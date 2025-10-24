@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
             bottomNav.setVisibility(View.GONE);
             bottomNav.setEnabled(false);
 
-            // 确保停留在首页
+            // 停留在首页
             if (navController.getCurrentDestination() != null &&
                     navController.getCurrentDestination().getId() != R.id.homeFragment) {
                 navController.navigate(R.id.homeFragment);
