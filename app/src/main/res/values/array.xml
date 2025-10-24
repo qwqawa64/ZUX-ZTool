@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="xposed_scope">
+        <item>com.android.settings</item>
+        <item>android</item>
+        <item>com.zui.game.service</item>
+        <item>com.lenovo.ota</item>
+        <item>com.lenovo.tbengine</item>
+        <item>com.android.packageinstaller</item>
+    </string-array>
+</resources>

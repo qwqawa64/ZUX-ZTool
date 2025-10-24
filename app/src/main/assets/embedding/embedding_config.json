@@ -1,0 +1,4097 @@
+{
+  "EmbeddingConfigVersion": "1.0.0",
+  "skipEmbeddingDividerActivities": [
+    "com.android.permissioncontroller/.permission.ui.GrantPermissionsActivity",
+    "com.android.providers.media.module/com.android.providers.media.photopicker.PhotoPickerGetContentActivity",
+    "com.android.providers.media.module/com.android.providers.media.photopicker.PhotoPickerActivity"
+  ],
+  "packages": [
+    {
+      "name": "com.tmall.wireless",
+      "mainPage": "com.tmall.wireless.maintab.module.TMMainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.tmall.wireless.maintab.module.TMMainTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.tmall.wireless.imagesearch.page.TMISCaptureActivity"
+      ]
+    },
+    {
+      "name": "com.baidu.tieba",
+      "mainPage": "com.baidu.tieba.tblauncher.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.tieba.tblauncher.MainTabActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "true",
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.baidu.tieba.LogoActivity",
+        "com.baidu.tieba.passaccount.app.LoginGuideActivity"
+      ]
+    },
+    {
+      "name": "tv.danmaku.bili",
+      "mainPage": "tv.danmaku.bili.MainActivityV2",
+      "activityPairs": [
+        {
+          "from": "tv.danmaku.bili.MainActivityV2",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "true",
+      "forceFullscreenPages": [
+        "com.bilibili.app.qrcode.QRcodeCaptureActivity",
+        "com.bilibili.bplus.following.publish.view.MediaChooserActivity"
+      ],
+      "transActivities": [
+        "com.bilibili.teenagersmode.ui.TeenagersModeDialogActivity",
+        "tv.danmaku.bili.sms.SmsLoginDialogActivityV2",
+        "com.bilibili.studio.centerplus.ui.CenterPlusMainActivity",
+        "tv.danmaku.bili.fullscreen.FullscreenLoginActivity",
+        "com.bilibili.studio.videoeditor.capturev3.activity.BiliCapturePreviewActivity"
+      ],
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "true"
+    },
+    {
+      "name": "com.qiyi.video",
+      "mainPage": "com.qiyi.video.WelcomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.qiyi.video.WelcomeActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "true",
+      "forceFullscreenPages": [
+        "org.qiyi.android.video.ui.account.lite.LiteAccountActivity",
+        "com.iqiyi.webcontainer.commonwebview.CommonWebView",
+        "org.qiyi.pluginlibrary.component.InstrActivityProxy1",
+        "org.qiyi.pluginlibrary.component.InstrActivityProxy0"
+      ],
+      "transActivities": [
+        "org.qiyi.android.video.activitys.NewUserLoginGuideActivity",
+        "com.qiyi.video.pages.category.activity.HomeTopMenuCategoryV2Activity",
+        "org.qiyi.pluginlibrary.component.InstrActivityProxyTranslucent0",
+        "com.qiyi.video.qigsaw.shortvideo.ShortVideoInstaller",
+        "org.qiyi.android.video.MiniModeMainActivity"
+      ],
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "true"
+    },
+    {
+      "name": "com.xunmeng.pinduoduo",
+      "mainPage": "com.xunmeng.pinduoduo.ui.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.xunmeng.pinduoduo.ui.activity.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "skipLetterboxDisplayInfo": "true",
+      "transActivities": []
+    },
+    {
+      "name": "com.baidu.netdisk",
+      "mainPage": "com.baidu.netdisk.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.netdisk.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.baidu.netdisk.video.VideoPlayerActivity",
+        "com.baidu.netdisk.sniff.ui.WholeWebSearchActivity"
+      ],
+      "showEmbeddingDivider": "true",
+      "transActivities": [
+        "com.baidu.netdisk.ocr.OCRTakePhotoActivity",
+        "com.baidu.netdisk.ui.permission.view.PermissionDialogActivity",
+        "com.baidu.netdisk.document.ui.view.PreViewDocumentByH5Activity",
+        "com.baidu.netdisk.ui.cloudp2p.ShareGuideDialogActivity",
+        "com.baidu.netdisk.ui.cloudp2p.ConversationActivity",
+        "com.baidu.netdisk.ui.cloudfile.HomeEntryActivity"
+      ]
+    },
+    {
+      "name": "com.hunantv.imgo.activity",
+      "mainPage": "com.hunantv.imgo.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.hunantv.imgo.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.mgtv.personalcenter.capture.CapturePermissionRequestActivity"
+      ],
+      "forceFullscreenPages": [
+        "com.mgtv.ui.login.main.ImgoLoginActivity"
+      ],
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.tencent.qqmusic",
+      "mainPage": "com.tencent.qqmusic.activity.AppStarterActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.qqmusic.activity.AppStarterActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.tme.qqmusic.knative.kuikly.container.KuiklyRenderActivity",
+        "com.tencent.qqmusic.activity.PortMVPlayerActivity",
+        "com.tencent.qqmusiccommon.hybrid.HybridViewActivity",
+        "com.tencent.qqmusic.activity.soundfx.supersound.customeffect.SuperSoundHRTFTestActivity"
+      ],
+      "transActivities": [
+        "com.tencent.qqmusic.camerascan.view.CameraScanActivity",
+        "com.tencent.qqmusic.activity.baseactivity.StartUpPrivacyPolicyActivity",
+        "com.tencent.qqmusic.activity.baseactivity.StartConfigActivity",
+        "com.tencent.qqmusic.activity.LoginActivity",
+        "com.tencent.qqmusic.business.ad.splash.hotlaunch.HotLaunchLargeScreenSplashActivity"
+      ]
+    },
+    {
+      "name": "com.sina.weibo",
+      "mainPage": "com.sina.weibo.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.sina.weibo.MainTabActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.sina.weibo.VisitorMainTabActivity",
+          "to": "com.sina.weibo.feed.DetailWeiboActivity"
+        },
+        {
+          "from": "com.sina.weibo.VisitorMainTabActivity",
+          "to": "com.sina.weibo.photoalbum.imageviewer.ImageViewer"
+        },
+        {
+          "from": "com.sina.weibo.VisitorMainTabActivity",
+          "to": "com.sina.weibo.video.tabcontainer.VideoTabContainerActivity"
+        },
+        {
+          "from": "com.sina.weibo.VisitorMainTabActivity",
+          "to": "com.sina.weibo.page.SearchResultActivity"
+        },
+        {
+          "from": "com.sina.weibo.VisitorMainTabActivity",
+          "to": "com.sina.weibo.MediaCoreActivity"
+        },
+        {
+          "from": "com.sina.weibo.VisitorMainTabActivity",
+          "to": "com.sina.weibo.preview.MediaPreviewActivity"
+        },
+        {
+          "from": "com.sina.weibo.VisitorMainTabActivity",
+          "to": "com.sina.weibo.account.login.LoginActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.sina.weibo.MainTabRestarActivity"
+      ],
+      "showEmbeddingDivider": "true",
+      "transActivities": [
+        "com.sina.weibo.SplashActivity",
+        "com.sina.weibo.FixedCarshActivity",
+        "com.sina.weibo.InterceptActivity",
+        "com.sina.weibo.composerinde.OriginalComposerActivity",
+        "com.sina.weibo.VisitorMainTabActivity",
+        "com.sina.weibo.qrcode.CaptureActivity",
+        "com.sina.weibo.browser.WeiboBrowser"
+      ]
+    },
+    {
+      "name": "com.tencent.android.qqdownloader",
+      "mainPage": "com.tencent.assistantv2.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.assistantv2.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.tencent.assistant.plugin.proxy.PluginProxyActivity",
+        "com.tencent.nucleus.manager.wxqqclean.WxCleanActivity",
+        "com.tencent.nucleus.manager.spacecleannew.GarbageCleanActivity",
+        "com.tencent.assistant.activity.BrowserActivity"
+      ],
+      "transActivities": [
+        "com.tencent.pangu.activity.TranslucentAppDemoActivity"
+      ]
+    },
+    {
+      "name": "com.eg.android.AlipayGphone",
+      "mainPage": "com.eg.android.AlipayGphone.AlipayLogin",
+      "activityPairs": [
+        {
+          "from": "com.eg.android.AlipayGphone.AlipayLogin",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.alipay.mobile.scan.as.main.MainCaptureActivity",
+        "com.alipay.mobile.chatapp.ui.video.VideoRecordActivity_",
+        "com.alipay.mobile.beehive.photo.ui.PhotoPreviewActivity",
+        "com.alipay.mobile.beehive.photo.ui.PhotoSelectActivity",
+        "com.ali.user.mobile.loginupgrade.activity.LoginActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.ss.android.article.news",
+      "mainPage": "com.ss.android.article.news.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ss.android.article.news.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.bytedance.mediachooser.MediaChooserActivity"
+      ],
+      "showEmbeddingDivider": "true",
+      "transActivities": [
+        "com.ss.android.article.base.feature.isolation.view.IsolationActivity"
+      ]
+    },
+    {
+      "name": "com.duowan.kiwi",
+      "mainPage": "com.duowan.kiwi.homepage.Homepage",
+      "activityPairs": [
+        {
+          "from": "com.duowan.kiwi.homepage.Homepage",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.duowan.kiwi.scan.impl.CaptureHwScanActivity",
+        "com.duowan.kiwi.adsplash.view.AdSplashActivity",
+        "com.kiwi.phoenix.picker.ui.camera.CameraActivity",
+        "com.duowan.kiwi.matchcommunity.impl.activity.MatchCommunityCommunityPublisherActivity",
+        "com.duowan.liveroom.LiveRoomActivity"
+      ],
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.snda.wifilocating",
+      "mainPage": "com.wifitutu.ui.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.wifitutu.ui.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.wifitutu.permission.ui.PermRequestPhoneActivity"
+      ]
+    },
+    {
+      "name": "com.sohu.inputmethod.sogou",
+      "mainPage": "com.sohu.inputmethod.sogou.SogouIMEHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.sohu.inputmethod.sogou.SogouIMEHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.sohu.inputmethod.splashscreen.AppSplashActivity",
+        "com.sogou.inputmethod.passport.account.AccountLoginActivity"
+      ],
+      "skipLetterboxDisplayInfo": "true"
+    },
+    {
+      "name": "com.baidu.searchbox.lite",
+      "mainPage": "com.baidu.searchbox.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.searchbox.MainActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.baidu.searchbox.newreader.discovery.novel.NovelHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.baidu.searchbox.godeye.CodeScannerActivity"
+      ],
+      "transActivities": [],
+      "showEmbeddingDivider": "true",
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.moji.mjweather",
+      "mainPage": "com.moji.mjweather.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.moji.mjweather.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.mojiweather.area.AddAreaFirstRunActivity"
+      ]
+    },
+    {
+      "name": "com.zhihu.android",
+      "mainPage": "com.zhihu.android.app.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zhihu.android.app.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.zhihu.android.app.SearchActivity",
+        "com.zhihu.android.app.ui.activity.HostActivity",
+        "com.zhihu.android.app.ui.activity.SocialOauthActivity"
+      ],
+      "showEmbeddingDivider": "true",
+      "transActivities": [
+      ],
+      "skipMultiWindowMode": "true",
+      "skipLetterboxDisplayInfo":"true"
+    },
+    {
+      "name": "air.tv.douyu.android",
+      "mainPage": "com.douyu.module.home.pages.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.douyu.module.home.pages.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "tv.douyu.view.activity.PlayerActivity",
+        "com.douyu.module.player.p.rambobase.RamboPlayerActivity"
+      ],
+      "transActivities": [
+        "com.douyu.module.settings.activity.YoungBindChildAgeActivity",
+        "com.douyu.module.young.view.activity.YoungPwdActivity",
+        "com.douyu.module.young.view.activity.YoungDetailActivity",
+        "com.douyu.module.settings.activity.SetupActivity",
+        "tv.douyu.view.activity.launcher.DYLauncherActivity"
+      ],
+      "showEmbeddingDivider": "false",
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.tencent.karaoke",
+      "mainPage": "com.tencent.karaoke.module.main.ui.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.karaoke.module.main.ui.MainTabActivity",
+          "to": "com.lenovo.fakeActivity"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.tencent.karaoke.module.detailrefactor.share.DetailRefactorSaveActivity"
+      ],
+      "shouldPausePrimaryActivity": "true"
+    },
+    {
+      "name": "com.kuaikan.comic",
+      "mainPage": "com.kuaikan.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.kuaikan.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.kkyanzhenjie.permission.bridge.BridgeActivity"
+      ]
+    },
+    {
+      "name": "com.ss.android.article.lite",
+      "mainPage": "com.ss.android.article.lite.activity.SplashActivity",
+      "activityPairs": [
+        {
+          "from": "com.ss.android.article.lite.activity.SplashActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.bytedance.common.plugin.base.lynx.page.DefaultLynxActivity",
+          "to": "com.ss.android.article.lite.activity.SplashActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+          "com.ss.android.newmedia.activity.browser.BrowserActivity",
+          "com.bytedance.mediachooser.MediaChooserActivity"
+      ],
+      "transActivities": [
+        "com.bytedance.bdauditsdkbase.permission.ui.PermissionMaskActivity",
+        "com.bytedance.basicmode.activity.BasicModeFeedActivity"
+      ],
+      "showEmbeddingDivider": "true"
+    },
+    {
+      "name": "com.fenbi.android.zenglish",
+      "mainPage": "com.fenbi.android.zebraenglish.activity.portal.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.fenbi.android.zebraenglish.activity.portal.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.fenbi.android.zebraenglish.splash.SplashActivity"
+      ]
+    },
+    {
+      "name": "com.kwai.videoeditor",
+      "mainPage": "com.kwai.videoeditor.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.kwai.videoeditor.activity.MainActivity",
+          "to": "com.kwai.videoeditor.vega.slideplay.v2.activity.SlidePlayActivityV2"
+        },
+        {
+          "from": "com.kwai.videoeditor.activity.MainActivity",
+          "to": "com.kwai.videoeditor.vega.search.TemplateSearchActivity"
+        },
+        {
+          "from": "com.kwai.videoeditor.activity.MainActivity",
+          "to": "com.kwai.videoeditor.activity.SettingActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.kwai.krn.KrnKyActivity",
+        "com.kwai.videoeditor.support.album.StartCreateActivity"
+      ],
+      "transActivities": [
+        "com.kwai.videoeditor.ksad.SdkSplashActivity",
+        "com.kwai.videoeditor.vega.search.TemplateSearchActivity",
+        "com.kwai.videoeditor.commercialization.splash.GeneralAdSplashActivity"
+      ]
+    },
+    {
+      "name": "com.lofter.android",
+      "mainPage": "com.lofter.android.global.home.TabHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.lofter.android.global.home.TabHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.lofter.android.module_publish.video.MCamera"
+      ],
+      "transActivities": [
+        "com.lofter.android.global.splash.HomeActivity"
+      ],
+      "showEmbeddingDivider": "true"
+    },
+    {
+      "name": "com.gkid.crazyrope",
+      "mainPage": "com.gkid.crazyrope.ui.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.gkid.crazyrope.ui.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.gkid.crazyrope.ui.unity.UnityActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.zhongduomei.rrmj.society",
+      "mainPage": "com.rrtv.rrtvtrunk.main.presentation.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.rrtv.rrtvtrunk.main.presentation.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.rrtv.login.presentation.LoginHalfFrontActivity"
+      ]
+    },
+    {
+      "name": "com.shizhuang.duapp",
+      "mainPage": "com.shizhuang.duapp.modules.home.ui.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.shizhuang.duapp.modules.home.ui.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.shizhuang.duapp.modules.mall_search.search.v3.ui.CommonSearchActivity",
+        "com.shizhuang.duapp.du_login.optimize.LoginContainerActivityV2",
+        "com.shizhuang.duapp.modules.user.setting.common.ui.NewSettingActivity",
+        "com.shizhuang.duapp.modules.mall_search.graphsearch.GraphSearchMainActivity",
+        "com.shizhuang.duapp.du_login.LoginContainerActivityV2",
+        "com.shizhuang.duapp.modules.user.setting.common.ui.scan.DuScanCodeActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.mihoyo.hyperion",
+      "mainPage": "com.mihoyo.hyperion.main.HyperionMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.mihoyo.hyperion.main.HyperionMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.sankuai.meituan",
+      "mainPage": "com.meituan.android.pt.homepage.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.meituan.android.pt.homepage.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.meituan.android.mrn.container.MRNBaseActivity"
+      ],
+      "transActivities": [
+        "com.meituan.android.scan.NewArActivity",
+        "com.sankuai.meituan.mbc.dsp.TransitActivity",
+        "com.sankuai.titans.adapter.mtapp.KNBWebViewActivity",
+        "com.meituan.android.scan.ScanQRInMeituanActivity",
+        "com.sankuai.meituan.msv.page.activity.MSVPageActivity",
+        "com.sankuai.waimai.foundation.core.base.activity.transfer.TransferActivity"
+      ],
+      "skipLetterboxDisplayInfo": "true"
+    },
+    {
+      "name": "com.cmcc.cmvideo",
+      "mainPage": "com.cmcc.cmvideo.main.application.CompatibleMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.cmcc.cmvideo.main.application.CompatibleMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.cmcc.migusso.sdk.activity.QRCodeScanActivity",
+        "com.cmcc.cmvideo.mgpersonalcenter.presentation.ui.activities.PersonalUserSetActivity",
+        "com.cmcc.cmvideo.main.teeny.TeenModeOpenActivity",
+        "com.cmcc.cmvideo.main.teeny.ManagePasswordActivity"
+      ],
+      "transActivities": [],
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "true"
+    },
+    {
+      "name": "com.chaoxing.mobile",
+      "mainPage": "com.chaoxing.mobile.main.ui.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.chaoxing.mobile.main.ui.MainTabActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.chaoxing.mobile.study.home.mainpage2.microread.MicroReadActivity",
+          "to": "com.chaoxing.mobile.note.ui.ShowNoteActivity"
+        },
+        {
+          "from": "com.chaoxing.mobile.webapp.ui.WebAppCommonViewer",
+          "to": "com.chaoxing.mobile.webapp.ui.WebAppViewerActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.chaoxing.android.scan.ScannerActivity"
+      ],
+      "transActivities": [],
+      "showEmbeddingDivider": "true"
+    },
+    {
+      "name": "com.baidu.browser.apps",
+      "mainPage": "com.baidu.searchbox.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.searchbox.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.weico.international",
+      "mainPage": "com.weico.international.activity.MainFragmentActivity",
+      "activityPairs": [
+        {
+          "from": "com.weico.international.activity.MainFragmentActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.ct.client",
+      "mainPage": "com.ct.client.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ct.client.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.sankuai.meituan.takeoutnew",
+      "mainPage": "com.sankuai.waimai.business.page.homepage.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.sankuai.waimai.business.page.homepage.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.netease.newsreader.activity",
+      "mainPage": "com.netease.nr.phone.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.netease.nr.phone.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.netease.nr.phone.main.MainActivity"
+      ],
+      "showEmbeddingDivider": "true"
+    },
+    {
+      "name": "com.intsig.camscanner",
+      "mainPage": "com.intsig.camscanner.mainmenu.mainactivity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.intsig.camscanner.mainmenu.mainactivity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.intsig.camscanner.capture.CaptureActivity"
+      ],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.tianyancha.skyeye",
+      "mainPage": "com.tianyancha.skyeye.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tianyancha.skyeye.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.shoujiduoduo.ringtone",
+      "mainPage": "com.shoujiduoduo.ringtone.activity.RingToneDuoduoActivity",
+      "activityPairs": [
+        {
+          "from": "com.shoujiduoduo.ringtone.activity.RingToneDuoduoActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.pingan.lifeinsurance",
+      "mainPage": "com.pingan.lifeinsurance.shell.activity.HomePageActivity",
+      "activityPairs": [
+        {
+          "from": "com.pingan.lifeinsurance.shell.activity.HomePageActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.kugou.android.ringtone",
+      "mainPage": "com.kugou.android.ringtone.activity.KGMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.kugou.android.ringtone.activity.KGMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.chinamworld.bocmbci",
+      "mainPage": "com.boc.bocsoft.mobile.bocmobile.buss.system.main.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.boc.bocsoft.mobile.bocmobile.buss.system.main.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.anjuke.android.app",
+      "mainPage": "com.anjuke.android.app.mainmodule.common.activity.MainTabPageActivityV5",
+      "activityPairs": [
+        {
+          "from": "com.anjuke.android.app.mainmodule.common.activity.MainTabPageActivityV5",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.lingan.seeyou",
+      "mainPage": "com.lingan.seeyou.ui.activity.main.SeeyouActivity",
+      "activityPairs": [
+        {
+          "from": "com.lingan.seeyou.ui.activity.main.SeeyouActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.wuba.zhuanzhuan",
+      "mainPage": "com.wuba.zhuanzhuan.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.wuba.zhuanzhuan.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "leftTransActivities":[
+        "com.zhuanzhuan.login.page.LoginActivity"
+      ],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.tencent.qqpim",
+      "mainPage": "com.tencent.qqpim.ui.home.QQPimHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.qqpim.ui.home.QQPimHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.lianjia.beike",
+      "mainPage": "com.lianjia.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.lianjia.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.sunland.app",
+      "mainPage": "com.sunland.app.ui.main.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.sunland.app.ui.main.HomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.hpbr.bosszhipin",
+      "mainPage": "com.hpbr.bosszhipin.module.main.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.hpbr.bosszhipin.module.main.activity.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.benqu.wuta",
+      "mainPage": "com.benqu.wuta.activities.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.benqu.wuta.activities.home.HomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.cmbchina.ccd.pluto.cmbActivity",
+      "mainPage": "com.cmbchina.ccd.pluto.cmbActivity.CMBRootActivityV2",
+      "activityPairs": [
+        {
+          "from": "com.cmbchina.ccd.pluto.cmbActivity.CMBRootActivityV2",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.cmbchina.ccd.pluto.cmbActivity.welcome.cmb0C1UGO"
+      ]
+    },
+    {
+      "name": "com.hp.android.printservice",
+      "mainPage": "com.hp.android.printservice.launcher.WelcomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.hp.android.printservice.launcher.WelcomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.dailyyoga.cn",
+      "mainPage": "com.dailyyoga.h2.ui.FrameworkActivity",
+      "activityPairs": [
+        {
+          "from": "com.dailyyoga.h2.ui.FrameworkActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.dailyyoga.h2.ui.sign.onboarding.PerfectTargetActivity"
+      ]
+    },
+    {
+      "name": "com.dewmobile.kuaiya",
+      "mainPage": "com.dewmobile.kuaiya.act.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.dewmobile.kuaiya.act.MainActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+      "com.dewmobile.kuaiya.act.qr.DmQrActivity"
+     ]
+    },
+    {
+      "name": "com.cnki.client",
+      "mainPage": "com.cnki.client.core.navigator.main.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.cnki.client.core.navigator.main.HomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.aijianji.clip",
+      "mainPage": "com.aijianji.clip.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.aijianji.clip.ui.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.liubowang.metronome",
+      "mainPage": "com.example.liusheng.metronome.appBase.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.example.liusheng.metronome.appBase.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.excean.dualaid",
+      "mainPage": "com.excean.dualaid.sxn27ddi.cdd27gp46woio",
+      "activityPairs": [
+        {
+          "from": "com.excean.dualaid.sxn27ddi.cdd27gp46woio",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.aikan",
+      "mainPage": "com.dz.business.main.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.dz.business.main.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.koolearn.android.cg",
+      "mainPage": "com.koolearn.android.home.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.koolearn.android.home.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.student.yuwen.yimilan",
+      "mainPage": "app.yimilan.code.activity.mainPage.MainActivity",
+      "activityPairs": [
+        {
+          "from": "app.yimilan.code.activity.mainPage.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.xiaomi.hm.health",
+      "mainPage": "com.xiaomi.hm.health.activity.ChannelMainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.xiaomi.hm.health.activity.ChannelMainTabActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.huami.account.ui.login.LoginActivity"
+      ]
+    },
+
+    {
+      "name": "com.tianqi2345",
+      "mainPage": "com.tianqi2345.activity.NewMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tianqi2345.activity.NewMainActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.tianqi2345.activity.CoveryActivity"
+      ]
+    },
+    {
+      "name": "com.mistong.ewt360",
+      "mainPage": "com.mistong.ewt360.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.mistong.ewt360.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.skyplatanus.crucio",
+      "mainPage": "com.skyplatanus.crucio.ui.home.HomeContainerActivity",
+      "activityPairs": [
+        {
+          "from": "com.skyplatanus.crucio.ui.home.HomeContainerActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.skyplatanus.crucio.ui.homeguide.welcome_c2.WelcomeC2Activity"
+      ]
+    },
+    {
+      "name": "com.pplive.androidphone",
+      "mainPage": "com.pplive.androidphone.ui.MainFragmentActivity",
+      "activityPairs": [
+        {
+          "from": "com.pplive.androidphone.ui.MainFragmentActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.youdao.kiddict",
+      "mainPage": "com.youdao.kiddict.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.youdao.kiddict.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.liubowang.lauchpad",
+      "mainPage": "com.example.denghailong.musicpad.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.example.denghailong.musicpad.activity.HomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.nfdaily.nfplus",
+      "mainPage": "com.nfdaily.nfplus.module.firstissue.HomeSideShowActivity",
+      "activityPairs": [
+        {
+          "from": "com.nfdaily.nfplus.module.firstissue.HomeSideShowActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.weibo.comic",
+      "mainPage": "com.sina.anime.ui.activity.NativeMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.sina.anime.ui.activity.NativeMainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.offcn.zhibo",
+      "mainPage": "com.offcn.zhibo.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.offcn.zhibo.activity.HomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.naver.linewebtoon.cn",
+      "mainPage": "com.naver.linewebtoon.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.naver.linewebtoon.main.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.kekeclient_",
+      "mainPage": "com.kekeclient.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.kekeclient.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.pplive.androidphone.sport",
+      "mainPage": "com.pplive.androidphone.sport.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.pplive.androidphone.sport.ui.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.soufun.app",
+      "mainPage": "com.soufun.app.activity.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.soufun.app.activity.MainTabActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.zidongdianji",
+      "mainPage": "com.autoclicker.clicker.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.autoclicker.clicker.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.hujiang.cctalk",
+      "mainPage": "com.hujiang.cctalk.module.main.ui.IndexActivity",
+      "activityPairs": [
+        {
+          "from": "com.hujiang.cctalk.module.main.ui.IndexActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.hujiang.cctalk.module.discover.ui.ContentGiftDialogActivity"
+      ],
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.netease.cc",
+      "mainPage": "com.netease.cc.appstart.CCMain",
+      "activityPairs": [
+        {
+          "from": "com.netease.cc.appstart.CCMain",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.netease.cc.activity.more.mytab.QrCaptureActivity"
+      ]
+    },
+    {
+      "name": "com.baidu.yuedu",
+      "mainPage": "com.baidu.yuedu.base.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.yuedu.base.ui.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.qb.qtranslator",
+      "mainPage": "com.qb.qtranslator.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.qb.qtranslator.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.netease.edu.study",
+      "mainPage": "com.netease.edu.study.main.activity.ActivityMain",
+      "activityPairs": [
+        {
+          "from": "com.netease.edu.study.main.activity.ActivityMain",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.vipkid.app",
+      "mainPage": "com.vipkid.app.home.controller.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.vipkid.app.home.controller.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.ivydad.readtool",
+      "mainPage": "com.ivydad.readtool.module.home.HomePadActivity",
+      "activityPairs": [
+        {
+          "from": "com.ivydad.readtool.module.home.HomePadActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.dongao.kaoqian.phone",
+      "mainPage": "com.dongao.kaoqian.module.home.main.HomeMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.dongao.kaoqian.module.home.main.HomeMainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.ruida.ruidaschool",
+      "mainPage": "com.ruida.ruidaschool.app.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ruida.ruidaschool.app.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.ruida.ruidaschool.mine.activity.AppUpdateActivity"
+      ]
+    },
+    {
+      "name": "com.gf.client",
+      "mainPage": "com.gf.mobile.module.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.gf.mobile.module.home.HomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.koudai.weidian.buyer",
+      "mainPage": "com.vdian.android.wdb.main.ui.activity.MainTabsActivity",
+      "activityPairs": [
+        {
+          "from": "com.vdian.android.wdb.main.ui.activity.MainTabsActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.vdian.android.lib.wdaccount.community.ui.activity.ACJVerifyHelperActivity",
+        "com.vdian.android.lib.wdaccount.community.ui.activity.ACLoginCommunityActivity"
+      ],
+      "forceFullscreenPages": [
+        "com.vdian.flutter.buyer_base.page.WDBFlutterWrapTranslucentActivity"
+      ]
+    },
+    {
+      "name": "com.yicai.news",
+      "mainPage": "com.yicai.news.view.ui.activity.CBNNewHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.yicai.news.view.ui.activity.CBNNewHomeActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.geek.jk.weather",
+      "mainPage": "com.module.main.weather.main.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.module.main.weather.main.activity.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.zbx.ct.tvzhibo",
+      "mainPage": "com.tvmain.mvp.view.activity.TvMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tvmain.mvp.view.activity.TvMainActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [
+        "com.bytedance.sdk.openadsdk.stub.activity.Stub_Standard_Portrait_Activity"
+      ]
+    },
+    {
+      "name": "com.xueersi.parentsmeeting",
+      "mainPage": "com.xueersi.parentsmeeting.module.home.HomeV2Activity",
+      "activityPairs": [
+        {
+          "from": "com.xueersi.parentsmeeting.module.home.HomeV2Activity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.szy.gamemorphvox",
+      "mainPage": "com.szy.gamemorphvox.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.szy.gamemorphvox.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.net.zdsoft.netstudy.netstudy_v5_mobile_app",
+      "mainPage": "net.zdsoft.netstudy.PhoneCenterActivity",
+      "activityPairs": [
+        {
+          "from": "net.zdsoft.netstudy.PhoneCenterActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.netease.snailread",
+      "mainPage": "com.netease.snailread.activity.HomeMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.netease.snailread.activity.HomeMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.kk.poem",
+      "mainPage": "com.kk.poem.activity.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.kk.poem.activity.MainTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.kk.poem.activity.SplashActivity"
+      ]
+    },
+    {
+      "name": "com.haojiazhang.xxb.speed",
+      "mainPage": "com.haojiazhang.activity.ui.main.NewMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.haojiazhang.activity.ui.main.NewMainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.nd.android.pandareader",
+      "mainPage": "com.baidu.shucheng.ui.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.shucheng.ui.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.baidu.shucheng.ui.main.SplashActivity"
+      ]
+    },
+    {
+      "name": "com.santi.sinology",
+      "mainPage": "com.santi.sinology.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.santi.sinology.ui.MainActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.santi.sinology.ui.TangActivity",
+          "to": "com.santi.sinology.ui.TangList"
+        },
+        {
+          "from": "com.santi.sinology.ui.SONGCIActivity",
+          "to": "com.santi.sinology.ui.SongciList"
+        },
+        {
+          "from": "com.santi.sinology.ui.PoetryActivity",
+          "to": "com.santi.sinology.ui.PoetryList"
+        },
+        {
+          "from": "com.santi.sinology.ui.SHENGZIActivity",
+          "to": "com.santi.sinology.ui.DictionaryActivity"
+        },
+        {
+          "from": "com.santi.sinology.ui.WholeActivity",
+          "to": "com.santi.sinology.ui.WholeListActivity"
+        },
+        {
+          "from": "com.santi.sinology.ui.WholeListActivity",
+          "to": "com.santi.sinology.ui.WholeContentActivity"
+        },
+        {
+          "from": "com.santi.sinology.ui.ClassicalActivity",
+          "to": "com.santi.sinology.ui.ClassicalList"
+        },
+        {
+          "from": "com.santi.sinology.ui.LUNYUActivity",
+          "to": "com.santi.sinology.ui.ListActivity"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.santi.sinology.ui.LoadingActivity"
+      ]
+    },
+    {
+      "name": "com.leku.diary",
+      "mainPage": "com.leku.diary.activity.HomeTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.leku.diary.activity.HomeTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.leku.diary.activity.WelcomeActivity"
+      ]
+    },
+    {
+      "name": "com.intotherain.voicechange",
+      "mainPage": "com.intotherain.voicechange.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.intotherain.voicechange.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.intotherain.voicechange.SplashADActivity"
+      ]
+    },
+    {
+      "name": "com.wondertek.paper",
+      "mainPage": "cn.thepaper.paper.ui.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "cn.thepaper.paper.ui.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "cn.thepaper.paper.ui.splash.welcome.LaunchActivity"
+      ]
+    },
+    {
+      "name": "com.hjwordgames",
+      "mainPage": "com.hujiang.iword.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.hujiang.iword.MainTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.hjwordgames.activity.GuideLoginActivity",
+        "com.hujiang.iword.book.booksearch.BookInfoDialogActivity"
+      ]
+    },
+    {
+      "name": "com.ifeng.news2",
+      "mainPage": "com.ifeng.news2.activity.IfengTabMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ifeng.news2.activity.IfengTabMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.homelink.android",
+      "mainPage": "com.homelink.android.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.homelink.android.MainActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.second.homepage.activity.SHHomePageActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.homelink.android.loader.a.ActivityN1NRNTS1",
+          "to": "*"
+        },
+        {
+          "from": "com.homelink.android.loader.a.ActivityN1NRNTS2",
+          "to": "*"
+        },
+        {
+          "from": "com.homelink.android.loader.a.ActivityN1NRNTS3",
+          "to": "*"
+        },
+        {
+          "from": "com.homelink.android.loader.a.ActivityN1NRNTS0",
+          "to": "*"
+        },
+        {
+          "from": "com.homelink.android.secondhouse.activity.SecondHandHouseListActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.lianjia.jinggong.sdk.activity.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tencent.qqsports",
+      "mainPage": "com.tencent.qqsports.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.qqsports.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.sup.android.superb",
+      "mainPage": "com.sup.android.base.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.sup.android.base.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.bytedance.mira.stub.p0.StubStandardActivity1"
+      ],
+      "transActivities": [
+          "com.sup.android.uikit.VideoDownloadProgressActivity"
+      ],
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.mampod.ergedd",
+      "mainPage": "com.mampod.ergedd.ui.phone.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.mampod.ergedd.ui.phone.activity.MainActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.mampod.ergedd.ui.phone.activity.VideoAlbumActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.mampod.ergedd.ui.phone.activity.AudioPlayListActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.kugou.shiqutouch",
+      "mainPage": "com.kugou.shiqutouch.activity.TouchInnerActivity",
+      "activityPairs": [
+        {
+          "from": "com.kugou.shiqutouch.activity.TouchInnerActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.netease.vopen",
+      "mainPage": "com.netease.vopen.feature.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.netease.vopen.feature.home.HomeActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.netease.vopen.feature.newcom.group.GroupDetailActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.pinguo.edit.sdk",
+      "mainPage": "us.pinguo.mix.modules.landingpage.MixMainActivity",
+      "activityPairs": [
+        {
+          "from": "us.pinguo.mix.modules.landingpage.MixMainActivity",
+          "to": "*"
+        },
+        {
+          "from": "us.pinguo.mix.modules.store.StoreActivity",
+          "to": "*"
+        },
+        {
+          "from": "us.pinguo.mix.modules.community.CommunityActivity",
+          "to": "*"
+        },
+        {
+          "from": "us.pinguo.mix.modules.college.CollegeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.sainti.eduread",
+      "mainPage": "com.sainti.eduread.home.FrActivity",
+      "activityPairs": [
+        {
+          "from": "com.sainti.eduread.home.FrActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.android.nineton.elfinapp",
+      "mainPage": "splash.main.mvp.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "splash.main.mvp.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.zmlearn.course.am",
+      "mainPage": "com.zmlearn.course.am.framework.FrameActivity",
+      "activityPairs": [
+        {
+          "from": "com.zmlearn.course.am.framework.FrameActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.fenbi.android.gaozhong",
+      "mainPage": "com.fenbi.android.s.activity.portal.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.fenbi.android.s.activity.portal.HomeActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.fenbi.android.s.paper.activity.PaperListActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.wumii.android.athena",
+      "mainPage": "com.wumii.android.athena.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.wumii.android.athena.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.mallestudio.gugu.app",
+      "mainPage": "com.mallestudio.gugu.modules.home.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.mallestudio.gugu.modules.home.activity.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.allhistory.dls.marble",
+      "mainPage": "com.pwrd.dls.marble.moudle.homepage.HomePageActivity",
+      "activityPairs": [
+        {
+          "from": "com.pwrd.dls.marble.moudle.homepage.HomePageActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.pwrd.dls.marble.moudle.auth.ui.AuthActivity",
+        "com.wpsdk.accountsdk.ui.ASLoginActivity",
+        "com.wpsdk.accountsdk.ui.verify.ASVerifyActivity"
+      ],
+      "transActivities": [
+        "com.pwrd.dls.marble.other.activity.SplashActivity",
+        "com.pwrd.dls.marble.other.notification.NotificationDialogActivity"
+      ]
+    },
+    {
+      "name": "com.edrawsoft.mindmaster",
+      "mainPage": "com.edrawsoft.mindmaster.view.app_view.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.edrawsoft.mindmaster.view.app_view.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.un.real.antiscreen",
+      "mainPage": "com.un.real.antiscreen.AntiscreenLauncherActivity",
+      "activityPairs": [
+        {
+          "from": "com.un.real.antiscreen.AntiscreenLauncherActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.alo7.android.student",
+      "mainPage": "com.alo7.android.student.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.alo7.android.student.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.alo7.android.student.activity.ASRouterActivity"
+      ]
+    },
+    {
+      "name": "com.openlanguage.kaiyan",
+      "mainPage": "com.openlanguage.kaiyan.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.openlanguage.kaiyan.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.baidu.dict",
+      "mainPage": "com.baidu.dict.activity.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.dict.activity.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.xinmang.unzip",
+      "mainPage": "com.xinmang.unzip.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xinmang.unzip.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tal.kaoyan",
+      "mainPage": "com.tal.kaoyan.ui.activity.HomeTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.tal.kaoyan.ui.activity.HomeTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.shanbay.news",
+      "mainPage": "com.shanbay.news.home.thiz.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.shanbay.news.home.thiz.activity.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.hsb.colaproduct",
+      "mainPage": "com.hsb.colaproduct.mvp.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.hsb.colaproduct.mvp.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.screeclibinvoke",
+      "mainPage": "com.screeclibinvoke.component.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.screeclibinvoke.component.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.lovebizhi.wallpaper",
+      "mainPage": "com.adesk.picasso.view.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.adesk.picasso.view.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.psyone.brainmusic",
+      "mainPage": "com.psyone.brainmusic.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.psyone.brainmusic.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.deskmate100",
+      "mainPage": "com.deskmate100.webview.ShowBuyWebViewActivity",
+      "activityPairs": [
+        {
+          "from": "com.deskmate100.webview.ShowBuyWebViewActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tongxue.tiku",
+      "mainPage": "com.tongxue.tiku.base.ui.activity.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tongxue.tiku.base.ui.activity.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.bly.dkplat",
+      "mainPage": "com.bly.dkplat.widget.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.bly.dkplat.widget.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.clover.daysmatter",
+      "mainPage": "com.clover.daysmatter.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.clover.daysmatter.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.eastmoney.android.berlin",
+      "mainPage": "com.eastmoney.android.module.launcher.internal.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.eastmoney.android.module.launcher.internal.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.yiche.autoeasy",
+      "mainPage": "com.yiche.autoeasy.MainActivity3",
+      "activityPairs": [
+        {
+          "from": "com.yiche.autoeasy.MainActivity3",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.hupu.shihuo",
+      "mainPage": "com.shizhi.shihuoapp.module.main.ui.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.shizhi.shihuoapp.module.main.ui.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "skipLetterboxDisplayInfo": "true",
+      "transActivities": []
+    },
+    {
+      "name": "com.netease.mail",
+      "mainPage": "com.netease.mail.biz.main.MainITabActivity",
+      "activityPairs": [
+        {
+          "from": "com.netease.mail.biz.main.MainITabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.netease.mail.scanner.activity.ScannerActivity"
+      ],
+      "transActivities": [
+        "com.netease.mail.ad.launch.ui.SplashAdActivity"
+      ]
+    },
+    {
+      "name": "com.glodon.drawingexplorer",
+      "mainPage": "com.glodon.drawingexplorer.activity.DefaultActivity",
+      "activityPairs": [
+        {
+          "from": "com.glodon.drawingexplorer.activity.DefaultActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.wudaokou.hippo",
+      "mainPage": "com.wudaokou.hippo.launcher.splash.SplashActivity",
+      "activityPairs": [
+        {
+          "from": "com.wudaokou.hippo.launcher.splash.SplashActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.wudaokou.hippo.category.CategoryInfoActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.wudaokou.hippo.launcher.agreement.AgreementActivity",
+        "com.taobao.runtimepermission.PermissionActivity",
+        "com.wudaokou.hippo.location.bussiness.choose.SwitchAddressActivity"
+      ]
+    },
+    {
+      "name": "com.baidu.minivideo",
+      "mainPage": "com.baidu.minivideo.app.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.minivideo.app.activity.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.eastmoney.android.fund",
+      "mainPage": "com.eastmoney.android.fund.centralis.activity.FundRootActivity",
+      "activityPairs": [
+        {
+          "from": "com.eastmoney.android.fund.centralis.activity.FundRootActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.baidu.wenku",
+      "mainPage": "com.baidu.wenku.main.view.activity.MainFragmentActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.wenku.main.view.activity.MainFragmentActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.networkspeed.master",
+      "mainPage": "com.aso114.cyp.speed.act.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.aso114.cyp.speed.act.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.xtuone.android.syllabus",
+      "mainPage": "com.xtuone.android.friday.MainFragmentActivity",
+      "activityPairs": [
+        {
+          "from": "com.xtuone.android.friday.MainFragmentActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.alibaba.ailabs.tg",
+      "mainPage": "com.alibaba.ailabs.tg.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.alibaba.ailabs.tg.activity.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+          "com.alibaba.ailabs.tg.device.add.ArAndQrCodeActivity",
+          "com.alibaba.ailabs.tg.activity.HomeActivity"
+      ],
+      "transActivities": [
+        "com.alibaba.ailabs.tg.activity.LoginStartActivity"
+      ]
+    },
+    {
+      "name": "com.sinyee.babybus.chants",
+      "mainPage": "com.sinyee.babybus.android.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.sinyee.babybus.android.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.hundsun.winner.pazq",
+      "mainPage": "com.hundsun.winner.pazq.ui.home.activity.MainContainerActivity",
+      "activityPairs": [
+        {
+          "from": "com.hundsun.winner.pazq.ui.home.activity.MainContainerActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.netease.edu.ucmooc",
+      "mainPage": "com.netease.edu.ucmooc.activity.ActivityMain",
+      "activityPairs": [
+        {
+          "from": "com.netease.edu.ucmooc.activity.ActivityMain",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.netease.edu.ucmooc.classroom.student.activity.ActivityScan"
+      ],
+      "transActivities": [],
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.guotai.dazhihui",
+      "mainPage": "com.gtja.home.MainScreen",
+      "activityPairs": [
+        {
+          "from": "com.gtja.home.MainScreen",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.boohee.one",
+      "mainPage": "com.boohee.one.app.home.ui.activity.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.boohee.one.app.home.ui.activity.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.lwby.breader.ad",
+      "mainPage": "com.lwby.breader.view.BKHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.lwby.breader.view.BKHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.xes.jazhanghui.activity",
+      "mainPage": "com.xes.jazhanghui.activity.mvp.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.xes.jazhanghui.activity.mvp.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.xes.jazhanghui.activity.mvp.web.SchemeManagerActivity"
+      ]
+    },
+    {
+      "name": "com.seewo.easicare.pro",
+      "mainPage": "com.seewo.easicare.component.CareMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.seewo.easicare.component.CareMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.youdao.course",
+      "mainPage": "com.youdao.course.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.youdao.course.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.lanjingren.ivwen",
+      "mainPage": "com.lanjingren.ivwen.ui.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.lanjingren.ivwen.ui.MainTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.lechuan.mdwz",
+      "mainPage": "com.lechuan.mdwz.ui.activity.NovelMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.lechuan.mdwz.ui.activity.NovelMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tencent.news",
+      "mainPage": "com.tencent.news.activity.SplashActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.news.activity.SplashActivity",
+          "to": "com.tencent.news.ui.NewsDetailActivity"
+        },
+        {
+          "from": "com.tencent.news.activity.SplashActivity",
+          "to": "com.tencent.news.webview.CustomWebBrowserForItemActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.tencent.news.album.camera.CameraActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.changba",
+      "mainPage": "com.changba.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.changba.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.babycloud.hanju",
+      "mainPage": "com.babycloud.hanju.ui.activity.HanjuHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.babycloud.hanju.ui.activity.HanjuHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": ["com.babycloud.hanju.ui.activity.ScanQRcodeActivity"],
+      "transActivities": [],
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.duowan.mobile",
+      "mainPage": "com.yy.mobile.plugin.homepage.ui.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.yy.mobile.plugin.homepage.ui.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.immomo.momo",
+      "mainPage": "com.immomo.momo.maintab.MaintabActivity",
+      "activityPairs": [
+        {
+          "from": "com.immomo.momo.maintab.MaintabActivity",
+          "to": "com.immomo.momo.luaview.LuaViewActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.immomo.momo.mk.MomoMKWebActivity",
+        "com.immomo.android.mvvm.luaview.view.LoginLuaActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.tal.imonkey.chinese",
+      "mainPage": "com.tal.imonkey.business.launch.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tal.imonkey.business.launch.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.smzdm.client.android",
+      "mainPage": "com.smzdm.client.android.app.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.smzdm.client.android.app.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.zhl.fep.aphone",
+      "mainPage": "com.zhl.xxxx.aphone.common.activity.FrameHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.zhl.xxxx.aphone.common.activity.FrameHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.android.icredit",
+      "mainPage": "com.android.icredit.ui.MainMenuActivity",
+      "activityPairs": [
+        {
+          "from": "com.android.icredit.ui.MainMenuActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.android.icredit.ui.person.LoginV2Activity"
+      ]
+    },
+    {
+      "name": "com.wifi.key",
+      "mainPage": "com.wifi.key.ui.activitys.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.wifi.key.ui.activitys.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.taobao.live",
+      "mainPage": "com.taobao.live.home.activity.TaoLiveHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.taobao.live.home.activity.TaoLiveHomeActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.taobao.live.h5.BrowserActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.taobao.tblive_opensdk.TBLiveEntranceActivity",
+        "com.taobao.live.h5.BrowserActivity",
+        "com.taobao.live.pha.PHAContainerActivity",
+        "com.ali.user.mobile.login.ui.HalfTransparentUserLoginActivity"
+      ]
+    },
+    {
+      "name": "com.tencent.gallerymanager",
+      "mainPage": "com.tencent.gallerymanager.ui.main.FrameActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.gallerymanager.ui.main.FrameActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.dw.btime",
+      "mainPage": "com.dw.btime.MainHomeTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.dw.btime.MainHomeTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.lphtsccft",
+      "mainPage": "com.lphtsccft.zhangle.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.lphtsccft.zhangle.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.youxiang.soyoungapp",
+      "mainPage": "com.soyoung.module_main.ui.MainActivityV2",
+      "activityPairs": [
+        {
+          "from": "com.soyoung.module_main.ui.MainActivityV2",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.taobao.qianniu",
+      "mainPage": "com.qianniu.launcher.business.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.qianniu.launcher.business.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.qianniu.launcher.business.privacy.PrivacyAuthActivity",
+        "com.taobao.qianniu.biz_login.view.GuideLoginActivity"
+      ]
+    },
+    {
+      "name": "com.black.unique",
+      "mainPage": "com.black.unique.feature.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.black.unique.feature.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.jjwxc.reader",
+      "mainPage": "com.example.jinjiangshucheng.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.example.jinjiangshucheng.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.suirui.zhumu",
+      "mainPage": "com.suirui.zhumu.manage.router.activity.RouterV2Activity",
+      "activityPairs": [
+        {
+          "from": "com.suirui.zhumu.manage.router.activity.RouterV2Activity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.sina.oasis",
+      "mainPage": "com.weibo.oasis.content.module.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.weibo.oasis.content.module.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.liulishuo.engzo",
+      "mainPage": "com.liulishuo.overlord.home.main.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.liulishuo.overlord.home.main.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.baidu.video",
+      "mainPage": "com.baidu.video.ui.VideoActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.video.ui.VideoActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.wodi.who",
+      "mainPage": "com.wodi.who.main.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.wodi.who.main.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.wodi.sdk.photopreview.previewlibrary.sketch.lib.ui.ImagePhotoBrowserActivity",
+        "com.wodi.who.feed.activity.VideoActivity"
+      ]
+    },
+    {
+      "name": "com.meitu.meipaimv",
+      "mainPage": "com.meitu.meipaimv.community.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.meitu.meipaimv.community.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tencent.tim",
+      "mainPage": "com.tencent.mobileqq.activity.SplashActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.mobileqq.activity.SplashActivity",
+          "to": "*"
+        }
+      ],
+      "skipMultiWindowMode": "true",
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.tencent.mobileqq.activity.LoginActivity"
+      ]
+    },
+    {
+      "name": "com.ophone.reader.ui",
+      "mainPage": "com.cmread.bplusc.bookshelf.LocalMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.cmread.bplusc.bookshelf.LocalMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.cmread.bplusc.bookshelf.PrivacyBrowseActivity",
+        "com.cmread.login.ui.LocalLoginDialogActivity",
+        "com.cmread.settings.interestsetting.InterestPageSettingActivity"
+      ]
+    },
+    {
+      "name": "com.hongxiu.app",
+      "mainPage": "com.readx.pages.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.readx.pages.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.readx.flutter.mixstack.HxFlutterTransparentActivity",
+        "com.readx.login.QuickLoginActivity",
+        "com.readx.pages.SplashActivity"
+      ]
+    },
+    {
+      "name": "com.qsmy.walkmonkey",
+      "mainPage": "com.qsmy.busniess.main.view.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.qsmy.busniess.main.view.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.qsmy.busniess.redenvelopes.view.NewUserRedEnvelopesActivity"
+      ]
+    },
+    {
+      "name": "com.rockets.chang",
+      "mainPage": "com.rockets.chang.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.rockets.chang.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.dedao.juvenile",
+      "mainPage": "com.dedao.juvenile.business.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.dedao.juvenile.business.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.lucky.luckyclient",
+      "mainPage": "com.luckin.client.main.FirstActivity",
+      "activityPairs": [
+        {
+          "from": "com.luckin.client.main.FirstActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.jym.mall",
+      "mainPage": "com.jym.mall.activity.MainHostActivity",
+      "activityPairs": [
+        {
+          "from": "com.jym.mall.activity.MainHostActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.microsoft.translator",
+      "mainPage": "com.microsoft.translator.activity.LandingActivity",
+      "activityPairs": [
+        {
+          "from": "com.microsoft.translator.activity.LandingActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.almighty.calculators",
+      "mainPage": "com.ibox.calculators.CalculatorActivity",
+      "activityPairs": [
+        {
+          "from": "com.ibox.calculators.CalculatorActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.bytedance.sdk.openadsdk.activity.base.TTDelegateActivity"
+      ]
+    },
+    {
+      "name": "com.xueqiu.android",
+      "mainPage": "com.xueqiu.android.mainnesting.view.MainNestingActivity",
+      "activityPairs": [
+        {
+          "from": "com.xueqiu.android.mainnesting.view.MainNestingActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.xueqiu.android.community.FakeAdActivity"
+      ]
+    },
+    {
+      "name": "com.mfw.roadbook",
+      "mainPage": "com.mfw.roadbook.business.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.mfw.roadbook.business.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.ekwing.students",
+      "mainPage": "com.ekwing.students.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ekwing.students.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.huodao.hdphone",
+      "mainPage": "com.huodao.hdphone.mvp.view.main.NewMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.huodao.hdphone.mvp.view.main.NewMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.puddingchildren2.NewConceptEnglish",
+      "mainPage": "com.puddingchildren2.NewConceptEnglish.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.puddingchildren2.NewConceptEnglish.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.up366.mobile",
+      "mainPage": "com.up366.mobile.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.up366.mobile.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.mosoink.teach",
+      "mainPage": "com.mosoink.teach.MainMenuActivity",
+      "activityPairs": [
+        {
+          "from": "com.mosoink.teach.MainMenuActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.mosoink.teach.MainActivity",
+        "com.mosoink.teach.CheckAgreementActivity",
+        "com.mosoink.teach.LoginNewActivity",
+        "com.mosoink.teach.PhoneRegisterNewActivity",
+        "com.mosoink.teach.InputCodeActivity",
+        "com.mosoink.teach.SettingPhonePasswordNewActivity",
+        "com.mosoink.teach.ChooseIdentityActivity",
+        "com.mosoink.teach.CompleteInfoActivity"
+      ]
+    },
+    {
+      "name": "com.kekenet.baby",
+      "mainPage": "com.kekenet.baby.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.kekenet.baby.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.kekenet.baby.ui.login.LoginActivity",
+        "com.kekenet.baby.main.GuideChooseGradeActivity"
+      ]
+    },
+    {
+      "name": "com.A17zuoye.mobile.homework",
+      "mainPage": "com.A17zuoye.mobile.homework.primary.activity.MainActivityNew",
+      "activityPairs": [
+        {
+          "from": "com.A17zuoye.mobile.homework.primary.activity.MainActivityNew",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.A17zuoye.mobile.homework.primary.zxing.activity.PrimaryQRCodeScanActivity",
+        "com.yiqizuoye.library.takevideo.YQTakeVideoActivity"
+      ],
+      "transActivities": [
+        "com.A17zuoye.mobile.homework.library.audio.StudentMediaPlayerActivity"
+      ]
+    },
+    {
+      "name": "com.shensz.student",
+      "mainPage": "com.A17zuoye.mobile.homework.middle.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.A17zuoye.mobile.homework.middle.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.A17zuoye.mobile.homework.middle.activity.MiddleWrongBookActivity"
+      ]
+    },
+    {
+      "name": "com.achievo.vipshop",
+      "mainPage": "com.achievo.vipshop.homepage.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.achievo.vipshop.homepage.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "skipMultiWindowMode": "true"
+    },
+    {
+      "name": "com.qiyi.video.lite",
+      "mainPage": "com.qiyi.video.lite.homepage.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.qiyi.video.lite.homepage.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "true"
+    },
+    {
+      "name": "com.jianpian.xiaoxigua",
+      "mainPage": "com.xiaoxigua.media.ui.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xiaoxigua.media.ui.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "false",
+      "showEmbeddingDivider": "true"
+    },
+    {
+      "name": "com.cctv.yangshipin.app.androidp",
+      "mainPage": "com.tencent.videolite.android.ui.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.videolite.android.ui.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.tencent.videolite.android.business.framework.ui.imgpreview.compat.ImgPreviewActivityImplV21"
+      ],
+      "transActivities": [
+        "com.tencent.videolite.android.ui.GuidePageActivity",
+        "com.tencent.videolite.android.ui.huawei.AgreementActivity",
+        "com.tencent.videolite.android.component.literoute.OpenActivity"
+      ],
+      "leftTransActivities":[],
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "false",
+      "showEmbeddingDivider": "true",
+      "shouldPausePrimaryActivity": "true"
+    },
+    {
+      "name": "com.Qunar",
+      "mainPage": "com.mqunar.atom.alexhome.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.mqunar.atom.alexhome.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "true"
+    },
+    {
+      "name": "com.cleanmaster.mguard_cn",
+      "mainPage": "com.keniu.security.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.keniu.security.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [
+          "com.cleanmaster.meplugin.anum.ui.login.LoginActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.ishowedu.peiyin",
+      "mainPage": "refactor.business.main.activity.FZMainActivity",
+      "activityPairs": [
+        {
+          "from": "refactor.business.main.activity.FZMainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.guangsuxie.aiwriting",
+      "mainPage": "com.zuoyebang.aiwriting.activity.index.IndexNewActivity",
+      "activityPairs": [
+        {
+          "from": "com.zuoyebang.aiwriting.activity.index.IndexNewActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tencent.weishi",
+      "mainPage": "com.tencent.oscar.module.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.oscar.module.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.dz.hmjc",
+      "mainPage": "com.dz.business.main.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.dz.business.main.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [
+         "com.dz.business.detail.ui.page.NewPlayDetailActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.follow.video",
+      "mainPage": "com.follow.video.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.follow.video.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.bilibili.studio",
+      "mainPage": "com.bcut.homepage.widget.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.bcut.homepage.widget.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.skyz.app.skyzdt",
+      "mainPage": "com.ys.resemble.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ys.resemble.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.liulan.acion",
+      "mainPage": "cn.iik.vod.MainActivity",
+      "activityPairs": [
+        {
+          "from": "cn.iik.vod.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.koolearn.android",
+      "mainPage": "com.koolearn.android.home.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.koolearn.android.home.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.superclear.fqkj",
+      "mainPage": "com.xiaoniu.cleanking.ui.main.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xiaoniu.cleanking.ui.main.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.codemao.lunarb2c",
+      "mainPage": "com.codemao.lunar.MainActivityV2",
+      "activityPairs": [
+        {
+          "from": "com.codemao.lunar.MainActivityV2",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tencent.tv.qie",
+      "mainPage": "com.tencent.tv.qie.main.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.tv.qie.main.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.walixiwa.flash.player",
+      "mainPage": "com.jason.videocat.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.jason.videocat.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.dyxc.banxue",
+      "mainPage": "com.dyxc.banxue.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.dyxc.banxue.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [
+          "com.dyxc.passservice.login.ui.LoginLoadingActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.xiaobu121.xiaobu.xiaobu_android",
+      "mainPage": "com.xiaobu121.xiaobu.xiaobu_android.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xiaobu121.xiaobu.xiaobu_android.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.ioowow.vod",
+      "mainPage": "com.ayctech.mky.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ayctech.mky.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "org.fungo.fungolive",
+      "mainPage": "org.fungo.v3.activity.tabmain.TabMainActivity",
+      "activityPairs": [
+        {
+          "from": "org.fungo.v3.activity.tabmain.TabMainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.xiaoguo101.yixiaoerguo",
+      "mainPage": "com.xiaoguo101.yixiaoerguo.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xiaoguo101.yixiaoerguo.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.qihoo.camera",
+      "mainPage": "com.qihoo.jia.ui.activity.TabMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.qihoo.jia.ui.activity.TabMainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.everyday.collection",
+      "mainPage": "com.everyday.collection.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.everyday.collection.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.sgsp.video.xs",
+      "mainPage": "com.xs.video.bayi.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xs.video.bayi.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.jd.jdlite",
+      "mainPage": "com.jd.jdlite.MainFrameActivity",
+      "activityPairs": [
+        {
+          "from": "com.jd.jdlite.MainFrameActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [
+        "com.jd.jdlite.scan.ScanCaptureActivity"
+      ],
+      "transActivities": [
+        "com.jd.jdlite.scan.ScanCaptureActivity"
+      ]
+    },
+    {
+      "name": "com.jifen.qukan",
+      "mainPage": "com.jifen.qkbase.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.jifen.qkbase.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.xs.video.yisobao.app",
+      "mainPage": "com.xs.video.hjw.app.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xs.video.hjw.app.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "cn.coldlake.stellarmobile",
+      "mainPage": "cn.coldlake.university.lib.launch.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "cn.coldlake.university.lib.launch.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [
+        "com.tribe.sdk.flutter.activity.CustomFlutterActivity",
+        "com.douyu.tribe.module.usercenter.activity.FlutterScanActivity",
+        "com.douyu.tribe.module.usercenter.activity.FlutterLoginActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.jinshu.jzt",
+      "mainPage": "com.yiqizuoye.jzt.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.yiqizuoye.jzt.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": [
+        "com.yiqizuoye.jzt.activity.user.addchild.ParentChildAccreditActivity"
+      ]
+    },
+    {
+      "name": "cn.wsds.gamemaster",
+      "mainPage": "cn.wsds.gamemaster.ui.ActivityMain",
+      "activityPairs": [
+        {
+          "from": "cn.wsds.gamemaster.ui.ActivityMain",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.sevenVideo.app.android",
+      "mainPage": "com.mymv.app.mymv.modules.home.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.mymv.app.mymv.modules.home.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.meishubao.artaiclass",
+      "mainPage": "com.meishubao.main.ui.app.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.meishubao.main.ui.app.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.hupu.games",
+      "mainPage": "com.hupu.games.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.hupu.games.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.ximalaya.ting.lite",
+      "mainPage": "com.ximalaya.ting.android.host.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ximalaya.ting.android.host.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "zwzt.fangqiu.edu.com.zwzt",
+      "mainPage": "com.zwzt.feature_home.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zwzt.feature_home.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.eykid.android.ey",
+      "mainPage": "com.eggl.android.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.eggl.android.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.codemao.lunar",
+      "mainPage": "com.codemao.lunar.MainActivityV2",
+      "activityPairs": [
+        {
+          "from": "com.codemao.lunar.MainActivityV2",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.app.jianying.xs",
+      "mainPage": "com.xs.app.jy.app.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xs.app.jy.app.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "cn.emagsoftware.gamehall",
+      "mainPage": "com.migugame.home_module.ui.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.migugame.home_module.ui.activity.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+          "com.migugame.userinfo_module.view.RealNameConfigActivity"
+      ],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.tencent.qt.qtl",
+      "mainPage": "com.tencent.zone.main.MainZoneHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.zone.main.MainZoneHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.peopledailychina.activity",
+      "mainPage": "com.peopledailychina.activity.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.peopledailychina.activity.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "cn.lzm.koreatv",
+      "mainPage": "cn.lzm.koreatv.activity.KoreatvHomeActivity",
+      "activityPairs": [
+        {
+          "from": "cn.lzm.koreatv.activity.KoreatvHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.yueyou.adreader",
+      "mainPage": "com.yueyou.adreader.ui.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.yueyou.adreader.ui.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.kkys.video",
+      "mainPage": "com.lxr.video_player.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.lxr.video_player.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.aiwu.market",
+      "mainPage": "com.aiwu.market.ui.activity.NewHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.aiwu.market.ui.activity.NewHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.zhl.jjyy.aphone",
+      "mainPage": "com.zhl.xxxx.aphone.common.activity.FrameHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.zhl.xxxx.aphone.common.activity.FrameHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.icbc",
+      "mainPage": "com.icbc.activity.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.icbc.activity.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.minimax.glow",
+      "mainPage": "com.minimax.glow.business.home.impl.ui.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.minimax.glow.business.home.impl.ui.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.xiaomi.gamecenter",
+      "mainPage": "com.xiaomi.gamecenter.ui.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.xiaomi.gamecenter.ui.MainTabActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.baidu.duer.superapp",
+      "mainPage": "com.baidu.duer.superapp.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.duer.superapp.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.xqhy.legendbox",
+      "mainPage": "com.xqhy.legendbox.main.BoxMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.xqhy.legendbox.main.BoxMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.zhilehuo.sqertongshizi",
+      "mainPage": "com.zhilehuo.sqertongshizi.QDMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zhilehuo.sqertongshizi.QDMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.huati",
+      "mainPage": "com.huluxia.ui.home.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.huluxia.ui.home.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "cn.xiaochuankeji.zuiyouLite",
+      "mainPage": "cn.xiaochuankeji.zuiyouLite.ui.main.MainTest",
+      "activityPairs": [
+        {
+          "from": "cn.xiaochuankeji.zuiyouLite.ui.main.MainTest",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.bestv.app",
+      "mainPage": "com.bestv.app.ui.activity.AdultActivity",
+      "activityPairs": [
+        {
+          "from": "com.bestv.app.ui.activity.AdultActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.ihuman.classstudent",
+      "mainPage": "com.ihumand.classstudent.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ihumand.classstudent.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.bilibili.app.blue",
+      "mainPage": "tv.danmaku.bili.MainActivityV2",
+      "activityPairs": [
+        {
+          "from": "tv.danmaku.bili.MainActivityV2",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "skipMultiWindowMode": "true",
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.shanbay.sentence",
+      "mainPage": "com.shanbay.words.home.mvp.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.shanbay.words.home.mvp.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.zuoyebang.knowledge",
+      "mainPage": "com.baidu.homework.activity.index.IndexActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.homework.activity.index.IndexActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+          "com.baidu.homework.activity.web.ZybWebActivity"
+      ],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.tencent.qqpimsecure",
+      "mainPage": "com.tencent.server.fore.QuickLoadActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.server.fore.QuickLoadActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.tencent.gamehelper.smoba",
+      "mainPage": "com.tencent.gamehelper.ui.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.gamehelper.ui.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.sankuai.meituan.merchant",
+      "mainPage": "com.sankuai.merchant.home.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.sankuai.merchant.home.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.zybang.parent",
+      "mainPage": "com.zybang.parent.activity.index.IndexActivity",
+      "activityPairs": [
+        {
+          "from": "com.zybang.parent.activity.index.IndexActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "cn.cntv",
+      "mainPage": "com.cctv.mcctv.ui.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.cctv.mcctv.ui.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "leftTransActivities": [
+        "com.cctv.mcctv.login.view.activity.AuthenticationActivity"
+      ],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.taobao.litetao",
+      "mainPage": "com.taobao.ltao.maintab.MainFrameActivity",
+      "activityPairs": [
+        {
+          "from": "com.taobao.ltao.maintab.MainFrameActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.tvbc.maiduidui",
+      "mainPage": "com.tvbc.maiduidui.MainHomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.tvbc.maiduidui.MainHomeActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.tvbc.maiduidui.activity.login.LoginDialogCodeActivity"
+      ],
+      "transActivities": [],
+      "skipMultiWindowMode": "true",
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.qudiandu.diandu",
+      "mainPage": "com.youjing.yingyudiandu.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.youjing.yingyudiandu.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "showEmbeddingDivider": "false"
+    },
+    {
+      "name": "com.yuncinc.bestplayingleather",
+      "mainPage": "com.yuncinc.bestplayingleather.ui.activity.MainBestplayingActivity",
+      "activityPairs": [
+          {
+            "from": "com.yuncinc.bestplayingleather.ui.activity.MainBestplayingActivity",
+            "to": "*"
+          }
+        ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.strawberry.cmbz",
+      "mainPage": "com.zfxm.pipi.wallpaper.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zfxm.pipi.wallpaper.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.ttule.picture",
+      "mainPage": "com.ttule.picture.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ttule.picture.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.galaxy.metawp",
+      "mainPage": "com.galaxy.metawp.ui.activity.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.galaxy.metawp.ui.activity.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.pocket.drawing",
+      "mainPage": "com.fenghuajueli.module_host.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.fenghuajueli.module_host.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.thorough.ttbz",
+      "mainPage": "com.zfxm.pipi.wallpaper.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zfxm.pipi.wallpaper.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.duohappy.skin",
+      "mainPage": "vip.qufenqian.app_skin.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "vip.qufenqian.app_skin.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.pleasure.hlbz",
+      "mainPage": "com.zfxm.pipi.wallpaper.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zfxm.pipi.wallpaper.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.kk.ysk3.tz12063k",
+      "mainPage": "com.salmon.film.main.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.salmon.film.main.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.baitao.btbz",
+      "mainPage": "com.zfxm.pipi.wallpaper.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zfxm.pipi.wallpaper.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "showEmbeddingDivider": "false",
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.taobao.idlefish",
+      "mainPage": "com.taobao.idlefish.maincontainer.activity.MainActivity",
+      "defaultRelate": "com.taobao.idlefish.category.CategoryPageActivity",
+      "activityPairs": [
+        {
+          "from": "com.taobao.idlefish.maincontainer.activity.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+          "com.idlefish.flutterbridge.flutterboost.boost.FishFlutterBoostActivity",
+          "com.alibaba.security.realidentity.ui.activity.ALBiometricsActivity"
+      ],
+      "transActivities": [
+          "com.taobao.idlefish.permission.PermissionActivity"
+      ]
+    },
+    {
+      "name": "com.qihoo.browser",
+      "mainPage": "com.qihoo.browser.BrowserActivity",
+      "activityPairs": [
+        {
+          "from": "com.baidu.searchbox.discovery.novel.NovelHomeActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.qihoo.browser.BrowserActivity",
+          "to": "org.geometerplus.android.fbreader.FBReader"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.gotokeep.keep",
+      "mainPage": "com.gotokeep.keep.refactor.business.main.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.gotokeep.keep.variplay.business.home.activity.VpHomePagerActivity",
+          "to": "com.gotokeep.keep.base.webview.KeepInProcessWebViewActivity"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.tencent.start",
+      "mainPage": "com.tencent.start.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.start.ui.MainActivity",
+          "to": "com.tencent.start.ui.GameActivity"
+        },
+        {
+          "from": "com.tencent.start.ui.MainActivity",
+          "to": "com.tencent.start.ui.SearchActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.tencent.start.ui.PlayActivity",
+        "com.tencent.start.ui.LaunchActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.chaozh.iReaderFree",
+      "mainPage": "com.zhangyue.iReader.bookshelf.ui.ActivityBookShelf",
+      "activityPairs": [
+        {
+          "from": "com.zhangyue.iReader.bookshelf.ui.ActivityBookShelf",
+          "to": "com.lenovo.fakeActivity"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.zhangyue.iReader.thirdplatform.barcode.ui.CaptureActivity"
+      ],
+      "transActivities": []
+    },
+    {
+      "name": "com.tencent.wetype",
+      "mainPage": "com.tencent.wetype.plugin.hld.reactnative.activity.FeedbackChatActivity",
+      "activityPairs": [
+        {
+          "from": "com.tencent.wetype.plugin.hld.reactnative.activity.FeedbackChatActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.xkw.client",
+      "mainPage": "com.zxxk.page.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.zxxk.page.main.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.cat.readall",
+      "mainPage": "com.cat.readall.activity.BrowserMainActivity",
+      "activityPairs": [
+        {
+          "from": "com.cat.readall.activity.BrowserMainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [
+        "com.ss.android.ugc.detail.refactor.ui.TikTokActivity"
+      ],
+      "transActivities": [
+        "com.ss.android.template.page.MainLynxActivity",
+        "com.ss.android.newmedia.activity.browser.BrowserActivity"
+      ],
+      "skipMultiWindowMode": "true",
+      "shouldPausePrimaryActivity": "true"
+    },
+    {
+      "name": "com.ss.android.article.daziban",
+      "mainPage": "com.ss.android.article.news.activity.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.ss.android.article.news.activity.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.cdel.accmobile",
+      "mainPage": "com.cdel.accmobile.app.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.cdel.accmobile.app.ui.MainActivity",
+          "to": "*"
+        }
+      ]
+    },
+    {
+      "name": "com.arivoc.ky",
+      "mainPage": "com.arivoc.accentz2.HomeActivity",
+      "activityPairs": [
+        {
+          "from": "com.arivoc.accentz2.HomeActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [],
+      "forceFullScreenPages": []
+    },
+    {
+      "name": "com.tal.tiku",
+      "mainPage": "com.tal.tiku.main.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.tal.tiku.main.MainActivity",
+          "to": "*"
+        }
+      ],
+      "transActivities": [],
+      "forceFullScreenPages": []
+    },
+    {
+      "name": "com.qihoo.cleandroid_cn",
+      "mainPage": "com.qihoo360.mobilesafe.opti.main.ui.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.qihoo360.mobilesafe.opti.main.ui.MainActivity",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": []
+    },
+    {
+      "name": "com.videogo",
+      "mainPage": "com.videogo.main.MainTabActivity",
+      "activityPairs": [
+        {
+          "from": "com.videogo.main.MainTabActivity",
+          "to": "*"
+        }
+      ]
+    }
+  ]
+}

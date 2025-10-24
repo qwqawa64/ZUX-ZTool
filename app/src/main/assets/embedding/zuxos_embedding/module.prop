@@ -1,0 +1,6 @@
+id=zuxos_embedding_config
+name=Ztool 一视界拓展模块
+version=v1.0.0_beta
+versionCode=1
+author=酷安@七眠233
+description=为 ZUXOS 平板适配更多一视界策略，已适配 1995 个应用。此模块为Ztool的创建的模块
