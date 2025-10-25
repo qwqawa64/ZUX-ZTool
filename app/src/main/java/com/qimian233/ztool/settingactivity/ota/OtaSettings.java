@@ -71,6 +71,7 @@ public class OtaSettings extends AppCompatActivity {
 
         initViews();
         loadSettings();
+        initRestartButton();
     }
 
     private void initViews() {
