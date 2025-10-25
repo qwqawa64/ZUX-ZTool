@@ -16,6 +16,7 @@ import com.qimian233.ztool.settingactivity.gametool.GameToolSettngs;
 import com.qimian233.ztool.settingactivity.ota.OtaSettings;
 import com.qimian233.ztool.settingactivity.packageinstaller.packageinstallersettings;
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailActivity;
+import com.qimian233.ztool.settingactivity.systemui.systemUISettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +67,15 @@ public class FeaturesFragment extends Fragment {
                 getApplicationIcon(requireContext(), "com.android.packageinstaller"),
                 true,
                 packageinstallersettings.class
+        ));
+        // 添加系统界面
+        appList.add(new FeaturesAdapter.AppItem(
+                "系统界面",
+                "系统界面应用",
+                "com.android.systemui",
+                getApplicationIcon(requireContext(), "android"),
+                true,
+                systemUISettings.class
         ));
 
         // 可以添加更多应用项
