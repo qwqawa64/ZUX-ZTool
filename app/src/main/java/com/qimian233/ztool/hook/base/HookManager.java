@@ -10,6 +10,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerA
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
+import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.util.ArrayList;
@@ -45,12 +46,14 @@ public class HookManager {
         registerHookModule(new SocTemperatureFix());
         // 注册模块：跳过APK扫描
         registerHookModule(new PackageInstallerHookScan());
-        // 新增包安装器权限Hook模块
+        // 注册模块：包安装器权限Hook模块
         registerHookModule(new PackageInstallerPermissionHook());
-        // 新增包安装器跳过警告页面模块
+        // 注册模块：包安装器跳过警告页面模块
         registerHookModule(new Hook_Skip_WarnPage());
-        // 新增PackageInstaller广告屏蔽模块
+        // 注册模块：PackageInstaller广告屏蔽模块
         registerHookModule(new Hook_disable_installerAD());
+        // 注册模块：状态栏时间显秒
+        registerHookModule(new StatusBarClockSecondsHook());
 
         initialized = true;
     }
