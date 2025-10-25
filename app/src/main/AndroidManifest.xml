@@ -29,6 +29,9 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.ZTool">
         <activity
+            android:name=".settingactivity.systemui.systemUISettings"
+            android:exported="false" />
+        <activity
             android:name=".settingactivity.packageinstaller.packageinstallersettings"
             android:exported="false" />
         <activity
@@ -51,8 +54,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <!-- xposed 模块声明 -->
+        </activity> <!-- xposed 模块声明 -->
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
