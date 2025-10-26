@@ -47,7 +47,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/SystemUI_title"
+                            android:text="@string/StatusBar_Clock_title"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnSurface"
@@ -88,6 +88,73 @@
                                 android:layout_height="wrap_content" />
 
                         </LinearLayout>
+
+                        <!-- 新增：自定义时钟开关选项 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="16dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/custom_clock_title"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/custom_clock_summary"
+                                    android:textSize="12sp"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:layout_marginTop="4dp" />
+
+                            </LinearLayout>
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/switch_custom_clock"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                        <!-- 输入框和保存按钮 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:id="@+id/ll_customClock"
+                            android:visibility="gone"
+                            android:layout_marginTop="16dp">
+
+                            <EditText
+                                android:id="@+id/edittext_clock_format"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:hint="@string/clock_format_hint"
+                                android:textSize="14sp"
+                                android:inputType="text" />
+
+                            <Button
+                                android:id="@+id/button_save_clock_format"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/save"
+                                android:layout_marginStart="16dp"
+                                style="?attr/materialButtonOutlinedStyle" /> <!-- 使用Material风格按钮，可选 -->
+
+                        </LinearLayout>
+
                     </LinearLayout>
 
                 </androidx.cardview.widget.CardView>

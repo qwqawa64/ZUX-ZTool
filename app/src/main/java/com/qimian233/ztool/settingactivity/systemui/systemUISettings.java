@@ -1,14 +1,19 @@
 package com.qimian233.ztool.settingactivity.systemui;
 
+import static android.view.View.VISIBLE;
+
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,7 +51,12 @@ public class systemUISettings extends AppCompatActivity {
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchDisplaySeconds;
+    private MaterialSwitch switchCustomClock;
     private FloatingActionButton fabRestart;
+    private LinearLayout llCustomClock;
+    private static final String PREFS_NAME = "StatusBar_Clock";
+    private Button SaveButton;
+    private SharedPreferences ZToolPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +86,9 @@ public class systemUISettings extends AppCompatActivity {
 
     private void initViews() {
         // 初始化视图
+        llCustomClock = findViewById(R.id.ll_customClock);
+        ZToolPrefs = getZToolPreferences();
+        SaveButton = findViewById(R.id.button_save_clock_format);
 
         // 设置状态栏显秒事件
         switchDisplaySeconds = findViewById(R.id.switch_statusBarDisplay_seconds);
@@ -85,16 +98,46 @@ public class systemUISettings extends AppCompatActivity {
                 saveSettings("StatusBarDisplay_Seconds",isChecked);
             }
         });
+
+        // 设置自定义时钟事件
+        switchCustomClock = findViewById(R.id.switch_custom_clock);
+        switchCustomClock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("Custom_StatusBarClock",isChecked);
+            }
+        });
+
+        SaveButton.setOnClickListener(v -> {
+            String clockFormat = ((TextView) findViewById(R.id.edittext_clock_format)).getText().toString();
+            ZToolPrefs.edit().putString("Custom_StatusBarClockFormat", clockFormat).apply();
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("成功")
+                    .setMessage("自定义时钟格式已保存")
+                    .setPositiveButton("确定", null)
+                    .show();
+        });
     }
 
     private void loadSettings() {
         // 加载状态栏显秒设置
         boolean removeBlacklistEnabled = mPrefsUtils.loadBooleanSetting("StatusBarDisplay_Seconds", false);
         switchDisplaySeconds.setChecked(removeBlacklistEnabled);
+        // 加载自定义时钟设置
+        boolean customClockEnabled = mPrefsUtils.loadBooleanSetting("Custom_StatusBarClock", false);
+        switchCustomClock.setChecked(customClockEnabled);
+        llCustomClock.setVisibility(customClockEnabled ? VISIBLE : View.GONE);
+        if (customClockEnabled) {
+            EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
+            editTextClockFormat.setText(ZToolPrefs.getString("Custom_StatusBarClockFormat", ""));
+        }
     }
 
     private void saveSettings(String moduleName,Boolean newValue) {
         mPrefsUtils.saveBooleanSetting(moduleName, newValue);
+        if (moduleName.equals("Custom_StatusBarClock")) {
+            llCustomClock.setVisibility(newValue ? VISIBLE : View.GONE);
+        }
     }
 
     private void initRestartButton() {
@@ -125,15 +168,21 @@ public class systemUISettings extends AppCompatActivity {
         }
     }
 
-    private void copyToClipboard(String text) {
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("OTA信息", text);
-        clipboard.setPrimaryClip(clip);
-    }
-
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
+    }
+
+    public SharedPreferences getZToolPreferences() {
+        Context mContext = this;
+        try {
+            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
+            return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+        } catch (Exception e) {
+            Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
+            // 降级方案：使用当前Context
+            return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+        }
     }
 }
