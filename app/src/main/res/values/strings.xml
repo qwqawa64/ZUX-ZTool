@@ -51,4 +51,7 @@
     <string name="custom_clock_summary">对状态栏时钟的显示进行自定义</string>
     <string name="clock_format_hint">输入时钟格式</string>
     <string name="save">保存</string>
+    <string name="preview_default">预览：输入格式以查看效果</string>
+    <string name="preview_display">预览：%s</string>
+    <string name="preview_invalid">预览：格式无效</string>
 </resources>

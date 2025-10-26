@@ -127,31 +127,50 @@
                         </LinearLayout>
 
                         <!-- 输入框和保存按钮 -->
+                        <!-- 修改后的 ll_customClock 部分 -->
                         <LinearLayout
+                            android:id="@+id/ll_customClock"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:id="@+id/ll_customClock"
+                            android:orientation="vertical"
                             android:visibility="gone"
                             android:layout_marginTop="16dp">
 
-                            <EditText
-                                android:id="@+id/edittext_clock_format"
-                                android:layout_width="0dp"
+                            <!-- 输入框和保存按钮的水平布局 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:hint="@string/clock_format_hint"
-                                android:textSize="14sp"
-                                android:inputType="text" />
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
 
-                            <Button
-                                android:id="@+id/button_save_clock_format"
-                                android:layout_width="wrap_content"
+                                <EditText
+                                    android:id="@+id/edittext_clock_format"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:hint="@string/clock_format_hint"
+                                    android:textSize="14sp"
+                                    android:inputType="text" />
+
+                                <Button
+                                    android:id="@+id/button_save_clock_format"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/save"
+                                    android:layout_marginStart="16dp"
+                                    style="?attr/materialButtonOutlinedStyle" />
+
+                            </LinearLayout>
+
+                            <!-- 新增：实时预览TextView -->
+                            <TextView
+                                android:id="@+id/textview_clock_preview"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/save"
-                                android:layout_marginStart="16dp"
-                                style="?attr/materialButtonOutlinedStyle" /> <!-- 使用Material风格按钮，可选 -->
+                                android:layout_marginTop="8dp"
+                                android:textSize="14sp"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:text="@string/preview_default" />
 
                         </LinearLayout>
 
