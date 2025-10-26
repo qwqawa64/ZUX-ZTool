@@ -1,6 +1,9 @@
 package com.qimian233.ztool;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -284,9 +287,21 @@ public class HomeFragment extends Fragment {
      */
     private void updateModuleStatus() {
         try {
-            // 模块版本信息，暂时硬编码
-            String moduleVersion = "1.3.1 (19350) RELEASE";
-            textModuleVersion.setText("模块版本: " + moduleVersion);
+            try {
+                Activity activity = getActivity();
+                if (activity != null) {
+                    PackageInfo packageInfo = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
+                    String versionName = packageInfo.versionName;
+                    int versionCode = packageInfo.versionCode;
+                    String moduleVersion = versionName + " (" + versionCode + ")";
+                    textModuleVersion.setText("模块版本: " + moduleVersion);
+                } else {
+                    textModuleVersion.setText("模块版本: 未知 (Activity 为空)");
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+                textModuleVersion.setText("模块版本: 未知");
+            }
 
             // Root来源信息
             String rootSource = detectRootSource();
