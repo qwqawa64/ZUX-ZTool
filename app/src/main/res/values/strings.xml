@@ -44,6 +44,6 @@
     <string name="Disable_installerAD_Title">去广告</string>
     <string name="Disable_installerAD_Summary">安装完成后的界面不再显示广告</string>
     <string name="SystemUI_title">系统界面</string>
-    <string name="Display_StatusBarSeconds_title">状态栏显秒</string>
-    <string name="Display_StatusBarSeconds_Summary">为状态栏添加秒数显示</string>
+    <string name="Display_StatusBarSeconds_title">走秒</string>
+    <string name="Display_StatusBarSeconds_Summary">为状态栏更新秒数显示，自定义时钟使用秒数时请打开开关</string>
 </resources>
