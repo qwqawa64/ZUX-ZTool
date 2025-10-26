@@ -9,6 +9,7 @@
 
     <!-- Toolbar 设置返回导航和标题 -->
     <androidx.appcompat.widget.Toolbar
+        android:layout_marginTop="16dp"
         android:id="@+id/toolbar_strategy_search"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
