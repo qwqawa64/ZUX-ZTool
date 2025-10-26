@@ -1,7 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
 import android.util.Log;
-
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
@@ -9,13 +8,11 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 /**
  * 自定义状态栏时钟Hook模块
- * 修改SystemUI状态栏时钟显示格式，支持自定义时间格式
+ * 修改SystemUI状态栏时钟显示格式，支持自定义时间格式，包括农历、节气等
  */
 public class CustomStatusBarClock extends BaseHookModule {
 
@@ -56,9 +53,6 @@ public class CustomStatusBarClock extends BaseHookModule {
                                 if (!isEnabled()) {
                                     return;
                                 }
-
-                                // 获取原始返回值
-                                CharSequence originalText = (CharSequence) param.getResult();
 
                                 // 自定义时间格式
                                 String customTime = getCustomTimeFormat();
@@ -111,20 +105,21 @@ public class CustomStatusBarClock extends BaseHookModule {
 
     /**
      * 自定义时间格式方法
-     * 在这里定义您想要的时间格式
+     * 使用新的格式化工具支持农历、节气等
      */
     private String getCustomTimeFormat() {
         try {
-            return new SimpleDateFormat(getCustomClock("Custom_StatusBarClockFormat"), Locale.getDefault()).format(new Date());
+            String format = getCustomClock("Custom_StatusBarClockFormat");
+            return CustomDateFormatter.format(format, new Date());
         } catch (Exception e) {
             logError("Error in custom time formatting", e);
             // 出错时返回默认时间格式
-            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+            return CustomDateFormatter.format("HH:mm", new Date());
         }
     }
 
     public static String getCustomClock(String key) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
+        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
         if (prefs != null) {
             String result = prefs.getString(key, "HH:mm");

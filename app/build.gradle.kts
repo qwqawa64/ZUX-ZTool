@@ -45,4 +45,5 @@ dependencies {
     compileOnly("de.robv.android.xposed:api:82")
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("cn.6tail:lunar:1.7.5")
 }
