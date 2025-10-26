@@ -54,4 +54,5 @@
     <string name="preview_default">预览：输入格式以查看效果</string>
     <string name="preview_display">预览：%s</string>
     <string name="preview_invalid">预览：格式无效</string>
+    <string name="tooltip_content_description">提示</string>
 </resources>
