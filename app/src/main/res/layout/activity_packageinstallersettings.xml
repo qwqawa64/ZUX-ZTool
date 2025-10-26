@@ -79,7 +79,7 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/Diaable_ScanAPK_Summary"
+                                    android:text="@string/Disable_ScanAPK_Summary"
                                     android:textSize="12sp"
                                     android:textColor="?attr/colorOnSurfaceVariant"
                                     android:layout_marginTop="4dp" />
