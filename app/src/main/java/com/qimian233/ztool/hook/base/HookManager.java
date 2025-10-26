@@ -10,6 +10,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerA
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
+import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -54,6 +55,8 @@ public class HookManager {
         registerHookModule(new Hook_disable_installerAD());
         // 注册模块：状态栏时间显秒
         registerHookModule(new StatusBarClockSecondsHook());
+        // 注册模块：自定义时钟
+        registerHookModule(new CustomStatusBarClock());
 
         initialized = true;
     }
