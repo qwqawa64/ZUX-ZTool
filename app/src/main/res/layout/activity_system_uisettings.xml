@@ -103,12 +103,30 @@
                                 android:layout_weight="1"
                                 android:orientation="vertical">
 
-                                <TextView
+                                <LinearLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/custom_clock_title"
-                                    android:textSize="16sp"
-                                    android:textColor="?attr/colorOnSurface" />
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/custom_clock_title"
+                                        android:textSize="16sp"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <!-- 小提示图标 -->
+                                    <ImageView
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:layout_marginStart="8dp"
+                                        android:id="@+id/info_img"
+                                        android:src="@drawable/ic_info"
+                                        android:contentDescription="@string/tooltip_content_description"
+                                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                                </LinearLayout>
 
                                 <TextView
                                     android:layout_width="match_parent"
@@ -126,7 +144,6 @@
                                 android:layout_height="wrap_content" />
 
                         </LinearLayout>
-
                         <!-- 输入框和保存按钮 -->
                         <!-- 修改后的 ll_customClock 部分 -->
                         <LinearLayout

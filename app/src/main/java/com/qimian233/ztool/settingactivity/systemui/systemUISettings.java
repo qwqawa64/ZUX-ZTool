@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,6 +34,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
+import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter;
 import com.qimian233.ztool.settingactivity.ota.OtaSettings;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -125,6 +127,10 @@ public class systemUISettings extends AppCompatActivity {
                     .show();
         });
 
+        // 添加格式帮助按钮点击事件
+        ImageView helpButton = findViewById(R.id.info_img);
+        helpButton.setOnClickListener(v -> showFormatHelpDialog());
+
         EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
         editTextClockFormat.addTextChangedListener(new TextWatcher() {
             @Override
@@ -136,6 +142,41 @@ public class systemUISettings extends AppCompatActivity {
                 updateClockPreview(s.toString());
             }
         });
+    }
+
+    /**
+     * 显示详细的格式帮助对话框
+     */
+    private void showFormatHelpDialog() {
+        String detailedHelp = "自定义时钟格式说明：\n\n" +
+                "📅 ISO 8601标准日期格式：\n" +
+                "  yyyy - 年份(2024)\n" +
+                "  MM   - 月份(12)\n" +
+                "  dd   - 日期(25)\n" +
+                "  HH   - 24小时制(14)\n" +
+                "  mm   - 分钟(30)\n" +
+                "  ss   - 秒(45)\n\n" +
+                "🌙 农历相关：\n" +
+                "  N - 农历日期(腊月廿三)\n" +
+                "  J - 节气(仅当天显示，如立春)\n" +
+                "  A - 生肖(龙)\n\n" +
+                "⏰ 时间相关：\n" +
+                "  T - 时辰(子时)\n" +
+                "  W - 星期(周一)\n\n" +
+                "✨ 其他：\n" +
+                "  C - 星座(水瓶座)\n\n";
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("时钟格式帮助")
+                .setMessage(detailedHelp)
+                .setPositiveButton("确定", null)
+                .setNeutralButton("复制示例", (dialog, which) -> {
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("时钟格式示例", "HH:mm N");
+                    clipboard.setPrimaryClip(clip);
+                    Toast.makeText(this, "示例已复制到剪贴板", Toast.LENGTH_SHORT).show();
+                })
+                .show();
     }
 
     private void loadSettings() {
@@ -154,20 +195,20 @@ public class systemUISettings extends AppCompatActivity {
         }
     }
 
-    // 更新时钟预览文本
+    // 更新时钟预览文本 - 使用新的CustomDateFormatter
     private void updateClockPreview(String format) {
         if (format == null || format.isEmpty()) {
             textPreview.setText(getString(R.string.preview_default));
             return;
         }
         try {
-            // 使用SimpleDateFormat格式化当前时间
-            SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
-            String currentTime = sdf.format(new Date());
+            // 使用新的CustomDateFormatter格式化当前时间
+            String currentTime = CustomDateFormatter.format(format, new Date());
             textPreview.setText(getString(R.string.preview_display, currentTime));
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             // 格式无效时显示错误
-            textPreview.setText(getString(R.string.preview_invalid));
+            textPreview.setText(getString(R.string.preview_invalid) + "\n错误: " + e.getMessage());
+            Log.e("CustomDatePreview", "Error formatting date: " + format, e);
         }
     }
 
