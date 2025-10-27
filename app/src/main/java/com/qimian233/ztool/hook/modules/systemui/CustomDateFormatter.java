@@ -263,18 +263,4 @@ public class CustomDateFormatter {
         }
         return false;
     }
-
-    /**
-     * 获取所有支持的自定义格式说明
-     */
-    public static String getSupportedFormats() {
-        return "支持的自定义格式:\n" +
-                "N - 农历日期 (如: 腊月廿三)\n" +
-                "J - 节气 (如: 立春)\n" +
-                "T - 时辰 (如: 子时)\n" +
-                "C - 星座 (如: 水瓶座)\n" +
-                "A - 生肖 (如: 龙)\n" +
-                "W - 星期 (如: 周一)\n" +
-                "同时支持标准日期格式: yyyy, MM, dd, HH, mm, ss等";
-    }
 }
