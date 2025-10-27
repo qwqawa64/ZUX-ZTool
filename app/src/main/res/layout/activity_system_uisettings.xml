@@ -190,6 +190,231 @@
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:text="@string/preview_default" />
 
+                            <!-- 新增：字体大小样式选项 -->
+                            <LinearLayout
+                                android:id="@+id/ll_text_size"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:layout_marginTop="16dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:text="@string/custom_clock_text_size_title"
+                                            android:textSize="16sp"
+                                            android:textColor="?attr/colorOnSurface" />
+
+                                        <TextView
+                                            android:id="@+id/textview_text_size_value"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:text="16sp"
+                                            android:textSize="12sp"
+                                            android:textColor="?attr/colorOnSurfaceVariant"
+                                            android:layout_marginTop="4dp" />
+
+                                    </LinearLayout>
+
+                                    <com.google.android.material.materialswitch.MaterialSwitch
+                                        android:id="@+id/switch_text_size"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content" />
+
+                                </LinearLayout>
+
+                                <SeekBar
+                                    android:id="@+id/seekbar_text_size"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:max="40" />
+
+
+                            </LinearLayout>
+
+                            <!-- 新增：字间距样式选项 -->
+                            <LinearLayout
+                                android:id="@+id/ll_letter_spacing"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:layout_marginTop="16dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:text="@string/custom_clock_letter_spacing_title"
+                                            android:textSize="16sp"
+                                            android:textColor="?attr/colorOnSurface" />
+
+                                        <TextView
+                                            android:id="@+id/textview_letter_spacing_value"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:text="0.1"
+                                            android:textSize="12sp"
+                                            android:textColor="?attr/colorOnSurfaceVariant"
+                                            android:layout_marginTop="4dp" />
+
+                                    </LinearLayout>
+
+                                    <com.google.android.material.materialswitch.MaterialSwitch
+                                        android:id="@+id/switch_letter_spacing"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content" />
+
+                                </LinearLayout>
+
+                                <SeekBar
+                                    android:id="@+id/seekbar_letter_spacing"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:max="20"
+                                    android:progress="1" />
+
+                            </LinearLayout>
+
+                            <!-- 新增：字体颜色样式选项 -->
+                            <LinearLayout
+                                android:id="@+id/ll_text_color"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:layout_marginTop="16dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:text="@string/custom_clock_text_color_title"
+                                            android:textSize="16sp"
+                                            android:textColor="?attr/colorOnSurface" />
+
+                                        <TextView
+                                            android:id="@+id/textview_text_color_value"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:text="#FFFFFFFF"
+                                            android:textSize="12sp"
+                                            android:textColor="?attr/colorOnSurfaceVariant"
+                                            android:layout_marginTop="4dp" />
+
+                                    </LinearLayout>
+
+                                    <com.google.android.material.materialswitch.MaterialSwitch
+                                        android:id="@+id/switch_text_color"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content" />
+
+                                </LinearLayout>
+
+                                <!-- 颜色选择器布局 -->
+                                <LinearLayout
+                                    android:id="@+id/ll_color_picker"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:layout_marginTop="8dp"
+                                    android:gravity="center_vertical">
+
+                                    <!-- 颜色预览 -->
+                                    <View
+                                        android:id="@+id/view_color_preview"
+                                        android:layout_width="24dp"
+                                        android:layout_height="24dp"
+                                        android:background="@drawable/color_preview_background"
+                                        android:layout_marginEnd="8dp" />
+
+                                    <!-- 颜色选择按钮 -->
+                                    <Button
+                                        android:id="@+id/button_pick_color"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:text="@string/pick_color"
+                                        style="?attr/materialButtonOutlinedStyle" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                            <!-- 新增：粗体样式选项 -->
+                            <LinearLayout
+                                android:id="@+id/ll_text_bold"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:visibility="gone"
+                                android:layout_marginTop="16dp"
+                                android:gravity="center_vertical">
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/custom_clock_text_bold_title"
+                                        android:textSize="16sp"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/custom_clock_text_bold_summary"
+                                        android:textSize="12sp"
+                                        android:textColor="?attr/colorOnSurfaceVariant"
+                                        android:layout_marginTop="4dp" />
+
+                                </LinearLayout>
+
+                                <com.google.android.material.materialswitch.MaterialSwitch
+                                    android:id="@+id/switch_text_bold"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content" />
+
+                            </LinearLayout>
+
                         </LinearLayout>
 
                     </LinearLayout>
