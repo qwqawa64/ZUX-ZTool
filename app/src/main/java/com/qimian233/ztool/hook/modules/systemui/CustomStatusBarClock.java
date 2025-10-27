@@ -312,8 +312,8 @@ public class CustomStatusBarClock extends BaseHookModule {
         prefs.reload();
         if (prefs != null) {
             String result = prefs.getString(key, "HH:mm");
-            XposedBridge.log(String.format("CustomStatusBarClock: Read %s = %s", key, result));
-            Log.d("CustomStatusBarClock", String.format("Read %s: %s", key, result));
+//            XposedBridge.log(String.format("CustomStatusBarClock: Read %s = %s", key, result));
+//            Log.d("CustomStatusBarClock", String.format("Read %s: %s", key, result));
             return result;
         } else {
             XposedBridge.log("CustomStatusBarClock: Preferences is null, returning default HH:mm");

@@ -82,6 +82,10 @@ public class ModuleConfig {
         if (prefs != null) {
             String key = PREFIX_ENABLED + moduleName;
             boolean result = prefs.getBoolean(key, false);
+            // 防止一直吐日志
+            if (moduleName.equals("module_enabled_Custom_StatusBarClock")) {
+                return result;
+            }
             XposedBridge.log(String.format("ModuleConfig: Read %s = %s (prefs: %s)", key, result, prefs));
             Log.d("ModuleConfig", String.format("Read %s: %s (prefs: %s)", key, result, prefs));
             return result;
