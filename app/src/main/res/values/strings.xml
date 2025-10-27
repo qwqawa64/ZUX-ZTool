@@ -64,5 +64,7 @@
     <string name="embedding_Title">小窗和分屏</string>
     <string name="Float_app_Mandatory">强制小窗</string>
     <string name="Float_app_Mandatory_summary">强制所有APP能够小窗运行</string>
+    <string name="Split_screen_Mandatory_Title">强制分屏</string>
+    <string name="Split_screen_Mandatory_Summary">强制所有APP能够分屏运行，需要重启系统</string>
 
 </resources>
