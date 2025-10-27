@@ -82,6 +82,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private LoadingDialog loadingDialog;
     private FloatingActionButton fabRestart;
     private MaterialSwitch switchFloatMandatory;
+    private MaterialSwitch switchSplitScreenMandatory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,6 +159,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
         });
 
+        //强制浮动窗口适配开关
         switchFloatMandatory = findViewById(R.id.switch_Float_app_Mandatory);
         switchFloatMandatory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -191,6 +193,14 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
         });
 
+        //强制分屏适配开关
+        switchSplitScreenMandatory = findViewById(R.id.switch_Split_screen_Mandatory);
+        switchSplitScreenMandatory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("Split_Screen_mandatory",isChecked);
+            }
+        });
 
         // 设置悬浮窗按钮点击监听
         ImageButton floatingButton = findViewById(R.id.button_floating_window);
@@ -321,6 +331,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
         ModuleSwitch.setChecked(isMagiskModuleEnabled());
         // 加载强制小窗选项
         switchFloatMandatory.setChecked(isForceResizableActivitiesEnabled());
+        // 加载强制分屏适配开关设置
+        boolean SplitScreenMandatory = mPrefsUtils.loadBooleanSetting("Split_Screen_mandatory", false);
+        switchSplitScreenMandatory.setChecked(SplitScreenMandatory);
     }
 
     /**
