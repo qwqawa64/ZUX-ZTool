@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -79,6 +81,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_OVERLAY_PERMISSION = 1001;
     private LoadingDialog loadingDialog;
     private FloatingActionButton fabRestart;
+    private MaterialSwitch switchFloatMandatory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,6 +157,40 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 }
             }
         });
+
+        switchFloatMandatory = findViewById(R.id.switch_Float_app_Mandatory);
+        switchFloatMandatory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String command;
+                            if (isChecked) {
+                                command = "settings put global force_resizable_activities 1";
+                            } else {
+                                command = "settings put global force_resizable_activities 0";
+                            }
+
+                            Process process = Runtime.getRuntime().exec("su -c " + command);
+                            process.waitFor();
+
+                            // 检查执行结果
+                            int exitValue = process.exitValue();
+                            if (exitValue != 0) {
+                                Log.e("SwitchCommand", "命令执行失败，退出码: " + exitValue);
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Log.e("SwitchCommand", "执行命令时发生错误: " + e.getMessage());
+                        }
+                    }
+                }).start();
+            }
+        });
+
 
         // 设置悬浮窗按钮点击监听
         ImageButton floatingButton = findViewById(R.id.button_floating_window);
@@ -282,7 +319,34 @@ public class SettingsDetailActivity extends AppCompatActivity {
         switchRemoveBlacklist.setChecked(removeBlacklistEnabled);
         // 加载Magisk模块开关设置
         ModuleSwitch.setChecked(isMagiskModuleEnabled());
+        // 加载强制小窗选项
+        switchFloatMandatory.setChecked(isForceResizableActivitiesEnabled());
     }
+
+    /**
+     * 检查是否开启了强制可调整大小的活动
+     *
+     * @return 如果开启了强制可调整大小的活动，则返回true；否则返回false
+     * @throws Exception 如果执行过程中发生异常，则抛出该异常
+     */
+    public boolean isForceResizableActivitiesEnabled() {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", "settings get global force_resizable_activities"});
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = reader.readLine();
+            process.waitFor();
+
+            if (line != null) {
+                line = line.trim();
+                return "1".equals(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("SettingsCheck", "检查设置时发生错误: " + e.getMessage());
+        }
+        return false; // 默认返回false，表示未开启
+    }
+
 
     private void saveSettings(String moduleName,Boolean newValue) {
         // 保存一视界移除黑名单设置
