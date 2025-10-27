@@ -55,4 +55,11 @@
     <string name="preview_display">预览：%s</string>
     <string name="preview_invalid">预览：格式无效</string>
     <string name="tooltip_content_description">提示</string>
+    <string name="custom_clock_text_size_title">字体大小</string>
+    <string name="custom_clock_letter_spacing_title">字间距</string>
+    <string name="custom_clock_text_color_title">字体颜色</string>
+    <string name="custom_clock_text_bold_title">粗体</string>
+    <string name="custom_clock_text_bold_summary">启用粗体显示</string>
+    <string name="pick_color">选择颜色</string>
+
 </resources>

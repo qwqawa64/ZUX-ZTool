@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.qimian233.ztool"
-        minSdk = 24
+        minSdk = 27
         targetSdk = 36
         versionCode = 2
         versionName = "Demo/251027"
