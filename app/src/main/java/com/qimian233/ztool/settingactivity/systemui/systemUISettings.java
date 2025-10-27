@@ -7,6 +7,8 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,6 +20,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +68,14 @@ public class systemUISettings extends AppCompatActivity {
     private SharedPreferences ZToolPrefs;
     private TextView textPreview;
 
+    // 新增：样式相关的视图
+    private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold;
+    private SeekBar seekbarTextSize, seekbarLetterSpacing;
+    private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
+    private View viewColorPreview;
+    private Button buttonPickColor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this);
@@ -98,6 +109,9 @@ public class systemUISettings extends AppCompatActivity {
         SaveButton = findViewById(R.id.button_save_clock_format);
         textPreview = findViewById(R.id.textview_clock_preview);
 
+        // 初始化样式视图
+        initStyleViews();
+
         // 设置状态栏显秒事件
         switchDisplaySeconds = findViewById(R.id.switch_statusBarDisplay_seconds);
         switchDisplaySeconds.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -113,6 +127,8 @@ public class systemUISettings extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 saveSettings("Custom_StatusBarClock",isChecked);
+                // 显示或隐藏所有样式选项
+                updateStyleViewsVisibility(isChecked);
             }
         });
 
@@ -142,6 +158,139 @@ public class systemUISettings extends AppCompatActivity {
                 updateClockPreview(s.toString());
             }
         });
+    }
+
+    /**
+     * 初始化样式相关的视图
+     */
+    private void initStyleViews() {
+        // 初始化布局
+        llTextSize = findViewById(R.id.ll_text_size);
+        llLetterSpacing = findViewById(R.id.ll_letter_spacing);
+        llTextColor = findViewById(R.id.ll_text_color);
+        llTextBold = findViewById(R.id.ll_text_bold);
+
+        // 初始化开关
+        switchTextSize = findViewById(R.id.switch_text_size);
+        switchLetterSpacing = findViewById(R.id.switch_letter_spacing);
+        switchTextColor = findViewById(R.id.switch_text_color);
+        switchTextBold = findViewById(R.id.switch_text_bold);
+
+        // 初始化进度条和数值显示
+        seekbarTextSize = findViewById(R.id.seekbar_text_size);
+        seekbarLetterSpacing = findViewById(R.id.seekbar_letter_spacing);
+        textTextSizeValue = findViewById(R.id.textview_text_size_value);
+        textLetterSpacingValue = findViewById(R.id.textview_letter_spacing_value);
+        textTextColorValue = findViewById(R.id.textview_text_color_value);
+
+        // 初始化颜色选择器
+        viewColorPreview = findViewById(R.id.view_color_preview);
+        buttonPickColor = findViewById(R.id.button_pick_color);
+
+        // 设置进度条监听器
+        seekbarTextSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    float textSize = 10 + (progress * 0.5f);
+                    textTextSizeValue.setText(textSize + "sp");
+                    saveTextSize(textSize);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        seekbarLetterSpacing.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    float letterSpacing = progress * 0.1f; // 0.0-2.0范围
+                    textLetterSpacingValue.setText(String.format("%.1f", letterSpacing));
+                    saveLetterSpacing(letterSpacing);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        // 设置开关监听器
+        switchTextSize.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveStyleEnabled("Custom_StatusBarClockTextSizeEnabled", isChecked);
+            seekbarTextSize.setEnabled(isChecked);
+        });
+
+        switchLetterSpacing.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveStyleEnabled("Custom_StatusBarClockLetterSpacingEnabled", isChecked);
+            seekbarLetterSpacing.setEnabled(isChecked);
+        });
+
+        switchTextColor.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveStyleEnabled("Custom_StatusBarClockTextColorEnabled", isChecked);
+            buttonPickColor.setEnabled(isChecked);
+        });
+
+        switchTextBold.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveStyleEnabled("Custom_StatusBarClockTextBold", isChecked);
+        });
+
+        // 设置颜色选择器点击事件
+        buttonPickColor.setOnClickListener(v -> showColorPickerDialog());
+    }
+
+    /**
+     * 显示颜色选择对话框
+     */
+    private void showColorPickerDialog() {
+        // 预定义一些常用颜色
+        int[] colors = {
+                Color.WHITE, Color.BLACK, Color.RED, Color.GREEN, Color.BLUE,
+                Color.YELLOW, Color.CYAN, Color.MAGENTA, 0xFF2196F3, 0xFF4CAF50,
+                0xFFFF9800, 0xFF9C27B0, 0xFF607D8B, 0xFFFF5722, 0xFF795548
+        };
+
+        String[] colorNames = {
+                "白色", "黑色", "红色", "绿色", "蓝色",
+                "黄色", "青色", "洋红", "蓝色", "绿色",
+                "橙色", "紫色", "灰色", "深橙", "棕色"
+        };
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("选择字体颜色")
+                .setItems(colorNames, (dialog, which) -> {
+                    int selectedColor = colors[which];
+                    saveTextColor(selectedColor);
+                    updateColorPreview(selectedColor);
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 更新颜色预览
+     */
+    private void updateColorPreview(int color) {
+        viewColorPreview.setBackgroundColor(color);
+        textTextColorValue.setText(String.format("#%08X", color));
+    }
+
+    /**
+     * 更新样式视图的显示状态
+     */
+    private void updateStyleViewsVisibility(boolean show) {
+        int visibility = show ? VISIBLE : View.GONE;
+        llTextSize.setVisibility(visibility);
+        llLetterSpacing.setVisibility(visibility);
+        llTextColor.setVisibility(visibility);
+        llTextBold.setVisibility(visibility);
     }
 
     /**
@@ -183,16 +332,61 @@ public class systemUISettings extends AppCompatActivity {
         // 加载状态栏显秒设置
         boolean removeBlacklistEnabled = mPrefsUtils.loadBooleanSetting("StatusBarDisplay_Seconds", false);
         switchDisplaySeconds.setChecked(removeBlacklistEnabled);
+
         // 加载自定义时钟设置
         boolean customClockEnabled = mPrefsUtils.loadBooleanSetting("Custom_StatusBarClock", false);
         switchCustomClock.setChecked(customClockEnabled);
         llCustomClock.setVisibility(customClockEnabled ? VISIBLE : View.GONE);
+
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
             String savedFormat = ZToolPrefs.getString("Custom_StatusBarClockFormat", "");
             editTextClockFormat.setText(savedFormat);
             updateClockPreview(savedFormat); // 初始加载时更新预览
+
+            // 加载样式设置
+            loadStyleSettings();
+            updateStyleViewsVisibility(true);
         }
+    }
+
+    /**
+     * 加载样式设置
+     */
+    private void loadStyleSettings() {
+        // 读取字体大小（使用浮点数）
+        float textSize = ZToolPrefs.getFloat("Custom_StatusBarClockTextSize", 16.0f);
+        boolean textSizeEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockTextSizeEnabled", false);
+
+        // 将实际值转换为 SeekBar 进度
+        int progress = (int) ((textSize - 10) / 0.5f);
+        seekbarTextSize.setProgress(progress);
+        switchTextSize.setChecked(textSizeEnabled);
+
+        // 显示格式化后的文本大小（保留1位小数）
+        textTextSizeValue.setText(String.format("%.1fsp", textSize));
+        seekbarTextSize.setEnabled(textSizeEnabled);
+
+
+        // 字间距
+        float letterSpacing = ZToolPrefs.getFloat("Custom_StatusBarClockLetterSpacing", 0.1f);
+        boolean letterSpacingEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockLetterSpacingEnabled", false);
+        seekbarLetterSpacing.setProgress((int)(letterSpacing * 10));
+        switchLetterSpacing.setChecked(letterSpacingEnabled);
+        textLetterSpacingValue.setText(String.format("%.1f", letterSpacing));
+        seekbarLetterSpacing.setEnabled(letterSpacingEnabled);
+
+        // 字体颜色
+        int textColor = ZToolPrefs.getInt("Custom_StatusBarClockTextColor", 0xFFFFFFFF);
+        boolean textColorEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockTextColorEnabled", false);
+        switchTextColor.setChecked(textColorEnabled);
+        updateColorPreview(textColor);
+        buttonPickColor.setEnabled(textColorEnabled);
+
+        // 粗体
+        boolean textBold = ZToolPrefs.getBoolean("Custom_StatusBarClockTextBold", true);
+        boolean textBoldEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockTextBold", false);
+        switchTextBold.setChecked(textBoldEnabled);
     }
 
     // 更新时钟预览文本 - 使用新的CustomDateFormatter
@@ -221,8 +415,38 @@ public class systemUISettings extends AppCompatActivity {
                 String savedFormat = ZToolPrefs.getString("Custom_StatusBarClockFormat", "");
                 editTextClockFormat.setText(savedFormat);
                 updateClockPreview(savedFormat); // 初始加载时更新预览
+                loadStyleSettings();
             }
+            updateStyleViewsVisibility(newValue);
         }
+    }
+
+    /**
+     * 保存字体大小设置
+     */
+    private void saveTextSize(float textSize) {
+        ZToolPrefs.edit().putFloat("Custom_StatusBarClockTextSize", textSize).apply();
+    }
+
+    /**
+     * 保存字间距设置
+     */
+    private void saveLetterSpacing(float letterSpacing) {
+        ZToolPrefs.edit().putFloat("Custom_StatusBarClockLetterSpacing", letterSpacing).apply();
+    }
+
+    /**
+     * 保存字体颜色设置
+     */
+    private void saveTextColor(int color) {
+        ZToolPrefs.edit().putInt("Custom_StatusBarClockTextColor", color).apply();
+    }
+
+    /**
+     * 保存样式启用状态
+     */
+    private void saveStyleEnabled(String key, boolean enabled) {
+        ZToolPrefs.edit().putBoolean(key, enabled).apply();
     }
 
     private void initRestartButton() {
