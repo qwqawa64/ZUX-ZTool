@@ -5,15 +5,12 @@ import static android.view.View.VISIBLE;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -27,9 +24,6 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -38,22 +32,10 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter;
-import com.qimian233.ztool.settingactivity.ota.OtaSettings;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 
 public class systemUISettings extends AppCompatActivity {
 
@@ -143,7 +125,6 @@ public class systemUISettings extends AppCompatActivity {
                     .show();
         });
 
-        // AOD开关事件
         switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
             new Thread(() -> {
                 try {
@@ -256,6 +237,7 @@ public class systemUISettings extends AppCompatActivity {
 
         // 设置颜色选择器点击事件
         buttonPickColor.setOnClickListener(v -> showColorPickerDialog());
+
     }
 
     /**
