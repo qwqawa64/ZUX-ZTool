@@ -66,5 +66,8 @@
     <string name="Float_app_Mandatory_summary">强制所有APP能够小窗运行</string>
     <string name="Split_screen_Mandatory_Title">强制分屏</string>
     <string name="Split_screen_Mandatory_Summary">强制所有APP能够分屏运行，需要重启系统</string>
+    <string name="aod_title">待机显示</string>
+    <string name="aod_enable_title">开启AOD显示</string>
+    <string name="aod_enable_summary">启用原生AOD，这可能增加耗电</string>
 
 </resources>

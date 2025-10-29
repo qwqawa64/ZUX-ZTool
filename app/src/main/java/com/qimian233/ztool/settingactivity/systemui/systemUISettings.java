@@ -70,7 +70,7 @@ public class systemUISettings extends AppCompatActivity {
 
     // 新增：样式相关的视图
     private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
-    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchEnableAod;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
     private View viewColorPreview;
@@ -143,6 +143,17 @@ public class systemUISettings extends AppCompatActivity {
                     .show();
         });
 
+        // AOD开关事件
+        switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            new Thread(() -> {
+                try {
+                    Runtime.getRuntime().exec("su -c \"settings put secure doze_always_on " + (isChecked ? 1 : 0) + "\"").waitFor();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        });
+
         // 添加格式帮助按钮点击事件
         ImageView helpButton = findViewById(R.id.info_img);
         helpButton.setOnClickListener(v -> showFormatHelpDialog());
@@ -175,6 +186,7 @@ public class systemUISettings extends AppCompatActivity {
         switchLetterSpacing = findViewById(R.id.switch_letter_spacing);
         switchTextColor = findViewById(R.id.switch_text_color);
         switchTextBold = findViewById(R.id.switch_text_bold);
+        switchEnableAod = findViewById(R.id.switch_aod);
 
         // 初始化进度条和数值显示
         seekbarTextSize = findViewById(R.id.seekbar_text_size);
@@ -367,6 +379,21 @@ public class systemUISettings extends AppCompatActivity {
                 .show();
     }
 
+    public boolean isAodEnabled() {
+        try {
+            Process process = Runtime.getRuntime().exec("su -c \"settings get secure doze_always_on\"");
+            process.waitFor();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String output = reader.readLine();
+            reader.close();
+            return output != null && output.trim().equals("1");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
     private void loadSettings() {
         // 加载状态栏显秒设置
         boolean removeBlacklistEnabled = mPrefsUtils.loadBooleanSetting("StatusBarDisplay_Seconds", false);
@@ -376,6 +403,10 @@ public class systemUISettings extends AppCompatActivity {
         boolean customClockEnabled = mPrefsUtils.loadBooleanSetting("Custom_StatusBarClock", false);
         switchCustomClock.setChecked(customClockEnabled);
         llCustomClock.setVisibility(customClockEnabled ? VISIBLE : View.GONE);
+
+        //加载AOD显示设置
+        boolean aodEnabled = isAodEnabled();
+        switchEnableAod.setChecked(aodEnabled);
 
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
