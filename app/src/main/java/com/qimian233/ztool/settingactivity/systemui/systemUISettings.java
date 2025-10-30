@@ -5,15 +5,12 @@ import static android.view.View.VISIBLE;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -27,9 +24,6 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -38,22 +32,10 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter;
-import com.qimian233.ztool.settingactivity.ota.OtaSettings;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 
 public class systemUISettings extends AppCompatActivity {
 
@@ -143,17 +125,6 @@ public class systemUISettings extends AppCompatActivity {
                     .show();
         });
 
-        // AOD开关事件
-        switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            new Thread(() -> {
-                try {
-                    Runtime.getRuntime().exec("su -c \"settings put secure doze_always_on " + (isChecked ? 1 : 0) + "\"").waitFor();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        });
-
         // 添加格式帮助按钮点击事件
         ImageView helpButton = findViewById(R.id.info_img);
         helpButton.setOnClickListener(v -> showFormatHelpDialog());
@@ -198,6 +169,32 @@ public class systemUISettings extends AppCompatActivity {
         // 初始化颜色选择器
         viewColorPreview = findViewById(R.id.view_color_preview);
         buttonPickColor = findViewById(R.id.button_pick_color);
+
+        // 设置息屏显示开关的监听器
+        switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            new Thread(() -> {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", "settings put secure doze_always_on " + (isChecked ? "1" : "0")});
+                    int exitCode = process.waitFor();
+                    Log.d("AODSwitch", "Command executed with exit code: " + exitCode);
+
+                    // 在主线程中更新UI
+                    runOnUiThread(() -> {
+                        if (exitCode !=0) {
+                            //Toast.makeText(systemUISettings.this, "AOD设置已更新", Toast.LENGTH_SHORT).show();
+                            switchEnableAod.setChecked(!isChecked);
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(() -> {
+                        Toast.makeText(systemUISettings.this, "执行错误: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        // 恢复开关状态
+                        switchEnableAod.setChecked(!isChecked);
+                    });
+                }
+            }).start();
+        });
 
         // 设置进度条监听器
         seekbarTextSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -256,6 +253,7 @@ public class systemUISettings extends AppCompatActivity {
 
         // 设置颜色选择器点击事件
         buttonPickColor.setOnClickListener(v -> showColorPickerDialog());
+
     }
 
     /**
