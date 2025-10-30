@@ -125,16 +125,6 @@ public class systemUISettings extends AppCompatActivity {
                     .show();
         });
 
-        switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            new Thread(() -> {
-                try {
-                    Runtime.getRuntime().exec("su -c \"settings put secure doze_always_on " + (isChecked ? 1 : 0) + "\"").waitFor();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        });
-
         // 添加格式帮助按钮点击事件
         ImageView helpButton = findViewById(R.id.info_img);
         helpButton.setOnClickListener(v -> showFormatHelpDialog());
@@ -179,6 +169,32 @@ public class systemUISettings extends AppCompatActivity {
         // 初始化颜色选择器
         viewColorPreview = findViewById(R.id.view_color_preview);
         buttonPickColor = findViewById(R.id.button_pick_color);
+
+        // 设置息屏显示开关的监听器
+        switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            new Thread(() -> {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", "settings put secure doze_always_on " + (isChecked ? "1" : "0")});
+                    int exitCode = process.waitFor();
+                    Log.d("AODSwitch", "Command executed with exit code: " + exitCode);
+
+                    // 在主线程中更新UI
+                    runOnUiThread(() -> {
+                        if (exitCode !=0) {
+                            //Toast.makeText(systemUISettings.this, "AOD设置已更新", Toast.LENGTH_SHORT).show();
+                            switchEnableAod.setChecked(!isChecked);
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(() -> {
+                        Toast.makeText(systemUISettings.this, "执行错误: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        // 恢复开关状态
+                        switchEnableAod.setChecked(!isChecked);
+                    });
+                }
+            }).start();
+        });
 
         // 设置进度条监听器
         seekbarTextSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
