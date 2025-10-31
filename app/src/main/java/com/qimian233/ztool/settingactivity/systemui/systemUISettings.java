@@ -599,8 +599,13 @@ public class systemUISettings extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 saveSettings("YiYan", isChecked);
                 findViewById(R.id.YiYanAPI).setVisibility(isChecked ? View.VISIBLE : View.GONE);
-                if (isChecked == false) {
+                if (!isChecked) {
                     saveSettings("auto_owner_info", false);
+                } else {
+                    String savedApiUrl = yiYanPrefs.getString("API_URL", "");
+                    if (!savedApiUrl.isEmpty()) {
+                        saveSettings("auto_owner_info", true);
+                    }
                 }
             }
         });
