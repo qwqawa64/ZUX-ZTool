@@ -379,7 +379,7 @@ public class systemUISettings extends AppCompatActivity {
 
     public boolean isAodEnabled() {
         try {
-            Process process = Runtime.getRuntime().exec("su -c \"settings get secure doze_always_on\"");
+            Process process = Runtime.getRuntime().exec("su -c settings get secure doze_always_on");
             process.waitFor();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String output = reader.readLine();
