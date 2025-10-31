@@ -14,6 +14,7 @@ import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
+import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.util.ArrayList;
@@ -63,6 +64,8 @@ public class HookManager {
         registerHookModule(new SplitScreenMandatory());
         // 注册模块：自定义锁屏一言
         registerHookModule(new OwnerInfoHook());
+        // 新增SystemUI充电瓦数显示模块
+        registerHookModule(new SystemUIChargeWattsHook());
 
         initialized = true;
     }

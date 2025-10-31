@@ -58,7 +58,7 @@ public class systemUISettings extends AppCompatActivity {
 
     // 新增：样式相关的视图
     private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
-    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchEnableAod, switchYiYan;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchEnableAod, switchYiYan, switchWatts;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
     private View viewColorPreview;
@@ -122,6 +122,15 @@ public class systemUISettings extends AppCompatActivity {
                 saveSettings("Custom_StatusBarClock",isChecked);
                 // 显示或隐藏所有样式选项
                 updateStyleViewsVisibility(isChecked);
+            }
+        });
+
+        // 设置瓦数显示事件
+        switchWatts = findViewById(R.id.switch_ChargeWatts);
+        switchWatts.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("systemui_charge_watts",isChecked);
             }
         });
 
@@ -416,6 +425,10 @@ public class systemUISettings extends AppCompatActivity {
         //加载AOD显示设置
         boolean aodEnabled = isAodEnabled();
         switchEnableAod.setChecked(aodEnabled);
+
+        // 加载充电瓦数显示设置
+        boolean showChargeWatts = mPrefsUtils.loadBooleanSetting("systemui_charge_watts", false);
+        switchWatts.setChecked(showChargeWatts);
 
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);

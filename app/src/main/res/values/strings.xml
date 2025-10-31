@@ -77,6 +77,8 @@
     <string name="test">测试&amp;保存</string>
     <string name="regex_label">正则表达式（可选）</string>
     <string name="regex_hint">提取响应体特定内容</string>
+    <string name="ChargeWattsTile">显示充电功率</string>
+    <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前充电协议瓦数</string>
 
 
 </resources>
