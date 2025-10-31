@@ -29,13 +29,19 @@ import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.qimian233.ztool.LoadingDialog;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class systemUISettings extends AppCompatActivity {
 
@@ -52,11 +58,15 @@ public class systemUISettings extends AppCompatActivity {
 
     // 新增：样式相关的视图
     private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
-    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchEnableAod;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchEnableAod, switchYiYan;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
     private View viewColorPreview;
     private Button buttonPickColor;
+    private EditText editApiAddress, editRegex;
+    private Button buttonTestApi;
+    private LoadingDialog loadingDialog;
+    private SharedPreferences yiYanPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +90,7 @@ public class systemUISettings extends AppCompatActivity {
         mPrefsUtils = new ModulePreferencesUtils(this);
 
         initViews();
+        initYiYanViews();
         loadSettings();
         initRestartButton();
     }
@@ -416,6 +427,9 @@ public class systemUISettings extends AppCompatActivity {
             loadStyleSettings();
             updateStyleViewsVisibility(true);
         }
+
+        // 加载一言设置
+        loadYiYanSettings();
     }
 
     /**
@@ -560,6 +574,230 @@ public class systemUISettings extends AppCompatActivity {
             Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
             // 降级方案：使用当前Context
             return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+        }
+    }
+
+    /**
+     * 初始化锁屏一言相关视图
+     */
+    private void initYiYanViews() {
+        // 初始化视图
+        switchYiYan = findViewById(R.id.switch_YiYan);
+        editApiAddress = findViewById(R.id.edit_api_address);
+        editRegex = findViewById(R.id.edit_regex);
+        buttonTestApi = findViewById(R.id.button_test_api);
+
+        // 初始化LoadingDialog
+        loadingDialog = new LoadingDialog(this);
+
+        // 获取锁屏一言的SharedPreferences
+        yiYanPrefs = getYiYanPreferences();
+
+        // 设置锁屏一言开关事件
+        switchYiYan.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("YiYan", isChecked);
+                findViewById(R.id.YiYanAPI).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                if (isChecked == false) {
+                    saveSettings("auto_owner_info", false);
+                }
+            }
+        });
+
+        // 设置测试按钮点击事件
+        buttonTestApi.setOnClickListener(v -> {
+            testApiConnection();
+        });
+
+        // 加载保存的API地址和正则表达式
+        loadYiYanSettings();
+    }
+    /**
+     * 测试API连接
+     */
+    private void testApiConnection() {
+        String apiUrl = editApiAddress.getText().toString().trim();
+        String regex = editRegex.getText().toString().trim();
+
+        // 验证输入
+        if (apiUrl.isEmpty()) {
+            Toast.makeText(this, "请输入API地址", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 显示加载对话框
+        loadingDialog.show("正在测试API连接...");
+
+        // 在新线程中执行网络请求
+        new Thread(() -> {
+            try {
+                // 执行GET请求
+                String response = performHttpGet(apiUrl);
+
+                // 处理响应
+                runOnUiThread(() -> {
+                    loadingDialog.dismiss();
+                    handleApiResponse(response, regex);
+                });
+
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    loadingDialog.dismiss();
+                    showTestResultDialog("请求失败", "错误信息: " + e.getMessage(), false);
+                });
+            }
+        }).start();
+    }
+    /**
+     * 执行HTTP GET请求
+     */
+    private String performHttpGet(String urlString) throws Exception {
+        HttpURLConnection connection = null;
+        BufferedReader reader = null;
+
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+            connection.setRequestProperty("User-Agent", "ZTool/1.0");
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                InputStream inputStream = connection.getInputStream();
+                reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+
+                return response.toString();
+            } else {
+                throw new Exception("HTTP错误: " + responseCode);
+            }
+
+        } finally {
+            try {
+                if (reader != null) reader.close();
+                if (connection != null) connection.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    /**
+     * 处理API响应
+     */
+    private void handleApiResponse(String response, String regex) {
+        String extractedContent = response;
+        boolean hasRegex = !regex.isEmpty();
+
+        // 如果提供了正则表达式，尝试匹配
+        if (hasRegex) {
+            try {
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(response);
+
+                if (matcher.find()) {
+                    // 使用第一个匹配组的内容
+                    extractedContent = matcher.group(1);
+                    // 处理转义字符
+                    extractedContent = extractedContent
+                            .replace("\\\"", "\"")
+                            .replace("\\\\", "\\")
+                            .replace("\\/", "/")
+                            .replace("\\b", "\b")
+                            .replace("\\f", "\f")
+                            .replace("\\n", "\n")
+                            .replace("\\r", "\r")
+                            .replace("\\t", "\t");
+                } else {
+                    showTestResultDialog("正则匹配失败",
+                            "响应体: " + response + "\n\n未找到匹配正则表达式的内容", false);
+                    return;
+                }
+            } catch (Exception e) {
+                showTestResultDialog("正则表达式错误",
+                        "错误信息: " + e.getMessage() + "\n\n响应体: " + response, false);
+                return;
+            }
+        }
+
+        // 显示成功结果并提供保存选项
+        String message = "API请求成功!\n\n";
+        if (hasRegex) {
+            message += "正则匹配结果: " + extractedContent + "\n\n";
+        }
+        message += "原始响应: " + response;
+
+        showTestResultDialog("测试成功", message, true);
+    }
+    /**
+     * 显示测试结果对话框
+     */
+    private void showTestResultDialog(String title, String message, boolean success) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setMessage(message);
+
+        if (success) {
+            builder.setPositiveButton("保存配置", (dialog, which) -> {
+                saveYiYanConfiguration();
+            });
+        }
+
+        builder.setNegativeButton("取消", null)
+                .show();
+    }
+    /**
+     * 保存锁屏一言配置
+     */
+    private void saveYiYanConfiguration() {
+        String apiUrl = editApiAddress.getText().toString().trim();
+        String regex = editRegex.getText().toString().trim();
+
+        // 保存到SharedPreferences
+        SharedPreferences.Editor editor = yiYanPrefs.edit();
+        editor.putString("API_URL", apiUrl);
+        editor.putString("Regular", regex);
+        editor.apply();
+
+        // 启用模块
+        saveSettings("auto_owner_info", true);
+
+        Toast.makeText(this, "配置已保存并启用锁屏一言功能", Toast.LENGTH_SHORT).show();
+    }
+    /**
+     * 加载锁屏一言设置
+     */
+    private void loadYiYanSettings() {
+        // 加载API地址和正则表达式
+        String savedApiUrl = yiYanPrefs.getString("API_URL", "");
+        String savedRegex = yiYanPrefs.getString("Regular", "");
+
+        editApiAddress.setText(savedApiUrl);
+        editRegex.setText(savedRegex);
+
+        // 加载模块启用状态
+        boolean yiYanEnabled = mPrefsUtils.loadBooleanSetting("auto_owner_info", false);
+        switchYiYan.setChecked(yiYanEnabled);
+    }
+    /**
+     * 获取锁屏一言的SharedPreferences
+     */
+    public SharedPreferences getYiYanPreferences() {
+        Context mContext = this;
+        try {
+            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
+            return moduleContext.getSharedPreferences("YiYanConfig", Context.MODE_WORLD_READABLE);
+        } catch (Exception e) {
+            Log.e("YiYanPreferences", "Failed to get module preferences, using fallback", e);
+            // 降级方案：使用当前Context
+            return mContext.getSharedPreferences("YiYanConfig", Context.MODE_WORLD_READABLE);
         }
     }
 }

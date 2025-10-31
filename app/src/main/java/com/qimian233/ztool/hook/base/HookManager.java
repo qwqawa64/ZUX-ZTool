@@ -9,6 +9,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
+import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
@@ -60,6 +61,8 @@ public class HookManager {
         registerHookModule(new CustomStatusBarClock());
         // 注册模块：移除分屏黑名单
         registerHookModule(new SplitScreenMandatory());
+        // 注册模块：自定义锁屏一言
+        registerHookModule(new OwnerInfoHook());
 
         initialized = true;
     }

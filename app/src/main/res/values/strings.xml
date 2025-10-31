@@ -69,5 +69,14 @@
     <string name="aod_title">待机显示</string>
     <string name="aod_enable_title">开启AOD显示</string>
     <string name="aod_enable_summary">启用原生AOD，这可能增加耗电</string>
+    <string name="lockScreenTitle">锁屏界面相关</string>
+    <string name="YiYanSummary">从网络API获取随机一句话，展示到小横条上方位置，需要重启系统</string>
+    <string name="YiYanTile">锁屏随机一言</string>
+    <string name="api_address_label">API地址</string>
+    <string name="api_address_hint">输入API地址</string>
+    <string name="test">测试&amp;保存</string>
+    <string name="regex_label">正则表达式（可选）</string>
+    <string name="regex_hint">提取响应体特定内容</string>
+
 
 </resources>
