@@ -12,12 +12,15 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +42,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,7 +62,7 @@ public class systemUISettings extends AppCompatActivity {
 
     // 新增：样式相关的视图
     private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
-    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchEnableAod, switchYiYan, switchWatts;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchEnableAod, switchYiYan;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
     private View viewColorPreview;
@@ -67,6 +71,8 @@ public class systemUISettings extends AppCompatActivity {
     private Button buttonTestApi;
     private LoadingDialog loadingDialog;
     private SharedPreferences yiYanPrefs;
+    private Spinner spinnerChargeWatts;
+    private String[] wattOptions = {"不启用", "握手的功率", "实际功率"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +97,7 @@ public class systemUISettings extends AppCompatActivity {
 
         initViews();
         initYiYanViews();
+        initChargeWattsViews();
         loadSettings();
         initRestartButton();
     }
@@ -125,15 +132,6 @@ public class systemUISettings extends AppCompatActivity {
             }
         });
 
-        // 设置瓦数显示事件
-        switchWatts = findViewById(R.id.switch_ChargeWatts);
-        switchWatts.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("systemui_charge_watts",isChecked);
-            }
-        });
-
         // 保存自定义时钟格式事件
         SaveButton.setOnClickListener(v -> {
             String clockFormat = ((TextView) findViewById(R.id.edittext_clock_format)).getText().toString();
@@ -160,6 +158,61 @@ public class systemUISettings extends AppCompatActivity {
                 updateClockPreview(s.toString());
             }
         });
+    }
+
+    // 新增：初始化充电瓦数相关视图
+    private void initChargeWattsViews() {
+        spinnerChargeWatts = findViewById(R.id.spinner_charge_watts);
+
+        setupSpinner();
+    }
+
+    // 设置Spinner
+    private void setupSpinner() {
+        // 创建适配器
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                wattOptions
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerChargeWatts.setAdapter(adapter);
+
+        // Spinner选择监听
+        spinnerChargeWatts.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedOption = wattOptions[position];
+
+                // 根据选择执行相应操作
+                handleWattOptionSelected(selectedOption);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // 什么都不做
+            }
+        });
+    }
+    // 处理瓦数选项选择
+    private void handleWattOptionSelected(String selectedOption) {
+        switch (selectedOption) {
+            case "不启用":
+                saveSettings("systemui_charge_watts", false);
+                saveSettings("systemUI_RealWatts", false);
+                break;
+            case "握手的功率":
+                saveSettings("systemui_charge_watts", true);
+                saveSettings("systemUI_RealWatts", false);
+                break;
+            case "实际功率":
+                saveSettings("systemui_charge_watts", false);
+                saveSettings("systemUI_RealWatts", true);
+                break;
+        }
+
+        // 保存当前选择的选项到偏好设置，用于下次初始化
+        ZToolPrefs.edit().putString("charge_watts_selected_option", selectedOption).apply();
     }
 
     /**
@@ -426,10 +479,6 @@ public class systemUISettings extends AppCompatActivity {
         boolean aodEnabled = isAodEnabled();
         switchEnableAod.setChecked(aodEnabled);
 
-        // 加载充电瓦数显示设置
-        boolean showChargeWatts = mPrefsUtils.loadBooleanSetting("systemui_charge_watts", false);
-        switchWatts.setChecked(showChargeWatts);
-
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
             String savedFormat = ZToolPrefs.getString("Custom_StatusBarClockFormat", "");
@@ -443,6 +492,40 @@ public class systemUISettings extends AppCompatActivity {
 
         // 加载一言设置
         loadYiYanSettings();
+
+        // 加载充电瓦数选项设置
+        loadChargeWattsOption();
+
+    }
+
+    /**
+     * 加载充电瓦数选项设置
+     */
+    private void loadChargeWattsOption() {
+        // 从偏好设置中获取上次选择的选项
+        String savedOption = ZToolPrefs.getString("charge_watts_selected_option", "不启用");
+
+        // 根据实际的设置状态验证并更新Spinner选择
+        boolean chargeWattsEnabled = mPrefsUtils.loadBooleanSetting("systemui_charge_watts", false);
+        boolean realWattsEnabled = mPrefsUtils.loadBooleanSetting("systemUI_RealWatts", false);
+
+        String currentOption;
+        if (chargeWattsEnabled && !realWattsEnabled) {
+            currentOption = "握手的功率";
+        } else if (!chargeWattsEnabled && realWattsEnabled) {
+            currentOption = "实际功率";
+        } else {
+            currentOption = "不启用";
+        }
+
+        // 设置Spinner的选中项
+        int position = Arrays.asList(wattOptions).indexOf(currentOption);
+        if (position >= 0) {
+            spinnerChargeWatts.setSelection(position);
+        }
+
+        // 保存当前选项到偏好设置
+        ZToolPrefs.edit().putString("charge_watts_selected_option", currentOption).apply();
     }
 
     /**

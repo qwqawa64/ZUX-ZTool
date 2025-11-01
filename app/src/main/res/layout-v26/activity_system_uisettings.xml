@@ -586,10 +586,12 @@
 
                             </LinearLayout>
 
-                            <com.google.android.material.materialswitch.MaterialSwitch
-                                android:id="@+id/switch_ChargeWatts"
+                            <!-- Spinner控件，默认隐藏 -->
+                            <Spinner
+                                android:id="@+id/spinner_charge_watts"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
+                                android:layout_height="wrap_content"
+                                android:spinnerMode="dropdown" />
 
                         </LinearLayout>
 
