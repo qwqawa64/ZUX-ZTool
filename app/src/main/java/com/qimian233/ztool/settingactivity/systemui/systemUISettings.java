@@ -72,7 +72,7 @@ public class systemUISettings extends AppCompatActivity {
     private LoadingDialog loadingDialog;
     private SharedPreferences yiYanPrefs;
     private Spinner spinnerChargeWatts;
-    private String[] wattOptions = {"不启用", "握手的功率", "实际功率"};
+    private String[] wattOptions = {"不启用", "握手功率", "实际功率"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
