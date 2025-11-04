@@ -81,9 +81,7 @@ public class SystemUIRealWatts extends BaseHookModule {
                                     log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
                                 } else {
                                     log("未能检测到充电功率");
-                                    if (!isBatteryFull()) {
-                                        param.setResult(originalText + "\n请授予 \"系统界面\" 应用Root权限");
-                                    }
+                                    param.setResult(originalText + "\n 0W");
                                 }
                             }
                         }
@@ -94,44 +92,6 @@ public class SystemUIRealWatts extends BaseHookModule {
         } catch (Throwable t) {
             logError("Hook KeyguardIndicationController失败", t);
         }
-    }
-
-    public static boolean isBatteryFull() {
-        try {
-            // 以root权限执行shell命令
-            Process process = Runtime.getRuntime().exec("su -c \"dumpsys battery | grep level\"");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-
-            // 读取命令输出
-            while ((line = reader.readLine()) != null) {
-                // 检查输出行是否包含"level"关键字
-                if (line.contains("level")) {
-                    // 解析电量值：假设输出格式为 "level: 100"
-                    String[] parts = line.split(":");
-                    if (parts.length >= 2) {
-                        String levelStr = parts[1].trim();
-                        try {
-                            int level = Integer.parseInt(levelStr);
-                            return level == 100; // 如果电量为100，返回true
-                        } catch (NumberFormatException e) {
-                            // 解析数字失败，记录错误并继续（可能有多行输出）
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-
-            // 关闭资源
-            reader.close();
-            process.destroy();
-        } catch (IOException e) {
-            // 命令执行失败（如无root权限），记录错误
-            e.printStackTrace();
-        }
-
-        // 默认返回false（未找到有效电量或命令失败）
-        return false;
     }
 
     /**
