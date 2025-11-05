@@ -29,6 +29,12 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.ZTool">
         <activity
+            android:name=".settingactivity.systemui.lockscreen.LockScreenSettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".settingactivity.systemui.systemUISettings"
             android:exported="false" />
         <activity

@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="8dp"
@@ -31,7 +31,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- 现有状态栏时钟卡片 -->
+                <!-- 状态栏设置入口卡片 -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -40,382 +40,45 @@
                     app:cardElevation="1dp">
 
                     <LinearLayout
+                        android:id="@+id/card_statusbar_settings"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:background="?attr/colorSurfaceContainer"
-                        android:padding="16dp">
+                        android:padding="16dp"
+                        android:clickable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
-                        <!-- 功能标题 -->
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/StatusBar_Clock_title"
+                            android:text="状态栏设置"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnSurface"
-                            android:layout_marginBottom="16dp" />
+                            android:layout_marginBottom="8dp" />
 
-                        <!-- 去除黑名单功能 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="自定义状态栏时钟、通知图标等设置"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical">
+                            android:orientation="horizontal"
+                            android:gravity="end"
+                            android:layout_marginTop="8dp">
 
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/Display_StatusBarSeconds_title"
-                                    android:textSize="16sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/Display_StatusBarSeconds_Summary"
-                                    android:textSize="12sp"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:layout_marginTop="4dp" />
-
-                            </LinearLayout>
-
-                            <com.google.android.material.materialswitch.MaterialSwitch
-                                android:id="@+id/switch_statusBarDisplay_seconds"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
-
-                        </LinearLayout>
-
-                        <!-- 新增：自定义时钟开关选项 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="16dp">
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:orientation="horizontal"
-                                    android:gravity="center_vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="@string/custom_clock_title"
-                                        android:textSize="16sp"
-                                        android:textColor="?attr/colorOnSurface" />
-
-                                    <!-- 小提示图标 -->
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:layout_marginStart="8dp"
-                                        android:id="@+id/info_img"
-                                        android:src="@drawable/ic_info"
-                                        android:contentDescription="@string/tooltip_content_description"
-                                        app:tint="?attr/colorOnSurfaceVariant" />
-
-                                </LinearLayout>
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/custom_clock_summary"
-                                    android:textSize="12sp"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:layout_marginTop="4dp" />
-
-                            </LinearLayout>
-
-                            <com.google.android.material.materialswitch.MaterialSwitch
-                                android:id="@+id/switch_custom_clock"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
-
-                        </LinearLayout>
-                        <!-- 输入框和保存按钮 -->
-                        <!-- 修改后的 ll_customClock 部分 -->
-                        <LinearLayout
-                            android:id="@+id/ll_customClock"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:visibility="gone"
-                            android:layout_marginTop="16dp">
-
-                            <!-- 输入框和保存按钮的水平布局 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <EditText
-                                    android:id="@+id/edittext_clock_format"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:hint="@string/clock_format_hint"
-                                    android:textSize="14sp"
-                                    android:inputType="text" />
-
-                                <Button
-                                    android:id="@+id/button_save_clock_format"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/save"
-                                    android:layout_marginStart="16dp"
-                                    style="?attr/materialButtonOutlinedStyle" />
-
-                            </LinearLayout>
-
-                            <!-- 新增：实时预览TextView -->
                             <TextView
-                                android:id="@+id/textview_clock_preview"
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:textSize="14sp"
-                                android:textColor="?attr/colorOnSurfaceVariant"
-                                android:text="@string/preview_default" />
-
-                            <!-- 新增：字体大小样式选项 -->
-                            <LinearLayout
-                                android:id="@+id/ll_text_size"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:visibility="gone"
-                                android:layout_marginTop="16dp">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical">
-
-                                    <LinearLayout
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:orientation="vertical">
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:text="@string/custom_clock_text_size_title"
-                                            android:textSize="16sp"
-                                            android:textColor="?attr/colorOnSurface" />
-
-                                        <TextView
-                                            android:id="@+id/textview_text_size_value"
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:text="16sp"
-                                            android:textSize="12sp"
-                                            android:textColor="?attr/colorOnSurfaceVariant"
-                                            android:layout_marginTop="4dp" />
-
-                                    </LinearLayout>
-
-                                    <com.google.android.material.materialswitch.MaterialSwitch
-                                        android:id="@+id/switch_text_size"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content" />
-
-                                </LinearLayout>
-
-                                <SeekBar
-                                    android:id="@+id/seekbar_text_size"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:max="40" />
-
-
-                            </LinearLayout>
-
-                            <!-- 新增：字间距样式选项 -->
-                            <LinearLayout
-                                android:id="@+id/ll_letter_spacing"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:visibility="gone"
-                                android:layout_marginTop="16dp">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical">
-
-                                    <LinearLayout
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:orientation="vertical">
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:text="@string/custom_clock_letter_spacing_title"
-                                            android:textSize="16sp"
-                                            android:textColor="?attr/colorOnSurface" />
-
-                                        <TextView
-                                            android:id="@+id/textview_letter_spacing_value"
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:text="0.1"
-                                            android:textSize="12sp"
-                                            android:textColor="?attr/colorOnSurfaceVariant"
-                                            android:layout_marginTop="4dp" />
-
-                                    </LinearLayout>
-
-                                    <com.google.android.material.materialswitch.MaterialSwitch
-                                        android:id="@+id/switch_letter_spacing"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content" />
-
-                                </LinearLayout>
-
-                                <SeekBar
-                                    android:id="@+id/seekbar_letter_spacing"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:max="20"
-                                    android:progress="1" />
-
-                            </LinearLayout>
-
-                            <!-- 新增：字体颜色样式选项 -->
-                            <LinearLayout
-                                android:id="@+id/ll_text_color"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:visibility="gone"
-                                android:layout_marginTop="16dp">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical">
-
-                                    <LinearLayout
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:orientation="vertical">
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:text="@string/custom_clock_text_color_title"
-                                            android:textSize="16sp"
-                                            android:textColor="?attr/colorOnSurface" />
-
-                                        <TextView
-                                            android:id="@+id/textview_text_color_value"
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:text="#FFFFFFFF"
-                                            android:textSize="12sp"
-                                            android:textColor="?attr/colorOnSurfaceVariant"
-                                            android:layout_marginTop="4dp" />
-
-                                    </LinearLayout>
-
-                                    <com.google.android.material.materialswitch.MaterialSwitch
-                                        android:id="@+id/switch_text_color"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content" />
-
-                                </LinearLayout>
-
-                                <!-- 颜色选择器布局 -->
-                                <LinearLayout
-                                    android:id="@+id/ll_color_picker"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:orientation="horizontal"
-                                    android:layout_marginTop="8dp"
-                                    android:gravity="center_vertical">
-
-                                    <!-- 颜色预览 -->
-                                    <View
-                                        android:id="@+id/view_color_preview"
-                                        android:layout_width="24dp"
-                                        android:layout_height="24dp"
-                                        android:background="@drawable/color_preview_background"
-                                        android:layout_marginEnd="8dp" />
-
-                                    <!-- 颜色选择按钮 -->
-                                    <Button
-                                        android:id="@+id/button_pick_color"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="@string/pick_color"
-                                        style="?attr/materialButtonOutlinedStyle" />
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                            <!-- 新增：粗体样式选项 -->
-                            <LinearLayout
-                                android:id="@+id/ll_text_bold"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:visibility="gone"
-                                android:layout_marginTop="16dp"
-                                android:gravity="center_vertical">
-
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:text="@string/custom_clock_text_bold_title"
-                                        android:textSize="16sp"
-                                        android:textColor="?attr/colorOnSurface" />
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:text="@string/custom_clock_text_bold_summary"
-                                        android:textSize="12sp"
-                                        android:textColor="?attr/colorOnSurfaceVariant"
-                                        android:layout_marginTop="4dp" />
-
-                                </LinearLayout>
-
-                                <com.google.android.material.materialswitch.MaterialSwitch
-                                    android:id="@+id/switch_text_bold"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content" />
-
-                            </LinearLayout>
+                                android:textSize="12sp"
+                                android:textColor="?attr/colorOnBackground"
+                                android:drawableEnd="@drawable/ic_arrow_forward"
+                                android:drawablePadding="4dp" />
 
                         </LinearLayout>
 
@@ -423,7 +86,7 @@
 
                 </androidx.cardview.widget.CardView>
 
-
+                <!-- 锁屏设置入口卡片 -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -432,242 +95,53 @@
                     app:cardElevation="1dp">
 
                     <LinearLayout
+                        android:id="@+id/card_lockscreen_settings"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:background="?attr/colorSurfaceContainer"
-                        android:padding="16dp">
+                        android:padding="16dp"
+                        android:clickable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
-                        <!-- 功能标题 -->
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/statusBar_notification_title"
+                            android:text="锁屏设置"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnSurface"
-                            android:layout_marginBottom="16dp" />
+                            android:layout_marginBottom="8dp" />
 
-                        <!-- 通知数字大小选项 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical">
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/notifyNumSize_title"
-                                    android:textSize="16sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/notifyNumSize_summary"
-                                    android:textSize="12sp"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:layout_marginTop="4dp" />
-
-                            </LinearLayout>
-
-                            <!-- Spinner，提供数字 1-15 和“无限制”选项 -->
-                            <Spinner
-                                android:id="@+id/spinner_notifyNumSize"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-
-                <!-- 锁屏一言卡片 -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:background="?attr/colorSurfaceContainer"
-                        android:padding="16dp">
-
-                        <!-- 功能标题 -->
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/lockScreenTitle"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="?attr/colorOnSurface"
-                            android:layout_marginBottom="16dp" />
-
-                        <!-- 锁屏一言 开关选项 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical">
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/YiYanTile"
-                                    android:textSize="16sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/YiYanSummary"
-                                    android:textSize="12sp"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:layout_marginTop="4dp" />
-
-                            </LinearLayout>
-
-                            <com.google.android.material.materialswitch.MaterialSwitch
-                                android:id="@+id/switch_YiYan"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
-
-                        </LinearLayout>
-
-                        <!-- 子项容器 -->
-                        <LinearLayout
-                            android:id="@+id/YiYanAPI"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:layout_marginStart="16dp"
-                            android:layout_marginTop="8dp"
-                            android:visibility="gone"
-                            >
-
-                            <!-- API 地址输入框和测试按钮 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:layout_marginBottom="8dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/api_address_label"
-                                    android:textSize="14sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <EditText
-                                    android:id="@+id/edit_api_address"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:layout_marginStart="8dp"
-                                    android:hint="@string/api_address_hint"
-                                    android:textSize="14sp" />
-
-                                <Button
-                                    android:id="@+id/button_test_api"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/test"
-                                    android:layout_marginStart="8dp"
-                                    android:textSize="12sp" />
-
-                            </LinearLayout>
-
-                            <!-- 正则表达式输入框 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/regex_label"
-                                    android:textSize="14sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <EditText
-                                    android:id="@+id/edit_regex"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:layout_marginStart="8dp"
-                                    android:hint="@string/regex_hint"
-                                    android:textSize="14sp" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:text="锁屏一言、充电功率显示等设置"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="16dp">
+                            android:orientation="horizontal"
+                            android:gravity="end"
+                            android:layout_marginTop="8dp">
 
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/ChargeWattsTile"
-                                    android:textSize="16sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/ChargeWattsSummary"
-                                    android:textSize="12sp"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:layout_marginTop="4dp" />
-
-                            </LinearLayout>
-
-                            <!-- Spinner控件，默认隐藏 -->
-                            <Spinner
-                                android:id="@+id/spinner_charge_watts"
+                            <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:spinnerMode="dropdown" />
+                                android:textSize="12sp"
+                                android:textColor="?attr/colorOnBackground"
+                                android:drawableEnd="@drawable/ic_arrow_forward"
+                                android:drawablePadding="4dp" />
 
                         </LinearLayout>
-
 
                     </LinearLayout>
 
                 </androidx.cardview.widget.CardView>
 
-
-                <!-- 新增：AOD 功能卡片 -->
+                <!-- AOD 功能卡片保持不变 -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -682,7 +156,6 @@
                         android:background="?attr/colorSurfaceContainer"
                         android:padding="16dp">
 
-                        <!-- 功能标题 -->
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -692,7 +165,6 @@
                             android:textColor="?attr/colorOnSurface"
                             android:layout_marginBottom="16dp" />
 
-                        <!-- AOD 开关选项 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -721,7 +193,6 @@
 
                             </LinearLayout>
 
-
                             <com.google.android.material.materialswitch.MaterialSwitch
                                 android:id="@+id/switch_aod"
                                 android:layout_width="wrap_content"
@@ -748,4 +219,5 @@
         app:srcCompat="@drawable/ic_refresh"
         app:tint="@android:color/white"
         app:backgroundTint="?attr/colorPrimary" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

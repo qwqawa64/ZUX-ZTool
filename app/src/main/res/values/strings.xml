@@ -82,5 +82,7 @@
     <string name="notifyNumSize_title">自定义最大图标数</string>
     <string name="notifyNumSize_summary">原系统配置默认4个以上通知开始省略图标</string>
     <string name="statusBar_notification_title">状态栏通知</string>
+    <string name="LockScreenSettingTitle">锁屏设置</string>
+    <string name="LockScreenSummary">锁屏一言、充电功率显示等设置</string>
 
 </resources>
