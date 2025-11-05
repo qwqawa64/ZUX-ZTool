@@ -13,6 +13,7 @@ import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
+import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIRealWatts;
@@ -69,6 +70,8 @@ public class HookManager {
         registerHookModule(new SystemUIChargeWattsHook());
         // 注册模块：SystemUI实际充电瓦数显示模块
         registerHookModule(new SystemUIRealWatts());
+        // 注册模块：自定义状态栏图标数量
+        registerHookModule(new NotificationIconHook());
 
         initialized = true;
     }

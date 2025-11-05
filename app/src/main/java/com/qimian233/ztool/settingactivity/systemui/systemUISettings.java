@@ -43,6 +43,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,8 +71,8 @@ public class systemUISettings extends AppCompatActivity {
     private EditText editApiAddress, editRegex;
     private Button buttonTestApi;
     private LoadingDialog loadingDialog;
-    private SharedPreferences yiYanPrefs;
-    private Spinner spinnerChargeWatts;
+    private SharedPreferences yiYanPrefs, StatusBar_notifyNumSize;
+    private Spinner spinnerChargeWatts, spinnerNotifyNumSize;
     private String[] wattOptions = {"不启用", "握手功率", "实际功率"};
 
     @Override
@@ -108,6 +109,8 @@ public class systemUISettings extends AppCompatActivity {
         ZToolPrefs = getZToolPreferences();
         SaveButton = findViewById(R.id.button_save_clock_format);
         textPreview = findViewById(R.id.textview_clock_preview);
+        // 初始化通知数量Spinner
+        spinnerNotifyNumSize = findViewById(R.id.spinner_notifyNumSize);
 
         // 初始化样式视图
         initStyleViews();
@@ -142,6 +145,19 @@ public class systemUISettings extends AppCompatActivity {
                     .setPositiveButton("确定", null)
                     .show();
         });
+
+        StatusBar_notifyNumSize = getNotifyNumSizeShared();
+        // 使用字符串数组直接作为数据源
+        String[] itemsArray = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "无限制"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, itemsArray);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerNotifyNumSize.setAdapter(adapter);
+        // 设置默认spinner
+        int selectedIndex = StatusBar_notifyNumSize.getInt("notify_num_size", 4);
+        if (selectedIndex == 100) {
+            selectedIndex = 15;
+        }
+        spinnerNotifyNumSize.setSelection(selectedIndex - 1);
 
         // 添加格式帮助按钮点击事件
         ImageView helpButton = findViewById(R.id.info_img);
@@ -326,6 +342,41 @@ public class systemUISettings extends AppCompatActivity {
 
         // 设置颜色选择器点击事件
         buttonPickColor.setOnClickListener(v -> showColorPickerDialog());
+
+        // 设置通知大小Spinner
+        spinnerNotifyNumSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // 获取选中的项
+                String selectedItem = parent.getItemAtPosition(position).toString();
+                // 获取当前数字值
+
+                // 根据选项触发不同逻辑
+                if (selectedItem.equals("4")) {
+                    saveSettings("notification_icon_limit",false);
+                    return;
+                }
+                saveSettings("notification_icon_limit",true);
+                if (selectedItem.equals("无限制")) {
+                    StatusBar_notifyNumSize.edit().putInt("notify_num_size", 100).apply();
+                } else {
+                    try {
+                        int num = Integer.parseInt(selectedItem);
+                        StatusBar_notifyNumSize.edit().putInt("notify_num_size", num).apply();
+                    } catch (NumberFormatException e) {
+                        // 异常处理（可选）
+                        Log.e("Spinner", "Invalid number format", e);
+                        Toast.makeText(systemUISettings.this, "保存失败，请查看Logcat", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                StatusBar_notifyNumSize.edit().putInt("notify_num_size",
+                        StatusBar_notifyNumSize.getInt("notify_num_size", 4)).apply();
+            }
+        });
 
     }
 
@@ -670,6 +721,18 @@ public class systemUISettings extends AppCompatActivity {
             Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
             // 降级方案：使用当前Context
             return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+        }
+    }
+
+    public SharedPreferences getNotifyNumSizeShared() {
+        Context mContext = this;
+        try {
+            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
+            return moduleContext.getSharedPreferences("StatusBar_notifyNumSize", Context.MODE_WORLD_READABLE);
+        } catch (Exception e) {
+            Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
+            // 降级方案：使用当前Context
+            return mContext.getSharedPreferences("StatusBar_notifyNumSize", Context.MODE_WORLD_READABLE);
         }
     }
 

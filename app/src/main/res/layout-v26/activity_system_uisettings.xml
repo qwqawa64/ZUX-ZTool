@@ -424,6 +424,72 @@
                 </androidx.cardview.widget.CardView>
 
 
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="?attr/colorSurfaceContainer"
+                        android:padding="16dp">
+
+                        <!-- 功能标题 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/statusBar_notification_title"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginBottom="16dp" />
+
+                        <!-- 通知数字大小选项 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/notifyNumSize_title"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/notifyNumSize_summary"
+                                    android:textSize="12sp"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:layout_marginTop="4dp" />
+
+                            </LinearLayout>
+
+                            <!-- Spinner，提供数字 1-15 和“无限制”选项 -->
+                            <Spinner
+                                android:id="@+id/spinner_notifyNumSize"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+
                 <!-- 锁屏一言卡片 -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"

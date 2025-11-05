@@ -79,6 +79,8 @@
     <string name="regex_hint">提取响应体特定内容</string>
     <string name="ChargeWattsTile">显示充电功率</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限</string>
-
+    <string name="notifyNumSize_title">自定义最大图标数</string>
+    <string name="notifyNumSize_summary">原系统配置默认4个以上通知开始省略图标</string>
+    <string name="statusBar_notification_title">状态栏通知</string>
 
 </resources>
