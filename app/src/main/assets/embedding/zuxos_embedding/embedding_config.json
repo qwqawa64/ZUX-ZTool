@@ -42893,6 +42893,28 @@
       "skipMultiWindowMode": "true",
       "showSurfaceViewBackground": "false",
       "shouldPausePrimaryActivity": "false"
+    },
+    {
+      "name": "com.qimian233.ztool",
+      "mainPage": "com.qimian233.ztool.MainActivity",
+      "activityPairs": [
+        {
+          "from": "com.qimian233.ztool.MainActivity",
+          "to": "*"
+        },
+        {
+          "from": "com.qimian233.ztool.settingactivity.systemui.systemUISettings",
+          "to": "*"
+        }
+      ],
+      "forceFullscreenPages": [],
+      "transActivities": [],
+      "leftTransActivities": [],
+      "showEmbeddingDivider": "true",
+      "skipLetterboxDisplayInfo": "false",
+      "skipMultiWindowMode": "true",
+      "showSurfaceViewBackground": "false",
+      "shouldPausePrimaryActivity": "false"
     }
   ]
 }
