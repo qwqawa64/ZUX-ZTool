@@ -5,6 +5,15 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- 添加的提示文本：千万不要起重复的字体名称 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="千万不要起重复的字体名称"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="8dp" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
