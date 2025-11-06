@@ -1361,7 +1361,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                     fontImportDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
                             .setTitle("导入成功")
-                            .setMessage("字体已成功导入到系统字体库")
+                            .setMessage("字体已成功导入到系统字体库\n前往 设置-个性定制-字体-本地 即可查看")
                             .setPositiveButton("确定", null)
                             .show();
                 });
