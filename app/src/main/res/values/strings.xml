@@ -84,5 +84,7 @@
     <string name="statusBar_notification_title">状态栏通知</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>
     <string name="LockScreenSummary">锁屏一言、充电功率显示等设置</string>
+    <string name="statusBarSettingTitle">状态栏设置</string>
+    <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
 
 </resources>
