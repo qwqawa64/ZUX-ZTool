@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermiss
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
+import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
@@ -60,7 +61,7 @@ public class HookManager {
         registerHookModule(new Hook_disable_installerAD());
         // 注册模块：状态栏时间显秒
         registerHookModule(new StatusBarClockSecondsHook());
-        // 注册模块：自定义时钟
+        // 注册模块：自定义状态栏时钟
         registerHookModule(new CustomStatusBarClock());
         // 注册模块：移除分屏黑名单
         registerHookModule(new SplitScreenMandatory());
@@ -72,6 +73,8 @@ public class HookManager {
         registerHookModule(new SystemUIRealWatts());
         // 注册模块：自定义状态栏图标数量
         registerHookModule(new NotificationIconHook());
+        // 注册模块：自定义控制中心月份时钟
+        registerHookModule(new CustomControlCenterDate());
 
         initialized = true;
     }

@@ -18,6 +18,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
+import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity;
 
@@ -68,6 +69,15 @@ public class systemUISettings extends AppCompatActivity {
         LinearLayout cardLockScreen = findViewById(R.id.card_lockscreen_settings);
         cardLockScreen.setOnClickListener(v -> {
             Intent intent = new Intent(this, LockScreenSettingsActivity.class);
+            intent.putExtra("app_name", getIntent().getStringExtra("app_name"));
+            intent.putExtra("app_package", appPackageName);
+            startActivity(intent);
+        });
+
+        // 控制中心设置入口
+        LinearLayout card_control_center_settings = findViewById(R.id.card_control_center_settings);
+        card_control_center_settings.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ControlCenterSettingsActivity.class);
             intent.putExtra("app_name", getIntent().getStringExtra("app_name"));
             intent.putExtra("app_package", appPackageName);
             startActivity(intent);

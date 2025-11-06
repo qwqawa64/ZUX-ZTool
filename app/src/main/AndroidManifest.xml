@@ -29,6 +29,9 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.ZTool">
         <activity
+            android:name=".settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".settingactivity.systemui.lockscreen.LockScreenSettingsActivity"
             android:exported="false" />
         <activity

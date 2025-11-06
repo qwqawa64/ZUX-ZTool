@@ -86,5 +86,13 @@
     <string name="LockScreenSummary">锁屏一言、充电功率显示等设置</string>
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
-
+    <string name="controlCenterTitle">控制中心设置</string>
+    <string name="controlCenterSummary">自定义控制中心时钟样式</string>
+    <string name="CustomDateSettingTitle">自定义日期格式</string>
+    <string name="CustomDateSettingSummary">自定义控制中心时间的显示格式</string>
+    <string name="ControllerDateFormate">输入时间格式</string>
+    <string name="DateFormateExample">M月d日 EEE</string>
+    <string name="SaveDateFormate">保存</string>
+    <string name="ControllerDate">控制中心日期设置</string>
+    <string name="Date_Blod">启用日期文字的粗体显示效果</string>
 </resources>
