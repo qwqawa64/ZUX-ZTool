@@ -13,6 +13,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
+import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -24,11 +25,22 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
     private NavController navController;
     private boolean isEnvironmentReady = false;
 
+    // 用于保存导航状态的键
+    private static final String KEY_CURRENT_DESTINATION = "current_destination";
+    private static final String KEY_ENVIRONMENT_READY = "environment_ready";
+    private int currentDestinationId = R.id.homeFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this);
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
+
+        // 恢复保存的状态
+        if (savedInstanceState != null) {
+            currentDestinationId = savedInstanceState.getInt(KEY_CURRENT_DESTINATION, R.id.homeFragment);
+            isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false);
+        }
 
         // 设置状态栏和导航栏样式
         setupSystemBars();
@@ -42,21 +54,57 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
 
-        // 初始状态下，假设环境不齐全，禁用导航栏
-        updateBottomNavigation(false);
-
-        // 设置导航目的地变化监听器，防止在环境不齐全时跳转到其他页面
+        // 设置导航目的地变化监听器
         navController.addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
             @Override
             public void onDestinationChanged(@NonNull NavController controller,
                                              @NonNull NavDestination destination,
                                              @Nullable Bundle arguments) {
+                // 更新当前目的地
+                currentDestinationId = destination.getId();
+
                 // 如果环境不齐全且尝试导航到非首页，则强制返回首页
                 if (!isEnvironmentReady && destination.getId() != R.id.homeFragment) {
                     navController.navigate(R.id.homeFragment);
                 }
             }
         });
+
+        // 根据环境状态更新导航栏
+        updateBottomNavigation(isEnvironmentReady);
+
+        // 如果环境就绪，尝试恢复到之前的目的地
+        if (isEnvironmentReady && currentDestinationId != R.id.homeFragment) {
+            navigateToSavedDestination();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // 保存当前目的地和环境状态
+        outState.putInt(KEY_CURRENT_DESTINATION, currentDestinationId);
+        outState.putBoolean(KEY_ENVIRONMENT_READY, isEnvironmentReady);
+    }
+
+    /**
+     * 导航到保存的目的地
+     */
+    private void navigateToSavedDestination() {
+        if (currentDestinationId != R.id.homeFragment) {
+            // 使用 NavOptions 来避免重复添加相同的目标到返回栈
+            NavOptions navOptions = new NavOptions.Builder()
+                    .setLaunchSingleTop(true)
+                    .setRestoreState(true)
+                    .build();
+
+            try {
+                navController.navigate(currentDestinationId, null, navOptions);
+            } catch (IllegalArgumentException e) {
+                // 如果目标ID无效，导航到首页
+                navController.navigate(R.id.homeFragment);
+            }
+        }
     }
 
     /**
@@ -99,6 +147,24 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
 
             // 重新设置导航控制器
             NavigationUI.setupWithNavController(bottomNav, navController);
+
+            // 更新底部导航栏的选中状态
+            if (currentDestinationId != R.id.homeFragment) {
+                // 延迟执行以确保UI已更新
+                bottomNav.post(() -> {
+                    try {
+                        // 尝试设置选中的菜单项
+                        for (int i = 0; i < bottomNav.getMenu().size(); i++) {
+                            if (bottomNav.getMenu().getItem(i).getItemId() == currentDestinationId) {
+                                bottomNav.setSelectedItemId(currentDestinationId);
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        // 忽略设置选中项时的异常
+                    }
+                });
+            }
         } else {
             // 环境不齐全：隐藏并禁用底部导航栏
             bottomNav.setVisibility(View.GONE);
@@ -109,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
                     navController.getCurrentDestination().getId() != R.id.homeFragment) {
                 navController.navigate(R.id.homeFragment);
             }
+            currentDestinationId = R.id.homeFragment;
         }
     }
 
@@ -117,7 +184,14 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
      */
     @Override
     public void onEnvironmentStateChanged(boolean environmentReady) {
+        boolean previousState = this.isEnvironmentReady;
         this.isEnvironmentReady = environmentReady;
+
         updateBottomNavigation(environmentReady);
+
+        // 如果环境从不就绪变为就绪，尝试恢复到之前保存的目的地
+        if (!previousState && environmentReady && currentDestinationId != R.id.homeFragment) {
+            navigateToSavedDestination();
+        }
     }
 }
