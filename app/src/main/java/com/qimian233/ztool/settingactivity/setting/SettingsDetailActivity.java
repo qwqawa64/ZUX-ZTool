@@ -1,32 +1,33 @@
 package com.qimian233.ztool.settingactivity.setting;
 
 import android.app.AppOpsManager;
-import android.app.usage.UsageStats;
-import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -66,9 +67,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class SettingsDetailActivity extends AppCompatActivity {
 
@@ -83,6 +83,11 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private FloatingActionButton fabRestart;
     private MaterialSwitch switchFloatMandatory;
     private MaterialSwitch switchSplitScreenMandatory;
+    private static final int REQUEST_CODE_PICK_FONT = 1002;
+    private static final String FONT_BASE_PATH = "/data_mirror/data_ce/null/0/com.zui.homesettings/files/.ZFont/.localFont/";
+    private static final String TEMP_FONT_DIR = "temp_fonts";
+    private File currentSelectedFontFile;
+    private LoadingDialog fontImportDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -248,6 +253,17 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 }
             });
         }
+
+        // 设置字体导入点击监听
+        View importFontLayout = findViewById(R.id.import_font_layout);
+        if (importFontLayout != null) {
+            importFontLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startFontImportProcess();
+                }
+            });
+        }
     }
 
     // 启动悬浮窗
@@ -289,6 +305,15 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(this, "悬浮窗权限未授予", Toast.LENGTH_SHORT).show();
                 }
+            }
+        }
+
+        // 处理选择字体文件结果
+        if (requestCode == REQUEST_CODE_PICK_FONT && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                // 将选中的字体文件复制到临时目录
+                copyFontToTemp(uri);
             }
         }
     }
@@ -1179,6 +1204,515 @@ public class SettingsDetailActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
+    /**
+     * 开始字体导入流程
+     */
+    private void startFontImportProcess() {
+        // 拉起文件管理器选择TTF文件
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        // 创建文件类型过滤器，只显示TTF文件
+        String[] mimeTypes = {"font/ttf", "application/x-font-ttf", "application/octet-stream"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+
+        try {
+            startActivityForResult(Intent.createChooser(intent, "选择TTF字体文件"), REQUEST_CODE_PICK_FONT);
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(this, "未找到文件管理器", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 将字体文件复制到临时目录
+     */
+    private void copyFontToTemp(Uri uri) {
+        fontImportDialog = new LoadingDialog(this);
+        fontImportDialog.show("正在准备字体文件...");
+
+        new Thread(() -> {
+            try {
+                // 创建临时目录
+                File tempDir = new File(getFilesDir(), TEMP_FONT_DIR);
+                if (!tempDir.exists()) {
+                    tempDir.mkdirs();
+                }
+
+                // 获取原始文件名
+                String originalFileName = getFileName(uri);
+                if (originalFileName == null) {
+                    originalFileName = "unknown_font.ttf";
+                }
+
+                // 创建临时文件
+                File tempFile = new File(tempDir, "temp_font_" + System.currentTimeMillis() + ".ttf");
+
+                // 复制文件
+                try (InputStream inputStream = getContentResolver().openInputStream(uri);
+                     FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+
+                    if (inputStream != null) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
+
+                        currentSelectedFontFile = tempFile;
+
+                        // 在主线程显示输入对话框
+                        String finalOriginalFileName = originalFileName;
+                        runOnUiThread(() -> showFontInputDialog(finalOriginalFileName));
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    fontImportDialog.dismiss();
+                    Toast.makeText(SettingsDetailActivity.this, "文件复制失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示字体信息输入对话框
+     */
+    private void showFontInputDialog(String originalFileName) {
+        fontImportDialog.dismiss();
+
+        // 创建自定义布局
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_font_input, null);
+        EditText etFontName = dialogView.findViewById(R.id.et_font_name);
+        EditText etFontDescription = dialogView.findViewById(R.id.et_font_description);
+
+        // 设置默认描述
+        String defaultDescription = "自定义导入的字体" + originalFileName;
+        etFontDescription.setText(defaultDescription);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("输入字体信息")
+                .setView(dialogView)
+                .setPositiveButton("确认", (dialog, which) -> {
+                    String fontName = etFontName.getText().toString().trim();
+                    String fontDescription = etFontDescription.getText().toString().trim();
+
+                    if (fontName.isEmpty()) {
+                        Toast.makeText(this, "字体名称不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (fontDescription.isEmpty()) {
+                        Toast.makeText(this, "字体描述不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // 开始导入流程
+                    startFontImport(fontName, fontDescription, originalFileName);
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 开始字体导入
+     */
+    private void startFontImport(String fontName, String fontDescription, String originalFileName) {
+        fontImportDialog = new LoadingDialog(this);
+        fontImportDialog.show("正在导入字体...");
+
+        new Thread(() -> {
+            try {
+                // 步骤1: 生成随机文件夹名
+                fontImportDialog.updateMessage("正在创建字体目录...");
+                String randomFolderName = generateRandomFolderName();
+                String targetFolderPath = FONT_BASE_PATH + randomFolderName;
+
+                // 创建目标文件夹
+                createFolderWithRoot(targetFolderPath);
+
+                // 步骤2: 复制字体文件到系统目录
+                fontImportDialog.updateMessage("正在复制字体文件...");
+                String targetFontPath = targetFolderPath + "/font.ttf";
+                copyFileWithRoot(currentSelectedFontFile.getAbsolutePath(), targetFontPath);
+
+                // 步骤3: 创建字体元数据
+                fontImportDialog.updateMessage("正在创建字体元数据...");
+                String xmlContent = generateFontXml(fontName, fontDescription);
+                String xmlFilePath = targetFolderPath + "/font.xml";
+                createXmlFileWithRoot(xmlFilePath, xmlContent);
+
+                // 步骤4: 生成预览图片（使用临时文件）
+                fontImportDialog.updateMessage("正在生成预览图片...");
+                generatePreviewImages(targetFolderPath, currentSelectedFontFile.getAbsolutePath(), fontName);
+
+                // 步骤5: 设置正确的文件夹权限和所有者
+                fontImportDialog.updateMessage("正在设置文件夹权限...");
+                setFolderPermissions(targetFolderPath);
+
+                // 清理临时文件
+                cleanupTempFiles();
+
+                // 导入成功
+                runOnUiThread(() -> {
+                    fontImportDialog.dismiss();
+                    new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
+                            .setTitle("导入成功")
+                            .setMessage("字体已成功导入到系统字体库")
+                            .setPositiveButton("确定", null)
+                            .show();
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    fontImportDialog.dismiss();
+                    new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
+                            .setTitle("导入失败")
+                            .setMessage("字体导入失败: " + e.getMessage())
+                            .setPositiveButton("确定", null)
+                            .show();
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 设置文件夹权限和所有者
+     */
+    private void setFolderPermissions(String folderPath) throws Exception {
+        // 获取参考文件夹的所有者和组
+        String[] ownerGroup = getReferenceFolderOwnerAndGroup();
+        String owner = ownerGroup[0];
+        String group = ownerGroup[1];
+
+        // 设置文件夹所有者
+        String chownCommand = "chown -R " + owner + ":" + group + " " + folderPath;
+        executeRootCommand(chownCommand);
+
+        // 设置文件夹权限 (drwx------，对应700)
+        String chmodCommand = "chmod 700 " + folderPath;
+        executeRootCommand(chmodCommand);
+
+        // 设置文件夹内文件的权限 (rw-------，对应600)
+        String chmodFilesCommand = "chmod 600 " + folderPath + "/*";
+        executeRootCommand(chmodFilesCommand);
+    }
+
+
+    /**
+     * 生成随机文件夹名（6个字母）
+     */
+    private String generateRandomFolderName() {
+        String chars = "abcdefghijklmnopqrstuvwxyz";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 生成字体XML内容
+     */
+    private String generateFontXml(String fontName, String fontDescription) {
+        return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                "<ZFont>\n" +
+                "<name>" + fontName + "</name>\n" +
+                "<language>简体</language>\n" +
+                "<author>Import By ZTool</author>\n" +
+                "<abstract>" + fontDescription + "</abstract>\n" +
+                "</ZFont>";
+    }
+
+    /**
+     * 生成字体预览Bitmap（支持多行文本排版，自适应文本大小，透明背景）
+     */
+    private Bitmap generateFontPreviewBitmap(Typeface typeface, String text, int width, int height) {
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        // 设置透明背景
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+        Paint paint = new Paint();
+        paint.setTypeface(typeface);
+        paint.setColor(Color.BLACK);
+        paint.setAntiAlias(true);
+        paint.setTextAlign(Paint.Align.CENTER);
+
+        // 按换行符分割文本
+        String[] lines = text.split("\n");
+
+        // 动态计算文本大小
+        float textSize = calculateOptimalTextSize(paint, lines, width, height);
+        paint.setTextSize(textSize);
+
+        // 获取字体度量
+        Paint.FontMetrics fm = paint.getFontMetrics();
+        float lineHeight = fm.descent - fm.ascent;
+        float lineSpacing = lineHeight * 0.2f; // 行间距为字高的20%
+        float totalLineHeight = lineHeight + lineSpacing;
+
+        // 计算起始Y坐标（垂直居中）
+        float totalTextHeight = lines.length * totalLineHeight - lineSpacing;
+        float startY = (height - totalTextHeight) / 2f - fm.ascent;
+
+        // 绘制每一行文本
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim(); // 去除行首尾空格
+
+            // 处理缩进：如果行首有空格，进行特殊处理
+            float x = width / 2f;
+            if (line.startsWith("   ")) { // 三个空格表示缩进
+                // 对于有缩进的行，调整对齐方式为左对齐并添加缩进
+                paint.setTextAlign(Paint.Align.LEFT);
+                x = width * 0.1f; // 左侧缩进10%
+            } else if (line.equals("---")) {
+                // 分隔线特殊处理
+                paint.setTextAlign(Paint.Align.CENTER);
+                x = width / 2f;
+            } else {
+                paint.setTextAlign(Paint.Align.CENTER);
+                x = width / 2f;
+            }
+
+            // 绘制当前行
+            canvas.drawText(line, x, startY + i * totalLineHeight, paint);
+
+            // 重置对齐方式
+            paint.setTextAlign(Paint.Align.CENTER);
+        }
+
+        return bitmap;
+    }
+
+    /**
+     * 计算多行文本的最优字体大小
+     */
+    private float calculateOptimalTextSize(Paint paint, String[] lines, int maxWidth, int maxHeight) {
+        float minTextSize = 8f;
+        float maxTextSize = 200f;
+        float optimalTextSize = minTextSize;
+
+        // 获取字体度量
+        Paint.FontMetrics fm = paint.getFontMetrics();
+
+        // 二分查找最优字体大小
+        while (minTextSize <= maxTextSize) {
+            float midTextSize = (minTextSize + maxTextSize) / 2;
+            paint.setTextSize(midTextSize);
+
+            // 计算行高
+            float lineHeight = fm.descent - fm.ascent;
+            float lineSpacing = lineHeight * 0.2f;
+            float totalLineHeight = lineHeight + lineSpacing;
+
+            // 检查所有行是否都能在宽度内显示
+            boolean fitsWidth = true;
+            float maxLineWidth = 0;
+
+            for (String line : lines) {
+                String trimmedLine = line.trim();
+                float lineWidth = paint.measureText(trimmedLine);
+                maxLineWidth = Math.max(maxLineWidth, lineWidth);
+
+                // 对于有缩进的行，需要额外考虑缩进空间
+                if (trimmedLine.startsWith("   ")) {
+                    float availableWidth = maxWidth * 0.9f; // 缩进后可用宽度为90%
+                    if (lineWidth > availableWidth) {
+                        fitsWidth = false;
+                        break;
+                    }
+                } else {
+                    if (lineWidth > maxWidth * 0.95f) { // 普通行可用宽度为95%
+                        fitsWidth = false;
+                        break;
+                    }
+                }
+            }
+
+            // 检查总高度是否合适
+            float totalTextHeight = lines.length * totalLineHeight - lineSpacing;
+            boolean fitsHeight = totalTextHeight <= maxHeight * 0.9f;
+
+            if (fitsWidth && fitsHeight) {
+                optimalTextSize = midTextSize;
+                minTextSize = midTextSize + 1;
+            } else {
+                maxTextSize = midTextSize - 1;
+            }
+        }
+
+        return optimalTextSize;
+    }
+
+    /**
+     * 生成预览图片（更新后的方法，包含正确的预览文本）
+     */
+    private void generatePreviewImages(String targetFolderPath, String fontPath, String fontName) throws Exception {
+        // 创建临时Typeface
+        Typeface typeface = Typeface.createFromFile(fontPath);
+
+        // 生成缩略图 (249x57)
+        fontImportDialog.updateMessage("正在生成缩略图...");
+        Bitmap smallBitmap = generateFontPreviewBitmap(typeface, fontName, 249, 70);
+        String smallTempPath = saveBitmapToTemp(smallBitmap, "small_temp.png");
+        copyFileWithRoot(smallTempPath, targetFolderPath + "/small.png");
+
+        // 生成详细预览图 (948x945) - 使用正确排版的文本
+        String previewString = "有言\n\n" +
+                "   与恶龙缠斗过久，自身亦成为恶龙；\n" +
+                "   凝视深渊过久，深渊将回以凝视。\n\n" +
+                "           ---" +
+                "弗里德里希·威廉·尼采";
+
+        fontImportDialog.updateMessage("正在生成详细预览图...");
+        Bitmap previewBitmap = generateFontPreviewBitmap(typeface, previewString, 948, 945);
+        String previewTempPath = saveBitmapToTemp(previewBitmap, "preview_temp.png");
+        copyFileWithRoot(previewTempPath, targetFolderPath + "/preview.png");
+
+        // 回收Bitmap
+        if (!smallBitmap.isRecycled()) {
+            smallBitmap.recycle();
+        }
+        if (!previewBitmap.isRecycled()) {
+            previewBitmap.recycle();
+        }
+    }
+
+
+
+    /**
+     * 保存Bitmap到临时文件
+     */
+    private String saveBitmapToTemp(Bitmap bitmap, String fileName) throws Exception {
+        File tempDir = new File(getFilesDir(), TEMP_FONT_DIR);
+        if (!tempDir.exists()) {
+            tempDir.mkdirs();
+        }
+
+        File tempFile = new File(tempDir, fileName);
+        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+        }
+        return tempFile.getAbsolutePath();
+    }
+    /**
+     * 使用root权限创建文件夹
+     */
+    private void createFolderWithRoot(String path) throws Exception {
+        String command = "mkdir -p " + path;
+        executeRootCommand(command);
+    }
+
+    /**
+     * 使用root权限复制文件
+     */
+    private void copyFileWithRoot(String sourcePath, String targetPath) throws Exception {
+        String command = "cp \"" + sourcePath + "\" \"" + targetPath + "\"";
+        executeRootCommand(command);
+    }
+
+    /**
+     * 使用root权限创建XML文件
+     */
+    private void createXmlFileWithRoot(String filePath, String content) throws Exception {
+        // 先写入临时文件
+        File tempFile = new File(getFilesDir(), "temp_xml.xml");
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+            fos.write(content.getBytes("UTF-8"));
+        }
+
+        // 使用root权限复制到目标位置
+        copyFileWithRoot(tempFile.getAbsolutePath(), filePath);
+
+        // 删除临时文件
+        tempFile.delete();
+    }
+
+    /**
+     * 执行root命令
+     */
+    private void executeRootCommand(String command) throws Exception {
+        Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new Exception("Root命令执行失败，退出码: " + exitCode);
+        }
+    }
+
+    /**
+     * 获取文件名
+     */
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex >= 0) {
+                        result = cursor.getString(nameIndex);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 清理临时文件
+     */
+    private void cleanupTempFiles() {
+        try {
+            File tempDir = new File(getFilesDir(), TEMP_FONT_DIR);
+            if (tempDir.exists()) {
+                deleteRecursive(tempDir);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取参考文件夹的所有者和组信息
+     */
+    private String[] getReferenceFolderOwnerAndGroup() throws Exception {
+        String referenceFolder = FONT_BASE_PATH + "Aa-BPBDY";
+        String command = "ls -ld " + referenceFolder;
+
+        Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line = reader.readLine();
+        process.waitFor();
+
+        if (line != null) {
+            // 解析输出格式: drwx------ 2 u0_a96 u0_a96 3452 2025-11-06 16:29 /path/to/folder
+            String[] parts = line.split("\\s+");
+            if (parts.length >= 4) {
+                String owner = parts[2];
+                String group = parts[3];
+                return new String[]{owner, group};
+            }
+        }
+
+        throw new Exception("无法获取参考文件夹的权限信息");
+    }
+
+
 
     private void initRestartButton() {
         fabRestart = findViewById(R.id.fab_restart);
