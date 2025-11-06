@@ -37,7 +37,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     app:cardCornerRadius="16dp"
-                    app:cardElevation="1dp">
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                     <LinearLayout
                         android:id="@+id/card_statusbar_settings"
@@ -45,40 +46,59 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:background="?attr/colorSurfaceContainer"
-                        android:padding="16dp"
+                        android:padding="20dp"
                         android:clickable="true"
                         android:foreground="?attr/selectableItemBackground">
 
-                        <TextView
+                        <!-- 图标和标题水平布局 -->
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="状态栏设置"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="?attr/colorOnSurface"
-                            android:layout_marginBottom="8dp" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="12dp">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_status_bar"
+                                android:layout_marginEnd="12dp"
+                                app:tint="?attr/colorPrimary" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="状态栏设置"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface" />
+
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="自定义状态栏时钟、通知图标等设置"
                             android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_marginBottom="12dp" />
 
+                        <!-- 底部箭头指示器 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="end"
-                            android:layout_marginTop="8dp">
+                            android:gravity="end">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:text="查看"
                                 android:textSize="12sp"
-                                android:textColor="?attr/colorOnBackground"
+                                android:textColor="?attr/colorPrimary"
                                 android:drawableEnd="@drawable/ic_arrow_forward"
-                                android:drawablePadding="4dp" />
+                                android:drawablePadding="6dp" />
 
                         </LinearLayout>
 
@@ -92,7 +112,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     app:cardCornerRadius="16dp"
-                    app:cardElevation="1dp">
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                     <LinearLayout
                         android:id="@+id/card_lockscreen_settings"
@@ -100,46 +121,65 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:background="?attr/colorSurfaceContainer"
-                        android:padding="16dp"
+                        android:padding="20dp"
                         android:clickable="true"
                         android:foreground="?attr/selectableItemBackground">
 
-                        <TextView
+                        <!-- 图标和标题水平布局 -->
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="锁屏设置"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="?attr/colorOnSurface"
-                            android:layout_marginBottom="8dp" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="12dp">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_lock"
+                                android:layout_marginEnd="12dp" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="锁屏设置"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface" />
+
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="锁屏一言、充电功率显示等设置"
                             android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_marginBottom="12dp" />
 
+                        <!-- 底部箭头指示器 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="end"
-                            android:layout_marginTop="8dp">
+                            android:gravity="end">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:text="查看"
                                 android:textSize="12sp"
-                                android:textColor="?attr/colorOnBackground"
+                                android:textColor="?attr/colorPrimary"
                                 android:drawableEnd="@drawable/ic_arrow_forward"
-                                android:drawablePadding="4dp" />
+                                android:drawablePadding="6dp" />
 
                         </LinearLayout>
 
                     </LinearLayout>
 
                 </androidx.cardview.widget.CardView>
+
 
                 <!-- AOD 功能卡片保持不变 -->
                 <androidx.cardview.widget.CardView
