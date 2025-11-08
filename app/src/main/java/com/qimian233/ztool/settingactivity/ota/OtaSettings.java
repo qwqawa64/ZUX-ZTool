@@ -317,11 +317,10 @@ public class OtaSettings extends AppCompatActivity {
         }
 
         try {
-            Process process = Runtime.getRuntime().exec("su -c am force-stop " + appPackageName);
-            process.waitFor(); // 等待命令执行完成
+            Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
+            process.waitFor();
         } catch (Exception e) {
-            e.printStackTrace();
-            android.widget.Toast.makeText(this, "强制停止失败", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
         }
     }
 

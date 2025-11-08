@@ -5,6 +5,7 @@ import android.widget.CompoundButton;
 import android.content.DialogInterface;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -110,11 +111,10 @@ public class GameToolSettngs extends AppCompatActivity {
         }
 
         try {
-            Process process = Runtime.getRuntime().exec("su -c am force-stop " + appPackageName);
-            process.waitFor(); // 等待命令执行完成
+            Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
+            process.waitFor();
         } catch (Exception e) {
-            e.printStackTrace();
-            android.widget.Toast.makeText(this, "强制停止失败", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -150,8 +150,7 @@ public class systemUISettings extends AppCompatActivity {
             Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
             process.waitFor();
         } catch (Exception e) {
-            e.printStackTrace();
-            android.widget.Toast.makeText(this, "强制停止失败", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
         }
     }
 
