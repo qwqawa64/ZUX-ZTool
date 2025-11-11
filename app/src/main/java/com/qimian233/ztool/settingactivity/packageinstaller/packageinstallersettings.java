@@ -48,6 +48,7 @@ public class packageinstallersettings extends AppCompatActivity {
     private MaterialSwitch switchOnlyAllow;
     private MaterialSwitch switchSkipWarnPage;
     private MaterialSwitch switchDisableInstallerAD;
+    private MaterialSwitch switchEnableRowStyle;
     private LinearLayout layoutOtaInfo;
     private FloatingActionButton fabRestart;
 
@@ -116,6 +117,15 @@ public class packageinstallersettings extends AppCompatActivity {
             }
         });
 
+        // 启用原生安装器样式
+        switchEnableRowStyle = findViewById(R.id.switch_enable_rowStyle);
+        switchEnableRowStyle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("packageInstallerStyle_hook",isChecked);
+            }
+        });
+
     }
 
     private void loadSettings() {
@@ -131,6 +141,9 @@ public class packageinstallersettings extends AppCompatActivity {
         // 加载禁用安装器广告设置
         boolean disable_installerAD = mPrefsUtils.loadBooleanSetting("disable_installerAD", false);
         switchDisableInstallerAD.setChecked(disable_installerAD);
+        // 加载启用原生安装器样式设置
+        boolean packageInstallerStyle_hook = mPrefsUtils.loadBooleanSetting("packageInstallerStyle_hook", false);
+        switchEnableRowStyle.setChecked(packageInstallerStyle_hook);
     }
 
     private void saveSettings(String moduleName,Boolean newValue) {

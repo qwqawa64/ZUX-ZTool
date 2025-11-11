@@ -58,7 +58,7 @@ public class Hook_Skip_WarnPage extends BaseHookModule {
                                         }
                                     }
                                 }
-                            }, 10); // 立刻执行
+                            }, 50); // 立刻执行
                         }
                     });
 

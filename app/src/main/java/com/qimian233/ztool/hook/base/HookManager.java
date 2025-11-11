@@ -9,6 +9,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
+import com.qimian233.ztool.hook.modules.packageinstaller.packageInstallerStyleHook;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
@@ -75,6 +76,8 @@ public class HookManager {
         registerHookModule(new NotificationIconHook());
         // 注册模块：自定义控制中心月份时钟
         registerHookModule(new CustomControlCenterDate());
+        // 注册模块：启用原生安装器
+        registerHookModule(new packageInstallerStyleHook());
 
         initialized = true;
     }
