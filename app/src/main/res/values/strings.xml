@@ -100,4 +100,7 @@
     <string name="import_font_summary">支持ttf格式，导入字体到系统的字体管理器</string>
     <string name="Enable_rowStyle_title">启用原生安装器</string>
     <string name="Enable_rowStyle_summary">启用原生安装器样式</string>
+    <string name="Dolby_Title">杜比音效</string>
+    <string name="AllowDisableDolby">允许关闭杜比</string>
+    <string name="AllowDisableDolby_summary">允许关闭杜比全景声，但是可能导致音量变小</string>
 </resources>

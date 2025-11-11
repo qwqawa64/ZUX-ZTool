@@ -83,6 +83,8 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private FloatingActionButton fabRestart;
     private MaterialSwitch switchFloatMandatory;
     private MaterialSwitch switchSplitScreenMandatory;
+    private MaterialSwitch switchAllowDisableDolby;
+
     private static final int REQUEST_CODE_PICK_FONT = 1002;
     private static final String FONT_BASE_PATH = "/data_mirror/data_ce/null/0/com.zui.homesettings/files/.ZFont/.localFont/";
     private static final String TEMP_FONT_DIR = "temp_fonts";
@@ -264,6 +266,15 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 }
             });
         }
+
+        // 设置杜比音效按钮点击监听
+        switchAllowDisableDolby = findViewById(R.id.switch_AllowDolbyDisable);
+        switchAllowDisableDolby.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
+                saveSettings("allow_display_dolby",isChecked);
+            }
+        });
     }
 
     // 启动悬浮窗
@@ -359,6 +370,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
         // 加载强制分屏适配开关设置
         boolean SplitScreenMandatory = mPrefsUtils.loadBooleanSetting("Split_Screen_mandatory", false);
         switchSplitScreenMandatory.setChecked(SplitScreenMandatory);
+        // 加载允许显示杜比音效设置
+        boolean allowDisplayDolby = mPrefsUtils.loadBooleanSetting("allow_display_dolby", false);
+        switchAllowDisableDolby.setChecked(allowDisplayDolby);
     }
 
     /**

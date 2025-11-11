@@ -10,6 +10,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerA
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
 import com.qimian233.ztool.hook.modules.packageinstaller.packageInstallerStyleHook;
+import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
@@ -78,8 +79,8 @@ public class HookManager {
         registerHookModule(new CustomControlCenterDate());
         // 注册模块：启用原生安装器
         registerHookModule(new packageInstallerStyleHook());
-
-        initialized = true;
+        // 注册模块：允许关闭Dolby
+        registerHookModule(new AllowDisplayDolbyHook());
     }
 
     /**
