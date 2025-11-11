@@ -45,7 +45,7 @@ public class NotificationIconHook extends BaseHookModule {
 
         try {
             // Hook 1: 修改资源获取的最大图标数量
-            hookResourceInteger(lpparam);
+//            hookResourceInteger(lpparam);
 
             // Hook 2: 修改 NotificationIconContainerStatusBarViewModel 的 maxIcons 字段
             hookViewModelConstructor(lpparam);
