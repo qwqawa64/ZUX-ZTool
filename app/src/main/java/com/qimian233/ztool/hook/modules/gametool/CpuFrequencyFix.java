@@ -203,7 +203,7 @@ public class CpuFrequencyFix extends BaseHookModule {
         }
 
         log("CpuFrequencyFix: Using default current freq: 2000000");
-        return 2000000; // 默认2.0GHz
+        return 0; // 默认0GHz
     }
 
     /**
@@ -232,7 +232,7 @@ public class CpuFrequencyFix extends BaseHookModule {
         }
 
         log("CpuFrequencyFix: Using default max freq: 3000000");
-        return 3000000; // 默认3.0GHz
+        return 0; // 默认0GHz
     }
 
     /**
