@@ -86,6 +86,7 @@
     <string name="LockScreenSummary">锁屏一言、充电功率显示等设置</string>
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
+<<<<<<< Updated upstream
     <string name="controlCenterTitle">控制中心设置</string>
     <string name="controlCenterSummary">自定义控制中心时钟样式</string>
     <string name="CustomDateSettingTitle">自定义日期格式</string>
@@ -98,5 +99,10 @@
     <string name="font_settings_title">字体</string>
     <string name="import_font_title">导入字体</string>
     <string name="import_font_summary">支持ttf格式，导入字体到系统的字体管理器</string>
+=======
+    <string name="nocharginganimation_enable_title">关闭充电动画</string>
+    <string name="nocharginganimation_enable_summary">停用充电动画显示功能</string>
+    <string name="nocharginganimation_title">充电动画</string>
+>>>>>>> Stashed changes
 
 </resources>
