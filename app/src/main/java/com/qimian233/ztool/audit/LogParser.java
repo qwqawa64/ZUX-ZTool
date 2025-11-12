@@ -102,6 +102,8 @@ public class LogParser {
                 Pattern.compile("\\[Split_Screen_mandatory\\]\\s*(.*)"));
         MODULE_PATTERNS.put("remove_blacklist",
                 Pattern.compile("\\[remove_blacklist\\]\\s*(.*)"));
+        MODULE_PATTERNS.put("keep_rotation",
+                Pattern.compile("\\[keep_rotation\\]\\s*(.*)"));
 
         // 模块显示名称映射
         // 系统UI相关
@@ -134,6 +136,7 @@ public class LogParser {
         MODULE_NAMES.put("PermissionControllerHook", "权限控制器");
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
+        MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
     }
 
     /**
@@ -493,7 +496,7 @@ public class LogParser {
         // 设置相关
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
-                "Split_Screen_mandatory", "remove_blacklist"
+                "Split_Screen_mandatory", "remove_blacklist", "keep_rotation"
         ));
 
         return categories;
