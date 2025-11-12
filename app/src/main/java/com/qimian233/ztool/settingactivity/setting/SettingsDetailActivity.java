@@ -277,6 +277,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
         });
 
+        // 设置原生权限控制器按钮点击监听
         switchAllowNativePermissionController = findViewById(R.id.switch_AllowNativePermissionController);
         switchAllowNativePermissionController.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

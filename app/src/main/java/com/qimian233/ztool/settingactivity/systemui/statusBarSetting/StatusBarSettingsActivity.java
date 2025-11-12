@@ -52,7 +52,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
     // 样式相关的视图
     private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
-    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchNativeNotificationIcon;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
     private View viewColorPreview;
@@ -119,6 +119,14 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
                     .setMessage("自定义时钟格式已保存")
                     .setPositiveButton("确定", null)
                     .show();
+        });
+
+        // 设置原生通知图标开关事件
+        switchNativeNotificationIcon = findViewById(R.id.switch_NativeNotificationIcon);
+        switchNativeNotificationIcon.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // 保存开关状态
+            saveSettings("NativeNotificationIcon",isChecked);
+            //Log.d("NativeNotificationIcon", "Switch state saved: " + isChecked);
         });
 
         StatusBar_notifyNumSize = getNotifyNumSizeShared();
@@ -364,6 +372,9 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         boolean customClockEnabled = mPrefsUtils.loadBooleanSetting("Custom_StatusBarClock", false);
         switchCustomClock.setChecked(customClockEnabled);
         llCustomClock.setVisibility(customClockEnabled ? VISIBLE : View.GONE);
+
+        boolean isNativeIconEnabled = mPrefsUtils.loadBooleanSetting("NativeNotificationIcon", false);
+        switchNativeNotificationIcon.setChecked(isNativeIconEnabled);
 
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
