@@ -17,6 +17,7 @@ import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
+import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
@@ -87,6 +88,8 @@ public class HookManager {
         registerHookModule(new AllowDisplayDolbyHook());
         // 注册模块：权限控制器样式Hook
         registerHookModule(new PermissionControllerHook());
+        // 注册模块，使用原生通知图标
+        registerHookModule(new NativeNotificationIcon());
 
         initialized = true;
     }
