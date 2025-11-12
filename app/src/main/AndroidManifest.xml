@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" /> <!-- 悬浮窗权限 -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- 使用情况统计权限 -->
+    <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -28,6 +29,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.ZTool">
+        <service android:name=".service.LogCollectorService"
+            android:enabled="true"
+            android:exported="false" />
         <activity
             android:name=".settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity"
             android:exported="false" />
