@@ -98,6 +98,9 @@
     <string name="font_settings_title">字体</string>
     <string name="import_font_title">导入字体</string>
     <string name="import_font_summary">支持ttf格式，导入字体到系统的字体管理器</string>
+    <string name="nocharginganimation_enable_title">关闭充电动画</string>
+    <string name="nocharginganimation_enable_summary">停用充电动画显示功能</string>
+    <string name="nocharginganimation_title">充电动画</string>
     <string name="Enable_rowStyle_title">启用原生安装器</string>
     <string name="Enable_rowStyle_summary">启用原生安装器样式</string>
     <string name="Dolby_Title">杜比音效</string>

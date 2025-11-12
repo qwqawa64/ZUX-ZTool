@@ -16,6 +16,7 @@ import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
+import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
@@ -77,10 +78,13 @@ public class HookManager {
         registerHookModule(new NotificationIconHook());
         // 注册模块：自定义控制中心月份时钟
         registerHookModule(new CustomControlCenterDate());
+        // 注册模块：移除充电动画
+        registerHookModule(new NoChargeAnimation());
         // 注册模块：启用原生安装器
         registerHookModule(new packageInstallerStyleHook());
         // 注册模块：允许关闭Dolby
         registerHookModule(new AllowDisplayDolbyHook());
+        initialized = true;
     }
 
     /**

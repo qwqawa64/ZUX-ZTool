@@ -17,6 +17,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
+import com.qimian233.ztool.config.ModuleConfig;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsActivity;
@@ -31,6 +32,7 @@ public class systemUISettings extends AppCompatActivity {
     private ModulePreferencesUtils mPrefsUtils;
     private FloatingActionButton fabRestart;
     private MaterialSwitch switchEnableAod;
+    private MaterialSwitch switchChargingAnimation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,11 +108,23 @@ public class systemUISettings extends AppCompatActivity {
                 }
             }).start();
         });
+
+        // 充电动画设置
+        switchChargingAnimation = findViewById(R.id.switch_chargingAnimation);
+        switchChargingAnimation.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // 保存开关状态到SharedPreferences
+            mPrefsUtils.saveBooleanSetting("No_ChargeAnimation", isChecked);
+            Log.d("ChargingAnimation", "Switch state saved: " + isChecked);
+        });
     }
 
     private void loadSettings() {
         boolean aodEnabled = isAodEnabled();
         switchEnableAod.setChecked(aodEnabled);
+
+        // 加载充电动画开关状态
+        boolean chargingAnimationEnabled = mPrefsUtils.loadBooleanSetting("No_ChargeAnimation", false);
+        switchChargingAnimation.setChecked(chargingAnimationEnabled);
     }
 
     public boolean isAodEnabled() {
