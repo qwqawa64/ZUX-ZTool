@@ -9,6 +9,10 @@
         android:icon="@drawable/ic_features"
     android:title="功能" />
     <item
+        android:id="@+id/auditFragment"
+        android:icon="@drawable/ic_audit"
+        android:title="日志" />
+    <item
         android:id="@+id/settingsFragment"
         android:icon="@drawable/ic_settings"
     android:title="设置" />

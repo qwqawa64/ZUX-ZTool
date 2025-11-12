@@ -18,6 +18,12 @@
         tools:layout="@layout/fragment_features" />
 
     <fragment
+        android:id="@+id/auditFragment"
+        android:name="com.qimian233.ztool.AuditFragment"
+        android:label="日志审计"
+        tools:layout="@layout/fragment_audit" />
+
+    <fragment
         android:id="@+id/settingsFragment"
         android:name="com.qimian233.ztool.SettingsFragment"
         android:label="设置"
