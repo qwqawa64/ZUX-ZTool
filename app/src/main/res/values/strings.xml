@@ -127,4 +127,7 @@
     <string name="notification_icon_limit_summary">设置状态栏显示的通知图标最大数量</string>
     <string name="notification_icon_native_title">使用原生通知图标</string>
     <string name="notification_icon_native_summary">对未适配APP无效</string>
+    <string name="keep_rotation_title">屏幕方向</string>
+    <string name="keep_rotation_enable_title">保持屏幕方向</string>
+    <string name="keep_rotation_enable_summary">重启后保持上一次关机前的屏幕方向，需重启系统</string>
 </resources>

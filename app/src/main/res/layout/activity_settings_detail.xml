@@ -518,7 +518,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp">
+                    app:cardElevation="0dp"/>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -527,7 +527,7 @@
                         android:background="?attr/colorSurfaceContainer"
                         android:padding="16dp">
 
-                        <!-- 大标题：杜比 -->
+                        <!-- 大标题：权限控制器 -->
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -537,7 +537,7 @@
                             android:textColor="?attr/colorOnSurface"
                             android:layout_marginBottom="16dp" />
 
-                        <!-- Dolby选项 - 整个项目可点击，带有涟漪效果 -->
+                        <!-- 权限控制器选项 -->
                         <LinearLayout
                             android:id="@+id/NativePermissionControllerLinearLayout"
                             android:layout_width="match_parent"
@@ -570,13 +570,84 @@
 
                             </LinearLayout>
 
-                            <!-- 允许关闭杜比 -->
+                            <!-- 允许使用原生权限管理器 -->
                             <com.google.android.material.materialswitch.MaterialSwitch
                                 android:id="@+id/switch_AllowNativePermissionController"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content" />
 
                         </LinearLayout>
+
+
+
+
+                    </LinearLayout>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="?attr/colorSurfaceContainer"
+                        android:padding="16dp">
+
+                        <!-- 大标题：屏幕方向 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/keep_rotation_title"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginBottom="16dp" />
+
+                        <!-- 保持屏幕方向选项 -->
+                        <LinearLayout
+                            android:id="@+id/keeprotationLinearLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/keep_rotation_enable_title"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/keep_rotation_enable_summary"
+                                    android:textSize="12sp"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:layout_marginTop="4dp" />
+
+                            </LinearLayout>
+
+                            <!-- 允许使用原生权限管理器 -->
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/switch_keep_rotation"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
 
 
 

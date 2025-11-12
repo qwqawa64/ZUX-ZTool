@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.otherhook;
+package com.qimian233.ztool.hook.modules.setting;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 

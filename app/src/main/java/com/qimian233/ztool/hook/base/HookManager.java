@@ -5,7 +5,7 @@ import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
-import com.qimian233.ztool.hook.modules.otherhook.KeepRotation;
+import com.qimian233.ztool.hook.modules.setting.KeepRotation;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
