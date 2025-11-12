@@ -13,7 +13,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorSurface"
         android:titleTextColor="?attr/colorOnPrimary"
-        app:title="状态栏设置" />
+        app:title="@string/status_bar_settings_title" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -45,7 +45,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="状态栏时钟设置"
+                        android:text="@string/status_bar_clock_settings_title"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface"
@@ -66,14 +66,14 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="显示秒数"
+                                android:text="@string/display_seconds_title"
                                 android:textSize="16sp"
                                 android:textColor="?attr/colorOnSurface" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="在状态栏时钟中显示秒数"
+                                android:text="@string/display_seconds_summary"
                                 android:textSize="12sp"
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:layout_marginTop="4dp" />
@@ -109,7 +109,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="自定义时钟格式"
+                                    android:text="@string/custom_clock_title"
                                     android:textSize="16sp"
                                     android:textColor="?attr/colorOnSurface" />
 
@@ -119,7 +119,7 @@
                                     android:layout_marginStart="8dp"
                                     android:id="@+id/info_img"
                                     android:src="@drawable/ic_info"
-                                    android:contentDescription="提示"
+                                    android:contentDescription="@string/tooltip_content_description"
                                     app:tint="?attr/colorOnSurfaceVariant" />
 
                             </LinearLayout>
@@ -127,7 +127,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="自定义状态栏时钟的显示格式"
+                                android:text="@string/custom_clock_summary"
                                 android:textSize="12sp"
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:layout_marginTop="4dp" />
@@ -162,7 +162,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="输入时钟格式"
+                                android:hint="@string/clock_format_hint"
                                 android:textSize="14sp"
                                 android:inputType="text" />
 
@@ -170,7 +170,7 @@
                                 android:id="@+id/button_save_clock_format"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="保存"
+                                android:text="@string/save"
                                 android:layout_marginStart="16dp"
                                 style="?attr/materialButtonOutlinedStyle" />
 
@@ -184,7 +184,7 @@
                             android:layout_marginTop="8dp"
                             android:textSize="14sp"
                             android:textColor="?attr/colorOnSurfaceVariant"
-                            android:text="预览: 当前时间" />
+                            android:text="@string/clock_preview_default" />
 
                         <!-- 字体大小样式选项 -->
                         <LinearLayout
@@ -209,7 +209,7 @@
                                     <TextView
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="字体大小"
+                                        android:text="@string/text_size_title"
                                         android:textSize="16sp"
                                         android:textColor="?attr/colorOnSurface" />
 
@@ -263,7 +263,7 @@
                                     <TextView
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="字间距"
+                                        android:text="@string/letter_spacing_title"
                                         android:textSize="16sp"
                                         android:textColor="?attr/colorOnSurface" />
 
@@ -318,7 +318,7 @@
                                     <TextView
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="字体颜色"
+                                        android:text="@string/text_color_title"
                                         android:textSize="16sp"
                                         android:textColor="?attr/colorOnSurface" />
 
@@ -363,7 +363,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="选择颜色"
+                                    android:text="@string/pick_color_button"
                                     style="?attr/materialButtonOutlinedStyle" />
 
                             </LinearLayout>
@@ -389,14 +389,14 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="粗体显示"
+                                    android:text="@string/text_bold_title"
                                     android:textSize="16sp"
                                     android:textColor="?attr/colorOnSurface" />
 
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="启用时钟文字的粗体显示效果"
+                                    android:text="@string/text_bold_summary"
                                     android:textSize="12sp"
                                     android:textColor="?attr/colorOnSurfaceVariant"
                                     android:layout_marginTop="4dp" />
@@ -434,7 +434,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="状态栏通知设置"
+                        android:text="@string/status_bar_notification_settings_title"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface"
@@ -455,14 +455,14 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="通知图标数量限制"
+                                android:text="@string/notification_icon_limit_title"
                                 android:textSize="16sp"
                                 android:textColor="?attr/colorOnSurface" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="设置状态栏显示的通知图标最大数量"
+                                android:text="@string/notification_icon_limit_summary"
                                 android:textSize="12sp"
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:layout_marginTop="4dp" />
@@ -471,6 +471,42 @@
 
                         <Spinner
                             android:id="@+id/spinner_notifyNumSize"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginTop="4dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/notification_icon_native_title"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="16sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/notification_icon_native_summary"
+                                android:textSize="12sp"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:layout_marginTop="4dp" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_NativeNotificationIcon"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
 

@@ -87,7 +87,7 @@
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="controlCenterTitle">控制中心设置</string>
-    <string name="controlCenterSummary">自定义控制中心时钟样式</string>
+    <string name="controlCenterSummary">自定义控制中心样式</string>
     <string name="CustomDateSettingTitle">自定义日期格式</string>
     <string name="CustomDateSettingSummary">自定义控制中心时间的显示格式</string>
     <string name="ControllerDateFormate">输入时间格式</string>
@@ -109,4 +109,22 @@
     <string name="NativePermissionController_Title">权限控制器</string>
     <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
     <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器</string>
+    <string name="status_bar_settings_title">状态栏设置</string>
+    <string name="status_bar_clock_settings_title">状态栏时钟设置</string>
+    <string name="display_seconds_title">显示秒数</string>
+    <string name="display_seconds_summary">在状态栏时钟中显示秒数</string>
+    <string name="custom_clock_format_title">自定义时钟格式</string>
+    <string name="custom_clock_format_summary">自定义状态栏时钟的显示格式</string>
+    <string name="clock_preview_default">预览: 当前时间</string>
+    <string name="text_size_title">字体大小</string>
+    <string name="letter_spacing_title">字间距</string>
+    <string name="text_color_title">字体颜色</string>
+    <string name="pick_color_button">选择颜色</string>
+    <string name="text_bold_title">粗体显示</string>
+    <string name="text_bold_summary">启用时钟文字的粗体显示效果</string>
+    <string name="status_bar_notification_settings_title">状态栏通知设置</string>
+    <string name="notification_icon_limit_title">通知图标数量限制</string>
+    <string name="notification_icon_limit_summary">设置状态栏显示的通知图标最大数量</string>
+    <string name="notification_icon_native_title">使用原生通知图标</string>
+    <string name="notification_icon_native_summary">对未适配APP无效</string>
 </resources>
