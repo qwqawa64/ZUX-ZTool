@@ -69,10 +69,11 @@ public abstract class BaseHookModule {
     }
 
     protected void log(String message) {
-        Log.d(TAG, "[" + getModuleName() + "] " + message);
+        // 使用统一的标签，便于日志收集服务过滤
+        android.util.Log.i("ZToolXposedModule", "[" + getModuleName() + "] " + message);
     }
 
     protected void logError(String message, Throwable t) {
-        Log.e(TAG, "[" + getModuleName() + "] " + message, t);
+        android.util.Log.e("ZToolXposedModule", "[" + getModuleName() + "] " + message, t);
     }
 }
