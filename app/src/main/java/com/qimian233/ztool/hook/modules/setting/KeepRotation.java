@@ -13,7 +13,7 @@ public class KeepRotation extends BaseHookModule {
     public String[] getTargetPackages() { return new String[]{TARGET_PACKAGE};}
 
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        log("[keep_rotation] Module initialized.");
+        log("[keep_rotation] Loading module keep_rotation.");
         if ("android".equals(lpparam.processName)) {
             log("[keep_rotation] Hooking DisplayRotation.isRotationCts");
             try{

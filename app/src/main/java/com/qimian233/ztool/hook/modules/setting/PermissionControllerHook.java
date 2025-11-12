@@ -33,12 +33,21 @@ public class PermissionControllerHook extends BaseHookModule {
 
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (!isEnabled()) return;
-        if ("com.android.permissioncontroller".equals(lpparam.packageName)) {
-            handleLoadPermissionController(lpparam);
-        } else if ("com.android.settings".equals(lpparam.packageName)) {
-            new SettingsHook().handleLoadSettings(lpparam);
-        } else if ("com.zui.safecenter".equals(lpparam.packageName)) {
-            handleLoadSafeCenter(lpparam);
+        log("[PermissionControllerHook] Loading module PermissionControllerHook.");
+        try {
+            if ("com.android.permissioncontroller".equals(lpparam.packageName)) {
+                log("[PermissionControllerHook] com.android.permissioncontroller detected. Hooking...");
+                handleLoadPermissionController(lpparam);
+            } else if ("com.android.settings".equals(lpparam.packageName)) {
+                log("[PermissionControllerHook] com.android.settings detected. Hooking...");
+                new SettingsHook().handleLoadSettings(lpparam);
+            } else if ("com.zui.safecenter".equals(lpparam.packageName)) {
+                log("[PermissionControllerHook] com.zui.safecenter detected. Hooking...");
+                handleLoadSafeCenter(lpparam);
+            }
+            log("[PermissionControllerHook] Hook is successful.");
+        }catch (Exception e) {
+            logError("[PermissionControllerHook] Error hooking", e);
         }
     }
 
