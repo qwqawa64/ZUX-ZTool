@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- 筛选工具栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="?android:attr/colorBackground"
+        android:elevation="0dp"
+        android:padding="8dp"
+        android:layout_marginTop="16dp">
+
+        <!-- 第一行：主要筛选 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- 类别筛选 -->
+            <Spinner
+                android:id="@+id/spinner_category"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp" />
+
+            <!-- 模块筛选 -->
+            <Spinner
+                android:id="@+id/spinner_module"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp" />
+
+            <!-- 级别筛选 -->
+            <Spinner
+                android:id="@+id/spinner_level"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8" />
+
+        </LinearLayout>
+
+        <!-- 第二行：搜索和按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <EditText
+                android:id="@+id/et_search"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="搜索日志..."
+                android:singleLine="true"
+                android:imeOptions="actionSearch" />
+
+            <Button
+                android:id="@+id/btn_refresh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="刷新" />
+
+            <Button
+                android:id="@+id/btn_stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="统计" />
+
+        </LinearLayout>
+
+        <!-- 第三行：高级筛选 -->
+        <LinearLayout
+            android:id="@+id/layout_advanced_filters"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <CheckBox
+                android:id="@+id/cb_show_errors"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="仅错误" />
+
+            <CheckBox
+                android:id="@+id/cb_show_success"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="仅成功" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 统计信息 -->
+    <TextView
+        android:id="@+id/tv_stats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:padding="8dp"
+        android:background="?android:attr/colorBackground"
+        android:text="总计: 0 条, 显示: 0 条"
+        android:textSize="12sp" />
+
+    <!-- 加载进度 -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <!-- 空状态 -->
+    <TextView
+        android:id="@+id/tv_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="暂无日志数据"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+    <!-- 日志列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_logs"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>
