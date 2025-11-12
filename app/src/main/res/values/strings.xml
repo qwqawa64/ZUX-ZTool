@@ -106,4 +106,7 @@
     <string name="Dolby_Title">杜比音效</string>
     <string name="AllowDisableDolby">允许关闭杜比</string>
     <string name="AllowDisableDolby_summary">允许关闭杜比全景声，但是可能导致音量变小</string>
+    <string name="NativePermissionController_Title">权限控制器</string>
+    <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
+    <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器</string>
 </resources>

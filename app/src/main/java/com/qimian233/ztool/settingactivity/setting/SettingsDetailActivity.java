@@ -84,6 +84,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private MaterialSwitch switchFloatMandatory;
     private MaterialSwitch switchSplitScreenMandatory;
     private MaterialSwitch switchAllowDisableDolby;
+    private  MaterialSwitch switchAllowNativePermissionController;
 
     private static final int REQUEST_CODE_PICK_FONT = 1002;
     private static final String FONT_BASE_PATH = "/data_mirror/data_ce/null/0/com.zui.homesettings/files/.ZFont/.localFont/";
@@ -275,6 +276,14 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 saveSettings("allow_display_dolby",isChecked);
             }
         });
+
+        switchAllowNativePermissionController = findViewById(R.id.switch_AllowNativePermissionController);
+        switchAllowNativePermissionController.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
+                saveSettings("PermissionControllerHook",isChecked);
+            }
+        });
     }
 
     // 启动悬浮窗
@@ -373,6 +382,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
         // 加载允许显示杜比音效设置
         boolean allowDisplayDolby = mPrefsUtils.loadBooleanSetting("allow_display_dolby", false);
         switchAllowDisableDolby.setChecked(allowDisplayDolby);
+        // 加载原生权限控制器设置
+        boolean useNativePMController = mPrefsUtils.loadBooleanSetting("PermissionControllerHook", false);
+        switchAllowNativePermissionController.setChecked(useNativePMController);
     }
 
     /**
@@ -1736,7 +1748,8 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
                 .setTitle("重启XP模块作用域")
-                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + " 的进程。")
+                // 尽量不破坏原有的Intent，临时使用硬编码，后续需要重构这部分逻辑
+                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + ", com.android.permissioncontroller" + ", com.zui.safecenter" + " 的进程。")
                 .setPositiveButton("确定", (dialog, which) -> forceStopApp())
                 .setNegativeButton("取消", null)
                 .show();
@@ -1748,8 +1761,14 @@ public class SettingsDetailActivity extends AppCompatActivity {
         }
 
         try {
+            // 尽量不破坏原有的Intent，临时使用硬编码，后续需要重构这部分逻辑
             Process process = Runtime.getRuntime().exec("su -c am force-stop " + appPackageName);
             process.waitFor(); // 等待命令执行完成
+            for (String mystring : new String[]{"com.android.permissioncontroller", "com.zui.safecenter"}) {
+                process = Runtime.getRuntime().exec("su -c am force-stop " + mystring);
+                process.waitFor(); // 等待命令执行完成
+            }
+
         } catch (Exception e) {
             Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
         }

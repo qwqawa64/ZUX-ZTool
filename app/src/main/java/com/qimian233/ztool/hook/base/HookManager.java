@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermiss
 import com.qimian233.ztool.hook.modules.packageinstaller.packageInstallerStyleHook;
 import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
+import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
@@ -84,6 +85,9 @@ public class HookManager {
         registerHookModule(new packageInstallerStyleHook());
         // 注册模块：允许关闭Dolby
         registerHookModule(new AllowDisplayDolbyHook());
+        // 注册模块：权限控制器样式Hook
+        registerHookModule(new PermissionControllerHook());
+
         initialized = true;
     }
 
