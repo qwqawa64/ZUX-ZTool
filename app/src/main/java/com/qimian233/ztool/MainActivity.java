@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -18,8 +19,10 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.color.DynamicColors;
+import com.qimian233.ztool.service.LogServiceManager;
 
-public class MainActivity extends AppCompatActivity implements HomeFragment.EnvironmentStateListener {
+public class MainActivity extends AppCompatActivity implements HomeFragment.EnvironmentStateListener,
+        LogServiceManager.ServiceStatusListener {
 
     private BottomNavigationView bottomNav;
     private NavController navController;
@@ -46,6 +49,9 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         setupSystemBars();
 
         setContentView(R.layout.activity_main);
+
+        // 设置服务状态监听器
+        LogServiceManager.setServiceStatusListener(this);
 
         // 初始化底部导航栏
         bottomNav = findViewById(R.id.bottom_navigation);
@@ -77,6 +83,9 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         if (isEnvironmentReady && currentDestinationId != R.id.homeFragment) {
             navigateToSavedDestination();
         }
+
+        // 应用启动时尝试重启日志服务
+        LogServiceManager.restartServiceIfNeeded(this);
     }
 
     @Override
@@ -85,6 +94,37 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         // 保存当前目的地和环境状态
         outState.putInt(KEY_CURRENT_DESTINATION, currentDestinationId);
         outState.putBoolean(KEY_ENVIRONMENT_READY, isEnvironmentReady);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 清理监听器
+        LogServiceManager.setServiceStatusListener(null);
+    }
+
+    /**
+     * 服务状态监听器实现
+     */
+    @Override
+    public void onServiceStarted() {
+        runOnUiThread(() -> {
+            Toast.makeText(this, "日志服务已启动", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    @Override
+    public void onServiceStopped() {
+        runOnUiThread(() -> {
+            Toast.makeText(this, "日志服务已停止", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    @Override
+    public void onServiceRestartFailed() {
+        runOnUiThread(() -> {
+            Toast.makeText(this, "日志服务自动重启失败，请手动启动", Toast.LENGTH_LONG).show();
+        });
     }
 
     /**
@@ -107,9 +147,9 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         }
     }
 
-    /**
-     * 设置状态栏和导航栏样式
-     */
+    // 其余方法保持不变...
+    // setupSystemBars(), updateBottomNavigation(), onEnvironmentStateChanged() 等
+
     private void setupSystemBars() {
         Window window = getWindow();
 
@@ -134,9 +174,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         windowInsetsController.setAppearanceLightNavigationBars(!isDarkTheme);
     }
 
-    /**
-     * 根据环境状态更新底部导航栏
-     */
     private void updateBottomNavigation(boolean environmentReady) {
         if (bottomNav == null) return;
 
@@ -179,9 +216,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         }
     }
 
-    /**
-     * 实现环境状态监听器接口
-     */
     @Override
     public void onEnvironmentStateChanged(boolean environmentReady) {
         boolean previousState = this.isEnvironmentReady;
