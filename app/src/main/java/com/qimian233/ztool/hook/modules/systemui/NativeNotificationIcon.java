@@ -26,7 +26,7 @@ public class NativeNotificationIcon extends BaseHookModule {
         if (Build.VERSION.SDK_INT != 35) {
             return;
         }
-        log("[NativeNotificationIcon] Loading module NativeNotificationIcon.");
+        log("Loading module NativeNotificationIcon.");
         new NativeNotificationIcon().handleLoadSystemUi(lpparam);
     }
 
@@ -34,7 +34,7 @@ public class NativeNotificationIcon extends BaseHookModule {
 
     public void handleLoadSystemUi(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         try {
-            log("[NativeNotificationIcon] Hooking com.android.systemui.util.XSystemUtil...");
+            log("Hooking com.android.systemui.util.XSystemUtil...");
             XposedHelpers.findAndHookMethod("com.android.systemui.util.XSystemUtil", lpparam.classLoader, "isCTSGTSTest", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -44,14 +44,14 @@ public class NativeNotificationIcon extends BaseHookModule {
                     }
                 }
             });
-            log("[NativeNotificationIcon] Successfully hooked com.android.systemui.util.XSystemUtil. [1/6]");
+            log("Successfully hooked com.android.systemui.util.XSystemUtil. [1/6]");
         }catch (Exception e) {
-            logError("[NativeNotificationIcon] Failed to hook com.android.systemui.util.XSystemUtil.",e);
+            logError("Failed to hook com.android.systemui.util.XSystemUtil.",e);
         }
 
         try{
             // use grayscale icons for notification shelf (collapsed notification icons)
-            log("[NativeNotificationIcon] Hooking com.android.systemui.statusbar.NotificationShelf");
+            log("Hooking com.android.systemui.statusbar.NotificationShelf");
             XposedHelpers.findAndHookMethod("com.android.systemui.statusbar.NotificationShelf", lpparam.classLoader, "updateResources$5", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -62,27 +62,27 @@ public class NativeNotificationIcon extends BaseHookModule {
                     isCtsMode.remove();
                 }
             });
-            log("[NativeNotificationIcon] Successfully hooked com.android.systemui.statusbar.NotificationShelf [2/6]");
+            log("Successfully hooked com.android.systemui.statusbar.NotificationShelf [2/6]");
         } catch (Exception e) {
-            logError("[NativeNotificationIcon] Failed to hook com.android.systemui.statusbar.NotificationShelf",e);
+            logError("Failed to hook com.android.systemui.statusbar.NotificationShelf",e);
         }
 
         try {
-            log("[NativeNotificationIcon] Hooking com.android.systemui.statusbar.NotificationListener");
+            log("Hooking com.android.systemui.statusbar.NotificationListener");
             // don't replace the small icon with app icon
             XposedHelpers.findAndHookMethod("com.android.systemui.statusbar.NotificationListener", lpparam.classLoader, "replaceTheSmallIcon", StatusBarNotification.class, XC_MethodReplacement.returnConstant(null));
             log("[NaticeNotificationIcon] Successfully hooked com.android.systemui.statusbar.NotificationListener [3/6]");
         }catch (Exception e) {
-            logError("[NativeNotificationIcon] Failed to hook com.android.systemui.statusbar.NotificationListener",e);
+            logError("Failed to hook com.android.systemui.statusbar.NotificationListener",e);
         }
 
         try {
-            log("[NativeNotificationIcon] Finding classes...");
+            log("Finding classes...");
             final var notificationHeaderViewWrapper_class = XposedHelpers.findClass("com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper", lpparam.classLoader);
             final var notificationHeaderViewWrapper_mIcon = XposedHelpers.findField(notificationHeaderViewWrapper_class, "mIcon");
             final var getIcon = MethodHandles.lookup().unreflectGetter(notificationHeaderViewWrapper_mIcon);
             final var expandableNotificationRow_class = XposedHelpers.findClass("com.android.systemui.statusbar.notification.row.ExpandableNotificationRow", lpparam.classLoader);
-            log("[NativeNotificationIcon] Classes found. Hooking...");
+            log("Classes found. Hooking...");
             XposedHelpers.findAndHookMethod(notificationHeaderViewWrapper_class, "onContentUpdated", expandableNotificationRow_class, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -107,29 +107,29 @@ public class NativeNotificationIcon extends BaseHookModule {
                 }
             }
             );
-            log("[NativeNotificationIcon] Successfully hooked com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper [4/6]");
+            log("Successfully hooked com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper [4/6]");
         }catch (Exception e) {
-            logError("[NativeNotificationIcon] Failed to hook com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper",e);
+            logError("Failed to hook com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper",e);
         }
 
         try {
-            log("[NativeNotificationIcon] Hooking com.android.systemui.notificationlist.view.NotificationHeaderView");
+            log("Hooking com.android.systemui.notificationlist.view.NotificationHeaderView");
             // always true for ROW
             XposedHelpers.findAndHookMethod("com.android.systemui.notificationlist.view.NotificationHeaderView", lpparam.classLoader, "shouldShowIconBackground", XC_MethodReplacement.returnConstant(true));
-            log("[NativeNotificationIcon] Successfully hooked com.android.systemui.notificationlist.view.NotificationHeaderView [5/6]");
+            log("Successfully hooked com.android.systemui.notificationlist.view.NotificationHeaderView [5/6]");
         }catch (Exception e) {
-            logError("[NativeNotificationIcon] Failed to hook com.android.systemui.notificationlist.view.NotificationHeaderView",e);
+            logError("Failed to hook com.android.systemui.notificationlist.view.NotificationHeaderView",e);
         }
 
         try {
-            log("[NativeNotificationIcon] Hooking android.app.Notification$Builder");
+            log("Hooking android.app.Notification$Builder");
             // always use circle template for android.app.Notification$Builder#get*Resource()
             XposedHelpers.findAndHookMethod("android.app.Notification$Builder", lpparam.classLoader, "isCtsGtsTest", XC_MethodReplacement.returnConstant(true));
-            log("[NativeNotificationIcon] Successfully hooked android.app.Notification$Builder [6/6]");
+            log("Successfully hooked android.app.Notification$Builder [6/6]");
         }catch (Exception e) {
-            logError("[NativeNotificationIcon] Failed to hook android.app.Notification$Builder",e);
+            logError("Failed to hook android.app.Notification$Builder",e);
         }
         
-        log("[NativeNotificationIcon] Hook is successful. [OK]");
+        log("Hook is successful. [OK]");
     }
 }

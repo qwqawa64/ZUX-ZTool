@@ -22,20 +22,20 @@ public class NoChargeAnimation extends BaseHookModule {
 
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (!isEnabled()) return;
-        log("[No_ChargeAnimation] Loading module No_ChargeAnimation.");
+        log("Loading module No_ChargeAnimation.");
         new NoChargeAnimation().handleLoadSystemUi(lpparam);
     }
 
     public void handleLoadSystemUi(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         try {
-            log("[No_ChargeAnimation] Hooking ChargingAnimationController...");
+            log("Hooking ChargingAnimationController...");
             var classLoader = lpparam.classLoader;
             var ChargingAnimationControllerClass = classLoader.loadClass("com.android.keyguard.lockscreen.charge.ChargingAnimationController");
             var handlerField = XposedHelpers.findField(ChargingAnimationControllerClass, "H");
             XposedHelpers.findAndHookMethod(handlerField.getType(), "handleMessage", Message.class, XC_MethodReplacement.DO_NOTHING);
-            log("[No_ChargeAnimation] Hooked ChargingAnimationController [OK]");
+            log("Hooked ChargingAnimationController [OK]");
         }catch (Exception e){
-            logError("[No_ChargeAnimation] Error hooking ChargingAnimationController", e);
+            logError("Error hooking ChargingAnimationController", e);
         }
     }
 }

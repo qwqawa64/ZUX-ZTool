@@ -13,14 +13,14 @@ public class KeepRotation extends BaseHookModule {
     public String[] getTargetPackages() { return new String[]{TARGET_PACKAGE};}
 
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        log("[keep_rotation] Loading module keep_rotation.");
+        log("Loading module keep_rotation.");
         if ("android".equals(lpparam.processName)) {
-            log("[keep_rotation] Hooking DisplayRotation.isRotationCts");
+            log("Hooking DisplayRotation.isRotationCts");
             try{
                 XposedHelpers.findAndHookMethod("com.zui.server.wm.ZuiDisplayRotation", lpparam.classLoader, "isRotationCts", XC_MethodReplacement.returnConstant(Boolean.TRUE));
-                log("[keep_rotation] Hooked DisplayRotation.isRotationCts [OK]");
+                log("Hooked DisplayRotation.isRotationCts [OK]");
             } catch (Exception e) {
-                logError("[keep_rotation] Error hooking DisplayRotation.isRotationCts", e);
+                logError("Error hooking DisplayRotation.isRotationCts", e);
             }
             //
         }
