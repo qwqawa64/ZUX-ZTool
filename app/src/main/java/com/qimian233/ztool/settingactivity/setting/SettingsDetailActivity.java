@@ -85,7 +85,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private MaterialSwitch switchSplitScreenMandatory;
     private MaterialSwitch switchAllowDisableDolby;
     private  MaterialSwitch switchAllowNativePermissionController;
-    private  MaterialSwitch switchKeepRotation;
 
     private static final int REQUEST_CODE_PICK_FONT = 1002;
     private static final String FONT_BASE_PATH = "/data_mirror/data_ce/null/0/com.zui.homesettings/files/.ZFont/.localFont/";
@@ -286,15 +285,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 saveSettings("PermissionControllerHook",isChecked);
             }
         });
-
-        // 设置保持屏幕方向按钮点击监听
-        switchKeepRotation = findViewById(R.id.switch_keep_rotation);
-        switchKeepRotation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                saveSettings("keep_rotation",isChecked);
-            }
-        });
     }
 
     // 启动悬浮窗
@@ -396,9 +386,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
         // 加载原生权限控制器设置
         boolean useNativePMController = mPrefsUtils.loadBooleanSetting("PermissionControllerHook", false);
         switchAllowNativePermissionController.setChecked(useNativePMController);
-        // 加载保持屏幕方向设置
-        boolean isKeepRotation = mPrefsUtils.loadBooleanSetting("keep_rotation", false);
-        switchKeepRotation.setChecked(isKeepRotation);
     }
 
     /**

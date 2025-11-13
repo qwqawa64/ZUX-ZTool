@@ -102,8 +102,7 @@ public class LogParser {
                 Pattern.compile("\\[Split_Screen_mandatory\\]\\s*(.*)"));
         MODULE_PATTERNS.put("remove_blacklist",
                 Pattern.compile("\\[remove_blacklist\\]\\s*(.*)"));
-        MODULE_PATTERNS.put("keep_rotation",
-                Pattern.compile("\\[keep_rotation\\]\\s*(.*)"));
+
 
         // 模块显示名称映射
         // 系统UI相关
@@ -140,6 +139,11 @@ public class LogParser {
 
         // 启动器相关
         MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
+
+        // 系统框架相关
+        MODULE_PATTERNS.put("keep_rotation",
+                Pattern.compile("\\[keep_rotation\\]\\s*(.*)"));
+        MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
     }
 
     /**
@@ -499,12 +503,17 @@ public class LogParser {
         // 设置相关
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
-                "Split_Screen_mandatory", "remove_blacklist", "keep_rotation"
+                "Split_Screen_mandatory", "remove_blacklist"
         ));
 
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
                 "disable_force_stop"
+        ));
+
+        // 系统框架相关
+        categories.put("系统框架", Arrays.asList(
+                "allow_get_packages", "keep_rotation"
         ));
 
         return categories;

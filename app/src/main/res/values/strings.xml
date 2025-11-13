@@ -133,4 +133,7 @@
     <string name="disable_force_stop_title">启动器行为</string>
     <string name="disable_force_stop_enable_title">禁止划卡杀后台</string>
     <string name="disable_force_stop_enable_summary">保证后台服务存活</string>
+    <string name="disable_zui_applist_title">权限管理</string>
+    <string name="disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
+    <string name="disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
 </resources>

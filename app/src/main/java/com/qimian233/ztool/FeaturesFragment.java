@@ -89,6 +89,15 @@ public class FeaturesFragment extends Fragment {
                 LauncherSettingsActivity.class
         ));
 
+        appList.add(new FeaturesAdapter.AppItem(
+                "系统框架",
+                "Android核心框架",
+                "android",
+                getApplicationIcon(requireContext(), "android"),
+                true,
+                LauncherSettingsActivity.class
+        ));
+
         // 可以添加更多应用项
         // appList.add(new FeaturesAdapter.AppItem(...));
 

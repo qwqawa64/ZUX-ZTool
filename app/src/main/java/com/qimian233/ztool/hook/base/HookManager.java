@@ -17,6 +17,7 @@ import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
+import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
@@ -96,6 +97,8 @@ public class HookManager {
         registerHookModule(new KeepRotation());
         // 注册模块，停用划卡杀后台
         registerHookModule(new DisableForceStop());
+        // 注册模块，停用系统的“禁止读取应用列表”
+        registerHookModule(new AllowGetPackages());
         initialized = true;
     }
 
