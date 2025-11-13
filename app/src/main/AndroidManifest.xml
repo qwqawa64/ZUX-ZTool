@@ -72,6 +72,9 @@
             android:name=".settingactivity.systemframework.FrameworkSettingsActivity"
             android:exported="false" />
         <activity
+            android:name=".settingactivity.safecenter.SafeCenterSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

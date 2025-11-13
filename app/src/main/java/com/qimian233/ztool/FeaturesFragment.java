@@ -16,6 +16,7 @@ import com.qimian233.ztool.settingactivity.gametool.GameToolSettngs;
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsActivity;
 import com.qimian233.ztool.settingactivity.ota.OtaSettings;
 import com.qimian233.ztool.settingactivity.packageinstaller.packageinstallersettings;
+import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsActivity;
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailActivity;
 import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.systemUISettings;
@@ -97,6 +98,15 @@ public class FeaturesFragment extends Fragment {
                 getApplicationIcon(requireContext(), "android"),
                 true,
                 FrameworkSettingsActivity.class
+        ));
+
+        appList.add(new FeaturesAdapter.AppItem(
+                "安全中心",
+                "ZUI/ZUX的安全中心",
+                "com.zui.safecenter",
+                getApplicationIcon(requireContext(), "com.zui.safecenter"),
+                true,
+                SafeCenterSettingsActivity.class
         ));
 
         // 可以添加更多应用项

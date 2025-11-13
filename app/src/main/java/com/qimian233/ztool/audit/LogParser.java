@@ -161,6 +161,9 @@ public class LogParser {
         MODULE_PATTERNS.put("keep_rotation",
                 Pattern.compile("\\[keep_rotation\\]\\s*(.*)"));
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
+
+        // 安全中心相关
+        MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
     }
 
     /**
@@ -534,6 +537,10 @@ public class LogParser {
                 "allow_get_packages", "keep_rotation"
         ));
 
+        // 安全中心相关
+        categories.put("安全中心", Arrays.asList(
+                "default_enable_autorun"
+        ));
         return categories;
     }
 

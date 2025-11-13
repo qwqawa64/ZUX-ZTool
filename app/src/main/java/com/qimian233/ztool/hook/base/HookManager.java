@@ -6,6 +6,7 @@ import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
+import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
 import com.qimian233.ztool.hook.modules.setting.KeepRotation;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
@@ -99,6 +100,8 @@ public class HookManager {
         registerHookModule(new DisableForceStop());
         // 注册模块，停用系统的“禁止读取应用列表”
         registerHookModule(new AllowGetPackages());
+        // 注册模块，默认允许应用自启
+        registerHookModule(new EnableAutorunByDefault());
         initialized = true;
     }
 
