@@ -66,6 +66,9 @@
             android:name=".settingactivity.setting.SettingsDetailActivity"
             android:exported="false" />
         <activity
+            android:name=".settingactivity.launcher.LauncherSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

@@ -4,6 +4,7 @@ import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
+import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
 import com.qimian233.ztool.hook.modules.setting.KeepRotation;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
@@ -93,6 +94,8 @@ public class HookManager {
         registerHookModule(new NativeNotificationIcon());
         // 注册模块，重启后保持屏幕方向不变
         registerHookModule(new KeepRotation());
+        // 注册模块，停用划卡杀后台
+        registerHookModule(new DisableForceStop());
         initialized = true;
     }
 

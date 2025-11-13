@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettngs;
+import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsActivity;
 import com.qimian233.ztool.settingactivity.ota.OtaSettings;
 import com.qimian233.ztool.settingactivity.packageinstaller.packageinstallersettings;
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailActivity;
@@ -76,6 +77,16 @@ public class FeaturesFragment extends Fragment {
                 getApplicationIcon(requireContext(), "android"),
                 true,
                 systemUISettings.class
+        ));
+
+        // 添加启动器设置
+        appList.add(new FeaturesAdapter.AppItem(
+                "启动器",
+                "启动器应用",
+                "com.zui.launcher",
+                getApplicationIcon(requireContext(), "com.zui.launcher"),
+                true,
+                LauncherSettingsActivity.class
         ));
 
         // 可以添加更多应用项

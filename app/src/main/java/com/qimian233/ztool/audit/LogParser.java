@@ -137,6 +137,9 @@ public class LogParser {
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
         MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
+
+        // 启动器相关
+        MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
     }
 
     /**
@@ -497,6 +500,11 @@ public class LogParser {
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
                 "Split_Screen_mandatory", "remove_blacklist", "keep_rotation"
+        ));
+
+        // 启动器相关
+        categories.put("系统桌面", Arrays.asList(
+                "disable_force_stop"
         ));
 
         return categories;

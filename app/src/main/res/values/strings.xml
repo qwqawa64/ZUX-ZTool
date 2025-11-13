@@ -130,4 +130,7 @@
     <string name="keep_rotation_title">屏幕方向</string>
     <string name="keep_rotation_enable_title">保持屏幕方向</string>
     <string name="keep_rotation_enable_summary">重启后保持上一次关机前的屏幕方向，需重启系统</string>
+    <string name="disable_force_stop_title">启动器行为</string>
+    <string name="disable_force_stop_enable_title">禁止划卡杀后台</string>
+    <string name="disable_force_stop_enable_summary">保证后台服务存活</string>
 </resources>
