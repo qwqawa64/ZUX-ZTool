@@ -67,7 +67,7 @@ public class LauncherSettingsActivity extends AppCompatActivity {
 
     private void loadSettings() {
         // 加载禁止强制停止开关状态
-        boolean disableForceStopEnabled = ModuleConfig.isModuleEnabled("disable_force_stop");
+        boolean disableForceStopEnabled = mPrefsUtils.loadBooleanSetting("disable_force_stop",false);
         switchDisableForceStop.setChecked(disableForceStopEnabled);
     }
 

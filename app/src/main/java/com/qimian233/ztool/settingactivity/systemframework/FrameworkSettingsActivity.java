@@ -69,7 +69,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
 
     private void loadSettings() {
         // 加载禁用系统应用列表管理开关状态
-        boolean disableZUIApplist = ModuleConfig.isModuleEnabled("allow_get_packages");
+        boolean disableZUIApplist = mPrefsUtils.loadBooleanSetting("allow_get_packages",false);
         switchDisableZUIApplist.setChecked(disableZUIApplist);
         // 加载保持屏幕方向设置
         boolean isKeepRotation = mPrefsUtils.loadBooleanSetting("keep_rotation", false);
