@@ -17,6 +17,7 @@ import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsActivity;
 import com.qimian233.ztool.settingactivity.ota.OtaSettings;
 import com.qimian233.ztool.settingactivity.packageinstaller.packageinstallersettings;
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailActivity;
+import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.systemUISettings;
 
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ public class FeaturesFragment extends Fragment {
                 "android",
                 getApplicationIcon(requireContext(), "android"),
                 true,
-                LauncherSettingsActivity.class
+                FrameworkSettingsActivity.class
         ));
 
         // 可以添加更多应用项

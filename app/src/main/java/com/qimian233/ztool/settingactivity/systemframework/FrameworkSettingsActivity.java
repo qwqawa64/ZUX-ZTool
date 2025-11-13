@@ -30,7 +30,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
         DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_launcher_settings);
+        setContentView(R.layout.activity_framework_settings);
 
         String appName = getIntent().getStringExtra("app_name");
         appPackageName = getIntent().getStringExtra("app_package");
