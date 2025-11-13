@@ -466,18 +466,69 @@ public class LogCollectorService extends Service {
                 int lineCount = 0;
                 long lastStatusLogTime = System.currentTimeMillis();
                 long lastNotificationUpdate = System.currentTimeMillis();
+                long lastFileCheckTime = System.currentTimeMillis();
+                final long FILE_CHECK_INTERVAL = 5000; // 每5秒检查一次文件是否存在
 
                 while (isRunning.get() && !Thread.currentThread().isInterrupted()) {
                     try {
+                        // 定期检查当前日志文件是否存在，如果被删除则重新创建
+                        long currentTime = System.currentTimeMillis();
+                        if (currentTime - lastFileCheckTime > FILE_CHECK_INTERVAL) {
+                            if (currentFile != null && !currentFile.exists()) {
+                                android.util.Log.w(TAG, "当前日志文件已被删除，重新创建新文件");
+                                mainHandler.post(() -> updateNotification("检测到文件被删除，重新创建..."));
+
+                                // 关闭当前写入器
+                                closeCurrentWriter();
+
+                                // 创建新文件
+                                currentFile = createNewLogFile(logDir);
+                                currentWriter = new BufferedWriter(new FileWriter(currentFile, true));
+
+                                android.util.Log.d(TAG, "已创建新日志文件: " + currentFile.getAbsolutePath());
+                                mainHandler.post(() -> updateNotification("已重新创建日志文件"));
+                            }
+                            lastFileCheckTime = currentTime;
+                        }
+
                         if (reader.ready() && (line = reader.readLine()) != null) {
                             String enhancedLine = enhanceLogLine(line);
-                            currentWriter.write(enhancedLine);
-                            currentWriter.newLine();
-                            currentWriter.flush();
+
+                            // 写入前再次检查文件状态
+                            if (currentWriter == null || (currentFile != null && !currentFile.exists())) {
+                                android.util.Log.w(TAG, "日志文件状态异常，重新初始化");
+                                closeCurrentWriter();
+                                currentFile = createNewLogFile(logDir);
+                                currentWriter = new BufferedWriter(new FileWriter(currentFile, true));
+                            }
+
+                            try {
+                                currentWriter.write(enhancedLine);
+                                currentWriter.newLine();
+                                currentWriter.flush();
+                            } catch (IOException e) {
+                                // 如果写入失败，可能是文件被删除，重新创建文件
+                                if (e.getMessage() != null &&
+                                        (e.getMessage().contains("ENOENT") ||
+                                                e.getMessage().contains("No such file") ||
+                                                e.getMessage().contains("Stream closed"))) {
+
+                                    android.util.Log.w(TAG, "写入日志失败，文件可能被删除，重新创建: " + e.getMessage());
+                                    closeCurrentWriter();
+                                    currentFile = createNewLogFile(logDir);
+                                    currentWriter = new BufferedWriter(new FileWriter(currentFile, true));
+
+                                    // 重试写入
+                                    currentWriter.write(enhancedLine);
+                                    currentWriter.newLine();
+                                    currentWriter.flush();
+                                } else {
+                                    throw e; // 重新抛出其他IO异常
+                                }
+                            }
 
                             lineCount++;
 
-                            long currentTime = System.currentTimeMillis();
                             if (lineCount % 100 == 0 || (currentTime - lastStatusLogTime) > 30000) {
                                 android.util.Log.d(TAG, "已收集 " + lineCount + " 行日志");
                                 lastStatusLogTime = currentTime;
@@ -549,6 +600,7 @@ public class LogCollectorService extends Service {
             return String.format("[%s] [%s] %s", timestamp, mode, originalLine);
         }
     }
+
 
     private File createNewLogFile(File logDir) {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
