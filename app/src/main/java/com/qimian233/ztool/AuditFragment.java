@@ -1,3 +1,4 @@
+// AuditFragment.java
 package com.qimian233.ztool;
 
 import android.os.Bundle;
@@ -24,7 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * 日志审计界面 - 增强版支持完整模块策略
+ * 日志审计界面 - 增强版支持完整模块策略和多文件读取
  */
 public class AuditFragment extends Fragment {
 
@@ -68,7 +69,7 @@ public class AuditFragment extends Fragment {
         initViews(view);
         setupRecyclerView();
         setupFilters();
-        loadLogFiles();
+        loadAllLogFiles();
         return view;
     }
 
@@ -195,7 +196,7 @@ public class AuditFragment extends Fragment {
         });
     }
 
-    private void loadLogFiles() {
+    private void loadAllLogFiles() {
         showLoading(true);
 
         new Thread(() -> {
@@ -211,21 +212,18 @@ public class AuditFragment extends Fragment {
                     return;
                 }
 
-                // 查找最新的日志文件
-                File latestLogFile = findLatestLogFile(logDir);
+                // 解析所有日志文件
+                allLogEntries = LogParser.parseAllLogFiles(logDir);
 
-                if (latestLogFile == null) {
+                if (allLogEntries.isEmpty()) {
                     mainHandler.post(() -> {
-                        showEmptyState("未找到日志文件");
+                        showEmptyState("未找到日志记录");
                         showLoading(false);
                     });
                     return;
                 }
 
-                // 解析日志文件
-                allLogEntries = LogParser.parseLogFile(latestLogFile);
-
-                // 按时间倒序排列
+                // 按时间倒序排列（最新的在前）
                 Collections.sort(allLogEntries, (e1, e2) -> {
                     try {
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -251,21 +249,6 @@ public class AuditFragment extends Fragment {
                 });
             }
         }).start();
-    }
-
-    private File findLatestLogFile(File logDir) {
-        File[] logFiles = logDir.listFiles((dir, name) ->
-                name.startsWith("hook_log_") && name.endsWith(".txt"));
-
-        if (logFiles == null || logFiles.length == 0) {
-            return null;
-        }
-
-        // 按最后修改时间排序，返回最新的文件
-        Arrays.sort(logFiles, (f1, f2) ->
-                Long.compare(f2.lastModified(), f1.lastModified()));
-
-        return logFiles[0];
     }
 
     private void applyFilters() {
@@ -330,13 +313,22 @@ public class AuditFragment extends Fragment {
         Map<String, Integer> moduleStats = LogParser.getModuleStats(allLogEntries);
         int totalModules = moduleStats.size();
 
-        String stats = String.format("总计: %d 条 | 显示: %d 条 | 模块: %d 个",
-                allLogEntries.size(), filteredLogEntries.size(), totalModules);
+        String stats = String.format("总计: %d 条 | 显示: %d 条 | 模块: %d 个 | 文件: %s",
+                allLogEntries.size(), filteredLogEntries.size(), totalModules, getLogFileCount());
         tvStats.setText(stats);
     }
 
+    private String getLogFileCount() {
+        if (logDir == null || !logDir.exists()) {
+            return "0";
+        }
+        File[] logFiles = logDir.listFiles((dir, name) ->
+                name.startsWith("hook_log_") && name.endsWith(".txt"));
+        return logFiles != null ? String.valueOf(logFiles.length) : "0";
+    }
+
     private void refreshLogs() {
-        loadLogFiles();
+        loadAllLogFiles();
     }
 
     private void showStatistics() {
@@ -347,7 +339,8 @@ public class AuditFragment extends Fragment {
         statsMessage.append("=== 日志统计 ===\n\n");
         statsMessage.append("总日志数: ").append(allLogEntries.size()).append("\n");
         statsMessage.append("模块数量: ").append(moduleStats.size()).append("\n");
-        statsMessage.append("错误数量: ").append(errorStats.get("total_errors")).append("\n\n");
+        statsMessage.append("错误数量: ").append(errorStats.get("total_errors")).append("\n");
+        statsMessage.append("日志文件: ").append(getLogFileCount()).append(" 个\n\n");
 
         statsMessage.append("=== 模块统计 ===\n");
         for (Map.Entry<String, Integer> entry : moduleStats.entrySet()) {
@@ -372,7 +365,11 @@ public class AuditFragment extends Fragment {
         details.append("PID: ").append(entry.pid).append("\n");
         details.append("模式: ").append(entry.mode).append("\n");
         details.append("函数: ").append(entry.function != null ? entry.function : "无").append("\n");
-        details.append("消息: ").append(entry.message).append("\n\n");
+        details.append("多行: ").append(entry.isMultiLine ? "是" : "否").append("\n\n");
+
+        // 显示完整消息（包含多行）
+        details.append("=== 完整消息 ===\n");
+        details.append(entry.getFullMessage()).append("\n\n");
 
         // 提取的数据
         if (!entry.extractedData.isEmpty()) {
@@ -409,7 +406,7 @@ public class AuditFragment extends Fragment {
     }
 
     /**
-     * 增强的日志适配器 - 支持点击查看详情
+     * 增强的日志适配器 - 支持点击查看详情和多行显示
      */
     private class LogAdapter extends RecyclerView.Adapter<LogAdapter.LogViewHolder> {
 
@@ -459,6 +456,7 @@ public class AuditFragment extends Fragment {
             private TextView tvDetails;
             private View levelIndicator;
             private ImageView ivStatus;
+            private TextView ivMultiLine;
 
             public LogViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -469,6 +467,7 @@ public class AuditFragment extends Fragment {
                 tvDetails = itemView.findViewById(R.id.tv_details);
                 levelIndicator = itemView.findViewById(R.id.level_indicator);
                 ivStatus = itemView.findViewById(R.id.iv_status);
+                ivMultiLine = itemView.findViewById(R.id.iv_multiline);
             }
 
             public void bind(LogEntry entry) {
@@ -493,10 +492,23 @@ public class AuditFragment extends Fragment {
                 String levelText = entry.level != null ? entry.level : "?";
                 tvLevel.setText(levelText);
 
-                // 消息显示 - 截取前100字符，避免过长
-                String message = entry.message != null ? entry.message : "";
-                if (message.length() > 100) {
-                    message = message.substring(0, 100) + "...";
+                // 消息显示 - 如果是多行日志，显示第一行并添加省略号
+                String message = entry.getFullMessage();
+                if (entry.isMultiLine) {
+                    // 对于多行日志，只显示第一行
+                    String[] lines = message.split("\n");
+                    if (lines.length > 0) {
+                        message = lines[0];
+                        if (message.length() > 100) {
+                            message = message.substring(0, 100) + "...";
+                        }
+                        message += " ... [" + (lines.length - 1) + " 更多行]";
+                    }
+                } else {
+                    // 单行日志正常截取
+                    if (message.length() > 100) {
+                        message = message.substring(0, 100) + "...";
+                    }
                 }
                 tvMessage.setText(message);
 
@@ -530,6 +542,13 @@ public class AuditFragment extends Fragment {
 
                 // 设置状态图标
                 setStatusIcon(entry);
+
+                // 设置多行图标
+                if (entry.isMultiLine) {
+                    ivMultiLine.setVisibility(View.VISIBLE);
+                } else {
+                    ivMultiLine.setVisibility(View.GONE);
+                }
             }
 
             private void setLevelIndicatorColor(LogLevel level) {

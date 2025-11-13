@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.regex.*;
 
 /**
- * 日志解析器
+ * 日志解析器 - 增强版支持多行错误堆栈合并和所有文件读取
  */
 public class LogParser {
     private static final String TAG = "LogParser";
@@ -31,15 +31,32 @@ public class LogParser {
         public String function;
         public Map<String, String> extractedData;
         public LogLevel logLevel;
+        public boolean isMultiLine = false; // 标记是否为多行日志
+        public List<String> originalLines = new ArrayList<>(); // 保存原始行
 
         public LogEntry() {
             extractedData = new HashMap<>();
+            originalLines = new ArrayList<>();
         }
 
         @Override
         public String toString() {
             return String.format("[%s] [%s] %s/%s(%d): %s",
                     timestamp, mode, level, tag, pid, message);
+        }
+
+        /**
+         * 获取完整的消息（包含多行）
+         */
+        public String getFullMessage() {
+            if (originalLines.size() <= 1) {
+                return message;
+            }
+            StringBuilder fullMessage = new StringBuilder();
+            for (String line : originalLines) {
+                fullMessage.append(line).append("\n");
+            }
+            return fullMessage.toString().trim();
         }
     }
 
@@ -166,6 +183,7 @@ public class LogParser {
                 entry.timestamp = enhancedMatcher.group(1).trim();
                 entry.mode = enhancedMatcher.group(2).trim();
                 String originalLine = enhancedMatcher.group(3).trim();
+                entry.originalLines.add(originalLine);
 
                 // 解析原始日志行
                 parseOriginalLogLine(originalLine, entry);
@@ -520,7 +538,7 @@ public class LogParser {
     }
 
     /**
-     * 解析整个日志文件
+     * 解析整个日志文件 - 增强版支持多行错误堆栈合并
      */
     public static List<LogEntry> parseLogFile(File logFile) {
         List<LogEntry> entries = new ArrayList<>();
@@ -532,18 +550,161 @@ public class LogParser {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(logFile))) {
             String line;
+            LogEntry currentEntry = null;
+
             while ((line = reader.readLine()) != null) {
-                LogEntry entry = parseLine(line);
-                if (entry != null) {
-                    entries.add(entry);
+                // 解析增强格式
+                Pattern enhancedPattern = Pattern.compile("^\\[(.+?)\\]\\s+\\[(.+?)\\]\\s+(.+)$");
+                Matcher enhancedMatcher = enhancedPattern.matcher(line);
+
+                if (enhancedMatcher.find()) {
+                    String timestamp = enhancedMatcher.group(1).trim();
+                    String mode = enhancedMatcher.group(2).trim();
+                    String originalLine = enhancedMatcher.group(3).trim();
+
+                    // 检查是否包含模块标识
+                    boolean hasModule = false;
+                    String detectedModule = null;
+
+                    for (Map.Entry<String, Pattern> moduleEntry : MODULE_PATTERNS.entrySet()) {
+                        Pattern pattern = moduleEntry.getValue();
+                        Matcher matcher = pattern.matcher(originalLine);
+                        if (matcher.find()) {
+                            hasModule = true;
+                            detectedModule = moduleEntry.getKey();
+                            break;
+                        }
+                    }
+
+                    if (hasModule) {
+                        // 如果当前有正在构建的条目，先保存
+                        if (currentEntry != null) {
+                            entries.add(currentEntry);
+                        }
+
+                        // 创建新的日志条目
+                        currentEntry = new LogEntry();
+                        currentEntry.timestamp = timestamp;
+                        currentEntry.mode = mode;
+                        currentEntry.originalLines.add(originalLine);
+
+                        // 解析原始日志行
+                        parseOriginalLogLine(originalLine, currentEntry);
+
+                        // 提取模块信息
+                        currentEntry.module = detectedModule;
+                        extractFunctionInfo(currentEntry, originalLine.replaceFirst("\\[" + detectedModule + "\\]\\s*", ""));
+
+                        // 提取特定数据
+                        extractSpecificData(currentEntry);
+
+                        // 确定日志级别
+                        determineLogLevel(currentEntry);
+
+                    } else if (currentEntry != null) {
+                        // 没有模块标识，但是有当前条目，说明是多行日志的延续
+                        currentEntry.originalLines.add(originalLine);
+                        currentEntry.isMultiLine = true;
+
+                        // 更新消息为完整的多行消息
+                        StringBuilder fullMessage = new StringBuilder();
+                        for (String origLine : currentEntry.originalLines) {
+                            fullMessage.append(origLine).append("\n");
+                        }
+                        currentEntry.message = fullMessage.toString().trim();
+
+                        // 重新提取错误信息（因为消息已更新）
+                        extractErrorData(currentEntry);
+                    } else {
+                        // 没有模块标识且没有当前条目，创建新的独立条目
+                        LogEntry entry = parseLine(line);
+                        if (entry != null) {
+                            entries.add(entry);
+                        }
+                    }
+                } else {
+                    // 不匹配增强格式的行，尝试作为独立行解析
+                    LogEntry entry = parseLine(line);
+                    if (entry != null) {
+                        if (currentEntry != null) {
+                            entries.add(currentEntry);
+                            currentEntry = null;
+                        }
+                        entries.add(entry);
+                    }
                 }
             }
+
+            // 保存最后一个条目
+            if (currentEntry != null) {
+                entries.add(currentEntry);
+            }
+
             Log.d(TAG, "成功解析日志文件，共 " + entries.size() + " 条记录");
         } catch (IOException e) {
             Log.e(TAG, "读取日志文件失败: " + logFile, e);
         }
 
         return entries;
+    }
+
+    /**
+     * 解析所有日志文件
+     */
+    public static List<LogEntry> parseAllLogFiles(File logDir) {
+        List<LogEntry> allEntries = new ArrayList<>();
+
+        if (logDir == null || !logDir.exists() || !logDir.isDirectory()) {
+            Log.w(TAG, "日志目录不存在: " + logDir);
+            return allEntries;
+        }
+
+        // 获取所有日志文件
+        File[] logFiles = logDir.listFiles((dir, name) ->
+                name.startsWith("hook_log_") && name.endsWith(".txt"));
+
+        if (logFiles == null || logFiles.length == 0) {
+            Log.w(TAG, "未找到日志文件");
+            return allEntries;
+        }
+
+        // 按文件名排序（时间顺序）
+        Arrays.sort(logFiles, (f1, f2) -> {
+            try {
+                // 从文件名提取时间戳进行比较
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+                String time1 = extractTimeFromFilename(f1.getName());
+                String time2 = extractTimeFromFilename(f2.getName());
+                Date date1 = sdf.parse(time1);
+                Date date2 = sdf.parse(time2);
+                return date1.compareTo(date2);
+            } catch (Exception e) {
+                return f1.getName().compareTo(f2.getName());
+            }
+        });
+
+        // 解析所有文件
+        for (File logFile : logFiles) {
+            Log.d(TAG, "解析日志文件: " + logFile.getName());
+            List<LogEntry> fileEntries = parseLogFile(logFile);
+            allEntries.addAll(fileEntries);
+        }
+
+        Log.d(TAG, "总共解析 " + allEntries.size() + " 条日志记录");
+        return allEntries;
+    }
+
+    /**
+     * 从文件名中提取时间戳
+     */
+    private static String extractTimeFromFilename(String filename) {
+        // 文件名格式: hook_log_root_20251112_144325.txt
+        Pattern pattern = Pattern.compile("hook_log_root_(\\d{8}_\\d{6})\\.txt");
+        Matcher matcher = pattern.matcher(filename);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
     }
 
     /**
@@ -589,10 +750,11 @@ public class LogParser {
                 }
             }
 
-            // 文本搜索
+            // 文本搜索 - 搜索完整消息（包含多行）
             if (searchText != null && !searchText.isEmpty()) {
                 String searchLower = searchText.toLowerCase();
-                boolean textMatch = (entry.message != null && entry.message.toLowerCase().contains(searchLower)) ||
+                String fullMessage = entry.getFullMessage().toLowerCase();
+                boolean textMatch = fullMessage.contains(searchLower) ||
                         (entry.tag != null && entry.tag.toLowerCase().contains(searchLower)) ||
                         (entry.module != null && entry.module.toLowerCase().contains(searchLower)) ||
                         (entry.function != null && entry.function.toLowerCase().contains(searchLower));

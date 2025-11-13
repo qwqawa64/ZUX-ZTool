@@ -68,6 +68,20 @@
                 android:textColor="#FFFFFF"
                 android:textStyle="bold" />
 
+            <!-- 多行标识 -->
+            <TextView
+                android:id="@+id/iv_multiline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_multiline_tag"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="1dp"
+                android:text="多行堆栈"
+                android:textSize="8sp"
+                android:textColor="#FFFFFF"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <!-- 消息内容 -->
