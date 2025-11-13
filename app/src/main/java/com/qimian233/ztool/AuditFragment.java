@@ -1,6 +1,9 @@
 // AuditFragment.java
 package com.qimian233.ztool;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -11,10 +14,14 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.audit.LogParser;
 import com.qimian233.ztool.audit.LogParser.LogEntry;
@@ -36,16 +43,19 @@ public class AuditFragment extends Fragment {
     private LogAdapter logAdapter;
     private ProgressBar progressBar;
     private TextView tvEmpty;
+    private View layoutEmpty;
     private Spinner spinnerCategory;
     private Spinner spinnerModule;
     private Spinner spinnerLevel;
-    private EditText etSearch;
-    private Button btnRefresh;
-    private Button btnStats;
+    private com.google.android.material.textfield.TextInputEditText etSearch;
+    private com.google.android.material.button.MaterialButton btnRefresh;
+    private com.google.android.material.button.MaterialButton btnClear;
+    private com.google.android.material.button.MaterialButton btnStats;
     private TextView tvStats;
     private LinearLayout layoutAdvancedFilters;
-    private CheckBox cbShowErrors;
-    private CheckBox cbShowSuccess;
+    private com.google.android.material.checkbox.MaterialCheckBox cbShowErrors;
+    private ExtendedFloatingActionButton fabScrollToTop;
+    private AppBarLayout appBarLayout;
 
     // 数据
     private List<LogEntry> allLogEntries = new ArrayList<>();
@@ -69,6 +79,7 @@ public class AuditFragment extends Fragment {
         initViews(view);
         setupRecyclerView();
         setupFilters();
+        setupScrollBehavior();
         loadAllLogFiles();
         return view;
     }
@@ -77,19 +88,25 @@ public class AuditFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recycler_view_logs);
         progressBar = view.findViewById(R.id.progress_bar);
         tvEmpty = view.findViewById(R.id.tv_empty);
+        layoutEmpty = view.findViewById(R.id.layout_empty);
         spinnerCategory = view.findViewById(R.id.spinner_category);
         spinnerModule = view.findViewById(R.id.spinner_module);
         spinnerLevel = view.findViewById(R.id.spinner_level);
         etSearch = view.findViewById(R.id.et_search);
         btnRefresh = view.findViewById(R.id.btn_refresh);
+        btnClear = view.findViewById(R.id.btn_clear);
         btnStats = view.findViewById(R.id.btn_stats);
         tvStats = view.findViewById(R.id.tv_stats);
         layoutAdvancedFilters = view.findViewById(R.id.layout_advanced_filters);
         cbShowErrors = view.findViewById(R.id.cb_show_errors);
-        cbShowSuccess = view.findViewById(R.id.cb_show_success);
+        fabScrollToTop = view.findViewById(R.id.fab_scroll_to_top);
+        appBarLayout = view.findViewById(R.id.app_bar);
 
         // 设置刷新按钮点击事件
         btnRefresh.setOnClickListener(v -> refreshLogs());
+
+        // 设置清除按钮点击事件
+        btnClear.setOnClickListener(v -> showClearLogsDialog());
 
         // 设置统计按钮点击事件
         btnStats.setOnClickListener(v -> showStatistics());
@@ -110,7 +127,37 @@ public class AuditFragment extends Fragment {
 
         // 设置高级筛选选项监听
         cbShowErrors.setOnCheckedChangeListener((buttonView, isChecked) -> applyFilters());
-        cbShowSuccess.setOnCheckedChangeListener((buttonView, isChecked) -> applyFilters());
+
+        // 设置返回顶部按钮点击事件
+        fabScrollToTop.setOnClickListener(v -> scrollToTop());
+    }
+
+    private void setupScrollBehavior() {
+        // 监听滚动状态，控制返回顶部按钮的显示/隐藏
+        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                // 当AppBar完全折叠时显示返回顶部按钮
+                if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
+                    fabScrollToTop.show();
+                } else {
+                    fabScrollToTop.hide();
+                }
+            }
+        });
+
+        // 初始隐藏返回顶部按钮
+        fabScrollToTop.hide();
+    }
+
+    private void scrollToTop() {
+        // 展开AppBarLayout
+        appBarLayout.setExpanded(true, true);
+
+        // 滚动RecyclerView到顶部
+        if (recyclerView.getLayoutManager() != null) {
+            recyclerView.getLayoutManager().scrollToPosition(0);
+        }
     }
 
     private void setupRecyclerView() {
@@ -125,44 +172,36 @@ public class AuditFragment extends Fragment {
     private void setupFilters() {
         // 获取模块分类数据
         modulesByCategory = LogParser.getModulesByCategory();
-
         // 类别过滤器
         List<String> categories = new ArrayList<>();
         categories.add("所有类别");
         categories.addAll(modulesByCategory.keySet());
-
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
                 getContext(), android.R.layout.simple_spinner_item, categories);
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategory.setAdapter(categoryAdapter);
-
         spinnerCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 updateModuleSpinner();
                 applyFilters();
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
-
         // 初始化模块过滤器
         updateModuleSpinner();
-
         // 级别过滤器
-        List<String> levels = Arrays.asList("所有级别", "VERBOSE", "DEBUG", "INFO", "WARN", "ERROR");
+        List<String> levels = Arrays.asList("所有级别", "INFO", "ERROR");
         ArrayAdapter<String> levelAdapter = new ArrayAdapter<>(
                 getContext(), android.R.layout.simple_spinner_item, levels);
         levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLevel.setAdapter(levelAdapter);
-
         spinnerLevel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 applyFilters();
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
@@ -171,7 +210,6 @@ public class AuditFragment extends Fragment {
     private void updateModuleSpinner() {
         List<String> modules = new ArrayList<>();
         modules.add("所有模块");
-
         String selectedCategory = (String) spinnerCategory.getSelectedItem();
         if (selectedCategory != null && !selectedCategory.equals("所有类别") && modulesByCategory.containsKey(selectedCategory)) {
             modules.addAll(modulesByCategory.get(selectedCategory));
@@ -179,18 +217,15 @@ public class AuditFragment extends Fragment {
             // 显示所有模块
             modules.addAll(LogParser.getAvailableModules());
         }
-
         ArrayAdapter<String> moduleAdapter = new ArrayAdapter<>(
                 getContext(), android.R.layout.simple_spinner_item, modules);
         moduleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerModule.setAdapter(moduleAdapter);
-
         spinnerModule.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 applyFilters();
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
@@ -255,13 +290,10 @@ public class AuditFragment extends Fragment {
         if (allLogEntries.isEmpty()) {
             return;
         }
-
         String selectedCategory = spinnerCategory.getSelectedItemPosition() == 0 ?
                 null : (String) spinnerCategory.getSelectedItem();
-
         String selectedModule = spinnerModule.getSelectedItemPosition() == 0 ?
                 null : (String) spinnerModule.getSelectedItem();
-
         LogLevel selectedLevel = LogLevel.UNKNOWN;
         if (spinnerLevel.getSelectedItemPosition() > 0) {
             String levelStr = (String) spinnerLevel.getSelectedItem();
@@ -271,7 +303,6 @@ public class AuditFragment extends Fragment {
                 selectedLevel = LogLevel.UNKNOWN;
             }
         }
-
         String searchText = etSearch.getText().toString().trim();
         if (searchText.isEmpty()) {
             searchText = null;
@@ -287,10 +318,6 @@ public class AuditFragment extends Fragment {
             boolean include = true;
 
             if (cbShowErrors.isChecked() && !"true".equals(entry.extractedData.get("is_error"))) {
-                include = false;
-            }
-
-            if (cbShowSuccess.isChecked() && !"true".equals(entry.extractedData.get("is_success"))) {
                 include = false;
             }
 
@@ -331,6 +358,55 @@ public class AuditFragment extends Fragment {
         loadAllLogFiles();
     }
 
+    private void showClearLogsDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("清除日志")
+                .setMessage("确定要清除所有日志文件吗？此操作不可恢复。")
+                .setPositiveButton("清除", (dialog, which) -> clearAllLogs())
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void clearAllLogs() {
+        showLoading(true);
+
+        new Thread(() -> {
+            try {
+                if (logDir != null && logDir.exists()) {
+                    File[] logFiles = logDir.listFiles((dir, name) ->
+                            name.startsWith("hook_log_") && name.endsWith(".txt"));
+
+                    if (logFiles != null) {
+                        for (File file : logFiles) {
+                            if (file.delete()) {
+                                android.util.Log.d(TAG, "删除日志文件: " + file.getName());
+                            }
+                        }
+                    }
+                }
+
+                mainHandler.post(() -> {
+                    allLogEntries.clear();
+                    filteredLogEntries.clear();
+                    logAdapter.setLogEntries(filteredLogEntries);
+                    updateStats();
+                    showEmptyState("日志已清除");
+                    showLoading(false);
+
+                    // 显示清除成功提示
+                    Toast.makeText(requireContext(), "日志清除成功", Toast.LENGTH_SHORT).show();
+                });
+
+            } catch (Exception e) {
+                android.util.Log.e(TAG, "清除日志失败", e);
+                mainHandler.post(() -> {
+                    showLoading(false);
+                    Toast.makeText(requireContext(), "清除日志失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+
     private void showStatistics() {
         Map<String, Integer> moduleStats = LogParser.getModuleStats(allLogEntries);
         Map<String, Object> errorStats = LogParser.getErrorStats(allLogEntries);
@@ -349,7 +425,7 @@ public class AuditFragment extends Fragment {
         }
 
         // 显示统计对话框
-        new android.app.AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("日志统计")
                 .setMessage(statsMessage.toString())
                 .setPositiveButton("确定", null)
@@ -379,29 +455,37 @@ public class AuditFragment extends Fragment {
             }
         }
 
-        new android.app.AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("日志详情")
                 .setMessage(details.toString())
-                .setPositiveButton("确定", null)
+                .setPositiveButton("复制", (dialog, which) -> copyToClipboard(details.toString()))
+                .setNegativeButton("关闭", null)
                 .show();
+    }
+
+    private void copyToClipboard(String text) {
+        ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("日志内容", text);
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(requireContext(), "已复制到剪贴板", Toast.LENGTH_SHORT).show();
     }
 
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         if (show) {
             recyclerView.setVisibility(View.GONE);
-            tvEmpty.setVisibility(View.GONE);
+            layoutEmpty.setVisibility(View.GONE);
         }
     }
 
     private void showEmptyState(String message) {
         tvEmpty.setText(message);
-        tvEmpty.setVisibility(View.VISIBLE);
+        layoutEmpty.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
     }
 
     private void hideEmptyState() {
-        tvEmpty.setVisibility(View.GONE);
+        layoutEmpty.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
     }
 
