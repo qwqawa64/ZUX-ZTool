@@ -45,7 +45,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="锁屏一言"
+                        android:text="@string/YiYanTile"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface"
@@ -66,14 +66,14 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="启用锁屏一言"
+                                android:text="@string/YiYanSwitchTitle"
                                 android:textSize="16sp"
                                 android:textColor="?attr/colorOnSurface" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="在锁屏界面显示自定义文本"
+                                android:text="@string/YiYanSummary"
                                 android:textSize="12sp"
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:layout_marginTop="4dp" />
@@ -107,7 +107,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="API地址"
+                                android:text="@string/api_address_label"
                                 android:textSize="14sp"
                                 android:textColor="?attr/colorOnSurface" />
 
@@ -117,14 +117,14 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="8dp"
-                                android:hint="输入API地址"
+                                android:hint="@string/api_address_hint"
                                 android:textSize="14sp" />
 
                             <Button
                                 android:id="@+id/button_test_api"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="测试"
+                                android:text="@string/test"
                                 android:layout_marginStart="8dp"
                                 android:textSize="12sp" />
 
@@ -139,7 +139,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="正则表达式"
+                                android:text="@string/regex_label_title"
                                 android:textSize="14sp"
                                 android:textColor="?attr/colorOnSurface" />
 
@@ -149,7 +149,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="8dp"
-                                android:hint="输入正则表达式(可选)"
+                                android:hint="@string/regex_label"
                                 android:textSize="14sp" />
 
                         </LinearLayout>
@@ -178,7 +178,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="充电功率显示"
+                        android:text="@string/ChargeWattsTitle"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface"
@@ -198,17 +198,17 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="充电功率显示类型"
+                                android:text="@string/ChargeWattsEnableTitle"
                                 android:textSize="16sp"
                                 android:textColor="?attr/colorOnSurface" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="选择在锁屏界面显示的充电功率类型"
-                                android:textSize="12sp"
+                                android:layout_marginTop="4dp"
+                                android:text="@string/ChargeWattsSummary"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:layout_marginTop="4dp" />
+                                android:textSize="12sp" />
 
                         </LinearLayout>
 

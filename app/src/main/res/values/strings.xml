@@ -70,14 +70,16 @@
     <string name="aod_enable_title">开启AOD显示</string>
     <string name="aod_enable_summary">启用原生AOD，这可能增加耗电</string>
     <string name="lockScreenTitle">锁屏界面相关</string>
-    <string name="YiYanSummary">从网络API获取随机一句话，展示到小横条上方位置，需要重启系统</string>
-    <string name="YiYanTile">锁屏随机一言</string>
+    <string name="YiYanSummary">在锁屏页面显示自定义文本</string>
+    <string name="YiYanTile">锁屏一言</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
-    <string name="test">测试&amp;保存</string>
+    <string name="test">测试</string>
     <string name="regex_label">正则表达式（可选）</string>
+    <string name="regex_label_title">正则表达式</string>
     <string name="regex_hint">提取响应体特定内容</string>
-    <string name="ChargeWattsTile">显示充电功率</string>
+    <string name="ChargeWattsTitle">显示充电功率</string>
+    <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限</string>
     <string name="notifyNumSize_title">自定义最大图标数</string>
     <string name="notifyNumSize_summary">原系统配置默认4个以上通知开始省略图标</string>
@@ -147,4 +149,5 @@
     <string name="statusBarNetworkSizeSummary">让数字尽可能大，让单位尽可能小，和双层网速同时启用会有奇怪的效果</string>
     <string name="statusBarNetworkSizeDoubleLayer">双层网速</string>
     <string name="statusBarNetworkSizeDoubleLayerSummary">能够显示上行和下行的流量</string>
+    <string name="YiYanSwitchTitle">显示锁屏一言</string>
 </resources>
