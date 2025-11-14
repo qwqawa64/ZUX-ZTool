@@ -33,6 +33,7 @@ public class systemUISettings extends AppCompatActivity {
     private FloatingActionButton fabRestart;
     private MaterialSwitch switchEnableAod;
     private MaterialSwitch switchChargingAnimation;
+    private MaterialSwitch switchEnableGuestMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +117,14 @@ public class systemUISettings extends AppCompatActivity {
             mPrefsUtils.saveBooleanSetting("No_ChargeAnimation", isChecked);
             Log.d("ChargingAnimation", "Switch state saved: " + isChecked);
         });
+
+        // 访客模式设置
+        switchEnableGuestMode = findViewById(R.id.switch_GuestFix);
+        switchEnableGuestMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // 保存开关状态到SharedPreferences
+            mPrefsUtils.saveBooleanSetting("guest_mode_controller", isChecked);
+            Log.d("GuestModeSwitch", "Switch state saved: " + isChecked);
+        });
     }
 
     private void loadSettings() {
@@ -125,6 +134,10 @@ public class systemUISettings extends AppCompatActivity {
         // 加载充电动画开关状态
         boolean chargingAnimationEnabled = mPrefsUtils.loadBooleanSetting("No_ChargeAnimation", false);
         switchChargingAnimation.setChecked(chargingAnimationEnabled);
+
+        // 加载访客模式开关状态
+        boolean guestModeEnabled = mPrefsUtils.loadBooleanSetting("guest_mode_controller", true);
+        switchEnableGuestMode.setChecked(guestModeEnabled);
     }
 
     public boolean isAodEnabled() {

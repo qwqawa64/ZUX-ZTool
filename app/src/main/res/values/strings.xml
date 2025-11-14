@@ -139,4 +139,7 @@
     <string name="default_allow_autorun_title">后台行为管理</string>
     <string name="default_allow_autorun_enable_title">默认允许APP自启</string>
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
+    <string name="systemUIMisc">杂项</string>
+    <string name="disable_guest_user_enable_title">禁止访客用户自动创建</string>
+    <string name="disable_guest_user_enable_summary">仅在多用户启用时允许创建访客用户</string>
 </resources>

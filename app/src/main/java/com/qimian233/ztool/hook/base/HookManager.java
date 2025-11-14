@@ -21,6 +21,7 @@ import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
+import com.qimian233.ztool.hook.modules.systemui.GuestModeController;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
@@ -102,6 +103,8 @@ public class HookManager {
         registerHookModule(new AllowGetPackages());
         // 注册模块，默认允许应用自启
         registerHookModule(new EnableAutorunByDefault());
+        // 注册模块：禁止访客用户自动创建
+        registerHookModule(new GuestModeController());
         initialized = true;
     }
 
