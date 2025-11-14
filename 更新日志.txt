@@ -1,11 +1,19 @@
+"Demo/251114" (7)
 移除通知图标数量内不必要的hook逻辑
 新增允许使用原生安装器
-新增允许关闭杜比音效
-新增允许关闭充电动画
+新增允许关闭杜比音效【移植自Unfuck ZUI Tablet】
+新增允许关闭充电动画【移植自Unfuck ZUI Tablet】
 新增日志板块
-新增允许禁用充电动画
-新增允许使用原生权限管理器
-新增状态栏允许显示原生通知图标
+新增日志收集服务
+新增允许禁用充电动画【移植自Unfuck ZUI Tablet】
+新增允许使用原生权限管理器【移植自Unfuck ZUI Tablet】
+新增状态栏允许显示原生通知图标【移植自Unfuck ZUI Tablet】
+新增禁止访客用户自动创建【移植自Unfuck ZUI Tablet】
+新增重启后保持屏幕方向【移植自Unfuck ZUI Tablet】
+新增禁止ZUX桌面划卡杀后台【移植自Unfuck ZUI Tablet】
+新增默认允许应用获取应用列表【移植自Unfuck ZUI Tablet】
+新增允许应用自启【移植自Unfuck ZUI Tablet】
+新增关于界面
 
 "Demo/251106" (6):
 新增充电瓦数显示允许使用实际功率
