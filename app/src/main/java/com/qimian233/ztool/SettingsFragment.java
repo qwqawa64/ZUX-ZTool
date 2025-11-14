@@ -144,9 +144,11 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
 
     private void showAboutPage() {
         // 使用 HTML 标签创建带链接的文本
-        String htmlText = "ZTool是个针对ZUXOS/ZUI的功能增强模块。<br>版本: " + updateModuleStatus()
+        String htmlText = "ZTool是个针对ZUXOS的LSPosed功能增强模块。<br>版本: " + updateModuleStatus()
                 + "<br>开发者: Qimian233, WASDDestroy"
-                + "<br>访问项目的<a href='https://github.com/qwqawa64/ZUX-ZTool'>Github主页</a>";
+                + "<br>访问项目的<a href='https://github.com/qwqawa64/ZUX-ZTool'>Github主页</a>"
+                + "<br>本项目遵守Apache 2.0协议发布。"
+                + "感谢<a href='https://github.com/dantmnf'>dantmnf</a>的<a href='https://github.com/dantmnf/UnfuckZUI'>UnfuckZUI</a>，功能搬运情况请参考我们的项目主页。";
 
         // 将 HTML 转换为 Spanned
         Spanned message = Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY);
