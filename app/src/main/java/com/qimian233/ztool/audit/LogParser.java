@@ -83,6 +83,10 @@ public class LogParser {
                 Pattern.compile("\\[NativeNotificationIcon\\]\\s*(.*)"));
         MODULE_PATTERNS.put("No_ChargeAnimation",
                 Pattern.compile("\\[No_ChargeAnimation\\]\\s*(.*)"));
+        MODULE_PATTERNS.put("systemui_network_speed_size",
+                Pattern.compile("\\[systemui_network_speed_size\\]\\s*(.*)"));
+        MODULE_PATTERNS.put("systemui_network_speed_doublelayer",
+                Pattern.compile("\\[systemui_network_speed_doublelayer\\]\\s*(.*)"));
 
         // 游戏工具相关模块
         MODULE_PATTERNS.put("Fix_CpuClock",
@@ -131,6 +135,8 @@ public class LogParser {
         MODULE_NAMES.put("Custom_ControlCenterDate", "控制中心日期");
         MODULE_NAMES.put("NativeNotificationIcon", "原生通知图标");
         MODULE_NAMES.put("No_ChargeAnimation", "无充电动画");
+        MODULE_NAMES.put("systemui_network_speed_size", "网速布局优化");
+        MODULE_NAMES.put("systemui_network_speed_doublelayer", "网速双层显示");
 
         // 游戏工具相关
         MODULE_NAMES.put("Fix_CpuClock", "CPU频率修复");
@@ -507,7 +513,8 @@ public class LogParser {
         categories.put("系统UI", Arrays.asList(
                 "notification_icon_limit", "systemUI_RealWatts", "systemui_charge_watts",
                 "Custom_StatusBarClock", "StatusBarDisplay_Seconds", "Custom_ControlCenterDate",
-                "NativeNotificationIcon", "No_ChargeAnimation"
+                "NativeNotificationIcon", "No_ChargeAnimation", "systemui_network_speed_size",
+                "systemui_network_speed_doublelayer"
         ));
 
         // 游戏工具相关

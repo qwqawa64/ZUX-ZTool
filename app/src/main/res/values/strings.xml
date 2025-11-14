@@ -142,4 +142,9 @@
     <string name="systemUIMisc">杂项</string>
     <string name="disable_guest_user_enable_title">禁止访客用户自动创建</string>
     <string name="disable_guest_user_enable_summary">仅在多用户启用时允许创建访客用户</string>
+    <string name="statusBarNetworkTitle">状态栏网速</string>
+    <string name="statusBarNetworkSizeTitle">优化网速显示比例</string>
+    <string name="statusBarNetworkSizeSummary">让数字尽可能大，让单位尽可能小，和双层网速同时启用会有奇怪的效果</string>
+    <string name="statusBarNetworkSizeDoubleLayer">双层网速</string>
+    <string name="statusBarNetworkSizeDoubleLayerSummary">能够显示上行和下行的流量</string>
 </resources>

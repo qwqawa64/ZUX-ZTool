@@ -27,6 +27,8 @@ import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
+import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeedSIzeHook;
+import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeeddoublelayerHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIRealWatts;
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -105,6 +107,10 @@ public class HookManager {
         registerHookModule(new EnableAutorunByDefault());
         // 注册模块：禁止访客用户自动创建
         registerHookModule(new GuestModeController());
+        // 注册模块：调整合适的状态栏网速
+        registerHookModule(new SystemUINetworkSpeedSIzeHook());
+        // 注册模块：状态栏双层网速
+        registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
         initialized = true;
     }
 

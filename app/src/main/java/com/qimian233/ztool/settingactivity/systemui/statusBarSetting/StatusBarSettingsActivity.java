@@ -52,7 +52,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
     // 样式相关的视图
     private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
-    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchNativeNotificationIcon;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchNativeNotificationIcon, switch_NetworkSpeedSize, switch_NetworkSpeedSizeDoubleLayer;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
     private View viewColorPreview;
@@ -128,6 +128,18 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             saveSettings("NativeNotificationIcon",isChecked);
             //Log.d("NativeNotificationIcon", "Switch state saved: " + isChecked);
         });
+
+        // 设置状态栏网速大小优化事件
+        switch_NetworkSpeedSize = findViewById(R.id.switch_NetworkSpeedSize);
+        switch_NetworkSpeedSize.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveSettings("systemui_network_speed_size",isChecked);
+        });
+
+        switch_NetworkSpeedSizeDoubleLayer = findViewById(R.id.switch_NetworkSpeedSizeDoubleLayer);
+        switch_NetworkSpeedSizeDoubleLayer.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveSettings("systemui_network_speed_doublelayer",isChecked);
+        });
+
 
         StatusBar_notifyNumSize = getNotifyNumSizeShared();
         String[] itemsArray = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "无限制"};
@@ -375,6 +387,12 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
         boolean isNativeIconEnabled = mPrefsUtils.loadBooleanSetting("NativeNotificationIcon", false);
         switchNativeNotificationIcon.setChecked(isNativeIconEnabled);
+
+        boolean isNetworkSpeedSize = mPrefsUtils.loadBooleanSetting("systemui_network_speed_size", false);
+        switch_NetworkSpeedSize.setChecked(isNetworkSpeedSize);
+
+        boolean isNetworkSpeedDoubleLayer = mPrefsUtils.loadBooleanSetting("systemui_network_speed_doublelayer", false);
+        switch_NetworkSpeedSizeDoubleLayer.setChecked(isNetworkSpeedDoubleLayer);
 
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
