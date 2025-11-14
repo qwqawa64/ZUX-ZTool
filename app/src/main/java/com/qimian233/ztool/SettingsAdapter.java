@@ -8,6 +8,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.materialswitch.MaterialSwitch;
+
 import java.util.List;
 
 public class SettingsAdapter extends RecyclerView.Adapter<SettingsAdapter.ViewHolder> {
@@ -118,7 +121,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingsAdapter.ViewHo
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView titleTextView;
         public TextView descriptionTextView;
-        public Switch settingSwitch;
+        public MaterialSwitch settingSwitch;
 
         public ViewHolder(View view) {
             super(view);

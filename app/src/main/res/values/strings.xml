@@ -150,4 +150,6 @@
     <string name="statusBarNetworkSizeDoubleLayer">双层网速</string>
     <string name="statusBarNetworkSizeDoubleLayerSummary">能够显示上行和下行的流量</string>
     <string name="YiYanSwitchTitle">显示锁屏一言</string>
+    <string name="SettingsTitle">设置项标题</string>
+    <string name="SettingsDescription">设置项描述</string>
 </resources>
