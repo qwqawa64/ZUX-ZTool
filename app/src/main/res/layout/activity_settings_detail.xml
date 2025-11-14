@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <!-- 根布局改为垂直方向的LinearLayout，用于放置标题栏和滚动内容 -->
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="8dp"
@@ -175,7 +175,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                                app:srcCompat="@drawable/ic_baseline_open_in_new_24" />
+                                app:srcCompat="@drawable/ic_baseline_open_in_new_24"
+                                tools:ignore="ContentDescription" />
 
                         </LinearLayout>
 
@@ -183,6 +184,7 @@
                             android:id="@+id/custom_landscapeResult_layout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:baselineAligned="false"
                             android:gravity="center_vertical"
                             android:layout_marginTop="16dp"
                             android:background="?attr/selectableItemBackground"
@@ -255,7 +257,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                                app:srcCompat="@drawable/ic_arrow_forward" />
+                                app:srcCompat="@drawable/ic_arrow_forward"
+                                tools:ignore="ContentDescription" />
 
                         </LinearLayout>
                     </LinearLayout>
@@ -434,7 +437,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                                app:srcCompat="@drawable/ic_baseline_add_24" />
+                                app:srcCompat="@drawable/ic_baseline_add_24"
+                                tools:ignore="ContentDescription" />
 
                         </LinearLayout>
 
@@ -593,5 +597,6 @@
         android:layout_margin="16dp"
         app:srcCompat="@drawable/ic_refresh"
         app:tint="@android:color/white"
-        app:backgroundTint="?attr/colorPrimary" />
+        app:backgroundTint="?attr/colorPrimary"
+        tools:ignore="ContentDescription" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
