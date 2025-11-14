@@ -1,12 +1,24 @@
 package com.qimian233.ztool;
 
+import android.app.Activity;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.qimian233.ztool.service.LogServiceManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +80,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
                 // 处理备份配置点击
                 break;
             case "关于":
-                // 处理关于点击
+                showAboutPage();
                 break;
             // 其他点击处理...
         }
@@ -128,5 +140,58 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
         // 更新日志服务开关状态
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());
         updateSettingItemState("日志采集服务", isLogServiceEnabled);
+    }
+
+    private void showAboutPage() {
+        // 使用 HTML 标签创建带链接的文本
+        String htmlText = "ZTool是个针对ZUXOS/ZUI的功能增强模块。<br>版本: " + updateModuleStatus()
+                + "<br>开发者: Qimian233, WASDDestroy"
+                + "<br>访问项目的<a href='https://github.com/qwqawa64/ZUX-ZTool'>Github主页</a>";
+
+        // 将 HTML 转换为 Spanned
+        Spanned message = Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY);
+
+        // 创建对话框
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("关于ZTool")
+                .setMessage(message)
+                .setPositiveButton("确定", null)
+                .create();
+
+        dialog.show();
+
+        // 【关键】使对话框中的链接可以点击
+        TextView messageView = dialog.findViewById(android.R.id.message);
+        if (messageView != null) {
+            messageView.setMovementMethod(LinkMovementMethod.getInstance());
+        }
+    }
+
+    private String updateModuleStatus() {
+        final String TAG = "SettingsFragment";
+        String moduleVersion;
+        try {
+            try {
+                Activity activity = getActivity();
+                if (activity != null) {
+                    PackageInfo packageInfo = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
+                    String versionName = packageInfo.versionName;
+                    int versionCode = packageInfo.versionCode;
+                    moduleVersion = versionName + " (" + versionCode + ")";
+                } else {
+                    moduleVersion = "未知 (Activity 为空)";
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+                moduleVersion = "未知";
+            }
+
+            Log.i(TAG, "模块状态更新完成");
+            return moduleVersion;
+
+        } catch (Exception e) {
+            Log.e(TAG, "更新模块状态失败: " + e.getMessage());
+            return null;
+        }
     }
 }
