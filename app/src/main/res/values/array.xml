@@ -8,5 +8,7 @@
         <item>com.lenovo.tbengine</item>
         <item>com.android.packageinstaller</item>
         <item>com.android.systemui</item>
+        <item>com.zui.safecenter</item>
+        <item>com.zui.launcher</item>
     </string-array>
 </resources>
