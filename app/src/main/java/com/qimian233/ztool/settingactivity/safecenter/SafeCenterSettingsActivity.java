@@ -20,7 +20,7 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private FloatingActionButton fabRestart;
-    private MaterialSwitch switchAllowAutoRun;
+    private MaterialSwitch switchAllowAutoRun, switchDisableSafeScan;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,12 +53,25 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
                 saveSettings("default_enable_autorun", isChecked);
             }
         });
+
+        // 禁用联想安全中心自动扫描开关
+        switchDisableSafeScan = findViewById(R.id.switch_Disable_SafeScanBlock);
+        switchDisableSafeScan.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("block_safecenter_scan", isChecked);
+            }
+        });
     }
 
     private void loadSettings() {
         // 加载默认允许应用自启状态
         boolean isAutoRunAllowedbyDefault = mPrefsUtils.loadBooleanSetting("default_enable_autorun",false);
         switchAllowAutoRun.setChecked(isAutoRunAllowedbyDefault);
+
+        // 加载禁用联想安全中心自动扫描状态
+        boolean isSafeScanBlocked = mPrefsUtils.loadBooleanSetting("block_safecenter_scan",false);
+        switchDisableSafeScan.setChecked(isSafeScanBlocked);
     }
 
     private void initRestartButton() {

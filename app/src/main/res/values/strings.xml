@@ -152,4 +152,6 @@
     <string name="YiYanSwitchTitle">显示锁屏一言</string>
     <string name="SettingsTitle">设置项标题</string>
     <string name="SettingsDescription">设置项描述</string>
+    <string name="DisableSafeScanTitle">禁止安全扫描</string>
+    <string name="DisableSafeScanSummary">阻止联想安全中心每七天的后台安全扫描行为，这可以阻止“病毒警报”类的弹窗</string>
 </resources>
