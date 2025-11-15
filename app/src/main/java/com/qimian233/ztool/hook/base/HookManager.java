@@ -7,6 +7,7 @@ import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
+import com.qimian233.ztool.hook.modules.safecenter.SafeCenterScanBlocker;
 import com.qimian233.ztool.hook.modules.setting.KeepRotation;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
@@ -111,6 +112,8 @@ public class HookManager {
         registerHookModule(new SystemUINetworkSpeedSIzeHook());
         // 注册模块：状态栏双层网速
         registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
+        // 注册模块：阻止安全中心的扫描行为
+        registerHookModule(new SafeCenterScanBlocker());
         initialized = true;
     }
 
