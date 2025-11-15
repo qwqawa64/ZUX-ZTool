@@ -124,6 +124,18 @@ public class LogParser {
         MODULE_PATTERNS.put("remove_blacklist",
                 Pattern.compile("\\[remove_blacklist\\]\\s*(.*)"));
 
+        // 系统框架相关
+        MODULE_PATTERNS.put("allow_get_packages",
+                Pattern.compile("\\[allow_get_packages\\]\\s*(.*)"));
+        MODULE_PATTERNS.put("keep_rotation",
+                Pattern.compile("\\[keep_rotation\\]\\s*(.*)"));
+
+        // 安全中心相关
+        MODULE_PATTERNS.put("default_enable_autorun",
+                Pattern.compile("\\[default_enable_autorun\\]\\s*(.*)"));
+        MODULE_PATTERNS.put("block_safecenter_scan",
+                Pattern.compile("\\[block_safecenter_scan\\]\\s*(.*)"));
+
 
         // 模块显示名称映射
         // 系统UI相关
@@ -158,18 +170,17 @@ public class LogParser {
         MODULE_NAMES.put("PermissionControllerHook", "权限控制器");
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
-        MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
 
         // 启动器相关
         MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
 
         // 系统框架相关
-        MODULE_PATTERNS.put("keep_rotation",
-                Pattern.compile("\\[keep_rotation\\]\\s*(.*)"));
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
+        MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
 
         // 安全中心相关
         MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
+        MODULE_NAMES.put("block_safecenter_scan", "阻止安全中心扫描");
     }
 
     /**
@@ -546,7 +557,7 @@ public class LogParser {
 
         // 安全中心相关
         categories.put("安全中心", Arrays.asList(
-                "default_enable_autorun"
+                "default_enable_autorun", "block_safecenter_scan"
         ));
         return categories;
     }
