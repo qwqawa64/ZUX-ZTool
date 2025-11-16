@@ -13,7 +13,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorSurface"
         android:titleTextColor="?attr/colorOnPrimary"
-        app:title="@string/status_bar_settings_title" />
+        app:title="@string/statusBarSettingTitle" />
 
     <ScrollView
         android:layout_width="match_parent"

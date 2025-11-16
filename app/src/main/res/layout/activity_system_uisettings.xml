@@ -337,7 +337,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/nocharginganimation_title"
+                            android:text="@string/noChargingAnimation_title"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnSurface"
@@ -357,14 +357,14 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/nocharginganimation_enable_title"
+                                    android:text="@string/noChargingAnimation_enable_title"
                                     android:textSize="16sp"
                                     android:textColor="?attr/colorOnSurface" />
 
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/nocharginganimation_enable_summary"
+                                    android:text="@string/noChargingAnimation_enable_summary"
                                     android:textSize="12sp"
                                     android:textColor="?attr/colorOnSurfaceVariant"
                                     android:layout_marginTop="4dp" />

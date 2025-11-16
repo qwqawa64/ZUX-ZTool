@@ -126,7 +126,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:hint="@string/ControllerDateFormate"
+                                android:hint="@string/ControllerDateFormat"
                                 android:text="@string/DateFormateExample"
                                 android:textSize="14sp"
                                 android:inputType="text" />
@@ -135,7 +135,7 @@
                                 android:id="@+id/button_save_date_format"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/SaveDateFormate"
+                                android:text="@string/save"
                                 android:layout_marginStart="16dp"
                                 style="?attr/materialButtonOutlinedStyle" />
 
@@ -360,7 +360,7 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/Date_Blod"
+                                    android:text="@string/useBoldDate"
                                     android:textSize="12sp"
                                     android:textColor="?attr/colorOnSurfaceVariant"
                                     android:layout_marginTop="4dp" />
