@@ -33,7 +33,7 @@ public class HomeFragment extends Fragment {
     // UI组件
     private CardView cardRequirements, cardModuleStatus, cardSystemInfo;
     private TextView textModuleStatus, textModuleVersion, textRootSource, textFrameworkVersion;
-    private TextView textDeviceModel, textProduct, textAndroidVersion, textBuildVersion, textKernelVersion;
+    private TextView textDeviceModel, textAndroidVersion, textBuildVersion, textKernelVersion;
     private TextView textHint;
 
     // 环境检测状态
@@ -218,7 +218,7 @@ public class HomeFragment extends Fragment {
             if (!isRootAvailable) hintBuilder.append("Root权限不可用");
 
             textHint.setText(hintBuilder.toString());
-            Log.w(TAG, "环境不完整: " + hintBuilder.toString());
+            Log.w(TAG, "环境不完整: " + hintBuilder);
         }
 
         // 通知Activity环境状态变化（只有当状态变化时才回调）
@@ -294,7 +294,7 @@ public class HomeFragment extends Fragment {
                     String versionName = packageInfo.versionName;
                     int versionCode = packageInfo.versionCode;
                     String moduleVersion = versionName + " (" + versionCode + ")";
-                    textModuleVersion.setText("模块版本: " + moduleVersion);
+                    textModuleVersion.setText("模块版本：" + moduleVersion);
                 } else {
                     textModuleVersion.setText("模块版本: 未知 (Activity 为空)");
                 }
@@ -358,16 +358,17 @@ public class HomeFragment extends Fragment {
                 }
             }
 
-            // 检查KernelSU
+            // 检查KernelSU - 使用[ ]语法
             try {
-                Process process = Runtime.getRuntime().exec("su -c cat /sys/kernel/kernelsu/version");
+                Process process = Runtime.getRuntime().exec("su -c su -v");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String version = reader.readLine();
                 int exitCode = process.waitFor();
 
-                if (exitCode == 0 && version != null && !version.isEmpty()) {
+                if (exitCode == 0 && version != null && version.contains("KernelSU")) {
                     Log.i(TAG, "检测到KernelSU: " + version);
-                    return "KernelSU (" + version + ")";
+                    int endPosition = version.indexOf("KernelSU");
+                    return "KernelSU (" + version.substring(0,endPosition-1) + ")";
                 }
             } catch (Exception e) {
                 Log.d(TAG, "KernelSU检测失败: " + e.getMessage());
