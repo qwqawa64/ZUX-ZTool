@@ -4,6 +4,10 @@
     <string name="embedding_setting_removeBlacklist">去除黑名单限制</string>
     <string name="embedding_setting_removeBlacklist_summary">去除黑名单限制，允许所有应用嵌入</string>
     <string name="default_title">XXX - 详细设置</string>
+    <string name="settingsFragment_title">设置</string>
+    <string name="featuresFragment_title">功能管理</string>
+    <string name="itemFeatures_appName">应用名称</string>
+    <string name="itemFeatures_appDescription">应用描述</string>
     <string name="RemoveHdAppFilter_title">去除HD名单限制</string>
     <string name="RemoveHdAppFilter_summary">去除HD应用列表过滤，使HD黑名单应用都显示在横屏视图设置中</string>
     <string name="Game_Audio_title">禁止处理游戏音频</string>
