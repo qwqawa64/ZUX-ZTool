@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -18,7 +17,7 @@
             android:id="@+id/title_home"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="主页"
+            android:text="@string/homeFragment_title"
             android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
@@ -39,7 +38,8 @@
             app:cardPreventCornerOverlap="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title_home">
+            app:layout_constraintTop_toBottomOf="@id/title_home"
+            android:foreground="?attr/selectableItemBackground">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -50,7 +50,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="工作模式要求"
+                    android:text="@string/workModeRequirement"
                     android:textColor="?attr/colorOnErrorContainer"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -59,7 +59,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="• 需要Root权限\n• 需要LSPosed框架"
+                    android:text="@string/workModeRequirementDetail"
                     android:textColor="?attr/colorOnErrorContainer"
                     android:textSize="15sp"
                     android:lineSpacingExtra="4dp" />
@@ -80,7 +80,8 @@
             app:cardPreventCornerOverlap="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_requirements">
+            app:layout_constraintTop_toBottomOf="@id/card_requirements"
+            android:foreground="?attr/selectableItemBackground">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -93,7 +94,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="状态"
+                android:text="@string/environmentState"
                 android:textColor="?attr/colorOnSecondaryContainer"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -111,14 +112,15 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_check_circle"
-                    app:tint="?attr/colorPrimary" />
+                    app:tint="?attr/colorPrimary"
+                    tools:ignore="ContentDescription" />
 
                 <TextView
                     android:id="@+id/text_module_status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="模块已激活"
+                    android:text="@string/moduleActivated"
                     android:textColor="?attr/colorPrimary"
                     android:textSize="22sp"
                     android:textStyle="bold" />
@@ -136,7 +138,7 @@
                     android:id="@+id/text_module_version"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="ZTool版本: 1.3.1 (19350)"
+                    android:text="@string/appVersion"
                     android:textColor="?attr/colorOnSecondaryContainer"
                     android:textSize="15sp" />
 
@@ -144,7 +146,7 @@
                     android:id="@+id/text_root_source"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Root管理器: R6687BB53-kitsune:MAGISKSU (27001)"
+                    android:text="@string/rootManagerVersion"
                     android:textColor="?attr/colorOnSecondaryContainer"
                     android:textSize="12sp" />
 
@@ -152,7 +154,7 @@
                     android:id="@+id/text_framework_version"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="XP框架: Zygisk - LSPosed v1.10.1 (7115)"
+                    android:text="@string/XPosedManagerVersion"
                     android:textColor="?attr/colorOnSecondaryContainer"
                     android:textSize="12sp" />
 
@@ -175,7 +177,8 @@
             app:cardPreventCornerOverlap="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_module_status">
+            app:layout_constraintTop_toBottomOf="@id/card_module_status"
+            android:foreground="?attr/selectableItemBackground">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -187,7 +190,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="设备与系统信息"
+                    android:text="@string/deviceInfo"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -210,7 +213,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="设备代号:"
+                            android:text="@string/deviceCodeName"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="15sp" />
 
@@ -219,7 +222,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Unknown"
+                            android:text="@string/placeHolderUnknown"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"
                             android:textAlignment="textEnd" />
@@ -236,7 +239,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Android版本:"
+                            android:text="@string/AndroidVersion"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="15sp" />
 
@@ -245,7 +248,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Unknown"
+                            android:text="@string/placeHolderUnknown"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"
                             android:textAlignment="textEnd" />
@@ -262,7 +265,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="构建版本:"
+                            android:text="@string/buildVersion"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="15sp" />
 
@@ -271,7 +274,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Unknown"
+                            android:text="@string/placeHolderUnknown"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"
                             android:textAlignment="textEnd" />
@@ -288,7 +291,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="内核版本:"
+                            android:text="@string/kernelVersion"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="15sp" />
 
@@ -297,7 +300,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Unknown"
+                            android:text="@string/placeHolderUnknown"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"
                             android:textAlignment="textEnd" />
@@ -317,7 +320,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:layout_marginBottom="20dp"
-            android:text="提示：模块正常工作需要Root权限和LSPosed框架支持"
+            android:text="@string/workConditionTip"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="14sp"
             android:gravity="center"
