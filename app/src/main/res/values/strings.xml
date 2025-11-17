@@ -2,9 +2,13 @@
     <!--Place Frequently Used Expressions Here-->
     <string name="tooltip_content_description">提示</string>
     <string name="save">保存</string>
+    <string name="delete">删除</string>
+    <string name="cancel">取消</string>
     <string name="test">测试</string>
+    <string name="nextStep">下一步</string>
     <string name="regex_label_title">正则表达式</string>
     <string name="regex_label">正则表达式（可选）</string>
+    <string name="loading">加载中…</string>
     <!--Homepage ResValue-->
     <string name="app_name">ZTool</string>
     <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
@@ -22,11 +26,11 @@
     <string name="workModeRequirementDetail">• 需要Root权限\n• 需要LSPosed框架</string>
     <string name="environmentState">状态</string>
     <string name="moduleActivated">模块已激活</string>
-    <!--Feature Page ResValue-->
+    <!--Feature Page and Feature Item ResValue-->
     <string name="featuresFragment_title">功能管理</string>
     <string name="itemFeatures_appName">应用名称</string>
     <string name="itemFeatures_appDescription">应用描述</string>
-    <!--Log Page ResValue-->
+    <!--Log Page and Log Item ResValue-->
     <string name="logFilter">日志过滤器</string>
     <string name="filterByType">类别</string>
     <string name="filterByModule">模块</string>
@@ -38,7 +42,13 @@
     <string name="logStatistic">统计</string>
     <string name="placeHolderLogStat">总计: 0 条 | 显示: 0 条 | 模块: 0 个 | 文件: 0</string>
     <string name="placeHolderNoLogAvailable">暂无日志数据</string>
-    <!--ZTool Settings Page ResValue-->
+    <string name="placeHolderTimeStamp">14:43:26.087</string>
+    <string name="placeHolderMessage">[notification_icon_limit] 修改图标限制 7 -&gt; 3 (图标总数: 3)</string>
+    <string name="placeHolderDetail">Tag: ZToolXposedModule | PID: 3470 | Mode: ROOT | Function: 修改 图标限制</string>
+    <string name="placeHolderLogLevel">I</string>
+    <string name="notificationIcon">通知图标</string>
+    <string name="multiLineStackTrace">多行堆栈</string>
+    <!--ZTool Settings Page and Settings Item ResValue-->
     <string name="default_title">XXX - 详细设置</string>
     <string name="settingsFragment_title">设置</string>
     <string name="SettingsTitle">设置项标题</string>
@@ -162,8 +172,11 @@
     <string name="CustomDateSettingTitle">自定义日期格式</string>
     <string name="CustomDateSettingSummary">自定义控制中心时间的显示格式</string>
     <string name="custom_clock_text_size_title">字体大小</string>
+    <string name="custom_clock_default_text_size">16sp</string>
     <string name="custom_clock_letter_spacing_title">字间距</string>
+    <string name="custom_clock_letter_spacing_default">0.1</string>>
     <string name="custom_clock_text_color_title">字体颜色</string>
+    <string name="custom_clock_text_color_default">#FFFFFFFF</string>
     <string name="custom_clock_text_bold_title">粗体</string>
     <string name="useBoldDate">启用日期文字的粗体显示效果</string>
     <string name="ControllerDateFormat">输入时间格式</string>
@@ -194,4 +207,35 @@
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
     <string name="DisableSafeScanTitle">禁止安全扫描</string>
     <string name="DisableSafeScanSummary">阻止联想安全中心每七天的后台安全扫描行为，这可以阻止“病毒警报”类的弹窗</string>
+    <!--Hook Features ResValue Ends Here-->
+    <!--Dialog ResValue Starts Here-->
+    <!--Config Selection Dialog ResValue-->
+    <string name="selectConfigFile">选择配置文件</string>
+    <string name="customPolicyAppliedCount">已刷入 X 个自定义策略</string>
+    <string name="flashAddedConfig">刷入配置</string>
+    <string name="restoreModule">还原模块</string>
+    <!--Font Import Dialog ResValue-->
+    <string name="doNotUseDuplicatedFontName">千万不要起重复的字体名称</string>
+    <string name="fontName">字体名称</string>
+    <string name="fontDescription">字体描述</string>
+    <!--OTA Info Dialog ResValue-->
+    <string name="updateLog">更新日志</string>
+    <!--YiShiJie Adapt Assistant ResValue-->
+    <string name="howToAdapt">步骤提示</string>
+    <string name="currentApp">当前应用:</string>
+    <string name="currentActivity">当前Activity:</string>
+    <string name="welcomeToUse">欢迎使用适配向导，请按照上面步骤提示操作:</string>
+    <string name="addCurrentActivity">添加当前活动</string>
+    <string name="noActivityAdded">已添加活动: 无</string>
+    <string name="showEmbeddingDivider">显示嵌入分隔符</string>
+    <string name="skipLetterBoxToDisplay">跳过信箱模式显示信息</string>
+    <string name="skipMultiWindowMode">跳过多窗口模式</string>
+    <string name="displaySurfaceViewBackground">显示SurfaceView背景</string>
+    <string name="shouldStopMainActivity">应暂停主活动</string>
+    <!--Dialog ResValue Ends Here-->
+    <!--Navigation Bar ResValue-->
+    <string name="gotoHomePage">主页</string>
+    <string name="gotoFeaturePage">功能</string>
+    <string name="gotoLogPage">日志</string>
+    <string name="gotoSettingsPage">设置</string>
 </resources>

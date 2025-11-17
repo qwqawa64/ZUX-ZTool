@@ -15,7 +15,7 @@
             android:id="@+id/step_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="步骤提示"
+            android:text="@string/howToAdapt"
             android:textColor="?attr/colorPrimary"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -25,7 +25,7 @@
             android:id="@+id/AppName_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="当前应用: "
+            android:text="@string/currentApp"
             android:textColor="?attr/colorPrimary"
             android:textSize="12sp" />
 
@@ -33,7 +33,7 @@
             android:id="@+id/ActivityInfo_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="当前Activity: "
+            android:text="@string/currentActivity"
             android:textColor="?attr/colorPrimary"
             android:textSize="12sp" />
 
@@ -42,7 +42,7 @@
             android:id="@+id/welcome_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="欢迎使用适配向导，请按照上面步骤提示操作: "
+            android:text="@string/welcomeToUse"
             android:textColor="?attr/colorPrimary"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -77,13 +77,13 @@
                 android:id="@+id/add_activity_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="添加当前活动" />
+                android:text="@string/addCurrentActivity" />
 
             <TextView
                 android:id="@+id/added_activities_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="已添加活动: 无"
+                android:text="@string/noActivityAdded"
                 android:textColor="?attr/colorPrimary"
                 android:textSize="10sp"
                 android:maxLines="5"
@@ -104,35 +104,35 @@
                 android:id="@+id/option_show_embedding_divider"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="显示嵌入分隔符"
+                android:text="@string/showEmbeddingDivider"
                 android:textSize="12sp" />
 
             <CheckBox
                 android:id="@+id/option_skip_letterbox_display_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="跳过信箱模式显示信息"
+                android:text="@string/skipLetterBoxToDisplay"
                 android:textSize="12sp" />
 
             <CheckBox
                 android:id="@+id/option_skip_multi_window_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="跳过多窗口模式"
+                android:text="@string/skipMultiWindowMode"
                 android:textSize="12sp" />
 
             <CheckBox
                 android:id="@+id/option_show_surface_view_background"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="显示SurfaceView背景"
+                android:text="@string/displaySurfaceViewBackground"
                 android:textSize="12sp" />
 
             <CheckBox
                 android:id="@+id/option_should_pause_primary_activity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="应暂停主活动"
+                android:text="@string/shouldStopMainActivity"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -147,7 +147,7 @@
                 android:id="@+id/next_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="下一步" />
+                android:text="@string/nextStep" />
 
         </LinearLayout>
 

@@ -10,7 +10,7 @@
         android:id="@+id/dialog_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="选择配置文件"
+        android:text="@string/selectConfigFile"
         android:textSize="18sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -21,7 +21,7 @@
         android:id="@+id/flashed_count_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="已刷入 X 个自定义策略"
+        android:text="@string/customPolicyAppliedCount"
         android:textSize="14sp"
         android:textColor="@color/design_default_color_primary"
         android:gravity="center"
@@ -48,7 +48,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="删除"
+            android:text="@string/delete"
             android:layout_marginEnd="8dp"
             style="@style/Widget.Material3.Button.TextButton" />
 
@@ -57,7 +57,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="刷入配置"
+            android:text="@string/flashAddedConfig"
             android:layout_marginEnd="8dp"
             style="@style/Widget.Material3.Button" />
 
@@ -66,7 +66,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="还原模块"
+            android:text="@string/restoreModule"
             android:layout_marginEnd="8dp"
             style="@style/Widget.Material3.Button.OutlinedButton" />
 
@@ -75,7 +75,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="取消"
+            android:text="@string/cancel"
             style="@style/Widget.Material3.Button.TextButton" />
 
     </LinearLayout>

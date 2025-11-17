@@ -181,7 +181,7 @@
                                         android:id="@+id/textview_text_size_value"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="16sp"
+                                        android:text="@string/custom_clock_default_text_size"
                                         android:textSize="12sp"
                                         android:textColor="?attr/colorOnSurfaceVariant"
                                         android:layout_marginTop="4dp" />
@@ -235,7 +235,7 @@
                                         android:id="@+id/textview_letter_spacing_value"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="0.1"
+                                        android:text="@string/custom_clock_letter_spacing_default"
                                         android:textSize="12sp"
                                         android:textColor="?attr/colorOnSurfaceVariant"
                                         android:layout_marginTop="4dp" />
@@ -290,7 +290,7 @@
                                         android:id="@+id/textview_text_color_value"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="#FFFFFFFF"
+                                        android:text="@string/custom_clock_text_color_default"
                                         android:textSize="12sp"
                                         android:textColor="?attr/colorOnSurfaceVariant"
                                         android:layout_marginTop="4dp" />
