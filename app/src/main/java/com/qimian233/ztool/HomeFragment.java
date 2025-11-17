@@ -16,11 +16,11 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import android.widget.TextView;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -239,17 +239,7 @@ public class HomeFragment extends Fragment {
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == 200) {
-                    InputStream inputStream = connection.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    reader.close();
-
-                    // 解析JSON响应
-                    JSONObject jsonResponse = new JSONObject(response.toString());
+                    JSONObject jsonResponse = getJsonObject(connection);
                     if (jsonResponse.getInt("code") == 200) {
                         JSONObject data = jsonResponse.getJSONObject("data");
                         String content = data.getString("content");
@@ -279,6 +269,22 @@ public class HomeFragment extends Fragment {
                 });
             }
         }).start();
+    }
+
+    @NonNull
+    private static JSONObject getJsonObject(HttpURLConnection connection) throws IOException, JSONException {
+        InputStream inputStream = connection.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+
+        // 解析JSON响应
+        JSONObject jsonResponse = new JSONObject(response.toString());
+        return jsonResponse;
     }
 
 
@@ -331,6 +337,7 @@ public class HomeFragment extends Fragment {
      */
     private String detectRootSource() {
         try {
+            int endPosition; // 存储版本号结束位置（事实上应该是结束位置+1）
             Log.d(TAG, "开始检测Root来源...");
 
             // 检查Magisk - 尝试多个可能路径
@@ -349,9 +356,10 @@ public class HomeFragment extends Fragment {
                     String version = reader.readLine();
                     int exitCode = process.waitFor();
 
-                    if (exitCode == 0 && version != null && !version.isEmpty()) {
+                    if (exitCode == 0 && version != null && version.contains("MAGISK")) {
                         Log.i(TAG, "检测到Magisk: " + version);
-                        return "MagiskSU (" + version + ")";
+                        endPosition = version.indexOf("MAGISK");
+                        return "MagiskSU (" + version.substring(0,endPosition-1) + ")";
                     }
                 } catch (Exception e) {
                     Log.d(TAG, "Magisk检测路径 " + magiskPath + " 失败: " + e.getMessage());
@@ -367,7 +375,7 @@ public class HomeFragment extends Fragment {
 
                 if (exitCode == 0 && version != null && version.contains("KernelSU")) {
                     Log.i(TAG, "检测到KernelSU: " + version);
-                    int endPosition = version.indexOf("KernelSU");
+                    endPosition = version.indexOf("KernelSU");
                     return "KernelSU (" + version.substring(0,endPosition-1) + ")";
                 }
             } catch (Exception e) {
@@ -471,7 +479,7 @@ public class HomeFragment extends Fragment {
                 }
                 int lsExitCode = lsProcess.waitFor();
 
-                Log.d(TAG, "模块目录扫描完成，退出码: " + lsExitCode + ", 发现目录: " + dirs.toString());
+                Log.d(TAG, "模块目录扫描完成，退出码: " + lsExitCode + ", 发现目录: " + dirs);
 
                 if (moduleDir == null) {
                     Log.w(TAG, "未在 /data/adb/modules 中找到LSPosed相关目录");

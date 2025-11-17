@@ -1,8 +1,11 @@
 package com.qimian233.ztool;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
@@ -13,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,6 +24,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.qimian233.ztool.service.LogServiceManager;
+import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
+import com.qimian233.ztool.utils.FileManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +33,8 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
 
     private SettingsAdapter adapter;
     private List<SettingsAdapter.SettingItem> settingsList;
+    private String backupSettingsContent;
+    private static final int REQUEST_CODE_BACKUP = 1001;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -46,7 +54,9 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
 
         // 其他设置项
         settingsList.add(new SettingsAdapter.SettingItem("自动启动", true, false));
-        settingsList.add(new SettingsAdapter.SettingItem("备份配置", false));
+        settingsList.add(new SettingsAdapter.SettingItem("备份配置到文件", false));
+        settingsList.add(new SettingsAdapter.SettingItem("从文件恢复配置", false));
+        settingsList.add(new SettingsAdapter.SettingItem("恢复默认配置", false));
         settingsList.add(new SettingsAdapter.SettingItem("关于", false));
 
         // 设置RecyclerView
@@ -76,13 +86,18 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
     @Override
     public void onItemClicked(String settingTitle) {
         switch (settingTitle) {
-            case "备份配置":
-                // 处理备份配置点击
+            case "备份配置到文件":
+                backupSettingsToFile();
                 break;
             case "关于":
                 showAboutPage();
                 break;
             // 其他点击处理...
+            case "从文件恢复配置":
+                break;
+            case "恢复默认配置":
+                restoreDefaultSettings();
+                break;
         }
     }
 
@@ -164,6 +179,31 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
         if (messageView != null) {
             messageView.setMovementMethod(LinkMovementMethod.getInstance());
         }
+    }
+
+    private void restoreDefaultSettings() {
+        String message = "你确定要恢复默认配置吗？这将重置所有设置到初始状态。";
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("最后一次确认")
+                .setMessage(message)
+                .setPositiveButton("确定",
+                        (dialogInterface, which) -> performRestore())
+                .setNegativeButton("取消", null)
+                .create();
+        dialog.show();
+    }
+
+    private void performRestore() {
+        new ModulePreferencesUtils(requireContext()).clearAllSettings();
+        showToast("已恢复默认配置");
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void backupSettingsToFile() {
+        String backupSettingsFileName = FileManager.generateBackupFileName();
+        backupSettingsContent = ModulePreferencesUtils.getAllSettingsAsJSON(requireContext());
+        FileManager.saveConfigToDownloads(requireContext(), backupSettingsContent, backupSettingsFileName);
+        showToast("配置已备份到 /sdcard/Download/" + backupSettingsFileName);
     }
 
     private String updateModuleStatus() {

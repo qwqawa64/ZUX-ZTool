@@ -11,7 +11,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.qimian233.ztool.R;
 import java.util.List;
 
 public class FeaturesAdapter extends RecyclerView.Adapter<FeaturesAdapter.ViewHolder> {
@@ -41,9 +40,6 @@ public class FeaturesAdapter extends RecyclerView.Adapter<FeaturesAdapter.ViewHo
         Drawable icon = item.getIconDrawable();
         if (icon != null) {
             holder.appIcon.setImageDrawable(icon);
-        } else {
-            // 如果获取图标失败，可以设置一个默认图标
-            // holder.appIcon.setImageResource(R.drawable.default_icon);
         }
 
         // 点击整个item进入详细设置
@@ -74,12 +70,12 @@ public class FeaturesAdapter extends RecyclerView.Adapter<FeaturesAdapter.ViewHo
 
     // 数据模型类
     public static class AppItem {
-        private String name;
-        private String description;
-        private String packageName;
-        private Drawable iconDrawable; // 改为Drawable类型
+        private final String name;
+        private final String description;
+        private final String packageName;
+        private final Drawable iconDrawable; // 改为Drawable类型
         private boolean enabled;
-        private Class<?> targetActivity;
+        private final Class<?> targetActivity;
 
         public AppItem(String name, String description, String packageName,
                        Drawable iconDrawable, boolean enabled, Class<?> targetActivity) {

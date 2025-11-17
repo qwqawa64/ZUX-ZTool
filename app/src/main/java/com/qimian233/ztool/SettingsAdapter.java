@@ -3,8 +3,6 @@ package com.qimian233.ztool;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
-import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,10 +14,10 @@ import java.util.List;
 public class SettingsAdapter extends RecyclerView.Adapter<SettingsAdapter.ViewHolder> {
 
     public static class SettingItem {
-        private String title;
-        private boolean isSwitch;
+        private final String title;
+        private final boolean isSwitch;
         private boolean switchState;
-        private String description;
+        private final String description;
 
         public SettingItem(String title, boolean isSwitch) {
             this.title = title;
@@ -50,7 +48,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingsAdapter.ViewHo
         public String getDescription() { return description; }
     }
 
-    private List<SettingItem> settingsList;
+    private final List<SettingItem> settingsList;
     private OnSettingChangeListener listener;
 
     public interface OnSettingChangeListener {
@@ -79,6 +77,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingsAdapter.ViewHo
         SettingItem item = settingsList.get(position);
         holder.titleTextView.setText(item.getTitle());
 
+        // 存在描述文本时显示设置项卡片控件
         if (item.getDescription() != null && !item.getDescription().isEmpty()) {
             holder.descriptionTextView.setText(item.getDescription());
             holder.descriptionTextView.setVisibility(View.VISIBLE);
@@ -87,27 +86,19 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingsAdapter.ViewHo
         }
 
         if (item.isSwitch()) {
-            holder.settingSwitch.setVisibility(View.VISIBLE);
+            //holder.settingSwitch.setVisibility(View.VISIBLE);
             holder.settingSwitch.setChecked(item.getSwitchState());
-            holder.settingSwitch.setOnCheckedChangeListener(null); // 先清除监听器避免重复触发
-            holder.settingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    item.setSwitchState(isChecked);
-                    if (listener != null) {
-                        listener.onSwitchChanged(item.getTitle(), isChecked);
-                    }
-                }
+            //holder.settingSwitch.setOnCheckedChangeListener(null); // 先清除监听器避免重复触发
+            holder.settingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                item.setSwitchState(isChecked);
+                listener.onSwitchChanged(item.getTitle(), isChecked);
             });
-            holder.itemView.setOnClickListener(null); // 禁用item点击，只使用switch
+            //holder.itemView.setOnClickListener(null); // 禁用item点击，只使用switch
         } else {
             holder.settingSwitch.setVisibility(View.GONE);
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (listener != null) {
-                        listener.onItemClicked(item.getTitle());
-                    }
+            holder.itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemClicked(item.getTitle());
                 }
             });
         }
