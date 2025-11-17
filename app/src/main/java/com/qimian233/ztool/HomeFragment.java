@@ -16,11 +16,11 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import android.widget.TextView;
 
-import org.json.JSONException;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -282,7 +282,17 @@ public class HomeFragment extends Fragment {
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == 200) {
-                    JSONObject jsonResponse = getJsonObject(connection);
+                    InputStream inputStream = connection.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    // 解析JSON响应
+                    JSONObject jsonResponse = new JSONObject(response.toString());
                     if (jsonResponse.getInt("code") == 200) {
                         JSONObject data = jsonResponse.getJSONObject("data");
                         String content = data.getString("content");
@@ -379,7 +389,6 @@ public class HomeFragment extends Fragment {
      */
     private String detectRootSource() {
         try {
-            int endPosition; // 存储版本号结束位置（事实上应该是结束位置+1）
             Log.d(TAG, "开始检测Root来源...");
 
             // 简化检测逻辑，只检查最可能的情况
