@@ -29,7 +29,7 @@ public class LauncherSettingsActivity extends AppCompatActivity {
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private FloatingActionButton fabRestart;
-    private MaterialSwitch switchDisableForceStop;
+    private MaterialSwitch switchDisableForceStop, switchMoreBigDock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,12 +63,23 @@ public class LauncherSettingsActivity extends AppCompatActivity {
                 saveSettings("disable_force_stop", isChecked);
             }
         });
+        // 更多大的Dock栏功能开关
+        switchMoreBigDock = findViewById(R.id.switch_dock_moreBig);
+        switchMoreBigDock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("zui_launcher_hotseat", isChecked);
+            }
+        });
     }
 
     private void loadSettings() {
         // 加载禁止强制停止开关状态
         boolean disableForceStopEnabled = mPrefsUtils.loadBooleanSetting("disable_force_stop",false);
         switchDisableForceStop.setChecked(disableForceStopEnabled);
+        // 加载更多大的Dock栏开关状态
+        boolean moreBigDockEnabled = mPrefsUtils.loadBooleanSetting("zui_launcher_hotseat",false);
+        switchMoreBigDock.setChecked(moreBigDockEnabled);
     }
 
     private void initRestartButton() {
