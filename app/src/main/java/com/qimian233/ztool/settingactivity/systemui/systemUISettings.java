@@ -291,35 +291,21 @@ public class systemUISettings extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // 方法1: 使用am force-stop命令（推荐）
-                String command = "am force-stop " + appPackageName;
-                EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand(command, 5);
+                Log.w("ForceStopApp", "方法1失败，尝试方法2");
+                String command = "killall " + appPackageName;
+                EnhancedShellExecutor.ShellResult result2 = shellExecutor.executeRootCommand(command, 5);
 
-                final boolean success = result.isSuccess();
+                final boolean success = result2.isSuccess();
 
-                // 如果方法1失败，尝试方法2: 使用killall
-                if (!success) {
-                    Log.w("ForceStopApp", "方法1失败，尝试方法2");
-                    command = "killall " + appPackageName;
-                    EnhancedShellExecutor.ShellResult result2 = shellExecutor.executeRootCommand(command, 5);
-
-                    final boolean success2 = result2.isSuccess();
-
-                    runOnUiThread(() -> {
-                        if (success2) {
-                            Toast.makeText(systemUISettings.this, "重启成功", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(systemUISettings.this,
-                                    "重启失败: " + result2.error, Toast.LENGTH_SHORT).show();
-                        }
-                        resetRestartButton();
-                    });
-                } else {
-                    runOnUiThread(() -> {
+                runOnUiThread(() -> {
+                    if (success) {
                         Toast.makeText(systemUISettings.this, "重启成功", Toast.LENGTH_SHORT).show();
-                        resetRestartButton();
-                    });
-                }
+                    } else {
+                        Toast.makeText(systemUISettings.this,
+                                "重启失败: " + result2.error, Toast.LENGTH_SHORT).show();
+                    }
+                    resetRestartButton();
+                });
 
                 Log.d("ForceStopApp", "强制停止应用结果: " + (success ? "成功" : "失败"));
 
