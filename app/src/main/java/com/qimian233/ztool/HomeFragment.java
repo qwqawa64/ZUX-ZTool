@@ -16,11 +16,9 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import android.widget.TextView;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -282,7 +280,15 @@ public class HomeFragment extends Fragment {
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == 200) {
-                    JSONObject jsonResponse = getJsonObject(connection);
+                    InputStream inputStream = connection.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+                    JSONObject jsonResponse = new JSONObject(response.toString());
                     if (jsonResponse.getInt("code") == 200) {
                         JSONObject data = jsonResponse.getJSONObject("data");
                         String content = data.getString("content");
@@ -396,7 +402,7 @@ public class HomeFragment extends Fragment {
                     if (cmd.contains("magisk")) {
                         return "MagiskSU (" + output + ")";
                     } else if (cmd.contains("su -v") && output.contains("KernelSU")) {
-                        int endPosition = output.indexOf("KernelSU");
+                        endPosition = output.indexOf("KernelSU");
                         return "KernelSU (" + output.substring(0, endPosition - 1) + ")";
                     } else if (cmd.contains("apd")) {
                         return "APatch (" + output + ")";
