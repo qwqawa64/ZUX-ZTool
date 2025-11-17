@@ -12,11 +12,17 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import com.qimian233.ztool.SettingsFragment;
+
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -55,7 +61,8 @@ public class FileManager {
             ContentResolver resolver = context.getContentResolver();
             InputStream inputStream = resolver.openInputStream(uri);
             if (inputStream != null) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(inputStream, StandardCharsets.UTF_8));
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -66,7 +73,7 @@ public class FileManager {
                 return stringBuilder.toString();
             }
         } catch (Exception e) {
-            Log.e(TAG, "SAF 读取文件失败: " + e.getMessage());
+            Log.e("SAF", "SAF 读取文件失败: " + e.getMessage());
         }
         return null;
     }
@@ -103,30 +110,57 @@ public class FileManager {
     /**
      * 使用 MediaStore 从 Downloads 目录读取配置
      */
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+    /*@RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     public static String readConfigFromDownloads(Context context, String fileName) {
-        try {
-            ContentResolver resolver = context.getContentResolver();
-            String selection = MediaStore.Downloads.DISPLAY_NAME + "=?";
-            String[] selectionArgs = new String[]{fileName};
 
-            Uri uri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
-            try (InputStream inputStream = resolver.openInputStream(uri)) {
-                if (inputStream != null) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-                    StringBuilder stringBuilder = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        stringBuilder.append(line);
+        ContentResolver resolver = context.getContentResolver();
+        String[] projection = new String[]{MediaStore.Downloads.DISPLAY_NAME};
+        String selection = MediaStore.Downloads.DISPLAY_NAME + " = ?";
+        String[] selectionArgs = new String[]{fileName};
+        Log.v("FileManager", "File args: selectionArgs: " + selectionArgs[0] + " selection:" + selection);
+        Log.v("FileManager", "Use hardcoded Uri: content:///sdcard/Download");
+        try (Cursor cursor = resolver.query(
+                Uri.parse("content:///sdcard/Download"),
+                projection,
+                selection,
+                selectionArgs,
+                null)) {
+            Log.v("FileManager", "File cursor: " + cursor);
+            Log.v("FileManager", "File cursor count: " + (cursor != null ? cursor.getCount() : 0));
+            if (cursor != null && cursor.moveToFirst()) {
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID));
+                Log.v("FileManager", "File id: " + id);
+                Uri fileUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id);
+                Log.v("FileManager", "File uri: " + fileUri);
+                try (InputStream inputStream = resolver.openInputStream(fileUri)) {
+                    if (inputStream != null) {
+                        Log.v("FileManager", "InputStream seems OK, reading file.");
+                        return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    } else {
+                        Log.e("FileManager", "Null InputStream, failed to open input stream for file: " + fileName);
                     }
-                    reader.close();
-                    return stringBuilder.toString();
                 }
+            } else {
+                throw new Exception("Cursor Error!");
             }
         } catch (Exception e) {
-            Log.e(TAG, "从 Downloads 读取失败: " + e.getMessage());
+            Log.e(TAG, "从 Downloads 读取文件失败: " + e);
         }
         return null;
+    }*/
+
+    public static String readConfigFromDownloads(Context context, String fileName) {
+        String downloadDir = Environment.getExternalStorageDirectory().getPath() + "/Download/";
+        String filePath = downloadDir + fileName;
+        try {
+            Path path = Paths.get(filePath);
+            byte[] bytes = Files.readAllBytes(path);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("FileManager", e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -136,7 +170,6 @@ public class FileManager {
      * @param content 要写入的内容
      * @return 写入是否成功
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public static boolean writeConfigToUri(Context context, Uri uri, String content) {
         try {
             ContentResolver resolver = context.getContentResolver();
@@ -168,7 +201,7 @@ public class FileManager {
      * 检查是否支持 SAF
      */
     public static boolean supportsSAF() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+        return true;
     }
 
     /**

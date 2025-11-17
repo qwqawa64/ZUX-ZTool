@@ -7,9 +7,11 @@ import android.util.Log;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.lang.reflect.Type;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * SharedPreferences工具类，封装Xposed模块配置的读写操作
@@ -164,6 +166,70 @@ public class ModulePreferencesUtils {
         } catch (Exception e) {
             Log.e("ModulePreferences", "Failed to convert sharedprefs to json string" + e);
             return null;
+        }
+    }
+
+    public static HashMap<String, Object> jsonToHashMap(String jsonString) {
+        try {
+            Gson gson = new Gson();
+            Type type = new TypeToken<HashMap<String, Object>>(){}.getType();
+            HashMap<String, Object> map = gson.fromJson(jsonString, type);
+
+            // 处理Gson将数字自动转换的问题，确保Boolean值正确
+            return processMapValues(map);
+
+        } catch (Exception e) {
+            Log.e("JsonToMapConverter", "JSON转换失败", e);
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * 处理Map中的值，确保Boolean类型正确
+     */
+    private static HashMap<String, Object> processMapValues(HashMap<String, Object> map) {
+        HashMap<String, Object> processedMap = new HashMap<>();
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+
+            // 处理Boolean值（Gson可能会将boolean解析为Double）
+            if (value instanceof Double) {
+                Double doubleValue = (Double) value;
+                // 检查是否为布尔值的数字表示（0.0或1.0）
+                if (doubleValue == 0.0 || doubleValue == 1.0) {
+                    processedMap.put(entry.getKey(), doubleValue == 1.0);
+                } else {
+                    processedMap.put(entry.getKey(), value);
+                }
+            } else {
+                processedMap.put(entry.getKey(), value);
+            }
+        }
+        return processedMap;
+    }
+
+    public void writeJSONToSharedPrefs(String jsonString){
+        Map <String, Object> mapToWrite = jsonToHashMap(jsonString);
+        for (Map.Entry<String, Object> entry : mapToWrite.entrySet()){
+            String key= entry.getKey();
+            if (entry.getValue() instanceof String){
+                String value = entry.getValue().toString();
+                saveStringSetting(key, value);
+            } else {
+                Boolean value = (Boolean) entry.getValue();
+                saveBooleanSetting(key, value);
+            }
+        }
+    }
+
+    public static void restoreConfig(Context context, String jsonToRestore){
+        try{
+            ModulePreferencesUtils utils = new ModulePreferencesUtils(context);
+            utils.writeJSONToSharedPrefs(jsonToRestore);
+            Log.d("ModulePreferences", "Successfully restored config from file.");
+        }catch (Exception e){
+            Log.e("ModulePreferences", "Failed to restore config from file, " + e);
         }
     }
 }

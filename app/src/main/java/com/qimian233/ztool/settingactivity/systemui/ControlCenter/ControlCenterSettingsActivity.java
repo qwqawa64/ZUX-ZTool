@@ -394,13 +394,12 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
     }
 
     public SharedPreferences getZToolPreferences() {
-        Context mContext = this;
         try {
-            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
-            return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+            Context moduleContext = createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
+            return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         } catch (Exception e) {
             Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
-            return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+            return getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         }
     }
 }

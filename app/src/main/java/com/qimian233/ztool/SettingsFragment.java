@@ -1,10 +1,11 @@
 package com.qimian233.ztool;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
@@ -16,6 +17,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
@@ -34,7 +37,6 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
     private SettingsAdapter adapter;
     private List<SettingsAdapter.SettingItem> settingsList;
     private String backupSettingsContent;
-    private static final int REQUEST_CODE_BACKUP = 1001;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -83,6 +85,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onItemClicked(String settingTitle) {
         switch (settingTitle) {
@@ -94,6 +97,7 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
                 break;
             // 其他点击处理...
             case "从文件恢复配置":
+                restoreSettingsFromFile();
                 break;
             case "恢复默认配置":
                 restoreDefaultSettings();
@@ -205,6 +209,51 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
         FileManager.saveConfigToDownloads(requireContext(), backupSettingsContent, backupSettingsFileName);
         showToast("配置已备份到 /sdcard/Download/" + backupSettingsFileName);
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+    private void restoreSettingsFromFile() {
+        String message = "点击确定后会打开系统的文件Acticvity，选择你的配置文件。" +
+                "\n默认的文件名应该像这样：ZTool_Config_Backup_yyyymmdd_hhmmss.json" +
+                "\n例如：ZTool_Config_Backup_20251117_211210.json";
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("从文件恢复配置")
+                .setMessage(message)
+                .setPositiveButton("确定",
+                        (dialogInterface, which) -> performRestoreFromFile())
+                .setNegativeButton("取消", null)
+                .create();
+        dialog.show();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+    private void performRestoreFromFile() {
+        openDocumentLauncher.launch(new String[]{"application/json"});
+        /*
+        String configToBeRestored = FileManager.readConfigFromDownloads(requireContext(), "ZTool_Config_Restore.json");
+        Log.i("SettingFragment", "配置内容: \n" + configToBeRestored);
+        if (configToBeRestored != null) {
+            ModulePreferencesUtils.restoreConfig(requireContext(), configToBeRestored);
+            showToast("配置已从文件恢复");
+        } else {
+            showToast("未找到备份的配置文件或文件为空");
+        }*/
+    }
+
+
+    private final ActivityResultLauncher<String[]> openDocumentLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri != null) {
+                    String content = FileManager.readConfigWithSAF(requireContext(), uri);
+                    if (content != null) {
+                        // 处理读取到的内容
+                        Log.d("SAF", "读取到的内容: " + content);
+                        ModulePreferencesUtils.restoreConfig(requireContext(), content);
+                        showToast("配置已从文件恢复");
+                    } else {
+                        Log.e("SAF", "文件读取失败或内容为空");
+                    }
+                }
+            });
 
     private String updateModuleStatus() {
         final String TAG = "SettingsFragment";
