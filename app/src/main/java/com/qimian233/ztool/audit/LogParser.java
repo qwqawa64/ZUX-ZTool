@@ -136,6 +136,12 @@ public class LogParser {
         MODULE_PATTERNS.put("block_safecenter_scan",
                 Pattern.compile("\\[block_safecenter_scan\\]\\s*(.*)"));
 
+        // 桌面相关
+        MODULE_PATTERNS.put("disable_force_stop",
+                Pattern.compile("\\[disable_force_stop\\]\\s*(.*)"));
+        MODULE_PATTERNS.put("zui_launcher_hotseat",
+                Pattern.compile("\\[zui_launcher_hotseat\\]\\s*(.*)"));
+
 
         // 模块显示名称映射
         // 系统UI相关
@@ -173,6 +179,7 @@ public class LogParser {
 
         // 启动器相关
         MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
+        MODULE_NAMES.put("zui_launcher_hotseat", "dock扩容");
 
         // 系统框架相关
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
@@ -547,7 +554,7 @@ public class LogParser {
 
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
-                "disable_force_stop"
+                "disable_force_stop", "zui_launcher_hotseat"
         ));
 
         // 系统框架相关

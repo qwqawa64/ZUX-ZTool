@@ -17,14 +17,16 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
+import com.qimian233.ztool.EnhancedShellExecutor;
 import com.qimian233.ztool.config.ModuleConfig;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
 
 public class systemUISettings extends AppCompatActivity {
 
@@ -35,12 +37,25 @@ public class systemUISettings extends AppCompatActivity {
     private MaterialSwitch switchChargingAnimation;
     private MaterialSwitch switchEnableGuestMode;
 
+    // Shell执行器
+    private EnhancedShellExecutor shellExecutor;
+
+    // 待处理的Shell任务
+    private final List<Future<EnhancedShellExecutor.ShellResult>> pendingFutures = new ArrayList<>();
+
+    // 防止重复点击的标志
+    private boolean isAodSwitchProcessing = false;
+    private boolean isRestartProcessing = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_system_uisettings);
+
+        // 初始化Shell执行器
+        shellExecutor = EnhancedShellExecutor.getInstance();
 
         String appName = getIntent().getStringExtra("app_name");
         appPackageName = getIntent().getStringExtra("app_package");
@@ -54,8 +69,49 @@ public class systemUISettings extends AppCompatActivity {
 
         mPrefsUtils = new ModulePreferencesUtils(this);
         initViews();
-        loadSettings();
+        loadSettingsAsync();
         initRestartButton();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 取消所有未完成的Shell任务
+        cancelPendingFutures();
+        Log.d("SystemUISettings", "Activity销毁，已取消所有Shell任务");
+    }
+
+    /**
+     * 取消所有待处理的Shell任务
+     */
+    private void cancelPendingFutures() {
+        synchronized (pendingFutures) {
+            for (Future<EnhancedShellExecutor.ShellResult> future : pendingFutures) {
+                if (!future.isDone()) {
+                    future.cancel(true);
+                    Log.d("SystemUISettings", "取消Shell任务");
+                }
+            }
+            pendingFutures.clear();
+        }
+    }
+
+    /**
+     * 添加Future到待处理列表
+     */
+    private void addPendingFuture(Future<EnhancedShellExecutor.ShellResult> future) {
+        synchronized (pendingFutures) {
+            pendingFutures.add(future);
+        }
+    }
+
+    /**
+     * 从待处理列表中移除Future
+     */
+    private void removePendingFuture(Future<EnhancedShellExecutor.ShellResult> future) {
+        synchronized (pendingFutures) {
+            pendingFutures.remove(future);
+        }
     }
 
     private void initViews() {
@@ -86,28 +142,16 @@ public class systemUISettings extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // AOD设置
+        // AOD设置 - 优化版本
         switchEnableAod = findViewById(R.id.switch_aod);
         switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            new Thread(() -> {
-                try {
-                    Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", "settings put secure doze_always_on " + (isChecked ? "1" : "0")});
-                    int exitCode = process.waitFor();
-                    Log.d("AODSwitch", "Command executed with exit code: " + exitCode);
+            if (isAodSwitchProcessing) {
+                Log.d("AODSwitch", "AOD开关正在处理中，忽略重复操作");
+                return;
+            }
 
-                    runOnUiThread(() -> {
-                        if (exitCode != 0) {
-                            switchEnableAod.setChecked(!isChecked);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    runOnUiThread(() -> {
-                        Toast.makeText(systemUISettings.this, "执行错误: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        switchEnableAod.setChecked(!isChecked);
-                    });
-                }
-            }).start();
+            isAodSwitchProcessing = true;
+            setAodEnabled(isChecked);
         });
 
         // 充电动画设置
@@ -127,36 +171,96 @@ public class systemUISettings extends AppCompatActivity {
         });
     }
 
-    private void loadSettings() {
-        boolean aodEnabled = isAodEnabled();
-        switchEnableAod.setChecked(aodEnabled);
+    /**
+     * 异步加载设置
+     */
+    private void loadSettingsAsync() {
+        new Thread(() -> {
+            try {
+                // 加载AOD设置
+                boolean aodEnabled = isAodEnabled();
+                runOnUiThread(() -> switchEnableAod.setChecked(aodEnabled));
 
-        // 加载充电动画开关状态
-        boolean chargingAnimationEnabled = mPrefsUtils.loadBooleanSetting("No_ChargeAnimation", false);
-        switchChargingAnimation.setChecked(chargingAnimationEnabled);
+                // 加载充电动画开关状态
+                boolean chargingAnimationEnabled = mPrefsUtils.loadBooleanSetting("No_ChargeAnimation", false);
+                runOnUiThread(() -> switchChargingAnimation.setChecked(chargingAnimationEnabled));
 
-        // 加载访客模式开关状态
-        boolean guestModeEnabled = mPrefsUtils.loadBooleanSetting("guest_mode_controller", true);
-        switchEnableGuestMode.setChecked(guestModeEnabled);
+                // 加载访客模式开关状态
+                boolean guestModeEnabled = mPrefsUtils.loadBooleanSetting("guest_mode_controller", true);
+                runOnUiThread(() -> switchEnableGuestMode.setChecked(guestModeEnabled));
+
+                Log.d("SystemUISettings", "设置加载完成");
+            } catch (Exception e) {
+                Log.e("SystemUISettings", "加载设置失败: " + e.getMessage());
+            }
+        }).start();
     }
 
+    /**
+     * 设置AOD启用状态 - 优化版本
+     */
+    private void setAodEnabled(final boolean enabled) {
+        new Thread(() -> {
+            try {
+                String command = "settings put secure doze_always_on " + (enabled ? "1" : "0");
+                EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand(command, 5);
+
+                final boolean success = result.isSuccess();
+                Log.d("AODSwitch", "AOD设置命令执行结果: " + (success ? "成功" : "失败") +
+                        ", 退出码: " + result.exitCode);
+
+                runOnUiThread(() -> {
+                    if (!success) {
+                        // 恢复开关状态
+                        switchEnableAod.setChecked(!enabled);
+                        Toast.makeText(systemUISettings.this,
+                                "设置失败: " + result.error, Toast.LENGTH_SHORT).show();
+                    }
+                    isAodSwitchProcessing = false;
+                });
+
+            } catch (Exception e) {
+                Log.e("AODSwitch", "设置AOD时出错: " + e.getMessage());
+                runOnUiThread(() -> {
+                    // 恢复开关状态
+                    switchEnableAod.setChecked(!enabled);
+                    Toast.makeText(systemUISettings.this,
+                            "执行错误: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    isAodSwitchProcessing = false;
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 检查AOD是否启用 - 优化版本
+     */
     public boolean isAodEnabled() {
         try {
-            Process process = Runtime.getRuntime().exec("su -c settings get secure doze_always_on");
-            process.waitFor();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String output = reader.readLine();
-            reader.close();
-            return output != null && output.trim().equals("1");
+            EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand(
+                    "settings get secure doze_always_on", 5);
+
+            if (result.isSuccess() && result.output != null) {
+                String output = result.output.trim();
+                boolean enabled = output.equals("1");
+                Log.d("AODCheck", "AOD状态: " + (enabled ? "启用" : "禁用"));
+                return enabled;
+            }
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            Log.e("AODCheck", "检查AOD状态失败: " + e.getMessage());
         }
+        return false;
     }
 
     private void initRestartButton() {
         fabRestart = findViewById(R.id.fab_restart);
-        fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
+        fabRestart.setOnClickListener(v -> {
+            if (isRestartProcessing) {
+                Log.d("RestartButton", "重启操作正在进行中，忽略重复点击");
+                return;
+            }
+            showRestartConfirmationDialog();
+        });
     }
 
     private void showRestartConfirmationDialog() {
@@ -168,22 +272,91 @@ public class systemUISettings extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * 强制停止应用 - 优化版本
+     */
     private void forceStopApp() {
         if (appPackageName == null || appPackageName.isEmpty()) {
+            Toast.makeText(this, "应用包名为空", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        try {
-            Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
-            process.waitFor();
-        } catch (Exception e) {
-            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
+        if (isRestartProcessing) {
+            Log.d("ForceStopApp", "重启操作正在进行中");
+            return;
         }
+
+        isRestartProcessing = true;
+        fabRestart.setEnabled(false);
+
+        new Thread(() -> {
+            try {
+                // 方法1: 使用am force-stop命令（推荐）
+                String command = "am force-stop " + appPackageName;
+                EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand(command, 5);
+
+                final boolean success = result.isSuccess();
+
+                // 如果方法1失败，尝试方法2: 使用killall
+                if (!success) {
+                    Log.w("ForceStopApp", "方法1失败，尝试方法2");
+                    command = "killall " + appPackageName;
+                    EnhancedShellExecutor.ShellResult result2 = shellExecutor.executeRootCommand(command, 5);
+
+                    final boolean success2 = result2.isSuccess();
+
+                    runOnUiThread(() -> {
+                        if (success2) {
+                            Toast.makeText(systemUISettings.this, "重启成功", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(systemUISettings.this,
+                                    "重启失败: " + result2.error, Toast.LENGTH_SHORT).show();
+                        }
+                        resetRestartButton();
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(systemUISettings.this, "重启成功", Toast.LENGTH_SHORT).show();
+                        resetRestartButton();
+                    });
+                }
+
+                Log.d("ForceStopApp", "强制停止应用结果: " + (success ? "成功" : "失败"));
+
+            } catch (Exception e) {
+                Log.e("ForceStopApp", "强制停止应用时出错: " + e.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(systemUISettings.this,
+                            "重启失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    resetRestartButton();
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 重置重启按钮状态
+     */
+    private void resetRestartButton() {
+        isRestartProcessing = false;
+        fabRestart.setEnabled(true);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d("SystemUISettings", "Activity暂停");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d("SystemUISettings", "Activity恢复");
     }
 }

@@ -195,6 +195,9 @@
     <string name="disable_force_stop_title">启动器行为</string>
     <string name="disable_force_stop_enable_title">禁止划卡杀后台</string>
     <string name="disable_force_stop_enable_summary">保证后台服务存活</string>
+    <string name="dock_Title">dock栏</string>
+    <string name="moreBig_dockTitle">更大的Dock栏</string>
+    <string name="moreBig_dockSummary">解除dock栏的图标数量限制，能够塞下更多图标</string>
     <!--SystemFramework Page ResValue-->
     <string name="keep_rotation_title">屏幕方向</string>
     <string name="keep_rotation_enable_title">保持屏幕方向</string>

@@ -7,7 +7,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 /**
  * ZUI Launcher Hotseat扩展Hook模块
- * 功能：解除Hotseat最大数量限制，绕过空间检查，修改DeviceProfile配置
+ * 解除ZUI Launcher的Hotseat最大数量限制，支持添加更多应用到底部快捷栏
  */
 public class ZuiLauncherHotseatHook extends BaseHookModule {
 
@@ -20,31 +20,19 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[]{
-                LAUNCHER_PACKAGE,
-                "com.android.launcher3"  // 可能使用的通用Launcher包名
-        };
+        return new String[]{LAUNCHER_PACKAGE};
     }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
-        if (LAUNCHER_PACKAGE.equals(packageName)) {
-            hookZuiLauncher(lpparam);
-        } else if ("com.android.launcher3".equals(packageName)) {
-            hookGenericLauncher(lpparam);
+        if (!LAUNCHER_PACKAGE.equals(lpparam.packageName)) {
+            return;
         }
-    }
 
-    /**
-     * Hook ZUI Launcher特定实现
-     */
-    private void hookZuiLauncher(XC_LoadPackage.LoadPackageParam lpparam) {
+        log("开始Hook ZUI Launcher Hotseat限制");
+
         try {
-            log("开始Hook ZUI Launcher Hotseat功能");
-
-            // Hook 1: 修改Hotseat的最大数量限制
+            // Hook 1: 绕过Hotseat最大数量检查
             hookHotseatMaxCount(lpparam);
 
             // Hook 2: 绕过空间检查
@@ -53,30 +41,27 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook 3: 修改DeviceProfile配置
             hookDeviceProfile(lpparam);
 
-            // Hook 4: 绕过添加项目时的限制
+            // Hook 4: 修复的添加项目方法
             hookAddItemMethods(lpparam);
 
-            // Hook 5: 修改CellLayout相关方法
+            // Hook 5: 修改数据库层面的Hotseat限制
+            hookDatabaseHotseatLimit(lpparam);
+
+            // Hook 6: 修改LoaderCursor的位置检查逻辑
+            hookLoaderCursorMethods(lpparam);
+
+            // Hook 7: 数据库操作Hook
+            hookDatabaseOperations(lpparam);
+
+            // Hook 8: LauncherAppState Hook
+            hookLauncherAppState(lpparam);
+
+            // Hook 9: CellLayout相关方法
             hookCellLayoutMethods(lpparam);
 
             log("ZUI Launcher Hotseat Hook完成");
         } catch (Throwable t) {
-            logError("Hook ZUI Launcher失败", t);
-        }
-    }
-
-    /**
-     * Hook 通用Launcher3实现（备用）
-     */
-    private void hookGenericLauncher(XC_LoadPackage.LoadPackageParam lpparam) {
-        try {
-            log("开始Hook通用Launcher3 Hotseat功能");
-            hookHotseatMaxCount(lpparam);
-            hookSpaceChecks(lpparam);
-            hookDeviceProfile(lpparam);
-            log("通用Launcher3 Hotseat Hook完成");
-        } catch (Throwable t) {
-            logError("Hook通用Launcher3失败", t);
+            logError("ZUI Launcher Hook过程中发生错误", t);
         }
     }
 
@@ -152,7 +137,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
      */
     private void hookDeviceProfile(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
-            // Hook DeviceProfile的getHotseatColumnSpan方法
+            // Hook DeviceProfile的numShownHotseatIcons字段
             XposedHelpers.findAndHookMethod(
                     "com.android.launcher3.DeviceProfile",
                     lpparam.classLoader,
@@ -162,7 +147,6 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                             // 修改Hotseat列跨度
                             param.setResult(20);
-                            log("修改Hotseat列跨度为20");
                         }
                     }
             );
@@ -189,7 +173,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
     }
 
     /**
-     * Hook 4: 绕过添加项目时的各种限制
+     * Hook 4: 修复的添加项目方法
      */
     private void hookAddItemMethods(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
@@ -207,7 +191,6 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     new XC_MethodHook() {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                            // 在添加前确保不会因为空间限制而失败
                             log("准备添加快捷方式到Hotseat");
                         }
                     }
@@ -238,20 +221,29 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     }
             );
 
-            // Hook Hotseat的addInScreen方法
-            XposedHelpers.findAndHookMethod(
-                    "com.android.launcher3.Hotseat",
-                    lpparam.classLoader,
-                    "addInScreen",
-                    android.view.View.class,
-                    "com.android.launcher3.model.data.ItemInfo",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                            log("Hotseat直接添加项目");
+            // Hook addToWorkspace方法（更通用的方法）
+            try {
+                XposedHelpers.findAndHookMethod(
+                        "com.android.launcher3.Launcher",
+                        lpparam.classLoader,
+                        "addToWorkspace",
+                        "com.android.launcher3.model.data.ItemInfo",
+                        boolean.class,
+                        new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                Object itemInfo = param.args[0];
+                                int container = XposedHelpers.getIntField(itemInfo, "container");
+
+                                if (container == -101) {
+                                    log("添加项目到Hotseat工作区");
+                                }
+                            }
                         }
-                    }
-            );
+                );
+            } catch (Throwable t) {
+                logError("Hook addToWorkspace失败", t);
+            }
 
         } catch (Throwable t) {
             logError("Hook添加方法失败", t);
@@ -259,7 +251,189 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
     }
 
     /**
-     * Hook 5: 修改CellLayout相关方法
+     * Hook 5: 修改数据库层面的Hotseat数量限制
+     */
+    private void hookDatabaseHotseatLimit(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            // Hook InvariantDeviceProfile的numDatabaseHotseatIcons字段
+            XposedHelpers.findAndHookMethod(
+                    "com.android.launcher3.InvariantDeviceProfile",
+                    lpparam.classLoader,
+                    "getNumDatabaseHotseatIcons",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            // 将数据库Hotseat数量从5改为20
+                            param.setResult(20);
+                            log("修改数据库Hotseat数量为20");
+                        }
+                    }
+            );
+
+            // 直接修改numDatabaseHotseatIcons字段（备用方案）
+            try {
+                Class<?> invProfileClass = XposedHelpers.findClass(
+                        "com.android.launcher3.InvariantDeviceProfile",
+                        lpparam.classLoader
+                );
+
+                XposedHelpers.setStaticIntField(invProfileClass, "numDatabaseHotseatIcons", 20);
+                log("直接修改numDatabaseHotseatIcons为20");
+            } catch (Throwable t) {
+                logError("直接修改numDatabaseHotseatIcons失败", t);
+            }
+
+        } catch (Throwable t) {
+            logError("Hook数据库Hotseat限制失败", t);
+        }
+    }
+
+    /**
+     * Hook 6: 修改LoaderCursor的位置检查逻辑
+     */
+    private void hookLoaderCursorMethods(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            // Hook checkItemPlacement方法，绕过Hotseat位置检查
+            XposedHelpers.findAndHookMethod(
+                    "com.android.launcher3.model.LoaderCursor",
+                    lpparam.classLoader,
+                    "checkItemPlacement",
+                    "com.android.launcher3.model.data.ItemInfo",
+                    boolean.class,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            Object itemInfo = param.args[0];
+                            int container = XposedHelpers.getIntField(itemInfo, "container");
+                            int screenId = XposedHelpers.getIntField(itemInfo, "screenId");
+
+                            // 如果是Hotseat且位置在扩展范围内，直接返回true
+                            if (container == -101 && screenId >= 0 && screenId < 20) {
+                                param.setResult(true);
+                                log("强制通过Hotseat位置检查: " + screenId);
+                            }
+                        }
+                    }
+            );
+
+            // Hook b方法（维度检查）
+            XposedHelpers.findAndHookMethod(
+                    "com.android.launcher3.model.LoaderCursor",
+                    lpparam.classLoader,
+                    "b",
+                    "com.android.launcher3.model.data.ItemInfo",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            Object itemInfo = param.args[0];
+                            int container = XposedHelpers.getIntField(itemInfo, "container");
+
+                            // 如果是Hotseat，强制返回false（不删除）
+                            if (container == -101) {
+                                param.setResult(false);
+                                log("绕过Hotseat维度检查");
+                            }
+                        }
+                    }
+            );
+
+            // Hook checkAndAddItem方法
+            XposedHelpers.findAndHookMethod(
+                    "com.android.launcher3.model.LoaderCursor",
+                    lpparam.classLoader,
+                    "checkAndAddItem",
+                    "com.android.launcher3.model.data.ItemInfo",
+                    "com.android.launcher3.model.BgDataModel",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            Object itemInfo = param.args[0];
+                            int container = XposedHelpers.getIntField(itemInfo, "container");
+                            int screenId = XposedHelpers.getIntField(itemInfo, "screenId");
+
+                            if (container == -101) {
+                                log("checkAndAddItem - Hotseat位置: " + screenId);
+                            }
+                        }
+                    }
+            );
+
+        } catch (Throwable t) {
+            logError("Hook LoaderCursor失败", t);
+        }
+    }
+
+    /**
+     * Hook 7: 数据库操作Hook
+     */
+    private void hookDatabaseOperations(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            // Hook LauncherModel的添加项目方法
+            XposedHelpers.findAndHookMethod(
+                    "com.android.launcher3.LauncherModel",
+                    lpparam.classLoader,
+                    "addOrMoveItemInDatabase",
+                    "com.android.launcher3.model.data.ItemInfo",
+                    int.class,
+                    int.class,
+                    int.class,
+                    int.class,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            Object itemInfo = param.args[0];
+                            int container = (int) param.args[1];
+                            int screen = (int) param.args[2];
+                            int cellX = (int) param.args[3];
+                            int cellY = (int) param.args[4];
+
+                            if (container == -101 && screen >= 5) {
+                                log("数据库操作 - Hotseat位置: " + screen);
+                                // 允许操作继续
+                            }
+                        }
+                    }
+            );
+
+        } catch (Throwable t) {
+            logError("Hook数据库操作失败", t);
+        }
+    }
+
+    /**
+     * Hook 8: LauncherAppState Hook
+     */
+    private void hookLauncherAppState(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            XposedHelpers.findAndHookMethod(
+                    "com.android.launcher3.LauncherAppState",
+                    lpparam.classLoader,
+                    "getInstance",
+                    android.content.Context.class,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            Object launcherAppState = param.getResult();
+                            if (launcherAppState != null) {
+                                try {
+                                    // 修改InvariantDeviceProfile的numDatabaseHotseatIcons
+                                    Object invDeviceProfile = XposedHelpers.getObjectField(launcherAppState, "mInvariantDeviceProfile");
+                                    XposedHelpers.setIntField(invDeviceProfile, "numDatabaseHotseatIcons", 20);
+                                    log("修改InvariantDeviceProfile的numDatabaseHotseatIcons为20");
+                                } catch (Throwable t) {
+                                    logError("修改InvariantDeviceProfile失败", t);
+                                }
+                            }
+                        }
+                    }
+            );
+        } catch (Throwable t) {
+            logError("Hook LauncherAppState失败", t);
+        }
+    }
+
+    /**
+     * Hook 9: 修改CellLayout相关方法
      */
     private void hookCellLayoutMethods(XC_LoadPackage.LoadPackageParam lpparam) {
         try {

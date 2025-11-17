@@ -1,6 +1,7 @@
 package com.qimian233.ztool.settingactivity.safecenter;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
@@ -13,7 +14,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
+import com.qimian233.ztool.EnhancedShellExecutor;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
 
 public class SafeCenterSettingsActivity extends AppCompatActivity {
 
@@ -22,12 +28,25 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
     private FloatingActionButton fabRestart;
     private MaterialSwitch switchAllowAutoRun, switchDisableSafeScan;
 
+    // Shell执行器
+    private EnhancedShellExecutor shellExecutor;
+
+    // 待处理的Shell任务
+    private final List<Future<EnhancedShellExecutor.ShellResult>> pendingFutures = new ArrayList<>();
+
+    // 防止重复点击的标志
+    private boolean isRestartProcessing = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_safecenter_settings);
+
+        // 初始化Shell执行器
+        shellExecutor = EnhancedShellExecutor.getInstance();
+
         String appName = getIntent().getStringExtra("app_name");
         appPackageName = getIntent().getStringExtra("app_package");
 
@@ -42,6 +61,47 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
         initViews();
         loadSettings();
         initRestartButton();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 取消所有未完成的Shell任务
+        cancelPendingFutures();
+        Log.d("SafeCenterSettings", "Activity销毁，已取消所有Shell任务");
+    }
+
+    /**
+     * 取消所有待处理的Shell任务
+     */
+    private void cancelPendingFutures() {
+        synchronized (pendingFutures) {
+            for (Future<EnhancedShellExecutor.ShellResult> future : pendingFutures) {
+                if (!future.isDone()) {
+                    future.cancel(true);
+                    Log.d("SafeCenterSettings", "取消Shell任务");
+                }
+            }
+            pendingFutures.clear();
+        }
+    }
+
+    /**
+     * 添加Future到待处理列表
+     */
+    private void addPendingFuture(Future<EnhancedShellExecutor.ShellResult> future) {
+        synchronized (pendingFutures) {
+            pendingFutures.add(future);
+        }
+    }
+
+    /**
+     * 从待处理列表中移除Future
+     */
+    private void removePendingFuture(Future<EnhancedShellExecutor.ShellResult> future) {
+        synchronized (pendingFutures) {
+            pendingFutures.remove(future);
+        }
     }
 
     private void initViews() {
@@ -76,7 +136,13 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
 
     private void initRestartButton() {
         fabRestart = findViewById(R.id.fab_restart);
-        fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
+        fabRestart.setOnClickListener(v -> {
+            if (isRestartProcessing) {
+                Log.d("RestartButton", "重启操作正在进行中，忽略重复点击");
+                return;
+            }
+            showRestartConfirmationDialog();
+        });
     }
 
     private void showRestartConfirmationDialog() {
@@ -88,18 +154,74 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * 强制停止应用 - 优化版本
+     */
     private void forceStopApp() {
         if (appPackageName == null || appPackageName.isEmpty()) {
+            Toast.makeText(this, "应用包名为空", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        try {
-            Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
-            process.waitFor();
-            Toast.makeText(this, "已重启应用进程", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
+        if (isRestartProcessing) {
+            Log.d("ForceStopApp", "重启操作正在进行中");
+            return;
         }
+
+        isRestartProcessing = true;
+        fabRestart.setEnabled(false);
+
+        new Thread(() -> {
+            try {
+                // 方法1: 使用am force-stop命令（推荐）
+                String command = "am force-stop " + appPackageName;
+                EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand(command, 5);
+
+                final boolean success = result.isSuccess();
+
+                // 如果方法1失败，尝试方法2: 使用killall
+                if (!success) {
+                    Log.w("ForceStopApp", "方法1失败，尝试方法2");
+                    command = "killall " + appPackageName;
+                    EnhancedShellExecutor.ShellResult result2 = shellExecutor.executeRootCommand(command, 5);
+
+                    final boolean success2 = result2.isSuccess();
+
+                    runOnUiThread(() -> {
+                        if (success2) {
+                            Toast.makeText(SafeCenterSettingsActivity.this, "已重启应用进程", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(SafeCenterSettingsActivity.this,
+                                    "重启失败: " + result2.error, Toast.LENGTH_SHORT).show();
+                        }
+                        resetRestartButton();
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(SafeCenterSettingsActivity.this, "已重启应用进程", Toast.LENGTH_SHORT).show();
+                        resetRestartButton();
+                    });
+                }
+
+                Log.d("ForceStopApp", "强制停止应用结果: " + (success ? "成功" : "失败"));
+
+            } catch (Exception e) {
+                Log.e("ForceStopApp", "强制停止应用时出错: " + e.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(SafeCenterSettingsActivity.this,
+                            "重启失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    resetRestartButton();
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 重置重启按钮状态
+     */
+    private void resetRestartButton() {
+        isRestartProcessing = false;
+        fabRestart.setEnabled(true);
     }
 
     @Override
@@ -110,5 +232,17 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
 
     private void saveSettings(String moduleName, Boolean newValue) {
         mPrefsUtils.saveBooleanSetting(moduleName, newValue);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d("SafeCenterSettings", "Activity暂停");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d("SafeCenterSettings", "Activity恢复");
     }
 }
