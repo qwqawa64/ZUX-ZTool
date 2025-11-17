@@ -39,7 +39,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/title_home"
-            android:foreground="?attr/selectableItemBackground">
+            android:foreground="?attr/selectableItemBackground"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -138,7 +139,7 @@
                     android:id="@+id/text_module_version"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/appVersion"
+                    android:text="@string/loading"
                     android:textColor="?attr/colorOnSecondaryContainer"
                     android:textSize="15sp" />
 
@@ -146,7 +147,7 @@
                     android:id="@+id/text_root_source"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/rootManagerVersion"
+                    android:text="@string/loading"
                     android:textColor="?attr/colorOnSecondaryContainer"
                     android:textSize="12sp" />
 
@@ -154,7 +155,7 @@
                     android:id="@+id/text_framework_version"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/XPosedManagerVersion"
+                    android:text="@string/loading"
                     android:textColor="?attr/colorOnSecondaryContainer"
                     android:textSize="12sp" />
 
