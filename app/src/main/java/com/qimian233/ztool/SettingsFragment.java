@@ -1,9 +1,6 @@
 package com.qimian233.ztool;
 
 import android.app.Activity;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -15,127 +12,49 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.service.LogServiceManager;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.utils.FileManager;
-import java.util.ArrayList;
-import java.util.List;
 
-public class SettingsFragment extends Fragment implements SettingsAdapter.OnSettingChangeListener {
+public class SettingsFragment extends Fragment {
 
-    private SettingsAdapter adapter;
-    private List<SettingsAdapter.SettingItem> settingsList;
-    private String backupSettingsContent;
-
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        // 初始化设置列表
-        settingsList = new ArrayList<>();
+        // 获取视图组件
+        LinearLayout backupConfigToFile = view.findViewById(R.id.backup_config_to_file);
+        LinearLayout restoreConfigFromFile = view.findViewById(R.id.restore_config_from_file);
+        LinearLayout restoreDefaultConfig = view.findViewById(R.id.restore_default_config);
+        MaterialSwitch switchEnableLogService = view.findViewById(R.id.switch_enable_log_service);
+        CardView showAboutPage = view.findViewById(R.id.show_about_page);
 
-        // 日志采集服务开关
+        // 设置点击监听器
+        backupConfigToFile.setOnClickListener(v -> backupSettingsToFile());
+        restoreConfigFromFile.setOnClickListener(v -> performRestoreFromFile());
+        restoreDefaultConfig.setOnClickListener(v -> restoreDefaultSettings());
+        showAboutPage.setOnClickListener(v -> showAboutPage());
+
+        // 设置开关监听器
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());
-        settingsList.add(new SettingsAdapter.SettingItem(
-                "日志采集服务",
-                true,
-                isLogServiceEnabled,
-                "开启后将在后台收集Hook模块的运行日志，保存到应用私有目录"
-        ));
-
-        // 其他设置项
-        settingsList.add(new SettingsAdapter.SettingItem("自动启动", true, false));
-        settingsList.add(new SettingsAdapter.SettingItem("备份配置到文件", false));
-        settingsList.add(new SettingsAdapter.SettingItem("从文件恢复配置", false));
-        settingsList.add(new SettingsAdapter.SettingItem("恢复默认配置", false));
-        settingsList.add(new SettingsAdapter.SettingItem("关于", false));
-
-        // 设置RecyclerView
-        RecyclerView recyclerView = view.findViewById(R.id.recycler_view_settings);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        adapter = new SettingsAdapter(settingsList);
-        adapter.setOnSettingChangeListener(this);
-        recyclerView.setAdapter(adapter);
+        switchEnableLogService.setChecked(isLogServiceEnabled);
+        switchEnableLogService.setOnCheckedChangeListener((buttonView, isChecked) -> handleLogServiceSwitch(isChecked));
 
         return view;
     }
-
-    @Override
-    public void onSwitchChanged(String settingTitle, boolean isChecked) {
-        switch (settingTitle) {
-            case "日志采集服务":
-                handleLogServiceSwitch(isChecked);
-                break;
-            case "自动启动":
-                // 处理自动启动开关
-                break;
-            // 其他开关处理...
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    @Override
-    public void onItemClicked(String settingTitle) {
-        switch (settingTitle) {
-            case "备份配置到文件":
-                backupSettingsToFile();
-                break;
-            case "关于":
-                showAboutPage();
-                break;
-            // 其他点击处理...
-            case "从文件恢复配置":
-                restoreSettingsFromFile();
-                break;
-            case "恢复默认配置":
-                restoreDefaultSettings();
-                break;
-        }
-    }
-
-    /**
-     * 处理日志服务开关状态变化
-     */
-    private void handleLogServiceSwitch(boolean isEnabled) {
-        if (isEnabled) {
-            // 启动日志采集服务
-            LogServiceManager.startLogService(requireContext());
-            showToast("日志采集服务已启动");
-        } else {
-            // 停止日志采集服务
-            LogServiceManager.stopLogService(requireContext());
-            showToast("日志采集服务已停止");
-        }
-
-        // 更新设置项状态
-        updateSettingItemState("日志采集服务", isEnabled);
-    }
-
-    /**
-     * 更新指定设置项的状态
-     */
-    private void updateSettingItemState(String title, boolean state) {
-        for (SettingsAdapter.SettingItem item : settingsList) {
-            if (item.getTitle().equals(title)) {
-                item.setSwitchState(state);
-                break;
-            }
-        }
-        adapter.notifyDataSetChanged();
-    }
-
     /**
      * 显示Toast消息
      */
@@ -158,7 +77,8 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
     private void refreshSwitchStates() {
         // 更新日志服务开关状态
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());
-        updateSettingItemState("日志采集服务", isLogServiceEnabled);
+        MaterialSwitch switchEnableLogService = requireView().findViewById(R.id.switch_enable_log_service);
+        switchEnableLogService.setChecked(isLogServiceEnabled);
     }
 
     private void showAboutPage() {
@@ -205,42 +125,17 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void backupSettingsToFile() {
         String backupSettingsFileName = FileManager.generateBackupFileName();
-        backupSettingsContent = ModulePreferencesUtils.getAllSettingsAsJSON(requireContext());
+        String backupSettingsContent = ModulePreferencesUtils.getAllSettingsAsJSON(requireContext());
         FileManager.saveConfigToDownloads(requireContext(), backupSettingsContent, backupSettingsFileName);
         showToast("配置已备份到 /sdcard/Download/" + backupSettingsFileName);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-    private void restoreSettingsFromFile() {
-        String message = "点击确定后会打开系统的文件Acticvity，选择你的配置文件。" +
-                "\n默认的文件名应该像这样：ZTool_Config_Backup_yyyymmdd_hhmmss.json" +
-                "\n例如：ZTool_Config_Backup_20251117_211210.json";
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("从文件恢复配置")
-                .setMessage(message)
-                .setPositiveButton("确定",
-                        (dialogInterface, which) -> performRestoreFromFile())
-                .setNegativeButton("取消", null)
-                .create();
-        dialog.show();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     private void performRestoreFromFile() {
-        openDocumentLauncher.launch(new String[]{"application/json"});
-        /*
-        String configToBeRestored = FileManager.readConfigFromDownloads(requireContext(), "ZTool_Config_Restore.json");
-        Log.i("SettingFragment", "配置内容: \n" + configToBeRestored);
-        if (configToBeRestored != null) {
-            ModulePreferencesUtils.restoreConfig(requireContext(), configToBeRestored);
-            showToast("配置已从文件恢复");
-        } else {
-            showToast("未找到备份的配置文件或文件为空");
-        }*/
+        openDocumentLauncherForRestore.launch(new String[]{"application/json"});
     }
 
-
-    private final ActivityResultLauncher<String[]> openDocumentLauncher =
+    private final ActivityResultLauncher<String[]> openDocumentLauncherForRestore =
             registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
                 if (uri != null) {
                     String content = FileManager.readConfigWithSAF(requireContext(), uri);
@@ -254,6 +149,21 @@ public class SettingsFragment extends Fragment implements SettingsAdapter.OnSett
                     }
                 }
             });
+
+    /**
+     * 处理日志服务开关状态变化
+     */
+    private void handleLogServiceSwitch(boolean isEnabled) {
+        if (isEnabled) {
+            // 启动日志采集服务
+            LogServiceManager.startLogService(requireContext());
+            showToast("日志采集服务已启动");
+        } else {
+            // 停止日志采集服务
+            LogServiceManager.stopLogService(requireContext());
+            showToast("日志采集服务已停止");
+        }
+    }
 
     private String updateModuleStatus() {
         final String TAG = "SettingsFragment";

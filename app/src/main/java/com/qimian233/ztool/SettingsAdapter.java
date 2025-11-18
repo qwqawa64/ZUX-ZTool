@@ -86,14 +86,11 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingsAdapter.ViewHo
         }
 
         if (item.isSwitch()) {
-            //holder.settingSwitch.setVisibility(View.VISIBLE);
             holder.settingSwitch.setChecked(item.getSwitchState());
-            //holder.settingSwitch.setOnCheckedChangeListener(null); // 先清除监听器避免重复触发
             holder.settingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 item.setSwitchState(isChecked);
                 listener.onSwitchChanged(item.getTitle(), isChecked);
             });
-            //holder.itemView.setOnClickListener(null); // 禁用item点击，只使用switch
         } else {
             holder.settingSwitch.setVisibility(View.GONE);
             holder.itemView.setOnClickListener(v -> {
