@@ -3,7 +3,6 @@ package com.qimian233.ztool.utils;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -11,8 +10,6 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
-
-import com.qimian233.ztool.SettingsFragment;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,6 +23,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Android API 33+ 文件管理工具类
@@ -37,19 +35,26 @@ public class FileManager {
     /**
      * 使用 SAF 创建文件并保存配置
      */
-    public static boolean saveConfigWithSAF(Context context, String content, String fileName) {
-        try {
-            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("application/json");
-            intent.putExtra(Intent.EXTRA_TITLE, fileName);
-
-            // 需要调用方在 Activity 中处理结果
-            context.startActivity(intent);
-            return true;
-        } catch (Exception e) {
-            Log.e(TAG, "SAF 创建文件失败: " + e.getMessage());
-            return false;
+    public static boolean saveConfigWithSAF(Context context, Uri uri, String fileName, String configContent) {
+        ContentResolver resolver = context.getContentResolver();
+        if (uri != null) {
+            try (OutputStream outputStream = resolver.openOutputStream(uri)){
+                if (outputStream != null) {
+                    outputStream.write(configContent.getBytes(StandardCharsets.UTF_8));
+                    outputStream.flush();
+                    Log.i(TAG, "配置已保存到" + uri + fileName);
+                    return true;
+                } else {
+                    Log.e(TAG, "输出流为空");
+                    return false;
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "保存文件失败: " + e.getMessage());
+                return false;
+            }
+        } else {
+                Log.e(TAG,"uri为空");
+                return false;
         }
     }
 
@@ -107,48 +112,6 @@ public class FileManager {
         return false;
     }
 
-    /**
-     * 使用 MediaStore 从 Downloads 目录读取配置
-     */
-    /*@RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-    public static String readConfigFromDownloads(Context context, String fileName) {
-
-        ContentResolver resolver = context.getContentResolver();
-        String[] projection = new String[]{MediaStore.Downloads.DISPLAY_NAME};
-        String selection = MediaStore.Downloads.DISPLAY_NAME + " = ?";
-        String[] selectionArgs = new String[]{fileName};
-        Log.v("FileManager", "File args: selectionArgs: " + selectionArgs[0] + " selection:" + selection);
-        Log.v("FileManager", "Use hardcoded Uri: content:///sdcard/Download");
-        try (Cursor cursor = resolver.query(
-                Uri.parse("content:///sdcard/Download"),
-                projection,
-                selection,
-                selectionArgs,
-                null)) {
-            Log.v("FileManager", "File cursor: " + cursor);
-            Log.v("FileManager", "File cursor count: " + (cursor != null ? cursor.getCount() : 0));
-            if (cursor != null && cursor.moveToFirst()) {
-                long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID));
-                Log.v("FileManager", "File id: " + id);
-                Uri fileUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id);
-                Log.v("FileManager", "File uri: " + fileUri);
-                try (InputStream inputStream = resolver.openInputStream(fileUri)) {
-                    if (inputStream != null) {
-                        Log.v("FileManager", "InputStream seems OK, reading file.");
-                        return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                    } else {
-                        Log.e("FileManager", "Null InputStream, failed to open input stream for file: " + fileName);
-                    }
-                }
-            } else {
-                throw new Exception("Cursor Error!");
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "从 Downloads 读取文件失败: " + e);
-        }
-        return null;
-    }*/
-
     public static String readConfigFromDownloads(Context context, String fileName) {
         String downloadDir = Environment.getExternalStorageDirectory().getPath() + "/Download/";
         String filePath = downloadDir + fileName;
@@ -158,7 +121,7 @@ public class FileManager {
             return new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
-            Log.e("FileManager", e.getMessage());
+            Log.e(TAG, Objects.requireNonNull(e.getMessage()));
             return null;
         }
     }

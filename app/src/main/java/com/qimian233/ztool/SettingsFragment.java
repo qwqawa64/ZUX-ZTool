@@ -29,7 +29,6 @@ import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesU
 import com.qimian233.ztool.utils.FileManager;
 
 public class SettingsFragment extends Fragment {
-
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,8 +42,10 @@ public class SettingsFragment extends Fragment {
         CardView showAboutPage = view.findViewById(R.id.show_about_page);
 
         // 设置点击监听器
-        backupConfigToFile.setOnClickListener(v -> backupSettingsToFile());
-        restoreConfigFromFile.setOnClickListener(v -> performRestoreFromFile());
+        backupConfigToFile.setOnClickListener(v ->
+                performBackup());
+        restoreConfigFromFile.setOnClickListener(v ->
+                openDocumentLauncherForRestore.launch(new String[]{"application/json"}));
         restoreDefaultConfig.setOnClickListener(v -> restoreDefaultSettings());
         showAboutPage.setOnClickListener(v -> showAboutPage());
 
@@ -62,6 +63,28 @@ public class SettingsFragment extends Fragment {
         if (getContext() != null) {
             android.widget.Toast.makeText(getContext(), message, android.widget.Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // 预先注册ActivityResultLauncher
+        backupLauncher = registerForActivityResult(
+                new ActivityResultContracts.CreateDocument("application/json"), uri -> {
+                    if (uri != null) {
+                        Boolean result = FileManager.saveConfigWithSAF(requireContext(),
+                                uri,
+                                FileManager.generateBackupFileName(),
+                                ModulePreferencesUtils.getAllSettingsAsJSON(requireContext()));
+                        if (result) {
+                            Log.d("SAF", "成功存储配置到用户指定的目录" + uri);
+                            showToast("配置已备份");
+                        } else {
+                            Log.e("SAF", "备份失败");
+                        }
+                    }
+                });
     }
 
     @Override
@@ -122,17 +145,12 @@ public class SettingsFragment extends Fragment {
         showToast("已恢复默认配置");
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private void backupSettingsToFile() {
-        String backupSettingsFileName = FileManager.generateBackupFileName();
-        String backupSettingsContent = ModulePreferencesUtils.getAllSettingsAsJSON(requireContext());
-        FileManager.saveConfigToDownloads(requireContext(), backupSettingsContent, backupSettingsFileName);
-        showToast("配置已备份到 /sdcard/Download/" + backupSettingsFileName);
-    }
+    // 类成员变量 - 预先注册的ActivityResultLauncher
+    private ActivityResultLauncher<String> backupLauncher;
 
-    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-    private void performRestoreFromFile() {
-        openDocumentLauncherForRestore.launch(new String[]{"application/json"});
+    private void performBackup(){
+        String backupFileName = FileManager.generateBackupFileName();
+        backupLauncher.launch(backupFileName);
     }
 
     private final ActivityResultLauncher<String[]> openDocumentLauncherForRestore =
