@@ -63,7 +63,7 @@ public class systemUISettings extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + R.string.SystemUIActionBar);
+            getSupportActionBar().setTitle(appName + getString(R.string.SystemUIActionBar));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -265,8 +265,8 @@ public class systemUISettings extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.restart_xp_title)
-                .setMessage(R.string.restart_xp_message_header + appPackageName + R.string.restart_xp_message)
+                .setTitle(getString(R.string.restart_xp_title))
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
                 .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
                 .setNegativeButton(R.string.restart_no, null)
                 .show();
