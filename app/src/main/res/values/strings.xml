@@ -54,6 +54,14 @@
     <string name="settingsFragment_title">设置</string>
     <string name="SettingsTitle">设置项标题</string>
     <string name="SettingsDescription">设置项描述</string>
+    <!--通用重启作用域资源-->
+    <string name="restart_xp_title">重启XP模块作用域</string>
+    <string name="restart_xp_message_header">是否重启此页的XP模块作用域？这将强行停止 </string>
+    <string name="restart_xp_message"> 的进程。</string>
+    <string name="restart_yes">确定</string>
+    <string name="restart_no">取消</string>
+    <string name="restartSuccess">重启成功</string>
+    <string name="restartFail">重启失败：</string>
     <!--从这里开始是各项Hook功能的资源值-->
     <!--游戏助手功能页资源值-->
     <string name="function_title">功能拓展</string>
@@ -119,6 +127,7 @@
     <string name="Enable_rowStyle_summary">启用原生安装器样式</string>
     <!--系统界面 一级功能页导航资源值-->
     <string name="SystemUI_title">系统界面</string>
+    <string name="SystemUIActionBar"> - 系统界面设置</string>
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>

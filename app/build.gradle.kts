@@ -48,4 +48,5 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("cn.6tail:lunar:1.7.5")
     implementation("com.google.android.material:material:1.8.0")
+    implementation("com.google.code.gson:gson:2.8.2")
 }

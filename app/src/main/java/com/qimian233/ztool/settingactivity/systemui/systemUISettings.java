@@ -63,7 +63,7 @@ public class systemUISettings extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 系统界面设置");
+            getSupportActionBar().setTitle(appName + R.string.SystemUIActionBar);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -265,10 +265,10 @@ public class systemUISettings extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("重启XP模块作用域")
-                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + " 的进程。")
-                .setPositiveButton("确定", (dialog, which) -> forceStopApp())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.restart_xp_title)
+                .setMessage(R.string.restart_xp_message_header + appPackageName + R.string.restart_xp_message)
+                .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -277,7 +277,6 @@ public class systemUISettings extends AppCompatActivity {
      */
     private void forceStopApp() {
         if (appPackageName == null || appPackageName.isEmpty()) {
-            Toast.makeText(this, "应用包名为空", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -299,10 +298,10 @@ public class systemUISettings extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     if (success) {
-                        Toast.makeText(systemUISettings.this, "重启成功", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(systemUISettings.this, R.string.restartSuccess, Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(systemUISettings.this,
-                                "重启失败: " + result2.error, Toast.LENGTH_SHORT).show();
+                                R.string.restartFail + result2.error, Toast.LENGTH_SHORT).show();
                     }
                     resetRestartButton();
                 });
@@ -313,7 +312,7 @@ public class systemUISettings extends AppCompatActivity {
                 Log.e("ForceStopApp", "强制停止应用时出错: " + e.getMessage());
                 runOnUiThread(() -> {
                     Toast.makeText(systemUISettings.this,
-                            "重启失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            R.string.restartFail + e.getMessage(), Toast.LENGTH_SHORT).show();
                     resetRestartButton();
                 });
             }
