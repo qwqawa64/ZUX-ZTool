@@ -129,8 +129,7 @@ public class ModulePreferencesUtils {
     public Map<String, Object> getAllSettings() {
         try {
             SharedPreferences prefs = getModulePreferences();
-            Map<String, Object> allEntries = new HashMap<>();
-            allEntries.putAll(prefs.getAll());
+            Map<String, Object> allEntries = new HashMap<>(prefs.getAll());
             Log.d("ModulePreferences", "成功读取所有设置，条目数：" + allEntries.size());
             return allEntries;
         } catch (Exception e) {
@@ -139,6 +138,7 @@ public class ModulePreferencesUtils {
         }
     }
 
+    // 处理getAllSettings的返回值，转换为JSON格式
     public String getAllSettingsAsJSON(){
         String result;
         try {
@@ -154,6 +154,7 @@ public class ModulePreferencesUtils {
 
     /**
      * 静态方法：获取所有设置并以JSON格式返回（需要Context参数）
+     * 方便外部调用
      * @param context 上下文对象
      * @return JSON格式的设置数据
      */
@@ -169,6 +170,7 @@ public class ModulePreferencesUtils {
         }
     }
 
+    // 配置还原功能的辅助方法，初步将JSON字符串转换为HashMap
     public static HashMap<String, Object> jsonToHashMap(String jsonString) {
         try {
             Gson gson = new Gson();
@@ -185,6 +187,7 @@ public class ModulePreferencesUtils {
     }
 
     /**
+     * 配置还原功能的辅助方法
      * 处理Map中的值，确保Boolean类型正确
      */
     private static HashMap<String, Object> processMapValues(HashMap<String, Object> map) {
@@ -218,7 +221,7 @@ public class ModulePreferencesUtils {
                 if (entry.getValue() instanceof String) {
                     Log.d("ModulePreferences", "Saving string key: " + key);
                     String value = entry.getValue().toString();
-                    saveStringSetting(key, value);
+                    saveStringSetting(key.replace(PREFIX_ENABLED, ""), value);
                 } else {
                     Log.d("ModulePreferences", "Saving boolean key: " + key);
                     Boolean value = (Boolean) entry.getValue();
