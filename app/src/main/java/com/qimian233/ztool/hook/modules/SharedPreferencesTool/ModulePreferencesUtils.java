@@ -212,13 +212,22 @@ public class ModulePreferencesUtils {
     public void writeJSONToSharedPrefs(String jsonString){
         Map <String, Object> mapToWrite = jsonToHashMap(jsonString);
         for (Map.Entry<String, Object> entry : mapToWrite.entrySet()){
-            String key= entry.getKey();
-            if (entry.getValue() instanceof String){
-                String value = entry.getValue().toString();
-                saveStringSetting(key, value);
-            } else {
-                Boolean value = (Boolean) entry.getValue();
-                saveBooleanSetting(key, value);
+            try {
+                String key = entry.getKey();
+                Log.d("ModulePreferences", "Processing key: " + key);
+                if (entry.getValue() instanceof String) {
+                    Log.d("ModulePreferences", "Saving string key: " + key);
+                    String value = entry.getValue().toString();
+                    saveStringSetting(key, value);
+                } else {
+                    Log.d("ModulePreferences", "Saving boolean key: " + key);
+                    Boolean value = (Boolean) entry.getValue();
+                    // 修改这里：去掉前缀，因为saveBooleanSetting会自动添加
+                    saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), value);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e("ModulePreferences", "Failed to save key: " + entry.getKey() + ", value: " + entry.getValue());
             }
         }
     }
