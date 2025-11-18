@@ -54,6 +54,13 @@
     <string name="settingsFragment_title">设置</string>
     <string name="SettingsTitle">设置项标题</string>
     <string name="SettingsDescription">设置项描述</string>
+    <string name="enableLogService">日志采集服务</string>
+    <string name="enableLogServiceDescription">开启后将在后台收集Hook模块的运行日志，保存到应用私有目录</string>
+    <string name="backupAndRestore">备份与还原</string>
+    <string name="backupConfigToFile">备份配置到文件</string>
+    <string name="restoreConfigFromFile">从文件恢复配置</string>
+    <string name="restoreDefaultConfig">恢复默认配置</string>
+    <string name="showAboutPage">关于ZTool</string>
     <!--通用重启作用域资源-->
     <string name="restart_xp_title">重启XP模块作用域</string>
     <string name="restart_xp_message_header">是否重启此页的XP模块作用域？这将强行停止 </string>
