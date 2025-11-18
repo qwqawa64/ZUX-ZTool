@@ -5,6 +5,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -43,6 +46,18 @@ public class EnhancedShellExecutor {
     // 上次执行时间（用于限流）
     private volatile long lastCommandTime = 0;
     private static final long MIN_COMMAND_INTERVAL = 50; // 最小命令间隔100ms
+
+    // 缓存白名单 - 只有这些命令会被缓存
+    private final Set<String> cacheWhitelist = new HashSet<>(Arrays.asList(
+            "id",                                   // Root权限检测
+            "touch /system/test_root && rm -f /system/test_root", // Root权限检测
+            "magisk -v",                           // Magisk检测
+            "su -v",                               // KernelSU检测
+            "apd -v",                              // APatch检测
+            "getprop ro.lsposed.version",          // LSPosed版本检测
+            "ls -la /data/adb/modules/ | grep -i lsposed", // LSPosed目录检测
+            "uname -r"                             // 内核版本检测
+    ));
 
     private EnhancedShellExecutor() {
         // 创建固定大小线程池，限制并发数
@@ -109,6 +124,25 @@ public class EnhancedShellExecutor {
     }
 
     /**
+     * 检查命令是否在白名单中（支持命令匹配）
+     */
+    private boolean isInCacheWhitelist(String command) {
+        // 直接匹配完整命令
+        if (cacheWhitelist.contains(command)) {
+            return true;
+        }
+
+        // 支持部分匹配（对于带参数的命令）
+        for (String whitelistCommand : cacheWhitelist) {
+            if (command.startsWith(whitelistCommand)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 执行Shell命令（需要root权限），带缓存
      */
     public ShellResult executeRootCommand(String command) {
@@ -128,8 +162,9 @@ public class EnhancedShellExecutor {
     private ShellResult executeRootCommand(String command, int timeoutSeconds, boolean useCache) {
         String cacheKey = "root_" + command;
 
-        // 检查缓存
-        if (useCache) {
+        // 检查缓存（只有白名单中的命令才使用缓存）
+        boolean shouldUseCache = useCache && isInCacheWhitelist(command);
+        if (shouldUseCache) {
             CachedResult cached = commandCache.get(cacheKey);
             if (cached != null && !cached.isExpired()) {
                 Log.d(TAG, "使用缓存结果: " + command);
@@ -139,9 +174,10 @@ public class EnhancedShellExecutor {
 
         ShellResult result = executeCommandInternal("su -c " + command, timeoutSeconds, true);
 
-        // 缓存成功的结果
-        if (useCache && result.isSuccess()) {
+        // 缓存成功的结果（只有白名单中的命令才缓存）
+        if (shouldUseCache && result.isSuccess()) {
             commandCache.put(cacheKey, new CachedResult(result));
+            Log.d(TAG, "命令已加入缓存: " + command);
         }
 
         return result;
@@ -391,7 +427,7 @@ public class EnhancedShellExecutor {
             return cached.result;
         }
 
-        // 方法1: 执行id命令检查uid（最可靠）
+        // 方法1: 执行id命令检查uid（最可靠）- 使用白名单缓存
         ShellResult result1 = executeRootCommand("id", 3);
         if (result1.isSuccess() && result1.output.contains("uid=0")) {
             Log.i(TAG, "Root权限检测成功: 已获取root权限");
@@ -400,7 +436,7 @@ public class EnhancedShellExecutor {
             return successResult;
         }
 
-        // 方法2: 检查/system分区是否可写
+        // 方法2: 检查/system分区是否可写 - 使用白名单缓存
         ShellResult result2 = executeRootCommand("touch /system/test_root && rm -f /system/test_root", 3);
         if (result2.isSuccess()) {
             Log.i(TAG, "Root权限检测成功: /system分区可写");
@@ -421,6 +457,20 @@ public class EnhancedShellExecutor {
     public void clearCache() {
         commandCache.clear();
         Log.i(TAG, "命令缓存已清理");
+    }
+
+    /**
+     * 获取缓存统计信息（用于调试）
+     */
+    public void printCacheStats() {
+        Log.i(TAG, "缓存统计 - 总条目数: " + commandCache.size());
+        for (String key : commandCache.keySet()) {
+            CachedResult cached = commandCache.get(key);
+            if (cached != null) {
+                long age = System.currentTimeMillis() - cached.timestamp;
+                Log.d(TAG, "缓存项: " + key + ", 年龄: " + age + "ms, 过期: " + cached.isExpired());
+            }
+        }
     }
 
     /**
