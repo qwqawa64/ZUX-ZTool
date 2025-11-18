@@ -1,5 +1,5 @@
 <resources>
-    <!--Place Frequently Used Expressions Here-->
+    <!--将常用的字符串资源放置在下面-->
     <string name="tooltip_content_description">提示</string>
     <string name="save">保存</string>
     <string name="delete">删除</string>
@@ -10,7 +10,7 @@
     <string name="regex_label">正则表达式（可选）</string>
     <string name="loading">加载中…</string>
     <string name="seeDetail">详情</string>
-    <!--Homepage ResValue-->
+    <!--主页资源值-->
     <string name="app_name">ZTool</string>
     <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
     <string name="rootManagerVersion">Root管理器: R6687BB53-kitsune:MAGISKSU (27001)</string>
@@ -27,11 +27,11 @@
     <string name="workModeRequirementDetail">• 需要Root权限\n• 需要LSPosed框架</string>
     <string name="environmentState">状态</string>
     <string name="moduleActivated">模块已激活</string>
-    <!--Feature Page and Feature Item ResValue-->
+    <!--功能管理页资源值-->
     <string name="featuresFragment_title">功能管理</string>
     <string name="itemFeatures_appName">应用名称</string>
     <string name="itemFeatures_appDescription">应用描述</string>
-    <!--Log Page and Log Item ResValue-->
+    <!--日志页资源值-->
     <string name="logFilter">日志过滤器</string>
     <string name="filterByType">类别</string>
     <string name="filterByModule">模块</string>
@@ -49,13 +49,13 @@
     <string name="placeHolderLogLevel">I</string>
     <string name="notificationIcon">通知图标</string>
     <string name="multiLineStackTrace">多行堆栈</string>
-    <!--ZTool Settings Page and Settings Item ResValue-->
+    <!--设置页资源值-->
     <string name="default_title">XXX - 详细设置</string>
     <string name="settingsFragment_title">设置</string>
     <string name="SettingsTitle">设置项标题</string>
     <string name="SettingsDescription">设置项描述</string>
-    <!--Hook Features ResValue Starts Here-->
-    <!--GameHelper Page ResValue-->
+    <!--从这里开始是各项Hook功能的资源值-->
+    <!--游戏助手功能页资源值-->
     <string name="function_title">功能拓展</string>
     <string name="Game_Audio_title">禁止处理游戏音频</string>
     <string name="Game_Audio_summary">游戏声音忽大忽小或音量爆炸可以尝试开启，需重启系统</string>
@@ -66,13 +66,13 @@
     <string name="FIx_CPU_Frequency_summary">修复控制台及浮窗CPU频率显示，解决使用Y700四代游戏助手后频率展示始终为0的问题</string>
     <string name="Fix_SocTemp">修复SOC温度显示</string>
     <string name="Fix_SocTemp_summary">修复控制台及浮窗SOC温度显示，解决使用Y700四代游戏助手后温度展示始终为0度的问题</string>
-    <!--SystemUpdate Page ResValue-->
+    <!--系统更新功能页资源值-->
     <string name="Ota_Setting_Title">系统更新</string>
     <string name="OtaDisable_title">启用本地安装</string>
     <string name="OtaDisable_summary">开启后在系统更新-右上角更多中找到本地安装选项</string>
     <string name="OtaInfoFetch_summary">获取当前版本/新版本的更新日志和下载链接</string>
     <string name="OtaInfoFetch_title">OTA信息拉取</string>
-    <!--Settings Page YiShiJie ResValue-->
+    <!--设置页：一视界功能资源值-->
     <string name="embedding_setting_title">一视界</string>
     <string name="embedding_setting_removeBlacklist">去除黑名单限制</string>
     <string name="embedding_setting_removeBlacklist_summary">去除黑名单限制，允许所有应用嵌入</string>
@@ -88,13 +88,13 @@
     <string name="FindRules_Hint">输入你需要查找的包名关键字</string>
     <string name="RulesResult">搜索结果</string>
     <string name="SearchRules">搜索</string>
-    <!--Settings Page ParallelWindow and Floating Window ResValue-->
+    <!--设置页：浮窗和分屏资源值-->
     <string name="embedding_Title">小窗和分屏</string>
     <string name="Float_app_Mandatory">强制小窗</string>
     <string name="Float_app_Mandatory_summary">强制所有APP能够小窗运行</string>
     <string name="Split_screen_Mandatory_Title">强制分屏</string>
     <string name="Split_screen_Mandatory_Summary">强制所有APP能够分屏运行，需要重启系统</string>
-    <!--Settings Page Misc ResValue-->
+    <!--设置页：杂项资源值-->
     <string name="font_settings_title">字体</string>
     <string name="import_font_title">导入字体</string>
     <string name="import_font_summary">支持ttf格式，导入字体到系统的字体管理器</string>
@@ -104,7 +104,7 @@
     <string name="NativePermissionController_Title">权限控制器</string>
     <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
     <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器，Android15的权限申请弹窗无法恢复原生样式</string>
-    <!--PackageManager Page ResValue-->
+    <!--应用包安装程序功能页资源值-->
     <string name="Disable_ScanAPK_Title">跳过安全扫描</string>
     <string name="Disable_ScanAPK_Summary">跳过安全扫描，节省时间</string>
     <string name="sec_title_function">安全相关</string>
@@ -117,7 +117,7 @@
     <string name="Disable_installerAD_Summary">安装完成后的界面不再显示广告</string>
     <string name="Enable_rowStyle_title">启用原生安装器</string>
     <string name="Enable_rowStyle_summary">启用原生安装器样式</string>
-    <!--SystemUI "Root" Page ResValue-->
+    <!--系统界面 一级功能页导航资源值-->
     <string name="SystemUI_title">系统界面</string>
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
@@ -125,7 +125,7 @@
     <string name="LockScreenSummary">锁屏一言、充电功率显示等设置</string>
     <string name="controlCenterTitle">控制中心设置</string>
     <string name="controlCenterSummary">自定义控制中心样式</string>
-    <!--SystemUI "Root" Page Misc ResValue-->
+    <!--系统界面 一级功能页杂项资源值-->
     <string name="aod_title">待机显示</string>
     <string name="aod_enable_title">开启AOD显示</string>
     <string name="aod_enable_summary">启用原生AOD，这可能增加耗电</string>
@@ -135,7 +135,7 @@
     <string name="systemUIMisc">杂项</string>
     <string name="disable_guest_user_enable_title">禁止访客用户自动创建</string>
     <string name="disable_guest_user_enable_summary">仅在多用户启用时允许创建访客用户</string>
-    <!--SystemUI StatusBarClock Page ResValue-->
+    <!--系统界面 状态栏时钟页资源值-->
     <string name="status_bar_clock_settings_title">状态栏时钟设置</string>
     <string name="display_seconds_title">显示秒数</string>
     <string name="display_seconds_summary">在状态栏时钟中显示秒数</string>
@@ -147,19 +147,19 @@
     <string name="text_bold_summary">启用时钟文字的粗体显示效果</string>
     <string name="pick_color_button">选择颜色</string>
     <string name="clock_preview_default">预览自定义时钟</string>
-    <!--SystemUI StatusBarNotification Page ResValue-->
+    <!--系统界面 状态栏通知资源值-->
     <string name="status_bar_notification_settings_title">状态栏通知设置</string>
     <string name="notification_icon_limit_title">通知图标数量限制</string>
     <string name="notification_icon_limit_summary">设置状态栏显示的通知图标最大数量</string>
     <string name="notification_icon_native_title">使用原生通知图标</string>
     <string name="notification_icon_native_summary">对未适配APP无效</string>
-    <!--SystemUI StatusBarInternetSpeedIndicator Page ResValue-->
+    <!--系统界面 状态栏网速显示资源值-->
     <string name="statusBarNetworkTitle">状态栏网速</string>
     <string name="statusBarNetworkSizeTitle">优化网速显示比例</string>
     <string name="statusBarNetworkSizeSummary">让数字尽可能大，让单位尽可能小，和双层网速同时启用会有奇怪的效果</string>
     <string name="statusBarNetworkSizeDoubleLayer">双层网速</string>
     <string name="statusBarNetworkSizeDoubleLayerSummary">能够显示上行和下行的流量</string>
-    <!--SystemUI KeyGuard Page ResValue-->
+    <!--系统界面 锁屏页资源值-->
     <string name="YiYanTile">锁屏一言</string>
     <string name="YiYanSwitchTitle">显示锁屏一言</string>
     <string name="YiYanSummary">在锁屏页面显示自定义文本</string>
@@ -168,7 +168,7 @@
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
-    <!--SystemUI ControlCenter Page ResValue-->
+    <!--系统界面 控制中心页资源值-->
     <string name="ControllerDate">控制中心日期设置</string>
     <string name="CustomDateSettingTitle">自定义日期格式</string>
     <string name="CustomDateSettingSummary">自定义控制中心时间的显示格式</string>
@@ -182,7 +182,7 @@
     <string name="useBoldDate">启用日期文字的粗体显示效果</string>
     <string name="ControllerDateFormat">输入时间格式</string>
     <string name="DateFormateExample">M月d日 EEE</string>
-    <!--StatusBar Clock and ControlCenter Date Shared ResValue-->
+    <!--状态栏时钟和控制中心时钟共享的资源值放置在这里-->
     <string name="preview_default">预览：输入格式以查看效果</string>
     <string name="preview_display">预览：%s</string>
     <string name="preview_invalid">预览：格式无效</string>
@@ -191,40 +191,40 @@
     <string name="letter_spacing_title">字间距</string>
     <string name="text_color_title">字体颜色</string>
     <string name="text_bold_title">粗体显示</string>
-    <!--Launcher Page ResValue-->
+    <!--启动器功能页的资源值-->
     <string name="disable_force_stop_title">启动器行为</string>
     <string name="disable_force_stop_enable_title">禁止划卡杀后台</string>
     <string name="disable_force_stop_enable_summary">保证后台服务存活</string>
     <string name="dock_Title">dock栏</string>
     <string name="moreBig_dockTitle">更大的Dock栏</string>
     <string name="moreBig_dockSummary">解除dock栏的图标数量限制，能够塞下更多图标</string>
-    <!--SystemFramework Page ResValue-->
+    <!--系统框架功能页的资源值-->
     <string name="keep_rotation_title">屏幕方向</string>
     <string name="keep_rotation_enable_title">保持屏幕方向</string>
     <string name="keep_rotation_enable_summary">重启后保持上一次关机前的屏幕方向，需重启系统以应用更改</string>
     <string name="disable_zui_applist_title">权限管理</string>
     <string name="disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
     <string name="disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
-    <!--SecurityCenter Page ResValue-->
+    <!--安全中心功能页的资源值-->
     <string name="default_allow_autorun_title">后台行为管理</string>
     <string name="default_allow_autorun_enable_title">默认允许APP自启</string>
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
     <string name="DisableSafeScanTitle">禁止安全扫描</string>
     <string name="DisableSafeScanSummary">阻止联想安全中心每七天的后台安全扫描行为，这可以阻止“病毒警报”类的弹窗</string>
-    <!--Hook Features ResValue Ends Here-->
-    <!--Dialog ResValue Starts Here-->
-    <!--Config Selection Dialog ResValue-->
+    <!--Hook功能页的资源值到这里结束-->
+    <!--对话（框）的资源值从这里开始-->
+    <!--配置选择页的资源值-->
     <string name="selectConfigFile">选择配置文件</string>
     <string name="customPolicyAppliedCount">已刷入 X 个自定义策略</string>
     <string name="flashAddedConfig">刷入配置</string>
     <string name="restoreModule">还原模块</string>
-    <!--Font Import Dialog ResValue-->
+    <!--字体导入页的资源值-->
     <string name="doNotUseDuplicatedFontName">千万不要起重复的字体名称</string>
     <string name="fontName">字体名称</string>
     <string name="fontDescription">字体描述</string>
-    <!--OTA Info Dialog ResValue-->
+    <!--获取更新日志页面的资源值-->
     <string name="updateLog">更新日志</string>
-    <!--YiShiJie Adapt Assistant ResValue-->
+    <!--一视界适配助手页的资源值-->
     <string name="howToAdapt">步骤提示</string>
     <string name="currentApp">当前应用:</string>
     <string name="currentActivity">当前Activity:</string>
@@ -236,8 +236,8 @@
     <string name="skipMultiWindowMode">跳过多窗口模式</string>
     <string name="displaySurfaceViewBackground">显示SurfaceView背景</string>
     <string name="shouldStopMainActivity">应暂停主活动</string>
-    <!--Dialog ResValue Ends Here-->
-    <!--Navigation Bar ResValue-->
+    <!--对话（框）的资源值到此结束-->
+    <!--导航栏资源值-->
     <string name="gotoHomePage">主页</string>
     <string name="gotoFeaturePage">功能</string>
     <string name="gotoLogPage">日志</string>
