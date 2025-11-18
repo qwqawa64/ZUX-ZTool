@@ -54,6 +54,14 @@
     <string name="settingsFragment_title">设置</string>
     <string name="SettingsTitle">设置项标题</string>
     <string name="SettingsDescription">设置项描述</string>
+    <!--通用重启作用域资源-->
+    <string name="restart_xp_title">重启XP模块作用域</string>
+    <string name="restart_xp_message_header">是否重启此页的XP模块作用域？这将强行停止 </string>
+    <string name="restart_xp_message"> 的进程。</string>
+    <string name="restart_yes">确定</string>
+    <string name="restart_no">取消</string>
+    <string name="restartSuccess">重启成功</string>
+    <string name="restartFail">重启失败：</string>
     <!--从这里开始是各项Hook功能的资源值-->
     <!--游戏助手功能页资源值-->
     <string name="function_title">功能拓展</string>
@@ -119,6 +127,7 @@
     <string name="Enable_rowStyle_summary">启用原生安装器样式</string>
     <!--系统界面 一级功能页导航资源值-->
     <string name="SystemUI_title">系统界面</string>
+    <string name="SystemUIActionBar"> - 系统界面设置</string>
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>
@@ -153,6 +162,24 @@
     <string name="notification_icon_limit_summary">设置状态栏显示的通知图标最大数量</string>
     <string name="notification_icon_native_title">使用原生通知图标</string>
     <string name="notification_icon_native_summary">对未适配APP无效</string>
+    <string name="status_bar_settings_title_suffix"> - 状态栏设置</string>
+    <string-array name="notify_num_size_options">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>无限制</item>
+    </string-array>
     <!--系统界面 状态栏网速显示资源值-->
     <string name="statusBarNetworkTitle">状态栏网速</string>
     <string name="statusBarNetworkSizeTitle">优化网速显示比例</string>
@@ -182,6 +209,12 @@
     <string name="useBoldDate">启用日期文字的粗体显示效果</string>
     <string name="ControllerDateFormat">输入时间格式</string>
     <string name="DateFormateExample">M月d日 EEE</string>
+    <string name="control_center_settings_title_suffix"> - 控制中心时间设置</string>
+    <string name="date_format_saved_message">自定义时间格式已保存</string>
+    <string name="date_format_help_title">时间格式帮助</string>
+    <string name="date_format_example">时间格式示例</string>
+    <string name="date_format_sample">yyyy年MM月dd日 EEEE</string>
+    <string name="default_date_format">yyyy年MM月dd日 EEEE</string>
     <!--状态栏时钟和控制中心时钟共享的资源值放置在这里-->
     <string name="preview_default">预览：输入格式以查看效果</string>
     <string name="preview_display">预览：%s</string>
@@ -191,6 +224,40 @@
     <string name="letter_spacing_title">字间距</string>
     <string name="text_color_title">字体颜色</string>
     <string name="text_bold_title">粗体显示</string>
+    <string name="save_success_title">成功</string>
+    <string name="clock_format_saved_message">自定义时钟格式已保存</string>
+    <string name="select_font_color_title">选择字体颜色</string>
+    <string name="clock_format_help_title">时钟格式帮助</string>
+    <string name="copy_example_button">复制示例</string>
+    <string name="clock_format_example">时钟格式示例</string>
+    <string name="clock_format_sample">HH:mm N</string>
+    <string name="example_copied_message">示例已复制到剪贴板</string>
+    <string name="sp_unit">sp</string>
+    <string name="save_failed_message">保存失败，请查看Logcat</string>
+    <string name="error_prefix">错误: </string>
+    <string name="notify_num_default">4</string>
+    <string name="notify_num_unlimited">无限制</string>
+    <string-array name="color_names">
+        <item>白色</item>
+        <item>黑色</item>
+        <item>红色</item>
+        <item>绿色</item>
+        <item>蓝色</item>
+        <item>黄色</item>
+        <item>青色</item>
+        <item>洋红</item>
+        <item>蓝色</item>
+        <item>绿色</item>
+        <item>橙色</item>
+        <item>紫色</item>
+        <item>灰色</item>
+        <item>深橙</item>
+        <item>棕色</item>
+    </string-array>
+
+    <!-- 时钟格式帮助内容 -->
+    <string name="clock_format_help_content">时间格式基于ISO 8601进行拓展，自定义时钟格式说明：\n\n📅 ISO 8601标准日期格式：\n  yyyy - 年份(2024)\n  yy   - 年份后两位(24)\n  MM   - 月份(12)\n  MMM  - 月份缩写(12月)\n  MMMM - 月份全称(十二月)\n  dd   - 日期(25)\n  HH   - 24小时制(14)\n  hh   - 12小时制(02)\n  mm   - 分钟(30)\n  ss   - 秒(45)\n  SSS  - 毫秒(123)\n\n📅 星期格式：\n  E    - 星期缩写(周一)\n  EE   - 星期缩写(周一)\n  EEE  - 星期缩写(周一)\n  EEEE - 星期全称(星期一)\n  u    - 数字星期(1-7,1=周一)\n  W    - 自定义星期格式(周一)\n\n🌙 农历相关：\n  N - 农历日期(腊月廿三)\n  J - 节气(仅当天显示，如立春)\n  A - 生肖(龙)\n\n⏰ 时间相关：\n  T - 时辰(子时)\n  a - 上午/下午标记(AM/PM)\n  k - 24小时制(1-24)\n  K - 12小时制(0-11)\n\n✨ 其他特殊格式：\n  C - 星座(水瓶座)\n  D - 一年中的第几天(1-365)\n  F - 一个月中的第几个星期\n  w - 一年中的第几周(1-53)\n  W - 一个月中的第几周(1-5)\n  z - 时区名称(GMT+08:00)\n  Z - 时区偏移量(+0800)\n\n🎯 使用示例：\n  \"yyyy-MM-dd HH:mm:ss\" → \"2024-12-25 14:30:45\"\n  \"MM月dd日 EEEE\" → \"12月25日 星期三\"\n  \"HH:mm T\" → \"14:30 午时\"\n  \"yyyy年MM月dd日 N A\" → \"2024年12月25日 腊月廿三 龙\"\n  \"yyyy/MM/dd E C\" → \"2024/12/25 周三 摩羯座\"\n\n💡 注意事项：\n  • 农历和节气基于中国农历算法\n  • 时辰按2小时一个时段划分\n  • 星座基于公历日期计算\n  • 生肖基于农历年份确定\n  • 自定义格式符(N,J,T,C,A,W)区分大小写</string>
+
     <!--启动器功能页的资源值-->
     <string name="disable_force_stop_title">启动器行为</string>
     <string name="disable_force_stop_enable_title">禁止划卡杀后台</string>

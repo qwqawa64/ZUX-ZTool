@@ -73,7 +73,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 状态栏设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.status_bar_settings_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -115,9 +115,9 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             String clockFormat = ((TextView) findViewById(R.id.edittext_clock_format)).getText().toString();
             ZToolPrefs.edit().putString("Custom_StatusBarClockFormat", clockFormat).apply();
             new MaterialAlertDialogBuilder(this)
-                    .setTitle("成功")
-                    .setMessage("自定义时钟格式已保存")
-                    .setPositiveButton("确定", null)
+                    .setTitle(R.string.save_success_title)
+                    .setMessage(R.string.clock_format_saved_message)
+                    .setPositiveButton(R.string.restart_yes, null)
                     .show();
         });
 
@@ -142,7 +142,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
 
         StatusBar_notifyNumSize = getNotifyNumSizeShared();
-        String[] itemsArray = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "无限制"};
+        String[] itemsArray = getResources().getStringArray(R.array.notify_num_size_options);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, itemsArray);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerNotifyNumSize.setAdapter(adapter);
@@ -196,7 +196,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     float textSize = 10 + (progress * 0.5f);
-                    textTextSizeValue.setText(textSize + "sp");
+                    textTextSizeValue.setText(textSize + getString(R.string.sp_unit));
                     saveTextSize(textSize);
                 }
             }
@@ -245,12 +245,12 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedItem = parent.getItemAtPosition(position).toString();
-                if (selectedItem.equals("4")) {
+                if (selectedItem.equals(getString(R.string.notify_num_default))) {
                     saveSettings("notification_icon_limit", false);
                     return;
                 }
                 saveSettings("notification_icon_limit", true);
-                if (selectedItem.equals("无限制")) {
+                if (selectedItem.equals(getString(R.string.notify_num_unlimited))) {
                     StatusBar_notifyNumSize.edit().putInt("notify_num_size", 100).apply();
                 } else {
                     try {
@@ -258,7 +258,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
                         StatusBar_notifyNumSize.edit().putInt("notify_num_size", num).apply();
                     } catch (NumberFormatException e) {
                         Log.e("Spinner", "Invalid number format", e);
-                        Toast.makeText(StatusBarSettingsActivity.this, "保存失败，请查看Logcat", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(StatusBarSettingsActivity.this, R.string.save_failed_message, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -277,20 +277,16 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
                 0xFFFF9800, 0xFF9C27B0, 0xFF607D8B, 0xFFFF5722, 0xFF795548
         };
 
-        String[] colorNames = {
-                "白色", "黑色", "红色", "绿色", "蓝色",
-                "黄色", "青色", "洋红", "蓝色", "绿色",
-                "橙色", "紫色", "灰色", "深橙", "棕色"
-        };
+        String[] colorNames = getResources().getStringArray(R.array.color_names);
 
         new MaterialAlertDialogBuilder(this)
-                .setTitle("选择字体颜色")
+                .setTitle(R.string.select_font_color_title)
                 .setItems(colorNames, (dialog, which) -> {
                     int selectedColor = colors[which];
                     saveTextColor(selectedColor);
                     updateColorPreview(selectedColor);
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -308,71 +304,15 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
     }
 
     private void showFormatHelpDialog() {
-        String detailedHelp = "时间格式基于ISO 8601进行拓展，自定义时钟格式说明：\n\n" +
-                "📅 ISO 8601标准日期格式：\n" +
-                "  yyyy - 年份(2024)\n" +
-                "  yy   - 年份后两位(24)\n" +
-                "  MM   - 月份(12)\n" +
-                "  MMM  - 月份缩写(12月)\n" +
-                "  MMMM - 月份全称(十二月)\n" +
-                "  dd   - 日期(25)\n" +
-                "  HH   - 24小时制(14)\n" +
-                "  hh   - 12小时制(02)\n" +
-                "  mm   - 分钟(30)\n" +
-                "  ss   - 秒(45)\n" +
-                "  SSS  - 毫秒(123)\n\n" +
-
-                "📅 星期格式：\n" +
-                "  E    - 星期缩写(周一)\n" +
-                "  EE   - 星期缩写(周一)\n" +
-                "  EEE  - 星期缩写(周一)\n" +
-                "  EEEE - 星期全称(星期一)\n" +
-                "  u    - 数字星期(1-7,1=周一)\n" +
-                "  W    - 自定义星期格式(周一)\n\n" +
-
-                "🌙 农历相关：\n" +
-                "  N - 农历日期(腊月廿三)\n" +
-                "  J - 节气(仅当天显示，如立春)\n" +
-                "  A - 生肖(龙)\n\n" +
-
-                "⏰ 时间相关：\n" +
-                "  T - 时辰(子时)\n" +
-                "  a - 上午/下午标记(AM/PM)\n" +
-                "  k - 24小时制(1-24)\n" +
-                "  K - 12小时制(0-11)\n\n" +
-
-                "✨ 其他特殊格式：\n" +
-                "  C - 星座(水瓶座)\n" +
-                "  D - 一年中的第几天(1-365)\n" +
-                "  F - 一个月中的第几个星期\n" +
-                "  w - 一年中的第几周(1-53)\n" +
-                "  W - 一个月中的第几周(1-5)\n" +
-                "  z - 时区名称(GMT+08:00)\n" +
-                "  Z - 时区偏移量(+0800)\n\n" +
-
-                "🎯 使用示例：\n" +
-                "  \"yyyy-MM-dd HH:mm:ss\" → \"2024-12-25 14:30:45\"\n" +
-                "  \"MM月dd日 EEEE\" → \"12月25日 星期三\"\n" +
-                "  \"HH:mm T\" → \"14:30 午时\"\n" +
-                "  \"yyyy年MM月dd日 N A\" → \"2024年12月25日 腊月廿三 龙\"\n" +
-                "  \"yyyy/MM/dd E C\" → \"2024/12/25 周三 摩羯座\"\n\n" +
-
-                "💡 注意事项：\n" +
-                "  • 农历和节气基于中国农历算法\n" +
-                "  • 时辰按2小时一个时段划分\n" +
-                "  • 星座基于公历日期计算\n" +
-                "  • 生肖基于农历年份确定\n" +
-                "  • 自定义格式符(N,J,T,C,A,W)区分大小写";
-
         new MaterialAlertDialogBuilder(this)
-                .setTitle("时钟格式帮助")
-                .setMessage(detailedHelp)
-                .setPositiveButton("确定", null)
-                .setNeutralButton("复制示例", (dialog, which) -> {
+                .setTitle(R.string.clock_format_help_title)
+                .setMessage(getString(R.string.clock_format_help_content))
+                .setPositiveButton(R.string.restart_yes, null)
+                .setNeutralButton(R.string.copy_example_button, (dialog, which) -> {
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clip = ClipData.newPlainText("时钟格式示例", "HH:mm N");
+                    ClipData clip = ClipData.newPlainText(getString(R.string.clock_format_example), getString(R.string.clock_format_sample));
                     clipboard.setPrimaryClip(clip);
-                    Toast.makeText(this, "示例已复制到剪贴板", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.example_copied_message, Toast.LENGTH_SHORT).show();
                 })
                 .show();
     }
@@ -411,7 +351,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         int progress = (int) ((textSize - 10) / 0.5f);
         seekbarTextSize.setProgress(progress);
         switchTextSize.setChecked(textSizeEnabled);
-        textTextSizeValue.setText(String.format("%.1fsp", textSize));
+        textTextSizeValue.setText(String.format("%.1f%s", textSize, getString(R.string.sp_unit)));
         seekbarTextSize.setEnabled(textSizeEnabled);
 
         float letterSpacing = ZToolPrefs.getFloat("Custom_StatusBarClockLetterSpacing", 0.1f);
@@ -441,7 +381,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             String currentTime = CustomDateFormatter.format(format, new Date());
             textPreview.setText(getString(R.string.preview_display, currentTime));
         } catch (Exception e) {
-            textPreview.setText(getString(R.string.preview_invalid) + "\n错误: " + e.getMessage());
+            textPreview.setText(getString(R.string.preview_invalid) + "\n" + getString(R.string.error_prefix) + e.getMessage());
             Log.e("CustomDatePreview", "Error formatting date: " + format, e);
         }
     }
