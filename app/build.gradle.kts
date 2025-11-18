@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     implementation(libs.swiperefreshlayout)
+    implementation(files("libs/swiperefreshlayout-1.1.0.pom"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -48,4 +49,5 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("cn.6tail:lunar:1.7.5")
     implementation("com.google.android.material:material:1.8.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
