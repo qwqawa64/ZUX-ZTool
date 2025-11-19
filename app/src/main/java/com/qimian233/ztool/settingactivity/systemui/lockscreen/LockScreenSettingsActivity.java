@@ -45,7 +45,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
     private LoadingDialog loadingDialog;
     private SharedPreferences yiYanPrefs, ZToolPrefs;
     private Spinner spinnerChargeWatts;
-    private String[] wattOptions = {"不启用", "握手功率", "实际功率"};
+    private String[] wattOptions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,12 +60,13 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 锁屏设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.lock_screen_settings_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
         mPrefsUtils = new ModulePreferencesUtils(this);
         ZToolPrefs = getZToolPreferences();
+        wattOptions = getResources().getStringArray(R.array.watt_options);
         initYiYanViews();
         initChargeWattsViews();
         loadSettings();
@@ -148,11 +149,11 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         String regex = editRegex.getText().toString().trim();
 
         if (apiUrl.isEmpty()) {
-            Toast.makeText(this, "请输入API地址", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.please_input_api_address, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        loadingDialog.show("正在测试API连接...");
+        loadingDialog.show(getString(R.string.testing_api_connection));
 
         new Thread(() -> {
             try {
@@ -164,7 +165,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     loadingDialog.dismiss();
-                    showTestResultDialog("请求失败", "错误信息: " + e.getMessage(), false);
+                    showTestResultDialog(getString(R.string.request_failed), getString(R.string.error_message_prefix) + e.getMessage(), false);
                 });
             }
         }).start();
@@ -194,7 +195,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
                 }
                 return response.toString();
             } else {
-                throw new Exception("HTTP错误: " + responseCode);
+                throw new Exception(getString(R.string.http_error_prefix) + responseCode);
             }
         } finally {
             try {
@@ -227,24 +228,24 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
                             .replace("\\r", "\r")
                             .replace("\\t", "\t");
                 } else {
-                    showTestResultDialog("正则匹配失败",
-                            "响应体: " + response + "\n\n未找到匹配正则表达式的内容", false);
+                    showTestResultDialog(getString(R.string.regex_match_failed),
+                            getString(R.string.response_body_prefix) + response + getString(R.string.regex_no_match_message), false);
                     return;
                 }
             } catch (Exception e) {
-                showTestResultDialog("正则表达式错误",
-                        "错误信息: " + e.getMessage() + "\n\n响应体: " + response, false);
+                showTestResultDialog(getString(R.string.regex_error),
+                        getString(R.string.error_message_prefix) + e.getMessage() + getString(R.string.response_body_prefix) + response, false);
                 return;
             }
         }
 
-        String message = "API请求成功!\n\n";
+        String message = getString(R.string.api_request_success);
         if (hasRegex) {
-            message += "正则匹配结果: " + extractedContent + "\n\n";
+            message += getString(R.string.regex_match_result_prefix) + extractedContent + "\n\n";
         }
-        message += "原始响应: " + response;
+        message += getString(R.string.original_response_prefix) + response;
 
-        showTestResultDialog("测试成功", message, true);
+        showTestResultDialog(getString(R.string.test_success), message, true);
     }
 
     private void showTestResultDialog(String title, String message, boolean success) {
@@ -253,12 +254,12 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
                 .setMessage(message);
 
         if (success) {
-            builder.setPositiveButton("保存配置", (dialog, which) -> {
+            builder.setPositiveButton(R.string.save_configuration_button, (dialog, which) -> {
                 saveYiYanConfiguration();
             });
         }
 
-        builder.setNegativeButton("取消", null)
+        builder.setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -272,7 +273,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         editor.apply();
 
         saveSettings("auto_owner_info", true);
-        Toast.makeText(this, "配置已保存并启用锁屏一言功能", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.configuration_saved_message, Toast.LENGTH_SHORT).show();
     }
 
     private void loadSettings() {
@@ -293,18 +294,18 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
     }
 
     private void loadChargeWattsOption() {
-        String savedOption = ZToolPrefs.getString("charge_watts_selected_option", "不启用");
+        String savedOption = ZToolPrefs.getString("charge_watts_selected_option", getString(R.string.watt_option_disabled));
 
         boolean chargeWattsEnabled = mPrefsUtils.loadBooleanSetting("systemui_charge_watts", false);
         boolean realWattsEnabled = mPrefsUtils.loadBooleanSetting("systemUI_RealWatts", false);
 
         String currentOption;
         if (chargeWattsEnabled && !realWattsEnabled) {
-            currentOption = "握手功率";
+            currentOption = getString(R.string.watt_option_handshake);
         } else if (!chargeWattsEnabled && realWattsEnabled) {
-            currentOption = "实际功率";
+            currentOption = getString(R.string.watt_option_actual);
         } else {
-            currentOption = "不启用";
+            currentOption = getString(R.string.watt_option_disabled);
         }
 
         int position = Arrays.asList(wattOptions).indexOf(currentOption);

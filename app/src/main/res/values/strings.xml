@@ -293,6 +293,31 @@
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
+    <!-- 锁屏设置相关字符串 -->
+    <string name="lock_screen_settings_title_suffix"> - 锁屏设置</string>
+    <string name="please_input_api_address">请输入API地址</string>
+    <string name="testing_api_connection">正在测试API连接...</string>
+    <string name="request_failed">请求失败</string>
+    <string name="test_success">测试成功</string>
+    <string name="regex_match_failed">正则匹配失败</string>
+    <string name="regex_error">正则表达式错误</string>
+    <string name="save_configuration_button">保存配置</string>
+    <string name="configuration_saved_message">配置已保存并启用锁屏一言功能</string>
+    <string name="error_message_prefix">错误信息: </string>
+    <string name="http_error_prefix">HTTP错误: </string>
+    <string name="response_body_prefix">\n\n响应体: </string>
+    <string name="regex_no_match_message">\n\n未找到匹配正则表达式的内容</string>
+    <string name="api_request_success">API请求成功!\n\n</string>
+    <string name="regex_match_result_prefix">正则匹配结果: </string>
+    <string name="original_response_prefix">原始响应: </string>
+    <string-array name="watt_options">
+        <item>不启用</item>
+        <item>握手功率</item>
+        <item>实际功率</item>
+    </string-array>
+    <string name="watt_option_disabled">不启用</string>
+    <string name="watt_option_handshake">握手功率</string>
+    <string name="watt_option_actual">实际功率</string>
     <!--系统界面 控制中心页资源值-->
     <string name="ControllerDate">控制中心日期设置</string>
     <string name="CustomDateSettingTitle">自定义日期格式</string>
