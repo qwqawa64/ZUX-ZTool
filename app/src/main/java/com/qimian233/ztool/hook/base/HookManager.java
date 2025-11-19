@@ -28,6 +28,7 @@ import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
+import com.qimian233.ztool.hook.modules.systemui.SystemUIBatteryHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeedSIzeHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeeddoublelayerHook;
@@ -117,6 +118,8 @@ public class HookManager {
         registerHookModule(new SafeCenterScanBlocker());
         // 注册模块：更大的dock栏
         registerHookModule(new ZuiLauncherHotseatHook());
+        // 注册模块：强制电量外部显示
+        registerHookModule(new SystemUIBatteryHook());
         initialized = true;
     }
 

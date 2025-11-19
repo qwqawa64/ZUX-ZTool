@@ -51,7 +51,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
     // 样式相关的视图
     private LinearLayout llTextSize, llLetterSpacing, llTextColor, llTextBold;
-    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchNativeNotificationIcon, switch_NetworkSpeedSize, switch_NetworkSpeedSizeDoubleLayer;
+    private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchNativeNotificationIcon, switch_NetworkSpeedSize, switch_NetworkSpeedSizeDoubleLayer, switchBatteryExternal;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
     private View viewColorPreview;
@@ -134,9 +134,16 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             saveSettings("systemui_network_speed_size",isChecked);
         });
 
+        // 设置状态栏网速大小优化事件 双层布局
         switch_NetworkSpeedSizeDoubleLayer = findViewById(R.id.switch_NetworkSpeedSizeDoubleLayer);
         switch_NetworkSpeedSizeDoubleLayer.setOnCheckedChangeListener((buttonView, isChecked) -> {
             saveSettings("systemui_network_speed_doublelayer",isChecked);
+        });
+
+        // 设置电池百分比电池外
+        switchBatteryExternal = findViewById(R.id.switch_BatteryExternal);
+        switchBatteryExternal.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveSettings("systemui_battery_percentage",isChecked);
         });
 
 
@@ -332,6 +339,9 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
         boolean isNetworkSpeedDoubleLayer = mPrefsUtils.loadBooleanSetting("systemui_network_speed_doublelayer", false);
         switch_NetworkSpeedSizeDoubleLayer.setChecked(isNetworkSpeedDoubleLayer);
+
+        boolean isBatteryPercentageEnabled = mPrefsUtils.loadBooleanSetting("systemui_battery_percentage", false);
+        switchBatteryExternal.setChecked(isBatteryPercentageEnabled);
 
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);

@@ -434,6 +434,10 @@
     <string name="statusBarNetworkSizeSummary">让数字尽可能大，让单位尽可能小，和双层网速同时启用会有奇怪的效果</string>
     <string name="statusBarNetworkSizeDoubleLayer">双层网速</string>
     <string name="statusBarNetworkSizeDoubleLayerSummary">能够显示上行和下行的流量</string>
+    <!--系统界面 状态栏电池显示资源值-->
+    <string name="statusBarBatteryTitle">电池</string>
+    <string name="syatusBatteryExternalTitle">强制电池外百分比</string>
+    <string name="syatusBatteryExternalSummary">在电池图标右侧显示剩余的电量，请先关闭系统设置的百分比显示</string>
     <!--系统界面 锁屏页资源值-->
     <string name="YiYanTile">锁屏一言</string>
     <string name="YiYanSwitchTitle">显示锁屏一言</string>
