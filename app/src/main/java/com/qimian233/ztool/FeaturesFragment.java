@@ -37,8 +37,8 @@ public class FeaturesFragment extends Fragment {
         // 添加设置到选项列表
         List<FeaturesAdapter.AppItem> appList = new ArrayList<>();
         appList.add(new FeaturesAdapter.AppItem(
-                "设置",
-                "系统设置应用",
+                getString(R.string.settings_app_name),
+                getString(R.string.settings_app_description),
                 "com.android.settings",
                 getApplicationIcon(requireContext(), "com.android.settings"),
                 true,
@@ -46,8 +46,8 @@ public class FeaturesFragment extends Fragment {
         ));
         //添加游戏助手
         appList.add(new FeaturesAdapter.AppItem(
-                "游戏助手",
-                "游戏助手应用",
+                getString(R.string.game_tool_app_name),
+                getString(R.string.game_tool_app_description),
                 "com.zui.game.service",
                 getApplicationIcon(requireContext(), "com.zui.game.service"),
                 true,
@@ -55,8 +55,8 @@ public class FeaturesFragment extends Fragment {
         ));
         //添加系统OTA
         appList.add(new FeaturesAdapter.AppItem(
-                "系统更新",
-                "系统更新应用",
+                getString(R.string.system_update_app_name),
+                getString(R.string.system_update_app_description),
                 "com.lenovo.ota",
                 getApplicationIcon(requireContext(), "com.lenovo.ota"),
                 true,
@@ -64,8 +64,8 @@ public class FeaturesFragment extends Fragment {
         ));
         //添加软件包安装程序
         appList.add(new FeaturesAdapter.AppItem(
-                "软件包安装程序",
-                "软件包安装程序应用",
+                getString(R.string.package_installer_app_name),
+                getString(R.string.package_installer_app_description),
                 "com.android.packageinstaller",
                 getApplicationIcon(requireContext(), "com.android.packageinstaller"),
                 true,
@@ -73,8 +73,8 @@ public class FeaturesFragment extends Fragment {
         ));
         // 添加系统界面
         appList.add(new FeaturesAdapter.AppItem(
-                "系统界面",
-                "系统界面应用",
+                getString(R.string.system_ui_app_name),
+                getString(R.string.system_ui_app_description),
                 "com.android.systemui",
                 getApplicationIcon(requireContext(), "android"),
                 true,
@@ -83,8 +83,8 @@ public class FeaturesFragment extends Fragment {
 
         // 添加启动器设置
         appList.add(new FeaturesAdapter.AppItem(
-                "启动器",
-                "启动器应用",
+                getString(R.string.launcher_app_name),
+                getString(R.string.launcher_app_description),
                 "com.zui.launcher",
                 getApplicationIcon(requireContext(), "com.zui.launcher"),
                 true,
@@ -92,8 +92,8 @@ public class FeaturesFragment extends Fragment {
         ));
 
         appList.add(new FeaturesAdapter.AppItem(
-                "系统框架",
-                "Android核心框架",
+                getString(R.string.system_framework_app_name),
+                getString(R.string.system_framework_app_description),
                 "android",
                 getApplicationIcon(requireContext(), "android"),
                 true,
@@ -101,8 +101,8 @@ public class FeaturesFragment extends Fragment {
         ));
 
         appList.add(new FeaturesAdapter.AppItem(
-                "安全中心",
-                "ZUI/ZUX的安全中心",
+                getString(R.string.safe_center_app_name),
+                getString(R.string.safe_center_app_description),
                 "com.zui.safecenter",
                 getApplicationIcon(requireContext(), "com.zui.safecenter"),
                 true,

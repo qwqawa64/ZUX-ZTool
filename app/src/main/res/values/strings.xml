@@ -51,6 +51,22 @@
     <string name="featuresFragment_title">功能管理</string>
     <string name="itemFeatures_appName">应用名称</string>
     <string name="itemFeatures_appDescription">应用描述</string>
+    <string name="settings_app_name">设置</string>
+    <string name="settings_app_description">系统设置应用</string>
+    <string name="game_tool_app_name">游戏助手</string>
+    <string name="game_tool_app_description">游戏助手应用</string>
+    <string name="system_update_app_name">系统更新</string>
+    <string name="system_update_app_description">系统更新应用</string>
+    <string name="package_installer_app_name">软件包安装程序</string>
+    <string name="package_installer_app_description">软件包安装程序应用</string>
+    <string name="system_ui_app_name">系统界面</string>
+    <string name="system_ui_app_description">系统界面应用</string>
+    <string name="launcher_app_name">启动器</string>
+    <string name="launcher_app_description">启动器应用</string>
+    <string name="system_framework_app_name">系统框架</string>
+    <string name="system_framework_app_description">Android核心框架</string>
+    <string name="safe_center_app_name">安全中心</string>
+    <string name="safe_center_app_description">ZUI/ZUX的安全中心</string>
     <!--日志页资源值-->
     <string name="logFilter">日志过滤器</string>
     <string name="filterByType">类别</string>
