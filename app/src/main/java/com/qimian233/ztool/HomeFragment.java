@@ -215,7 +215,7 @@ public class HomeFragment extends Fragment {
                 updateSystemInfoAsync();
 
                 // 立即显示默认文本，确保界面快速渲染
-                textHint.setText("环境就绪");
+                textHint.setText(getString(R.string.environment_ready));
 
                 // 异步获取API内容
                 fetchHintFromAPI();
@@ -227,9 +227,9 @@ public class HomeFragment extends Fragment {
                 cardSystemInfo.setVisibility(View.GONE);
 
                 // 更新提示信息，明确指出缺少什么
-                StringBuilder hintBuilder = new StringBuilder("缺少必要环境: ");
-                if (!isModuleActive) hintBuilder.append("模块未激活 ");
-                if (!isRootAvailable) hintBuilder.append("Root权限不可用");
+                StringBuilder hintBuilder = new StringBuilder(getString(R.string.missing_environment));
+                if (!isModuleActive) hintBuilder.append(getString(R.string.module_not_active));
+                if (!isRootAvailable) hintBuilder.append(getString(R.string.root_not_available));
 
                 textHint.setText(hintBuilder.toString());
                 Log.w(TAG, "环境不完整: " + hintBuilder);
@@ -337,21 +337,21 @@ public class HomeFragment extends Fragment {
                     System.currentTimeMillis() - lastSystemInfoUpdate > SYSTEM_INFO_CACHE_DURATION) {
                 cachedRootSource = detectRootSource();
             }
-            textRootSource.post(() -> textRootSource.setText("Root管理器: " + cachedRootSource));
+            textRootSource.post(() -> textRootSource.setText(getString(R.string.root_manager_prefix, cachedRootSource)));
 
             // 框架版本信息（使用缓存）
             if (cachedFrameworkVersion.isEmpty() ||
                     System.currentTimeMillis() - lastSystemInfoUpdate > SYSTEM_INFO_CACHE_DURATION) {
                 cachedFrameworkVersion = detectFrameworkVersionAndMode();
             }
-            textFrameworkVersion.post(() -> textFrameworkVersion.setText("XP框架: " + cachedFrameworkVersion));
+            textFrameworkVersion.post(() -> textFrameworkVersion.setText(getString(R.string.xp_framework_prefix, cachedFrameworkVersion)));
 
             // 更新模块状态显示
             textModuleStatus.post(() -> {
                 if (isModuleActive) {
-                    textModuleStatus.setText("模块已激活");
+                    textModuleStatus.setText(getString(R.string.module_active));
                 } else {
-                    textModuleStatus.setText("模块未激活");
+                    textModuleStatus.setText(getString(R.string.module_inactive));
                     textModuleStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark, null));
                 }
             });
@@ -374,13 +374,13 @@ public class HomeFragment extends Fragment {
                 String versionName = packageInfo.versionName;
                 int versionCode = packageInfo.versionCode;
                 String moduleVersion = versionName + " (" + versionCode + ")";
-                textModuleVersion.post(() -> textModuleVersion.setText("模块版本：" + moduleVersion));
+                textModuleVersion.post(() -> textModuleVersion.setText(getString(R.string.module_version_prefix, moduleVersion)));
             } else {
-                textModuleVersion.post(() -> textModuleVersion.setText("模块版本: 未知 (Activity 为空)"));
+                textModuleVersion.post(() -> textModuleVersion.setText(getString(R.string.module_version_unknown_activity)));
             }
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
-            textModuleVersion.post(() -> textModuleVersion.setText("模块版本: 未知"));
+            textModuleVersion.post(() -> textModuleVersion.setText(getString(R.string.module_version_unknown)));
         }
     }
 
@@ -403,12 +403,12 @@ public class HomeFragment extends Fragment {
                 if (result.isSuccess() && result.output != null && !result.output.isEmpty()) {
                     String output = result.output.trim();
                     if (cmd.contains("magisk")) {
-                        return "MagiskSU (" + output + ")";
+                        return getString(R.string.magisk_su_format, output);
                     } else if (cmd.contains("su -v") && output.contains("KernelSU")) {
                         int endPosition = output.indexOf("KernelSU");
-                        return "KernelSU (" + output.substring(0, endPosition - 1) + ")";
+                        return getString(R.string.kernelsu_format, output.substring(0, endPosition - 1));
                     } else if (cmd.contains("apd")) {
-                        return "APatch (" + output + ")";
+                        return getString(R.string.apatch_format, output);
                     }
                 }
             }
@@ -418,7 +418,7 @@ public class HomeFragment extends Fragment {
         }
 
         Log.w(TAG, "未检测到明确的Root来源");
-        return "Unknown (但Root可用)";
+        return getString(R.string.unknown_root_available);
     }
 
     /**
@@ -433,7 +433,7 @@ public class HomeFragment extends Fragment {
             if (propResult.isSuccess() && propResult.output != null && !propResult.output.trim().isEmpty()) {
                 String version = "v" + propResult.output.trim();
                 Log.i(TAG, "通过系统属性检测到LSPosed版本: " + version);
-                return "LSPosed " + version + " (Standard)";
+                return getString(R.string.lsposed_standard_format, version);
             }
         } catch (Exception e) {
             Log.w(TAG, "系统属性检测失败: " + e.getMessage());
@@ -443,14 +443,14 @@ public class HomeFragment extends Fragment {
         try {
             EnhancedShellExecutor.ShellResult lsResult = shellExecutor.executeRootCommand("ls -la /data/adb/modules/ | grep -i lsposed", 3);
             if (lsResult.isSuccess() && lsResult.output != null && !lsResult.output.trim().isEmpty()) {
-                return "LSPosed (Zygisk)"; // 简化返回
+                return getString(R.string.lsposed_zygisk);
             }
         } catch (Exception e) {
             Log.w(TAG, "目录检测失败: " + e.getMessage());
         }
 
         Log.w(TAG, "未检测到LSPosed框架");
-        return "Unknown";
+        return getString(R.string.unknown_framework);
     }
 
     /**
@@ -460,22 +460,22 @@ public class HomeFragment extends Fragment {
         try {
             // 设备型号（不涉及Shell命令）
             String deviceModel = Build.MODEL;
-            textDeviceModel.post(() -> textDeviceModel.setText(deviceModel.isEmpty() ? "Unknown" : deviceModel));
+            textDeviceModel.post(() -> textDeviceModel.setText(deviceModel.isEmpty() ? getString(R.string.unknown) : deviceModel));
 
             // Android版本（不涉及Shell命令）
             String androidVersion = Build.VERSION.RELEASE;
-            textAndroidVersion.post(() -> textAndroidVersion.setText(androidVersion.isEmpty() ? "Unknown" : "Android " + androidVersion));
+            textAndroidVersion.post(() -> textAndroidVersion.setText(androidVersion.isEmpty() ? getString(R.string.unknown) : getString(R.string.android_version_prefix, androidVersion)));
 
             // 构建版本（不涉及Shell命令）
             String buildVersion = Build.DISPLAY;
-            textBuildVersion.post(() -> textBuildVersion.setText(buildVersion.isEmpty() ? "Unknown" : buildVersion));
+            textBuildVersion.post(() -> textBuildVersion.setText(buildVersion.isEmpty() ? getString(R.string.unknown) : buildVersion));
 
             // 内核版本（使用缓存）
             if (cachedKernelVersion.isEmpty() ||
                     System.currentTimeMillis() - lastSystemInfoUpdate > SYSTEM_INFO_CACHE_DURATION) {
                 cachedKernelVersion = getKernelVersion();
             }
-            textKernelVersion.post(() -> textKernelVersion.setText(cachedKernelVersion.isEmpty() ? "Unknown" : cachedKernelVersion));
+            textKernelVersion.post(() -> textKernelVersion.setText(cachedKernelVersion.isEmpty() ? getString(R.string.unknown) : cachedKernelVersion));
 
             // 更新缓存时间
             lastSystemInfoUpdate = System.currentTimeMillis();
