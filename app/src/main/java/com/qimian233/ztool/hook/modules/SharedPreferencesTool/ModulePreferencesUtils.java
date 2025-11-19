@@ -1,9 +1,11 @@
 package com.qimian233.ztool.hook.modules.SharedPreferencesTool;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,9 @@ public class ModulePreferencesUtils {
 
     private static final String PREFS_NAME = "xposed_module_config";
     private static final String PREFIX_ENABLED = "module_enabled_";
+    // 存储直接使用SharedPreferences存储的设置项名称
+    // 直接使用SharedPreferences存储设置项是不正确的，所有模块都应当使用本工具类进行配置存取
+    private static final String[] otherPrefsName = {"ControlCenter_Date", "StatusBar_Clock"};
 
     private Context mContext;
     private String mModulePackageName;
@@ -35,8 +40,10 @@ public class ModulePreferencesUtils {
 
     /**
      * 获取模块的SharedPreferences实例
+     * @noinspection deprecation
      */
-    public SharedPreferences getModulePreferences() {
+    @SuppressLint("WorldReadableFiles")
+    public SharedPreferences  getModulePreferences() {
         try {
             Context moduleContext = mContext.createPackageContext(mModulePackageName, Context.CONTEXT_IGNORE_SECURITY);
             return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
@@ -114,22 +121,35 @@ public class ModulePreferencesUtils {
     /**
      * 清除所有设置
      * @return 是否清除成功
+     * @noinspection deprecation
      */
+    @SuppressLint("WorldReadableFiles")
     public boolean clearAllSettings() {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.edit()
-                .clear()
-                .commit();
+        for (String key : otherPrefsName){
+            SharedPreferences sharedPreferences = mContext.getSharedPreferences(key, Context.MODE_WORLD_READABLE);
+            sharedPreferences.edit().clear().commit();
+        }
+        return prefs.edit().clear().commit();
     }
 
     /**
      * 获取所有设置
      * @return 包含所有键值对的Map对象
+     * @noinspection deprecation
      */
+    @SuppressLint("WorldReadableFiles")
     public Map<String, Object> getAllSettings() {
         try {
+
             SharedPreferences prefs = getModulePreferences();
             Map<String, Object> allEntries = new HashMap<>(prefs.getAll());
+            // 读取其他SharedPreferences文件中的设置，例如自定义状态栏和控制中心时间的配置
+            // 所有模块都应当使用ModulePreferencesUtils来保存设置，而非SharedPreferences
+            for (String name : otherPrefsName) {
+                SharedPreferences otherPrefs = mContext.getSharedPreferences(name, Context.MODE_WORLD_READABLE);
+                allEntries.putAll(otherPrefs.getAll());
+            }
             Log.d("ModulePreferences", "成功读取所有设置，条目数：" + allEntries.size());
             return allEntries;
         } catch (Exception e) {
@@ -177,7 +197,7 @@ public class ModulePreferencesUtils {
             Type type = new TypeToken<HashMap<String, Object>>(){}.getType();
             HashMap<String, Object> map = gson.fromJson(jsonString, type);
 
-            // 处理Gson将数字自动转换的问题，确保Boolean值正确
+            // 处理Gson将数字自动转换的问题，确保Boolean值正确，并增强对Int、String和Float类型的支持
             return processMapValues(map);
 
         } catch (Exception e) {
@@ -188,7 +208,7 @@ public class ModulePreferencesUtils {
 
     /**
      * 配置还原功能的辅助方法
-     * 处理Map中的值，确保Boolean类型正确
+     * 处理Map中的值，确保Boolean、Int、String和Float类型正确
      */
     private static HashMap<String, Object> processMapValues(HashMap<String, Object> map) {
         HashMap<String, Object> processedMap = new HashMap<>();
@@ -198,35 +218,84 @@ public class ModulePreferencesUtils {
 
             // 处理Boolean值（Gson可能会将boolean解析为Double）
             if (value instanceof Double) {
-                Double doubleValue = (Double) value;
+                double doubleValue = (Double) value;
                 // 检查是否为布尔值的数字表示（0.0或1.0）
                 if (doubleValue == 0.0 || doubleValue == 1.0) {
                     processedMap.put(entry.getKey(), doubleValue == 1.0);
+                } else if (doubleValue % 1 == 0) {
+                    // 处理整型值（如42.0）
+                    processedMap.put(entry.getKey(), (int) doubleValue);
                 } else {
-                    processedMap.put(entry.getKey(), value);
+                    // 处理浮点型值（如3.14）
+                    processedMap.put(entry.getKey(), doubleValue);
+                }
+            } else if (value instanceof Number) {
+                // 处理其他Number类型（如Integer、Long、Float等）
+                Number numberValue = (Number) value;
+                // 如果值是整数，则转为Integer类型
+                if (numberValue.doubleValue() % 1 == 0) {
+                    processedMap.put(entry.getKey(), numberValue.intValue());
+                } else {
+                    // 否则转为Float类型（如果需要更高精度则使用Double）
+                    processedMap.put(entry.getKey(), numberValue.floatValue());
                 }
             } else {
+                // 其他类型（包括String）直接处理
                 processedMap.put(entry.getKey(), value);
             }
         }
         return processedMap;
     }
-
-    public void writeJSONToSharedPrefs(String jsonString){
-        Map <String, Object> mapToWrite = jsonToHashMap(jsonString);
-        for (Map.Entry<String, Object> entry : mapToWrite.entrySet()){
+    /** @noinspection deprecation*/
+    @SuppressLint("WorldReadableFiles")
+    public void writeJSONToSharedPrefs(String jsonString) {
+        Map<String, Object> mapToWrite = jsonToHashMap(jsonString);
+        for (Map.Entry<String, Object> entry : mapToWrite.entrySet()) {
             try {
                 String key = entry.getKey();
-                Log.d("ModulePreferences", "Processing key: " + key);
-                if (entry.getValue() instanceof String) {
-                    Log.d("ModulePreferences", "Saving string key: " + key);
-                    String value = entry.getValue().toString();
-                    saveStringSetting(key.replace(PREFIX_ENABLED, ""), value);
+                Object value = entry.getValue();
+                Log.d("ModulePreferencesUtils", "Processing key: " + key + ", value: " + value + ", type: " + (value != null ? value.getClass().getSimpleName() : "null"));
+
+                // 处理先前开发中遗留的直接使用SharedPreferences的键名
+                if (Arrays.asList(otherPrefsName).contains(key)) {
+                    SharedPreferences sharedPreferences = mContext.getSharedPreferences(key, Context.MODE_WORLD_READABLE);
+                    if (value instanceof String) {
+                        sharedPreferences.edit().putString(key, (String) value).apply();
+                    } else if (value instanceof Integer) {
+                        sharedPreferences.edit().putInt(key, (Integer) value).apply();
+                    } else if (value instanceof Float) {
+                        sharedPreferences.edit().putFloat(key, (Float) value).apply();
+                    } else if (value instanceof Boolean) {
+                        sharedPreferences.edit().putBoolean(key, (Boolean) value).apply();
+                    } else {
+                        // 默认处理为字符串
+                        sharedPreferences.edit().putString(key, value.toString()).apply();
+                    }
                 } else {
-                    Log.d("ModulePreferences", "Saving boolean key: " + key);
-                    Boolean value = (Boolean) entry.getValue();
-                    // 修改这里：去掉前缀，因为saveBooleanSetting会自动添加
-                    saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), value);
+                    // 使用工具类提供的设置保存方法
+                    if (value instanceof String) {
+                        Log.d("ModulePreferencesUtils", "Saving string key: " + key);
+                        saveStringSetting(key.replace(PREFIX_ENABLED, ""), (String) value);
+                    } else if (value instanceof Integer) {
+                        Log.d("ModulePreferencesUtils", "Saving integer key: " + key);
+                        // 注意：这里需要添加对应的保存Integer类型的方法，或者转换为Boolean/String处理
+                        // 当前假设整数0/1表示Boolean，其他转换为字符串保存
+                        if ((Integer) value == 0 || (Integer) value == 1) {
+                            saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), (Integer) value == 1);
+                        } else {
+                            saveStringSetting(key.replace(PREFIX_ENABLED, ""), value.toString());
+                        }
+                    } else if (value instanceof Boolean) {
+                        Log.d("ModulePreferencesUtils", "Saving boolean key: " + key);
+                        saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), (Boolean) value);
+                    } else if (value instanceof Float) {
+                        Log.d("ModulePreferencesUtils", "Saving float key: " + key);
+                        // 注意：这里需要添加对应的保存Float类型的方法，或者转换为String处理
+                        saveStringSetting(key.replace(PREFIX_ENABLED, ""), value.toString());
+                    } else {
+                        Log.d("ModulePreferencesUtils", "Saving unknown type key (as string): " + key);
+                        saveStringSetting(key.replace(PREFIX_ENABLED, ""), value.toString());
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
