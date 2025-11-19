@@ -38,7 +38,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 系统框架设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.framework_settings_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -84,10 +84,10 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("重启系统")
-                .setMessage("更改涉及系统框架，需要重启系统以应用更改。")
-                .setPositiveButton("确定", (dialog, which) -> restartOS())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.restart_system_title)
+                .setMessage(R.string.restart_system_message)
+                .setPositiveButton(R.string.restart_yes, (dialog, which) -> restartOS())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -98,7 +98,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
             process.waitFor();
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "重启失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.restart_fail_prefix) + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

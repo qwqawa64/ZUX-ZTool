@@ -377,10 +377,7 @@
         <item>深橙</item>
         <item>棕色</item>
     </string-array>
-
-    <!-- 时钟格式帮助内容 -->
     <string name="clock_format_help_content">时间格式基于ISO 8601进行拓展，自定义时钟格式说明：\n\n📅 ISO 8601标准日期格式：\n  yyyy - 年份(2024)\n  yy   - 年份后两位(24)\n  MM   - 月份(12)\n  MMM  - 月份缩写(12月)\n  MMMM - 月份全称(十二月)\n  dd   - 日期(25)\n  HH   - 24小时制(14)\n  hh   - 12小时制(02)\n  mm   - 分钟(30)\n  ss   - 秒(45)\n  SSS  - 毫秒(123)\n\n📅 星期格式：\n  E    - 星期缩写(周一)\n  EE   - 星期缩写(周一)\n  EEE  - 星期缩写(周一)\n  EEEE - 星期全称(星期一)\n  u    - 数字星期(1-7,1=周一)\n  W    - 自定义星期格式(周一)\n\n🌙 农历相关：\n  N - 农历日期(腊月廿三)\n  J - 节气(仅当天显示，如立春)\n  A - 生肖(龙)\n\n⏰ 时间相关：\n  T - 时辰(子时)\n  a - 上午/下午标记(AM/PM)\n  k - 24小时制(1-24)\n  K - 12小时制(0-11)\n\n✨ 其他特殊格式：\n  C - 星座(水瓶座)\n  D - 一年中的第几天(1-365)\n  F - 一个月中的第几个星期\n  w - 一年中的第几周(1-53)\n  W - 一个月中的第几周(1-5)\n  z - 时区名称(GMT+08:00)\n  Z - 时区偏移量(+0800)\n\n🎯 使用示例：\n  \"yyyy-MM-dd HH:mm:ss\" → \"2024-12-25 14:30:45\"\n  \"MM月dd日 EEEE\" → \"12月25日 星期三\"\n  \"HH:mm T\" → \"14:30 午时\"\n  \"yyyy年MM月dd日 N A\" → \"2024年12月25日 腊月廿三 龙\"\n  \"yyyy/MM/dd E C\" → \"2024/12/25 周三 摩羯座\"\n\n💡 注意事项：\n  • 农历和节气基于中国农历算法\n  • 时辰按2小时一个时段划分\n  • 星座基于公历日期计算\n  • 生肖基于农历年份确定\n  • 自定义格式符(N,J,T,C,A,W)区分大小写</string>
-
     <!--启动器功能页的资源值-->
     <string name="disable_force_stop_title">启动器行为</string>
     <string name="disable_force_stop_enable_title">禁止划卡杀后台</string>
@@ -395,6 +392,10 @@
     <string name="disable_zui_applist_title">权限管理</string>
     <string name="disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
     <string name="disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
+    <string name="framework_settings_title_suffix"> - 系统框架设置</string>
+    <string name="restart_system_title">重启系统</string>
+    <string name="restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
+    <string name="restart_fail_prefix">重启失败: </string>
     <!--安全中心功能页的资源值-->
     <string name="default_allow_autorun_title">后台行为管理</string>
     <string name="default_allow_autorun_enable_title">默认允许APP自启</string>
