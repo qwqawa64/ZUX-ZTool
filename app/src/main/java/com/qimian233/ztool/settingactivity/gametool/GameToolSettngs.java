@@ -44,7 +44,7 @@ public class GameToolSettngs extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 详细设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.game_tool_settings_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -98,10 +98,10 @@ public class GameToolSettngs extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("重启XP模块作用域")
-                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + " 的进程。")
-                .setPositiveButton("确定", (dialog, which) -> forceStopApp())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.restart_xp_title)
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -114,7 +114,7 @@ public class GameToolSettngs extends AppCompatActivity {
             Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
             process.waitFor();
         } catch (Exception e) {
-            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.restart_fail_short, Toast.LENGTH_SHORT).show();
         }
     }
 

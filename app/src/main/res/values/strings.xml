@@ -46,7 +46,6 @@
     <string name="lsposed_zygisk">LSPosed (Zygisk)</string>
     <string name="unknown_framework">Unknown</string>
     <string name="android_version_prefix">Android %s</string>
-
     <!--功能管理页资源值-->
     <string name="featuresFragment_title">功能管理</string>
     <string name="itemFeatures_appName">应用名称</string>
@@ -162,6 +161,8 @@
     <string name="restartFail">重启失败：</string>
     <!--从这里开始是各项Hook功能的资源值-->
     <!--游戏助手功能页资源值-->
+    <string name="game_tool_settings_title_suffix"> - 详细设置</string>
+    <string name="restart_fail_short">重启失败</string>
     <string name="function_title">功能拓展</string>
     <string name="Game_Audio_title">禁止处理游戏音频</string>
     <string name="Game_Audio_summary">游戏声音忽大忽小或音量爆炸可以尝试开启，需重启系统</string>
