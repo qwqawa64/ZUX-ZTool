@@ -85,6 +85,49 @@
     <string name="placeHolderLogLevel">I</string>
     <string name="notificationIcon">通知图标</string>
     <string name="multiLineStackTrace">多行堆栈</string>
+    <string name="all_categories">所有类别</string>
+    <string name="all_levels">所有级别</string>
+    <string name="all_modules">所有模块</string>
+    <string name="log_directory_not_exists">日志目录不存在</string>
+    <string name="no_log_records_found">未找到日志记录</string>
+    <string name="load_logs_failed">加载日志失败: </string>
+    <string name="no_matching_log_records">没有匹配的日志记录</string>
+    <string name="stats_format">总计: %1$d 条 | 显示: %2$d 条 | 模块: %3$d 个 | 文件: %4$s</string>
+    <string name="clear_logs_title">清除日志</string>
+    <string name="clear_logs_message">确定要清除所有日志文件吗？此操作不可恢复。</string>
+    <string name="clear_button">清除</string>
+    <string name="logs_cleared_message">日志已清除</string>
+    <string name="clear_logs_success">日志清除成功</string>
+    <string name="clear_logs_failed">清除日志失败: </string>
+    <string name="log_statistics_title">日志统计</string>
+    <string name="log_statistics_header">=== 日志统计 ===</string>
+    <string name="total_logs">总日志数: </string>
+    <string name="total_modules">模块数量: </string>
+    <string name="total_errors">错误数量: </string>
+    <string name="log_files_count">日志文件: </string>
+    <string name="log_files_unit"> 个</string>
+    <string name="module_statistics_header">=== 模块统计 ===</string>
+    <string name="log_count_unit"> 条</string>
+    <string name="log_detail_title">日志详情</string>
+    <string name="log_detail_time">时间: </string>
+    <string name="log_detail_module">模块: </string>
+    <string name="log_detail_level">级别: </string>
+    <string name="log_detail_tag">标签: </string>
+    <string name="log_detail_pid">PID: </string>
+    <string name="log_detail_mode">模式: </string>
+    <string name="log_detail_function">函数: </string>
+    <string name="log_detail_multiline">多行: </string>
+    <string name="none">无</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="full_message_header">=== 完整消息 ===</string>
+    <string name="extracted_data_header">=== 提取数据 ===</string>
+    <string name="copy_button">复制</string>
+    <string name="close_button">关闭</string>
+    <string name="log_content">日志内容</string>
+    <string name="copied_to_clipboard">已复制到剪贴板</string>
+    <string name="more_lines_suffix"> 更多行</string>
+
     <!--设置页资源值-->
     <string name="default_title">XXX - 详细设置</string>
     <string name="settingsFragment_title">设置</string>

@@ -174,7 +174,7 @@ public class AuditFragment extends Fragment {
         modulesByCategory = LogParser.getModulesByCategory();
         // 类别过滤器
         List<String> categories = new ArrayList<>();
-        categories.add("所有类别");
+        categories.add(getString(R.string.all_categories));
         categories.addAll(modulesByCategory.keySet());
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
                 getContext(), android.R.layout.simple_spinner_item, categories);
@@ -192,7 +192,7 @@ public class AuditFragment extends Fragment {
         // 初始化模块过滤器
         updateModuleSpinner();
         // 级别过滤器
-        List<String> levels = Arrays.asList("所有级别", "INFO", "ERROR");
+        List<String> levels = Arrays.asList(getString(R.string.all_levels), "INFO", "ERROR");
         ArrayAdapter<String> levelAdapter = new ArrayAdapter<>(
                 getContext(), android.R.layout.simple_spinner_item, levels);
         levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -209,9 +209,9 @@ public class AuditFragment extends Fragment {
 
     private void updateModuleSpinner() {
         List<String> modules = new ArrayList<>();
-        modules.add("所有模块");
+        modules.add(getString(R.string.all_modules));
         String selectedCategory = (String) spinnerCategory.getSelectedItem();
-        if (selectedCategory != null && !selectedCategory.equals("所有类别") && modulesByCategory.containsKey(selectedCategory)) {
+        if (selectedCategory != null && !selectedCategory.equals(getString(R.string.all_categories)) && modulesByCategory.containsKey(selectedCategory)) {
             modules.addAll(modulesByCategory.get(selectedCategory));
         } else {
             // 显示所有模块
@@ -241,7 +241,7 @@ public class AuditFragment extends Fragment {
 
                 if (!logDir.exists() || !logDir.isDirectory()) {
                     mainHandler.post(() -> {
-                        showEmptyState("日志目录不存在");
+                        showEmptyState(getString(R.string.log_directory_not_exists));
                         showLoading(false);
                     });
                     return;
@@ -252,7 +252,7 @@ public class AuditFragment extends Fragment {
 
                 if (allLogEntries.isEmpty()) {
                     mainHandler.post(() -> {
-                        showEmptyState("未找到日志记录");
+                        showEmptyState(getString(R.string.no_log_records_found));
                         showLoading(false);
                     });
                     return;
@@ -279,7 +279,7 @@ public class AuditFragment extends Fragment {
             } catch (Exception e) {
                 android.util.Log.e(TAG, "加载日志文件失败", e);
                 mainHandler.post(() -> {
-                    showEmptyState("加载日志失败: " + e.getMessage());
+                    showEmptyState(getString(R.string.load_logs_failed) + e.getMessage());
                     showLoading(false);
                 });
             }
@@ -330,7 +330,7 @@ public class AuditFragment extends Fragment {
         updateStats();
 
         if (filteredLogEntries.isEmpty()) {
-            showEmptyState("没有匹配的日志记录");
+            showEmptyState(getString(R.string.no_matching_log_records));
         } else {
             hideEmptyState();
         }
@@ -340,7 +340,7 @@ public class AuditFragment extends Fragment {
         Map<String, Integer> moduleStats = LogParser.getModuleStats(allLogEntries);
         int totalModules = moduleStats.size();
 
-        String stats = String.format("总计: %d 条 | 显示: %d 条 | 模块: %d 个 | 文件: %s",
+        String stats = getString(R.string.stats_format,
                 allLogEntries.size(), filteredLogEntries.size(), totalModules, getLogFileCount());
         tvStats.setText(stats);
     }
@@ -360,10 +360,10 @@ public class AuditFragment extends Fragment {
 
     private void showClearLogsDialog() {
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("清除日志")
-                .setMessage("确定要清除所有日志文件吗？此操作不可恢复。")
-                .setPositiveButton("清除", (dialog, which) -> clearAllLogs())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.clear_logs_title)
+                .setMessage(R.string.clear_logs_message)
+                .setPositiveButton(R.string.clear_button, (dialog, which) -> clearAllLogs())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -390,18 +390,18 @@ public class AuditFragment extends Fragment {
                     filteredLogEntries.clear();
                     logAdapter.setLogEntries(filteredLogEntries);
                     updateStats();
-                    showEmptyState("日志已清除");
+                    showEmptyState(getString(R.string.logs_cleared_message));
                     showLoading(false);
 
                     // 显示清除成功提示
-                    Toast.makeText(requireContext(), "日志清除成功", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), R.string.clear_logs_success, Toast.LENGTH_SHORT).show();
                 });
 
             } catch (Exception e) {
                 android.util.Log.e(TAG, "清除日志失败", e);
                 mainHandler.post(() -> {
                     showLoading(false);
-                    Toast.makeText(requireContext(), "清除日志失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.clear_logs_failed) + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -412,62 +412,62 @@ public class AuditFragment extends Fragment {
         Map<String, Object> errorStats = LogParser.getErrorStats(allLogEntries);
 
         StringBuilder statsMessage = new StringBuilder();
-        statsMessage.append("=== 日志统计 ===\n\n");
-        statsMessage.append("总日志数: ").append(allLogEntries.size()).append("\n");
-        statsMessage.append("模块数量: ").append(moduleStats.size()).append("\n");
-        statsMessage.append("错误数量: ").append(errorStats.get("total_errors")).append("\n");
-        statsMessage.append("日志文件: ").append(getLogFileCount()).append(" 个\n\n");
+        statsMessage.append(getString(R.string.log_statistics_header)).append("\n\n");
+        statsMessage.append(getString(R.string.total_logs)).append(allLogEntries.size()).append("\n");
+        statsMessage.append(getString(R.string.total_modules)).append(moduleStats.size()).append("\n");
+        statsMessage.append(getString(R.string.total_errors)).append(errorStats.get("total_errors")).append("\n");
+        statsMessage.append(getString(R.string.log_files_count)).append(getLogFileCount()).append(getString(R.string.log_files_unit)).append("\n\n");
 
-        statsMessage.append("=== 模块统计 ===\n");
+        statsMessage.append(getString(R.string.module_statistics_header)).append("\n");
         for (Map.Entry<String, Integer> entry : moduleStats.entrySet()) {
             String moduleName = LogParser.getModuleDisplayName(entry.getKey());
-            statsMessage.append(moduleName).append(": ").append(entry.getValue()).append(" 条\n");
+            statsMessage.append(moduleName).append(": ").append(entry.getValue()).append(getString(R.string.log_count_unit)).append("\n");
         }
 
         // 显示统计对话框
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("日志统计")
+                .setTitle(R.string.log_statistics_title)
                 .setMessage(statsMessage.toString())
-                .setPositiveButton("确定", null)
+                .setPositiveButton(R.string.restart_yes, null)
                 .show();
     }
 
     private void showLogDetails(LogEntry entry) {
         StringBuilder details = new StringBuilder();
-        details.append("时间: ").append(entry.timestamp).append("\n");
-        details.append("模块: ").append(LogParser.getModuleDisplayName(entry.module)).append("\n");
-        details.append("级别: ").append(entry.level).append("\n");
-        details.append("标签: ").append(entry.tag).append("\n");
-        details.append("PID: ").append(entry.pid).append("\n");
-        details.append("模式: ").append(entry.mode).append("\n");
-        details.append("函数: ").append(entry.function != null ? entry.function : "无").append("\n");
-        details.append("多行: ").append(entry.isMultiLine ? "是" : "否").append("\n\n");
+        details.append(getString(R.string.log_detail_time)).append(entry.timestamp).append("\n");
+        details.append(getString(R.string.log_detail_module)).append(LogParser.getModuleDisplayName(entry.module)).append("\n");
+        details.append(getString(R.string.log_detail_level)).append(entry.level).append("\n");
+        details.append(getString(R.string.log_detail_tag)).append(entry.tag).append("\n");
+        details.append(getString(R.string.log_detail_pid)).append(entry.pid).append("\n");
+        details.append(getString(R.string.log_detail_mode)).append(entry.mode).append("\n");
+        details.append(getString(R.string.log_detail_function)).append(entry.function != null ? entry.function : getString(R.string.none)).append("\n");
+        details.append(getString(R.string.log_detail_multiline)).append(entry.isMultiLine ? getString(R.string.yes) : getString(R.string.no)).append("\n\n");
 
         // 显示完整消息（包含多行）
-        details.append("=== 完整消息 ===\n");
+        details.append(getString(R.string.full_message_header)).append("\n");
         details.append(entry.getFullMessage()).append("\n\n");
 
         // 提取的数据
         if (!entry.extractedData.isEmpty()) {
-            details.append("=== 提取数据 ===\n");
+            details.append(getString(R.string.extracted_data_header)).append("\n");
             for (Map.Entry<String, String> data : entry.extractedData.entrySet()) {
                 details.append(data.getKey()).append(": ").append(data.getValue()).append("\n");
             }
         }
 
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("日志详情")
+                .setTitle(R.string.log_detail_title)
                 .setMessage(details.toString())
-                .setPositiveButton("复制", (dialog, which) -> copyToClipboard(details.toString()))
-                .setNegativeButton("关闭", null)
+                .setPositiveButton(R.string.copy_button, (dialog, which) -> copyToClipboard(details.toString()))
+                .setNegativeButton(R.string.close_button, null)
                 .show();
     }
 
     private void copyToClipboard(String text) {
         ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("日志内容", text);
+        ClipData clip = ClipData.newPlainText(getString(R.string.log_content), text);
         clipboard.setPrimaryClip(clip);
-        Toast.makeText(requireContext(), "已复制到剪贴板", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
     }
 
     private void showLoading(boolean show) {
@@ -586,7 +586,7 @@ public class AuditFragment extends Fragment {
                         if (message.length() > 100) {
                             message = message.substring(0, 100) + "...";
                         }
-                        message += " ... [" + (lines.length - 1) + " 更多行]";
+                        message += " ... [" + (lines.length - 1) + getString(R.string.more_lines_suffix) + "]";
                     }
                 } else {
                     // 单行日志正常截取
