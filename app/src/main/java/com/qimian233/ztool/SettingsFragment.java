@@ -81,7 +81,7 @@ public class SettingsFragment extends Fragment {
                                 ModulePreferencesUtils.getAllSettingsAsJSON(requireContext()));
                         if (result) {
                             Log.d("SAF", "成功存储配置到用户指定的目录" + uri);
-                            showToast("配置已备份");
+                            showToast(getString(R.string.config_backup_success));
                         } else {
                             Log.e("SAF", "备份失败");
                         }
@@ -108,18 +108,14 @@ public class SettingsFragment extends Fragment {
 
     private void showAboutPage() {
         // 使用 HTML 标签创建带链接的文本
-        String htmlText = "ZTool是个针对ZUXOS的LSPosed功能增强模块。<br>版本: " + updateModuleStatus()
-                + "<br>开发者: Qimian233, WASDDestroy"
-                + "<br>访问项目的<a href='https://github.com/qwqawa64/ZUX-ZTool'>Github主页</a>"
-                + "<br>本项目遵守Apache 2.0协议发布。"
-                + "<br>感谢<a href='https://github.com/dantmnf'>dantmnf</a>的<a href='https://github.com/dantmnf/UnfuckZUI'>UnfuckZUI</a>，功能搬运情况请参考我们的项目主页。";
+        String htmlText = getString(R.string.about_description, updateModuleStatus());
 
         Spanned message = Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("关于ZTool")
+                .setTitle(R.string.about_ztool_title)
                 .setMessage(message)
-                .setPositiveButton("确定", null)
+                .setPositiveButton(R.string.restart_yes, null)
                 .create();
 
         dialog.show();
@@ -131,20 +127,19 @@ public class SettingsFragment extends Fragment {
     }
 
     private void restoreDefaultSettings() {
-        String message = "你确定要恢复默认配置吗？这将重置所有设置到初始状态。";
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("最后一次确认")
-                .setMessage(message)
-                .setPositiveButton("确定",
+                .setTitle(R.string.final_confirmation_title)
+                .setMessage(R.string.restore_default_confirmation)
+                .setPositiveButton(R.string.restart_yes,
                         (dialogInterface, which) -> performRestore())
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.restart_no, null)
                 .create();
         dialog.show();
     }
 
     private void performRestore() {
         new ModulePreferencesUtils(requireContext()).clearAllSettings();
-        showToast("已恢复默认配置");
+        showToast(getString(R.string.default_config_restored));
     }
 
     // 类成员变量 - 预先注册的ActivityResultLauncher
@@ -163,7 +158,7 @@ public class SettingsFragment extends Fragment {
                         // 处理读取到的内容
                         Log.d("SAF", "读取到的内容: " + content);
                         ModulePreferencesUtils.restoreConfig(requireContext(), content);
-                        showToast("配置已从文件恢复");
+                        showToast(getString(R.string.config_restore_success));
                     } else {
                         Log.e("SAF", "文件读取失败或内容为空");
                     }
@@ -177,11 +172,11 @@ public class SettingsFragment extends Fragment {
         if (isEnabled) {
             // 启动日志采集服务
             LogServiceManager.startLogService(requireContext());
-            showToast("日志采集服务已启动");
+            showToast(getString(R.string.log_service_started));
         } else {
             // 停止日志采集服务
             LogServiceManager.stopLogService(requireContext());
-            showToast("日志采集服务已停止");
+            showToast(getString(R.string.log_service_stopped));
         }
     }
 
@@ -197,11 +192,11 @@ public class SettingsFragment extends Fragment {
                     int versionCode = packageInfo.versionCode;
                     moduleVersion = versionName + " (" + versionCode + ")";
                 } else {
-                    moduleVersion = "未知 (Activity 为空)";
+                    moduleVersion = getString(R.string.unknown_activity_null);
                 }
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
-                moduleVersion = "未知";
+                moduleVersion = getString(R.string.unknown);
             }
 
             Log.i(TAG, "模块状态更新完成");

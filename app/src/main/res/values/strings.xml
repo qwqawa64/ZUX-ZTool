@@ -61,6 +61,18 @@
     <string name="restoreConfigFromFile">从文件恢复配置</string>
     <string name="restoreDefaultConfig">恢复默认配置</string>
     <string name="showAboutPage">关于ZTool</string>
+    <string name="config_backup_success">配置已备份</string>
+    <string name="about_ztool_title">关于ZTool</string>
+    <string name="about_description">ZTool是个针对ZUXOS的LSPosed功能增强模块。&lt;br&gt;版本: %s&lt;br&gt;开发者: Qimian233, WASDDestroy&lt;br&gt;访问项目的&lt;a href=\'https://github.com/qwqawa64/ZUX-ZTool\'&gt;Github主页&lt;/a&gt;&lt;br&gt;本项目遵守Apache 2.0协议发布。&lt;br&gt;感谢&lt;a href=\'https://github.com/dantmnf\'&gt;dantmnf&lt;/a&gt;的&lt;a href=\'https://github.com/dantmnf/UnfuckZUI\'&gt;UnfuckZUI&lt;/a&gt;，功能搬运情况请参考我们的项目主页。</string>
+    <string name="final_confirmation_title">最后一次确认</string>
+    <string name="restore_default_confirmation">你确定要恢复默认配置吗？这将重置所有设置到初始状态。</string>
+    <string name="default_config_restored">已恢复默认配置</string>
+    <string name="config_restore_success">配置已从文件恢复</string>
+    <string name="log_service_started">日志采集服务已启动</string>
+    <string name="log_service_stopped">日志采集服务已停止</string>
+    <string name="unknown">未知</string>
+    <string name="unknown_activity_null">未知 (Activity 为空)</string>
+
     <!--通用重启作用域资源-->
     <string name="restart_xp_title">重启XP模块作用域</string>
     <string name="restart_xp_message_header">是否重启此页的XP模块作用域？这将强行停止 </string>
