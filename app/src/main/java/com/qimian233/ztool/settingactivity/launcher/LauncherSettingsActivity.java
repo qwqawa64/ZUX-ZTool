@@ -44,7 +44,7 @@ public class LauncherSettingsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 启动器设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.launcher_settings_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -89,10 +89,10 @@ public class LauncherSettingsActivity extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("重启XP模块作用域")
-                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + " 的进程。")
-                .setPositiveButton("确定", (dialog, which) -> forceStopApp())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.restart_xp_title)
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -104,9 +104,9 @@ public class LauncherSettingsActivity extends AppCompatActivity {
         try {
             Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
             process.waitFor();
-            Toast.makeText(this, "已重启应用进程", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.force_stop_success, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.force_stop_fail, Toast.LENGTH_SHORT).show();
         }
     }
 
