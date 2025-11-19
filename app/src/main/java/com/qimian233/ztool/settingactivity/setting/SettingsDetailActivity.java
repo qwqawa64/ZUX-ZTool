@@ -105,7 +105,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 详细设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.settings_detail_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -136,9 +136,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 if (!isChecked) {
                     ModuleSwitch.setChecked(true);
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle("警告")
-                            .setMessage("APP内暂不支持卸载模块，请在Magisk/KSU模块管理中卸载模块后再重启APP")
-                            .setNegativeButton("知道了", null)
+                            .setTitle(R.string.warning_title)
+                            .setMessage(R.string.module_uninstall_warning)
+                            .setNegativeButton(R.string.got_it_button, null)
                             .show();
                 } else {
                     // 如果模块已经安装，直接返回
@@ -147,20 +147,20 @@ public class SettingsDetailActivity extends AppCompatActivity {
                         return;
                     }
                     loadingDialog = new LoadingDialog(SettingsDetailActivity.this);
-                    loadingDialog.show("正在安装模块...");
+                    loadingDialog.show(getString(R.string.installing_module));
                     String result = copyEmbeddingModule(SettingsDetailActivity.this);
                     if ("success".equals(result)) {
                         loadingDialog.dismiss();
                         new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                                .setTitle("提示")
-                                .setMessage("安装成功，重启系统生效")
-                                .setNegativeButton("知道了", null)
+                                .setTitle(R.string.tip_title)
+                                .setMessage(R.string.install_success_message)
+                                .setNegativeButton(R.string.got_it_button, null)
                                 .show();
                     } else {
                         new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                                .setTitle("错误")
-                                .setMessage("安装失败：" + result)
-                                .setNegativeButton("知道了", null)
+                                .setTitle(R.string.error_title)
+                                .setMessage(getString(R.string.install_failed_message, result))
+                                .setNegativeButton(R.string.got_it_button, null)
                                 .show();
                     }
                 }
@@ -299,7 +299,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         // 检查使用情况统计权限
         if (!hasUsageStatsPermission()) {
-            Toast.makeText(this, "请授予使用情况统计权限", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.request_usage_stats_permission, Toast.LENGTH_LONG).show();
             Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
             startActivity(intent);
             return;
@@ -324,7 +324,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 if (Settings.canDrawOverlays(this)) {
                     startFloatingWindow();
                 } else {
-                    Toast.makeText(this, "悬浮窗权限未授予", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.overlay_permission_denied, Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -357,7 +357,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         // 创建FloatingWindow实例
         floatingWindow = new FloatingWindow(this);
-        Toast.makeText(this, "配置向导已启动", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.floating_window_started, Toast.LENGTH_SHORT).show();
     }
 
     // 隐藏悬浮窗 - 使用FloatingWindow类
@@ -365,7 +365,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         if (floatingWindow != null) {
             floatingWindow.hide();
             floatingWindow = null;
-            Toast.makeText(this, "配置向导已关闭", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.floating_window_closed, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -446,11 +446,11 @@ public class SettingsDetailActivity extends AppCompatActivity {
             // 删除已存在的临时目录（清理旧数据）
             deleteRecursive(tempDir);
             if (!tempDir.mkdirs()) {
-                return "Error: Failed to create temp directory";
+                return getString(R.string.error_create_temp_dir);
             }
             // 步骤1: 将assets中的文件复制到临时目录
             if (!copyAssetsToDirectory(context, sourceAssetsPath, tempDir)) {
-                return "Error: Failed to copy assets to temp directory";
+                return getString(R.string.error_copy_assets);
             }
             // 步骤2: 使用su权限复制临时目录到目标位置
             String[] commands = {
@@ -470,11 +470,11 @@ public class SettingsDetailActivity extends AppCompatActivity {
                     error.append(line).append("; ");
                 }
                 errorReader.close();
-                return "Error: Shell command failed - " + error.toString();
+                return getString(R.string.error_shell_command_failed, error.toString());
             }
             return "success";
         } catch (Exception e) {
-            return "Error: " + e.getMessage();
+            return getString(R.string.error_prefix) + e.getMessage();
         } finally {
             // 清理临时目录
             deleteRecursive(tempDir);
@@ -501,7 +501,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 return true;
             } else {
                 // 处理目录
-                loadingDialog.updateMessage("正在释放文件...");
+                loadingDialog.updateMessage(getString(R.string.releasing_files));
                 for (String file : files) {
                     String fullAssetsPath = assetsPath.isEmpty() ? file : assetsPath + "/" + file;
                     File targetFile = new File(targetDir, file);
@@ -537,7 +537,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
     // 递归删除目录或文件
     private void deleteRecursive(File fileOrDirectory) {
         if (fileOrDirectory.isDirectory()) {
-            loadingDialog.updateMessage("正在清理临时文件...");
+            loadingDialog.updateMessage(getString(R.string.cleaning_temp_files));
             File[] children = fileOrDirectory.listFiles();
             if (children != null) {
                 for (File child : children) {
@@ -720,15 +720,14 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private void showConfigSelectionDialog(List<ConfigFileInfo> configs) {
         if (configs.isEmpty()) {
-            Toast.makeText(this, "请" +
-                    "使用配置向导生成第一个配置文件吧", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_config_files_prompt, Toast.LENGTH_SHORT).show();
             return;
         }
         // 准备对话框数据
         String[] displayItems = new String[configs.size()];
         for (int i = 0; i < configs.size(); i++) {
             ConfigFileInfo config = configs.get(i);
-            displayItems[i] = config.timestamp + " " + config.appName + " 配置";
+            displayItems[i] = config.timestamp + " " + config.appName + getString(R.string.config_suffix);
         }
         boolean[] checkedItems = new boolean[configs.size()];
         Arrays.fill(checkedItems, false);
@@ -743,12 +742,12 @@ public class SettingsDetailActivity extends AppCompatActivity {
         builder.setView(dialogView);
         // 设置标题
         TextView titleText = dialogView.findViewById(R.id.dialog_title);
-        titleText.setText("选择配置文件");
+        titleText.setText(R.string.select_config_files);
 
         // 显示已刷入策略数量
         TextView flashedCountText = dialogView.findViewById(R.id.flashed_count_text);
         if (flashedCount > 0) {
-            flashedCountText.setText("已刷入 " + flashedCount + " 个自定义策略");
+            flashedCountText.setText(getString(R.string.flashed_configs_count, flashedCount));
             flashedCountText.setVisibility(View.VISIBLE);
         } else {
             flashedCountText.setVisibility(View.GONE);
@@ -797,7 +796,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             // 如果配置已刷入，则不允许选择
             if (flashedConfigs.contains(configKey)) {
                 ((CheckedTextView) view).setChecked(false);
-                Toast.makeText(this, "已刷入的配置不可选择", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.config_already_flashed, Toast.LENGTH_SHORT).show();
             } else {
                 checkedItems[position] = !checkedItems[position];
                 ((CheckedTextView) view).setChecked(checkedItems[position]);
@@ -820,7 +819,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
 
             if (selectedConfigs.isEmpty()) {
-                Toast.makeText(this, "请选择要删除的配置文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.select_config_to_delete, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -836,7 +835,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 }
             }
             if (selectedConfigs.isEmpty()) {
-                Toast.makeText(this, "请选择至少一个配置文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.select_at_least_one_config, Toast.LENGTH_SHORT).show();
                 return;
             }
             dialog.dismiss();
@@ -885,19 +884,19 @@ public class SettingsDetailActivity extends AppCompatActivity {
         // 显示删除结果
         StringBuilder resultMessage = new StringBuilder();
         if (deletedCount > 0) {
-            resultMessage.append("成功删除 ").append(deletedCount).append(" 个配置文件");
+            resultMessage.append(getString(R.string.delete_success, deletedCount));
         }
         if (skippedCount > 0) {
             if (resultMessage.length() > 0) {
                 resultMessage.append("\n");
             }
-            resultMessage.append("自动跳过 ").append(skippedCount).append(" 个已刷入的配置");
+            resultMessage.append(getString(R.string.delete_skipped, skippedCount));
         }
 
         if (resultMessage.length() > 0) {
             Toast.makeText(this, resultMessage.toString(), Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(this, "没有文件被删除", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_files_deleted, Toast.LENGTH_SHORT).show();
         }
 
         // 关闭当前对话框并重新加载配置列表
@@ -906,7 +905,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         if (!newConfigs.isEmpty()) {
             showConfigSelectionDialog(newConfigs);
         } else {
-            Toast.makeText(this, "所有配置文件已删除", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.all_configs_deleted, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -918,9 +917,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
         // 检查模块是否已安装
         if (!isMagiskModuleEnabled()) {
             new MaterialAlertDialogBuilder(this)
-                    .setTitle("提示")
-                    .setMessage("请先安装拓展模块")
-                    .setNegativeButton("知道了", null)
+                    .setTitle(R.string.tip_title)
+                    .setMessage(R.string.install_module_first)
+                    .setNegativeButton(R.string.got_it_button, null)
                     .show();
             return;
         }
@@ -930,9 +929,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
         for (ConfigFileInfo config : selectedConfigs) {
             if (packageNames.contains(config.packageName)) {
                 new MaterialAlertDialogBuilder(this)
-                        .setTitle("警告")
-                        .setMessage("一个应用只允许一次刷入一次配置，请检查选择的应用：" + config.appName)
-                        .setNegativeButton("知道了", null)
+                        .setTitle(R.string.warning_title)
+                        .setMessage(getString(R.string.duplicate_package_warning, config.appName))
+                        .setNegativeButton(R.string.got_it_button, null)
                         .show();
                 return;
             }
@@ -941,13 +940,13 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         // 显示警告提示
         new MaterialAlertDialogBuilder(this)
-                .setTitle("警告")
-                .setMessage("刷入的策略如果与原策略冲突将会覆盖处理")
-                .setPositiveButton("继续", (dialog, which) -> {
+                .setTitle(R.string.warning_title)
+                .setMessage(R.string.flash_config_warning)
+                .setPositiveButton(R.string.continue_button, (dialog, which) -> {
                     // 开始刷入配置
                     performConfigFlash(selectedConfigs);
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
     /**
@@ -955,12 +954,12 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private void performConfigFlash(List<ConfigFileInfo> selectedConfigs) {
         loadingDialog = new LoadingDialog(this);
-        loadingDialog.show("正在刷入配置...");
+        loadingDialog.show(getString(R.string.flashing_config));
 
         new Thread(() -> {
             try {
                 // 步骤1: 提取原模块JSON文件到临时目录
-                loadingDialog.updateMessage("正在提取原配置文件...");
+                loadingDialog.updateMessage(getString(R.string.extracting_original_config));
 
                 // 使用更可靠的临时目录路径
                 String tempDirPath = getCacheDir().getAbsolutePath() + "/module_temp";
@@ -969,7 +968,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 // 创建临时目录
                 deleteRecursive(tempDir);
                 if (!tempDir.mkdirs()) {
-                    throw new IOException("无法创建临时目录: " + tempDirPath);
+                    throw new IOException(getString(R.string.error_create_temp_dir));
                 }
 
                 // 首先检查模块文件是否存在
@@ -980,7 +979,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 Process checkProcess = Runtime.getRuntime().exec(checkCommands);
                 int checkExitCode = checkProcess.waitFor();
                 if (checkExitCode != 0) {
-                    throw new IOException("模块目录不存在或无法访问");
+                    throw new IOException(getString(R.string.error_module_dir_not_exists));
                 }
 
                 // 复制原JSON文件到临时目录
@@ -991,11 +990,11 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 Process copyProcess = Runtime.getRuntime().exec(copyCommands);
                 int copyExitCode = copyProcess.waitFor();
                 if (copyExitCode != 0) {
-                    throw new IOException("复制原配置文件失败，请检查模块是否完整安装");
+                    throw new IOException(getString(R.string.error_copy_original_config));
                 }
 
                 // 更改文件权限和所有者：使用chmod和chown确保应用可读写
-                loadingDialog.updateMessage("正在设置文件权限...");
+                loadingDialog.updateMessage(getString(R.string.setting_file_permissions));
                 int uid = android.os.Process.myUid(); // 获取应用用户ID
                 String[] permissionCommands = {
                         "su", "-c",
@@ -1005,26 +1004,26 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 Process permissionProcess = Runtime.getRuntime().exec(permissionCommands);
                 int permissionExitCode = permissionProcess.waitFor();
                 if (permissionExitCode != 0) {
-                    throw new IOException("设置文件权限和所有者失败");
+                    throw new IOException(getString(R.string.error_set_permissions));
                 }
 
                 // 步骤2: 读取并解析原JSON文件
-                loadingDialog.updateMessage("正在解析原配置...");
+                loadingDialog.updateMessage(getString(R.string.parsing_original_config));
                 File tempJsonFile = new File(tempDirPath, "embedding_config.json");
                 if (!tempJsonFile.exists()) {
-                    throw new IOException("临时配置文件不存在: " + tempJsonFile.getAbsolutePath());
+                    throw new IOException(getString(R.string.error_temp_config_not_exists));
                 }
 
                 String originalJsonContent = readFileContent(tempJsonFile);
                 if (originalJsonContent == null || originalJsonContent.isEmpty()) {
-                    throw new IOException("读取原配置文件失败");
+                    throw new IOException(getString(R.string.error_read_original_config));
                 }
 
                 JSONObject originalJson = new JSONObject(originalJsonContent);
                 JSONArray originalPackages = originalJson.getJSONArray("packages");
 
                 // 步骤3: 处理选中的配置
-                loadingDialog.updateMessage("正在处理新配置...");
+                loadingDialog.updateMessage(getString(R.string.processing_new_config));
                 for (ConfigFileInfo config : selectedConfigs) {
                     // 解析用户配置
                     JSONObject userConfig = new JSONObject(config.configContent);
@@ -1048,14 +1047,14 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 originalJson.put("packages", originalPackages);
 
                 // 步骤4: 写回临时文件（现在文件所有者是应用用户，可以正常写入）
-                loadingDialog.updateMessage("正在生成新配置文件...");
+                loadingDialog.updateMessage(getString(R.string.generating_new_config));
                 String newJsonContent = originalJson.toString(2);
                 FileOutputStream fos = new FileOutputStream(tempJsonFile); // 不再抛出权限错误
                 fos.write(newJsonContent.getBytes("UTF-8"));
                 fos.close();
 
                 // 步骤5: 覆盖模块目录下的JSON文件（需要root权限）
-                loadingDialog.updateMessage("正在更新模块配置...");
+                loadingDialog.updateMessage(getString(R.string.updating_module_config));
                 String[] overwriteCommands = {
                         "su", "-c",
                         "cp " + tempJsonFile.getAbsolutePath() + " /data/adb/modules/zuxos_embedding/embedding_config.json && " +
@@ -1064,7 +1063,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 Process overwriteProcess = Runtime.getRuntime().exec(overwriteCommands);
                 int overwriteExitCode = overwriteProcess.waitFor();
                 if (overwriteExitCode != 0) {
-                    throw new IOException("更新模块配置失败，请检查root权限");
+                    throw new IOException(getString(R.string.error_update_module_config));
                 }
 
                 // 步骤6: 保存刷入的策略到SharedPreferences
@@ -1085,9 +1084,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     loadingDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle("成功")
-                            .setMessage("配置刷入成功，重启系统生效")
-                            .setNegativeButton("知道了", null)
+                            .setTitle(R.string.success_title)
+                            .setMessage(R.string.flash_success_message)
+                            .setNegativeButton(R.string.got_it_button, null)
                             .show();
                 });
 
@@ -1096,9 +1095,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     loadingDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle("错误")
-                            .setMessage("刷入配置失败：" + e.getMessage())
-                            .setNegativeButton("知道了", null)
+                            .setTitle(R.string.error_title)
+                            .setMessage(getString(R.string.flash_failed_message, e.getMessage()))
+                            .setNegativeButton(R.string.got_it_button, null)
                             .show();
                 });
             }
@@ -1112,12 +1111,12 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private void restoreOriginalModule() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("确认还原")
-                .setMessage("此操作将删除所有自定义配置并重新安装原始模块，是否继续？")
-                .setPositiveButton("确认", (dialog, which) -> {
+                .setTitle(R.string.confirm_restore_title)
+                .setMessage(R.string.confirm_restore_message)
+                .setPositiveButton(R.string.confirm_button, (dialog, which) -> {
                     performModuleRestore();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -1126,12 +1125,12 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private void performModuleRestore() {
         loadingDialog = new LoadingDialog(this);
-        loadingDialog.show("正在还原模块...");
+        loadingDialog.show(getString(R.string.restoring_module));
 
         new Thread(() -> {
             try {
                 // 步骤1: 删除模块目录
-                loadingDialog.updateMessage("正在删除模块...");
+                loadingDialog.updateMessage(getString(R.string.deleting_module));
                 String[] deleteCommands = {
                         "su", "-c",
                         "rm -rf /data/adb/modules/zuxos_embedding"
@@ -1139,14 +1138,14 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 Process deleteProcess = Runtime.getRuntime().exec(deleteCommands);
                 int deleteExitCode = deleteProcess.waitFor();
                 if (deleteExitCode != 0) {
-                    throw new IOException("删除模块失败，请检查root权限");
+                    throw new IOException(getString(R.string.error_delete_module));
                 }
 
                 // 步骤2: 重新安装模块
-                loadingDialog.updateMessage("正在重新安装模块...");
+                loadingDialog.updateMessage(getString(R.string.reinstalling_module));
                 String result = copyEmbeddingModule(SettingsDetailActivity.this);
                 if (!"success".equals(result)) {
-                    throw new IOException("重新安装模块失败: " + result);
+                    throw new IOException(getString(R.string.reinstall_failed_message, result));
                 }
 
                 // 步骤3: 清除SharedPreferences中的刷入记录
@@ -1156,9 +1155,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     loadingDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle("成功")
-                            .setMessage("模块还原成功，重启系统生效")
-                            .setNegativeButton("知道了", null)
+                            .setTitle(R.string.success_title)
+                            .setMessage(R.string.restore_success_message)
+                            .setNegativeButton(R.string.got_it_button, null)
                             .show();
                 });
 
@@ -1167,9 +1166,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     loadingDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle("错误")
-                            .setMessage("模块还原失败：" + e.getMessage())
-                            .setNegativeButton("知道了", null)
+                            .setTitle(R.string.error_title)
+                            .setMessage(getString(R.string.restore_failed_message, e.getMessage()))
+                            .setNegativeButton(R.string.got_it_button, null)
                             .show();
                 });
             }
@@ -1246,9 +1245,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
 
         try {
-            startActivityForResult(Intent.createChooser(intent, "选择TTF字体文件"), REQUEST_CODE_PICK_FONT);
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.select_ttf_file)), REQUEST_CODE_PICK_FONT);
         } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(this, "未找到文件管理器", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_file_manager_found, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -1257,7 +1256,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private void copyFontToTemp(Uri uri) {
         fontImportDialog = new LoadingDialog(this);
-        fontImportDialog.show("正在准备字体文件...");
+        fontImportDialog.show(getString(R.string.preparing_font_file));
 
         new Thread(() -> {
             try {
@@ -1270,7 +1269,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 // 获取原始文件名
                 String originalFileName = getFileName(uri);
                 if (originalFileName == null) {
-                    originalFileName = "unknown_font.ttf";
+                    originalFileName = getString(R.string.unknown_font_filename);
                 }
 
                 // 创建临时文件
@@ -1299,7 +1298,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     fontImportDialog.dismiss();
-                    Toast.makeText(SettingsDetailActivity.this, "文件复制失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SettingsDetailActivity.this, getString(R.string.file_copy_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -1317,30 +1316,30 @@ public class SettingsDetailActivity extends AppCompatActivity {
         EditText etFontDescription = dialogView.findViewById(R.id.et_font_description);
 
         // 设置默认描述
-        String defaultDescription = "自定义导入的字体" + originalFileName;
+        String defaultDescription = getString(R.string.default_font_description, originalFileName);
         etFontDescription.setText(defaultDescription);
 
         new MaterialAlertDialogBuilder(this)
-                .setTitle("输入字体信息")
+                .setTitle(R.string.input_font_info_title)
                 .setView(dialogView)
-                .setPositiveButton("确认", (dialog, which) -> {
+                .setPositiveButton(R.string.confirm_button, (dialog, which) -> {
                     String fontName = etFontName.getText().toString().trim();
                     String fontDescription = etFontDescription.getText().toString().trim();
 
                     if (fontName.isEmpty()) {
-                        Toast.makeText(this, "字体名称不能为空", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.font_name_empty, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     if (fontDescription.isEmpty()) {
-                        Toast.makeText(this, "字体描述不能为空", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.font_description_empty, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     // 开始导入流程
                     startFontImport(fontName, fontDescription, originalFileName);
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -1349,12 +1348,12 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private void startFontImport(String fontName, String fontDescription, String originalFileName) {
         fontImportDialog = new LoadingDialog(this);
-        fontImportDialog.show("正在导入字体...");
+        fontImportDialog.show(getString(R.string.importing_font));
 
         new Thread(() -> {
             try {
                 // 步骤1: 生成随机文件夹名
-                fontImportDialog.updateMessage("正在创建字体目录...");
+                fontImportDialog.updateMessage(getString(R.string.creating_font_directory));
                 String randomFolderName = generateRandomFolderName();
                 String targetFolderPath = FONT_BASE_PATH + randomFolderName;
 
@@ -1362,22 +1361,22 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 createFolderWithRoot(targetFolderPath);
 
                 // 步骤2: 复制字体文件到系统目录
-                fontImportDialog.updateMessage("正在复制字体文件...");
+                fontImportDialog.updateMessage(getString(R.string.copying_font_file));
                 String targetFontPath = targetFolderPath + "/font.ttf";
                 copyFileWithRoot(currentSelectedFontFile.getAbsolutePath(), targetFontPath);
 
                 // 步骤3: 创建字体元数据
-                fontImportDialog.updateMessage("正在创建字体元数据...");
+                fontImportDialog.updateMessage(getString(R.string.creating_font_metadata));
                 String xmlContent = generateFontXml(fontName, fontDescription);
                 String xmlFilePath = targetFolderPath + "/font.xml";
                 createXmlFileWithRoot(xmlFilePath, xmlContent);
 
                 // 步骤4: 生成预览图片（使用临时文件）
-                fontImportDialog.updateMessage("正在生成预览图片...");
+                fontImportDialog.updateMessage(getString(R.string.generating_preview_images));
                 generatePreviewImages(targetFolderPath, currentSelectedFontFile.getAbsolutePath(), fontName);
 
                 // 步骤5: 设置正确的文件夹权限和所有者
-                fontImportDialog.updateMessage("正在设置文件夹权限...");
+                fontImportDialog.updateMessage(getString(R.string.setting_folder_permissions));
                 setFolderPermissions(targetFolderPath);
 
                 // 清理临时文件
@@ -1387,9 +1386,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     fontImportDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle("导入成功")
-                            .setMessage("字体已成功导入到系统字体库\n前往 设置-个性定制-字体-本地 即可查看")
-                            .setPositiveButton("确定", null)
+                            .setTitle(R.string.import_success_title)
+                            .setMessage(R.string.import_success_message)
+                            .setPositiveButton(R.string.restart_yes, null)
                             .show();
                 });
 
@@ -1398,9 +1397,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     fontImportDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle("导入失败")
-                            .setMessage("字体导入失败: " + e.getMessage())
-                            .setPositiveButton("确定", null)
+                            .setTitle(R.string.import_failed_title)
+                            .setMessage(getString(R.string.import_failed_message, e.getMessage()))
+                            .setPositiveButton(R.string.restart_yes, null)
                             .show();
                 });
             }
@@ -1450,8 +1449,8 @@ public class SettingsDetailActivity extends AppCompatActivity {
         return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
                 "<ZFont>\n" +
                 "<name>" + fontName + "</name>\n" +
-                "<language>简体</language>\n" +
-                "<author>Import By ZTool</author>\n" +
+                "<language>" + getString(R.string.font_language) + "</language>\n" +
+                "<author>" + getString(R.string.font_author) + "</author>\n" +
                 "<abstract>" + fontDescription + "</abstract>\n" +
                 "</ZFont>";
     }
@@ -1586,19 +1585,15 @@ public class SettingsDetailActivity extends AppCompatActivity {
         Typeface typeface = Typeface.createFromFile(fontPath);
 
         // 生成缩略图 (249x57)
-        fontImportDialog.updateMessage("正在生成缩略图...");
+        fontImportDialog.updateMessage(getString(R.string.generating_thumbnail));
         Bitmap smallBitmap = generateFontPreviewBitmap(typeface, fontName, 249, 70);
         String smallTempPath = saveBitmapToTemp(smallBitmap, "small_temp.png");
         copyFileWithRoot(smallTempPath, targetFolderPath + "/small.png");
 
         // 生成详细预览图 (948x945) - 使用正确排版的文本
-        String previewString = "有言\n\n" +
-                "   与恶龙缠斗过久，自身亦成为恶龙；\n" +
-                "   凝视深渊过久，深渊将回以凝视。\n\n" +
-                "           ---" +
-                "弗里德里希·威廉·尼采";
+        String previewString = getString(R.string.font_preview_text);
 
-        fontImportDialog.updateMessage("正在生成详细预览图...");
+        fontImportDialog.updateMessage(getString(R.string.generating_detailed_preview));
         Bitmap previewBitmap = generateFontPreviewBitmap(typeface, previewString, 948, 945);
         String previewTempPath = saveBitmapToTemp(previewBitmap, "preview_temp.png");
         copyFileWithRoot(previewTempPath, targetFolderPath + "/preview.png");
@@ -1669,7 +1664,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new Exception("Root命令执行失败，退出码: " + exitCode);
+            throw new Exception(getString(R.string.error_root_command_failed, exitCode));
         }
     }
 
@@ -1736,7 +1731,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
         }
 
-        throw new Exception("无法获取参考文件夹的权限信息");
+        throw new Exception(getString(R.string.error_get_folder_permissions));
     }
 
 
@@ -1748,11 +1743,11 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("重启XP模块作用域")
+                .setTitle(R.string.restart_xp_title)
                 // 尽量不破坏原有的Intent，临时使用硬编码，后续需要重构这部分逻辑
-                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + ", com.android.permissioncontroller" + ", com.zui.safecenter" + " 的进程。")
-                .setPositiveButton("确定", (dialog, which) -> forceStopApp())
-                .setNegativeButton("取消", null)
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -1771,7 +1766,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.restartFail, Toast.LENGTH_SHORT).show();
         }
     }
 }
