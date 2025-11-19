@@ -527,13 +527,17 @@
     <string name="framework_settings_title_suffix"> - 系统框架设置</string>
     <string name="restart_system_title">重启系统</string>
     <string name="restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
-    <string name="restart_fail_prefix">重启失败: </string>
     <!--安全中心功能页的资源值-->
     <string name="default_allow_autorun_title">后台行为管理</string>
     <string name="default_allow_autorun_enable_title">默认允许APP自启</string>
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
     <string name="DisableSafeScanTitle">禁止安全扫描</string>
     <string name="DisableSafeScanSummary">阻止联想安全中心每七天的后台安全扫描行为，这可以阻止“病毒警报”类的弹窗</string>
+    <string name="safe_center_settings_title_suffix"> - 启动器设置</string>
+    <string name="empty_package_name_message">应用包名为空</string>
+    <string name="app_process_restarted_message">已重启应用进程</string>
+    <string name="restart_fail_prefix">重启失败: </string>
+
     <!--Hook功能页的资源值到这里结束-->
     <!--对话（框）的资源值从这里开始-->
     <!--配置选择页的资源值-->

@@ -53,7 +53,7 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 启动器设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.safe_center_settings_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -147,10 +147,10 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("重启XP模块作用域")
-                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + " 的进程。")
-                .setPositiveButton("确定", (dialog, which) -> forceStopApp())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.restart_xp_title)
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -159,7 +159,7 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
      */
     private void forceStopApp() {
         if (appPackageName == null || appPackageName.isEmpty()) {
-            Toast.makeText(this, "应用包名为空", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.empty_package_name_message, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -189,16 +189,16 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
 
                     runOnUiThread(() -> {
                         if (success2) {
-                            Toast.makeText(SafeCenterSettingsActivity.this, "已重启应用进程", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(SafeCenterSettingsActivity.this, R.string.app_process_restarted_message, Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(SafeCenterSettingsActivity.this,
-                                    "重启失败: " + result2.error, Toast.LENGTH_SHORT).show();
+                                    getString(R.string.restart_fail_prefix) + result2.error, Toast.LENGTH_SHORT).show();
                         }
                         resetRestartButton();
                     });
                 } else {
                     runOnUiThread(() -> {
-                        Toast.makeText(SafeCenterSettingsActivity.this, "已重启应用进程", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SafeCenterSettingsActivity.this, R.string.app_process_restarted_message, Toast.LENGTH_SHORT).show();
                         resetRestartButton();
                     });
                 }
@@ -209,7 +209,7 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
                 Log.e("ForceStopApp", "强制停止应用时出错: " + e.getMessage());
                 runOnUiThread(() -> {
                     Toast.makeText(SafeCenterSettingsActivity.this,
-                            "重启失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            getString(R.string.restart_fail_prefix) + e.getMessage(), Toast.LENGTH_SHORT).show();
                     resetRestartButton();
                 });
             }
