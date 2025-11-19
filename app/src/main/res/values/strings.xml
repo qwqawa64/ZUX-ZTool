@@ -265,6 +265,27 @@
     <string name="error_get_folder_permissions">无法获取参考文件夹的权限信息</string>
     <string name="font_preview_text">有言\n\n   与恶龙缠斗过久，自身亦成为恶龙；\n   凝视深渊过久，深渊将回以凝视。\n\n           ---弗里德里希·威廉·尼采</string>
     <string name="select_at_least_one_config">请选择至少一个配置文件</string>
+    <!--设置页：一视界策略搜索页功能资源值-->
+    <string name="module_config_tips">Tips:当前已使用模块配置文件，已适配应用策略数量：%d</string>
+    <string name="official_config_tips">Tips:当前使用官方配置文件，已适配应用策略数量：244</string>
+    <string name="config_not_exists_tips">Tips:当前配置文件不存在</string>
+    <string name="parallel_window_details_title">📋 平行视窗策略详情</string>
+    <string name="package_info_header">📱 包名信息</string>
+    <string name="app_package_name">• 应用包名: </string>
+    <string name="main_activity_info">• 展示在左侧界面的主活动: </string>
+    <string name="activity_pairs_info">• activity对应关系（左侧固定的界面 -> 可出现的右侧界面，*代表全部）:</string>
+    <string name="activity_pair_format">  └ %1$s → %2$s</string>
+    <string name="force_fullscreen_pages">• 强制全屏页面:</string>
+    <string name="transparent_activities">• 透明活动:</string>
+    <string name="left_transparent_activities">• 左侧透明活动:</string>
+    <string name="list_item_format">  └ %s</string>
+    <string name="split_screen_config_header">⚙️ 分屏配置</string>
+    <string name="adjust_window_ratio">• 是否可调整左右窗口占比: </string>
+    <string name="skip_multi_window_mode">• 跳过多窗口模式: </string>
+    <string name="skip_letterbox_display">• 跳过信箱模式显示: </string>
+    <string name="show_surface_view_bg">• 显示SurfaceView背景: </string>
+    <string name="pause_primary_activity">• 暂停主活动: </string>
+    <string name="unsetValue">未设置</string>
     <!--设置页：一视界功能资源值-->
     <string name="embedding_setting_title">一视界</string>
     <string name="embedding_setting_removeBlacklist">去除黑名单限制</string>

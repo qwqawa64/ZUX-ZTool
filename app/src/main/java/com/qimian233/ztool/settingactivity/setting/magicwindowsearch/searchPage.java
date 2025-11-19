@@ -1,4 +1,3 @@
-// 修改后的searchPage.java
 package com.qimian233.ztool.settingactivity.setting.magicwindowsearch;
 
 import android.os.Bundle;
@@ -68,15 +67,15 @@ public class searchPage extends AppCompatActivity {
         try {
             embedding_config = new JSONObject(readFile("/data/system/zui/embedding/embedding_config.json"));
             int count = embedding_config.getJSONArray("packages").length();
-            tips.setText("Tips:当前已使用模块配置文件，已适配应用策略数量：" + count);
+            tips.setText(getString(R.string.module_config_tips, count));
         } catch (JSONException e) {
             try {
                 embedding_config = new JSONObject(loadJsonFromAsset("embedding/embedding_config.json"));
             } catch (JSONException ex) {
-                tips.setText("Tips:当前配置文件不存在");
+                tips.setText(R.string.config_not_exists_tips);
                 return;
             }
-            tips.setText("Tips:当前使用官方配置文件，已适配应用策略数量：244");
+            tips.setText(R.string.official_config_tips);
         }
 
         TextInputEditText searchEditText = findViewById(R.id.edittext_search_package);
@@ -129,16 +128,16 @@ public class searchPage extends AppCompatActivity {
         StringBuilder details = new StringBuilder();
 
         // 构建详细信息
-        details.append("📱 包名信息\n\n");
-        details.append("• 应用包名: ").append(packageInfo.getName()).append("\n\n");
-        details.append("• 展示在左侧界面的主活动: ").append(packageInfo.getMainPage()).append("\n\n");
+        details.append(getString(R.string.package_info_header)).append("\n\n");
+        details.append(getString(R.string.app_package_name)).append(packageInfo.getName()).append("\n\n");
+        details.append(getString(R.string.main_activity_info)).append(packageInfo.getMainPage()).append("\n\n");
 
         // 活动对信息
         List<ActivityPair> activityPairs = packageInfo.getActivityPairs();
         if (!activityPairs.isEmpty()) {
-            details.append("• activity对应关系（左侧固定的界面 -> 可出现的右侧界面，*代表全部）:\n");
+            details.append(getString(R.string.activity_pairs_info)).append("\n");
             for (ActivityPair pair : activityPairs) {
-                details.append("  └ ").append(pair.getFrom()).append(" → ").append(pair.getTo()).append("\n");
+                details.append(getString(R.string.activity_pair_format, pair.getFrom(), pair.getTo())).append("\n");
             }
             details.append("\n");
         }
@@ -146,9 +145,9 @@ public class searchPage extends AppCompatActivity {
         // 强制全屏页面
         List<String> forceFullscreenPages = packageInfo.getForceFullscreenPages();
         if (!forceFullscreenPages.isEmpty()) {
-            details.append("• 强制全屏页面:\n");
+            details.append(getString(R.string.force_fullscreen_pages)).append("\n");
             for (String page : forceFullscreenPages) {
-                details.append("  └ ").append(page).append("\n");
+                details.append(getString(R.string.list_item_format, page)).append("\n");
             }
             details.append("\n");
         }
@@ -156,9 +155,9 @@ public class searchPage extends AppCompatActivity {
         // 透明活动
         List<String> transActivities = packageInfo.getTransActivities();
         if (!transActivities.isEmpty()) {
-            details.append("• 透明活动:\n");
+            details.append(getString(R.string.transparent_activities)).append("\n");
             for (String activity : transActivities) {
-                details.append("  └ ").append(activity).append("\n");
+                details.append(getString(R.string.list_item_format, activity)).append("\n");
             }
             details.append("\n");
         }
@@ -166,26 +165,26 @@ public class searchPage extends AppCompatActivity {
         // 左侧透明活动
         List<String> leftTransActivities = packageInfo.getLeftTransActivities();
         if (!leftTransActivities.isEmpty()) {
-            details.append("• 左侧透明活动:\n");
+            details.append(getString(R.string.left_transparent_activities)).append("\n");
             for (String activity : leftTransActivities) {
-                details.append("  └ ").append(activity).append("\n");
+                details.append(getString(R.string.list_item_format, activity)).append("\n");
             }
             details.append("\n");
         }
 
         // 其他配置信息
-        details.append("⚙️ 分屏配置\n\n");
-        details.append("• 是否可调整左右窗口占比: ").append(packageInfo.getShowEmbeddingDivider()).append("\n");
-        details.append("• 跳过多窗口模式: ").append(packageInfo.getSkipMultiWindowMode()).append("\n");
-        details.append("• 跳过信箱模式显示: ").append(packageInfo.getSkipLetterboxDisplayInfo()).append("\n");
-        details.append("• 显示SurfaceView背景: ").append(packageInfo.getShowSurfaceViewBackground()).append("\n");
-        details.append("• 暂停主活动: ").append(packageInfo.getShouldPausePrimaryActivity()).append("\n");
+        details.append(getString(R.string.split_screen_config_header)).append("\n\n");
+        details.append(getString(R.string.adjust_window_ratio)).append(packageInfo.getShowEmbeddingDivider()).append("\n");
+        details.append(getString(R.string.skip_multi_window_mode)).append(packageInfo.getSkipMultiWindowMode()).append("\n");
+        details.append(getString(R.string.skip_letterbox_display)).append(packageInfo.getSkipLetterboxDisplayInfo()).append("\n");
+        details.append(getString(R.string.show_surface_view_bg)).append(packageInfo.getShowSurfaceViewBackground()).append("\n");
+        details.append(getString(R.string.pause_primary_activity)).append(packageInfo.getShouldPausePrimaryActivity()).append("\n");
 
         // 创建MaterialAlertDialog
         new MaterialAlertDialogBuilder(this)
-                .setTitle("📋 平行视窗策略详情")
+                .setTitle(R.string.parallel_window_details_title)
                 .setMessage(details.toString())
-                .setPositiveButton("关闭", null)
+                .setPositiveButton(R.string.close_button, null)
                 .show();
     }
 
