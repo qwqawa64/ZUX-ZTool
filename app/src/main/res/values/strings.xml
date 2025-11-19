@@ -286,6 +286,30 @@
     <string name="show_surface_view_bg">• 显示SurfaceView背景: </string>
     <string name="pause_primary_activity">• 暂停主活动: </string>
     <string name="unsetValue">未设置</string>
+    <!-- 设置页：悬浮窗适配向导相关字符串 -->
+    <string name="cannot_get_app_foreground">无法获取当前应用，请确保应用在前台</string>
+    <string name="cannot_get_activity">无法获取当前Activity</string>
+    <string name="activity_added">已添加活动: %s</string>
+    <string name="activity_already_added">该活动已添加</string>
+    <string name="config_generated">配置已生成</string>
+    <string name="config_generation_error">生成配置时出错</string>
+    <string name="welcome_message">欢迎使用适配向导，请按照上面步骤提示操作: </string>
+    <string name="step_1_instruction">步骤 1/4: 请打开您想要适配的APP，然后点击下一步</string>
+    <string name="set_main_page_title">设置主界面</string>
+    <string name="step_2_instruction">步骤 2/4: 请在%1$s中停留在主界面（如：哔哩哔哩的首页），然后点击下一步</string>
+    <string name="add_activities_title">添加其他在左半屏的界面</string>
+    <string name="step_3_instruction">步骤 3/4: 现在，你可以添加多个需要选择其他需要显示在左侧的界面，定位到需要的界面，点击\"添加当前活动\"按钮</string>
+    <string name="config_options_title">配置选项</string>
+    <string name="step_4_instruction">步骤 4/4: 请设置以下属性（不明白可以默认）</string>
+    <string name="config_complete_title">配置已完成！</string>
+    <string name="step_complete_instruction">保存后可以前往APP查看</string>
+    <string name="next_button">下一步</string>
+    <string name="finish_config_button">完成配置</string>
+    <string name="save_config_button">保存配置</string>
+    <string name="added_activities_count">已添加 %d 个活动</string>
+    <string name="current_activity">当前Activity: %s</string>
+    <string name="app_name_label">应用名称: %s</string>
+    <string name="return_to_app">请返回应用 %s</string>
     <!--设置页：一视界功能资源值-->
     <string name="embedding_setting_title">一视界</string>
     <string name="embedding_setting_removeBlacklist">去除黑名单限制</string>

@@ -163,8 +163,8 @@ public class FloatingWindow {
             case STEP_SELECT_APP:
                 // 记录应用包名
                 appPackage = getForegroundActivityByShell(true);
-                if (appPackage == null || appPackage.equals("未知")) {
-                    Toast.makeText(context, "无法获取当前应用，请确保应用在前台", Toast.LENGTH_SHORT).show();
+                if (appPackage == null || appPackage.equals(getString(R.string.unknown))) {
+                    Toast.makeText(context, R.string.cannot_get_app_foreground, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 SelectedApp = getAppNameFromPackage(context, appPackage);
@@ -174,8 +174,8 @@ public class FloatingWindow {
             case STEP_SET_MAIN_PAGE:
                 // 记录主活动
                 mainActivity = getForegroundActivityByShell(false);
-                if (mainActivity == null || mainActivity.equals("未知")) {
-                    Toast.makeText(context, "无法获取当前Activity", Toast.LENGTH_SHORT).show();
+                if (mainActivity == null || mainActivity.equals(getString(R.string.unknown))) {
+                    Toast.makeText(context, R.string.cannot_get_activity, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 // 自动添加主活动到映射列表
@@ -218,40 +218,47 @@ public class FloatingWindow {
 
         switch (currentStep) {
             case STEP_SELECT_APP:
-                welcomeText.setText("欢迎使用适配向导，请按照上面步骤提示操作: ");
-                stepText.setText("步骤 1/4: 请打开您想要适配的APP，然后点击下一步");
-                nextButton.setText("下一步");
+                welcomeText.setText(R.string.welcome_message);
+                stepText.setText(R.string.step_1_instruction);
+                nextButton.setText(R.string.next_button);
                 break;
             case STEP_SET_MAIN_PAGE:
-                welcomeText.setText("设置主界面");
-                stepText.setText("步骤 2/4: 请在" + SelectedApp + "中停留在主界面（如：哔哩哔哩的首页），然后点击下一步");
-                nextButton.setText("下一步");
+                welcomeText.setText(R.string.set_main_page_title);
+                stepText.setText(getString(R.string.step_2_instruction, SelectedApp));
+                nextButton.setText(R.string.next_button);
                 videoLayout.setVisibility(View.VISIBLE); // 显示视频布局
                 startVideoPlayback(R.raw.mainact); // 播放主活动教程视频
                 break;
             case STEP_ADD_ACTIVITIES:
-                welcomeText.setText("添加其他在左半屏的界面");
-                stepText.setText("步骤 3/4: 现在，你可以添加多个需要选择其他需要显示在左侧的界面，定位到需要的界面，点击\"添加当前活动\"按钮");
-                nextButton.setText("继续");
+                welcomeText.setText(R.string.add_activities_title);
+                stepText.setText(R.string.step_3_instruction);
+                nextButton.setText(R.string.continue_button);
                 addActivityLayout.setVisibility(View.VISIBLE);
                 videoLayout.setVisibility(View.VISIBLE);
                 startVideoPlayback(R.raw.tutorial); // 播放原有教程视频
                 updateAddedActivitiesText();
                 break;
             case STEP_SET_OPTIONS:
-                welcomeText.setText("配置选项");
-                stepText.setText("步骤 4/4: 请设置以下属性（不明白可以默认）");
-                nextButton.setText("完成配置");
+                welcomeText.setText(R.string.config_options_title);
+                stepText.setText(R.string.step_4_instruction);
+                nextButton.setText(R.string.finish_config_button);
                 optionsLayout.setVisibility(View.VISIBLE);
                 break;
             case STEP_COMPLETE:
-                welcomeText.setText("配置已完成！");
-                stepText.setText("保存后可以前往APP查看");
-                nextButton.setText("保存配置");
+                welcomeText.setText(R.string.config_complete_title);
+                stepText.setText(R.string.step_complete_instruction);
+                nextButton.setText(R.string.save_config_button);
                 break;
         }
     }
 
+    private String getString(int resId) {
+        return context.getString(resId);
+    }
+
+    private String getString(int resId, Object... formatArgs) {
+        return context.getString(resId, formatArgs);
+    }
 
     private void startVideoPlayback(int videoResId) {
         try {
@@ -270,7 +277,6 @@ public class FloatingWindow {
         }
     }
 
-
     // 停止视频播放
     private void stopVideoPlayback() {
         if (tutorialVideo != null && tutorialVideo.isPlaying()) {
@@ -280,20 +286,20 @@ public class FloatingWindow {
 
     private void addCurrentActivity() {
         String currentActivity = getForegroundActivityByShell(false);
-        if (currentActivity != null && !currentActivity.equals("未知")) {
+        if (currentActivity != null && !currentActivity.equals(getString(R.string.unknown))) {
             if (activityFromSet.add(currentActivity)) {
                 updateAddedActivitiesText();
-                Toast.makeText(context, "已添加活动: " + currentActivity, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, getString(R.string.activity_added, currentActivity), Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(context, "该活动已添加", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.activity_already_added, Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(context, "无法获取当前Activity", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.cannot_get_activity, Toast.LENGTH_SHORT).show();
         }
     }
 
     private void updateAddedActivitiesText() {
-        String text = "已添加 " + activityFromSet.size() + " 个活动";
+        String text = getString(R.string.added_activities_count, activityFromSet.size());
         if (!activityFromSet.isEmpty()) {
             text += "\n" + String.join("\n", activityFromSet);
         }
@@ -331,12 +337,12 @@ public class FloatingWindow {
             // 输出配置（这里可以保存到文件或发送到其他组件）
             String configJson = config.toString(2);
             Log.d("EmbeddingConfig", "生成的配置:\n" + configJson);
-            Toast.makeText(context, "配置已生成", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, R.string.config_generated, Toast.LENGTH_LONG).show();
             saveBase64StringToFile(floatingView.getContext(),configJson,appPackage);
 
         } catch (JSONException e) {
             e.printStackTrace();
-            Toast.makeText(context, "生成配置时出错", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.config_generation_error, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -355,21 +361,21 @@ public class FloatingWindow {
                 Log.i("EmbeddingConfig", "当前应用: " + foregroundApp);
                 String appName = getAppNameFromPackage(floatingView.getContext(), foregroundActivity);
 
-                infoText.setText("当前Activity: " + foregroundApp);
-                appNameText.setText("应用名称: " + appName);
+                infoText.setText(getString(R.string.current_activity, foregroundApp));
+                appNameText.setText(getString(R.string.app_name_label, appName));
 
                 // 在前步骤3中检查是否在目标应用中
                 if (currentStep <= STEP_ADD_ACTIVITIES && SelectedApp != null && !appName.equals(SelectedApp)) {
-                    stepText.setText("请返回应用 " + SelectedApp);
+                    stepText.setText(getString(R.string.return_to_app, SelectedApp));
                     addActivityButton.setVisibility(View.GONE);
                     nextButton.setVisibility(View.GONE);
                 } else if (currentStep <= STEP_ADD_ACTIVITIES && SelectedApp != null) {
                     nextButton.setVisibility(View.VISIBLE);
                     if (currentStep == STEP_ADD_ACTIVITIES) {
                         addActivityButton.setVisibility(View.VISIBLE);
-                        stepText.setText("步骤 3/4: 现在，你可以添加多个需要选择其他需要显示在左侧的界面，定位到需要的界面，点击\"添加当前活动\"按钮");
+                        stepText.setText(R.string.step_3_instruction);
                     } else if (currentStep == STEP_SET_MAIN_PAGE) {
-                        stepText.setText("步骤 2/4: 请在" + SelectedApp + "中停留在主界面（如：哔哩哔哩的首页），然后点击下一步");
+                        stepText.setText(getString(R.string.step_2_instruction, SelectedApp));
                     }
                 }
 
@@ -403,7 +409,7 @@ public class FloatingWindow {
 
     private String getForegroundApp() {
         String activityInfo = getForegroundActivityByShell(false);
-        if (activityInfo != null && !activityInfo.equals("未知")) {
+        if (activityInfo != null && !activityInfo.equals(getString(R.string.unknown))) {
             return activityInfo;
         }
         return getForegroundPackage();
@@ -453,7 +459,7 @@ public class FloatingWindow {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "未知";
+        return getString(R.string.unknown);
     }
 
     private String getForegroundPackage() {
@@ -472,8 +478,9 @@ public class FloatingWindow {
                 }
             }
         }
-        return "未知";
+        return getString(R.string.unknown);
     }
+
     public boolean saveBase64StringToFile(Context context, String originalString, String PackageName) {
         try {
             // Step 1: 将字符串进行Base64编码
@@ -508,7 +515,6 @@ public class FloatingWindow {
         }
     }
 
-
     // 在closeFloatingWindow方法中确保停止视频播放
     public void closeFloatingWindow() {
         stopVideoPlayback();
@@ -518,6 +524,7 @@ public class FloatingWindow {
             floatingView = null;
         }
     }
+
     // 在hide方法中也停止视频
     public void hide() {
         if (floatingView != null) {
