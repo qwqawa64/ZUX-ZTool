@@ -178,6 +178,21 @@
     <string name="OtaDisable_summary">开启后在系统更新-右上角更多中找到本地安装选项</string>
     <string name="OtaInfoFetch_summary">获取当前版本/新版本的更新日志和下载链接</string>
     <string name="OtaInfoFetch_title">OTA信息拉取</string>
+    <string name="ota_settings_title_suffix"> - 详细设置</string>
+    <string name="ota_info_fetch_failed">读取OTA信息失败: </string>
+    <string name="no_changelog_available">无可用更新日志</string>
+    <string name="no_download_link">无下载链接</string>
+    <string name="version_info_format">当前版本: %s\n新版本: %s</string>
+    <string name="download_info_format">下载链接: %s\n文件大小: %s\nMD5: %s</string>
+    <string name="ota_update_info_title">OTA更新信息</string>
+    <string name="copy_download_link">复制下载链接</string>
+    <string name="copy_changelog">复制更新日志</string>
+    <string name="close">关闭</string>
+    <string name="download_link_copied">下载链接已复制到剪贴板</string>
+    <string name="changelog_copied">更新日志已复制到剪贴板</string>
+    <string name="ota_info_clipboard_label">OTA信息</string>
+    <string name="restart_failed">重启失败</string>
+    <string name="changelog_full_format">版本信息:\n当前版本: %1$s\n新版本: %2$s\n\n更新日志:\n%3$s\n\n文件信息:\n文件大小: %4$s\nMD5: %5$s</string>
     <!--设置页：代码内资源值-->
     <!-- 详细设置相关字符串 -->
     <string name="settings_detail_title_suffix"> - 详细设置</string>

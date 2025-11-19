@@ -62,7 +62,7 @@ public class OtaSettings extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(appName + " - 详细设置");
+            getSupportActionBar().setTitle(appName + getString(R.string.ota_settings_title_suffix));
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -129,7 +129,7 @@ public class OtaSettings extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(OtaSettings.this, "读取OTA信息失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(OtaSettings.this, getString(R.string.ota_info_fetch_failed) + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -233,7 +233,7 @@ public class OtaSettings extends AppCompatActivity {
         }
 
         // 默认返回英文
-        return otaInfo.getOrDefault("HashMap.en", "无可用更新日志");
+        return otaInfo.getOrDefault("HashMap.en", getString(R.string.no_changelog_available));
     }
 
     private String formatFileSize(long size) {
@@ -254,11 +254,11 @@ public class OtaSettings extends AppCompatActivity {
         TextView textDownloadInfo = dialogView.findViewById(R.id.text_download_info);
 
         // 提取OTA信息
-        String fromVersion = otaInfo.getOrDefault("mUpdateFromVersion", "未知");
-        String toVersion = otaInfo.getOrDefault("updateToVersion", "未知");
-        String downloadUrl = otaInfo.getOrDefault("downloadUrl", "无下载链接");
+        String fromVersion = otaInfo.getOrDefault("mUpdateFromVersion", getString(R.string.unknown));
+        String toVersion = otaInfo.getOrDefault("updateToVersion", getString(R.string.unknown));
+        String downloadUrl = otaInfo.getOrDefault("downloadUrl", getString(R.string.no_download_link));
         String sizeStr = otaInfo.getOrDefault("size", "0");
-        String md5 = otaInfo.getOrDefault("md5", "未知");
+        String md5 = otaInfo.getOrDefault("md5", getString(R.string.unknown));
         String changelog = getChangelogByLocale(otaInfo);
 
         // 格式化文件大小
@@ -266,34 +266,34 @@ public class OtaSettings extends AppCompatActivity {
         String formattedSize = formatFileSize(size);
 
         // 设置显示内容
-        textVersionInfo.setText(String.format("当前版本: %s\n新版本: %s", fromVersion, toVersion));
+        textVersionInfo.setText(String.format(getString(R.string.version_info_format), fromVersion, toVersion));
         textChangelog.setText(changelog);
-        textDownloadInfo.setText(String.format("下载链接: %s\n文件大小: %s\nMD5: %s", downloadUrl, formattedSize, md5));
+        textDownloadInfo.setText(String.format(getString(R.string.download_info_format), downloadUrl, formattedSize, md5));
 
         // 创建对话框
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("OTA更新信息")
+        builder.setTitle(R.string.ota_update_info_title)
                 .setView(dialogView)
-                .setPositiveButton("复制下载链接", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.copy_download_link, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         copyToClipboard(downloadUrl);
-                        Toast.makeText(OtaSettings.this, "下载链接已复制到剪贴板", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(OtaSettings.this, R.string.download_link_copied, Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("复制更新日志", new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.copy_changelog, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // 构建不包含下载链接的更新日志信息
                         String changelogText = String.format(
-                                "版本信息:\n当前版本: %s\n新版本: %s\n\n更新日志:\n%s\n\n文件信息:\n文件大小: %s\nMD5: %s",
+                                getString(R.string.changelog_full_format),
                                 fromVersion, toVersion, changelog, formattedSize, md5
                         );
                         copyToClipboard(changelogText);
-                        Toast.makeText(OtaSettings.this, "更新日志已复制到剪贴板", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(OtaSettings.this, R.string.changelog_copied, Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNeutralButton("关闭", null)
+                .setNeutralButton(R.string.close, null)
                 .show();
     }
 
@@ -304,10 +304,10 @@ public class OtaSettings extends AppCompatActivity {
 
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("重启XP模块作用域")
-                .setMessage("是否重启此页的XP模块作用域？这将强行停止 " + appPackageName + " 的进程。")
-                .setPositiveButton("确定", (dialog, which) -> forceStopApp())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.restart_xp_title)
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
+                .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
 
@@ -320,13 +320,13 @@ public class OtaSettings extends AppCompatActivity {
             Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
             process.waitFor();
         } catch (Exception e) {
-            Toast.makeText(this, "重启失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.restart_failed, Toast.LENGTH_SHORT).show();
         }
     }
 
     private void copyToClipboard(String text) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("OTA信息", text);
+        ClipData clip = ClipData.newPlainText(getString(R.string.ota_info_clipboard_label), text);
         clipboard.setPrimaryClip(clip);
     }
 
