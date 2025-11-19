@@ -343,6 +343,8 @@
     <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
     <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器，Android15的权限申请弹窗无法恢复原生样式</string>
     <!--应用包安装程序功能页资源值-->
+    <string name="detailed_settings_suffix"> - 详细设置</string>
+    <string name="restart_fail_simple">重启失败</string>
     <string name="Disable_ScanAPK_Title">跳过安全扫描</string>
     <string name="Disable_ScanAPK_Summary">跳过安全扫描，节省时间</string>
     <string name="sec_title_function">安全相关</string>
