@@ -106,6 +106,30 @@ public class ModulePreferencesUtils {
                 .commit();
     }
 
+    public boolean saveIntegerSetting(String featureName, int value) {
+        SharedPreferences prefs = getModulePreferences();
+        return prefs.edit()
+                .putInt(PREFIX_ENABLED + featureName, value)
+                .commit();
+    }
+
+    public int loadIntegerSetting(String featureName, int defaultValue) {
+        SharedPreferences prefs = getModulePreferences();
+        return prefs.getInt(PREFIX_ENABLED + featureName, defaultValue);
+    }
+
+    public boolean saveFloatSetting(String featureName, float value) {
+        SharedPreferences prefs = getModulePreferences();
+        return prefs.edit()
+                .putFloat(PREFIX_ENABLED + featureName, value)
+                .commit();
+    }
+
+    public float loadFloatSetting(String featureName, float defaultValue) {
+        SharedPreferences prefs = getModulePreferences();
+        return prefs.getFloat(PREFIX_ENABLED + featureName, defaultValue);
+    }
+
     /**
      * 删除指定设置
      * @param featureName 功能名称
@@ -262,13 +286,18 @@ public class ModulePreferencesUtils {
                     if (value instanceof String) {
                         sharedPreferences.edit().putString(key, (String) value).apply();
                     } else if (value instanceof Integer) {
-                        sharedPreferences.edit().putInt(key, (Integer) value).apply();
+                        if ((Integer) value == 0 || (Integer) value == 1) {
+                            sharedPreferences.edit().putBoolean(key, (Integer) value == 1).apply();
+                        } else {
+                            sharedPreferences.edit().putInt(key, (Integer) value).apply();
+                        }
                     } else if (value instanceof Float) {
                         sharedPreferences.edit().putFloat(key, (Float) value).apply();
                     } else if (value instanceof Boolean) {
                         sharedPreferences.edit().putBoolean(key, (Boolean) value).apply();
                     } else {
                         // 默认处理为字符串
+                        assert value != null;
                         sharedPreferences.edit().putString(key, value.toString()).apply();
                     }
                 } else {
@@ -278,22 +307,20 @@ public class ModulePreferencesUtils {
                         saveStringSetting(key.replace(PREFIX_ENABLED, ""), (String) value);
                     } else if (value instanceof Integer) {
                         Log.d("ModulePreferencesUtils", "Saving integer key: " + key);
-                        // 注意：这里需要添加对应的保存Integer类型的方法，或者转换为Boolean/String处理
-                        // 当前假设整数0/1表示Boolean，其他转换为字符串保存
                         if ((Integer) value == 0 || (Integer) value == 1) {
                             saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), (Integer) value == 1);
                         } else {
-                            saveStringSetting(key.replace(PREFIX_ENABLED, ""), value.toString());
+                            saveIntegerSetting(key.replace(PREFIX_ENABLED, ""), (Integer) value);
                         }
                     } else if (value instanceof Boolean) {
                         Log.d("ModulePreferencesUtils", "Saving boolean key: " + key);
                         saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), (Boolean) value);
                     } else if (value instanceof Float) {
                         Log.d("ModulePreferencesUtils", "Saving float key: " + key);
-                        // 注意：这里需要添加对应的保存Float类型的方法，或者转换为String处理
-                        saveStringSetting(key.replace(PREFIX_ENABLED, ""), value.toString());
+                        saveFloatSetting(key.replace(PREFIX_ENABLED, ""), (Float) value);
                     } else {
                         Log.d("ModulePreferencesUtils", "Saving unknown type key (as string): " + key);
+                        assert value != null;
                         saveStringSetting(key.replace(PREFIX_ENABLED, ""), value.toString());
                     }
                 }
