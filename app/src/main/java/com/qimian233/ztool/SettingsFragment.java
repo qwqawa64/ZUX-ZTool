@@ -1,8 +1,6 @@
 package com.qimian233.ztool;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -75,7 +73,7 @@ public class SettingsFragment extends Fragment {
         backupLauncher = registerForActivityResult(
                 new ActivityResultContracts.CreateDocument("application/json"), uri -> {
                     if (uri != null) {
-                        Boolean result = FileManager.saveConfigWithSAF(requireContext(),
+                        boolean result = FileManager.saveConfigWithSAF(requireContext(),
                                 uri,
                                 FileManager.generateBackupFileName(),
                                 ModulePreferencesUtils.getAllSettingsAsJSON(requireContext()));

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,10 +23,11 @@ public class ModulePreferencesUtils {
     private static final String PREFIX_ENABLED = "module_enabled_";
     // 存储直接使用SharedPreferences存储的设置项名称
     // 直接使用SharedPreferences存储设置项是不正确的，所有模块都应当使用本工具类进行配置存取
-    private static final String[] otherPrefsName = {"ControlCenter_Date", "StatusBar_Clock"};
+    // private static final String[] otherPrefsName = {"ControlCenter_Date"};
 
-    private Context mContext;
-    private String mModulePackageName;
+    private final Context mContext;
+    private final String mModulePackageName;
+    private static final String TAG = "ModulePreferencesUtils";
 
     public ModulePreferencesUtils(Context context) {
         this(context, "com.qimian233.ztool");
@@ -48,7 +48,7 @@ public class ModulePreferencesUtils {
             Context moduleContext = mContext.createPackageContext(mModulePackageName, Context.CONTEXT_IGNORE_SECURITY);
             return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
         } catch (Exception e) {
-            Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
+            Log.e(TAG, "Failed to get module preferences, using fallback", e);
             // 降级方案：使用当前Context
             return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
         }
@@ -63,7 +63,7 @@ public class ModulePreferencesUtils {
     public boolean loadBooleanSetting(String featureName, boolean defaultValue) {
         SharedPreferences prefs = getModulePreferences();
         boolean value = prefs.getBoolean(PREFIX_ENABLED + featureName, defaultValue);
-        Log.d("ModulePreferences", "Loading " + featureName + ": " + value);
+        Log.d(TAG, "Loading " + featureName + ": " + value);
         return value;
     }
 
@@ -78,7 +78,7 @@ public class ModulePreferencesUtils {
         boolean success = prefs.edit()
                 .putBoolean(PREFIX_ENABLED + featureName, value)
                 .commit();
-        Log.d("ModulePreferences", "Saved " + featureName + ": " + value + ", success: " + success);
+        Log.d(TAG, "Saved " + featureName + ": " + value + ", success: " + success);
         return success;
     }
 
@@ -95,20 +95,20 @@ public class ModulePreferencesUtils {
 
     /**
      * 保存字符串设置
+     *
      * @param featureName 功能名称
-     * @param value 要保存的值
-     * @return 是否保存成功
+     * @param value       要保存的值
      */
-    public boolean saveStringSetting(String featureName, String value) {
+    public void saveStringSetting(String featureName, String value) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.edit()
+        prefs.edit()
                 .putString(PREFIX_ENABLED + featureName, value)
                 .commit();
     }
 
-    public boolean saveIntegerSetting(String featureName, int value) {
+    public void saveIntegerSetting(String featureName, int value) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.edit()
+        prefs.edit()
                 .putInt(PREFIX_ENABLED + featureName, value)
                 .commit();
     }
@@ -118,9 +118,9 @@ public class ModulePreferencesUtils {
         return prefs.getInt(PREFIX_ENABLED + featureName, defaultValue);
     }
 
-    public boolean saveFloatSetting(String featureName, float value) {
+    public void saveFloatSetting(String featureName, float value) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.edit()
+        prefs.edit()
                 .putFloat(PREFIX_ENABLED + featureName, value)
                 .commit();
     }
@@ -144,23 +144,16 @@ public class ModulePreferencesUtils {
 
     /**
      * 清除所有设置
-     * @return 是否清除成功
-     * @noinspection deprecation
      */
     @SuppressLint("WorldReadableFiles")
-    public boolean clearAllSettings() {
+    public void clearAllSettings() {
         SharedPreferences prefs = getModulePreferences();
-        for (String key : otherPrefsName){
-            SharedPreferences sharedPreferences = mContext.getSharedPreferences(key, Context.MODE_WORLD_READABLE);
-            sharedPreferences.edit().clear().commit();
-        }
-        return prefs.edit().clear().commit();
+        prefs.edit().clear().commit();
     }
 
     /**
      * 获取所有设置
      * @return 包含所有键值对的Map对象
-     * @noinspection deprecation
      */
     @SuppressLint("WorldReadableFiles")
     public Map<String, Object> getAllSettings() {
@@ -170,14 +163,10 @@ public class ModulePreferencesUtils {
             Map<String, Object> allEntries = new HashMap<>(prefs.getAll());
             // 读取其他SharedPreferences文件中的设置，例如自定义状态栏和控制中心时间的配置
             // 所有模块都应当使用ModulePreferencesUtils来保存设置，而非SharedPreferences
-            for (String name : otherPrefsName) {
-                SharedPreferences otherPrefs = mContext.getSharedPreferences(name, Context.MODE_WORLD_READABLE);
-                allEntries.putAll(otherPrefs.getAll());
-            }
-            Log.d("ModulePreferences", "成功读取所有设置，条目数：" + allEntries.size());
+            Log.d(TAG, "成功读取所有设置，条目数：" + allEntries.size());
             return allEntries;
         } catch (Exception e) {
-            Log.e("ModulePreferences", "读取所有设置失败", e);
+            Log.e(TAG, "读取所有设置失败", e);
             return Collections.emptyMap();
         }
     }
@@ -206,10 +195,10 @@ public class ModulePreferencesUtils {
         try {
             ModulePreferencesUtils utils = new ModulePreferencesUtils(context);
             String result = utils.getAllSettingsAsJSON();
-            Log.d("ModulePreferences", "Successfully converted sharedprefs to json string");
+            Log.d(TAG, "Successfully converted sharedprefs to json string");
             return result;
         } catch (Exception e) {
-            Log.e("ModulePreferences", "Failed to convert sharedprefs to json string" + e);
+            Log.e(TAG, "Failed to convert sharedprefs to json string" + e);
             return null;
         }
     }
@@ -270,63 +259,44 @@ public class ModulePreferencesUtils {
         }
         return processedMap;
     }
-    /** @noinspection deprecation*/
+
     @SuppressLint("WorldReadableFiles")
     public void writeJSONToSharedPrefs(String jsonString) {
         Map<String, Object> mapToWrite = jsonToHashMap(jsonString);
         for (Map.Entry<String, Object> entry : mapToWrite.entrySet()) {
             try {
-                String key = entry.getKey();
                 Object value = entry.getValue();
-                Log.d("ModulePreferencesUtils", "Processing key: " + key + ", value: " + value + ", type: " + (value != null ? value.getClass().getSimpleName() : "null"));
-
-                // 处理先前开发中遗留的直接使用SharedPreferences的键名
-                if (Arrays.asList(otherPrefsName).contains(key)) {
-                    SharedPreferences sharedPreferences = mContext.getSharedPreferences(key, Context.MODE_WORLD_READABLE);
-                    if (value instanceof String) {
-                        sharedPreferences.edit().putString(key, (String) value).apply();
-                    } else if (value instanceof Integer) {
-                        if ((Integer) value == 0 || (Integer) value == 1) {
-                            sharedPreferences.edit().putBoolean(key, (Integer) value == 1).apply();
-                        } else {
-                            sharedPreferences.edit().putInt(key, (Integer) value).apply();
-                        }
-                    } else if (value instanceof Float) {
-                        sharedPreferences.edit().putFloat(key, (Float) value).apply();
-                    } else if (value instanceof Boolean) {
-                        sharedPreferences.edit().putBoolean(key, (Boolean) value).apply();
+                String cleanKey = entry.getKey().replace(PREFIX_ENABLED, "");
+                Log.d(TAG, "Processing key: "
+                        + cleanKey + ", value: " + value + ", type: " +
+                        (value != null ? value.getClass().getSimpleName() : "null"));
+                if (value instanceof String) {
+                    Log.d(TAG, "Saving string key: " + cleanKey);
+                    saveStringSetting(cleanKey, (String) value);
+                } else if (value instanceof Integer){
+                    Log.d(TAG, "Saving integer key: " + cleanKey);
+                    if ((Integer) value == 0 || (Integer) value == 1) {
+                        saveBooleanSetting(cleanKey, (Integer) value == 1);
                     } else {
-                        // 默认处理为字符串
-                        assert value != null;
-                        sharedPreferences.edit().putString(key, value.toString()).apply();
+                        saveIntegerSetting(cleanKey, (Integer) value);
                     }
-                } else {
-                    // 使用工具类提供的设置保存方法
-                    if (value instanceof String) {
-                        Log.d("ModulePreferencesUtils", "Saving string key: " + key);
-                        saveStringSetting(key.replace(PREFIX_ENABLED, ""), (String) value);
-                    } else if (value instanceof Integer) {
-                        Log.d("ModulePreferencesUtils", "Saving integer key: " + key);
-                        if ((Integer) value == 0 || (Integer) value == 1) {
-                            saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), (Integer) value == 1);
-                        } else {
-                            saveIntegerSetting(key.replace(PREFIX_ENABLED, ""), (Integer) value);
-                        }
-                    } else if (value instanceof Boolean) {
-                        Log.d("ModulePreferencesUtils", "Saving boolean key: " + key);
-                        saveBooleanSetting(key.replace(PREFIX_ENABLED, ""), (Boolean) value);
-                    } else if (value instanceof Float) {
-                        Log.d("ModulePreferencesUtils", "Saving float key: " + key);
-                        saveFloatSetting(key.replace(PREFIX_ENABLED, ""), (Float) value);
-                    } else {
-                        Log.d("ModulePreferencesUtils", "Saving unknown type key (as string): " + key);
-                        assert value != null;
-                        saveStringSetting(key.replace(PREFIX_ENABLED, ""), value.toString());
-                    }
+                }else if (value instanceof Boolean) {
+                    Log.d(TAG, "Saving boolean key: " + cleanKey);
+                    saveBooleanSetting(cleanKey, (Boolean) value);
+                } else if (value instanceof Float) {
+                    Log.d(TAG, "Saving single precision FP key: " + cleanKey);
+                    saveFloatSetting(cleanKey, (Float) value);
+                } else if (value instanceof Double) {
+                    Log.d(TAG, "Saving double precision FP key: " + cleanKey);
+                    saveFloatSetting(cleanKey, ((Double) value).floatValue());
+                } else if (value != null) {
+                    Log.d(TAG, "Saving unknown type key (as string): " + cleanKey);
+                    saveStringSetting(cleanKey, value.toString());
                 }
             } catch (Exception e) {
+                Log.e(TAG, "Failed to save key: " + entry.getKey()
+                        + ", value: " + entry.getValue() + ", error: " + e.getMessage());
                 e.printStackTrace();
-                Log.e("ModulePreferences", "Failed to save key: " + entry.getKey() + ", value: " + entry.getValue());
             }
         }
     }
@@ -335,9 +305,9 @@ public class ModulePreferencesUtils {
         try{
             ModulePreferencesUtils utils = new ModulePreferencesUtils(context);
             utils.writeJSONToSharedPrefs(jsonToRestore);
-            Log.d("ModulePreferences", "Successfully restored config from file.");
+            Log.d(TAG, "Successfully restored config from file.");
         }catch (Exception e){
-            Log.e("ModulePreferences", "Failed to restore config from file, " + e);
+            Log.e(TAG, "Failed to restore config from file, " + e);
         }
     }
 }

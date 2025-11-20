@@ -7,9 +7,8 @@ import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
-import android.util.Log;
 import android.util.TypedValue;
-import android.widget.TextView;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
@@ -25,7 +24,7 @@ import java.util.Date;
  */
 public class CustomControlCenterDate extends BaseHookModule {
 
-    private static final String PREFS_NAME = "ControlCenter_Date";
+    private static final String PREFS_NAME = "xposed_module_config";
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     private static final String VARIABLE_DATE_VIEW_CLASS = "com.android.systemui.statusbar.policy.VariableDateView";
@@ -81,7 +80,7 @@ public class CustomControlCenterDate extends BaseHookModule {
                     CharSequence.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             try {
                                 if (!isEnabled()) return;
 
@@ -125,7 +124,7 @@ public class CustomControlCenterDate extends BaseHookModule {
                     controllerClass,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 Object controller = param.args[0];
                                 Object dateView = XposedHelpers.getObjectField(controller, "mView");
@@ -162,7 +161,7 @@ public class CustomControlCenterDate extends BaseHookModule {
                     "onAttachedToWindow",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 Object textView = param.thisObject;
                                 String className = textView.getClass().getName();

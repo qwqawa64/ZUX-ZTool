@@ -5,7 +5,6 @@ import static android.view.View.VISIBLE;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
@@ -13,7 +12,6 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -36,13 +34,10 @@ import java.util.Date;
 
 public class ControlCenterSettingsActivity extends AppCompatActivity {
 
-    private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchCustomDate;
     private LinearLayout llCustomDate;
-    private static final String PREFS_NAME = "ControlCenter_Date";
-    private Button SaveButton;
-    private SharedPreferences ZToolPrefs;
+    private ModulePreferencesUtils ZToolPrefs;
     private TextView textPreview;
 
     // 样式相关的视图
@@ -61,7 +56,7 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_control_center_settings);
 
         String appName = getIntent().getStringExtra("app_name");
-        appPackageName = getIntent().getStringExtra("app_package");
+        // String appPackageName = getIntent().getStringExtra("app_package");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -77,27 +72,24 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
 
     private void initViews() {
         llCustomDate = findViewById(R.id.ll_customDate);
-        ZToolPrefs = getZToolPreferences();
-        SaveButton = findViewById(R.id.button_save_date_format);
+        ZToolPrefs = new ModulePreferencesUtils(this);
+        Button saveButton = findViewById(R.id.button_save_date_format);
         textPreview = findViewById(R.id.textview_date_preview);
 
         initStyleViews();
 
         // 自定义时间事件
         switchCustomDate = findViewById(R.id.switch_custom_date);
-        switchCustomDate.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("Custom_ControlCenterDate", isChecked);
-                updateStyleViewsVisibility(isChecked);
-            }
+        switchCustomDate.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveSettings("Custom_ControlCenterDate", isChecked);
+            updateStyleViewsVisibility(isChecked);
         });
 
         // 保存自定义时间格式事件
-        SaveButton.setOnClickListener(v -> {
+        saveButton.setOnClickListener(v -> {
             String dateFormat = ((TextView) findViewById(R.id.edittext_date_format)).getText().toString();
             Log.d("DateFormat", "保存的格式：" + dateFormat);
-            ZToolPrefs.edit().putString("Custom_ControlCenterDateFormat", dateFormat).apply();
+            ZToolPrefs.saveStringSetting("Custom_ControlCenterDateFormat", dateFormat);
             new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.save_success_title)
                     .setMessage(R.string.date_format_saved_message)
@@ -185,9 +177,7 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
             buttonPickColor.setEnabled(isChecked);
         });
 
-        switchTextBold.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            saveStyleEnabled("Custom_ControlCenterDateTextBold", isChecked);
-        });
+        switchTextBold.setOnCheckedChangeListener((buttonView, isChecked) -> saveStyleEnabled("Custom_ControlCenterDateTextBold", isChecked));
 
         // 颜色选择器
         buttonPickColor.setOnClickListener(v -> showColorPickerDialog());
@@ -247,7 +237,7 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
 
         if (customDateEnabled) {
             EditText editTextDateFormat = findViewById(R.id.edittext_date_format);
-            String savedFormat = ZToolPrefs.getString("Custom_ControlCenterDateFormat", getString(R.string.default_date_format));
+            String savedFormat = ZToolPrefs.loadStringSetting("Custom_ControlCenterDateFormat", getString(R.string.default_date_format));
             editTextDateFormat.setText(savedFormat);
             updateDatePreview(savedFormat);
             loadStyleSettings();
@@ -256,8 +246,8 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
     }
 
     private void loadStyleSettings() {
-        float textSize = ZToolPrefs.getFloat("Custom_ControlCenterDateTextSize", 16.0f);
-        boolean textSizeEnabled = ZToolPrefs.getBoolean("Custom_ControlCenterDateTextSizeEnabled", false);
+        float textSize = ZToolPrefs.loadFloatSetting("Custom_ControlCenterDateTextSize", 16.0f);
+        boolean textSizeEnabled = ZToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextSizeEnabled", false);
 
         int progress = (int) ((textSize - 10) / 0.5f);
         seekbarTextSize.setProgress(progress);
@@ -265,21 +255,21 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
         textTextSizeValue.setText(String.format("%.1f%s", textSize, getString(R.string.sp_unit)));
         seekbarTextSize.setEnabled(textSizeEnabled);
 
-        float letterSpacing = ZToolPrefs.getFloat("Custom_ControlCenterDateLetterSpacing", 0.1f);
-        boolean letterSpacingEnabled = ZToolPrefs.getBoolean("Custom_ControlCenterDateLetterSpacingEnabled", false);
+        float letterSpacing = ZToolPrefs.loadFloatSetting("Custom_ControlCenterDateLetterSpacing", 0.1f);
+        boolean letterSpacingEnabled = ZToolPrefs.loadBooleanSetting("Custom_ControlCenterDateLetterSpacingEnabled", false);
         seekbarLetterSpacing.setProgress((int)(letterSpacing * 10));
         switchLetterSpacing.setChecked(letterSpacingEnabled);
         textLetterSpacingValue.setText(String.format("%.1f", letterSpacing));
         seekbarLetterSpacing.setEnabled(letterSpacingEnabled);
 
-        int textColor = ZToolPrefs.getInt("Custom_ControlCenterDateTextColor", 0xFFFFFFFF);
-        boolean textColorEnabled = ZToolPrefs.getBoolean("Custom_ControlCenterDateTextColorEnabled", false);
+        int textColor = ZToolPrefs.loadIntegerSetting("Custom_ControlCenterDateTextColor", 0xFFFFFFFF);
+        boolean textColorEnabled = ZToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextColorEnabled", false);
         switchTextColor.setChecked(textColorEnabled);
         updateColorPreview(textColor);
         buttonPickColor.setEnabled(textColorEnabled);
 
-        boolean textBold = ZToolPrefs.getBoolean("Custom_ControlCenterDateTextBold", true);
-        boolean textBoldEnabled = ZToolPrefs.getBoolean("Custom_ControlCenterDateTextBold", false);
+        // boolean textBold = ZToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextBold", true);
+        boolean textBoldEnabled = ZToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextBold", false);
         switchTextBold.setChecked(textBoldEnabled);
     }
 
@@ -303,7 +293,7 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
             llCustomDate.setVisibility(newValue ? VISIBLE : View.GONE);
             if (newValue) {
                 EditText editTextDateFormat = findViewById(R.id.edittext_date_format);
-                String savedFormat = ZToolPrefs.getString("Custom_ControlCenterDateFormat", getString(R.string.default_date_format));
+                String savedFormat = ZToolPrefs.loadStringSetting("Custom_ControlCenterDateFormat", getString(R.string.default_date_format));
                 editTextDateFormat.setText(savedFormat);
                 updateDatePreview(savedFormat);
                 loadStyleSettings();
@@ -313,35 +303,24 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
     }
 
     private void saveTextSize(float textSize) {
-        ZToolPrefs.edit().putFloat("Custom_ControlCenterDateTextSize", textSize).apply();
+        ZToolPrefs.saveFloatSetting("Custom_ControlCenterDateTextSize", textSize);
     }
 
     private void saveLetterSpacing(float letterSpacing) {
-        ZToolPrefs.edit().putFloat("Custom_ControlCenterDateLetterSpacing", letterSpacing).apply();
+        ZToolPrefs.saveFloatSetting("Custom_ControlCenterDateLetterSpacing", letterSpacing);
     }
 
     private void saveTextColor(int color) {
-        ZToolPrefs.edit().putInt("Custom_ControlCenterDateTextColor", color).apply();
+        ZToolPrefs.saveIntegerSetting("Custom_ControlCenterDateTextColor", color);
     }
 
     private void saveStyleEnabled(String key, boolean enabled) {
-        ZToolPrefs.edit().putBoolean(key, enabled).apply();
+        ZToolPrefs.saveBooleanSetting(key, enabled);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
-    }
-
-    public SharedPreferences getZToolPreferences() {
-        Context mContext = this;
-        try {
-            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
-            return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
-        } catch (Exception e) {
-            Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
-            return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
-        }
     }
 }

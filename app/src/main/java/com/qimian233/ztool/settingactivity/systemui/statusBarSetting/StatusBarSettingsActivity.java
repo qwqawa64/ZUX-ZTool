@@ -16,7 +16,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,8 +44,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
     private MaterialSwitch switchDisplaySeconds;
     private MaterialSwitch switchCustomClock;
     private LinearLayout llCustomClock;
-    private static final String PREFS_NAME = "StatusBar_Clock";
-    private SharedPreferences ZToolPrefs;
+    private ModulePreferencesUtils ZToolPrefs;
     private TextView textPreview;
 
     // 样式相关的视图
@@ -67,7 +65,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_status_bar_settings);
 
         String appName = getIntent().getStringExtra("app_name");
-        String appPackageName = getIntent().getStringExtra("app_package");
+        // String appPackageName = getIntent().getStringExtra("app_package");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -83,7 +81,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
     private void initViews() {
         llCustomClock = findViewById(R.id.ll_customClock);
-        ZToolPrefs = getZToolPreferences();
+        ZToolPrefs = new ModulePreferencesUtils(this);
         Button saveButton = findViewById(R.id.button_save_clock_format);
         textPreview = findViewById(R.id.textview_clock_preview);
         spinnerNotifyNumSize = findViewById(R.id.spinner_notifyNumSize);
@@ -92,27 +90,20 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
         // 状态栏显秒事件
         switchDisplaySeconds = findViewById(R.id.switch_statusBarDisplay_seconds);
-        switchDisplaySeconds.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("StatusBarDisplay_Seconds", isChecked);
-            }
-        });
+        switchDisplaySeconds.setOnCheckedChangeListener((buttonView, isChecked) ->
+                saveSettings("StatusBarDisplay_Seconds", isChecked));
 
         // 自定义时钟事件
         switchCustomClock = findViewById(R.id.switch_custom_clock);
-        switchCustomClock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("Custom_StatusBarClock", isChecked);
-                updateStyleViewsVisibility(isChecked);
-            }
+        switchCustomClock.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveSettings("Custom_StatusBarClock", isChecked);
+            updateStyleViewsVisibility(isChecked);
         });
 
         // 保存自定义时钟格式事件
         saveButton.setOnClickListener(v -> {
             String clockFormat = ((TextView) findViewById(R.id.edittext_clock_format)).getText().toString();
-            ZToolPrefs.edit().putString("Custom_StatusBarClockFormat", clockFormat).apply();
+            ZToolPrefs.saveStringSetting("Custom_StatusBarClockFormat", clockFormat);
             new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.save_success_title)
                     .setMessage(R.string.clock_format_saved_message)
@@ -130,21 +121,18 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
         // 设置状态栏网速大小优化事件
         switch_NetworkSpeedSize = findViewById(R.id.switch_NetworkSpeedSize);
-        switch_NetworkSpeedSize.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            saveSettings("systemui_network_speed_size",isChecked);
-        });
+        switch_NetworkSpeedSize.setOnCheckedChangeListener((buttonView, isChecked) ->
+                saveSettings("systemui_network_speed_size",isChecked));
 
         // 设置状态栏网速大小优化事件 双层布局
         switch_NetworkSpeedSizeDoubleLayer = findViewById(R.id.switch_NetworkSpeedSizeDoubleLayer);
-        switch_NetworkSpeedSizeDoubleLayer.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            saveSettings("systemui_network_speed_doublelayer",isChecked);
-        });
+        switch_NetworkSpeedSizeDoubleLayer.setOnCheckedChangeListener((buttonView, isChecked) ->
+                saveSettings("systemui_network_speed_doublelayer",isChecked));
 
         // 设置电池百分比电池外
         switchBatteryExternal = findViewById(R.id.switch_BatteryExternal);
-        switchBatteryExternal.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            saveSettings("systemui_battery_percentage",isChecked);
-        });
+        switchBatteryExternal.setOnCheckedChangeListener((buttonView, isChecked) ->
+                saveSettings("systemui_battery_percentage",isChecked));
 
 
         StatusBar_notifyNumSize = getNotifyNumSizeShared();
@@ -239,9 +227,8 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             buttonPickColor.setEnabled(isChecked);
         });
 
-        switchTextBold.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            saveStyleEnabled("Custom_StatusBarClockTextBold", isChecked);
-        });
+        switchTextBold.setOnCheckedChangeListener((buttonView, isChecked) ->
+                saveStyleEnabled("Custom_StatusBarClockTextBold", isChecked));
 
         // 颜色选择器
         buttonPickColor.setOnClickListener(v -> showColorPickerDialog());
@@ -345,7 +332,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
         if (customClockEnabled) {
             EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
-            String savedFormat = ZToolPrefs.getString("Custom_StatusBarClockFormat", "");
+            String savedFormat = ZToolPrefs.loadStringSetting("Custom_StatusBarClockFormat", "");
             editTextClockFormat.setText(savedFormat);
             updateClockPreview(savedFormat);
             loadStyleSettings();
@@ -354,8 +341,8 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
     }
 
     private void loadStyleSettings() {
-        float textSize = ZToolPrefs.getFloat("Custom_StatusBarClockTextSize", 16.0f);
-        boolean textSizeEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockTextSizeEnabled", false);
+        float textSize = ZToolPrefs.loadFloatSetting("Custom_StatusBarClockTextSize", 16.0f);
+        boolean textSizeEnabled = ZToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextSizeEnabled", false);
 
         int progress = (int) ((textSize - 10) / 0.5f);
         seekbarTextSize.setProgress(progress);
@@ -363,21 +350,21 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         textTextSizeValue.setText(String.format("%.1f%s", textSize, getString(R.string.sp_unit)));
         seekbarTextSize.setEnabled(textSizeEnabled);
 
-        float letterSpacing = ZToolPrefs.getFloat("Custom_StatusBarClockLetterSpacing", 0.1f);
-        boolean letterSpacingEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockLetterSpacingEnabled", false);
+        float letterSpacing = ZToolPrefs.loadFloatSetting("Custom_StatusBarClockLetterSpacing", 0.1f);
+        boolean letterSpacingEnabled = ZToolPrefs.loadBooleanSetting("Custom_StatusBarClockLetterSpacingEnabled", false);
         seekbarLetterSpacing.setProgress((int)(letterSpacing * 10));
         switchLetterSpacing.setChecked(letterSpacingEnabled);
         textLetterSpacingValue.setText(String.format("%.1f", letterSpacing));
         seekbarLetterSpacing.setEnabled(letterSpacingEnabled);
 
-        int textColor = ZToolPrefs.getInt("Custom_StatusBarClockTextColor", 0xFFFFFFFF);
-        boolean textColorEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockTextColorEnabled", false);
+        int textColor = ZToolPrefs.loadIntegerSetting("Custom_StatusBarClockTextColor", 0xFFFFFFFF);
+        boolean textColorEnabled = ZToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextColorEnabled", false);
         switchTextColor.setChecked(textColorEnabled);
         updateColorPreview(textColor);
         buttonPickColor.setEnabled(textColorEnabled);
 
-        boolean textBold = ZToolPrefs.getBoolean("Custom_StatusBarClockTextBold", true);
-        boolean textBoldEnabled = ZToolPrefs.getBoolean("Custom_StatusBarClockTextBold", false);
+        boolean textBold = ZToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextBold", true);
+        boolean textBoldEnabled = ZToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextBold", false);
         switchTextBold.setChecked(textBoldEnabled);
     }
 
@@ -401,7 +388,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             llCustomClock.setVisibility(newValue ? VISIBLE : View.GONE);
             if (newValue) {
                 EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
-                String savedFormat = ZToolPrefs.getString("Custom_StatusBarClockFormat", "");
+                String savedFormat = ZToolPrefs.loadStringSetting("Custom_StatusBarClockFormat", "");
                 editTextClockFormat.setText(savedFormat);
                 updateClockPreview(savedFormat);
                 loadStyleSettings();
@@ -411,38 +398,25 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
     }
 
     private void saveTextSize(float textSize) {
-        ZToolPrefs.edit().putFloat("Custom_StatusBarClockTextSize", textSize).apply();
+        ZToolPrefs.saveFloatSetting("Custom_StatusBarClockTextSize", textSize);
     }
 
     private void saveLetterSpacing(float letterSpacing) {
-        ZToolPrefs.edit().putFloat("Custom_StatusBarClockLetterSpacing", letterSpacing).apply();
+        ZToolPrefs.saveFloatSetting("Custom_StatusBarClockLetterSpacing", letterSpacing);
     }
 
     private void saveTextColor(int color) {
-        ZToolPrefs.edit().putInt("Custom_StatusBarClockTextColor", color).apply();
+        ZToolPrefs.saveFloatSetting("Custom_StatusBarClockTextColor", color);
     }
 
     private void saveStyleEnabled(String key, boolean enabled) {
-        ZToolPrefs.edit().putBoolean(key, enabled).apply();
+        ZToolPrefs.saveBooleanSetting(key, enabled);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
-    }
-
-    @SuppressLint("WorldReadableFiles")
-    public SharedPreferences getZToolPreferences() {
-        Context mContext = this;
-        try {
-            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
-            //noinspection deprecation
-            return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
-        } catch (Exception e) {
-            Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
-            return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
-        }
     }
 
     @SuppressLint("WorldReadableFiles")
