@@ -56,7 +56,7 @@ public class CustomStatusBarClock extends BaseHookModule {
                     "getSmallTime", new XC_MethodHook() {
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 // 检查模块是否启用
                                 if (!isEnabled()) {
@@ -85,7 +85,7 @@ public class CustomStatusBarClock extends BaseHookModule {
                     "updateClock", new XC_MethodHook() {
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 // 检查模块是否启用
                                 if (!isEnabled()) {
@@ -116,7 +116,7 @@ public class CustomStatusBarClock extends BaseHookModule {
                     "onFinishInflate", new XC_MethodHook() {
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 if (!isEnabled()) {
                                     return;
@@ -250,7 +250,7 @@ public class CustomStatusBarClock extends BaseHookModule {
             if (isTextSizeEnabled()) {
                 float textSizeSp = getTextSize();
                 XposedHelpers.callMethod(clockInstance, "setTextSize",
-                        TypedValue.COMPLEX_UNIT_SP, (float) textSizeSp);
+                        TypedValue.COMPLEX_UNIT_SP, textSizeSp);
             }
 
             // 尝试设置字间距（仅在开关开启时应用）
@@ -312,10 +312,7 @@ public class CustomStatusBarClock extends BaseHookModule {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
         if (prefs != null) {
-            String result = prefs.getString(PREFIX + key, "HH:mm");
-//            XposedBridge.log(String.format("CustomStatusBarClock: Read %s = %s", key, result));
-//            Log.d("CustomStatusBarClock", String.format("Read %s: %s", key, result));
-            return result;
+            return prefs.getString(PREFIX + key, "HH:mm");
         } else {
             XposedBridge.log("CustomStatusBarClock: Preferences is null, returning default HH:mm");
             Log.w("CustomStatusBarClock", "Preferences is null, returning default HH:mm");
