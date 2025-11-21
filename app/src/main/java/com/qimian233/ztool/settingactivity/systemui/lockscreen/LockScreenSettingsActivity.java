@@ -1,18 +1,12 @@
 package com.qimian233.ztool.settingactivity.systemui.lockscreen;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -37,13 +31,11 @@ import java.util.regex.Pattern;
 
 public class LockScreenSettingsActivity extends AppCompatActivity {
 
-    private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchYiYan;
     private EditText editApiAddress, editRegex;
-    private Button buttonTestApi;
     private LoadingDialog loadingDialog;
-    private SharedPreferences yiYanPrefs, ZToolPrefs;
+    private ModulePreferencesUtils ZToolPrefs, yiYanPrefs;
     private Spinner spinnerChargeWatts;
     private String[] wattOptions;
 
@@ -55,7 +47,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_lock_screen_settings);
 
         String appName = getIntent().getStringExtra("app_name");
-        appPackageName = getIntent().getStringExtra("app_package");
+        //String appPackageName = getIntent().getStringExtra("app_package");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -65,7 +57,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         }
 
         mPrefsUtils = new ModulePreferencesUtils(this);
-        ZToolPrefs = getZToolPreferences();
+        ZToolPrefs = new ModulePreferencesUtils(this);
         wattOptions = getResources().getStringArray(R.array.watt_options);
         initYiYanViews();
         initChargeWattsViews();
@@ -76,30 +68,25 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         switchYiYan = findViewById(R.id.switch_YiYan);
         editApiAddress = findViewById(R.id.edit_api_address);
         editRegex = findViewById(R.id.edit_regex);
-        buttonTestApi = findViewById(R.id.button_test_api);
+        Button buttonTestApi = findViewById(R.id.button_test_api);
 
         loadingDialog = new LoadingDialog(this);
-        yiYanPrefs = getYiYanPreferences();
+        yiYanPrefs = new ModulePreferencesUtils(this);
 
-        switchYiYan.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("YiYan", isChecked);
-                findViewById(R.id.YiYanAPI).setVisibility(isChecked ? View.VISIBLE : View.GONE);
-                if (!isChecked) {
-                    saveSettings("auto_owner_info", false);
-                } else {
-                    String savedApiUrl = yiYanPrefs.getString("API_URL", "");
-                    if (!savedApiUrl.isEmpty()) {
-                        saveSettings("auto_owner_info", true);
-                    }
+        switchYiYan.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveSettings("YiYan", isChecked);
+            findViewById(R.id.YiYanAPI).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            if (!isChecked) {
+                saveSettings("auto_owner_info", false);
+            } else {
+                String savedApiUrl = yiYanPrefs.loadStringSetting("API_URL", "");
+                if (!savedApiUrl.isEmpty()) {
+                    saveSettings("auto_owner_info", true);
                 }
             }
         });
 
-        buttonTestApi.setOnClickListener(v -> {
-            testApiConnection();
-        });
+        buttonTestApi.setOnClickListener(v -> testApiConnection());
 
         loadYiYanSettings();
     }
@@ -141,7 +128,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
                 saveSettings("systemUI_RealWatts", true);
                 break;
         }
-        ZToolPrefs.edit().putString("charge_watts_selected_option", selectedOption).apply();
+        ZToolPrefs.saveStringSetting("charge_watts_selected_option", selectedOption);
     }
 
     private void testApiConnection() {
@@ -218,6 +205,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
 
                 if (matcher.find()) {
                     extractedContent = matcher.group(1);
+                    assert extractedContent != null;
                     extractedContent = extractedContent
                             .replace("\\\"", "\"")
                             .replace("\\\\", "\\")
@@ -254,9 +242,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
                 .setMessage(message);
 
         if (success) {
-            builder.setPositiveButton(R.string.save_configuration_button, (dialog, which) -> {
-                saveYiYanConfiguration();
-            });
+            builder.setPositiveButton(R.string.save_configuration_button, (dialog, which) -> saveYiYanConfiguration());
         }
 
         builder.setNegativeButton(R.string.restart_no, null)
@@ -267,10 +253,8 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         String apiUrl = editApiAddress.getText().toString().trim();
         String regex = editRegex.getText().toString().trim();
 
-        SharedPreferences.Editor editor = yiYanPrefs.edit();
-        editor.putString("API_URL", apiUrl);
-        editor.putString("Regular", regex);
-        editor.apply();
+        yiYanPrefs.saveStringSetting("API_URL", apiUrl);
+        yiYanPrefs.saveStringSetting("Regular", regex);
 
         saveSettings("auto_owner_info", true);
         Toast.makeText(this, R.string.configuration_saved_message, Toast.LENGTH_SHORT).show();
@@ -282,8 +266,8 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
     }
 
     private void loadYiYanSettings() {
-        String savedApiUrl = yiYanPrefs.getString("API_URL", "");
-        String savedRegex = yiYanPrefs.getString("Regular", "");
+        String savedApiUrl = yiYanPrefs.loadStringSetting("API_URL", "");
+        String savedRegex = yiYanPrefs.loadStringSetting("Regular", "");
 
         editApiAddress.setText(savedApiUrl);
         editRegex.setText(savedRegex);
@@ -294,7 +278,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
     }
 
     private void loadChargeWattsOption() {
-        String savedOption = ZToolPrefs.getString("charge_watts_selected_option", getString(R.string.watt_option_disabled));
+        // String savedOption = ZToolPrefs.loadStringSetting("charge_watts_selected_option", getString(R.string.watt_option_disabled));
 
         boolean chargeWattsEnabled = mPrefsUtils.loadBooleanSetting("systemui_charge_watts", false);
         boolean realWattsEnabled = mPrefsUtils.loadBooleanSetting("systemUI_RealWatts", false);
@@ -313,7 +297,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
             spinnerChargeWatts.setSelection(position);
         }
 
-        ZToolPrefs.edit().putString("charge_watts_selected_option", currentOption).apply();
+        ZToolPrefs.saveStringSetting("charge_watts_selected_option", currentOption);
     }
 
     private void saveSettings(String moduleName, Boolean newValue) {
@@ -326,25 +310,4 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         return true;
     }
 
-    public SharedPreferences getZToolPreferences() {
-        Context mContext = this;
-        try {
-            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
-            return moduleContext.getSharedPreferences("StatusBar_Clock", Context.MODE_WORLD_READABLE);
-        } catch (Exception e) {
-            Log.e("ModulePreferences", "Failed to get module preferences, using fallback", e);
-            return mContext.getSharedPreferences("StatusBar_Clock", Context.MODE_WORLD_READABLE);
-        }
-    }
-
-    public SharedPreferences getYiYanPreferences() {
-        Context mContext = this;
-        try {
-            Context moduleContext = mContext.createPackageContext("com.qimian233.ztool", Context.CONTEXT_IGNORE_SECURITY);
-            return moduleContext.getSharedPreferences("YiYanConfig", Context.MODE_WORLD_READABLE);
-        } catch (Exception e) {
-            Log.e("YiYanPreferences", "Failed to get module preferences, using fallback", e);
-            return mContext.getSharedPreferences("YiYanConfig", Context.MODE_WORLD_READABLE);
-        }
-    }
 }

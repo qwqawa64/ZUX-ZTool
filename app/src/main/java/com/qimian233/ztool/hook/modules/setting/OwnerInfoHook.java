@@ -3,7 +3,6 @@ package com.qimian233.ztool.hook.modules.setting;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -14,7 +13,8 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -36,8 +36,9 @@ public class OwnerInfoHook extends BaseHookModule {
     private BroadcastReceiver mScreenReceiver;
     private boolean mIsReceiverRegistered = false;
     private String mCachedContent = "";
-    private static final String PREFS_NAME = "YiYanConfig";
+    private static final String PREFS_NAME = "xposed_module_config";
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
+    private static final String PREFIX = "module_enabled_";
 
     @Override
     public String getModuleName() {
@@ -74,7 +75,7 @@ public class OwnerInfoHook extends BaseHookModule {
                     "onResume",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             log("SecuritySettings resumed, registering screen receiver");
                             registerScreenReceiver(param.thisObject, lpparam.classLoader);
                         }
@@ -96,7 +97,7 @@ public class OwnerInfoHook extends BaseHookModule {
                     String.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             Object activityRecord = param.args[0];
                             Object activity = XposedHelpers.getObjectField(activityRecord, "activity");
 
@@ -124,7 +125,7 @@ public class OwnerInfoHook extends BaseHookModule {
                     boolean.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             boolean screenOn = (Boolean) param.args[0];
                             log("电源状态改变，屏幕状态: " + screenOn);
 
@@ -151,7 +152,7 @@ public class OwnerInfoHook extends BaseHookModule {
                     int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             int event = (Integer) param.args[0];
                             // 用户活动事件，包括屏幕触摸、按键等
                             if (event == 0 || event == 2 || event == 3) { // POWER_BUTTON, TOUCH, etc.
@@ -176,7 +177,7 @@ public class OwnerInfoHook extends BaseHookModule {
                     IntentFilter.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 检查是否是我们自己的接收器，避免重复注册
                             if (param.args[0] == mScreenReceiver) {
                                 return;
@@ -266,33 +267,41 @@ public class OwnerInfoHook extends BaseHookModule {
 
     private void updateOwnerInfo(Object context, ClassLoader classLoader) {
         // 启动新线程获取API数据，避免阻塞UI线程
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    API_URL = getString("API_URL");
-                    String content = fetchContentFromAPI();
-                    if (content != null && !content.equals(mCachedContent)) {
-                        mCachedContent = content;
-                        log("从API获取新内容: " + content);
-                        setOwnerInfoContent(content, context, classLoader);
-                    } else if (content == null) {
-                        log("从API获取内容失败" + API_URL);
-                    } else {
-                        log("内容未变化，跳过更新");
+        new Thread(() -> {
+            try {
+                API_URL = getString("API_URL");
+                // log("API_URL: " + API_URL);
+                // 处理可能的URL协议保存问题，这里添加补全协议的逻辑
+                if (API_URL != null && !API_URL.isEmpty()) {
+                    if (!API_URL.startsWith("http://") && !API_URL.startsWith("https://")) {
+                        API_URL = "https://" + API_URL;
                     }
-                } catch (Exception e) {
-                    logError("updateOwnerInfo线程出错", e);
+                } else {
+                    log("API_URL配置为空，使用默认值");
+                    API_URL = "https://api.example.com"; // 设置一个默认URL
                 }
+                String content = fetchContentFromAPI();
+                if (content != null && !content.equals(mCachedContent)) {
+                    mCachedContent = content;
+                    log("从API获取新内容: " + content);
+                    setOwnerInfoContent(content, context, classLoader);
+                } else if (content == null) {
+                    log("从API获取内容失败" + API_URL);
+                } else {
+                    log("内容未变化，跳过更新");
+                }
+            } catch (Exception e) {
+                logError("updateOwnerInfo线程出错", e);
             }
         }).start();
     }
 
     private String fetchContentFromAPI() {
-        HttpURLConnection connection = null;
-        BufferedReader reader = null;
+        HttpURLConnection connection;
+        BufferedReader reader;
 
         try {
+            // log("URL:" + API_URL);
             URL url = new URL(API_URL);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -327,14 +336,12 @@ public class OwnerInfoHook extends BaseHookModule {
                     while ((line = reader.readLine()) != null) {
                         errorResponse.append(line);
                     }
-                    log("API错误响应: " + errorResponse.toString());
+                    log("API错误响应: " + errorResponse);
                 }
                 log("HTTP错误响应: " + responseCode);
             }
         } catch (Exception e) {
             logError("获取API数据时出错", e);
-        } finally {
-            // 原有的清理代码
         }
         return null;
     }
@@ -354,6 +361,7 @@ public class OwnerInfoHook extends BaseHookModule {
             if (matcher.find()) {
                 String content = matcher.group(1);
                 // 处理转义字符（如\"转换为"）
+                assert content != null;
                 content = content.replace("\\\"", "\"")
                         .replace("\\\\", "\\")
                         .replace("\\/", "/")
@@ -379,79 +387,66 @@ public class OwnerInfoHook extends BaseHookModule {
         // 确保在主线程执行设置操作
         try {
             Handler mainHandler = new Handler(Looper.getMainLooper());
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
+            mainHandler.post(() -> {
+                try {
+                    log("设置OwnerInfo内容: " + content);
+
+                    // 方法1: 通过LockPatternUtils
                     try {
-                        log("设置OwnerInfo内容: " + content);
+                        Object lockPatternUtils = getObject(context, classLoader);
 
-                        // 方法1: 通过LockPatternUtils
-                        try {
-                            Class<?> lockPatternUtilsClass = XposedHelpers.findClass(
-                                    "com.android.internal.widget.LockPatternUtils", classLoader);
+                        // 先启用OwnerInfo
+                        XposedHelpers.callMethod(lockPatternUtils, "setOwnerInfoEnabled", true, 0);
+                        // 设置OwnerInfo内容
+                        XposedHelpers.callMethod(lockPatternUtils, "setOwnerInfo", content, 0);
 
-                            Object lockPatternUtils;
-                            if (context instanceof Context) {
-                                // 从Context创建LockPatternUtils实例
-                                lockPatternUtils = XposedHelpers.newInstance(lockPatternUtilsClass, context);
-                            } else {
-                                // 使用默认构造函数
-                                lockPatternUtils = XposedHelpers.newInstance(lockPatternUtilsClass);
-                            }
-
-                            // 先启用OwnerInfo
-                            XposedHelpers.callMethod(lockPatternUtils, "setOwnerInfoEnabled", true, 0);
-                            // 设置OwnerInfo内容
-                            XposedHelpers.callMethod(lockPatternUtils, "setOwnerInfo", content, 0);
-
-                            log("通过LockPatternUtils成功更新OwnerInfo");
-                            return;
-                        } catch (Throwable e) {
-                            logError("通过LockPatternUtils更新失败", e);
-                        }
-
-                        // 方法2: 通过ILockSettings服务
-                        try {
-                            Class<?> serviceManagerClass = XposedHelpers.findClass("android.os.ServiceManager", classLoader);
-                            Object lockSettingsService = XposedHelpers.callStaticMethod(
-                                    serviceManagerClass, "getService", "lock_settings");
-
-                            if (lockSettingsService != null) {
-                                Class<?> iLockSettingsClass = XposedHelpers.findClass(
-                                        "com.android.internal.widget.ILockSettings", classLoader);
-
-                                // 启用OwnerInfo
-                                XposedHelpers.callMethod(lockSettingsService, "setBoolean",
-                                        "lock_screen_owner_info_enabled", true, 0);
-                                // 设置内容
-                                XposedHelpers.callMethod(lockSettingsService, "setString",
-                                        "lock_screen_owner_info", content, 0);
-
-                                log("通过ILockSettings成功更新OwnerInfo");
-                                return;
-                            }
-                        } catch (Throwable e) {
-                            logError("通过ILockSettings更新失败", e);
-                        }
-
-                        // 方法3: 直接调用SettingsProvider（备用方法）
-                        try {
-                            if (context instanceof Context) {
-                                Settings.Secure.putString(
-                                        ((Context) context).getContentResolver(),
-                                        "lock_screen_owner_info_enabled", "1");
-                                Settings.Secure.putString(
-                                        ((Context) context).getContentResolver(),
-                                        "lock_screen_owner_info", content);
-                                log("通过SettingsProvider成功更新OwnerInfo");
-                            }
-                        } catch (Throwable e) {
-                            logError("通过SettingsProvider更新失败", e);
-                        }
-
+                        log("通过LockPatternUtils成功更新OwnerInfo");
+                        return;
                     } catch (Throwable e) {
-                        logError("设置OwnerInfo内容失败", e);
+                        logError("通过LockPatternUtils更新失败", e);
                     }
+
+                    // 方法2: 通过ILockSettings服务
+                    try {
+                        Class<?> serviceManagerClass = XposedHelpers.findClass("android.os.ServiceManager", classLoader);
+                        Object lockSettingsService = XposedHelpers.callStaticMethod(
+                                serviceManagerClass, "getService", "lock_settings");
+
+                        if (lockSettingsService != null) {
+                            Class<?> iLockSettingsClass = XposedHelpers.findClass(
+                                    "com.android.internal.widget.ILockSettings", classLoader);
+
+                            // 启用OwnerInfo
+                            XposedHelpers.callMethod(lockSettingsService, "setBoolean",
+                                    "lock_screen_owner_info_enabled", true, 0);
+                            // 设置内容
+                            XposedHelpers.callMethod(lockSettingsService, "setString",
+                                    "lock_screen_owner_info", content, 0);
+
+                            log("通过ILockSettings成功更新OwnerInfo");
+                            return;
+                        }
+                    } catch (Throwable e) {
+                        logError("通过ILockSettings更新失败", e);
+                    }
+
+                    // 方法3: 直接调用SettingsProvider（备用方法）
+                    try {
+                        if (context instanceof Context) {
+                            Settings.Secure.putString(
+                                    ((Context) context).getContentResolver(),
+                                    "lock_screen_owner_info_enabled", "1");
+                            Settings.Secure.putString(
+                                    ((Context) context).getContentResolver(),
+                                    "lock_screen_owner_info", content);
+                            log("通过SettingsProvider成功更新OwnerInfo");
+                        }
+                    } catch (Throwable e) {
+                        logError("通过SettingsProvider更新失败", e);
+                    }
+
+                } catch (Throwable e) {
+                    logError("设置OwnerInfo内容失败", e);
                 }
             });
         } catch (Throwable e) {
@@ -459,17 +454,26 @@ public class OwnerInfoHook extends BaseHookModule {
         }
     }
 
+    @NonNull
+    private static Object getObject(Object context, ClassLoader classLoader) {
+        Class<?> lockPatternUtilsClass = XposedHelpers.findClass(
+                "com.android.internal.widget.LockPatternUtils", classLoader);
+
+        Object lockPatternUtils;
+        if (context instanceof Context) {
+            // 从Context创建LockPatternUtils实例
+            lockPatternUtils = XposedHelpers.newInstance(lockPatternUtilsClass, context);
+        } else {
+            // 使用默认构造函数
+            lockPatternUtils = XposedHelpers.newInstance(lockPatternUtilsClass);
+        }
+        return lockPatternUtils;
+    }
+
     public static String getString(String key) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        if (prefs != null) {
-            String result = prefs.getString(key, "");
-//            XposedBridge.log(String.format("CustomStatusBarClock: Read %s = %s", key, result));
-//            Log.d("CustomStatusBarClock", String.format("Read %s: %s", key, result));
-            return result;
-        } else {
-            return null;
-        }
+        return prefs.getString(PREFIX + key, "");
     }
 
 

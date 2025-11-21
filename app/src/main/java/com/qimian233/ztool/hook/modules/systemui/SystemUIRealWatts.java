@@ -6,11 +6,8 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * SystemUI充电瓦数显示Hook模块
@@ -58,7 +55,7 @@ public class SystemUIRealWatts extends BaseHookModule {
                     "computePowerIndication", new XC_MethodHook() {
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 获取原始返回的充电提示文本
                             String originalText = (String) param.getResult();
                             if (originalText == null) return;

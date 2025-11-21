@@ -43,7 +43,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                     "computePowerIndication", new XC_MethodHook() {
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 获取原始返回的充电提示文本
                             String originalText = (String) param.getResult();
                             if (originalText == null) return;
@@ -77,7 +77,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                     new XC_MethodHook() {
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
                             Object batteryStatus = param.args[0];
                             if (batteryStatus != null) {
