@@ -24,10 +24,11 @@ import java.util.Date;
  */
 public class CustomStatusBarClock extends BaseHookModule {
 
-    private static final String PREFS_NAME = "StatusBar_Clock";
+    private static final String PREFS_NAME = "xposed_module_config";
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     private static final String CLOCK_CLASS = "com.android.systemui.statusbar.policy.Clock";
+    private static final String PREFIX = "module_enabled_";
 
     @Override
     public String getModuleName() {
@@ -311,7 +312,7 @@ public class CustomStatusBarClock extends BaseHookModule {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
         if (prefs != null) {
-            String result = prefs.getString(key, "HH:mm");
+            String result = prefs.getString(PREFIX + key, "HH:mm");
 //            XposedBridge.log(String.format("CustomStatusBarClock: Read %s = %s", key, result));
 //            Log.d("CustomStatusBarClock", String.format("Read %s: %s", key, result));
             return result;
@@ -384,7 +385,7 @@ public class CustomStatusBarClock extends BaseHookModule {
     private int getCustomClockInt(String key, int defaultValue) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getInt(key, defaultValue);
+        return prefs.getInt(PREFIX + key, defaultValue);
     }
 
     /**
@@ -393,7 +394,7 @@ public class CustomStatusBarClock extends BaseHookModule {
     private float getCustomClockFloat(String key, float defaultValue) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getFloat(key, defaultValue);
+        return prefs.getFloat(PREFIX + key, defaultValue);
     }
 
     /**
@@ -402,6 +403,6 @@ public class CustomStatusBarClock extends BaseHookModule {
     private boolean getCustomClockBoolean(String key, boolean defaultValue) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getBoolean(key, defaultValue);
+        return prefs.getBoolean(PREFIX + key, defaultValue);
     }
 }

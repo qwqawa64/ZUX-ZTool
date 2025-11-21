@@ -406,7 +406,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
     }
 
     private void saveTextColor(int color) {
-        ZToolPrefs.saveFloatSetting("Custom_StatusBarClockTextColor", color);
+        ZToolPrefs.saveIntegerSetting("Custom_StatusBarClockTextColor", color);
     }
 
     private void saveStyleEnabled(String key, boolean enabled) {

@@ -21,10 +21,6 @@ public class ModulePreferencesUtils {
 
     private static final String PREFS_NAME = "xposed_module_config";
     private static final String PREFIX_ENABLED = "module_enabled_";
-    // 存储直接使用SharedPreferences存储的设置项名称
-    // 直接使用SharedPreferences存储设置项是不正确的，所有模块都应当使用本工具类进行配置存取
-    // private static final String[] otherPrefsName = {"ControlCenter_Date"};
-
     private final Context mContext;
     private final String mModulePackageName;
     private static final String TAG = "ModulePreferencesUtils";
