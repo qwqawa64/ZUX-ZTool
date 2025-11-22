@@ -256,9 +256,12 @@ public class ModulePreferencesUtils {
         return processedMap;
     }
 
-    @SuppressLint("WorldReadableFiles")
     public void writeJSONToSharedPrefs(String jsonString) {
         Map<String, Object> mapToWrite = jsonToHashMap(jsonString);
+        writeConfigToSharedPrefs(mapToWrite);
+    }
+
+    public void writeConfigToSharedPrefs(Map<String,Object> mapToWrite) {
         for (Map.Entry<String, Object> entry : mapToWrite.entrySet()) {
             try {
                 Object value = entry.getValue();
