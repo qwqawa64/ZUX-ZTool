@@ -201,10 +201,13 @@
     <string name="module_uninstall_warning">APP内暂不支持卸载模块，请在Magisk/KSU模块管理中卸载模块后再重启APP</string>
     <string name="got_it_button">知道了</string>
     <string name="installing_module">正在安装模块…</string>
+    <string name="removing_module">正在移除模块…</string>
     <string name="tip_title">提示</string>
     <string name="install_success_message">安装成功，重启系统生效</string>
+    <string name="remove_success_message">移除成功，重启系统生效</string>
     <string name="error_title">错误</string>
     <string name="install_failed_message">安装失败：%1$s</string>
+    <string name="remove_failed_message">移除失败：%1$s</string>
     <string name="request_usage_stats_permission">请授予使用情况统计权限</string>
     <string name="overlay_permission_denied">悬浮窗权限未授予</string>
     <string name="floating_window_started">配置向导已启动</string>

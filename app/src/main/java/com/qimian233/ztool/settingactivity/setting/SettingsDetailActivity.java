@@ -15,7 +15,6 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
@@ -26,7 +25,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -35,7 +33,6 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -60,6 +57,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,24 +65,25 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 
+/** @noinspection ResultOfMethodCallIgnored*/
 public class SettingsDetailActivity extends AppCompatActivity {
 
     private MaterialSwitch switchRemoveBlacklist;
-    private MaterialSwitch switchRemoveHdAppFilter;
+    // private MaterialSwitch switchRemoveHdAppFilter;
     private MaterialSwitch ModuleSwitch;
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private FloatingWindow floatingWindow;
     private static final int REQUEST_CODE_OVERLAY_PERMISSION = 1001;
     private LoadingDialog loadingDialog;
-    private FloatingActionButton fabRestart;
     private MaterialSwitch switchFloatMandatory;
     private MaterialSwitch switchSplitScreenMandatory;
     private MaterialSwitch switchAllowDisableDolby;
-    private  MaterialSwitch switchAllowNativePermissionController;
+    private MaterialSwitch switchAllowNativePermissionController;
 
     private static final int REQUEST_CODE_PICK_FONT = 1002;
     private static final String FONT_BASE_PATH = "/data_mirror/data_ce/null/0/com.zui.homesettings/files/.ZFont/.localFont/";
@@ -121,180 +120,137 @@ public class SettingsDetailActivity extends AppCompatActivity {
         switchRemoveBlacklist = findViewById(R.id.switch_remove_blacklist);
 
         // 设置一视界移除黑名单监听器
-        switchRemoveBlacklist.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("remove_blacklist",isChecked);
-            }
-        });
+        switchRemoveBlacklist.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("remove_blacklist",isChecked));
 
         // 设置Magisk模块开关监听器
         ModuleSwitch = findViewById(R.id.switch_MagiskModule);
-        ModuleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (!isChecked) {
-                    ModuleSwitch.setChecked(true);
+        ModuleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked) {
+                loadingDialog = new LoadingDialog(SettingsDetailActivity.this);
+                loadingDialog.show(getString(R.string.removing_module));
+                String result = removeEmbeddingModule(SettingsDetailActivity.this);
+                if ("success".equals(result)) {
+                    loadingDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                            .setTitle(R.string.warning_title)
-                            .setMessage(R.string.module_uninstall_warning)
+                            .setTitle(R.string.tip_title)
+                            .setMessage(R.string.remove_success_message)
                             .setNegativeButton(R.string.got_it_button, null)
                             .show();
                 } else {
-                    // 如果模块已经安装，直接返回
-                    if (isMagiskModuleEnabled()) {
-                        ModuleSwitch.setChecked(true);
-                        return;
-                    }
-                    loadingDialog = new LoadingDialog(SettingsDetailActivity.this);
-                    loadingDialog.show(getString(R.string.installing_module));
-                    String result = copyEmbeddingModule(SettingsDetailActivity.this);
-                    if ("success".equals(result)) {
-                        loadingDialog.dismiss();
-                        new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                                .setTitle(R.string.tip_title)
-                                .setMessage(R.string.install_success_message)
-                                .setNegativeButton(R.string.got_it_button, null)
-                                .show();
-                    } else {
-                        new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
-                                .setTitle(R.string.error_title)
-                                .setMessage(getString(R.string.install_failed_message, result))
-                                .setNegativeButton(R.string.got_it_button, null)
-                                .show();
-                    }
+                    new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
+                            .setTitle(R.string.error_title)
+                            .setMessage(getString(R.string.remove_failed_message, result))
+                            .setNegativeButton(R.string.got_it_button, null)
+                            .show();
+                }
+            } else {
+                // 如果模块已经安装，直接返回
+                if (isMagiskModuleEnabled()) {
+                    ModuleSwitch.setChecked(true);
+                    return;
+                }
+                loadingDialog = new LoadingDialog(SettingsDetailActivity.this);
+                loadingDialog.show(getString(R.string.installing_module));
+                String result = copyEmbeddingModule(SettingsDetailActivity.this);
+                if ("success".equals(result)) {
+                    loadingDialog.dismiss();
+                    new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
+                            .setTitle(R.string.tip_title)
+                            .setMessage(R.string.install_success_message)
+                            .setNegativeButton(R.string.got_it_button, null)
+                            .show();
+                } else {
+                    new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
+                            .setTitle(R.string.error_title)
+                            .setMessage(getString(R.string.install_failed_message, result))
+                            .setNegativeButton(R.string.got_it_button, null)
+                            .show();
                 }
             }
         });
 
         //强制浮动窗口适配开关
         switchFloatMandatory = findViewById(R.id.switch_Float_app_Mandatory);
-        switchFloatMandatory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            String command;
-                            if (isChecked) {
-                                command = "settings put global force_resizable_activities 1";
-                            } else {
-                                command = "settings put global force_resizable_activities 0";
-                            }
+        switchFloatMandatory.setOnCheckedChangeListener((buttonView, isChecked) -> new Thread(() -> {
+            try {
+                String command;
+                if (isChecked) {
+                    command = "settings put global force_resizable_activities 1";
+                } else {
+                    command = "settings put global force_resizable_activities 0";
+                }
 
-                            Process process = Runtime.getRuntime().exec("su -c " + command);
-                            process.waitFor();
+                Process process = Runtime.getRuntime().exec("su -c " + command);
+                process.waitFor();
 
-                            // 检查执行结果
-                            int exitValue = process.exitValue();
-                            if (exitValue != 0) {
-                                Log.e("SwitchCommand", "命令执行失败，退出码: " + exitValue);
-                            }
+                // 检查执行结果
+                int exitValue = process.exitValue();
+                if (exitValue != 0) {
+                    Log.e("SwitchCommand", "命令执行失败，退出码: " + exitValue);
+                }
 
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            Log.e("SwitchCommand", "执行命令时发生错误: " + e.getMessage());
-                        }
-                    }
-                }).start();
+            } catch (Exception e) {
+                // e.printStackTrace();
+                Log.e("SwitchCommand", "执行命令时发生错误: " + e.getMessage());
             }
-        });
+        }).start());
 
         //强制分屏适配开关
         switchSplitScreenMandatory = findViewById(R.id.switch_Split_screen_Mandatory);
-        switchSplitScreenMandatory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("Split_Screen_mandatory",isChecked);
-            }
-        });
+        switchSplitScreenMandatory.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("Split_Screen_mandatory",isChecked));
 
         // 设置悬浮窗按钮点击监听
         ImageButton floatingButton = findViewById(R.id.button_floating_window);
-        floatingButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startFloatingWindow();
-            }
-        });
+        floatingButton.setOnClickListener(v -> startFloatingWindow());
 
         // 设置横屏适配按钮点击监听
         View customLandscapeLayout = findViewById(R.id.custom_landscape_layout);
         if (customLandscapeLayout != null) {
-            customLandscapeLayout.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startFloatingWindow();
-                }
-            });
+            customLandscapeLayout.setOnClickListener(v -> startFloatingWindow());
         }
 
         // 设置横屏适配结果查看按钮点击监听
         View customLandscapeResult = findViewById(R.id.custom_landscapeResult_layout);
         if (customLandscapeResult != null) {
-            customLandscapeResult.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // 读取并解析配置文件
-                    List<ConfigFileInfo> validConfigs = loadAndValidateConfigFiles();
+            customLandscapeResult.setOnClickListener(v -> {
+                // 读取并解析配置文件
+                List<ConfigFileInfo> validConfigs = loadAndValidateConfigFiles();
 
-                    // 显示配置选择对话框
-                    showConfigSelectionDialog(validConfigs);
-                }
+                // 显示配置选择对话框
+                showConfigSelectionDialog(validConfigs);
             });
         }
 
         // 设置适配策略按钮点击监听
         View adapter_yishijie = findViewById(R.id.view_adapted_strategies_layout);
         if (adapter_yishijie != null) {
-            adapter_yishijie.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(SettingsDetailActivity.this, searchPage.class);
-                    startActivity(intent);
-                }
+            adapter_yishijie.setOnClickListener(v -> {
+                Intent intent = new Intent(SettingsDetailActivity.this, searchPage.class);
+                startActivity(intent);
             });
         }
 
         // 设置字体导入点击监听
         View importFontLayout = findViewById(R.id.import_font_layout);
         if (importFontLayout != null) {
-            importFontLayout.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startFontImportProcess();
-                }
-            });
+            importFontLayout.setOnClickListener(v -> startFontImportProcess());
         }
 
         // 设置杜比音效按钮点击监听
         switchAllowDisableDolby = findViewById(R.id.switch_AllowDolbyDisable);
-        switchAllowDisableDolby.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                saveSettings("allow_display_dolby",isChecked);
-            }
-        });
+        switchAllowDisableDolby.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("allow_display_dolby",isChecked));
 
         // 设置原生权限控制器按钮点击监听
         switchAllowNativePermissionController = findViewById(R.id.switch_AllowNativePermissionController);
-        switchAllowNativePermissionController.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                saveSettings("PermissionControllerHook",isChecked);
-            }
-        });
+        switchAllowNativePermissionController.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("PermissionControllerHook",isChecked));
     }
 
     // 启动悬浮窗
     private void startFloatingWindow() {
         // 检查悬浮窗权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                requestOverlayPermission();
-                return;
-            }
+        if (!Settings.canDrawOverlays(this)) {
+            requestOverlayPermission();
+            return;
         }
 
         // 检查使用情况统计权限
@@ -309,7 +265,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
     }
 
     // 请求悬浮窗权限（Android 6.0+）
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private void requestOverlayPermission() {
         Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:" + getPackageName()));
@@ -320,12 +275,10 @@ public class SettingsDetailActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_OVERLAY_PERMISSION) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(this)) {
-                    startFloatingWindow();
-                } else {
-                    Toast.makeText(this, R.string.overlay_permission_denied, Toast.LENGTH_SHORT).show();
-                }
+            if (Settings.canDrawOverlays(this)) {
+                startFloatingWindow();
+            } else {
+                Toast.makeText(this, R.string.overlay_permission_denied, Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -392,7 +345,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
      * 检查是否开启了强制可调整大小的活动
      *
      * @return 如果开启了强制可调整大小的活动，则返回true；否则返回false
-     * @throws Exception 如果执行过程中发生异常，则抛出该异常
      */
     public boolean isForceResizableActivitiesEnabled() {
         try {
@@ -406,7 +358,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 return "1".equals(line);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             Log.e("SettingsCheck", "检查设置时发生错误: " + e.getMessage());
         }
         return false; // 默认返回false，表示未开启
@@ -432,11 +384,37 @@ public class SettingsDetailActivity extends AppCompatActivity {
             process.waitFor();
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return false;
         }
     }
 
+    public String removeEmbeddingModule(Context context) {
+        String targetDirPath = "/data/adb/modules/zuxos_embedding"; // 目标路径
+        String tempDirPath = context.getFilesDir().getAbsolutePath() + "/zuxos_embedding_temp"; // 临时目录路径
+        // Step 0, remove temporary directory if exists
+        try {
+            File tempDir = new File(tempDirPath);
+            deleteRecursive(tempDir);
+        } catch (Exception ignored) {}
+        // Step 1, remove target directory (using su)
+        try {
+            // 使用su权限删除模块目录
+            Process process = Runtime.getRuntime().exec("su -c rm -rf " + targetDirPath);
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                return getString(R.string.error_shell_command_failed, "Failed to remove module");
+            }
+            process = Runtime.getRuntime().exec("su -c rm -f /data/system/zui/embedding/embedding_config.json");
+            exitCode = process.waitFor();
+            if (exitCode != 0) {
+                return getString(R.string.error_shell_command_failed, "Failed to remove module");
+            }
+            return "success";
+        } catch (Exception e) {
+            return getString(R.string.error_prefix) + e.getMessage();
+        }
+    }
     public String copyEmbeddingModule(Context context) {
         String sourceAssetsPath = "embedding/zuxos_embedding"; // assets中的源路径
         String tempDirPath = context.getFilesDir().getAbsolutePath() + "/zuxos_embedding_temp"; // 临时目录路径
@@ -449,7 +427,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 return getString(R.string.error_create_temp_dir);
             }
             // 步骤1: 将assets中的文件复制到临时目录
-            if (!copyAssetsToDirectory(context, sourceAssetsPath, tempDir)) {
+            if (copyAssetsToDirectory(context, sourceAssetsPath, tempDir)) {
                 return getString(R.string.error_copy_assets);
             }
             // 步骤2: 使用su权限复制临时目录到目标位置
@@ -498,20 +476,19 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 out.flush();
                 out.close();
                 in.close();
-                return true;
             } else {
                 // 处理目录
                 loadingDialog.updateMessage(getString(R.string.releasing_files));
                 for (String file : files) {
                     String fullAssetsPath = assetsPath.isEmpty() ? file : assetsPath + "/" + file;
                     File targetFile = new File(targetDir, file);
-                    if (assetManager.list(fullAssetsPath).length > 0) {
+                    if (Objects.requireNonNull(assetManager.list(fullAssetsPath)).length > 0) {
                         // 子目录：递归复制
                         if (!targetFile.mkdirs()) {
-                            return false;
+                            return true;
                         }
-                        if (!copyAssetsToDirectory(context, fullAssetsPath, targetFile)) {
-                            return false;
+                        if (copyAssetsToDirectory(context, fullAssetsPath, targetFile)) {
+                            return true;
                         }
                     } else {
                         // 文件：直接复制
@@ -527,11 +504,11 @@ public class SettingsDetailActivity extends AppCompatActivity {
                         in.close();
                     }
                 }
-                return true;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
             return false;
+        } catch (IOException e) {
+            // e.printStackTrace();
+            return true;
         }
     }
     // 递归删除目录或文件
@@ -601,7 +578,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
 
         return validConfigs;
@@ -642,7 +619,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
             // Base64解码
             byte[] decodedBytes = Base64.decode(base64Content, Base64.DEFAULT);
-            String originalContent = new String(decodedBytes, "UTF-8");
+            String originalContent = new String(decodedBytes, StandardCharsets.UTF_8);
             configInfo.configContent = originalContent;
 
             // 验证JSON格式
@@ -653,7 +630,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             return configInfo;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return null;
         }
     }
@@ -680,7 +657,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             // 应用未安装，返回包名
             return packageName;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return packageName;
         }
     }
@@ -693,9 +670,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
             byte[] buffer = new byte[(int) file.length()];
             inputStream.read(buffer);
             inputStream.close();
-            return new String(buffer, "UTF-8");
+            return new String(buffer, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return null;
         }
     }
@@ -757,10 +734,11 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         // 设置列表项
         ListView listView = dialogView.findViewById(R.id.config_list_view);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_multiple_choice, displayItems) {
+            @NonNull
             @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
                 CheckedTextView checkedTextView = (CheckedTextView) view;
 
@@ -841,9 +819,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             dialog.dismiss();
             flashSelectedConfigs(selectedConfigs);
         });
-        cancelButton.setOnClickListener(v -> {
-            dialog.dismiss();
-        });
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
         // 设置还原按钮可见性
         if (!flashedConfigs.isEmpty()) {
             restoreButton.setVisibility(View.VISIBLE);
@@ -1050,7 +1026,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 loadingDialog.updateMessage(getString(R.string.generating_new_config));
                 String newJsonContent = originalJson.toString(2);
                 FileOutputStream fos = new FileOutputStream(tempJsonFile); // 不再抛出权限错误
-                fos.write(newJsonContent.getBytes("UTF-8"));
+                fos.write(newJsonContent.getBytes(StandardCharsets.UTF_8));
                 fos.close();
 
                 // 步骤5: 覆盖模块目录下的JSON文件（需要root权限）
@@ -1091,7 +1067,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 });
 
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
                 runOnUiThread(() -> {
                     loadingDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
@@ -1113,9 +1089,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.confirm_restore_title)
                 .setMessage(R.string.confirm_restore_message)
-                .setPositiveButton(R.string.confirm_button, (dialog, which) -> {
-                    performModuleRestore();
-                })
+                .setPositiveButton(R.string.confirm_button, (dialog, which) -> performModuleRestore())
                 .setNegativeButton(R.string.restart_no, null)
                 .show();
     }
@@ -1162,7 +1136,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 });
 
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
                 runOnUiThread(() -> {
                     loadingDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
@@ -1193,7 +1167,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             // 返回新的HashSet以避免并发修改异常
             return new HashSet<>(result);
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return defaultSet;
         }
     }
@@ -1212,22 +1186,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             editor.putStringSet(key, new HashSet<>(set));
             editor.apply();
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 从SharedPreferences中移除设置
-     * @param key 要移除的设置的键名
-     */
-    private void removeSetting(String key) {
-        try {
-            SharedPreferences sharedPreferences = getSharedPreferences("module_settings", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.remove(key);
-            editor.apply();
-        } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
     }
 
@@ -1295,7 +1254,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
                 runOnUiThread(() -> {
                     fontImportDialog.dismiss();
                     Toast.makeText(SettingsDetailActivity.this, getString(R.string.file_copy_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
@@ -1393,7 +1352,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 });
 
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
                 runOnUiThread(() -> {
                     fontImportDialog.dismiss();
                     new MaterialAlertDialogBuilder(SettingsDetailActivity.this)
@@ -1493,7 +1452,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
             String line = lines[i].trim(); // 去除行首尾空格
 
             // 处理缩进：如果行首有空格，进行特殊处理
-            float x = width / 2f;
+            float x;
             if (line.startsWith("   ")) { // 三个空格表示缩进
                 // 对于有缩进的行，调整对齐方式为左对齐并添加缩进
                 paint.setTextAlign(Paint.Align.LEFT);
@@ -1647,7 +1606,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         // 先写入临时文件
         File tempFile = new File(getFilesDir(), "temp_xml.xml");
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(content.getBytes("UTF-8"));
+            fos.write(content.getBytes(StandardCharsets.UTF_8));
         }
 
         // 使用root权限复制到目标位置
@@ -1673,7 +1632,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private String getFileName(Uri uri) {
         String result = null;
-        if (uri.getScheme().equals("content")) {
+        if (Objects.equals(uri.getScheme(), "content")) {
             try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
                     int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -1682,11 +1641,12 @@ public class SettingsDetailActivity extends AppCompatActivity {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
         }
         if (result == null) {
             result = uri.getPath();
+            assert result != null;
             int cut = result.lastIndexOf('/');
             if (cut != -1) {
                 result = result.substring(cut + 1);
@@ -1705,7 +1665,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 deleteRecursive(tempDir);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
     }
 
@@ -1737,7 +1697,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
 
     private void initRestartButton() {
-        fabRestart = findViewById(R.id.fab_restart);
+        FloatingActionButton fabRestart = findViewById(R.id.fab_restart);
         fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
     }
 
