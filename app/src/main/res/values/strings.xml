@@ -391,6 +391,8 @@
     <string name="aod_enable_summary">启用原生AOD，这可能增加耗电</string>
     <string name="noChargingAnimation_enable_title">关闭充电动画</string>
     <string name="noChargingAnimation_enable_summary">停用充电动画显示功能</string>
+    <string name="Charge_Animation_Fix">补全充电动画列表</string>
+    <string name="Charge_Animation_Fix_Summary">修复充电动画列表，这可以使用更多充电动画</string>
     <string name="noChargingAnimation_title">充电动画</string>
     <string name="systemUIMisc">杂项</string>
     <string name="disable_guest_user_enable_title">禁止访客用户自动创建</string>

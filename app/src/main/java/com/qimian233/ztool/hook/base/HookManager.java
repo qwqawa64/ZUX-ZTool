@@ -33,6 +33,7 @@ import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeedSIzeHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeeddoublelayerHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIRealWatts;
+import com.qimian233.ztool.hook.modules.wallpaper.ChargeAnimationFixModule;
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.util.ArrayList;
@@ -120,6 +121,8 @@ public class HookManager {
         registerHookModule(new ZuiLauncherHotseatHook());
         // 注册模块：强制电量外部显示
         registerHookModule(new SystemUIBatteryHook());
+        // 注册模块：充电动画修复模块
+        registerHookModule(new ChargeAnimationFixModule());
         initialized = true;
     }
 

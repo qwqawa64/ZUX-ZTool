@@ -144,6 +144,10 @@ public class LogParser {
         MODULE_PATTERNS.put("zui_launcher_hotseat",
                 Pattern.compile("\\[zui_launcher_hotseat\\]\\s*(.*)"));
 
+        // 壁纸相关
+        MODULE_PATTERNS.put("charge_animation_fix",
+                Pattern.compile("\\[charge_animation_fix\\]\\s*(.*)"));
+
 
         // 模块显示名称映射
         // 系统UI相关
@@ -191,6 +195,9 @@ public class LogParser {
         // 安全中心相关
         MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
         MODULE_NAMES.put("block_safecenter_scan", "阻止安全中心扫描");
+
+        // 壁纸相关
+        MODULE_NAMES.put("charge_animation_fix", "充电动画列表修复");
     }
 
     /**
@@ -568,6 +575,11 @@ public class LogParser {
         // 安全中心相关
         categories.put("安全中心", Arrays.asList(
                 "default_enable_autorun", "block_safecenter_scan"
+        ));
+
+        // 壁纸相关
+        categories.put("壁纸", Arrays.asList(
+                "charge_animation_fix"
         ));
         return categories;
     }

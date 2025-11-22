@@ -36,6 +36,8 @@ public class systemUISettings extends AppCompatActivity {
     private MaterialSwitch switchEnableAod;
     private MaterialSwitch switchChargingAnimation;
     private MaterialSwitch switchEnableGuestMode;
+    private MaterialSwitch switchChargingAnimationFix;
+
 
     // Shell执行器
     private EnhancedShellExecutor shellExecutor;
@@ -162,6 +164,13 @@ public class systemUISettings extends AppCompatActivity {
             Log.d("ChargingAnimation", "Switch state saved: " + isChecked);
         });
 
+        // 充电动画修复
+        switchChargingAnimationFix = findViewById(R.id.switch_chargingFixAnimation);
+        switchChargingAnimationFix.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // 保存开关状态到SharedPreferences
+            mPrefsUtils.saveBooleanSetting("charge_animation_fix", isChecked);
+        });
+
         // 访客模式设置
         switchEnableGuestMode = findViewById(R.id.switch_GuestFix);
         switchEnableGuestMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -185,8 +194,12 @@ public class systemUISettings extends AppCompatActivity {
                 boolean chargingAnimationEnabled = mPrefsUtils.loadBooleanSetting("No_ChargeAnimation", false);
                 runOnUiThread(() -> switchChargingAnimation.setChecked(chargingAnimationEnabled));
 
+                // 加载充电动画修复开关状态
+                boolean chargingAnimationFixEnabled = mPrefsUtils.loadBooleanSetting("charge_animation_fix", false);
+                runOnUiThread(() -> switchChargingAnimationFix.setChecked(chargingAnimationFixEnabled));
+
                 // 加载访客模式开关状态
-                boolean guestModeEnabled = mPrefsUtils.loadBooleanSetting("guest_mode_controller", true);
+                boolean guestModeEnabled = mPrefsUtils.loadBooleanSetting("guest_mode_controller", false);
                 runOnUiThread(() -> switchEnableGuestMode.setChecked(guestModeEnabled));
 
                 Log.d("SystemUISettings", "设置加载完成");
@@ -266,7 +279,7 @@ public class systemUISettings extends AppCompatActivity {
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.restart_xp_title))
-                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + "，com.zui.wallpapersetting" + getString(R.string.restart_xp_message))
                 .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
                 .setNegativeButton(R.string.restart_no, null)
                 .show();
@@ -305,6 +318,26 @@ public class systemUISettings extends AppCompatActivity {
                     }
                     resetRestartButton();
                 });
+
+                Log.d("ForceStopApp", "强制停止应用结果: " + (success ? "成功" : "失败"));
+
+            } catch (Exception e) {
+                Log.e("ForceStopApp", "强制停止应用时出错: " + e.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(systemUISettings.this,
+                            R.string.restartFail + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    resetRestartButton();
+                });
+            }
+        }).start();
+
+        new Thread(() -> {
+            try {
+                Log.w("ForceStopApp", "方法1失败，尝试方法2");
+                String command = "killall " + "com.zui.wallpapersetting";
+                EnhancedShellExecutor.ShellResult result2 = shellExecutor.executeRootCommand(command, 5);
+
+                final boolean success = result2.isSuccess();
 
                 Log.d("ForceStopApp", "强制停止应用结果: " + (success ? "成功" : "失败"));
 

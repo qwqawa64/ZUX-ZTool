@@ -10,5 +10,6 @@
         <item>com.android.systemui</item>
         <item>com.zui.safecenter</item>
         <item>com.zui.launcher</item>
+        <item>com.zui.wallpapersetting</item>
     </string-array>
 </resources>
