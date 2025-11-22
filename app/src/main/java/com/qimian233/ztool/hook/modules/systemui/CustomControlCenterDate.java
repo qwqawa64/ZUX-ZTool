@@ -29,7 +29,6 @@ public class CustomControlCenterDate extends BaseHookModule {
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     private static final String VARIABLE_DATE_VIEW_CLASS = "com.android.systemui.statusbar.policy.VariableDateView";
     private static final String VARIABLE_DATE_CONTROLLER_CLASS = "com.android.systemui.statusbar.policy.VariableDateViewController";
-    private static final String PREFIX = "module_enabled_";
 
     @Override
     public String getModuleName() {
@@ -313,7 +312,7 @@ public class CustomControlCenterDate extends BaseHookModule {
     private String getCustomDateSetting(String key) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getString(PREFIX + key, "yyyy年MM月dd日 EEEE");
+        return prefs.getString(key, "yyyy年MM月dd日 EEEE");
     }
 
     /**
@@ -378,7 +377,7 @@ public class CustomControlCenterDate extends BaseHookModule {
     private int getCustomDateInt(String key, int defaultValue) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getInt(PREFIX + key, defaultValue);
+        return prefs.getInt(key, defaultValue);
     }
 
     /**
@@ -387,7 +386,7 @@ public class CustomControlCenterDate extends BaseHookModule {
     private float getCustomDateFloat(String key, float defaultValue) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getFloat(PREFIX + key, defaultValue);
+        return prefs.getFloat(key, defaultValue);
     }
 
     /**
@@ -396,6 +395,6 @@ public class CustomControlCenterDate extends BaseHookModule {
     private boolean getCustomDateBoolean(String key, boolean defaultValue) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getBoolean(PREFIX + key, defaultValue);
+        return prefs.getBoolean(key, defaultValue);
     }
 }

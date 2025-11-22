@@ -384,7 +384,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
             process.waitFor();
             return false;
         } catch (Exception e) {
-            // e.printStackTrace();
             return false;
         }
     }

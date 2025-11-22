@@ -4,15 +4,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.qimian233.ztool.hook.HookInit;
-
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class ModuleConfig {
     private static final String PREFS_NAME = "xposed_module_config";
-    private static final String PREFIX_ENABLED = "module_enabled_";
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
 
     private static SharedPreferences getPreferences() {
@@ -80,14 +77,13 @@ public class ModuleConfig {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
         prefs.reload();
         if (prefs != null) {
-            String key = PREFIX_ENABLED + moduleName;
-            boolean result = prefs.getBoolean(key, false);
+            boolean result = prefs.getBoolean(moduleName, false);
             // 防止一直吐日志
-            if (key.equals("module_enabled_Custom_StatusBarClock")) {
+            if (moduleName.equals("Custom_StatusBarClock")) {
                 return result;
             }
-            XposedBridge.log(String.format("ModuleConfig: Read %s = %s (prefs: %s)", key, result, prefs));
-            Log.d("ModuleConfig", String.format("Read %s: %s (prefs: %s)", key, result, prefs));
+            XposedBridge.log(String.format("ModuleConfig: Read %s = %s (prefs: %s)", moduleName, result, prefs));
+            Log.d("ModuleConfig", String.format("Read %s: %s (prefs: %s)", moduleName, result, prefs));
             return result;
         } else {
             XposedBridge.log("ModuleConfig: Preferences is null, returning default true");
@@ -99,12 +95,11 @@ public class ModuleConfig {
     public static void setModuleEnabled(String moduleName, boolean enabled) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
         if (prefs != null) {
-            String key = PREFIX_ENABLED + moduleName;
             boolean success = prefs.edit()
-                    .putBoolean(key, enabled)
+                    .putBoolean(moduleName, enabled)
                     .commit();
-            XposedBridge.log(String.format("ModuleConfig: Set %s to %s, success: %s", key, enabled, success));
-            Log.d("ModuleConfig", String.format("Set %s to %s, success: %s", key, enabled, success));
+            XposedBridge.log(String.format("ModuleConfig: Set %s to %s, success: %s", moduleName, enabled, success));
+            Log.d("ModuleConfig", String.format("Set %s to %s, success: %s", moduleName, enabled, success));
             if (!success) {
                 dumpAllPreferences();
             }

@@ -46,6 +46,11 @@
     <string name="lsposed_zygisk">LSPosed (Zygisk)</string>
     <string name="unknown_framework">Unknown</string>
     <string name="android_version_prefix">Android %s</string>
+    <string name="config_upgraded_tip_title">模块配置文件已更新</string>
+    <string name="config_upgraded_tip_message">看起来您从旧版本ZTool升级到了当前版本。\n此版本包含了配置文件格式的较大改动，为了保证Hook生效和APP读取配置正常，请重启系统。</string>
+    <string name="restart_system_button">立即重启系统</string>
+    <string name="do_not_restart_system_button">稍后手动重启</string>
+    <string name="have_not_restart_warn">在您重启系统之前，配置将不会生效！</string>
     <!--功能管理页资源值-->
     <string name="featuresFragment_title">功能管理</string>
     <string name="itemFeatures_appName">应用名称</string>

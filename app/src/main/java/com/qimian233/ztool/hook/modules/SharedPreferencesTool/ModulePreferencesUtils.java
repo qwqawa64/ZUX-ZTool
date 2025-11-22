@@ -20,7 +20,6 @@ import com.google.gson.reflect.TypeToken;
 public class ModulePreferencesUtils {
 
     private static final String PREFS_NAME = "xposed_module_config";
-    private static final String PREFIX_ENABLED = "module_enabled_";
     private final Context mContext;
     private final String mModulePackageName;
     private static final String TAG = "ModulePreferencesUtils";
@@ -58,7 +57,7 @@ public class ModulePreferencesUtils {
      */
     public boolean loadBooleanSetting(String featureName, boolean defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        boolean value = prefs.getBoolean(PREFIX_ENABLED + featureName, defaultValue);
+        boolean value = prefs.getBoolean(featureName, defaultValue);
         Log.d(TAG, "Loading " + featureName + ": " + value);
         return value;
     }
@@ -72,7 +71,7 @@ public class ModulePreferencesUtils {
     public boolean saveBooleanSetting(String featureName, boolean value) {
         SharedPreferences prefs = getModulePreferences();
         boolean success = prefs.edit()
-                .putBoolean(PREFIX_ENABLED + featureName, value)
+                .putBoolean(featureName, value)
                 .commit();
         Log.d(TAG, "Saved " + featureName + ": " + value + ", success: " + success);
         return success;
@@ -86,7 +85,7 @@ public class ModulePreferencesUtils {
      */
     public String loadStringSetting(String featureName, String defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.getString(PREFIX_ENABLED + featureName, defaultValue);
+        return prefs.getString(featureName, defaultValue);
     }
 
     /**
@@ -98,32 +97,32 @@ public class ModulePreferencesUtils {
     public void saveStringSetting(String featureName, String value) {
         SharedPreferences prefs = getModulePreferences();
         prefs.edit()
-                .putString(PREFIX_ENABLED + featureName, value)
+                .putString(featureName, value)
                 .commit();
     }
 
     public void saveIntegerSetting(String featureName, int value) {
         SharedPreferences prefs = getModulePreferences();
         prefs.edit()
-                .putInt(PREFIX_ENABLED + featureName, value)
+                .putInt(featureName, value)
                 .commit();
     }
 
     public int loadIntegerSetting(String featureName, int defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.getInt(PREFIX_ENABLED + featureName, defaultValue);
+        return prefs.getInt(featureName, defaultValue);
     }
 
     public void saveFloatSetting(String featureName, float value) {
         SharedPreferences prefs = getModulePreferences();
         prefs.edit()
-                .putFloat(PREFIX_ENABLED + featureName, value)
+                .putFloat(featureName, value)
                 .commit();
     }
 
     public float loadFloatSetting(String featureName, float defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.getFloat(PREFIX_ENABLED + featureName, defaultValue);
+        return prefs.getFloat(featureName, defaultValue);
     }
 
     /**
@@ -134,7 +133,7 @@ public class ModulePreferencesUtils {
     public boolean removeSetting(String featureName) {
         SharedPreferences prefs = getModulePreferences();
         return prefs.edit()
-                .remove(PREFIX_ENABLED + featureName)
+                .remove(featureName)
                 .commit();
     }
 
@@ -265,7 +264,8 @@ public class ModulePreferencesUtils {
         for (Map.Entry<String, Object> entry : mapToWrite.entrySet()) {
             try {
                 Object value = entry.getValue();
-                String cleanKey = entry.getKey().replace(PREFIX_ENABLED, "");
+                // 处理旧版本配置遗留的多余前缀module_enabled_
+                String cleanKey = entry.getKey().replace("module_enabled_", "");
                 Log.d(TAG, "Processing key: "
                         + cleanKey + ", value: " + value + ", type: " +
                         (value != null ? value.getClass().getSimpleName() : "null"));

@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import android.widget.TextView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.qimian233.ztool.utils.ConfigUpgrade;
 
 import org.json.JSONObject;
 
@@ -220,6 +221,18 @@ public class HomeFragment extends Fragment {
                 // 异步获取API内容
                 fetchHintFromAPI();
                 Log.i(TAG, "环境完备，显示完整功能界面");
+                Log.i(TAG,"开始检查配置是否为最新版本");
+                if(ConfigUpgrade.configUpgrader(requireContext())){
+                    new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle(R.string.config_upgraded_tip_title)
+                            .setMessage(R.string.config_upgraded_tip_message)
+                            .setPositiveButton(R.string.restart_system_button, (dialog, which) -> shellExecutor.executeRootCommand("su -c reboot", 3))
+                            .setNegativeButton(R.string.do_not_restart_system_button, (dialog, which) -> android.widget.Toast.makeText(getContext(), R.string.have_not_restart_warn, android.widget.Toast.LENGTH_SHORT).show())
+                            .show();
+                    Log.i(TAG,"配置升级成功");
+                } else{
+                    Log.i(TAG,"配置已是最新版本");
+                }
             } else {
                 // 环境不完整，只显示要求卡片
                 cardRequirements.setVisibility(View.VISIBLE);
@@ -317,9 +330,7 @@ public class HomeFragment extends Fragment {
 
             // 如果API请求失败，并且当前环境仍然就绪，则显示默认提示
             if (isAdded() && isModuleActive && isRootAvailable) {
-                textHint.post(() -> {
-                    Log.w(TAG, "API请求失败，保持默认提示文本");
-                });
+                textHint.post(() -> Log.w(TAG, "API请求失败，保持默认提示文本"));
             }
         }).start();
     }
