@@ -86,7 +86,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private MaterialSwitch switchAllowNativePermissionController;
 
     private static final int REQUEST_CODE_PICK_FONT = 1002;
-    private static final String FONT_BASE_PATH = "/data_mirror/data_ce/null/0/com.zui.homesettings/files/.ZFont/.localFont/";
+    private static final String FONT_BASE_PATH = "/data_mirror/data_ce/null/0/com.zui.homesettings/files/.ZFont/.localFont";
     private static final String TEMP_FONT_DIR = "temp_fonts";
     private File currentSelectedFontFile;
     private LoadingDialog fontImportDialog;
@@ -1313,7 +1313,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                 // 步骤1: 生成随机文件夹名
                 fontImportDialog.updateMessage(getString(R.string.creating_font_directory));
                 String randomFolderName = generateRandomFolderName();
-                String targetFolderPath = FONT_BASE_PATH + randomFolderName;
+                String targetFolderPath = FONT_BASE_PATH + "/" + randomFolderName;
 
                 // 创建目标文件夹
                 createFolderWithRoot(targetFolderPath);
@@ -1672,8 +1672,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
      * 获取参考文件夹的所有者和组信息
      */
     private String[] getReferenceFolderOwnerAndGroup() throws Exception {
-        String referenceFolder = FONT_BASE_PATH + "Aa-BPBDY";
-        String command = "ls -ld " + referenceFolder;
+        String command = "ls -ld " + FONT_BASE_PATH;
 
         Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
