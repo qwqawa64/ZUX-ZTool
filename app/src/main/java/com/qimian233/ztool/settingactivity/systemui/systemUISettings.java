@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.LinearLayout;
 import static android.widget.Toast.LENGTH_SHORT;
 import static android.widget.Toast.makeText;
@@ -38,7 +39,7 @@ public class systemUISettings extends AppCompatActivity {
     private MaterialSwitch switchChargingAnimation;
     private MaterialSwitch switchEnableGuestMode;
     private MaterialSwitch switchChargingAnimationFix;
-
+    private View buttonStartAODActivity;
 
     // Shell执行器
     private EnhancedShellExecutor shellExecutor;
@@ -164,6 +165,7 @@ public class systemUISettings extends AppCompatActivity {
                     mPrefsUtils.saveBooleanSetting("ForceLenovoAOD", false);
                     Log.d("LenovoAODSwitch", "Switch state saved: false");
                     switchEnableLenovoAod.setChecked(false);
+                    buttonStartAODActivity.setVisibility(View.GONE);
                     makeText(
                         this, R.string.restart_scope_required,
                         LENGTH_SHORT
@@ -183,6 +185,7 @@ public class systemUISettings extends AppCompatActivity {
             isAodSwitchProcessing = true;
             mPrefsUtils.saveBooleanSetting("ForceLenovoAOD", isChecked);
             Log.d("LenovoAODSwitch", "Switch state saved: " + isChecked);
+            buttonStartAODActivity.setVisibility(isChecked ? View.VISIBLE : View.GONE);
 
             handler.post(() -> {
                 if (isAodEnabled()) {
@@ -192,6 +195,12 @@ public class systemUISettings extends AppCompatActivity {
                 }
                 isAodSwitchProcessing = false;
             });
+        });
+
+        buttonStartAODActivity = findViewById(R.id.start_lenovo_aod_activity);
+        buttonStartAODActivity.setOnClickListener(v -> {
+            EnhancedShellExecutor.ShellResult executeResult = shellExecutor.executeRootCommand("am start -n com.android.systemui/com.android.systemui.aod.setting.AoDSettingActivity", 5);
+            Log.d("LenovoAODPicker",executeResult.toString());
         });
 
         // 充电动画设置
@@ -231,6 +240,9 @@ public class systemUISettings extends AppCompatActivity {
                 // 加载联想AOD设置
                 boolean lenovoAodEnabled = mPrefsUtils.loadBooleanSetting("ForceLenovoAOD", false);
                 runOnUiThread(() -> switchEnableLenovoAod.setChecked(lenovoAodEnabled));
+
+                // 加载启动联想AOD设置界面控件的可见性
+                buttonStartAODActivity.setVisibility(lenovoAodEnabled ? View.VISIBLE : View.GONE);
 
                 // 加载充电动画开关状态
                 boolean chargingAnimationEnabled = mPrefsUtils.loadBooleanSetting("No_ChargeAnimation", false);

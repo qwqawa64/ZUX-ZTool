@@ -398,6 +398,8 @@
     <string name="aod_native_enable_summary">启用原生AOD，这将增加耗电和发热</string>
     <string name="aod_lenovo_enable_title">开启联想提供的AOD显示</string>
     <string name="aod_lenovo_enable_summary">启用联想提供的AOD，这将增加耗电和发热</string>
+    <string name="aod_lenovo_activity_title">打开息屏显示图案设置页</string>
+    <string name="aod_lenovo_activity_summary">仅适用于联想息屏显示</string>
     <string name="noChargingAnimation_enable_title">关闭充电动画</string>
     <string name="noChargingAnimation_enable_summary">停用充电动画显示功能</string>
     <string name="Charge_Animation_Fix">补全充电动画列表</string>
