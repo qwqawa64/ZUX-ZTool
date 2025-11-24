@@ -10,6 +10,8 @@
     <string name="regex_label">正则表达式（可选）</string>
     <string name="loading">加载中…</string>
     <string name="seeDetail">详情</string>
+    <string name="restart_scope_required">请重启作用域</string>
+    <string name="request_retry">请再试一次</string>
     <!--主页资源值-->
     <string name="app_name">ZTool</string>
     <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
@@ -392,8 +394,10 @@
     <string name="controlCenterSummary">自定义控制中心样式</string>
     <!--系统界面 一级功能页杂项资源值-->
     <string name="aod_title">待机显示</string>
-    <string name="aod_enable_title">开启AOD显示</string>
-    <string name="aod_enable_summary">启用原生AOD，这可能增加耗电</string>
+    <string name="aod_native_enable_title">开启原生AOD显示</string>
+    <string name="aod_native_enable_summary">启用原生AOD，这将增加耗电和发热</string>
+    <string name="aod_lenovo_enable_title">开启联想提供的AOD显示</string>
+    <string name="aod_lenovo_enable_summary">启用联想提供的AOD，这将增加耗电和发热</string>
     <string name="noChargingAnimation_enable_title">关闭充电动画</string>
     <string name="noChargingAnimation_enable_summary">停用充电动画显示功能</string>
     <string name="Charge_Animation_Fix">补全充电动画列表</string>

@@ -23,7 +23,7 @@ import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
-import com.qimian233.ztool.hook.modules.systemui.ForceEnableAOD;
+import com.qimian233.ztool.hook.modules.systemui.ForceLenovoAOD;
 import com.qimian233.ztool.hook.modules.systemui.GuestModeController;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
@@ -125,7 +125,7 @@ public class HookManager {
         // 注册模块：充电动画修复模块
         registerHookModule(new ChargeAnimationFixModule());
         // 注册模块：强开联想AOD和原生AOD
-        registerHookModule(new ForceEnableAOD());
+        registerHookModule(new ForceLenovoAOD());
         initialized = true;
     }
 

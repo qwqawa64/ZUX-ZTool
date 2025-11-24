@@ -2,15 +2,16 @@ package com.qimian233.ztool.settingactivity.systemui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.Toast;
+import static android.widget.Toast.LENGTH_SHORT;
+import static android.widget.Toast.makeText;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.cardview.widget.CardView;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -18,7 +19,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.EnhancedShellExecutor;
-import com.qimian233.ztool.config.ModuleConfig;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity;
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsActivity;
@@ -33,7 +33,8 @@ public class systemUISettings extends AppCompatActivity {
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private FloatingActionButton fabRestart;
-    private MaterialSwitch switchEnableAod;
+    private MaterialSwitch switchEnableNativeAod;
+    private MaterialSwitch switchEnableLenovoAod;
     private MaterialSwitch switchChargingAnimation;
     private MaterialSwitch switchEnableGuestMode;
     private MaterialSwitch switchChargingAnimationFix;
@@ -48,6 +49,7 @@ public class systemUISettings extends AppCompatActivity {
     // 防止重复点击的标志
     private boolean isAodSwitchProcessing = false;
     private boolean isRestartProcessing = false;
+    final Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,16 +146,52 @@ public class systemUISettings extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // AOD设置 - 优化版本
-        switchEnableAod = findViewById(R.id.switch_aod);
-        switchEnableAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        // 原生AOD设置
+        switchEnableNativeAod = findViewById(R.id.switch_native_aod);
+        switchEnableNativeAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isAodSwitchProcessing) {
-                Log.d("AODSwitch", "AOD开关正在处理中，忽略重复操作");
+                Log.d("NativeAODSwitch", "AOD开关正在处理中，忽略重复操作");
                 return;
             }
-
             isAodSwitchProcessing = true;
-            setAodEnabled(isChecked);
+            handler.post(() -> {
+                setNativeAodEnabled(isChecked);
+                mPrefsUtils.saveBooleanSetting("ForceNativeAOD", isChecked);
+                Log.d("NativeAODSwitch", "Switch state saved: " + isChecked);
+
+                boolean lenovoAodEnabled = mPrefsUtils.loadBooleanSetting("ForceLenovoAOD", false);
+                if (lenovoAodEnabled) {
+                    mPrefsUtils.saveBooleanSetting("ForceLenovoAOD", false);
+                    Log.d("LenovoAODSwitch", "Switch state saved: false");
+                    switchEnableLenovoAod.setChecked(false);
+                    makeText(
+                        this, R.string.restart_scope_required,
+                        LENGTH_SHORT
+                    ).show();
+                }
+                isAodSwitchProcessing = false;
+            });
+        });
+
+        // 联想AOD，本功能和原生AOD不共存
+        switchEnableLenovoAod = findViewById(R.id.switch_lenovo_aod);
+        switchEnableLenovoAod.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isAodSwitchProcessing) {
+                Log.d("LenovoAODSwitch", "AOD开关正在处理中，忽略重复操作");
+                return;
+            }
+            isAodSwitchProcessing = true;
+            mPrefsUtils.saveBooleanSetting("ForceLenovoAOD", isChecked);
+            Log.d("LenovoAODSwitch", "Switch state saved: " + isChecked);
+
+            handler.post(() -> {
+                if (isAodEnabled()) {
+                    setNativeAodEnabled(false);
+                    Log.d("NativeAODSwitch", "Switch state saved: false");
+                    switchEnableNativeAod.setChecked(false);
+                }
+                isAodSwitchProcessing = false;
+            });
         });
 
         // 充电动画设置
@@ -186,9 +224,13 @@ public class systemUISettings extends AppCompatActivity {
     private void loadSettingsAsync() {
         new Thread(() -> {
             try {
-                // 加载AOD设置
-                boolean aodEnabled = isAodEnabled();
-                runOnUiThread(() -> switchEnableAod.setChecked(aodEnabled));
+                // 加载原生AOD设置
+                boolean aodEnabled = mPrefsUtils.loadBooleanSetting("ForceNativeAOD", false);
+                runOnUiThread(() -> switchEnableNativeAod.setChecked(aodEnabled));
+
+                // 加载联想AOD设置
+                boolean lenovoAodEnabled = mPrefsUtils.loadBooleanSetting("ForceLenovoAOD", false);
+                runOnUiThread(() -> switchEnableLenovoAod.setChecked(lenovoAodEnabled));
 
                 // 加载充电动画开关状态
                 boolean chargingAnimationEnabled = mPrefsUtils.loadBooleanSetting("No_ChargeAnimation", false);
@@ -210,9 +252,9 @@ public class systemUISettings extends AppCompatActivity {
     }
 
     /**
-     * 设置AOD启用状态 - 优化版本
+     * 启用Android原生的AOD显示
      */
-    private void setAodEnabled(final boolean enabled) {
+    private void setNativeAodEnabled(final boolean enabled) {
         new Thread(() -> {
             try {
                 String command = "settings put secure doze_always_on " + (enabled ? "1" : "0");
@@ -222,23 +264,23 @@ public class systemUISettings extends AppCompatActivity {
                 Log.d("AODSwitch", "AOD设置命令执行结果: " + (success ? "成功" : "失败") +
                         ", 退出码: " + result.exitCode);
 
-                runOnUiThread(() -> {
+                handler.post(() -> {
                     if (!success) {
                         // 恢复开关状态
-                        switchEnableAod.setChecked(!enabled);
-                        Toast.makeText(systemUISettings.this,
-                                "设置失败: " + result.error, Toast.LENGTH_SHORT).show();
+                        switchEnableNativeAod.setChecked(!enabled);
+                        makeText(this,
+                                "设置失败: " + result.error, LENGTH_SHORT).show();
                     }
                     isAodSwitchProcessing = false;
                 });
 
             } catch (Exception e) {
                 Log.e("AODSwitch", "设置AOD时出错: " + e.getMessage());
-                runOnUiThread(() -> {
+                handler.post(() -> {
                     // 恢复开关状态
-                    switchEnableAod.setChecked(!enabled);
-                    Toast.makeText(systemUISettings.this,
-                            "执行错误: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    switchEnableNativeAod.setChecked(!enabled);
+                    makeText(this,
+                            "执行错误: " + e.getMessage(), LENGTH_SHORT).show();
                     isAodSwitchProcessing = false;
                 });
             }
@@ -256,11 +298,11 @@ public class systemUISettings extends AppCompatActivity {
             if (result.isSuccess() && result.output != null) {
                 String output = result.output.trim();
                 boolean enabled = output.equals("1");
-                Log.d("AODCheck", "AOD状态: " + (enabled ? "启用" : "禁用"));
+                Log.d("AODCheck", "原生AOD状态: " + (enabled ? "启用" : "禁用"));
                 return enabled;
             }
         } catch (Exception e) {
-            Log.e("AODCheck", "检查AOD状态失败: " + e.getMessage());
+            Log.e("AODCheck", "检查原生AOD状态失败: " + e.getMessage());
         }
         return false;
     }
@@ -309,12 +351,12 @@ public class systemUISettings extends AppCompatActivity {
 
                 final boolean success = result2.isSuccess();
 
-                runOnUiThread(() -> {
+                handler.post(() -> {
                     if (success) {
-                        Toast.makeText(systemUISettings.this, R.string.restartSuccess, Toast.LENGTH_SHORT).show();
+                        makeText(this, R.string.restartSuccess, LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(systemUISettings.this,
-                                R.string.restartFail + result2.error, Toast.LENGTH_SHORT).show();
+                        makeText(this,
+                                R.string.restartFail + result2.error, LENGTH_SHORT).show();
                     }
                     resetRestartButton();
                 });
@@ -323,9 +365,9 @@ public class systemUISettings extends AppCompatActivity {
 
             } catch (Exception e) {
                 Log.e("ForceStopApp", "强制停止应用时出错: " + e.getMessage());
-                runOnUiThread(() -> {
-                    Toast.makeText(systemUISettings.this,
-                            R.string.restartFail + e.getMessage(), Toast.LENGTH_SHORT).show();
+                handler.post(() -> {
+                    makeText(this,
+                            R.string.restartFail + e.getMessage(), LENGTH_SHORT).show();
                     resetRestartButton();
                 });
             }
@@ -343,9 +385,9 @@ public class systemUISettings extends AppCompatActivity {
 
             } catch (Exception e) {
                 Log.e("ForceStopApp", "强制停止应用时出错: " + e.getMessage());
-                runOnUiThread(() -> {
-                    Toast.makeText(systemUISettings.this,
-                            R.string.restartFail + e.getMessage(), Toast.LENGTH_SHORT).show();
+                handler.post(() -> {
+                    makeText(this,
+                            R.string.restartFail + e.getMessage(), LENGTH_SHORT).show();
                     resetRestartButton();
                 });
             }
@@ -356,8 +398,10 @@ public class systemUISettings extends AppCompatActivity {
      * 重置重启按钮状态
      */
     private void resetRestartButton() {
-        isRestartProcessing = false;
-        fabRestart.setEnabled(true);
+        handler.post(() -> {
+            isRestartProcessing = false;
+            fabRestart.setEnabled(true);
+        });
     }
 
     @Override

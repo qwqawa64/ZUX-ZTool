@@ -162,7 +162,7 @@ public class LogParser {
         MODULE_NAMES.put("systemui_network_speed_size", "网速布局优化");
         MODULE_NAMES.put("systemui_network_speed_doublelayer", "网速双层显示");
         MODULE_NAMES.put("systemui_battery_percentage", "电池外百分比");
-        MODULE_NAMES.put("ForceEnableAOD", "强制开启联想AOD");
+        MODULE_NAMES.put("ForceLenovoAOD", "强制开启联想AOD");
 
         // 游戏工具相关
         MODULE_NAMES.put("Fix_CpuClock", "CPU频率修复");
@@ -543,7 +543,7 @@ public class LogParser {
                 "notification_icon_limit", "systemUI_RealWatts", "systemui_charge_watts",
                 "Custom_StatusBarClock", "StatusBarDisplay_Seconds", "Custom_ControlCenterDate",
                 "NativeNotificationIcon", "No_ChargeAnimation", "systemui_network_speed_size",
-                "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceEnableAOD"
+                "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceLenovoAOD"
         ));
 
         // 游戏工具相关

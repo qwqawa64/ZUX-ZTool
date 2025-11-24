@@ -9,9 +9,9 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-public class ForceEnableAOD extends BaseHookModule {
+public class ForceLenovoAOD extends BaseHookModule {
 
-    private static final String TAG = "ForceEnableAOD";
+    private static final String TAG = "ForceLenovoAOD";
     @Override
     public String getModuleName() {
         return TAG;
