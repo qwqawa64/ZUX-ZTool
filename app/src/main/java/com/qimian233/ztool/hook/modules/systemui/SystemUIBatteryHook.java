@@ -50,7 +50,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
                     int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             modifyBatteryLayout(param.thisObject);
                         }
                     }
@@ -61,7 +61,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
                     "updateShowPercent",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             forceShowPercentage(param.thisObject);
                         }
                     }
@@ -72,7 +72,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
                     "updatePercentText",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             updatePercentageText(param.thisObject);
                         }
                     }
@@ -83,7 +83,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
                     "scaleBatteryMeterViews",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             adjustTextSize(param.thisObject);
                         }
                     }
@@ -171,8 +171,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
             if (originalSizeRes != 0) {
                 float sizeInPixels = context.getResources().getDimension(originalSizeRes);
                 // 将像素转换为sp
-                float sizeInSp = sizeInPixels / context.getResources().getDisplayMetrics().scaledDensity;
-                return sizeInSp;
+                return sizeInPixels / context.getResources().getDisplayMetrics().scaledDensity;
             }
         } catch (Throwable t) {
             log("获取原始电池字体大小失败，使用默认值");

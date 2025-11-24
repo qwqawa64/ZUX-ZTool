@@ -68,85 +68,85 @@ public class LogParser {
         // 初始化所有模块的正则模式
         // 系统UI相关模块
         MODULE_PATTERNS.put("notification_icon_limit",
-                Pattern.compile("\\[notification_icon_limit\\]\\s*(.*)"));
+                Pattern.compile("\\[notification_icon_limit]\\s*(.*)"));
         MODULE_PATTERNS.put("systemUI_RealWatts",
-                Pattern.compile("\\[systemUI_RealWatts\\]\\s*(.*)"));
+                Pattern.compile("\\[systemUI_RealWatts]\\s*(.*)"));
         MODULE_PATTERNS.put("systemui_charge_watts",
-                Pattern.compile("\\[systemui_charge_watts\\]\\s*(.*)"));
+                Pattern.compile("\\[systemui_charge_watts]\\s*(.*)"));
         MODULE_PATTERNS.put("Custom_StatusBarClock",
-                Pattern.compile("\\[Custom_StatusBarClock\\]\\s*(.*)"));
+                Pattern.compile("\\[Custom_StatusBarClock]\\s*(.*)"));
         MODULE_PATTERNS.put("StatusBarDisplay_Seconds",
-                Pattern.compile("\\[StatusBarDisplay_Seconds\\]\\s*(.*)"));
+                Pattern.compile("\\[StatusBarDisplay_Seconds]\\s*(.*)"));
         MODULE_PATTERNS.put("Custom_ControlCenterDate",
-                Pattern.compile("\\[Custom_ControlCenterDate\\]\\s*(.*)"));
+                Pattern.compile("\\[Custom_ControlCenterDate]\\s*(.*)"));
         MODULE_PATTERNS.put("NativeNotificationIcon",
-                Pattern.compile("\\[NativeNotificationIcon\\]\\s*(.*)"));
+                Pattern.compile("\\[NativeNotificationIcon]\\s*(.*)"));
         MODULE_PATTERNS.put("No_ChargeAnimation",
-                Pattern.compile("\\[No_ChargeAnimation\\]\\s*(.*)"));
+                Pattern.compile("\\[No_ChargeAnimation]\\s*(.*)"));
         MODULE_PATTERNS.put("systemui_network_speed_size",
-                Pattern.compile("\\[systemui_network_speed_size\\]\\s*(.*)"));
+                Pattern.compile("\\[systemui_network_speed_size]\\s*(.*)"));
         MODULE_PATTERNS.put("systemui_network_speed_doublelayer",
-                Pattern.compile("\\[systemui_network_speed_doublelayer\\]\\s*(.*)"));
+                Pattern.compile("\\[systemui_network_speed_doublelayer]\\s*(.*)"));
         MODULE_PATTERNS.put("systemui_battery_percentage",
-                Pattern.compile("\\[systemui_battery_percentage\\]\\s*(.*)"));
+                Pattern.compile("\\[systemui_battery_percentage]\\s*(.*)"));
 
         // 游戏工具相关模块
         MODULE_PATTERNS.put("Fix_CpuClock",
-                Pattern.compile("\\[Fix_CpuClock\\]\\s*(.*)"));
+                Pattern.compile("\\[Fix_CpuClock]\\s*(.*)"));
         MODULE_PATTERNS.put("disguise_TB322FC",
-                Pattern.compile("\\[disguise_TB322FC\\]\\s*(.*)"));
+                Pattern.compile("\\[disguise_TB322FC]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_GameAudio",
-                Pattern.compile("\\[disable_GameAudio\\]\\s*(.*)"));
+                Pattern.compile("\\[disable_GameAudio]\\s*(.*)"));
         MODULE_PATTERNS.put("Fix_SocTemp",
-                Pattern.compile("\\[Fix_SocTemp\\]\\s*(.*)"));
+                Pattern.compile("\\[Fix_SocTemp]\\s*(.*)"));
 
         // 包安装器相关模块
         MODULE_PATTERNS.put("disable_OtaCheck",
-                Pattern.compile("\\[disable_OtaCheck\\]\\s*(.*)"));
+                Pattern.compile("\\[disable_OtaCheck]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_installerAD",
-                Pattern.compile("\\[disable_installerAD\\]\\s*(.*)"));
+                Pattern.compile("\\[disable_installerAD]\\s*(.*)"));
         MODULE_PATTERNS.put("Skip_WarnPage",
-                Pattern.compile("\\[Skip_WarnPage\\]\\s*(.*)"));
+                Pattern.compile("\\[Skip_WarnPage]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_scanAPK",
-                Pattern.compile("\\[disable_scanAPK\\]\\s*(.*)"));
+                Pattern.compile("\\[disable_scanAPK]\\s*(.*)"));
         MODULE_PATTERNS.put("Always_AllowPermission",
-                Pattern.compile("\\[Always_AllowPermission\\]\\s*(.*)"));
+                Pattern.compile("\\[Always_AllowPermission]\\s*(.*)"));
         MODULE_PATTERNS.put("packageInstallerStyle_hook",
-                Pattern.compile("\\[packageInstallerStyle_hook\\]\\s*(.*)"));
+                Pattern.compile("\\[packageInstallerStyle_hook]\\s*(.*)"));
 
         // 设置相关模块
         MODULE_PATTERNS.put("allow_display_dolby",
-                Pattern.compile("\\[allow_display_dolby\\]\\s*(.*)"));
+                Pattern.compile("\\[allow_display_dolby]\\s*(.*)"));
         MODULE_PATTERNS.put("auto_owner_info",
-                Pattern.compile("\\[auto_owner_info\\]\\s*(.*)"));
+                Pattern.compile("\\[auto_owner_info]\\s*(.*)"));
         MODULE_PATTERNS.put("PermissionControllerHook",
-                Pattern.compile("\\[PermissionControllerHook\\]\\s*(.*)"));
+                Pattern.compile("\\[PermissionControllerHook]\\s*(.*)"));
         MODULE_PATTERNS.put("Split_Screen_mandatory",
-                Pattern.compile("\\[Split_Screen_mandatory\\]\\s*(.*)"));
+                Pattern.compile("\\[Split_Screen_mandatory]\\s*(.*)"));
         MODULE_PATTERNS.put("remove_blacklist",
-                Pattern.compile("\\[remove_blacklist\\]\\s*(.*)"));
+                Pattern.compile("\\[remove_blacklist]\\s*(.*)"));
 
         // 系统框架相关
         MODULE_PATTERNS.put("allow_get_packages",
-                Pattern.compile("\\[allow_get_packages\\]\\s*(.*)"));
+                Pattern.compile("\\[allow_get_packages]\\s*(.*)"));
         MODULE_PATTERNS.put("keep_rotation",
-                Pattern.compile("\\[keep_rotation\\]\\s*(.*)"));
+                Pattern.compile("\\[keep_rotation]\\s*(.*)"));
 
         // 安全中心相关
         MODULE_PATTERNS.put("default_enable_autorun",
-                Pattern.compile("\\[default_enable_autorun\\]\\s*(.*)"));
+                Pattern.compile("\\[default_enable_autorun]\\s*(.*)"));
         MODULE_PATTERNS.put("block_safecenter_scan",
-                Pattern.compile("\\[block_safecenter_scan\\]\\s*(.*)"));
+                Pattern.compile("\\[block_safecenter_scan]\\s*(.*)"));
 
         // 桌面相关
         MODULE_PATTERNS.put("disable_force_stop",
-                Pattern.compile("\\[disable_force_stop\\]\\s*(.*)"));
+                Pattern.compile("\\[disable_force_stop]\\s*(.*)"));
         MODULE_PATTERNS.put("zui_launcher_hotseat",
-                Pattern.compile("\\[zui_launcher_hotseat\\]\\s*(.*)"));
+                Pattern.compile("\\[zui_launcher_hotseat]\\s*(.*)"));
 
         // 壁纸相关
         MODULE_PATTERNS.put("charge_animation_fix",
-                Pattern.compile("\\[charge_animation_fix\\]\\s*(.*)"));
+                Pattern.compile("\\[charge_animation_fix]\\s*(.*)"));
 
 
         // 模块显示名称映射
@@ -162,6 +162,7 @@ public class LogParser {
         MODULE_NAMES.put("systemui_network_speed_size", "网速布局优化");
         MODULE_NAMES.put("systemui_network_speed_doublelayer", "网速双层显示");
         MODULE_NAMES.put("systemui_battery_percentage", "电池外百分比");
+        MODULE_NAMES.put("ForceEnableAOD", "强制开启联想AOD");
 
         // 游戏工具相关
         MODULE_NAMES.put("Fix_CpuClock", "CPU频率修复");
@@ -213,13 +214,13 @@ public class LogParser {
         try {
             // 解析增强的日志格式: [timestamp] [mode] original_log_line
             Pattern enhancedPattern = Pattern.compile(
-                    "^\\[(.+?)\\]\\s+\\[(.+?)\\]\\s+(.+)$");
+                    "^\\[(.+?)]\\s+\\[(.+?)]\\s+(.+)$");
             Matcher enhancedMatcher = enhancedPattern.matcher(line);
 
             if (enhancedMatcher.find()) {
-                entry.timestamp = enhancedMatcher.group(1).trim();
-                entry.mode = enhancedMatcher.group(2).trim();
-                String originalLine = enhancedMatcher.group(3).trim();
+                entry.timestamp = Objects.requireNonNull(enhancedMatcher.group(1)).trim();
+                entry.mode = Objects.requireNonNull(enhancedMatcher.group(2)).trim();
+                String originalLine = Objects.requireNonNull(enhancedMatcher.group(3)).trim();
                 entry.originalLines.add(originalLine);
 
                 // 解析原始日志行
@@ -253,12 +254,12 @@ public class LogParser {
         Matcher matcher = logPattern.matcher(line);
 
         if (matcher.find()) {
-            entry.originalTimestamp = matcher.group(1).trim();
-            entry.level = matcher.group(2).trim();
-            entry.tag = matcher.group(3).trim();
+            entry.originalTimestamp = Objects.requireNonNull(matcher.group(1)).trim();
+            entry.level = Objects.requireNonNull(matcher.group(2)).trim();
+            entry.tag = Objects.requireNonNull(matcher.group(3)).trim();
 
             try {
-                entry.pid = Integer.parseInt(matcher.group(4).trim());
+                entry.pid = Integer.parseInt(Objects.requireNonNull(matcher.group(4)).trim());
             } catch (NumberFormatException e) {
                 entry.pid = -1;
             }
@@ -300,7 +301,7 @@ public class LogParser {
 
         // 增强的函数名模式，支持更多操作类型
         Pattern functionPattern = Pattern.compile(
-                "(Successfully|Failed to|开始|修改|成功|失败|执行|更新|添加|读取|拦截|Hook|清除|设置|修复|伪装|禁用|跳过|允许|强制)\\s+(hook|Hook|执行|修改|更新|添加|读取|拦截|清除|设置|修复|伪装|禁用|跳过|允许|强制)?\\s*([\\w]+)");
+                "(Successfully|Failed to|开始|修改|成功|失败|执行|更新|添加|读取|拦截|Hook|清除|设置|修复|伪装|禁用|跳过|允许|强制)\\s+(hook|Hook|执行|修改|更新|添加|读取|拦截|清除|设置|修复|伪装|禁用|跳过|允许|强制)?\\s*(\\w+)");
         Matcher matcher = functionPattern.matcher(content);
 
         if (matcher.find()) {
@@ -461,7 +462,7 @@ public class LogParser {
                 entry.message.contains("型号") || entry.message.contains("model")) {
 
             // 提取设备型号
-            Pattern modelPattern = Pattern.compile("型号[:：]\\s*([\\w]+)");
+            Pattern modelPattern = Pattern.compile("型号[:：]\\s*(\\w+)");
             Matcher modelMatcher = modelPattern.matcher(entry.message);
             if (modelMatcher.find()) {
                 entry.extractedData.put("device_model", modelMatcher.group(1));
@@ -542,7 +543,7 @@ public class LogParser {
                 "notification_icon_limit", "systemUI_RealWatts", "systemui_charge_watts",
                 "Custom_StatusBarClock", "StatusBarDisplay_Seconds", "Custom_ControlCenterDate",
                 "NativeNotificationIcon", "No_ChargeAnimation", "systemui_network_speed_size",
-                "systemui_network_speed_doublelayer", "systemui_battery_percentage"
+                "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceEnableAOD"
         ));
 
         // 游戏工具相关
@@ -601,13 +602,13 @@ public class LogParser {
 
             while ((line = reader.readLine()) != null) {
                 // 解析增强格式
-                Pattern enhancedPattern = Pattern.compile("^\\[(.+?)\\]\\s+\\[(.+?)\\]\\s+(.+)$");
+                Pattern enhancedPattern = Pattern.compile("^\\[(.+?)]\\s+\\[(.+?)]\\s+(.+)$");
                 Matcher enhancedMatcher = enhancedPattern.matcher(line);
 
                 if (enhancedMatcher.find()) {
-                    String timestamp = enhancedMatcher.group(1).trim();
-                    String mode = enhancedMatcher.group(2).trim();
-                    String originalLine = enhancedMatcher.group(3).trim();
+                    String timestamp = Objects.requireNonNull(enhancedMatcher.group(1)).trim();
+                    String mode = Objects.requireNonNull(enhancedMatcher.group(2)).trim();
+                    String originalLine = Objects.requireNonNull(enhancedMatcher.group(3)).trim();
 
                     // 检查是否包含模块标识
                     boolean hasModule = false;
@@ -640,7 +641,7 @@ public class LogParser {
 
                         // 提取模块信息
                         currentEntry.module = detectedModule;
-                        extractFunctionInfo(currentEntry, originalLine.replaceFirst("\\[" + detectedModule + "\\]\\s*", ""));
+                        extractFunctionInfo(currentEntry, originalLine.replaceFirst("\\[" + detectedModule + "]\\s*", ""));
 
                         // 提取特定数据
                         extractSpecificData(currentEntry);
