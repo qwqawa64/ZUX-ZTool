@@ -113,6 +113,8 @@ public class LogParser {
                 Pattern.compile("\\[Always_AllowPermission]\\s*(.*)"));
         MODULE_PATTERNS.put("packageInstallerStyle_hook",
                 Pattern.compile("\\[packageInstallerStyle_hook]\\s*(.*)"));
+        MODULE_PATTERNS.put("package_installer_disable_delete",
+                Pattern.compile("\\[package_installer_disable_delete]\\s*(.*)"));
 
         // 设置相关模块
         MODULE_PATTERNS.put("allow_display_dolby",
@@ -177,6 +179,7 @@ public class LogParser {
         MODULE_NAMES.put("disable_scanAPK", "禁用APK扫描");
         MODULE_NAMES.put("Always_AllowPermission", "始终允许权限");
         MODULE_NAMES.put("packageInstallerStyle_hook", "包安装器样式");
+        MODULE_NAMES.put("package_installer_disable_delete", "禁止删除安装包");
 
         // 设置相关
         MODULE_NAMES.put("allow_display_dolby", "杜比显示");
@@ -554,7 +557,7 @@ public class LogParser {
         // 包安装器相关
         categories.put("包安装器", Arrays.asList(
                 "disable_OtaCheck", "disable_installerAD", "Skip_WarnPage",
-                "disable_scanAPK", "Always_AllowPermission", "packageInstallerStyle_hook"
+                "disable_scanAPK", "Always_AllowPermission", "packageInstallerStyle_hook", "package_installer_disable_delete"
         ));
 
         // 设置相关

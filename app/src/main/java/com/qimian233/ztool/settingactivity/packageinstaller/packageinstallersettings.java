@@ -49,6 +49,7 @@ public class packageinstallersettings extends AppCompatActivity {
     private MaterialSwitch switchSkipWarnPage;
     private MaterialSwitch switchDisableInstallerAD;
     private MaterialSwitch switchEnableRowStyle;
+    private MaterialSwitch switchDisableDeletePackage;
     private LinearLayout layoutOtaInfo;
     private FloatingActionButton fabRestart;
 
@@ -126,6 +127,15 @@ public class packageinstallersettings extends AppCompatActivity {
             }
         });
 
+        // 拦截删除安装包行为
+        switchDisableDeletePackage = findViewById(R.id.switch_disable_delete);
+        switchDisableDeletePackage.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveSettings("package_installer_disable_delete",isChecked);
+            }
+        });
+
     }
 
     private void loadSettings() {
@@ -144,6 +154,9 @@ public class packageinstallersettings extends AppCompatActivity {
         // 加载启用原生安装器样式设置
         boolean packageInstallerStyle_hook = mPrefsUtils.loadBooleanSetting("packageInstallerStyle_hook", false);
         switchEnableRowStyle.setChecked(packageInstallerStyle_hook);
+        // 加载拦截删除安装包行为设置
+        boolean package_installer_disable_delete = mPrefsUtils.loadBooleanSetting("package_installer_disable_delete", false);
+        switchDisableDeletePackage.setChecked(package_installer_disable_delete);
     }
 
     private void saveSettings(String moduleName,Boolean newValue) {

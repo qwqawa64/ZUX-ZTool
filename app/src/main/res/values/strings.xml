@@ -383,6 +383,8 @@
     <string name="Disable_installerAD_Summary">安装完成后的界面不再显示广告</string>
     <string name="Enable_rowStyle_title">启用原生安装器</string>
     <string name="Enable_rowStyle_summary">启用原生安装器样式</string>
+    <string name="Disable_deletePackage_Title">不要删除安装包</string>
+    <string name="Disable_deletePackage_Summary">拦截安装器安装完成后的删除安装包行为</string>
     <!--系统界面 一级功能页导航资源值-->
     <string name="SystemUI_title">系统界面</string>
     <string name="SystemUIActionBar"> - 系统界面设置</string>

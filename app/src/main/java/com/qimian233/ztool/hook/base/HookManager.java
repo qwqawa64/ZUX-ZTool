@@ -7,6 +7,7 @@ import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
+import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
 import com.qimian233.ztool.hook.modules.safecenter.SafeCenterScanBlocker;
 import com.qimian233.ztool.hook.modules.setting.KeepRotation;
@@ -126,6 +127,8 @@ public class HookManager {
         registerHookModule(new ChargeAnimationFixModule());
         // 注册模块：强开联想AOD和原生AOD
         registerHookModule(new ForceLenovoAOD());
+        // 注册模块：拦截删除安装包行为
+        registerHookModule(new PackageInstallerNoDeleteModule());
         initialized = true;
     }
 
