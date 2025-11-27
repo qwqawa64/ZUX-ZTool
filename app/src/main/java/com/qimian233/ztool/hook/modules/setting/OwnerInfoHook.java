@@ -272,7 +272,8 @@ public class OwnerInfoHook extends BaseHookModule {
                 // log("API_URL: " + API_URL);
                 // 处理可能的URL协议保存问题，这里添加补全协议的逻辑
                 if (API_URL != null && !API_URL.isEmpty()) {
-                    if (!API_URL.startsWith("http://") && !API_URL.startsWith("https://")) {
+                    if (!API_URL.startsWith("http://") && !API_URL.startsWith("https://") &&
+                            !API_URL.startsWith("Https://") && !API_URL.startsWith("Http://")) {
                         API_URL = "https://" + API_URL;
                     }
                 } else {
