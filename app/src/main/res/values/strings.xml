@@ -391,7 +391,7 @@
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>
-    <string name="LockScreenSummary">锁屏一言、充电功率显示等设置</string>
+    <string name="LockScreenSummary">锁屏随即签名、充电功率显示等设置</string>
     <string name="controlCenterTitle">控制中心设置</string>
     <string name="controlCenterSummary">自定义控制中心样式</string>
     <!--系统界面 一级功能页杂项资源值-->
@@ -458,8 +458,8 @@
     <string name="syatusBatteryExternalSummary">在电池图标右侧显示剩余的电量，请先关闭系统设置的百分比显示</string>
     <!--系统界面 锁屏页资源值-->
     <string name="YiYanTile">锁屏一言</string>
-    <string name="YiYanSwitchTitle">显示锁屏一言</string>
-    <string name="YiYanSummary">在锁屏页面显示自定义文本</string>
+    <string name="YiYanSwitchTitle">随机锁屏签名</string>
+    <string name="YiYanSummary">在锁屏页面显示从网络获取的随机文本</string>
     <string name="ChargeWattsTitle">显示充电功率</string>
     <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限\n* 重启作用域后不一定立刻生效</string>
@@ -555,8 +555,8 @@
     <string name="force_stop_success">已重启应用进程</string>
     <string name="force_stop_fail">重启失败</string>
     <string name="disable_force_stop_title">启动器行为</string>
-    <string name="disable_force_stop_enable_title">禁止划卡杀后台</string>
-    <string name="disable_force_stop_enable_summary">保证后台服务存活</string>
+    <string name="disable_force_stop_enable_title">原生后台管理</string>
+    <string name="disable_force_stop_enable_summary">联想的后台策略比较激进，开启后使用原生后台策略，保证后台服务存活</string>
     <string name="dock_Title">dock栏</string>
     <string name="moreBig_dockTitle">更大的Dock栏</string>
     <string name="moreBig_dockSummary">解除dock栏的图标数量限制，能够塞下更多图标</string>
