@@ -10,8 +10,8 @@ android {
         applicationId = "com.qimian233.ztool"
         minSdk = 27
         targetSdk = 36
-        versionCode = 7
-        versionName = "Demo/251114"
+        versionCode = 8
+        versionName = "Demo/251127"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
