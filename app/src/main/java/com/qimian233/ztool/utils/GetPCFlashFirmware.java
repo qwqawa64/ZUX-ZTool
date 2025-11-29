@@ -97,14 +97,14 @@ public class GetPCFlashFirmware {
             String jsonBody = "{\"mtm\":\"" + mtm + "\"}";
 
             String response = sendPostRequest(urlStr, jsonBody);
-            String[] result = {extractEverything(response, "download_url"), // Download URL
+            return new String[]{
+                    extractEverything(response, "download_url"), // Download URL
                     "FC(fv:SknR", // Password, found in official tool
                     extractEverything(response, "platform"), // Platform type, Qualcomm or MTK
                     extractEverything(response, "flashing_machine_method"), // Method
                     extractEverything(response, "add_time"), // Uncertain, maybe first upload time?
                     extractEverything(response, "upd_time") // Last update time
             };
-            return result;
 
         } catch (Exception e) {
             Log.w(TAG, "获取下载链接时发生错误: " + e.getMessage());
@@ -186,26 +186,6 @@ public class GetPCFlashFirmware {
         return null;
     }
 
-    /**
-     * 从JSON响应中提取下载链接（使用Gson解析）
-     */
-    private String extractDownloadUrl(String jsonResponse) {
-        try {
-            Gson gson = new Gson();
-            JsonObject response = gson.fromJson(jsonResponse, JsonObject.class);
-            JsonArray dataArray = response.getAsJsonArray("data");
-
-            if (dataArray != null && !dataArray.isEmpty()) {
-                JsonObject firmwareInfo = dataArray.get(0).getAsJsonObject();
-                //Log.d(TAG, "提取到的下载链接：" + result);
-                return firmwareInfo.get("download_url").getAsString();
-            }
-        } catch (JsonSyntaxException e) {
-            Log.e(TAG, "Failed to parse download URL using Gson", e);
-        }
-        return null;
-    }
-
     private String extractEverything(String jsonResponse, String key) {
         try {
             Gson gson = new Gson();
@@ -214,8 +194,7 @@ public class GetPCFlashFirmware {
 
             if (dataArray != null && !dataArray.isEmpty()) {
                 JsonObject firmwareInfo = dataArray.get(0).getAsJsonObject();
-                String result = firmwareInfo.get(key).getAsString();
-                return result;
+                return firmwareInfo.get(key).getAsString();
             }
         } catch (JsonSyntaxException e) {
             Log.e(TAG, "Failed to parse assigned content", e);

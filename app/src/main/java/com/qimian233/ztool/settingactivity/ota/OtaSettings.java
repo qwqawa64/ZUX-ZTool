@@ -142,7 +142,7 @@ public class OtaSettings extends AppCompatActivity {
                 // 回到UI线程显示对话框
                 runOnUiThread(() -> showOtaInfoDialog(otaInfo));
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
                 runOnUiThread(() -> Toast.makeText(OtaSettings.this, getString(R.string.ota_info_fetch_failed) + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
