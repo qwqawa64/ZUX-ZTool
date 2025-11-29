@@ -3,8 +3,10 @@
     <string name="tooltip_content_description">提示</string>
     <string name="save">保存</string>
     <string name="delete">删除</string>
+    <string name="confirm">确认</string>
     <string name="cancel">取消</string>
     <string name="test">测试</string>
+    <string name="retry">重试</string>
     <string name="nextStep">下一步</string>
     <string name="regex_label_title">正则表达式</string>
     <string name="regex_label">正则表达式（可选）</string>
@@ -190,6 +192,7 @@
     <string name="ota_info_fetch_failed">读取OTA信息失败: </string>
     <string name="no_changelog_available">无可用更新日志</string>
     <string name="no_download_link">无下载链接</string>
+    <string name="firmware_query_failed">获取固件信息失败</string>
     <string name="version_info_format">当前版本: %s\n新版本: %s</string>
     <string name="download_info_format">下载链接: %s\n文件大小: %s\nMD5: %s</string>
     <string name="ota_update_info_title">OTA更新信息</string>
@@ -201,6 +204,16 @@
     <string name="ota_info_clipboard_label">OTA信息</string>
     <string name="restart_failed">重启失败</string>
     <string name="changelog_full_format">版本信息:\n当前版本: %1$s\n新版本: %2$s\n\n更新日志:\n%3$s\n\n文件信息:\n文件大小: %4$s\nMD5: %5$s</string>
+    <string name="PCFlashFirmwareFetch_title">获取9008救砖包链接</string>
+    <string name="PCFlashFirmwareFetch_summary">根据提供的SN在服务器上抓取当前最新救砖包</string>
+    <string name="ProvideSerialNumber">在下方填写希望获取刷机包设备的SN，留空将使用本机SN尝试获取</string>
+    <string name="SN_default_hint">请输入SN码，可以在设备设置、平板上的贴纸或者包装盒等地找到它</string>
+    <string name="SN_current_machine_hint">当前使用本机SN: %s</string>
+    <string name="PCFlashFirmwareFetch_result">固件获取结果</string>
+    <string name="copy_password">复制密码</string>
+    <string name="password_copied">密码已复制到剪贴板</string>
+    <string name="PCFlashFirmwareFetch_error">无法获取9008固件</string>
+    <string name="PCFlashFirmwareFetch_failed_message">获取下载链接的过程中出错。检查网络状况并确认SN是否正确输入，然后再试一次。</string>
     <!--设置页：代码内资源值-->
     <!-- 详细设置相关字符串 -->
     <string name="settings_detail_title_suffix"> - 详细设置</string>

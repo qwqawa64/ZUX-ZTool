@@ -638,8 +638,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
      */
     private String formatTimestamp(long timestamp) {
         try {
+            // 默认假设是秒级时间戳，转换为毫秒级
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss", Locale.getDefault());
-            return sdf.format(new Date(timestamp));
+            return sdf.format(new Date(timestamp * 1000L));
         } catch (Exception e) {
             return String.valueOf(timestamp);
         }

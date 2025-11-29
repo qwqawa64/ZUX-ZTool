@@ -3,12 +3,10 @@ package com.qimian233.ztool.settingactivity.ota;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,16 +14,17 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.qimian233.ztool.EnhancedShellExecutor;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
+import com.qimian233.ztool.utils.GetPCFlashFirmware;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -36,17 +35,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 public class OtaSettings extends AppCompatActivity {
 
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
-    private MaterialSwitch switchDisableAudio;
-    private LinearLayout layoutOtaInfo;
-    private FloatingActionButton fabRestart;
+    private MaterialSwitch switchDisableOTACheck;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,66 +73,77 @@ public class OtaSettings extends AppCompatActivity {
         loadSettings();
         initRestartButton();
     }
-
     private void initViews() {
         // 初始化视图
 
-        // 禁用游戏音频优化设置
-        switchDisableAudio = findViewById(R.id.switch_disable_OtaCHeck);
-        switchDisableAudio.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("disable_OtaCheck",isChecked);
-            }
-        });
+        // 启用本地安装选项
+        switchDisableOTACheck = findViewById(R.id.switch_disable_OtaCHeck);
+        switchDisableOTACheck.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_OtaCheck", isChecked));
 
         // OTA信息拉取功能
-        layoutOtaInfo = findViewById(R.id.layout_ota_info);
-        layoutOtaInfo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fetchOtaInfo();
+        LinearLayout layoutOtaInfo = findViewById(R.id.layout_ota_info);
+        layoutOtaInfo.setOnClickListener(v -> fetchOtaInfo());
+
+        // 获取9008刷机包功能
+        LinearLayout layoutGet9008Firmware = findViewById(R.id.layout_fetch_pc_flash_firmware);
+        layoutGet9008Firmware.setOnClickListener(v -> {
+            // 创建并显示dialog
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+            View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pcflash_fetch, null);
+
+            // 首先获取本机SN并设置hint
+            TextInputLayout textInputLayout = dialogView.findViewById(R.id.text_input_layout);
+            if (textInputLayout != null) {
+                String machineSN = getMachineSNByProps();
+                if (machineSN != null && !machineSN.isEmpty()) {
+                    textInputLayout.setHint(getString(R.string.SN_current_machine_hint, machineSN));
+                } else {
+                    textInputLayout.setHint(R.string.SN_default_hint);
+                }
             }
+
+            builder.setView(dialogView)
+                   .setTitle(R.string.PCFlashFirmwareFetch_title)
+                   .setPositiveButton(R.string.confirm, (dialog, which) -> {
+                       TextInputEditText etMachineSN = dialogView.findViewById(R.id.et_machine_sn);
+                       String inputSN = Objects.requireNonNull(etMachineSN.getText()).toString().trim();
+                       if (!inputSN.isEmpty()) {
+                           // 使用输入的SN
+                           getPCFlashFirmwareLink(inputSN);
+                       } else {
+                           // 使用本机SN
+                           getPCFlashFirmwareLink(getMachineSNByProps());
+                       }
+                   })
+                   .setNegativeButton(R.string.cancel, null)
+                   .show();
         });
     }
 
     private void loadSettings() {
-        // 加载禁用游戏音频优化设置
+        // 加载开启本地安装选项
         boolean removeBlacklistEnabled = mPrefsUtils.loadBooleanSetting("disable_OtaCheck", false);
-        switchDisableAudio.setChecked(removeBlacklistEnabled);
+        switchDisableOTACheck.setChecked(removeBlacklistEnabled);
     }
 
-    private void saveSettings(String moduleName,Boolean newValue) {
-        // 保存禁用游戏音频优化设置
+    private void saveSettings(String moduleName, Boolean newValue) {
+        // 保存开启本地安装选项
         mPrefsUtils.saveBooleanSetting(moduleName, newValue);
     }
 
     private void fetchOtaInfo() {
         // 在后台线程中执行文件读取操作
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String filePath = "/data_mirror/data_ce/null/0/com.lenovo.tbengine/shared_prefs/lenovo_row_ota_package_info.xml";
-                    String xmlContent = readFileWithRoot(filePath);
-                    Map<String, String> otaInfo = parseOtaInfoXml(xmlContent);
+        new Thread(() -> {
+            try {
+                String filePath = "/data_mirror/data_ce/null/0/com.lenovo.tbengine/shared_prefs/lenovo_row_ota_package_info.xml";
+                String xmlContent = readFileWithRoot(filePath);
+                Map<String, String> otaInfo = parseOtaInfoXml(xmlContent);
 
-                    // 回到UI线程显示对话框
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            showOtaInfoDialog(otaInfo);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(OtaSettings.this, getString(R.string.ota_info_fetch_failed) + e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
+                // 回到UI线程显示对话框
+                runOnUiThread(() -> showOtaInfoDialog(otaInfo));
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(OtaSettings.this, getString(R.string.ota_info_fetch_failed) + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
     }
@@ -171,11 +182,11 @@ public class OtaSettings extends AppCompatActivity {
 
         Log.i("readFileWithRoot", "Exit code: " + exitCode);
         Log.i("readFileWithRoot", "Content length: " + content.length());
-        Log.i("readFileWithRoot", "Error content: " + errorContent.toString());
+        Log.i("readFileWithRoot", "Error content: " + errorContent);
 
         if (exitCode != 0 || content.length() == 0) {
             throw new IOException("Root command failed. Exit code: " + exitCode +
-                    ", Error: " + errorContent.toString());
+                    ", Error: " + errorContent);
         }
 
         return content.toString();
@@ -189,7 +200,7 @@ public class OtaSettings extends AppCompatActivity {
         parser.setInput(new StringReader(xmlContent));
 
         int eventType = parser.getEventType();
-        String currentKey = null;
+        String currentKey;
 
         while (eventType != XmlPullParser.END_DOCUMENT) {
             if (eventType == XmlPullParser.START_TAG) {
@@ -262,6 +273,7 @@ public class OtaSettings extends AppCompatActivity {
         String changelog = getChangelogByLocale(otaInfo);
 
         // 格式化文件大小
+        assert sizeStr != null;
         long size = Long.parseLong(sizeStr);
         String formattedSize = formatFileSize(size);
 
@@ -274,31 +286,95 @@ public class OtaSettings extends AppCompatActivity {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.ota_update_info_title)
                 .setView(dialogView)
-                .setPositiveButton(R.string.copy_download_link, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        copyToClipboard(downloadUrl);
-                        Toast.makeText(OtaSettings.this, R.string.download_link_copied, Toast.LENGTH_SHORT).show();
-                    }
+                .setPositiveButton(R.string.copy_download_link, (dialog, which) -> {
+                    copyToClipboard(downloadUrl);
+                    Toast.makeText(OtaSettings.this, R.string.download_link_copied, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton(R.string.copy_changelog, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // 构建不包含下载链接的更新日志信息
-                        String changelogText = String.format(
-                                getString(R.string.changelog_full_format),
-                                fromVersion, toVersion, changelog, formattedSize, md5
-                        );
-                        copyToClipboard(changelogText);
-                        Toast.makeText(OtaSettings.this, R.string.changelog_copied, Toast.LENGTH_SHORT).show();
-                    }
+                .setNegativeButton(R.string.copy_changelog, (dialog, which) -> {
+                    // 构建不包含下载链接的更新日志信息
+                    String changelogText = String.format(
+                            getString(R.string.changelog_full_format),
+                            fromVersion, toVersion, changelog, formattedSize, md5
+                    );
+                    copyToClipboard(changelogText);
+                    Toast.makeText(OtaSettings.this, R.string.changelog_copied, Toast.LENGTH_SHORT).show();
                 })
                 .setNeutralButton(R.string.close, null)
                 .show();
     }
 
+    // 从三个Property中读取SN，优先使用GSN
+    private String getMachineSNByProps(){
+        EnhancedShellExecutor shellExecutor = EnhancedShellExecutor.getInstance();
+        EnhancedShellExecutor.ShellResult shellResult = shellExecutor.executeRootCommand("getprop ro.odm.lenovo.gsn",5);
+        if (shellResult.isSuccess() && !shellResult.output.isEmpty()) return shellResult.output;
+        shellResult = shellExecutor.executeRootCommand("getprop ro.serialno",5);
+        if (shellResult.isSuccess() && !shellResult.output.isEmpty()) return shellResult.output;
+        shellResult = shellExecutor.executeRootCommand("getprop ro.boot.serialno",5);
+        if (shellResult.isSuccess() && !shellResult.output.isEmpty()) return shellResult.output;
+        return null;
+    }
+
+    // 根据提供的SN码从联想服务器拉取9008救砖包
+    // 使用异步方式获取固件信息
+    private void getPCFlashFirmwareLink(String machineSN) {
+        GetPCFlashFirmware utils = new GetPCFlashFirmware();
+        utils.queryFirmwareAsync(machineSN, this::showFirmwareInfoDialog);
+    }
+
+    private void showFirmwareInfoDialog(String[] firmwareInfo){
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+
+        if (firmwareInfo == null || firmwareInfo.length < 6) {
+            builder.setTitle(R.string.PCFlashFirmwareFetch_error)
+                   .setMessage(R.string.PCFlashFirmwareFetch_failed_message)
+                   .setPositiveButton(R.string.retry, (dialog, which) -> {
+                       // 重新获取SN并再次查询
+                       TextInputLayout textInputLayout = findViewById(R.id.text_input_layout);
+                       assert textInputLayout.getEditText() != null;
+                       String inputSN = Objects.requireNonNull(textInputLayout.getEditText().getText()).toString().trim();
+                       if (!inputSN.isEmpty()) {
+                           getPCFlashFirmwareLink(inputSN);
+                       } else {
+                           getPCFlashFirmwareLink(getMachineSNByProps());
+                       }
+                   })
+                   .setNegativeButton(R.string.cancel, null)
+                   .show();
+            return;
+        }
+
+        builder.setTitle(R.string.PCFlashFirmwareFetch_result)
+               .setMessage("下载链接：" + firmwareInfo[0]
+                       + '\n' + "解压密码：" + firmwareInfo[1]
+                       + '\n' + "平台/刷机方法：" + firmwareInfo[2] + "平台，" + firmwareInfo[3]
+                       + '\n' + "首次上传时间：" + formatTimestamp(Long.parseLong(firmwareInfo[4]))
+                       + '\n' + "最后更新时间：" + formatTimestamp(Long.parseLong(firmwareInfo[5]))
+               )
+               .setPositiveButton(R.string.copy_download_link, (dialog, which) -> {
+                   copyToClipboard(firmwareInfo[0]);
+                   Toast.makeText(OtaSettings.this, R.string.download_link_copied, Toast.LENGTH_SHORT).show();
+               })
+               .setNegativeButton(R.string.copy_password, (dialog, which) -> {
+                   copyToClipboard(firmwareInfo[1]);
+                   Toast.makeText(OtaSettings.this, R.string.password_copied, Toast.LENGTH_SHORT).show();
+               })
+               .setNeutralButton(R.string.close, null)
+               .show();
+    }
+
+    private String formatTimestamp(long timestamp) {
+        try {
+            // 默认假设是秒级时间戳，转换为毫秒级
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss", Locale.getDefault());
+            return sdf.format(new Date(timestamp * 1000L));
+        } catch (Exception e) {
+            return String.valueOf(timestamp);
+        }
+    }
+
     private void initRestartButton() {
-        fabRestart = findViewById(R.id.fab_restart);
+        FloatingActionButton fabRestart = findViewById(R.id.fab_restart);
         fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
     }
 
