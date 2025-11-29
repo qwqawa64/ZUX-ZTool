@@ -328,18 +328,7 @@ public class OtaSettings extends AppCompatActivity {
         if (firmwareInfo == null || firmwareInfo.length < 6) {
             builder.setTitle(R.string.PCFlashFirmwareFetch_error)
                    .setMessage(R.string.PCFlashFirmwareFetch_failed_message)
-                   .setPositiveButton(R.string.retry, (dialog, which) -> {
-                       // 重新获取SN并再次查询
-                       TextInputLayout textInputLayout = findViewById(R.id.text_input_layout);
-                       assert textInputLayout.getEditText() != null;
-                       String inputSN = Objects.requireNonNull(textInputLayout.getEditText().getText()).toString().trim();
-                       if (!inputSN.isEmpty()) {
-                           getPCFlashFirmwareLink(inputSN);
-                       } else {
-                           getPCFlashFirmwareLink(getMachineSNByProps());
-                       }
-                   })
-                   .setNegativeButton(R.string.cancel, null)
+                   .setNegativeButton(R.string.confirm, null)
                    .show();
             return;
         }
