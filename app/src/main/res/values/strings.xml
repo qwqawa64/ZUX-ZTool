@@ -170,6 +170,15 @@
     <string name="restartFail">重启失败：</string>
     <!--从这里开始是各项Hook功能的资源值-->
     <!--游戏助手功能页资源值-->
+    <string name="SelectDefault">不开启</string>
+    <string name="SelectAllGames">全部游戏</string>
+    <string name="SelectWhiteList">白名单内</string>
+    <string name="SelectGame">选择游戏</string>
+    <string name="whitelist_config_title">配置白名单</string>
+    <string name="whitelist_config_summary">当前已启用X个游戏</string>
+    <string name="whitelist_count">已启用 %d 个游戏</string>
+    <string name="auto_open_prevent_touch_title">自动开启防误触</string>
+    <string name="auto_open_prevent_touch_summary">在游戏启动时候，允许白名单内或所有游戏自动开启防误触</string>
     <string name="game_tool_settings_title_suffix"> - 详细设置</string>
     <string name="restart_fail_short">重启失败</string>
     <string name="function_title">功能拓展</string>
@@ -634,4 +643,6 @@
     <string name="gotoFeaturePage">功能</string>
     <string name="gotoLogPage">日志</string>
     <string name="gotoSettingsPage">设置</string>
+    <!--应用名单选择界面弹窗-->
+    <string name="SearchHint">搜索...</string>
 </resources>

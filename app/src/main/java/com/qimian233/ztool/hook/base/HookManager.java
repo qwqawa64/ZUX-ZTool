@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.base;
 
+import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook;
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
@@ -129,6 +130,8 @@ public class HookManager {
         registerHookModule(new ForceLenovoAOD());
         // 注册模块：拦截删除安装包行为
         registerHookModule(new PackageInstallerNoDeleteModule());
+        // 注册模块：自动开启防误触
+        registerHookModule(new AutoMistakeTouchHook());
         initialized = true;
     }
 

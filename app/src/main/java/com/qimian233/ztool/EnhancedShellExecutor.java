@@ -56,7 +56,8 @@ public class EnhancedShellExecutor {
             "apd -v",                              // APatch检测
             "getprop ro.lsposed.version",          // LSPosed版本检测
             "ls -la /data/adb/modules/ | grep -i lsposed", // LSPosed目录检测
-            "uname -r"                             // 内核版本检测
+            "uname -r",                             // 内核版本检测
+            "ls /data/system_ce/0/managed_apps/"    // 游戏包名检测
     ));
 
     private EnhancedShellExecutor() {
