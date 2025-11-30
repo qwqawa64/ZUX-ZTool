@@ -76,7 +76,8 @@
     <string name="safe_center_app_name">安全中心</string>
     <string name="safe_center_app_description">ZUI/ZUX的安全中心</string>
     <!--日志页资源值-->
-    <string name="logFilter">日志过滤器</string>
+    <string name="logsFragment_title">日志</string>
+    <string name="logFilter">过滤器</string>
     <string name="filterByType">类别</string>
     <string name="filterByModule">模块</string>
     <string name="filterByLevel">级别</string>
@@ -456,7 +457,7 @@
     <!--系统界面 状态栏通知资源值-->
     <string name="status_bar_notification_settings_title">状态栏通知设置</string>
     <string name="notification_icon_limit_title">通知图标数量限制</string>
-    <string name="notification_icon_limit_summary">设置状态栏显示的通知图标最大数量</string>
+    <string name="notification_icon_limit_summary">设置状态栏显示的通知图标最大数量，系统默认为4</string>
     <string name="notification_icon_native_title">使用原生通知图标</string>
     <string name="notification_icon_native_summary">对未适配APP无效</string>
     <string name="status_bar_settings_title_suffix"> - 状态栏设置</string>

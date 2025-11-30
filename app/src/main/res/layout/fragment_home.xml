@@ -10,15 +10,16 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
 
-        <!-- 页面标题：加大视觉权重，居中对齐 -->
+        <!-- 统一标题样式 -->
         <TextView
             android:id="@+id/title_home"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/homeFragment_title"
-            android:textSize="28sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintEnd_toEndOf="parent"
@@ -84,86 +85,86 @@
             app:layout_constraintTop_toBottomOf="@id/card_requirements"
             android:foreground="?attr/selectableItemBackground">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="16dp">
-
-            <!-- 卡片标题 -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/environmentState"
-                android:textColor="?attr/colorOnSecondaryContainer"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <!-- 核心状态区：对勾图标 + “模块已激活”文字 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <!-- 对勾图标（需准备一个矢量图，如 ic_check_circle.xml） -->
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_check_circle"
-                    app:tint="?attr/colorPrimary"
-                    tools:ignore="ContentDescription" />
-
-                <TextView
-                    android:id="@+id/text_module_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/moduleActivated"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- 技术参数区：模块版本、Root来源、框架版本 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:orientation="vertical"
-                android:spacing="10dp"> <!-- 增加行间距，提升可读性 -->
+                android:gravity="center"
+                android:padding="16dp">
 
+                <!-- 卡片标题 -->
                 <TextView
-                    android:id="@+id/text_module_version"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/loading"
+                    android:text="@string/environmentState"
                     android:textColor="?attr/colorOnSecondaryContainer"
-                    android:textSize="15sp" />
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/text_root_source"
+                <!-- 核心状态区：对勾图标 + "模块已激活"文字 -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:textColor="?attr/colorOnSecondaryContainer"
-                    android:textSize="12sp" />
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/text_framework_version"
-                    android:layout_width="wrap_content"
+                    <!-- 对勾图标（需准备一个矢量图，如 ic_check_circle.xml） -->
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_check_circle"
+                        app:tint="?attr/colorPrimary"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/text_module_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/moduleActivated"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- 技术参数区：模块版本、Root来源、框架版本 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:textColor="?attr/colorOnSecondaryContainer"
-                    android:textSize="12sp" />
+                    android:layout_marginTop="16dp"
+                    android:orientation="vertical"
+                    android:spacing="10dp"> <!-- 增加行间距，提升可读性 -->
+
+                    <TextView
+                        android:id="@+id/text_module_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/loading"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/text_root_source"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/loading"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/text_framework_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/loading"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
+        </androidx.cardview.widget.CardView>
 
         <!-- 3. 设备与系统信息卡片：优化列表布局，统一对齐方式 -->
         <androidx.cardview.widget.CardView

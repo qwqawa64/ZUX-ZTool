@@ -11,14 +11,16 @@
         android:padding="8dp"
         android:orientation="vertical">
 
-        <androidx.appcompat.widget.Toolbar
-            android:layout_marginTop="16dp"
-            android:id="@+id/toolbar"
+        <!-- 统一标题样式 -->
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorSurface"
-            android:titleTextColor="?attr/colorOnPrimary"
-            app:title="@string/settingsFragment_title" />
+            android:layout_height="wrap_content"
+            android:text="@string/settingsFragment_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            android:gravity="center"
+            android:padding="16dp" />
 
         <ScrollView
             android:layout_width="match_parent"
@@ -237,7 +239,7 @@
 
                 </androidx.cardview.widget.CardView>
 
-                <!-- 日志服务卡片 -->
+                <!-- 关于卡片 -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/show_about_page"
                     android:layout_width="match_parent"

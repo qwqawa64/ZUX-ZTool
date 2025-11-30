@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginTop="16dp"
+    android:layout_marginTop="26dp"
     android:background="?attr/colorSurface">
 
-    <!-- 标题 -->
+    <!-- 统一标题样式 -->
     <TextView
         android:id="@+id/title_features"
         android:layout_width="wrap_content"
