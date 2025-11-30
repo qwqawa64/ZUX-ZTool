@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +23,7 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.qimian233.ztool.EnhancedShellExecutor;
+import com.qimian233.ztool.LoadingDialog;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.utils.GetPCFlashFirmware;
@@ -47,6 +49,7 @@ public class OtaSettings extends AppCompatActivity {
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchDisableOTACheck;
+    private LoadingDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -318,8 +321,12 @@ public class OtaSettings extends AppCompatActivity {
     // 根据提供的SN码从联想服务器拉取9008救砖包
     // 使用异步方式获取固件信息
     private void getPCFlashFirmwareLink(String machineSN) {
+        // 创建并显示加载对话框
+        loadingDialog = new LoadingDialog(this);
+        loadingDialog.show(getString(R.string.fetching_firmware_info));
+
         GetPCFlashFirmware utils = new GetPCFlashFirmware();
-        utils.queryFirmwareAsync(machineSN, this::showFirmwareInfoDialog);
+        utils.queryFirmwareAsync(machineSN, this::handleFirmwareInfoResult);
     }
 
     private void showFirmwareInfoDialog(String[] firmwareInfo){
@@ -327,29 +334,57 @@ public class OtaSettings extends AppCompatActivity {
 
         if (firmwareInfo == null || firmwareInfo.length < 6) {
             builder.setTitle(R.string.PCFlashFirmwareFetch_error)
-                   .setMessage(R.string.PCFlashFirmwareFetch_failed_message)
-                   .setNegativeButton(R.string.confirm, null)
-                   .show();
+                    .setMessage(R.string.PCFlashFirmwareFetch_failed_message)
+                    .setNegativeButton(R.string.confirm, null)
+                    .show();
             return;
         }
 
+        // 使用字符串资源构建消息，完全替换硬编码
+        String message = getString(R.string.firmware_download_link) + firmwareInfo[0] + "\n"
+                + getString(R.string.firmware_extract_password) + firmwareInfo[1] + "\n"
+                + getString(R.string.firmware_platform_and_method) + firmwareInfo[2]
+                + getString(R.string.firmware_platform_suffix) + firmwareInfo[3] + "\n"
+                + getString(R.string.firmware_first_upload_time) + formatTimestamp(Long.parseLong(firmwareInfo[4])) + "\n"
+                + getString(R.string.firmware_last_update_time) + formatTimestamp(Long.parseLong(firmwareInfo[5]));
+
         builder.setTitle(R.string.PCFlashFirmwareFetch_result)
-               .setMessage("下载链接：" + firmwareInfo[0]
-                       + '\n' + "解压密码：" + firmwareInfo[1]
-                       + '\n' + "平台/刷机方法：" + firmwareInfo[2] + "平台，" + firmwareInfo[3]
-                       + '\n' + "首次上传时间：" + formatTimestamp(Long.parseLong(firmwareInfo[4]))
-                       + '\n' + "最后更新时间：" + formatTimestamp(Long.parseLong(firmwareInfo[5]))
-               )
-               .setPositiveButton(R.string.copy_download_link, (dialog, which) -> {
-                   copyToClipboard(firmwareInfo[0]);
-                   Toast.makeText(OtaSettings.this, R.string.download_link_copied, Toast.LENGTH_SHORT).show();
-               })
-               .setNegativeButton(R.string.copy_password, (dialog, which) -> {
-                   copyToClipboard(firmwareInfo[1]);
-                   Toast.makeText(OtaSettings.this, R.string.password_copied, Toast.LENGTH_SHORT).show();
-               })
-               .setNeutralButton(R.string.close, null)
-               .show();
+                .setMessage(message)
+                .setPositiveButton(R.string.copy_download_link, (dialog, which) -> {
+                    copyToClipboard(firmwareInfo[0]);
+                    Toast.makeText(OtaSettings.this, R.string.download_link_copied, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(R.string.copy_password, (dialog, which) -> {
+                    copyToClipboard(firmwareInfo[1]);
+                    Toast.makeText(OtaSettings.this, R.string.password_copied, Toast.LENGTH_SHORT).show();
+                })
+                .setNeutralButton(R.string.close, null)
+                .show();
+    }
+    // 处理固件信息结果的回调方法
+    private void handleFirmwareInfoResult(String[] firmwareInfo) {
+        runOnUiThread(() -> {
+            if (loadingDialog != null && loadingDialog.isShowing()) {
+                if (firmwareInfo != null && firmwareInfo.length >= 6) {
+                    loadingDialog.updateMessage(getString(R.string.firmware_fetch_success));
+                    // 延迟一小段时间再显示结果，让用户看到成功消息
+                    new Handler().postDelayed(() -> {
+                        showFirmwareInfoDialog(firmwareInfo);
+                    }, 200);
+                    loadingDialog.dismiss();
+                } else {
+                    loadingDialog.updateMessage(getString(R.string.firmware_fetch_failed));
+                    // 延迟后显示错误对话框
+                    new Handler().postDelayed(() -> {
+                        showFirmwareInfoDialog(firmwareInfo);
+                    }, 100);
+                    loadingDialog.dismiss();
+                }
+            } else {
+                // 如果加载框已经关闭，直接显示结果
+                showFirmwareInfoDialog(firmwareInfo);
+            }
+        });
     }
 
     private String formatTimestamp(long timestamp) {

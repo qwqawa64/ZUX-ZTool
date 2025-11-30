@@ -183,6 +183,15 @@
     <string name="Fix_SocTemp">修复SOC温度显示</string>
     <string name="Fix_SocTemp_summary">修复控制台及浮窗SOC温度显示，解决使用Y700四代游戏助手后温度展示始终为0度的问题</string>
     <!--系统更新功能页资源值-->
+    <string name="firmware_download_link">下载链接：</string>
+    <string name="firmware_extract_password">解压密码：</string>
+    <string name="firmware_platform_and_method">平台/刷机方法：</string>
+    <string name="firmware_platform_suffix">平台，</string>
+    <string name="firmware_first_upload_time">首次上传时间：</string>
+    <string name="firmware_last_update_time">最后更新时间：</string>
+    <string name="fetching_firmware_info">正在获取固件信息...</string>
+    <string name="firmware_fetch_success">固件信息获取成功</string>
+    <string name="firmware_fetch_failed">固件信息获取失败</string>
     <string name="Ota_Setting_Title">系统更新</string>
     <string name="OtaDisable_title">启用本地安装</string>
     <string name="OtaDisable_summary">开启后在系统更新-右上角更多中找到本地安装选项</string>
