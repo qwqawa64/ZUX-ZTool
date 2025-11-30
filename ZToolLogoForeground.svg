@@ -1,0 +1,13 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" clip-rule="evenodd">
+
+ <g>
+  <title>Layer 1</title>
+  <path id="svg_1" d="m111.5,95.5l128,0l0,16l-16,0l0,32l16,0l0,16l32,0l0,-16l16,0l0,-32l-16,0l0,-16l128,0l0,16l16,0l0,128l16,0l0,-16l32,0l0,16l16,0l0,32l-16,0l0,16l-32,0l0,-16l-16,0l0,128l-16,0l0,16l-288,0l0,-16l-16,0l0,-288l16,0l0,-16zm176,160l0,-32l-128,0l0,-32l192,0l0,32l-32,0l0,32l-32,0zm0,0l0,32l-32,0l0,-32l32,0zm-32,32l0,32l-32,0l0,-32l32,0zm-32,32l0,32l128,0l0,32l-192,0l0,-32l32,0l0,-32l32,0z"/>
+  <rect id="svg_7" height="32" width="196" y="357.24999" x="158" stroke="#ffffff" fill="#ffffff"/>
+  <rect id="svg_8" height="32" width="196" y="192.99999" x="158" stroke="#ffffff" fill="#ffffff"/>
+  <rect id="svg_9" height="32" width="32" y="324.83331" x="190.58496" stroke="#ffffff" fill="#ffffff"/>
+  <rect id="svg_11" height="32" width="32" y="292.08333" x="223.33495" stroke="#ffffff" fill="#ffffff"/>
+  <rect id="svg_12" height="32" width="32" y="258.83334" x="256.33494" stroke="#ffffff" fill="#ffffff"/>
+  <rect id="svg_13" height="32" width="32" y="225.58335" x="289.33493" stroke="#ffffff" fill="#ffffff"/>
+ </g>
+</svg>
