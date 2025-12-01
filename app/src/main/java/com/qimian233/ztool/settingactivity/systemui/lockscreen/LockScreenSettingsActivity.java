@@ -126,6 +126,17 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
             case "实际功率":
                 saveSettings("systemui_charge_watts", false);
                 saveSettings("systemUI_RealWatts", true);
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+                if (!mPrefsUtils.loadBooleanSetting("isSystemUIPermissionConfirmed",false)) {
+                    builder.setTitle(R.string.tooltip_content_description)
+                            .setMessage(R.string.systemui_root_permission_required_message)
+                            .setNegativeButton(R.string.confirm, null)
+                            .setPositiveButton(R.string.do_not_show_again, (dialogInterface, i) -> {
+                                saveSettings("isSystemUIPermissionConfirmed", true);
+                                android.widget.Toast.makeText(this, R.string.no_tip_next_time, android.widget.Toast.LENGTH_SHORT).show();
+                            })
+                            .show();
+                }
                 break;
         }
         ZToolPrefs.saveStringSetting("charge_watts_selected_option", selectedOption);

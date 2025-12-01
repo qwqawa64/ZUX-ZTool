@@ -193,7 +193,8 @@ public class SettingsFragment extends Fragment {
                     moduleVersion = getString(R.string.unknown_activity_null);
                 }
             } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
+                Log.w(TAG, "无法获取模块版本信息: " + e.getMessage());
                 moduleVersion = getString(R.string.unknown);
             }
 

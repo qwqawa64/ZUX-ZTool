@@ -14,6 +14,8 @@
     <string name="seeDetail">详情</string>
     <string name="restart_scope_required">请重启作用域</string>
     <string name="request_retry">请再试一次</string>
+    <string name="do_not_show_again">不再提示</string>
+    <string name="no_tip_next_time">下次将不再提示此内容</string>
     <!--主页资源值-->
     <string name="app_name">ZTool</string>
     <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
@@ -495,6 +497,7 @@
     <string name="ChargeWattsTitle">显示充电功率</string>
     <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限\n* 重启作用域后不一定立刻生效</string>
+    <string name="systemui_root_permission_required_message">要使用实际充电功率功能，请在Root管理器中为“系统界面”授予Root权限！</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
     <!-- 锁屏设置相关字符串 -->
