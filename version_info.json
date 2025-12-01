@@ -1,0 +1,11 @@
+{
+  "latest": "Demo/251127 (8)",
+  "versions": {
+    "Demo/251127 (8)": {
+      "release_date": "2025-11-27",
+      "download_url": "https://github.com/qwqawa64/ZUX-ZTool/releases/download/ZUX-ZToolDemo251127(8)/ZToolDemo251127.apk",
+      "update_log": "[新增] 启用联想息屏显示\n[新增] 模块配置备份还原功能\n[新增] 状态栏网速优化布局\n[新增] 状态栏双排网速\n[新增] 解除ZUX桌面Dock栏图标数量限制\n[新增] 允许使用Y700特性充电动画（拯救姬）\n[新增] 电池外百分比显示\n[优化] 适配预见返回手势（和一视界不兼容）\n[优化] 更改设置主页后台Hook点[Android16]\n[优化] 部分字体导入逻辑\n[优化] 部分场景MTK机型崩溃问题\n[优化] 适配Android 16",
+      "required": false // 强制更新
+    },
+  }
+}
