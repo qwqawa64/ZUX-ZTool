@@ -1,7 +1,5 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.text.TextUtils;
 
@@ -23,7 +21,6 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
     private static final String TARGET_PACKAGE = "com.zui.game.service";
     private static final String SETTINGS_UTIL_CLASS = "com.zui.util.SettingsValueUtilKt";
-    private static final String PREVENT_MISOPERATION_KEY = "key_game_assistant_prevent_misoperation";
     private static final String PREFS_NAME = "xposed_module_config";
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
 
@@ -57,17 +54,14 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
     private void hookGameService(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
-            // 方案1: Hook GameHelperViewController 的初始化
+            // Hook GameHelperViewController 的初始化
             hookGameHelperViewController(lpparam);
 
-            // 方案2: 直接 Hook 设置工具类的方法
-            hookSettingsUtil(lpparam);
+            // Hook ItemBlockMistakeTouch 的状态同步
+            hookItemBlockMistakeTouch(lpparam);
 
-            // 方案3: Hook 应用启动时的关键方法
-            hookApplicationStart(lpparam);
-
-            // 方案4: 增强版本 - Hook前台应用检测
-            hookTargetGameDetection(lpparam);
+            // Hook LiveData 的状态同步
+            hookLiveDataPostValue(lpparam);
 
             log("AutoMistakeTouch Hook initialized successfully");
 
@@ -80,30 +74,6 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         try {
             String className = "com.zui.game.service.ui.GameHelperViewController";
 
-            // Hook 构造函数
-            XposedHelpers.findAndHookConstructor(className, lpparam.classLoader,
-                    "org.kodein.di.DI",
-                    "kotlinx.coroutines.CoroutineScope",
-                    "android.content.Context",
-                    "kotlinx.coroutines.CoroutineDispatcher",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            checkAndEnableMistakeTouch(param.thisObject, lpparam);
-                        }
-                    });
-
-            // Hook setData 方法
-            XposedHelpers.findAndHookMethod(className, lpparam.classLoader,
-                    "setData",
-                    "com.zui.game.service.ui.view.HelperMainViewAttachState",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            checkAndEnableMistakeTouch(param.thisObject, lpparam);
-                        }
-                    });
-
             // Hook setPkgName 方法（游戏启动时调用）
             XposedHelpers.findAndHookMethod(className, lpparam.classLoader,
                     "setPkgName",
@@ -113,14 +83,18 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                             String pkgName = (String) param.args[0];
                             if (pkgName != null && !pkgName.isEmpty()) {
-                                // 直接检查传入的包名
+                                // 检查是否为白名单游戏
                                 if (isTargetGame(pkgName)) {
-                                    enableMistakeTouch(param.thisObject, lpparam);
-                                    log("Target game detected by pkgName: " + pkgName);
+                                    log("Target game detected: " + pkgName);
+
+                                    // 延迟设置，确保游戏助手完全初始化
+                                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            enableMistakeTouchWithSync(param.thisObject, lpparam);
+                                        }
+                                    }, 1000);
                                 }
-                            } else {
-                                // 如果没有传入包名，检查当前前台应用
-                                checkAndEnableMistakeTouch(param.thisObject, lpparam);
                             }
                         }
                     });
@@ -132,132 +106,111 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         }
     }
 
-    private void hookSettingsUtil(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookItemBlockMistakeTouch(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
-            // Hook getPreventMisoperation 方法，在特定游戏运行时返回开启状态
-            XposedHelpers.findAndHookMethod(SETTINGS_UTIL_CLASS, lpparam.classLoader,
-                    "getPreventMisoperation",
-                    Context.class,
+            String itemClassName = "com.zui.game.service.sys.item.ItemBlockMistakeTouch";
+
+            // Hook change2Status 方法，确保状态正确同步
+            XposedHelpers.findAndHookMethod(itemClassName, lpparam.classLoader,
+                    "change2Status",
+                    int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            Context context = (Context) param.args[0];
-                            if (isTargetGameRunning(context)) {
-                                // 强制返回开启状态 (1)
-                                param.setResult(1);
-                                log("Force enabled mistake touch for target game via SettingsUtil");
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            int targetStatus = (int) param.args[0];
+                            log("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
+                        }
+                    });
+
+            log("Successfully hooked ItemBlockMistakeTouch");
+
+        } catch (Throwable e) {
+            logError("Hook ItemBlockMistakeTouch failed", e);
+        }
+    }
+
+    private void hookLiveDataPostValue(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            // Hook LiveData的postValue方法，确保状态同步
+            XposedHelpers.findAndHookMethod("androidx.lifecycle.MutableLiveData", lpparam.classLoader,
+                    "postValue",
+                    Object.class,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            Object value = param.args[0];
+                            if (value instanceof Integer) {
+                                int status = (Integer) value;
+                                // 检查这个LiveData是否是防误触的LiveData
+                                String stackTrace = android.util.Log.getStackTraceString(new Throwable());
+                                if (stackTrace.contains("ItemBlockMistakeTouch") ||
+                                        stackTrace.contains("change2Status")) {
+                                    log("LiveData postValue for mistake touch: " + status);
+                                }
                             }
                         }
                     });
 
-            log("Successfully hooked SettingsUtil");
+            log("Successfully hooked LiveData");
 
         } catch (Throwable e) {
-            logError("Hook SettingsUtil failed", e);
+            logError("Hook LiveData failed", e);
         }
     }
 
-    private void hookApplicationStart(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void enableMistakeTouchWithSync(Object gameHelper, XC_LoadPackage.LoadPackageParam lpparam) {
         try {
-            // Hook Application 的 onCreate 方法
-            XposedHelpers.findAndHookMethod("android.app.Application", lpparam.classLoader,
-                    "onCreate",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            Context context = (Context) param.thisObject;
-                            if (isTargetGameRunning(context)) {
-                                setMistakeTouchEnabled(context, true);
-                                log("Enabled mistake touch on app start for target game");
-                            }
-                        }
-                    });
-
-            log("Successfully hooked Application onCreate");
-
-        } catch (Throwable e) {
-            logError("Hook Application failed", e);
-        }
-    }
-
-    private void hookTargetGameDetection(XC_LoadPackage.LoadPackageParam lpparam) {
-        try {
-            // Hook 获取前台应用包名的方法
-            String hideSystemApiClass = "com.zui.util.HideSystemApiKt";
-            XposedHelpers.findAndHookMethod(hideSystemApiClass, lpparam.classLoader,
-                    "getForegroundGameAppPackageName",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            String currentPackage = (String) param.getResult();
-                            if (currentPackage != null && isTargetGame(currentPackage)) {
-                                log("Target game detected as foreground: " + currentPackage);
-                                // 可以在这里触发防误触设置
-                            }
-                        }
-                    });
-
-            log("Successfully hooked target game detection");
-
-        } catch (Throwable e) {
-            log("Hook target game detection failed: " + e.getMessage());
-        }
-    }
-
-    private void checkAndEnableMistakeTouch(Object gameHelper, XC_LoadPackage.LoadPackageParam lpparam) {
-        try {
-            // 获取 Context
+            // 获取Context
             Object context = XposedHelpers.callMethod(gameHelper, "getContext");
             if (context == null) {
                 context = XposedHelpers.callMethod(gameHelper, "getNotNullContext");
             }
 
             if (context instanceof Context) {
-                if (isTargetGameRunning((Context) context)) {
-                    enableMistakeTouch(gameHelper, lpparam);
+                // 先获取当前系统设置状态
+                int currentStatus = getCurrentMistakeTouchStatus((Context) context);
+                log("Current mistake touch status: " + currentStatus);
+
+                if (currentStatus != 1) {
+                    // 通过游戏助手内部方法设置，确保状态同步
+                    setMistakeTouchThroughGameHelper(gameHelper, lpparam, true);
+
+                    log("Auto-enabled mistake touch with sync");
+                } else {
+                    log("Mistake touch already enabled");
                 }
             }
 
         } catch (Throwable e) {
-            logError("Check and enable mistake touch failed", e);
+            logError("Enable mistake touch with sync failed", e);
         }
     }
 
-    private void enableMistakeTouch(Object gameHelper, XC_LoadPackage.LoadPackageParam lpparam) {
+    private void setMistakeTouchThroughGameHelper(Object gameHelper, XC_LoadPackage.LoadPackageParam lpparam, boolean enable) {
         try {
-            // 获取 Context
-            Object context = XposedHelpers.callMethod(gameHelper, "getContext");
-            if (context == null) {
-                context = XposedHelpers.callMethod(gameHelper, "getNotNullContext");
-            }
+            // 调用游戏助手内部的changeMistouchStatus方法
+            XposedHelpers.callMethod(gameHelper, "changeMistouchStatus", enable);
 
-            if (context instanceof Context) {
-                setMistakeTouchEnabled((Context) context, true);
-
-                // 同时调用 changeMistouchStatus 方法确保UI状态同步
-                try {
-                    XposedHelpers.callMethod(gameHelper, "changeMistouchStatus", true);
-                    log("Called changeMistouchStatus for target game");
-                } catch (Throwable e) {
-                    log("changeMistouchStatus not available: " + e.getMessage());
-                }
+            // 同时确保ItemBlockMistakeTouch的状态同步
+            Object mItemBlockMistakeTouch = XposedHelpers.getObjectField(gameHelper, "mItemBlockMistakeTouch");
+            if (mItemBlockMistakeTouch != null) {
+                XposedHelpers.callMethod(mItemBlockMistakeTouch, "change2Status", enable ? 0 : 1);
             }
 
         } catch (Throwable e) {
-            logError("Enable mistake touch failed", e);
+            logError("Set through game helper failed", e);
         }
     }
 
-    private void setMistakeTouchEnabled(Context context, boolean enabled) {
+    private int getCurrentMistakeTouchStatus(Context context) {
         try {
-            // 直接设置系统设置
-            android.provider.Settings.Global.putInt(context.getContentResolver(),
-                    PREVENT_MISOPERATION_KEY, enabled ? 1 : 0);
-
-            log("Mistake touch set to: " + (enabled ? "enabled" : "disabled") + " for target game");
-
+            // 使用反射调用SettingsValueUtilKt.getPreventMisoperation
+            Class<?> settingsUtilClass = Class.forName(SETTINGS_UTIL_CLASS);
+            java.lang.reflect.Method method = settingsUtilClass.getMethod("getPreventMisoperation", Context.class);
+            return (Integer) method.invoke(null, context);
         } catch (Throwable e) {
-            logError("Set mistake touch failed", e);
+            logError("Get current status failed", e);
+            return -1;
         }
     }
 
@@ -278,33 +231,5 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         } else {
             return true;
         }
-    }
-
-    // 检查是否有特定目标游戏正在运行
-    private boolean isTargetGameRunning(Context context) {
-        try {
-            ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-            if (activityManager != null) {
-                List<RunningAppProcessInfo> runningProcesses = activityManager.getRunningAppProcesses();
-                if (runningProcesses != null) {
-                    for (RunningAppProcessInfo processInfo : runningProcesses) {
-                        if (processInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                            String[] pkgList = processInfo.pkgList;
-                            if (pkgList != null) {
-                                for (String pkg : pkgList) {
-                                    if (isTargetGame(pkg)) {
-                                        log("Target game running: " + pkg);
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Throwable e) {
-            logError("Check running games failed", e);
-        }
-        return false;
     }
 }
