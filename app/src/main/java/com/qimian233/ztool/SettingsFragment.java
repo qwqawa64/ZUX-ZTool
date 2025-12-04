@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.content.Intent;
+import android.net.Uri;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -40,6 +42,7 @@ public class SettingsFragment extends Fragment {
         LinearLayout restoreDefaultConfig = view.findViewById(R.id.restore_default_config);
         MaterialSwitch switchEnableLogService = view.findViewById(R.id.switch_enable_log_service);
         CardView showAboutPage = view.findViewById(R.id.show_about_page);
+        CardView checkZToolUpdate = view.findViewById(R.id.check_ztool_update);
 
         // 设置点击监听器
         backupConfigToFile.setOnClickListener(v ->
@@ -48,6 +51,7 @@ public class SettingsFragment extends Fragment {
                 openDocumentLauncherForRestore.launch(new String[]{"application/json"}));
         restoreDefaultConfig.setOnClickListener(v -> restoreDefaultSettings());
         showAboutPage.setOnClickListener(v -> showAboutPage());
+        checkZToolUpdate.setOnClickListener(v -> checkForZToolUpdates());
 
         // 设置开关监听器
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());
@@ -102,6 +106,18 @@ public class SettingsFragment extends Fragment {
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());
         MaterialSwitch switchEnableLogService = requireView().findViewById(R.id.switch_enable_log_service);
         switchEnableLogService.setChecked(isLogServiceEnabled);
+    }
+
+    // 打开系统默认浏览器，访问项目的Github Releases
+    private void checkForZToolUpdates(){
+        String url = "https://github.com/qwqawa64/ZUX-ZTool/releases";
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception e) {
+            showToast(getString(R.string.open_browser_failed));
+            Log.e("SettingsFragment", "无法打开浏览器: " + e.getMessage());
+        }
     }
 
     private void showAboutPage() {

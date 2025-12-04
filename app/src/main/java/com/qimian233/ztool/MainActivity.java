@@ -3,17 +3,14 @@ package com.qimian233.ztool;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
@@ -58,21 +55,17 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
 
         // 设置导航控制器
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        assert navHostFragment != null;
         navController = navHostFragment.getNavController();
 
         // 设置导航目的地变化监听器
-        navController.addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
-            @Override
-            public void onDestinationChanged(@NonNull NavController controller,
-                                             @NonNull NavDestination destination,
-                                             @Nullable Bundle arguments) {
-                // 更新当前目的地
-                currentDestinationId = destination.getId();
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            // 更新当前目的地
+            currentDestinationId = destination.getId();
 
-                // 如果环境不齐全且尝试导航到非首页，则强制返回首页
-                if (!isEnvironmentReady && destination.getId() != R.id.homeFragment) {
-                    navController.navigate(R.id.homeFragment);
-                }
+            // 如果环境不齐全且尝试导航到非首页，则强制返回首页
+            if (!isEnvironmentReady && destination.getId() != R.id.homeFragment) {
+                navController.navigate(R.id.homeFragment);
             }
         });
 
@@ -108,23 +101,17 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
      */
     @Override
     public void onServiceStarted() {
-        runOnUiThread(() -> {
-            Toast.makeText(this, "日志服务已启动", Toast.LENGTH_SHORT).show();
-        });
+        runOnUiThread(() -> Toast.makeText(this, "日志服务已启动", Toast.LENGTH_SHORT).show());
     }
 
     @Override
     public void onServiceStopped() {
-        runOnUiThread(() -> {
-            Toast.makeText(this, "日志服务已停止", Toast.LENGTH_SHORT).show();
-        });
+        runOnUiThread(() -> Toast.makeText(this, "日志服务已停止", Toast.LENGTH_SHORT).show());
     }
 
     @Override
     public void onServiceRestartFailed() {
-        runOnUiThread(() -> {
-            Toast.makeText(this, "日志服务自动重启失败，请手动启动", Toast.LENGTH_LONG).show();
-        });
+        runOnUiThread(() -> Toast.makeText(this, "日志服务自动重启失败，请手动启动", Toast.LENGTH_LONG).show());
     }
 
     /**

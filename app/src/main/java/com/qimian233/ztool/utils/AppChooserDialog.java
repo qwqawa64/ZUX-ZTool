@@ -39,9 +39,9 @@ public class AppChooserDialog {
     }
 
     public static class AppInfo {
-        private String packageName;
-        private String appName;
-        private Drawable appIcon;
+        private final String packageName;
+        private final String appName;
+        private final Drawable appIcon;
         private boolean isSelected;
 
         public AppInfo(String packageName, String appName, Drawable appIcon) {
@@ -59,9 +59,9 @@ public class AppChooserDialog {
     }
 
     private static class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
-        private List<AppInfo> appList;
-        private List<AppInfo> filteredList;
-        private Set<String> selectedPackages;
+        private final List<AppInfo> appList;
+        private final List<AppInfo> filteredList;
+        private final Set<String> selectedPackages;
 
         public AppAdapter(List<AppInfo> appList) {
             this.appList = appList;
@@ -121,10 +121,10 @@ public class AppChooserDialog {
         }
 
         class AppViewHolder extends RecyclerView.ViewHolder {
-            private ImageView appIcon;
-            private TextView appName;
-            private TextView packageName;
-            private CheckBox checkBox;
+            private final ImageView appIcon;
+            private final TextView appName;
+            private final TextView packageName;
+            private final CheckBox checkBox;
 
             public AppViewHolder(@NonNull View itemView) {
                 super(itemView);

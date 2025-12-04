@@ -10,6 +10,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
+/** @noinspection deprecation*/
 public class GetPCFlashFirmware {
 
     private static final String TAG = "LenovoFirmwareQuery";
@@ -19,7 +20,7 @@ public class GetPCFlashFirmware {
         new QueryFirmwareTask(listener).execute(sn);
     }
 
-    // 异步任务类
+    /** @noinspection deprecation*/ // 异步任务类
     private class QueryFirmwareTask extends AsyncTask<String, Void, String[]> {
         private final OnFirmwareQueryListener listener;
 

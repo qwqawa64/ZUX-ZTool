@@ -368,16 +368,12 @@ public class OtaSettings extends AppCompatActivity {
                 if (firmwareInfo != null && firmwareInfo.length >= 6) {
                     loadingDialog.updateMessage(getString(R.string.firmware_fetch_success));
                     // 延迟一小段时间再显示结果，让用户看到成功消息
-                    new Handler().postDelayed(() -> {
-                        showFirmwareInfoDialog(firmwareInfo);
-                    }, 200);
+                    new Handler().postDelayed(() -> showFirmwareInfoDialog(firmwareInfo), 200);
                     loadingDialog.dismiss();
                 } else {
                     loadingDialog.updateMessage(getString(R.string.firmware_fetch_failed));
                     // 延迟后显示错误对话框
-                    new Handler().postDelayed(() -> {
-                        showFirmwareInfoDialog(firmwareInfo);
-                    }, 100);
+                    new Handler().postDelayed(() -> showFirmwareInfoDialog(firmwareInfo), 100);
                     loadingDialog.dismiss();
                 }
             } else {
