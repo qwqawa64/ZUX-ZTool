@@ -1296,7 +1296,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
                     }
 
                     // 开始导入流程
-                    startFontImport(fontName, fontDescription, originalFileName);
+                    startFontImport(fontName, fontDescription);
                 })
                 .setNegativeButton(R.string.restart_no, null)
                 .show();
@@ -1305,7 +1305,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
     /**
      * 开始字体导入
      */
-    private void startFontImport(String fontName, String fontDescription, String originalFileName) {
+    private void startFontImport(String fontName, String fontDescription) {
         fontImportDialog = new LoadingDialog(this);
         fontImportDialog.show(getString(R.string.importing_font));
 

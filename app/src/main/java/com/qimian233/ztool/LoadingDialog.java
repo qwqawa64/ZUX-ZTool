@@ -1,12 +1,10 @@
 package com.qimian233.ztool;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -14,7 +12,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 public class LoadingDialog {
     private AlertDialog dialog;
     private TextView tvDescription;
-    private ProgressBar progressBar;
     private final Context context;
     private boolean isShowing = false;
 
@@ -32,7 +29,6 @@ public class LoadingDialog {
         View dialogView = inflater.inflate(R.layout.dialog_loading, null);
 
         // 初始化视图
-        progressBar = dialogView.findViewById(R.id.progress_bar);
         tvDescription = dialogView.findViewById(R.id.tv_description);
 
         builder.setView(dialogView);
@@ -98,12 +94,4 @@ public class LoadingDialog {
         return isShowing;
     }
 
-    /**
-     * 设置对话框是否可取消
-     */
-    public void setCancelable(boolean cancelable) {
-        if (dialog != null) {
-            dialog.setCancelable(cancelable);
-        }
-    }
 }

@@ -14,7 +14,6 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.qimian233.ztool.R;
 import com.qimian233.ztool.audit.LogParser;
 import com.qimian233.ztool.audit.LogParser.LogEntry;
 import com.qimian233.ztool.audit.LogParser.LogLevel;
@@ -48,11 +46,7 @@ public class AuditFragment extends Fragment {
     private Spinner spinnerModule;
     private Spinner spinnerLevel;
     private com.google.android.material.textfield.TextInputEditText etSearch;
-    private com.google.android.material.button.MaterialButton btnRefresh;
-    private com.google.android.material.button.MaterialButton btnClear;
-    private com.google.android.material.button.MaterialButton btnStats;
     private TextView tvStats;
-    private LinearLayout layoutAdvancedFilters;
     private com.google.android.material.checkbox.MaterialCheckBox cbShowErrors;
     private ExtendedFloatingActionButton fabScrollToTop;
     private AppBarLayout appBarLayout;
@@ -93,11 +87,10 @@ public class AuditFragment extends Fragment {
         spinnerModule = view.findViewById(R.id.spinner_module);
         spinnerLevel = view.findViewById(R.id.spinner_level);
         etSearch = view.findViewById(R.id.et_search);
-        btnRefresh = view.findViewById(R.id.btn_refresh);
-        btnClear = view.findViewById(R.id.btn_clear);
-        btnStats = view.findViewById(R.id.btn_stats);
+        com.google.android.material.button.MaterialButton btnRefresh = view.findViewById(R.id.btn_refresh);
+        com.google.android.material.button.MaterialButton btnClear = view.findViewById(R.id.btn_clear);
+        com.google.android.material.button.MaterialButton btnStats = view.findViewById(R.id.btn_stats);
         tvStats = view.findViewById(R.id.tv_stats);
-        layoutAdvancedFilters = view.findViewById(R.id.layout_advanced_filters);
         cbShowErrors = view.findViewById(R.id.cb_show_errors);
         fabScrollToTop = view.findViewById(R.id.fab_scroll_to_top);
         appBarLayout = view.findViewById(R.id.app_bar);
@@ -134,15 +127,12 @@ public class AuditFragment extends Fragment {
 
     private void setupScrollBehavior() {
         // 监听滚动状态，控制返回顶部按钮的显示/隐藏
-        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                // 当AppBar完全折叠时显示返回顶部按钮
-                if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
-                    fabScrollToTop.show();
-                } else {
-                    fabScrollToTop.hide();
-                }
+        appBarLayout.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            // 当AppBar完全折叠时显示返回顶部按钮
+            if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
+                fabScrollToTop.show();
+            } else {
+                fabScrollToTop.hide();
             }
         });
 
@@ -166,7 +156,7 @@ public class AuditFragment extends Fragment {
         recyclerView.setAdapter(logAdapter);
 
         // 添加点击事件支持查看详情
-        logAdapter.setOnItemClickListener(entry -> showLogDetails(entry));
+        logAdapter.setOnItemClickListener(this::showLogDetails);
     }
 
     private void setupFilters() {
@@ -177,7 +167,7 @@ public class AuditFragment extends Fragment {
         categories.add(getString(R.string.all_categories));
         categories.addAll(modulesByCategory.keySet());
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
-                getContext(), android.R.layout.simple_spinner_item, categories);
+                Objects.requireNonNull(requireContext()), android.R.layout.simple_spinner_item, categories);
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategory.setAdapter(categoryAdapter);
         spinnerCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -194,7 +184,7 @@ public class AuditFragment extends Fragment {
         // 级别过滤器
         List<String> levels = Arrays.asList(getString(R.string.all_levels), "INFO", "ERROR");
         ArrayAdapter<String> levelAdapter = new ArrayAdapter<>(
-                getContext(), android.R.layout.simple_spinner_item, levels);
+                Objects.requireNonNull(requireContext()), android.R.layout.simple_spinner_item, levels);
         levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLevel.setAdapter(levelAdapter);
         spinnerLevel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -212,13 +202,13 @@ public class AuditFragment extends Fragment {
         modules.add(getString(R.string.all_modules));
         String selectedCategory = (String) spinnerCategory.getSelectedItem();
         if (selectedCategory != null && !selectedCategory.equals(getString(R.string.all_categories)) && modulesByCategory.containsKey(selectedCategory)) {
-            modules.addAll(modulesByCategory.get(selectedCategory));
+            modules.addAll(Objects.requireNonNull(modulesByCategory.get(selectedCategory)));
         } else {
             // 显示所有模块
             modules.addAll(LogParser.getAvailableModules());
         }
         ArrayAdapter<String> moduleAdapter = new ArrayAdapter<>(
-                getContext(), android.R.layout.simple_spinner_item, modules);
+                Objects.requireNonNull(requireContext()), android.R.layout.simple_spinner_item, modules);
         moduleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerModule.setAdapter(moduleAdapter);
         spinnerModule.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -259,11 +249,12 @@ public class AuditFragment extends Fragment {
                 }
 
                 // 按时间倒序排列（最新的在前）
-                Collections.sort(allLogEntries, (e1, e2) -> {
+                allLogEntries.sort((e1, e2) -> {
                     try {
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
                         Date date1 = sdf.parse(e1.timestamp);
                         Date date2 = sdf.parse(e2.timestamp);
+                        assert date2 != null;
                         return date2.compareTo(date1); // 降序
                     } catch (Exception e) {
                         return e2.timestamp.compareTo(e1.timestamp);
@@ -299,11 +290,10 @@ public class AuditFragment extends Fragment {
             String levelStr = (String) spinnerLevel.getSelectedItem();
             try {
                 selectedLevel = LogLevel.valueOf(levelStr);
-            } catch (IllegalArgumentException e) {
-                selectedLevel = LogLevel.UNKNOWN;
+            } catch (IllegalArgumentException ignored) {
             }
         }
-        String searchText = etSearch.getText().toString().trim();
+        String searchText = Objects.requireNonNull(etSearch.getText()).toString().trim();
         if (searchText.isEmpty()) {
             searchText = null;
         }
@@ -315,11 +305,7 @@ public class AuditFragment extends Fragment {
 
         // 应用错误/成功筛选
         for (LogEntry entry : tempFiltered) {
-            boolean include = true;
-
-            if (cbShowErrors.isChecked() && !"true".equals(entry.extractedData.get("is_error"))) {
-                include = false;
-            }
+            boolean include = !cbShowErrors.isChecked() || "true".equals(entry.extractedData.get("is_error"));
 
             if (include) {
                 filteredLogEntries.add(entry);
@@ -533,14 +519,14 @@ public class AuditFragment extends Fragment {
         }
 
         class LogViewHolder extends RecyclerView.ViewHolder {
-            private TextView tvTime;
-            private TextView tvModule;
-            private TextView tvLevel;
-            private TextView tvMessage;
-            private TextView tvDetails;
-            private View levelIndicator;
-            private ImageView ivStatus;
-            private TextView ivMultiLine;
+            private final TextView tvTime;
+            private final TextView tvModule;
+            private final TextView tvLevel;
+            private final TextView tvMessage;
+            private final TextView tvDetails;
+            private final View levelIndicator;
+            private final ImageView ivStatus;
+            private final TextView ivMultiLine;
 
             public LogViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -638,9 +624,6 @@ public class AuditFragment extends Fragment {
             private void setLevelIndicatorColor(LogLevel level) {
                 int color;
                 switch (level) {
-                    case VERBOSE:
-                        color = 0xFF9E9E9E; // 灰色
-                        break;
                     case DEBUG:
                         color = 0xFF2196F3; // 蓝色
                         break;

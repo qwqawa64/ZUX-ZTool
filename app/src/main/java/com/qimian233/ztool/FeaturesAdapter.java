@@ -15,8 +15,8 @@ import java.util.List;
 
 public class FeaturesAdapter extends RecyclerView.Adapter<FeaturesAdapter.ViewHolder> {
 
-    private List<AppItem> appList;
-    private Context context;
+    private final List<AppItem> appList;
+    private final Context context;
 
     public FeaturesAdapter(List<AppItem> appList, Context context) {
         this.appList = appList;
@@ -94,6 +94,5 @@ public class FeaturesAdapter extends RecyclerView.Adapter<FeaturesAdapter.ViewHo
         public Drawable getIconDrawable() { return iconDrawable; } // 返回Drawable
         public boolean isEnabled() { return enabled; }
         public Class<?> getTargetActivity() { return targetActivity; }
-        public void setEnabled(boolean enabled) { this.enabled = enabled; }
     }
 }

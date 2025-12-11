@@ -2,8 +2,8 @@
 package com.qimian233.ztool.settingactivity.setting.magicwindowsearch;
 
 public class ActivityPair {
-    private String from;
-    private String to;
+    private final String from;
+    private final String to;
 
     public ActivityPair(String from, String to) {
         this.from = from;

@@ -122,12 +122,13 @@ public class FeaturesFragment extends Fragment {
      * 根据包名获取应用图标
      */
     public Drawable getApplicationIcon(Context context, String packageName) {
-        if (packageName == null || packageName.length() < 1) {
+        if (packageName == null || packageName.isEmpty()) {
             return null;
         }
         PackageManager pm = context.getPackageManager();
         PackageInfo packageInfo = getPackageInfo(context, packageName);
         if (packageInfo != null) {
+            assert packageInfo.applicationInfo != null;
             return packageInfo.applicationInfo.loadIcon(pm);
         }
         return null;
@@ -137,13 +138,12 @@ public class FeaturesFragment extends Fragment {
      * 根据包名获取 PackageInfo
      */
     public PackageInfo getPackageInfo(Context context, String packageName) {
-        if (packageName == null || packageName.length() < 1) {
+        if (packageName == null || packageName.isEmpty()) {
             return null;
         }
         PackageManager pm = context.getPackageManager();
         try {
-            PackageInfo packageInfo = pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
-            return packageInfo;
+            return pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
         } catch (Throwable ignore) {
             // 处理异常，可能是包名不存在等情况
         }

@@ -1,34 +1,23 @@
 package com.qimian233.ztool.settingactivity.launcher;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.cardview.widget.CardView;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
-import com.qimian233.ztool.config.ModuleConfig;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 
 public class LauncherSettingsActivity extends AppCompatActivity {
 
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
-    private FloatingActionButton fabRestart;
     private MaterialSwitch switchDisableForceStop, switchMoreBigDock;
 
     @Override
@@ -57,20 +46,10 @@ public class LauncherSettingsActivity extends AppCompatActivity {
     private void initViews() {
         // 禁止强制停止功能开关
         switchDisableForceStop = findViewById(R.id.switch_disable_force_stop);
-        switchDisableForceStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("disable_force_stop", isChecked);
-            }
-        });
+        switchDisableForceStop.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_force_stop", isChecked));
         // 更多大的Dock栏功能开关
         switchMoreBigDock = findViewById(R.id.switch_dock_moreBig);
-        switchMoreBigDock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("zui_launcher_hotseat", isChecked);
-            }
-        });
+        switchMoreBigDock.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("zui_launcher_hotseat", isChecked));
     }
 
     private void loadSettings() {
@@ -83,7 +62,7 @@ public class LauncherSettingsActivity extends AppCompatActivity {
     }
 
     private void initRestartButton() {
-        fabRestart = findViewById(R.id.fab_restart);
+        FloatingActionButton fabRestart = findViewById(R.id.fab_restart);
         fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
     }
 

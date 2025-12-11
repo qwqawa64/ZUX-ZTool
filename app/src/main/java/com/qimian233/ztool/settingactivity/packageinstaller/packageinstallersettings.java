@@ -1,24 +1,11 @@
 package com.qimian233.ztool.settingactivity.packageinstaller;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -26,19 +13,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 
 public class packageinstallersettings extends AppCompatActivity {
 
@@ -50,8 +24,6 @@ public class packageinstallersettings extends AppCompatActivity {
     private MaterialSwitch switchDisableInstallerAD;
     private MaterialSwitch switchEnableRowStyle;
     private MaterialSwitch switchDisableDeletePackage;
-    private LinearLayout layoutOtaInfo;
-    private FloatingActionButton fabRestart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,57 +56,27 @@ public class packageinstallersettings extends AppCompatActivity {
 
         // 禁用扫描APK功能
         switchDisableScanAPK = findViewById(R.id.switch_disable_ScanAPK);
-        switchDisableScanAPK.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("disable_scanAPK",isChecked);
-            }
-        });
+        switchDisableScanAPK.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_scanAPK",isChecked));
 
         // 总是允许安装应用所需的权限
         switchOnlyAllow = findViewById(R.id.switch_onlyAllow);
-        switchOnlyAllow.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("Always_AllowPermission",isChecked);
-            }
-        });
+        switchOnlyAllow.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("Always_AllowPermission",isChecked));
 
         // 跳过警告页面
         switchSkipWarnPage = findViewById(R.id.switch_skipWarnPage);
-        switchSkipWarnPage.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("Skip_WarnPage",isChecked);
-            }
-        });
+        switchSkipWarnPage.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("Skip_WarnPage",isChecked));
 
         // 禁用安装器广告
         switchDisableInstallerAD = findViewById(R.id.switch_disable_installerAD);
-        switchDisableInstallerAD.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("disable_installerAD",isChecked);
-            }
-        });
+        switchDisableInstallerAD.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_installerAD",isChecked));
 
         // 启用原生安装器样式
         switchEnableRowStyle = findViewById(R.id.switch_enable_rowStyle);
-        switchEnableRowStyle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("packageInstallerStyle_hook",isChecked);
-            }
-        });
+        switchEnableRowStyle.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("packageInstallerStyle_hook",isChecked));
 
         // 拦截删除安装包行为
         switchDisableDeletePackage = findViewById(R.id.switch_disable_delete);
-        switchDisableDeletePackage.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("package_installer_disable_delete",isChecked);
-            }
-        });
+        switchDisableDeletePackage.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("package_installer_disable_delete",isChecked));
 
     }
 
@@ -170,7 +112,7 @@ public class packageinstallersettings extends AppCompatActivity {
     }
 
     private void initRestartButton() {
-        fabRestart = findViewById(R.id.fab_restart);
+        FloatingActionButton fabRestart = findViewById(R.id.fab_restart);
         fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
     }
 

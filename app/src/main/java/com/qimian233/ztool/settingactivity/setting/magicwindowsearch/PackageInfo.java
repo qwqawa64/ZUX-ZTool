@@ -9,17 +9,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PackageInfo {
-    private String name;
-    private String mainPage;
-    private List<ActivityPair> activityPairs;
-    private List<String> forceFullscreenPages;
-    private List<String> transActivities;
-    private List<String> leftTransActivities;
-    private String showEmbeddingDivider;
-    private String skipLetterboxDisplayInfo;
-    private String skipMultiWindowMode;
-    private String showSurfaceViewBackground;
-    private String shouldPausePrimaryActivity;
+    private final String name;
+    private final String mainPage;
+    private final List<ActivityPair> activityPairs;
+    private final List<String> forceFullscreenPages;
+    private final List<String> transActivities;
+    private final List<String> leftTransActivities;
+    private final String showEmbeddingDivider;
+    private final String skipLetterboxDisplayInfo;
+    private final String skipMultiWindowMode;
+    private final String showSurfaceViewBackground;
+    private final String shouldPausePrimaryActivity;
 
     public PackageInfo(JSONObject jsonObject) throws JSONException {
         this.name = jsonObject.optString("name", "");

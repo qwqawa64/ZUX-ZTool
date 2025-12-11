@@ -6,9 +6,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
-import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
@@ -43,14 +41,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FloatingWindow {
-    private Context context;
-    private WindowManager windowManager;
+    private final Context context;
+    private final WindowManager windowManager;
     private View floatingView;
     private TextView infoText;
     private TextView appNameText;
     private TextView welcomeText;
     private TextView stepText; // 新增：步骤提示文本
-    private Handler handler;
+    private final Handler handler;
     private Runnable updateRunnable;
     private static final long UPDATE_INTERVAL = 1000;
     private String SelectedApp;
@@ -77,7 +75,7 @@ public class FloatingWindow {
     // 配置数据
     private String appPackage;
     private String mainActivity;
-    private Set<String> activityFromSet; // 使用Set避免重复
+    private final Set<String> activityFromSet; // 使用Set避免重复
     private boolean showEmbeddingDivider = true;
     private boolean skipLetterboxDisplayInfo = false;
     private boolean skipMultiWindowMode = true;
@@ -124,28 +122,16 @@ public class FloatingWindow {
         optionShouldPausePrimaryActivity.setChecked(shouldPausePrimaryActivity);
 
         // 下一步按钮逻辑
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                handleNextStep();
-            }
-        });
+        nextButton.setOnClickListener(v -> handleNextStep());
 
         // 添加活动按钮逻辑
-        addActivityButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addCurrentActivity();
-            }
-        });
+        addActivityButton.setOnClickListener(v -> addCurrentActivity());
 
         // 设置窗口参数
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY :
-                        WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT
         );
@@ -265,11 +251,8 @@ public class FloatingWindow {
             String videoPath = "android.resource://" + context.getPackageName() + "/" + videoResId;
             Uri videoUri = Uri.parse(videoPath);
             tutorialVideo.setVideoURI(videoUri);
-            tutorialVideo.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    tutorialVideo.start(); // 循环播放
-                }
+            tutorialVideo.setOnCompletionListener(mp -> {
+                tutorialVideo.start(); // 循环播放
             });
             tutorialVideo.start();
         } catch (Exception e) {
@@ -400,7 +383,7 @@ public class FloatingWindow {
         try {
             ApplicationInfo applicationInfo = packageManager.getApplicationInfo(packageName, 0);
             CharSequence label = packageManager.getApplicationLabel(applicationInfo);
-            return label != null ? label.toString() : null;
+            return label.toString();
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
             return null;
@@ -429,8 +412,7 @@ public class FloatingWindow {
                         String activityName = matcher.group(2);
                         return packageName + activityName;
                     } else {
-                        String packageName = matcher.group(1);
-                        return packageName;
+                        return matcher.group(1);
                     }
                 }
             }
@@ -463,25 +445,24 @@ public class FloatingWindow {
     }
 
     private String getForegroundPackage() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-            long time = System.currentTimeMillis();
-            List<UsageStats> stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 5000, time);
-            if (stats != null) {
-                SortedMap<Long, UsageStats> sortedStats = new TreeMap<>();
-                for (UsageStats usageStats : stats) {
-                    sortedStats.put(usageStats.getLastTimeUsed(), usageStats);
-                }
-                if (!sortedStats.isEmpty()) {
-                    UsageStats latestStats = sortedStats.get(sortedStats.lastKey());
-                    return latestStats.getPackageName();
-                }
+        UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+        long time = System.currentTimeMillis();
+        List<UsageStats> stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 5000, time);
+        if (stats != null) {
+            SortedMap<Long, UsageStats> sortedStats = new TreeMap<>();
+            for (UsageStats usageStats : stats) {
+                sortedStats.put(usageStats.getLastTimeUsed(), usageStats);
+            }
+            if (!sortedStats.isEmpty()) {
+                UsageStats latestStats = sortedStats.get(sortedStats.lastKey());
+                assert latestStats != null;
+                return latestStats.getPackageName();
             }
         }
         return getString(R.string.unknown);
     }
 
-    public boolean saveBase64StringToFile(Context context, String originalString, String PackageName) {
+    public void saveBase64StringToFile(Context context, String originalString, String PackageName) {
         try {
             // Step 1: 将字符串进行Base64编码
             // 使用UTF-8编码确保字符正确转换，Base64.DEFAULT表示使用默认标志
@@ -494,7 +475,7 @@ public class FloatingWindow {
                 boolean dirCreated = dir.mkdirs();
                 if (!dirCreated) {
                     // 目录创建失败，返回false
-                    return false;
+                    return;
                 }
             }
 
@@ -508,10 +489,8 @@ public class FloatingWindow {
             outputStream.write(base64String.getBytes("UTF-8"));
             outputStream.close(); // 关闭流
 
-            return true; // 保存成功
         } catch (IOException e) {
             e.printStackTrace(); // 打印异常日志（实际项目中可使用Log.e）
-            return false; // 保存失败
         }
     }
 

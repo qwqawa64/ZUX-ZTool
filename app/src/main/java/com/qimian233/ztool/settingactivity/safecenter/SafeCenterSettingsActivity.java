@@ -2,7 +2,6 @@ package com.qimian233.ztool.settingactivity.safecenter;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -86,42 +85,14 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * 添加Future到待处理列表
-     */
-    private void addPendingFuture(Future<EnhancedShellExecutor.ShellResult> future) {
-        synchronized (pendingFutures) {
-            pendingFutures.add(future);
-        }
-    }
-
-    /**
-     * 从待处理列表中移除Future
-     */
-    private void removePendingFuture(Future<EnhancedShellExecutor.ShellResult> future) {
-        synchronized (pendingFutures) {
-            pendingFutures.remove(future);
-        }
-    }
-
     private void initViews() {
         // 默认允许应用自启开关
         switchAllowAutoRun = findViewById(R.id.switch_allow_autorun);
-        switchAllowAutoRun.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("default_enable_autorun", isChecked);
-            }
-        });
+        switchAllowAutoRun.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("default_enable_autorun", isChecked));
 
         // 禁用联想安全中心自动扫描开关
         switchDisableSafeScan = findViewById(R.id.switch_Disable_SafeScanBlock);
-        switchDisableSafeScan.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("block_safecenter_scan", isChecked);
-            }
-        });
+        switchDisableSafeScan.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("block_safecenter_scan", isChecked));
     }
 
     private void loadSettings() {

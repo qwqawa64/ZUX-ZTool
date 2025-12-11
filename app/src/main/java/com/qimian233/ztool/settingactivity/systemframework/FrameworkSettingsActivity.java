@@ -1,11 +1,9 @@
 package com.qimian233.ztool.settingactivity.systemframework;
 
 import android.os.Bundle;
-import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -14,14 +12,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
-import com.qimian233.ztool.config.ModuleConfig;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 
 public class FrameworkSettingsActivity extends AppCompatActivity {
 
-    private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
-    private FloatingActionButton fabRestart;
     private MaterialSwitch switchKeepRotation;
     private MaterialSwitch switchDisableZUIApplist;
 
@@ -33,7 +28,6 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_framework_settings);
 
         String appName = getIntent().getStringExtra("app_name");
-        appPackageName = getIntent().getStringExtra("app_package");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -51,20 +45,10 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
     private void initViews() {
         // 设置保持屏幕方向按钮点击监听
         switchKeepRotation = findViewById(R.id.switch_keep_rotation);
-        switchKeepRotation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                saveSettings("keep_rotation",isChecked);
-            }
-        });
+        switchKeepRotation.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("keep_rotation",isChecked));
         // 设置禁用系统应用列表管理点击监听
         switchDisableZUIApplist = findViewById(R.id.switch_disable_zuiapplist);
-        switchDisableZUIApplist.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                saveSettings("allow_get_packages",isChecked);
-            }
-        });
+        switchDisableZUIApplist.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("allow_get_packages",isChecked));
     }
 
     private void loadSettings() {
@@ -78,7 +62,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
     }
 
     private void initRestartButton() {
-        fabRestart = findViewById(R.id.fab_restart);
+        FloatingActionButton fabRestart = findViewById(R.id.fab_restart);
         fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
     }
 

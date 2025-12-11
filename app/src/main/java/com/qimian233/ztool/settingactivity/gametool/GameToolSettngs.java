@@ -5,10 +5,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
-import android.content.DialogInterface;
-import android.app.ActivityManager;
-import android.content.Context;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -17,25 +13,19 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.EnhancedShellExecutor;
-import com.qimian233.ztool.MainActivity;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.utils.AppChooserDialog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class GameToolSettngs extends AppCompatActivity {
 
@@ -45,7 +35,6 @@ public class GameToolSettngs extends AppCompatActivity {
     private MaterialSwitch switchDeviceDisguise;
     private MaterialSwitch switchFixCpuFrequency;
     private MaterialSwitch switchFixSocTemperature;
-    private FloatingActionButton fabRestart;
     private Spinner mistakeTouchSpinner;
     private LinearLayout mistakeTouchConfig;
     private TextView mistakeTouchWhiteListCount;
@@ -80,42 +69,20 @@ public class GameToolSettngs extends AppCompatActivity {
     private void initViews() {
         // 初始化原有的视图
         switchDisableAudio = findViewById(R.id.switch_disable_audio);
-        switchDisableAudio.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("disable_GameAudio", isChecked);
-            }
-        });
+        switchDisableAudio.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_GameAudio", isChecked));
 
         switchDeviceDisguise = findViewById(R.id.switch_disguise_device);
-        switchDeviceDisguise.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("disguise_TB322FC", isChecked);
-            }
-        });
+        switchDeviceDisguise.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disguise_TB322FC", isChecked));
 
         switchFixCpuFrequency = findViewById(R.id.switch_fix_cpuClock);
-        switchFixCpuFrequency.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("Fix_CpuClock", isChecked);
-            }
-        });
+        switchFixCpuFrequency.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("Fix_CpuClock", isChecked));
 
         switchFixSocTemperature = findViewById(R.id.switch_fix_socTemp);
-        switchFixSocTemperature.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveSettings("Fix_SocTemp", isChecked);
-            }
-        });
+        switchFixSocTemperature.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("Fix_SocTemp", isChecked));
 
         // 初始化防误触配置布局和文本视图
         mistakeTouchConfig = findViewById(R.id.layout_whitelist_config);
-        mistakeTouchConfig.setOnClickListener(v -> {
-            SelectGameAPP();
-        });
+        mistakeTouchConfig.setOnClickListener(v -> SelectGameAPP());
         // 读取白名单
         String WhiteList = mPrefsUtils.loadStringSetting("MistakeTouchWhiteListGame", "");
         TARGET_GAME_PACKAGES = Arrays.asList(WhiteList.split(","));
@@ -157,7 +124,7 @@ public class GameToolSettngs extends AppCompatActivity {
     }
 
     private void initRestartButton() {
-        fabRestart = findViewById(R.id.fab_restart);
+        FloatingActionButton fabRestart = findViewById(R.id.fab_restart);
         fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
     }
 

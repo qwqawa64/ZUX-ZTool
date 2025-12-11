@@ -9,9 +9,6 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,13 +30,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class searchPage extends AppCompatActivity {
 
-    private TextView tips;
     private CardView resultCard;
     private JSONObject embedding_config;
-    private List<PackageInfo> searchResults = new ArrayList<>();
+    private final List<PackageInfo> searchResults = new ArrayList<>();
     private PackageAdapter adapter;
 
     @Override
@@ -50,7 +47,7 @@ public class searchPage extends AppCompatActivity {
         setContentView(R.layout.activity_search_page);
 
         Toolbar toolbar = findViewById(R.id.toolbar_strategy_search);
-        tips = findViewById(R.id.tips_search_package);
+        TextView tips = findViewById(R.id.tips_search_package);
         resultCard = findViewById(R.id.ResultsCard);
 
         setSupportActionBar(toolbar);
@@ -82,7 +79,7 @@ public class searchPage extends AppCompatActivity {
         MaterialButton searchButton = findViewById(R.id.button_search);
 
         searchButton.setOnClickListener(v -> {
-            String packageName = searchEditText.getText().toString().trim();
+            String packageName = Objects.requireNonNull(searchEditText.getText()).toString().trim();
             if (packageName.isEmpty()) {
                 // 可以添加提示输入不能为空
                 return;

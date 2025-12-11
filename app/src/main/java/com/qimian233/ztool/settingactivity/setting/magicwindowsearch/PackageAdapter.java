@@ -14,8 +14,8 @@ import com.qimian233.ztool.R;
 import java.util.List;
 
 public class PackageAdapter extends RecyclerView.Adapter<PackageAdapter.ViewHolder> {
-    private List<PackageInfo> packageList;
-    private OnItemClickListener onItemClickListener;
+    private final List<PackageInfo> packageList;
+    private final OnItemClickListener onItemClickListener;
 
     public interface OnItemClickListener {
         void onItemClick(PackageInfo packageInfo);
@@ -27,6 +27,7 @@ public class PackageAdapter extends RecyclerView.Adapter<PackageAdapter.ViewHold
     }
 
     // 修改PackageAdapter的onCreateViewHolder方法
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
