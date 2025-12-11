@@ -197,16 +197,12 @@
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:background="?attr/colorSurfaceContainer"
-                        android:padding="16dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical">
+                            android:gravity="center_vertical"
+                            android:background="?attr/colorSurfaceContainer"
+                            android:padding="16dp">
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -232,13 +228,12 @@
                             </LinearLayout>
 
                             <com.google.android.material.materialswitch.MaterialSwitch
+                                android:contentDescription="@string/enableLogService"
                                 android:id="@+id/switch_enable_log_service"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content" />
 
                         </LinearLayout>
-
-                    </LinearLayout>
 
                 </androidx.cardview.widget.CardView>
 
@@ -247,19 +242,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp">
+                    app:cardCornerRadius="16dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:background="?attr/colorSurfaceContainer"
-                        android:padding="16dp">
                         <LinearLayout
+                            android:background="?attr/colorSurfaceContainer"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical">
+                            android:padding="16dp">
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -291,8 +280,6 @@
 
                         </LinearLayout>
 
-                    </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
                 <!-- 检查更新卡片 -->
@@ -301,8 +288,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp">
+                    app:cardCornerRadius="16dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -310,36 +296,21 @@
                         android:orientation="vertical"
                         android:background="?attr/colorSurfaceContainer"
                         android:padding="16dp">
-                        <LinearLayout
+
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:baselineAligned="false"
-                            android:gravity="center_vertical">
+                            android:text="@string/checkZToolUpdate"
+                            android:textSize="16sp"
+                            android:textColor="?attr/colorOnSurface" />
 
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/checkZToolUpdate"
-                                    android:textSize="16sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/checkZToolUpdateSummary"
-                                    android:textSize="12sp"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:layout_marginTop="4dp" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/checkZToolUpdateSummary"
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_marginTop="4dp" />
 
                     </LinearLayout>
 
@@ -360,28 +331,13 @@
                         android:orientation="vertical"
                         android:background="?attr/colorSurfaceContainer"
                         android:padding="16dp">
-                        <LinearLayout
+
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:baselineAligned="false"
-                            android:gravity="center_vertical">
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/showAboutPage"
-                                    android:textSize="16sp"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:text="@string/showAboutPage"
+                            android:textSize="16sp"
+                            android:textColor="?attr/colorOnSurface" />
 
                     </LinearLayout>
 
