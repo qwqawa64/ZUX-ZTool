@@ -18,10 +18,13 @@ import android.widget.TextView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.qimian233.ztool.utils.ConfigUpgrade;
+import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -194,6 +197,9 @@ public class HomeFragment extends Fragment {
      * 根据环境检测结果更新UI - 线程安全版本
      */
     private void updateUI() {
+
+        ModulePreferencesUtils utils = new ModulePreferencesUtils(requireContext());
+
         if (isUpdatingUI.getAndSet(true)) {
             Log.d(TAG, "UI更新已在执行，跳过本次更新");
             return;
@@ -215,11 +221,14 @@ public class HomeFragment extends Fragment {
                 updateModuleStatusAsync();
                 updateSystemInfoAsync();
 
-                // 立即显示默认文本，确保界面快速渲染
-                textHint.setText(getString(R.string.environment_ready));
-
-                // 异步获取API内容
-                fetchHintFromAPI();
+                if (!utils.loadBooleanSetting("enable_homepage_yiyan", true)) {
+                    // 立即显示默认文本，确保界面快速渲染
+                    // 如果用户不使用主界面一言，那么同样显示这段文本
+                    textHint.setText(getString(R.string.environment_ready));
+                } else {
+                    // 异步获取API内容
+                    fetchHintFromAPI();
+                }
                 Log.i(TAG, "环境完备，显示完整功能界面");
                 Log.i(TAG,"开始检查配置是否为最新版本");
                 if(ConfigUpgrade.configUpgrader(requireContext())){
@@ -295,17 +304,7 @@ public class HomeFragment extends Fragment {
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == 200) {
-                    InputStream inputStream = connection.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    reader.close();
-
-                    // 解析JSON响应
-                    JSONObject jsonResponse = new JSONObject(response.toString());
+                    JSONObject jsonResponse = getJsonObject(connection);
                     if (jsonResponse.getInt("code") == 200) {
                         JSONObject data = jsonResponse.getJSONObject("data");
                         String content = data.getString("content");
@@ -315,7 +314,9 @@ public class HomeFragment extends Fragment {
                         if (isAdded() && isModuleActive && isRootAvailable) {
                             // 使用View.post()更新UI
                             textHint.post(() -> {
-                                textHint.setText(content + " - " + origin);
+                                textHint.setText(String.format(getString(R.string.homepage_yiyan),
+                                        content,
+                                        origin));
                                 Log.i(TAG, "成功从API获取提示文本: " + content);
                             });
                         } else {
@@ -333,6 +334,21 @@ public class HomeFragment extends Fragment {
                 textHint.post(() -> Log.w(TAG, "API请求失败，保持默认提示文本"));
             }
         }).start();
+    }
+
+    @NonNull
+    private static JSONObject getJsonObject(HttpURLConnection connection) throws IOException, JSONException {
+        InputStream inputStream = connection.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+
+        // 解析JSON响应
+        return new JSONObject(response.toString());
     }
 
     /**

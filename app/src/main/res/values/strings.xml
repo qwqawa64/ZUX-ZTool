@@ -34,6 +34,7 @@
     <string name="environmentState">状态</string>
     <string name="moduleActivated">模块已激活</string>
     <string name="environment_ready">环境就绪</string>
+    <string name="homepage_yiyan">%1$s - %2$s</string>
     <string name="missing_environment">缺少必要环境: </string>
     <string name="module_not_active">模块未激活 </string>
     <string name="root_not_available">Root权限不可用</string>
@@ -150,6 +151,8 @@
     <string name="backupConfigToFile">备份配置到文件</string>
     <string name="restoreConfigFromFile">从文件恢复配置</string>
     <string name="restoreDefaultConfig">恢复默认配置</string>
+    <string name="enableHomePageYiyan">随机一言</string>
+    <string name="enableHomePageYiyanSummary">启用主界面下方的随机一言，此功能需要联网</string>
     <string name="checkZToolUpdate">检查更新</string>
     <string name="open_browser_failed">无法打开浏览器</string>
     <string name="checkZToolUpdateSummary">打开项目的Github Releases页面</string>
