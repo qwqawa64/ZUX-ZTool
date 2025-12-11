@@ -21,7 +21,7 @@ public class GetPCFlashFirmware {
     }
 
     /** @noinspection deprecation*/ // 异步任务类
-    private class QueryFirmwareTask extends AsyncTask<String, Void, String[]> {
+    private static class QueryFirmwareTask extends AsyncTask<String, Void, String[]> {
         private final OnFirmwareQueryListener listener;
 
         public QueryFirmwareTask(OnFirmwareQueryListener listener) {
@@ -74,7 +74,7 @@ public class GetPCFlashFirmware {
     /**
      * 获取机器信息并提取MTM参数
      */
-    private String getMTM(String sn) {
+    private static String getMTM(String sn) {
         try {
             String urlStr = "https://ptstpd.lenovo.com.cn/home/ConfigurationQuery/getMachineSequenceInfo?MachineNo="+
                     URLEncoder.encode(sn, "UTF-8");
@@ -92,7 +92,7 @@ public class GetPCFlashFirmware {
     /**
      * 使用MTM获取刷机包信息
      */
-    private String[] getDownloadPackageInfo(String mtm) {
+    private static String[] getDownloadPackageInfo(String mtm) {
         try {
             String urlStr = "https://ptstpd.lenovo.com.cn/home/ConfigurationQuery/getPadFlashingMachine";
             String jsonBody = "{\"mtm\":\"" + mtm + "\"}";
@@ -116,7 +116,7 @@ public class GetPCFlashFirmware {
     /**
      * 发送GET请求
      */
-    private String sendGetRequest(String urlStr) throws IOException {
+    private static String sendGetRequest(String urlStr) throws IOException {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
@@ -128,7 +128,7 @@ public class GetPCFlashFirmware {
     /**
      * 发送POST请求
      */
-    private String sendPostRequest(String urlStr, String jsonBody) throws IOException {
+    private static String sendPostRequest(String urlStr, String jsonBody) throws IOException {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
@@ -149,7 +149,7 @@ public class GetPCFlashFirmware {
     /**
      * 读取HTTP响应
      */
-    private String readResponse(HttpURLConnection conn) throws IOException {
+    private static String readResponse(HttpURLConnection conn) throws IOException {
             int responseCode = conn.getResponseCode();
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 Log.w(TAG, "HTTP请求失败，响应码: " + responseCode);
@@ -177,7 +177,7 @@ public class GetPCFlashFirmware {
     /**
      * 从JSON响应中提取MTM参数
      */
-    private String extractMTM(String jsonResponse) {
+    private static String extractMTM(String jsonResponse) {
         Pattern pattern = Pattern.compile("\"MTM\":\"([^\"]+)\"");
         Matcher matcher = pattern.matcher(jsonResponse);
 
@@ -187,7 +187,7 @@ public class GetPCFlashFirmware {
         return null;
     }
 
-    private String extractEverything(String jsonResponse, String key) {
+    private static String extractEverything(String jsonResponse, String key) {
         try {
             Gson gson = new Gson();
             JsonObject response = gson.fromJson(jsonResponse, JsonObject.class);

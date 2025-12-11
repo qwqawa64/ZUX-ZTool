@@ -45,7 +45,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
             hookPermissionsAdapterGetCount(lpparam);
 
             // 方法4：钩住 ListView 的 setAdapter 方法
-            hookListViewSetAdapter(lpparam);
+            hookListViewSetAdapter();
 
             log("Successfully hooked PackageInstaller permission controls");
         } catch (Throwable t) {
@@ -61,7 +61,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                     "startCustomInstallConfirm",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             if (!isEnabled()) return;
 
                             Object activityExtra = param.thisObject;
@@ -77,7 +77,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                                     if (ArrayList.class.isAssignableFrom(field.getType())) {
                                         Object fieldValue = field.get(mAdapter);
                                         if (fieldValue instanceof ArrayList) {
-                                            dataList = (ArrayList) fieldValue;
+                                            dataList = (ArrayList<?>) fieldValue;
                                             break;
                                         }
                                     }
@@ -117,7 +117,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                     android.os.Handler.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             if (!isEnabled()) return;
 
                             ArrayList originalList = (ArrayList) param.args[1];
@@ -146,7 +146,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                     "getCount",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             if (!isEnabled()) return;
                             param.setResult(1);
                         }
@@ -157,7 +157,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
         }
     }
 
-    private void hookListViewSetAdapter(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookListViewSetAdapter() {
         try {
             XposedHelpers.findAndHookMethod(
                     android.widget.ListView.class,
@@ -165,7 +165,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                     android.widget.ListAdapter.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             if (!isEnabled()) return;
 
                             Object adapter = param.args[0];

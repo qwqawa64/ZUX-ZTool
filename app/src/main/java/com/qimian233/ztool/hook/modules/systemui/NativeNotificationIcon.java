@@ -15,10 +15,8 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-//import xyz.cirno.unfuckzui.FeatureRegistry;
 
 public class NativeNotificationIcon extends BaseHookModule {
-    //public static final String FEATURE_NAME = "honor_notification_smallicon";
     public String getModuleName() { return "NativeNotificationIcon"; }
     public String[] getTargetPackages() { return new String[] { "com.android.systemui" }; }
 
@@ -32,12 +30,12 @@ public class NativeNotificationIcon extends BaseHookModule {
 
     private final ThreadLocal<Boolean> isCtsMode = ThreadLocal.withInitial(() -> null);
 
-    public void handleLoadSystemUi(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadSystemUi(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
             log("Hooking com.android.systemui.util.XSystemUtil...");
             XposedHelpers.findAndHookMethod("com.android.systemui.util.XSystemUtil", lpparam.classLoader, "isCTSGTSTest", new XC_MethodHook() {
                 @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                protected void beforeHookedMethod(MethodHookParam param) {
                     var mode = isCtsMode.get();
                     if (mode != null) {
                         param.setResult(mode);
@@ -54,11 +52,11 @@ public class NativeNotificationIcon extends BaseHookModule {
             log("Hooking com.android.systemui.statusbar.NotificationShelf");
             XposedHelpers.findAndHookMethod("com.android.systemui.statusbar.NotificationShelf", lpparam.classLoader, "updateResources$5", new XC_MethodHook() {
                 @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                protected void beforeHookedMethod(MethodHookParam param) {
                     isCtsMode.set(true);
                 }
                 @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                protected void afterHookedMethod(MethodHookParam param) {
                     isCtsMode.remove();
                 }
             });
@@ -71,7 +69,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             log("Hooking com.android.systemui.statusbar.NotificationListener");
             // don't replace the small icon with app icon
             XposedHelpers.findAndHookMethod("com.android.systemui.statusbar.NotificationListener", lpparam.classLoader, "replaceTheSmallIcon", StatusBarNotification.class, XC_MethodReplacement.returnConstant(null));
-            log("[NaticeNotificationIcon] Successfully hooked com.android.systemui.statusbar.NotificationListener [3/6]");
+            log("[NativeNotificationIcon] Successfully hooked com.android.systemui.statusbar.NotificationListener [3/6]");
         }catch (Exception e) {
             logError("Failed to hook com.android.systemui.statusbar.NotificationListener",e);
         }

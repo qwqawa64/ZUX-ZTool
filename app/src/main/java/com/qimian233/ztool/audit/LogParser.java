@@ -2,6 +2,9 @@
 package com.qimian233.ztool.audit;
 
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -32,13 +35,14 @@ public class LogParser {
         public Map<String, String> extractedData;
         public LogLevel logLevel;
         public boolean isMultiLine = false; // 标记是否为多行日志
-        public List<String> originalLines = new ArrayList<>(); // 保存原始行
+        public List<String> originalLines; // 保存原始行
 
         public LogEntry() {
             extractedData = new HashMap<>();
             originalLines = new ArrayList<>();
         }
 
+        @NonNull
         @Override
         public String toString() {
             return String.format("[%s] [%s] %s/%s(%d): %s",
@@ -267,7 +271,7 @@ public class LogParser {
                 entry.pid = -1;
             }
 
-            entry.message = matcher.group(5).trim();
+            entry.message = Objects.requireNonNull(matcher.group(5)).trim();
         } else {
             // 如果不匹配标准格式，将整行作为消息
             entry.message = line;
@@ -728,6 +732,7 @@ public class LogParser {
                 String time2 = extractTimeFromFilename(f2.getName());
                 Date date1 = sdf.parse(time1);
                 Date date2 = sdf.parse(time2);
+                assert date1 != null;
                 return date1.compareTo(date2);
             } catch (Exception e) {
                 return f1.getName().compareTo(f2.getName());
@@ -773,7 +778,7 @@ public class LogParser {
         if (categoryFilter != null && !categoryFilter.isEmpty()) {
             Map<String, List<String>> categories = getModulesByCategory();
             if (categories.containsKey(categoryFilter)) {
-                categoryModules.addAll(categories.get(categoryFilter));
+                categoryModules.addAll(Objects.requireNonNull(categories.get(categoryFilter)));
             }
         }
 

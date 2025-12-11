@@ -7,8 +7,6 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
 public class NoChargeAnimation extends BaseHookModule {
-    //public static final String FEATURE_NAME = "no_charge_animation";
-    //public static final FeatureRegistry.Feature FEATURE = new FeatureRegistry.Feature(FEATURE_NAME, new String[] {"com.android.systemui"}, NoChargeAnimation::handleLoadPackage);
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     @Override
     public String getModuleName() {
@@ -26,7 +24,7 @@ public class NoChargeAnimation extends BaseHookModule {
         new NoChargeAnimation().handleLoadSystemUi(lpparam);
     }
 
-    public void handleLoadSystemUi(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadSystemUi(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
             log("Hooking ChargingAnimationController...");
             var classLoader = lpparam.classLoader;

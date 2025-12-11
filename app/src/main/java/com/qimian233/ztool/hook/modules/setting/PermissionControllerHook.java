@@ -15,12 +15,9 @@ import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-//import xyz.cirno.unfuckzui.FeatureRegistry;
 
 public class PermissionControllerHook extends BaseHookModule {
-    public static final String FEATURE_NAME = "permission_controller_style";
-    //public static final FeatureRegistry.Feature FEATURE = new FeatureRegistry.Feature(FEATURE_NAME, new String[] {"com.android.permissioncontroller", "com.android.settings", "com.zui.safecenter"}, PermissionControllerHook::handleLoadPackage);
-    private static final String TARGET_PACKAGE = "com.android.systemui";
+
     @Override
     public String getModuleName() {
         return "PermissionControllerHook";
@@ -53,9 +50,9 @@ public class PermissionControllerHook extends BaseHookModule {
 
     private static void handleLoadSafeCenter(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         var cls = XposedHelpers.findClass("com.lenovo.xuipermissionmanager.XuiPermissionManager", lpparam.classLoader);
-        var supercls = cls.getSuperclass();
+        var superclass = cls.getSuperclass();
         var onCreate = XposedHelpers.findMethodExact(cls, "onCreate", Bundle.class);
-        var super_onCreate = XposedHelpers.findMethodExact(supercls, "onCreate", Bundle.class);
+        var super_onCreate = XposedHelpers.findMethodExact(superclass, "onCreate", Bundle.class);
         final var super_onCreate_invokespecial = MethodHandles.lookup().unreflectSpecial(super_onCreate, cls);
         XposedBridge.hookMethod(onCreate, new XC_MethodHook() {
             @Override
@@ -76,7 +73,7 @@ public class PermissionControllerHook extends BaseHookModule {
 
         private class IsRowVersionHook extends XC_MethodHook {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            protected void beforeHookedMethod(MethodHookParam param) {
                 var value = isRowVersionTls.get();
                 if (value != null) {
                     param.setResult(value);
@@ -86,12 +83,12 @@ public class PermissionControllerHook extends BaseHookModule {
 
         private class IsRowVersionTlsHook extends XC_MethodHook {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            protected void beforeHookedMethod(MethodHookParam param) {
                 isRowVersionTls.set(true);
             }
 
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            protected void afterHookedMethod(MethodHookParam param) {
                 isRowVersionTls.remove();
             }
         }
@@ -120,7 +117,7 @@ public class PermissionControllerHook extends BaseHookModule {
 
         if (Build.VERSION.SDK_INT <= 34) {
             XposedHelpers.findAndHookMethod("com.android.permissioncontroller.permission.ui.GrantPermissionsActivity", lpparam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                protected void beforeHookedMethod(MethodHookParam param) {
                     var activity = (Activity) param.thisObject;
                     activity.setTheme(android.R.style.Theme_DeviceDefault_Light_Dialog_Alert);
                     activity.requestWindowFeature(Window.FEATURE_NO_TITLE);

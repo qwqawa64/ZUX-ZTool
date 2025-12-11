@@ -228,11 +228,6 @@ public class OwnerInfoHook extends BaseHookModule {
                 context = (Context) XposedHelpers.callMethod(contextObj, "getContext");
             }
 
-            if (context == null) {
-                log("获取Context失败，无法注册广播接收器");
-                return;
-            }
-
             mScreenReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {

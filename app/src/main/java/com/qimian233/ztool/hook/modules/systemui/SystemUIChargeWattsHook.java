@@ -157,23 +157,4 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
         }
     }
 
-    /**
-     * 添加调试方法，输出充电信息
-     */
-    private void logChargingInfo(Object controller) {
-        try {
-            boolean isPluggedIn = XposedHelpers.getBooleanField(controller, "mPowerPluggedIn");
-            int chargingWattage = XposedHelpers.getIntField(controller, "mChargingWattage");
-            int batteryLevel = XposedHelpers.getIntField(controller, "mBatteryLevel");
-            int chargingSpeed = XposedHelpers.getIntField(controller, "mChargingSpeed");
-
-            log("充电信息 - 已插入: " + isPluggedIn +
-                    ", 瓦数: " + chargingWattage +
-                    ", 电量: " + batteryLevel +
-                    ", 速度: " + chargingSpeed);
-
-        } catch (Throwable t) {
-            logError("记录充电信息失败", t);
-        }
-    }
 }

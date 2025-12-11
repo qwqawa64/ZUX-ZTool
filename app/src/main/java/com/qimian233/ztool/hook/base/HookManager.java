@@ -145,20 +145,6 @@ public class HookManager {
     }
 
     /**
-     * 注销Hook模块
-     */
-    public static void unregisterHookModule(BaseHookModule module) {
-        hookModules.remove(module);
-    }
-
-    /**
-     * 获取所有注册的模块
-     */
-    public static List<BaseHookModule> getHookModules() {
-        return new ArrayList<>(hookModules);
-    }
-
-    /**
      * 执行所有适用的Hook模块
      */
     public static void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -167,15 +153,4 @@ public class HookManager {
         }
     }
 
-    /**
-     * 根据名称获取模块
-     */
-    public static BaseHookModule getModuleByName(String name) {
-        for (BaseHookModule module : hookModules) {
-            if (module.getModuleName().equals(name)) {
-                return module;
-            }
-        }
-        return null;
-    }
 }

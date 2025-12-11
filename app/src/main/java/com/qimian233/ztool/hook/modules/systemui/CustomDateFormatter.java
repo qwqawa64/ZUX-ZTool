@@ -27,12 +27,6 @@ public class CustomDateFormatter {
             "午时", "未时", "申时", "酉时", "戌时", "亥时"
     };
 
-    // 地支对照表
-    private static final String[] EARTHLY_BRANCHES = {
-            "子", "丑", "寅", "卯", "辰", "巳",
-            "午", "未", "申", "酉", "戌", "亥"
-    };
-
     // 自定义格式模式映射
     private static final Map<String, String> CUSTOM_PATTERNS = new HashMap<>();
 
@@ -224,17 +218,17 @@ public class CustomDateFormatter {
      */
     private static String getConstellationBySolarDate(int month, int day) {
         if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return "水瓶座";
-        if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "双鱼座";
-        if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return "白羊座";
-        if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return "金牛座";
-        if ((month == 5 && day >= 21) || (month == 6 && day <= 21)) return "双子座";
-        if ((month == 6 && day >= 22) || (month == 7 && day <= 22)) return "巨蟹座";
-        if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return "狮子座";
-        if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return "处女座";
-        if ((month == 9 && day >= 23) || (month == 10 && day <= 23)) return "天秤座";
-        if ((month == 10 && day >= 24) || (month == 11 && day <= 22)) return "天蝎座";
-        if ((month == 11 && day >= 23) || (month == 12 && day <= 21)) return "射手座";
-        if ((month == 12 && day >= 22) || (month == 1 && day <= 19)) return "摩羯座";
+        if (month == 2 || month == 3 && day <= 20) return "双鱼座";
+        if (month == 3 || month == 4 && day <= 19) return "白羊座";
+        if (month == 4 || month == 5 && day <= 20) return "金牛座";
+        if (month == 5 || month == 6 && day <= 21) return "双子座";
+        if (month == 6 || month == 7 && day <= 22) return "巨蟹座";
+        if (month == 7 || month == 8 && day <= 22) return "狮子座";
+        if (month == 8 || month == 9 && day <= 22) return "处女座";
+        if (month == 9 || month == 10 && day <= 23) return "天秤座";
+        if (month == 10 || month == 11 && day <= 22) return "天蝎座";
+        if (month == 11 || month == 12 && day <= 21) return "射手座";
+        if (month == 12 || month == 1) return "摩羯座";
         return "";
     }
 

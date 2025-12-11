@@ -43,7 +43,7 @@ public class GuestModeController extends BaseHookModule {
                     "isDeviceAllowedToAddGuest",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 获取应用上下文
                             Context context = (Context) XposedHelpers.getObjectField(param.thisObject, "applicationContext");
 

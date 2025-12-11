@@ -101,7 +101,7 @@ public class packageInstallerStyleHook extends BaseHookModule {
                     Bundle.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             Activity activity = (Activity) param.thisObject;
 
                             // 检查是否为目标包安装器的Activity

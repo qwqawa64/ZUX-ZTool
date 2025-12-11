@@ -56,7 +56,7 @@ public class DisableForceStop extends BaseHookModule {
             if ("com.zui.launcher".equals(packageName)) {
                 hookZuiLauncherAndroid16(lpparam);
             } else if ("com.android.launcher3".equals(packageName)) {
-                hookBaseLauncherAndroid16(lpparam);
+                hookBaseLauncherAndroid16();
             }
             log("Android 16+ Hook策略已应用");
         } catch (Throwable t) {
@@ -92,7 +92,7 @@ public class DisableForceStop extends BaseHookModule {
                     Context.class, int.class, String.class, int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             String packageName = (String) param.args[2]; // 注意：参数索引修正
 
                             // 记录原本要杀死的应用，但不执行杀死操作
@@ -112,7 +112,7 @@ public class DisableForceStop extends BaseHookModule {
                     Context.class, String.class, int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             String packageName = (String) param.args[1];
                             log("Android 16: 阻止强制杀死应用: " + packageName);
                             param.setResult(null);
@@ -128,9 +128,8 @@ public class DisableForceStop extends BaseHookModule {
                     Context.class, ArrayList.class, boolean.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                            ArrayList tasks = (ArrayList) param.args[1];
-                            boolean forceKill = (Boolean) param.args[2];
+                        protected void beforeHookedMethod(MethodHookParam param) {
+                            ArrayList<?> tasks = (ArrayList<?>) param.args[1];
 
                             // 记录批量清理操作但不执行
                             if (tasks != null) {
@@ -155,7 +154,7 @@ public class DisableForceStop extends BaseHookModule {
                         Void[].class,
                         new XC_MethodHook() {
                             @Override
-                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            protected void beforeHookedMethod(MethodHookParam param) {
                                 log("Android 16: 阻止异步后台清理任务执行");
                                 param.setResult(null);
                             }
@@ -176,7 +175,7 @@ public class DisableForceStop extends BaseHookModule {
     /**
      * Android 16+ 基础Launcher Hook
      */
-    private void hookBaseLauncherAndroid16(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookBaseLauncherAndroid16() {
         try {
             // Android 16上基础Launcher可能的Hook点
             // 这里可以根据需要添加对com.android.launcher3的特定Hook
@@ -269,14 +268,5 @@ public class DisableForceStop extends BaseHookModule {
             logError("获取SDK版本失败，使用默认值", t);
             return Build.VERSION_CODES.BASE; // 返回最低版本
         }
-    }
-
-    /**
-     * 可选：添加配置管理，允许用户选择哪些应用需要保护
-     */
-    private boolean shouldProtectApp(String packageName) {
-        // 默认保护所有应用
-        // 可以扩展为读取配置，让用户选择白名单
-        return true;
     }
 }

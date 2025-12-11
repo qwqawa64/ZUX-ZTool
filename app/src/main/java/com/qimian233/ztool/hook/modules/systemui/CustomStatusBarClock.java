@@ -337,51 +337,51 @@ public class CustomStatusBarClock extends BaseHookModule {
      * 获取字体颜色配置
      */
     private int getTextColor() {
-        return getCustomClockInt("Custom_StatusBarClockTextColor", 0xFFFFFFFF); // 默认白色
+        return getCustomClockInt(); // 默认白色
     }
 
     /**
      * 获取粗体配置
      */
     private boolean isTextBold() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextBold", false); // 默认非粗体
+        return getCustomClockBoolean("Custom_StatusBarClockTextBold"); // 默认非粗体
     }
 
     /**
      * 检查字体大小是否启用
      */
     private boolean isTextSizeEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextSizeEnabled", false);
+        return getCustomClockBoolean("Custom_StatusBarClockTextSizeEnabled");
     }
 
     /**
      * 检查字间距是否启用
      */
     private boolean isLetterSpacingEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockLetterSpacingEnabled", false);
+        return getCustomClockBoolean("Custom_StatusBarClockLetterSpacingEnabled");
     }
 
     /**
      * 检查字体颜色是否启用
      */
     private boolean isTextColorEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextColorEnabled", false);
+        return getCustomClockBoolean("Custom_StatusBarClockTextColorEnabled");
     }
 
     /**
      * 检查粗体是否启用
      */
     private boolean isTextBoldEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextBold", false);
+        return getCustomClockBoolean("Custom_StatusBarClockTextBold");
     }
 
     /**
      * 辅助方法：读取整型配置
      */
-    private int getCustomClockInt(String key, int defaultValue) {
+    private int getCustomClockInt() {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getInt(key, defaultValue);
+        return prefs.getInt("Custom_StatusBarClockTextColor", -1);
     }
 
     /**
@@ -396,9 +396,9 @@ public class CustomStatusBarClock extends BaseHookModule {
     /**
      * 辅助方法：读取布尔型配置
      */
-    private boolean getCustomClockBoolean(String key, boolean defaultValue) {
+    private boolean getCustomClockBoolean(String key) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getBoolean(key, defaultValue);
+        return prefs.getBoolean(key, false);
     }
 }

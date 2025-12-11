@@ -59,36 +59,6 @@ public class NotificationIconHook extends BaseHookModule {
         }
     }
 
-    private void hookResourceInteger(XC_LoadPackage.LoadPackageParam lpparam) {
-        try {
-            XposedHelpers.findAndHookMethod(
-                    "android.content.res.Resources",
-                    lpparam.classLoader,
-                    "getInteger",
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            try {
-                                // 获取资源ID名称
-                                String resName = getResourceName((Integer) param.args[0], lpparam.classLoader);
-                                if (resName != null && resName.contains("max_notif_static_icons")) {
-                                    int originalValue = (Integer) param.getResult();
-                                    log("拦截到 max_notif_static_icons 资源获取，原值: " + originalValue + "，修改为: " + NEW_MAX_ICONS);
-                                    param.setResult(NEW_MAX_ICONS);
-                                }
-                            } catch (Exception e) {
-                                logError("资源Hook过程中发生错误", e);
-                            }
-                        }
-                    }
-            );
-            log("资源整数Hook设置成功");
-        } catch (Throwable e) {
-            logError("设置资源整数Hook失败", e);
-        }
-    }
-
     private void hookViewModelConstructor(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
             Class<?> viewModelClass = XposedHelpers.findClass(
@@ -107,7 +77,7 @@ public class NotificationIconHook extends BaseHookModule {
                     "com.android.systemui.shade.domain.interactor.ShadeInteractor",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 XposedHelpers.setIntField(param.thisObject, "maxIcons", NEW_MAX_ICONS);
                                 log("成功修改 ViewModel maxIcons 为 " + NEW_MAX_ICONS);
@@ -137,7 +107,7 @@ public class NotificationIconHook extends BaseHookModule {
                     "com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData$LimitType",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             try {
                                 // 获取图标列表
                                 Object iconList = param.args[0];
@@ -161,17 +131,6 @@ public class NotificationIconHook extends BaseHookModule {
             log("ViewData构造函数Hook设置成功");
         } catch (Throwable e) {
             log("找不到 ViewData 类，可能系统版本不兼容: " + e.getMessage());
-        }
-    }
-
-    // 辅助方法：获取资源名称
-    private String getResourceName(int resId, ClassLoader classLoader) {
-        try {
-            Class<?> resClass = XposedHelpers.findClass("android.content.res.Resources", classLoader);
-            Object resources = XposedHelpers.callStaticMethod(resClass, "getSystem");
-            return (String) XposedHelpers.callMethod(resources, "getResourceName", resId);
-        } catch (Exception e) {
-            return null;
         }
     }
 

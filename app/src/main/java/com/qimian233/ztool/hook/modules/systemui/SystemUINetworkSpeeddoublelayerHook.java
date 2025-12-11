@@ -50,7 +50,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             initNetworkSpeedView(param.thisObject);
                         }
                     });
@@ -109,7 +109,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
             XposedHelpers.findAndHookMethod(handlerClass, "handleMessage",
                     android.os.Message.class, new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             Object handler = param.thisObject;
                             Object networkSpeedView = XposedHelpers.getObjectField(handler, "this$0");
 

@@ -8,9 +8,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * CPU频率Hook模块 - 修复游戏服务中的CPU时钟读取
@@ -38,7 +36,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             XposedHelpers.findAndHookMethod("com.zui.game.service.util.HWDataInterface",
                     lpparam.classLoader, "getCpuCurFreq", new XC_MethodReplacement() {
                         @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                        protected Object replaceHookedMethod(MethodHookParam param) {
                             return getLastCpuCoreCurrentFreq();
                         }
                     });
@@ -47,7 +45,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             XposedHelpers.findAndHookMethod("com.zui.game.service.util.HWDataInterface",
                     lpparam.classLoader, "getCpuCurFreq", int.class, new XC_MethodReplacement() {
                         @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                        protected Object replaceHookedMethod(MethodHookParam param) {
                             // 忽略传入的coreIndex，始终读取最后一个核心
                             return getLastCpuCoreCurrentFreq();
                         }
@@ -57,7 +55,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             XposedHelpers.findAndHookMethod("com.zui.game.service.util.HWDataInterface",
                     lpparam.classLoader, "getCpuMaxFreq", new XC_MethodReplacement() {
                         @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                        protected Object replaceHookedMethod(MethodHookParam param) {
                             return getLastCpuCoreMaxFreq();
                         }
                     });
@@ -139,12 +137,7 @@ public class CpuFrequencyFix extends BaseHookModule {
     private int getLastCpuCoreIndex() {
         try {
             File cpuDir = new File("/sys/devices/system/cpu/");
-            File[] cpuFiles = cpuDir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.matches("cpu[0-9]+");
-                }
-            });
+            File[] cpuFiles = cpuDir.listFiles((dir, name) -> name.matches("cpu[0-9]+"));
 
             if (cpuFiles == null || cpuFiles.length == 0) {
                 log("CpuFrequencyFix: No CPU cores found in /sys/devices/system/cpu/");
@@ -152,16 +145,13 @@ public class CpuFrequencyFix extends BaseHookModule {
             }
 
             // 按核心编号降序排序，取最大的（最后一个核心）
-            Arrays.sort(cpuFiles, new Comparator<File>() {
-                @Override
-                public int compare(File f1, File f2) {
-                    try {
-                        int num1 = Integer.parseInt(f1.getName().substring(3));
-                        int num2 = Integer.parseInt(f2.getName().substring(3));
-                        return Integer.compare(num2, num1); // 降序
-                    } catch (NumberFormatException e) {
-                        return 0;
-                    }
+            Arrays.sort(cpuFiles, (f1, f2) -> {
+                try {
+                    int num1 = Integer.parseInt(f1.getName().substring(3));
+                    int num2 = Integer.parseInt(f2.getName().substring(3));
+                    return Integer.compare(num2, num1); // 降序
+                } catch (NumberFormatException e) {
+                    return 0;
                 }
             });
 
@@ -248,8 +238,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             }
 
             reader = new BufferedReader(new FileReader(file));
-            String line = reader.readLine();
-            return line;
+            return reader.readLine();
 
         } catch (Exception e) {
             logError("CpuFrequencyFix: Error reading file " + filePath, e);

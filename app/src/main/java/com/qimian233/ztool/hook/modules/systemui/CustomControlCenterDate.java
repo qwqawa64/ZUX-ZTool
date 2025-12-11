@@ -293,7 +293,7 @@ public class CustomControlCenterDate extends BaseHookModule {
      */
     private String getCustomDateFormat() {
         try {
-            String format = getCustomDateSetting("Custom_ControlCenterDateFormat");
+            String format = getCustomDateSetting();
             log("初次读取到的配置：" + format);
             if (format == null || format.isEmpty()) {
                 log("读取到的配置为空，使用默认格式");
@@ -309,10 +309,10 @@ public class CustomControlCenterDate extends BaseHookModule {
     /**
      * 从SharedPreferences获取配置值的方法
      */
-    private String getCustomDateSetting(String key) {
+    private String getCustomDateSetting() {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getString(key, "yyyy年MM月dd日 EEEE");
+        return prefs.getString("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE");
     }
 
     /**
@@ -333,51 +333,51 @@ public class CustomControlCenterDate extends BaseHookModule {
      * 获取字体颜色配置
      */
     private int getTextColor() {
-        return getCustomDateInt("Custom_ControlCenterDateTextColor", 0xFFFFFFFF);
+        return getCustomDateInt();
     }
 
     /**
      * 获取粗体配置
      */
     private boolean isTextBold() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextBold", false);
+        return getCustomDateBoolean("Custom_ControlCenterDateTextBold");
     }
 
     /**
      * 检查字体大小是否启用
      */
     private boolean isTextSizeEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextSizeEnabled", false);
+        return getCustomDateBoolean("Custom_ControlCenterDateTextSizeEnabled");
     }
 
     /**
      * 检查字间距是否启用
      */
     private boolean isLetterSpacingEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateLetterSpacingEnabled", false);
+        return getCustomDateBoolean("Custom_ControlCenterDateLetterSpacingEnabled");
     }
 
     /**
      * 检查字体颜色是否启用
      */
     private boolean isTextColorEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextColorEnabled", false);
+        return getCustomDateBoolean("Custom_ControlCenterDateTextColorEnabled");
     }
 
     /**
      * 检查粗体是否启用
      */
     private boolean isTextBoldEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextBold", false);
+        return getCustomDateBoolean("Custom_ControlCenterDateTextBold");
     }
 
     /**
      * 辅助方法：读取整型配置
      */
-    private int getCustomDateInt(String key, int defaultValue) {
+    private int getCustomDateInt() {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getInt(key, defaultValue);
+        return prefs.getInt("Custom_ControlCenterDateTextColor", -1);
     }
 
     /**
@@ -392,9 +392,9 @@ public class CustomControlCenterDate extends BaseHookModule {
     /**
      * 辅助方法：读取布尔型配置
      */
-    private boolean getCustomDateBoolean(String key, boolean defaultValue) {
+    private boolean getCustomDateBoolean(String key) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         prefs.reload();
-        return prefs.getBoolean(key, defaultValue);
+        return prefs.getBoolean(key, false);
     }
 }

@@ -40,7 +40,7 @@ public class DeviceModelDisguiseHook extends BaseHookModule {
             // Hook getBuildModel方法，强制返回目标型号
             XposedHelpers.findAndHookMethod(deviceUtilsClass, "getBuildModel", new XC_MethodReplacement() {
                 @Override
-                protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                protected Object replaceHookedMethod(MethodHookParam param) {
                     // 强制返回目标型号TB322FC
                     return "TB322FC";
                 }

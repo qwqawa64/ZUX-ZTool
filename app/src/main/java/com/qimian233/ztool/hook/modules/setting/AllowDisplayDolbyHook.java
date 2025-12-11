@@ -75,7 +75,7 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                         "initView",
                         new XC_MethodHook() {
                             @Override
-                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            protected void afterHookedMethod(MethodHookParam param) {
                                 try {
                                     Object preference = XposedHelpers.getObjectField(param.thisObject, "mDolbySwitchPreference");
                                     if (preference != null) {
@@ -109,7 +109,7 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                         "androidx.preference.Preference",
                         new XC_MethodHook() {
                             @Override
-                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            protected void beforeHookedMethod(MethodHookParam param) {
                                 try {
                                     if (param.args[0] != null) {
                                         XposedHelpers.callMethod(param.args[0], "setSummary", new Object[]{null});

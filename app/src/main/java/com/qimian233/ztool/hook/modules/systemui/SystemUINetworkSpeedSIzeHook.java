@@ -30,11 +30,11 @@ public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
         String packageName = lpparam.packageName;
 
         if ("com.android.systemui".equals(packageName)) {
-            hookSystemUI(lpparam);
+            hookSystemUI();
         }
     }
 
-    private void hookSystemUI(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemUI() {
         try {
             log("开始Hook系统UI网速显示");
 
@@ -42,7 +42,7 @@ public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
             XposedHelpers.findAndHookMethod(TextView.class, "setText",
                     CharSequence.class, new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             try {
                                 CharSequence text = (CharSequence) param.args[0];
 

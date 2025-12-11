@@ -46,7 +46,7 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
                     "initView",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             if (!isEnabled()) {
                                 return; // 根据配置动态判断是否启用
                             }
@@ -70,7 +70,7 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
                                     // 更新UI复选框状态
                                     try {
                                         Object checkBox = XposedHelpers.getObjectField(instance, "del_check_box");
-                                        if (checkBox != null && checkBox instanceof android.widget.CheckBox) {
+                                        if (checkBox instanceof android.widget.CheckBox) {
                                             ((android.widget.CheckBox) checkBox).setChecked(false);
                                             log("Successfully updated UI checkbox state");
                                         }

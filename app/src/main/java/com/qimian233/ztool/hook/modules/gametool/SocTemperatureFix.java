@@ -61,12 +61,12 @@ public class SocTemperatureFix extends BaseHookModule {
                     "getTemp",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             log("拦截 getTemp() 调用");
                         }
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             int originalResult = (int) param.getResult();
                             int newTemperature = readTemperatureFromFile();
 
@@ -87,13 +87,13 @@ public class SocTemperatureFix extends BaseHookModule {
                     int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             int type = (int) param.args[0];
                             log("拦截 getThermalTemp() 类型: " + type);
                         }
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             int originalResult = (int) param.getResult();
                             int newTemperature = readTemperatureFromFile();
 
@@ -126,7 +126,7 @@ public class SocTemperatureFix extends BaseHookModule {
                         "getCurrentTemperature",
                         new XC_MethodHook() {
                             @Override
-                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            protected void afterHookedMethod(MethodHookParam param) {
                                 int originalResult = (int) param.getResult();
                                 int newTemperature = readTemperatureFromFile();
 
@@ -165,7 +165,7 @@ public class SocTemperatureFix extends BaseHookModule {
                             methodName,
                             new XC_MethodHook() {
                                 @Override
-                                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                protected void afterHookedMethod(MethodHookParam param) {
                                     int newTemperature = readTemperatureFromFile();
                                     if (newTemperature > 0) {
                                         log("通用温度方法 " + methodName + " 修复为: " + newTemperature);
@@ -204,9 +204,7 @@ public class SocTemperatureFix extends BaseHookModule {
             return -1;
         }
 
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(thermalFile));
+        try (BufferedReader reader = new BufferedReader(new FileReader(thermalFile))) {
             String line = reader.readLine();
 
             if (line != null && !line.trim().isEmpty()) {
@@ -219,14 +217,6 @@ public class SocTemperatureFix extends BaseHookModule {
             logError("读取温度文件IO异常", e);
         } catch (NumberFormatException e) {
             logError("温度数据格式异常", e);
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    logError("关闭文件读取器异常", e);
-                }
-            }
         }
 
         return -1;
@@ -248,8 +238,6 @@ public class SocTemperatureFix extends BaseHookModule {
             File thermalFile = new File(path);
             if (thermalFile.exists() && thermalFile.canRead()) {
                 log("找到替代温度文件: " + path);
-                // 更新默认路径以便后续使用
-                // THERMAL_FILE_PATH = path; // 注意：这里不能修改final变量
                 return readFromSpecificFile(path);
             }
         }
@@ -260,9 +248,7 @@ public class SocTemperatureFix extends BaseHookModule {
 
     private int readFromSpecificFile(String filePath) {
         File thermalFile = new File(filePath);
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(thermalFile));
+        try (BufferedReader reader = new BufferedReader(new FileReader(thermalFile))) {
             String line = reader.readLine();
 
             if (line != null && !line.trim().isEmpty()) {
@@ -270,15 +256,8 @@ public class SocTemperatureFix extends BaseHookModule {
             }
         } catch (Exception e) {
             logError("读取替代温度文件失败: " + filePath, e);
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    // 忽略关闭异常
-                }
-            }
         }
+        // 忽略关闭异常
         return -1;
     }
 }

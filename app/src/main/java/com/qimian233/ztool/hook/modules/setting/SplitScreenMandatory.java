@@ -46,7 +46,7 @@ public class SplitScreenMandatory extends BaseHookModule {
                     "initLocalBlackList",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 检查模块是否启用
                             if (!isEnabled()) {
                                 return;

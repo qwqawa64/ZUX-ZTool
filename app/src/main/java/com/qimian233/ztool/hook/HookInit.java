@@ -2,13 +2,11 @@ package com.qimian233.ztool.hook;
 
 import static android.content.ContentValues.TAG;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.qimian233.ztool.hook.base.HookManager;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -17,7 +15,6 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  * 负责初始化和管理所有Hook模块
  */
 public class HookInit implements IXposedHookLoadPackage {
-    public static Context moduleContext;
 
     static {
         // 预初始化Hook管理器

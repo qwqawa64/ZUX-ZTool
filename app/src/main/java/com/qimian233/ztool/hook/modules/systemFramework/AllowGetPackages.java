@@ -1,14 +1,10 @@
 package com.qimian233.ztool.hook.modules.systemFramework;
 
-import android.provider.Settings;
-
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import com.qimian233.ztool.hook.base.BaseHookModule;
 
 public class AllowGetPackages extends BaseHookModule {
     public static final String FEATURE_NAME = "allow_get_packages";

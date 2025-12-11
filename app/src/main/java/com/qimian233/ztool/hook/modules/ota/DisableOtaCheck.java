@@ -53,7 +53,7 @@ public class DisableOtaCheck extends BaseHookModule {
             XposedHelpers.findAndHookMethod(MAIN_ACTIVITY, lpparam.classLoader,
                     "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 Menu menu = (Menu) param.args[0];
                                 // 找到本地安装菜单项并设置为可见
@@ -83,7 +83,7 @@ public class DisableOtaCheck extends BaseHookModule {
             XposedHelpers.findAndHookMethod(MAIN_ACTIVITY, lpparam.classLoader,
                     "onPrepareOptionsMenu", Menu.class, new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             try {
                                 Menu menu = (Menu) param.args[0];
                                 // 通过反射获取菜单项ID
@@ -118,7 +118,7 @@ public class DisableOtaCheck extends BaseHookModule {
             XposedHelpers.findAndHookMethod(MAIN_ACTIVITY, lpparam.classLoader,
                     "clickCountCallBack", new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 在调用前直接设置计数器为6
                             XposedHelpers.setIntField(param.thisObject, "mCount", 6);
                             log("在 clickCountCallBack 前强制设置计数器为6");

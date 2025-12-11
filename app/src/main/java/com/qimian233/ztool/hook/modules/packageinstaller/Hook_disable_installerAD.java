@@ -46,7 +46,7 @@ public class Hook_disable_installerAD extends BaseHookModule {
             XposedHelpers.findAndHookMethod(installSuccessClass, "initRecommendAppsData",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 直接返回，不执行任何广告初始化逻辑
                             param.setResult(null);
                             log("已阻止PackageInstaller广告数据初始化");
@@ -76,7 +76,7 @@ public class Hook_disable_installerAD extends BaseHookModule {
                 XposedHelpers.findAndHookMethod(installSuccessClass, "initRecommendAppsData",
                         new XC_MethodHook() {
                             @Override
-                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            protected void beforeHookedMethod(MethodHookParam param) {
                                 param.setResult(null);
                                 log("已阻止Google PackageInstaller广告数据初始化");
                             }

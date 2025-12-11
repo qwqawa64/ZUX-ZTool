@@ -35,7 +35,7 @@ public class SafeCenterScanBlocker extends BaseHookModule {
                     android.content.Context.class,
                     new XC_MethodReplacement() {
                         @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                        protected Object replaceHookedMethod(MethodHookParam param) {
                             // 直接返回null，阻止自动扫描执行
                             log("Auto virus scan blocked at entry point");
                             return null;

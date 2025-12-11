@@ -55,7 +55,7 @@ public class DisableGameAudio extends BaseHookModule {
                     String.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             String key = (String) param.args[0];
                             String value = (String) param.args[1];
 
@@ -68,11 +68,10 @@ public class DisableGameAudio extends BaseHookModule {
                                 for (int i = 0; i < Math.min(stackTrace.length, 10); i++) {
                                     stackTraceStr.append(stackTrace[i].toString()).append("\n");
                                 }
-                                log("Call stack:\n" + stackTraceStr.toString());
+                                log("Call stack:\n" + stackTraceStr);
 
                                 // 阻止设置该属性
                                 param.setResult(null);
-                                return;
                             }
                         }
                     });
@@ -101,11 +100,11 @@ public class DisableGameAudio extends BaseHookModule {
                     String.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             String packageName = (String) param.args[0];
                             log("ZuiGameAppStateListener.onGameAppStart for: " + packageName);
 
-                            if (shouldBlockGameAudio(packageName)) {
+                            if (shouldBlockGameAudio()) {
                                 log("Blocking game audio for: " + packageName);
                                 // 不阻止方法执行，但会在 SystemProperties.set 层拦截
                             }
@@ -121,7 +120,7 @@ public class DisableGameAudio extends BaseHookModule {
                     String.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             String packageName = (String) param.args[0];
                             log("ZuiGameAppStateListener.onGameAppExit for: " + packageName);
                         }
@@ -149,7 +148,7 @@ public class DisableGameAudio extends BaseHookModule {
                     String.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             String keyValuePairs = (String) param.args[0];
 
                             if (keyValuePairs != null && keyValuePairs.contains("game_voip=true")) {
@@ -157,7 +156,6 @@ public class DisableGameAudio extends BaseHookModule {
 
                                 // 阻止设置游戏VOIP参数
                                 param.setResult(null);
-                                return;
                             }
                         }
                     });
@@ -184,7 +182,7 @@ public class DisableGameAudio extends BaseHookModule {
                     android.os.Bundle.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 清除游戏音频属性
                             clearGameAudioProperties();
                             log("Cleared game audio properties in " + lpparam.packageName);
@@ -199,14 +197,10 @@ public class DisableGameAudio extends BaseHookModule {
     /**
      * 判断是否应该阻止游戏音频设置
      */
-    private boolean shouldBlockGameAudio(String packageName) {
+    private boolean shouldBlockGameAudio() {
         // 阻止所有游戏的音频优化设置
         // 可以根据需要修改为特定包名过滤
         return true;
-
-        // 示例：只阻止特定包名
-        // return "com.tencent.lolm".equals(packageName) ||
-        //        "com.tencent.tmgp.pubgmhd".equals(packageName);
     }
 
     /**

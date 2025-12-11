@@ -76,7 +76,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     "getMaxCount",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 将最大数量从5改为20
                             param.setResult(20);
                             log("修改Hotseat最大数量为20");
@@ -101,7 +101,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     boolean.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 阻止显示空间不足提示
                             param.setResult(null);
                             log("阻止显示空间不足提示");
@@ -120,7 +120,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     boolean.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             param.setResult(true);
                             log("强制通过空间检查");
                         }
@@ -144,7 +144,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     "getHotseatColumnSpan",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 修改Hotseat列跨度
                             param.setResult(20);
                         }
@@ -158,7 +158,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     "recalculateHotseatWidthAndBorderSpace",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             Object deviceProfile = param.thisObject;
                             // 强制设置numShownHotseatIcons为20
                             XposedHelpers.setIntField(deviceProfile, "numShownHotseatIcons", 20);
@@ -190,7 +190,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     "com.android.launcher3.util.PendingRequestArgs",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             log("准备添加快捷方式到Hotseat");
                         }
                     }
@@ -209,9 +209,8 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 确保添加项目时不会受到限制
-                            Object pendingItemInfo = param.args[0];
                             int container = (int) param.args[1];
 
                             if (container == -101) { // -101是Hotseat的容器ID
@@ -231,7 +230,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                         boolean.class,
                         new XC_MethodHook() {
                             @Override
-                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            protected void beforeHookedMethod(MethodHookParam param) {
                                 Object itemInfo = param.args[0];
                                 int container = XposedHelpers.getIntField(itemInfo, "container");
 
@@ -262,7 +261,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     "getNumDatabaseHotseatIcons",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 将数据库Hotseat数量从5改为20
                             param.setResult(20);
                             log("修改数据库Hotseat数量为20");
@@ -302,7 +301,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     boolean.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             Object itemInfo = param.args[0];
                             int container = XposedHelpers.getIntField(itemInfo, "container");
                             int screenId = XposedHelpers.getIntField(itemInfo, "screenId");
@@ -324,7 +323,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     "com.android.launcher3.model.data.ItemInfo",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             Object itemInfo = param.args[0];
                             int container = XposedHelpers.getIntField(itemInfo, "container");
 
@@ -346,7 +345,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     "com.android.launcher3.model.BgDataModel",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             Object itemInfo = param.args[0];
                             int container = XposedHelpers.getIntField(itemInfo, "container");
                             int screenId = XposedHelpers.getIntField(itemInfo, "screenId");
@@ -380,12 +379,9 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                            Object itemInfo = param.args[0];
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             int container = (int) param.args[1];
                             int screen = (int) param.args[2];
-                            int cellX = (int) param.args[3];
-                            int cellY = (int) param.args[4];
 
                             if (container == -101 && screen >= 5) {
                                 log("数据库操作 - Hotseat位置: " + screen);
@@ -412,7 +408,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     android.content.Context.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             Object launcherAppState = param.getResult();
                             if (launcherAppState != null) {
                                 try {
@@ -447,7 +443,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     int.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             boolean result = (boolean) param.getResult();
                             if (!result) {
                                 // 如果原本找不到位置，强制返回true并设置坐标

@@ -37,25 +37,22 @@ public class Hook_Skip_WarnPage extends BaseHookModule {
                     "onResume",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             final Object activity = param.thisObject;
 
                             // 延迟执行，确保界面完全加载
-                            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
+                            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                                try {
+                                    // 直接调用 handleDirectInstallInFindSameAppCase 方法
+                                    XposedHelpers.callMethod(activity, "handleDirectInstallInFindSameAppCase");
+                                    log("Successfully called handleDirectInstallInFindSameAppCase");
+                                } catch (Exception e) {
+                                    // 如果上面的方法不存在，尝试调用 onDirectInstall 方法
                                     try {
-                                        // 直接调用 handleDirectInstallInFindSameAppCase 方法
-                                        XposedHelpers.callMethod(activity, "handleDirectInstallInFindSameAppCase");
-                                        log("Successfully called handleDirectInstallInFindSameAppCase");
-                                    } catch (Exception e) {
-                                        // 如果上面的方法不存在，尝试调用 onDirectInstall 方法
-                                        try {
-                                            XposedHelpers.callMethod(activity, "onDirectInstall");
-                                            log("Successfully called onDirectInstall");
-                                        } catch (Exception e2) {
-                                            logError("Both installation methods failed", e2);
-                                        }
+                                        XposedHelpers.callMethod(activity, "onDirectInstall");
+                                        log("Successfully called onDirectInstall");
+                                    } catch (Exception e2) {
+                                        logError("Both installation methods failed", e2);
                                     }
                                 }
                             }, 50); // 立刻执行

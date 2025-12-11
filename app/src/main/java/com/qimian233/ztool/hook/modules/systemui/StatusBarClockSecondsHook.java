@@ -41,7 +41,7 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
                     "onAttachedToWindow", new XC_MethodHook() {
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             forceEnableClockSeconds(param.thisObject);
                         }
                     });
@@ -57,7 +57,7 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
                     "onTuningChanged", String.class, String.class, new XC_MethodHook() {
 
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             String key = (String) param.args[0];
                             if ("clock_seconds".equals(key)) {
                                 // 强制覆盖设置为开启
@@ -67,7 +67,7 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
                         }
 
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             String key = (String) param.args[0];
                             if ("clock_seconds".equals(key)) {
                                 // 确保秒显示更新
@@ -87,7 +87,7 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
                     "updateShowSeconds", new XC_MethodHook() {
 
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             // 强制启用秒显示
                             XposedHelpers.setBooleanField(param.thisObject, "mShowSeconds", true);
                         }

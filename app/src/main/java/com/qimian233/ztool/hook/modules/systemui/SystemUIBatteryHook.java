@@ -118,7 +118,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
             );
 
             // 设置左边距，让百分比显示在电池图标右侧
-            int marginStart = getDimenValue(batteryMeterView, "qs_battery_padding");
+            int marginStart = getDimenValue(batteryMeterView);
             layoutParams.setMargins(marginStart, 0, 0, 0);
 
             // 将百分比文本直接添加到 BatteryMeterView (LinearLayout) 中
@@ -236,11 +236,11 @@ public class SystemUIBatteryHook extends BaseHookModule {
     }
 
     // 工具方法：获取维度值
-    private int getDimenValue(Object batteryMeterView, String dimenName) {
+    private int getDimenValue(Object batteryMeterView) {
         try {
             android.content.Context context = getContext(batteryMeterView);
             int resId = context.getResources().getIdentifier(
-                    dimenName, "dimen", "com.android.systemui");
+                    "qs_battery_padding", "dimen", "com.android.systemui");
             return context.getResources().getDimensionPixelOffset(resId);
         } catch (Throwable t) {
             return 8; // 默认值

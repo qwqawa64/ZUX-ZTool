@@ -126,18 +126,6 @@ public class ModulePreferencesUtils {
     }
 
     /**
-     * 删除指定设置
-     * @param featureName 功能名称
-     * @return 是否删除成功
-     */
-    public boolean removeSetting(String featureName) {
-        SharedPreferences prefs = getModulePreferences();
-        return prefs.edit()
-                .remove(featureName)
-                .commit();
-    }
-
-    /**
      * 清除所有设置
      */
     @SuppressLint("WorldReadableFiles")

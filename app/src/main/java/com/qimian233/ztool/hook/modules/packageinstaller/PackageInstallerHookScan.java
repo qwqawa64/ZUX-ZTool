@@ -11,7 +11,6 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public class PackageInstallerHookScan extends BaseHookModule {
 
-    private static final String TAG = "PackageInstallerHookScan";
     private static final String PACKAGE_INSTALLER = "com.android.packageinstaller";
 
     @Override
@@ -57,7 +56,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
                     "startScanApps",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             log("拦截startScanApps，跳过扫描流程");
                             param.setResult(null); // 直接返回，不执行扫描
 
@@ -85,7 +84,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
                     "showResultIfFinish",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             log("拦截showResultIfFinish");
 
                             Object activity = param.thisObject;
@@ -113,7 +112,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
                     "bindSafeService",
                     new XC_MethodHook() {
                         @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void beforeHookedMethod(MethodHookParam param) {
                             log("拦截bindSafeService，跳过服务绑定");
 
                             Object activity = param.thisObject;

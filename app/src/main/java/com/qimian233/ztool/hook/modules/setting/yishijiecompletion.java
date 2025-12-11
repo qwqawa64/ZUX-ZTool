@@ -28,7 +28,7 @@ public class yishijiecompletion extends BaseHookModule {
         if ("com.android.settings".equals(packageName)) {
             hookSettingsAppManager(lpparam);
         } else if ("com.lenovo.settings".equals(packageName)) {
-            hookLenovoSettings(lpparam);
+            hookLenovoSettings();
         }
     }
 
@@ -46,7 +46,7 @@ public class yishijiecompletion extends BaseHookModule {
         }
     }
 
-    private void hookLenovoSettings(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookLenovoSettings() {
         try {
             // 这里可以添加更多Lenovo设置的Hook
             // 例如：XposedHelpers.findAndHookMethod(...)
