@@ -5,10 +5,15 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+
+import com.qimian233.ztool.R;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -147,17 +152,12 @@ public class LogCollectorService extends Service {
      */
     private Notification createSimpleNotification() {
         try {
-            Notification.Builder builder;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                builder = new Notification.Builder(this, CHANNEL_ID);
-            } else {
-                builder = new Notification.Builder(this);
-            }
-
+            NotificationCompat.Builder builder;
+            builder = new NotificationCompat.Builder(this, CHANNEL_ID);
             return builder.setContentTitle("日志采集服务")
                     .setContentText("服务启动中...")
                     .setSmallIcon(getNotificationIcon())
-                    .setPriority(Notification.PRIORITY_LOW)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
                     .setOngoing(true)
                     .setOnlyAlertOnce(true)
                     .build();
@@ -173,18 +173,13 @@ public class LogCollectorService extends Service {
     private void startFallbackForeground() {
         try {
             // 使用最基本的通知设置
-            Notification.Builder builder = new Notification.Builder(this);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                builder.setChannelId(CHANNEL_ID);
-            }
-
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID);
             Notification notification = builder
                     .setContentTitle("日志服务")
                     .setContentText("运行中")
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setPriority(Notification.PRIORITY_LOW)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
                     .build();
-
             startForeground(NOTIFICATION_ID, notification);
             isForeground = true;
             android.util.Log.d(TAG, "备用前台服务启动成功");
@@ -196,27 +191,25 @@ public class LogCollectorService extends Service {
     /**
      * 创建通知渠道
      */
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                NotificationChannel channel = new NotificationChannel(
-                        CHANNEL_ID,
-                        CHANNEL_NAME,
-                        NotificationManager.IMPORTANCE_LOW
-                );
-                channel.setDescription("用于收集Hook模块的运行日志");
-                channel.setShowBadge(false);
-                channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+    public void createNotificationChannel() {
+        try {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("用于收集Hook模块的运行日志");
+            channel.setShowBadge(false);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
 
-                if (notificationManager != null) {
-                    notificationManager.createNotificationChannel(channel);
-                    android.util.Log.d(TAG, "通知渠道创建成功");
-                } else {
-                    android.util.Log.e(TAG, "NotificationManager 为 null");
-                }
-            } catch (Exception e) {
-                android.util.Log.e(TAG, "创建通知渠道失败", e);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+                android.util.Log.d(TAG, "通知渠道创建成功");
+            } else {
+                android.util.Log.e(TAG, "NotificationManager 为 null");
             }
+        } catch (Exception e) {
+            android.util.Log.e(TAG, "创建通知渠道失败", e);
         }
     }
 
@@ -227,18 +220,14 @@ public class LogCollectorService extends Service {
         if (isForeground) {
             mainHandler.post(() -> {
                 try {
-                    Notification.Builder builder;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        builder = new Notification.Builder(this, CHANNEL_ID);
-                    } else {
-                        builder = new Notification.Builder(this);
-                    }
+                    NotificationCompat.Builder builder;
+                    builder = new NotificationCompat.Builder(this, CHANNEL_ID);
 
                     Notification notification = builder
                             .setContentTitle("日志采集服务")
                             .setContentText(contentText)
                             .setSmallIcon(getNotificationIcon())
-                            .setPriority(Notification.PRIORITY_LOW)
+                            .setPriority(NotificationCompat.PRIORITY_LOW)
                             .setOngoing(true)
                             .setOnlyAlertOnce(true)
                             .build();
@@ -259,7 +248,7 @@ public class LogCollectorService extends Service {
     private int getNotificationIcon() {
         // 使用应用图标或默认系统图标
         try {
-            int icon = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
+            int icon = R.mipmap.ic_launcher;
             if (icon == 0) {
                 icon = android.R.drawable.ic_dialog_info;
             }
@@ -352,25 +341,10 @@ public class LogCollectorService extends Service {
             command.add("su");
             command.add("-c");
 
-            StringBuilder logcatCmd = new StringBuilder();
-            logcatCmd.append("logcat");
-            logcatCmd.append(" -v");
-            logcatCmd.append(" time");
-            logcatCmd.append(" -b");
-            logcatCmd.append(" main");
-            logcatCmd.append(" -b");
-            logcatCmd.append(" system");
-            logcatCmd.append(" -b");
-            logcatCmd.append(" events");
-
-            for (String tag : LOG_TAGS) {
-                logcatCmd.append(" ").append(tag).append(":I");
-            }
-
-            logcatCmd.append(" *:S");
+            StringBuilder logcatCmd = getStringBuilder();
 
             command.add(logcatCmd.toString());
-            android.util.Log.d(TAG, "Root模式命令: " + command.toString());
+            android.util.Log.d(TAG, "Root模式命令: " + command);
         } else {
             command.add("logcat");
             command.add("-v");
@@ -385,10 +359,31 @@ public class LogCollectorService extends Service {
             }
 
             command.add("*:S");
-            android.util.Log.d(TAG, "非Root模式命令: " + command.toString());
+            android.util.Log.d(TAG, "非Root模式命令: " + command);
         }
 
         return command;
+    }
+
+    @NonNull
+    private static StringBuilder getStringBuilder() {
+        StringBuilder logcatCmd = new StringBuilder();
+        logcatCmd.append("logcat");
+        logcatCmd.append(" -v");
+        logcatCmd.append(" time");
+        logcatCmd.append(" -b");
+        logcatCmd.append(" main");
+        logcatCmd.append(" -b");
+        logcatCmd.append(" system");
+        logcatCmd.append(" -b");
+        logcatCmd.append(" events");
+
+        for (String tag : LOG_TAGS) {
+            logcatCmd.append(" ").append(tag).append(":I");
+        }
+
+        logcatCmd.append(" *:S");
+        return logcatCmd;
     }
 
     private boolean checkRootPermission() {
@@ -443,7 +438,7 @@ public class LogCollectorService extends Service {
 
                 // 构建并启动logcat进程
                 List<String> command = buildLogcatCommand();
-                android.util.Log.d(TAG, "执行logcat命令: " + command.toString());
+                android.util.Log.d(TAG, "执行logcat命令: " + command);
 
                 mainHandler.post(() -> updateNotification("正在启动logcat进程..."));
 
@@ -491,7 +486,10 @@ public class LogCollectorService extends Service {
                             lastFileCheckTime = currentTime;
                         }
 
-                        if (reader.ready() && (line = reader.readLine()) != null) {
+                        // 使用 readLine() 的阻塞特性，避免忙等待
+                        // 设置读取超时，以便定期检查文件状态和运行状态
+                        line = reader.readLine();
+                        if (line != null) {
                             String enhancedLine = enhanceLogLine(line);
 
                             // 写入前再次检查文件状态
@@ -548,12 +546,9 @@ public class LogCollectorService extends Service {
                                 mainHandler.post(() -> updateNotification("正在收集日志..."));
                             }
                         } else {
-                            Thread.sleep(100);
+                            android.util.Log.d(TAG, "Logcat 流已结束");
+                            break;
                         }
-                    } catch (InterruptedException e) {
-                        android.util.Log.d(TAG, "日志收集线程被中断");
-                        Thread.currentThread().interrupt();
-                        break;
                     } catch (IOException e) {
                         if (isRunning.get()) {
                             android.util.Log.e(TAG, "读取日志流失败", e);
@@ -628,20 +623,10 @@ public class LogCollectorService extends Service {
     }
 
     private void cleanupOldFiles(File logDir) {
-        File[] logFiles = logDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith(FILE_PREFIX) && name.endsWith(FILE_SUFFIX);
-            }
-        });
+        File[] logFiles = logDir.listFiles((dir, name) -> name.startsWith(FILE_PREFIX) && name.endsWith(FILE_SUFFIX));
 
         if (logFiles != null && logFiles.length > MAX_FILES) {
-            Arrays.sort(logFiles, new Comparator<File>() {
-                @Override
-                public int compare(File f1, File f2) {
-                    return Long.compare(f1.lastModified(), f2.lastModified());
-                }
-            });
+            Arrays.sort(logFiles, Comparator.comparingLong(File::lastModified));
 
             int filesToDelete = logFiles.length - MAX_FILES;
             for (int i = 0; i < filesToDelete; i++) {

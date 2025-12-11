@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import android.widget.TextView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.qimian233.ztool.service.LogCollectorService;
 import com.qimian233.ztool.utils.ConfigUpgrade;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 
@@ -75,6 +76,10 @@ public class HomeFragment extends Fragment {
 
         // 初始化Shell执行器
         shellExecutor = EnhancedShellExecutor.getInstance();
+
+        // 创建通知渠道
+        LogCollectorService service = new LogCollectorService();
+        service.createNotificationChannel();
 
         return inflater.inflate(R.layout.fragment_home, container, false);
     }

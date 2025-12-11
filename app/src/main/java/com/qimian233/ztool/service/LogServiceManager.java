@@ -17,7 +17,6 @@ public class LogServiceManager {
     private static final String KEY_USE_ROOT_MODE = "use_root_mode";
     private static final String KEY_SERVICE_RESTART_ATTEMPTS = "service_restart_attempts";
     private static final int MAX_RESTART_ATTEMPTS = 3;
-    private static final long RESTART_DELAY_MS = 2000;
 
     // 服务状态监听器
     public interface ServiceStatusListener {
@@ -38,8 +37,8 @@ public class LogServiceManager {
     /**
      * 启动日志采集服务（自动选择Root模式）
      */
-    public static boolean startLogService(Context context) {
-        return startLogService(context, false);
+    public static void startLogService(Context context) {
+        startLogService(context, false);
     }
 
     /**
@@ -64,10 +63,9 @@ public class LogServiceManager {
                         hasRoot, hasReadLogs, isRestart));
 
         // 自动选择最佳模式
-        boolean useRootMode = hasRoot;
-        setUseRootMode(context, useRootMode);
+        setUseRootMode(context, hasRoot);
 
-        if (useRootMode) {
+        if (hasRoot) {
             android.util.Log.d("LogServiceManager", "使用Root模式启动日志服务");
         } else {
             android.util.Log.w("LogServiceManager",
@@ -79,11 +77,7 @@ public class LogServiceManager {
             intent.putExtra("is_restart", isRestart);
 
             // 对于 Android 8.0+ 使用 startForegroundService，其他使用 startService
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent);
-            } else {
-                context.startService(intent);
-            }
+            context.startForegroundService(intent);
 
             setServiceEnabled(context, true);
             resetRestartAttempts(context);
@@ -91,9 +85,7 @@ public class LogServiceManager {
             android.util.Log.d("LogServiceManager", "日志服务启动成功");
 
             if (statusListener != null) {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    statusListener.onServiceStarted();
-                });
+                new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceStarted());
             }
 
             return true;
@@ -111,7 +103,7 @@ public class LogServiceManager {
     /**
      * 停止日志采集服务
      */
-    public static boolean stopLogService(Context context) {
+    public static void stopLogService(Context context) {
         try {
             Intent intent = new Intent(context, LogCollectorService.class);
             context.stopService(intent);
@@ -122,15 +114,11 @@ public class LogServiceManager {
 
             // 通知监听器
             if (statusListener != null) {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    statusListener.onServiceStopped();
-                });
+                new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceStopped());
             }
 
-            return true;
         } catch (Exception e) {
             android.util.Log.e("LogServiceManager", "停止日志服务失败", e);
-            return false;
         }
     }
 
@@ -161,9 +149,7 @@ public class LogServiceManager {
                 setServiceEnabled(context, false);
 
                 if (statusListener != null) {
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        statusListener.onServiceRestartFailed();
-                    });
+                    new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceRestartFailed());
                 }
             }
         }
@@ -184,9 +170,7 @@ public class LogServiceManager {
             setServiceEnabled(context, false);
 
             if (statusListener != null) {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    statusListener.onServiceRestartFailed();
-                });
+                new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceRestartFailed());
             }
         }
     }
@@ -197,14 +181,6 @@ public class LogServiceManager {
     public static boolean isServiceEnabled(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         return prefs.getBoolean(KEY_SERVICE_ENABLED, false);
-    }
-
-    /**
-     * 检查是否使用Root模式
-     */
-    public static boolean isUseRootMode(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        return prefs.getBoolean(KEY_USE_ROOT_MODE, false);
     }
 
     /**
@@ -241,39 +217,5 @@ public class LogServiceManager {
     private static void setUseRootMode(Context context, boolean useRoot) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putBoolean(KEY_USE_ROOT_MODE, useRoot).apply();
-    }
-
-    /**
-     * 获取服务状态信息
-     */
-    public static String getServiceStatus(Context context) {
-        StringBuilder status = new StringBuilder();
-        status.append("服务状态: ").append(isServiceEnabled(context) ? "运行中" : "已停止").append("\n");
-        status.append("运行模式: ").append(isUseRootMode(context) ? "Root模式" : "普通模式").append("\n");
-        status.append("重启尝试: ").append(getRestartAttempts(context)).append("/").append(MAX_RESTART_ATTEMPTS).append("\n");
-        status.append(PermissionChecker.getPermissionStatus(context));
-        return status.toString();
-    }
-
-    /**
-     * 强制使用Root模式（如果可用）
-     */
-    public static boolean forceRootMode(Context context) {
-        if (PermissionChecker.hasRootPermission()) {
-            setUseRootMode(context, true);
-
-            // 如果服务正在运行，重启以应用新模式
-            if (isServiceEnabled(context)) {
-                stopLogService(context);
-                try {
-                    Thread.sleep(1000); // 等待服务完全停止
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                return startLogService(context);
-            }
-            return true;
-        }
-        return false;
     }
 }
