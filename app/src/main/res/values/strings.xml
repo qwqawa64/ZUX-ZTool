@@ -360,13 +360,13 @@
     <string name="config_generated">配置已生成</string>
     <string name="config_generation_error">生成配置时出错</string>
     <string name="welcome_message">欢迎使用适配向导，请按照上面步骤提示操作: </string>
-    <string name="step_1_instruction">步骤 1/4: 请打开您想要适配的APP，然后点击下一步</string>
+    <string name="step_1_instruction">步骤 1，共 4 步: 请打开您想要适配的APP，然后点击下一步</string>
     <string name="set_main_page_title">设置主界面</string>
-    <string name="step_2_instruction">步骤 2/4: 请在%1$s中停留在主界面（如：哔哩哔哩的首页），然后点击下一步</string>
+    <string name="step_2_instruction">步骤 2，共 4 步: 请在%1$s中停留在主界面（如：哔哩哔哩的首页），然后点击下一步</string>
     <string name="add_activities_title">添加其他在左半屏的界面</string>
-    <string name="step_3_instruction">步骤 3/4: 现在，你可以添加多个需要选择其他需要显示在左侧的界面，定位到需要的界面，点击\"添加当前活动\"按钮</string>
+    <string name="step_3_instruction">步骤 3，共 4 步: 现在，你可以添加多个需要选择其他需要显示在左侧的界面，定位到需要的界面，点击\"添加当前活动\"按钮</string>
     <string name="config_options_title">配置选项</string>
-    <string name="step_4_instruction">步骤 4/4: 请设置以下属性（不明白可以默认）</string>
+    <string name="step_4_instruction">步骤 4，共 4 步: 请设置以下属性（不明白可以默认）</string>
     <string name="config_complete_title">配置已完成！</string>
     <string name="step_complete_instruction">保存后可以前往APP查看</string>
     <string name="next_button">下一步</string>
@@ -590,7 +590,7 @@
         <item>深橙</item>
         <item>棕色</item>
     </string-array>
-    <string name="clock_format_help_content">时间格式基于ISO 8601进行拓展，自定义时钟格式说明：\n\n📅 ISO 8601标准日期格式：\n  yyyy - 年份(2024)\n  yy   - 年份后两位(24)\n  MM   - 月份(12)\n  MMM  - 月份缩写(12月)\n  MMMM - 月份全称(十二月)\n  dd   - 日期(25)\n  HH   - 24小时制(14)\n  hh   - 12小时制(02)\n  mm   - 分钟(30)\n  ss   - 秒(45)\n  SSS  - 毫秒(123)\n\n📅 星期格式：\n  E    - 星期缩写(周一)\n  EE   - 星期缩写(周一)\n  EEE  - 星期缩写(周一)\n  EEEE - 星期全称(星期一)\n  u    - 数字星期(1-7,1=周一)\n  W    - 自定义星期格式(周一)\n\n🌙 农历相关：\n  N - 农历日期(腊月廿三)\n  J - 节气(仅当天显示，如立春)\n  A - 生肖(龙)\n\n⏰ 时间相关：\n  T - 时辰(子时)\n  a - 上午/下午标记(AM/PM)\n  k - 24小时制(1-24)\n  K - 12小时制(0-11)\n\n✨ 其他特殊格式：\n  C - 星座(水瓶座)\n  D - 一年中的第几天(1-365)\n  F - 一个月中的第几个星期\n  w - 一年中的第几周(1-53)\n  W - 一个月中的第几周(1-5)\n  z - 时区名称(GMT+08:00)\n  Z - 时区偏移量(+0800)\n\n🎯 使用示例：\n  \"yyyy-MM-dd HH:mm:ss\" → \"2024-12-25 14:30:45\"\n  \"MM月dd日 EEEE\" → \"12月25日 星期三\"\n  \"HH:mm T\" → \"14:30 午时\"\n  \"yyyy年MM月dd日 N A\" → \"2024年12月25日 腊月廿三 龙\"\n  \"yyyy/MM/dd E C\" → \"2024/12/25 周三 摩羯座\"\n\n💡 注意事项：\n  • 农历和节气基于中国农历算法\n  • 时辰按2小时一个时段划分\n  • 星座基于公历日期计算\n  • 生肖基于农历年份确定\n  • 自定义格式符(N,J,T,C,A,W)区分大小写</string>
+    <string name="clock_format_help_content">时间格式基于ISO 8601进行拓展，自定义时钟格式说明：\n\n📅 ISO 8601标准日期格式：\n  yyyy – 年份(2024)\n  yy   – 年份后两位(24)\n  MM   – 月份(12)\n  MMM  – 月份缩写(12月)\n  MMMM – 月份全称(十二月)\n  dd   – 日期(25)\n  HH   – 24小时制(14)\n  hh   – 12小时制(02)\n  mm   – 分钟(30)\n  ss   – 秒(45)\n  SSS  – 毫秒(123)\n\n📅 星期格式：\n  E    – 星期缩写(周一)\n  EE   – 星期缩写(周一)\n  EEE  – 星期缩写(周一)\n  EEEE – 星期全称(星期一)\n  u    – 数字星期(1–7,1=周一)\n  W    – 自定义星期格式(周一)\n\n🌙 农历相关：\n  N – 农历日期(腊月廿三)\n  J – 节气(仅当天显示，如立春)\n  A – 生肖(龙)\n\n⏰ 时间相关：\n  T – 时辰(子时)\n  a – 上午/下午标记(AM/PM)\n  k – 24小时制(1–24)\n  K – 12小时制(0–11)\n\n✨ 其他特殊格式：\n  C – 星座(水瓶座)\n  D – 一年中的第几天(1–365)\n  F – 一个月中的第几个星期\n  w – 一年中的第几周(1–53)\n  W – 一个月中的第几周(1–5)\n  z – 时区名称(GMT+08:00)\n  Z – 时区偏移量(+0800)\n\n🎯 使用示例：\n  \"yyyy–MM–dd HH:mm:ss\" → \"2024–12–25 14:30:45\"\n  \"MM月dd日 EEEE\" → \"12月25日 星期三\"\n  \"HH:mm T\" → \"14:30 午时\"\n  \"yyyy年MM月dd日 N A\" → \"2024年12月25日 腊月廿三 龙\"\n  \"yyyy/MM/dd E C\" → \"2024/12/25 周三 摩羯座\"\n\n💡 注意事项：\n  • 农历和节气基于中国农历算法\n  • 时辰按2小时一个时段划分\n  • 星座基于公历日期计算\n  • 生肖基于农历年份确定\n  • 自定义格式符(N,J,T,C,A,W)区分大小写</string>
     <!--启动器功能页的资源值-->
     <string name="launcher_settings_title_suffix"> - 启动器设置</string>
     <string name="force_stop_success">已重启应用进程</string>
