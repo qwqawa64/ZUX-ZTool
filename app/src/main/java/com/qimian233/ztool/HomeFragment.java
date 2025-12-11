@@ -406,7 +406,8 @@ public class HomeFragment extends Fragment {
                 textModuleVersion.post(() -> textModuleVersion.setText(getString(R.string.module_version_unknown_activity)));
             }
         } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            Log.e(TAG, "获取模块版本信息失败: " + e.getMessage());
             textModuleVersion.post(() -> textModuleVersion.setText(getString(R.string.module_version_unknown)));
         }
     }
