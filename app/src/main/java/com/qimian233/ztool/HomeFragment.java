@@ -227,10 +227,11 @@ public class HomeFragment extends Fragment {
                 updateSystemInfoAsync();
 
                 if (!utils.loadBooleanSetting("enable_homepage_yiyan", true)) {
-                    // 立即显示默认文本，确保界面快速渲染
-                    // 如果用户不使用主界面一言，那么同样显示这段文本
+                    // 如果用户不使用主界面一言，那么同样显示“环境就绪”
                     textHint.setText(getString(R.string.environment_ready));
                 } else {
+                    // 立即显示默认文本，确保界面快速渲染
+                    textHint.setText(getString(R.string.environment_ready));
                     // 异步获取API内容
                     fetchHintFromAPI();
                 }
