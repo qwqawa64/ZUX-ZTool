@@ -127,10 +127,12 @@ public class SystemUIRealWatts extends BaseHookModule {
             data.voltage = (float) voltageV;
             data.power = power;  // 保留原始double值，不四舍五入
 
-            log("Root读取实时充电数据 - 状态: " + status +
-                    ", 电流: " + currentA + "A (" + currentMicroA + "μA)" +
-                    ", 电压: " + voltageV + "V (" + voltageMicroV + "μV)" +
-                    ", 功率: " + POWER_FORMAT.format(power) + "W");
+            if (DEBUG) {
+                log("Root读取实时充电数据 - 状态: " + status +
+                        ", 电流: " + currentA + "A (" + currentMicroA + "μA)" +
+                        ", 电压: " + voltageV + "V (" + voltageMicroV + "μV)" +
+                        ", 功率: " + POWER_FORMAT.format(power) + "W");
+            }
 
             return data;
 
@@ -166,7 +168,7 @@ public class SystemUIRealWatts extends BaseHookModule {
             }
 
             String result = output.toString().trim();
-            log("Root命令执行成功: " + command + " -> " + result);
+            if (DEBUG) log("Root命令执行成功: " + command + " -> " + result);
             return result;
 
         } catch (Exception e) {
