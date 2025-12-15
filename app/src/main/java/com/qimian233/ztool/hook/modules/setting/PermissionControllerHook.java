@@ -30,21 +30,21 @@ public class PermissionControllerHook extends BaseHookModule {
 
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (!isEnabled()) return;
-        log("[PermissionControllerHook] Loading module PermissionControllerHook.");
+        log("Loading module PermissionControllerHook.");
         try {
             if ("com.android.permissioncontroller".equals(lpparam.packageName)) {
-                log("[PermissionControllerHook] com.android.permissioncontroller detected. Hooking...");
+                log("com.android.permissioncontroller detected. Hooking...");
                 handleLoadPermissionController(lpparam);
             } else if ("com.android.settings".equals(lpparam.packageName)) {
-                log("[PermissionControllerHook] com.android.settings detected. Hooking...");
+                log("com.android.settings detected. Hooking...");
                 new SettingsHook().handleLoadSettings(lpparam);
             } else if ("com.zui.safecenter".equals(lpparam.packageName)) {
-                log("[PermissionControllerHook] com.zui.safecenter detected. Hooking...");
+                log("com.zui.safecenter detected. Hooking...");
                 handleLoadSafeCenter(lpparam);
             }
-            log("[PermissionControllerHook] Hook is successful.");
+            log("Hook is successful.");
         }catch (Exception e) {
-            logError("[PermissionControllerHook] Error hooking", e);
+            logError("Error hooking", e);
         }
     }
 
@@ -99,7 +99,11 @@ public class PermissionControllerHook extends BaseHookModule {
             // make settings invoke AOSP permission manager
             XposedHelpers.findAndHookMethod("com.android.settings.applications.appinfo.AppPermissionPreferenceController", lpparam.classLoader, "startManagePermissionsActivity", new IsRowVersionTlsHook());
             XposedHelpers.findAndHookMethod("com.lenovo.settings.privacy.PrivacyManagerPreferenceController", lpparam.classLoader, "handlePreferenceTreeClick", "androidx.preference.Preference", new IsRowVersionTlsHook());
-            XposedHelpers.findAndHookMethod("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController", lpparam.classLoader, "lambda$initAppEntryList$0$com-lenovo-settings-applications-LenovoAppHeaderPreferenceController", "android.view.View", new IsRowVersionTlsHook());
+            if (android.os.Build.VERSION.SDK_INT >= 36){
+                XposedHelpers.findAndHookMethod("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController", lpparam.classLoader, "handlePermissionClick", new IsRowVersionTlsHook());
+            } else {
+                XposedHelpers.findAndHookMethod("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController", lpparam.classLoader, "lambda$initAppEntryList$0$com-lenovo-settings-applications-LenovoAppHeaderPreferenceController", "android.view.View", new IsRowVersionTlsHook());
+            }
         }
     }
 
