@@ -54,10 +54,11 @@ public abstract class BaseHookModule {
      * 安全执行Hook（捕获异常，防止一个模块崩溃影响其他模块）
      */
     public void safeHandleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        if (!supportsPackage(lpparam.packageName) || !isEnabled()) {
-            Log.d(TAG, "module disable: " + getModuleName());
+        if (!isEnabled()) {
+            Log.d(TAG, "module disabled: " + getModuleName()); // If module is disabled, log it and return.
             return;
         }
+        if (!supportsPackage(lpparam.packageName) || !isEnabled()) return; // If not supported, return directly.
 
         try {
             Log.d(TAG, "Executing hook module: " + getModuleName() + " for package: " + lpparam.packageName);
