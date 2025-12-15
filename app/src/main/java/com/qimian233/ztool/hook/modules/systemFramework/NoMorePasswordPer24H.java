@@ -4,10 +4,7 @@ import android.os.Handler;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import java.util.Date;
-
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -94,7 +91,6 @@ public class NoMorePasswordPer24H extends BaseHookModule {
                     tag.contains("LockSettings");
 
             if (isStrongAuthAlarm) {
-                long originalTime = (long) param.args[1];
                 long currentTime = System.currentTimeMillis();
 
                 // 计算1年后的时间
@@ -107,16 +103,6 @@ public class NoMorePasswordPer24H extends BaseHookModule {
                 }
 
                 param.args[1] = newTime;
-
-                log(String.format(
-                        "[StrongAuthHook] 修改强认证闹钟:\n" +
-                                "Tag: %s\n" +
-                                "原时间: %d (%s)\n" +
-                                "新时间: %d (%s)",
-                        tag,
-                        originalTime, new Date(originalTime),
-                        newTime, new Date(newTime)
-                ));
             }
 
         } catch (Exception e) {
