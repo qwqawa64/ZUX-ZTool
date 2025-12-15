@@ -608,6 +608,9 @@
     <string name="disable_zui_applist_title">权限管理</string>
     <string name="disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
     <string name="disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
+    <string name="framework_lockscreen_settings_title">锁屏</string>
+    <string name="disable_lockscreen_password_per24h">禁止每24小时验证一次锁屏密码</string>
+    <string name="disable_lockscreen_password_per24h_summary">注意：此功能很可能降低设备安全性，如非刚需不建议开启</string>
     <string name="framework_settings_title_suffix"> - 系统框架设置</string>
     <string name="restart_system_title">重启系统</string>
     <string name="restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>

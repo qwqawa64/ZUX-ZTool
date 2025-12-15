@@ -19,6 +19,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchKeepRotation;
     private MaterialSwitch switchDisableZUIApplist;
+    // private MaterialSwitch switchDisableForcedLockscreenPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +50,9 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
         // 设置禁用系统应用列表管理点击监听
         switchDisableZUIApplist = findViewById(R.id.switch_disable_zuiapplist);
         switchDisableZUIApplist.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("allow_get_packages",isChecked));
+        // 设置禁用每24H验证一次锁屏密码
+        // switchDisableForcedLockscreenPassword = findViewById(R.id.switch_disable_lockscreen_password_per24h);
+        // switchDisableForcedLockscreenPassword.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("NoMorePasswordPer24H", isChecked));
     }
 
     private void loadSettings() {
@@ -58,7 +62,9 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
         // 加载保持屏幕方向设置
         boolean isKeepRotation = mPrefsUtils.loadBooleanSetting("keep_rotation", false);
         switchKeepRotation.setChecked(isKeepRotation);
-
+        // 加载禁止24H验证一次锁屏密码的设置
+        // boolean isNotRequireLockscreenPasswordPer24H = mPrefsUtils.loadBooleanSetting("NoMorePasswordPer24H", false);
+        // switchDisableForcedLockscreenPassword.setChecked(isNotRequireLockscreenPasswordPer24H);
     }
 
     private void initRestartButton() {
