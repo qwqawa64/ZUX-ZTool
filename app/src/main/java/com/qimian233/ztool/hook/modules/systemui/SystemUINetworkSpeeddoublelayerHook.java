@@ -89,7 +89,9 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                 XposedHelpers.callMethod(networkSpeedView, "setTextSize",
                         android.util.TypedValue.COMPLEX_UNIT_PX, newTextSize);
 
-                log("Adjusted text size from " + currentTextSize + " to " + newTextSize);
+                if (DEBUG) {
+                    log("Adjusted text size from " + currentTextSize + " to " + newTextSize);
+                }
             } catch (Throwable sizeError) {
                 logError("Error adjusting text size", sizeError);
             }
@@ -175,8 +177,10 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     long upSpeed = (currentTxBytes - lastTxBytes) / timeDiff;
 
                     // 记录调试信息
-                    log(String.format("Speed update - downSpeed=%d, upSpeed=%d, timeDiff=%d",
-                            downSpeed, upSpeed, timeDiff));
+                    if (DEBUG) {
+                        log(String.format("Speed update - downSpeed=%d, upSpeed=%d, timeDiff=%d",
+                                downSpeed, upSpeed, timeDiff));
+                    }
 
                     // 发送显示消息
                     Object message = XposedHelpers.callMethod(handler, "obtainMessage");
