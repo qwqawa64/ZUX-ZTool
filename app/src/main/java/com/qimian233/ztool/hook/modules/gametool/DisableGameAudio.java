@@ -1,5 +1,7 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
@@ -89,6 +91,7 @@ public class DisableGameAudio extends BaseHookModule {
      */
     private void hookPhoneWindowManager(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
+            if (android.os.Build.VERSION.SDK_INT <=35) {
             log("Attempting to hook PhoneWindowManager");
 
             // Hook ZuiGameAppStateListener 的 onGameAppStart 方法
@@ -127,9 +130,11 @@ public class DisableGameAudio extends BaseHookModule {
                     });
 
             log("Successfully hooked PhoneWindowManager");
-
-        } catch (Throwable t) {
-            logError("Failed to hook PhoneWindowManager", t);
+            } else {
+                log("Unsupported API level: " + android.os.Build.VERSION.SDK_INT + " skipping...");
+            }
+        } catch (Exception e) {
+            logError("Failed to hook PhoneWindowManager", e);
         }
     }
 
@@ -209,7 +214,7 @@ public class DisableGameAudio extends BaseHookModule {
     private void clearGameAudioProperties() {
         try {
             // 使用反射调用 SystemProperties.set 来清除属性
-            Class<?> systemPropertiesClass = Class.forName("android.os.SystemProperties");
+            @SuppressLint("PrivateApi") Class<?> systemPropertiesClass = Class.forName("android.os.SystemProperties");
             java.lang.reflect.Method setMethod = systemPropertiesClass.getMethod("set", String.class, String.class);
             setMethod.invoke(null, TARGET_PROPERTY, "");
 
