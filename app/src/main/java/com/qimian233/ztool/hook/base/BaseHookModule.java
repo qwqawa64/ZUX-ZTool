@@ -12,6 +12,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public abstract class BaseHookModule {
     protected static final String TAG = "XposedHook";
+    public static boolean DEBUG = false;
 
     /**
      * 获取模块名称（用于日志和配置）
@@ -55,15 +56,15 @@ public abstract class BaseHookModule {
      */
     public void safeHandleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         if (!isEnabled()) {
-            Log.d(TAG, "module disabled: " + getModuleName()); // If module is disabled, log it and return.
+            if (DEBUG) Log.d(TAG, "module disabled: " + getModuleName()); // If module is disabled, log it and return.
             return;
         }
         if (!supportsPackage(lpparam.packageName) || !isEnabled()) return; // If not supported, return directly.
 
         try {
-            Log.d(TAG, "Executing hook module: " + getModuleName() + " for package: " + lpparam.packageName);
+            if (DEBUG) Log.d(TAG, "Executing hook module: " + getModuleName() + " for package: " + lpparam.packageName);
             handleLoadPackage(lpparam);
-            Log.d(TAG, "Hook module executed successfully: " + getModuleName());
+            if (DEBUG) Log.d(TAG, "Hook module executed successfully: " + getModuleName());
         } catch (Throwable t) {
             Log.e(TAG, "Error in hook module: " + getModuleName(), t);
         }
