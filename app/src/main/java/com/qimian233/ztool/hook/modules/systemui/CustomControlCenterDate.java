@@ -191,7 +191,7 @@ public class CustomControlCenterDate extends BaseHookModule {
     private String getCustomFormattedDate() {
         try {
             String format = getCustomDateFormat();
-            log("读取到的配置：" + format);
+            if (DEBUG) log("读取到的配置：" + format);
             return CustomDateFormatter.format(format, new Date());
         } catch (Exception e) {
             logError("自定义日期格式化失败", e);
@@ -294,7 +294,7 @@ public class CustomControlCenterDate extends BaseHookModule {
     private String getCustomDateFormat() {
         try {
             String format = getCustomDateSetting();
-            log("初次读取到的配置：" + format);
+            if (DEBUG) log("初次读取到的配置：" + format);
             if (format == null || format.isEmpty()) {
                 log("读取到的配置为空，使用默认格式");
                 format = "yyyy年MM月dd日 EEEE"; // 默认格式
