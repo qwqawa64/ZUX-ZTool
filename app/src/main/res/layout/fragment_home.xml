@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
@@ -101,32 +100,20 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <!-- 核心状态区：对勾图标 + "模块已激活"文字 -->
-                <LinearLayout
+                <!-- 核心状态区：显示“模块已激活”提示 -->
+                <TextView
+                    android:id="@+id/text_module_status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    app:drawableStartCompat="@drawable/ic_check_circle"
+                    android:drawablePadding="8dp"
+                    app:drawableTint="?attr/colorPrimary"
                     android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <!-- 对勾图标（需准备一个矢量图，如 ic_check_circle.xml） -->
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_check_circle"
-                        app:tint="?attr/colorPrimary"
-                        tools:ignore="ContentDescription" />
-
-                    <TextView
-                        android:id="@+id/text_module_status"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="@string/moduleActivated"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    android:text="@string/moduleActivated"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
                 <!-- 技术参数区：模块版本、Root来源、框架版本 -->
                 <LinearLayout
