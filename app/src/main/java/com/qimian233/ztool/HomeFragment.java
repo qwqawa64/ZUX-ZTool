@@ -258,9 +258,15 @@ public class HomeFragment extends Fragment {
 
                 // 更新提示信息，明确指出缺少什么
                 StringBuilder hintBuilder = new StringBuilder(getString(R.string.missing_environment));
-                if (!isModuleActive) hintBuilder.append(getString(R.string.module_not_active));
-                if (!isRootAvailable) hintBuilder.append(getString(R.string.root_not_available));
-
+                if (!isModuleActive && !isRootAvailable) {
+                    // 处理两个条件均不满足的情况，这个时候添加逗号分隔提升可读性
+                    hintBuilder.append(getString(R.string.module_not_active));
+                    hintBuilder.append(", ");
+                    hintBuilder.append(getString(R.string.root_not_available));
+                } else {
+                    if (!isModuleActive) hintBuilder.append(getString(R.string.module_not_active));
+                    if (!isRootAvailable) hintBuilder.append(getString(R.string.root_not_available));
+                }
                 textHint.setText(hintBuilder.toString());
                 Log.w(TAG, "环境不完整: " + hintBuilder);
             }
