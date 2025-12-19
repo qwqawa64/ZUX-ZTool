@@ -432,7 +432,7 @@
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>
-    <string name="LockScreenSummary">锁屏随即签名、充电功率显示等设置</string>
+    <string name="LockScreenSummary">锁屏随机签名、充电功率显示等设置</string>
     <string name="controlCenterTitle">控制中心设置</string>
     <string name="controlCenterSummary">自定义控制中心样式</string>
     <!--系统界面 一级功能页杂项资源值-->
