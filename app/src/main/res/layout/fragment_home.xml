@@ -309,6 +309,32 @@
 
                     </LinearLayout>
 
+                    <!-- 当前槽位 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/currentSlot"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="15sp" />
+
+                        <TextView
+                            android:id="@+id/text_current_slot"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/placeHolderUnknown"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="15sp"
+                            android:textAlignment="textEnd" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
             </LinearLayout>

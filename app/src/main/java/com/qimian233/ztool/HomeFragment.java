@@ -39,7 +39,7 @@ public class HomeFragment extends Fragment {
     // UI组件
     private CardView cardRequirements, cardModuleStatus, cardSystemInfo;
     private TextView textModuleStatus, textModuleVersion, textRootSource, textFrameworkVersion;
-    private TextView textDeviceModel, textAndroidVersion, textBuildVersion, textKernelVersion;
+    private TextView textDeviceModel, textAndroidVersion, textBuildVersion, textKernelVersion, textCurrentSlot;
     private TextView textHint;
 
     // 环境检测状态
@@ -65,6 +65,7 @@ public class HomeFragment extends Fragment {
     private String cachedKernelVersion = "";
     private String cachedRootSource = "";
     private String cachedFrameworkVersion = "";
+    private String cachedCurrentSlot = "";
     private long lastSystemInfoUpdate = 0;
     private static final long SYSTEM_INFO_CACHE_DURATION = 60000; // 1分钟缓存
 
@@ -157,6 +158,7 @@ public class HomeFragment extends Fragment {
         textAndroidVersion = view.findViewById(R.id.text_android_version);
         textBuildVersion = view.findViewById(R.id.text_build_version);
         textKernelVersion = view.findViewById(R.id.text_kernel_version);
+        textCurrentSlot = view.findViewById(R.id.text_current_slot);
 
         textHint = view.findViewById(R.id.text_hint);
 
@@ -511,6 +513,11 @@ public class HomeFragment extends Fragment {
             }
             textKernelVersion.post(() -> textKernelVersion.setText(cachedKernelVersion.isEmpty() ? getString(R.string.unknown) : cachedKernelVersion));
 
+            if (cachedCurrentSlot.isEmpty() || System.currentTimeMillis() - lastSystemInfoUpdate > SYSTEM_INFO_CACHE_DURATION) {
+                cachedCurrentSlot = getCurrentBootSlot();
+            }
+            textCurrentSlot.post(() -> textCurrentSlot.setText(cachedCurrentSlot.isEmpty() ? getString(R.string.unknown) : cachedCurrentSlot));
+
             // 更新缓存时间
             lastSystemInfoUpdate = System.currentTimeMillis();
 
@@ -534,6 +541,17 @@ public class HomeFragment extends Fragment {
             return result.output.trim();
         }
 
+        return "";
+    }
+
+    private String getCurrentBootSlot() {
+        Log.d(TAG, "开始检测启动槽位");
+
+        EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand("getprop ro.boot.slot_suffix", 3);
+        if (result.isSuccess() && result.output != null && !result.output.isEmpty()) {
+            Log.i(TAG, "启动槽位: " + result.output);
+            return result.output.trim();
+        }
         return "";
     }
 }
