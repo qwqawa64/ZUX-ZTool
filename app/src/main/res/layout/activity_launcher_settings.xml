@@ -84,12 +84,26 @@
 
                             </LinearLayout>
 
-                            <com.google.android.material.materialswitch.MaterialSwitch
-                                android:id="@+id/switch_disable_force_stop"
+                            <Spinner
+                                android:id="@+id/spinner_disable_force_stop"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp" />
 
                         </LinearLayout>
+
+                        <!-- 新增缩进子项 -->
+                        <TextView
+                            android:id="@+id/txt_protected_apps"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/protected_apps_summary"
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_marginTop="12dp"
+                            android:layout_marginStart="32dp"
+                            android:paddingVertical="4dp"
+                            android:visibility="gone"/>
 
                     </LinearLayout>
 

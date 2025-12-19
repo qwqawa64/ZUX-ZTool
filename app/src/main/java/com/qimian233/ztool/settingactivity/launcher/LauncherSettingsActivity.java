@@ -1,6 +1,15 @@
 package com.qimian233.ztool.settingactivity.launcher;
 
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -13,12 +22,22 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
+import com.qimian233.ztool.utils.AppChooserDialog;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class LauncherSettingsActivity extends AppCompatActivity {
 
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
-    private MaterialSwitch switchDisableForceStop, switchMoreBigDock;
+    private MaterialSwitch switchMoreBigDock;
+    private Spinner switchDisableForceStop;
+    private TextView forceStopWhiteListCount;
+    private List<String> WHITE_LIST;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,9 +63,55 @@ public class LauncherSettingsActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        // 禁止强制停止功能开关
-        switchDisableForceStop = findViewById(R.id.switch_disable_force_stop);
-        switchDisableForceStop.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_force_stop", isChecked));
+        // 初始化禁止强制停止功能Spinner
+        List<String> disableForceStop = Arrays.asList(
+                getString(R.string.SelectDefault),
+                getString(R.string.SelectAllAPP),
+                getString(R.string.SelectWhiteList)
+        );
+        switchDisableForceStop = findViewById(R.id.spinner_disable_force_stop);
+        switchDisableForceStop.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, disableForceStop));
+        switchDisableForceStop.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // 或者使用 position 来判断
+                switch (position) {
+                    case 0: // 默认
+                        SelectDefault();
+                        break;
+                    case 1: // 全部APP
+                        SelectAllGames();
+                        break;
+                    case 2: // 白名单内
+                        SelectWhiteList();
+                        break;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // 当没有选项被选中时的处理
+                Log.d("Spinner", "没有选项被选中");
+            }
+        });
+        // 读取白名单
+        String whitelist = mPrefsUtils.loadStringSetting("ForceStopWhiteList", "");
+        // 处理空字符串
+        if (whitelist == null || whitelist.trim().isEmpty()) {
+            WHITE_LIST = Collections.emptyList(); // 或 new ArrayList<>()
+        } else {
+            // 使用 split 并过滤空字符串
+            WHITE_LIST = Arrays.stream(whitelist.split(","))
+                    .filter(s -> !s.trim().isEmpty())
+                    .collect(Collectors.toList());
+        }
+        // 白名单文本视图
+        forceStopWhiteListCount = findViewById(R.id.txt_protected_apps);
+        forceStopWhiteListCount.setText(getString(R.string.protected_apps_summary, WHITE_LIST.size()));
+        forceStopWhiteListCount.setOnClickListener((View view) -> {
+            SelectUnForceStopAPP();
+        });
+//        switchDisableForceStop.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_force_stop", isChecked));
         // 更多大的Dock栏功能开关
         switchMoreBigDock = findViewById(R.id.switch_dock_moreBig);
         switchMoreBigDock.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("zui_launcher_hotseat", isChecked));
@@ -55,11 +120,73 @@ public class LauncherSettingsActivity extends AppCompatActivity {
     private void loadSettings() {
         // 加载禁止强制停止开关状态
         boolean disableForceStopEnabled = mPrefsUtils.loadBooleanSetting("disable_force_stop",false);
-        switchDisableForceStop.setChecked(disableForceStopEnabled);
+        boolean disableForceStopWhiteListEnable = mPrefsUtils.loadBooleanSetting("ForceStopWhiteListEnable",false);
+        switchDisableForceStop.setSelection(disableForceStopEnabled ? (disableForceStopWhiteListEnable ? 2 : 1) : 0);
         // 加载更多大的Dock栏开关状态
         boolean moreBigDockEnabled = mPrefsUtils.loadBooleanSetting("zui_launcher_hotseat",false);
         switchMoreBigDock.setChecked(moreBigDockEnabled);
     }
+
+    private void SelectDefault() {
+        saveSettings("disable_force_stop",false);
+        forceStopWhiteListCount.setVisibility(View.GONE);
+    }
+
+    private void SelectAllGames() {
+        saveSettings("disable_force_stop",true);
+        saveSettings("ForceStopWhiteListEnable",false);
+        forceStopWhiteListCount.setVisibility(View.GONE);
+    }
+
+    private void SelectWhiteList() {
+        saveSettings("disable_force_stop",true);
+        saveSettings("ForceStopWhiteListEnable",true);
+        forceStopWhiteListCount.setVisibility(View.VISIBLE);
+    }
+
+    private void SelectUnForceStopAPP() {
+        AppChooserDialog.show(this, getUserInstalledPackageNames(LauncherSettingsActivity.this), WHITE_LIST, getString(R.string.force_stop_title), new AppChooserDialog.AppSelectionCallback() {
+            @Override
+            public void onSelected(List<AppChooserDialog.AppInfo> selectedApps) {
+                StringBuilder selectedPackageNames = new StringBuilder();
+                // 处理用户选择的应用
+                WHITE_LIST = new ArrayList<>();
+                for (AppChooserDialog.AppInfo app : selectedApps) {
+                    Log.d("AppChooser", "Selected: " + app.getAppName() + " (" + app.getPackageName() + ")");
+                    selectedPackageNames.append(app.getPackageName()).append(",");
+                    WHITE_LIST.add(app.getPackageName());
+                }
+                mPrefsUtils.saveStringSetting("ForceStopWhiteList", selectedPackageNames.toString());
+                // 刷新白名单数量文本视图
+                forceStopWhiteListCount.setText(getString(R.string.protected_apps_summary, WHITE_LIST.size()));
+            }
+
+            @Override
+            public void onCancel() {
+            }
+        });
+    }
+
+    public static List<String> getUserInstalledPackageNames(Context context) {
+        List<String> userPackageNames = new ArrayList<>();
+        PackageManager pm = context.getPackageManager();
+        List<PackageInfo> installedPackages = pm.getInstalledPackages(0);
+
+        for (PackageInfo info : installedPackages) {
+            // 判断是否为系统应用
+            boolean isSystemApp = (info.applicationInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0;
+
+            // 如果不是系统应用，或者虽然是系统应用但是用户升级过的
+            boolean isUpdatedSystemApp = (info.applicationInfo.flags & android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
+
+            // 这里仅保留用户应用，你可以根据需求调整逻辑
+            if (!isSystemApp || isUpdatedSystemApp) {
+                userPackageNames.add(info.packageName);
+            }
+        }
+        return userPackageNames;
+    }
+
 
     private void initRestartButton() {
         FloatingActionButton fabRestart = findViewById(R.id.fab_restart);

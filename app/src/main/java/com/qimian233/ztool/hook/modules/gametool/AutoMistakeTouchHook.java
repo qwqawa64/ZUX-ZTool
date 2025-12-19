@@ -1,10 +1,12 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.PreferenceHelper;
+
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -16,14 +18,13 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
     private static final String TARGET_PACKAGE = "com.zui.game.service";
     private static final String SETTINGS_UTIL_CLASS = "com.zui.util.SettingsValueUtilKt";
-    private static final String PREFS_NAME = "xposed_module_config";
-    private static final String MODULE_PACKAGE = "com.qimian233.ztool";
 
-    private boolean MistakeTouchWhiteListEnabled() {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
-        return prefs.getBoolean("MistakeTouchWhiteList", false);
-    }
+    // 配置键名常量
+    private static final String KEY_MISTAKE_TOUCH_WHITELIST_ENABLED = "MistakeTouchWhiteList";
+    private static final String KEY_MISTAKE_TOUCH_WHITELIST_GAMES = "MistakeTouchWhiteListGame";
+
+    // 配置工具类实例
+    private final PreferenceHelper mPrefHelper = PreferenceHelper.getInstance();
 
     @Override
     public String getModuleName() {
@@ -207,22 +208,47 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         }
     }
 
-    // 检查是否为特定目标游戏
-    private boolean isTargetGame(String packageName) {
-        if (MistakeTouchWhiteListEnabled()) {
-            // 读取白名单
-            XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-            prefs.reload();
-            String whiteList = prefs.getString("MistakeTouchWhiteListGame", "");
-            // 白名单游戏包名列表
-            String[] TARGET_GAME_PACKAGES = whiteList.split(",");
-            for (String targetPackage : TARGET_GAME_PACKAGES) {
-                if (targetPackage.equals(packageName)) {
-                    return true;
-                }
+    /**
+     * 检查防误触白名单功能是否启用
+     */
+    private boolean isMistakeTouchWhiteListEnabled() {
+        return mPrefHelper.getBoolean(KEY_MISTAKE_TOUCH_WHITELIST_ENABLED, false);
+    }
+
+    /**
+     * 获取防误触白名单中的所有游戏包名
+     */
+    private String[] getMistakeTouchWhiteListGames() {
+        return mPrefHelper.getStringArray(KEY_MISTAKE_TOUCH_WHITELIST_GAMES);
+    }
+
+    /**
+     * 检查指定游戏是否在防误触白名单中
+     */
+    private boolean isGameInMistakeTouchWhiteList(String packageName) {
+        String[] whiteListGames = getMistakeTouchWhiteListGames();
+        for (String gamePackage : whiteListGames) {
+            if (TextUtils.isEmpty(gamePackage)) {
+                continue;
             }
-            return false;
+            if (gamePackage.trim().equals(packageName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 检查是否为特定目标游戏
+     * 逻辑：如果白名单功能启用，则只对白名单中的游戏生效
+     *       如果白名单功能未启用，则对所有游戏生效
+     */
+    private boolean isTargetGame(String packageName) {
+        if (isMistakeTouchWhiteListEnabled()) {
+            // 白名单功能启用，只对白名单中的游戏生效
+            return isGameInMistakeTouchWhiteList(packageName);
         } else {
+            // 白名单功能未启用，对所有游戏生效
             return true;
         }
     }
