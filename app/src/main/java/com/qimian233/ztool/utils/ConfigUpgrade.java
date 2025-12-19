@@ -27,6 +27,13 @@ public class ConfigUpgrade {
     public boolean isConfigNeedUpgrade(Context context) {
         mPreferencesUtils = new ModulePreferencesUtils(context);
         Map<String,Object> allSettings = mPreferencesUtils.getAllSettings();
+        // 如果配置为空，则不需要升级（可能是用户点击了“清除配置”，或者全新安装了APP）
+        // 这个时候可以顺便设置一个配置升级标记，避免重复执行升级操作。
+        if (allSettings.isEmpty()){
+            Log.d(TAG, "Config is empty, maybe user performed reset or this is a fresh install, skipping upgrade.");
+            mPreferencesUtils.saveBooleanSetting("isConfigUpgraded", true);
+            return false;
+        }
         // 先尝试读取新的配置升级标记，如果没有，则需要升级配置
         if (!mPreferencesUtils.loadBooleanSetting("isConfigUpgraded", false)) {
             Log.d(TAG,"Old config format detected, need to upgrade config.");
