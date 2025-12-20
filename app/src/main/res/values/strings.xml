@@ -432,7 +432,7 @@
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>
-    <string name="LockScreenSummary">锁屏随即签名、充电功率显示等设置</string>
+    <string name="LockScreenSummary">锁屏随机签名、充电功率显示等设置</string>
     <string name="controlCenterTitle">控制中心设置</string>
     <string name="controlCenterSummary">自定义控制中心样式</string>
     <!--系统界面 一级功能页杂项资源值-->
@@ -503,7 +503,7 @@
     <string name="YiYanSummary">在锁屏页面显示从网络获取的随机文本</string>
     <string name="ChargeWattsTitle">显示充电功率</string>
     <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
-    <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限\n* 重启作用域后不一定立刻生效</string>
+    <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限\n* 重启作用域后需要最多1分钟方可生效</string>
     <string name="systemui_root_permission_required_message">要使用实际充电功率功能，请在Root管理器中为“系统界面”授予Root权限！</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
@@ -607,8 +607,8 @@
     <string name="moreBig_dockSummary">解除dock栏的图标数量限制，能够塞下更多图标</string>
     <!--系统框架功能页的资源值-->
     <string name="keep_rotation_title">屏幕方向</string>
-    <string name="keep_rotation_enable_title">保持屏幕方向</string>
-    <string name="keep_rotation_enable_summary">重启后保持上一次关机前的屏幕方向，需重启系统以应用更改</string>
+    <string name="keep_rotation_enable_title">保持屏幕方向为竖屏</string>
+    <string name="keep_rotation_enable_summary">将默认屏幕方向由横屏改为竖屏</string>
     <string name="disable_zui_applist_title">权限管理</string>
     <string name="disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
     <string name="disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
