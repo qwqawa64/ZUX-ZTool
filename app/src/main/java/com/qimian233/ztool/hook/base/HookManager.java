@@ -23,6 +23,7 @@ import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
+import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
@@ -135,6 +136,8 @@ public class HookManager {
         registerHookModule(new AutoMistakeTouchHook());
         // 注册模块：禁止每24H必须强制验证一次锁屏密码
         registerHookModule(new NoMorePasswordPer24H());
+        // 注册模块：移除FlagSecure
+        registerHookModule(new DisableFlagSecure());
         initialized = true;
     }
 

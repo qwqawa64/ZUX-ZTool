@@ -17,8 +17,7 @@ import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesU
 public class FrameworkSettingsActivity extends AppCompatActivity {
 
     private ModulePreferencesUtils mPrefsUtils;
-    private MaterialSwitch switchKeepRotation;
-    private MaterialSwitch switchDisableZUIApplist;
+    private MaterialSwitch switchKeepRotation, switchDisableZUIApplist, switchDisableFlagSecure;
     // private MaterialSwitch switchDisableForcedLockscreenPassword;
 
     @Override
@@ -53,6 +52,9 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
         // 设置禁用每24H验证一次锁屏密码
         // switchDisableForcedLockscreenPassword = findViewById(R.id.switch_disable_lockscreen_password_per24h);
         // switchDisableForcedLockscreenPassword.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("NoMorePasswordPer24H", isChecked));
+        // 移除安全窗口标识
+        switchDisableFlagSecure = findViewById(R.id.switch_DisableFlagSecure);
+        switchDisableFlagSecure.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_flag_secure",isChecked));
     }
 
     private void loadSettings() {
@@ -65,6 +67,9 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
         // 加载禁止24H验证一次锁屏密码的设置
         // boolean isNotRequireLockscreenPasswordPer24H = mPrefsUtils.loadBooleanSetting("NoMorePasswordPer24H", false);
         // switchDisableForcedLockscreenPassword.setChecked(isNotRequireLockscreenPasswordPer24H);
+        // 加载移除安全窗口标识
+        boolean isDisableFlagSecure = mPrefsUtils.loadBooleanSetting("disable_flag_secure", false);
+        switchDisableFlagSecure.setChecked(isDisableFlagSecure);
     }
 
     private void initRestartButton() {

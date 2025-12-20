@@ -139,6 +139,8 @@ public class LogParser {
                 Pattern.compile("\\[keep_rotation]\\s*(.*)"));
         MODULE_PATTERNS.put("NoMorePasswordPer24H",
                 Pattern.compile("\\[NoMorePasswordPer24H]\\s*(.*)"));
+        MODULE_PATTERNS.put("disable_flag_secure",
+                Pattern.compile("\\[disable_flag_secure]\\s*(.*)"));
 
         // 安全中心相关
         MODULE_PATTERNS.put("default_enable_autorun",
@@ -202,6 +204,7 @@ public class LogParser {
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
         MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
         MODULE_NAMES.put("NoMorePasswordPer24H", "无需每24H验证一次锁屏密码");
+        MODULE_NAMES.put("disable_flag_secure", "强制允许截屏");
 
         // 安全中心相关
         MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
@@ -580,7 +583,7 @@ public class LogParser {
 
         // 系统框架相关
         categories.put("系统框架", Arrays.asList(
-                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H"
+                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H", "disable_flag_secure"
         ));
 
         // 安全中心相关
