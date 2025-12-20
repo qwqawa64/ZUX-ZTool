@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 /**
  * 自定义日期格式化工具类
- * 支持农历、节气、时辰等特殊格式
+ * 支持农历、节气、时辰、时间段等特殊格式
  */
 public class CustomDateFormatter {
 
@@ -38,6 +38,7 @@ public class CustomDateFormatter {
         CUSTOM_PATTERNS.put("C", "constellation");   // 星座
         CUSTOM_PATTERNS.put("A", "animal");          // 生肖
         CUSTOM_PATTERNS.put("W", "week");            // 星期
+        CUSTOM_PATTERNS.put("a", "timePeriod");      // 时间段
     }
 
     /**
@@ -50,6 +51,7 @@ public class CustomDateFormatter {
      *                C - 星座（如：水瓶座）
      *                A - 生肖（如：龙）
      *                W - 星期（如：星期一）
+     *                a - 时间段（如：凌晨、上午、中午、下午、晚上）
      *                同时支持标准的SimpleDateFormat格式
      *
      * @param date 要格式化的日期
@@ -147,6 +149,8 @@ public class CustomDateFormatter {
                 return lunar.getYearShengXiao();
             case "week":
                 return getChineseWeek(date);
+            case "timePeriod":
+                return getTimePeriod(date);
             default:
                 return "";
         }
@@ -242,6 +246,35 @@ public class CustomDateFormatter {
             return week.replace("星期", "周"); // 统一格式为"周一"
         } catch (Exception e) {
             Log.e(TAG, "Error getting Chinese week", e);
+            return "";
+        }
+    }
+
+    /**
+     * 获取当前时间段（凌晨、上午、下午等）
+     */
+    private static String getTimePeriod(Date date) {
+        try {
+            SimpleDateFormat hourFormat = new SimpleDateFormat("H", Locale.getDefault());
+            int hour = Integer.parseInt(hourFormat.format(date));
+
+            if (hour >= 0 && hour < 6) {
+                return "凌晨";
+            } else if (hour >= 6 && hour < 9) {
+                return "早上";
+            } else if (hour >= 9 && hour < 12) {
+                return "上午";
+            } else if (hour >= 12 && hour < 14) {
+                return "中午";
+            } else if (hour >= 14 && hour < 18) {
+                return "下午";
+            } else if (hour >= 18 && hour < 24) {
+                return "晚上";
+            } else {
+                return "";
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting time period", e);
             return "";
         }
     }
