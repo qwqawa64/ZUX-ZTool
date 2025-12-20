@@ -22,6 +22,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.qimian233.ztool.LoadingDialog;
 import com.qimian233.ztool.R;
 
 import java.util.ArrayList;
@@ -197,12 +198,8 @@ public class AppChooserDialog {
                             AppSelectionCallback callback) {
 
         // 创建加载中对话框
-        AlertDialog loadingDialog = new MaterialAlertDialogBuilder(context)
-                .setTitle("加载中...")
-                .setMessage("正在获取应用信息")
-                .setCancelable(false)
-                .create();
-        loadingDialog.show();
+        LoadingDialog loadingDialog = new LoadingDialog(context);
+        loadingDialog.show(context.getString(R.string.loadingUserAPP));
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -211,20 +208,48 @@ public class AppChooserDialog {
             List<AppInfo> appInfoList = new ArrayList<>();
             PackageManager pm = context.getPackageManager();
 
-            for (String packageName : packageNames) {
-                try {
-                    ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-                    String appName = pm.getApplicationLabel(appInfo).toString();
-                    Drawable appIcon = pm.getApplicationIcon(appInfo);
+            // 如果有传入已选择的包名列表，则将已选择的应用放在前面
+            if (selectedPackageNames != null) {
+                // 使用两个列表来分别存储已选择和未选择的应用
+                List<AppInfo> selectedApps = new ArrayList<>();
+                List<AppInfo> unselectedApps = new ArrayList<>();
 
-                    AppInfo app = new AppInfo(packageName, appName, appIcon);
-                    // 根据 selectedPackageNames 设置选中状态
-                    if (selectedPackageNames != null && selectedPackageNames.contains(packageName)) {
-                        app.setSelected(true);
+                for (String packageName : packageNames) {
+                    try {
+                        ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+                        String appName = pm.getApplicationLabel(appInfo).toString();
+                        Drawable appIcon = pm.getApplicationIcon(appInfo);
+
+                        AppInfo app = new AppInfo(packageName, appName, appIcon);
+                        if (selectedPackageNames.contains(packageName)) {
+                            app.setSelected(true);
+                            selectedApps.add(app);
+                        } else {
+                            app.setSelected(false);
+                            unselectedApps.add(app);
+                        }
+                    } catch (PackageManager.NameNotFoundException e) {
+                        // 包名不存在，跳过
                     }
-                    appInfoList.add(app);
-                } catch (PackageManager.NameNotFoundException e) {
-                    // 包名不存在，跳过
+                }
+
+                // 先添加已选择的应用，再添加未选择的应用
+                appInfoList.addAll(selectedApps);
+                appInfoList.addAll(unselectedApps);
+            } else {
+                // 如果没有传入已选择的包名列表，保持原有顺序，所有应用默认未选中
+                for (String packageName : packageNames) {
+                    try {
+                        ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+                        String appName = pm.getApplicationLabel(appInfo).toString();
+                        Drawable appIcon = pm.getApplicationIcon(appInfo);
+
+                        AppInfo app = new AppInfo(packageName, appName, appIcon);
+                        app.setSelected(false); // 明确设置为未选中
+                        appInfoList.add(app);
+                    } catch (PackageManager.NameNotFoundException e) {
+                        // 包名不存在，跳过
+                    }
                 }
             }
 
@@ -258,7 +283,7 @@ public class AppChooserDialog {
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.setAdapter(adapter);
 
-        // 其余代码保持不变...
+        // 搜索功能
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
