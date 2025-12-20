@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.base;
 
+import com.qimian233.ztool.hook.modules.documentsui.DocumentsUIBypass;
 import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook;
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
@@ -138,6 +139,8 @@ public class HookManager {
         registerHookModule(new NoMorePasswordPer24H());
         // 注册模块：移除FlagSecure
         registerHookModule(new DisableFlagSecure());
+        // 注册模块：允许用户选择受限的目录
+        registerHookModule(new DocumentsUIBypass());
         initialized = true;
     }
 

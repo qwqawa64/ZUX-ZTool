@@ -25,7 +25,7 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private FloatingActionButton fabRestart;
-    private MaterialSwitch switchAllowAutoRun, switchDisableSafeScan;
+    private MaterialSwitch switchAllowAutoRun, switchDisableSafeScan, switchBypassDocumentsUI;
 
     // Shell执行器
     private EnhancedShellExecutor shellExecutor;
@@ -93,6 +93,10 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
         // 禁用联想安全中心自动扫描开关
         switchDisableSafeScan = findViewById(R.id.switch_Disable_SafeScanBlock);
         switchDisableSafeScan.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("block_safecenter_scan", isChecked));
+
+        // 允许用户选择根目录开关
+        switchBypassDocumentsUI = findViewById(R.id.switch_BypassDocumentsUI);
+        switchBypassDocumentsUI.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("documents_ui_bypass", isChecked));
     }
 
     private void loadSettings() {
@@ -103,6 +107,10 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
         // 加载禁用联想安全中心自动扫描状态
         boolean isSafeScanBlocked = mPrefsUtils.loadBooleanSetting("block_safecenter_scan",false);
         switchDisableSafeScan.setChecked(isSafeScanBlocked);
+
+        // 加载允许用户选择根目录状态
+        boolean isDocumentsUIBypassed = mPrefsUtils.loadBooleanSetting("documents_ui_bypass",false);
+        switchBypassDocumentsUI.setChecked(isDocumentsUIBypassed);
     }
 
     private void initRestartButton() {
@@ -119,7 +127,7 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.restart_xp_title)
-                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + ", com.android.documentsui"+ getString(R.string.restart_xp_message))
                 .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
                 .setNegativeButton(R.string.restart_no, null)
                 .show();
@@ -148,7 +156,10 @@ public class SafeCenterSettingsActivity extends AppCompatActivity {
                 String command = "am force-stop " + appPackageName;
                 EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand(command, 5);
 
-                final boolean success = result.isSuccess();
+                String command2 = "am force-stop com.android.documentsui";
+                EnhancedShellExecutor.ShellResult result_1 = shellExecutor.executeRootCommand(command2, 5);
+
+                final boolean success = result.isSuccess() && result_1.isSuccess();
 
                 // 如果方法1失败，尝试方法2: 使用killall
                 if (!success) {

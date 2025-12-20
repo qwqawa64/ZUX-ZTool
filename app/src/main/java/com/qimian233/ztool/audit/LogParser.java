@@ -148,6 +148,10 @@ public class LogParser {
         MODULE_PATTERNS.put("block_safecenter_scan",
                 Pattern.compile("\\[block_safecenter_scan]\\s*(.*)"));
 
+        // 文件相关
+        MODULE_PATTERNS.put("documents_ui_bypass",
+                Pattern.compile("\\[documents_ui_bypass]\\s*(.*)"));
+
         // 桌面相关
         MODULE_PATTERNS.put("disable_force_stop",
                 Pattern.compile("\\[disable_force_stop]\\s*(.*)"));
@@ -195,6 +199,9 @@ public class LogParser {
         MODULE_NAMES.put("PermissionControllerHook", "权限控制器");
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
+
+        // 文件相关
+        MODULE_NAMES.put("documents_ui_bypass", "允许选择根目录");
 
         // 启动器相关
         MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
@@ -579,6 +586,11 @@ public class LogParser {
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
                 "disable_force_stop", "zui_launcher_hotseat"
+        ));
+
+        // 文件选择器相关
+        categories.put("文件", Arrays.asList(
+                "documents_ui_bypass"
         ));
 
         // 系统框架相关

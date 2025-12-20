@@ -11,5 +11,6 @@
         <item>com.zui.safecenter</item>
         <item>com.zui.launcher</item>
         <item>com.zui.wallpapersetting</item>
+        <item>com.android.documentsui</item>
     </string-array>
 </resources>
