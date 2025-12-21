@@ -24,6 +24,8 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
     private BottomNavigationView bottomNav;
     private NavController navController;
     private boolean isEnvironmentReady = false;
+    private long lastClickTime = 0;
+    private static final long CLICK_INTERVAL = 300; // 限制点击间隔为300ms
 
     // 用于保存导航状态的键
     private static final String KEY_CURRENT_DESTINATION = "current_destination";
@@ -72,10 +74,11 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         // 根据环境状态更新导航栏
         updateBottomNavigation(isEnvironmentReady);
 
-        // 如果环境就绪，尝试恢复到之前的目的地
-        if (isEnvironmentReady && currentDestinationId != R.id.homeFragment) {
+        // 如果环境已就绪且存在保存的目的地，则导航到该目的地
+        if (savedInstanceState == null && isEnvironmentReady && currentDestinationId != R.id.homeFragment) {
             navigateToSavedDestination();
         }
+
 
         // 应用启动时尝试重启日志服务
         LogServiceManager.restartServiceIfNeeded(this);
@@ -134,9 +137,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         }
     }
 
-    // 其余方法保持不变...
-    // setupSystemBars(), updateBottomNavigation(), onEnvironmentStateChanged() 等
-
     private void setupSystemBars() {
         Window window = getWindow();
 
@@ -163,38 +163,54 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
 
     private void updateBottomNavigation(boolean environmentReady) {
         if (bottomNav == null) return;
-
         if (environmentReady) {
-            // 环境齐全：显示并启用底部导航栏
             bottomNav.setVisibility(View.VISIBLE);
             bottomNav.setEnabled(true);
-
-            // 重新设置导航控制器
+            bottomNav.setOnItemSelectedListener(null);
             NavigationUI.setupWithNavController(bottomNav, navController);
-
-            // 更新底部导航栏的选中状态
-            if (currentDestinationId != R.id.homeFragment) {
-                // 延迟执行以确保UI已更新
-                bottomNav.post(() -> {
-                    try {
-                        // 尝试设置选中的菜单项
-                        for (int i = 0; i < bottomNav.getMenu().size(); i++) {
-                            if (bottomNav.getMenu().getItem(i).getItemId() == currentDestinationId) {
-                                bottomNav.setSelectedItemId(currentDestinationId);
-                                break;
-                            }
-                        }
-                    } catch (Exception e) {
-                        // 忽略设置选中项时的异常
-                    }
-                });
+            bottomNav.setOnItemSelectedListener(item -> {
+                long currentTime = System.currentTimeMillis();
+                // 【防抖】如果点击太快，直接忽略
+                if (currentTime - lastClickTime < CLICK_INTERVAL) {
+                    return false;
+                }
+                lastClickTime = currentTime;
+                int itemId = item.getItemId();
+                androidx.navigation.NavDestination currentDestination = navController.getCurrentDestination();
+                // 判空保护 + 避免重复点击当前页刷新 (如果不需要刷新当前页的话)
+                if (currentDestination != null && currentDestination.getId() == itemId) {
+                    return false;
+                }
+                // 构造动画配置
+                NavOptions.Builder builder = new NavOptions.Builder()
+                        .setLaunchSingleTop(true)
+                        .setRestoreState(true)
+                        .setEnterAnim(R.anim.nav_enter)
+                        .setExitAnim(R.anim.nav_exit)
+                        .setPopEnterAnim(R.anim.nav_pop_enter)
+                        .setPopExitAnim(R.anim.nav_pop_exit);
+                // 获取首页ID (StartDestination)
+                int startDestinationId = navController.getGraph().getStartDestinationId();
+                builder.setPopUpTo(startDestinationId, false, true);
+                try {
+                    navController.navigate(itemId, null, builder.build());
+                    return true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            });
+            // 4. 同步 UI 状态
+            if (navController.getCurrentDestination() != null) {
+                int currentId = navController.getCurrentDestination().getId();
+                if (bottomNav.getSelectedItemId() != currentId) {
+                    bottomNav.setSelectedItemId(currentId);
+                }
             }
         } else {
-            // 环境不齐全：隐藏并禁用底部导航栏
+            // 环境不齐全处理... (保持不变)
             bottomNav.setVisibility(View.GONE);
             bottomNav.setEnabled(false);
-
-            // 停留在首页
             if (navController.getCurrentDestination() != null &&
                     navController.getCurrentDestination().getId() != R.id.homeFragment) {
                 navController.navigate(R.id.homeFragment);
@@ -202,6 +218,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
             currentDestinationId = R.id.homeFragment;
         }
     }
+
 
     @Override
     public void onEnvironmentStateChanged(boolean environmentReady) {
