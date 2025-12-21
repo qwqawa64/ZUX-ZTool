@@ -607,6 +607,14 @@
     <string name="moreBig_dockTitle">更大的Dock栏</string>
     <string name="moreBig_dockSummary">解除dock栏的图标数量限制，能够塞下更多图标</string>
     <!--系统框架功能页的资源值-->
+    <string name="Custom_attention">注意！</string>
+    <string name="Custom_Attention_content">自定义唤醒符后，一定一定需要额外勾选使用全局输入的APP作用域（如QQ）不勾选只能使用官方的唤醒符号，效果测试可在下面输入框进行，比如打出&amp;&amp;你好，你是谁&amp;&amp;。</string>
+    <string name="test_Input">在此输入测试文本...</string>
+    <string name="custom_detector_err">格式错误：请使用英文逗号分隔多个检测符</string>
+    <string name="custom_detector_hint">请输入自定义的检测符，多个使用英文逗号分隔</string>
+    <string name="ai_input_Title">AI全局输入</string>
+    <string name="ai_input_expand_Title">自定义唤起符</string>
+    <string name="ai_input_expand_summary">尝试强制启用AI全局输入，自定义AI触发符号，官方默认为全/半角的“&amp;&amp;”</string>
     <string name="keep_rotation_title">屏幕方向</string>
     <string name="keep_rotation_enable_title">保持屏幕方向为竖屏</string>
     <string name="keep_rotation_enable_summary">将默认屏幕方向由横屏改为竖屏</string>

@@ -23,6 +23,7 @@ import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
+import com.qimian233.ztool.hook.modules.systemFramework.AiInputExpand;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
@@ -141,6 +142,8 @@ public class HookManager {
         registerHookModule(new DisableFlagSecure());
         // 注册模块：允许用户选择受限的目录
         registerHookModule(new DocumentsUIBypass());
+        // 注册模块：自定义AI输入检测符
+        registerHookModule(new AiInputExpand());
         initialized = true;
     }
 
