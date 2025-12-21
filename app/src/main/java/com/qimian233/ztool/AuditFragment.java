@@ -1,4 +1,3 @@
-// AuditFragment.java
 package com.qimian233.ztool;
 
 import android.content.ClipData;
@@ -10,10 +9,21 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ArrayAdapter;
+import android.widget.Filter;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,20 +31,32 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputEditText;
 import com.qimian233.ztool.audit.LogParser;
 import com.qimian233.ztool.audit.LogParser.LogEntry;
 import com.qimian233.ztool.audit.LogParser.LogLevel;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * 日志审计界面 - 增强版支持完整模块策略和多文件读取
+ * 日志审计界面 - 无阴影扁平版 + IME(insets)修复 + 模块显示名修复
  */
 public class AuditFragment extends Fragment {
 
     private static final String TAG = "AuditFragment";
+
+    // Root
+    private View rootView;
 
     // UI组件
     private RecyclerView recyclerView;
@@ -42,10 +64,13 @@ public class AuditFragment extends Fragment {
     private ProgressBar progressBar;
     private TextView tvEmpty;
     private View layoutEmpty;
-    private Spinner spinnerCategory;
-    private Spinner spinnerModule;
-    private Spinner spinnerLevel;
-    private com.google.android.material.textfield.TextInputEditText etSearch;
+
+    // Filters (ExposedDropdownMenu)
+    private MaterialAutoCompleteTextView spinnerCategory;
+    private MaterialAutoCompleteTextView spinnerModule;
+    private MaterialAutoCompleteTextView spinnerLevel;
+    private TextInputEditText etSearch;
+
     private TextView tvStats;
     private com.google.android.material.checkbox.MaterialCheckBox cbShowErrors;
     private ExtendedFloatingActionButton fabScrollToTop;
@@ -62,20 +87,54 @@ public class AuditFragment extends Fragment {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     // 模块分类数据
-    private Map<String, List<String>> modulesByCategory;
+    private Map<String, List<String>> modulesByCategory = Collections.emptyMap();
+
+    // Adapter（禁用过滤，避免下拉为空）
+    private NoFilterArrayAdapter<String> categoryAdapter;
+    private NoFilterArrayAdapter<ModuleOption> moduleAdapter;
+    private NoFilterArrayAdapter<String> levelAdapter;
+
+    // 当前选择（模块用 key 存，不用显示文本）
+    @Nullable
+    private String selectedModuleKey = null;
+
+    // 处理 IME 空白：在本 Fragment 存在期间禁用 adjustResize
+    private int oldSoftInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
+
+    // Insets 基础值
+    private int baseRecyclerPaddingBottom = 0;
+    private int baseFabMarginBottom = 0;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_audit, container, false);
-        initViews(view);
+        rootView = inflater.inflate(R.layout.fragment_audit, container, false);
+        initViews(rootView);
         setupRecyclerView();
         setupFilters();
         setupScrollBehavior();
+        setupWindowInsetsFix();
         loadAllLogFiles();
-        return view;
+        return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // 避免：键盘隐藏后窗口尺寸不恢复，留下空白（ROM bug）
+        Window w = requireActivity().getWindow();
+        oldSoftInputMode = w.getAttributes().softInputMode;
+        w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // 恢复 Activity 原来的 softInputMode，避免影响别的页面
+        Window w = requireActivity().getWindow();
+        w.setSoftInputMode(oldSoftInputMode);
     }
 
     private void initViews(View view) {
@@ -83,142 +142,224 @@ public class AuditFragment extends Fragment {
         progressBar = view.findViewById(R.id.progress_bar);
         tvEmpty = view.findViewById(R.id.tv_empty);
         layoutEmpty = view.findViewById(R.id.layout_empty);
+
         spinnerCategory = view.findViewById(R.id.spinner_category);
         spinnerModule = view.findViewById(R.id.spinner_module);
         spinnerLevel = view.findViewById(R.id.spinner_level);
         etSearch = view.findViewById(R.id.et_search);
+
         com.google.android.material.button.MaterialButton btnRefresh = view.findViewById(R.id.btn_refresh);
         com.google.android.material.button.MaterialButton btnClear = view.findViewById(R.id.btn_clear);
         com.google.android.material.button.MaterialButton btnStats = view.findViewById(R.id.btn_stats);
+
         tvStats = view.findViewById(R.id.tv_stats);
         cbShowErrors = view.findViewById(R.id.cb_show_errors);
         fabScrollToTop = view.findViewById(R.id.fab_scroll_to_top);
         appBarLayout = view.findViewById(R.id.app_bar);
 
-        // 设置刷新按钮点击事件
         btnRefresh.setOnClickListener(v -> refreshLogs());
-
-        // 设置清除按钮点击事件
         btnClear.setOnClickListener(v -> showClearLogsDialog());
-
-        // 设置统计按钮点击事件
         btnStats.setOnClickListener(v -> showStatistics());
 
-        // 设置搜索框文本变化监听
         etSearch.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-            @Override
-            public void afterTextChanged(android.text.Editable s) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
                 applyFilters();
             }
         });
 
-        // 设置高级筛选选项监听
         cbShowErrors.setOnCheckedChangeListener((buttonView, isChecked) -> applyFilters());
-
-        // 设置返回顶部按钮点击事件
         fabScrollToTop.setOnClickListener(v -> scrollToTop());
     }
 
+    /**
+     * 解决“键盘隐藏后底部空白” + 让列表/FAB 自动避开键盘覆盖
+     */
+    private void setupWindowInsetsFix() {
+        baseRecyclerPaddingBottom = recyclerView.getPaddingBottom();
+
+        ViewGroup.LayoutParams lp = fabScrollToTop.getLayoutParams();
+        if (lp instanceof ViewGroup.MarginLayoutParams) {
+            baseFabMarginBottom = ((ViewGroup.MarginLayoutParams) lp).bottomMargin;
+        } else {
+            baseFabMarginBottom = 0;
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+
+            int bottom = Math.max(sys.bottom, ime.bottom);
+
+            recyclerView.setPadding(
+                    recyclerView.getPaddingLeft(),
+                    recyclerView.getPaddingTop(),
+                    recyclerView.getPaddingRight(),
+                    baseRecyclerPaddingBottom + bottom
+            );
+
+            ViewGroup.LayoutParams p = fabScrollToTop.getLayoutParams();
+            if (p instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) p;
+                mlp.bottomMargin = baseFabMarginBottom + bottom;
+                fabScrollToTop.setLayoutParams(mlp);
+            }
+
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(rootView);
+    }
+
     private void setupScrollBehavior() {
-        // 监听滚动状态，控制返回顶部按钮的显示/隐藏
-        appBarLayout.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
-            // 当AppBar完全折叠时显示返回顶部按钮
-            if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
+        appBarLayout.addOnOffsetChangedListener((appBar, verticalOffset) -> {
+            if (Math.abs(verticalOffset) >= appBar.getTotalScrollRange()) {
                 fabScrollToTop.show();
             } else {
                 fabScrollToTop.hide();
             }
         });
-
-        // 初始隐藏返回顶部按钮
         fabScrollToTop.hide();
     }
 
     private void scrollToTop() {
-        // 展开AppBarLayout
         appBarLayout.setExpanded(true, true);
-
-        // 滚动RecyclerView到顶部
-        if (recyclerView.getLayoutManager() != null) {
-            recyclerView.getLayoutManager().scrollToPosition(0);
-        }
+        recyclerView.smoothScrollToPosition(0);
     }
 
     private void setupRecyclerView() {
         logAdapter = new LogAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(logAdapter);
-
-        // 添加点击事件支持查看详情
         logAdapter.setOnItemClickListener(this::showLogDetails);
     }
 
     private void setupFilters() {
-        // 获取模块分类数据
         modulesByCategory = LogParser.getModulesByCategory();
-        // 类别过滤器
+        if (modulesByCategory == null) modulesByCategory = Collections.emptyMap();
+
+        // --- Category ---
         List<String> categories = new ArrayList<>();
         categories.add(getString(R.string.all_categories));
-        categories.addAll(modulesByCategory.keySet());
-        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
-                Objects.requireNonNull(requireContext()), android.R.layout.simple_spinner_item, categories);
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        List<String> keys = new ArrayList<>(modulesByCategory.keySet());
+        Collections.sort(keys, String.CASE_INSENSITIVE_ORDER);
+        categories.addAll(keys);
+
+        categoryAdapter = new NoFilterArrayAdapter<>(
+                requireContext(),
+                com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
+                categories
+        );
         spinnerCategory.setAdapter(categoryAdapter);
-        spinnerCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateModuleSpinner();
-                applyFilters();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+        spinnerCategory.setThreshold(0);
+        spinnerCategory.setShowSoftInputOnFocus(false);
+        spinnerCategory.setText(categories.get(0), false);
+
+        spinnerCategory.setOnClickListener(v -> {
+            hideImeAndFixInsets();
+            spinnerCategory.showDropDown();
         });
-        // 初始化模块过滤器
-        updateModuleSpinner();
-        // 级别过滤器
-        List<String> levels = Arrays.asList(getString(R.string.all_levels), "INFO", "ERROR");
-        ArrayAdapter<String> levelAdapter = new ArrayAdapter<>(
-                Objects.requireNonNull(requireContext()), android.R.layout.simple_spinner_item, levels);
-        levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCategory.setOnItemClickListener((parent, view, position, id) -> {
+            updateModuleDropdown();
+            applyFilters();
+        });
+
+        // --- Level ---
+        List<String> levels = Arrays.asList(
+                getString(R.string.all_levels),
+                "DEBUG", "INFO", "WARN", "ERROR"
+        );
+        levelAdapter = new NoFilterArrayAdapter<>(
+                requireContext(),
+                com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
+                levels
+        );
         spinnerLevel.setAdapter(levelAdapter);
-        spinnerLevel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                applyFilters();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+        spinnerLevel.setThreshold(0);
+        spinnerLevel.setShowSoftInputOnFocus(false);
+        spinnerLevel.setText(levels.get(0), false);
+
+        spinnerLevel.setOnClickListener(v -> {
+            hideImeAndFixInsets();
+            spinnerLevel.showDropDown();
         });
+        spinnerLevel.setOnItemClickListener((parent, view, position, id) -> applyFilters());
+
+        // --- Module (depends on Category) ---
+        spinnerModule.setThreshold(0);
+        spinnerModule.setShowSoftInputOnFocus(false);
+        spinnerModule.setOnClickListener(v -> {
+            hideImeAndFixInsets();
+            spinnerModule.showDropDown();
+        });
+        spinnerModule.setOnItemClickListener((parent, view, position, id) -> {
+            ModuleOption opt = (ModuleOption) parent.getItemAtPosition(position);
+            selectedModuleKey = opt.key; // null = all
+            applyFilters();
+        });
+
+        updateModuleDropdown();
     }
 
-    private void updateModuleSpinner() {
-        List<String> modules = new ArrayList<>();
-        modules.add(getString(R.string.all_modules));
-        String selectedCategory = (String) spinnerCategory.getSelectedItem();
-        if (selectedCategory != null && !selectedCategory.equals(getString(R.string.all_categories)) && modulesByCategory.containsKey(selectedCategory)) {
-            modules.addAll(Objects.requireNonNull(modulesByCategory.get(selectedCategory)));
+    private void updateModuleDropdown() {
+        List<String> moduleKeys = new ArrayList<>();
+
+        String selectedCategory = getDropdownText(spinnerCategory);
+        if (selectedCategory != null
+                && !selectedCategory.equals(getString(R.string.all_categories))
+                && modulesByCategory.containsKey(selectedCategory)) {
+            List<String> list = modulesByCategory.get(selectedCategory);
+            if (list != null) moduleKeys.addAll(list);
         } else {
-            // 显示所有模块
-            modules.addAll(LogParser.getAvailableModules());
+            List<String> all = LogParser.getAvailableModules();
+            if (all != null) moduleKeys.addAll(all);
         }
-        ArrayAdapter<String> moduleAdapter = new ArrayAdapter<>(
-                Objects.requireNonNull(requireContext()), android.R.layout.simple_spinner_item, modules);
-        moduleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerModule.setAdapter(moduleAdapter);
-        spinnerModule.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                applyFilters();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
+
+        // 组装显示项：显示名来自 LogParser.getModuleDisplayName（你的数据源）
+        List<ModuleOption> options = new ArrayList<>();
+        options.add(new ModuleOption(null, getString(R.string.all_modules)));
+        for (String key : moduleKeys) {
+            String display = LogParser.getModuleDisplayName(key);
+            if (display == null || display.trim().isEmpty()) display = key;
+            options.add(new ModuleOption(key, display));
+        }
+
+        if (moduleAdapter == null) {
+            moduleAdapter = new NoFilterArrayAdapter<>(
+                    requireContext(),
+                    com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
+                    options
+            );
+            spinnerModule.setAdapter(moduleAdapter);
+        } else {
+            moduleAdapter.replaceAll(options);
+        }
+
+        // category 变化时模块默认回到“全部”
+        selectedModuleKey = null;
+        spinnerModule.setText(options.get(0).label, false);
+    }
+
+    private void hideImeAndFixInsets() {
+        // 清掉搜索焦点，避免 ROM 抽风导致 IME/insets 状态卡住
+        etSearch.clearFocus();
+
+        WindowInsetsControllerCompat controller = ViewCompat.getWindowInsetsController(rootView);
+        if (controller != null) {
+            controller.hide(WindowInsetsCompat.Type.ime());
+        }
+
+        // 强制触发 insets 重新分发（非常关键）
+        ViewCompat.requestApplyInsets(rootView);
+    }
+
+    @Nullable
+    private static String getDropdownText(@NonNull MaterialAutoCompleteTextView v) {
+        CharSequence cs = v.getText();
+        if (cs == null) return null;
+        String s = cs.toString().trim();
+        return s.isEmpty() ? null : s;
     }
 
     private void loadAllLogFiles() {
@@ -226,7 +367,6 @@ public class AuditFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                // 获取日志目录
                 logDir = new File(requireContext().getFilesDir(), "Log");
 
                 if (!logDir.exists() || !logDir.isDirectory()) {
@@ -237,7 +377,6 @@ public class AuditFragment extends Fragment {
                     return;
                 }
 
-                // 解析所有日志文件
                 allLogEntries = LogParser.parseAllLogFiles(logDir);
 
                 if (allLogEntries.isEmpty()) {
@@ -248,16 +387,15 @@ public class AuditFragment extends Fragment {
                     return;
                 }
 
-                // 按时间倒序排列（最新的在前）
+                final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
                 allLogEntries.sort((e1, e2) -> {
                     try {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
                         Date date1 = sdf.parse(e1.timestamp);
                         Date date2 = sdf.parse(e2.timestamp);
-                        assert date2 != null;
-                        return date2.compareTo(date1); // 降序
+                        if (date1 == null || date2 == null) return 0;
+                        return date2.compareTo(date1);
                     } catch (Exception e) {
-                        return e2.timestamp.compareTo(e1.timestamp);
+                        return String.valueOf(e2.timestamp).compareTo(String.valueOf(e1.timestamp));
                     }
                 });
 
@@ -278,38 +416,37 @@ public class AuditFragment extends Fragment {
     }
 
     private void applyFilters() {
-        if (allLogEntries.isEmpty()) {
-            return;
+        if (allLogEntries.isEmpty()) return;
+
+        String selectedCategory = getDropdownText(spinnerCategory);
+        if (selectedCategory != null && selectedCategory.equals(getString(R.string.all_categories))) {
+            selectedCategory = null;
         }
-        String selectedCategory = spinnerCategory.getSelectedItemPosition() == 0 ?
-                null : (String) spinnerCategory.getSelectedItem();
-        String selectedModule = spinnerModule.getSelectedItemPosition() == 0 ?
-                null : (String) spinnerModule.getSelectedItem();
+
         LogLevel selectedLevel = LogLevel.UNKNOWN;
-        if (spinnerLevel.getSelectedItemPosition() > 0) {
-            String levelStr = (String) spinnerLevel.getSelectedItem();
+        String levelText = getDropdownText(spinnerLevel);
+        if (levelText != null && !levelText.equals(getString(R.string.all_levels))) {
             try {
-                selectedLevel = LogLevel.valueOf(levelStr);
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-        String searchText = Objects.requireNonNull(etSearch.getText()).toString().trim();
-        if (searchText.isEmpty()) {
-            searchText = null;
+                selectedLevel = LogLevel.valueOf(levelText);
+            } catch (IllegalArgumentException ignored) {}
         }
 
-        // 应用高级筛选
-        filteredLogEntries = new ArrayList<>();
+        String searchText = etSearch.getText() != null ? etSearch.getText().toString().trim() : null;
+        if (searchText != null && searchText.isEmpty()) searchText = null;
+
         List<LogEntry> tempFiltered = LogParser.filterEntries(
-                allLogEntries, selectedModule, selectedLevel, searchText, selectedCategory);
+                allLogEntries,
+                selectedModuleKey,     // 这里传 module key（不是显示名）
+                selectedLevel,
+                searchText,
+                selectedCategory
+        );
 
-        // 应用错误/成功筛选
+        filteredLogEntries = new ArrayList<>();
+        boolean onlyErrors = cbShowErrors.isChecked();
         for (LogEntry entry : tempFiltered) {
-            boolean include = !cbShowErrors.isChecked() || "true".equals(entry.extractedData.get("is_error"));
-
-            if (include) {
-                filteredLogEntries.add(entry);
-            }
+            boolean include = !onlyErrors || "true".equals(entry.extractedData.get("is_error"));
+            if (include) filteredLogEntries.add(entry);
         }
 
         logAdapter.setLogEntries(filteredLogEntries);
@@ -326,17 +463,19 @@ public class AuditFragment extends Fragment {
         Map<String, Integer> moduleStats = LogParser.getModuleStats(allLogEntries);
         int totalModules = moduleStats.size();
 
-        String stats = getString(R.string.stats_format,
-                allLogEntries.size(), filteredLogEntries.size(), totalModules, getLogFileCount());
+        String stats = getString(
+                R.string.stats_format,
+                allLogEntries.size(),
+                filteredLogEntries.size(),
+                totalModules,
+                getLogFileCount()
+        );
         tvStats.setText(stats);
     }
 
     private String getLogFileCount() {
-        if (logDir == null || !logDir.exists()) {
-            return "0";
-        }
-        File[] logFiles = logDir.listFiles((dir, name) ->
-                name.startsWith("hook_log_") && name.endsWith(".txt"));
+        if (logDir == null || !logDir.exists()) return "0";
+        File[] logFiles = logDir.listFiles((dir, name) -> name.startsWith("hook_log_") && name.endsWith(".txt"));
         return logFiles != null ? String.valueOf(logFiles.length) : "0";
     }
 
@@ -364,9 +503,8 @@ public class AuditFragment extends Fragment {
 
                     if (logFiles != null) {
                         for (File file : logFiles) {
-                            if (file.delete()) {
-                                android.util.Log.d(TAG, "删除日志文件: " + file.getName());
-                            }
+                            //noinspection ResultOfMethodCallIgnored
+                            file.delete();
                         }
                     }
                 }
@@ -378,8 +516,6 @@ public class AuditFragment extends Fragment {
                     updateStats();
                     showEmptyState(getString(R.string.logs_cleared_message));
                     showLoading(false);
-
-                    // 显示清除成功提示
                     Toast.makeText(requireContext(), R.string.clear_logs_success, Toast.LENGTH_SHORT).show();
                 });
 
@@ -387,7 +523,9 @@ public class AuditFragment extends Fragment {
                 android.util.Log.e(TAG, "清除日志失败", e);
                 mainHandler.post(() -> {
                     showLoading(false);
-                    Toast.makeText(requireContext(), getString(R.string.clear_logs_failed) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(),
+                            getString(R.string.clear_logs_failed) + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -410,7 +548,6 @@ public class AuditFragment extends Fragment {
             statsMessage.append(moduleName).append(": ").append(entry.getValue()).append(getString(R.string.log_count_unit)).append("\n");
         }
 
-        // 显示统计对话框
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.log_statistics_title)
                 .setMessage(statsMessage.toString())
@@ -429,11 +566,9 @@ public class AuditFragment extends Fragment {
         details.append(getString(R.string.log_detail_function)).append(entry.function != null ? entry.function : getString(R.string.none)).append("\n");
         details.append(getString(R.string.log_detail_multiline)).append(entry.isMultiLine ? getString(R.string.yes) : getString(R.string.no)).append("\n\n");
 
-        // 显示完整消息（包含多行）
         details.append(getString(R.string.full_message_header)).append("\n");
         details.append(entry.getFullMessage()).append("\n\n");
 
-        // 提取的数据
         if (!entry.extractedData.isEmpty()) {
             details.append(getString(R.string.extracted_data_header)).append("\n");
             for (Map.Entry<String, String> data : entry.extractedData.entrySet()) {
@@ -476,7 +611,63 @@ public class AuditFragment extends Fragment {
     }
 
     /**
-     * 增强的日志适配器 - 支持点击查看详情和多行显示
+     * 禁用 AutoComplete 默认过滤（否则 setText 后会按文本过滤导致列表为空）
+     */
+    private static class NoFilterArrayAdapter<T> extends ArrayAdapter<T> {
+        private final List<T> allItems;
+
+        public NoFilterArrayAdapter(@NonNull Context context, int resource, @NonNull List<T> items) {
+            super(context, resource, new ArrayList<>(items));
+            this.allItems = new ArrayList<>(items);
+        }
+
+        public void replaceAll(@NonNull List<T> items) {
+            allItems.clear();
+            allItems.addAll(items);
+            clear();
+            addAll(items);
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence constraint) {
+                    FilterResults results = new FilterResults();
+                    results.values = allItems;
+                    results.count = allItems.size();
+                    return results;
+                }
+
+                @Override
+                protected void publishResults(CharSequence constraint, FilterResults results) {
+                    // 数据不变，强制刷新即可
+                    notifyDataSetChanged();
+                }
+            };
+        }
+    }
+
+    private static final class ModuleOption {
+        @Nullable final String key;   // 真正用于过滤的 key
+        @NonNull final String label;  // 显示名（来自 LogParser 数据源）
+
+        ModuleOption(@Nullable String key, @NonNull String label) {
+            this.key = key;
+            this.label = label;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    /**
+     * 日志适配器
      */
     private class LogAdapter extends RecyclerView.Adapter<LogAdapter.LogViewHolder> {
 
@@ -505,7 +696,6 @@ public class AuditFragment extends Fragment {
             LogEntry entry = logEntries.get(position);
             holder.bind(entry);
 
-            // 设置点击事件
             holder.itemView.setOnClickListener(v -> {
                 if (onItemClickListener != null) {
                     onItemClickListener.onItemClick(entry);
@@ -542,16 +732,18 @@ public class AuditFragment extends Fragment {
 
             public void bind(LogEntry entry) {
                 // 时间显示
-                if (entry.timestamp != null) {
-                    String displayTime = entry.timestamp.substring(11); // 只显示时间部分
-                    tvTime.setText(displayTime);
+                if (entry.timestamp != null && entry.timestamp.length() >= 12) {
+                    tvTime.setText(entry.timestamp.substring(11));
                 } else {
                     tvTime.setText("--:--:--");
                 }
 
-                // 模块显示
+                // 模块显示：用你的数据源映射（不显示英文 key）
                 if (entry.module != null) {
                     String displayModule = LogParser.getModuleDisplayName(entry.module);
+                    if (displayModule == null || displayModule.trim().isEmpty()) {
+                        displayModule = entry.module;
+                    }
                     tvModule.setText(displayModule);
                     tvModule.setVisibility(View.VISIBLE);
                 } else {
@@ -559,26 +751,19 @@ public class AuditFragment extends Fragment {
                 }
 
                 // 级别显示
-                String levelText = entry.level != null ? entry.level : "?";
-                tvLevel.setText(levelText);
+                tvLevel.setText(entry.level != null ? entry.level : "?");
 
-                // 消息显示 - 如果是多行日志，显示第一行并添加省略号
+                // 消息显示
                 String message = entry.getFullMessage();
                 if (entry.isMultiLine) {
-                    // 对于多行日志，只显示第一行
                     String[] lines = message.split("\n");
                     if (lines.length > 0) {
                         message = lines[0];
-                        if (message.length() > 100) {
-                            message = message.substring(0, 100) + "...";
-                        }
+                        if (message.length() > 100) message = message.substring(0, 100) + "...";
                         message += " ... [" + (lines.length - 1) + getString(R.string.more_lines_suffix) + "]";
                     }
                 } else {
-                    // 单行日志正常截取
-                    if (message.length() > 100) {
-                        message = message.substring(0, 100) + "...";
-                    }
+                    if (message.length() > 100) message = message.substring(0, 100) + "...";
                 }
                 tvMessage.setText(message);
 
@@ -607,37 +792,28 @@ public class AuditFragment extends Fragment {
                     tvDetails.setVisibility(View.GONE);
                 }
 
-                // 设置级别指示器颜色
                 setLevelIndicatorColor(entry.logLevel);
-
-                // 设置状态图标
                 setStatusIcon(entry);
-
-                // 设置多行图标
-                if (entry.isMultiLine) {
-                    ivMultiLine.setVisibility(View.VISIBLE);
-                } else {
-                    ivMultiLine.setVisibility(View.GONE);
-                }
+                ivMultiLine.setVisibility(entry.isMultiLine ? View.VISIBLE : View.GONE);
             }
 
             private void setLevelIndicatorColor(LogLevel level) {
                 int color;
                 switch (level) {
                     case DEBUG:
-                        color = 0xFF2196F3; // 蓝色
+                        color = 0xFF2196F3;
                         break;
                     case INFO:
-                        color = 0xFF4CAF50; // 绿色
+                        color = 0xFF4CAF50;
                         break;
                     case WARN:
-                        color = 0xFFFFC107; // 黄色
+                        color = 0xFFFFC107;
                         break;
                     case ERROR:
-                        color = 0xFFF44336; // 红色
+                        color = 0xFFF44336;
                         break;
                     default:
-                        color = 0xFF9E9E9E; // 灰色
+                        color = 0xFF9E9E9E;
                 }
                 levelIndicator.setBackgroundColor(color);
             }
