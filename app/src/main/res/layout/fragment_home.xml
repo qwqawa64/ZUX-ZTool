@@ -1,348 +1,451 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
     android:background="?attr/colorSurface"
-    android:clipToPadding="false">
+    android:clipToPadding="false"
+    android:fillViewport="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
+        android:paddingBottom="24dp">
 
-        <!-- 统一标题样式 -->
-        <TextView
-            android:id="@+id/title_home"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/homeFragment_title"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+        <!-- 顶部装饰背景块：消除顶部的空旷感 -->
+        <View
+            android:id="@+id/bg_header"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:background="?attr/colorSurfaceContainer"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- 1. 工作模式要求卡片：强调警告属性，保留红色系配色 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/card_requirements"
+        <!-- 标题区域：位置上移，与背景块融合 -->
+        <TextView
+            android:id="@+id/title_home"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:padding="16dp"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:text="@string/homeFragment_title"
+            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Dashboard" />
+
+        <!-- 1. 工作模式警告卡片 -->
+        <!-- 保持全宽，用红色线条强调 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_requirements"
+            style="?attr/materialCardViewOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="24dp"
+            android:visibility="gone"
             app:cardBackgroundColor="?attr/colorErrorContainer"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="1dp"
-            app:cardPreventCornerOverlap="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/title_home"
-            android:foreground="?attr/selectableItemBackground"
-            android:visibility="gone">
+            app:strokeColor="?attr/colorError"
+            app:strokeWidth="1dp"
+            tools:visibility="visible">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/workModeRequirement"
-                    android:textColor="?attr/colorOnErrorContainer"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_info"
+                    app:tint="?attr/colorOnErrorContainer" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="16dp"
                     android:text="@string/workModeRequirementDetail"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnErrorContainer"
-                    android:textSize="15sp"
-                    android:lineSpacingExtra="4dp" />
-
+                    android:textStyle="bold" />
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
+        <!-- 2. 核心状态卡片 -->
+        <!-- 稍微上移覆盖一点背景块，营造悬浮感 -->
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_module_status"
+            style="?attr/materialCardViewFilledStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:padding="18dp"
-            app:cardBackgroundColor="?attr/colorSecondaryContainer"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="1dp"
-            app:cardPreventCornerOverlap="true"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="?attr/colorPrimaryContainer"
+            app:cardElevation="2dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_requirements"
-            android:foreground="?attr/selectableItemBackground">
+            app:layout_constraintTop_toBottomOf="@id/card_requirements">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:gravity="center"
-                android:padding="16dp">
+                android:padding="24dp">
 
-                <!-- 卡片标题 -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/environmentState"
-                    android:textColor="?attr/colorOnSecondaryContainer"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <!-- 核心状态区：显示“模块已激活”提示 -->
-                <TextView
-                    android:id="@+id/text_module_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:drawableStartCompat="@drawable/ic_check_circle"
-                    android:drawablePadding="8dp"
-                    app:drawableTint="?attr/colorPrimary"
-                    android:gravity="center"
-                    android:text="@string/moduleActivated"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
-                <!-- 技术参数区：模块版本、Root来源、框架版本 -->
+                <!-- 头部：标题 + 图标 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:orientation="vertical"
-                    android:spacing="10dp"> <!-- 增加行间距，提升可读性 -->
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/text_module_version"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/loading"
-                        android:textColor="?attr/colorOnSecondaryContainer"
-                        android:textSize="15sp" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/text_root_source"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/loading"
-                        android:textColor="?attr/colorOnSecondaryContainer"
-                        android:textSize="12sp" />
+                        <TextView
+                            android:text="@string/environmentState"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:alpha="0.8"
+                            tools:text="Environment" />
 
-                    <TextView
-                        android:id="@+id/text_framework_version"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/loading"
-                        android:textColor="?attr/colorOnSecondaryContainer"
-                        android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/text_module_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/moduleActivated"
+                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textStyle="bold"
+                            tools:text="Active" />
+                    </LinearLayout>
 
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_check_circle"
+                        app:tint="?attr/colorPrimary" />
                 </LinearLayout>
 
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="16dp"
+                    android:alpha="0.2"
+                    app:dividerColor="?attr/colorOnPrimaryContainer" />
+
+                <!-- 底部三个参数：横向分布，适合宽屏 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <!-- Item 1 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:text="Version"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:alpha="0.7" />
+
+                        <TextView
+                            android:id="@+id/text_module_version"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/loading"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textStyle="bold"
+                            tools:text="v1.0.2" />
+                    </LinearLayout>
+
+                    <!-- Item 2 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:text="Root"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:alpha="0.7" />
+
+                        <TextView
+                            android:id="@+id/text_root_source"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/loading"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textStyle="bold"
+                            tools:text="Magisk" />
+                    </LinearLayout>
+
+                    <!-- Item 3 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:text="Framework"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:alpha="0.7" />
+
+                        <TextView
+                            android:id="@+id/text_framework_version"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/loading"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textStyle="bold"
+                            tools:text="LSPosed" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        </androidx.cardview.widget.CardView>
-
-        <!-- 3. 设备与系统信息卡片：优化列表布局，统一对齐方式 -->
-        <androidx.cardview.widget.CardView
+        <!-- 3. 设备信息卡片：关键重构 -->
+        <!-- 使用 ConstraintLayout 内部网格，横屏时从列表变为 2列 布局，填充感更强 -->
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_system_info"
+            style="?attr/materialCardViewFilledStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginTop="16dp"
-            android:padding="18dp"
-            app:cardBackgroundColor="?attr/colorSurfaceContainer"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="1dp"
-            app:cardPreventCornerOverlap="true"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_module_status"
-            android:foreground="?attr/selectableItemBackground">
+            app:layout_constraintTop_toBottomOf="@id/card_module_status">
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
-                <!-- 卡片标题 -->
                 <TextView
+                    android:id="@+id/title_device"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/deviceInfo"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-                <!-- 系统信息列表：统一间距+左右对齐优化 -->
+                <!-- 左侧列：Model -->
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:id="@+id/group_model"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="8dp"
                     android:orientation="vertical"
-                    android:spacing="10dp">
+                    app:layout_constraintEnd_toStartOf="@+id/guideline_center"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/title_device">
 
-                    <!-- 手机型号 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:text="@string/deviceCodeName"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/deviceCodeName"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:id="@+id/text_device_model"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/placeHolderUnknown"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="15sp"
-                            android:textAlignment="textEnd" />
-
-                    </LinearLayout>
-
-                    <!-- Android版本 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/text_device_model"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/AndroidVersion"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:id="@+id/text_android_version"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/placeHolderUnknown"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="15sp"
-                            android:textAlignment="textEnd" />
-
-                    </LinearLayout>
-
-                    <!-- 构建版本 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/buildVersion"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:id="@+id/text_build_version"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/placeHolderUnknown"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="15sp"
-                            android:textAlignment="textEnd" />
-
-                    </LinearLayout>
-
-                    <!-- 内核版本 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/kernelVersion"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:id="@+id/text_kernel_version"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/placeHolderUnknown"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="15sp"
-                            android:textAlignment="textEnd" />
-
-                    </LinearLayout>
-
-                    <!-- 当前槽位 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/currentSlot"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:id="@+id/text_current_slot"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/placeHolderUnknown"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="15sp"
-                            android:textAlignment="textEnd" />
-
-                    </LinearLayout>
-
+                        android:text="@string/placeHolderUnknown"
+                        android:textAppearance="?attr/textAppearanceBodyLarge"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"
+                        tools:text="Pixel 7 Pro" />
                 </LinearLayout>
 
-            </LinearLayout>
+                <!-- 右侧列：Android Version -->
+                <LinearLayout
+                    android:id="@+id/group_android"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guideline_center"
+                    app:layout_constraintTop_toBottomOf="@id/title_device">
 
-        </androidx.cardview.widget.CardView>
+                    <TextView
+                        android:text="@string/AndroidVersion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
 
-        <!-- 底部提示：优化间距，提升可读性 -->
+                    <TextView
+                        android:id="@+id/text_android_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/placeHolderUnknown"
+                        android:textAppearance="?attr/textAppearanceBodyLarge"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"
+                        tools:text="Android 14" />
+                </LinearLayout>
+
+                <!-- 左侧列：Build -->
+                <LinearLayout
+                    android:id="@+id/group_build"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toStartOf="@+id/guideline_center"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/group_model">
+
+                    <TextView
+                        android:text="@string/buildVersion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/text_build_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/placeHolderUnknown"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"
+                        tools:text="UQ1A.240105.004" />
+                </LinearLayout>
+
+                <!-- 右侧列：Kernel -->
+                <LinearLayout
+                    android:id="@+id/group_kernel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guideline_center"
+                    app:layout_constraintTop_toBottomOf="@id/group_android">
+
+                    <TextView
+                        android:text="@string/kernelVersion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/text_kernel_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/placeHolderUnknown"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"
+                        tools:text="5.10.198-android12-9" />
+                </LinearLayout>
+
+                <!-- 底部：Slot (占据全宽或者左侧) -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="?attr/colorSecondaryContainer"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginBottom="4dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/group_build">
+
+                    <TextView
+                        android:text="@string/currentSlot"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="?attr/colorOnSecondaryContainer" />
+
+                    <TextView
+                        android:id="@+id/text_current_slot"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/placeHolderUnknown"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textStyle="bold"
+                        tools:text="Slot A" />
+                </LinearLayout>
+
+                <!-- 垂直分割线 Guideline (50%) -->
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline_center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.5" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 底部提示 -->
         <TextView
             android:id="@+id/text_hint"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="20dp"
-            android:text="@string/workConditionTip"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="14sp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="24dp"
             android:gravity="center"
+            android:text="@string/workConditionTip"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_system_info" />
+            app:layout_constraintTop_toBottomOf="@id/card_system_info"
+            tools:text="Ensure your device is rooted for full functionality." />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </androidx.core.widget.NestedScrollView>
