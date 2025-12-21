@@ -76,7 +76,7 @@ public class FeaturesFragment extends Fragment {
                 getString(R.string.system_ui_app_name),
                 getString(R.string.system_ui_app_description),
                 "com.android.systemui",
-                getApplicationIcon(requireContext(), "android"),
+                getApplicationIcon(requireContext(), "com.android.systemui"),
                 true,
                 systemUISettings.class
         ));
