@@ -78,7 +78,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                             if (pkgName != null && !pkgName.isEmpty()) {
                                 // 检查是否为白名单游戏
                                 if (isTargetGame(pkgName)) {
-                                    log("Target game detected: " + pkgName);
+                                    if (DEBUG) log("Target game detected: " + pkgName);
 
                                     // 延迟设置，确保游戏助手完全初始化
                                     new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> enableMistakeTouchWithSync(param.thisObject), 1000);
@@ -106,7 +106,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
                             int targetStatus = (int) param.args[0];
-                            log("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
+                            if (DEBUG) log("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
                         }
                     });
 
@@ -133,7 +133,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                                 String stackTrace = android.util.Log.getStackTraceString(new Throwable());
                                 if (stackTrace.contains("ItemBlockMistakeTouch") ||
                                         stackTrace.contains("change2Status")) {
-                                    log("LiveData postValue for mistake touch: " + status);
+                                    if (DEBUG) log("LiveData postValue for mistake touch: " + status);
                                 }
                             }
                         }
@@ -157,15 +157,15 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             if (context instanceof Context) {
                 // 先获取当前系统设置状态
                 int currentStatus = getCurrentMistakeTouchStatus((Context) context);
-                log("Current mistake touch status: " + currentStatus);
+                if (DEBUG) log("Current mistake touch status: " + currentStatus);
 
                 if (currentStatus != 1) {
                     // 通过游戏助手内部方法设置，确保状态同步
                     setMistakeTouchThroughGameHelper(gameHelper);
 
-                    log("Auto-enabled mistake touch with sync");
+                    if (DEBUG) log("Auto-enabled mistake touch with sync");
                 } else {
-                    log("Mistake touch already enabled");
+                    if (DEBUG) log("Mistake touch already enabled");
                 }
             }
 
