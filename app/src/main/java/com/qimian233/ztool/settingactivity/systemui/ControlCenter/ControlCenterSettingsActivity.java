@@ -140,7 +140,7 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     float textSize = 10 + (progress * 0.5f);
-                    textTextSizeValue.setText(textSize + getString(R.string.sp_unit));
+                    textTextSizeValue.setText(String.format(getString(R.string.sp_unit), textSize));
                     saveTextSize(textSize);
                 }
             }
@@ -252,7 +252,7 @@ public class ControlCenterSettingsActivity extends AppCompatActivity {
         int progress = (int) ((textSize - 10) / 0.5f);
         seekbarTextSize.setProgress(progress);
         switchTextSize.setChecked(textSizeEnabled);
-        textTextSizeValue.setText(String.format("%.1f%s", textSize, getString(R.string.sp_unit)));
+        textTextSizeValue.setText(String.format(getString(R.string.sp_unit), textSize));
         seekbarTextSize.setEnabled(textSizeEnabled);
 
         float letterSpacing = ZToolPrefs.loadFloatSetting("Custom_ControlCenterDateLetterSpacing", 0.1f);

@@ -52,6 +52,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
     private MaterialSwitch switchTextSize, switchLetterSpacing, switchTextColor, switchTextBold, switchNativeNotificationIcon, switch_NetworkSpeedSize, switch_NetworkSpeedSizeDoubleLayer, switchBatteryExternal;
     private SeekBar seekbarTextSize, seekbarLetterSpacing;
     private TextView textTextSizeValue, textLetterSpacingValue, textTextColorValue;
+    private EditText editableClockFormat;
     private View viewColorPreview;
     private Button buttonPickColor;
     private Spinner spinnerNotifyNumSize;
@@ -85,6 +86,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         Button saveButton = findViewById(R.id.button_save_clock_format);
         textPreview = findViewById(R.id.textview_clock_preview);
         spinnerNotifyNumSize = findViewById(R.id.spinner_notifyNumSize);
+        editableClockFormat = findViewById(R.id.edittext_clock_format);
 
         initStyleViews();
 
@@ -102,7 +104,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
         // 保存自定义时钟格式事件
         saveButton.setOnClickListener(v -> {
-            String clockFormat = ((TextView) findViewById(R.id.edittext_clock_format)).getText().toString();
+            String clockFormat = editableClockFormat.getText().toString();
             ZToolPrefs.saveStringSetting("Custom_StatusBarClockFormat", clockFormat);
             new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.save_success_title)
@@ -113,11 +115,8 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
 
         // 设置原生通知图标开关事件
         switchNativeNotificationIcon = findViewById(R.id.switch_NativeNotificationIcon);
-        switchNativeNotificationIcon.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // 保存开关状态
-            saveSettings("NativeNotificationIcon",isChecked);
-            //Log.d("NativeNotificationIcon", "Switch state saved: " + isChecked);
-        });
+        switchNativeNotificationIcon.setOnCheckedChangeListener((buttonView, isChecked) ->
+            saveSettings("NativeNotificationIcon",isChecked));
 
         // 设置状态栏网速大小优化事件
         switch_NetworkSpeedSize = findViewById(R.id.switch_NetworkSpeedSize);
@@ -151,7 +150,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         ImageView helpButton = findViewById(R.id.info_img);
         helpButton.setOnClickListener(v -> showFormatHelpDialog());
 
-        EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
+        EditText editTextClockFormat = editableClockFormat;
         editTextClockFormat.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -190,7 +189,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     float textSize = 10 + (progress * 0.5f);
-                    textTextSizeValue.setText(textSize + getString(R.string.sp_unit));
+                    textTextSizeValue.setText(String.format(getString(R.string.sp_unit), textSize));
                     saveTextSize(textSize);
                 }
             }
@@ -331,7 +330,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         switchBatteryExternal.setChecked(isBatteryPercentageEnabled);
 
         if (customClockEnabled) {
-            EditText editTextClockFormat = findViewById(R.id.edittext_clock_format);
+            EditText editTextClockFormat = editableClockFormat;
             String savedFormat = ZToolPrefs.loadStringSetting("Custom_StatusBarClockFormat", "");
             editTextClockFormat.setText(savedFormat);
             updateClockPreview(savedFormat);
@@ -347,7 +346,7 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         int progress = (int) ((textSize - 10) / 0.5f);
         seekbarTextSize.setProgress(progress);
         switchTextSize.setChecked(textSizeEnabled);
-        textTextSizeValue.setText(String.format("%.1f%s", textSize, getString(R.string.sp_unit)));
+        textTextSizeValue.setText(String.format(getString(R.string.sp_unit), textSize));
         seekbarTextSize.setEnabled(textSizeEnabled);
 
         float letterSpacing = ZToolPrefs.loadFloatSetting("Custom_StatusBarClockLetterSpacing", 0.1f);
@@ -363,7 +362,6 @@ public class StatusBarSettingsActivity extends AppCompatActivity {
         updateColorPreview(textColor);
         buttonPickColor.setEnabled(textColorEnabled);
 
-        boolean textBold = ZToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextBold", true);
         boolean textBoldEnabled = ZToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextBold", false);
         switchTextBold.setChecked(textBoldEnabled);
     }
