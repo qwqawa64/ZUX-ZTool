@@ -611,7 +611,7 @@
     <!--系统框架功能页的资源值-->
     <string name="Custom_attention">注意！</string>
     <string name="Custom_Attention_content">自定义唤醒符后，一定一定需要额外勾选使用全局输入的APP作用域（如QQ）不勾选只能使用官方的唤醒符号，效果测试可在下面输入框进行，比如打出&amp;&amp;你好，你是谁&amp;&amp;。</string>
-    <string name="test_Input">在此输入测试文本...</string>
+    <string name="test_Input">在此输入测试文本…</string>
     <string name="custom_detector_err">格式错误：请使用英文逗号分隔多个检测符</string>
     <string name="custom_detector_hint">请输入自定义的检测符，多个使用英文逗号分隔</string>
     <string name="ai_input_Title">AI全局输入</string>
