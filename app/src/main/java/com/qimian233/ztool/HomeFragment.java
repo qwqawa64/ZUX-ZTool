@@ -555,9 +555,13 @@ public class HomeFragment extends Fragment {
 
         EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand("getprop ro.boot.slot_suffix", 3);
         if (result.isSuccess() && result.output != null && !result.output.isEmpty()) {
-            Log.i(TAG, "启动槽位: " + result.output);
-            return result.output.trim();
+            Log.i(TAG, "Booting from: " + result.output);
+            if (result.output.trim().equals("_a")) {
+                return getString(R.string.slot_a);
+            } else if (result.output.trim().equals("_b")) {
+                return getString(R.string.slot_b);
+            } else return getString(R.string.unknown);
         }
-        return "";
+        return getString(R.string.unknown);
     }
 }

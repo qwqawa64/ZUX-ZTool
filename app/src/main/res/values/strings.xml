@@ -17,6 +17,7 @@
     <string name="do_not_show_again">不再提示</string>
     <string name="no_tip_next_time">下次将不再提示此内容</string>
     <string name="loadingUserAPP">加载用户应用列表…</string>
+    <string name="unknown">未知</string>
     <!--主页资源值-->
     <string name="app_name">ZTool</string>
     <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
@@ -60,6 +61,8 @@
     <string name="restart_system_button">立即重启</string>
     <string name="do_not_restart_system_button">稍后</string>
     <string name="have_not_restart_warn">在您重启系统之前，配置将不会生效！</string>
+    <string name="slot_a">A槽</string>
+    <string name="slot_b">B槽</string>
     <!--功能管理页资源值-->
     <string name="featuresFragment_title">功能管理</string>
     <string name="itemFeatures_appName">应用名称</string>
@@ -168,7 +171,6 @@
     <string name="config_restore_success">配置已从文件恢复</string>
     <string name="log_service_started">日志采集服务已启动</string>
     <string name="log_service_stopped">日志采集服务已停止</string>
-    <string name="unknown">未知</string>
     <string name="unknown_activity_null">未知 (Activity 为空)</string>
 
     <!--通用重启作用域资源-->
