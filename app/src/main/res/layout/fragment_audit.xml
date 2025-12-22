@@ -313,6 +313,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
+        android:layout_marginTop="400dp"
         android:orientation="vertical"
         android:visibility="gone">
 
