@@ -157,6 +157,7 @@
     <string name="backupConfigToFile">备份配置到文件</string>
     <string name="restoreConfigFromFile">从文件恢复配置</string>
     <string name="restoreDefaultConfig">恢复默认配置</string>
+    <string name="moreSettings">更多设置</string>
     <string name="enableHomePageYiyan">随机一言</string>
     <string name="enableHomePageYiyanSummary">启用主界面下方的随机一言，此功能需要联网</string>
     <string name="checkZToolUpdate">检查更新</string>
