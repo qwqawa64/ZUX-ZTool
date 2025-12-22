@@ -1,17 +1,21 @@
 package com.qimian233.ztool.settingactivity.systemframework;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -236,16 +240,51 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
 
     private void initRestartButton() {
         FloatingActionButton fabRestart = findViewById(R.id.fab_restart);
-        fabRestart.setOnClickListener(v -> showRestartConfirmationDialog());
+        fabRestart.setOnClickListener(v -> showRestartConfirmationDialog(this));
     }
 
-    private void showRestartConfirmationDialog() {
-        new MaterialAlertDialogBuilder(this)
+    /**
+     * Test method: create a MaterialAlarmDialog with a countdown
+     * If this method works fine, consider create a util class for dialogs.
+    * */
+    public void showRestartConfirmationDialog(Context context) {
+        final int totalTime = 3;
+        // First, create a dialog with countdown timer.
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context)
                 .setTitle(R.string.restart_system_title)
                 .setMessage(R.string.restart_system_message)
-                .setPositiveButton(R.string.restart_yes, (dialog, which) -> restartOS())
-                .setNegativeButton(R.string.restart_no, null)
-                .show();
+                .setPositiveButton(  R.string.confirm + "(" + totalTime + "s)", null)
+                .setNegativeButton(R.string.restart_no, null);
+        final AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            final Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+
+            positiveButton.setEnabled(false);
+
+            // Countdown implementation
+            CountDownTimer countDownTimer = new CountDownTimer(totalTime * 1000L, 1000L) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    int seconds = (int) (millisUntilFinished / 1000);
+                    positiveButton.setText(String.format(getString(R.string.confirmWithCountdown), seconds + 1));
+                }
+
+                @Override
+                public void onFinish() {
+                    positiveButton.setEnabled(true);
+                    positiveButton.setText(R.string.confirm);
+                    positiveButton.setOnClickListener(v -> restartOS());
+                }
+            };
+
+            countDownTimer.start();
+
+            // 对话框关闭时取消计时器
+            dialog.setOnDismissListener(dialogInterface1 -> countDownTimer.cancel());
+        });
+
+        dialog.show();
     }
 
     private void restartOS() {
@@ -254,7 +293,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
             Process process = Runtime.getRuntime().exec("su -c reboot");
             process.waitFor();
         } catch (Exception e) {
-            e.printStackTrace();
+            e.getMessage();
             Toast.makeText(this, getString(R.string.restart_fail_prefix) + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
