@@ -30,7 +30,7 @@ public class DocumentsUIBypass extends BaseHookModule {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if ("com.android.documentsui".equals(lpparam.packageName)) {
-            log("开始加载 DocumentsUI 解除限制模块...");
+            if (DEBUG) log("开始加载 DocumentsUI 解除限制模块...");
             hookDocumentInfo(lpparam.classLoader);
             hookPickFragment(lpparam.classLoader);
         }
@@ -50,7 +50,7 @@ public class DocumentsUIBypass extends BaseHookModule {
                     "isBlockedFromTree",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             // 强制返回 false，允许选择所有目录
                             param.setResult(false);
                         }
@@ -66,7 +66,7 @@ public class DocumentsUIBypass extends BaseHookModule {
                         "isBlocked",
                         new XC_MethodHook() {
                             @Override
-                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            protected void afterHookedMethod(MethodHookParam param) {
                                 param.setResult(false);
                             }
                         }
@@ -95,7 +95,7 @@ public class DocumentsUIBypass extends BaseHookModule {
                     "updateView",
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             Object fragment = param.thisObject;
 
                             // 1. 获取并启用 mPick 按钮
