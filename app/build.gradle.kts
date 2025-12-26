@@ -1,3 +1,22 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+
+fun getGitCommitCount(): Int {
+    return try {
+        val process = ProcessBuilder("git", "rev-list", "--count", "HEAD").start()
+        process.waitFor()
+        process.inputStream.bufferedReader().readText().trim().toInt()
+    } catch (e: Exception) {
+        println("无法获取 Git 版本号，降级为 1")
+        1
+    }
+}
+
+
+fun getBuildTime(): String {
+    return SimpleDateFormat("yyMMdd").format(Date())
+}
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -10,8 +29,9 @@ android {
         applicationId = "com.qimian233.ztool"
         minSdk = 27
         targetSdk = 36
-        versionCode = 8
-        versionName = "Demo/251127"
+
+        versionCode = getGitCommitCount()
+        versionName = "Demo/${getBuildTime()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,7 +52,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -48,6 +67,6 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("cn.6tail:lunar:1.7.5")
-    implementation("com.google.android.material:material:1.8.0")
+    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3")
     implementation("com.google.code.gson:gson:2.10.1")
 }
