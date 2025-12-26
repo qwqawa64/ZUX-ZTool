@@ -15,10 +15,10 @@ public class ModuleConfig {
     private static SharedPreferences getPreferences() {
         SharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         if (prefs != null) {
-            XposedBridge.log("ModuleConfig: √ Successfully accessed com.qimian233.ztool preferences");
+//            XposedBridge.log("ModuleConfig: √ Successfully accessed com.qimian233.ztool preferences");
             return prefs;
         }
-        XposedBridge.log("ModuleConfig: Failed to access com.qimian233.ztool preferences");
+//        XposedBridge.log("ModuleConfig: Failed to access com.qimian233.ztool preferences");
 
         // 方法2：尝试直接通过模块上下文获取
         try {
@@ -30,17 +30,17 @@ public class ModuleConfig {
                 boolean success = directPrefs.edit().putBoolean("test_key_direct", testValue).commit();
 
                 if (success) {
-                    Log.d("ModuleConfig", "Successfully accessed module preferences via direct context");
+//                    Log.d("ModuleConfig", "Successfully accessed module preferences via direct context");
                     return directPrefs;
                 } else {
-                    Log.e("ModuleConfig", "Failed to commit test value to direct context preferences");
+//                    Log.e("ModuleConfig", "Failed to commit test value to direct context preferences");
                 }
             }
         } catch (Throwable e) {
-            Log.e("ModuleConfig", "Failed to get module preferences via direct context", e);
+//            Log.e("ModuleConfig", "Failed to get module preferences via direct context", e);
         }
-
-        Log.e("ModuleConfig", "All methods failed to get preferences");
+//
+//        Log.e("ModuleConfig", "All methods failed to get preferences");
         return null;
     }
 
@@ -61,15 +61,15 @@ public class ModuleConfig {
                 if (appContext != null) {
                     moduleContext = appContext.createPackageContext(MODULE_PACKAGE,
                             Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
-                    XposedBridge.log("ModuleConfig: Successfully initialized module context");
+//                    XposedBridge.log("ModuleConfig: Successfully initialized module context");
                     return moduleContext;
                 }
             }
         } catch (Throwable e) {
-            XposedBridge.log("ModuleConfig: Failed to initialize module context: " + e.getMessage());
+//            XposedBridge.log("ModuleConfig: Failed to initialize module context: " + e.getMessage());
         }
 
-        XposedBridge.log("ModuleConfig: Could not initialize module context");
+//        XposedBridge.log("ModuleConfig: Could not initialize module context");
         return null;
     }
 
@@ -82,12 +82,12 @@ public class ModuleConfig {
             if (moduleName.equals("Custom_StatusBarClock")) {
                 return result;
             }
-            XposedBridge.log(String.format("ModuleConfig: Read %s = %s (prefs: %s)", moduleName, result, prefs));
-            Log.d("ModuleConfig", String.format("Read %s: %s (prefs: %s)", moduleName, result, prefs));
+//            XposedBridge.log(String.format("ModuleConfig: Read %s = %s (prefs: %s)", moduleName, result, prefs));
+//            Log.d("ModuleConfig", String.format("Read %s: %s (prefs: %s)", moduleName, result, prefs));
             return result;
         } else {
-            XposedBridge.log("ModuleConfig: Preferences is null, returning default true");
-            Log.w("ModuleConfig", "Preferences is null, returning default true");
+//            XposedBridge.log("ModuleConfig: Preferences is null, returning default true");
+//            Log.w("ModuleConfig", "Preferences is null, returning default true");
             return false;
         }
     }
@@ -98,14 +98,14 @@ public class ModuleConfig {
             boolean success = prefs.edit()
                     .putBoolean(moduleName, enabled)
                     .commit();
-            XposedBridge.log(String.format("ModuleConfig: Set %s to %s, success: %s", moduleName, enabled, success));
-            Log.d("ModuleConfig", String.format("Set %s to %s, success: %s", moduleName, enabled, success));
+//            XposedBridge.log(String.format("ModuleConfig: Set %s to %s, success: %s", moduleName, enabled, success));
+//            Log.d("ModuleConfig", String.format("Set %s to %s, success: %s", moduleName, enabled, success));
             if (!success) {
                 dumpAllPreferences();
             }
         } else {
-            XposedBridge.log("ModuleConfig: Failed to set module enabled - preferences is null");
-            Log.e("ModuleConfig", "Failed to set module enabled - preferences is null");
+//            XposedBridge.log("ModuleConfig: Failed to set module enabled - preferences is null");
+//            Log.e("ModuleConfig", "Failed to set module enabled - preferences is null");
         }
     }
 
