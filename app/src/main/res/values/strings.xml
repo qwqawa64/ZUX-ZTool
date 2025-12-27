@@ -346,7 +346,7 @@
     <string name="select_at_least_one_config">请选择至少一个配置文件</string>
     <!--设置页：一视界策略搜索页功能资源值-->
     <string name="zui_force_config_title">小窗与分屏</string>
-    <string name="zui_force_config_summary">需要重启系统，此项配置优先级相当高，会覆盖所有用户及配置，不勾选的应用保持系统默认</string>
+    <string name="zui_force_config_summary">需要重启系统，此项配置优先级相当高，会覆盖所有用户及系统配置，不勾选的应用保持系统默认行为</string>
     <string name="zui_force_split_title">强制应用支持分屏</string>
     <string name="zui_force_split_summary">修改系统配置文件，强制指定应用支持分屏</string>
     <string name="zui_force_freeform_title">强制自由小窗</string>
