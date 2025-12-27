@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 8,
-      "versionName": "Demo/251127",
-      "outputFile": "app-release.apk"
+      "versionCode": 295,
+      "versionName": "Beta/251227",
+      "outputFile": "ZTool_Beta_251227_c295.apk"
     }
   ],
   "elementType": "File",
@@ -22,14 +22,14 @@
       "minApi": 28,
       "maxApi": 30,
       "baselineProfiles": [
-        "baselineProfiles/1/app-release.dm"
+        "baselineProfiles/1/ZTool_Beta_251227_c295.dm"
       ]
     },
     {
       "minApi": 31,
       "maxApi": 2147483647,
       "baselineProfiles": [
-        "baselineProfiles/0/app-release.dm"
+        "baselineProfiles/0/ZTool_Beta_251227_c295.dm"
       ]
     }
   ],

@@ -1,6 +1,6 @@
 {
   "newVersionName": "Beta/251227",
-  "newVersionCode": 401,
-  "whatNew": "[新增] 启用联想息屏显示\n[新增] 模块配置备份还原功能\n[新增] 状态栏网速优化布局\n[新增] 状态栏双排网速\n[新增] 解除ZUX桌面Dock栏图标数量限制\n[新增] 允许使用Y700特性充电动画（拯救姬）\n[新增] 电池外百分比显示\n[优化] 适配预见返回手势（和一视界不兼容）\n[优化] 更改设置主页后台Hook点[Android16]\n[优化] 部分字体导入逻辑\n[优化] 部分场景MTK机型崩溃问题\n[优化] 适配Android 16",
+  "newVersionCode": 295,
+  "whatNew": "新增检查更新功能\n新增获取9008/MTK深刷包功能\n新增允许自动开启防误触\n新增允许原生后台管理APP白名单\n新增强制允许截屏\n新增AI全局输入唤醒符号自定义\n适配新的原生通知图标Hook点[Android16]\n重构部分UI界面\n适配强制分屏的支持[Android16]\n适配强制固定小窗的支持[Android16]\n适配强制自由小窗的支持[Android16]\n新增OTA请求参数",
   "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/ZUX-ZToolDemo251127(8)"
 }
