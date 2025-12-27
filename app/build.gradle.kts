@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -31,7 +32,7 @@ android {
         targetSdk = 36
 
         versionCode = getGitCommitCount()
-        versionName = "Demo/${getBuildTime()}"
+        versionName = "Beta/${getBuildTime()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -48,6 +49,27 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    applicationVariants.all {
+        val variant = this
+        variant.outputs
+            .map { it as BaseVariantOutputImpl }
+            .forEach { output ->
+                if (variant.buildType.name == "release") {
+                    val appName = "ZTool"
+
+                    // 2. 获取版本信息
+                    // 注意：你的 versionName 含有 "/"，必须替换掉，否则会报错
+                    val safeVersionName = variant.versionName.replace("/", "_")
+                    val vCode = variant.versionCode
+
+                    // 3. 拼接新文件名
+                    val newFileName = "${appName}_${safeVersionName}_c${vCode}.apk"
+
+                    // 4. 应用新文件名
+                    output.outputFileName = newFileName
+                }
+            }
     }
 }
 
