@@ -338,6 +338,18 @@
     <string name="font_preview_text">有言\n\n   与恶龙缠斗过久，自身亦成为恶龙；\n   凝视深渊过久，深渊将回以凝视。\n\n           ---弗里德里希·威廉·尼采</string>
     <string name="select_at_least_one_config">请选择至少一个配置文件</string>
     <!--设置页：一视界策略搜索页功能资源值-->
+    <string name="zui_force_config_title">小窗与分屏</string>
+    <string name="zui_force_config_summary">需要重启系统，此项配置优先级相当高，会覆盖所有用户及配置，不勾选的应用保持系统默认</string>
+    <string name="zui_force_split_title">强制应用支持分屏</string>
+    <string name="zui_force_split_summary">修改系统配置文件，强制指定应用支持分屏</string>
+    <string name="zui_force_freeform_title">强制自由小窗</string>
+    <string name="zui_force_freeform_summary">与固定比例小窗冲突，强制指定应用使用任意比例小窗</string>
+    <string name="zui_force_fixed_title">强制固定比例小窗</string>
+    <string name="zui_force_fixed_summary">与自由小窗冲突，强制指定应用使用固定比例小窗</string>
+    <string name="loading_config">正在读取系统配置...</string>
+    <string name="saving_config">正在保存系统配置...</string>
+    <string name="select_apps_title">选择应用</string>
+    <string name="save_success_message">保存成功</string>
     <string name="module_config_tips">Tips:当前已使用模块配置文件，已适配应用策略数量：%d</string>
     <string name="official_config_tips">Tips:当前使用官方配置文件，已适配应用策略数量：244</string>
     <string name="config_not_exists_tips">Tips:当前配置文件不存在</string>

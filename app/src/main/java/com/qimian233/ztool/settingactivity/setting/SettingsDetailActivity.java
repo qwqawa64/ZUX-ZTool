@@ -4,9 +4,12 @@ import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
@@ -26,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -37,15 +41,18 @@ import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.settingactivity.setting.floatingwindow.FloatingWindow;
 import com.qimian233.ztool.settingactivity.setting.magicwindowsearch.searchPage;
+import com.qimian233.ztool.utils.AppChooserDialog;
 import com.qimian233.ztool.utils.EmbeddingConfigManager;
 import com.qimian233.ztool.utils.FontInstallerManager;
 import com.qimian233.ztool.utils.MagiskModuleManager;
+import com.qimian233.ztool.utils.OvCommonConfigManager;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -65,11 +72,13 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private MagiskModuleManager magiskManager;
     private EmbeddingConfigManager configManager;
     private FontInstallerManager fontManager;
+    private OvCommonConfigManager ovConfigManager; // 新增：ZUI配置管理器
 
     // 状态变量
     private String appPackageName;
     private FloatingWindow floatingWindow;
     private File currentSelectedFontFile;
+    private List<String> allInstalledPackages; // 缓存已安装应用列表
 
     // 请求码
     private static final int REQUEST_CODE_OVERLAY_PERMISSION = 1001;
@@ -103,6 +112,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         magiskManager = new MagiskModuleManager();
         configManager = new EmbeddingConfigManager();
         fontManager = new FontInstallerManager();
+        ovConfigManager = new OvCommonConfigManager();
     }
 
     private void initToolbarData() {
@@ -144,6 +154,21 @@ public class SettingsDetailActivity extends AppCompatActivity {
             );
         });
 
+        // 新增的小窗自定义配置
+        CardView cardZuiConfig = findViewById(R.id.card_zui_force_config);
+        CardView cardSmallWindow = findViewById(R.id.card_small_window_settings);
+        if (cardZuiConfig != null && cardSmallWindow != null) {
+            if (Build.VERSION.SDK_INT >= 36) {
+                // 安卓 16 及以上：显示 ZUI 强制配置，隐藏旧版小窗设置
+                cardZuiConfig.setVisibility(View.VISIBLE);
+                cardSmallWindow.setVisibility(View.GONE);
+            } else {
+                // 安卓 15 及以下：隐藏 ZUI 强制配置，显示旧版小窗设置
+                cardZuiConfig.setVisibility(View.GONE);
+                cardSmallWindow.setVisibility(View.VISIBLE);
+            }
+        }
+
         // --- 悬浮窗按钮 ---
         ImageButton floatingButton = findViewById(R.id.button_floating_window);
         floatingButton.setOnClickListener(v -> startFloatingWindow());
@@ -158,7 +183,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
         View customLandscapeResult = findViewById(R.id.custom_landscapeResult_layout);
         if (customLandscapeResult != null) {
             customLandscapeResult.setOnClickListener(v -> {
-                // 读取配置是一个IO操作，但在点击时读取通常可以接受，或者放入线程
                 List<EmbeddingConfigManager.ConfigFileInfo> validConfigs = configManager.loadAndValidateConfigFiles(this);
                 showConfigSelectionDialog(validConfigs);
             });
@@ -177,6 +201,37 @@ public class SettingsDetailActivity extends AppCompatActivity {
         View importFontLayout = findViewById(R.id.import_font_layout);
         if (importFontLayout != null) {
             importFontLayout.setOnClickListener(v -> startFontImportProcess());
+        }
+
+        // ========================================================================================
+        // 新增：ZUI 强制配置功能 (OvCommonConfig)
+        // ========================================================================================
+
+        // 1. 强制分屏
+        View zuiForceSplit = findViewById(R.id.layout_zui_force_split);
+        if (zuiForceSplit != null) {
+            zuiForceSplit.setOnClickListener(v -> openOvConfigDialog(
+                    OvCommonConfigManager.MODE_SPLIT_SCREEN,
+                    getString(R.string.zui_force_split_title)
+            ));
+        }
+
+        // 2. 强制自由小窗
+        View zuiForceFree = findViewById(R.id.layout_zui_force_freeform);
+        if (zuiForceFree != null) {
+            zuiForceFree.setOnClickListener(v -> openOvConfigDialog(
+                    OvCommonConfigManager.MODE_FREEFORM_FREE,
+                    getString(R.string.zui_force_freeform_title)
+            ));
+        }
+
+        // 3. 强制固定比例小窗
+        View zuiForceFixed = findViewById(R.id.layout_zui_force_fixed);
+        if (zuiForceFixed != null) {
+            zuiForceFixed.setOnClickListener(v -> openOvConfigDialog(
+                    OvCommonConfigManager.MODE_FREEFORM_FIXED,
+                    getString(R.string.zui_force_fixed_title)
+            ));
         }
     }
 
@@ -205,11 +260,105 @@ public class SettingsDetailActivity extends AppCompatActivity {
     }
 
     // ============================================================================================
+    // ZUI 强制配置 (OvCommonConfig) 业务逻辑
+    // ============================================================================================
+
+    /**
+     * 打开 ZUI 配置选择对话框
+     * @param mode 操作模式 (分屏/自由小窗/固定小窗)
+     * @param title 对话框标题
+     */
+    private void openOvConfigDialog(int mode, String title) {
+        loadingDialog = new LoadingDialog(this);
+        loadingDialog.show(getString(R.string.loading_config)); // 确保 strings.xml 有此字串
+
+        new Thread(() -> {
+            // 1. 获取所有已安装应用 (如果还没缓存)
+            if (allInstalledPackages == null) {
+                allInstalledPackages = new ArrayList<>();
+                PackageManager pm = getPackageManager();
+
+                // 获取所有应用信息（包括系统应用和用户应用）
+                List<ApplicationInfo> apps = pm.getInstalledApplications(0);
+
+                for (ApplicationInfo app : apps) {
+                    // 确保有启动Intent
+                    if (pm.getLaunchIntentForPackage(app.packageName) != null) {
+                        allInstalledPackages.add(app.packageName);
+                    }
+                }
+            }
+
+
+            // 2. 读取当前系统 XML 配置
+            Map<String, OvCommonConfigManager.AppConfig> currentConfig = ovConfigManager.loadConfig(this);
+
+            // 3. 筛选出当前模式下已经勾选的应用
+            List<String> selectedPackages = ovConfigManager.getPackagesForMode(currentConfig, mode);
+
+            runOnUiThread(() -> {
+                loadingDialog.dismiss();
+                // 4. 弹出选择框
+                AppChooserDialog.show(this, allInstalledPackages, selectedPackages, title, new AppChooserDialog.AppSelectionCallback() {
+                    @Override
+                    public void onSelected(List<AppChooserDialog.AppInfo> selectedApps) {
+                        saveOvConfig(currentConfig, selectedApps, mode);
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        // Do nothing
+                    }
+                });
+            });
+        }).start();
+    }
+
+    /**
+     * 保存 ZUI 配置
+     */
+    private void saveOvConfig(Map<String, OvCommonConfigManager.AppConfig> configMap, List<AppChooserDialog.AppInfo> selectedApps, int mode) {
+        loadingDialog = new LoadingDialog(this);
+        loadingDialog.show(getString(R.string.saving_config)); // 确保 strings.xml 有此字串
+
+        new Thread(() -> {
+            // 1. 提取包名列表
+            List<String> newSelectedPackages = new ArrayList<>();
+            for (AppChooserDialog.AppInfo app : selectedApps) {
+                newSelectedPackages.add(app.getPackageName());
+            }
+
+            // 2. 更新配置 Map (处理冲突逻辑)
+            ovConfigManager.updateConfigForMode(configMap, newSelectedPackages, mode);
+
+            // 3. 写入文件并推送回系统
+            String result = ovConfigManager.saveConfig(this, configMap);
+
+            runOnUiThread(() -> {
+                loadingDialog.dismiss();
+                if ("success".equals(result)) {
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.success_title)
+                            .setMessage(R.string.save_success_message) // 需确保 strings.xml 有此字串: "保存成功"
+                            .setPositiveButton(R.string.got_it_button, null)
+                            .show();
+                } else {
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.error_title)
+                            .setMessage(getString(R.string.error_prefix) + result)
+                            .setPositiveButton(R.string.got_it_button, null)
+                            .show();
+                }
+            });
+        }).start();
+    }
+
+    // ============================================================================================
     // Magisk 模块处理逻辑
     // ============================================================================================
 
     private void handleModuleSwitch(boolean isChecked) {
-        // 防止重复触发：如果已经在对应状态，则不做处理
+        // 防止重复触发
         if (isChecked && magiskManager.isModuleEnabled()) {
             ModuleSwitch.setChecked(true);
             return;
@@ -235,7 +384,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
                             .setNegativeButton(R.string.got_it_button, null)
                             .show();
                 } else {
-                    // 失败回滚开关状态
                     ModuleSwitch.setChecked(!isChecked);
                     new MaterialAlertDialogBuilder(this)
                             .setTitle(R.string.error_title)
@@ -304,7 +452,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // 准备数据
         String[] displayItems = new String[configs.size()];
         for (int i = 0; i < configs.size(); i++) {
             EmbeddingConfigManager.ConfigFileInfo config = configs.get(i);
@@ -316,7 +463,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         Set<String> flashedConfigs = loadStringSetSetting("flashed_configs", new HashSet<>());
 
-        // 构建 Dialog UI
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_config_selection, null);
         builder.setView(dialogView);
@@ -335,7 +481,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         AlertDialog dialog = builder.create();
 
-        // 配置 ListView
         ListView listView = dialogView.findViewById(R.id.config_list_view);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_multiple_choice, displayItems) {
@@ -375,7 +520,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
             }
         });
 
-        // 按钮事件
         Button deleteButton = dialogView.findViewById(R.id.delete_button);
         Button flashButton = dialogView.findViewById(R.id.flash_button);
         Button cancelButton = dialogView.findViewById(R.id.cancel_button);
@@ -439,10 +583,8 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // 调用 Manager 执行核心刷入逻辑
                 configManager.flashConfigs(this, selectedConfigs);
 
-                // 更新 SharedPrefs
                 Set<String> flashed = loadStringSetSetting("flashed_configs", new HashSet<>());
                 for (EmbeddingConfigManager.ConfigFileInfo c : selectedConfigs) {
                     flashed.add(c.timestamp + "_" + c.packageName);
@@ -470,9 +612,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
                     loadingDialog = new LoadingDialog(this);
                     loadingDialog.show(getString(R.string.restoring_module));
                     new Thread(() -> {
-                        magiskManager.removeModule(this); // 先删
-                        String res = magiskManager.installModule(this); // 再装（恢复初始）
-                        saveStringSetSetting("flashed_configs", new HashSet<>()); // 清空记录
+                        magiskManager.removeModule(this);
+                        String res = magiskManager.installModule(this);
+                        saveStringSetSetting("flashed_configs", new HashSet<>());
                         runOnUiThread(() -> {
                             loadingDialog.dismiss();
                             if ("success".equals(res)) {
@@ -508,7 +650,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
         loadingDialog.show(getString(R.string.preparing_font_file));
         new Thread(() -> {
             try {
-                // 复制到缓存
                 currentSelectedFontFile = fontManager.copyFontToTemp(this, uri);
                 String fileName = getFileName(uri);
                 runOnUiThread(() -> {
@@ -579,7 +720,6 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
     private void forceStopApp() {
         if (appPackageName == null) return;
-        // 使用 EnhancedShellExecutor 批量执行强行停止
         new Thread(() -> {
             EnhancedShellExecutor executor = EnhancedShellExecutor.getInstance();
             executor.executeRootCommand("am force-stop " + appPackageName);

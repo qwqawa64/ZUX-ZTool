@@ -265,8 +265,172 @@
 
                 </androidx.cardview.widget.CardView>
 
+                <!-- 新增CardView：ZUI 强制配置 (写文件) -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_zui_force_config"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="?attr/colorSurfaceContainer"
+                        android:padding="16dp">
+
+                        <!-- 标题 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/zui_force_config_title"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginBottom="3dp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/zui_force_config_summary"
+                            android:textSize="10sp"
+                            android:layout_marginBottom="6dp"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <!-- 1. 强制分屏应用 -->
+                        <LinearLayout
+                            android:id="@+id/layout_zui_force_split"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingVertical="8dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/zui_force_split_title"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/zui_force_split_summary"
+                                    android:textSize="12sp"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <ImageButton
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="?android:attr/selectableItemBackgroundBorderless"
+                                app:tint="?attr/colorOnSurfaceVariant"
+                                tools:ignore="ContentDescription" />
+                        </LinearLayout>
+
+                        <!-- 2. 强制自由小窗 -->
+                        <LinearLayout
+                            android:id="@+id/layout_zui_force_freeform"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:layout_marginTop="12dp"
+                            android:paddingVertical="8dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/zui_force_freeform_title"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/zui_force_freeform_summary"
+                                    android:textSize="12sp"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <ImageButton
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="?android:attr/selectableItemBackgroundBorderless"
+                                app:tint="?attr/colorOnSurfaceVariant"
+                                tools:ignore="ContentDescription" />
+                        </LinearLayout>
+
+                        <!-- 3. 强制固定比例小窗 -->
+                        <LinearLayout
+                            android:id="@+id/layout_zui_force_fixed"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:layout_marginTop="12dp"
+                            android:paddingVertical="8dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/zui_force_fixed_title"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/zui_force_fixed_summary"
+                                    android:textSize="12sp"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <ImageButton
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="?android:attr/selectableItemBackgroundBorderless"
+                                app:tint="?attr/colorOnSurfaceVariant"
+                                tools:ignore="ContentDescription" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+
                 <!-- 新增CardView：小窗设置 -->
                 <androidx.cardview.widget.CardView
+                    android:id="@+id/card_small_window_settings"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
