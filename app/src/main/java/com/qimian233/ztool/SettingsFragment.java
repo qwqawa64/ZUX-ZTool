@@ -201,7 +201,7 @@ public class SettingsFragment extends Fragment {
         backgroundView.setAlpha(0f);
         backgroundView.animate()
                 .alpha(1.0f)
-                .setDuration(totalTypingTime + 300)
+                .setDuration(300)
                 .setStartDelay(0)
                 .setInterpolator(new LinearInterpolator())
                 .start();
