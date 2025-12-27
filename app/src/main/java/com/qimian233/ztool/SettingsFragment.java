@@ -1,39 +1,55 @@
 package com.qimian233.ztool;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
+import android.app.Dialog;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
-import android.text.Spanned;
-import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.content.Intent;
-import android.net.Uri;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
-import com.qimian233.ztool.service.LogServiceManager;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
+import com.qimian233.ztool.service.LogServiceManager;
 import com.qimian233.ztool.utils.FileManager;
 
 public class SettingsFragment extends Fragment {
+
+    private ActivityResultLauncher<String> backupLauncher;
+
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
         // 获取视图组件
@@ -46,8 +62,7 @@ public class SettingsFragment extends Fragment {
         CardView checkZToolUpdate = view.findViewById(R.id.check_ztool_update);
 
         // 设置点击监听器
-        backupConfigToFile.setOnClickListener(v ->
-                performBackup());
+        backupConfigToFile.setOnClickListener(v -> performBackup());
         restoreConfigFromFile.setOnClickListener(v ->
                 openDocumentLauncherForRestore.launch(new String[]{"application/json"}));
         restoreDefaultConfig.setOnClickListener(v -> restoreDefaultSettings());
@@ -66,9 +81,7 @@ public class SettingsFragment extends Fragment {
 
         return view;
     }
-    /**
-     * 显示Toast消息
-     */
+
     private void showToast(String message) {
         if (getContext() != null) {
             android.widget.Toast.makeText(getContext(), message, android.widget.Toast.LENGTH_SHORT).show();
@@ -78,8 +91,6 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // 预先注册ActivityResultLauncher
         backupLauncher = registerForActivityResult(
                 new ActivityResultContracts.CreateDocument("application/json"), uri -> {
                     if (uri != null) {
@@ -100,22 +111,19 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // 每次进入设置页面时更新开关状态
         refreshSwitchStates();
     }
 
-    /**
-     * 刷新所有开关状态
-     */
     private void refreshSwitchStates() {
-        // 更新日志服务开关状态
+        if (getContext() == null || getView() == null) return;
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());
         MaterialSwitch switchEnableLogService = requireView().findViewById(R.id.switch_enable_log_service);
-        switchEnableLogService.setChecked(isLogServiceEnabled);
+        if (switchEnableLogService != null) {
+            switchEnableLogService.setChecked(isLogServiceEnabled);
+        }
     }
 
-    // 打开系统默认浏览器，访问项目的Github Releases
-    private void checkForZToolUpdates(){
+    private void checkForZToolUpdates() {
         String url = "https://github.com/qwqawa64/ZUX-ZTool/releases";
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -126,25 +134,128 @@ public class SettingsFragment extends Fragment {
         }
     }
 
+    // =======================================================
+    // 重写的关于页面逻辑 (全屏沉浸式 + 点击任意空白关闭)
+    // =======================================================
+
     private void showAboutPage() {
-        // 使用 HTML 标签创建带链接的文本
-        String htmlText = getString(R.string.about_description, updateModuleStatus());
+        // 1. 初始化 View
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_about_custom, null);
 
-        Spanned message = Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY);
+        View backgroundView = dialogView.findViewById(R.id.about_background);
+        NestedScrollView scrollView = dialogView.findViewById(R.id.about_scroll_view);
+        LinearLayout contentContainer = dialogView.findViewById(R.id.about_content_container);
 
+        View iconCard = dialogView.findViewById(R.id.about_icon_card);
+        TextView titleView = dialogView.findViewById(R.id.about_title);
+        TextView versionView = dialogView.findViewById(R.id.about_version);
+        TextView descView = dialogView.findViewById(R.id.about_description);
+        View actionsLayout = dialogView.findViewById(R.id.about_actions);
+        MaterialButton btnGithub = dialogView.findViewById(R.id.btn_github);
+
+        // 2. 设置数据
+        versionView.setText(updateModuleStatus());
+        String rawHtml = getString(R.string.about_description, "");
+        String plainText = Html.fromHtml(rawHtml, Html.FROM_HTML_MODE_LEGACY).toString();
+
+        btnGithub.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/qwqawa64/ZUX-ZTool")));
+            } catch (Exception e) {
+                showToast("无法打开链接");
+            }
+        });
+
+        // 3. 创建 Dialog
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.about_ztool_title)
-                .setMessage(message)
-                .setPositiveButton(R.string.restart_yes, null)
+                .setView(dialogView)
+                .setCancelable(true)
                 .create();
 
-        dialog.show();
+        // 4. 【关键修改】设置点击关闭逻辑
+        // 定义一个通用的关闭监听器
+        View.OnClickListener dismissListener = v -> dialog.dismiss();
 
-        TextView messageView = dialog.findViewById(android.R.id.message);
-        if (messageView != null) {
-            messageView.setMovementMethod(LinkMovementMethod.getInstance());
+        // 给底层背景设置关闭
+        backgroundView.setOnClickListener(dismissListener);
+        // 给滚动视图层设置关闭 (因为 match_parent 会遮挡背景)
+        scrollView.setOnClickListener(dismissListener);
+        contentContainer.setOnClickListener(dismissListener);
+
+        // 5. 显示 Dialog 并配置 Window 参数
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+            window.setDimAmount(0f);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        // ============ 动画编排 ============
+
+        long startDelay = 50;
+        long charInterval = 25;
+        long totalTypingTime = plainText.length() * charInterval;
+
+        // 背景渐变动画
+        backgroundView.setAlpha(0f);
+        backgroundView.animate()
+                .alpha(1.0f)
+                .setDuration(totalTypingTime + 300)
+                .setStartDelay(0)
+                .setInterpolator(new LinearInterpolator())
+                .start();
+
+        // 内容元素入场
+        animateEntrance(iconCard, startDelay);
+        animateEntrance(titleView, startDelay + 100);
+        animateEntrance(versionView, startDelay + 200);
+
+        // 打字机文字
+        new Handler(Looper.getMainLooper()).postDelayed(() ->
+                        typeWriterAnimation(descView, plainText, charInterval),
+                startDelay + 300
+        );
+
+        // 底部按钮最后浮现
+        animateEntrance(actionsLayout, startDelay + totalTypingTime + 200);
+    }
+
+    private void animateEntrance(View view, long delay) {
+        if (view == null) return;
+        view.setAlpha(0f);
+        view.setTranslationY(60f);
+
+        view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setStartDelay(delay)
+                .setDuration(600)
+                .setInterpolator(new DecelerateInterpolator(1.5f))
+                .start();
+    }
+
+    private void typeWriterAnimation(TextView textView, String text, long interval) {
+        if (textView == null || text == null) return;
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final int length = text.length();
+        final StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            final int index = i;
+            handler.postDelayed(() -> {
+                if (!isAdded() || getContext() == null) return;
+                builder.append(text.charAt(index));
+                textView.setText(builder.toString());
+
+                if (index % 2 == 0) {
+                    textView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                }
+            }, i * interval);
         }
     }
+
+    // =======================================================
 
     private void restoreDefaultSettings() {
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
@@ -162,10 +273,7 @@ public class SettingsFragment extends Fragment {
         showToast(getString(R.string.default_config_restored));
     }
 
-    // 类成员变量 - 预先注册的ActivityResultLauncher
-    private ActivityResultLauncher<String> backupLauncher;
-
-    private void performBackup(){
+    private void performBackup() {
         String backupFileName = FileManager.generateBackupFileName();
         backupLauncher.launch(backupFileName);
     }
@@ -175,7 +283,6 @@ public class SettingsFragment extends Fragment {
                 if (uri != null) {
                     String content = FileManager.readConfigWithSAF(requireContext(), uri);
                     if (content != null) {
-                        // 处理读取到的内容
                         Log.d("SAF", "读取到的内容: " + content);
                         ModulePreferencesUtils.restoreConfig(requireContext(), content);
                         showToast(getString(R.string.config_restore_success));
@@ -185,16 +292,11 @@ public class SettingsFragment extends Fragment {
                 }
             });
 
-    /**
-     * 处理日志服务开关状态变化
-     */
     private void handleLogServiceSwitch(boolean isEnabled) {
         if (isEnabled) {
-            // 启动日志采集服务
             LogServiceManager.startLogService(requireContext());
             showToast(getString(R.string.log_service_started));
         } else {
-            // 停止日志采集服务
             LogServiceManager.stopLogService(requireContext());
             showToast(getString(R.string.log_service_stopped));
         }
@@ -215,11 +317,9 @@ public class SettingsFragment extends Fragment {
                     moduleVersion = getString(R.string.unknown_activity_null);
                 }
             } catch (PackageManager.NameNotFoundException e) {
-                //e.printStackTrace();
                 Log.w(TAG, "无法获取模块版本信息: " + e.getMessage());
                 moduleVersion = getString(R.string.unknown);
             }
-
             Log.i(TAG, "模块状态更新完成");
             return moduleVersion;
 
