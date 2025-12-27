@@ -104,9 +104,13 @@ public class LogParser {
         MODULE_PATTERNS.put("Fix_SocTemp",
                 Pattern.compile("\\[Fix_SocTemp]\\s*(.*)"));
 
-        // 包安装器相关模块
+        // 系统更新相关模块
         MODULE_PATTERNS.put("disable_OtaCheck",
                 Pattern.compile("\\[disable_OtaCheck]\\s*(.*)"));
+        MODULE_PATTERNS.put("custom_ota_parameters",
+                Pattern.compile("\\[custom_ota_parameters]\\s*(.*)"));
+
+        // 包安装器相关模块
         MODULE_PATTERNS.put("disable_installerAD",
                 Pattern.compile("\\[disable_installerAD]\\s*(.*)"));
         MODULE_PATTERNS.put("Skip_WarnPage",
@@ -141,6 +145,8 @@ public class LogParser {
                 Pattern.compile("\\[NoMorePasswordPer24H]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_flag_secure",
                 Pattern.compile("\\[disable_flag_secure]\\s*(.*)"));
+        MODULE_PATTERNS.put("ai_input_expand",
+                Pattern.compile("\\[ai_input_expand]\\s*(.*)"));
 
         // 安全中心相关
         MODULE_PATTERNS.put("default_enable_autorun",
@@ -184,8 +190,11 @@ public class LogParser {
         MODULE_NAMES.put("disable_GameAudio", "禁用游戏音频");
         MODULE_NAMES.put("Fix_SocTemp", "SOC温度修复");
 
+        // OTA相关
+        MODULE_NAMES.put("disable_OtaCheck", "开启本地安装");
+        MODULE_NAMES.put("custom_ota_parameters", "自定义OTA请求参数");
+
         // 包安装器相关
-        MODULE_NAMES.put("disable_OtaCheck", "禁用OTA检查");
         MODULE_NAMES.put("disable_installerAD", "禁用安装器广告");
         MODULE_NAMES.put("Skip_WarnPage", "跳过警告页面");
         MODULE_NAMES.put("disable_scanAPK", "禁用APK扫描");
@@ -212,6 +221,7 @@ public class LogParser {
         MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
         MODULE_NAMES.put("NoMorePasswordPer24H", "无需每24H验证一次锁屏密码");
         MODULE_NAMES.put("disable_flag_secure", "强制允许截屏");
+        MODULE_NAMES.put("ai_input_expand", "自定义AI全局输入触发符");
 
         // 安全中心相关
         MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
@@ -573,8 +583,14 @@ public class LogParser {
 
         // 包安装器相关
         categories.put("包安装器", Arrays.asList(
-                "disable_OtaCheck", "disable_installerAD", "Skip_WarnPage",
+                "disable_installerAD", "Skip_WarnPage",
                 "disable_scanAPK", "Always_AllowPermission", "packageInstallerStyle_hook", "package_installer_disable_delete"
+        ));
+
+        // 系统更新相关
+        categories.put("系统更新", Arrays.asList(
+                "custom_ota_parameters", "disable_ota_check"
+
         ));
 
         // 设置相关
@@ -595,7 +611,7 @@ public class LogParser {
 
         // 系统框架相关
         categories.put("系统框架", Arrays.asList(
-                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H", "disable_flag_secure"
+                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H", "disable_flag_secure", "ai_input_expand"
         ));
 
         // 安全中心相关

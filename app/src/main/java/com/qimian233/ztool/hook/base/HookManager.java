@@ -41,6 +41,7 @@ import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeedSIzeHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeeddoublelayerHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIRealWatts;
 import com.qimian233.ztool.hook.modules.wallpaper.ChargeAnimationFixModule;
+import com.qimian233.ztool.hook.modules.ota.LenovoOTAHook;
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.util.ArrayList;
@@ -144,6 +145,8 @@ public class HookManager {
         registerHookModule(new DocumentsUIBypass());
         // 注册模块：自定义AI输入检测符
         registerHookModule(new AiInputExpand());
+        // 注册模块：自定义OTA参数
+        registerHookModule(new LenovoOTAHook());
         initialized = true;
     }
 

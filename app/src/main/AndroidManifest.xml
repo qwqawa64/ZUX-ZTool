@@ -53,7 +53,8 @@
             android:exported="false" />
         <activity
             android:name=".settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
         <activity
             android:name=".settingactivity.systemui.systemUISettings"
             android:exported="false" />

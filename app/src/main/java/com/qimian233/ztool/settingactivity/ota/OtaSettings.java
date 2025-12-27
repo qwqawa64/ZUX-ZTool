@@ -5,6 +5,9 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +18,8 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -50,12 +55,24 @@ public class OtaSettings extends AppCompatActivity {
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchDisableOTACheck;
     private LoadingDialog loadingDialog;
+    private TextInputEditText etCustomVersion;
+    private TextInputEditText etCustomDeviceId;
+    private TextView tvCurrentVersionInfo;
+    private TextView tvCurrentSnInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        View rootView = findViewById(android.R.id.content);
+        // 输入法优化
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime()
+            );
+            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
         //绑定视图
         setContentView(R.layout.activity_ota_settings);
 
@@ -74,14 +91,40 @@ public class OtaSettings extends AppCompatActivity {
 
         initViews();
         loadSettings();
+        loadCurrentDeviceInfo();
         initRestartButton();
     }
     private void initViews() {
+        mPrefsUtils.saveBooleanSetting("custom_ota_parameters", true);
         // 初始化视图
 
         // 启用本地安装选项
         switchDisableOTACheck = findViewById(R.id.switch_disable_OtaCHeck);
         switchDisableOTACheck.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_OtaCheck", isChecked));
+
+        // 自定义OTA参数
+        etCustomVersion = findViewById(R.id.et_custom_ota_version);
+        etCustomDeviceId = findViewById(R.id.et_custom_ota_deviceid);
+        tvCurrentVersionInfo = findViewById(R.id.tv_current_version_info);
+        tvCurrentSnInfo = findViewById(R.id.tv_current_sn_info);
+
+        // 初始化监听器
+        if (etCustomVersion != null) {
+            etCustomVersion.addTextChangedListener(new SimpleTextWatcher() {
+                @Override
+                public void afterTextChanged(Editable s) {
+                    mPrefsUtils.saveStringSetting("Custom_ota_target_versionName", s.toString());
+                }
+            });
+        }
+        if (etCustomDeviceId != null) {
+            etCustomDeviceId.addTextChangedListener(new SimpleTextWatcher() {
+                @Override
+                public void afterTextChanged(Editable s) {
+                    mPrefsUtils.saveStringSetting("Custom_ota_target_deviceID", s.toString());
+                }
+            });
+        }
 
         // OTA信息拉取功能
         LinearLayout layoutOtaInfo = findViewById(R.id.layout_ota_info);
@@ -127,6 +170,18 @@ public class OtaSettings extends AppCompatActivity {
         // 加载开启本地安装选项
         boolean removeBlacklistEnabled = mPrefsUtils.loadBooleanSetting("disable_OtaCheck", false);
         switchDisableOTACheck.setChecked(removeBlacklistEnabled);
+
+        // 加载自定义版本号
+        if (etCustomVersion != null) {
+            //即使没有保存过，默认值给 "" (空字符串)
+            String savedVersion = mPrefsUtils.loadStringSetting("Custom_ota_target_versionName", "");
+            etCustomVersion.setText(savedVersion);
+        }
+        // 加载自定义设备ID
+        if (etCustomDeviceId != null) {
+            String savedDeviceId = mPrefsUtils.loadStringSetting("Custom_ota_target_deviceID", "");
+            etCustomDeviceId.setText(savedDeviceId);
+        }
     }
 
     private void saveSettings(String moduleName, Boolean newValue) {
@@ -149,6 +204,74 @@ public class OtaSettings extends AppCompatActivity {
                 runOnUiThread(() -> Toast.makeText(OtaSettings.this, getString(R.string.ota_info_fetch_failed) + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    /**
+     * 异步读取当前系统信息并显示在 UI 上
+     */
+    private void loadCurrentDeviceInfo() {
+        new Thread(() -> {
+            EnhancedShellExecutor executor = EnhancedShellExecutor.getInstance();
+
+            // 1. 获取系统版本 (ro.build.display.id)
+            // 不需要 root 权限，使用普通 executeCommand 即可，但 executeRootCommand 也兼容
+            EnhancedShellExecutor.ShellResult verResult = executor.executeCommand("getprop ro.build.display.id");
+            String currentVersion = verResult.isSuccess() && !verResult.output.isEmpty()
+                    ? verResult.output.trim()
+                    : getString(R.string.unknown);
+            // 2. 获取 SN 码 (复用逻辑)
+            String currentSN = getMachineSNByProps();
+            if (currentSN == null || currentSN.isEmpty()) {
+                currentSN = getString(R.string.unknown);
+            }
+            // 更新 UI
+            final String finalVer = currentVersion;
+            final String finalSn = currentSN;
+
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (tvCurrentVersionInfo != null) {
+                    tvCurrentVersionInfo.setText(getString(R.string.current_version_fmt, finalVer));
+                }
+                if (tvCurrentSnInfo != null) {
+                    tvCurrentSnInfo.setText(getString(R.string.current_sn_fmt, finalSn));
+                }
+            });
+        }).start();
+    }
+
+    /**
+     * 使用 EnhancedShellExecutor 获取 SN 码
+     * 顺序：ro.odm.lenovo.gsn -> ro.serialno -> ro.boot.serialno
+     */
+    private String getMachineSNByProps() {
+        EnhancedShellExecutor shellExecutor = EnhancedShellExecutor.getInstance();
+
+        // 尝试 GSN
+        EnhancedShellExecutor.ShellResult result = shellExecutor.executeRootCommand("getprop ro.odm.lenovo.gsn", 3);
+        if (result.isSuccess() && !result.output.trim().isEmpty()) {
+            return result.output.trim();
+        }
+
+        // 尝试 SerialNo
+        result = shellExecutor.executeRootCommand("getprop ro.serialno", 3);
+        if (result.isSuccess() && !result.output.trim().isEmpty()) {
+            return result.output.trim();
+        }
+
+        // 尝试 Boot SerialNo
+        result = shellExecutor.executeRootCommand("getprop ro.boot.serialno", 3);
+        if (result.isSuccess() && !result.output.trim().isEmpty()) {
+            return result.output.trim();
+        }
+
+        return null;
+    }
+    // 简单的 TextWatcher 实现
+    private abstract static class SimpleTextWatcher implements TextWatcher {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
     }
 
     private String readFileWithRoot(String filePath) throws IOException, InterruptedException {
@@ -306,18 +429,6 @@ public class OtaSettings extends AppCompatActivity {
                 .show();
     }
 
-    // 从三个Property中读取SN，优先使用GSN
-    private String getMachineSNByProps(){
-        EnhancedShellExecutor shellExecutor = EnhancedShellExecutor.getInstance();
-        EnhancedShellExecutor.ShellResult shellResult = shellExecutor.executeRootCommand("getprop ro.odm.lenovo.gsn",5);
-        if (shellResult.isSuccess() && !shellResult.output.isEmpty()) return shellResult.output;
-        shellResult = shellExecutor.executeRootCommand("getprop ro.serialno",5);
-        if (shellResult.isSuccess() && !shellResult.output.isEmpty()) return shellResult.output;
-        shellResult = shellExecutor.executeRootCommand("getprop ro.boot.serialno",5);
-        if (shellResult.isSuccess() && !shellResult.output.isEmpty()) return shellResult.output;
-        return null;
-    }
-
     // 根据提供的SN码从联想服务器拉取9008救砖包
     // 使用异步方式获取固件信息
     private void getPCFlashFirmwareLink(String machineSN) {
@@ -401,7 +512,7 @@ public class OtaSettings extends AppCompatActivity {
     private void showRestartConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.restart_xp_title)
-                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + getString(R.string.restart_xp_message))
+                .setMessage(getString(R.string.restart_xp_message_header) + appPackageName + ",com.lenovo.tbengine" + getString(R.string.restart_xp_message))
                 .setPositiveButton(R.string.restart_yes, (dialog, which) -> forceStopApp())
                 .setNegativeButton(R.string.restart_no, null)
                 .show();
@@ -414,7 +525,9 @@ public class OtaSettings extends AppCompatActivity {
 
         try {
             Process process = Runtime.getRuntime().exec("su -c killall " + appPackageName);
+            Process process2 = Runtime.getRuntime().exec("su -c killall com.lenovo.tbengine");
             process.waitFor();
+            process2.waitFor();
         } catch (Exception e) {
             Toast.makeText(this, R.string.restart_failed, Toast.LENGTH_SHORT).show();
         }

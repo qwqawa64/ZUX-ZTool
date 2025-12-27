@@ -23,7 +23,9 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:fillViewport="true"
+            android:scrollbars="none">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -165,6 +167,84 @@
 
                     </LinearLayout>
 
+                </androidx.cardview.widget.CardView>
+
+                <!-- 自定义OTA参数 -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="80dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="?attr/colorSurfaceContainer"
+                        android:padding="16dp">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/Ota_Custom_Params_Title"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginBottom="4dp" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/Ota_Custom_Params_Desc"
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_marginBottom="16dp" />
+                        <!-- 新增：当前版本提示 -->
+                        <TextView
+                            android:id="@+id/tv_current_version_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/loading_ellipsis"
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorPrimary"
+                            android:layout_marginBottom="4dp"
+                            android:layout_marginStart="4dp"/>
+                        <!-- 输入框：目标版本号 -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/Ota_Custom_Version_Hint"
+                            android:layout_marginBottom="12dp"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_custom_ota_version"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="text"
+                                android:maxLines="1" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <!-- 新增：当前SN提示 -->
+                        <TextView
+                            android:id="@+id/tv_current_sn_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/loading_ellipsis"
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorPrimary"
+                            android:layout_marginBottom="4dp"
+                            android:layout_marginStart="4dp"/>
+                        <!-- 输入框：目标设备ID -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/Ota_Custom_DeviceID_Hint"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_custom_ota_deviceid"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="text"
+                                android:maxLines="1" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
             </LinearLayout>

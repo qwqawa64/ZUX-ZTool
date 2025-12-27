@@ -247,6 +247,13 @@
     <string name="password_copied">密码已复制到剪贴板</string>
     <string name="PCFlashFirmwareFetch_error">无法获取固件</string>
     <string name="PCFlashFirmwareFetch_failed_message">获取下载链接的过程中出错。检查网络状况并确认SN是否正确输入，然后再试一次。</string>
+    <string name="Ota_Custom_Params_Title">OTA请求伪装</string>
+    <string name="Ota_Custom_Params_Desc">在此处设置的值将强制覆盖 OTA 请求中的参数以获取不同版本的增量包或者全量包，使用内测SN可升级至内测开发版本。留空则表示保持系统原值（不修改）。</string>
+    <string name="Ota_Custom_Version_Hint">系统版本</string>
+    <string name="Ota_Custom_DeviceID_Hint">SN</string>
+    <string name="current_version_fmt">当前系统版本: %1$s</string>
+    <string name="current_sn_fmt">当前机器SN: %1$s</string>
+    <string name="loading_ellipsis">加载中...</string>
     <!--设置页：代码内资源值-->
     <!-- 详细设置相关字符串 -->
     <string name="settings_detail_title_suffix"> - 详细设置</string>
