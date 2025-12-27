@@ -209,9 +209,9 @@
     <string name="Device_Model_Disguise">机型伪装</string>
     <string name="Device_Model_Disguise_summary">针对游戏助手伪装机型Y700四代启用对应功能，如旁路充电等</string>
     <string name="FIx_CPU_Frequency">修复CPU频率显示</string>
-    <string name="FIx_CPU_Frequency_summary">仅在PadProGT上通过设置，解决使用Y700四代游戏助手后频率展示始终为0的问题</string>
+    <string name="FIx_CPU_Frequency_summary">仅在PadProGT上通过测试，解决使用Y700四代游戏助手后频率展示始终为0的问题</string>
     <string name="Fix_SocTemp">修复SOC温度显示</string>
-    <string name="Fix_SocTemp_summary">仅在PadProGT上通过设置，解决使用Y700四代游戏助手后温度展示始终为0度的问题</string>
+    <string name="Fix_SocTemp_summary">仅在PadProGT上通过测试，解决使用Y700四代游戏助手后温度展示始终为0度的问题</string>
     <!--系统更新功能页资源值-->
     <string name="firmware_download_link">下载链接：</string>
     <string name="firmware_extract_password">解压密码：</string>
