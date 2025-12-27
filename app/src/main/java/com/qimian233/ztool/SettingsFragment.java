@@ -59,7 +59,7 @@ public class SettingsFragment extends Fragment {
         MaterialSwitch switchEnableLogService = view.findViewById(R.id.switch_enable_log_service);
         MaterialSwitch switchEnableHomepageYiyan = view.findViewById(R.id.switch_enable_homepage_yiyan);
         CardView showAboutPage = view.findViewById(R.id.show_about_page);
-        CardView checkZToolUpdate = view.findViewById(R.id.check_ztool_update);
+//        CardView checkZToolUpdate = view.findViewById(R.id.check_ztool_update);
 
         // 设置点击监听器
         backupConfigToFile.setOnClickListener(v -> performBackup());
@@ -67,7 +67,7 @@ public class SettingsFragment extends Fragment {
                 openDocumentLauncherForRestore.launch(new String[]{"application/json"}));
         restoreDefaultConfig.setOnClickListener(v -> restoreDefaultSettings());
         showAboutPage.setOnClickListener(v -> showAboutPage());
-        checkZToolUpdate.setOnClickListener(v -> checkForZToolUpdates());
+//        checkZToolUpdate.setOnClickListener(v -> checkForZToolUpdates());
 
         // 设置开关监听器
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());

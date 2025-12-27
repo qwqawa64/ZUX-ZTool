@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:paddingBottom="24dp">
 
-        <!-- 顶部装饰背景块：消除顶部的空旷感 -->
+        <!-- 顶部装饰背景块 -->
         <View
             android:id="@+id/bg_header"
             android:layout_width="match_parent"
@@ -21,7 +21,7 @@
             android:background="?attr/colorSurfaceContainer"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- 标题区域：位置上移，与背景块融合 -->
+        <!-- 标题区域 -->
         <TextView
             android:id="@+id/title_home"
             android:layout_width="0dp"
@@ -38,7 +38,6 @@
             tools:text="Dashboard" />
 
         <!-- 1. 工作模式警告卡片 -->
-        <!-- 保持全宽，用红色线条强调 -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_requirements"
             style="?attr/materialCardViewOutlinedStyle"
@@ -79,8 +78,99 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_update"
+            style="?attr/materialCardViewFilledStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="?attr/colorTertiaryContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/card_requirements"
+            tools:visibility="visible">
+
+            <!-- 注意：点击效果将在 Java 代码中动态添加，防止短文本也能点击 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <!-- 标题栏 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_update"
+                        app:tint="?attr/colorOnTertiaryContainer"
+                        tools:ignore="ContentDescription" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="@string/update_available_title"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="?attr/colorOnTertiaryContainer"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/text_update_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:alpha="0.8"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="?attr/colorOnTertiaryContainer"
+                        tools:text="v1.2.0" />
+                </LinearLayout>
+                <!-- 更新日志：默认最多4行，尾部省略 -->
+                <!-- 关键：移除 textIsSelectable，否则会拦截点击事件 -->
+                <TextView
+                    android:id="@+id/text_update_changelog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="4dp"
+                    android:maxLines="4"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnTertiaryContainer"
+                    tools:text="- Fix bugs\n- Add new features\n- Line 3\n- Line 4\n- Line 5 (Hidden)" />
+                <!-- 按钮区域 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/btn_ignore_update"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@string/update_button_ignore"
+                        android:textColor="?attr/colorOnTertiaryContainer"
+                        app:strokeColor="?attr/colorOnTertiaryContainer"
+                        app:strokeWidth="1dp" />
+                    <Button
+                        android:id="@+id/btn_do_update"
+                        style="?attr/materialButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="?attr/colorOnTertiaryContainer"
+                        android:text="@string/update_button_update"
+                        android:textColor="?attr/colorTertiaryContainer" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
         <!-- 2. 核心状态卡片 -->
-        <!-- 稍微上移覆盖一点背景块，营造悬浮感 -->
+        <!-- 注意：ConstraintTop 改为了 card_update -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_module_status"
             style="?attr/materialCardViewFilledStyle"
@@ -92,7 +182,7 @@
             app:cardElevation="2dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_requirements">
+            app:layout_constraintTop_toBottomOf="@id/card_update">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -147,14 +237,13 @@
                     android:alpha="0.2"
                     app:dividerColor="?attr/colorOnPrimaryContainer" />
 
-                <!-- 底部三个参数：横向分布，适合宽屏 -->
+                <!-- 底部三个参数 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:baselineAligned="false"
                     android:orientation="horizontal">
 
-                    <!-- Item 1 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -180,7 +269,6 @@
                             tools:text="v1.0.2" />
                     </LinearLayout>
 
-                    <!-- Item 2 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -206,7 +294,6 @@
                             tools:text="Magisk" />
                     </LinearLayout>
 
-                    <!-- Item 3 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -235,8 +322,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 3. 设备信息卡片：关键重构 -->
-        <!-- 使用 ConstraintLayout 内部网格，横屏时从列表变为 2列 布局，填充感更强 -->
+        <!-- 3. 设备信息卡片 -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_system_info"
             style="?attr/materialCardViewFilledStyle"
@@ -387,7 +473,7 @@
                         tools:text="5.10.198-android12-9" />
                 </LinearLayout>
 
-                <!-- 底部：Slot (占据全宽或者左侧) -->
+                <!-- 底部：Slot -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
