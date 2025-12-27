@@ -75,21 +75,21 @@
     <string name="itemFeatures_appName">应用名称</string>
     <string name="itemFeatures_appDescription">应用描述</string>
     <string name="settings_app_name">设置</string>
-    <string name="settings_app_description">系统设置应用</string>
+    <string name="settings_app_description">管理一视界、窗口交互模式及系统个性化设置。</string>
     <string name="game_tool_app_name">游戏助手</string>
-    <string name="game_tool_app_description">游戏助手应用</string>
+    <string name="game_tool_app_description">音频处理、机型伪装、参数显示修复及自动防误触等配置。</string>
     <string name="system_update_app_name">系统更新</string>
-    <string name="system_update_app_description">系统更新应用</string>
+    <string name="system_update_app_description">配置系统更新的高级选项，支持本地安装与OTA参数修改。</string>
     <string name="package_installer_app_name">软件包安装程序</string>
-    <string name="package_installer_app_description">软件包安装程序应用</string>
+    <string name="package_installer_app_description">应用安装过程中的安全检测策略与高级功能选项</string>
     <string name="system_ui_app_name">系统界面</string>
-    <string name="system_ui_app_description">系统界面应用</string>
-    <string name="launcher_app_name">启动器</string>
-    <string name="launcher_app_description">启动器应用</string>
+    <string name="system_ui_app_description">状态栏、锁屏、控制中心及充电动画等系统界面的自定义设置</string>
+    <string name="launcher_app_name">桌面</string>
+    <string name="launcher_app_description">dock栏，后台管理策略</string>
     <string name="system_framework_app_name">系统框架</string>
-    <string name="system_framework_app_description">Android核心框架</string>
+    <string name="system_framework_app_description">配置屏幕方向、安全策略及AI全局输入设置</string>
     <string name="safe_center_app_name">安全中心</string>
-    <string name="safe_center_app_description">ZUI/ZUX的安全中心</string>
+    <string name="safe_center_app_description">存储选择，安全扫描设置，app自启</string>
     <!--日志页资源值-->
     <string name="logsFragment_title">日志</string>
     <string name="logFilter">过滤器</string>
@@ -438,7 +438,7 @@
     <string name="AllowDisableDolby_summary">允许关闭杜比全景声，但是可能导致音量变小</string>
     <string name="NativePermissionController_Title">权限控制器</string>
     <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
-    <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器，Android15的权限申请弹窗无法恢复原生样式</string>
+    <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器，Android14及以下生效</string>
     <!--应用包安装程序功能页资源值-->
     <string name="detailed_settings_suffix"> - 详细设置</string>
     <string name="restart_fail_simple">重启失败</string>
