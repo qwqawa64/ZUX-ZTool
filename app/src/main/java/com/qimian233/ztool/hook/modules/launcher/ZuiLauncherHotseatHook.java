@@ -162,7 +162,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                             Object deviceProfile = param.thisObject;
                             // 强制设置numShownHotseatIcons为20
                             XposedHelpers.setIntField(deviceProfile, "numShownHotseatIcons", 20);
-                            log("修改DeviceProfile的Hotseat配置");
+                            if (DEBUG) log("修改DeviceProfile的Hotseat配置");
                         }
                     }
             );
@@ -241,7 +241,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                         }
                 );
             } catch (Throwable t) {
-                logError("Hook addToWorkspace失败", t);
+                if (DEBUG) logError("Hook addToWorkspace失败", t);
             }
 
         } catch (Throwable t) {
@@ -283,7 +283,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             }
 
         } catch (Throwable t) {
-            logError("Hook数据库Hotseat限制失败", t);
+            if (DEBUG) logError("Hook数据库Hotseat限制失败", t);
         }
     }
 
@@ -358,7 +358,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             );
 
         } catch (Throwable t) {
-            logError("Hook LoaderCursor失败", t);
+            if (DEBUG) logError("Hook LoaderCursor失败", t);
         }
     }
 
@@ -392,7 +392,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             );
 
         } catch (Throwable t) {
-            logError("Hook数据库操作失败", t);
+            if (DEBUG) logError("Hook数据库操作失败", t);
         }
     }
 
