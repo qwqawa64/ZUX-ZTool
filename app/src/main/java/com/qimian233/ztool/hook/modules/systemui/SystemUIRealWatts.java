@@ -75,7 +75,7 @@ public class SystemUIRealWatts extends BaseHookModule {
                                     // 使用换行符 \n 追加功率信息
                                     String newText = originalText + "\n" + formatWattage(chargingData.power);
                                     param.setResult(newText);
-                                    log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
+                                    if (DEBUG) log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
                                 } else {
                                     log("未能检测到充电功率");
                                     param.setResult(originalText + "\n 0W");

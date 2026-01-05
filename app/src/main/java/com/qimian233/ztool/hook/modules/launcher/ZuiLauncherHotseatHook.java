@@ -309,7 +309,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                             // 如果是Hotseat且位置在扩展范围内，直接返回true
                             if (container == -101 && screenId >= 0 && screenId < 20) {
                                 param.setResult(true);
-                                log("强制通过Hotseat位置检查: " + screenId);
+                                if (DEBUG) log("强制通过Hotseat位置检查: " + screenId);
                             }
                         }
                     }
@@ -384,7 +384,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                             int screen = (int) param.args[2];
 
                             if (container == -101 && screen >= 5) {
-                                log("数据库操作 - Hotseat位置: " + screen);
+                                if (DEBUG) log("数据库操作 - Hotseat位置: " + screen);
                                 // 允许操作继续
                             }
                         }
