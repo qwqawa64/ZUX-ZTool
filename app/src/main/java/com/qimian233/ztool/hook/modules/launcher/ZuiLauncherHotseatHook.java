@@ -417,7 +417,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                                     XposedHelpers.setIntField(invDeviceProfile, "numDatabaseHotseatIcons", 20);
                                     log("修改InvariantDeviceProfile的numDatabaseHotseatIcons为20");
                                 } catch (Throwable t) {
-                                    logError("修改InvariantDeviceProfile失败", t);
+                                    if (DEBUG) logError("修改InvariantDeviceProfile失败", t);
                                 }
                             }
                         }

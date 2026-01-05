@@ -57,6 +57,7 @@ public class SettingsFragment extends Fragment {
         LinearLayout restoreConfigFromFile = view.findViewById(R.id.restore_config_from_file);
         LinearLayout restoreDefaultConfig = view.findViewById(R.id.restore_default_config);
         MaterialSwitch switchEnableLogService = view.findViewById(R.id.switch_enable_log_service);
+        MaterialSwitch switchEnableDetailedLogging = view.findViewById(R.id.switch_enable_detailed_logging);
         MaterialSwitch switchEnableHomepageYiyan = view.findViewById(R.id.switch_enable_homepage_yiyan);
         CardView showAboutPage = view.findViewById(R.id.show_about_page);
 //        CardView checkZToolUpdate = view.findViewById(R.id.check_ztool_update);
@@ -74,10 +75,18 @@ public class SettingsFragment extends Fragment {
         switchEnableLogService.setChecked(isLogServiceEnabled);
         switchEnableLogService.setOnCheckedChangeListener((buttonView, isChecked) -> handleLogServiceSwitch(isChecked));
 
+        // 这里初始化一个SharedPreferencesUtils实例，需要使用SharedPreferences来初始化配置的开关放在它后面
         ModulePreferencesUtils utils = new ModulePreferencesUtils(requireContext());
-        boolean isHomepageYiyanEnabled = utils.loadBooleanSetting("enable_homepage_yiyan", true);
-        switchEnableHomepageYiyan.setChecked(isHomepageYiyanEnabled);
-        switchEnableHomepageYiyan.setOnCheckedChangeListener((buttonView, isChecked) -> utils.saveBooleanSetting("enable_homepage_yiyan", isChecked));
+
+        switchEnableDetailedLogging.setChecked(
+                utils.loadBooleanSetting("isDetailedLogging", false));
+        switchEnableDetailedLogging.setOnCheckedChangeListener(((buttonView, isChecked) ->
+                utils.saveBooleanSetting("isDetailedLogging", isChecked)));
+
+        switchEnableHomepageYiyan.setChecked(
+                utils.loadBooleanSetting("enable_homepage_yiyan", true));
+        switchEnableHomepageYiyan.setOnCheckedChangeListener((buttonView, isChecked) ->
+                utils.saveBooleanSetting("enable_homepage_yiyan", isChecked));
 
         return view;
     }
