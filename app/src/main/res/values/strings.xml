@@ -36,6 +36,7 @@
     <string name="buildVersion">构建版本:</string>
     <string name="kernelVersion">内核版本:</string>
     <string name="currentSlot">当前槽位：</string>
+    <string name="romRegion">ROM地区：</string>
     <string name="workConditionTip">提示：模块正常工作需要Root权限和LSPosed框架支持</string>
     <string name="placeHolderUnknown">未知</string>
     <string name="homeFragment_title">主页</string>

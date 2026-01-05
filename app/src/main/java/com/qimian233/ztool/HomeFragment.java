@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,7 +56,7 @@ public class HomeFragment extends Fragment {
     private Button btnIgnoreUpdate, btnDoUpdate;
 
     private TextView textModuleStatus, textModuleVersion, textRootSource, textFrameworkVersion;
-    private TextView textDeviceModel, textAndroidVersion, textBuildVersion, textKernelVersion, textCurrentSlot;
+    private TextView textDeviceModel, textAndroidVersion, textBuildVersion, textKernelVersion, textCurrentSlot, textRomRegion;
     private TextView textHint;
 
     // 环境检测状态
@@ -84,6 +83,7 @@ public class HomeFragment extends Fragment {
     private String cachedRootSource = "";
     private String cachedFrameworkVersion = "";
     private String cachedCurrentSlot = "";
+    private String cachedRomRegion = "";
     private long lastSystemInfoUpdate = 0;
     private static final long SYSTEM_INFO_CACHE_DURATION = 60000; // 1分钟缓存
 
@@ -178,6 +178,7 @@ public class HomeFragment extends Fragment {
         textBuildVersion = view.findViewById(R.id.text_build_version);
         textKernelVersion = view.findViewById(R.id.text_kernel_version);
         textCurrentSlot = view.findViewById(R.id.text_current_slot);
+        textRomRegion = view.findViewById(R.id.text_rom_region);
 
         textHint = view.findViewById(R.id.text_hint);
 
@@ -193,7 +194,7 @@ public class HomeFragment extends Fragment {
                 if (getContext() == null) return;
 
                 // --- 获取本地版本号 ---
-                int currentVersionCode = 0;
+                int currentVersionCode;
                 try {
                     PackageInfo pInfo = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -308,9 +309,7 @@ public class HomeFragment extends Fragment {
         cardUpdate.setOnClickListener(toggleListener);
         textUpdateChangelog.setOnClickListener(toggleListener);
     }
-    /**
-     * 辅助方法：卡片入场动画 (淡入 + 放大)
-     */
+
     /**
      * 卡片入场动画：使用 TransitionManager 让布局平滑撑开
      */
@@ -535,7 +534,6 @@ public class HomeFragment extends Fragment {
                                 Log.i(TAG, "成功从API获取提示文本: " + content);
                             });
                         }
-                        return;
                     }
                 }
             } catch (Exception e) {
@@ -694,6 +692,17 @@ public class HomeFragment extends Fragment {
             }
             textCurrentSlot.post(() -> textCurrentSlot.setText(cachedCurrentSlot.isEmpty() ? getString(R.string.unknown) : cachedCurrentSlot));
 
+            if (cachedRomRegion.isEmpty() || System.currentTimeMillis() - lastSystemInfoUpdate > SYSTEM_INFO_CACHE_DURATION) {
+                cachedRomRegion = getRomRegion();
+                ModulePreferencesUtils utils = new ModulePreferencesUtils(getActivity());
+                utils.saveStringSetting("RomRegion", cachedRomRegion);
+                // 存储到SharedPreferences中，方便其他模块调用
+                // 模块开关改变必然需要访问对应设置页面，那么就一定会访问主界面触发本更新逻辑
+                // 因此将存储逻辑放置在这里是可以接受的
+                // 如果用户非常喜欢创建快捷方式等APP，那和我的issue被关闭说去吧
+            }
+            textRomRegion.post(() -> textRomRegion.setText(cachedRomRegion.isEmpty() ? getString(R.string.unknown) : cachedRomRegion));
+
             lastSystemInfoUpdate = System.currentTimeMillis();
 
         } catch (Exception e) {
@@ -719,5 +728,30 @@ public class HomeFragment extends Fragment {
             } else return getString(R.string.unknown);
         }
         return getString(R.string.unknown);
+    }
+
+    private String getRomRegion() {
+        EnhancedShellExecutor.ShellResult result;
+        // 依次尝试不同的prop，直到找到不为空的prop
+        try {
+            // 先尝试最正常的prop，这个时候其实应该已经可以读取到内容了
+            result = shellExecutor.executeRootCommand("getprop ro.boot.region", 3);
+            // 现在依次尝试几个不太常见的prop，如果还不行就返回unknown
+            if (result.output.trim().isEmpty()) {
+                result = shellExecutor.executeRootCommand("getprop ro.config.zui.region", 3);
+            }
+            if (result.output.trim().isEmpty()) {
+                result = shellExecutor.executeRootCommand("getprop ro.vendor.config.zui.region", 3);
+            }
+            // 返回
+            if (result.output.trim().isEmpty()) {
+                return getString(R.string.unknown);
+            } else {
+                return result.output.trim();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to fetch ROM region: " + e.getMessage());
+            return getString(R.string.unknown);
+        }
     }
 }
