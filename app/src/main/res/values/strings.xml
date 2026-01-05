@@ -153,6 +153,8 @@
     <string name="SettingsDescription">设置项描述</string>
     <string name="enableLogService">日志采集服务</string>
     <string name="enableLogServiceDescription">开启后将在后台收集Hook模块的运行日志，保存到应用私有目录</string>
+    <string name="enableDetailedLogging">开启详细日志</string>
+    <string name="enableDetailedLoggingDescription">显示更细节的Hook信息，开关状态变更后请重启作用域。反馈问题时必须打开本开关！</string>
     <string name="backupAndRestore">备份与还原</string>
     <string name="backupConfigToFile">备份配置到文件</string>
     <string name="restoreConfigFromFile">从文件恢复配置</string>

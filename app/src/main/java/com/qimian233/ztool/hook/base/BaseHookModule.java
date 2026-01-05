@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.qimian233.ztool.config.ModuleConfig;
 
+import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 /**
@@ -12,7 +13,10 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public abstract class BaseHookModule {
     protected static final String TAG = "XposedHook";
-    public static boolean DEBUG = false;
+
+    public static boolean DEBUG = new XSharedPreferences("com.qimian233.ztool",
+            "xposed_module_config")
+            .getBoolean("isDetailedLogging", false);
 
     /**
      * 获取模块名称（用于日志和配置）
