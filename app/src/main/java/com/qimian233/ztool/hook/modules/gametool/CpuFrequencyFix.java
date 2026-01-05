@@ -29,7 +29,7 @@ public class CpuFrequencyFix extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        log("CpuFrequencyFix: Targeting " + lpparam.packageName);
+        if (DEBUG) log("CpuFrequencyFix: Targeting " + lpparam.packageName);
 
         try {
             // Hook HWDataInterface 的 getCpuCurFreq() 方法（无参数）
@@ -75,7 +75,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             // 获取最后一个CPU核心的索引
             int lastCoreIndex = getLastCpuCoreIndex();
             if (lastCoreIndex < 0) {
-                log("CpuFrequencyFix: No CPU cores found, using fallback");
+                if (DEBUG) log("CpuFrequencyFix: No CPU cores found, using fallback");
                 return readFallbackCpuFreq();
             }
 
@@ -85,7 +85,7 @@ public class CpuFrequencyFix extends BaseHookModule {
 
             if (freqStr != null && !freqStr.isEmpty()) {
                 int freq = Integer.parseInt(freqStr.trim());
-                log("CpuFrequencyFix: Current freq from core " + lastCoreIndex + ": " + freq);
+                if (DEBUG) log("CpuFrequencyFix: Current freq from core " + lastCoreIndex + ": " + freq);
                 return freq;
             }
 
@@ -107,7 +107,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             // 获取最后一个CPU核心的索引
             int lastCoreIndex = getLastCpuCoreIndex();
             if (lastCoreIndex < 0) {
-                log("CpuFrequencyFix: No CPU cores found for max freq, using fallback");
+                if (DEBUG) log("CpuFrequencyFix: No CPU cores found for max freq, using fallback");
                 return readFallbackCpuMaxFreq();
             }
 
@@ -117,7 +117,7 @@ public class CpuFrequencyFix extends BaseHookModule {
 
             if (freqStr != null && !freqStr.isEmpty()) {
                 int freq = Integer.parseInt(freqStr.trim());
-                log("CpuFrequencyFix: Max freq from core " + lastCoreIndex + ": " + freq);
+                if (DEBUG) log("CpuFrequencyFix: Max freq from core " + lastCoreIndex + ": " + freq);
                 return freq;
             }
 
@@ -140,7 +140,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             File[] cpuFiles = cpuDir.listFiles((dir, name) -> name.matches("cpu[0-9]+"));
 
             if (cpuFiles == null || cpuFiles.length == 0) {
-                log("CpuFrequencyFix: No CPU cores found in /sys/devices/system/cpu/");
+                if (DEBUG) log("CpuFrequencyFix: No CPU cores found in /sys/devices/system/cpu/");
                 return -1;
             }
 
@@ -158,7 +158,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             // 获取最后一个核心的索引
             String lastName = cpuFiles[0].getName();
             int lastIndex = Integer.parseInt(lastName.substring(3));
-            log("CpuFrequencyFix: Last CPU core index: " + lastIndex);
+            if (DEBUG) log("CpuFrequencyFix: Last CPU core index: " + lastIndex);
             return lastIndex;
 
         } catch (Exception e) {
@@ -176,7 +176,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             String curFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");
             if (curFreqStr != null && !curFreqStr.isEmpty()) {
                 int freq = Integer.parseInt(curFreqStr.trim());
-                log("CpuFrequencyFix: Fallback current freq: " + freq);
+                if (DEBUG) log("CpuFrequencyFix: Fallback current freq: " + freq);
                 return freq;
             }
 
@@ -184,7 +184,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             String infoCurFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq");
             if (infoCurFreqStr != null && !infoCurFreqStr.isEmpty()) {
                 int freq = Integer.parseInt(infoCurFreqStr.trim());
-                log("CpuFrequencyFix: Fallback cpuinfo current freq: " + freq);
+                if (DEBUG) log("CpuFrequencyFix: Fallback cpuinfo current freq: " + freq);
                 return freq;
             }
 
@@ -205,7 +205,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             String maxFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq");
             if (maxFreqStr != null && !maxFreqStr.isEmpty()) {
                 int freq = Integer.parseInt(maxFreqStr.trim());
-                log("CpuFrequencyFix: Fallback max freq: " + freq);
+                if (DEBUG) log("CpuFrequencyFix: Fallback max freq: " + freq);
                 return freq;
             }
 
@@ -213,7 +213,7 @@ public class CpuFrequencyFix extends BaseHookModule {
             String infoMaxFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq");
             if (infoMaxFreqStr != null && !infoMaxFreqStr.isEmpty()) {
                 int freq = Integer.parseInt(infoMaxFreqStr.trim());
-                log("CpuFrequencyFix: Fallback cpuinfo max freq: " + freq);
+                if (DEBUG) log("CpuFrequencyFix: Fallback cpuinfo max freq: " + freq);
                 return freq;
             }
 
@@ -233,7 +233,7 @@ public class CpuFrequencyFix extends BaseHookModule {
         try {
             File file = new File(filePath);
             if (!file.exists()) {
-                log("CpuFrequencyFix: File does not exist: " + filePath);
+                if (DEBUG) log("CpuFrequencyFix: File does not exist: " + filePath);
                 return null;
             }
 

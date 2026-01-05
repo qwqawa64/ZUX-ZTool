@@ -62,7 +62,7 @@ public class DisableGameAudio extends BaseHookModule {
                             String value = (String) param.args[1];
 
                             if (TARGET_PROPERTY.equals(key)) {
-                                log("Blocked SystemProperties.set for " + key + " = " + value);
+                                if (DEBUG) log("Blocked SystemProperties.set for " + key + " = " + value);
 
                                 // 打印调用栈以调试
                                 StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
@@ -70,7 +70,7 @@ public class DisableGameAudio extends BaseHookModule {
                                 for (int i = 0; i < Math.min(stackTrace.length, 10); i++) {
                                     stackTraceStr.append(stackTrace[i].toString()).append("\n");
                                 }
-                                log("Call stack:\n" + stackTraceStr);
+                                if (DEBUG) log("Call stack:\n" + stackTraceStr);
 
                                 // 阻止设置该属性
                                 param.setResult(null);
@@ -105,10 +105,10 @@ public class DisableGameAudio extends BaseHookModule {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
                             String packageName = (String) param.args[0];
-                            log("ZuiGameAppStateListener.onGameAppStart for: " + packageName);
+                            if (DEBUG) log("ZuiGameAppStateListener.onGameAppStart for: " + packageName);
 
                             if (shouldBlockGameAudio()) {
-                                log("Blocking game audio for: " + packageName);
+                                if (DEBUG) log("Blocking game audio for: " + packageName);
                                 // 不阻止方法执行，但会在 SystemProperties.set 层拦截
                             }
                         }
@@ -125,13 +125,13 @@ public class DisableGameAudio extends BaseHookModule {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
                             String packageName = (String) param.args[0];
-                            log("ZuiGameAppStateListener.onGameAppExit for: " + packageName);
+                            if (DEBUG) log("ZuiGameAppStateListener.onGameAppExit for: " + packageName);
                         }
                     });
 
             log("Successfully hooked PhoneWindowManager");
             } else {
-                log("Unsupported API level: " + android.os.Build.VERSION.SDK_INT + " skipping...");
+                if (DEBUG) log("Unsupported API level: " + android.os.Build.VERSION.SDK_INT + " skipping...");
             }
         } catch (Exception e) {
             logError("Failed to hook PhoneWindowManager", e);
@@ -157,7 +157,7 @@ public class DisableGameAudio extends BaseHookModule {
                             String keyValuePairs = (String) param.args[0];
 
                             if (keyValuePairs != null && keyValuePairs.contains("game_voip=true")) {
-                                log("Blocked AudioManager.setParameters: " + keyValuePairs);
+                                if (DEBUG) log("Blocked AudioManager.setParameters: " + keyValuePairs);
 
                                 // 阻止设置游戏VOIP参数
                                 param.setResult(null);
@@ -190,7 +190,7 @@ public class DisableGameAudio extends BaseHookModule {
                         protected void afterHookedMethod(MethodHookParam param) {
                             // 清除游戏音频属性
                             clearGameAudioProperties();
-                            log("Cleared game audio properties in " + lpparam.packageName);
+                            if (DEBUG) log("Cleared game audio properties in " + lpparam.packageName);
                         }
                     });
 

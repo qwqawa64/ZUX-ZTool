@@ -36,7 +36,7 @@ public class SocTemperatureFix extends BaseHookModule {
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         String packageName = lpparam.packageName;
 
-        log("SocTemperatureFix: 开始处理包 " + packageName);
+        if (DEBUG) log("SocTemperatureFix: 开始处理包 " + packageName);
 
         if ("com.zui.game.service".equals(packageName)) {
             hookZuiGameService(lpparam);
@@ -62,7 +62,7 @@ public class SocTemperatureFix extends BaseHookModule {
                     new XC_MethodHook() {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
-                            log("拦截 getTemp() 调用");
+                            log("Block call to getTemp()");
                         }
 
                         @Override
@@ -71,10 +71,10 @@ public class SocTemperatureFix extends BaseHookModule {
                             int newTemperature = readTemperatureFromFile();
 
                             if (newTemperature > 0) {
-                                log("getTemp - 原始温度: " + originalResult + ", 新温度: " + newTemperature);
+                                if (DEBUG) log("getTemp - Original temperature: " + originalResult + ", new temperature: " + newTemperature);
                                 param.setResult(newTemperature);
                             } else {
-                                log("读取温度文件失败，使用原始值: " + originalResult);
+                                log("Failed to read temperature file, use original value: " + originalResult);
                             }
                         }
                     }
@@ -89,7 +89,7 @@ public class SocTemperatureFix extends BaseHookModule {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
                             int type = (int) param.args[0];
-                            log("拦截 getThermalTemp() 类型: " + type);
+                            if (DEBUG) log("Blocked getThermalTemp(), type: " + type);
                         }
 
                         @Override
@@ -98,17 +98,17 @@ public class SocTemperatureFix extends BaseHookModule {
                             int newTemperature = readTemperatureFromFile();
 
                             if (newTemperature > 0) {
-                                log("getThermalTemp - 原始: " + originalResult + ", 新值: " + newTemperature);
+                                if (DEBUG) log("getThermalTemp - Original: " + originalResult + ", new: " + newTemperature);
                                 param.setResult(newTemperature);
                             }
                         }
                     }
             );
 
-            log("ZUI游戏服务温度修复Hook安装成功");
+            log("Hook executed successfully.");
 
         } catch (Throwable t) {
-            logError("ZUI游戏服务Hook安装失败", t);
+            logError("Failed to hook ZUI game service!", t);
         }
     }
 
@@ -131,19 +131,22 @@ public class SocTemperatureFix extends BaseHookModule {
                                 int newTemperature = readTemperatureFromFile();
 
                                 if (newTemperature > 0) {
-                                    log("联想游戏服务 - 温度修复: " + originalResult + " -> " + newTemperature);
+                                    if (DEBUG) log("Lenovo Game Service - temperature fix: "
+                                            + originalResult
+                                            + " -> "
+                                            + newTemperature);
                                     param.setResult(newTemperature);
                                 }
                             }
                         }
                 );
-                log("联想游戏服务温度修复Hook安装成功");
+                log("Hook for gaming service executed successfully.");
             } else {
-                log("未找到联想游戏服务的ThermalManager类");
+                log("Unable to find class ThermalManager");
             }
 
         } catch (Throwable t) {
-            logError("联想游戏服务Hook安装失败", t);
+            logError("Hook failed!", t);
         }
     }
 
@@ -168,7 +171,10 @@ public class SocTemperatureFix extends BaseHookModule {
                                 protected void afterHookedMethod(MethodHookParam param) {
                                     int newTemperature = readTemperatureFromFile();
                                     if (newTemperature > 0) {
-                                        log("通用温度方法 " + methodName + " 修复为: " + newTemperature);
+                                        if (DEBUG) log("Generic temperature detection method "
+                                                + methodName
+                                                + " fixed, new temperature: "
+                                                + newTemperature);
                                         param.setResult(newTemperature);
                                     }
                                 }
@@ -179,10 +185,10 @@ public class SocTemperatureFix extends BaseHookModule {
                 }
             }
 
-            log("通用游戏服务温度修复Hook安装成功");
+            if (DEBUG) log("Generic detection method hook executed successfully.");
 
         } catch (Throwable t) {
-            logError("通用游戏服务Hook安装失败", t);
+            logError("Failed to hook generic temperature detection method", t);
         }
     }
 
@@ -194,13 +200,13 @@ public class SocTemperatureFix extends BaseHookModule {
         File thermalFile = new File(THERMAL_FILE_PATH);
 
         if (!thermalFile.exists()) {
-            log("温度文件不存在: " + THERMAL_FILE_PATH);
+            if (DEBUG) log("Temperature file does not exist: " + THERMAL_FILE_PATH);
             // 尝试其他可能的thermal文件路径
             return tryAlternativeThermalFiles();
         }
 
         if (!thermalFile.canRead()) {
-            log("无权限读取温度文件: " + THERMAL_FILE_PATH);
+            log("Failed to read file: permission denied " + THERMAL_FILE_PATH);
             return -1;
         }
 
@@ -209,14 +215,14 @@ public class SocTemperatureFix extends BaseHookModule {
 
             if (line != null && !line.trim().isEmpty()) {
                 int temperature = Integer.parseInt(line.trim());
-                log("从文件读取温度: " + temperature);
+                if (DEBUG) log("Read temperature data from file: " + temperature);
                 return temperature;
             }
 
         } catch (IOException e) {
-            logError("读取温度文件IO异常", e);
+            logError("IO exception happened when reading temperature file", e);
         } catch (NumberFormatException e) {
-            logError("温度数据格式异常", e);
+            logError("Invalid temperature file format", e);
         }
 
         return -1;
@@ -237,12 +243,12 @@ public class SocTemperatureFix extends BaseHookModule {
         for (String path : alternativePaths) {
             File thermalFile = new File(path);
             if (thermalFile.exists() && thermalFile.canRead()) {
-                log("找到替代温度文件: " + path);
+                if (DEBUG) log("Alternate temperature file found: " + path);
                 return readFromSpecificFile(path);
             }
         }
 
-        log("未找到任何可用的温度文件");
+        log("Unable to find a valid temperature file.");
         return -1;
     }
 
@@ -255,7 +261,7 @@ public class SocTemperatureFix extends BaseHookModule {
                 return Integer.parseInt(line.trim());
             }
         } catch (Exception e) {
-            logError("读取替代温度文件失败: " + filePath, e);
+            logError("Failed to read temperature file: " + filePath, e);
         }
         // 忽略关闭异常
         return -1;

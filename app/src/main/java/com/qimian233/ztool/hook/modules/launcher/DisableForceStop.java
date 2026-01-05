@@ -7,11 +7,8 @@ import com.qimian233.ztool.hook.base.BaseHookModule;
 import com.qimian233.ztool.hook.base.PreferenceHelper;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -48,8 +45,11 @@ public class DisableForceStop extends BaseHookModule {
         // 获取当前Android SDK版本
         int sdkVersion = getSDKVersion();
         WHITE_LIST = getWhiteListPackages();
-        log("当前Android SDK版本: " + sdkVersion + ", 目标包名: " + packageName);
-        log("白名单保护机制已启用，保护应用数量: " + (WHITE_LIST.length ));
+        if (DEBUG) log("Current Android SDK: "
+                + sdkVersion
+                + ", target package name: "
+                + packageName);
+        if (DEBUG) log("White list enabled, app in whitelist: " + (WHITE_LIST.length ));
 
         // 根据Android版本选择Hook策略
         if (sdkVersion >= 36) { // 包括Android 16
@@ -70,9 +70,9 @@ public class DisableForceStop extends BaseHookModule {
             } else if ("com.android.launcher3".equals(packageName)) {
                 hookBaseLauncherAndroid16();
             }
-            log("Android 16+ Hook策略已应用，白名单保护已启用");
+            log("Android 16+ Hook applied, whitelist protection enabled");
         } catch (Throwable t) {
-            logError("Android 16+ Hook失败", t);
+            logError("Android 16+ Hook failed!", t);
         }
     }
 
@@ -106,9 +106,9 @@ public class DisableForceStop extends BaseHookModule {
             if ("com.zui.launcher".equals(packageName) || "com.android.launcher3".equals(packageName)) {
                 hookLegacyLauncher(lpparam);
             }
-            log("Android 15- Hook策略已应用，白名单保护已启用");
+            log("Android 15- Hook applied, whitelist protection enabled");
         } catch (Throwable t) {
-            logError("Android 15- Hook失败", t);
+            logError("Android 15- Hook failed!", t);
         }
     }
 
@@ -132,13 +132,15 @@ public class DisableForceStop extends BaseHookModule {
                             // 检查是否在白名单中
                             if (isProtectedPackage(packageName)) {
                                 // 在白名单中，阻止杀死操作
-                                log("Android 16: 阻止杀死白名单应用: " + packageName + " (UID: " + uid + ")");
+                                if (DEBUG) log("Android 16: Avoid killing app in whitelist: "
+                                        + packageName
+                                        + " (UID: " + uid + ")");
                                 param.setResult(null);
                                 return;
                             }
 
                             // 不在白名单中，允许执行原方法
-                            log("Android 16: 允许杀死非白名单应用: " + packageName);
+                           if (DEBUG) log("Android 16: Allow killing app: " + packageName);
                             // 不设置result，让原方法继续执行
                         }
                     }
@@ -159,13 +161,15 @@ public class DisableForceStop extends BaseHookModule {
                             // 检查是否在白名单中
                             if (isProtectedPackage(packageName)) {
                                 // 在白名单中，阻止强制杀死
-                                log("Android 16: 阻止强制杀死白名单应用: " + packageName + " (UID: " + uid + ")");
+                                if (DEBUG) log("Android 16: Blocked forced killing app in whitelist: "
+                                        + packageName
+                                        + " (UID: " + uid + ")");
                                 param.setResult(null);
                                 return;
                             }
 
                             // 不在白名单中，允许执行原方法
-                            log("Android 16: 允许强制杀死非白名单应用: " + packageName);
+                            if (DEBUG) log("Android 16: Allow forced killing app: " + packageName);
                             // 不设置result，让原方法继续执行
                         }
                     }
@@ -194,7 +198,8 @@ public class DisableForceStop extends BaseHookModule {
                                         String packageName = getPackageNameFromTask(task);
                                         if (packageName != null && isProtectedPackage(packageName)) {
                                             protectedCount++;
-                                            log("Android 16: 批量清理中检测到白名单应用: " + packageName);
+                                            if (DEBUG) log("Android 16: Whitelist APP detected when performing batch kill: "
+                                                    + packageName);
                                         }
                                     } catch (Exception e) {
                                         // 如果无法获取包名，跳过
@@ -203,13 +208,14 @@ public class DisableForceStop extends BaseHookModule {
 
                                 if (protectedCount > 0) {
                                     // 如果包含白名单应用，阻止整个批量清理操作
-                                    log("Android 16: 批量清理包含 " + protectedCount + " 个白名单应用，阻止整个清理操作");
+                                    if (DEBUG) log("Android 16: " + protectedCount
+                                            + "included in batch kill list, blocking kill operation");
                                     param.setResult(null);
                                     return;
                                 }
 
                                 // 不包含白名单应用，允许执行批量清理
-                                log("Android 16: 批量清理 " + totalTasks + " 个应用，未包含白名单应用，允许清理");
+                                if (DEBUG) log("Android 16: " + totalTasks + " APP(s) are allowed to be killed.");
                             }
 
                             // 不设置result，让原方法继续执行
@@ -242,7 +248,8 @@ public class DisableForceStop extends BaseHookModule {
                                             try {
                                                 String packageName = getPackageNameFromTask(task);
                                                 if (packageName != null && isProtectedPackage(packageName)) {
-                                                    log("Android 16: 异步任务中包含白名单应用 " + packageName + "，阻止执行");
+                                                    if (DEBUG) log("Android 16: Whitelist app detected in async task, count: "
+                                                            + packageName + ", blocking async task");
                                                     param.setResult(null);
                                                     return;
                                                 }
@@ -253,13 +260,13 @@ public class DisableForceStop extends BaseHookModule {
                                     }
                                 } catch (Exception e) {
                                     // 如果无法检查，默认阻止
-                                    log("Android 16: 无法检查异步任务内容，阻止执行以保安全");
+                                    if (DEBUG) log("Android 16: Unable to check async task, blocking it by default");
                                     param.setResult(null);
                                     return;
                                 }
 
                                 // 不包含白名单应用，允许执行
-                                log("Android 16: 异步后台清理任务不包含白名单应用，允许执行");
+                                if (DEBUG) log("Android 16: Allowed to perform async kill");
                                 // 不设置result，让原方法继续执行
                             }
                         }
@@ -269,10 +276,10 @@ public class DisableForceStop extends BaseHookModule {
             // 尝试Hook Android 16可能新增的方法
             hookAdditionalAndroid16Methods(lpparam);
 
-            log("Android 16+ ZUI Launcher后台保护Hook已成功应用，白名单机制生效");
+            log("Hook for Android 16+ ZUI Launcher successfully applied.");
 
         } catch (Throwable t) {
-            logError("Android 16+ Hook ZUI Launcher失败", t);
+            logError("Android 16+: Failed to hook ZUI Launcher", t);
         }
     }
 
@@ -285,7 +292,7 @@ public class DisableForceStop extends BaseHookModule {
             // 这里可以根据需要添加对com.android.launcher3的特定Hook
 
         } catch (Throwable t) {
-            logError("Android 16+ Hook基础Launcher失败", t);
+            logError("Android 16+: failed to hook basic Launcher", t);
         }
     }
 
@@ -294,7 +301,7 @@ public class DisableForceStop extends BaseHookModule {
      */
     private void hookLegacyLauncher(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
-            log("开始Hook传统Launcher架构（带白名单机制）...");
+            log("Start hooking legacy Launcher with whitelist enabled.");
 
             // Hook ActivityManagerWrapper类的方法
             var amwclass = XposedHelpers.findClassIfExists(
@@ -303,7 +310,7 @@ public class DisableForceStop extends BaseHookModule {
             );
 
             if (amwclass != null) {
-                log("找到ActivityManagerWrapper类，开始Hook...");
+                if (DEBUG) log("找到ActivityManagerWrapper类，开始Hook...");
 
                 XposedHelpers.findAndHookMethod(
                         amwclass,
@@ -329,9 +336,8 @@ public class DisableForceStop extends BaseHookModule {
                                     }
 
                                     if (protectedCount > 0) {
-                                        log("传统架构: 批量清理包含 " + protectedCount + " 个白名单应用，阻止清理");
+                                        if (DEBUG) log("传统架构: 批量清理包含 " + protectedCount + " 个白名单应用，阻止清理");
                                         param.setResult(null);
-                                        return;
                                     }
                                 }
 
@@ -353,9 +359,8 @@ public class DisableForceStop extends BaseHookModule {
                                 String packageName = (String) param.args[2];
 
                                 if (isProtectedPackage(packageName)) {
-                                    log("传统架构: 阻止杀死白名单应用: " + packageName);
+                                    if (DEBUG) log("传统架构: 阻止杀死白名单应用: " + packageName);
                                     param.setResult(null);
-                                    return;
                                 }
 
                                 // 不设置result，让原方法继续执行
@@ -370,7 +375,7 @@ public class DisableForceStop extends BaseHookModule {
             }
 
         } catch (Exception e) {
-            logError("传统Launcher Hook失败", e);
+            logError("Failed to hook legacy launcher", e);
         }
     }
 
@@ -389,14 +394,14 @@ public class DisableForceStop extends BaseHookModule {
             for (String className : potentialClasses) {
                 Class<?> targetClass = XposedHelpers.findClassIfExists(className, lpparam.classLoader);
                 if (targetClass != null) {
-                    log("找到Android 16新类: " + className);
+                    if (DEBUG) log("Android 16 new class: " + className);
                     // 可以根据需要添加具体的Hook逻辑
                 }
             }
 
         } catch (Throwable t) {
             // 忽略错误，这些是可选的Hook点
-            log("Android 16附加Hook点探测完成");
+            if (DEBUG) log("Android 16 extra hook points detection completed.");
         }
     }
 
@@ -458,7 +463,7 @@ public class DisableForceStop extends BaseHookModule {
         try {
             return Build.VERSION.SDK_INT;
         } catch (Throwable t) {
-            logError("获取SDK版本失败，使用默认值", t);
+            logError("Failed to fetch SDK level, use default.", t);
             return Build.VERSION_CODES.BASE; // 返回最低版本
         }
     }
