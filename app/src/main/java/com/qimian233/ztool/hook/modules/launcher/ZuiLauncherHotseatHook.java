@@ -162,7 +162,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                             Object deviceProfile = param.thisObject;
                             // 强制设置numShownHotseatIcons为20
                             XposedHelpers.setIntField(deviceProfile, "numShownHotseatIcons", 20);
-                            log("修改DeviceProfile的Hotseat配置");
+                            if (DEBUG) log("修改DeviceProfile的Hotseat配置");
                         }
                     }
             );
@@ -241,7 +241,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                         }
                 );
             } catch (Throwable t) {
-                logError("Hook addToWorkspace失败", t);
+                if (DEBUG) logError("Hook addToWorkspace失败", t);
             }
 
         } catch (Throwable t) {
@@ -283,7 +283,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             }
 
         } catch (Throwable t) {
-            logError("Hook数据库Hotseat限制失败", t);
+            if (DEBUG) logError("Hook数据库Hotseat限制失败", t);
         }
     }
 
@@ -309,7 +309,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                             // 如果是Hotseat且位置在扩展范围内，直接返回true
                             if (container == -101 && screenId >= 0 && screenId < 20) {
                                 param.setResult(true);
-                                log("强制通过Hotseat位置检查: " + screenId);
+                                if (DEBUG) log("强制通过Hotseat位置检查: " + screenId);
                             }
                         }
                     }
@@ -358,7 +358,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             );
 
         } catch (Throwable t) {
-            logError("Hook LoaderCursor失败", t);
+            if (DEBUG) logError("Hook LoaderCursor失败", t);
         }
     }
 
@@ -384,7 +384,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                             int screen = (int) param.args[2];
 
                             if (container == -101 && screen >= 5) {
-                                log("数据库操作 - Hotseat位置: " + screen);
+                                if (DEBUG) log("数据库操作 - Hotseat位置: " + screen);
                                 // 允许操作继续
                             }
                         }
@@ -392,7 +392,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             );
 
         } catch (Throwable t) {
-            logError("Hook数据库操作失败", t);
+            if (DEBUG) logError("Hook数据库操作失败", t);
         }
     }
 
