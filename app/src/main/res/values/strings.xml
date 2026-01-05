@@ -19,6 +19,9 @@
     <string name="no_tip_next_time">下次将不再提示此内容</string>
     <string name="loadingUserAPP">加载用户应用列表…</string>
     <string name="unknown">未知</string>
+    <string name="version">Version</string>
+    <string name="root">Root</string>
+    <string name="framework">Framework</string>
     <!--主页资源值-->
     <string name="update_available_title">发现新版本</string>
     <string name="update_available_version_format">新版本: %1$s (Build %2$d)</string>
@@ -262,7 +265,7 @@
     <string name="Ota_Custom_DeviceID_Hint">SN</string>
     <string name="current_version_fmt">当前系统版本: %1$s</string>
     <string name="current_sn_fmt">当前机器SN: %1$s</string>
-    <string name="loading_ellipsis">加载中...</string>
+    <string name="loading_ellipsis">加载中…</string>
     <!--设置页：代码内资源值-->
     <!-- 详细设置相关字符串 -->
     <string name="settings_detail_title_suffix"> - 详细设置</string>
@@ -362,8 +365,8 @@
     <string name="zui_force_freeform_summary">与固定比例小窗冲突，强制指定应用使用任意比例小窗</string>
     <string name="zui_force_fixed_title">强制固定比例小窗</string>
     <string name="zui_force_fixed_summary">与自由小窗冲突，强制指定应用使用固定比例小窗</string>
-    <string name="loading_config">正在读取系统配置...</string>
-    <string name="saving_config">正在保存系统配置...</string>
+    <string name="loading_config">正在读取系统配置…</string>
+    <string name="saving_config">正在保存系统配置…</string>
     <string name="select_apps_title">选择应用</string>
     <string name="save_success_message">保存成功</string>
     <string name="module_config_tips">Tips:当前已使用模块配置文件，已适配应用策略数量：%d</string>

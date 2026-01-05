@@ -65,7 +65,8 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_info"
-                    app:tint="?attr/colorOnErrorContainer" />
+                    app:tint="?attr/colorOnErrorContainer"
+                    tools:ignore="ContentDescription" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -74,7 +75,7 @@
                     android:text="@string/workModeRequirementDetail"
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnErrorContainer"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -227,7 +228,8 @@
                         android:layout_width="32dp"
                         android:layout_height="32dp"
                         android:src="@drawable/ic_check_circle"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/colorPrimary"
+                        tools:ignore="ContentDescription" />
                 </LinearLayout>
 
                 <com.google.android.material.divider.MaterialDivider
@@ -251,7 +253,7 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:text="Version"
+                            android:text="@string/version"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceLabelSmall"
@@ -276,7 +278,7 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:text="Root"
+                            android:text="@string/root"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceLabelSmall"
@@ -301,7 +303,7 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:text="Framework"
+                            android:text="@string/framework"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceLabelSmall"
