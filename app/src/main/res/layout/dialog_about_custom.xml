@@ -50,7 +50,8 @@
                     android:layout_height="match_parent"
                     android:padding="12dp"
                     android:src="@mipmap/ic_launcher"
-                    tools:src="@android:drawable/sym_def_app_icon" />
+                    tools:src="@android:drawable/sym_def_app_icon"
+                    tools:ignore="ContentDescription" />
             </com.google.android.material.card.MaterialCardView>
 
             <!-- 标题 -->
@@ -60,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:alpha="0"
-                android:text="ZTool"
+                android:text="@string/app_name"
                 android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
@@ -105,7 +106,16 @@
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Github" />
+                    android:layout_marginEnd="16dp"
+                    android:text="@string/button_project_homepage" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_credits"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/button_credits" />
 
             </LinearLayout>
 
