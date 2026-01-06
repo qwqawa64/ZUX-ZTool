@@ -91,34 +91,69 @@
                 android:textColor="?attr/colorOnSurfaceVariant"
                 tools:text="正在初始化..." />
 
-            <!-- 底部按钮 -->
             <LinearLayout
-                android:id="@+id/about_actions"
-                android:layout_width="match_parent"
+                android:id="@+id/btn_container_project_info"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
-                android:alpha="0"
+                android:layout_marginEnd="16dp"
                 android:gravity="center"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:alpha="0">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_github"
                     style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="180dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="16dp"
-                    android:text="@string/button_project_homepage" />
+                    android:text="@string/button_project_homepage"
+                    app:icon="@drawable/github"
+                    app:iconGravity="textStart" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_credits"
                     style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="180dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="@string/button_credits" />
+                    android:text="@string/button_credits"
+                    app:icon="@drawable/github"
+                    app:iconGravity="textStart" />
 
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/btn_container_author_info"
+                android:layout_marginTop="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:alpha="0">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_qimian233_coolapk"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:text="@string/button_qimian233_coolapk"
+                    app:icon="@drawable/coolapk"
+                    app:iconGravity="textStart" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_wasddestroy_coolapk"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/button_wasddestroy_coolapk"
+                    app:icon="@drawable/coolapk"
+                    app:iconGravity="textStart" />
+
+            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </FrameLayout>

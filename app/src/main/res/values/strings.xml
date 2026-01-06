@@ -179,10 +179,8 @@
     <string name="moreSettings">更多设置</string>
     <string name="enableHomePageYiyan">随机一言</string>
     <string name="enableHomePageYiyanSummary">启用主界面下方的随机一言，此功能需要联网</string>
-    <string name="checkZToolUpdate">检查更新</string>
     <string name="open_browser_failed">无法打开浏览器</string>
     <string name="open_web_link_failed">无法打开链接</string>
-    <string name="checkZToolUpdateSummary">打开项目的Github Releases页面</string>
     <string name="showAboutPage">关于ZTool</string>
     <string name="config_backup_success">配置已备份</string>
     <string name="about_ztool_title">关于ZTool</string>
@@ -197,6 +195,8 @@
     <string name="unknown_activity_null">未知 (Activity 为空)</string>
     <string name="button_project_homepage">Our GitHub</string>
     <string name="button_credits">UnfuckZUI</string>
+    <string name="button_qimian233_coolapk">七眠233</string>
+    <string name="button_wasddestroy_coolapk">WASD_Destroy</string>
 
     <!--通用重启作用域资源-->
     <string name="restart_xp_title">重启XP模块作用域</string>

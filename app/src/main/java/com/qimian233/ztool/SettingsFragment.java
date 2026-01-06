@@ -143,9 +143,12 @@ public class SettingsFragment extends Fragment {
         TextView titleView = dialogView.findViewById(R.id.about_title);
         TextView versionView = dialogView.findViewById(R.id.about_version);
         TextView descView = dialogView.findViewById(R.id.about_description);
-        View actionsLayout = dialogView.findViewById(R.id.about_actions);
+        View btnContainerProject = dialogView.findViewById(R.id.btn_container_project_info);
+        View btnContainerAuthor = dialogView.findViewById(R.id.btn_container_author_info);
         MaterialButton btnGithub = dialogView.findViewById(R.id.btn_github);
         MaterialButton btnCredits = dialogView.findViewById(R.id.btn_credits);
+        MaterialButton btnAuthor = dialogView.findViewById(R.id.btn_qimian233_coolapk);
+        MaterialButton btnCollaborator = dialogView.findViewById(R.id.btn_wasddestroy_coolapk);
 
         // 2. 设置数据
         versionView.setText(updateModuleStatus());
@@ -163,6 +166,28 @@ public class SettingsFragment extends Fragment {
         btnCredits.setOnClickListener(v -> {
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/dantmnf/UnfuckZUI")));
+            } catch (Exception e) {
+                showToast(getString(R.string.open_web_link_failed));
+            }
+        });
+
+        btnAuthor.setOnClickListener(v -> {
+            try {
+                // Qimian233
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.coolapk.com/u/10099756"));
+                intent.setPackage("com.coolapk.market");
+                startActivity(intent);
+            } catch (Exception e) {
+                showToast(getString(R.string.open_web_link_failed));
+            }
+        });
+
+        btnCollaborator.setOnClickListener(v -> {
+            try {
+                // WASD_Destroy
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.coolapk.com/u/18634835"));
+                intent.setPackage("com.coolapk.market");
+                startActivity(intent);
             } catch (Exception e) {
                 showToast(getString(R.string.open_web_link_failed));
             }
@@ -220,7 +245,8 @@ public class SettingsFragment extends Fragment {
         );
 
         // 底部按钮最后浮现
-        animateEntrance(actionsLayout, startDelay + totalTypingTime + 200);
+        animateEntrance(btnContainerProject, startDelay + totalTypingTime + 200);
+        animateEntrance(btnContainerAuthor, startDelay + totalTypingTime + 400);
     }
 
     private void animateEntrance(View view, long delay) {
