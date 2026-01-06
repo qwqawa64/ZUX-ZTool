@@ -267,7 +267,12 @@ public class FrameworkSettingsActivity extends AppCompatActivity {
                 @Override
                 public void onTick(long millisUntilFinished) {
                     int seconds = (int) (millisUntilFinished / 1000);
-                    positiveButton.setText(String.format(getString(R.string.confirmWithCountdown), seconds + 1));
+                    positiveButton.setText(
+                            String.format(
+                                    getString(R.string.customizedConfirmWithCountdown),
+                                    getString(R.string.confirm),
+                                    seconds + 1)
+                    );
                 }
 
                 @Override
