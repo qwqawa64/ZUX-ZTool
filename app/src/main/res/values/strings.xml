@@ -4,7 +4,7 @@
     <string name="save">保存</string>
     <string name="delete">删除</string>
     <string name="confirm">确认</string>
-    <string name="confirmWithCountdown">确认（%d秒）</string>
+    <string name="customizedConfirmWithCountdown">%s（%d秒）</string>
     <string name="cancel">取消</string>
     <string name="test">测试</string>
     <string name="retry">重试</string>
@@ -22,6 +22,13 @@
     <string name="version">Version</string>
     <string name="root">Root</string>
     <string name="framework">Framework</string>
+    <!--FirstRun资源值-->
+    <string name="user_confirm_agreement">已确认声明</string>
+    <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
+    <string name="agreement_title">重要提示</string>
+    <string name="agreement_text">欢迎使用 ZTool。\n本工具基于 Root 权限与 LSPosed 框架，为运行 ZUXOS 的联想设备提供自定义功能与系统优化选项。由于本模块在设备中拥有最高控制权，请您务必仔细阅读并理解以下声明。\n如不同意，请立即退出并卸载本应用。\n声明条款\n1. 本模块仅通过 GitHub Releases 页面 官方发布。请勿安装任何来自第三方（包括但不限于网页、群组、个人分发）的 ZTool 副本，此类版本可能为恶意软件，会导致设备安全风险。若已安装不明来源的副本，请立即卸载并彻底检查系统权限及敏感目录，建议清除 Root 并重新刷机，以防潜在病毒利用高权限漏洞。\n2. 部分功能可能随系统更新而失效。如遇此类情况，请向开发者反馈，并附上本模块与 LSPosed 的详细日志。\n3. 本模块提供的功能及可能出现的异常与联想官方无关。请勿在官方渠道（包括群组、反馈平台等）中提及本模块或因此质疑官方。如更改选项后出现问题，请先恢复设置并重启作用域。违反本条可能影响后续更新支持。\n4. 本模块为遵循 Apache 2.0 协议的开源软件，在 GitHub 上免费发布。如果您为此付费，即遭遇诈骗。请立即停止使用该副本，转用本项目 GitHub Releases 页面的官方版本。\n5. ZTool 开发者保留对模块功能及上述条款的最终解释权。\n若您已阅读并同意以上内容，请在倒计时结束后点击“同意并进入”按钮。否则，点击“不同意并退出”按钮退出本应用。</string>
+    <string name="agreement_confirm">同意并进入</string>
+    <string name="agreement_dismiss">不同意并退出</string>
     <!--主页资源值-->
     <string name="update_available_title">发现新版本</string>
     <string name="update_available_version_format">新版本: %1$s (Build %2$d)</string>
@@ -174,18 +181,22 @@
     <string name="enableHomePageYiyanSummary">启用主界面下方的随机一言，此功能需要联网</string>
     <string name="checkZToolUpdate">检查更新</string>
     <string name="open_browser_failed">无法打开浏览器</string>
+    <string name="open_web_link_failed">无法打开链接</string>
     <string name="checkZToolUpdateSummary">打开项目的Github Releases页面</string>
     <string name="showAboutPage">关于ZTool</string>
     <string name="config_backup_success">配置已备份</string>
     <string name="about_ztool_title">关于ZTool</string>
-    <string name="about_description">ZTool是个针对ZUXOS的LSPosed功能增强模块。&lt;br&gt;开发者: Qimian233, WASDDestroy&lt;br&gt;访问项目的&lt;a href=\'https://github.com/qwqawa64/ZUX-ZTool\'&gt;Github主页&lt;/a&gt;&lt;br&gt;本项目遵守Apache 2.0协议发布。&lt;br&gt;感谢&lt;a href=\'https://github.com/dantmnf\'&gt;dantmnf&lt;/a&gt;的&lt;a href=\'https://github.com/dantmnf/UnfuckZUI\'&gt;UnfuckZUI&lt;/a&gt;</string>
+    <string name="about_description">ZTool是个针对ZUXOS的LSPosed功能增强模块。&lt;br&gt;开发者: Qimian233, WASDDestroy&lt;br&gt;本项目遵守Apache 2.0协议发布。&lt;br&gt;本项目部分功能来自于dantmnf的UnfuckZUI。</string>
     <string name="final_confirmation_title">最后一次确认</string>
     <string name="restore_default_confirmation">你确定要恢复默认配置吗？这将重置所有设置到初始状态。</string>
     <string name="default_config_restored">已恢复默认配置</string>
     <string name="config_restore_success">配置已从文件恢复</string>
     <string name="log_service_started">日志采集服务已启动</string>
     <string name="log_service_stopped">日志采集服务已停止</string>
+    <string name="log_service_require_manual_restart">日志服务自动重启失败，请手动启动</string>
     <string name="unknown_activity_null">未知 (Activity 为空)</string>
+    <string name="button_project_homepage">Our GitHub</string>
+    <string name="button_credits">UnfuckZUI</string>
 
     <!--通用重启作用域资源-->
     <string name="restart_xp_title">重启XP模块作用域</string>
