@@ -164,7 +164,7 @@ public class SettingsFragment extends Fragment {
 
         // 2. 设置数据
         versionView.setText(updateModuleStatus());
-        String rawHtml = getString(R.string.about_description, "");
+        String rawHtml = getString(R.string.about_description);
         String plainText = Html.fromHtml(rawHtml, Html.FROM_HTML_MODE_LEGACY).toString();
 
         btnGithub.setOnClickListener(v -> {
