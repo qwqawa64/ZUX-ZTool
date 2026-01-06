@@ -145,6 +145,7 @@ public class SettingsFragment extends Fragment {
         TextView descView = dialogView.findViewById(R.id.about_description);
         View actionsLayout = dialogView.findViewById(R.id.about_actions);
         MaterialButton btnGithub = dialogView.findViewById(R.id.btn_github);
+        MaterialButton btnCredits = dialogView.findViewById(R.id.btn_credits);
 
         // 2. 设置数据
         versionView.setText(updateModuleStatus());
@@ -155,7 +156,15 @@ public class SettingsFragment extends Fragment {
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/qwqawa64/ZUX-ZTool")));
             } catch (Exception e) {
-                showToast("无法打开链接");
+                showToast(getString(R.string.open_web_link_failed));
+            }
+        });
+
+        btnCredits.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/dantmnf/UnfuckZUI")));
+            } catch (Exception e) {
+                showToast(getString(R.string.open_web_link_failed));
             }
         });
 
