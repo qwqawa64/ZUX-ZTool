@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -211,15 +212,7 @@ public class FrameworkSettingsActivity extends AppCompatActivity implements Coun
         textInputLayout.setHint(getString(R.string.test_Input)); // 输入框提示
 
         // 3. 创建 TextInputEditText
-        TextInputEditText editText = new TextInputEditText(textInputLayout.getContext());
-        editText.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        // 设置为多行文本，最小高度5行
-        editText.setMinLines(5);
-        editText.setMaxLines(10);
-        editText.setGravity(Gravity.TOP | Gravity.START); // 文字从左上角开始
-        editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        TextInputEditText editText = getTextInputEditText(textInputLayout);
 
         // 4. 组装视图
         textInputLayout.addView(editText);
@@ -232,6 +225,20 @@ public class FrameworkSettingsActivity extends AppCompatActivity implements Coun
                 .setView(container) // 设置自定义视图
                 .setPositiveButton(android.R.string.ok, null) // 确定按钮
                 .show();
+    }
+
+    @NonNull
+    private static TextInputEditText getTextInputEditText(TextInputLayout textInputLayout) {
+        TextInputEditText editText = new TextInputEditText(textInputLayout.getContext());
+        editText.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        // 设置为多行文本，最小高度5行
+        editText.setMinLines(5);
+        editText.setMaxLines(10);
+        editText.setGravity(Gravity.TOP | Gravity.START); // 文字从左上角开始
+        editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        return editText;
     }
 
 
