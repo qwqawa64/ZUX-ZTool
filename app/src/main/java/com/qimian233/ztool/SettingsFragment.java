@@ -1,9 +1,6 @@
 package com.qimian233.ztool;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -60,7 +57,6 @@ public class SettingsFragment extends Fragment {
         MaterialSwitch switchEnableDetailedLogging = view.findViewById(R.id.switch_enable_detailed_logging);
         MaterialSwitch switchEnableHomepageYiyan = view.findViewById(R.id.switch_enable_homepage_yiyan);
         CardView showAboutPage = view.findViewById(R.id.show_about_page);
-//        CardView checkZToolUpdate = view.findViewById(R.id.check_ztool_update);
 
         // 设置点击监听器
         backupConfigToFile.setOnClickListener(v -> performBackup());
@@ -68,7 +64,6 @@ public class SettingsFragment extends Fragment {
                 openDocumentLauncherForRestore.launch(new String[]{"application/json"}));
         restoreDefaultConfig.setOnClickListener(v -> restoreDefaultSettings());
         showAboutPage.setOnClickListener(v -> showAboutPage());
-//        checkZToolUpdate.setOnClickListener(v -> checkForZToolUpdates());
 
         // 设置开关监听器
         boolean isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext());
@@ -129,17 +124,6 @@ public class SettingsFragment extends Fragment {
         MaterialSwitch switchEnableLogService = requireView().findViewById(R.id.switch_enable_log_service);
         if (switchEnableLogService != null) {
             switchEnableLogService.setChecked(isLogServiceEnabled);
-        }
-    }
-
-    private void checkForZToolUpdates() {
-        String url = "https://github.com/qwqawa64/ZUX-ZTool/releases";
-        try {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            startActivity(intent);
-        } catch (Exception e) {
-            showToast(getString(R.string.open_browser_failed));
-            Log.e("SettingsFragment", "无法打开浏览器: " + e.getMessage());
         }
     }
 
