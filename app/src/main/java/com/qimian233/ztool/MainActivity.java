@@ -1,5 +1,7 @@
 package com.qimian233.ztool;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -17,9 +19,10 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.color.DynamicColors;
 import com.qimian233.ztool.service.LogServiceManager;
+import com.qimian233.ztool.utils.CountdownDialog;
 
 public class MainActivity extends AppCompatActivity implements HomeFragment.EnvironmentStateListener,
-        LogServiceManager.ServiceStatusListener {
+        LogServiceManager.ServiceStatusListener, CountdownDialog.OnCountdownFinishListener {
 
     private BottomNavigationView bottomNav;
     private NavController navController;
@@ -79,10 +82,44 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
             navigateToSavedDestination();
         }
 
+        SharedPreferences utils = getSharedPreferences("ZToolPrefs", Context.MODE_PRIVATE);
+        if (utils.getBoolean("isFirstLaunch", true)) {
+            CountdownDialog.Builder dialog = new CountdownDialog.Builder(navHostFragment.requireContext(), this);
+            dialog.setTitle(getString(R.string.agreement_title));
+            dialog.setMessage(getString(R.string.agreement_text));
+            dialog.setCancelable(false);
+            dialog.setCountdownSeconds(30);
+            dialog.setNegativeText(getString(R.string.agreement_dismiss));
+            dialog.setPositiveText(getString(R.string.agreement_confirm));
+            dialog.setOnCountdownFinishListener(this);
+            dialog.build().show();
+        }
 
         // 应用启动时尝试重启日志服务
         LogServiceManager.restartServiceIfNeeded(this);
     }
+
+    @Override
+    public void onPositiveButtonClick() {
+        SharedPreferences utils = getSharedPreferences("ZToolPrefs", Context.MODE_PRIVATE);
+        utils.edit().putBoolean("isFirstLaunch", false).apply();
+        android.widget.Toast.makeText(this,
+                getString(R.string.user_confirm_agreement),
+                android.widget.Toast.LENGTH_SHORT)
+                .show();
+    }
+
+    @Override
+    public void onNegativeButtonClick() {
+        android.widget.Toast.makeText(this,
+                        getString(R.string.user_dismiss_agreement),
+                        android.widget.Toast.LENGTH_SHORT)
+                .show();
+        System.exit(0);
+    }
+
+    @Override
+    public void onCountdownFinished() {}
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
@@ -104,17 +141,26 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
      */
     @Override
     public void onServiceStarted() {
-        runOnUiThread(() -> Toast.makeText(this, "日志服务已启动", Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this,
+                getString(R.string.log_service_started),
+                Toast.LENGTH_SHORT).
+                show());
     }
 
     @Override
     public void onServiceStopped() {
-        runOnUiThread(() -> Toast.makeText(this, "日志服务已停止", Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this,
+                getString(R.string.log_service_stopped),
+                Toast.LENGTH_SHORT)
+                .show());
     }
 
     @Override
     public void onServiceRestartFailed() {
-        runOnUiThread(() -> Toast.makeText(this, "日志服务自动重启失败，请手动启动", Toast.LENGTH_LONG).show());
+        runOnUiThread(() -> Toast.makeText(this,
+                getString(R.string.log_service_require_manual_restart),
+                Toast.LENGTH_LONG)
+                .show());
     }
 
     /**
