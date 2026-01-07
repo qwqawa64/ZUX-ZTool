@@ -172,8 +172,127 @@
 
                 </androidx.cardview.widget.CardView>
 
+                <!-- 自定义网格卡片 -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp">
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="?attr/colorSurfaceContainer"
+                        android:padding="16dp">
 
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/customLauncherLayoutTitle"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginBottom="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/customGridTitle"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/customGridSummary"
+                                    android:textSize="12sp"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:layout_marginTop="4dp" />
+
+                            </LinearLayout>
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/switch_custom_grid_size"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                        <!--编辑区标题-->
+                        <TextView
+                            android:id="@+id/inputGridSizeTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/customGridInputZoneTitle"
+                            android:textSize="16sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginTop="16dp"
+                            android:visibility="gone"/>
+
+                        <LinearLayout
+                            android:id="@+id/customGridSizeLayout_dataInput"
+                            android:layout_height="match_parent"
+                            android:layout_width="wrap_content"
+                            android:orientation="horizontal"
+                            android:background="?attr/colorSurfaceContainer"
+                            android:layout_marginTop="16dp"
+                            android:layout_gravity="start"
+                            android:visibility="gone">
+
+                            <!--第一个文本输入框-->
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="128dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="16dp"
+                                android:hint="@string/inputRowNumberHere">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edit_row_number"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:maxLines="1"
+                                    android:inputType="number"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <!--中间用乘号分隔-->
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/multiply"
+                                android:textSize="24sp"
+                                android:textColor="?attr/colorOnSurface" />
+
+                            <!--第二个文本输入框-->
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="128dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:hint="@string/inputColumnNumberHere">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edit_column_number"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:maxLines="1"
+                                    android:inputType="number"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
 
             </LinearLayout>
 

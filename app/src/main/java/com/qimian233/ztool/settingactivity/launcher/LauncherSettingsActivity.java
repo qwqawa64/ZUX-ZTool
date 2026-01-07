@@ -11,6 +11,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,6 +22,7 @@ import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.textfield.TextInputEditText;
 import com.qimian233.ztool.R;
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils;
 import com.qimian233.ztool.utils.AppChooserDialog;
@@ -28,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class LauncherSettingsActivity extends AppCompatActivity {
@@ -35,8 +39,11 @@ public class LauncherSettingsActivity extends AppCompatActivity {
     private String appPackageName;
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchMoreBigDock;
+    private MaterialSwitch switchCustomizeGridSize;
     private Spinner switchDisableForceStop;
-    private TextView forceStopWhiteListCount;
+    private TextView forceStopWhiteListCount, inputGridSizeTitle;
+    TextInputEditText etCustomGridRow, etCustomGridColumn;
+    private View inputGridSizeLayout;
     private List<String> WHITE_LIST;
 
     @Override
@@ -108,13 +115,63 @@ public class LauncherSettingsActivity extends AppCompatActivity {
         // 白名单文本视图
         forceStopWhiteListCount = findViewById(R.id.txt_protected_apps);
         forceStopWhiteListCount.setText(getString(R.string.protected_apps_summary, WHITE_LIST.size()));
-        forceStopWhiteListCount.setOnClickListener((View view) -> {
-            SelectUnForceStopAPP();
-        });
+        forceStopWhiteListCount.setOnClickListener((View view) -> SelectUnForceStopAPP());
 //        switchDisableForceStop.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("disable_force_stop", isChecked));
         // 更多大的Dock栏功能开关
         switchMoreBigDock = findViewById(R.id.switch_dock_moreBig);
-        switchMoreBigDock.setOnCheckedChangeListener((buttonView, isChecked) -> saveSettings("zui_launcher_hotseat", isChecked));
+        switchMoreBigDock.setOnCheckedChangeListener((buttonView, isChecked) ->
+                saveSettings("zui_launcher_hotseat", isChecked));
+
+        // 自定义桌面网格功能输入区的标题和输入区本体
+        inputGridSizeTitle = findViewById(R.id.inputGridSizeTitle);
+        inputGridSizeLayout = findViewById(R.id.customGridSizeLayout_dataInput);
+
+        // 自定义桌面网格功能开关
+        switchCustomizeGridSize = findViewById(R.id.switch_custom_grid_size);
+        switchCustomizeGridSize.setOnCheckedChangeListener((buttonView, isChecked) ->
+        {
+            saveSettings("CustomGridSize", isChecked);
+            if (isChecked) {
+                inputGridSizeTitle.setVisibility(View.VISIBLE);
+                inputGridSizeLayout.setVisibility(View.VISIBLE);
+            } else {
+                inputGridSizeTitle.setVisibility(View.GONE);
+                inputGridSizeLayout.setVisibility(View.GONE);
+            }
+        });
+
+        etCustomGridRow = inputGridSizeLayout.findViewById(R.id.edit_row_number);
+        etCustomGridColumn = inputGridSizeLayout.findViewById(R.id.edit_column_number);
+
+        etCustomGridRow.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                saveGridValues();
+            }
+        });
+
+        etCustomGridColumn.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                saveGridValues();
+            }
+        });
     }
 
     private void loadSettings() {
@@ -125,6 +182,21 @@ public class LauncherSettingsActivity extends AppCompatActivity {
         // 加载更多大的Dock栏开关状态
         boolean moreBigDockEnabled = mPrefsUtils.loadBooleanSetting("zui_launcher_hotseat",false);
         switchMoreBigDock.setChecked(moreBigDockEnabled);
+        // 加载自定义桌面网格功能开关状态
+        boolean customGridSizeEnabled = mPrefsUtils.loadBooleanSetting("CustomGridSize",false);
+        switchCustomizeGridSize.setChecked(customGridSizeEnabled);
+
+        if (customGridSizeEnabled) {
+            inputGridSizeTitle.setVisibility(View.VISIBLE);
+            inputGridSizeLayout.setVisibility(View.VISIBLE);
+            etCustomGridRow.setText(String.valueOf(
+                    mPrefsUtils.loadIntegerSetting("CustomLauncherRow", 4)));
+            etCustomGridColumn.setText(String.valueOf(
+                    mPrefsUtils.loadIntegerSetting("CustomLauncherColumn", 6)));
+        } else {
+            inputGridSizeTitle.setVisibility(View.GONE);
+            inputGridSizeLayout.setVisibility(View.GONE);
+        }
     }
 
     private void SelectDefault() {
@@ -174,6 +246,7 @@ public class LauncherSettingsActivity extends AppCompatActivity {
 
         for (PackageInfo info : installedPackages) {
             // 判断是否为系统应用
+            assert info.applicationInfo != null;
             boolean isSystemApp = (info.applicationInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0;
 
             // 如果不是系统应用，或者虽然是系统应用但是用户升级过的
@@ -224,5 +297,27 @@ public class LauncherSettingsActivity extends AppCompatActivity {
 
     private void saveSettings(String moduleName, Boolean newValue) {
         mPrefsUtils.saveBooleanSetting(moduleName, newValue);
+    }
+
+    private void saveGrid(int gridRow, int gridColumn) {
+        mPrefsUtils.saveIntegerSetting("CustomLauncherRow", gridRow);
+        mPrefsUtils.saveIntegerSetting("CustomLauncherColumn", gridColumn);
+    }
+
+    private void saveGridValues() {
+        try {
+            String rowText = Objects.requireNonNull(etCustomGridRow.getText()).toString().trim();
+            String columnText = Objects.requireNonNull(etCustomGridColumn.getText()).toString().trim();
+
+            if (!rowText.isEmpty() && !columnText.isEmpty()) {
+                int customGridRow = Integer.parseInt(rowText);
+                int customGridColumn = Integer.parseInt(columnText);
+                saveGrid(customGridRow, customGridColumn);
+            }
+        } catch (NumberFormatException e) {
+            Log.d("GridSettings", "Invalid number format: " + e.getMessage());
+        } catch (NullPointerException e) {
+            Log.d("GridSettings", "Text is null: " + e.getMessage());
+        }
     }
 }

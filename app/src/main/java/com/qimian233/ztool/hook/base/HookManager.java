@@ -6,6 +6,7 @@ import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
+import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
@@ -147,6 +148,8 @@ public class HookManager {
         registerHookModule(new AiInputExpand());
         // 注册模块：自定义OTA参数
         registerHookModule(new LenovoOTAHook());
+        // 注册模块：自定义桌面网格大小
+        registerHookModule(new CustomGridSize());
         initialized = true;
     }
 

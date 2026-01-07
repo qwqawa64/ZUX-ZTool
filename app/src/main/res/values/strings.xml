@@ -22,6 +22,7 @@
     <string name="version">Version</string>
     <string name="root">Root</string>
     <string name="framework">Framework</string>
+    <string name="multiply">×</string>
     <!--FirstRun资源值-->
     <string name="user_confirm_agreement">已确认声明</string>
     <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
@@ -96,7 +97,7 @@
     <string name="system_ui_app_name">系统界面</string>
     <string name="system_ui_app_description">状态栏、锁屏、控制中心及充电动画等系统界面的自定义设置</string>
     <string name="launcher_app_name">桌面</string>
-    <string name="launcher_app_description">dock栏，后台管理策略</string>
+    <string name="launcher_app_description">Dock栏，后台管理策略</string>
     <string name="system_framework_app_name">系统框架</string>
     <string name="system_framework_app_description">配置屏幕方向、安全策略及AI全局输入设置</string>
     <string name="safe_center_app_name">安全中心</string>
@@ -649,9 +650,15 @@
     <string name="disable_force_stop_title">启动器行为</string>
     <string name="disable_force_stop_enable_title">原生后台管理</string>
     <string name="disable_force_stop_enable_summary">联想的后台策略比较激进，开启后使用原生后台策略，保证后台服务存活</string>
-    <string name="dock_Title">dock栏</string>
+    <string name="dock_Title">Dock栏</string>
     <string name="moreBig_dockTitle">更大的Dock栏</string>
-    <string name="moreBig_dockSummary">解除dock栏的图标数量限制，能够塞下更多图标</string>
+    <string name="moreBig_dockSummary">解除Dock栏的图标数量限制，能够塞下更多图标</string>
+    <string name="customLauncherLayoutTitle">自定义桌面布局</string>
+    <string name="customGridTitle">自定义桌面网格行列数</string>
+    <string name="customGridSummary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
+    <string name="customGridInputZoneTitle">在下方输入希望使用的行列数</string>
+    <string name="inputRowNumberHere">行数</string>
+    <string name="inputColumnNumberHere">列数</string>
     <!--系统框架功能页的资源值-->
     <string name="Custom_attention">注意！</string>
     <string name="Custom_Attention_content">自定义唤醒符后，一定一定需要额外勾选使用全局输入的APP作用域（如QQ）不勾选只能使用官方的唤醒符号，效果测试可在下面输入框进行，比如打出&amp;&amp;你好，你是谁&amp;&amp;。</string>
