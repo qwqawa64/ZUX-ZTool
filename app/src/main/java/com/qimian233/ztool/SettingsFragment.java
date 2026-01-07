@@ -155,43 +155,19 @@ public class SettingsFragment extends Fragment {
         String rawHtml = getString(R.string.about_description);
         String plainText = Html.fromHtml(rawHtml, Html.FROM_HTML_MODE_LEGACY).toString();
 
-        btnGithub.setOnClickListener(v -> {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/qwqawa64/ZUX-ZTool")));
-            } catch (Exception e) {
-                showToast(getString(R.string.open_web_link_failed));
-            }
-        });
+        btnGithub.setOnClickListener(v ->
+                openExternalLink("https://github.com/qwqawa64/ZUX-ZTool",
+                        false, ""));
 
-        btnCredits.setOnClickListener(v -> {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/dantmnf/UnfuckZUI")));
-            } catch (Exception e) {
-                showToast(getString(R.string.open_web_link_failed));
-            }
-        });
+        btnCredits.setOnClickListener(v ->
+                openExternalLink("https://github.com/dantmnf/UnfuckZUI",
+                false, ""));
 
-        btnAuthor.setOnClickListener(v -> {
-            try {
-                // Qimian233
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.coolapk.com/u/10099756"));
-                intent.setPackage("com.coolapk.market");
-                startActivity(intent);
-            } catch (Exception e) {
-                showToast(getString(R.string.open_web_link_failed));
-            }
-        });
+        btnAuthor.setOnClickListener(v -> openExternalLink("http://www.coolapk.com/u/10099756",
+                true, "com.coolapk.market")); // Qimian233
 
-        btnCollaborator.setOnClickListener(v -> {
-            try {
-                // WASD_Destroy
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.coolapk.com/u/18634835"));
-                intent.setPackage("com.coolapk.market");
-                startActivity(intent);
-            } catch (Exception e) {
-                showToast(getString(R.string.open_web_link_failed));
-            }
-        });
+        btnCollaborator.setOnClickListener(v -> openExternalLink("http://www.coolapk.com/u/18634835",
+                true, "com.coolapk.market")); // WASD_Destroy
 
         // 3. 创建 Dialog
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
@@ -304,6 +280,18 @@ public class SettingsFragment extends Fragment {
     private void performBackup() {
         String backupFileName = FileManager.generateBackupFileName();
         backupLauncher.launch(backupFileName);
+    }
+
+    private void openExternalLink(String link, boolean shouldDeterminePackage, String packageName) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+            if (shouldDeterminePackage) {
+                intent.setPackage(packageName);
+            }
+            startActivity(intent);
+        } catch (Exception e) {
+            showToast(getString(R.string.open_web_link_failed));
+        }
     }
 
     private final ActivityResultLauncher<String[]> openDocumentLauncherForRestore =
