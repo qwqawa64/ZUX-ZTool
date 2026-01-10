@@ -36,14 +36,13 @@ public class ConfigUpgrade {
         }
         // 先尝试读取新的配置升级标记，如果没有，则需要升级配置
         if (!mPreferencesUtils.loadBooleanSetting("isConfigUpgraded", false)) {
-            Log.d(TAG,"Old config format detected, need to upgrade config.");
-            return true;
-        }
-        // 如果上面的判断没有触发return，则开始逐条遍历配置信息，如果存在module_enabled_前缀，则说明需要升级配置
-        for (Map.Entry<String, Object> entry : allSettings.entrySet()) {
-            if (entry.getKey().startsWith("module_enabled_")) {
-                Log.d(TAG,"Old config format detected, need to upgrade config.");
-                return true;
+            Log.d(TAG,"Upgraded flag not detected, try alternative method to detect config version.");
+            // 备用方法，逐条遍历配置信息，如果存在module_enabled_前缀，则说明需要升级配置
+            for (Map.Entry<String, Object> entry : allSettings.entrySet()) {
+                if (entry.getKey().startsWith("module_enabled_")) {
+                    Log.d(TAG,"Old config format detected, need to upgrade config.");
+                    return true;
+                }
             }
         }
         Log.d(TAG,"Config is already upgraded.");
