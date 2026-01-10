@@ -65,6 +65,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
     private MaterialSwitch switchSplitScreenMandatory;
     private MaterialSwitch switchAllowDisableDolby;
     private MaterialSwitch switchAllowNativePermissionController;
+    private MaterialSwitch switchAlwaysDisplaySuggestions;
     private LoadingDialog loadingDialog;
 
     // 业务逻辑管理器
@@ -140,6 +141,9 @@ public class SettingsDetailActivity extends AppCompatActivity {
 
         switchAllowNativePermissionController = findViewById(R.id.switch_AllowNativePermissionController);
         switchAllowNativePermissionController.setOnCheckedChangeListener((v, c) -> mPrefsUtils.saveBooleanSetting("PermissionControllerHook", c));
+
+        switchAlwaysDisplaySuggestions = findViewById(R.id.switch_AlwaysDisplaySuggestions);
+        switchAlwaysDisplaySuggestions.setOnCheckedChangeListener((v, c) -> mPrefsUtils.saveBooleanSetting("AlwaysDisplaySuggestion", c));
 
         // --- Magisk 模块开关 ---
         ModuleSwitch = findViewById(R.id.switch_MagiskModule);
@@ -241,6 +245,7 @@ public class SettingsDetailActivity extends AppCompatActivity {
         switchSplitScreenMandatory.setChecked(mPrefsUtils.loadBooleanSetting("Split_Screen_mandatory", false));
         switchAllowDisableDolby.setChecked(mPrefsUtils.loadBooleanSetting("allow_display_dolby", false));
         switchAllowNativePermissionController.setChecked(mPrefsUtils.loadBooleanSetting("PermissionControllerHook", false));
+        switchAlwaysDisplaySuggestions.setChecked(mPrefsUtils.loadBooleanSetting("AlwaysDisplaySuggestion", false));
 
         // 异步检查 Root 状态和模块状态
         new Thread(() -> {

@@ -23,6 +23,7 @@
     <string name="root">Root</string>
     <string name="framework">Framework</string>
     <string name="multiply">×</string>
+    <string name="misc">杂项</string>
     <!--FirstRun资源值-->
     <string name="user_confirm_agreement">已确认声明</string>
     <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
@@ -451,12 +452,12 @@
     <string name="font_settings_title">字体</string>
     <string name="import_font_title">导入字体</string>
     <string name="import_font_summary">支持ttf格式，导入字体到系统的字体管理器</string>
-    <string name="Dolby_Title">杜比音效</string>
     <string name="AllowDisableDolby">允许关闭杜比</string>
     <string name="AllowDisableDolby_summary">允许关闭杜比全景声，但是可能导致音量变小</string>
-    <string name="NativePermissionController_Title">权限控制器</string>
     <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
     <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器，Android14及以下生效</string>
+    <string name="AlwaysDisplaySuggestionsTitle">显示设置首页的建议项目</string>
+    <string name="AlwaysDisplaySuggestionsSummary">“自欺欺人术之假装设备全新未使用”</string>
     <!--应用包安装程序功能页资源值-->
     <string name="detailed_settings_suffix"> - 详细设置</string>
     <string name="restart_fail_simple">重启失败</string>

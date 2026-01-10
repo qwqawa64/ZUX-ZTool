@@ -135,6 +135,8 @@ public class LogParser {
                 Pattern.compile("\\[Split_Screen_mandatory]\\s*(.*)"));
         MODULE_PATTERNS.put("remove_blacklist",
                 Pattern.compile("\\[remove_blacklist]\\s*(.*)"));
+        MODULE_PATTERNS.put("AlwaysDisplaySuggestion",
+                Pattern.compile("\\[AlwaysDisplaySuggestion]\\s*(.*)"));
 
         // 系统框架相关
         MODULE_PATTERNS.put("allow_get_packages",
@@ -210,6 +212,7 @@ public class LogParser {
         MODULE_NAMES.put("PermissionControllerHook", "权限控制器");
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
+        MODULE_NAMES.put("AlwaysDisplaySuggestion", "始终显示建议");
 
         // 文件相关
         MODULE_NAMES.put("documents_ui_bypass", "允许选择根目录");
@@ -599,12 +602,12 @@ public class LogParser {
         // 设置相关
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
-                "Split_Screen_mandatory", "remove_blacklist"
+                "Split_Screen_mandatory", "remove_blacklist", "AlwaysDisplaySuggestion"
         ));
 
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
-                "disable_force_stop", "zui_launcher_hotseat"
+                "disable_force_stop", "zui_launcher_hotseat", "CustomGridSize"
         ));
 
         // 文件选择器相关
