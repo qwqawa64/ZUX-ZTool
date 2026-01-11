@@ -108,7 +108,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="16dp"
                     android:text="@string/button_project_homepage"
-                    app:icon="@drawable/github"
+                    app:icon="@drawable/ic_github_logo"
                     app:iconGravity="textStart" />
 
                 <com.google.android.material.button.MaterialButton
@@ -118,7 +118,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:text="@string/button_credits"
-                    app:icon="@drawable/github"
+                    app:icon="@drawable/ic_github_logo"
                     app:iconGravity="textStart" />
 
             </LinearLayout>
@@ -140,7 +140,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="16dp"
                     android:text="@string/button_qimian233_coolapk"
-                    app:icon="@drawable/coolapk"
+                    app:icon="@drawable/ic_coolapk_logo"
                     app:iconGravity="textStart" />
 
                 <com.google.android.material.button.MaterialButton
@@ -150,7 +150,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:text="@string/button_wasddestroy_coolapk"
-                    app:icon="@drawable/coolapk"
+                    app:icon="@drawable/ic_coolapk_logo"
                     app:iconGravity="textStart" />
 
             </LinearLayout>
