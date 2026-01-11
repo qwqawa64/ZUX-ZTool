@@ -39,11 +39,11 @@
     <string name="recovery">Recovery</string>
     <string name="edl">EDL</string>
     <string name="reboot_confirm_title">确认重启</string>
-    <string name="soft_reboot_confirm_message">确定要执行软重启吗？\n\n注意：软重启仅适用于Android 14及以下版本。</string>
+    <string name="soft_reboot_confirm_message">确定要执行软重启吗？</string>
     <string name="reboot_confirm_message">确定要重启设备吗？</string>
-    <string name="bootloader_confirm_message">确定要重启到Bootloader模式吗？</string>
-    <string name="recovery_confirm_message">确定要重启到Recovery模式吗？</string>
-    <string name="edl_confirm_message">确定要重启到EDL模式吗？</string>
+    <string name="bootloader_confirm_message">确定要重启到Bootloader模式吗？\n\n你最好知道怎么退出！</string>
+    <string name="recovery_confirm_message">确定要重启到Recovery模式吗？\n\n你最好知道怎么退出！</string>
+    <string name="edl_confirm_message">确定要重启到EDL模式吗？\n\n你最好知道怎么退出！</string>
     <string name="reboot_success">重启命令已发送</string>
     <string name="reboot_failed">重启失败：%s</string>
     <string name="soft_reboot_not_supported">软重启仅支持Android 14及以下版本</string>

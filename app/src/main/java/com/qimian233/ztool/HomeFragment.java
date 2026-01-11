@@ -15,17 +15,24 @@ import android.transition.AutoTransition;
 import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.cardview.widget.CardView;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.qimian233.ztool.service.LogCollectorService;
@@ -54,6 +61,7 @@ public class HomeFragment extends Fragment {
     private CardView cardUpdate;
     private TextView textUpdateVersion, textUpdateChangelog;
     private Button btnIgnoreUpdate, btnDoUpdate;
+    private ImageButton restartButton;
 
     private TextView textModuleStatus, textModuleVersion, textRootSource, textFrameworkVersion;
     private TextView textDeviceModel, textAndroidVersion, textBuildVersion, textKernelVersion, textCurrentSlot, textRomRegion;
@@ -109,6 +117,8 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, "onViewCreated: 初始化UI组件");
 
         initViews(view);
+
+        setupMenuProvider();
 
         // 延迟执行环境检测，避免界面卡顿
         view.postDelayed(() -> {
@@ -181,6 +191,8 @@ public class HomeFragment extends Fragment {
         textRomRegion = view.findViewById(R.id.text_rom_region);
 
         textHint = view.findViewById(R.id.text_hint);
+
+        restartButton = view.findViewById(R.id.restart_button);
 
         Log.d(TAG, "initViews: UI组件初始化完成");
     }
@@ -290,7 +302,7 @@ public class HomeFragment extends Fragment {
         cardUpdate.setClickable(true);
         android.util.TypedValue outValue = new android.util.TypedValue();
         requireContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-        cardUpdate.setForeground(requireContext().getDrawable(outValue.resourceId));
+        cardUpdate.setForeground(AppCompatResources.getDrawable(requireContext(), outValue.resourceId));
         // 2. 定义点击动作
         View.OnClickListener toggleListener = v -> {
             // 准备布局过渡动画
@@ -418,6 +430,16 @@ public class HomeFragment extends Fragment {
 
             Log.d(TAG, "更新UI - 环境就绪: " + environmentReady +
                     " (模块激活: " + isModuleActive + ", Root可用: " + isRootAvailable + ")");
+
+            // Reboot function depends on root permission only, it's not necessary to check module activation.
+            if (isRootAvailable) {
+                // Set reboot button to visible and set listener
+                restartButton.setVisibility(View.VISIBLE);
+                restartButton.setOnClickListener(v -> showRebootMenu());
+            } else {
+                // Hide restart button
+                restartButton.setVisibility(View.GONE);
+            }
 
             if (environmentReady) {
                 // 环境完备，隐藏要求卡片，显示状态和系统信息
@@ -752,6 +774,115 @@ public class HomeFragment extends Fragment {
         } catch (Exception e) {
             Log.e(TAG, "Failed to fetch ROM region: " + e.getMessage());
             return getString(R.string.unknown);
+        }
+    }
+
+    private void showRebootMenu() {
+        android.widget.PopupMenu popupMenu = new android.widget.PopupMenu(requireContext(), restartButton);
+        popupMenu.getMenuInflater().inflate(R.menu.reboot_menu, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(this::handleMenuItemClick);
+        popupMenu.show();
+    }
+
+    private void setupMenuProvider() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {}
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                return handleMenuItemClick(menuItem);
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    private boolean handleMenuItemClick(MenuItem item) {
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.menu_soft_reboot) {
+            showSoftRebootConfirmation();
+            return true;
+        } else if (itemId == R.id.menu_bootloader) {
+            showRebootConfirmation("bootloader");
+            return true;
+        } else if (itemId == R.id.menu_recovery) {
+            showRebootConfirmation("recovery");
+            return true;
+        } else if (itemId == R.id.menu_edl) {
+            showRebootConfirmation("edl");
+            return true;
+        } else if (itemId == R.id.menu_reboot) {
+            showRebootConfirmation("system");
+            return true;
+        }
+        return false;
+    }
+
+    private void showSoftRebootConfirmation() {
+        // 检查Android版本，软重启在Android 15已废弃
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Toast.makeText(requireContext(), getString(R.string.soft_reboot_not_supported), Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.reboot_confirm_title))
+                .setMessage(getString(R.string.soft_reboot_confirm_message))
+                .setPositiveButton(getString(R.string.confirm), (dialog, which) -> executeReboot("userspace"))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    // Use parameter "rebootTarget" to specify the target for reboot, e.g., "recovery", "bootloader
+    private void showRebootConfirmation(String rebootTarget) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        switch (rebootTarget) {
+            case "bootloader":
+                builder.setMessage(getString(R.string.bootloader_confirm_message));
+                break;
+            case "recovery":
+                builder.setMessage(getString(R.string.recovery_confirm_message));
+                break;
+            case "edl":
+                builder.setMessage(getString(R.string.edl_confirm_message));
+                break;
+            default:
+                builder.setMessage(getString(R.string.reboot_confirm_message));
+                break;
+        }
+        builder.setTitle(getString(R.string.reboot_confirm_title))
+                .setPositiveButton(getString(R.string.confirm), (dialog, which) -> executeReboot(rebootTarget))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    private void executeReboot(String rebootTarget) {
+        // argument "rebootTarget" is reused to build reboot command in this switch-case block
+        switch (rebootTarget) {
+            case "bootloader":
+                rebootTarget = "reboot bootloader";
+                break;
+            case "recovery":
+                rebootTarget = "reboot recovery";
+                break;
+            case "edl":
+                rebootTarget = "reboot edl";
+                break;
+            case "userspace":
+                rebootTarget = "reboot userspace";
+                break;
+            default:
+                rebootTarget = "reboot";
+        }
+
+        EnhancedShellExecutor.ShellResult result = EnhancedShellExecutor.getInstance()
+                .executeRootCommand(rebootTarget, 5);
+
+        if (result.isSuccess()) {
+            Toast.makeText(requireContext(), getString(R.string.reboot_success), Toast.LENGTH_SHORT).show();
+        } else {
+            String errorMsg = String.format(getString(R.string.reboot_failed), result.error);
+            Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show();
         }
     }
 }
