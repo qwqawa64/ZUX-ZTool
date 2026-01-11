@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_soft_reboot"
+        android:title="@string/soft_reboot"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/menu_reboot"
+        android:title="@string/reboot"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/menu_bootloader"
+        android:title="@string/bootloader"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/menu_recovery"
+        android:title="@string/recovery"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/menu_edl"
+        android:title="@string/edl"
+        app:showAsAction="ifRoom" />
+</menu>

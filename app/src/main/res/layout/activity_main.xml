@@ -5,6 +5,21 @@
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
 
+    <ImageButton
+        android:id="@+id/restart_button"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="36dp"
+        android:layout_marginEnd="32dp"
+        android:background="@android:color/transparent"
+        app:tint="@color/colorOnSurface"
+        android:scaleType="centerCrop"
+        app:srcCompat="@drawable/ic_restart_menu"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="@string/reboot_menu_description"
+        android:elevation="10dp"/>
+
     <!-- 主内容区域 -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"

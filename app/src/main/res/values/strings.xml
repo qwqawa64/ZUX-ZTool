@@ -31,6 +31,22 @@
     <string name="agreement_text">欢迎使用 ZTool。\n本工具基于 Root 权限与 LSPosed 框架，为运行 ZUXOS 的联想设备提供自定义功能与系统优化选项。由于本模块在设备中拥有最高控制权，请您务必仔细阅读并理解以下声明。\n如不同意，请立即退出并卸载本应用。\n声明条款\n1. 本模块仅通过 GitHub Releases 页面 官方发布。请勿安装任何来自第三方（包括但不限于网页、群组、个人分发）的 ZTool 副本，此类版本可能为恶意软件，会导致设备安全风险。若已安装不明来源的副本，请立即卸载并彻底检查系统权限及敏感目录，建议清除 Root 并重新刷机，以防潜在病毒利用高权限漏洞。\n2. 部分功能可能随系统更新而失效。如遇此类情况，请向开发者反馈，并附上本模块与 LSPosed 的详细日志。\n3. 本模块提供的功能及可能出现的异常与联想官方无关。请勿在官方渠道（包括群组、反馈平台等）中提及本模块或因此质疑官方。如更改选项后出现问题，请先恢复设置并重启作用域。违反本条可能影响后续更新支持。\n4. 本模块为遵循 Apache 2.0 协议的开源软件，在 GitHub 上免费发布。如果您为此付费，即遭遇诈骗。请立即停止使用该副本，转用本项目 GitHub Releases 页面的官方版本。\n5. ZTool 开发者保留对模块功能及上述条款的最终解释权。\n若您已阅读并同意以上内容，请在倒计时结束后点击“同意并进入”按钮。否则，点击“不同意并退出”按钮退出本应用。</string>
     <string name="agreement_confirm">同意并进入</string>
     <string name="agreement_dismiss">不同意并退出</string>
+    <!--重启菜单资源值-->
+    <string name="reboot_menu_description">重启菜单</string>
+    <string name="soft_reboot">软重启</string>
+    <string name="reboot">重启</string>
+    <string name="bootloader">Bootloader</string>
+    <string name="recovery">Recovery</string>
+    <string name="edl">EDL</string>
+    <string name="reboot_confirm_title">确认重启</string>
+    <string name="soft_reboot_confirm_message">确定要执行软重启吗？\n\n注意：软重启仅适用于Android 14及以下版本。</string>
+    <string name="reboot_confirm_message">确定要重启设备吗？</string>
+    <string name="bootloader_confirm_message">确定要重启到Bootloader模式吗？</string>
+    <string name="recovery_confirm_message">确定要重启到Recovery模式吗？</string>
+    <string name="edl_confirm_message">确定要重启到EDL模式吗？</string>
+    <string name="reboot_success">重启命令已发送</string>
+    <string name="reboot_failed">重启失败：%s</string>
+    <string name="soft_reboot_not_supported">软重启仅支持Android 14及以下版本</string>
     <!--主页资源值-->
     <string name="update_available_title">发现新版本</string>
     <string name="update_available_version_format">新版本: %1$s (Build %2$d)</string>

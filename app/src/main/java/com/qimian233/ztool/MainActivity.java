@@ -3,8 +3,10 @@ package com.qimian233.ztool;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -18,6 +20,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.color.DynamicColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.qimian233.ztool.service.LogServiceManager;
 import com.qimian233.ztool.utils.CountdownDialog;
 
@@ -26,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
 
     private BottomNavigationView bottomNav;
     private NavController navController;
+    private ImageButton restartButton;
     private boolean isEnvironmentReady = false;
     private long lastClickTime = 0;
     private static final long CLICK_INTERVAL = 300; // 限制点击间隔为300ms
@@ -58,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         // 初始化底部导航栏
         bottomNav = findViewById(R.id.bottom_navigation);
 
+        // 初始化重启按钮
+        restartButton = findViewById(R.id.restart_button);
+
         // 设置导航控制器
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         assert navHostFragment != null;
@@ -76,6 +83,9 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
 
         // 根据环境状态更新导航栏
         updateBottomNavigation(isEnvironmentReady);
+
+        // 根据环境状态更新重启的fab按钮
+        updateRebootButton(isEnvironmentReady);
 
         // 如果环境已就绪且存在保存的目的地，则导航到该目的地
         if (savedInstanceState == null && isEnvironmentReady && currentDestinationId != R.id.homeFragment) {
@@ -265,6 +275,16 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         }
     }
 
+    private void updateRebootButton(boolean environmentReady) {
+        // 如果环境就绪，将重启菜单的fab按钮设置为可见
+        if (environmentReady) {
+            restartButton.setVisibility(View.VISIBLE);
+            restartButton.setOnClickListener(v -> showRebootMenu());
+        } else {
+            restartButton.setVisibility(View.GONE);
+        }
+    }
+
 
     @Override
     public void onEnvironmentStateChanged(boolean environmentReady) {
@@ -272,10 +292,112 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
         this.isEnvironmentReady = environmentReady;
 
         updateBottomNavigation(environmentReady);
+        updateRebootButton(environmentReady);
 
         // 如果环境从不就绪变为就绪，尝试恢复到之前保存的目的地
         if (!previousState && environmentReady && currentDestinationId != R.id.homeFragment) {
             navigateToSavedDestination();
+        }
+    }
+
+    private void showRebootMenu() {
+        // 创建一个弹出菜单
+        android.widget.PopupMenu popupMenu = new android.widget.PopupMenu(this, restartButton);
+        popupMenu.getMenuInflater().inflate(R.menu.reboot_menu, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(this::onOptionsItemSelected);
+        popupMenu.show();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.menu_soft_reboot) {
+            showSoftRebootConfirmation();
+            return true;
+        } else if (itemId == R.id.menu_bootloader) {
+            showRebootConfirmation("bootloader");
+            return true;
+        } else if (itemId == R.id.menu_recovery) {
+            showRebootConfirmation("recovery");
+            return true;
+        } else if (itemId == R.id.menu_edl) {
+            showRebootConfirmation("edl");
+            return true;
+        } else if (itemId == R.id.menu_reboot) {
+            showRebootConfirmation("system");
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showSoftRebootConfirmation() {
+        // 检查Android版本，软重启在Android 15已废弃
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Toast.makeText(this, getString(R.string.soft_reboot_not_supported), Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.reboot_confirm_title))
+                .setMessage(getString(R.string.soft_reboot_confirm_message))
+                .setPositiveButton(getString(R.string.confirm), (dialog, which) -> executeReboot("userspace"))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    // Use parameter "rebootTarget" to specify the target for reboot, e.g., "recovery", "bootloader
+    private void showRebootConfirmation(String rebootTarget) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        switch (rebootTarget) {
+            case "bootloader":
+                builder.setMessage(getString(R.string.bootloader_confirm_message));
+                break;
+            case "recovery":
+                builder.setMessage(getString(R.string.recovery_confirm_message));
+                break;
+            case "edl":
+                builder.setMessage(getString(R.string.edl_confirm_message));
+                break;
+            default:
+                builder.setMessage(getString(R.string.reboot_confirm_message));
+                break;
+        }
+        builder.setTitle(getString(R.string.reboot_confirm_title))
+                .setMessage(getString(R.string.reboot_confirm_message))
+                .setPositiveButton(getString(R.string.confirm), (dialog, which) -> executeReboot(rebootTarget))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    private void executeReboot(String rebootTarget) {
+        // argument "rebootTarget" is reused to build reboot command in this switch-case block
+        switch (rebootTarget) {
+            case "bootloader":
+                rebootTarget = "reboot bootloader";
+                break;
+            case "recovery":
+                rebootTarget = "reboot recovery";
+                break;
+            case "edl":
+                rebootTarget = "reboot edl";
+                break;
+            case "userspace":
+                rebootTarget = "reboot userspace";
+                break;
+            default:
+                rebootTarget = "reboot";
+        }
+
+        EnhancedShellExecutor.ShellResult result = EnhancedShellExecutor.getInstance()
+                .executeRootCommand(rebootTarget, 5);
+
+        if (result.isSuccess()) {
+            Toast.makeText(this, getString(R.string.reboot_success), Toast.LENGTH_SHORT).show();
+        } else {
+            String errorMsg = String.format(getString(R.string.reboot_failed), result.error);
+            Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
         }
     }
 }
