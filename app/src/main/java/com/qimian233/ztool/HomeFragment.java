@@ -255,7 +255,7 @@ public class HomeFragment extends Fragment {
      */
     private void showUpdateCard(String versionName, int versionCode, String changelog, String downloadUrl) {
         if (!isAdded() || getContext() == null) return;
-        textUpdateVersion.setText(String.format("%s (Build %d)", versionName, versionCode));
+        textUpdateVersion.setText(String.format(getString(R.string.buildCode), versionName, versionCode));
 
         textUpdateChangelog.setText(changelog);
 

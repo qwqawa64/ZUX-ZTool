@@ -56,6 +56,7 @@
     <string name="update_check_failed">检查更新失败</string>
     <string name="app_name">ZTool</string>
     <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
+    <string name="buildCode">%s (Build %d)</string>
     <string name="rootManagerVersion">Root管理器: R6687BB53-kitsune:MAGISKSU (27001)</string>
     <string name="XPosedManagerVersion">XP框架: Zygisk - LSPosed v1.10.1 (7115)</string>
     <string name="deviceInfo">设备信息</string>

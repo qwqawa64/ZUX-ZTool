@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Envi
                     navController.navigate(itemId, null, builder.build());
                     return true;
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    e.getMessage();
                     return false;
                 }
             });
