@@ -73,24 +73,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="16dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_info"
-                    app:tint="?attr/colorOnErrorContainer"
-                    tools:ignore="ContentDescription" />
+                android:orientation="horizontal">
 
                 <TextView
+                    android:padding="16dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:text="@string/workModeRequirementDetail"
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnErrorContainer"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold"
+                    android:drawablePadding="16dp"
+                    app:drawableTint="?attr/colorOnErrorContainer"
+                    app:drawableStartCompat="@drawable/ic_info_24dp"
+                    app:drawableWidth="24dp"
+                    app:drawableHeight="24dp"/>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
