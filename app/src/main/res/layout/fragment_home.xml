@@ -86,9 +86,7 @@
                     android:textStyle="bold"
                     android:drawablePadding="16dp"
                     app:drawableTint="?attr/colorOnErrorContainer"
-                    app:drawableStartCompat="@drawable/ic_info_24dp"
-                    app:drawableWidth="24dp"
-                    app:drawableHeight="24dp"/>
+                    app:drawableStartCompat="@drawable/ic_info_24dp" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
