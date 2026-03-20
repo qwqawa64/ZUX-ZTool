@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -17,6 +18,9 @@ public class SystemUIRealWatts extends BaseHookModule {
 
     private static final String TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController";
 
+    private static final String PREFS_NAME = "xposed_module_config";
+
+    private static final String PACKAGE_NAME = "com.qimian233.ztool";
     // 系统文件路径
     private static final String CURRENT_NOW_PATH = "/sys/class/power_supply/battery/current_now";
     private static final String VOLTAGE_NOW_PATH = "/sys/class/power_supply/battery/voltage_now";
@@ -24,6 +28,8 @@ public class SystemUIRealWatts extends BaseHookModule {
 
     // 用于格式化功率显示，保留两位小数
     private static final DecimalFormat POWER_FORMAT = new DecimalFormat("0.00");
+
+    private static long lastUpdate = 0;
 
     @Override
     public String getModuleName() {
@@ -48,6 +54,9 @@ public class SystemUIRealWatts extends BaseHookModule {
 
     private void hookKeyguardIndicationController(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
+
+            double timeInterval = getCustomizedInterval();
+
             ClassLoader classLoader = lpparam.classLoader;
 
             // Hook computePowerIndication方法来添加充电瓦数显示
@@ -68,6 +77,10 @@ public class SystemUIRealWatts extends BaseHookModule {
 
                             // 只在充电状态下显示瓦数
                             if (isPluggedIn) {
+                                if (isCustomizedIntervalDefined() && System.currentTimeMillis() - lastUpdate < Math.round(timeInterval * 1000)) {
+                                    log("间隔时间太短，稍后再刷新充电功率");
+                                    return;
+                                }
                                 // 使用Root权限读取系统文件获取实时充电功率
                                 ChargingData chargingData = readChargingDataWithRoot();
 
@@ -75,6 +88,7 @@ public class SystemUIRealWatts extends BaseHookModule {
                                     // 使用换行符 \n 追加功率信息
                                     String newText = originalText + "\n" + formatWattage(chargingData.power);
                                     param.setResult(newText);
+                                    lastUpdate = System.currentTimeMillis();
                                     if (DEBUG) log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
                                 } else {
                                     log("未能检测到充电功率");
@@ -211,6 +225,16 @@ public class SystemUIRealWatts extends BaseHookModule {
         }
     }
 
+    private double getCustomizedInterval() {
+        XSharedPreferences sharedPrefs = new XSharedPreferences(PACKAGE_NAME, PREFS_NAME);
+        return sharedPrefs.getFloat("real_watts_refresh_interval", (float) 0.0);
+    }
+
+    private boolean isCustomizedIntervalDefined() {
+        XSharedPreferences sharedPrefs = new XSharedPreferences(PACKAGE_NAME, PREFS_NAME);
+        return sharedPrefs.getBoolean("real_watts_customized_interval", false);
+    }
+
     /**
      * 充电数据容器类
      */
@@ -220,4 +244,5 @@ public class SystemUIRealWatts extends BaseHookModule {
         float voltage;  // 伏特
         double power;   // 瓦特（保留小数）
     }
+
 }
