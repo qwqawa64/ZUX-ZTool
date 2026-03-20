@@ -1,11 +1,15 @@
 package com.qimian233.ztool.settingactivity.systemui.lockscreen;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -26,6 +30,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,11 +38,12 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
 
     private ModulePreferencesUtils mPrefsUtils;
     private MaterialSwitch switchYiYan;
-    private EditText editApiAddress, editRegex;
+    private EditText editApiAddress, editRegex, editRealWattsRefreshInterval;
     private LoadingDialog loadingDialog;
     private ModulePreferencesUtils ZToolPrefs, yiYanPrefs;
-    private Spinner spinnerChargeWatts;
-    private String[] wattOptions;
+    private Spinner spinnerChargeWatts, spinnerRealWattsRefreshInterval;
+    private LinearLayout layoutEditRealWattsRefreshInterval;
+    private String[] wattOptions, refreshIntervals;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +65,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         mPrefsUtils = new ModulePreferencesUtils(this);
         ZToolPrefs = new ModulePreferencesUtils(this);
         wattOptions = getResources().getStringArray(R.array.watt_options);
+        refreshIntervals =getResources().getStringArray(R.array.real_watt_interval);
         initYiYanViews();
         initChargeWattsViews();
         loadSettings();
@@ -99,8 +106,20 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
                 android.R.layout.simple_spinner_item,
                 wattOptions
         );
+
+        spinnerRealWattsRefreshInterval = findViewById(R.id.spinner_real_watts_interval);
+
+        ArrayAdapter<String> realWattIntervalAdapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                refreshIntervals
+        );
+
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        realWattIntervalAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
         spinnerChargeWatts.setAdapter(adapter);
+        spinnerRealWattsRefreshInterval.setAdapter(realWattIntervalAdapter);
 
         spinnerChargeWatts.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -111,6 +130,40 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
+
+        spinnerRealWattsRefreshInterval.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedOption = refreshIntervals[position];
+                handleIntervalOptionSelected(selectedOption);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        editRealWattsRefreshInterval = findViewById(R.id.edit_real_watts_refresh_interval);
+        layoutEditRealWattsRefreshInterval = findViewById(R.id.set_real_watts_refresh_interval);
+
+        boolean isRealWattEnabled = mPrefsUtils.loadBooleanSetting("systemUI_RealWatts", false);
+        layoutEditRealWattsRefreshInterval.setVisibility(isRealWattEnabled ? View.VISIBLE : View.GONE);
+
+        boolean isCustomizedIntervalEnabled = mPrefsUtils.loadBooleanSetting("real_watts_customized_interval", false);
+        editRealWattsRefreshInterval.setVisibility(isCustomizedIntervalEnabled ? View.VISIBLE : View.GONE);
+
+        editRealWattsRefreshInterval.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                saveRealWattsInterval();
+            }
+        });
     }
 
     private void handleWattOptionSelected(String selectedOption) {
@@ -118,10 +171,12 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
             case "不启用":
                 saveSettings("systemui_charge_watts", false);
                 saveSettings("systemUI_RealWatts", false);
+                layoutEditRealWattsRefreshInterval.setVisibility(View.GONE);
                 break;
             case "握手功率":
                 saveSettings("systemui_charge_watts", true);
                 saveSettings("systemUI_RealWatts", false);
+                layoutEditRealWattsRefreshInterval.setVisibility(View.GONE);
                 break;
             case "实际功率":
                 saveSettings("systemui_charge_watts", false);
@@ -137,9 +192,23 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
                             })
                             .show();
                 }
+                layoutEditRealWattsRefreshInterval.setVisibility(View.VISIBLE);
                 break;
         }
         ZToolPrefs.saveStringSetting("charge_watts_selected_option", selectedOption);
+    }
+
+    private void handleIntervalOptionSelected(String selectedOption) {
+        switch (selectedOption) {
+            case "功率变化时":
+                editRealWattsRefreshInterval.setVisibility(View.GONE);
+                mPrefsUtils.saveBooleanSetting("real_watts_customized_interval", false);
+                break;
+            case "一定时长后":
+                editRealWattsRefreshInterval.setVisibility(View.VISIBLE);
+                mPrefsUtils.saveBooleanSetting("real_watts_customized_interval", true);
+                break;
+        }
     }
 
     private void testApiConnection() {
@@ -271,6 +340,16 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         Toast.makeText(this, R.string.configuration_saved_message, Toast.LENGTH_SHORT).show();
     }
 
+    private void saveRealWattsInterval() {
+        try {
+        String refreshInterval = Objects.requireNonNull(editRealWattsRefreshInterval.getText().toString().trim());
+
+        mPrefsUtils.saveFloatSetting("real_watts_refresh_interval", Float.parseFloat(refreshInterval));
+        } catch (NumberFormatException e) {
+            Log.d("LockScreenSettingsActivity", "Empty number string, will not save it as a valid refresh interval.");
+        }
+    }
+
     private void loadSettings() {
         loadYiYanSettings();
         loadChargeWattsOption();
@@ -293,6 +372,7 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
 
         boolean chargeWattsEnabled = mPrefsUtils.loadBooleanSetting("systemui_charge_watts", false);
         boolean realWattsEnabled = mPrefsUtils.loadBooleanSetting("systemUI_RealWatts", false);
+        boolean customizedRefreshIntervalEnabled = mPrefsUtils.loadBooleanSetting("real_watts_customized_interval", false);
 
         String currentOption;
         if (chargeWattsEnabled && !realWattsEnabled) {
@@ -307,6 +387,21 @@ public class LockScreenSettingsActivity extends AppCompatActivity {
         if (position >= 0) {
             spinnerChargeWatts.setSelection(position);
         }
+
+        if (customizedRefreshIntervalEnabled) {
+            currentOption = getString(R.string.real_watt_custom_refresh_interval_enabled);
+        } else {
+            currentOption = getString(R.string.real_watt_custom_refresh_interval_disabled);
+        }
+        position = Arrays.asList(refreshIntervals).indexOf(currentOption);
+        if (position >= 0) {
+            spinnerRealWattsRefreshInterval.setSelection(position);
+        }
+
+        editRealWattsRefreshInterval.setHint(
+                String.format(
+                        getString(R.string.RealWattsRefreshIntervalInputTip),
+                        mPrefsUtils.loadFloatSetting("real_watts_refresh_interval", (float)3.0)));
 
         ZToolPrefs.saveStringSetting("charge_watts_selected_option", currentOption);
     }

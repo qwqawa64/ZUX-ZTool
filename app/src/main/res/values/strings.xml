@@ -570,6 +570,10 @@
     <string name="ChargeWattsTitle">显示充电功率</string>
     <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限\n* 重启作用域后需要最多1分钟方可生效</string>
+    <string name="RealWattsRefreshInterval">真实充电功率刷新时机</string>
+    <string name="RealWattsRefreshIntervalSummary">控制锁屏显示真实充电功率时刷新此信息的时机，不建议设置得太短</string>
+    <string name="RealWattsRefreshIntervalInputTip">当前设置为：%.1f 秒</string>
+    <string name="RealWattsIntervalSavedMessage">刷新间隔已保存</string>
     <string name="systemui_root_permission_required_message">要使用实际充电功率功能，请在Root管理器中为“系统界面”授予Root权限！</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
@@ -595,9 +599,15 @@
         <item>握手功率</item>
         <item>实际功率</item>
     </string-array>
+    <string-array name="real_watt_interval">
+        <item>功率变化时</item>
+        <item>一定时长后</item>
+    </string-array>
     <string name="watt_option_disabled">不启用</string>
     <string name="watt_option_handshake">握手功率</string>
     <string name="watt_option_actual">实际功率</string>
+    <string name="real_watt_custom_refresh_interval_enabled">一定时长后</string>
+    <string name="real_watt_custom_refresh_interval_disabled">功率变化时</string>
     <!--系统界面 控制中心页资源值-->
     <string name="ControllerDate">控制中心日期设置</string>
     <string name="CustomDateSettingTitle">自定义日期格式</string>

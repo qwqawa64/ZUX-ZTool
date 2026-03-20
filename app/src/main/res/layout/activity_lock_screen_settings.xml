@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="8dp"
@@ -118,7 +119,8 @@
                                 android:layout_weight="1"
                                 android:layout_marginStart="8dp"
                                 android:hint="@string/api_address_hint"
-                                android:textSize="14sp" />
+                                android:textSize="14sp"
+                                tools:ignore="TextFields" />
 
                             <Button
                                 android:id="@+id/button_test_api"
@@ -150,7 +152,8 @@
                                 android:layout_weight="1"
                                 android:layout_marginStart="8dp"
                                 android:hint="@string/regex_label"
-                                android:textSize="14sp" />
+                                android:textSize="14sp"
+                                tools:ignore="TextFields" />
 
                         </LinearLayout>
 
@@ -217,6 +220,70 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:spinnerMode="dropdown" />
+
+                    </LinearLayout>
+
+                    <!--显示真实功率的刷新时机，避免疯狂刷新用-->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:orientation="vertical"
+                        android:gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:layout_marginTop="16dp"
+                        android:visibility="visible"
+                        android:id="@+id/set_real_watts_refresh_interval">
+
+                        <LinearLayout
+                            android:layout_height="wrap_content"
+                            android:layout_width="match_parent"
+                            android:gravity="center_vertical">
+
+                            <LinearLayout
+                                android:layout_height="wrap_content"
+                                android:layout_width="0dp"
+                                android:orientation="vertical"
+                                android:layout_weight="1">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/RealWattsRefreshInterval"
+                                    android:textSize="16sp"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="@string/RealWattsRefreshIntervalSummary"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:textSize="12sp" />
+
+                            </LinearLayout>
+
+                            <Spinner
+                                android:id="@+id/spinner_real_watts_interval"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:spinnerMode="dropdown" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/edit_real_watts_refresh_interval_text_input"
+                            android:layout_width="256dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:visibility="visible">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/edit_real_watts_refresh_interval"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:inputType="numberDecimal"/>
+                        </com.google.android.material.textfield.TextInputLayout>
 
                     </LinearLayout>
 
