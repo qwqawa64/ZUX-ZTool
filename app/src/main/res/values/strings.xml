@@ -459,6 +459,7 @@
     <string name="FindRules_Hint">输入你需要查找的包名关键字</string>
     <string name="RulesResult">搜索结果</string>
     <string name="SearchRules">搜索</string>
+    <string name="unable_to_find_application">找不到此应用</string>
     <!--设置页：浮窗和分屏资源值-->
     <string name="embedding_Title">小窗和分屏</string>
     <string name="Float_app_Mandatory">强制小窗</string>

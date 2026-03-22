@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -110,7 +111,7 @@ public class searchPage extends AppCompatActivity {
 
             if (searchResults.isEmpty()) {
                 resultCard.setVisibility(View.GONE);
-                // 可以显示没有找到结果的提示
+                android.widget.Toast.makeText(this, getString(R.string.unable_to_find_application), Toast.LENGTH_LONG).show();
             } else {
                 resultCard.setVisibility(View.VISIBLE);
             }
