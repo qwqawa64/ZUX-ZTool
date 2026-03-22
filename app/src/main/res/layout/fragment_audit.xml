@@ -252,6 +252,17 @@
                                 app:iconTint="?attr/colorOnSurfaceVariant" />
 
                             <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_save"
+                                style="@style/Widget.Material3.Button.IconButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:elevation="0dp"
+                                android:stateListAnimator="@null"
+                                android:tooltipText="@string/logClear"
+                                app:icon="@drawable/ic_save"
+                                app:iconTint="?attr/colorOnSurfaceVariant" />
+
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/btn_refresh"
                                 style="@style/Widget.Material3.Button.TonalButton"
                                 android:layout_width="wrap_content"

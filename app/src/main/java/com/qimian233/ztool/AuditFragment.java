@@ -18,6 +18,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
@@ -36,6 +38,8 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.qimian233.ztool.audit.LogParser;
 import com.qimian233.ztool.audit.LogParser.LogEntry;
 import com.qimian233.ztool.audit.LogParser.LogLevel;
+import com.qimian233.ztool.utils.FileUtils;
+import com.qimian233.ztool.utils.FileManager;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -46,7 +50,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 日志审计界面 - 无阴影扁平版 + IME(insets)修复 + 模块显示名修复
@@ -82,17 +85,14 @@ public class AuditFragment extends Fragment {
 
     // 日志目录
     private File logDir;
-
+    
     // 处理UI更新
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     // 模块分类数据
     private Map<String, List<String>> modulesByCategory = Collections.emptyMap();
 
-    // Adapter（禁用过滤，避免下拉为空）
-    private NoFilterArrayAdapter<String> categoryAdapter;
     private NoFilterArrayAdapter<ModuleOption> moduleAdapter;
-    private NoFilterArrayAdapter<String> levelAdapter;
 
     // 当前选择（模块用 key 存，不用显示文本）
     @Nullable
@@ -104,6 +104,10 @@ public class AuditFragment extends Fragment {
     // Insets 基础值
     private int baseRecyclerPaddingBottom = 0;
     private int baseFabMarginBottom = 0;
+
+    // 导出日志
+
+    ActivityResultLauncher<String> exportLogLauncher;
 
     @Nullable
     @Override
@@ -130,6 +134,23 @@ public class AuditFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        exportLogLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/zip"), uri -> {
+            if (uri != null) {
+                showLoading(true);
+                boolean result = FileManager.exportFileWithSAF(requireContext(), uri, "logs_" + new SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.US).format(new Date()) + ".zip", zipLogFiles());
+                showLoading(false);
+                if (result) {
+                    Toast.makeText(getContext(), R.string.export_logs_success, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), R.string.export_logs_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
         // 恢复 Activity 原来的 softInputMode，避免影响别的页面
@@ -151,6 +172,7 @@ public class AuditFragment extends Fragment {
         com.google.android.material.button.MaterialButton btnRefresh = view.findViewById(R.id.btn_refresh);
         com.google.android.material.button.MaterialButton btnClear = view.findViewById(R.id.btn_clear);
         com.google.android.material.button.MaterialButton btnStats = view.findViewById(R.id.btn_stats);
+        com.google.android.material.button.MaterialButton btnSave = view.findViewById(R.id.btn_save);
 
         tvStats = view.findViewById(R.id.tv_stats);
         cbShowErrors = view.findViewById(R.id.cb_show_errors);
@@ -160,6 +182,7 @@ public class AuditFragment extends Fragment {
         btnRefresh.setOnClickListener(v -> refreshLogs());
         btnClear.setOnClickListener(v -> showClearLogsDialog());
         btnStats.setOnClickListener(v -> showStatistics());
+        btnSave.setOnClickListener(v -> saveAllLogs());
 
         etSearch.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -246,7 +269,8 @@ public class AuditFragment extends Fragment {
         Collections.sort(keys, String.CASE_INSENSITIVE_ORDER);
         categories.addAll(keys);
 
-        categoryAdapter = new NoFilterArrayAdapter<>(
+        // Adapter（禁用过滤，避免下拉为空）
+        NoFilterArrayAdapter<String> categoryAdapter = new NoFilterArrayAdapter<>(
                 requireContext(),
                 com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
                 categories
@@ -270,7 +294,7 @@ public class AuditFragment extends Fragment {
                 getString(R.string.all_levels),
                 "DEBUG", "INFO", "WARN", "ERROR"
         );
-        levelAdapter = new NoFilterArrayAdapter<>(
+        NoFilterArrayAdapter<String> levelAdapter = new NoFilterArrayAdapter<>(
                 requireContext(),
                 com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
                 levels
@@ -481,6 +505,61 @@ public class AuditFragment extends Fragment {
 
     private void refreshLogs() {
         loadAllLogFiles();
+    }
+
+    /**
+     * 将日志文件打包为zip并保存到内部存储
+     * @return 生成的zip文件，失败返回null
+     */
+    private File zipLogFiles() {
+        if (logDir == null || !logDir.exists()) return null;
+        
+        File[] logFiles = logDir.listFiles((dir, name) -> name.startsWith("hook_log_") && name.endsWith(".txt"));
+        if (logFiles == null || logFiles.length == 0) return null;
+        
+        File outputDir = new File(requireContext().getCacheDir(), "temp");
+        if (!outputDir.exists() && !outputDir.mkdirs()) return null;
+        
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+        File zipFile = new File(outputDir, "logs_" + sdf.format(new Date()) + ".zip");
+        
+        boolean success = FileUtils.createZipFromFiles(logFiles, zipFile);
+        return success ? zipFile : null;
+    }
+
+    private void saveAllLogs() {
+        showLoading(true);
+        
+        new Thread(() -> {
+            try {
+                // Zip all log files
+                File zipFile = zipLogFiles();
+                if (zipFile == null) {
+                    mainHandler.post(() -> {
+                        showLoading(false);
+                        Toast.makeText(requireContext(), R.string.zip_logs_failed, Toast.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
+                
+                // Export zip file with SAF
+                String fileName = "ZTool_Logs_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + ".zip";
+                
+                mainHandler.post(() -> {
+                    exportLogLauncher.launch(fileName);
+                    showLoading(false);
+                });
+                
+            } catch (Exception e) {
+                android.util.Log.e(TAG, "导出日志失败", e);
+                mainHandler.post(() -> {
+                    showLoading(false);
+                    Toast.makeText(requireContext(), 
+                            getString(R.string.export_logs_failed) + e.getMessage(), 
+                            Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
     }
 
     private void showClearLogsDialog() {

@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +23,37 @@ import java.util.Locale;
  */
 public class FileManager {
     private static final String TAG = "FileManager";
+
+    /**
+     * 使用 SAF 导出文件
+     * @param context 上下文
+     * @param uri 目标目录Uri
+     * @param fileName 要保存的文件名
+     * @param sourceFile 要导出的源文件
+     * @return 是否成功
+     */
+    public static boolean exportFileWithSAF(Context context, Uri uri, String fileName, File sourceFile) {
+        if (uri == null || sourceFile == null || !sourceFile.exists()) return false;
+        
+        ContentResolver resolver = context.getContentResolver();
+        try (InputStream inputStream = new FileInputStream(sourceFile);
+             OutputStream outputStream = resolver.openOutputStream(uri)) {
+            
+            if (outputStream == null) return false;
+            
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+            
+            Log.i(TAG, "文件已导出到" + uri + fileName);
+            return true;
+        } catch (IOException e) {
+            Log.e(TAG, "导出文件失败: " + e.getMessage());
+            return false;
+        }
+    }
 
     /**
      * 使用 SAF 创建文件并保存配置

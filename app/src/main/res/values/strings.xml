@@ -181,6 +181,9 @@
     <string name="log_content">日志内容</string>
     <string name="copied_to_clipboard">已复制到剪贴板</string>
     <string name="more_lines_suffix"> 更多行</string>
+    <string name="export_logs_success">日志导出成功</string>
+    <string name="export_logs_failed">日志导出失败</string>
+    <string name="zip_logs_failed">压缩日志时出现问题，无法导出日志</string>
 
     <!--设置页资源值-->
     <string name="default_title">XXX - 详细设置</string>

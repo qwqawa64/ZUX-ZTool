@@ -10,8 +10,44 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class FileUtils {
+    
+    /**
+     * 将多个文件打包为zip
+     * @param files 要打包的文件数组
+     * @param outputZip 输出的zip文件
+     * @return 是否成功
+     */
+    public static boolean createZipFromFiles(File[] files, File outputZip) {
+        if (files == null || files.length == 0 || outputZip == null) return false;
+        
+        try (FileOutputStream fos = new FileOutputStream(outputZip);
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+            
+            byte[] buffer = new byte[1024];
+            
+            for (File file : files) {
+                if (!file.exists() || file.isDirectory()) continue;
+                
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    ZipEntry zipEntry = new ZipEntry(file.getName());
+                    zos.putNextEntry(zipEntry);
+                    
+                    int length;
+                    while ((length = fis.read(buffer)) > 0) {
+                        zos.write(buffer, 0, length);
+                    }
+                    zos.closeEntry();
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     // 递归删除目录
     public static void deleteRecursive(File fileOrDirectory) {
