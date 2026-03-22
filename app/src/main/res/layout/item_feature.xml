@@ -38,7 +38,7 @@
 
             <TextView
                 android:id="@+id/text_app_name"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="Application Name"
                 android:textSize="16sp"
@@ -47,7 +47,7 @@
 
             <TextView
                 android:id="@+id/text_app_desc"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="Application description"
                 android:textSize="12sp"
