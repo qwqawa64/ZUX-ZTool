@@ -178,7 +178,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
                     // 记录调试信息
                     if (DEBUG) {
-                        log(String.format("Speed update - downSpeed=%d, upSpeed=%d, timeDiff=%d",
+                        log(String.format("Successfully updated speed - downSpeed=%d, upSpeed=%d, timeDiff=%d",
                                 downSpeed, upSpeed, timeDiff));
                     }
 
