@@ -72,6 +72,7 @@ public class PreferenceHelper {
     /**
      * 读取浮点数配置
      */
+    @SuppressWarnings("unused")
     public float getFloat(String key, float defaultValue) {
         reload();
         return mPreferences.getFloat(key, defaultValue);
@@ -80,6 +81,7 @@ public class PreferenceHelper {
     /**
      * 读取长整数配置
      */
+    @SuppressWarnings("unused")
     public long getLong(String key, long defaultValue) {
         reload();
         return mPreferences.getLong(key, defaultValue);
