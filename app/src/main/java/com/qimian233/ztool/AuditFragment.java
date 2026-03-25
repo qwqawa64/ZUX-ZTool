@@ -259,20 +259,19 @@ public class AuditFragment extends Fragment {
 
     private void setupFilters() {
         modulesByCategory = LogParser.getModulesByCategory();
-        if (modulesByCategory == null) modulesByCategory = Collections.emptyMap();
 
         // --- Category ---
         List<String> categories = new ArrayList<>();
         categories.add(getString(R.string.all_categories));
 
         List<String> keys = new ArrayList<>(modulesByCategory.keySet());
-        Collections.sort(keys, String.CASE_INSENSITIVE_ORDER);
+        keys.sort(String.CASE_INSENSITIVE_ORDER);
         categories.addAll(keys);
 
         // Adapter（禁用过滤，避免下拉为空）
         NoFilterArrayAdapter<String> categoryAdapter = new NoFilterArrayAdapter<>(
                 requireContext(),
-                com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
+                R.layout.item_auto_complete_simple,
                 categories
         );
         spinnerCategory.setAdapter(categoryAdapter);
@@ -296,7 +295,7 @@ public class AuditFragment extends Fragment {
         );
         NoFilterArrayAdapter<String> levelAdapter = new NoFilterArrayAdapter<>(
                 requireContext(),
-                com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
+                R.layout.item_auto_complete_simple,
                 levels
         );
         spinnerLevel.setAdapter(levelAdapter);
@@ -337,7 +336,7 @@ public class AuditFragment extends Fragment {
             if (list != null) moduleKeys.addAll(list);
         } else {
             List<String> all = LogParser.getAvailableModules();
-            if (all != null) moduleKeys.addAll(all);
+            moduleKeys.addAll(all);
         }
 
         // 组装显示项：显示名来自 LogParser.getModuleDisplayName（你的数据源）
@@ -352,7 +351,7 @@ public class AuditFragment extends Fragment {
         if (moduleAdapter == null) {
             moduleAdapter = new NoFilterArrayAdapter<>(
                     requireContext(),
-                    com.google.android.material.R.layout.mtrl_auto_complete_simple_item,
+                    R.layout.item_auto_complete_simple,
                     options
             );
             spinnerModule.setAdapter(moduleAdapter);
