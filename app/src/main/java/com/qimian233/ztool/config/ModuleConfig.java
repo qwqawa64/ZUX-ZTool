@@ -5,14 +5,14 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class ModuleConfig {
     private static final String PREFS_NAME = "xposed_module_config";
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
 
-    private static SharedPreferences getPreferences() {
+    @SuppressWarnings("unused")
+    private SharedPreferences getPreferences() {
         SharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
         if (prefs != null) {
 //            XposedBridge.log("ModuleConfig: √ Successfully accessed com.qimian233.ztool preferences");
@@ -22,7 +22,7 @@ public class ModuleConfig {
 
         // 方法2：尝试直接通过模块上下文获取
         try {
-            Context moduleContext = getModuleContext();
+            Context moduleContext = this.getModuleContext();
             if (moduleContext != null) {
                 SharedPreferences directPrefs = moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
                 // 测试直接上下文的读写能力
@@ -30,10 +30,7 @@ public class ModuleConfig {
                 boolean success = directPrefs.edit().putBoolean("test_key_direct", testValue).commit();
 
                 if (success) {
-//                    Log.d("ModuleConfig", "Successfully accessed module preferences via direct context");
                     return directPrefs;
-                } else {
-//                    Log.e("ModuleConfig", "Failed to commit test value to direct context preferences");
                 }
             }
         } catch (Throwable e) {
@@ -44,9 +41,9 @@ public class ModuleConfig {
         return null;
     }
 
-    private static Context moduleContext = null;
+    private Context moduleContext = null;
 
-    private static synchronized Context getModuleContext() {
+    private synchronized Context getModuleContext() {
         if (moduleContext != null) {
             return moduleContext;
         }
@@ -82,30 +79,22 @@ public class ModuleConfig {
             if (moduleName.equals("Custom_StatusBarClock")) {
                 return result;
             }
-//            XposedBridge.log(String.format("ModuleConfig: Read %s = %s (prefs: %s)", moduleName, result, prefs));
-//            Log.d("ModuleConfig", String.format("Read %s: %s (prefs: %s)", moduleName, result, prefs));
             return result;
         } else {
-//            XposedBridge.log("ModuleConfig: Preferences is null, returning default true");
-//            Log.w("ModuleConfig", "Preferences is null, returning default true");
             return false;
         }
     }
 
+    @SuppressWarnings("unused")
     public static void setModuleEnabled(String moduleName, boolean enabled) {
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
         if (prefs != null) {
             boolean success = prefs.edit()
                     .putBoolean(moduleName, enabled)
                     .commit();
-//            XposedBridge.log(String.format("ModuleConfig: Set %s to %s, success: %s", moduleName, enabled, success));
-//            Log.d("ModuleConfig", String.format("Set %s to %s, success: %s", moduleName, enabled, success));
             if (!success) {
                 dumpAllPreferences();
             }
-        } else {
-//            XposedBridge.log("ModuleConfig: Failed to set module enabled - preferences is null");
-//            Log.e("ModuleConfig", "Failed to set module enabled - preferences is null");
         }
     }
 
