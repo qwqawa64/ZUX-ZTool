@@ -10,7 +10,8 @@
         android:id="@+id/app_icon"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginEnd="16dp" />
+        android:layout_marginEnd="16dp"
+        android:contentDescription="@string/app_icon" />
 
     <LinearLayout
         android:layout_width="0dp"
