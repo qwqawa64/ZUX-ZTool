@@ -3,6 +3,7 @@ package com.qimian233.ztool;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
@@ -368,9 +371,16 @@ public class AuditFragment extends Fragment {
         // 清掉搜索焦点，避免 ROM 抽风导致 IME/insets 状态卡住
         etSearch.clearFocus();
 
-        WindowInsetsControllerCompat controller = ViewCompat.getWindowInsetsController(rootView);
-        if (controller != null) {
-            controller.hide(WindowInsetsCompat.Type.ime());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = rootView.getWindowInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.ime());
+            }
+        } else {
+            @SuppressWarnings("deprecation") WindowInsetsControllerCompat controller = ViewCompat.getWindowInsetsController(rootView);
+            if (controller != null) {
+                controller.hide(WindowInsetsCompat.Type.ime());
+            }
         }
 
         // 强制触发 insets 重新分发（非常关键）
@@ -754,6 +764,7 @@ public class AuditFragment extends Fragment {
 
         public void setLogEntries(List<LogEntry> entries) {
             this.logEntries = entries != null ? entries : new ArrayList<>();
+            //notifyItemInserted(logEntries.size() - 1);
             notifyDataSetChanged();
         }
 
