@@ -24,6 +24,7 @@
     <string name="framework">Framework</string>
     <string name="multiply">×</string>
     <string name="misc">杂项</string>
+    <string name="app_icon">应用图标</string>
     <!--FirstRun资源值-->
     <string name="user_confirm_agreement">已确认声明</string>
     <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
