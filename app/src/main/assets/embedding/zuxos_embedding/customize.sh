@@ -3,6 +3,10 @@
 # Magisk 模块安装脚本
 MODDIR=${0%/*}
 
+if ! command -v ui_print >/dev/null 2>&1; then
+  ui_print() { echo "$1"; }
+fi
+
 ui_print "********************************"
 ui_print "ZUXOS 平行视界配置模块安装"
 ui_print "适配策略移植自模块 [HyperOS完美横屏计划] 作者：酷安@做梦书等"
