@@ -91,13 +91,21 @@ public class DisableGameAudio extends BaseHookModule {
      */
     private void hookPhoneWindowManager(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
-            if (android.os.Build.VERSION.SDK_INT <=35) {
-            log("Attempting to hook PhoneWindowManager");
-
+            Class<?> targetClass = XposedHelpers.findClassIfExists("com.android.server.policy.PhoneWindowManager$ZuiGameAppStateListener", lpparam.classLoader);
+            if (targetClass == null) {
+                targetClass = XposedHelpers.findClassIfExists("com.android.server.policy.PhoneWindowManager$2", lpparam.classLoader);
+                if (targetClass == null) {
+                    log("Failed to find target class for PhoneWindowManager");
+                    return;
+                } else {
+                    log("Found alternative class for PhoneWindowManager");
+                }
+            } else {
+                log("Found target class for PhoneWindowManager");
+            }
             // Hook ZuiGameAppStateListener 的 onGameAppStart 方法
             XposedHelpers.findAndHookMethod(
-                    "com.android.server.policy.PhoneWindowManager$ZuiGameAppStateListener",
-                    lpparam.classLoader,
+                    targetClass,
                     "onGameAppStart",
                     String.class,
                     String.class,
@@ -116,8 +124,7 @@ public class DisableGameAudio extends BaseHookModule {
 
             // Hook ZuiGameAppStateListener 的 onGameAppExit 方法
             XposedHelpers.findAndHookMethod(
-                    "com.android.server.policy.PhoneWindowManager$ZuiGameAppStateListener",
-                    lpparam.classLoader,
+                    targetClass,
                     "onGameAppExit",
                     String.class,
                     String.class,
@@ -130,11 +137,10 @@ public class DisableGameAudio extends BaseHookModule {
                     });
 
             log("Successfully hooked PhoneWindowManager");
-            } else {
-                if (DEBUG) log("Unsupported API level: " + android.os.Build.VERSION.SDK_INT + " skipping...");
-            }
+        } catch (XposedHelpers.ClassNotFoundError e) {
+            log("Failed to hook PhoneWindowManager, unable to find target class!");
         } catch (Exception e) {
-            logError("Failed to hook PhoneWindowManager", e);
+            logError("Failed to hook PhoneWindowManager due to unknown reason: ", e);
         }
     }
 
