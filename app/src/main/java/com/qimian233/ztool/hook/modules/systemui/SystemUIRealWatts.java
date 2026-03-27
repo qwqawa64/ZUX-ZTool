@@ -57,6 +57,8 @@ public class SystemUIRealWatts extends BaseHookModule {
 
             double timeInterval = getCustomizedInterval();
 
+            if (DEBUG) log("自定义刷新间隔：" + timeInterval * 1000 + "ms");
+
             ClassLoader classLoader = lpparam.classLoader;
 
             // Hook computePowerIndication方法来添加充电瓦数显示
@@ -77,8 +79,9 @@ public class SystemUIRealWatts extends BaseHookModule {
 
                             // 只在充电状态下显示瓦数
                             if (isPluggedIn) {
-                                if (isCustomizedIntervalDefined() && System.currentTimeMillis() - lastUpdate < Math.round(timeInterval * 1000)) {
+                                if (isCustomizedIntervalDefined() && System.currentTimeMillis() - lastUpdate < Math.round(timeInterval * 1000) && DEBUG) {
                                     log("间隔时间太短，稍后再刷新充电功率");
+                                    log("下次刷新：" + (Math.round(timeInterval * 1000) - (System.currentTimeMillis() - lastUpdate)) + "ms");
                                     return;
                                 }
                                 // 使用Root权限读取系统文件获取实时充电功率
