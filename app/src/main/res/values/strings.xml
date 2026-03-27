@@ -576,7 +576,7 @@
     <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限\n* 重启作用域后需要最多1分钟方可生效</string>
     <string name="RealWattsRefreshInterval">真实充电功率刷新时机</string>
-    <string name="RealWattsRefreshIntervalSummary">控制锁屏显示真实充电功率时刷新此信息的时机，不建议设置得太短</string>
+    <string name="RealWattsRefreshIntervalSummary">控制锁屏显示真实充电功率时刷新此信息的时机，设置成0.1其实就差不多了</string>
     <string name="RealWattsRefreshIntervalInputTip">当前设置为：%.1f 秒</string>
     <string name="RealWattsIntervalSavedMessage">刷新间隔已保存</string>
     <string name="systemui_root_permission_required_message">要使用实际充电功率功能，请在Root管理器中为“系统界面”授予Root权限！</string>
