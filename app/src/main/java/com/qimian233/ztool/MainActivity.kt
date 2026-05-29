@@ -32,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentContainerView
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
@@ -320,17 +319,23 @@ private fun LegacyNavHost(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
-            }.also { container ->
-                val existing = activity.supportFragmentManager
-                    .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-                val navHostFragment = existing ?: NavHostFragment.create(R.navigation.nav_graph).also {
-                    activity.supportFragmentManager
-                        .beginTransaction()
-                        .replace(R.id.nav_host_fragment, it)
-                        .setPrimaryNavigationFragment(it)
-                        .commitNow()
-                }
-                onNavHostReady(navHostFragment)
+                addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(view: android.view.View) {
+                        removeOnAttachStateChangeListener(this)
+                        val existing = activity.supportFragmentManager
+                            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                        val navHostFragment = existing ?: NavHostFragment.create(R.navigation.nav_graph).also {
+                            activity.supportFragmentManager
+                                .beginTransaction()
+                                .replace(R.id.nav_host_fragment, it)
+                                .setPrimaryNavigationFragment(it)
+                                .commitNow()
+                        }
+                        onNavHostReady(navHostFragment)
+                    }
+
+                    override fun onViewDetachedFromWindow(view: android.view.View) = Unit
+                })
             }
         }
     )
