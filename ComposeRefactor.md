@@ -408,6 +408,7 @@
   - `settingactivity/setting/SettingsDetailActivity.kt`：系统设置详情页已迁移到 Compose，保留原类名和启动入口；保留 `remove_blacklist`、`Split_Screen_mandatory`、`allow_display_dolby`、`PermissionControllerHook`、`AlwaysDisplaySuggestion` 配置键；保留 Magisk/KSU 一视界模块安装与移除、强制小窗 root 命令、悬浮窗适配向导、手动适配策略刷入、ZUI `ov_common_persist_user_0.xml` 配置选择、字体导入与重启作用域逻辑；复杂选择器和字体输入暂时继续复用现有 View Dialog/工具类，页面主体、开关和重启确认已改为 Compose。
   - `AuditFragment.kt`：日志审计页已迁移到 Compose，保留 Fragment 路由入口与 `LogParser` 数据解析逻辑；RecyclerView/Adapter 改为 Compose `LazyColumn`，类别/模块/级别筛选改为 Compose 下拉菜单，搜索、仅显示错误、刷新、清除、统计、导出和日志详情改为 Compose 状态与 Dialog；日志 zip 导出继续使用 SAF `CreateDocument` 与现有 `FileManager`/`FileUtils`。
   - `settingactivity/ota/OtaSettings.kt`：系统更新设置页已迁移到 Compose，保留原类名和启动入口；保留 `custom_ota_parameters`、`disable_OtaCheck`、`Custom_ota_target_versionName`、`Custom_ota_target_deviceID` 配置键；OTA 信息拉取结果和 9008/深刷包查询结果已改为页面内状态区域展示，提供复制下载链接、复制更新日志和复制密码操作；保留当前系统版本/SN 读取、root 读取 OTA XML、XML 解析、`GetPCFlashFirmware` 异步查询和重启 `app_package` + `com.lenovo.tbengine` 作用域逻辑。
+  - `settingactivity/systemui/systemUISettings.kt`：系统界面设置聚合页已迁移到 Compose，保留原小写类名和启动入口；保留状态栏、锁屏、控制中心三个子设置入口；保留 `ForceNativeAOD`、`ForceLenovoAOD`、`No_ChargeAnimation`、`charge_animation_fix`、`guest_mode_controller` 配置键；保留原生 AOD secure setting 写入、联想 AOD 入口启动、AOD 互斥处理和重启 `app_package` + `com.zui.wallpapersetting` 作用域逻辑。
 
   最近验证
 
@@ -425,10 +426,11 @@
   - 2026-05-29：完成 `SettingsDetailActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。未新增迁移页面 warning；仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `AuditFragment` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `OtaSettings` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
+  - 2026-05-29：完成 `systemUISettings` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
 
   下一步候选
 
-  - 下一步可继续评估剩余传统页面，例如 `HomeFragment.java` 或 `settingactivity/systemui/systemUISettings.java`。两者业务逻辑都较重，应先拆状态再迁移 UI。
+  - 下一步可继续评估 `HomeFragment.java`。首页业务逻辑最重，应先拆环境检测、系统信息、更新检查和配置升级状态，再迁移 UI。
 
   OtaSettings 迁移实施计划（2026-05-29）
 
@@ -455,5 +457,5 @@
 
   当前停止点
 
-  - 已完成并验证：`OtaSettings` 页面 Compose 化。
-  - 下一次继续时，建议评估 `HomeFragment.java` 或 `systemUISettings.java`，优先拆出环境/系统状态读取与页面状态，再做 Compose 化。
+  - 已完成并验证：`systemUISettings` 页面 Compose 化。
+  - 下一次继续时，建议评估 `HomeFragment.java`，优先拆出环境/系统状态读取、更新检查和配置升级提示，再做 Compose 化。
