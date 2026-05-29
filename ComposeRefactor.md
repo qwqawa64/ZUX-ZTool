@@ -173,12 +173,14 @@ The following settings screens now consume a single screen state object instead 
 - `settingactivity/packageinstaller/packageinstallersettings.kt`: `PackageInstallerSettingsUiState`.
 - `settingactivity/safecenter/SafeCenterSettingsActivity.kt`: `SafeCenterSettingsUiState`.
 - `settingactivity/gametool/GameToolSettngs.kt`: `GameToolSettingsUiState`.
+- `settingactivity/launcher/LauncherSettingsActivity.kt`: `LauncherSettingsUiState`.
 
 Preserved behavior:
 
 - Existing Activity class names and packages.
 - Existing preference keys for package installer and safe center hooks.
 - Existing preference keys for game tool hooks and mistake-touch whitelist configuration.
+- Existing preference keys for launcher force-stop, dock, and grid configuration.
 - Existing restart confirmation and restart scope behavior.
 - Existing root/shell behavior.
 
@@ -191,6 +193,7 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the package installer and safe center consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the game tool consolidation.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the launcher consolidation.
 
 ## Full Refactor Roadmap
 

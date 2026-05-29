@@ -62,13 +62,7 @@ class LauncherSettingsActivity : ComponentActivity() {
     private var appPackageName: String? = null
     private lateinit var prefsUtils: ModulePreferencesUtils
 
-    private var forceStopMode by mutableStateOf(ForceStopMode.Default)
-    private var forceStopWhitelist by mutableStateOf<List<String>>(emptyList())
-    private var moreBigDock by mutableStateOf(false)
-    private var customGridSize by mutableStateOf(false)
-    private var customGridRow by mutableStateOf(4)
-    private var customGridColumn by mutableStateOf(6)
-    private var showRestartConfirmDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(LauncherSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,36 +77,31 @@ class LauncherSettingsActivity : ComponentActivity() {
             ZToolTheme {
                 LauncherSettingsScreen(
                     title = appName + stringResource(R.string.launcher_settings_title_suffix),
-                    forceStopMode = forceStopMode,
-                    forceStopWhitelistCount = forceStopWhitelist.size,
-                    moreBigDock = moreBigDock,
-                    customGridSize = customGridSize,
-                    customGridRow = customGridRow,
-                    customGridColumn = customGridColumn,
+                    state = uiState,
                     onBack = ::finish,
-                    onRestart = { showRestartConfirmDialog = true },
+                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
                     onForceStopModeChanged = ::handleForceStopModeChanged,
                     onSelectForceStopWhitelist = ::selectForceStopWhitelist,
                     onMoreBigDockChanged = {
-                        moreBigDock = it
+                        uiState = uiState.copy(moreBigDock = it)
                         saveSettings("zui_launcher_hotseat", it)
                     },
                     onCustomGridSizeChanged = {
-                        customGridSize = it
+                        uiState = uiState.copy(customGridSize = it)
                         saveSettings("CustomGridSize", it)
                     },
                     onCustomGridRowChanged = ::handleGridRowChanged,
                     onCustomGridColumnChanged = ::handleGridColumnChanged
                 )
 
-                if (showRestartConfirmDialog) {
+                if (uiState.showRestartConfirmDialog) {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            showRestartConfirmDialog = false
+                            uiState = uiState.copy(showRestartConfirmDialog = false)
                             forceStopApp()
                         },
-                        onDismiss = { showRestartConfirmDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
                     )
                 }
             }
@@ -120,19 +109,23 @@ class LauncherSettingsActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        forceStopWhitelist = loadForceStopWhitelist()
+        val forceStopWhitelist = loadForceStopWhitelist()
         val disableForceStop = prefsUtils.loadBooleanSetting("disable_force_stop", false)
         val whitelistEnabled = prefsUtils.loadBooleanSetting("ForceStopWhiteListEnable", false)
-        forceStopMode = when {
+        val forceStopMode = when {
             disableForceStop && whitelistEnabled -> ForceStopMode.Whitelist
             disableForceStop -> ForceStopMode.AllApps
             else -> ForceStopMode.Default
         }
 
-        moreBigDock = prefsUtils.loadBooleanSetting("zui_launcher_hotseat", false)
-        customGridSize = prefsUtils.loadBooleanSetting("CustomGridSize", false)
-        customGridRow = prefsUtils.loadIntegerSetting("CustomLauncherRow", 4).coerceIn(GRID_MIN, GRID_MAX)
-        customGridColumn = prefsUtils.loadIntegerSetting("CustomLauncherColumn", 6).coerceIn(GRID_MIN, GRID_MAX)
+        uiState = uiState.copy(
+            forceStopMode = forceStopMode,
+            forceStopWhitelist = forceStopWhitelist,
+            moreBigDock = prefsUtils.loadBooleanSetting("zui_launcher_hotseat", false),
+            customGridSize = prefsUtils.loadBooleanSetting("CustomGridSize", false),
+            customGridRow = prefsUtils.loadIntegerSetting("CustomLauncherRow", 4).coerceIn(GRID_MIN, GRID_MAX),
+            customGridColumn = prefsUtils.loadIntegerSetting("CustomLauncherColumn", 6).coerceIn(GRID_MIN, GRID_MAX)
+        )
     }
 
     private fun loadForceStopWhitelist(): List<String> {
@@ -143,7 +136,7 @@ class LauncherSettingsActivity : ComponentActivity() {
     }
 
     private fun handleForceStopModeChanged(mode: ForceStopMode) {
-        forceStopMode = mode
+        uiState = uiState.copy(forceStopMode = mode)
         when (mode) {
             ForceStopMode.Default -> {
                 saveSettings("disable_force_stop", false)
@@ -164,7 +157,7 @@ class LauncherSettingsActivity : ComponentActivity() {
         AppChooserDialog.show(
             this,
             getUserInstalledPackageNames(this),
-            forceStopWhitelist,
+            uiState.forceStopWhitelist,
             getString(R.string.force_stop_title),
             object : AppChooserDialog.AppSelectionCallback {
                 override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
@@ -172,7 +165,7 @@ class LauncherSettingsActivity : ComponentActivity() {
                     selectedPackageNames.forEach {
                         Log.d(TAG, "Selected protected app package: $it")
                     }
-                    forceStopWhitelist = selectedPackageNames
+                    uiState = uiState.copy(forceStopWhitelist = selectedPackageNames)
                     prefsUtils.saveStringSetting(
                         "ForceStopWhiteList",
                         selectedPackageNames.joinToString(separator = ",", postfix = ",")
@@ -185,18 +178,18 @@ class LauncherSettingsActivity : ComponentActivity() {
     }
 
     private fun handleGridRowChanged(value: Int) {
-        customGridRow = value.coerceIn(GRID_MIN, GRID_MAX)
+        uiState = uiState.copy(customGridRow = value.coerceIn(GRID_MIN, GRID_MAX))
         saveGridValues()
     }
 
     private fun handleGridColumnChanged(value: Int) {
-        customGridColumn = value.coerceIn(GRID_MIN, GRID_MAX)
+        uiState = uiState.copy(customGridColumn = value.coerceIn(GRID_MIN, GRID_MAX))
         saveGridValues()
     }
 
     private fun saveGridValues() {
-        prefsUtils.saveIntegerSetting("CustomLauncherRow", customGridRow)
-        prefsUtils.saveIntegerSetting("CustomLauncherColumn", customGridColumn)
+        prefsUtils.saveIntegerSetting("CustomLauncherRow", uiState.customGridRow)
+        prefsUtils.saveIntegerSetting("CustomLauncherColumn", uiState.customGridColumn)
     }
 
     private fun forceStopApp() {
@@ -244,16 +237,24 @@ private enum class ForceStopMode {
     Whitelist
 }
 
+private data class LauncherSettingsUiState(
+    val forceStopMode: ForceStopMode = ForceStopMode.Default,
+    val forceStopWhitelist: List<String> = emptyList(),
+    val moreBigDock: Boolean = false,
+    val customGridSize: Boolean = false,
+    val customGridRow: Int = 4,
+    val customGridColumn: Int = 6,
+    val showRestartConfirmDialog: Boolean = false
+) {
+    val forceStopWhitelistCount: Int
+        get() = forceStopWhitelist.size
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LauncherSettingsScreen(
     title: String,
-    forceStopMode: ForceStopMode,
-    forceStopWhitelistCount: Int,
-    moreBigDock: Boolean,
-    customGridSize: Boolean,
-    customGridRow: Int,
-    customGridColumn: Int,
+    state: LauncherSettingsUiState,
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onForceStopModeChanged: (ForceStopMode) -> Unit,
@@ -311,12 +312,12 @@ private fun LauncherSettingsScreen(
             ) {
                 SettingsCard(title = stringResource(R.string.disable_force_stop_title)) {
                     ForceStopModeRow(
-                        selectedMode = forceStopMode,
+                        selectedMode = state.forceStopMode,
                         onModeChanged = onForceStopModeChanged
                     )
-                    if (forceStopMode == ForceStopMode.Whitelist) {
+                    if (state.forceStopMode == ForceStopMode.Whitelist) {
                         WhitelistRow(
-                            whitelistCount = forceStopWhitelistCount,
+                            whitelistCount = state.forceStopWhitelistCount,
                             onClick = onSelectForceStopWhitelist
                         )
                     }
@@ -328,7 +329,7 @@ private fun LauncherSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.moreBig_dockTitle),
                         summary = stringResource(R.string.moreBig_dockSummary),
-                        checked = moreBigDock,
+                        checked = state.moreBigDock,
                         onCheckedChange = onMoreBigDockChanged
                     )
                 }
@@ -339,10 +340,10 @@ private fun LauncherSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.customGridTitle),
                         summary = stringResource(R.string.customGridSummary),
-                        checked = customGridSize,
+                        checked = state.customGridSize,
                         onCheckedChange = onCustomGridSizeChanged
                     )
-                    if (customGridSize) {
+                    if (state.customGridSize) {
                         Text(
                             text = stringResource(R.string.customGridInputZoneTitle),
                             style = MaterialTheme.typography.titleMedium,
@@ -350,8 +351,8 @@ private fun LauncherSettingsScreen(
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                         )
                         GridSliderRows(
-                            row = customGridRow,
-                            column = customGridColumn,
+                            row = state.customGridRow,
+                            column = state.customGridColumn,
                             onRowChanged = onCustomGridRowChanged,
                             onColumnChanged = onCustomGridColumnChanged
                         )
