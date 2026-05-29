@@ -406,6 +406,7 @@
   - `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`：状态栏设置页已迁移到 Compose，保留原类名和启动入口；保留 `StatusBarDisplay_Seconds`、`Custom_StatusBarClock`、`Custom_StatusBarClockFormat`、`Custom_StatusBarClockTextSize`、`Custom_StatusBarClockTextSizeEnabled`、`Custom_StatusBarClockLetterSpacing`、`Custom_StatusBarClockLetterSpacingEnabled`、`Custom_StatusBarClockTextColor`、`Custom_StatusBarClockTextColorEnabled`、`Custom_StatusBarClockTextBold`、`NativeNotificationIcon`、`notification_icon_limit`、`systemui_network_speed_size`、`systemui_network_speed_doublelayer`、`systemui_battery_percentage` 配置键；保留 `StatusBar_notifyNumSize` world-readable SharedPreferences 写入行为；SeekBar/Spinner/Dialog 改为 Compose Slider/下拉菜单/Dialog。
   - `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`：控制中心时间设置页已迁移到 Compose，保留原类名、包名和启动入口；保留 `Custom_ControlCenterDate`、`Custom_ControlCenterDateFormat`、`Custom_ControlCenterDateTextSize`、`Custom_ControlCenterDateTextSizeEnabled`、`Custom_ControlCenterDateLetterSpacing`、`Custom_ControlCenterDateLetterSpacingEnabled`、`Custom_ControlCenterDateTextColor`、`Custom_ControlCenterDateTextColorEnabled`、`Custom_ControlCenterDateTextBold` 配置键；日期格式输入、实时预览、格式帮助、示例复制、颜色选择、字体大小与字间距 SeekBar 均改为 Compose TextField/Dialog/Slider。
   - `settingactivity/setting/SettingsDetailActivity.kt`：系统设置详情页已迁移到 Compose，保留原类名和启动入口；保留 `remove_blacklist`、`Split_Screen_mandatory`、`allow_display_dolby`、`PermissionControllerHook`、`AlwaysDisplaySuggestion` 配置键；保留 Magisk/KSU 一视界模块安装与移除、强制小窗 root 命令、悬浮窗适配向导、手动适配策略刷入、ZUI `ov_common_persist_user_0.xml` 配置选择、字体导入与重启作用域逻辑；复杂选择器和字体输入暂时继续复用现有 View Dialog/工具类，页面主体、开关和重启确认已改为 Compose。
+  - `AuditFragment.kt`：日志审计页已迁移到 Compose，保留 Fragment 路由入口与 `LogParser` 数据解析逻辑；RecyclerView/Adapter 改为 Compose `LazyColumn`，类别/模块/级别筛选改为 Compose 下拉菜单，搜索、仅显示错误、刷新、清除、统计、导出和日志详情改为 Compose 状态与 Dialog；日志 zip 导出继续使用 SAF `CreateDocument` 与现有 `FileManager`/`FileUtils`。
 
   最近验证
 
@@ -421,14 +422,13 @@
   - 2026-05-29：完成 `StatusBarSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。新增 `MODE_WORLD_READABLE` deprecated warning，这是原状态栏通知数量 Hook 需要的兼容行为，暂时保留；游戏助手页 `menuAnchor()` warning 仍待后续处理。
   - 2026-05-29：完成 `ControlCenterSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `SettingsDetailActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。未新增迁移页面 warning；仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
+  - 2026-05-29：完成 `AuditFragment` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
 
   下一步候选
 
-  - 优先继续迁移主页面中风险较低的页面，例如：
-      - `AuditFragment.java`
-  - 暂缓迁移 `OtaSettings.java`，因为它包含输入框、异步拉取、剪贴板、多个自定义 Dialog 和 root 文件读取，适合在通用设置页模式稳定后处理。
+  - 下一步可迁移 `settingactivity/ota/OtaSettings.java`。建议按评估结果重排页面：OTA 信息拉取结果和 9008 固件链接查询结果直接内联展示在 `OtaSettings` 页面中，仅保留必要的错误提示和重启确认 Dialog。
 
   当前停止点
 
-  - 已完成并验证：`SettingsDetailActivity` 页面 Compose 化。
-  - 下一次继续时，建议优先评估 `AuditFragment.java` 或重新评估 `OtaSettings.java` 是否可拆分迁移；`OtaSettings.java` 复杂度仍明显高于普通开关设置页。
+  - 已完成并验证：`AuditFragment` 页面 Compose 化。
+  - 下一次继续时，建议处理 `OtaSettings.java`，但应先把 OTA 信息和 9008 查询结果设计为页面内状态区域，避免继续堆叠多个自定义 Dialog。
