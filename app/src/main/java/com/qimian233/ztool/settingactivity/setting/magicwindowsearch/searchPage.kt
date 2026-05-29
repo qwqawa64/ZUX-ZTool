@@ -67,11 +67,7 @@ import java.util.Locale
 class searchPage : ComponentActivity() {
 
     private var embeddingConfig: JSONObject? = null
-    private var tipsText by mutableStateOf("")
-    private var keyword by mutableStateOf("")
-    private var searchResults by mutableStateOf<List<PackageInfo>>(emptyList())
-    private var selectedPackage by mutableStateOf<PackageInfo?>(null)
-    private var hasSearched by mutableStateOf(false)
+    private var uiState by mutableStateOf(SearchPageUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -82,20 +78,17 @@ class searchPage : ComponentActivity() {
         setContent {
             ZToolTheme {
                 SearchPageScreen(
-                    tipsText = tipsText,
-                    keyword = keyword,
-                    results = searchResults,
-                    hasSearched = hasSearched,
-                    onKeywordChanged = { keyword = it },
+                    state = uiState,
+                    onKeywordChanged = { uiState = uiState.copy(keyword = it) },
                     onSearch = ::performSearch,
-                    onResultClick = { selectedPackage = it },
+                    onResultClick = { uiState = uiState.copy(selectedPackage = it) },
                     onNavigateBack = ::finish
                 )
 
-                selectedPackage?.let { packageInfo ->
+                uiState.selectedPackage?.let { packageInfo ->
                     PackageDetailsDialog(
                         packageInfo = packageInfo,
-                        onDismiss = { selectedPackage = null }
+                        onDismiss = { uiState = uiState.copy(selectedPackage = null) }
                     )
                 }
             }
@@ -106,20 +99,20 @@ class searchPage : ComponentActivity() {
         try {
             embeddingConfig = JSONObject(requireNotNull(readFile(MODULE_CONFIG_PATH)))
             val count = embeddingConfig?.getJSONArray("packages")?.length() ?: 0
-            tipsText = getString(R.string.module_config_tips, count)
+            uiState = uiState.copy(tipsText = getString(R.string.module_config_tips, count))
         } catch (_: Exception) {
             try {
                 embeddingConfig = JSONObject(requireNotNull(loadJsonFromAsset("embedding/embedding_config.json")))
-                tipsText = getString(R.string.official_config_tips)
+                uiState = uiState.copy(tipsText = getString(R.string.official_config_tips))
             } catch (_: Exception) {
                 embeddingConfig = null
-                tipsText = getString(R.string.config_not_exists_tips)
+                uiState = uiState.copy(tipsText = getString(R.string.config_not_exists_tips))
             }
         }
     }
 
     private fun performSearch() {
-        val query = keyword.trim()
+        val query = uiState.keyword.trim()
         if (query.isEmpty()) return
 
         val config = embeddingConfig ?: return
@@ -135,8 +128,10 @@ class searchPage : ComponentActivity() {
                     results.add(PackageInfo(packageObject))
                 }
             }
-            searchResults = results
-            hasSearched = true
+            uiState = uiState.copy(
+                searchResults = results,
+                hasSearched = true
+            )
 
             if (results.isEmpty()) {
                 Toast.makeText(this, R.string.unable_to_find_application, Toast.LENGTH_LONG).show()
@@ -191,13 +186,18 @@ class searchPage : ComponentActivity() {
     }
 }
 
+private data class SearchPageUiState(
+    val tipsText: String = "",
+    val keyword: String = "",
+    val searchResults: List<PackageInfo> = emptyList(),
+    val selectedPackage: PackageInfo? = null,
+    val hasSearched: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchPageScreen(
-    tipsText: String,
-    keyword: String,
-    results: List<PackageInfo>,
-    hasSearched: Boolean,
+    state: SearchPageUiState,
     onKeywordChanged: (String) -> Unit,
     onSearch: () -> Unit,
     onResultClick: (PackageInfo) -> Unit,
@@ -240,20 +240,20 @@ private fun SearchPageScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 SearchCard(
-                    tipsText = tipsText,
-                    keyword = keyword,
+                    tipsText = state.tipsText,
+                    keyword = state.keyword,
                     onKeywordChanged = onKeywordChanged,
                     onSearch = onSearch
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (results.isNotEmpty()) {
+                if (state.searchResults.isNotEmpty()) {
                     ResultsCard(
-                        results = results,
+                        results = state.searchResults,
                         onResultClick = onResultClick
                     )
-                } else if (hasSearched) {
+                } else if (state.hasSearched) {
                     EmptyResultCard()
                 }
             }

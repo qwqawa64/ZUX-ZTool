@@ -108,14 +108,7 @@ class SettingsDetailActivity : ComponentActivity() {
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
     private lateinit var fontPickerLauncher: ActivityResultLauncher<Intent>
 
-    private var removeBlacklist by mutableStateOf(false)
-    private var moduleEnabled by mutableStateOf(false)
-    private var floatMandatory by mutableStateOf(false)
-    private var splitScreenMandatory by mutableStateOf(false)
-    private var allowDisableDolby by mutableStateOf(false)
-    private var allowNativePermissionController by mutableStateOf(false)
-    private var alwaysDisplaySuggestions by mutableStateOf(false)
-    private var showRestartDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(SettingsDetailUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,17 +129,10 @@ class SettingsDetailActivity : ComponentActivity() {
             ZToolTheme {
                 SettingsDetailScreen(
                     title = appName + stringResource(R.string.settings_detail_title_suffix),
-                    removeBlacklist = removeBlacklist,
-                    moduleEnabled = moduleEnabled,
-                    floatMandatory = floatMandatory,
-                    splitScreenMandatory = splitScreenMandatory,
-                    allowDisableDolby = allowDisableDolby,
-                    allowNativePermissionController = allowNativePermissionController,
-                    alwaysDisplaySuggestions = alwaysDisplaySuggestions,
-                    showZuiForceConfig = Build.VERSION.SDK_INT >= 36,
+                    state = uiState,
                     onBack = ::finish,
                     onRemoveBlacklistChanged = {
-                        removeBlacklist = it
+                        uiState = uiState.copy(removeBlacklist = it)
                         prefsUtils.saveBooleanSetting("remove_blacklist", it)
                     },
                     onModuleEnabledChanged = ::handleModuleSwitch,
@@ -176,39 +162,39 @@ class SettingsDetailActivity : ComponentActivity() {
                         )
                     },
                     onFloatMandatoryChanged = {
-                        floatMandatory = it
+                        uiState = uiState.copy(floatMandatory = it)
                         EnhancedShellExecutor.getInstance().executeCommand(
                             "su -c settings put global force_resizable_activities " + if (it) "1" else "0"
                         )
                     },
                     onSplitScreenMandatoryChanged = {
-                        splitScreenMandatory = it
+                        uiState = uiState.copy(splitScreenMandatory = it)
                         prefsUtils.saveBooleanSetting("Split_Screen_mandatory", it)
                     },
                     onImportFont = ::startFontImportProcess,
                     onAllowNativePermissionControllerChanged = {
-                        allowNativePermissionController = it
+                        uiState = uiState.copy(allowNativePermissionController = it)
                         prefsUtils.saveBooleanSetting("PermissionControllerHook", it)
                     },
                     onAllowDisableDolbyChanged = {
-                        allowDisableDolby = it
+                        uiState = uiState.copy(allowDisableDolby = it)
                         prefsUtils.saveBooleanSetting("allow_display_dolby", it)
                     },
                     onAlwaysDisplaySuggestionsChanged = {
-                        alwaysDisplaySuggestions = it
+                        uiState = uiState.copy(alwaysDisplaySuggestions = it)
                         prefsUtils.saveBooleanSetting("AlwaysDisplaySuggestion", it)
                     },
-                    onRestartScope = { showRestartDialog = true }
+                    onRestartScope = { uiState = uiState.copy(showRestartDialog = true) }
                 )
 
-                if (showRestartDialog) {
+                if (uiState.showRestartDialog) {
                     RestartScopeDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            showRestartDialog = false
+                            uiState = uiState.copy(showRestartDialog = false)
                             forceStopApp()
                         },
-                        onDismiss = { showRestartDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartDialog = false) }
                     )
                 }
             }
@@ -216,18 +202,22 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        removeBlacklist = prefsUtils.loadBooleanSetting("remove_blacklist", false)
-        splitScreenMandatory = prefsUtils.loadBooleanSetting("Split_Screen_mandatory", false)
-        allowDisableDolby = prefsUtils.loadBooleanSetting("allow_display_dolby", false)
-        allowNativePermissionController = prefsUtils.loadBooleanSetting("PermissionControllerHook", false)
-        alwaysDisplaySuggestions = prefsUtils.loadBooleanSetting("AlwaysDisplaySuggestion", false)
+        uiState = uiState.copy(
+            removeBlacklist = prefsUtils.loadBooleanSetting("remove_blacklist", false),
+            splitScreenMandatory = prefsUtils.loadBooleanSetting("Split_Screen_mandatory", false),
+            allowDisableDolby = prefsUtils.loadBooleanSetting("allow_display_dolby", false),
+            allowNativePermissionController = prefsUtils.loadBooleanSetting("PermissionControllerHook", false),
+            alwaysDisplaySuggestions = prefsUtils.loadBooleanSetting("AlwaysDisplaySuggestion", false)
+        )
 
         Thread {
             val isModuleEnabled = magiskManager.isModuleEnabled
             val isForceResize = isForceResizableActivitiesEnabled()
             runOnUiThread {
-                moduleEnabled = isModuleEnabled
-                floatMandatory = isForceResize
+                uiState = uiState.copy(
+                    moduleEnabled = isModuleEnabled,
+                    floatMandatory = isForceResize
+                )
             }
         }.start()
     }
@@ -328,11 +318,11 @@ class SettingsDetailActivity : ComponentActivity() {
 
     private fun handleModuleSwitch(isChecked: Boolean) {
         if (isChecked && magiskManager.isModuleEnabled) {
-            moduleEnabled = true
+            uiState = uiState.copy(moduleEnabled = true)
             return
         }
 
-        moduleEnabled = isChecked
+        uiState = uiState.copy(moduleEnabled = isChecked)
         loadingDialog = LoadingDialog(this).also {
             it.show(getString(if (isChecked) R.string.installing_module else R.string.removing_module))
         }
@@ -347,14 +337,14 @@ class SettingsDetailActivity : ComponentActivity() {
             runOnUiThread {
                 loadingDialog?.dismiss()
                 if (result == "success") {
-                    moduleEnabled = isChecked
+                    uiState = uiState.copy(moduleEnabled = isChecked)
                     MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.tip_title)
                         .setMessage(if (isChecked) R.string.install_success_message else R.string.remove_success_message)
                         .setNegativeButton(R.string.got_it_button, null)
                         .show()
                 } else {
-                    moduleEnabled = !isChecked
+                    uiState = uiState.copy(moduleEnabled = !isChecked)
                     MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.error_title)
                         .setMessage(
@@ -708,18 +698,23 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 }
 
+private data class SettingsDetailUiState(
+    val removeBlacklist: Boolean = false,
+    val moduleEnabled: Boolean = false,
+    val floatMandatory: Boolean = false,
+    val splitScreenMandatory: Boolean = false,
+    val allowDisableDolby: Boolean = false,
+    val allowNativePermissionController: Boolean = false,
+    val alwaysDisplaySuggestions: Boolean = false,
+    val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
+    val showRestartDialog: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsDetailScreen(
     title: String,
-    removeBlacklist: Boolean,
-    moduleEnabled: Boolean,
-    floatMandatory: Boolean,
-    splitScreenMandatory: Boolean,
-    allowDisableDolby: Boolean,
-    allowNativePermissionController: Boolean,
-    alwaysDisplaySuggestions: Boolean,
-    showZuiForceConfig: Boolean,
+    state: SettingsDetailUiState,
     onBack: () -> Unit,
     onRemoveBlacklistChanged: (Boolean) -> Unit,
     onModuleEnabledChanged: (Boolean) -> Unit,
@@ -792,14 +787,14 @@ private fun SettingsDetailScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.embedding_setting_removeBlacklist),
                         summary = stringResource(R.string.embedding_setting_removeBlacklist_summary),
-                        checked = removeBlacklist,
+                        checked = state.removeBlacklist,
                         onCheckedChange = onRemoveBlacklistChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.RoleModule_Title),
                         summary = stringResource(R.string.RoleModule_Summary),
-                        checked = moduleEnabled,
+                        checked = state.moduleEnabled,
                         onCheckedChange = onModuleEnabledChanged
                     )
                     ZToolSettingsDivider()
@@ -826,7 +821,7 @@ private fun SettingsDetailScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (showZuiForceConfig) {
+                if (state.showZuiForceConfig) {
                     SettingsCard(title = stringResource(R.string.zui_force_config_title)) {
                         Text(
                             text = stringResource(R.string.zui_force_config_summary),
@@ -857,14 +852,14 @@ private fun SettingsDetailScreen(
                         ZToolSwitchRow(
                             title = stringResource(R.string.Float_app_Mandatory),
                             summary = stringResource(R.string.Float_app_Mandatory_summary),
-                            checked = floatMandatory,
+                            checked = state.floatMandatory,
                             onCheckedChange = onFloatMandatoryChanged
                         )
                         ZToolSettingsDivider()
                         ZToolSwitchRow(
                             title = stringResource(R.string.Split_screen_Mandatory_Title),
                             summary = stringResource(R.string.Split_screen_Mandatory_Summary),
-                            checked = splitScreenMandatory,
+                            checked = state.splitScreenMandatory,
                             onCheckedChange = onSplitScreenMandatoryChanged
                         )
                     }
@@ -887,21 +882,21 @@ private fun SettingsDetailScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.NativePermissionController_enable_title),
                         summary = stringResource(R.string.NativePermissionController_enable_summary),
-                        checked = allowNativePermissionController,
+                        checked = state.allowNativePermissionController,
                         onCheckedChange = onAllowNativePermissionControllerChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.AllowDisableDolby),
                         summary = stringResource(R.string.AllowDisableDolby_summary),
-                        checked = allowDisableDolby,
+                        checked = state.allowDisableDolby,
                         onCheckedChange = onAllowDisableDolbyChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.AlwaysDisplaySuggestionsTitle),
                         summary = stringResource(R.string.AlwaysDisplaySuggestionsSummary),
-                        checked = alwaysDisplaySuggestions,
+                        checked = state.alwaysDisplaySuggestions,
                         onCheckedChange = onAlwaysDisplaySuggestionsChanged
                     )
                 }

@@ -171,6 +171,8 @@ Verification:
 The following settings screens now consume a single screen state object instead of separate boolean/state parameters:
 
 - `settingactivity/ota/OtaSettings.kt`: `OtaSettingsUiState`.
+- `settingactivity/setting/SettingsDetailActivity.kt`: `SettingsDetailUiState`.
+- `settingactivity/setting/magicwindowsearch/searchPage.kt`: `SearchPageUiState`.
 - `settingactivity/packageinstaller/packageinstallersettings.kt`: `PackageInstallerSettingsUiState`.
 - `settingactivity/safecenter/SafeCenterSettingsActivity.kt`: `SafeCenterSettingsUiState`.
 - `settingactivity/gametool/GameToolSettngs.kt`: `GameToolSettingsUiState`.
@@ -184,6 +186,7 @@ Preserved behavior:
 
 - Existing Activity class names and packages.
 - Existing preference keys for OTA disable check and custom OTA parameters.
+- Existing preference keys for system settings detail hooks, embedding options, permissions, Dolby display, and suggestions.
 - Existing preference keys for package installer and safe center hooks.
 - Existing preference keys for game tool hooks and mistake-touch whitelist configuration.
 - Existing preference keys for launcher force-stop, dock, and grid configuration.
@@ -194,6 +197,8 @@ Preserved behavior:
 - Existing restart confirmation and restart scope behavior.
 - Existing root/shell behavior.
 - Existing OTA info parsing, firmware query, clipboard, and restart-scope behavior.
+- Existing settings detail config flashing, font import, overlay guide, strategy search, Magisk, and OV config behavior.
+- Existing magic-window strategy search JSON loading, root config fallback, result display, and details dialog behavior.
 
 Implementation note:
 
@@ -203,6 +208,7 @@ Implementation note:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the OTA settings consolidation.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the settings detail and magic-window search consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the package installer and safe center consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the game tool consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the launcher consolidation.
@@ -363,11 +369,7 @@ Continue the pre-ViewModel consolidation pass: make remaining Compose screens co
 
 Recommended next order:
 
-1. Remaining settings/detail flows
-   - `settingactivity/setting/SettingsDetailActivity.kt`.
-   - `settingactivity/setting/magicwindowsearch/searchPage.kt`.
-
-2. Fragment-level screens
+1. Fragment-level screens
    - `AuditFragment.kt`.
    - `SettingsFragment.kt`.
    - `HomeFragment.kt` dialog flags should be folded into `HomeUiState` before later ViewModel extraction.
