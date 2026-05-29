@@ -56,11 +56,7 @@ class SafeCenterSettingsActivity : ComponentActivity() {
     private lateinit var prefsUtils: ModulePreferencesUtils
     private lateinit var shellExecutor: EnhancedShellExecutor
 
-    private var defaultEnableAutorun by mutableStateOf(false)
-    private var blockSafeCenterScan by mutableStateOf(false)
-    private var documentsUiBypass by mutableStateOf(false)
-    private var showRestartConfirmDialog by mutableStateOf(false)
-    private var isRestartProcessing by mutableStateOf(false)
+    private var uiState by mutableStateOf(SafeCenterSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,40 +72,37 @@ class SafeCenterSettingsActivity : ComponentActivity() {
             ZToolTheme {
                 SafeCenterSettingsScreen(
                     title = appName + stringResource(R.string.safe_center_settings_title_suffix),
-                    defaultEnableAutorun = defaultEnableAutorun,
-                    blockSafeCenterScan = blockSafeCenterScan,
-                    documentsUiBypass = documentsUiBypass,
-                    isRestartProcessing = isRestartProcessing,
+                    state = uiState,
                     onBack = ::finish,
                     onRestart = {
-                        if (isRestartProcessing) {
+                        if (uiState.isRestartProcessing) {
                             Log.d(TAG, "Restart is already processing, ignoring duplicate click")
                         } else {
-                            showRestartConfirmDialog = true
+                            uiState = uiState.copy(showRestartConfirmDialog = true)
                         }
                     },
                     onDefaultEnableAutorunChanged = {
-                        defaultEnableAutorun = it
+                        uiState = uiState.copy(defaultEnableAutorun = it)
                         saveSettings("default_enable_autorun", it)
                     },
                     onBlockSafeCenterScanChanged = {
-                        blockSafeCenterScan = it
+                        uiState = uiState.copy(blockSafeCenterScan = it)
                         saveSettings("block_safecenter_scan", it)
                     },
                     onDocumentsUiBypassChanged = {
-                        documentsUiBypass = it
+                        uiState = uiState.copy(documentsUiBypass = it)
                         saveSettings("documents_ui_bypass", it)
                     }
                 )
 
-                if (showRestartConfirmDialog) {
+                if (uiState.showRestartConfirmDialog) {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            showRestartConfirmDialog = false
+                            uiState = uiState.copy(showRestartConfirmDialog = false)
                             forceStopApp()
                         },
-                        onDismiss = { showRestartConfirmDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
                     )
                 }
             }
@@ -117,9 +110,11 @@ class SafeCenterSettingsActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        defaultEnableAutorun = prefsUtils.loadBooleanSetting("default_enable_autorun", false)
-        blockSafeCenterScan = prefsUtils.loadBooleanSetting("block_safecenter_scan", false)
-        documentsUiBypass = prefsUtils.loadBooleanSetting("documents_ui_bypass", false)
+        uiState = uiState.copy(
+            defaultEnableAutorun = prefsUtils.loadBooleanSetting("default_enable_autorun", false),
+            blockSafeCenterScan = prefsUtils.loadBooleanSetting("block_safecenter_scan", false),
+            documentsUiBypass = prefsUtils.loadBooleanSetting("documents_ui_bypass", false)
+        )
     }
 
     private fun saveSettings(moduleName: String, newValue: Boolean) {
@@ -133,12 +128,12 @@ class SafeCenterSettingsActivity : ComponentActivity() {
             return
         }
 
-        if (isRestartProcessing) {
+        if (uiState.isRestartProcessing) {
             Log.d(TAG, "Restart is already processing")
             return
         }
 
-        isRestartProcessing = true
+        uiState = uiState.copy(isRestartProcessing = true)
 
         Thread {
             try {
@@ -192,7 +187,7 @@ class SafeCenterSettingsActivity : ComponentActivity() {
     }
 
     private fun resetRestartButton() {
-        isRestartProcessing = false
+        uiState = uiState.copy(isRestartProcessing = false)
     }
 
     companion object {
@@ -200,14 +195,19 @@ class SafeCenterSettingsActivity : ComponentActivity() {
     }
 }
 
+private data class SafeCenterSettingsUiState(
+    val defaultEnableAutorun: Boolean = false,
+    val blockSafeCenterScan: Boolean = false,
+    val documentsUiBypass: Boolean = false,
+    val showRestartConfirmDialog: Boolean = false,
+    val isRestartProcessing: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SafeCenterSettingsScreen(
     title: String,
-    defaultEnableAutorun: Boolean,
-    blockSafeCenterScan: Boolean,
-    documentsUiBypass: Boolean,
-    isRestartProcessing: Boolean,
+    state: SafeCenterSettingsUiState,
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
@@ -241,7 +241,7 @@ private fun SafeCenterSettingsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onRestart,
-                containerColor = if (isRestartProcessing) {
+                containerColor = if (state.isRestartProcessing) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     MaterialTheme.colorScheme.primaryContainer
@@ -271,14 +271,14 @@ private fun SafeCenterSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.default_allow_autorun_enable_title),
                         summary = stringResource(R.string.default_allow_autorun_enable_summary),
-                        checked = defaultEnableAutorun,
+                        checked = state.defaultEnableAutorun,
                         onCheckedChange = onDefaultEnableAutorunChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.DisableSafeScanTitle),
                         summary = stringResource(R.string.DisableSafeScanSummary),
-                        checked = blockSafeCenterScan,
+                        checked = state.blockSafeCenterScan,
                         onCheckedChange = onBlockSafeCenterScanChanged
                     )
                 }
@@ -289,7 +289,7 @@ private fun SafeCenterSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.bypassDocementsUI),
                         summary = stringResource(R.string.bypassDocementsUISummary),
-                        checked = documentsUiBypass,
+                        checked = state.documentsUiBypass,
                         onCheckedChange = onDocumentsUiBypassChanged
                     )
                 }

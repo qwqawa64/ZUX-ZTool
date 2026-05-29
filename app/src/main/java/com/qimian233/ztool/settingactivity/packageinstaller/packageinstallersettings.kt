@@ -52,13 +52,7 @@ class packageinstallersettings : ComponentActivity() {
     private var appPackageName: String? = null
     private lateinit var prefsUtils: ModulePreferencesUtils
 
-    private var disableScanApk by mutableStateOf(false)
-    private var alwaysAllowPermission by mutableStateOf(false)
-    private var skipWarnPage by mutableStateOf(false)
-    private var disableInstallerAd by mutableStateOf(false)
-    private var packageInstallerStyleHook by mutableStateOf(false)
-    private var disableDeletePackage by mutableStateOf(false)
-    private var showRestartConfirmDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(PackageInstallerSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,48 +67,43 @@ class packageinstallersettings : ComponentActivity() {
             ZToolTheme {
                 PackageInstallerSettingsScreen(
                     title = appName + stringResource(R.string.detailed_settings_suffix),
-                    disableScanApk = disableScanApk,
-                    alwaysAllowPermission = alwaysAllowPermission,
-                    skipWarnPage = skipWarnPage,
-                    disableInstallerAd = disableInstallerAd,
-                    packageInstallerStyleHook = packageInstallerStyleHook,
-                    disableDeletePackage = disableDeletePackage,
+                    state = uiState,
                     onBack = ::finish,
-                    onRestart = { showRestartConfirmDialog = true },
+                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
                     onDisableScanApkChanged = {
-                        disableScanApk = it
+                        uiState = uiState.copy(disableScanApk = it)
                         saveSettings("disable_scanAPK", it)
                     },
                     onAlwaysAllowPermissionChanged = {
-                        alwaysAllowPermission = it
+                        uiState = uiState.copy(alwaysAllowPermission = it)
                         saveSettings("Always_AllowPermission", it)
                     },
                     onSkipWarnPageChanged = {
-                        skipWarnPage = it
+                        uiState = uiState.copy(skipWarnPage = it)
                         saveSettings("Skip_WarnPage", it)
                     },
                     onDisableInstallerAdChanged = {
-                        disableInstallerAd = it
+                        uiState = uiState.copy(disableInstallerAd = it)
                         saveSettings("disable_installerAD", it)
                     },
                     onPackageInstallerStyleHookChanged = {
-                        packageInstallerStyleHook = it
+                        uiState = uiState.copy(packageInstallerStyleHook = it)
                         saveSettings("packageInstallerStyle_hook", it)
                     },
                     onDisableDeletePackageChanged = {
-                        disableDeletePackage = it
+                        uiState = uiState.copy(disableDeletePackage = it)
                         saveSettings("package_installer_disable_delete", it)
                     }
                 )
 
-                if (showRestartConfirmDialog) {
+                if (uiState.showRestartConfirmDialog) {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            showRestartConfirmDialog = false
+                            uiState = uiState.copy(showRestartConfirmDialog = false)
                             forceStopApp()
                         },
-                        onDismiss = { showRestartConfirmDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
                     )
                 }
             }
@@ -122,12 +111,14 @@ class packageinstallersettings : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        disableScanApk = prefsUtils.loadBooleanSetting("disable_scanAPK", false)
-        alwaysAllowPermission = prefsUtils.loadBooleanSetting("Always_AllowPermission", false)
-        skipWarnPage = prefsUtils.loadBooleanSetting("Skip_WarnPage", false)
-        disableInstallerAd = prefsUtils.loadBooleanSetting("disable_installerAD", false)
-        packageInstallerStyleHook = prefsUtils.loadBooleanSetting("packageInstallerStyle_hook", false)
-        disableDeletePackage = prefsUtils.loadBooleanSetting("package_installer_disable_delete", false)
+        uiState = uiState.copy(
+            disableScanApk = prefsUtils.loadBooleanSetting("disable_scanAPK", false),
+            alwaysAllowPermission = prefsUtils.loadBooleanSetting("Always_AllowPermission", false),
+            skipWarnPage = prefsUtils.loadBooleanSetting("Skip_WarnPage", false),
+            disableInstallerAd = prefsUtils.loadBooleanSetting("disable_installerAD", false),
+            packageInstallerStyleHook = prefsUtils.loadBooleanSetting("packageInstallerStyle_hook", false),
+            disableDeletePackage = prefsUtils.loadBooleanSetting("package_installer_disable_delete", false)
+        )
     }
 
     private fun saveSettings(moduleName: String, newValue: Boolean) {
@@ -149,16 +140,21 @@ class packageinstallersettings : ComponentActivity() {
     }
 }
 
+private data class PackageInstallerSettingsUiState(
+    val disableScanApk: Boolean = false,
+    val alwaysAllowPermission: Boolean = false,
+    val skipWarnPage: Boolean = false,
+    val disableInstallerAd: Boolean = false,
+    val packageInstallerStyleHook: Boolean = false,
+    val disableDeletePackage: Boolean = false,
+    val showRestartConfirmDialog: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PackageInstallerSettingsScreen(
     title: String,
-    disableScanApk: Boolean,
-    alwaysAllowPermission: Boolean,
-    skipWarnPage: Boolean,
-    disableInstallerAd: Boolean,
-    packageInstallerStyleHook: Boolean,
-    disableDeletePackage: Boolean,
+    state: PackageInstallerSettingsUiState,
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onDisableScanApkChanged: (Boolean) -> Unit,
@@ -212,21 +208,21 @@ private fun PackageInstallerSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.Disable_ScanAPK_Title),
                         summary = stringResource(R.string.Disable_ScanAPK_Summary),
-                        checked = disableScanApk,
+                        checked = state.disableScanApk,
                         onCheckedChange = onDisableScanApkChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.OnlyAllow_Title),
                         summary = stringResource(R.string.OnlyAllow_Summary),
-                        checked = alwaysAllowPermission,
+                        checked = state.alwaysAllowPermission,
                         onCheckedChange = onAlwaysAllowPermissionChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.skip_warn_page_title),
                         summary = stringResource(R.string.skip_warn_page_summary),
-                        checked = skipWarnPage,
+                        checked = state.skipWarnPage,
                         onCheckedChange = onSkipWarnPageChanged
                     )
                 }
@@ -237,21 +233,21 @@ private fun PackageInstallerSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.Disable_installerAD_Title),
                         summary = stringResource(R.string.Disable_installerAD_Summary),
-                        checked = disableInstallerAd,
+                        checked = state.disableInstallerAd,
                         onCheckedChange = onDisableInstallerAdChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.Enable_rowStyle_title),
                         summary = stringResource(R.string.Enable_rowStyle_summary),
-                        checked = packageInstallerStyleHook,
+                        checked = state.packageInstallerStyleHook,
                         onCheckedChange = onPackageInstallerStyleHookChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.Disable_deletePackage_Title),
                         summary = stringResource(R.string.Disable_deletePackage_Summary),
-                        checked = disableDeletePackage,
+                        checked = state.disableDeletePackage,
                         onCheckedChange = onDisableDeletePackageChanged
                     )
                 }

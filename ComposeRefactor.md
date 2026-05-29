@@ -166,6 +166,29 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29.
 
+### Settings Screen UiState Consolidation
+
+The following settings screens now consume a single screen state object instead of separate boolean/state parameters:
+
+- `settingactivity/packageinstaller/packageinstallersettings.kt`: `PackageInstallerSettingsUiState`.
+- `settingactivity/safecenter/SafeCenterSettingsActivity.kt`: `SafeCenterSettingsUiState`.
+
+Preserved behavior:
+
+- Existing Activity class names and packages.
+- Existing preference keys for package installer and safe center hooks.
+- Existing restart confirmation and restart scope behavior.
+- Existing root/shell behavior.
+
+Implementation note:
+
+- This continues the interim goal of making screens consume one state object before introducing ViewModels.
+- ViewModel and repository extraction remains intentionally deferred until the active screens have consistent `UiState` shapes.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -314,4 +337,4 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue Phase 2 state extraction by moving `settingactivity/systemui/systemUISettings.kt` from Activity-owned state toward a ViewModel/repository boundary, or apply the same `UiState` consolidation pattern to `HomeFragment` before extracting shell, update, and preference work.
+Continue the pre-ViewModel consolidation pass: make remaining Compose screens consume one `UiState` object each before moving any page to a ViewModel/repository boundary. Good next candidates are `GameToolSettngs.kt`, `LauncherSettingsActivity.kt`, `FrameworkSettingsActivity.kt`, and the SystemUI sub-pages.
