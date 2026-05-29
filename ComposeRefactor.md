@@ -401,6 +401,7 @@
   - `settingactivity/safecenter/SafeCenterSettingsActivity.kt`：安全中心设置页已迁移到 Compose，保留原类名和启动入口；保留 `default_enable_autorun`、`block_safecenter_scan`、`documents_ui_bypass` 配置键；保留重启当前作用域与 `com.android.documentsui` 的 root shell 逻辑，并用 Compose state 控制重启处理中状态。
   - `settingactivity/gametool/GameToolSettngs.kt`：游戏助手设置页已迁移到 Compose，保留原类名和启动入口；保留 `disable_GameAudio`、`disguise_TB322FC`、`Fix_CpuClock`、`Fix_SocTemp`、`auto_mistake_touch`、`MistakeTouchWhiteList`、`MistakeTouchWhiteListGame` 配置键；防误触模式由 Spinner 改为 Compose 下拉菜单，白名单选择器暂时复用现有 `AppChooserDialog`。
   - `settingactivity/launcher/LauncherSettingsActivity.kt`：桌面设置页已迁移到 Compose，保留原类名和启动入口；保留 `disable_force_stop`、`ForceStopWhiteListEnable`、`ForceStopWhiteList`、`zui_launcher_hotseat`、`CustomGridSize`、`CustomLauncherRow`、`CustomLauncherColumn` 配置键；原生后台管理模式由 Spinner 改为 Compose 下拉菜单，白名单选择器暂时复用现有 `AppChooserDialog`，自定义网格行列改为 Compose 数字输入框。
+  - `settingactivity/launcher/LauncherSettingsActivity.kt` 修复与改进：修复原生后台管理下拉选择器点击不展开的问题；自定义桌面网格行列输入由数字输入框改为 3-10 的带步进 Slider，并继续保存到 `CustomLauncherRow`、`CustomLauncherColumn`。
 
   最近验证
 
@@ -411,6 +412,7 @@
   - 2026-05-29：完成 `SafeCenterSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅存在上述既有 deprecated warning。
   - 2026-05-29：完成 `GameToolSettngs` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。新增一个 Compose Material3 `menuAnchor()` deprecated warning，后续统一处理；其余仍为既有 deprecated warning。
   - 2026-05-29：完成 `LauncherSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。`menuAnchor()` deprecated warning 现在出现在游戏助手和桌面两个下拉菜单页面，后续统一处理；其余仍为既有 deprecated warning。
+  - 2026-05-29：修复 `LauncherSettingsActivity` 下拉展开问题并将自定义网格改为 Slider 后运行 `.\gradlew.bat assembleDebug`，构建成功。Launcher 页的 `menuAnchor()` deprecated warning 已消除，游戏助手页仍有同类 warning 待后续统一处理。
 
   下一步候选
 
@@ -421,5 +423,5 @@
 
   当前停止点
 
-  - 已完成并验证：`LauncherSettingsActivity` 页面 Compose 化。
+  - 已完成并验证：`LauncherSettingsActivity` 下拉选择器修复和自定义网格 Slider 改进。
   - 下一次继续时，应从候选页中选择一个页面迁移；建议优先处理 `SettingsDetailActivity.java` 或 `LockScreenSettingsActivity.java`，继续沉淀设置页 Compose 模式。

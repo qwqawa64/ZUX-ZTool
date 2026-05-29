@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -33,6 +32,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -41,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -52,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.R
@@ -70,8 +70,8 @@ class LauncherSettingsActivity : ComponentActivity() {
     private var forceStopWhitelist by mutableStateOf<List<String>>(emptyList())
     private var moreBigDock by mutableStateOf(false)
     private var customGridSize by mutableStateOf(false)
-    private var customGridRow by mutableStateOf("")
-    private var customGridColumn by mutableStateOf("")
+    private var customGridRow by mutableStateOf(4)
+    private var customGridColumn by mutableStateOf(6)
     private var showRestartConfirmDialog by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,14 +105,8 @@ class LauncherSettingsActivity : ComponentActivity() {
                         customGridSize = it
                         saveSettings("CustomGridSize", it)
                     },
-                    onCustomGridRowChanged = {
-                        customGridRow = it.filter(Char::isDigit)
-                        saveGridValues()
-                    },
-                    onCustomGridColumnChanged = {
-                        customGridColumn = it.filter(Char::isDigit)
-                        saveGridValues()
-                    }
+                    onCustomGridRowChanged = ::handleGridRowChanged,
+                    onCustomGridColumnChanged = ::handleGridColumnChanged
                 )
 
                 if (showRestartConfirmDialog) {
@@ -141,8 +135,8 @@ class LauncherSettingsActivity : ComponentActivity() {
 
         moreBigDock = prefsUtils.loadBooleanSetting("zui_launcher_hotseat", false)
         customGridSize = prefsUtils.loadBooleanSetting("CustomGridSize", false)
-        customGridRow = prefsUtils.loadIntegerSetting("CustomLauncherRow", 4).toString()
-        customGridColumn = prefsUtils.loadIntegerSetting("CustomLauncherColumn", 6).toString()
+        customGridRow = prefsUtils.loadIntegerSetting("CustomLauncherRow", 4).coerceIn(GRID_MIN, GRID_MAX)
+        customGridColumn = prefsUtils.loadIntegerSetting("CustomLauncherColumn", 6).coerceIn(GRID_MIN, GRID_MAX)
     }
 
     private fun loadForceStopWhitelist(): List<String> {
@@ -194,13 +188,19 @@ class LauncherSettingsActivity : ComponentActivity() {
         )
     }
 
+    private fun handleGridRowChanged(value: Int) {
+        customGridRow = value.coerceIn(GRID_MIN, GRID_MAX)
+        saveGridValues()
+    }
+
+    private fun handleGridColumnChanged(value: Int) {
+        customGridColumn = value.coerceIn(GRID_MIN, GRID_MAX)
+        saveGridValues()
+    }
+
     private fun saveGridValues() {
-        val row = customGridRow.toIntOrNull()
-        val column = customGridColumn.toIntOrNull()
-        if (row != null && column != null) {
-            prefsUtils.saveIntegerSetting("CustomLauncherRow", row)
-            prefsUtils.saveIntegerSetting("CustomLauncherColumn", column)
-        }
+        prefsUtils.saveIntegerSetting("CustomLauncherRow", customGridRow)
+        prefsUtils.saveIntegerSetting("CustomLauncherColumn", customGridColumn)
     }
 
     private fun forceStopApp() {
@@ -224,6 +224,8 @@ class LauncherSettingsActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "LauncherSettings"
+        private const val GRID_MIN = 3
+        private const val GRID_MAX = 10
 
         fun getUserInstalledPackageNames(context: Context): List<String> {
             val packageManager = context.packageManager
@@ -254,16 +256,16 @@ private fun LauncherSettingsScreen(
     forceStopWhitelistCount: Int,
     moreBigDock: Boolean,
     customGridSize: Boolean,
-    customGridRow: String,
-    customGridColumn: String,
+    customGridRow: Int,
+    customGridColumn: Int,
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onForceStopModeChanged: (ForceStopMode) -> Unit,
     onSelectForceStopWhitelist: () -> Unit,
     onMoreBigDockChanged: (Boolean) -> Unit,
     onCustomGridSizeChanged: (Boolean) -> Unit,
-    onCustomGridRowChanged: (String) -> Unit,
-    onCustomGridColumnChanged: (String) -> Unit
+    onCustomGridRowChanged: (Int) -> Unit,
+    onCustomGridColumnChanged: (Int) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -351,7 +353,7 @@ private fun LauncherSettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                         )
-                        GridInputRow(
+                        GridSliderRows(
                             row = customGridRow,
                             column = customGridColumn,
                             onRowChanged = onCustomGridRowChanged,
@@ -411,7 +413,10 @@ private fun ForceStopModeRow(
                 readOnly = true,
                 singleLine = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor()
+                modifier = Modifier.menuAnchor(
+                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                    enabled = true
+                )
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -459,39 +464,67 @@ private fun WhitelistRow(
 }
 
 @Composable
-private fun GridInputRow(
-    row: String,
-    column: String,
-    onRowChanged: (String) -> Unit,
-    onColumnChanged: (String) -> Unit
+private fun GridSliderRows(
+    row: Int,
+    column: Int,
+    onRowChanged: (Int) -> Unit,
+    onColumnChanged: (Int) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
-        OutlinedTextField(
+        GridSliderRow(
+            label = stringResource(R.string.inputRowNumberHere),
             value = row,
-            onValueChange = onRowChanged,
-            label = { Text(stringResource(R.string.inputRowNumberHere)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(128.dp)
+            onValueChanged = onRowChanged
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        GridSliderRow(
+            label = stringResource(R.string.inputColumnNumberHere),
+            value = column,
+            onValueChanged = onColumnChanged
         )
         Text(
-            text = stringResource(R.string.multiply),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            text = "${row}${stringResource(R.string.multiply)}$column",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
         )
-        OutlinedTextField(
-            value = column,
-            onValueChange = onColumnChanged,
-            label = { Text(stringResource(R.string.inputColumnNumberHere)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(128.dp)
+    }
+}
+
+@Composable
+private fun GridSliderRow(
+    label: String,
+    value: Int,
+    onValueChanged: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.width(64.dp)
+        )
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { onValueChanged(it.toInt()) },
+            valueRange = 3f..10f,
+            steps = 6,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .width(40.dp)
+                .padding(start = 12.dp)
         )
     }
 }
