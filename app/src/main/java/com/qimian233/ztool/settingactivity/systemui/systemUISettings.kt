@@ -2,9 +2,6 @@ package com.qimian233.ztool.settingactivity.systemui
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,9 +39,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -52,40 +48,44 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsActivity
 import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
+import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
 
 @Suppress("ClassName")
 class systemUISettings : ComponentActivity() {
 
-    private lateinit var prefsUtils: ModulePreferencesUtils
-    private lateinit var shellExecutor: EnhancedShellExecutor
-    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var viewModel: SystemUiSettingsViewModel
 
     private var appName: String = ""
     private var appPackageName: String? = null
-
-    private var uiState by mutableStateOf(SystemUiSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        shellExecutor = EnhancedShellExecutor.getInstance()
-        prefsUtils = ModulePreferencesUtils(this)
+        val repository = SystemUiSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            SystemUiSettingsViewModelFactory(repository)
+        )[SystemUiSettingsViewModel::class.java]
         appName = intent.getStringExtra("app_name").orEmpty()
         appPackageName = intent.getStringExtra("app_package")
 
-        loadSettingsAsync()
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 SystemUiSettingsScreen(
                     title = appName + stringResource(R.string.SystemUIActionBar),
@@ -101,35 +101,21 @@ class systemUISettings : ComponentActivity() {
                         openSubSettings(ControlCenterSettingsActivity::class.java)
                     },
                     onNativeAodChanged = ::handleNativeAodChanged,
-                    onLenovoAodChanged = ::handleLenovoAodChanged,
-                    onOpenLenovoAodSettings = ::openLenovoAodSettings,
-                    onNoChargeAnimationChanged = {
-                        uiState = uiState.copy(noChargeAnimation = it)
-                        prefsUtils.saveBooleanSetting("No_ChargeAnimation", it)
-                    },
-                    onChargeAnimationFixChanged = {
-                        uiState = uiState.copy(chargeAnimationFix = it)
-                        prefsUtils.saveBooleanSetting("charge_animation_fix", it)
-                    },
-                    onGuestModeChanged = {
-                        uiState = uiState.copy(guestModeController = it)
-                        prefsUtils.saveBooleanSetting("guest_mode_controller", it)
-                    },
-                    onRestartScope = {
-                        if (!uiState.isRestartProcessing) {
-                            uiState = uiState.copy(showRestartDialog = true)
-                        }
-                    }
+                    onLenovoAodChanged = viewModel::setLenovoAodEnabled,
+                    onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
+                    onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
+                    onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
+                    onGuestModeChanged = viewModel::setGuestModeController,
+                    onRestartScope = viewModel::showRestartDialog
                 )
 
                 if (uiState.showRestartDialog) {
                     RestartScopeDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            uiState = uiState.copy(showRestartDialog = false)
-                            forceStopApp()
+                            forceStopScope()
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartDialog = false) }
+                        onDismiss = viewModel::dismissRestartDialog
                     )
                 }
             }
@@ -144,199 +130,48 @@ class systemUISettings : ComponentActivity() {
         startActivity(intent)
     }
 
-    private fun loadSettingsAsync() {
-        Thread {
-            try {
-                val native = prefsUtils.loadBooleanSetting("ForceNativeAOD", false)
-                val lenovo = prefsUtils.loadBooleanSetting("ForceLenovoAOD", false)
-                val noCharge = prefsUtils.loadBooleanSetting("No_ChargeAnimation", false)
-                val chargeFix = prefsUtils.loadBooleanSetting("charge_animation_fix", false)
-                val guest = prefsUtils.loadBooleanSetting("guest_mode_controller", false)
-
-                runOnUiThread {
-                    uiState = uiState.copy(
-                        nativeAod = native,
-                        lenovoAod = lenovo,
-                        noChargeAnimation = noCharge,
-                        chargeAnimationFix = chargeFix,
-                        guestModeController = guest
-                    )
-                }
-                Log.d(TAG, "设置加载完成")
-            } catch (e: Exception) {
-                Log.e(TAG, "加载设置失败: ${e.message}")
-            }
-        }.start()
-    }
 
     private fun handleNativeAodChanged(enabled: Boolean) {
-        if (uiState.isAodSwitchProcessing) {
-            Log.d(TAG, "AOD开关正在处理中，忽略重复操作")
-            return
-        }
-        uiState = uiState.copy(
-            nativeAod = enabled,
-            isAodSwitchProcessing = true
+        viewModel.setNativeAodEnabled(
+            enabled = enabled,
+            onLenovoAodDisabled = {
+                runOnUiThread {
+                    Toast.makeText(this, R.string.restart_scope_required, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onFailure = { error ->
+                runOnUiThread {
+                    Toast.makeText(this, "设置失败: $error", Toast.LENGTH_SHORT).show()
+                }
+            }
         )
-
-        handler.post {
-            setNativeAodEnabled(enabled)
-            prefsUtils.saveBooleanSetting("ForceNativeAOD", enabled)
-
-            if (prefsUtils.loadBooleanSetting("ForceLenovoAOD", false)) {
-                prefsUtils.saveBooleanSetting("ForceLenovoAOD", false)
-                uiState = uiState.copy(lenovoAod = false)
-                Toast.makeText(this, R.string.restart_scope_required, Toast.LENGTH_SHORT).show()
-            }
-            uiState = uiState.copy(isAodSwitchProcessing = false)
-        }
     }
 
-    private fun handleLenovoAodChanged(enabled: Boolean) {
-        if (uiState.isAodSwitchProcessing) {
-            Log.d(TAG, "AOD开关正在处理中，忽略重复操作")
-            return
-        }
-        uiState = uiState.copy(
-            lenovoAod = enabled,
-            isAodSwitchProcessing = true
-        )
-        prefsUtils.saveBooleanSetting("ForceLenovoAOD", enabled)
-
-        handler.post {
-            if (isAodEnabled()) {
-                setNativeAodEnabled(false)
-                uiState = uiState.copy(nativeAod = false)
-            }
-            uiState = uiState.copy(isAodSwitchProcessing = false)
-        }
-    }
-
-    private fun openLenovoAodSettings() {
-        val result = shellExecutor.executeRootCommand(
-            "am start -n com.android.systemui/com.android.systemui.aod.setting.AoDSettingActivity",
-            5
-        )
-        Log.d("LenovoAODPicker", result.toString())
-    }
-
-    private fun setNativeAodEnabled(enabled: Boolean) {
-        Thread {
-            try {
-                val command = "settings put secure doze_always_on " + if (enabled) "1" else "0"
-                val result = shellExecutor.executeRootCommand(command, 5)
-                val success = result.isSuccess
-                Log.d("AODSwitch", "AOD设置命令执行结果: ${if (success) "成功" else "失败"}, 退出码: ${result.exitCode}")
-
-                handler.post {
-                    if (!success) {
-                        uiState = uiState.copy(nativeAod = !enabled)
-                        Toast.makeText(this, "设置失败: ${result.error}", Toast.LENGTH_SHORT).show()
-                    }
-                    uiState = uiState.copy(isAodSwitchProcessing = false)
-                }
-            } catch (e: Exception) {
-                Log.e("AODSwitch", "设置AOD时出错: ${e.message}")
-                handler.post {
-                    uiState = uiState.copy(nativeAod = !enabled)
-                    Toast.makeText(this, "执行错误: ${e.message}", Toast.LENGTH_SHORT).show()
-                    uiState = uiState.copy(isAodSwitchProcessing = false)
+    private fun forceStopScope() {
+        viewModel.forceStopScope(appPackageName.orEmpty()) { success, error ->
+            runOnUiThread {
+                if (success) {
+                    Toast.makeText(this, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, getString(R.string.restartFail) + error, Toast.LENGTH_SHORT).show()
                 }
             }
-        }.start()
-    }
-
-    private fun isAodEnabled(): Boolean {
-        return try {
-            val result = shellExecutor.executeRootCommand("settings get secure doze_always_on", 5)
-            if (result.isSuccess && result.output != null) {
-                val enabled = result.output.trim() == "1"
-                Log.d("AODCheck", "原生AOD状态: ${if (enabled) "启用" else "禁用"}")
-                enabled
-            } else {
-                false
-            }
-        } catch (e: Exception) {
-            Log.e("AODCheck", "检查原生AOD状态失败: ${e.message}")
-            false
         }
     }
 
-    private fun forceStopApp() {
-        val packageName = appPackageName
-        if (packageName.isNullOrEmpty() || uiState.isRestartProcessing) return
-
-        uiState = uiState.copy(isRestartProcessing = true)
-
-        Thread {
-            try {
-                val result = shellExecutor.executeRootCommand("killall $packageName", 5)
-                val success = result.isSuccess
-
-                handler.post {
-                    if (success) {
-                        Toast.makeText(this, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, getString(R.string.restartFail) + result.error, Toast.LENGTH_SHORT).show()
-                    }
-                    resetRestartButton()
-                }
-                Log.d("ForceStopApp", "强制停止应用结果: ${if (success) "成功" else "失败"}")
-            } catch (e: Exception) {
-                Log.e("ForceStopApp", "强制停止应用时出错: ${e.message}")
-                handler.post {
-                    Toast.makeText(this, getString(R.string.restartFail) + e.message, Toast.LENGTH_SHORT).show()
-                    resetRestartButton()
-                }
-            }
-        }.start()
-
-        Thread {
-            try {
-                val result = shellExecutor.executeRootCommand("killall com.zui.wallpapersetting", 5)
-                Log.d("ForceStopApp", "强制停止壁纸设置结果: ${if (result.isSuccess) "成功" else "失败"}")
-            } catch (e: Exception) {
-                Log.e("ForceStopApp", "强制停止壁纸设置时出错: ${e.message}")
-            }
-        }.start()
-    }
-
-    private fun resetRestartButton() {
-        handler.post {
-            uiState = uiState.copy(isRestartProcessing = false)
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "Activity销毁")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "Activity暂停")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "Activity恢复")
-    }
-
-    companion object {
-        private const val TAG = "SystemUISettings"
-    }
 }
 
-private data class SystemUiSettingsUiState(
-    val nativeAod: Boolean = false,
-    val lenovoAod: Boolean = false,
-    val noChargeAnimation: Boolean = false,
-    val chargeAnimationFix: Boolean = false,
-    val guestModeController: Boolean = false,
-    val isAodSwitchProcessing: Boolean = false,
-    val isRestartProcessing: Boolean = false,
-    val showRestartDialog: Boolean = false
-)
+private class SystemUiSettingsViewModelFactory(
+    private val repository: SystemUiSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SystemUiSettingsViewModel::class.java)) {
+            return SystemUiSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -322,6 +322,30 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `SettingsFragment` ViewModel/repository extraction.
 
+### SystemUISettings ViewModel Boundary
+
+`settingactivity/systemui/systemUISettings.kt` now delegates aggregate System UI settings state and shell coordination to:
+
+- `viewmodel/SystemUiSettingsViewModel.kt`.
+- `data/systemui/SystemUiSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `systemUISettings` class name, package, Activity launch contract, and sub-settings navigation.
+- Existing preference keys: `ForceNativeAOD`, `ForceLenovoAOD`, `No_ChargeAnimation`, `charge_animation_fix`, and `guest_mode_controller`.
+- Existing root shell commands for native AOD, Lenovo AOD settings, app process restart, and wallpaper settings restart.
+- Existing restart confirmation dialog and restart result Toast behavior.
+
+Implementation note:
+
+- `SystemUiSettingsUiState` now lives with `SystemUiSettingsViewModel`.
+- The Activity now hosts Compose, opens sub-settings routes, shows Toasts, and forwards user actions to the ViewModel.
+- `SystemUiSettingsRepository` wraps `ModulePreferencesUtils` and `EnhancedShellExecutor` for this aggregate page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `systemUISettings` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -474,6 +498,14 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/systemui/systemUISettings.kt`
-   - Extract System UI aggregate settings state and shell/restart coordination into a ViewModel/repository boundary.
-   - Preserve existing preference keys, shell commands, and sub-settings navigation contracts.
+1. `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`
+   - Extract status bar clock, notification icon, network speed, and battery preference state into a ViewModel/repository boundary.
+   - Preserve existing preference keys and restart-scope behavior.
+
+2. `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`
+   - Extract lock screen YiYan, charge watts, real watts interval, and permission-confirmation state into a ViewModel/repository boundary.
+   - Preserve existing preference keys, SystemUI permission flow, and restart-scope behavior.
+
+3. `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`
+   - Extract control center date, time, spacing, text style, and color state into a ViewModel/repository boundary.
+   - Preserve existing preference keys and restart-scope behavior.
