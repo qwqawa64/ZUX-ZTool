@@ -57,7 +57,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -89,27 +88,11 @@ import kotlinx.coroutines.launch
 
 class AuditFragment : Fragment() {
 
-    private val allLogEntries = mutableStateListOf<LogEntry>()
-    private val filteredLogEntries = mutableStateListOf<LogEntry>()
+    private val allLogEntries = mutableListOf<LogEntry>()
 
     private var logDir: File? = null
     private var modulesByCategory: Map<String, List<String>> = emptyMap()
-    private var categoryOptions by mutableStateOf(emptyList<String>())
-    private var levelOptions by mutableStateOf(emptyList<String>())
-    private var moduleOptions by mutableStateOf(emptyList<ModuleOption>())
-
-    private var selectedCategory by mutableStateOf("")
-    private var selectedModuleKey by mutableStateOf<String?>(null)
-    private var selectedModuleLabel by mutableStateOf("")
-    private var selectedLevel by mutableStateOf("")
-    private var searchText by mutableStateOf("")
-    private var showErrorsOnly by mutableStateOf(false)
-    private var isLoading by mutableStateOf(false)
-    private var emptyMessage by mutableStateOf("")
-    private var statsText by mutableStateOf("")
-    private var selectedLogEntry by mutableStateOf<LogEntry?>(null)
-    private var showClearDialog by mutableStateOf(false)
-    private var statisticsMessage by mutableStateOf<String?>(null)
+    private var uiState by mutableStateOf(AuditUiState())
 
     private lateinit var exportLogLauncher: ActivityResultLauncher<String>
 
@@ -137,72 +120,63 @@ class AuditFragment : Fragment() {
             setContent {
                 ZToolTheme {
                     AuditScreen(
-                        statsText = statsText,
-                        categoryOptions = categoryOptions,
-                        selectedCategory = selectedCategory,
-                        moduleOptions = moduleOptions,
-                        selectedModuleLabel = selectedModuleLabel,
-                        levelOptions = levelOptions,
-                        selectedLevel = selectedLevel,
-                        searchText = searchText,
-                        showErrorsOnly = showErrorsOnly,
-                        isLoading = isLoading,
-                        emptyMessage = emptyMessage,
-                        logEntries = filteredLogEntries,
+                        state = uiState,
                         onCategorySelected = {
-                            selectedCategory = it
+                            uiState = uiState.copy(selectedCategory = it)
                             updateModuleDropdown()
                             applyFilters()
                         },
                         onModuleSelected = {
-                            selectedModuleKey = it.key
-                            selectedModuleLabel = it.label
+                            uiState = uiState.copy(
+                                selectedModuleKey = it.key,
+                                selectedModuleLabel = it.label
+                            )
                             applyFilters()
                         },
                         onLevelSelected = {
-                            selectedLevel = it
+                            uiState = uiState.copy(selectedLevel = it)
                             applyFilters()
                         },
                         onSearchTextChanged = {
-                            searchText = it
+                            uiState = uiState.copy(searchText = it)
                             applyFilters()
                         },
                         onShowErrorsOnlyChanged = {
-                            showErrorsOnly = it
+                            uiState = uiState.copy(showErrorsOnly = it)
                             applyFilters()
                         },
                         onRefresh = ::loadAllLogFiles,
-                        onClear = { showClearDialog = true },
+                        onClear = { uiState = uiState.copy(showClearDialog = true) },
                         onShowStatistics = ::showStatistics,
                         onSave = ::saveAllLogs,
-                        onLogSelected = { selectedLogEntry = it }
+                        onLogSelected = { uiState = uiState.copy(selectedLogEntry = it) }
                     )
 
-                    selectedLogEntry?.let { entry ->
+                    uiState.selectedLogEntry?.let { entry ->
                         LogDetailDialog(
                             entry = entry,
                             onCopy = {
                                 copyToClipboard(buildLogDetails(entry))
-                                selectedLogEntry = null
+                                uiState = uiState.copy(selectedLogEntry = null)
                             },
-                            onDismiss = { selectedLogEntry = null }
+                            onDismiss = { uiState = uiState.copy(selectedLogEntry = null) }
                         )
                     }
 
-                    if (showClearDialog) {
+                    if (uiState.showClearDialog) {
                         ClearLogsDialog(
                             onConfirm = {
-                                showClearDialog = false
+                                uiState = uiState.copy(showClearDialog = false)
                                 clearAllLogs()
                             },
-                            onDismiss = { showClearDialog = false }
+                            onDismiss = { uiState = uiState.copy(showClearDialog = false) }
                         )
                     }
 
-                    statisticsMessage?.let { message ->
+                    uiState.statisticsMessage?.let { message ->
                         StatisticsDialog(
                             message = message,
-                            onDismiss = { statisticsMessage = null }
+                            onDismiss = { uiState = uiState.copy(statisticsMessage = null) }
                         )
                     }
                 }
@@ -214,32 +188,37 @@ class AuditFragment : Fragment() {
         modulesByCategory = LogParser.getModulesByCategory()
 
         val allCategories = getString(R.string.all_categories)
-        categoryOptions = listOf(allCategories) + modulesByCategory.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
-        selectedCategory = allCategories
+        uiState = uiState.copy(
+            categoryOptions = listOf(allCategories) + modulesByCategory.keys.sortedWith(String.CASE_INSENSITIVE_ORDER),
+            selectedCategory = allCategories,
+            levelOptions = listOf(getString(R.string.all_levels), "DEBUG", "INFO", "WARN", "ERROR")
+        )
 
-        levelOptions = listOf(getString(R.string.all_levels), "DEBUG", "INFO", "WARN", "ERROR")
-        selectedLevel = levelOptions.first()
+        uiState = uiState.copy(selectedLevel = uiState.levelOptions.first())
 
         updateModuleDropdown()
     }
 
     private fun updateModuleDropdown() {
         val moduleKeys = if (
-            selectedCategory.isNotEmpty() &&
-            selectedCategory != getString(R.string.all_categories) &&
-            modulesByCategory.containsKey(selectedCategory)
+            uiState.selectedCategory.isNotEmpty() &&
+            uiState.selectedCategory != getString(R.string.all_categories) &&
+            modulesByCategory.containsKey(uiState.selectedCategory)
         ) {
-            modulesByCategory[selectedCategory].orEmpty()
+            modulesByCategory[uiState.selectedCategory].orEmpty()
         } else {
             LogParser.getAvailableModules()
         }
 
-        moduleOptions = listOf(ModuleOption(null, getString(R.string.all_modules))) +
+        val options = listOf(ModuleOption(null, getString(R.string.all_modules))) +
             moduleKeys.map { key ->
                 ModuleOption(key, LogParser.getModuleDisplayName(key).takeIf { it.isNotBlank() } ?: key)
             }
-        selectedModuleKey = null
-        selectedModuleLabel = moduleOptions.firstOrNull()?.label.orEmpty()
+        uiState = uiState.copy(
+            moduleOptions = options,
+            selectedModuleKey = null,
+            selectedModuleLabel = options.firstOrNull()?.label.orEmpty()
+        )
     }
 
     private fun loadAllLogFiles() {
@@ -263,7 +242,6 @@ class AuditFragment : Fragment() {
                 if (parsedEntries.isEmpty()) {
                     requireActivity().runOnUiThread {
                         allLogEntries.clear()
-                        filteredLogEntries.clear()
                         updateStats()
                         showEmptyState(getString(R.string.no_log_records_found))
                         showLoading(false)
@@ -306,51 +284,52 @@ class AuditFragment : Fragment() {
     private fun applyFilters() {
         if (allLogEntries.isEmpty()) return
 
-        val categoryFilter = selectedCategory.takeIf {
+        val categoryFilter = uiState.selectedCategory.takeIf {
             it.isNotEmpty() && it != getString(R.string.all_categories)
         }
 
         val levelFilter = if (
-            selectedLevel.isNotEmpty() &&
-            selectedLevel != getString(R.string.all_levels)
+            uiState.selectedLevel.isNotEmpty() &&
+            uiState.selectedLevel != getString(R.string.all_levels)
         ) {
-            runCatching { LogLevel.valueOf(selectedLevel) }.getOrDefault(LogLevel.UNKNOWN)
+            runCatching { LogLevel.valueOf(uiState.selectedLevel) }.getOrDefault(LogLevel.UNKNOWN)
         } else {
             LogLevel.UNKNOWN
         }
 
-        val search = searchText.trim().ifEmpty { null }
+        val search = uiState.searchText.trim().ifEmpty { null }
         val tempFiltered = LogParser.filterEntries(
             allLogEntries,
-            selectedModuleKey,
+            uiState.selectedModuleKey,
             levelFilter,
             search,
             categoryFilter
         )
 
-        filteredLogEntries.clear()
-        filteredLogEntries.addAll(
-            tempFiltered.filter { entry ->
-                !showErrorsOnly || entry.extractedData["is_error"] == "true"
+        val filtered = tempFiltered.filter { entry ->
+            !uiState.showErrorsOnly || entry.extractedData["is_error"] == "true"
+        }
+        uiState = uiState.copy(
+            filteredLogEntries = filtered,
+            emptyMessage = if (filtered.isEmpty()) {
+                getString(R.string.no_matching_log_records)
+            } else {
+                ""
             }
         )
         updateStats()
-
-        emptyMessage = if (filteredLogEntries.isEmpty()) {
-            getString(R.string.no_matching_log_records)
-        } else {
-            ""
-        }
     }
 
     private fun updateStats() {
         val moduleStats = LogParser.getModuleStats(allLogEntries)
-        statsText = getString(
-            R.string.stats_format,
-            allLogEntries.size,
-            filteredLogEntries.size,
-            moduleStats.size,
-            getLogFileCount()
+        uiState = uiState.copy(
+            statsText = getString(
+                R.string.stats_format,
+                allLogEntries.size,
+                uiState.filteredLogEntries.size,
+                moduleStats.size,
+                getLogFileCount()
+            )
         )
     }
 
@@ -433,7 +412,7 @@ class AuditFragment : Fragment() {
 
                 requireActivity().runOnUiThread {
                     allLogEntries.clear()
-                    filteredLogEntries.clear()
+                    uiState = uiState.copy(filteredLogEntries = emptyList())
                     updateStats()
                     showEmptyState(getString(R.string.logs_cleared_message))
                     showLoading(false)
@@ -457,20 +436,22 @@ class AuditFragment : Fragment() {
         val moduleStats = LogParser.getModuleStats(allLogEntries)
         val errorStats = LogParser.getErrorStats(allLogEntries)
 
-        statisticsMessage = buildString {
-            append(getString(R.string.log_statistics_header)).append("\n\n")
-            append(getString(R.string.total_logs)).append(allLogEntries.size).append("\n")
-            append(getString(R.string.total_modules)).append(moduleStats.size).append("\n")
-            append(getString(R.string.total_errors)).append(errorStats["total_errors"]).append("\n")
-            append(getString(R.string.log_files_count)).append(getLogFileCount()).append(getString(R.string.log_files_unit)).append("\n\n")
-            append(getString(R.string.module_statistics_header)).append("\n")
-            for ((module, count) in moduleStats) {
-                append(LogParser.getModuleDisplayName(module)).append(": ")
-                    .append(count)
-                    .append(getString(R.string.log_count_unit))
-                    .append("\n")
+        uiState = uiState.copy(
+            statisticsMessage = buildString {
+                append(getString(R.string.log_statistics_header)).append("\n\n")
+                append(getString(R.string.total_logs)).append(allLogEntries.size).append("\n")
+                append(getString(R.string.total_modules)).append(moduleStats.size).append("\n")
+                append(getString(R.string.total_errors)).append(errorStats["total_errors"]).append("\n")
+                append(getString(R.string.log_files_count)).append(getLogFileCount()).append(getString(R.string.log_files_unit)).append("\n\n")
+                append(getString(R.string.module_statistics_header)).append("\n")
+                for ((module, count) in moduleStats) {
+                    append(LogParser.getModuleDisplayName(module)).append(": ")
+                        .append(count)
+                        .append(getString(R.string.log_count_unit))
+                        .append("\n")
+                }
             }
-        }
+        )
     }
 
     private fun buildLogDetails(entry: LogEntry): String {
@@ -503,14 +484,14 @@ class AuditFragment : Fragment() {
     }
 
     private fun showLoading(show: Boolean) {
-        isLoading = show
-        if (show) {
-            emptyMessage = ""
-        }
+        uiState = uiState.copy(
+            isLoading = show,
+            emptyMessage = if (show) "" else uiState.emptyMessage
+        )
     }
 
     private fun showEmptyState(message: String) {
-        emptyMessage = message
+        uiState = uiState.copy(emptyMessage = message)
     }
 
     companion object {
@@ -525,21 +506,29 @@ private data class ModuleOption(
     override fun toString(): String = label
 }
 
+private data class AuditUiState(
+    val categoryOptions: List<String> = emptyList(),
+    val levelOptions: List<String> = emptyList(),
+    val moduleOptions: List<ModuleOption> = emptyList(),
+    val selectedCategory: String = "",
+    val selectedModuleKey: String? = null,
+    val selectedModuleLabel: String = "",
+    val selectedLevel: String = "",
+    val searchText: String = "",
+    val showErrorsOnly: Boolean = false,
+    val isLoading: Boolean = false,
+    val emptyMessage: String = "",
+    val statsText: String = "",
+    val filteredLogEntries: List<LogEntry> = emptyList(),
+    val selectedLogEntry: LogEntry? = null,
+    val showClearDialog: Boolean = false,
+    val statisticsMessage: String? = null
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AuditScreen(
-    statsText: String,
-    categoryOptions: List<String>,
-    selectedCategory: String,
-    moduleOptions: List<ModuleOption>,
-    selectedModuleLabel: String,
-    levelOptions: List<String>,
-    selectedLevel: String,
-    searchText: String,
-    showErrorsOnly: Boolean,
-    isLoading: Boolean,
-    emptyMessage: String,
-    logEntries: List<LogEntry>,
+    state: AuditUiState,
     onCategorySelected: (String) -> Unit,
     onModuleSelected: (ModuleOption) -> Unit,
     onLevelSelected: (String) -> Unit,
@@ -556,7 +545,7 @@ private fun AuditScreen(
 
     Scaffold(
         floatingActionButton = {
-            if (logEntries.isNotEmpty()) {
+            if (state.filteredLogEntries.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = {
                         scope.launch {
@@ -590,7 +579,7 @@ private fun AuditScreen(
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = statsText.ifEmpty { stringResource(R.string.placeHolderLogStat) },
+                        text = state.statsText.ifEmpty { stringResource(R.string.placeHolderLogStat) },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -599,14 +588,14 @@ private fun AuditScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 FilterCard(
-                    categoryOptions = categoryOptions,
-                    selectedCategory = selectedCategory,
-                    moduleOptions = moduleOptions,
-                    selectedModuleLabel = selectedModuleLabel,
-                    levelOptions = levelOptions,
-                    selectedLevel = selectedLevel,
-                    searchText = searchText,
-                    showErrorsOnly = showErrorsOnly,
+                    categoryOptions = state.categoryOptions,
+                    selectedCategory = state.selectedCategory,
+                    moduleOptions = state.moduleOptions,
+                    selectedModuleLabel = state.selectedModuleLabel,
+                    levelOptions = state.levelOptions,
+                    selectedLevel = state.selectedLevel,
+                    searchText = state.searchText,
+                    showErrorsOnly = state.showErrorsOnly,
                     onCategorySelected = onCategorySelected,
                     onModuleSelected = onModuleSelected,
                     onLevelSelected = onLevelSelected,
@@ -631,7 +620,7 @@ private fun AuditScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     when {
-                        isLoading -> {
+                        state.isLoading -> {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -639,13 +628,13 @@ private fun AuditScreen(
                                 CircularProgressIndicator()
                             }
                         }
-                        emptyMessage.isNotEmpty() -> {
+                        state.emptyMessage.isNotEmpty() -> {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = emptyMessage,
+                                    text = state.emptyMessage,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -657,7 +646,7 @@ private fun AuditScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(vertical = 10.dp)
                             ) {
-                                items(logEntries) { entry ->
+                                items(state.filteredLogEntries) { entry ->
                                     LogEntryRow(
                                         entry = entry,
                                         onClick = { onLogSelected(entry) }

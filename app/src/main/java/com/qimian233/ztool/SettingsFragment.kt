@@ -55,11 +55,7 @@ import com.qimian233.ztool.utils.FileManager
 
 class SettingsFragment : Fragment() {
 
-    private var isLogServiceEnabled by mutableStateOf(false)
-    private var isDetailedLoggingEnabled by mutableStateOf(false)
-    private var isHomepageYiyanEnabled by mutableStateOf(true)
-    private var showRestoreConfirmDialog by mutableStateOf(false)
-    private var showAboutDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(SettingsUiState())
 
     private val backupLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -107,32 +103,30 @@ class SettingsFragment : Fragment() {
             setContent {
                 ZToolTheme {
                     SettingsRoute(
-                        isLogServiceEnabled = isLogServiceEnabled,
-                        isDetailedLoggingEnabled = isDetailedLoggingEnabled,
-                        isHomepageYiyanEnabled = isHomepageYiyanEnabled,
+                        state = uiState,
                         onBackup = ::performBackup,
                         onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-                        onRestoreDefault = { showRestoreConfirmDialog = true },
+                        onRestoreDefault = { uiState = uiState.copy(showRestoreConfirmDialog = true) },
                         onLogServiceChanged = ::handleLogServiceSwitch,
                         onDetailedLoggingChanged = ::handleDetailedLoggingSwitch,
                         onHomepageYiyanChanged = ::handleHomepageYiyanSwitch,
-                        onAbout = { showAboutDialog = true }
+                        onAbout = { uiState = uiState.copy(showAboutDialog = true) }
                     )
 
-                    if (showRestoreConfirmDialog) {
+                    if (uiState.showRestoreConfirmDialog) {
                         RestoreDefaultDialog(
                             onConfirm = {
-                                showRestoreConfirmDialog = false
+                                uiState = uiState.copy(showRestoreConfirmDialog = false)
                                 performRestore()
                             },
-                            onDismiss = { showRestoreConfirmDialog = false }
+                            onDismiss = { uiState = uiState.copy(showRestoreConfirmDialog = false) }
                         )
                     }
 
-                    if (showAboutDialog) {
+                    if (uiState.showAboutDialog) {
                         AboutDialog(
                             version = updateModuleStatus(),
-                            onDismiss = { showAboutDialog = false },
+                            onDismiss = { uiState = uiState.copy(showAboutDialog = false) },
                             onOpenGithub = {
                                 openExternalLink("https://github.com/qwqawa64/ZUX-ZTool", false, "")
                             },
@@ -160,9 +154,11 @@ class SettingsFragment : Fragment() {
     private fun loadSwitchStates() {
         if (context == null) return
         val prefs = ModulePreferencesUtils(requireContext())
-        isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext())
-        isDetailedLoggingEnabled = prefs.loadBooleanSetting("isDetailedLogging", false)
-        isHomepageYiyanEnabled = prefs.loadBooleanSetting("enable_homepage_yiyan", true)
+        uiState = uiState.copy(
+            isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext()),
+            isDetailedLoggingEnabled = prefs.loadBooleanSetting("isDetailedLogging", false),
+            isHomepageYiyanEnabled = prefs.loadBooleanSetting("enable_homepage_yiyan", true)
+        )
     }
 
     private fun performBackup() {
@@ -176,7 +172,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun handleLogServiceSwitch(isEnabled: Boolean) {
-        isLogServiceEnabled = isEnabled
+        uiState = uiState.copy(isLogServiceEnabled = isEnabled)
         if (isEnabled) {
             LogServiceManager.startLogService(requireContext())
             showToast(getString(R.string.log_service_started))
@@ -187,12 +183,12 @@ class SettingsFragment : Fragment() {
     }
 
     private fun handleDetailedLoggingSwitch(isEnabled: Boolean) {
-        isDetailedLoggingEnabled = isEnabled
+        uiState = uiState.copy(isDetailedLoggingEnabled = isEnabled)
         ModulePreferencesUtils(requireContext()).saveBooleanSetting("isDetailedLogging", isEnabled)
     }
 
     private fun handleHomepageYiyanSwitch(isEnabled: Boolean) {
-        isHomepageYiyanEnabled = isEnabled
+        uiState = uiState.copy(isHomepageYiyanEnabled = isEnabled)
         ModulePreferencesUtils(requireContext()).saveBooleanSetting("enable_homepage_yiyan", isEnabled)
     }
 
@@ -237,11 +233,17 @@ class SettingsFragment : Fragment() {
     }
 }
 
+private data class SettingsUiState(
+    val isLogServiceEnabled: Boolean = false,
+    val isDetailedLoggingEnabled: Boolean = false,
+    val isHomepageYiyanEnabled: Boolean = true,
+    val showRestoreConfirmDialog: Boolean = false,
+    val showAboutDialog: Boolean = false
+)
+
 @Composable
 private fun SettingsRoute(
-    isLogServiceEnabled: Boolean,
-    isDetailedLoggingEnabled: Boolean,
-    isHomepageYiyanEnabled: Boolean,
+    state: SettingsUiState,
     onBackup: () -> Unit,
     onRestore: () -> Unit,
     onRestoreDefault: () -> Unit,
@@ -289,19 +291,19 @@ private fun SettingsRoute(
                 SettingsSwitchRow(
                     title = stringResource(R.string.enableLogService),
                     summary = stringResource(R.string.enableLogServiceDescription),
-                    checked = isLogServiceEnabled,
+                    checked = state.isLogServiceEnabled,
                     onCheckedChange = onLogServiceChanged
                 )
                 SettingsSwitchRow(
                     title = stringResource(R.string.enableDetailedLogging),
                     summary = stringResource(R.string.enableDetailedLoggingDescription),
-                    checked = isDetailedLoggingEnabled,
+                    checked = state.isDetailedLoggingEnabled,
                     onCheckedChange = onDetailedLoggingChanged
                 )
                 SettingsSwitchRow(
                     title = stringResource(R.string.enableHomePageYiyan),
                     summary = stringResource(R.string.enableHomePageYiyanSummary),
-                    checked = isHomepageYiyanEnabled,
+                    checked = state.isHomepageYiyanEnabled,
                     onCheckedChange = onHomepageYiyanChanged
                 )
             }

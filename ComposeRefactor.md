@@ -217,6 +217,30 @@ Verification:
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the status bar consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the lock screen consolidation.
 
+### Fragment Screen UiState Consolidation
+
+The following Fragment-level Compose screens now consume one screen state object:
+
+- `AuditFragment.kt`: `AuditUiState`.
+- `SettingsFragment.kt`: `SettingsUiState`.
+- `HomeFragment.kt`: `HomeUiState`, including config-upgrade and reboot dialog flags.
+
+Preserved behavior:
+
+- Existing Fragment class names, packages, and main navigation contracts.
+- Existing log parsing, filtering, statistics, clear, export, and copy behavior in `AuditFragment.kt`.
+- Existing settings backup, restore, default restore, log service, detailed logging, homepage YiYan, about, and external-link behavior in `SettingsFragment.kt`.
+- Existing environment checks, root/framework/system info, update check, config upgrade prompt, homepage hint, reboot menu, and shell behavior in `HomeFragment.kt`.
+
+Implementation note:
+
+- This completes the current pre-ViewModel consolidation pass for the listed Fragment-level screens.
+- The next migration step should move selected heavy Fragment business logic behind ViewModels and repository wrappers rather than adding more Activity/Fragment-local state.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the Fragment-level consolidation.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -365,11 +389,19 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue the pre-ViewModel consolidation pass: make remaining Compose screens consume one `UiState` object each before moving any page to a ViewModel/repository boundary.
+Begin Phase 2 ViewModel/repository extraction now that the active Compose screens consume stable `UiState` objects.
 
 Recommended next order:
 
-1. Fragment-level screens
-   - `AuditFragment.kt`.
-   - `SettingsFragment.kt`.
-   - `HomeFragment.kt` dialog flags should be folded into `HomeUiState` before later ViewModel extraction.
+1. `HomeFragment.kt`
+   - Extract `HomeViewModel` and `HomeUiState` out of the Fragment.
+   - Introduce repository/manager wrappers for environment checks, module status, system info, homepage hint, update checks, and reboot actions.
+   - Keep the existing Fragment route and `EnvironmentStateListener` contract intact while moving shell/network/preference work out of direct UI code.
+
+2. `AuditFragment.kt`
+   - Extract log loading, filtering, stats, clear, and export coordination into a ViewModel plus log/file repository boundary.
+   - Preserve current log file locations and export behavior.
+
+3. `SettingsFragment.kt`
+   - Extract settings backup/restore, log-service toggles, and app metadata lookup into a ViewModel/repository boundary.
+   - Preserve existing preference keys and SAF launch contracts.

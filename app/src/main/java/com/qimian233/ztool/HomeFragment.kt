@@ -99,8 +99,6 @@ class HomeFragment : Fragment() {
     private var lastSystemInfoUpdate = 0L
 
     private var uiState by mutableStateOf(HomeUiState())
-    private var configUpgradeDialogVisible by mutableStateOf(false)
-    private var rebootConfirmation by mutableStateOf<RebootTarget?>(null)
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -131,14 +129,14 @@ class HomeFragment : Fragment() {
                         onOpenUpdate = ::openUpdateUrl
                     )
 
-                    if (configUpgradeDialogVisible) {
+                    if (uiState.configUpgradeDialogVisible) {
                         ConfigUpgradeDialog(
                             onRestart = {
-                                configUpgradeDialogVisible = false
+                                uiState = uiState.copy(configUpgradeDialogVisible = false)
                                 shellExecutor.executeRootCommand("su -c reboot", 3)
                             },
                             onLater = {
-                                configUpgradeDialogVisible = false
+                                uiState = uiState.copy(configUpgradeDialogVisible = false)
                                 Toast.makeText(
                                     requireContext(),
                                     R.string.have_not_restart_warn,
@@ -148,14 +146,14 @@ class HomeFragment : Fragment() {
                         )
                     }
 
-                    rebootConfirmation?.let { target ->
+                    uiState.rebootConfirmation?.let { target ->
                         RebootConfirmDialog(
                             target = target,
                             onConfirm = {
-                                rebootConfirmation = null
+                                uiState = uiState.copy(rebootConfirmation = null)
                                 executeReboot(target)
                             },
-                            onDismiss = { rebootConfirmation = null }
+                            onDismiss = { uiState = uiState.copy(rebootConfirmation = null) }
                         )
                     }
                 }
@@ -272,7 +270,7 @@ class HomeFragment : Fragment() {
     private fun checkConfigUpgrade() {
         Log.i(TAG, "开始检查配置是否为最新版本")
         if (ConfigUpgrade.configUpgrader(requireContext())) {
-            configUpgradeDialogVisible = true
+            uiState = uiState.copy(configUpgradeDialogVisible = true)
             Log.i(TAG, "配置升级成功")
         } else {
             Log.i(TAG, "配置已是最新版本")
@@ -558,7 +556,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun handleMenuItemClick(item: MenuItem): Boolean {
-        rebootConfirmation = when (item.itemId) {
+        uiState = uiState.copy(rebootConfirmation = when (item.itemId) {
             R.id.menu_soft_reboot -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     Toast.makeText(
@@ -575,7 +573,7 @@ class HomeFragment : Fragment() {
             R.id.menu_edl -> RebootTarget.Edl
             R.id.menu_reboot -> RebootTarget.System
             else -> return false
-        }
+        })
         return true
     }
 
@@ -611,7 +609,9 @@ class HomeFragment : Fragment() {
         val kernelVersion: String = "",
         val currentSlot: String = "",
         val romRegion: String = "",
-        val updateInfo: UpdateInfo? = null
+        val updateInfo: UpdateInfo? = null,
+        val configUpgradeDialogVisible: Boolean = false,
+        val rebootConfirmation: RebootTarget? = null
     ) {
         val environmentReady: Boolean
             get() = isModuleActive && isRootAvailable
