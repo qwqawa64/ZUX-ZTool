@@ -407,6 +407,7 @@
   - `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`：控制中心时间设置页已迁移到 Compose，保留原类名、包名和启动入口；保留 `Custom_ControlCenterDate`、`Custom_ControlCenterDateFormat`、`Custom_ControlCenterDateTextSize`、`Custom_ControlCenterDateTextSizeEnabled`、`Custom_ControlCenterDateLetterSpacing`、`Custom_ControlCenterDateLetterSpacingEnabled`、`Custom_ControlCenterDateTextColor`、`Custom_ControlCenterDateTextColorEnabled`、`Custom_ControlCenterDateTextBold` 配置键；日期格式输入、实时预览、格式帮助、示例复制、颜色选择、字体大小与字间距 SeekBar 均改为 Compose TextField/Dialog/Slider。
   - `settingactivity/setting/SettingsDetailActivity.kt`：系统设置详情页已迁移到 Compose，保留原类名和启动入口；保留 `remove_blacklist`、`Split_Screen_mandatory`、`allow_display_dolby`、`PermissionControllerHook`、`AlwaysDisplaySuggestion` 配置键；保留 Magisk/KSU 一视界模块安装与移除、强制小窗 root 命令、悬浮窗适配向导、手动适配策略刷入、ZUI `ov_common_persist_user_0.xml` 配置选择、字体导入与重启作用域逻辑；复杂选择器和字体输入暂时继续复用现有 View Dialog/工具类，页面主体、开关和重启确认已改为 Compose。
   - `AuditFragment.kt`：日志审计页已迁移到 Compose，保留 Fragment 路由入口与 `LogParser` 数据解析逻辑；RecyclerView/Adapter 改为 Compose `LazyColumn`，类别/模块/级别筛选改为 Compose 下拉菜单，搜索、仅显示错误、刷新、清除、统计、导出和日志详情改为 Compose 状态与 Dialog；日志 zip 导出继续使用 SAF `CreateDocument` 与现有 `FileManager`/`FileUtils`。
+  - `settingactivity/ota/OtaSettings.kt`：系统更新设置页已迁移到 Compose，保留原类名和启动入口；保留 `custom_ota_parameters`、`disable_OtaCheck`、`Custom_ota_target_versionName`、`Custom_ota_target_deviceID` 配置键；OTA 信息拉取结果和 9008/深刷包查询结果已改为页面内状态区域展示，提供复制下载链接、复制更新日志和复制密码操作；保留当前系统版本/SN 读取、root 读取 OTA XML、XML 解析、`GetPCFlashFirmware` 异步查询和重启 `app_package` + `com.lenovo.tbengine` 作用域逻辑。
 
   最近验证
 
@@ -423,12 +424,36 @@
   - 2026-05-29：完成 `ControlCenterSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `SettingsDetailActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。未新增迁移页面 warning；仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `AuditFragment` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
+  - 2026-05-29：完成 `OtaSettings` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
 
   下一步候选
 
-  - 下一步可迁移 `settingactivity/ota/OtaSettings.java`。建议按评估结果重排页面：OTA 信息拉取结果和 9008 固件链接查询结果直接内联展示在 `OtaSettings` 页面中，仅保留必要的错误提示和重启确认 Dialog。
+  - 下一步可继续评估剩余传统页面，例如 `HomeFragment.java` 或 `settingactivity/systemui/systemUISettings.java`。两者业务逻辑都较重，应先拆状态再迁移 UI。
+
+  OtaSettings 迁移实施计划（2026-05-29）
+
+  - 将 `settingactivity/ota/OtaSettings.java` 替换为同包名同类名的 Kotlin Compose Activity，保留 Manifest 启动入口和外部传入的 `app_name`、`app_package`。
+  - 保留原配置键与 Hook 行为：
+      - `custom_ota_parameters`：进入页面时继续保存为 `true`。
+      - `disable_OtaCheck`：本地安装/禁用 OTA 检查开关。
+      - `Custom_ota_target_versionName`：自定义 OTA 目标系统版本。
+      - `Custom_ota_target_deviceID`：自定义 OTA 目标设备 SN。
+  - 页面重排为 4 个 Compose 区域：
+      1. 系统更新开关卡片：`disable_OtaCheck` 开关。
+      2. OTA 信息卡片：点击“拉取 OTA 信息”后直接在页面内展示当前版本、新版本、更新日志、下载链接、大小、MD5，并提供“复制下载链接”和“复制更新日志”按钮，不再使用 `dialog_ota_info.xml` 承载主要结果。
+      3. 9008/深刷包卡片：SN 输入框默认填充/提示本机 SN，点击查询后直接在页面内展示下载链接、解压密码、平台、刷机方式、首次上传时间、最后更新时间，并提供“复制下载链接”和“复制密码”按钮，不再使用 `dialog_pcflash_fetch.xml` 承载主要结果。
+      4. OTA 请求伪装卡片：展示当前系统版本和当前机器 SN，提供系统版本与 SN 输入框并即时保存。
+  - 异步逻辑处理：
+      - 当前系统版本通过 `EnhancedShellExecutor.executeCommand("getprop ro.build.display.id")` 读取。
+      - 当前 SN 继续按 `ro.odm.lenovo.gsn`、`ro.serialno`、`ro.boot.serialno` 顺序读取。
+      - OTA 信息继续读取 `/data_mirror/data_ce/null/0/com.lenovo.tbengine/shared_prefs/lenovo_row_ota_package_info.xml` 并复用 XML 解析逻辑；失败时写入页面错误状态或使用轻量 Dialog/Toast。
+      - 9008 固件查询先复用 `GetPCFlashFirmware.queryFirmwareAsync`，结果映射为 Compose state；后续可再把 `AsyncTask` 工具改成 Repository。
+  - 仅保留必要 Dialog：
+      - 重启 XP 模块作用域确认。
+      - 无法获取 OTA 信息或固件信息时的错误提示可用页面内错误文本或 AlertDialog。
+  - 保留重启作用域逻辑：继续停止 `app_package` 和 `com.lenovo.tbengine`。
 
   当前停止点
 
-  - 已完成并验证：`AuditFragment` 页面 Compose 化。
-  - 下一次继续时，建议处理 `OtaSettings.java`，但应先把 OTA 信息和 9008 查询结果设计为页面内状态区域，避免继续堆叠多个自定义 Dialog。
+  - 已完成并验证：`OtaSettings` 页面 Compose 化。
+  - 下一次继续时，建议评估 `HomeFragment.java` 或 `systemUISettings.java`，优先拆出环境/系统状态读取与页面状态，再做 Compose 化。
