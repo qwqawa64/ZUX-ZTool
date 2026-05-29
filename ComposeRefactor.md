@@ -397,6 +397,30 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `LockScreenSettingsActivity` ViewModel/repository extraction.
 
+### ControlCenterSettings ViewModel Boundary
+
+`settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt` now delegates control center date preference state and date-preview formatting to:
+
+- `viewmodel/ControlCenterSettingsViewModel.kt`.
+- `data/systemui/ControlCenterSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `ControlCenterSettingsActivity` class name, package, and Activity launch contract.
+- Existing preference keys for custom control center date, date format, text size, letter spacing, text color, and bold style.
+- Existing date format preview and invalid-format fallback behavior.
+- Existing format help copy action, color picker dialog, and save confirmation dialog behavior.
+
+Implementation note:
+
+- `ControlCenterSettingsUiState` now lives with `ControlCenterSettingsViewModel`.
+- The Activity now hosts Compose, handles clipboard/Toast effects, and forwards user actions to the ViewModel.
+- `ControlCenterSettingsRepository` wraps `ModulePreferencesUtils` and `CustomDateFormatter` for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `ControlCenterSettingsActivity` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -549,6 +573,6 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`
-   - Extract control center date, time, spacing, text style, and color state into a ViewModel/repository boundary.
+1. `settingactivity/systemframework/FrameworkSettingsActivity.kt`
+   - Extract framework, AI input expansion, package visibility, secure flag, and password confirmation state into a ViewModel/repository boundary.
    - Preserve existing preference keys and restart-scope behavior.

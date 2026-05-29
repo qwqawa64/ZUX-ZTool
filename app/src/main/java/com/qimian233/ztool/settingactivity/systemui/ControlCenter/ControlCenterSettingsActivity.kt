@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,9 +42,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,74 +51,57 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
-import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter
+import com.qimian233.ztool.data.systemui.ControlCenterSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import java.util.Date
+import com.qimian233.ztool.viewmodel.ControlCenterSettingsUiState
+import com.qimian233.ztool.viewmodel.ControlCenterSettingsViewModel
 
 class ControlCenterSettingsActivity : ComponentActivity() {
 
-    private lateinit var prefsUtils: ModulePreferencesUtils
-    private lateinit var zToolPrefs: ModulePreferencesUtils
-
-    private var uiState by mutableStateOf(ControlCenterSettingsUiState())
+    private lateinit var viewModel: ControlCenterSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()
-        prefsUtils = ModulePreferencesUtils(this)
-        zToolPrefs = ModulePreferencesUtils(this)
-        loadSettings()
+        val repository = ControlCenterSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            ControlCenterSettingsViewModelFactory(repository)
+        )[ControlCenterSettingsViewModel::class.java]
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 ControlCenterSettingsScreen(
                     title = appName + stringResource(R.string.control_center_settings_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onCustomDateChanged = ::handleCustomDateChanged,
-                    onDateFormatChanged = {
-                        uiState = uiState.copy(dateFormat = it)
-                        updateDatePreview(it)
-                    },
-                    onSaveDateFormat = ::saveDateFormat,
-                    onShowFormatHelp = { uiState = uiState.copy(showFormatHelpDialog = true) },
-                    onTextSizeEnabledChanged = {
-                        uiState = uiState.copy(textSizeEnabled = it)
-                        zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateTextSizeEnabled", it)
-                    },
-                    onTextSizeChanged = {
-                        uiState = uiState.copy(textSize = it)
-                        zToolPrefs.saveFloatSetting("Custom_ControlCenterDateTextSize", it)
-                    },
-                    onLetterSpacingEnabledChanged = {
-                        uiState = uiState.copy(letterSpacingEnabled = it)
-                        zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateLetterSpacingEnabled", it)
-                    },
-                    onLetterSpacingChanged = {
-                        uiState = uiState.copy(letterSpacing = it)
-                        zToolPrefs.saveFloatSetting("Custom_ControlCenterDateLetterSpacing", it)
-                    },
-                    onTextColorEnabledChanged = {
-                        uiState = uiState.copy(textColorEnabled = it)
-                        zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateTextColorEnabled", it)
-                    },
-                    onPickTextColor = { uiState = uiState.copy(showColorPickerDialog = true) },
-                    onTextBoldChanged = {
-                        uiState = uiState.copy(textBold = it)
-                        zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateTextBold", it)
-                    }
+                    onCustomDateChanged = viewModel::setCustomDate,
+                    onDateFormatChanged = viewModel::setDateFormat,
+                    onSaveDateFormat = viewModel::saveDateFormat,
+                    onShowFormatHelp = viewModel::showFormatHelpDialog,
+                    onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
+                    onTextSizeChanged = viewModel::setTextSize,
+                    onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
+                    onLetterSpacingChanged = viewModel::setLetterSpacing,
+                    onTextColorEnabledChanged = viewModel::setTextColorEnabled,
+                    onPickTextColor = viewModel::showColorPickerDialog,
+                    onTextBoldChanged = viewModel::setTextBold
                 )
 
                 if (uiState.showFormatHelpDialog) {
                     FormatHelpDialog(
-                        onDismiss = { uiState = uiState.copy(showFormatHelpDialog = false) },
+                        onDismiss = viewModel::dismissFormatHelpDialog,
                         onCopyExample = {
-                            uiState = uiState.copy(showFormatHelpDialog = false)
+                            viewModel.dismissFormatHelpDialog()
                             copyDateFormatExample()
                         }
                     )
@@ -129,24 +109,18 @@ class ControlCenterSettingsActivity : ComponentActivity() {
 
                 if (uiState.showColorPickerDialog) {
                     ColorPickerDialog(
-                        onColorSelected = {
-                            uiState = uiState.copy(
-                                showColorPickerDialog = false,
-                                textColor = it
-                            )
-                            zToolPrefs.saveIntegerSetting("Custom_ControlCenterDateTextColor", it)
-                        },
-                        onDismiss = { uiState = uiState.copy(showColorPickerDialog = false) }
+                        onColorSelected = viewModel::setTextColor,
+                        onDismiss = viewModel::dismissColorPickerDialog
                     )
                 }
 
                 if (uiState.showSaveSuccessDialog) {
                     AlertDialog(
-                        onDismissRequest = { uiState = uiState.copy(showSaveSuccessDialog = false) },
+                        onDismissRequest = viewModel::dismissSaveSuccessDialog,
                         title = { Text(stringResource(R.string.save_success_title)) },
                         text = { Text(stringResource(R.string.date_format_saved_message)) },
                         confirmButton = {
-                            TextButton(onClick = { uiState = uiState.copy(showSaveSuccessDialog = false) }) {
+                            TextButton(onClick = viewModel::dismissSaveSuccessDialog) {
                                 Text(stringResource(R.string.restart_yes))
                             }
                         }
@@ -154,67 +128,6 @@ class ControlCenterSettingsActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun loadSettings() {
-        val loadedDateFormat = zToolPrefs.loadStringSetting(
-            "Custom_ControlCenterDateFormat",
-            getString(R.string.default_date_format)
-        )
-        uiState = uiState.copy(
-            customDate = prefsUtils.loadBooleanSetting("Custom_ControlCenterDate", false),
-            dateFormat = loadedDateFormat,
-            textSize = zToolPrefs.loadFloatSetting("Custom_ControlCenterDateTextSize", 16.0f),
-            textSizeEnabled = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextSizeEnabled", false),
-            letterSpacing = zToolPrefs.loadFloatSetting("Custom_ControlCenterDateLetterSpacing", 0.1f),
-            letterSpacingEnabled = zToolPrefs.loadBooleanSetting(
-                "Custom_ControlCenterDateLetterSpacingEnabled",
-                false
-            ),
-            textColor = zToolPrefs.loadIntegerSetting(
-                "Custom_ControlCenterDateTextColor",
-                0xFFFFFFFF.toInt()
-            ),
-            textColorEnabled = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextColorEnabled", false),
-            textBold = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextBold", false)
-        )
-        updateDatePreview(loadedDateFormat)
-    }
-
-    private fun handleCustomDateChanged(isEnabled: Boolean) {
-        var nextDateFormat = uiState.dateFormat
-        prefsUtils.saveBooleanSetting("Custom_ControlCenterDate", isEnabled)
-        if (isEnabled && nextDateFormat.isEmpty()) {
-            nextDateFormat = zToolPrefs.loadStringSetting(
-                "Custom_ControlCenterDateFormat",
-                getString(R.string.default_date_format)
-            )
-        }
-        uiState = uiState.copy(
-            customDate = isEnabled,
-            dateFormat = nextDateFormat
-        )
-        updateDatePreview(nextDateFormat)
-    }
-
-    private fun saveDateFormat() {
-        Log.d(TAG, "保存的格式：${uiState.dateFormat}")
-        zToolPrefs.saveStringSetting("Custom_ControlCenterDateFormat", uiState.dateFormat)
-        uiState = uiState.copy(showSaveSuccessDialog = true)
-    }
-
-    private fun updateDatePreview(format: String) {
-        val preview = if (format.isEmpty()) {
-            getString(R.string.preview_default)
-        } else {
-            try {
-                getString(R.string.preview_display, CustomDateFormatter.format(format, Date()))
-            } catch (e: Exception) {
-                Log.e(TAG, "Error formatting date: $format", e)
-                getString(R.string.preview_invalid) + "\n" + getString(R.string.error_prefix) + e.message
-            }
-        }
-        uiState = uiState.copy(datePreview = preview)
     }
 
     private fun copyDateFormatExample() {
@@ -226,27 +139,19 @@ class ControlCenterSettingsActivity : ComponentActivity() {
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, R.string.example_copied_message, Toast.LENGTH_SHORT).show()
     }
-
-    companion object {
-        private const val TAG = "ControlCenterSettings"
-    }
 }
 
-private data class ControlCenterSettingsUiState(
-    val customDate: Boolean = false,
-    val dateFormat: String = "",
-    val datePreview: String = "",
-    val textSizeEnabled: Boolean = false,
-    val textSize: Float = 16.0f,
-    val letterSpacingEnabled: Boolean = false,
-    val letterSpacing: Float = 0.1f,
-    val textColorEnabled: Boolean = false,
-    val textColor: Int = 0xFFFFFFFF.toInt(),
-    val textBold: Boolean = false,
-    val showFormatHelpDialog: Boolean = false,
-    val showColorPickerDialog: Boolean = false,
-    val showSaveSuccessDialog: Boolean = false
-)
+private class ControlCenterSettingsViewModelFactory(
+    private val repository: ControlCenterSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ControlCenterSettingsViewModel::class.java)) {
+            return ControlCenterSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
