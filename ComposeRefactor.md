@@ -296,6 +296,32 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `AuditFragment` ViewModel/repository extraction.
 
+### SettingsFragment ViewModel Boundary
+
+`SettingsFragment.kt` now delegates settings state and configuration work to:
+
+- `viewmodel/SettingsViewModel.kt`.
+- `data/settings/SettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `SettingsFragment` class name, package, Fragment route, and Compose UI surface.
+- Existing preference keys: `isDetailedLogging` and `enable_homepage_yiyan`.
+- Existing settings backup and restore through SAF document launchers.
+- Existing default-restore behavior through `ModulePreferencesUtils.clearAllSettings()`.
+- Existing log service start/stop behavior through `LogServiceManager`.
+- Existing about dialog links and external app/package handling.
+
+Implementation note:
+
+- `SettingsUiState` now lives with `SettingsViewModel`.
+- `SettingsFragment` now hosts Compose, handles SAF callbacks, opens external links, shows Toasts, and forwards user actions to the ViewModel.
+- `SettingsRepository` wraps config backup/restore, log-service state, preference reads/writes, and app version lookup.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `SettingsFragment` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -448,10 +474,6 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `SettingsFragment.kt`
-   - Extract settings backup/restore, log-service toggles, and app metadata lookup into a ViewModel/repository boundary.
-   - Preserve existing preference keys and SAF launch contracts.
-
-2. `settingactivity/systemui/systemUISettings.kt`
+1. `settingactivity/systemui/systemUISettings.kt`
    - Extract System UI aggregate settings state and shell/restart coordination into a ViewModel/repository boundary.
    - Preserve existing preference keys, shell commands, and sub-settings navigation contracts.

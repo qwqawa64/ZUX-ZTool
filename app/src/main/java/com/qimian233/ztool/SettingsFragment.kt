@@ -1,11 +1,8 @@
 package com.qimian233.ztool
 
-import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -36,9 +33,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -47,31 +43,37 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
-import com.qimian233.ztool.service.LogServiceManager
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.utils.FileManager
+import com.qimian233.ztool.viewmodel.SettingsUiState
+import com.qimian233.ztool.viewmodel.SettingsViewModel
 
 class SettingsFragment : Fragment() {
 
-    private var uiState by mutableStateOf(SettingsUiState())
+    private lateinit var viewModel: SettingsViewModel
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val repository = SettingsRepository(requireContext().applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            SettingsViewModelFactory(repository)
+        )[SettingsViewModel::class.java]
+    }
 
     private val backupLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
-            val result = FileManager.saveConfigWithSAF(
-                requireContext(),
-                uri,
-                FileManager.generateBackupFileName(),
-                ModulePreferencesUtils.getAllSettingsAsJSON(requireContext())
-            )
-            if (result) {
-                Log.d(TAG, "Saved config backup to user-selected uri: $uri")
-                showToast(getString(R.string.config_backup_success))
-            } else {
-                Log.e(TAG, "Config backup failed")
+            viewModel.backupConfig(uri) { result ->
+                activity?.runOnUiThread {
+                    if (result) {
+                        showToast(getString(R.string.config_backup_success))
+                    }
+                }
             }
         }
     }
@@ -80,14 +82,12 @@ class SettingsFragment : Fragment() {
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            val content = FileManager.readConfigWithSAF(requireContext(), uri)
-            if (content != null) {
-                Log.d(TAG, "Read config content: $content")
-                ModulePreferencesUtils.restoreConfig(requireContext(), content)
-                showToast(getString(R.string.config_restore_success))
-                loadSwitchStates()
-            } else {
-                Log.e(TAG, "Config file read failed or content was empty")
+            viewModel.restoreConfig(uri) { result ->
+                activity?.runOnUiThread {
+                    if (result) {
+                        showToast(getString(R.string.config_restore_success))
+                    }
+                }
             }
         }
     }
@@ -97,36 +97,44 @@ class SettingsFragment : Fragment() {
         container: android.view.ViewGroup?,
         savedInstanceState: Bundle?
     ): android.view.View {
-        loadSwitchStates()
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
+                val uiState by viewModel.uiState.collectAsState()
+
                 ZToolTheme {
                     SettingsRoute(
                         state = uiState,
-                        onBackup = ::performBackup,
+                        onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
                         onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-                        onRestoreDefault = { uiState = uiState.copy(showRestoreConfirmDialog = true) },
-                        onLogServiceChanged = ::handleLogServiceSwitch,
-                        onDetailedLoggingChanged = ::handleDetailedLoggingSwitch,
-                        onHomepageYiyanChanged = ::handleHomepageYiyanSwitch,
-                        onAbout = { uiState = uiState.copy(showAboutDialog = true) }
+                        onRestoreDefault = viewModel::showRestoreConfirmDialog,
+                        onLogServiceChanged = {
+                            viewModel.setLogServiceEnabled(it)
+                            showToast(
+                                getString(
+                                    if (it) R.string.log_service_started else R.string.log_service_stopped
+                                )
+                            )
+                        },
+                        onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+                        onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
+                        onAbout = viewModel::showAboutDialog
                     )
 
                     if (uiState.showRestoreConfirmDialog) {
                         RestoreDefaultDialog(
                             onConfirm = {
-                                uiState = uiState.copy(showRestoreConfirmDialog = false)
-                                performRestore()
+                                viewModel.restoreDefaultConfig()
+                                showToast(getString(R.string.default_config_restored))
                             },
-                            onDismiss = { uiState = uiState.copy(showRestoreConfirmDialog = false) }
+                            onDismiss = viewModel::dismissRestoreConfirmDialog
                         )
                     }
 
                     if (uiState.showAboutDialog) {
                         AboutDialog(
-                            version = updateModuleStatus(),
-                            onDismiss = { uiState = uiState.copy(showAboutDialog = false) },
+                            version = uiState.moduleVersion,
+                            onDismiss = viewModel::dismissAboutDialog,
                             onOpenGithub = {
                                 openExternalLink("https://github.com/qwqawa64/ZUX-ZTool", false, "")
                             },
@@ -148,48 +156,7 @@ class SettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        loadSwitchStates()
-    }
-
-    private fun loadSwitchStates() {
-        if (context == null) return
-        val prefs = ModulePreferencesUtils(requireContext())
-        uiState = uiState.copy(
-            isLogServiceEnabled = LogServiceManager.isServiceEnabled(requireContext()),
-            isDetailedLoggingEnabled = prefs.loadBooleanSetting("isDetailedLogging", false),
-            isHomepageYiyanEnabled = prefs.loadBooleanSetting("enable_homepage_yiyan", true)
-        )
-    }
-
-    private fun performBackup() {
-        backupLauncher.launch(FileManager.generateBackupFileName())
-    }
-
-    private fun performRestore() {
-        ModulePreferencesUtils(requireContext()).clearAllSettings()
-        loadSwitchStates()
-        showToast(getString(R.string.default_config_restored))
-    }
-
-    private fun handleLogServiceSwitch(isEnabled: Boolean) {
-        uiState = uiState.copy(isLogServiceEnabled = isEnabled)
-        if (isEnabled) {
-            LogServiceManager.startLogService(requireContext())
-            showToast(getString(R.string.log_service_started))
-        } else {
-            LogServiceManager.stopLogService(requireContext())
-            showToast(getString(R.string.log_service_stopped))
-        }
-    }
-
-    private fun handleDetailedLoggingSwitch(isEnabled: Boolean) {
-        uiState = uiState.copy(isDetailedLoggingEnabled = isEnabled)
-        ModulePreferencesUtils(requireContext()).saveBooleanSetting("isDetailedLogging", isEnabled)
-    }
-
-    private fun handleHomepageYiyanSwitch(isEnabled: Boolean) {
-        uiState = uiState.copy(isHomepageYiyanEnabled = isEnabled)
-        ModulePreferencesUtils(requireContext()).saveBooleanSetting("enable_homepage_yiyan", isEnabled)
+        viewModel.refresh()
     }
 
     private fun openExternalLink(link: String, shouldDeterminePackage: Boolean, packageName: String) {
@@ -210,36 +177,19 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun updateModuleStatus(): String {
-        return try {
-            val activity: Activity? = activity
-            if (activity != null) {
-                val packageInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
-                "${packageInfo.versionName} (${packageInfo.versionCode})"
-            } else {
-                getString(R.string.unknown_activity_null)
-            }
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.w(TAG, "Unable to get module version: ${e.message}")
-            getString(R.string.unknown)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to update module status: ${e.message}")
-            getString(R.string.unknown)
-        }
-    }
-
-    companion object {
-        private const val TAG = "SettingsFragment"
-    }
 }
 
-private data class SettingsUiState(
-    val isLogServiceEnabled: Boolean = false,
-    val isDetailedLoggingEnabled: Boolean = false,
-    val isHomepageYiyanEnabled: Boolean = true,
-    val showRestoreConfirmDialog: Boolean = false,
-    val showAboutDialog: Boolean = false
-)
+private class SettingsViewModelFactory(
+    private val repository: SettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+            return SettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @Composable
 private fun SettingsRoute(
