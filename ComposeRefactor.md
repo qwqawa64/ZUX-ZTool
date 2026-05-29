@@ -45,6 +45,7 @@ The following areas are migrated or substantially converted to Compose:
 - `settingactivity/setting/magicwindowsearch/searchPage.kt`: magic-window strategy search page.
 - `settingactivity/setting/floatingwindow/FloatingWindow.kt`: floating-window guide.
 - `utils/AppChooserDialog.kt`: reusable app chooser dialog.
+- `utils/CountdownDialog.kt`: reusable countdown confirmation dialog.
 - `LoadingDialog.kt`: reusable loading dialog.
 
 ## Latest Migration Notes
@@ -95,6 +96,28 @@ Preserved behavior:
 Implementation note:
 
 - The dialog now uses Compose state for the message and a Compose progress indicator.
+
+### CountdownDialog
+
+`utils/CountdownDialog.java` was replaced by `utils/CountdownDialog.kt`.
+
+Preserved behavior:
+
+- Public `CountdownDialog.Builder(...)` construction.
+- `OnCountdownFinishListener`.
+- Configurable title, message, positive text, negative text, countdown seconds, and cancelable state.
+- Disabled positive action until the countdown completes.
+- `onCountdownFinished()`, `onPositiveButtonClick()`, and `onNegativeButtonClick()` callbacks.
+- Existing first-launch agreement flow in `MainActivity`.
+
+Implementation note:
+
+- The dialog now uses a `ComposeView` hosted by `MaterialAlertDialogBuilder`, with Compose state driving the remaining countdown and button enabled state.
+- Explicit lifecycle, ViewModelStore, and saved-state owners are attached when the context provides them.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29.
 
 ### FeaturesFragment Card Height
 
@@ -272,4 +295,4 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue with shared component consolidation and the remaining legacy dialog review, starting with whether `utils/CountdownDialog.java` is still used by active flows.
+Continue with shared component consolidation and Phase 2 state extraction. Prioritize heavy logic pages such as `HomeFragment` and `settingactivity/systemui/systemUISettings.kt`, and introduce repository/ViewModel boundaries only where they reduce direct shell, preference, or raw thread work in UI code.
