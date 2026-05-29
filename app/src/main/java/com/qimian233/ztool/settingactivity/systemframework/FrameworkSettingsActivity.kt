@@ -60,14 +60,7 @@ class FrameworkSettingsActivity : ComponentActivity() {
 
     private lateinit var prefsUtils: ModulePreferencesUtils
 
-    private var keepRotation by mutableStateOf(false)
-    private var allowGetPackages by mutableStateOf(false)
-    private var disableFlagSecure by mutableStateOf(false)
-    private var aiInputExpand by mutableStateOf(false)
-    private var aiInputSigns by mutableStateOf("")
-    private var aiInputSignsError by mutableStateOf<String?>(null)
-    private var showAiInputInfoDialog by mutableStateOf(false)
-    private var showRestartConfirmDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(FrameworkSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,50 +74,45 @@ class FrameworkSettingsActivity : ComponentActivity() {
             ZToolTheme {
                 FrameworkSettingsScreen(
                     title = appName + getString(R.string.framework_settings_title_suffix),
-                    keepRotation = keepRotation,
-                    allowGetPackages = allowGetPackages,
-                    disableFlagSecure = disableFlagSecure,
-                    aiInputExpand = aiInputExpand,
-                    aiInputSigns = aiInputSigns,
-                    aiInputSignsError = aiInputSignsError,
+                    state = uiState,
                     onBack = ::finish,
-                    onRestart = { showRestartConfirmDialog = true },
+                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
                     onKeepRotationChanged = {
-                        keepRotation = it
+                        uiState = uiState.copy(keepRotation = it)
                         saveSettings("keep_rotation", it)
                     },
                     onAllowGetPackagesChanged = {
-                        allowGetPackages = it
+                        uiState = uiState.copy(allowGetPackages = it)
                         saveSettings("allow_get_packages", it)
                     },
                     onDisableFlagSecureChanged = {
-                        disableFlagSecure = it
+                        uiState = uiState.copy(disableFlagSecure = it)
                         saveSettings("disable_flag_secure", it)
                     },
                     onAiInputExpandChanged = {
-                        aiInputExpand = it
+                        uiState = uiState.copy(
+                            aiInputExpand = it,
+                            aiInputSignsError = if (it) uiState.aiInputSignsError else null
+                        )
                         saveSettings("ai_input_expand", it)
-                        if (!it) {
-                            aiInputSignsError = null
-                        }
                     },
                     onAiInputSignsChanged = ::handleAiInputSignsChanged,
-                    onShowAiInputInfo = { showAiInputInfoDialog = true }
+                    onShowAiInputInfo = { uiState = uiState.copy(showAiInputInfoDialog = true) }
                 )
 
-                if (showAiInputInfoDialog) {
+                if (uiState.showAiInputInfoDialog) {
                     AiInputInfoDialog(
-                        onDismiss = { showAiInputInfoDialog = false }
+                        onDismiss = { uiState = uiState.copy(showAiInputInfoDialog = false) }
                     )
                 }
 
-                if (showRestartConfirmDialog) {
+                if (uiState.showRestartConfirmDialog) {
                     RestartSystemDialog(
                         onConfirm = {
-                            showRestartConfirmDialog = false
+                            uiState = uiState.copy(showRestartConfirmDialog = false)
                             restartOS()
                         },
-                        onDismiss = { showRestartConfirmDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
                     )
                 }
             }
@@ -132,12 +120,15 @@ class FrameworkSettingsActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        allowGetPackages = prefsUtils.loadBooleanSetting("allow_get_packages", false)
-        keepRotation = prefsUtils.loadBooleanSetting("keep_rotation", false)
-        disableFlagSecure = prefsUtils.loadBooleanSetting("disable_flag_secure", false)
-        aiInputExpand = prefsUtils.loadBooleanSetting("ai_input_expand", false)
-        aiInputSigns = prefsUtils.loadStringSetting("AI_INPUT_EXPAND_SIGNS", "")
-        aiInputSignsError = validateAiInputSigns(aiInputSigns)
+        val aiInputSigns = prefsUtils.loadStringSetting("AI_INPUT_EXPAND_SIGNS", "")
+        uiState = uiState.copy(
+            allowGetPackages = prefsUtils.loadBooleanSetting("allow_get_packages", false),
+            keepRotation = prefsUtils.loadBooleanSetting("keep_rotation", false),
+            disableFlagSecure = prefsUtils.loadBooleanSetting("disable_flag_secure", false),
+            aiInputExpand = prefsUtils.loadBooleanSetting("ai_input_expand", false),
+            aiInputSigns = aiInputSigns,
+            aiInputSignsError = validateAiInputSigns(aiInputSigns)
+        )
     }
 
     private fun saveSettings(moduleName: String, newValue: Boolean) {
@@ -145,10 +136,12 @@ class FrameworkSettingsActivity : ComponentActivity() {
     }
 
     private fun handleAiInputSignsChanged(value: String) {
-        aiInputSigns = value
         val input = value.trim()
         val error = validateAiInputSigns(input)
-        aiInputSignsError = error
+        uiState = uiState.copy(
+            aiInputSigns = value,
+            aiInputSignsError = error
+        )
 
         if (input.isEmpty()) {
             prefsUtils.saveStringSetting("AI_INPUT_EXPAND_SIGNS", "")
@@ -184,16 +177,22 @@ class FrameworkSettingsActivity : ComponentActivity() {
     }
 }
 
+private data class FrameworkSettingsUiState(
+    val keepRotation: Boolean = false,
+    val allowGetPackages: Boolean = false,
+    val disableFlagSecure: Boolean = false,
+    val aiInputExpand: Boolean = false,
+    val aiInputSigns: String = "",
+    val aiInputSignsError: String? = null,
+    val showAiInputInfoDialog: Boolean = false,
+    val showRestartConfirmDialog: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FrameworkSettingsScreen(
     title: String,
-    keepRotation: Boolean,
-    allowGetPackages: Boolean,
-    disableFlagSecure: Boolean,
-    aiInputExpand: Boolean,
-    aiInputSigns: String,
-    aiInputSignsError: String?,
+    state: FrameworkSettingsUiState,
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onKeepRotationChanged: (Boolean) -> Unit,
@@ -253,7 +252,7 @@ private fun FrameworkSettingsScreen(
                     ZToolSwitchRow(
                         title = getStringResource(R.string.keep_rotation_enable_title),
                         summary = getStringResource(R.string.keep_rotation_enable_summary),
-                        checked = keepRotation,
+                        checked = state.keepRotation,
                         onCheckedChange = onKeepRotationChanged
                     )
                 }
@@ -264,14 +263,14 @@ private fun FrameworkSettingsScreen(
                     ZToolSwitchRow(
                         title = getStringResource(R.string.disable_zui_applist_enable_title),
                         summary = getStringResource(R.string.disable_zui_applist_enable_summary),
-                        checked = allowGetPackages,
+                        checked = state.allowGetPackages,
                         onCheckedChange = onAllowGetPackagesChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = getStringResource(R.string.disable_flag_secure_title),
                         summary = getStringResource(R.string.disable_flag_secure_summary),
-                        checked = disableFlagSecure,
+                        checked = state.disableFlagSecure,
                         onCheckedChange = onDisableFlagSecureChanged
                     )
                 }
@@ -282,7 +281,7 @@ private fun FrameworkSettingsScreen(
                     ZToolSwitchRow(
                         title = getStringResource(R.string.ai_input_expand_Title),
                         summary = getStringResource(R.string.ai_input_expand_summary),
-                        checked = aiInputExpand,
+                        checked = state.aiInputExpand,
                         onCheckedChange = onAiInputExpandChanged
                     )
                     IconButton(
@@ -295,18 +294,18 @@ private fun FrameworkSettingsScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    if (aiInputExpand) {
+                    if (state.aiInputExpand) {
                         OutlinedTextField(
-                            value = aiInputSigns,
+                            value = state.aiInputSigns,
                             onValueChange = onAiInputSignsChanged,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp, vertical = 8.dp),
                             label = { Text(getStringResource(R.string.custom_detector_hint)) },
-                            isError = aiInputSignsError != null,
+                            isError = state.aiInputSignsError != null,
                             supportingText = {
-                                if (aiInputSignsError != null) {
-                                    Text(aiInputSignsError)
+                                if (state.aiInputSignsError != null) {
+                                    Text(state.aiInputSignsError)
                                 }
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
