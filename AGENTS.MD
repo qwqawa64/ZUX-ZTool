@@ -153,8 +153,9 @@ When migrating a page to Compose:
 6. Prefer converting one page or dialog at a time to keep regression scope small.
 7. Do not delete legacy XML layouts, old adapters, or `nav_graph.xml` simply because a page was migrated; leave cleanup for a dedicated XML View cleanup phase.
 8. After a page migration, run `.\gradlew.bat assembleDebug`.
-9. Document the completed page, verification result, and next step in the project notes if requested by the user.
-10. If committing, include only the current page refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
+9. Document the completed page, verification result, and next step in `ComposeRefactor.md`.
+10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md` to mark it as completed.
+11. Commit your changes after documenting them unless user told you not to do so. When committing, include only the current page refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
 
 ## Areas To Preserve
 
@@ -172,44 +173,13 @@ Do not casually refactor these as part of UI migration:
 
 These may be wrapped behind repositories or state holders, but behavior must remain compatible.
 
-## Completed Compose Migration State
-
-As of 2026-05-29, these areas have already been migrated or substantially converted to Compose:
-
-- `MainActivity.kt`: hosts the main Compose framework.
-- `FeaturesFragment.kt`: feature page.
-- `SettingsFragment.kt`: settings home.
-- `settingactivity/packageinstaller/packageinstallersettings.kt`: package installer settings.
-- `settingactivity/systemframework/FrameworkSettingsActivity.kt`: system framework settings.
-- `settingactivity/safecenter/SafeCenterSettingsActivity.kt`: security center settings.
-- `settingactivity/gametool/GameToolSettngs.kt`: game tool settings.
-- `settingactivity/launcher/LauncherSettingsActivity.kt`: launcher settings, including later dropdown and grid slider fixes.
-- `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`: lock screen settings.
-- `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`: status bar settings.
-- `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`: control center time settings.
-- `settingactivity/setting/SettingsDetailActivity.kt`: system settings detail page; remaining config-selection and font-input View dialogs have been migrated to Compose while preserving config delete/flash/restore and font import flows.
-- `AuditFragment.kt`: log audit page.
-- `settingactivity/ota/OtaSettings.kt`: OTA settings.
-- `settingactivity/systemui/systemUISettings.kt`: system UI aggregate settings.
-- `HomeFragment.kt`: home page, migrated from Java to Kotlin Compose while preserving Fragment route entry.
-- `settingactivity/setting/magicwindowsearch/searchPage.kt`: magic-window strategy search page.
-- `settingactivity/setting/floatingwindow/FloatingWindow.kt`: floating-window guide, now using `WindowManager` with `ComposeView`; overlay lifecycle, ViewModelStore, and saved-state owners are explicitly provided to avoid `ViewTreeLifecycleOwner` attach crashes.
-- `utils/AppChooserDialog.kt`: reusable app chooser migrated from Java/XML/RecyclerView to Compose while preserving `show(...)`, `AppInfo`, `AppSelectionCallback`, loading, search, multi-select, selected count, and current game tool, launcher, and system settings detail call sites.
-- `LoadingDialog.kt`: legacy XML loading dialog migrated to Compose while preserving `show()`, `show(message)`, `dismiss()`, `updateMessage()`, and `isShowing()` behavior for long-running tasks.
-
-Known verification state:
-
-- `.\gradlew.bat assembleDebug` succeeded after the latest recorded dialog migrations and FloatingWindow lifecycle fix.
-- Remaining known deprecated warnings are existing compatibility items:
-  - `MainActivity.kt`: `statusBarColor`, `navigationBarColor`.
-  - `SettingsFragment.kt`: `versionCode`.
-  - `StatusBarSettingsActivity.kt`: `MODE_WORLD_READABLE`, retained for Hook compatibility.
-
 ## Current Follow-Up Priorities
 
 Use `ComposeRefactor.md` as the source of truth for the detailed migration order, rationale, completed work log, and next-step notes.
 
-DO NOT ADD ANY FOLLOW-UP PLANNING IN AGENTS.MD, ADD THESE INFORMATION IN ComposeRefactor.md
+- Keep all follow-up plans only in `ComposeRefactor.md`.
+- Do not record work completion progress in `AGENTS.MD`.
+- Keep `AGENTS.MD` stable as an operating guide; update it only for durable workflow rules, preservation boundaries, or project-wide instructions.
 
 ## Current Working Branch
 
