@@ -72,25 +72,7 @@ class StatusBarSettingsActivity : ComponentActivity() {
     private lateinit var zToolPrefs: ModulePreferencesUtils
     private lateinit var notifyNumSizePrefs: SharedPreferences
 
-    private var displaySeconds by mutableStateOf(false)
-    private var customClock by mutableStateOf(false)
-    private var clockFormat by mutableStateOf("")
-    private var clockPreview by mutableStateOf("")
-    private var textSizeEnabled by mutableStateOf(false)
-    private var textSize by mutableStateOf(16.0f)
-    private var letterSpacingEnabled by mutableStateOf(false)
-    private var letterSpacing by mutableStateOf(0.1f)
-    private var textColorEnabled by mutableStateOf(false)
-    private var textColor by mutableStateOf(0xFFFFFFFF.toInt())
-    private var textBold by mutableStateOf(false)
-    private var notificationIconLimitOption by mutableStateOf("")
-    private var nativeNotificationIcon by mutableStateOf(false)
-    private var networkSpeedSize by mutableStateOf(false)
-    private var networkSpeedDoubleLayer by mutableStateOf(false)
-    private var batteryExternal by mutableStateOf(false)
-    private var showFormatHelpDialog by mutableStateOf(false)
-    private var showColorPickerDialog by mutableStateOf(false)
-    private var showSaveSuccessDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(StatusBarSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,112 +88,99 @@ class StatusBarSettingsActivity : ComponentActivity() {
             ZToolTheme {
                 StatusBarSettingsScreen(
                     title = appName + stringResource(R.string.status_bar_settings_title_suffix),
-                    displaySeconds = displaySeconds,
-                    customClock = customClock,
-                    clockFormat = clockFormat,
-                    clockPreview = clockPreview,
-                    textSizeEnabled = textSizeEnabled,
-                    textSize = textSize,
-                    letterSpacingEnabled = letterSpacingEnabled,
-                    letterSpacing = letterSpacing,
-                    textColorEnabled = textColorEnabled,
-                    textColor = textColor,
-                    textBold = textBold,
-                    notificationIconLimitOption = notificationIconLimitOption,
-                    nativeNotificationIcon = nativeNotificationIcon,
-                    networkSpeedSize = networkSpeedSize,
-                    networkSpeedDoubleLayer = networkSpeedDoubleLayer,
-                    batteryExternal = batteryExternal,
+                    state = uiState,
                     onBack = ::finish,
                     onDisplaySecondsChanged = {
-                        displaySeconds = it
+                        uiState = uiState.copy(displaySeconds = it)
                         saveSettings("StatusBarDisplay_Seconds", it)
                     },
                     onCustomClockChanged = {
-                        customClock = it
+                        uiState = uiState.copy(customClock = it)
                         saveSettings("Custom_StatusBarClock", it)
                         if (it) {
-                            updateClockPreview(clockFormat)
+                            updateClockPreview(uiState.clockFormat)
                         }
                     },
                     onClockFormatChanged = {
-                        clockFormat = it
+                        uiState = uiState.copy(clockFormat = it)
                         updateClockPreview(it)
                     },
                     onSaveClockFormat = ::saveClockFormat,
-                    onShowFormatHelp = { showFormatHelpDialog = true },
+                    onShowFormatHelp = { uiState = uiState.copy(showFormatHelpDialog = true) },
                     onTextSizeEnabledChanged = {
-                        textSizeEnabled = it
+                        uiState = uiState.copy(textSizeEnabled = it)
                         zToolPrefs.saveBooleanSetting("Custom_StatusBarClockTextSizeEnabled", it)
                     },
                     onTextSizeChanged = {
-                        textSize = it
+                        uiState = uiState.copy(textSize = it)
                         zToolPrefs.saveFloatSetting("Custom_StatusBarClockTextSize", it)
                     },
                     onLetterSpacingEnabledChanged = {
-                        letterSpacingEnabled = it
+                        uiState = uiState.copy(letterSpacingEnabled = it)
                         zToolPrefs.saveBooleanSetting("Custom_StatusBarClockLetterSpacingEnabled", it)
                     },
                     onLetterSpacingChanged = {
-                        letterSpacing = it
+                        uiState = uiState.copy(letterSpacing = it)
                         zToolPrefs.saveFloatSetting("Custom_StatusBarClockLetterSpacing", it)
                     },
                     onTextColorEnabledChanged = {
-                        textColorEnabled = it
+                        uiState = uiState.copy(textColorEnabled = it)
                         zToolPrefs.saveBooleanSetting("Custom_StatusBarClockTextColorEnabled", it)
                     },
-                    onPickTextColor = { showColorPickerDialog = true },
+                    onPickTextColor = { uiState = uiState.copy(showColorPickerDialog = true) },
                     onTextBoldChanged = {
-                        textBold = it
+                        uiState = uiState.copy(textBold = it)
                         zToolPrefs.saveBooleanSetting("Custom_StatusBarClockTextBold", it)
                     },
                     onNotificationIconLimitChanged = ::handleNotificationIconLimitChanged,
                     onNativeNotificationIconChanged = {
-                        nativeNotificationIcon = it
+                        uiState = uiState.copy(nativeNotificationIcon = it)
                         saveSettings("NativeNotificationIcon", it)
                     },
                     onNetworkSpeedSizeChanged = {
-                        networkSpeedSize = it
+                        uiState = uiState.copy(networkSpeedSize = it)
                         saveSettings("systemui_network_speed_size", it)
                     },
                     onNetworkSpeedDoubleLayerChanged = {
-                        networkSpeedDoubleLayer = it
+                        uiState = uiState.copy(networkSpeedDoubleLayer = it)
                         saveSettings("systemui_network_speed_doublelayer", it)
                     },
                     onBatteryExternalChanged = {
-                        batteryExternal = it
+                        uiState = uiState.copy(batteryExternal = it)
                         saveSettings("systemui_battery_percentage", it)
                     }
                 )
 
-                if (showFormatHelpDialog) {
+                if (uiState.showFormatHelpDialog) {
                     FormatHelpDialog(
-                        onDismiss = { showFormatHelpDialog = false },
+                        onDismiss = { uiState = uiState.copy(showFormatHelpDialog = false) },
                         onCopyExample = {
-                            showFormatHelpDialog = false
+                            uiState = uiState.copy(showFormatHelpDialog = false)
                             copyClockFormatExample()
                         }
                     )
                 }
 
-                if (showColorPickerDialog) {
+                if (uiState.showColorPickerDialog) {
                     ColorPickerDialog(
                         onColorSelected = {
-                            showColorPickerDialog = false
-                            textColor = it
+                            uiState = uiState.copy(
+                                showColorPickerDialog = false,
+                                textColor = it
+                            )
                             zToolPrefs.saveIntegerSetting("Custom_StatusBarClockTextColor", it)
                         },
-                        onDismiss = { showColorPickerDialog = false }
+                        onDismiss = { uiState = uiState.copy(showColorPickerDialog = false) }
                     )
                 }
 
-                if (showSaveSuccessDialog) {
+                if (uiState.showSaveSuccessDialog) {
                     AlertDialog(
-                        onDismissRequest = { showSaveSuccessDialog = false },
+                        onDismissRequest = { uiState = uiState.copy(showSaveSuccessDialog = false) },
                         title = { Text(stringResource(R.string.save_success_title)) },
                         text = { Text(stringResource(R.string.clock_format_saved_message)) },
                         confirmButton = {
-                            TextButton(onClick = { showSaveSuccessDialog = false }) {
+                            TextButton(onClick = { uiState = uiState.copy(showSaveSuccessDialog = false) }) {
                                 Text(stringResource(R.string.restart_yes))
                             }
                         }
@@ -222,33 +191,34 @@ class StatusBarSettingsActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        displaySeconds = prefsUtils.loadBooleanSetting("StatusBarDisplay_Seconds", false)
-        customClock = prefsUtils.loadBooleanSetting("Custom_StatusBarClock", false)
-        nativeNotificationIcon = prefsUtils.loadBooleanSetting("NativeNotificationIcon", false)
-        networkSpeedSize = prefsUtils.loadBooleanSetting("systemui_network_speed_size", false)
-        networkSpeedDoubleLayer = prefsUtils.loadBooleanSetting("systemui_network_speed_doublelayer", false)
-        batteryExternal = prefsUtils.loadBooleanSetting("systemui_battery_percentage", false)
-
-        clockFormat = zToolPrefs.loadStringSetting("Custom_StatusBarClockFormat", "")
-        textSize = zToolPrefs.loadFloatSetting("Custom_StatusBarClockTextSize", 16.0f)
-        textSizeEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextSizeEnabled", false)
-        letterSpacing = zToolPrefs.loadFloatSetting("Custom_StatusBarClockLetterSpacing", 0.1f)
-        letterSpacingEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockLetterSpacingEnabled", false)
-        textColor = zToolPrefs.loadIntegerSetting("Custom_StatusBarClockTextColor", 0xFFFFFFFF.toInt())
-        textColorEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextColorEnabled", false)
-        textBold = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextBold", false)
-
-        notificationIconLimitOption = notifyNumSizeToOption(notifyNumSizePrefs.getInt("notify_num_size", 4))
-        updateClockPreview(clockFormat)
+        val loadedClockFormat = zToolPrefs.loadStringSetting("Custom_StatusBarClockFormat", "")
+        uiState = uiState.copy(
+            displaySeconds = prefsUtils.loadBooleanSetting("StatusBarDisplay_Seconds", false),
+            customClock = prefsUtils.loadBooleanSetting("Custom_StatusBarClock", false),
+            nativeNotificationIcon = prefsUtils.loadBooleanSetting("NativeNotificationIcon", false),
+            networkSpeedSize = prefsUtils.loadBooleanSetting("systemui_network_speed_size", false),
+            networkSpeedDoubleLayer = prefsUtils.loadBooleanSetting("systemui_network_speed_doublelayer", false),
+            batteryExternal = prefsUtils.loadBooleanSetting("systemui_battery_percentage", false),
+            clockFormat = loadedClockFormat,
+            textSize = zToolPrefs.loadFloatSetting("Custom_StatusBarClockTextSize", 16.0f),
+            textSizeEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextSizeEnabled", false),
+            letterSpacing = zToolPrefs.loadFloatSetting("Custom_StatusBarClockLetterSpacing", 0.1f),
+            letterSpacingEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockLetterSpacingEnabled", false),
+            textColor = zToolPrefs.loadIntegerSetting("Custom_StatusBarClockTextColor", 0xFFFFFFFF.toInt()),
+            textColorEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextColorEnabled", false),
+            textBold = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextBold", false),
+            notificationIconLimitOption = notifyNumSizeToOption(notifyNumSizePrefs.getInt("notify_num_size", 4))
+        )
+        updateClockPreview(loadedClockFormat)
     }
 
     private fun saveClockFormat() {
-        zToolPrefs.saveStringSetting("Custom_StatusBarClockFormat", clockFormat)
-        showSaveSuccessDialog = true
+        zToolPrefs.saveStringSetting("Custom_StatusBarClockFormat", uiState.clockFormat)
+        uiState = uiState.copy(showSaveSuccessDialog = true)
     }
 
     private fun updateClockPreview(format: String) {
-        clockPreview = if (format.isEmpty()) {
+        val preview = if (format.isEmpty()) {
             getString(R.string.preview_default)
         } else {
             try {
@@ -258,10 +228,11 @@ class StatusBarSettingsActivity : ComponentActivity() {
                 getString(R.string.preview_invalid) + "\n" + getString(R.string.error_prefix) + e.message
             }
         }
+        uiState = uiState.copy(clockPreview = preview)
     }
 
     private fun handleNotificationIconLimitChanged(option: String) {
-        notificationIconLimitOption = option
+        uiState = uiState.copy(notificationIconLimitOption = option)
         if (option == getString(R.string.notify_num_default)) {
             saveSettings("notification_icon_limit", false)
             return
@@ -320,26 +291,33 @@ class StatusBarSettingsActivity : ComponentActivity() {
     }
 }
 
+private data class StatusBarSettingsUiState(
+    val displaySeconds: Boolean = false,
+    val customClock: Boolean = false,
+    val clockFormat: String = "",
+    val clockPreview: String = "",
+    val textSizeEnabled: Boolean = false,
+    val textSize: Float = 16.0f,
+    val letterSpacingEnabled: Boolean = false,
+    val letterSpacing: Float = 0.1f,
+    val textColorEnabled: Boolean = false,
+    val textColor: Int = 0xFFFFFFFF.toInt(),
+    val textBold: Boolean = false,
+    val notificationIconLimitOption: String = "",
+    val nativeNotificationIcon: Boolean = false,
+    val networkSpeedSize: Boolean = false,
+    val networkSpeedDoubleLayer: Boolean = false,
+    val batteryExternal: Boolean = false,
+    val showFormatHelpDialog: Boolean = false,
+    val showColorPickerDialog: Boolean = false,
+    val showSaveSuccessDialog: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StatusBarSettingsScreen(
     title: String,
-    displaySeconds: Boolean,
-    customClock: Boolean,
-    clockFormat: String,
-    clockPreview: String,
-    textSizeEnabled: Boolean,
-    textSize: Float,
-    letterSpacingEnabled: Boolean,
-    letterSpacing: Float,
-    textColorEnabled: Boolean,
-    textColor: Int,
-    textBold: Boolean,
-    notificationIconLimitOption: String,
-    nativeNotificationIcon: Boolean,
-    networkSpeedSize: Boolean,
-    networkSpeedDoubleLayer: Boolean,
-    batteryExternal: Boolean,
+    state: StatusBarSettingsUiState,
     onBack: () -> Unit,
     onDisplaySecondsChanged: (Boolean) -> Unit,
     onCustomClockChanged: (Boolean) -> Unit,
@@ -401,14 +379,14 @@ private fun StatusBarSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.display_seconds_title),
                         summary = stringResource(R.string.display_seconds_summary),
-                        checked = displaySeconds,
+                        checked = state.displaySeconds,
                         onCheckedChange = onDisplaySecondsChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.custom_clock_title),
                         summary = stringResource(R.string.custom_clock_summary),
-                        checked = customClock,
+                        checked = state.customClock,
                         onCheckedChange = onCustomClockChanged
                     )
                     IconButton(
@@ -421,17 +399,17 @@ private fun StatusBarSettingsScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    if (customClock) {
+                    if (state.customClock) {
                         CustomClockConfig(
-                            clockFormat = clockFormat,
-                            clockPreview = clockPreview,
-                            textSizeEnabled = textSizeEnabled,
-                            textSize = textSize,
-                            letterSpacingEnabled = letterSpacingEnabled,
-                            letterSpacing = letterSpacing,
-                            textColorEnabled = textColorEnabled,
-                            textColor = textColor,
-                            textBold = textBold,
+                            clockFormat = state.clockFormat,
+                            clockPreview = state.clockPreview,
+                            textSizeEnabled = state.textSizeEnabled,
+                            textSize = state.textSize,
+                            letterSpacingEnabled = state.letterSpacingEnabled,
+                            letterSpacing = state.letterSpacing,
+                            textColorEnabled = state.textColorEnabled,
+                            textColor = state.textColor,
+                            textBold = state.textBold,
                             onClockFormatChanged = onClockFormatChanged,
                             onSaveClockFormat = onSaveClockFormat,
                             onTextSizeEnabledChanged = onTextSizeEnabledChanged,
@@ -452,14 +430,14 @@ private fun StatusBarSettingsScreen(
                         title = stringResource(R.string.notification_icon_limit_title),
                         summary = stringResource(R.string.notification_icon_limit_summary),
                         options = stringArrayResource(R.array.notify_num_size_options).toList(),
-                        selectedOption = notificationIconLimitOption,
+                        selectedOption = state.notificationIconLimitOption,
                         onOptionSelected = onNotificationIconLimitChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.notification_icon_native_title),
                         summary = stringResource(R.string.notification_icon_native_summary),
-                        checked = nativeNotificationIcon,
+                        checked = state.nativeNotificationIcon,
                         onCheckedChange = onNativeNotificationIconChanged
                     )
                 }
@@ -470,14 +448,14 @@ private fun StatusBarSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.statusBarNetworkSizeTitle),
                         summary = stringResource(R.string.statusBarNetworkSizeSummary),
-                        checked = networkSpeedSize,
+                        checked = state.networkSpeedSize,
                         onCheckedChange = onNetworkSpeedSizeChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.statusBarNetworkSizeDoubleLayer),
                         summary = stringResource(R.string.statusBarNetworkSizeDoubleLayerSummary),
-                        checked = networkSpeedDoubleLayer,
+                        checked = state.networkSpeedDoubleLayer,
                         onCheckedChange = onNetworkSpeedDoubleLayerChanged
                     )
                 }
@@ -488,7 +466,7 @@ private fun StatusBarSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.syatusBatteryExternalTitle),
                         summary = stringResource(R.string.syatusBatteryExternalSummary),
-                        checked = batteryExternal,
+                        checked = state.batteryExternal,
                         onCheckedChange = onBatteryExternalChanged
                     )
                 }
