@@ -1,0 +1,157 @@
+package com.qimian233.ztool.data.systemui
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
+import com.qimian233.ztool.R
+import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter
+import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
+import java.util.Date
+
+class StatusBarSettingsRepository(
+    private val context: Context
+) {
+    private val prefsUtils = ModulePreferencesUtils(context)
+    private val zToolPrefs = ModulePreferencesUtils(context)
+    private val notifyNumSizePrefs = getNotifyNumSizeShared()
+
+    fun loadState(): StatusBarSettingsUiState {
+        val loadedClockFormat = zToolPrefs.loadStringSetting(KEY_CUSTOM_CLOCK_FORMAT, "")
+        return StatusBarSettingsUiState(
+            displaySeconds = prefsUtils.loadBooleanSetting(KEY_DISPLAY_SECONDS, false),
+            customClock = prefsUtils.loadBooleanSetting(KEY_CUSTOM_CLOCK, false),
+            nativeNotificationIcon = prefsUtils.loadBooleanSetting(KEY_NATIVE_NOTIFICATION_ICON, false),
+            networkSpeedSize = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_SIZE, false),
+            networkSpeedDoubleLayer = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_DOUBLE_LAYER, false),
+            batteryExternal = prefsUtils.loadBooleanSetting(KEY_BATTERY_EXTERNAL, false),
+            clockFormat = loadedClockFormat,
+            clockPreview = buildClockPreview(loadedClockFormat),
+            textSize = zToolPrefs.loadFloatSetting(KEY_CLOCK_TEXT_SIZE, 16.0f),
+            textSizeEnabled = zToolPrefs.loadBooleanSetting(KEY_CLOCK_TEXT_SIZE_ENABLED, false),
+            letterSpacing = zToolPrefs.loadFloatSetting(KEY_CLOCK_LETTER_SPACING, 0.1f),
+            letterSpacingEnabled = zToolPrefs.loadBooleanSetting(KEY_CLOCK_LETTER_SPACING_ENABLED, false),
+            textColor = zToolPrefs.loadIntegerSetting(KEY_CLOCK_TEXT_COLOR, 0xFFFFFFFF.toInt()),
+            textColorEnabled = zToolPrefs.loadBooleanSetting(KEY_CLOCK_TEXT_COLOR_ENABLED, false),
+            textBold = zToolPrefs.loadBooleanSetting(KEY_CLOCK_TEXT_BOLD, false),
+            notificationIconLimitOption = notifyNumSizeToOption(notifyNumSizePrefs.getInt(KEY_NOTIFY_NUM_SIZE, 4))
+        )
+    }
+
+    fun buildClockPreview(format: String): String {
+        return if (format.isEmpty()) {
+            context.getString(R.string.preview_default)
+        } else {
+            try {
+                context.getString(R.string.preview_display, CustomDateFormatter.format(format, Date()))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error formatting date: $format", e)
+                context.getString(R.string.preview_invalid) +
+                    "\n" +
+                    context.getString(R.string.error_prefix) +
+                    e.message
+            }
+        }
+    }
+
+    fun saveBooleanSetting(key: String, enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(key, enabled)
+    }
+
+    fun saveClockFormat(format: String) {
+        zToolPrefs.saveStringSetting(KEY_CUSTOM_CLOCK_FORMAT, format)
+    }
+
+    fun saveTextSizeEnabled(enabled: Boolean) {
+        zToolPrefs.saveBooleanSetting(KEY_CLOCK_TEXT_SIZE_ENABLED, enabled)
+    }
+
+    fun saveTextSize(value: Float) {
+        zToolPrefs.saveFloatSetting(KEY_CLOCK_TEXT_SIZE, value)
+    }
+
+    fun saveLetterSpacingEnabled(enabled: Boolean) {
+        zToolPrefs.saveBooleanSetting(KEY_CLOCK_LETTER_SPACING_ENABLED, enabled)
+    }
+
+    fun saveLetterSpacing(value: Float) {
+        zToolPrefs.saveFloatSetting(KEY_CLOCK_LETTER_SPACING, value)
+    }
+
+    fun saveTextColorEnabled(enabled: Boolean) {
+        zToolPrefs.saveBooleanSetting(KEY_CLOCK_TEXT_COLOR_ENABLED, enabled)
+    }
+
+    fun saveTextColor(color: Int) {
+        zToolPrefs.saveIntegerSetting(KEY_CLOCK_TEXT_COLOR, color)
+    }
+
+    fun saveTextBold(enabled: Boolean) {
+        zToolPrefs.saveBooleanSetting(KEY_CLOCK_TEXT_BOLD, enabled)
+    }
+
+    fun saveNotificationIconLimit(option: String): Boolean {
+        if (option == context.getString(R.string.notify_num_default)) {
+            saveBooleanSetting(KEY_NOTIFICATION_ICON_LIMIT, false)
+            return true
+        }
+
+        saveBooleanSetting(KEY_NOTIFICATION_ICON_LIMIT, true)
+        if (option == context.getString(R.string.notify_num_unlimited)) {
+            notifyNumSizePrefs.edit().putInt(KEY_NOTIFY_NUM_SIZE, 100).apply()
+            return true
+        }
+
+        val optionValue = option.toIntOrNull()
+        return if (optionValue != null) {
+            notifyNumSizePrefs.edit().putInt(KEY_NOTIFY_NUM_SIZE, optionValue).apply()
+            true
+        } else {
+            Log.e(TAG, "Invalid notification number option: $option")
+            false
+        }
+    }
+
+    private fun notifyNumSizeToOption(value: Int): String {
+        return when (value) {
+            100 -> context.getString(R.string.notify_num_unlimited)
+            else -> value.coerceIn(1, 14).toString()
+        }
+    }
+
+    @SuppressLint("WorldReadableFiles")
+    private fun getNotifyNumSizeShared(): SharedPreferences {
+        return try {
+            val moduleContext = context.createPackageContext(
+                "com.qimian233.ztool",
+                Context.CONTEXT_IGNORE_SECURITY
+            )
+            moduleContext.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_WORLD_READABLE)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get module preferences, using fallback", e)
+            context.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_WORLD_READABLE)
+        }
+    }
+
+    companion object {
+        private const val TAG = "StatusBarSettingsRepository"
+        private const val PREF_STATUS_BAR_NOTIFY_NUM_SIZE = "StatusBar_notifyNumSize"
+        private const val KEY_NOTIFY_NUM_SIZE = "notify_num_size"
+        private const val KEY_DISPLAY_SECONDS = "StatusBarDisplay_Seconds"
+        private const val KEY_CUSTOM_CLOCK = "Custom_StatusBarClock"
+        private const val KEY_CUSTOM_CLOCK_FORMAT = "Custom_StatusBarClockFormat"
+        private const val KEY_CLOCK_TEXT_SIZE = "Custom_StatusBarClockTextSize"
+        private const val KEY_CLOCK_TEXT_SIZE_ENABLED = "Custom_StatusBarClockTextSizeEnabled"
+        private const val KEY_CLOCK_LETTER_SPACING = "Custom_StatusBarClockLetterSpacing"
+        private const val KEY_CLOCK_LETTER_SPACING_ENABLED = "Custom_StatusBarClockLetterSpacingEnabled"
+        private const val KEY_CLOCK_TEXT_COLOR = "Custom_StatusBarClockTextColor"
+        private const val KEY_CLOCK_TEXT_COLOR_ENABLED = "Custom_StatusBarClockTextColorEnabled"
+        private const val KEY_CLOCK_TEXT_BOLD = "Custom_StatusBarClockTextBold"
+        private const val KEY_NOTIFICATION_ICON_LIMIT = "notification_icon_limit"
+        private const val KEY_NATIVE_NOTIFICATION_ICON = "NativeNotificationIcon"
+        private const val KEY_NETWORK_SPEED_SIZE = "systemui_network_speed_size"
+        private const val KEY_NETWORK_SPEED_DOUBLE_LAYER = "systemui_network_speed_doublelayer"
+        private const val KEY_BATTERY_EXTERNAL = "systemui_battery_percentage"
+    }
+}

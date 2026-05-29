@@ -1,12 +1,9 @@
 package com.qimian233.ztool.settingactivity.systemui.statusBarSetting
 
-import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -46,116 +43,74 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
-import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter
+import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import java.util.Date
+import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
+import com.qimian233.ztool.viewmodel.StatusBarSettingsViewModel
 
 class StatusBarSettingsActivity : ComponentActivity() {
 
-    private lateinit var prefsUtils: ModulePreferencesUtils
-    private lateinit var zToolPrefs: ModulePreferencesUtils
-    private lateinit var notifyNumSizePrefs: SharedPreferences
-
-    private var uiState by mutableStateOf(StatusBarSettingsUiState())
+    private lateinit var viewModel: StatusBarSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()
-        prefsUtils = ModulePreferencesUtils(this)
-        zToolPrefs = ModulePreferencesUtils(this)
-        notifyNumSizePrefs = getNotifyNumSizeShared()
-        loadSettings()
+        val repository = StatusBarSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            StatusBarSettingsViewModelFactory(repository)
+        )[StatusBarSettingsViewModel::class.java]
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 StatusBarSettingsScreen(
                     title = appName + stringResource(R.string.status_bar_settings_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onDisplaySecondsChanged = {
-                        uiState = uiState.copy(displaySeconds = it)
-                        saveSettings("StatusBarDisplay_Seconds", it)
-                    },
-                    onCustomClockChanged = {
-                        uiState = uiState.copy(customClock = it)
-                        saveSettings("Custom_StatusBarClock", it)
-                        if (it) {
-                            updateClockPreview(uiState.clockFormat)
-                        }
-                    },
-                    onClockFormatChanged = {
-                        uiState = uiState.copy(clockFormat = it)
-                        updateClockPreview(it)
-                    },
-                    onSaveClockFormat = ::saveClockFormat,
-                    onShowFormatHelp = { uiState = uiState.copy(showFormatHelpDialog = true) },
-                    onTextSizeEnabledChanged = {
-                        uiState = uiState.copy(textSizeEnabled = it)
-                        zToolPrefs.saveBooleanSetting("Custom_StatusBarClockTextSizeEnabled", it)
-                    },
-                    onTextSizeChanged = {
-                        uiState = uiState.copy(textSize = it)
-                        zToolPrefs.saveFloatSetting("Custom_StatusBarClockTextSize", it)
-                    },
-                    onLetterSpacingEnabledChanged = {
-                        uiState = uiState.copy(letterSpacingEnabled = it)
-                        zToolPrefs.saveBooleanSetting("Custom_StatusBarClockLetterSpacingEnabled", it)
-                    },
-                    onLetterSpacingChanged = {
-                        uiState = uiState.copy(letterSpacing = it)
-                        zToolPrefs.saveFloatSetting("Custom_StatusBarClockLetterSpacing", it)
-                    },
-                    onTextColorEnabledChanged = {
-                        uiState = uiState.copy(textColorEnabled = it)
-                        zToolPrefs.saveBooleanSetting("Custom_StatusBarClockTextColorEnabled", it)
-                    },
-                    onPickTextColor = { uiState = uiState.copy(showColorPickerDialog = true) },
-                    onTextBoldChanged = {
-                        uiState = uiState.copy(textBold = it)
-                        zToolPrefs.saveBooleanSetting("Custom_StatusBarClockTextBold", it)
-                    },
+                    onDisplaySecondsChanged = viewModel::setDisplaySeconds,
+                    onCustomClockChanged = viewModel::setCustomClock,
+                    onClockFormatChanged = viewModel::setClockFormat,
+                    onSaveClockFormat = viewModel::saveClockFormat,
+                    onShowFormatHelp = viewModel::showFormatHelpDialog,
+                    onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
+                    onTextSizeChanged = viewModel::setTextSize,
+                    onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
+                    onLetterSpacingChanged = viewModel::setLetterSpacing,
+                    onTextColorEnabledChanged = viewModel::setTextColorEnabled,
+                    onPickTextColor = viewModel::showColorPickerDialog,
+                    onTextBoldChanged = viewModel::setTextBold,
                     onNotificationIconLimitChanged = ::handleNotificationIconLimitChanged,
-                    onNativeNotificationIconChanged = {
-                        uiState = uiState.copy(nativeNotificationIcon = it)
-                        saveSettings("NativeNotificationIcon", it)
-                    },
-                    onNetworkSpeedSizeChanged = {
-                        uiState = uiState.copy(networkSpeedSize = it)
-                        saveSettings("systemui_network_speed_size", it)
-                    },
-                    onNetworkSpeedDoubleLayerChanged = {
-                        uiState = uiState.copy(networkSpeedDoubleLayer = it)
-                        saveSettings("systemui_network_speed_doublelayer", it)
-                    },
-                    onBatteryExternalChanged = {
-                        uiState = uiState.copy(batteryExternal = it)
-                        saveSettings("systemui_battery_percentage", it)
-                    }
+                    onNativeNotificationIconChanged = viewModel::setNativeNotificationIcon,
+                    onNetworkSpeedSizeChanged = viewModel::setNetworkSpeedSize,
+                    onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
+                    onBatteryExternalChanged = viewModel::setBatteryExternal
                 )
 
                 if (uiState.showFormatHelpDialog) {
                     FormatHelpDialog(
-                        onDismiss = { uiState = uiState.copy(showFormatHelpDialog = false) },
+                        onDismiss = viewModel::dismissFormatHelpDialog,
                         onCopyExample = {
-                            uiState = uiState.copy(showFormatHelpDialog = false)
+                            viewModel.dismissFormatHelpDialog()
                             copyClockFormatExample()
                         }
                     )
@@ -163,24 +118,18 @@ class StatusBarSettingsActivity : ComponentActivity() {
 
                 if (uiState.showColorPickerDialog) {
                     ColorPickerDialog(
-                        onColorSelected = {
-                            uiState = uiState.copy(
-                                showColorPickerDialog = false,
-                                textColor = it
-                            )
-                            zToolPrefs.saveIntegerSetting("Custom_StatusBarClockTextColor", it)
-                        },
-                        onDismiss = { uiState = uiState.copy(showColorPickerDialog = false) }
+                        onColorSelected = viewModel::setTextColor,
+                        onDismiss = viewModel::dismissColorPickerDialog
                     )
                 }
 
                 if (uiState.showSaveSuccessDialog) {
                     AlertDialog(
-                        onDismissRequest = { uiState = uiState.copy(showSaveSuccessDialog = false) },
+                        onDismissRequest = viewModel::dismissSaveSuccessDialog,
                         title = { Text(stringResource(R.string.save_success_title)) },
                         text = { Text(stringResource(R.string.clock_format_saved_message)) },
                         confirmButton = {
-                            TextButton(onClick = { uiState = uiState.copy(showSaveSuccessDialog = false) }) {
+                            TextButton(onClick = viewModel::dismissSaveSuccessDialog) {
                                 Text(stringResource(R.string.restart_yes))
                             }
                         }
@@ -190,71 +139,9 @@ class StatusBarSettingsActivity : ComponentActivity() {
         }
     }
 
-    private fun loadSettings() {
-        val loadedClockFormat = zToolPrefs.loadStringSetting("Custom_StatusBarClockFormat", "")
-        uiState = uiState.copy(
-            displaySeconds = prefsUtils.loadBooleanSetting("StatusBarDisplay_Seconds", false),
-            customClock = prefsUtils.loadBooleanSetting("Custom_StatusBarClock", false),
-            nativeNotificationIcon = prefsUtils.loadBooleanSetting("NativeNotificationIcon", false),
-            networkSpeedSize = prefsUtils.loadBooleanSetting("systemui_network_speed_size", false),
-            networkSpeedDoubleLayer = prefsUtils.loadBooleanSetting("systemui_network_speed_doublelayer", false),
-            batteryExternal = prefsUtils.loadBooleanSetting("systemui_battery_percentage", false),
-            clockFormat = loadedClockFormat,
-            textSize = zToolPrefs.loadFloatSetting("Custom_StatusBarClockTextSize", 16.0f),
-            textSizeEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextSizeEnabled", false),
-            letterSpacing = zToolPrefs.loadFloatSetting("Custom_StatusBarClockLetterSpacing", 0.1f),
-            letterSpacingEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockLetterSpacingEnabled", false),
-            textColor = zToolPrefs.loadIntegerSetting("Custom_StatusBarClockTextColor", 0xFFFFFFFF.toInt()),
-            textColorEnabled = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextColorEnabled", false),
-            textBold = zToolPrefs.loadBooleanSetting("Custom_StatusBarClockTextBold", false),
-            notificationIconLimitOption = notifyNumSizeToOption(notifyNumSizePrefs.getInt("notify_num_size", 4))
-        )
-        updateClockPreview(loadedClockFormat)
-    }
-
-    private fun saveClockFormat() {
-        zToolPrefs.saveStringSetting("Custom_StatusBarClockFormat", uiState.clockFormat)
-        uiState = uiState.copy(showSaveSuccessDialog = true)
-    }
-
-    private fun updateClockPreview(format: String) {
-        val preview = if (format.isEmpty()) {
-            getString(R.string.preview_default)
-        } else {
-            try {
-                getString(R.string.preview_display, CustomDateFormatter.format(format, Date()))
-            } catch (e: Exception) {
-                Log.e(TAG, "Error formatting date: $format", e)
-                getString(R.string.preview_invalid) + "\n" + getString(R.string.error_prefix) + e.message
-            }
-        }
-        uiState = uiState.copy(clockPreview = preview)
-    }
-
     private fun handleNotificationIconLimitChanged(option: String) {
-        uiState = uiState.copy(notificationIconLimitOption = option)
-        if (option == getString(R.string.notify_num_default)) {
-            saveSettings("notification_icon_limit", false)
-            return
-        }
-
-        saveSettings("notification_icon_limit", true)
-        if (option == getString(R.string.notify_num_unlimited)) {
-            notifyNumSizePrefs.edit().putInt("notify_num_size", 100).apply()
-        } else {
-            option.toIntOrNull()?.let {
-                notifyNumSizePrefs.edit().putInt("notify_num_size", it).apply()
-            } ?: run {
-                Log.e(TAG, "Invalid notification number option: $option")
-                Toast.makeText(this, R.string.save_failed_message, Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun notifyNumSizeToOption(value: Int): String {
-        return when (value) {
-            100 -> getString(R.string.notify_num_unlimited)
-            else -> value.coerceIn(1, 14).toString()
+        if (!viewModel.setNotificationIconLimit(option)) {
+            Toast.makeText(this, R.string.save_failed_message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -268,50 +155,19 @@ class StatusBarSettingsActivity : ComponentActivity() {
         Toast.makeText(this, R.string.example_copied_message, Toast.LENGTH_SHORT).show()
     }
 
-    private fun saveSettings(moduleName: String, newValue: Boolean) {
-        prefsUtils.saveBooleanSetting(moduleName, newValue)
-    }
-
-    @SuppressLint("WorldReadableFiles")
-    private fun getNotifyNumSizeShared(): SharedPreferences {
-        return try {
-            val moduleContext = createPackageContext(
-                "com.qimian233.ztool",
-                Context.CONTEXT_IGNORE_SECURITY
-            )
-            moduleContext.getSharedPreferences("StatusBar_notifyNumSize", Context.MODE_WORLD_READABLE)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to get module preferences, using fallback", e)
-            getSharedPreferences("StatusBar_notifyNumSize", Context.MODE_WORLD_READABLE)
-        }
-    }
-
-    companion object {
-        private const val TAG = "StatusBarSettings"
-    }
 }
 
-private data class StatusBarSettingsUiState(
-    val displaySeconds: Boolean = false,
-    val customClock: Boolean = false,
-    val clockFormat: String = "",
-    val clockPreview: String = "",
-    val textSizeEnabled: Boolean = false,
-    val textSize: Float = 16.0f,
-    val letterSpacingEnabled: Boolean = false,
-    val letterSpacing: Float = 0.1f,
-    val textColorEnabled: Boolean = false,
-    val textColor: Int = 0xFFFFFFFF.toInt(),
-    val textBold: Boolean = false,
-    val notificationIconLimitOption: String = "",
-    val nativeNotificationIcon: Boolean = false,
-    val networkSpeedSize: Boolean = false,
-    val networkSpeedDoubleLayer: Boolean = false,
-    val batteryExternal: Boolean = false,
-    val showFormatHelpDialog: Boolean = false,
-    val showColorPickerDialog: Boolean = false,
-    val showSaveSuccessDialog: Boolean = false
-)
+private class StatusBarSettingsViewModelFactory(
+    private val repository: StatusBarSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(StatusBarSettingsViewModel::class.java)) {
+            return StatusBarSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

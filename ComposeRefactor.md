@@ -6,7 +6,7 @@ Use `AGENTS.MD` for the concise operating rules and preservation boundaries. Use
 
 ## Current Status
 
-Last updated: 2026-05-29.
+Last updated: 2026-05-30.
 
 The project is in a gradual UI-layer migration from XML/View/Fragment screens to Jetpack Compose. Hook modules, Xposed metadata, runtime assets, service behavior, shell behavior, existing preference keys, and external launch contracts must remain compatible.
 
@@ -346,6 +346,32 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `systemUISettings` ViewModel/repository extraction.
 
+### StatusBarSettings ViewModel Boundary
+
+`settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt` now delegates status bar preference state to:
+
+- `viewmodel/StatusBarSettingsViewModel.kt`.
+- `data/systemui/StatusBarSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `StatusBarSettingsActivity` class name, package, and Activity launch contract.
+- Existing preference keys for status bar seconds, custom clock format/style, notification icon limit/native icon, network speed size/double layer, and external battery percentage.
+- Existing world-readable `StatusBar_notifyNumSize` preference file behavior for Hook compatibility.
+- Existing custom clock preview formatting and invalid-format fallback.
+- Existing format help copy action, color picker dialog, save confirmation dialog, and Toast behavior.
+
+Implementation note:
+
+- `StatusBarSettingsUiState` now lives with `StatusBarSettingsViewModel`.
+- The Activity now hosts Compose, handles clipboard/Toast effects, and forwards user actions to the ViewModel.
+- `StatusBarSettingsRepository` wraps `ModulePreferencesUtils`, `StatusBar_notifyNumSize`, and clock preview formatting for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded from Android Studio on 2026-05-30 after the `StatusBarSettingsActivity` ViewModel/repository extraction.
+- Remaining warning: deprecated `MODE_WORLD_READABLE`, retained for Hook compatibility.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -498,14 +524,10 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`
-   - Extract status bar clock, notification icon, network speed, and battery preference state into a ViewModel/repository boundary.
-   - Preserve existing preference keys and restart-scope behavior.
-
-2. `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`
+1. `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`
    - Extract lock screen YiYan, charge watts, real watts interval, and permission-confirmation state into a ViewModel/repository boundary.
    - Preserve existing preference keys, SystemUI permission flow, and restart-scope behavior.
 
-3. `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`
+2. `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`
    - Extract control center date, time, spacing, text style, and color state into a ViewModel/repository boundary.
    - Preserve existing preference keys and restart-scope behavior.
