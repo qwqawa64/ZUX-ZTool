@@ -209,23 +209,7 @@ Known verification state:
 
 Use `ComposeRefactor.md` as the source of truth for the detailed migration order, rationale, completed work log, and next-step notes.
 
-The previously listed dialog migration items are now complete:
-
-- `utils/AppChooserDialog.kt`
-- `LoadingDialog.kt`
-- Remaining config-selection and font-input dialogs inside `SettingsDetailActivity.kt`
-
-Suggested next migration and cleanup order:
-
-1. UI foundation fixes
-   - Normalize `FeaturesFragment.kt` card heights.
-   - Centralize dropdown behavior in `ZToolDropdownField`.
-   - Ensure screen root backgrounds use `MaterialTheme.colorScheme.background` or an approved shared container.
-   - Gradually move duplicated rows, cards, sliders, text fields, and action rows into project-level components.
-
-2. Remaining legacy UI cleanup candidates
-   - `utils/CountdownDialog.java`, if still used by active flows.
-   - Old XML layouts, adapters, and `nav_graph.xml` references only during a dedicated XML View cleanup phase, not during feature migrations.
+DO NOT ADD ANY FOLLOW-UP PLANNING IN AGENTS.MD, ADD THESE INFORMATION IN ComposeRefactor.md
 
 ## Current Working Branch
 

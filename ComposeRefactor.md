@@ -151,6 +151,17 @@ If unused:
 
 ### 3. State Architecture Follow-Up
 
+Suggested next migration and cleanup order:
+
+1. UI foundation fixes
+   - Centralize dropdown behavior in `ZToolDropdownField`.
+   - Ensure screen root backgrounds use `MaterialTheme.colorScheme.background` or an approved shared container.
+   - Gradually move duplicated rows, cards, sliders, text fields, and action rows into project-level components.
+
+2. Remaining legacy UI cleanup candidates
+   - `utils/CountdownDialog.java`, if still used by active flows.
+   - Old XML layouts, adapters, and `nav_graph.xml` references only during a dedicated XML View cleanup phase, not during feature migrations.
+
 Gradually move business logic out of composable screens when touching risky pages.
 
 Preferred direction:
