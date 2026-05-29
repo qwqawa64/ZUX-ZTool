@@ -154,7 +154,7 @@ When migrating a page to Compose:
 7. Do not delete legacy XML layouts, old adapters, or `nav_graph.xml` simply because a page was migrated; leave cleanup for a dedicated XML View cleanup phase.
 8. After a page migration, run `.\gradlew.bat assembleDebug`.
 9. Document the completed page, verification result, and next step in `ComposeRefactor.md`.
-10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md` to mark it as completed.
+10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md` to mark it as completed. If the task entry is empty, generate new tasks to push forward the refactor progress.
 11. Commit your changes after documenting them unless user told you not to do so. When committing, include only the current page refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
 
 ## Areas To Preserve
