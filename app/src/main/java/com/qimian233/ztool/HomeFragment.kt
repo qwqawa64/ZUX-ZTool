@@ -89,7 +89,10 @@ class HomeFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val repository = HomeRepository(requireContext().applicationContext)
+        val repository = HomeRepository(
+            context = requireContext().applicationContext,
+            moduleActiveChecker = ::isModuleActive
+        )
         viewModel = ViewModelProvider(
             this,
             HomeViewModelFactory(repository)
@@ -238,6 +241,10 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun isModuleActive(): Boolean {
+        return false
     }
 }
 

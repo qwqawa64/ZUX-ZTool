@@ -264,6 +264,13 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `HomeFragment` ViewModel/repository extraction.
 
+Follow-up fix:
+
+- Root availability could be detected, so the reboot button appeared, but the rest of the home screen still showed the missing Root/LSPosed state.
+- Root cause: the ViewModel extraction moved the self-check implementation away from `HomeFragment.isModuleActive()`, while `hook/HookInit.java` still hooks that exact method and replaces it with `true` when the module is active.
+- Fix: keep `HomeFragment.isModuleActive()` as the stable LSPosed self-check hook target and inject it into `HomeRepository` as `moduleActiveChecker`.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after restoring the self-check compatibility path.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic

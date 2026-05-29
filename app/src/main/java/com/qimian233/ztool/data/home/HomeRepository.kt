@@ -19,7 +19,8 @@ import java.net.URL
 
 class HomeRepository(
     private val context: Context,
-    private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance()
+    private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance(),
+    private val moduleActiveChecker: () -> Boolean = { false }
 ) {
     private var cachedKernelVersion = ""
     private var cachedRootSource = ""
@@ -302,8 +303,7 @@ class HomeRepository(
     }
 
     private fun isModuleActive(): Boolean {
-        Log.d(TAG, "isModuleActive: module self-check called; defaulting to false")
-        return false
+        return moduleActiveChecker()
     }
 
     companion object {
