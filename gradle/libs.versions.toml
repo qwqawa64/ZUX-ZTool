@@ -8,6 +8,8 @@ espressoCore = "3.5.1"
 appcompat = "1.7.1"
 material = "1.13.0"
 activity = "1.9.3"
+lifecycle = "2.9.4"
+savedstate = "1.3.3"
 constraintlayout = "2.1.4"
 navigationFragment = "2.9.5"
 navigationUi = "2.9.5"
@@ -24,6 +26,9 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-android", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-android", version.ref = "lifecycle" }
+androidx-savedstate = { group = "androidx.savedstate", name = "savedstate-android", version.ref = "savedstate" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

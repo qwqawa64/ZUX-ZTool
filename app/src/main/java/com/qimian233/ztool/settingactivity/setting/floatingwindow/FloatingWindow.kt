@@ -49,6 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import org.json.JSONArray
@@ -69,6 +75,12 @@ import kotlinx.coroutines.launch
 class FloatingWindow(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val lifecycleOwner = context as? LifecycleOwner
+        ?: error("FloatingWindow context must implement LifecycleOwner")
+    private val viewModelStoreOwner = context as? ViewModelStoreOwner
+        ?: error("FloatingWindow context must implement ViewModelStoreOwner")
+    private val savedStateRegistryOwner = context as? SavedStateRegistryOwner
+        ?: error("FloatingWindow context must implement SavedStateRegistryOwner")
     private val handler = Handler(Looper.getMainLooper())
     private val recomposer = Recomposer(AndroidUiDispatcher.CurrentThread)
     private val recomposerScope = CoroutineScope(AndroidUiDispatcher.CurrentThread)
@@ -101,6 +113,9 @@ class FloatingWindow(private val context: Context) {
 
     private fun initFloatingView() {
         floatingView = ComposeView(context).apply {
+            setViewTreeLifecycleOwner(lifecycleOwner)
+            setViewTreeViewModelStoreOwner(viewModelStoreOwner)
+            setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
             setParentCompositionContext(recomposer)
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {

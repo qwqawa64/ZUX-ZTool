@@ -6,20 +6,12 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.database.Cursor
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.provider.Settings
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.CheckedTextView
-import android.widget.EditText
-import android.widget.ListView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -36,9 +28,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -51,25 +46,35 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.LoadingDialog
@@ -86,7 +91,6 @@ import com.qimian233.ztool.utils.FontInstallerManager
 import com.qimian233.ztool.utils.MagiskModuleManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
 import java.io.File
-import java.util.Arrays
 
 class SettingsDetailActivity : ComponentActivity() {
 
@@ -420,94 +424,32 @@ class SettingsDetailActivity : ComponentActivity() {
             return
         }
 
-        val displayItems = configs.map {
-            it.timestamp + " " + it.appName + getString(R.string.config_suffix)
-        }.toTypedArray()
-        val checkedItems = BooleanArray(configs.size)
-        Arrays.fill(checkedItems, false)
-
         val flashedConfigs = loadStringSetSetting("flashed_configs", hashSetOf())
-        val dialogView = layoutInflater.inflate(R.layout.dialog_config_selection, null)
-        val builder = MaterialAlertDialogBuilder(this).setView(dialogView)
-
-        dialogView.findViewById<TextView>(R.id.dialog_title).setText(R.string.select_config_files)
-        val flashedCountText = dialogView.findViewById<TextView>(R.id.flashed_count_text)
-        if (flashedConfigs.isNotEmpty()) {
-            flashedCountText.text = getString(R.string.flashed_configs_count, flashedConfigs.size)
-            flashedCountText.visibility = View.VISIBLE
-        } else {
-            flashedCountText.visibility = View.GONE
+        lateinit var dialog: AlertDialog
+        dialog = showComposeDialog {
+            ConfigSelectionDialogContent(
+                configs = configs,
+                flashedConfigs = flashedConfigs,
+                configLabel = { config ->
+                    config.timestamp + " " + config.appName + getString(R.string.config_suffix)
+                },
+                onAlreadyFlashedClick = {
+                    Toast.makeText(this, R.string.config_already_flashed, Toast.LENGTH_SHORT).show()
+                },
+                onDelete = { selectedConfigs ->
+                    performConfigDelete(selectedConfigs, flashedConfigs, dialog)
+                },
+                onFlash = { selectedConfigs ->
+                    dialog.dismiss()
+                    flashSelectedConfigs(selectedConfigs)
+                },
+                onRestore = {
+                    dialog.dismiss()
+                    restoreOriginalModule()
+                },
+                onCancel = { dialog.dismiss() }
+            )
         }
-
-        val dialog = builder.create()
-        val listView = dialogView.findViewById<ListView>(R.id.config_list_view)
-        val adapter = object : ArrayAdapter<String>(
-            this,
-            android.R.layout.simple_list_item_multiple_choice,
-            displayItems
-        ) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getView(position, convertView, parent)
-                val checkedTextView = view as CheckedTextView
-                val config = configs[position]
-                val configKey = config.timestamp + "_" + config.packageName
-
-                if (flashedConfigs.contains(configKey)) {
-                    checkedTextView.setTextColor(Color.GRAY)
-                    checkedTextView.isEnabled = false
-                    checkedTextView.isChecked = true
-                    checkedItems[position] = false
-                } else {
-                    checkedTextView.setTextColor(Color.BLACK)
-                    checkedTextView.isEnabled = true
-                    checkedTextView.isChecked = checkedItems[position]
-                }
-                return view
-            }
-        }
-
-        listView.adapter = adapter
-        listView.choiceMode = ListView.CHOICE_MODE_MULTIPLE
-        listView.setOnItemClickListener { _, view, position, _ ->
-            val config = configs[position]
-            val configKey = config.timestamp + "_" + config.packageName
-            if (flashedConfigs.contains(configKey)) {
-                (view as CheckedTextView).isChecked = false
-                Toast.makeText(this, R.string.config_already_flashed, Toast.LENGTH_SHORT).show()
-            } else {
-                checkedItems[position] = !checkedItems[position]
-                (view as CheckedTextView).isChecked = checkedItems[position]
-            }
-        }
-
-        dialogView.findViewById<Button>(R.id.delete_button).setOnClickListener {
-            val toDelete = configs.filterIndexed { index, _ -> checkedItems[index] }
-            if (toDelete.isNotEmpty()) {
-                performConfigDelete(toDelete, flashedConfigs, dialog)
-            }
-        }
-        dialogView.findViewById<Button>(R.id.flash_button).setOnClickListener {
-            val toFlash = configs.filterIndexed { index, _ -> checkedItems[index] }
-            if (toFlash.isNotEmpty()) {
-                dialog.dismiss()
-                flashSelectedConfigs(toFlash)
-            }
-        }
-        dialogView.findViewById<Button>(R.id.cancel_button).setOnClickListener {
-            dialog.dismiss()
-        }
-        val restoreButton = dialogView.findViewById<Button>(R.id.restore_button)
-        if (flashedConfigs.isNotEmpty()) {
-            restoreButton.visibility = View.VISIBLE
-            restoreButton.setOnClickListener {
-                dialog.dismiss()
-                restoreOriginalModule()
-            }
-        } else {
-            restoreButton.visibility = View.GONE
-        }
-
-        dialog.show()
     }
 
     private fun performConfigDelete(
@@ -638,22 +580,43 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 
     private fun showFontInputDialog(originalFileName: String) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_font_input, null)
-        val fontName = dialogView.findViewById<EditText>(R.id.et_font_name)
-        val fontDescription = dialogView.findViewById<EditText>(R.id.et_font_description)
-        fontDescription.setText(getString(R.string.default_font_description, originalFileName))
+        lateinit var dialog: AlertDialog
+        dialog = showComposeDialog {
+            FontInputDialogContent(
+                originalDescription = getString(R.string.default_font_description, originalFileName),
+                onConfirm = { name, description ->
+                    if (name.isNotEmpty() && description.isNotEmpty()) {
+                        dialog.dismiss()
+                        startFontImport(name, description)
+                    }
+                },
+                onCancel = { dialog.dismiss() }
+            )
+        }
+    }
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.input_font_info_title)
-            .setView(dialogView)
-            .setPositiveButton(R.string.confirm_button) { _, _ ->
-                val name = fontName.text.toString().trim()
-                val description = fontDescription.text.toString().trim()
-                if (name.isNotEmpty() && description.isNotEmpty()) {
-                    startFontImport(name, description)
+    private fun showComposeDialog(content: @Composable () -> Unit): AlertDialog {
+        val composeView = ComposeView(this).apply {
+            setViewTreeLifecycleOwner(this@SettingsDetailActivity)
+            setViewTreeViewModelStoreOwner(this@SettingsDetailActivity)
+            setViewTreeSavedStateRegistryOwner(this@SettingsDetailActivity)
+            setContent {
+                ZToolTheme {
+                    content()
                 }
             }
-            .show()
+        }
+
+        return MaterialAlertDialogBuilder(this)
+            .setView(composeView)
+            .create()
+            .also { dialog ->
+                dialog.show()
+                dialog.window?.setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            }
     }
 
     private fun startFontImport(fontName: String, fontDescription: String) {
@@ -941,6 +904,209 @@ private fun SettingsDetailScreen(
                         checked = alwaysDisplaySuggestions,
                         onCheckedChange = onAlwaysDisplaySuggestionsChanged
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConfigSelectionDialogContent(
+    configs: List<EmbeddingConfigManager.ConfigFileInfo>,
+    flashedConfigs: Set<String>,
+    configLabel: (EmbeddingConfigManager.ConfigFileInfo) -> String,
+    onAlreadyFlashedClick: () -> Unit,
+    onDelete: (List<EmbeddingConfigManager.ConfigFileInfo>) -> Unit,
+    onFlash: (List<EmbeddingConfigManager.ConfigFileInfo>) -> Unit,
+    onRestore: () -> Unit,
+    onCancel: () -> Unit
+) {
+    val selectedIndexes = remember { mutableStateListOf<Int>() }
+
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.select_config_files),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            if (flashedConfigs.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.flashed_configs_count, flashedConfigs.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 8.dp)
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .padding(top = 12.dp)
+            ) {
+                itemsIndexed(configs) { index, config ->
+                    val configKey = config.timestamp + "_" + config.packageName
+                    val flashed = configKey in flashedConfigs
+                    val selected = index in selectedIndexes
+                    ConfigSelectionRow(
+                        label = configLabel(config),
+                        flashed = flashed,
+                        selected = selected,
+                        onClick = {
+                            if (flashed) {
+                                onAlreadyFlashedClick()
+                            } else if (selected) {
+                                selectedIndexes -= index
+                            } else {
+                                selectedIndexes += index
+                            }
+                        }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = {
+                        val selectedConfigs = selectedIndexes.map { configs[it] }
+                        if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
+                    }
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+                TextButton(
+                    onClick = {
+                        val selectedConfigs = selectedIndexes.map { configs[it] }
+                        if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
+                    }
+                ) {
+                    Text(stringResource(R.string.flashAddedConfig))
+                }
+                if (flashedConfigs.isNotEmpty()) {
+                    TextButton(onClick = onRestore) {
+                        Text(stringResource(R.string.restoreModule))
+                    }
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = onCancel) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConfigSelectionRow(
+    label: String,
+    flashed: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = flashed || selected,
+            onCheckedChange = { onClick() },
+            enabled = !flashed
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (flashed) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun FontInputDialogContent(
+    originalDescription: String,
+    onConfirm: (String, String) -> Unit,
+    onCancel: () -> Unit
+) {
+    var fontName by remember { mutableStateOf("") }
+    var fontDescription by remember { mutableStateOf(originalDescription) }
+
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.input_font_info_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(R.string.doNotUseDuplicatedFontName),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            OutlinedTextField(
+                value = fontName,
+                onValueChange = { fontName = it },
+                label = { Text(stringResource(R.string.fontName)) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            )
+            OutlinedTextField(
+                value = fontDescription,
+                onValueChange = { fontDescription = it },
+                label = { Text(stringResource(R.string.fontDescription)) },
+                minLines = 3,
+                maxLines = 5,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = onCancel) {
+                    Text(stringResource(R.string.cancel))
+                }
+                TextButton(
+                    onClick = {
+                        onConfirm(fontName.trim(), fontDescription.trim())
+                    }
+                ) {
+                    Text(stringResource(R.string.confirm_button))
                 }
             }
         }

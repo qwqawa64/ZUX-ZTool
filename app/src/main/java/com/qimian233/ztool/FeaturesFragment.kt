@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +41,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.Fragment
@@ -95,6 +95,8 @@ private data class FeatureItem(
     val icon: Drawable?,
     val targetActivity: Class<*>
 )
+
+private val FeatureCardHeight: Dp = 112.dp
 
 @Composable
 private fun rememberFeatureItems(context: Context): List<FeatureItem> {
@@ -235,13 +237,13 @@ private fun FeatureCard(
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 112.dp)
+            .height(FeatureCardHeight)
             .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(112.dp)
+                .fillMaxHeight()
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
