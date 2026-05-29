@@ -151,11 +151,12 @@ When migrating a page to Compose:
 4. Preserve Xposed metadata and `assets/xposed_init`.
 5. Preserve `assets/embedding/**`.
 6. Prefer converting one page or dialog at a time to keep regression scope small.
-7. Do not delete legacy XML layouts, old adapters, or `nav_graph.xml` simply because a page was migrated; leave cleanup for a dedicated XML View cleanup phase.
-8. After a page migration, run `.\gradlew.bat assembleDebug`.
-9. Document the completed page, verification result, and next step in `ComposeRefactor.md`.
-10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md` to mark it as completed. If the task entry is empty, generate new tasks to push forward the refactor progress.
-11. Commit your changes after documenting them unless user told you not to do so. When committing, include only the current page refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
+7. When applying your changes, prefer smaller patches for modifying files that already exists.
+8. Do not delete legacy XML layouts, old adapters, or `nav_graph.xml` simply because a page was migrated; leave cleanup for a dedicated XML View cleanup phase.
+9. After a page migration, run `.\gradlew.bat assembleDebug`.
+10. Document the completed page, verification result, and next step in `ComposeRefactor.md`.
+11. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md` to mark it as completed. If the task entry is empty, generate new tasks to push forward the refactor progress.
+12. Commit your changes after documenting them unless user told you not to do so. When committing, include only the current page refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
 
 ## Areas To Preserve
 
