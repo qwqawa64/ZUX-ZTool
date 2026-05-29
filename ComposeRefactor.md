@@ -372,6 +372,31 @@ Verification:
 - `.\gradlew.bat assembleDebug` succeeded from Android Studio on 2026-05-30 after the `StatusBarSettingsActivity` ViewModel/repository extraction.
 - Remaining warning: deprecated `MODE_WORLD_READABLE`, retained for Hook compatibility.
 
+### LockScreenSettings ViewModel Boundary
+
+`settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt` now delegates lock screen preference state, YiYan API testing, and charge-watt option coordination to:
+
+- `viewmodel/LockScreenSettingsViewModel.kt`.
+- `data/systemui/LockScreenSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `LockScreenSettingsActivity` class name, package, and Activity launch contract.
+- Existing preference keys for YiYan, owner info, YiYan API URL/regex, charge watts, real watts, custom refresh interval, selected watts option, and SystemUI permission confirmation.
+- Existing charge-watts option behavior, including disabled/handshake/actual mutual exclusivity.
+- Existing SystemUI root-permission explanation dialog and "do not show again" confirmation behavior.
+- Existing YiYan API test request, regex extraction, response/error dialogs, and configuration save behavior.
+
+Implementation note:
+
+- `LockScreenSettingsUiState` and `ApiTestResult` now live with `LockScreenSettingsViewModel`.
+- The Activity now hosts Compose, shows Toast effects, and forwards user actions to the ViewModel.
+- `LockScreenSettingsRepository` wraps `ModulePreferencesUtils`, HTTP testing, regex extraction, and localized result text for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `LockScreenSettingsActivity` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -524,10 +549,6 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`
-   - Extract lock screen YiYan, charge watts, real watts interval, and permission-confirmation state into a ViewModel/repository boundary.
-   - Preserve existing preference keys, SystemUI permission flow, and restart-scope behavior.
-
-2. `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`
+1. `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`
    - Extract control center date, time, spacing, text style, and color state into a ViewModel/repository boundary.
    - Preserve existing preference keys and restart-scope behavior.
