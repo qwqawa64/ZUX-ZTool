@@ -403,6 +403,7 @@
   - `settingactivity/launcher/LauncherSettingsActivity.kt`：桌面设置页已迁移到 Compose，保留原类名和启动入口；保留 `disable_force_stop`、`ForceStopWhiteListEnable`、`ForceStopWhiteList`、`zui_launcher_hotseat`、`CustomGridSize`、`CustomLauncherRow`、`CustomLauncherColumn` 配置键；原生后台管理模式由 Spinner 改为 Compose 下拉菜单，白名单选择器暂时复用现有 `AppChooserDialog`，自定义网格行列改为 Compose 数字输入框。
   - `settingactivity/launcher/LauncherSettingsActivity.kt` 修复与改进：修复原生后台管理下拉选择器点击不展开的问题；自定义桌面网格行列输入由数字输入框改为 3-10 的带步进 Slider，并继续保存到 `CustomLauncherRow`、`CustomLauncherColumn`。
   - `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`：锁屏设置页已迁移到 Compose，保留原类名和启动入口；保留 `auto_owner_info`、`YiYan`、`API_URL`、`Regular`、`systemui_charge_watts`、`systemUI_RealWatts`、`real_watts_customized_interval`、`real_watts_refresh_interval`、`isSystemUIPermissionConfirmed`、`charge_watts_selected_option` 配置键；充电功率与刷新时机 Spinner 改为 Compose 下拉菜单，API 测试与正则提取逻辑保留并改用 Compose Dialog 展示结果。
+  - `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`：状态栏设置页已迁移到 Compose，保留原类名和启动入口；保留 `StatusBarDisplay_Seconds`、`Custom_StatusBarClock`、`Custom_StatusBarClockFormat`、`Custom_StatusBarClockTextSize`、`Custom_StatusBarClockTextSizeEnabled`、`Custom_StatusBarClockLetterSpacing`、`Custom_StatusBarClockLetterSpacingEnabled`、`Custom_StatusBarClockTextColor`、`Custom_StatusBarClockTextColorEnabled`、`Custom_StatusBarClockTextBold`、`NativeNotificationIcon`、`notification_icon_limit`、`systemui_network_speed_size`、`systemui_network_speed_doublelayer`、`systemui_battery_percentage` 配置键；保留 `StatusBar_notifyNumSize` world-readable SharedPreferences 写入行为；SeekBar/Spinner/Dialog 改为 Compose Slider/下拉菜单/Dialog。
 
   最近验证
 
@@ -415,15 +416,16 @@
   - 2026-05-29：完成 `LauncherSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。`menuAnchor()` deprecated warning 现在出现在游戏助手和桌面两个下拉菜单页面，后续统一处理；其余仍为既有 deprecated warning。
   - 2026-05-29：修复 `LauncherSettingsActivity` 下拉展开问题并将自定义网格改为 Slider 后运行 `.\gradlew.bat assembleDebug`，构建成功。Launcher 页的 `menuAnchor()` deprecated warning 已消除，游戏助手页仍有同类 warning 待后续统一处理。
   - 2026-05-29：完成 `LockScreenSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning 与游戏助手页 `menuAnchor()` warning。
+  - 2026-05-29：完成 `StatusBarSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。新增 `MODE_WORLD_READABLE` deprecated warning，这是原状态栏通知数量 Hook 需要的兼容行为，暂时保留；游戏助手页 `menuAnchor()` warning 仍待后续处理。
 
   下一步候选
 
   - 优先继续迁移结构简单、以开关为主的设置页，例如：
       - `settingactivity/setting/SettingsDetailActivity.java`
-      - `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.java`
+      - `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.java`
   - 暂缓迁移 `OtaSettings.java`，因为它包含输入框、异步拉取、剪贴板、多个自定义 Dialog 和 root 文件读取，适合在通用设置页模式稳定后处理。
 
   当前停止点
 
-  - 已完成并验证：`LockScreenSettingsActivity` 页面 Compose 化。
-  - 下一次继续时，应从候选页中选择一个页面迁移；建议优先处理 `StatusBarSettingsActivity.java` 或评估拆分 `SettingsDetailActivity.java`，继续沉淀设置页 Compose 模式。
+  - 已完成并验证：`StatusBarSettingsActivity` 页面 Compose 化。
+  - 下一次继续时，应从候选页中选择一个页面迁移；建议优先处理 `ControlCenterSettingsActivity.java` 或评估拆分 `SettingsDetailActivity.java`，继续沉淀设置页 Compose 模式。
