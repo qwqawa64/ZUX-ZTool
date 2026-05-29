@@ -398,6 +398,7 @@
   - `SettingsFragment.kt`：设置首页已迁移到 Compose；已修复 `isDetailedLoggingEnabled`、`isHomepageYiyanEnabled` 属性 setter 与同名方法的 JVM 签名冲突。
   - `settingactivity/packageinstaller/packageinstallersettings.kt`：包安装器设置页已迁移到 Compose，保留原类名和启动入口，保留原 SharedPreferences key 与重启作用域逻辑。
   - `settingactivity/systemframework/FrameworkSettingsActivity.kt`：系统框架设置页已迁移到 Compose，保留原类名和启动入口；保留 `keep_rotation`、`allow_get_packages`、`disable_flag_secure`、`ai_input_expand`、`AI_INPUT_EXPAND_SIGNS` 配置键；保留 AI 输入检测符格式校验和系统重启确认倒计时。
+  - `settingactivity/safecenter/SafeCenterSettingsActivity.kt`：安全中心设置页已迁移到 Compose，保留原类名和启动入口；保留 `default_enable_autorun`、`block_safecenter_scan`、`documents_ui_bypass` 配置键；保留重启当前作用域与 `com.android.documentsui` 的 root shell 逻辑，并用 Compose state 控制重启处理中状态。
 
   最近验证
 
@@ -405,15 +406,16 @@
       - `MainActivity.kt` 中 `statusBarColor`、`navigationBarColor`。
       - `SettingsFragment.kt` 中 `versionCode`。
   - 2026-05-29：完成 `FrameworkSettingsActivity` Compose 化后再次运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅存在上述既有 deprecated warning。
+  - 2026-05-29：完成 `SafeCenterSettingsActivity` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅存在上述既有 deprecated warning。
 
   下一步候选
 
   - 优先继续迁移结构简单、以开关为主的设置页，例如：
-      - `settingactivity/safecenter/SafeCenterSettingsActivity.java`
       - `settingactivity/gametool/GameToolSettngs.java`
+      - `settingactivity/launcher/LauncherSettingsActivity.java`
   - 暂缓迁移 `OtaSettings.java`，因为它包含输入框、异步拉取、剪贴板、多个自定义 Dialog 和 root 文件读取，适合在通用设置页模式稳定后处理。
 
   当前停止点
 
-  - 已完成并验证：`FrameworkSettingsActivity` 页面 Compose 化。
-  - 下一次继续时，应从候选页中选择一个页面迁移；建议优先处理 `SafeCenterSettingsActivity.java`，该页包含 3 个开关和重启两个作用域，逻辑比 OTA 简单。
+  - 已完成并验证：`SafeCenterSettingsActivity` 页面 Compose 化。
+  - 下一次继续时，应从候选页中选择一个页面迁移；建议优先处理 `GameToolSettngs.java` 或 `LauncherSettingsActivity.java`，继续沉淀设置页 Compose 模式。
