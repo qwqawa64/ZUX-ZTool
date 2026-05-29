@@ -15,6 +15,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import android.widget.VideoView
+import androidx.compose.runtime.Recomposer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,11 +62,19 @@ import java.io.InputStreamReader
 import java.util.SortedMap
 import java.util.TreeMap
 import java.util.regex.Pattern
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 class FloatingWindow(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val handler = Handler(Looper.getMainLooper())
+    private val recomposer = Recomposer(AndroidUiDispatcher.CurrentThread)
+    private val recomposerScope = CoroutineScope(AndroidUiDispatcher.CurrentThread)
+    private val recomposerJob: Job = recomposerScope.launch {
+        recomposer.runRecomposeAndApplyChanges()
+    }
     private var floatingView: ComposeView? = null
     private var updateRunnable: Runnable? = null
 
@@ -91,6 +101,7 @@ class FloatingWindow(private val context: Context) {
 
     private fun initFloatingView() {
         floatingView = ComposeView(context).apply {
+            setParentCompositionContext(recomposer)
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {
                 ZToolTheme {
@@ -365,6 +376,8 @@ class FloatingWindow(private val context: Context) {
             runCatching { windowManager.removeView(view) }
         }
         floatingView = null
+        recomposer.cancel()
+        recomposerJob.cancel()
     }
 
     fun hide() {

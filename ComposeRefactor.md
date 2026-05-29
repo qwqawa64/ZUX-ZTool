@@ -433,6 +433,7 @@
   - 2026-05-29：完成 `HomeFragment` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `searchPage` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `FloatingWindow` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、状态栏页 `MODE_WORLD_READABLE`。
+  - 2026-05-29：修复 `FloatingWindow` 作为 `WindowManager` 外挂 `ComposeView` 启动时缺少 `ViewTreeLifecycleOwner` 崩溃；改为悬浮窗内部创建并管理独立 `Recomposer`，关闭悬浮窗时取消重组任务；运行 `.\gradlew.bat assembleDebug` 构建成功。
 
   下一步候选
 
