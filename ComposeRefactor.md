@@ -124,68 +124,141 @@ Preserved behavior:
 
 Legacy XML resources were intentionally left in place for a later cleanup phase.
 
-## Next Plan
+## Full Refactor Roadmap
 
-### 1. UI Foundation Fixes
+### Phase 1. Build the Compose Shell Without Touching Hook Logic
 
-Do these before starting another broad screen migration.
+Keep `hook/`, `service/`, `utils/`, and `config/` behavior intact. Add or continue consolidating Kotlin UI architecture under packages such as:
 
-- Normalize `FeaturesFragment.kt` card heights.
-- Continue using and improving `ZToolDropdownField`.
-- Ensure root screen containers consistently use `MaterialTheme.colorScheme.background` or an approved shared page container.
-- Move duplicated rows, cards, sliders, text fields, dialogs, and action rows into `ui/components` gradually.
-- Avoid adding screen-local versions of components that already exist in `ui/components`.
+```text
+app/src/main/java/com/qimian233/ztool/
+  ui/
+    ZToolApp.kt
+    navigation/
+    theme/
+    components/
+    screens/
+      home/
+      features/
+      audit/
+      settings/
+      module/
+  data/
+    preference/
+    shell/
+    update/
+    log/
+  viewmodel/
+```
 
-### 2. Remaining Legacy Dialog Review
+The Compose shell should become the main UI surface while preserving existing launch entry points during migration.
 
-Evaluate whether `utils/CountdownDialog.java` is still used by active flows.
+### Phase 2. Extract Business State From Fragments And Activities
 
-If still used:
+Prioritize heavy logic pages such as `HomeFragment` and `settingactivity/systemui/systemUISettings.kt`.
 
-- Migrate it to Compose while preserving existing callback and countdown behavior.
-- Keep the public entry contract stable unless the call sites are migrated in the same change.
+The target shape is:
 
-If unused:
+- Screens consume stable `UiState`.
+- Screens dispatch events to a `ViewModel`.
+- UI code does not directly run shell commands.
+- UI code does not directly read or write preferences.
+- UI code does not create raw threads for business work.
 
-- Leave deletion for the dedicated XML/View cleanup phase unless explicitly asked to remove dead code now.
+Use repository or manager wrappers for shell execution, logs, config, preferences, update checks, and system services.
 
-### 3. State Architecture Follow-Up
+### Phase 3. Implement The Frontend Style Adapter Layer
 
-Suggested next migration and cleanup order:
+Define a project-level style model:
 
-1. UI foundation fixes
-   - Centralize dropdown behavior in `ZToolDropdownField`.
-   - Ensure screen root backgrounds use `MaterialTheme.colorScheme.background` or an approved shared container.
-   - Gradually move duplicated rows, cards, sliders, text fields, and action rows into project-level components.
+```kotlin
+enum class FrontendStyle {
+    MaterialExpressive,
+    Miuix
+}
+```
 
-2. Remaining legacy UI cleanup candidates
-   - `utils/CountdownDialog.java`, if still used by active flows.
-   - Old XML layouts, adapters, and `nav_graph.xml` references only during a dedicated XML View cleanup phase, not during feature migrations.
+Feature screens should call project components instead of branching on style directly:
 
-Gradually move business logic out of composable screens when touching risky pages.
+```kotlin
+ZSwitchRow(
+    title = stringResource(R.string.xxx),
+    checked = state.enabled,
+    onCheckedChange = viewModel::setEnabled
+)
+```
 
-Preferred direction:
+Components and theme adapters, such as `ZToolTheme`, `ZToolScaffold`, `ZToolCard`, `ZToolDropdownField`, `ZSwitchRow`, `ZListItem`, and `ZDialog`, should choose the Material 3 Expressive, Miuix, or future ZUX/ZUI rendering internally.
 
-- `ViewModel`.
-- `UiState`.
-- `StateFlow`.
-- Repository wrappers for shell, logs, config, preferences, update checks, and system services.
+Avoid scattering checks such as `if (style == FrontendStyle.Miuix)` through business screens.
 
-Do not turn a page migration into a large architecture rewrite unless the page logic is already blocking a safe UI migration.
+### Phase 4. Migrate Main Navigation
 
-### 4. XML/View Cleanup Phase
+Replace the active `MainActivity` + `nav_graph.xml` + `BottomNavigationView` + Fragment navigation surface with Compose navigation:
 
-Do not delete old XML layouts, adapters, or `nav_graph.xml` during ordinary page migrations.
+```kotlin
+setContent {
+    ZToolTheme(style = selectedStyle) {
+        ZToolNavHost()
+    }
+}
+```
 
-Reserve these for a dedicated cleanup pass after active UI routes no longer depend on them:
+Bottom navigation, top bars, page transitions, and route state should be implemented in Compose.
 
-- Unused `res/layout/activity_*.xml`.
-- Unused `res/layout/fragment_*.xml`.
-- Unused dialog and item XML files.
-- Old RecyclerView adapters.
+Preserve compatibility for existing external launch contracts while moving the main in-app navigation to `navigation-compose`.
+
+### Phase 5. Migrate Settings Pages Through A Shared Settings Model
+
+Create a shared settings item model before migrating more setting pages:
+
+```kotlin
+sealed interface SettingItem {
+    data class Switch(...)
+    data class Entry(...)
+    data class Slider(...)
+    data class TextInput(...)
+    data class Category(...)
+}
+```
+
+Each settings page should declare data and behavior through the model, and Compose should render the common rows consistently.
+
+This should speed up migration and reduce duplicated UI logic for:
+
+- `systemui`.
+- `gametool`.
+- `launcher`.
+- `ota`.
+- `packageinstaller`.
+
+Preserve all existing preference keys used by Hook modules.
+
+### Phase 6. Clean Up The XML/View Layer
+
+Only start this phase after active UI routes no longer depend on the old View layer.
+
+Cleanup candidates:
+
+- `res/layout/activity_*.xml`.
+- `res/layout/fragment_*.xml`.
+- `res/navigation/nav_graph.xml`.
+- Old adapters.
 - Obsolete Fragment classes.
-- XML Navigation references that are no longer active.
-- Unneeded AppCompat/Material View dependencies.
+- Unneeded AppCompat or Material View dependencies.
+
+Do not delete XML resources or legacy classes during ordinary page migrations unless the cleanup is explicitly part of the scoped task.
+
+## Preservation Boundaries
+
+Keep these areas behavior-compatible throughout the Compose migration:
+
+- `hook/**`: must not participate in UI refactors.
+- `service/**`: expose state to ViewModels where needed, but preserve service behavior.
+- `utils/EnhancedShellExecutor`, `utils/MagiskModuleManager`, and `utils/EmbeddingConfigManager`: may be wrapped by repositories, but their behavior should remain compatible.
+- `assets/embedding/**`: must remain.
+- `assets/xposed_init`: must remain.
+- Xposed metadata in `AndroidManifest.xml`: must remain.
 
 ## Verification Policy
 
