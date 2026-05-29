@@ -177,6 +177,7 @@ The following settings screens now consume a single screen state object instead 
 - `settingactivity/systemframework/FrameworkSettingsActivity.kt`: `FrameworkSettingsUiState`.
 - `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`: `ControlCenterSettingsUiState`.
 - `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`: `StatusBarSettingsUiState`.
+- `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`: `LockScreenSettingsUiState`.
 
 Preserved behavior:
 
@@ -187,6 +188,7 @@ Preserved behavior:
 - Existing preference keys for framework, AI input expansion, and secure flag configuration.
 - Existing preference keys for control center date, text size, spacing, color, and bold configuration.
 - Existing preference keys for status bar clock, notification icon, network speed, and battery configuration.
+- Existing preference keys for lock screen YiYan, charge watts, real watts interval, and SystemUI permission confirmation.
 - Existing restart confirmation and restart scope behavior.
 - Existing root/shell behavior.
 
@@ -203,6 +205,7 @@ Verification:
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the framework consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the control center consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the status bar consolidation.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the lock screen consolidation.
 
 ## Full Refactor Roadmap
 
@@ -356,15 +359,12 @@ Continue the pre-ViewModel consolidation pass: make remaining Compose screens co
 
 Recommended next order:
 
-1. SystemUI sub-pages
-   - `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`.
-
-2. Remaining settings/detail flows
+1. Remaining settings/detail flows
    - `settingactivity/ota/OtaSettings.kt`.
    - `settingactivity/setting/SettingsDetailActivity.kt`.
    - `settingactivity/setting/magicwindowsearch/searchPage.kt`.
 
-3. Fragment-level screens
+2. Fragment-level screens
    - `AuditFragment.kt`.
    - `SettingsFragment.kt`.
    - `HomeFragment.kt` dialog flags should be folded into `HomeUiState` before later ViewModel extraction.

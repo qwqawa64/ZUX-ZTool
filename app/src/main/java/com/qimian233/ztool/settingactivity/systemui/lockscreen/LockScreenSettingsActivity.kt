@@ -65,15 +65,7 @@ class LockScreenSettingsActivity : ComponentActivity() {
     private lateinit var zToolPrefs: ModulePreferencesUtils
     private lateinit var yiYanPrefs: ModulePreferencesUtils
 
-    private var yiYanEnabled by mutableStateOf(false)
-    private var apiAddress by mutableStateOf("")
-    private var regex by mutableStateOf("")
-    private var chargeWattsOption by mutableStateOf("")
-    private var realWattsIntervalOption by mutableStateOf("")
-    private var realWattsRefreshInterval by mutableStateOf("")
-    private var isTestingApi by mutableStateOf(false)
-    private var showRootPermissionDialog by mutableStateOf(false)
-    private var apiTestResult by mutableStateOf<ApiTestResult?>(null)
+    private var uiState by mutableStateOf(LockScreenSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,42 +81,36 @@ class LockScreenSettingsActivity : ComponentActivity() {
             ZToolTheme {
                 LockScreenSettingsScreen(
                     title = appName + stringResource(R.string.lock_screen_settings_title_suffix),
-                    yiYanEnabled = yiYanEnabled,
-                    apiAddress = apiAddress,
-                    regex = regex,
-                    chargeWattsOption = chargeWattsOption,
-                    realWattsIntervalOption = realWattsIntervalOption,
-                    realWattsRefreshInterval = realWattsRefreshInterval,
-                    isTestingApi = isTestingApi,
+                    state = uiState,
                     onBack = ::finish,
                     onYiYanChanged = ::handleYiYanChanged,
-                    onApiAddressChanged = { apiAddress = it },
-                    onRegexChanged = { regex = it },
+                    onApiAddressChanged = { uiState = uiState.copy(apiAddress = it) },
+                    onRegexChanged = { uiState = uiState.copy(regex = it) },
                     onTestApi = ::testApiConnection,
                     onChargeWattsOptionChanged = ::handleWattOptionSelected,
                     onRealWattsIntervalOptionChanged = ::handleIntervalOptionSelected,
                     onRealWattsRefreshIntervalChanged = ::handleRealWattsRefreshIntervalChanged
                 )
 
-                if (showRootPermissionDialog) {
+                if (uiState.showRootPermissionDialog) {
                     RootPermissionDialog(
-                        onConfirm = { showRootPermissionDialog = false },
+                        onConfirm = { uiState = uiState.copy(showRootPermissionDialog = false) },
                         onDoNotShowAgain = {
-                            showRootPermissionDialog = false
+                            uiState = uiState.copy(showRootPermissionDialog = false)
                             saveSettings("isSystemUIPermissionConfirmed", true)
                             Toast.makeText(this, R.string.no_tip_next_time, Toast.LENGTH_SHORT).show()
                         }
                     )
                 }
 
-                apiTestResult?.let { result ->
+                uiState.apiTestResult?.let { result ->
                     ApiTestResultDialog(
                         result = result,
                         onSave = {
                             saveYiYanConfiguration()
-                            apiTestResult = null
+                            uiState = uiState.copy(apiTestResult = null)
                         },
-                        onDismiss = { apiTestResult = null }
+                        onDismiss = { uiState = uiState.copy(apiTestResult = null) }
                     )
                 }
             }
@@ -132,34 +118,43 @@ class LockScreenSettingsActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        apiAddress = yiYanPrefs.loadStringSetting("API_URL", "")
-        regex = yiYanPrefs.loadStringSetting("Regular", "")
-        yiYanEnabled = prefsUtils.loadBooleanSetting("auto_owner_info", false)
+        val loadedApiAddress = yiYanPrefs.loadStringSetting("API_URL", "")
+        val loadedRegex = yiYanPrefs.loadStringSetting("Regular", "")
+        val loadedYiYanEnabled = prefsUtils.loadBooleanSetting("auto_owner_info", false)
 
         val chargeWattsEnabled = prefsUtils.loadBooleanSetting("systemui_charge_watts", false)
         val realWattsEnabled = prefsUtils.loadBooleanSetting("systemUI_RealWatts", false)
-        chargeWattsOption = when {
+        val loadedChargeWattsOption = when {
             chargeWattsEnabled && !realWattsEnabled -> getString(R.string.watt_option_handshake)
             !chargeWattsEnabled && realWattsEnabled -> getString(R.string.watt_option_actual)
             else -> getString(R.string.watt_option_disabled)
         }
 
-        realWattsIntervalOption = if (
+        val loadedRealWattsIntervalOption = if (
             prefsUtils.loadBooleanSetting("real_watts_customized_interval", false)
         ) {
             getString(R.string.real_watt_custom_refresh_interval_enabled)
         } else {
             getString(R.string.real_watt_custom_refresh_interval_disabled)
         }
-        realWattsRefreshInterval = prefsUtils
+        val loadedRealWattsRefreshInterval = prefsUtils
             .loadFloatSetting("real_watts_refresh_interval", 3.0f)
             .toString()
 
-        zToolPrefs.saveStringSetting("charge_watts_selected_option", chargeWattsOption)
+        uiState = uiState.copy(
+            yiYanEnabled = loadedYiYanEnabled,
+            apiAddress = loadedApiAddress,
+            regex = loadedRegex,
+            chargeWattsOption = loadedChargeWattsOption,
+            realWattsIntervalOption = loadedRealWattsIntervalOption,
+            realWattsRefreshInterval = loadedRealWattsRefreshInterval
+        )
+
+        zToolPrefs.saveStringSetting("charge_watts_selected_option", loadedChargeWattsOption)
     }
 
     private fun handleYiYanChanged(isEnabled: Boolean) {
-        yiYanEnabled = isEnabled
+        uiState = uiState.copy(yiYanEnabled = isEnabled)
         saveSettings("YiYan", isEnabled)
         if (!isEnabled) {
             saveSettings("auto_owner_info", false)
@@ -169,7 +164,7 @@ class LockScreenSettingsActivity : ComponentActivity() {
     }
 
     private fun handleWattOptionSelected(selectedOption: String) {
-        chargeWattsOption = selectedOption
+        uiState = uiState.copy(chargeWattsOption = selectedOption)
         when (selectedOption) {
             getString(R.string.watt_option_disabled) -> {
                 saveSettings("systemui_charge_watts", false)
@@ -183,7 +178,7 @@ class LockScreenSettingsActivity : ComponentActivity() {
                 saveSettings("systemui_charge_watts", false)
                 saveSettings("systemUI_RealWatts", true)
                 if (!prefsUtils.loadBooleanSetting("isSystemUIPermissionConfirmed", false)) {
-                    showRootPermissionDialog = true
+                    uiState = uiState.copy(showRootPermissionDialog = true)
                 }
             }
         }
@@ -191,7 +186,7 @@ class LockScreenSettingsActivity : ComponentActivity() {
     }
 
     private fun handleIntervalOptionSelected(selectedOption: String) {
-        realWattsIntervalOption = selectedOption
+        uiState = uiState.copy(realWattsIntervalOption = selectedOption)
         prefsUtils.saveBooleanSetting(
             "real_watts_customized_interval",
             selectedOption == getString(R.string.real_watt_custom_refresh_interval_enabled)
@@ -199,36 +194,39 @@ class LockScreenSettingsActivity : ComponentActivity() {
     }
 
     private fun handleRealWattsRefreshIntervalChanged(value: String) {
-        realWattsRefreshInterval = value.filter { it.isDigit() || it == '.' }
-        realWattsRefreshInterval.toFloatOrNull()?.let {
+        val filteredValue = value.filter { it.isDigit() || it == '.' }
+        uiState = uiState.copy(realWattsRefreshInterval = filteredValue)
+        filteredValue.toFloatOrNull()?.let {
             prefsUtils.saveFloatSetting("real_watts_refresh_interval", it)
         } ?: Log.d(TAG, "Empty number string, will not save it as a valid refresh interval.")
     }
 
     private fun testApiConnection() {
-        val apiUrl = apiAddress.trim()
-        val regexValue = regex.trim()
+        val apiUrl = uiState.apiAddress.trim()
+        val regexValue = uiState.regex.trim()
 
         if (apiUrl.isEmpty()) {
             Toast.makeText(this, R.string.please_input_api_address, Toast.LENGTH_SHORT).show()
             return
         }
 
-        isTestingApi = true
+        uiState = uiState.copy(isTestingApi = true)
         Thread {
             try {
                 val response = performHttpGet(apiUrl)
                 runOnUiThread {
-                    isTestingApi = false
+                    uiState = uiState.copy(isTestingApi = false)
                     handleApiResponse(response, regexValue)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    isTestingApi = false
-                    apiTestResult = ApiTestResult(
-                        title = getString(R.string.request_failed),
-                        message = getString(R.string.error_message_prefix) + e.message,
-                        success = false
+                    uiState = uiState.copy(
+                        isTestingApi = false,
+                        apiTestResult = ApiTestResult(
+                            title = getString(R.string.request_failed),
+                            message = getString(R.string.error_message_prefix) + e.message,
+                            success = false
+                        )
                     )
                 }
             }
@@ -279,23 +277,27 @@ class LockScreenSettingsActivity : ComponentActivity() {
                         ?.replace("\\t", "\t")
                         .orEmpty()
                 } else {
-                    apiTestResult = ApiTestResult(
-                        title = getString(R.string.regex_match_failed),
-                        message = getString(R.string.response_body_prefix) +
-                            response +
-                            getString(R.string.regex_no_match_message),
-                        success = false
+                    uiState = uiState.copy(
+                        apiTestResult = ApiTestResult(
+                            title = getString(R.string.regex_match_failed),
+                            message = getString(R.string.response_body_prefix) +
+                                response +
+                                getString(R.string.regex_no_match_message),
+                            success = false
+                        )
                     )
                     return
                 }
             } catch (e: Exception) {
-                apiTestResult = ApiTestResult(
-                    title = getString(R.string.regex_error),
-                    message = getString(R.string.error_message_prefix) +
-                        e.message +
-                        getString(R.string.response_body_prefix) +
-                        response,
-                    success = false
+                uiState = uiState.copy(
+                    apiTestResult = ApiTestResult(
+                        title = getString(R.string.regex_error),
+                        message = getString(R.string.error_message_prefix) +
+                            e.message +
+                            getString(R.string.response_body_prefix) +
+                            response,
+                        success = false
+                    )
                 )
                 return
             }
@@ -307,18 +309,20 @@ class LockScreenSettingsActivity : ComponentActivity() {
         }
         message += getString(R.string.original_response_prefix) + response
 
-        apiTestResult = ApiTestResult(
-            title = getString(R.string.test_success),
-            message = message,
-            success = true
+        uiState = uiState.copy(
+            apiTestResult = ApiTestResult(
+                title = getString(R.string.test_success),
+                message = message,
+                success = true
+            )
         )
     }
 
     private fun saveYiYanConfiguration() {
-        yiYanPrefs.saveStringSetting("API_URL", apiAddress.trim())
-        yiYanPrefs.saveStringSetting("Regular", regex.trim())
+        yiYanPrefs.saveStringSetting("API_URL", uiState.apiAddress.trim())
+        yiYanPrefs.saveStringSetting("Regular", uiState.regex.trim())
         saveSettings("auto_owner_info", true)
-        yiYanEnabled = true
+        uiState = uiState.copy(yiYanEnabled = true)
         Toast.makeText(this, R.string.configuration_saved_message, Toast.LENGTH_SHORT).show()
     }
 
@@ -337,17 +341,23 @@ private data class ApiTestResult(
     val success: Boolean
 )
 
+private data class LockScreenSettingsUiState(
+    val yiYanEnabled: Boolean = false,
+    val apiAddress: String = "",
+    val regex: String = "",
+    val chargeWattsOption: String = "",
+    val realWattsIntervalOption: String = "",
+    val realWattsRefreshInterval: String = "",
+    val isTestingApi: Boolean = false,
+    val showRootPermissionDialog: Boolean = false,
+    val apiTestResult: ApiTestResult? = null
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LockScreenSettingsScreen(
     title: String,
-    yiYanEnabled: Boolean,
-    apiAddress: String,
-    regex: String,
-    chargeWattsOption: String,
-    realWattsIntervalOption: String,
-    realWattsRefreshInterval: String,
-    isTestingApi: Boolean,
+    state: LockScreenSettingsUiState,
     onBack: () -> Unit,
     onYiYanChanged: (Boolean) -> Unit,
     onApiAddressChanged: (String) -> Unit,
@@ -399,14 +409,14 @@ private fun LockScreenSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.YiYanSwitchTitle),
                         summary = stringResource(R.string.YiYanSummary),
-                        checked = yiYanEnabled,
+                        checked = state.yiYanEnabled,
                         onCheckedChange = onYiYanChanged
                     )
-                    if (yiYanEnabled) {
+                    if (state.yiYanEnabled) {
                         YiYanConfigFields(
-                            apiAddress = apiAddress,
-                            regex = regex,
-                            isTestingApi = isTestingApi,
+                            apiAddress = state.apiAddress,
+                            regex = state.regex,
+                            isTestingApi = state.isTestingApi,
                             onApiAddressChanged = onApiAddressChanged,
                             onRegexChanged = onRegexChanged,
                             onTestApi = onTestApi
@@ -421,22 +431,22 @@ private fun LockScreenSettingsScreen(
                         title = stringResource(R.string.ChargeWattsEnableTitle),
                         summary = stringResource(R.string.ChargeWattsSummary),
                         options = stringArrayResource(R.array.watt_options).toList(),
-                        selectedOption = chargeWattsOption,
+                        selectedOption = state.chargeWattsOption,
                         onOptionSelected = onChargeWattsOptionChanged
                     )
 
-                    if (chargeWattsOption == stringResource(R.string.watt_option_actual)) {
+                    if (state.chargeWattsOption == stringResource(R.string.watt_option_actual)) {
                         DropdownSettingRow(
                             title = stringResource(R.string.RealWattsRefreshInterval),
                             summary = stringResource(R.string.RealWattsRefreshIntervalSummary),
                             options = stringArrayResource(R.array.real_watt_interval).toList(),
-                            selectedOption = realWattsIntervalOption,
+                            selectedOption = state.realWattsIntervalOption,
                             onOptionSelected = onRealWattsIntervalOptionChanged
                         )
 
-                        if (realWattsIntervalOption == stringResource(R.string.real_watt_custom_refresh_interval_enabled)) {
+                        if (state.realWattsIntervalOption == stringResource(R.string.real_watt_custom_refresh_interval_enabled)) {
                             OutlinedTextField(
-                                value = realWattsRefreshInterval,
+                                value = state.realWattsRefreshInterval,
                                 onValueChange = onRealWattsRefreshIntervalChanged,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -445,7 +455,7 @@ private fun LockScreenSettingsScreen(
                                     Text(
                                         stringResource(
                                             R.string.RealWattsRefreshIntervalInputTip,
-                                            realWattsRefreshInterval.toFloatOrNull() ?: 3.0f
+                                            state.realWattsRefreshInterval.toFloatOrNull() ?: 3.0f
                                         )
                                     )
                                 },
