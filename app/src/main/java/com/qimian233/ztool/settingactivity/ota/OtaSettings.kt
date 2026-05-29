@@ -79,18 +79,7 @@ class OtaSettings : ComponentActivity() {
     private lateinit var prefsUtils: ModulePreferencesUtils
     private var appPackageName: String? = null
 
-    private var disableOtaCheck by mutableStateOf(false)
-    private var customVersion by mutableStateOf("")
-    private var customDeviceId by mutableStateOf("")
-    private var currentVersion by mutableStateOf("")
-    private var currentSn by mutableStateOf("")
-    private var firmwareSnInput by mutableStateOf("")
-    private var isFetchingOtaInfo by mutableStateOf(false)
-    private var isFetchingFirmware by mutableStateOf(false)
-    private var otaInfoResult by mutableStateOf<OtaInfoResult?>(null)
-    private var firmwareResult by mutableStateOf<FirmwareResult?>(null)
-    private var errorDialogMessage by mutableStateOf<String?>(null)
-    private var showRestartDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(OtaSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,30 +97,21 @@ class OtaSettings : ComponentActivity() {
             ZToolTheme {
                 OtaSettingsScreen(
                     title = appName + stringResource(R.string.ota_settings_title_suffix),
-                    disableOtaCheck = disableOtaCheck,
-                    customVersion = customVersion,
-                    customDeviceId = customDeviceId,
-                    currentVersion = currentVersion,
-                    currentSn = currentSn,
-                    firmwareSnInput = firmwareSnInput,
-                    isFetchingOtaInfo = isFetchingOtaInfo,
-                    isFetchingFirmware = isFetchingFirmware,
-                    otaInfoResult = otaInfoResult,
-                    firmwareResult = firmwareResult,
+                    state = uiState,
                     onBack = ::finish,
                     onDisableOtaCheckChanged = {
-                        disableOtaCheck = it
+                        uiState = uiState.copy(disableOtaCheck = it)
                         prefsUtils.saveBooleanSetting("disable_OtaCheck", it)
                     },
                     onFetchOtaInfo = ::fetchOtaInfo,
-                    onFirmwareSnChanged = { firmwareSnInput = it },
+                    onFirmwareSnChanged = { uiState = uiState.copy(firmwareSnInput = it) },
                     onFetchFirmware = ::fetchFirmware,
                     onCustomVersionChanged = {
-                        customVersion = it
+                        uiState = uiState.copy(customVersion = it)
                         prefsUtils.saveStringSetting("Custom_ota_target_versionName", it)
                     },
                     onCustomDeviceIdChanged = {
-                        customDeviceId = it
+                        uiState = uiState.copy(customDeviceId = it)
                         prefsUtils.saveStringSetting("Custom_ota_target_deviceID", it)
                     },
                     onCopyDownloadLink = {
@@ -146,24 +126,24 @@ class OtaSettings : ComponentActivity() {
                         copyToClipboard(it)
                         Toast.makeText(this, R.string.password_copied, Toast.LENGTH_SHORT).show()
                     },
-                    onRestartScope = { showRestartDialog = true }
+                    onRestartScope = { uiState = uiState.copy(showRestartDialog = true) }
                 )
 
-                errorDialogMessage?.let { message ->
+                uiState.errorDialogMessage?.let { message ->
                     ErrorDialog(
                         message = message,
-                        onDismiss = { errorDialogMessage = null }
+                        onDismiss = { uiState = uiState.copy(errorDialogMessage = null) }
                     )
                 }
 
-                if (showRestartDialog) {
+                if (uiState.showRestartDialog) {
                     RestartScopeDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            showRestartDialog = false
+                            uiState = uiState.copy(showRestartDialog = false)
                             forceStopApp()
                         },
-                        onDismiss = { showRestartDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartDialog = false) }
                     )
                 }
             }
@@ -171,11 +151,13 @@ class OtaSettings : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        disableOtaCheck = prefsUtils.loadBooleanSetting("disable_OtaCheck", false)
-        customVersion = prefsUtils.loadStringSetting("Custom_ota_target_versionName", "")
-        customDeviceId = prefsUtils.loadStringSetting("Custom_ota_target_deviceID", "")
-        currentVersion = getString(R.string.loading_ellipsis)
-        currentSn = getString(R.string.loading_ellipsis)
+        uiState = uiState.copy(
+            disableOtaCheck = prefsUtils.loadBooleanSetting("disable_OtaCheck", false),
+            customVersion = prefsUtils.loadStringSetting("Custom_ota_target_versionName", ""),
+            customDeviceId = prefsUtils.loadStringSetting("Custom_ota_target_deviceID", ""),
+            currentVersion = getString(R.string.loading_ellipsis),
+            currentSn = getString(R.string.loading_ellipsis)
+        )
     }
 
     private fun loadCurrentDeviceInfo() {
@@ -190,17 +172,24 @@ class OtaSettings : ComponentActivity() {
 
             val sn = getMachineSnByProps()?.takeIf { it.isNotEmpty() } ?: getString(R.string.unknown)
             runOnUiThread {
-                currentVersion = version
-                currentSn = sn
-                if (firmwareSnInput.isEmpty() && sn != getString(R.string.unknown)) {
-                    firmwareSnInput = sn
-                }
+                uiState = uiState.copy(
+                    currentVersion = version,
+                    currentSn = sn,
+                    firmwareSnInput = if (
+                        uiState.firmwareSnInput.isEmpty() &&
+                        sn != getString(R.string.unknown)
+                    ) {
+                        sn
+                    } else {
+                        uiState.firmwareSnInput
+                    }
+                )
             }
         }.start()
     }
 
     private fun fetchOtaInfo() {
-        isFetchingOtaInfo = true
+        uiState = uiState.copy(isFetchingOtaInfo = true)
         Thread {
             try {
                 val filePath = "/data_mirror/data_ce/null/0/com.lenovo.tbengine/shared_prefs/lenovo_row_ota_package_info.xml"
@@ -208,41 +197,50 @@ class OtaSettings : ComponentActivity() {
                 val otaInfo = parseOtaInfoXml(xmlContent)
                 val result = otaInfo.toOtaInfoResult()
                 runOnUiThread {
-                    otaInfoResult = result
-                    isFetchingOtaInfo = false
+                    uiState = uiState.copy(
+                        otaInfoResult = result,
+                        isFetchingOtaInfo = false
+                    )
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "读取OTA信息失败", e)
                 runOnUiThread {
-                    isFetchingOtaInfo = false
-                    errorDialogMessage = getString(R.string.ota_info_fetch_failed) + e.message
+                    uiState = uiState.copy(
+                        isFetchingOtaInfo = false,
+                        errorDialogMessage = getString(R.string.ota_info_fetch_failed) + e.message
+                    )
                 }
             }
         }.start()
     }
 
     private fun fetchFirmware() {
-        val sn = firmwareSnInput.trim().ifEmpty { getMachineSnByProps().orEmpty() }
+        val sn = uiState.firmwareSnInput.trim().ifEmpty { getMachineSnByProps().orEmpty() }
         if (sn.isEmpty()) {
-            errorDialogMessage = getString(R.string.SN_default_hint)
+            uiState = uiState.copy(errorDialogMessage = getString(R.string.SN_default_hint))
             return
         }
 
-        isFetchingFirmware = true
+        uiState = uiState.copy(isFetchingFirmware = true)
         GetPCFlashFirmware().queryFirmwareAsync(sn) { firmwareInfo ->
             runOnUiThread {
-                isFetchingFirmware = false
                 if (firmwareInfo != null && firmwareInfo.size >= 6) {
-                    firmwareResult = FirmwareResult(
-                        downloadUrl = firmwareInfo[0].orEmpty(),
-                        password = firmwareInfo[1].orEmpty(),
-                        platform = firmwareInfo[2].orEmpty(),
-                        method = firmwareInfo[3].orEmpty(),
-                        firstUploadTime = formatTimestamp(firmwareInfo[4].toLongOrNull() ?: 0L),
-                        lastUpdateTime = formatTimestamp(firmwareInfo[5].toLongOrNull() ?: 0L)
+                    uiState = uiState.copy(
+                        isFetchingFirmware = false,
+                        firmwareResult = FirmwareResult(
+                            downloadUrl = firmwareInfo[0].orEmpty(),
+                            password = firmwareInfo[1].orEmpty(),
+                            platform = firmwareInfo[2].orEmpty(),
+                            method = firmwareInfo[3].orEmpty(),
+                            firstUploadTime = formatTimestamp(firmwareInfo[4].toLongOrNull() ?: 0L),
+                            lastUpdateTime = formatTimestamp(firmwareInfo[5].toLongOrNull() ?: 0L)
+                        )
                     )
                 } else {
-                    errorDialogMessage = getString(R.string.PCFlashFirmwareFetch_failed_message)
+                    uiState = uiState.copy(
+                        isFetchingFirmware = false,
+                        errorDialogMessage = getString(R.string.PCFlashFirmwareFetch_failed_message)
+                    )
                 }
             }
         }
@@ -428,20 +426,26 @@ private data class FirmwareResult(
     val lastUpdateTime: String
 )
 
+private data class OtaSettingsUiState(
+    val disableOtaCheck: Boolean = false,
+    val customVersion: String = "",
+    val customDeviceId: String = "",
+    val currentVersion: String = "",
+    val currentSn: String = "",
+    val firmwareSnInput: String = "",
+    val isFetchingOtaInfo: Boolean = false,
+    val isFetchingFirmware: Boolean = false,
+    val otaInfoResult: OtaInfoResult? = null,
+    val firmwareResult: FirmwareResult? = null,
+    val errorDialogMessage: String? = null,
+    val showRestartDialog: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OtaSettingsScreen(
     title: String,
-    disableOtaCheck: Boolean,
-    customVersion: String,
-    customDeviceId: String,
-    currentVersion: String,
-    currentSn: String,
-    firmwareSnInput: String,
-    isFetchingOtaInfo: Boolean,
-    isFetchingFirmware: Boolean,
-    otaInfoResult: OtaInfoResult?,
-    firmwareResult: FirmwareResult?,
+    state: OtaSettingsUiState,
     onBack: () -> Unit,
     onDisableOtaCheckChanged: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
@@ -501,7 +505,7 @@ private fun OtaSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.OtaDisable_title),
                         summary = stringResource(R.string.OtaDisable_summary),
-                        checked = disableOtaCheck,
+                        checked = state.disableOtaCheck,
                         onCheckedChange = onDisableOtaCheckChanged
                     )
                 }
@@ -509,8 +513,8 @@ private fun OtaSettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OtaInfoCard(
-                    isFetching = isFetchingOtaInfo,
-                    result = otaInfoResult,
+                    isFetching = state.isFetchingOtaInfo,
+                    result = state.otaInfoResult,
                     onFetch = onFetchOtaInfo,
                     onCopyDownloadLink = onCopyDownloadLink,
                     onCopyChangelog = onCopyChangelog
@@ -519,10 +523,10 @@ private fun OtaSettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 FirmwareCard(
-                    sn = firmwareSnInput,
-                    currentSn = currentSn,
-                    isFetching = isFetchingFirmware,
-                    result = firmwareResult,
+                    sn = state.firmwareSnInput,
+                    currentSn = state.currentSn,
+                    isFetching = state.isFetchingFirmware,
+                    result = state.firmwareResult,
                     onSnChanged = onFirmwareSnChanged,
                     onFetch = onFetchFirmware,
                     onCopyDownloadLink = onCopyDownloadLink,
@@ -540,12 +544,12 @@ private fun OtaSettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = stringResource(R.string.current_version_fmt, currentVersion),
+                            text = stringResource(R.string.current_version_fmt, state.currentVersion),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                         OutlinedTextField(
-                            value = customVersion,
+                            value = state.customVersion,
                             onValueChange = onCustomVersionChanged,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -555,12 +559,12 @@ private fun OtaSettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = stringResource(R.string.current_sn_fmt, currentSn),
+                            text = stringResource(R.string.current_sn_fmt, state.currentSn),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                         OutlinedTextField(
-                            value = customDeviceId,
+                            value = state.customDeviceId,
                             onValueChange = onCustomDeviceIdChanged,
                             modifier = Modifier
                                 .fillMaxWidth()

@@ -170,6 +170,7 @@ Verification:
 
 The following settings screens now consume a single screen state object instead of separate boolean/state parameters:
 
+- `settingactivity/ota/OtaSettings.kt`: `OtaSettingsUiState`.
 - `settingactivity/packageinstaller/packageinstallersettings.kt`: `PackageInstallerSettingsUiState`.
 - `settingactivity/safecenter/SafeCenterSettingsActivity.kt`: `SafeCenterSettingsUiState`.
 - `settingactivity/gametool/GameToolSettngs.kt`: `GameToolSettingsUiState`.
@@ -182,6 +183,7 @@ The following settings screens now consume a single screen state object instead 
 Preserved behavior:
 
 - Existing Activity class names and packages.
+- Existing preference keys for OTA disable check and custom OTA parameters.
 - Existing preference keys for package installer and safe center hooks.
 - Existing preference keys for game tool hooks and mistake-touch whitelist configuration.
 - Existing preference keys for launcher force-stop, dock, and grid configuration.
@@ -191,6 +193,7 @@ Preserved behavior:
 - Existing preference keys for lock screen YiYan, charge watts, real watts interval, and SystemUI permission confirmation.
 - Existing restart confirmation and restart scope behavior.
 - Existing root/shell behavior.
+- Existing OTA info parsing, firmware query, clipboard, and restart-scope behavior.
 
 Implementation note:
 
@@ -199,6 +202,7 @@ Implementation note:
 
 Verification:
 
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the OTA settings consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the package installer and safe center consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the game tool consolidation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the launcher consolidation.
@@ -360,7 +364,6 @@ Continue the pre-ViewModel consolidation pass: make remaining Compose screens co
 Recommended next order:
 
 1. Remaining settings/detail flows
-   - `settingactivity/ota/OtaSettings.kt`.
    - `settingactivity/setting/SettingsDetailActivity.kt`.
    - `settingactivity/setting/magicwindowsearch/searchPage.kt`.
 
