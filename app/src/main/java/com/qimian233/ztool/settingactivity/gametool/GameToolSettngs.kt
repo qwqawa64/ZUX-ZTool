@@ -61,13 +61,7 @@ class GameToolSettngs : ComponentActivity() {
     private var appPackageName: String? = null
     private lateinit var prefsUtils: ModulePreferencesUtils
 
-    private var disableGameAudio by mutableStateOf(false)
-    private var disguiseDevice by mutableStateOf(false)
-    private var fixCpuFrequency by mutableStateOf(false)
-    private var fixSocTemperature by mutableStateOf(false)
-    private var mistakeTouchMode by mutableStateOf(MistakeTouchMode.Default)
-    private var targetGamePackages by mutableStateOf<List<String>>(emptyList())
-    private var showRestartConfirmDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(GameToolSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,42 +76,37 @@ class GameToolSettngs : ComponentActivity() {
             ZToolTheme {
                 GameToolSettingsScreen(
                     title = appName + stringResource(R.string.game_tool_settings_title_suffix),
-                    disableGameAudio = disableGameAudio,
-                    disguiseDevice = disguiseDevice,
-                    fixCpuFrequency = fixCpuFrequency,
-                    fixSocTemperature = fixSocTemperature,
-                    mistakeTouchMode = mistakeTouchMode,
-                    whitelistCount = targetGamePackages.size,
+                    state = uiState,
                     onBack = ::finish,
-                    onRestart = { showRestartConfirmDialog = true },
+                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
                     onDisableGameAudioChanged = {
-                        disableGameAudio = it
+                        uiState = uiState.copy(disableGameAudio = it)
                         saveSettings("disable_GameAudio", it)
                     },
                     onDisguiseDeviceChanged = {
-                        disguiseDevice = it
+                        uiState = uiState.copy(disguiseDevice = it)
                         saveSettings("disguise_TB322FC", it)
                     },
                     onFixCpuFrequencyChanged = {
-                        fixCpuFrequency = it
+                        uiState = uiState.copy(fixCpuFrequency = it)
                         saveSettings("Fix_CpuClock", it)
                     },
                     onFixSocTemperatureChanged = {
-                        fixSocTemperature = it
+                        uiState = uiState.copy(fixSocTemperature = it)
                         saveSettings("Fix_SocTemp", it)
                     },
                     onMistakeTouchModeChanged = ::handleMistakeTouchModeChanged,
                     onSelectWhitelist = ::selectGameApps
                 )
 
-                if (showRestartConfirmDialog) {
+                if (uiState.showRestartConfirmDialog) {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            showRestartConfirmDialog = false
+                            uiState = uiState.copy(showRestartConfirmDialog = false)
                             forceStopApp()
                         },
-                        onDismiss = { showRestartConfirmDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
                     )
                 }
             }
@@ -125,19 +114,24 @@ class GameToolSettngs : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        disableGameAudio = prefsUtils.loadBooleanSetting("disable_GameAudio", false)
-        disguiseDevice = prefsUtils.loadBooleanSetting("disguise_TB322FC", false)
-        fixCpuFrequency = prefsUtils.loadBooleanSetting("Fix_CpuClock", false)
-        fixSocTemperature = prefsUtils.loadBooleanSetting("Fix_SocTemp", false)
-        targetGamePackages = loadWhitelistPackages()
+        val targetGamePackages = loadWhitelistPackages()
 
         val autoMistakeTouch = prefsUtils.loadBooleanSetting("auto_mistake_touch", false)
         val mistakeTouchWhiteList = prefsUtils.loadBooleanSetting("MistakeTouchWhiteList", false)
-        mistakeTouchMode = when {
+        val mistakeTouchMode = when {
             autoMistakeTouch && mistakeTouchWhiteList -> MistakeTouchMode.Whitelist
             autoMistakeTouch -> MistakeTouchMode.AllGames
             else -> MistakeTouchMode.Default
         }
+
+        uiState = uiState.copy(
+            disableGameAudio = prefsUtils.loadBooleanSetting("disable_GameAudio", false),
+            disguiseDevice = prefsUtils.loadBooleanSetting("disguise_TB322FC", false),
+            fixCpuFrequency = prefsUtils.loadBooleanSetting("Fix_CpuClock", false),
+            fixSocTemperature = prefsUtils.loadBooleanSetting("Fix_SocTemp", false),
+            mistakeTouchMode = mistakeTouchMode,
+            targetGamePackages = targetGamePackages
+        )
     }
 
     private fun loadWhitelistPackages(): List<String> {
@@ -148,7 +142,7 @@ class GameToolSettngs : ComponentActivity() {
     }
 
     private fun handleMistakeTouchModeChanged(mode: MistakeTouchMode) {
-        mistakeTouchMode = mode
+        uiState = uiState.copy(mistakeTouchMode = mode)
         when (mode) {
             MistakeTouchMode.Default -> {
                 saveSettings("auto_mistake_touch", false)
@@ -169,7 +163,7 @@ class GameToolSettngs : ComponentActivity() {
         AppChooserDialog.show(
             this,
             getPackageNames(),
-            targetGamePackages,
+            uiState.targetGamePackages,
             getString(R.string.SelectGame),
             object : AppChooserDialog.AppSelectionCallback {
                 override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
@@ -177,7 +171,7 @@ class GameToolSettngs : ComponentActivity() {
                     selectedPackageNames.forEach {
                         Log.d(TAG, "Selected game package: $it")
                     }
-                    targetGamePackages = selectedPackageNames
+                    uiState = uiState.copy(targetGamePackages = selectedPackageNames)
                     saveConfig(
                         "MistakeTouchWhiteListGame",
                         selectedPackageNames.joinToString(separator = ",", postfix = ",")
@@ -236,16 +230,24 @@ private enum class MistakeTouchMode {
     Whitelist
 }
 
+private data class GameToolSettingsUiState(
+    val disableGameAudio: Boolean = false,
+    val disguiseDevice: Boolean = false,
+    val fixCpuFrequency: Boolean = false,
+    val fixSocTemperature: Boolean = false,
+    val mistakeTouchMode: MistakeTouchMode = MistakeTouchMode.Default,
+    val targetGamePackages: List<String> = emptyList(),
+    val showRestartConfirmDialog: Boolean = false
+) {
+    val whitelistCount: Int
+        get() = targetGamePackages.size
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GameToolSettingsScreen(
     title: String,
-    disableGameAudio: Boolean,
-    disguiseDevice: Boolean,
-    fixCpuFrequency: Boolean,
-    fixSocTemperature: Boolean,
-    mistakeTouchMode: MistakeTouchMode,
-    whitelistCount: Int,
+    state: GameToolSettingsUiState,
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onDisableGameAudioChanged: (Boolean) -> Unit,
@@ -305,7 +307,7 @@ private fun GameToolSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.Game_Audio_title),
                         summary = stringResource(R.string.Game_Audio_summary),
-                        checked = disableGameAudio,
+                        checked = state.disableGameAudio,
                         onCheckedChange = onDisableGameAudioChanged
                     )
                 }
@@ -316,32 +318,32 @@ private fun GameToolSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.Device_Model_Disguise),
                         summary = stringResource(R.string.Device_Model_Disguise_summary),
-                        checked = disguiseDevice,
+                        checked = state.disguiseDevice,
                         onCheckedChange = onDisguiseDeviceChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.FIx_CPU_Frequency),
                         summary = stringResource(R.string.FIx_CPU_Frequency_summary),
-                        checked = fixCpuFrequency,
+                        checked = state.fixCpuFrequency,
                         onCheckedChange = onFixCpuFrequencyChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.Fix_SocTemp),
                         summary = stringResource(R.string.Fix_SocTemp_summary),
-                        checked = fixSocTemperature,
+                        checked = state.fixSocTemperature,
                         onCheckedChange = onFixSocTemperatureChanged
                     )
                     ZToolSettingsDivider()
                     MistakeTouchModeRow(
-                        selectedMode = mistakeTouchMode,
+                        selectedMode = state.mistakeTouchMode,
                         onModeChanged = onMistakeTouchModeChanged
                     )
-                    if (mistakeTouchMode == MistakeTouchMode.Whitelist) {
+                    if (state.mistakeTouchMode == MistakeTouchMode.Whitelist) {
                         ZToolSettingsDivider()
                         WhitelistRow(
-                            whitelistCount = whitelistCount,
+                            whitelistCount = state.whitelistCount,
                             onClick = onSelectWhitelist
                         )
                     }
