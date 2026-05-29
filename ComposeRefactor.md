@@ -241,6 +241,29 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the Fragment-level consolidation.
 
+### HomeFragment ViewModel Boundary
+
+`HomeFragment.kt` now delegates business state and background work to:
+
+- `viewmodel/HomeViewModel.kt`.
+- `data/home/HomeRepository.kt`.
+
+Preserved behavior:
+
+- Existing `HomeFragment` class name, package, Fragment route, and `EnvironmentStateListener` contract.
+- Existing environment/root/module checks, module status display, system info display, homepage YiYan hint, update check, update ignore preference key, config-upgrade prompt, reboot menu, and reboot shell commands.
+- Existing shell executor usage remains behavior-compatible behind the repository boundary.
+
+Implementation note:
+
+- `HomeUiState`, `UpdateInfo`, and `RebootTarget` now live with `HomeViewModel`.
+- `HomeFragment` now hosts Compose, handles the reboot menu anchor, opens external update URLs, shows Toasts, and forwards user actions to the ViewModel.
+- `HomeRepository` wraps shell, network, package metadata, config upgrade, and preference access for the home screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `HomeFragment` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -393,15 +416,14 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `HomeFragment.kt`
-   - Extract `HomeViewModel` and `HomeUiState` out of the Fragment.
-   - Introduce repository/manager wrappers for environment checks, module status, system info, homepage hint, update checks, and reboot actions.
-   - Keep the existing Fragment route and `EnvironmentStateListener` contract intact while moving shell/network/preference work out of direct UI code.
-
-2. `AuditFragment.kt`
+1. `AuditFragment.kt`
    - Extract log loading, filtering, stats, clear, and export coordination into a ViewModel plus log/file repository boundary.
    - Preserve current log file locations and export behavior.
 
-3. `SettingsFragment.kt`
+2. `SettingsFragment.kt`
    - Extract settings backup/restore, log-service toggles, and app metadata lookup into a ViewModel/repository boundary.
    - Preserve existing preference keys and SAF launch contracts.
+
+3. `settingactivity/systemui/systemUISettings.kt`
+   - Extract System UI aggregate settings state and shell/restart coordination into a ViewModel/repository boundary.
+   - Preserve existing preference keys, shell commands, and sub-settings navigation contracts.
