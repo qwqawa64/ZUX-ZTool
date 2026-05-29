@@ -147,6 +147,25 @@ Preserved behavior:
 
 Legacy XML resources were intentionally left in place for a later cleanup phase.
 
+### SystemUISettings State Shape
+
+`settingactivity/systemui/systemUISettings.kt` now uses a single immutable `SystemUiSettingsUiState` for screen state instead of separate Activity-level mutable Compose fields.
+
+Preserved behavior:
+
+- Existing Activity class name and package.
+- Existing preference keys: `ForceNativeAOD`, `ForceLenovoAOD`, `No_ChargeAnimation`, `charge_animation_fix`, and `guest_mode_controller`.
+- Existing shell commands for AOD settings, Lenovo AOD settings, and restart scope behavior.
+- Existing sub-settings navigation contracts.
+
+Implementation note:
+
+- The screen composable now consumes one `state` object, reducing parameter sprawl and preparing the page for a future ViewModel/repository extraction.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -295,4 +314,4 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue with shared component consolidation and Phase 2 state extraction. Prioritize heavy logic pages such as `HomeFragment` and `settingactivity/systemui/systemUISettings.kt`, and introduce repository/ViewModel boundaries only where they reduce direct shell, preference, or raw thread work in UI code.
+Continue Phase 2 state extraction by moving `settingactivity/systemui/systemUISettings.kt` from Activity-owned state toward a ViewModel/repository boundary, or apply the same `UiState` consolidation pattern to `HomeFragment` before extracting shell, update, and preference work.

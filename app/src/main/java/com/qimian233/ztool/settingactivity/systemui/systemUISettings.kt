@@ -72,14 +72,7 @@ class systemUISettings : ComponentActivity() {
     private var appName: String = ""
     private var appPackageName: String? = null
 
-    private var nativeAod by mutableStateOf(false)
-    private var lenovoAod by mutableStateOf(false)
-    private var noChargeAnimation by mutableStateOf(false)
-    private var chargeAnimationFix by mutableStateOf(false)
-    private var guestModeController by mutableStateOf(false)
-    private var isAodSwitchProcessing by mutableStateOf(false)
-    private var isRestartProcessing by mutableStateOf(false)
-    private var showRestartDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(SystemUiSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,12 +89,7 @@ class systemUISettings : ComponentActivity() {
             ZToolTheme {
                 SystemUiSettingsScreen(
                     title = appName + stringResource(R.string.SystemUIActionBar),
-                    nativeAod = nativeAod,
-                    lenovoAod = lenovoAod,
-                    noChargeAnimation = noChargeAnimation,
-                    chargeAnimationFix = chargeAnimationFix,
-                    guestModeController = guestModeController,
-                    isRestartProcessing = isRestartProcessing,
+                    state = uiState,
                     onBack = ::finish,
                     onOpenStatusBar = {
                         openSubSettings(StatusBarSettingsActivity::class.java)
@@ -116,32 +104,32 @@ class systemUISettings : ComponentActivity() {
                     onLenovoAodChanged = ::handleLenovoAodChanged,
                     onOpenLenovoAodSettings = ::openLenovoAodSettings,
                     onNoChargeAnimationChanged = {
-                        noChargeAnimation = it
+                        uiState = uiState.copy(noChargeAnimation = it)
                         prefsUtils.saveBooleanSetting("No_ChargeAnimation", it)
                     },
                     onChargeAnimationFixChanged = {
-                        chargeAnimationFix = it
+                        uiState = uiState.copy(chargeAnimationFix = it)
                         prefsUtils.saveBooleanSetting("charge_animation_fix", it)
                     },
                     onGuestModeChanged = {
-                        guestModeController = it
+                        uiState = uiState.copy(guestModeController = it)
                         prefsUtils.saveBooleanSetting("guest_mode_controller", it)
                     },
                     onRestartScope = {
-                        if (!isRestartProcessing) {
-                            showRestartDialog = true
+                        if (!uiState.isRestartProcessing) {
+                            uiState = uiState.copy(showRestartDialog = true)
                         }
                     }
                 )
 
-                if (showRestartDialog) {
+                if (uiState.showRestartDialog) {
                     RestartScopeDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            showRestartDialog = false
+                            uiState = uiState.copy(showRestartDialog = false)
                             forceStopApp()
                         },
-                        onDismiss = { showRestartDialog = false }
+                        onDismiss = { uiState = uiState.copy(showRestartDialog = false) }
                     )
                 }
             }
@@ -166,11 +154,13 @@ class systemUISettings : ComponentActivity() {
                 val guest = prefsUtils.loadBooleanSetting("guest_mode_controller", false)
 
                 runOnUiThread {
-                    nativeAod = native
-                    lenovoAod = lenovo
-                    noChargeAnimation = noCharge
-                    chargeAnimationFix = chargeFix
-                    guestModeController = guest
+                    uiState = uiState.copy(
+                        nativeAod = native,
+                        lenovoAod = lenovo,
+                        noChargeAnimation = noCharge,
+                        chargeAnimationFix = chargeFix,
+                        guestModeController = guest
+                    )
                 }
                 Log.d(TAG, "设置加载完成")
             } catch (e: Exception) {
@@ -180,12 +170,14 @@ class systemUISettings : ComponentActivity() {
     }
 
     private fun handleNativeAodChanged(enabled: Boolean) {
-        if (isAodSwitchProcessing) {
+        if (uiState.isAodSwitchProcessing) {
             Log.d(TAG, "AOD开关正在处理中，忽略重复操作")
             return
         }
-        isAodSwitchProcessing = true
-        nativeAod = enabled
+        uiState = uiState.copy(
+            nativeAod = enabled,
+            isAodSwitchProcessing = true
+        )
 
         handler.post {
             setNativeAodEnabled(enabled)
@@ -193,28 +185,30 @@ class systemUISettings : ComponentActivity() {
 
             if (prefsUtils.loadBooleanSetting("ForceLenovoAOD", false)) {
                 prefsUtils.saveBooleanSetting("ForceLenovoAOD", false)
-                lenovoAod = false
+                uiState = uiState.copy(lenovoAod = false)
                 Toast.makeText(this, R.string.restart_scope_required, Toast.LENGTH_SHORT).show()
             }
-            isAodSwitchProcessing = false
+            uiState = uiState.copy(isAodSwitchProcessing = false)
         }
     }
 
     private fun handleLenovoAodChanged(enabled: Boolean) {
-        if (isAodSwitchProcessing) {
+        if (uiState.isAodSwitchProcessing) {
             Log.d(TAG, "AOD开关正在处理中，忽略重复操作")
             return
         }
-        isAodSwitchProcessing = true
-        lenovoAod = enabled
+        uiState = uiState.copy(
+            lenovoAod = enabled,
+            isAodSwitchProcessing = true
+        )
         prefsUtils.saveBooleanSetting("ForceLenovoAOD", enabled)
 
         handler.post {
             if (isAodEnabled()) {
                 setNativeAodEnabled(false)
-                nativeAod = false
+                uiState = uiState.copy(nativeAod = false)
             }
-            isAodSwitchProcessing = false
+            uiState = uiState.copy(isAodSwitchProcessing = false)
         }
     }
 
@@ -236,17 +230,17 @@ class systemUISettings : ComponentActivity() {
 
                 handler.post {
                     if (!success) {
-                        nativeAod = !enabled
+                        uiState = uiState.copy(nativeAod = !enabled)
                         Toast.makeText(this, "设置失败: ${result.error}", Toast.LENGTH_SHORT).show()
                     }
-                    isAodSwitchProcessing = false
+                    uiState = uiState.copy(isAodSwitchProcessing = false)
                 }
             } catch (e: Exception) {
                 Log.e("AODSwitch", "设置AOD时出错: ${e.message}")
                 handler.post {
-                    nativeAod = !enabled
+                    uiState = uiState.copy(nativeAod = !enabled)
                     Toast.makeText(this, "执行错误: ${e.message}", Toast.LENGTH_SHORT).show()
-                    isAodSwitchProcessing = false
+                    uiState = uiState.copy(isAodSwitchProcessing = false)
                 }
             }
         }.start()
@@ -270,9 +264,9 @@ class systemUISettings : ComponentActivity() {
 
     private fun forceStopApp() {
         val packageName = appPackageName
-        if (packageName.isNullOrEmpty() || isRestartProcessing) return
+        if (packageName.isNullOrEmpty() || uiState.isRestartProcessing) return
 
-        isRestartProcessing = true
+        uiState = uiState.copy(isRestartProcessing = true)
 
         Thread {
             try {
@@ -309,7 +303,7 @@ class systemUISettings : ComponentActivity() {
 
     private fun resetRestartButton() {
         handler.post {
-            isRestartProcessing = false
+            uiState = uiState.copy(isRestartProcessing = false)
         }
     }
 
@@ -333,16 +327,22 @@ class systemUISettings : ComponentActivity() {
     }
 }
 
+private data class SystemUiSettingsUiState(
+    val nativeAod: Boolean = false,
+    val lenovoAod: Boolean = false,
+    val noChargeAnimation: Boolean = false,
+    val chargeAnimationFix: Boolean = false,
+    val guestModeController: Boolean = false,
+    val isAodSwitchProcessing: Boolean = false,
+    val isRestartProcessing: Boolean = false,
+    val showRestartDialog: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SystemUiSettingsScreen(
     title: String,
-    nativeAod: Boolean,
-    lenovoAod: Boolean,
-    noChargeAnimation: Boolean,
-    chargeAnimationFix: Boolean,
-    guestModeController: Boolean,
-    isRestartProcessing: Boolean,
+    state: SystemUiSettingsUiState,
     onBack: () -> Unit,
     onOpenStatusBar: () -> Unit,
     onOpenLockScreen: () -> Unit,
@@ -379,7 +379,7 @@ private fun SystemUiSettingsScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onRestartScope,
-                expanded = !isRestartProcessing,
+                expanded = !state.isRestartProcessing,
                 icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                 text = { Text(stringResource(R.string.restart_yes)) }
             )
@@ -426,17 +426,17 @@ private fun SystemUiSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.aod_native_enable_title),
                         summary = stringResource(R.string.aod_native_enable_summary),
-                        checked = nativeAod,
+                        checked = state.nativeAod,
                         onCheckedChange = onNativeAodChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.aod_lenovo_enable_title),
                         summary = stringResource(R.string.aod_lenovo_enable_summary),
-                        checked = lenovoAod,
+                        checked = state.lenovoAod,
                         onCheckedChange = onLenovoAodChanged
                     )
-                    if (lenovoAod) {
+                    if (state.lenovoAod) {
                         ZToolSettingsDivider()
                         ActionRow(
                             title = stringResource(R.string.aod_lenovo_activity_title),
@@ -452,14 +452,14 @@ private fun SystemUiSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.noChargingAnimation_enable_title),
                         summary = stringResource(R.string.noChargingAnimation_enable_summary),
-                        checked = noChargeAnimation,
+                        checked = state.noChargeAnimation,
                         onCheckedChange = onNoChargeAnimationChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
                         title = stringResource(R.string.Charge_Animation_Fix),
                         summary = stringResource(R.string.Charge_Animation_Fix_Summary),
-                        checked = chargeAnimationFix,
+                        checked = state.chargeAnimationFix,
                         onCheckedChange = onChargeAnimationFixChanged
                     )
                 }
@@ -470,7 +470,7 @@ private fun SystemUiSettingsScreen(
                     ZToolSwitchRow(
                         title = stringResource(R.string.disable_guest_user_enable_title),
                         summary = stringResource(R.string.disable_guest_user_enable_summary),
-                        checked = guestModeController,
+                        checked = state.guestModeController,
                         onCheckedChange = onGuestModeChanged
                     )
                 }
