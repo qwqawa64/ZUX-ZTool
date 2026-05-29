@@ -3,9 +3,7 @@ package com.qimian233.ztool
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -56,9 +54,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,37 +69,50 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.audit.LogParser
 import com.qimian233.ztool.audit.LogParser.LogEntry
 import com.qimian233.ztool.audit.LogParser.LogLevel
+import com.qimian233.ztool.data.audit.AuditRepository
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.utils.FileManager
-import com.qimian233.ztool.utils.FileUtils
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.qimian233.ztool.viewmodel.AuditUiState
+import com.qimian233.ztool.viewmodel.AuditViewModel
+import com.qimian233.ztool.viewmodel.ModuleOption
 import kotlinx.coroutines.launch
 
 class AuditFragment : Fragment() {
 
-    private val allLogEntries = mutableListOf<LogEntry>()
-
-    private var logDir: File? = null
-    private var modulesByCategory: Map<String, List<String>> = emptyMap()
-    private var uiState by mutableStateOf(AuditUiState())
-
     private lateinit var exportLogLauncher: ActivityResultLauncher<String>
+    private lateinit var viewModel: AuditViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val repository = AuditRepository(requireContext().applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            AuditViewModelFactory(repository)
+        )[AuditViewModel::class.java]
+
         exportLogLauncher = registerForActivityResult(
             ActivityResultContracts.CreateDocument("application/zip")
         ) { uri ->
             if (uri != null) {
-                exportLogsToUri(uri)
+                viewModel.exportLogsToUri(uri) { success, error ->
+                    activity?.runOnUiThread {
+                        Toast.makeText(
+                            requireContext(),
+                            when {
+                                success -> getString(R.string.export_logs_success)
+                                error != null -> getString(R.string.export_logs_failed) + error
+                                else -> getString(R.string.export_logs_failed)
+                            },
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             }
         }
     }
@@ -112,71 +122,62 @@ class AuditFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        initializeFilters()
-        loadAllLogFiles()
-
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
+                val uiState by viewModel.uiState.collectAsState()
+
                 ZToolTheme {
                     AuditScreen(
                         state = uiState,
-                        onCategorySelected = {
-                            uiState = uiState.copy(selectedCategory = it)
-                            updateModuleDropdown()
-                            applyFilters()
-                        },
-                        onModuleSelected = {
-                            uiState = uiState.copy(
-                                selectedModuleKey = it.key,
-                                selectedModuleLabel = it.label
-                            )
-                            applyFilters()
-                        },
-                        onLevelSelected = {
-                            uiState = uiState.copy(selectedLevel = it)
-                            applyFilters()
-                        },
-                        onSearchTextChanged = {
-                            uiState = uiState.copy(searchText = it)
-                            applyFilters()
-                        },
-                        onShowErrorsOnlyChanged = {
-                            uiState = uiState.copy(showErrorsOnly = it)
-                            applyFilters()
-                        },
-                        onRefresh = ::loadAllLogFiles,
-                        onClear = { uiState = uiState.copy(showClearDialog = true) },
-                        onShowStatistics = ::showStatistics,
-                        onSave = ::saveAllLogs,
-                        onLogSelected = { uiState = uiState.copy(selectedLogEntry = it) }
+                        onCategorySelected = viewModel::selectCategory,
+                        onModuleSelected = viewModel::selectModule,
+                        onLevelSelected = viewModel::selectLevel,
+                        onSearchTextChanged = viewModel::setSearchText,
+                        onShowErrorsOnlyChanged = viewModel::setShowErrorsOnly,
+                        onRefresh = viewModel::loadAllLogFiles,
+                        onClear = viewModel::showClearDialog,
+                        onShowStatistics = viewModel::showStatistics,
+                        onSave = { exportLogLauncher.launch(viewModel.exportFileName()) },
+                        onLogSelected = viewModel::selectLogEntry
                     )
 
                     uiState.selectedLogEntry?.let { entry ->
                         LogDetailDialog(
                             entry = entry,
                             onCopy = {
-                                copyToClipboard(buildLogDetails(entry))
-                                uiState = uiState.copy(selectedLogEntry = null)
+                                copyToClipboard(viewModel.buildLogDetails(entry))
+                                viewModel.dismissLogEntry()
                             },
-                            onDismiss = { uiState = uiState.copy(selectedLogEntry = null) }
+                            onDismiss = viewModel::dismissLogEntry
                         )
                     }
 
                     if (uiState.showClearDialog) {
                         ClearLogsDialog(
                             onConfirm = {
-                                uiState = uiState.copy(showClearDialog = false)
-                                clearAllLogs()
+                                viewModel.clearAllLogs { success, error ->
+                                    activity?.runOnUiThread {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            if (success) {
+                                                getString(R.string.clear_logs_success)
+                                            } else {
+                                                getString(R.string.clear_logs_failed) + error.orEmpty()
+                                            },
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
                             },
-                            onDismiss = { uiState = uiState.copy(showClearDialog = false) }
+                            onDismiss = viewModel::dismissClearDialog
                         )
                     }
 
                     uiState.statisticsMessage?.let { message ->
                         StatisticsDialog(
                             message = message,
-                            onDismiss = { uiState = uiState.copy(statisticsMessage = null) }
+                            onDismiss = viewModel::dismissStatistics
                         )
                     }
                 }
@@ -184,296 +185,9 @@ class AuditFragment : Fragment() {
         }
     }
 
-    private fun initializeFilters() {
-        modulesByCategory = LogParser.getModulesByCategory()
-
-        val allCategories = getString(R.string.all_categories)
-        uiState = uiState.copy(
-            categoryOptions = listOf(allCategories) + modulesByCategory.keys.sortedWith(String.CASE_INSENSITIVE_ORDER),
-            selectedCategory = allCategories,
-            levelOptions = listOf(getString(R.string.all_levels), "DEBUG", "INFO", "WARN", "ERROR")
-        )
-
-        uiState = uiState.copy(selectedLevel = uiState.levelOptions.first())
-
-        updateModuleDropdown()
-    }
-
-    private fun updateModuleDropdown() {
-        val moduleKeys = if (
-            uiState.selectedCategory.isNotEmpty() &&
-            uiState.selectedCategory != getString(R.string.all_categories) &&
-            modulesByCategory.containsKey(uiState.selectedCategory)
-        ) {
-            modulesByCategory[uiState.selectedCategory].orEmpty()
-        } else {
-            LogParser.getAvailableModules()
-        }
-
-        val options = listOf(ModuleOption(null, getString(R.string.all_modules))) +
-            moduleKeys.map { key ->
-                ModuleOption(key, LogParser.getModuleDisplayName(key).takeIf { it.isNotBlank() } ?: key)
-            }
-        uiState = uiState.copy(
-            moduleOptions = options,
-            selectedModuleKey = null,
-            selectedModuleLabel = options.firstOrNull()?.label.orEmpty()
-        )
-    }
-
-    private fun loadAllLogFiles() {
-        showLoading(true)
-
-        Thread {
-            try {
-                val context = requireContext()
-                val dir = File(context.filesDir, "Log")
-                logDir = dir
-
-                if (!dir.exists() || !dir.isDirectory) {
-                    requireActivity().runOnUiThread {
-                        showEmptyState(getString(R.string.log_directory_not_exists))
-                        showLoading(false)
-                    }
-                    return@Thread
-                }
-
-                val parsedEntries = LogParser.parseAllLogFiles(dir)
-                if (parsedEntries.isEmpty()) {
-                    requireActivity().runOnUiThread {
-                        allLogEntries.clear()
-                        updateStats()
-                        showEmptyState(getString(R.string.no_log_records_found))
-                        showLoading(false)
-                    }
-                    return@Thread
-                }
-
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
-                parsedEntries.sortWith { first, second ->
-                    try {
-                        val firstDate = sdf.parse(first.timestamp)
-                        val secondDate = sdf.parse(second.timestamp)
-                        if (firstDate == null || secondDate == null) {
-                            0
-                        } else {
-                            secondDate.compareTo(firstDate)
-                        }
-                    } catch (_: Exception) {
-                        second.timestamp.orEmpty().compareTo(first.timestamp.orEmpty())
-                    }
-                }
-
-                requireActivity().runOnUiThread {
-                    allLogEntries.clear()
-                    allLogEntries.addAll(parsedEntries)
-                    applyFilters()
-                    updateStats()
-                    showLoading(false)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "加载日志文件失败", e)
-                requireActivity().runOnUiThread {
-                    showEmptyState(getString(R.string.load_logs_failed) + e.message)
-                    showLoading(false)
-                }
-            }
-        }.start()
-    }
-
-    private fun applyFilters() {
-        if (allLogEntries.isEmpty()) return
-
-        val categoryFilter = uiState.selectedCategory.takeIf {
-            it.isNotEmpty() && it != getString(R.string.all_categories)
-        }
-
-        val levelFilter = if (
-            uiState.selectedLevel.isNotEmpty() &&
-            uiState.selectedLevel != getString(R.string.all_levels)
-        ) {
-            runCatching { LogLevel.valueOf(uiState.selectedLevel) }.getOrDefault(LogLevel.UNKNOWN)
-        } else {
-            LogLevel.UNKNOWN
-        }
-
-        val search = uiState.searchText.trim().ifEmpty { null }
-        val tempFiltered = LogParser.filterEntries(
-            allLogEntries,
-            uiState.selectedModuleKey,
-            levelFilter,
-            search,
-            categoryFilter
-        )
-
-        val filtered = tempFiltered.filter { entry ->
-            !uiState.showErrorsOnly || entry.extractedData["is_error"] == "true"
-        }
-        uiState = uiState.copy(
-            filteredLogEntries = filtered,
-            emptyMessage = if (filtered.isEmpty()) {
-                getString(R.string.no_matching_log_records)
-            } else {
-                ""
-            }
-        )
-        updateStats()
-    }
-
-    private fun updateStats() {
-        val moduleStats = LogParser.getModuleStats(allLogEntries)
-        uiState = uiState.copy(
-            statsText = getString(
-                R.string.stats_format,
-                allLogEntries.size,
-                uiState.filteredLogEntries.size,
-                moduleStats.size,
-                getLogFileCount()
-            )
-        )
-    }
-
-    private fun getLogFileCount(): String {
-        val dir = logDir ?: return "0"
-        if (!dir.exists()) return "0"
-        val logFiles = dir.listFiles { _, name ->
-            name.startsWith("hook_log_") && name.endsWith(".txt")
-        }
-        return (logFiles?.size ?: 0).toString()
-    }
-
-    private fun zipLogFiles(): File? {
-        val dir = logDir ?: return null
-        if (!dir.exists()) return null
-
-        val logFiles = dir.listFiles { _, name ->
-            name.startsWith("hook_log_") && name.endsWith(".txt")
-        }
-        if (logFiles.isNullOrEmpty()) return null
-
-        val outputDir = File(requireContext().cacheDir, "temp")
-        if (!outputDir.exists() && !outputDir.mkdirs()) return null
-
-        val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-        val zipFile = File(outputDir, "logs_" + sdf.format(Date()) + ".zip")
-
-        return if (FileUtils.createZipFromFiles(logFiles, zipFile)) zipFile else null
-    }
-
-    private fun saveAllLogs() {
-        val fileName = "ZTool_Logs_" +
-            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date()) +
-            ".zip"
-        exportLogLauncher.launch(fileName)
-    }
-
-    private fun exportLogsToUri(uri: Uri) {
-        showLoading(true)
-
-        Thread {
-            try {
-                val zipFile = zipLogFiles()
-                val result = FileManager.exportFileWithSAF(
-                    requireContext(),
-                    uri,
-                    "logs_" + SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.US).format(Date()) + ".zip",
-                    zipFile
-                )
-                requireActivity().runOnUiThread {
-                    showLoading(false)
-                    Toast.makeText(
-                        requireContext(),
-                        if (result) R.string.export_logs_success else R.string.export_logs_failed,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "导出日志失败", e)
-                requireActivity().runOnUiThread {
-                    showLoading(false)
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.export_logs_failed) + e.message,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }.start()
-    }
-
-    private fun clearAllLogs() {
-        showLoading(true)
-
-        Thread {
-            try {
-                logDir?.takeIf { it.exists() }?.listFiles { _, name ->
-                    name.startsWith("hook_log_") && name.endsWith(".txt")
-                }?.forEach { it.delete() }
-
-                requireActivity().runOnUiThread {
-                    allLogEntries.clear()
-                    uiState = uiState.copy(filteredLogEntries = emptyList())
-                    updateStats()
-                    showEmptyState(getString(R.string.logs_cleared_message))
-                    showLoading(false)
-                    Toast.makeText(requireContext(), R.string.clear_logs_success, Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "清除日志失败", e)
-                requireActivity().runOnUiThread {
-                    showLoading(false)
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.clear_logs_failed) + e.message,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }.start()
-    }
-
-    private fun showStatistics() {
-        val moduleStats = LogParser.getModuleStats(allLogEntries)
-        val errorStats = LogParser.getErrorStats(allLogEntries)
-
-        uiState = uiState.copy(
-            statisticsMessage = buildString {
-                append(getString(R.string.log_statistics_header)).append("\n\n")
-                append(getString(R.string.total_logs)).append(allLogEntries.size).append("\n")
-                append(getString(R.string.total_modules)).append(moduleStats.size).append("\n")
-                append(getString(R.string.total_errors)).append(errorStats["total_errors"]).append("\n")
-                append(getString(R.string.log_files_count)).append(getLogFileCount()).append(getString(R.string.log_files_unit)).append("\n\n")
-                append(getString(R.string.module_statistics_header)).append("\n")
-                for ((module, count) in moduleStats) {
-                    append(LogParser.getModuleDisplayName(module)).append(": ")
-                        .append(count)
-                        .append(getString(R.string.log_count_unit))
-                        .append("\n")
-                }
-            }
-        )
-    }
-
-    private fun buildLogDetails(entry: LogEntry): String {
-        return buildString {
-            append(getString(R.string.log_detail_time)).append(entry.timestamp).append("\n")
-            append(getString(R.string.log_detail_module)).append(LogParser.getModuleDisplayName(entry.module)).append("\n")
-            append(getString(R.string.log_detail_level)).append(entry.level).append("\n")
-            append(getString(R.string.log_detail_tag)).append(entry.tag).append("\n")
-            append(getString(R.string.log_detail_pid)).append(entry.pid).append("\n")
-            append(getString(R.string.log_detail_mode)).append(entry.mode).append("\n")
-            append(getString(R.string.log_detail_function)).append(entry.function ?: getString(R.string.none)).append("\n")
-            append(getString(R.string.log_detail_multiline)).append(if (entry.isMultiLine) getString(R.string.yes) else getString(R.string.no)).append("\n\n")
-            append(getString(R.string.full_message_header)).append("\n")
-            append(entry.fullMessage).append("\n\n")
-
-            if (entry.extractedData.isNotEmpty()) {
-                append(getString(R.string.extracted_data_header)).append("\n")
-                for ((key, value) in entry.extractedData) {
-                    append(key).append(": ").append(value).append("\n")
-                }
-            }
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.start()
     }
 
     private fun copyToClipboard(text: String) {
@@ -483,47 +197,19 @@ class AuditFragment : Fragment() {
         Toast.makeText(requireContext(), R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
 
-    private fun showLoading(show: Boolean) {
-        uiState = uiState.copy(
-            isLoading = show,
-            emptyMessage = if (show) "" else uiState.emptyMessage
-        )
-    }
-
-    private fun showEmptyState(message: String) {
-        uiState = uiState.copy(emptyMessage = message)
-    }
-
-    companion object {
-        private const val TAG = "AuditFragment"
-    }
 }
 
-private data class ModuleOption(
-    val key: String?,
-    val label: String
-) {
-    override fun toString(): String = label
+private class AuditViewModelFactory(
+    private val repository: AuditRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(AuditViewModel::class.java)) {
+            return AuditViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
 }
-
-private data class AuditUiState(
-    val categoryOptions: List<String> = emptyList(),
-    val levelOptions: List<String> = emptyList(),
-    val moduleOptions: List<ModuleOption> = emptyList(),
-    val selectedCategory: String = "",
-    val selectedModuleKey: String? = null,
-    val selectedModuleLabel: String = "",
-    val selectedLevel: String = "",
-    val searchText: String = "",
-    val showErrorsOnly: Boolean = false,
-    val isLoading: Boolean = false,
-    val emptyMessage: String = "",
-    val statsText: String = "",
-    val filteredLogEntries: List<LogEntry> = emptyList(),
-    val selectedLogEntry: LogEntry? = null,
-    val showClearDialog: Boolean = false,
-    val statisticsMessage: String? = null
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

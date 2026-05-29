@@ -271,6 +271,31 @@ Follow-up fix:
 - Fix: keep `HomeFragment.isModuleActive()` as the stable LSPosed self-check hook target and inject it into `HomeRepository` as `moduleActiveChecker`.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after restoring the self-check compatibility path.
 
+### AuditFragment ViewModel Boundary
+
+`AuditFragment.kt` now delegates log state and file work to:
+
+- `viewmodel/AuditViewModel.kt`.
+- `data/audit/AuditRepository.kt`.
+
+Preserved behavior:
+
+- Existing `AuditFragment` class name, package, Fragment route, and Compose UI surface.
+- Existing log file location under app files `Log`.
+- Existing hook log file matching for `hook_log_*.txt`.
+- Existing log parsing, timestamp sorting, category/module/level/search/error-only filtering, statistics, clear, export, detail, and copy behavior.
+- Existing SAF export launcher contract and exported zip filename shape.
+
+Implementation note:
+
+- `AuditUiState` and `ModuleOption` now live with `AuditViewModel`.
+- `AuditFragment` now hosts Compose, handles the SAF document callback, copies log details to clipboard, shows Toasts, and forwards user actions to the ViewModel.
+- `AuditRepository` wraps `LogParser`, log directory access, zip creation, SAF export, and localized status/statistics/detail text.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-29 after the `AuditFragment` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -423,14 +448,10 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `AuditFragment.kt`
-   - Extract log loading, filtering, stats, clear, and export coordination into a ViewModel plus log/file repository boundary.
-   - Preserve current log file locations and export behavior.
-
-2. `SettingsFragment.kt`
+1. `SettingsFragment.kt`
    - Extract settings backup/restore, log-service toggles, and app metadata lookup into a ViewModel/repository boundary.
    - Preserve existing preference keys and SAF launch contracts.
 
-3. `settingactivity/systemui/systemUISettings.kt`
+2. `settingactivity/systemui/systemUISettings.kt`
    - Extract System UI aggregate settings state and shell/restart coordination into a ViewModel/repository boundary.
    - Preserve existing preference keys, shell commands, and sub-settings navigation contracts.
