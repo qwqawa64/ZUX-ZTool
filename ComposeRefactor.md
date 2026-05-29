@@ -410,6 +410,7 @@
   - `settingactivity/ota/OtaSettings.kt`：系统更新设置页已迁移到 Compose，保留原类名和启动入口；保留 `custom_ota_parameters`、`disable_OtaCheck`、`Custom_ota_target_versionName`、`Custom_ota_target_deviceID` 配置键；OTA 信息拉取结果和 9008/深刷包查询结果已改为页面内状态区域展示，提供复制下载链接、复制更新日志和复制密码操作；保留当前系统版本/SN 读取、root 读取 OTA XML、XML 解析、`GetPCFlashFirmware` 异步查询和重启 `app_package` + `com.lenovo.tbengine` 作用域逻辑。
   - `settingactivity/systemui/systemUISettings.kt`：系统界面设置聚合页已迁移到 Compose，保留原小写类名和启动入口；保留状态栏、锁屏、控制中心三个子设置入口；保留 `ForceNativeAOD`、`ForceLenovoAOD`、`No_ChargeAnimation`、`charge_animation_fix`、`guest_mode_controller` 配置键；保留原生 AOD secure setting 写入、联想 AOD 入口启动、AOD 互斥处理和重启 `app_package` + `com.zui.wallpapersetting` 作用域逻辑。
   - `HomeFragment.kt`：首页已由 `HomeFragment.java` 迁移为同类名 Kotlin Compose Fragment，保留 XML Navigation 路由入口、`EnvironmentStateListener` 与 Xposed 自检测方法 `isModuleActive`；环境检测、模块状态、系统信息、更新检查、一言提示、配置升级提示和重启菜单均改为 Compose state/Dialog 驱动；保留 Root 检测、模块激活检测、版本更新忽略、ROM 地区缓存写入和重启命令逻辑。
+  - `settingactivity/setting/magicwindowsearch/searchPage.kt`：一视界策略查找页已由 Java/XML/RecyclerView 迁移到 Kotlin Compose Activity，保留原小写类名和 Manifest 启动入口；保留 root 读取 `/data/system/zui/embedding/embedding_config.json`、失败回退 assets 官方配置、包名关键字不区分大小写搜索、搜索结果列表和策略详情字段展示逻辑；详情弹窗改为 Compose `AlertDialog`，结果列表改为 Compose `LazyColumn`。
 
   最近验证
 
@@ -429,10 +430,11 @@
   - 2026-05-29：完成 `OtaSettings` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `systemUISettings` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `HomeFragment` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
+  - 2026-05-29：完成 `searchPage` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、状态栏页 `MODE_WORLD_READABLE`。
 
   下一步候选
 
-  - 下一步可继续评估残留传统入口，例如 `settingactivity/setting/floatingwindow/FloatingWindow.java` 或 `settingactivity/setting/magicwindowsearch/searchPage.java`。建议先选择一个页面继续，仍保持一次只迁移一个页面。
+  - 下一步可继续评估 `settingactivity/setting/floatingwindow/FloatingWindow.java`。该项涉及悬浮窗生命周期、视频播放和定时状态刷新，应单独迁移并验证。
 
   OtaSettings 迁移实施计划（2026-05-29）
 
@@ -459,8 +461,8 @@
 
   当前停止点
 
-  - 已完成并验证：`HomeFragment` 页面 Compose 化。
-  - 下一次继续时，建议评估剩余传统页面，优先选择 `FloatingWindow.java` 或 `magicwindowsearch/searchPage.java` 中范围更清晰的一项。
+  - 已完成并验证：`searchPage` 页面 Compose 化。
+  - 下一次继续时，建议评估 `FloatingWindow.java`，保留 `SettingsDetailActivity` 现有调用入口和悬浮窗行为，改为 `WindowManager` 承载 `ComposeView`。
 
   UI 基础问题整合与修正顺序（2026-05-29）
 
@@ -485,3 +487,29 @@
       - 原因：页面内直接使用 `CardDefaults.cardColors`、局部固定 `Color(...)`、各自实现 Row/Card/Dialog，缺少项目级设计系统组件。
       - 解决方案：先补齐基础组件和默认色策略：`ZToolSurface`/页面容器、`ZToolCard`、`ZToolDropdownField`，后续再逐步把 `SwitchRow`、`SliderRow`、`TextField`、`ActionRow` 迁入组件层。日志级别色、用户自定义颜色预览等语义色可保留固定色，普通业务控件必须使用 `MaterialTheme.colorScheme`。
       - 是否会后续自然修复：只能在后续页面采用统一组件后逐步收敛；已迁移页面需要分批替换，不能依赖自然修复。
+
+  剩余可迁移界面顺序（2026-05-29）
+
+  按当前计划，现阶段不删除无引用 XML、旧 Adapter 或 `nav_graph.xml` 中指向旧布局的 `tools:layout`；这些清理项留到后续 XML View 层清理阶段。
+
+  1. `settingactivity/setting/magicwindowsearch/searchPage.java`（已完成）
+      - 迁移目标：保留 Manifest 启动入口和类名，将传统 `AppCompatActivity + activity_search_page.xml + RecyclerView + PackageAdapter` 改为 Kotlin `ComponentActivity + setContent`。
+      - 行为保留：继续优先通过 root 读取 `/data/system/zui/embedding/embedding_config.json`，失败后回退到 `assets/embedding/embedding_config.json`；搜索包名时保持不区分大小写；结果详情继续展示包名、主 Activity、活动对、强制全屏、透明 Activity、左侧透明 Activity 和分屏配置字段。
+      - Compose 方案：搜索框和按钮使用 Compose 状态；结果列表使用 `LazyColumn`；详情使用 Compose `AlertDialog`；错误/空结果使用 Toast 或页面内状态。
+
+  2. `settingactivity/setting/floatingwindow/FloatingWindow.java`
+      - 迁移目标：保留 `SettingsDetailActivity` 调用入口和悬浮窗行为，将 `WindowManager` 中承载的 XML View 改为 `ComposeView`。
+      - 行为保留：步骤向导、当前前台应用/Activity 轮询、添加活动、配置选项、教程视频、Base64 配置保存和关闭/隐藏逻辑。
+      - 风险说明：该项涉及悬浮窗生命周期、视频播放和定时状态刷新，成本高于普通 Activity，应在 `searchPage` 后单独迁移。
+
+  3. `utils/AppChooserDialog.java`
+      - 迁移目标：将复用范围较广的应用选择弹窗迁移为 Compose Dialog 或可复用选择器组件。
+      - 行为保留：用户应用加载、搜索、多选、已选数量、回调 `AppSelectionCallback`，以及游戏助手、桌面、系统设置详情页现有调用入口。
+
+  4. `LoadingDialog.java`
+      - 迁移目标：将旧 XML loading dialog 替换为 Compose 状态或 Compose Dialog。
+      - 行为保留：SettingsDetailActivity 中耗时任务开始/结束时的加载提示。
+
+  5. `SettingsDetailActivity.kt` 内剩余 View Dialog
+      - 迁移目标：将 `dialog_config_selection.xml`、`dialog_font_input.xml` 等仍由 `layoutInflater.inflate` 承载的复杂弹窗迁移到 Compose。
+      - 行为保留：配置文件选择、多选状态、字体名称/描述输入、安装/移除/刷入相关流程和现有 root/Magisk/KSU 逻辑。
