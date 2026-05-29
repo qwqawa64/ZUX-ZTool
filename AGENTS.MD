@@ -195,3 +195,5 @@ Use this command after UI migrations:
 ```
 
 The command is expected to build successfully even if the known deprecated warnings listed above remain.
+
+If gradle reaches timeout, stop workflow and ask user to manually trigger gradle sync and build in Android Studio for once.
