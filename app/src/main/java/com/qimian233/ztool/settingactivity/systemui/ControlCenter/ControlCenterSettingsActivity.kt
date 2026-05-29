@@ -66,19 +66,7 @@ class ControlCenterSettingsActivity : ComponentActivity() {
     private lateinit var prefsUtils: ModulePreferencesUtils
     private lateinit var zToolPrefs: ModulePreferencesUtils
 
-    private var customDate by mutableStateOf(false)
-    private var dateFormat by mutableStateOf("")
-    private var datePreview by mutableStateOf("")
-    private var textSizeEnabled by mutableStateOf(false)
-    private var textSize by mutableStateOf(16.0f)
-    private var letterSpacingEnabled by mutableStateOf(false)
-    private var letterSpacing by mutableStateOf(0.1f)
-    private var textColorEnabled by mutableStateOf(false)
-    private var textColor by mutableStateOf(0xFFFFFFFF.toInt())
-    private var textBold by mutableStateOf(false)
-    private var showFormatHelpDialog by mutableStateOf(false)
-    private var showColorPickerDialog by mutableStateOf(false)
-    private var showSaveSuccessDialog by mutableStateOf(false)
+    private var uiState by mutableStateOf(ControlCenterSettingsUiState())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,79 +81,72 @@ class ControlCenterSettingsActivity : ComponentActivity() {
             ZToolTheme {
                 ControlCenterSettingsScreen(
                     title = appName + stringResource(R.string.control_center_settings_title_suffix),
-                    customDate = customDate,
-                    dateFormat = dateFormat,
-                    datePreview = datePreview,
-                    textSizeEnabled = textSizeEnabled,
-                    textSize = textSize,
-                    letterSpacingEnabled = letterSpacingEnabled,
-                    letterSpacing = letterSpacing,
-                    textColorEnabled = textColorEnabled,
-                    textColor = textColor,
-                    textBold = textBold,
+                    state = uiState,
                     onBack = ::finish,
                     onCustomDateChanged = ::handleCustomDateChanged,
                     onDateFormatChanged = {
-                        dateFormat = it
+                        uiState = uiState.copy(dateFormat = it)
                         updateDatePreview(it)
                     },
                     onSaveDateFormat = ::saveDateFormat,
-                    onShowFormatHelp = { showFormatHelpDialog = true },
+                    onShowFormatHelp = { uiState = uiState.copy(showFormatHelpDialog = true) },
                     onTextSizeEnabledChanged = {
-                        textSizeEnabled = it
+                        uiState = uiState.copy(textSizeEnabled = it)
                         zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateTextSizeEnabled", it)
                     },
                     onTextSizeChanged = {
-                        textSize = it
+                        uiState = uiState.copy(textSize = it)
                         zToolPrefs.saveFloatSetting("Custom_ControlCenterDateTextSize", it)
                     },
                     onLetterSpacingEnabledChanged = {
-                        letterSpacingEnabled = it
+                        uiState = uiState.copy(letterSpacingEnabled = it)
                         zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateLetterSpacingEnabled", it)
                     },
                     onLetterSpacingChanged = {
-                        letterSpacing = it
+                        uiState = uiState.copy(letterSpacing = it)
                         zToolPrefs.saveFloatSetting("Custom_ControlCenterDateLetterSpacing", it)
                     },
                     onTextColorEnabledChanged = {
-                        textColorEnabled = it
+                        uiState = uiState.copy(textColorEnabled = it)
                         zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateTextColorEnabled", it)
                     },
-                    onPickTextColor = { showColorPickerDialog = true },
+                    onPickTextColor = { uiState = uiState.copy(showColorPickerDialog = true) },
                     onTextBoldChanged = {
-                        textBold = it
+                        uiState = uiState.copy(textBold = it)
                         zToolPrefs.saveBooleanSetting("Custom_ControlCenterDateTextBold", it)
                     }
                 )
 
-                if (showFormatHelpDialog) {
+                if (uiState.showFormatHelpDialog) {
                     FormatHelpDialog(
-                        onDismiss = { showFormatHelpDialog = false },
+                        onDismiss = { uiState = uiState.copy(showFormatHelpDialog = false) },
                         onCopyExample = {
-                            showFormatHelpDialog = false
+                            uiState = uiState.copy(showFormatHelpDialog = false)
                             copyDateFormatExample()
                         }
                     )
                 }
 
-                if (showColorPickerDialog) {
+                if (uiState.showColorPickerDialog) {
                     ColorPickerDialog(
                         onColorSelected = {
-                            showColorPickerDialog = false
-                            textColor = it
+                            uiState = uiState.copy(
+                                showColorPickerDialog = false,
+                                textColor = it
+                            )
                             zToolPrefs.saveIntegerSetting("Custom_ControlCenterDateTextColor", it)
                         },
-                        onDismiss = { showColorPickerDialog = false }
+                        onDismiss = { uiState = uiState.copy(showColorPickerDialog = false) }
                     )
                 }
 
-                if (showSaveSuccessDialog) {
+                if (uiState.showSaveSuccessDialog) {
                     AlertDialog(
-                        onDismissRequest = { showSaveSuccessDialog = false },
+                        onDismissRequest = { uiState = uiState.copy(showSaveSuccessDialog = false) },
                         title = { Text(stringResource(R.string.save_success_title)) },
                         text = { Text(stringResource(R.string.date_format_saved_message)) },
                         confirmButton = {
-                            TextButton(onClick = { showSaveSuccessDialog = false }) {
+                            TextButton(onClick = { uiState = uiState.copy(showSaveSuccessDialog = false) }) {
                                 Text(stringResource(R.string.restart_yes))
                             }
                         }
@@ -176,47 +157,54 @@ class ControlCenterSettingsActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        customDate = prefsUtils.loadBooleanSetting("Custom_ControlCenterDate", false)
-        dateFormat = zToolPrefs.loadStringSetting(
+        val loadedDateFormat = zToolPrefs.loadStringSetting(
             "Custom_ControlCenterDateFormat",
             getString(R.string.default_date_format)
         )
-        textSize = zToolPrefs.loadFloatSetting("Custom_ControlCenterDateTextSize", 16.0f)
-        textSizeEnabled = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextSizeEnabled", false)
-        letterSpacing = zToolPrefs.loadFloatSetting("Custom_ControlCenterDateLetterSpacing", 0.1f)
-        letterSpacingEnabled = zToolPrefs.loadBooleanSetting(
-            "Custom_ControlCenterDateLetterSpacingEnabled",
-            false
+        uiState = uiState.copy(
+            customDate = prefsUtils.loadBooleanSetting("Custom_ControlCenterDate", false),
+            dateFormat = loadedDateFormat,
+            textSize = zToolPrefs.loadFloatSetting("Custom_ControlCenterDateTextSize", 16.0f),
+            textSizeEnabled = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextSizeEnabled", false),
+            letterSpacing = zToolPrefs.loadFloatSetting("Custom_ControlCenterDateLetterSpacing", 0.1f),
+            letterSpacingEnabled = zToolPrefs.loadBooleanSetting(
+                "Custom_ControlCenterDateLetterSpacingEnabled",
+                false
+            ),
+            textColor = zToolPrefs.loadIntegerSetting(
+                "Custom_ControlCenterDateTextColor",
+                0xFFFFFFFF.toInt()
+            ),
+            textColorEnabled = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextColorEnabled", false),
+            textBold = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextBold", false)
         )
-        textColor = zToolPrefs.loadIntegerSetting(
-            "Custom_ControlCenterDateTextColor",
-            0xFFFFFFFF.toInt()
-        )
-        textColorEnabled = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextColorEnabled", false)
-        textBold = zToolPrefs.loadBooleanSetting("Custom_ControlCenterDateTextBold", false)
-        updateDatePreview(dateFormat)
+        updateDatePreview(loadedDateFormat)
     }
 
     private fun handleCustomDateChanged(isEnabled: Boolean) {
-        customDate = isEnabled
+        var nextDateFormat = uiState.dateFormat
         prefsUtils.saveBooleanSetting("Custom_ControlCenterDate", isEnabled)
-        if (isEnabled && dateFormat.isEmpty()) {
-            dateFormat = zToolPrefs.loadStringSetting(
+        if (isEnabled && nextDateFormat.isEmpty()) {
+            nextDateFormat = zToolPrefs.loadStringSetting(
                 "Custom_ControlCenterDateFormat",
                 getString(R.string.default_date_format)
             )
         }
-        updateDatePreview(dateFormat)
+        uiState = uiState.copy(
+            customDate = isEnabled,
+            dateFormat = nextDateFormat
+        )
+        updateDatePreview(nextDateFormat)
     }
 
     private fun saveDateFormat() {
-        Log.d(TAG, "保存的格式：$dateFormat")
-        zToolPrefs.saveStringSetting("Custom_ControlCenterDateFormat", dateFormat)
-        showSaveSuccessDialog = true
+        Log.d(TAG, "保存的格式：${uiState.dateFormat}")
+        zToolPrefs.saveStringSetting("Custom_ControlCenterDateFormat", uiState.dateFormat)
+        uiState = uiState.copy(showSaveSuccessDialog = true)
     }
 
     private fun updateDatePreview(format: String) {
-        datePreview = if (format.isEmpty()) {
+        val preview = if (format.isEmpty()) {
             getString(R.string.preview_default)
         } else {
             try {
@@ -226,6 +214,7 @@ class ControlCenterSettingsActivity : ComponentActivity() {
                 getString(R.string.preview_invalid) + "\n" + getString(R.string.error_prefix) + e.message
             }
         }
+        uiState = uiState.copy(datePreview = preview)
     }
 
     private fun copyDateFormatExample() {
@@ -243,20 +232,27 @@ class ControlCenterSettingsActivity : ComponentActivity() {
     }
 }
 
+private data class ControlCenterSettingsUiState(
+    val customDate: Boolean = false,
+    val dateFormat: String = "",
+    val datePreview: String = "",
+    val textSizeEnabled: Boolean = false,
+    val textSize: Float = 16.0f,
+    val letterSpacingEnabled: Boolean = false,
+    val letterSpacing: Float = 0.1f,
+    val textColorEnabled: Boolean = false,
+    val textColor: Int = 0xFFFFFFFF.toInt(),
+    val textBold: Boolean = false,
+    val showFormatHelpDialog: Boolean = false,
+    val showColorPickerDialog: Boolean = false,
+    val showSaveSuccessDialog: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ControlCenterSettingsScreen(
     title: String,
-    customDate: Boolean,
-    dateFormat: String,
-    datePreview: String,
-    textSizeEnabled: Boolean,
-    textSize: Float,
-    letterSpacingEnabled: Boolean,
-    letterSpacing: Float,
-    textColorEnabled: Boolean,
-    textColor: Int,
-    textBold: Boolean,
+    state: ControlCenterSettingsUiState,
     onBack: () -> Unit,
     onCustomDateChanged: (Boolean) -> Unit,
     onDateFormatChanged: (String) -> Unit,
@@ -313,7 +309,7 @@ private fun ControlCenterSettingsScreen(
                         ZToolSwitchRow(
                             title = stringResource(R.string.CustomDateSettingTitle),
                             summary = stringResource(R.string.CustomDateSettingSummary),
-                            checked = customDate,
+                            checked = state.customDate,
                             onCheckedChange = onCustomDateChanged,
                             modifier = Modifier.weight(1f)
                         )
@@ -329,17 +325,17 @@ private fun ControlCenterSettingsScreen(
                         }
                     }
 
-                    if (customDate) {
+                    if (state.customDate) {
                         CustomDateConfig(
-                            dateFormat = dateFormat,
-                            datePreview = datePreview,
-                            textSizeEnabled = textSizeEnabled,
-                            textSize = textSize,
-                            letterSpacingEnabled = letterSpacingEnabled,
-                            letterSpacing = letterSpacing,
-                            textColorEnabled = textColorEnabled,
-                            textColor = textColor,
-                            textBold = textBold,
+                            dateFormat = state.dateFormat,
+                            datePreview = state.datePreview,
+                            textSizeEnabled = state.textSizeEnabled,
+                            textSize = state.textSize,
+                            letterSpacingEnabled = state.letterSpacingEnabled,
+                            letterSpacing = state.letterSpacing,
+                            textColorEnabled = state.textColorEnabled,
+                            textColor = state.textColor,
+                            textBold = state.textBold,
                             onDateFormatChanged = onDateFormatChanged,
                             onSaveDateFormat = onSaveDateFormat,
                             onTextSizeEnabledChanged = onTextSizeEnabledChanged,
