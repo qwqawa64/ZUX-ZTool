@@ -1,8 +1,9 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.PreferenceHelper;
+
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -18,9 +19,6 @@ public class SystemUIRealWatts extends BaseHookModule {
 
     private static final String TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController";
 
-    private static final String PREFS_NAME = "xposed_module_config";
-
-    private static final String PACKAGE_NAME = "com.qimian233.ztool";
     // 系统文件路径
     private static final String CURRENT_NOW_PATH = "/sys/class/power_supply/battery/current_now";
     private static final String VOLTAGE_NOW_PATH = "/sys/class/power_supply/battery/voltage_now";
@@ -229,13 +227,11 @@ public class SystemUIRealWatts extends BaseHookModule {
     }
 
     private double getCustomizedInterval() {
-        XSharedPreferences sharedPrefs = new XSharedPreferences(PACKAGE_NAME, PREFS_NAME);
-        return sharedPrefs.getFloat("real_watts_refresh_interval", (float) 0.0);
+        return PreferenceHelper.getInstance().getFloat("real_watts_refresh_interval", (float) 0.0);
     }
 
     private boolean isCustomizedIntervalDefined() {
-        XSharedPreferences sharedPrefs = new XSharedPreferences(PACKAGE_NAME, PREFS_NAME);
-        return sharedPrefs.getBoolean("real_watts_customized_interval", false);
+        return PreferenceHelper.getInstance().getBoolean("real_watts_customized_interval", false);
     }
 
     /**
