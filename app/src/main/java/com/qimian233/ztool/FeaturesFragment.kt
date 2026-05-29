@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,9 +31,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -55,6 +53,8 @@ import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsActivity
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailActivity
 import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsActivity
 import com.qimian233.ztool.settingactivity.systemui.systemUISettings
+import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.theme.ZToolTheme
 
 class FeaturesFragment : Fragment() {
@@ -192,7 +192,7 @@ private fun FeaturesRoute(
     items: List<FeatureItem>,
     onFeatureClick: (FeatureItem) -> Unit
 ) {
-    Box(
+    ZToolPageSurface(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -227,25 +227,21 @@ private fun FeaturesRoute(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeatureCard(
     item: FeatureItem,
     onClick: () -> Unit
 ) {
-    Card(
+    ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .heightIn(min = 112.dp)
+            .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(112.dp)
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

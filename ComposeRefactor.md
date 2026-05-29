@@ -461,3 +461,27 @@
 
   - 已完成并验证：`HomeFragment` 页面 Compose 化。
   - 下一次继续时，建议评估剩余传统页面，优先选择 `FloatingWindow.java` 或 `magicwindowsearch/searchPage.java` 中范围更清晰的一项。
+
+  UI 基础问题整合与修正顺序（2026-05-29）
+
+  按重构成本从低到高排序：
+
+  1. 功能管理页卡片高度不一致（低成本，需现在修正）
+      - 原因：`FeaturesFragment.kt` 的功能卡片高度由标题/描述文字自然撑开，描述行数不同会导致 LazyVerticalGrid 中不同卡片高度不一致。
+      - 解决方案：给功能卡片设置稳定最小高度或固定高度，标题固定 1 行、描述固定 2 行，图标、箭头、内边距保持固定，避免同一网格中的卡片大小跳变。
+      - 是否会后续自然修复：不会。功能管理页已经 Compose 化，细节页继续迁移不会改变这里的布局。
+
+  2. Compose 下拉/Spinner 点击无反应（中低成本，需现在修正）
+      - 原因：已迁移页面中下拉组件分散实现，部分仍使用旧 `menuAnchor()` 或不同的 `ExposedDropdownMenuBox` 写法，点击锚点和展开状态容易出现不一致。
+      - 解决方案：在 `ui/components` 中新增统一 `ZToolDropdownField`，使用 Material3 新版 `menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)`，`OutlinedTextField` 设置 `readOnly`、`singleLine`、稳定 trailing icon，并让所有已迁移页面的下拉选择器逐步替换为该组件。
+      - 是否会后续自然修复：不会。若继续复制现有写法，问题会扩散到后续迁移页面。
+
+  3. 页面根背景不统一，动态取色只在部分页面生效（中等成本，需现在修正）
+      - 原因：`ZToolTheme` 仍使用固定 `Md3eLightColors/Md3eDarkColors`，部分页面根容器没有显式使用 `MaterialTheme.colorScheme.background/surface`，因此不同页面在动态取色下呈现不一致。
+      - 解决方案：`ZToolTheme` 在 Android 12+ 优先使用 `dynamicLightColorScheme/dynamicDarkColorScheme`；新增/使用统一的页面根背景组件或在现有页面根 `Box/Scaffold` 上统一设置 `MaterialTheme.colorScheme.background`。业务页面避免硬编码背景色。
+      - 是否会后续自然修复：部分新页面可能因为使用新模板而改善，但已迁移页面不会自动变化，需要现在统一。
+
+  4. 多数控件未统一适配 MD3 动态取色（中高成本，先修基础层，后续迁移中持续收敛）
+      - 原因：页面内直接使用 `CardDefaults.cardColors`、局部固定 `Color(...)`、各自实现 Row/Card/Dialog，缺少项目级设计系统组件。
+      - 解决方案：先补齐基础组件和默认色策略：`ZToolSurface`/页面容器、`ZToolCard`、`ZToolDropdownField`，后续再逐步把 `SwitchRow`、`SliderRow`、`TextField`、`ActionRow` 迁入组件层。日志级别色、用户自定义颜色预览等语义色可保留固定色，普通业务控件必须使用 `MaterialTheme.colorScheme`。
+      - 是否会后续自然修复：只能在后续页面采用统一组件后逐步收敛；已迁移页面需要分批替换，不能依赖自然修复。

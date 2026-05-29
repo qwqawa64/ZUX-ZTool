@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
 import com.qimian233.ztool.service.LogServiceManager
+import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.FileManager
 
@@ -249,7 +250,7 @@ private fun SettingsRoute(
     onHomepageYiyanChanged: (Boolean) -> Unit,
     onAbout: () -> Unit
 ) {
-    Box(
+    ZToolPageSurface(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {

@@ -45,12 +45,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -80,6 +76,8 @@ import androidx.fragment.app.Fragment
 import com.qimian233.ztool.audit.LogParser
 import com.qimian233.ztool.audit.LogParser.LogEntry
 import com.qimian233.ztool.audit.LogParser.LogLevel
+import com.qimian233.ztool.ui.components.ZToolDropdownField
+import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.FileManager
 import com.qimian233.ztool.utils.FileUtils
@@ -571,7 +569,7 @@ private fun AuditScreen(
             }
         }
     ) { innerPadding ->
-        Box(
+        ZToolPageSurface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -795,7 +793,6 @@ private fun FilterCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> DropdownField(
     label: String,
@@ -804,41 +801,13 @@ private fun <T> DropdownField(
     optionLabel: (T) -> String,
     onOptionSelected: (T) -> Unit
 ) {
-    var expanded by androidx.compose.runtime.remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(
-                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                    enabled = true
-                )
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(optionLabel(option)) },
-                    onClick = {
-                        expanded = false
-                        onOptionSelected(option)
-                    }
-                )
-            }
-        }
-    }
+    ZToolDropdownField(
+        label = label,
+        value = value,
+        options = options,
+        optionLabel = optionLabel,
+        onOptionSelected = onOptionSelected
+    )
 }
 
 @Composable

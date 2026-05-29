@@ -66,6 +66,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.ConfigUpgrade
 import org.json.JSONException
@@ -668,7 +669,7 @@ private fun HomeScreen(
     onOpenUpdate: (String) -> Unit
 ) {
     Scaffold { innerPadding ->
-        Box(
+        ZToolPageSurface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
