@@ -409,6 +409,7 @@
   - `AuditFragment.kt`：日志审计页已迁移到 Compose，保留 Fragment 路由入口与 `LogParser` 数据解析逻辑；RecyclerView/Adapter 改为 Compose `LazyColumn`，类别/模块/级别筛选改为 Compose 下拉菜单，搜索、仅显示错误、刷新、清除、统计、导出和日志详情改为 Compose 状态与 Dialog；日志 zip 导出继续使用 SAF `CreateDocument` 与现有 `FileManager`/`FileUtils`。
   - `settingactivity/ota/OtaSettings.kt`：系统更新设置页已迁移到 Compose，保留原类名和启动入口；保留 `custom_ota_parameters`、`disable_OtaCheck`、`Custom_ota_target_versionName`、`Custom_ota_target_deviceID` 配置键；OTA 信息拉取结果和 9008/深刷包查询结果已改为页面内状态区域展示，提供复制下载链接、复制更新日志和复制密码操作；保留当前系统版本/SN 读取、root 读取 OTA XML、XML 解析、`GetPCFlashFirmware` 异步查询和重启 `app_package` + `com.lenovo.tbengine` 作用域逻辑。
   - `settingactivity/systemui/systemUISettings.kt`：系统界面设置聚合页已迁移到 Compose，保留原小写类名和启动入口；保留状态栏、锁屏、控制中心三个子设置入口；保留 `ForceNativeAOD`、`ForceLenovoAOD`、`No_ChargeAnimation`、`charge_animation_fix`、`guest_mode_controller` 配置键；保留原生 AOD secure setting 写入、联想 AOD 入口启动、AOD 互斥处理和重启 `app_package` + `com.zui.wallpapersetting` 作用域逻辑。
+  - `HomeFragment.kt`：首页已由 `HomeFragment.java` 迁移为同类名 Kotlin Compose Fragment，保留 XML Navigation 路由入口、`EnvironmentStateListener` 与 Xposed 自检测方法 `isModuleActive`；环境检测、模块状态、系统信息、更新检查、一言提示、配置升级提示和重启菜单均改为 Compose state/Dialog 驱动；保留 Root 检测、模块激活检测、版本更新忽略、ROM 地区缓存写入和重启命令逻辑。
 
   最近验证
 
@@ -427,10 +428,11 @@
   - 2026-05-29：完成 `AuditFragment` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `OtaSettings` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
   - 2026-05-29：完成 `systemUISettings` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
+  - 2026-05-29：完成 `HomeFragment` Compose 化后运行 `.\gradlew.bat assembleDebug`，构建成功。仍仅剩既有 deprecated warning：`MainActivity.kt` 的系统栏颜色 API、`SettingsFragment.kt` 的 `versionCode`、游戏助手页 `menuAnchor()`、状态栏页 `MODE_WORLD_READABLE`。
 
   下一步候选
 
-  - 下一步可继续评估 `HomeFragment.java`。首页业务逻辑最重，应先拆环境检测、系统信息、更新检查和配置升级状态，再迁移 UI。
+  - 下一步可继续评估残留传统入口，例如 `settingactivity/setting/floatingwindow/FloatingWindow.java` 或 `settingactivity/setting/magicwindowsearch/searchPage.java`。建议先选择一个页面继续，仍保持一次只迁移一个页面。
 
   OtaSettings 迁移实施计划（2026-05-29）
 
@@ -457,5 +459,5 @@
 
   当前停止点
 
-  - 已完成并验证：`systemUISettings` 页面 Compose 化。
-  - 下一次继续时，建议评估 `HomeFragment.java`，优先拆出环境/系统状态读取、更新检查和配置升级提示，再做 Compose 化。
+  - 已完成并验证：`HomeFragment` 页面 Compose 化。
+  - 下一次继续时，建议评估剩余传统页面，优先选择 `FloatingWindow.java` 或 `magicwindowsearch/searchPage.java` 中范围更清晰的一项。
