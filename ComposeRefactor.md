@@ -346,4 +346,21 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue the pre-ViewModel consolidation pass: make remaining Compose screens consume one `UiState` object each before moving any page to a ViewModel/repository boundary. Good next candidates are `GameToolSettngs.kt`, `LauncherSettingsActivity.kt`, `FrameworkSettingsActivity.kt`, and the SystemUI sub-pages.
+Continue the pre-ViewModel consolidation pass: make remaining Compose screens consume one `UiState` object each before moving any page to a ViewModel/repository boundary.
+
+Recommended next order:
+
+1. SystemUI sub-pages
+   - `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`.
+   - `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`.
+   - `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`.
+
+2. Remaining settings/detail flows
+   - `settingactivity/ota/OtaSettings.kt`.
+   - `settingactivity/setting/SettingsDetailActivity.kt`.
+   - `settingactivity/setting/magicwindowsearch/searchPage.kt`.
+
+3. Fragment-level screens
+   - `AuditFragment.kt`.
+   - `SettingsFragment.kt`.
+   - `HomeFragment.kt` dialog flags should be folded into `HomeUiState` before later ViewModel extraction.
