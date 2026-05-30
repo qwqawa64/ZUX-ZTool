@@ -396,16 +396,18 @@ Recommended next order:
    - No dependency was removed in this slice because any remaining Fragment artifact is transitive through AppCompat, which is intentionally retained until the later AppCompat cleanup.
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
 
-4. Migrate `MainActivity` away from AppCompat. Next.
-   - Convert to `ComponentActivity` after verifying dynamic color, edge-to-edge, first-launch agreement, lifecycle, and service callbacks.
-   - Run `.\gradlew.bat assembleDebug`.
+4. Migrate `MainActivity` away from AppCompat. Completed on 2026-05-31.
+   - Converted `MainActivity` from `AppCompatActivity` to `ComponentActivity`.
+   - Verified dynamic color application remains in place through `DynamicColors`, edge-to-edge setup, first-launch agreement dialog, saved state, theme observation, and log service callbacks still build.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
 
-5. Replace AppCompat/Material dialog bridges.
-   - Migrate `LoadingDialog`, `CountdownDialog`, `AppChooserDialog`, and remaining `SettingsDetailActivity` dialog flows to Compose-owned state/components.
-   - Preserve current public APIs until all call sites are migrated.
-   - Run `.\gradlew.bat assembleDebug`.
+5. Replace AppCompat/Material dialog bridges. Completed on 2026-05-31.
+   - Added a platform `Dialog` + Compose host helper for owner-bound dialog content.
+   - Migrated `LoadingDialog`, `CountdownDialog`, `AppChooserDialog`, and remaining `SettingsDetailActivity` dialog flows away from AppCompat `AlertDialog` and `MaterialAlertDialogBuilder`.
+   - Preserved current public APIs and call sites for reusable dialog wrappers.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
 
-6. Remove AppCompat and unused Material Components dependencies.
+6. Remove AppCompat and unused Material Components dependencies. Next.
    - Remove only after no `androidx.appcompat` or Material Components APIs remain.
    - Keep Compose Material3 and Miuix.
    - Run `.\gradlew.bat assembleDebug`.

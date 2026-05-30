@@ -6,9 +6,9 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.Window
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -35,7 +35,7 @@ import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.CountdownDialog
 
-class MainActivity : AppCompatActivity(),
+class MainActivity : ComponentActivity(),
     EnvironmentStateListener,
     LogServiceManager.ServiceStatusListener,
     CountdownDialog.OnCountdownFinishListener {

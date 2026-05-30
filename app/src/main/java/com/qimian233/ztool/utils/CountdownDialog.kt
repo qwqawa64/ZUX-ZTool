@@ -5,7 +5,7 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
+import android.app.Dialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,17 +25,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.qimian233.ztool.R
-import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.components.createPlatformComposeDialog
 
 class CountdownDialog private constructor(
     private val context: Context,
@@ -48,7 +40,7 @@ class CountdownDialog private constructor(
     private val listener: OnCountdownFinishListener?
 ) {
     private val handler = Handler(Looper.getMainLooper())
-    private var dialog: AlertDialog? = null
+    private var dialog: Dialog? = null
     private var countDownTimer: CountDownTimer? = null
     private var remainingSeconds by mutableIntStateOf(countdownSeconds.coerceAtLeast(0))
     private var positiveEnabled by mutableStateOf(countdownSeconds <= 0)
@@ -140,75 +132,63 @@ class CountdownDialog private constructor(
         }
     }
 
-    private fun ensureDialog(): AlertDialog {
+    private fun ensureDialog(): Dialog {
         dialog?.let { return it }
 
-        val composeView = ComposeView(context).apply {
-            bindOwners(context)
-            setContent {
-                ZToolTheme {
-                    Surface(color = MaterialTheme.colorScheme.surface) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp)
-                        ) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(weight = 1f, fill = false)
-                                    .verticalScroll(rememberScrollState())
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                OutlinedButton(
-                                    onClick = {
-                                        listener?.onNegativeButtonClick()
-                                        dismiss()
-                                    }
-                                ) {
-                                    Text(negativeText)
-                                }
-                                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                                Button(
-                                    enabled = positiveEnabled,
-                                    onClick = {
-                                        listener?.onPositiveButtonClick()
-                                        dismiss()
-                                    }
-                                ) {
-                                    Text(positiveButtonLabel())
-                                }
+        return createPlatformComposeDialog(context, cancelable = cancelable) {
+            Surface(color = MaterialTheme.colorScheme.surface) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(weight = 1f, fill = false)
+                            .verticalScroll(rememberScrollState())
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                listener?.onNegativeButtonClick()
+                                dismiss()
                             }
+                        ) {
+                            Text(negativeText)
+                        }
+                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                        Button(
+                            enabled = positiveEnabled,
+                            onClick = {
+                                listener?.onPositiveButtonClick()
+                                dismiss()
+                            }
+                        ) {
+                            Text(positiveButtonLabel())
                         }
                     }
                 }
             }
-        }
-
-        return MaterialAlertDialogBuilder(context)
-            .setView(composeView)
-            .setCancelable(cancelable)
-            .create()
-            .also { alertDialog ->
-                alertDialog.setCanceledOnTouchOutside(cancelable)
-                alertDialog.setOnDismissListener {
+        }.also { platformDialog ->
+                platformDialog.setOnDismissListener {
                     countDownTimer?.cancel()
                     countDownTimer = null
                 }
-                dialog = alertDialog
+                dialog = platformDialog
             }
     }
 
@@ -245,12 +225,6 @@ class CountdownDialog private constructor(
             finishedCallbackSent = true
             listener?.onCountdownFinished()
         }
-    }
-
-    private fun ComposeView.bindOwners(context: Context) {
-        (context as? LifecycleOwner)?.let(::setViewTreeLifecycleOwner)
-        (context as? ViewModelStoreOwner)?.let(::setViewTreeViewModelStoreOwner)
-        (context as? SavedStateRegistryOwner)?.let(::setViewTreeSavedStateRegistryOwner)
     }
 
     private fun runOnMain(block: () -> Unit) {

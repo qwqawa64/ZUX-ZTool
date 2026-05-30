@@ -6,9 +6,9 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
+import android.app.Dialog
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,21 +36,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.qimian233.ztool.R
-import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import java.util.concurrent.Executors
 
 object AppChooserDialog {
@@ -163,7 +155,7 @@ object AppChooserDialog {
         title: String?,
         callback: AppSelectionCallback?
     ) {
-        lateinit var dialog: AlertDialog
+        lateinit var dialog: Dialog
         dialog = showComposeDialog(context, cancelable = true) {
             AppChooserContent(
                 title = title,
@@ -189,35 +181,15 @@ object AppChooserDialog {
     private fun showComposeDialog(
         context: Context,
         cancelable: Boolean,
-        content: @Composable (AlertDialog?) -> Unit
-    ): AlertDialog {
-        val composeView = ComposeView(context).apply {
-            bindOwners(context)
-            setContent {
-                ZToolTheme {
-                    content(null)
-                }
-            }
-        }
-
-        val dialog = MaterialAlertDialogBuilder(context)
-            .setView(composeView)
-            .create()
-
-        dialog.setCancelable(cancelable)
-        dialog.setCanceledOnTouchOutside(cancelable)
-        dialog.show()
-        dialog.window?.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
+        content: @Composable (Dialog) -> Unit
+    ): Dialog {
+        return showPlatformComposeDialog(
+            context = context,
+            cancelable = cancelable,
+            width = ViewGroup.LayoutParams.MATCH_PARENT,
+            height = ViewGroup.LayoutParams.WRAP_CONTENT,
+            content = content
         )
-        return dialog
-    }
-
-    private fun ComposeView.bindOwners(context: Context) {
-        (context as? LifecycleOwner)?.let(::setViewTreeLifecycleOwner)
-        (context as? ViewModelStoreOwner)?.let(::setViewTreeViewModelStoreOwner)
-        (context as? SavedStateRegistryOwner)?.let(::setViewTreeSavedStateRegistryOwner)
     }
 }
 

@@ -1564,3 +1564,38 @@ Audit result:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the Fragment dependency audit.
+
+### Phase 7 AppCompat MainActivity Removal
+
+`MainActivity` now extends `ComponentActivity` instead of `AppCompatActivity`.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name and launcher Manifest entry.
+- Compose `setContent` host, edge-to-edge setup, theme settings observation, dynamic color application, first-launch agreement dialog, saved main route/environment state, log service callbacks, and environment-ready gating.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after migrating `MainActivity` to `ComponentActivity`.
+
+### Phase 7 Dialog Bridge Replacement
+
+The remaining AppCompat/Material dialog host bridges were replaced with a small platform `Dialog` + Compose host.
+
+Implemented:
+
+- Added `ui/components/PlatformComposeDialog.kt` for owner-bound Compose content in platform dialogs.
+- Updated `LoadingDialog`, `CountdownDialog`, and `AppChooserDialog` to preserve their public APIs while dropping AppCompat `AlertDialog` and `MaterialAlertDialogBuilder`.
+- Replaced `SettingsDetailActivity` command-style `MaterialAlertDialogBuilder` flows with Compose-hosted platform dialogs.
+
+Preserved behavior:
+
+- Loading dialog show/update/dismiss behavior.
+- Countdown dialog builder API, countdown enablement, callbacks, cancelability, and first-launch agreement flow.
+- App chooser loading/search/multi-select/selected-first behavior and callbacks.
+- Settings Detail config selection, module restore/flash, OV config save, module install/remove, and font import result dialogs.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after replacing the reusable dialog bridges.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after replacing the remaining `SettingsDetailActivity` dialog builder calls.

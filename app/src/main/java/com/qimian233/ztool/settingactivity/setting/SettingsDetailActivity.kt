@@ -1,19 +1,18 @@
 package com.qimian233.ztool.settingactivity.setting
 
 import android.app.AppOpsManager
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,17 +53,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.qimian233.ztool.LoadingDialog
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
@@ -76,6 +70,7 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.utils.EmbeddingConfigManager
@@ -216,11 +211,10 @@ class SettingsDetailActivity : ComponentActivity() {
                         )
                     }
                     is SettingsDetailOvConfigSelectionResult.Failure -> {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.error_title)
-                            .setMessage(getString(R.string.error_prefix) + result.message)
-                            .setPositiveButton(R.string.got_it_button, null)
-                            .show()
+                        showMessageDialog(
+                            title = getString(R.string.error_title),
+                            message = getString(R.string.error_prefix) + result.message
+                        )
                     }
                 }
             }
@@ -244,17 +238,15 @@ class SettingsDetailActivity : ComponentActivity() {
             runOnUiThread {
                 loadingDialog?.dismiss()
                 if (result == "success") {
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.success_title)
-                        .setMessage(R.string.save_success_message)
-                        .setPositiveButton(R.string.got_it_button, null)
-                        .show()
+                    showMessageDialog(
+                        title = getString(R.string.success_title),
+                        message = getString(R.string.save_success_message)
+                    )
                 } else {
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.error_title)
-                        .setMessage(getString(R.string.error_prefix) + result)
-                        .setPositiveButton(R.string.got_it_button, null)
-                        .show()
+                    showMessageDialog(
+                        title = getString(R.string.error_title),
+                        message = getString(R.string.error_prefix) + result
+                    )
                 }
             }
         }
@@ -271,33 +263,29 @@ class SettingsDetailActivity : ComponentActivity() {
                 when (result) {
                     SettingsDetailModuleResult.AlreadyEnabled -> Unit
                     is SettingsDetailModuleResult.Success -> {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.tip_title)
-                            .setMessage(
+                        showMessageDialog(
+                            title = getString(R.string.tip_title),
+                            message = getString(
                                 if (result.enabled) {
                                     R.string.install_success_message
                                 } else {
                                     R.string.remove_success_message
                                 }
                             )
-                            .setNegativeButton(R.string.got_it_button, null)
-                            .show()
+                        )
                     }
                     is SettingsDetailModuleResult.Failure -> {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.error_title)
-                            .setMessage(
-                                getString(
-                                    if (result.requestedEnabled) {
-                                        R.string.install_failed_message
-                                    } else {
-                                        R.string.remove_failed_message
-                                    },
-                                    result.message
-                                )
+                        showMessageDialog(
+                            title = getString(R.string.error_title),
+                            message = getString(
+                                if (result.requestedEnabled) {
+                                    R.string.install_failed_message
+                                } else {
+                                    R.string.remove_failed_message
+                                },
+                                result.message
                             )
-                            .setNegativeButton(R.string.got_it_button, null)
-                            .show()
+                        )
                     }
                 }
             }
@@ -359,7 +347,7 @@ class SettingsDetailActivity : ComponentActivity() {
         }
 
         val flashedConfigs = viewModel.loadFlashedConfigs()
-        lateinit var dialog: AlertDialog
+        lateinit var dialog: Dialog
         dialog = showComposeDialog {
             ConfigSelectionDialogContent(
                 configs = configs,
@@ -389,7 +377,7 @@ class SettingsDetailActivity : ComponentActivity() {
     private fun performConfigDelete(
         toDelete: List<EmbeddingConfigManager.ConfigFileInfo>,
         flashed: Set<String>,
-        dialog: AlertDialog
+        dialog: Dialog
     ) {
         val count = viewModel.deleteEmbeddingConfigs(toDelete, flashed)
         Toast.makeText(this, getString(R.string.delete_success, count), Toast.LENGTH_SHORT).show()
@@ -399,10 +387,10 @@ class SettingsDetailActivity : ComponentActivity() {
 
     private fun flashSelectedConfigs(selectedConfigs: List<EmbeddingConfigManager.ConfigFileInfo>) {
         if (!viewModel.uiState.value.moduleEnabled) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.tip_title)
-                .setMessage(R.string.install_module_first)
-                .show()
+            showMessageDialog(
+                title = getString(R.string.tip_title),
+                message = getString(R.string.install_module_first)
+            )
             return
         }
 
@@ -415,16 +403,16 @@ class SettingsDetailActivity : ComponentActivity() {
                 loadingDialog?.dismiss()
                 when (result) {
                     SettingsDetailConfigFlashResult.Success -> {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.success_title)
-                            .setMessage(R.string.flash_success_message)
-                            .show()
+                        showMessageDialog(
+                            title = getString(R.string.success_title),
+                            message = getString(R.string.flash_success_message)
+                        )
                     }
                     is SettingsDetailConfigFlashResult.Failure -> {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.error_title)
-                            .setMessage(getString(R.string.flash_failed_message, result.message))
-                            .show()
+                        showMessageDialog(
+                            title = getString(R.string.error_title),
+                            message = getString(R.string.flash_failed_message, result.message)
+                        )
                     }
                 }
             }
@@ -432,10 +420,12 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 
     private fun restoreOriginalModule() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.confirm_restore_title)
-            .setMessage(R.string.confirm_restore_message)
-            .setPositiveButton(R.string.confirm_button) { _, _ ->
+        showConfirmDialog(
+            title = getString(R.string.confirm_restore_title),
+            message = getString(R.string.confirm_restore_message),
+            confirmText = getString(R.string.confirm_button),
+            dismissText = getString(R.string.restart_no)
+        ) {
                 loadingDialog = LoadingDialog(this).also {
                     it.show(getString(R.string.restoring_module))
                 }
@@ -444,23 +434,21 @@ class SettingsDetailActivity : ComponentActivity() {
                         loadingDialog?.dismiss()
                         when (result) {
                             SettingsDetailRestoreResult.Success -> {
-                                MaterialAlertDialogBuilder(this)
-                                    .setTitle(R.string.success_title)
-                                    .setMessage(R.string.restore_success_message)
-                                    .show()
+                                showMessageDialog(
+                                    title = getString(R.string.success_title),
+                                    message = getString(R.string.restore_success_message)
+                                )
                             }
                             is SettingsDetailRestoreResult.Failure -> {
-                                MaterialAlertDialogBuilder(this)
-                                    .setTitle(R.string.error_title)
-                                    .setMessage(result.message)
-                                    .show()
+                                showMessageDialog(
+                                    title = getString(R.string.error_title),
+                                    message = result.message
+                                )
                             }
                         }
                     }
                 }
             }
-            .setNegativeButton(R.string.restart_no, null)
-            .show()
     }
 
     private fun startFontImportProcess() {
@@ -503,7 +491,7 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 
     private fun showFontInputDialog(originalFileName: String) {
-        lateinit var dialog: AlertDialog
+        lateinit var dialog: Dialog
         dialog = showComposeDialog {
             FontInputDialogContent(
                 originalDescription = getString(R.string.default_font_description, originalFileName),
@@ -518,28 +506,10 @@ class SettingsDetailActivity : ComponentActivity() {
         }
     }
 
-    private fun showComposeDialog(content: @Composable () -> Unit): AlertDialog {
-        val composeView = ComposeView(this).apply {
-            setViewTreeLifecycleOwner(this@SettingsDetailActivity)
-            setViewTreeViewModelStoreOwner(this@SettingsDetailActivity)
-            setViewTreeSavedStateRegistryOwner(this@SettingsDetailActivity)
-            setContent {
-                ZToolTheme {
-                    content()
-                }
-            }
+    private fun showComposeDialog(content: @Composable () -> Unit): Dialog {
+        return showPlatformComposeDialog(this) {
+            content()
         }
-
-        return MaterialAlertDialogBuilder(this)
-            .setView(composeView)
-            .create()
-            .also { dialog ->
-                dialog.show()
-                dialog.window?.setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            }
     }
 
     private fun startFontImport(fontName: String, fontDescription: String) {
@@ -552,17 +522,17 @@ class SettingsDetailActivity : ComponentActivity() {
                 loadingDialog?.dismiss()
                 when (result) {
                     SettingsDetailFontInstallResult.Success -> {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.import_success_title)
-                            .setMessage(R.string.import_success_message)
-                            .setPositiveButton(R.string.restart_yes, null)
-                            .show()
+                        showMessageDialog(
+                            title = getString(R.string.import_success_title),
+                            message = getString(R.string.import_success_message),
+                            buttonText = getString(R.string.restart_yes)
+                        )
                     }
                     is SettingsDetailFontInstallResult.Failure -> {
-                        MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.import_failed_title)
-                            .setMessage(result.message)
-                            .show()
+                        showMessageDialog(
+                            title = getString(R.string.import_failed_title),
+                            message = result.message
+                        )
                     }
                 }
             }
@@ -575,6 +545,91 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 
     companion object {
+    }
+
+    private fun showMessageDialog(
+        title: String,
+        message: String,
+        buttonText: String = getString(R.string.got_it_button)
+    ) {
+        showPlatformComposeDialog(this) { dialog ->
+            SimpleSettingsDetailDialogContent(
+                title = title,
+                message = message,
+                confirmText = buttonText,
+                onConfirm = { dialog.dismiss() }
+            )
+        }
+    }
+
+    private fun showConfirmDialog(
+        title: String,
+        message: String,
+        confirmText: String,
+        dismissText: String,
+        onConfirm: () -> Unit
+    ) {
+        showPlatformComposeDialog(this) { dialog ->
+            SimpleSettingsDetailDialogContent(
+                title = title,
+                message = message,
+                confirmText = confirmText,
+                dismissText = dismissText,
+                onConfirm = {
+                    dialog.dismiss()
+                    onConfirm()
+                },
+                onDismiss = { dialog.dismiss() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SimpleSettingsDetailDialogContent(
+    title: String,
+    message: String,
+    confirmText: String,
+    dismissText: String? = null,
+    onConfirm: () -> Unit,
+    onDismiss: (() -> Unit)? = null
+) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 20.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 12.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                if (dismissText != null && onDismiss != null) {
+                    TextButton(onClick = onDismiss) {
+                        Text(dismissText)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                TextButton(onClick = onConfirm) {
+                    Text(confirmText)
+                }
+            }
+        }
     }
 }
 
