@@ -17,7 +17,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -71,11 +70,11 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.settingactivity.setting.floatingwindow.FloatingWindow
 import com.qimian233.ztool.settingactivity.setting.magicwindowsearch.searchPage
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
-import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
@@ -653,126 +652,217 @@ private fun SettingsDetailScreen(
                     .padding(horizontal = 24.dp, vertical = 24.dp)
                     .padding(bottom = 88.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.embedding_setting_title)) {
-                    ZToolSwitchRow(
+                ZToolSettingsList(
+                    sections = settingsDetailSections(
+                        state = state,
+                        onRemoveBlacklistChanged = onRemoveBlacklistChanged,
+                        onModuleEnabledChanged = onModuleEnabledChanged,
+                        onStartFloatingWindow = onStartFloatingWindow,
+                        onOpenConfigSelection = onOpenConfigSelection,
+                        onOpenStrategySearch = onOpenStrategySearch,
+                        onZuiForceSplit = onZuiForceSplit,
+                        onZuiForceFreeform = onZuiForceFreeform,
+                        onZuiForceFixed = onZuiForceFixed,
+                        onFloatMandatoryChanged = onFloatMandatoryChanged,
+                        onSplitScreenMandatoryChanged = onSplitScreenMandatoryChanged,
+                        onImportFont = onImportFont,
+                        onAllowNativePermissionControllerChanged = onAllowNativePermissionControllerChanged,
+                        onAllowDisableDolbyChanged = onAllowDisableDolbyChanged,
+                        onAlwaysDisplaySuggestionsChanged = onAlwaysDisplaySuggestionsChanged
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun settingsDetailSections(
+    state: SettingsDetailUiState,
+    onRemoveBlacklistChanged: (Boolean) -> Unit,
+    onModuleEnabledChanged: (Boolean) -> Unit,
+    onStartFloatingWindow: () -> Unit,
+    onOpenConfigSelection: () -> Unit,
+    onOpenStrategySearch: () -> Unit,
+    onZuiForceSplit: () -> Unit,
+    onZuiForceFreeform: () -> Unit,
+    onZuiForceFixed: () -> Unit,
+    onFloatMandatoryChanged: (Boolean) -> Unit,
+    onSplitScreenMandatoryChanged: (Boolean) -> Unit,
+    onImportFont: () -> Unit,
+    onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
+    onAllowDisableDolbyChanged: (Boolean) -> Unit,
+    onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit
+): List<SettingSection> {
+    return buildList {
+        add(
+            SettingSection(
+                title = stringResource(R.string.embedding_setting_title),
+                items = listOf(
+                    SettingItem.Switch(
                         title = stringResource(R.string.embedding_setting_removeBlacklist),
                         summary = stringResource(R.string.embedding_setting_removeBlacklist_summary),
                         checked = state.removeBlacklist,
                         onCheckedChange = onRemoveBlacklistChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
+                    ),
+                    SettingItem.Switch(
                         title = stringResource(R.string.RoleModule_Title),
                         summary = stringResource(R.string.RoleModule_Summary),
                         checked = state.moduleEnabled,
                         onCheckedChange = onModuleEnabledChanged
-                    )
-                    ZToolSettingsDivider()
-                    ActionSettingRow(
+                    ),
+                    settingsDetailActionItem(
                         title = stringResource(R.string.custom_landscape_view),
                         summary = stringResource(R.string.custom_landscape_view_summary),
-                        icon = { Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null) },
-                        onClick = onStartFloatingWindow
-                    )
-                    ZToolSettingsDivider()
-                    ActionSettingRow(
+                        onClick = onStartFloatingWindow,
+                        icon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    ),
+                    settingsDetailActionItem(
                         title = stringResource(R.string.custom_landscapeResult_Title),
                         summary = stringResource(R.string.custom_landscapeResult_Summary),
                         onClick = onOpenConfigSelection
-                    )
-                    ZToolSettingsDivider()
-                    ActionSettingRow(
+                    ),
+                    settingsDetailActionItem(
                         title = stringResource(R.string.YiShiJieRules),
                         summary = stringResource(R.string.YiShiJieRules_Summary),
-                        icon = { Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null) },
                         onClick = onOpenStrategySearch
                     )
-                }
+                )
+            )
+        )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (state.showZuiForceConfig) {
-                    SettingsCard(title = stringResource(R.string.zui_force_config_title)) {
-                        Text(
-                            text = stringResource(R.string.zui_force_config_summary),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                        )
-                        ActionSettingRow(
+        if (state.showZuiForceConfig) {
+            add(
+                SettingSection(
+                    title = stringResource(R.string.zui_force_config_title),
+                    items = listOf(
+                        SettingItem.Custom(
+                            content = {
+                                Text(
+                                    text = stringResource(R.string.zui_force_config_summary),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                )
+                            }
+                        ),
+                        settingsDetailActionItem(
                             title = stringResource(R.string.zui_force_split_title),
                             summary = stringResource(R.string.zui_force_split_summary),
                             onClick = onZuiForceSplit
-                        )
-                        ZToolSettingsDivider()
-                        ActionSettingRow(
+                        ),
+                        settingsDetailActionItem(
                             title = stringResource(R.string.zui_force_freeform_title),
                             summary = stringResource(R.string.zui_force_freeform_summary),
                             onClick = onZuiForceFreeform
-                        )
-                        ZToolSettingsDivider()
-                        ActionSettingRow(
+                        ),
+                        settingsDetailActionItem(
                             title = stringResource(R.string.zui_force_fixed_title),
                             summary = stringResource(R.string.zui_force_fixed_summary),
                             onClick = onZuiForceFixed
                         )
-                    }
-                } else {
-                    SettingsCard(title = stringResource(R.string.embedding_Title)) {
-                        ZToolSwitchRow(
+                    )
+                )
+            )
+        } else {
+            add(
+                SettingSection(
+                    title = stringResource(R.string.embedding_Title),
+                    items = listOf(
+                        SettingItem.Switch(
                             title = stringResource(R.string.Float_app_Mandatory),
                             summary = stringResource(R.string.Float_app_Mandatory_summary),
                             checked = state.floatMandatory,
                             onCheckedChange = onFloatMandatoryChanged
-                        )
-                        ZToolSettingsDivider()
-                        ZToolSwitchRow(
+                        ),
+                        SettingItem.Switch(
                             title = stringResource(R.string.Split_screen_Mandatory_Title),
                             summary = stringResource(R.string.Split_screen_Mandatory_Summary),
                             checked = state.splitScreenMandatory,
                             onCheckedChange = onSplitScreenMandatoryChanged
                         )
-                    }
-                }
+                    )
+                )
+            )
+        }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.font_settings_title)) {
-                    ActionSettingRow(
+        add(
+            SettingSection(
+                title = stringResource(R.string.font_settings_title),
+                items = listOf(
+                    settingsDetailActionItem(
                         title = stringResource(R.string.import_font_title),
                         summary = stringResource(R.string.import_font_summary),
-                        icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
-                        onClick = onImportFont
+                        onClick = onImportFont,
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     )
-                }
+                )
+            )
+        )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.misc)) {
-                    ZToolSwitchRow(
+        add(
+            SettingSection(
+                title = stringResource(R.string.misc),
+                items = listOf(
+                    SettingItem.Switch(
                         title = stringResource(R.string.NativePermissionController_enable_title),
                         summary = stringResource(R.string.NativePermissionController_enable_summary),
                         checked = state.allowNativePermissionController,
                         onCheckedChange = onAllowNativePermissionControllerChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
+                    ),
+                    SettingItem.Switch(
                         title = stringResource(R.string.AllowDisableDolby),
                         summary = stringResource(R.string.AllowDisableDolby_summary),
                         checked = state.allowDisableDolby,
                         onCheckedChange = onAllowDisableDolbyChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
+                    ),
+                    SettingItem.Switch(
                         title = stringResource(R.string.AlwaysDisplaySuggestionsTitle),
                         summary = stringResource(R.string.AlwaysDisplaySuggestionsSummary),
                         checked = state.alwaysDisplaySuggestions,
                         onCheckedChange = onAlwaysDisplaySuggestionsChanged
                     )
-                }
+                )
+            )
+        )
+    }
+}
+
+@Composable
+private fun settingsDetailActionItem(
+    title: String,
+    summary: String,
+    onClick: () -> Unit,
+    icon: (@Composable () -> Unit)? = null
+): SettingItem {
+    return SettingItem.Action(
+        title = title,
+        summary = summary,
+        onClick = onClick,
+        trailingContent = {
+            if (icon != null) {
+                icon()
+            } else {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
-    }
+    )
 }
 
 @Composable
@@ -974,72 +1064,6 @@ private fun FontInputDialogContent(
                     Text(stringResource(R.string.confirm_button))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
-    }
-}
-
-@Composable
-private fun ActionSettingRow(
-    title: String,
-    summary: String,
-    onClick: () -> Unit,
-    icon: @Composable (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .widthIn(max = 720.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        if (icon != null) {
-            icon()
-        } else {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

@@ -319,7 +319,7 @@ Move to Phase 5: migrate settings pages through a shared settings model. Phase 4
 
 Current Phase 5 status:
 
-- Shared settings model foundation, low-risk pilots, medium-complexity pages, System UI detail pages, and the System UI aggregate page are complete for the current candidate set.
+- Shared settings model foundation, low-risk pilots, medium-complexity pages, System UI detail pages, the System UI aggregate page, and Settings Detail ordinary rows are complete for the current candidate set.
 - Model coverage was reviewed on 2026-05-31. Keep the model limited to section/card structure and ordinary rows for now; do not add new model item types before migrating the remaining suitable pages.
 - Do not force complex query, format-preview, color-picker, app-picker, root/shell, or wizard workflows into generic `SettingItem` variants.
 
@@ -333,16 +333,15 @@ Recommended next order:
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
    - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-2. Migrate the ordinary rows in `settingactivity/setting/SettingsDetailActivity.kt` through the shared settings model. Next.
-   - This page still uses local `SettingsCard`, `ActionSettingRow`, and direct `ZToolSwitchRow` composition.
-   - Convert ordinary embedding, permission, Dolby, and suggestion switches to `SettingItem.Switch`.
-   - Convert simple action rows to `SettingItem.Action` or `SettingItem.Entry` where behavior stays obvious.
-   - Keep floating-window launch, strategy search, config selection, Magisk/module restore, OV config generation, font import, loading dialogs, and restart-scope behavior page-owned.
-   - Preserve all existing preference keys, external Activity launch contracts, root/Magisk behavior, embedding asset behavior, and config flashing behavior.
-   - Run `.\gradlew.bat assembleDebug`.
-   - Record implementation notes and verification in `MigrationNotes.md`.
+2. Migrate the ordinary rows in `settingactivity/setting/SettingsDetailActivity.kt` through the shared settings model. Completed on 2026-05-31.
+   - Converted ordinary embedding, permission, Dolby, and suggestion switches to `SettingItem.Switch`.
+   - Converted simple action rows to `SettingItem.Action`.
+   - Kept floating-window launch, strategy search, config selection, Magisk/module restore, OV config generation, font import, loading dialogs, and restart-scope behavior page-owned.
+   - Preserved all existing preference keys, external Activity launch contracts, root/Magisk behavior, embedding asset behavior, and config flashing behavior.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
+   - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-3. Defer `settingactivity/setting/magicwindowsearch/searchPage.kt` from Phase 5 model migration unless a narrow card-shell cleanup is explicitly requested.
+3. Defer `settingactivity/setting/magicwindowsearch/searchPage.kt` from Phase 5 model migration unless a narrow card-shell cleanup is explicitly requested. Next.
    - The page is primarily a search/query/result/detail workflow rather than a settings-row page.
    - Keep JSON loading, root fallback, search filtering, result cards, and details dialog outside the settings model.
 

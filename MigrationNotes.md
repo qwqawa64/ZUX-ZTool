@@ -1309,3 +1309,29 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the System UI aggregate settings model migration.
+
+### Phase 5 Settings Detail Ordinary Rows Model Migration
+
+`settingactivity/setting/SettingsDetailActivity.kt` now renders its ordinary settings sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `SettingsDetailActivity` Activity class name, package, and launch contract.
+- Existing `SettingsDetailViewModel` and `SettingsDetailRepository` boundaries.
+- Existing preference keys for embedding blacklist removal, split-screen mandatory, permission controller, Dolby display disabling, and suggestions display.
+- Existing Magisk module enable/disable behavior, module restore/config flashing behavior, floating-window launch, strategy search launch, OV config generation flows, font import flow, loading dialogs, and restart-scope behavior.
+- Existing embedding asset and config file behavior.
+
+Model suitability review:
+
+- The shared model remains suitable for the ordinary rows on this page.
+- Basic switches now use `SettingItem.Switch`.
+- Simple launch/action rows now use `SettingItem.Action`.
+- The Android-version-specific ZUI force-config summary remains explicit as `SettingItem.Custom`.
+- Config selection, Magisk/module restore, OV config, font import, floating-window, strategy search, loading dialog, and restart workflows remain page/ViewModel/repository-owned.
+- No new settings model item types were added.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the Settings Detail ordinary rows model migration.
