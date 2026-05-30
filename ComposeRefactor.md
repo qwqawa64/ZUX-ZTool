@@ -885,6 +885,29 @@ Remaining Phase 3 task 4 work:
 - Do not add the Miuix dependency until the Material 3 adapter path is stable across a few pages.
 - After future adapter changes, run `.\gradlew.bat assembleDebug` and record the result here.
 
+### Phase 3 User-Facing Theme Settings Entry
+
+`SettingsFragment.kt` now exposes the persisted app UI theme settings to users.
+
+Preserved behavior:
+
+- Existing `SettingsFragment` class name, Fragment route, backup/restore flow, log-service controls, detailed logging key, homepage YiYan key, about dialog links, and external launch behavior.
+- Existing Hook/module preference keys are unchanged.
+- App UI theme settings remain stored through the dedicated `ThemePreferencesRepository` preference file.
+
+Implementation note:
+
+- `SettingsRepository` wraps `ThemePreferencesRepository` for loading and saving app UI theme settings.
+- `SettingsUiState` now carries `ZToolThemeSettings`, manual seed color text, and validation state.
+- `SettingsViewModel` exposes setters for frontend style, theme mode, Monet dynamic color, manual color enablement, manual seed color, and AMOLED black.
+- The settings screen now has an App UI theme section using shared ZTool components.
+- Manual seed color accepts `#RRGGBB` or `#AARRGGBB`; valid values are persisted as a full ARGB seed color.
+- The `FrontendStyle.Miuix` option is user-visible but still renders through the existing Material 3 fallback until the Miuix dependency and component rendering are added.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the user-facing theme settings entry.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1086,12 +1109,12 @@ Continue Phase 3 by completing user-facing style selection and the Miuix compone
 
 Recommended next order:
 
-1. Add a user-facing app UI theme settings entry.
-   - Expose frontend style, theme mode, Monet dynamic color, manual seed color, manual color enablement, and AMOLED black settings.
-   - Store changes through `ThemePreferencesRepository`; do not read or write Hook/module preference keys.
-   - Reuse shared ZTool components and preserve the existing settings Fragment launch contract.
+1. Add a user-facing app UI theme settings entry. Completed on 2026-05-30.
+   - Exposes frontend style, theme mode, Monet dynamic color, manual seed color, manual color enablement, and AMOLED black settings.
+   - Stores changes through `ThemePreferencesRepository`; Hook/module preference keys are untouched.
+   - Reuses shared ZTool components and preserves the existing settings Fragment launch contract.
 
-2. Add the Miuix dependency.
+2. Add the Miuix dependency. Next.
    - Use the official `compose-miuix-ui/miuix` Android artifact form, such as `top.yukonga.miuix.kmp:miuix-ui-android`, with version pinning compatible with the current Kotlin/Compose setup.
    - Keep Material 3 Expressive as the default and verified style path.
    - Run `.\gradlew.bat assembleDebug` after adding the dependency.

@@ -761,4 +761,21 @@
     <string name="gotoSettingsPage">设置</string>
     <!--应用名单选择界面弹窗-->
     <string name="SearchHint">搜索…</string>
+    <string name="app_ui_theme_settings">App UI theme</string>
+    <string name="frontend_style_title">Frontend style</string>
+    <string name="frontend_style_material3">Material 3 Expressive</string>
+    <string name="frontend_style_miuix">Miuix</string>
+    <string name="theme_mode_title">Theme mode</string>
+    <string name="theme_mode_follow_system">Follow system</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string name="dynamic_color_title">Dynamic color</string>
+    <string name="dynamic_color_summary">Use Android 12+ Monet colors when manual color is off.</string>
+    <string name="manual_color_title">Manual seed color</string>
+    <string name="manual_color_summary">Derive the app color scheme from a custom seed color.</string>
+    <string name="manual_seed_color_title">Seed color</string>
+    <string name="manual_seed_color_summary">Use #RRGGBB or #AARRGGBB.</string>
+    <string name="manual_seed_color_error">Enter a valid #RRGGBB or #AARRGGBB color.</string>
+    <string name="amoled_black_title">AMOLED black</string>
+    <string name="amoled_black_summary">Use pure black surfaces in dark theme.</string>
 </resources>

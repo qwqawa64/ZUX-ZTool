@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,10 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
@@ -43,9 +47,13 @@ import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.viewmodel.SettingsUiState
 import com.qimian233.ztool.viewmodel.SettingsViewModel
 
@@ -116,6 +124,12 @@ class SettingsFragment : Fragment() {
                         },
                         onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
                         onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
+                        onFrontendStyleChanged = viewModel::setFrontendStyle,
+                        onThemeModeChanged = viewModel::setThemeMode,
+                        onDynamicColorChanged = viewModel::setDynamicColorEnabled,
+                        onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
+                        onManualColorChanged = viewModel::setManualColorEnabled,
+                        onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
                         onAbout = viewModel::showAboutDialog
                     )
 
@@ -198,6 +212,12 @@ private fun SettingsRoute(
     onLogServiceChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
+    onFrontendStyleChanged: (FrontendStyle) -> Unit,
+    onThemeModeChanged: (ThemeMode) -> Unit,
+    onDynamicColorChanged: (Boolean) -> Unit,
+    onAmoledBlackChanged: (Boolean) -> Unit,
+    onManualColorChanged: (Boolean) -> Unit,
+    onManualSeedColorTextChanged: (String) -> Unit,
     onAbout: () -> Unit
 ) {
     ZToolPageSurface(
@@ -235,6 +255,20 @@ private fun SettingsRoute(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            ThemeSettingsSection(
+                settings = state.themeSettings,
+                manualSeedColorText = state.manualSeedColorText,
+                manualSeedColorError = state.manualSeedColorError,
+                onFrontendStyleChanged = onFrontendStyleChanged,
+                onThemeModeChanged = onThemeModeChanged,
+                onDynamicColorChanged = onDynamicColorChanged,
+                onAmoledBlackChanged = onAmoledBlackChanged,
+                onManualColorChanged = onManualColorChanged,
+                onManualSeedColorTextChanged = onManualSeedColorTextChanged
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             SettingsSection(title = stringResource(R.string.moreSettings)) {
                 ZToolSwitchRow(
                     title = stringResource(R.string.enableLogService),
@@ -266,6 +300,163 @@ private fun SettingsRoute(
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+}
+
+@Composable
+private fun ThemeSettingsSection(
+    settings: ZToolThemeSettings,
+    manualSeedColorText: String,
+    manualSeedColorError: Boolean,
+    onFrontendStyleChanged: (FrontendStyle) -> Unit,
+    onThemeModeChanged: (ThemeMode) -> Unit,
+    onDynamicColorChanged: (Boolean) -> Unit,
+    onAmoledBlackChanged: (Boolean) -> Unit,
+    onManualColorChanged: (Boolean) -> Unit,
+    onManualSeedColorTextChanged: (String) -> Unit
+) {
+    val frontendStyleOptions = listOf(
+        LabeledOption(
+            value = FrontendStyle.Material3Expressive,
+            label = stringResource(R.string.frontend_style_material3)
+        ),
+        LabeledOption(
+            value = FrontendStyle.Miuix,
+            label = stringResource(R.string.frontend_style_miuix)
+        )
+    )
+    val themeModeOptions = listOf(
+        LabeledOption(
+            value = ThemeMode.FollowSystem,
+            label = stringResource(R.string.theme_mode_follow_system)
+        ),
+        LabeledOption(
+            value = ThemeMode.Light,
+            label = stringResource(R.string.theme_mode_light)
+        ),
+        LabeledOption(
+            value = ThemeMode.Dark,
+            label = stringResource(R.string.theme_mode_dark)
+        )
+    )
+
+    SettingsSection(title = stringResource(R.string.app_ui_theme_settings)) {
+        DropdownSettingRow(
+            title = stringResource(R.string.frontend_style_title),
+            value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
+            options = frontendStyleOptions,
+            optionLabel = { it.label },
+            onOptionSelected = { onFrontendStyleChanged(it.value) }
+        )
+        DropdownSettingRow(
+            title = stringResource(R.string.theme_mode_title),
+            value = themeModeOptions.first { it.value == settings.themeMode }.label,
+            options = themeModeOptions,
+            optionLabel = { it.label },
+            onOptionSelected = { onThemeModeChanged(it.value) }
+        )
+        ZToolSwitchRow(
+            title = stringResource(R.string.dynamic_color_title),
+            summary = stringResource(R.string.dynamic_color_summary),
+            checked = settings.dynamicColorEnabled,
+            onCheckedChange = onDynamicColorChanged,
+            enabled = !settings.manualColorEnabled
+        )
+        ZToolSwitchRow(
+            title = stringResource(R.string.manual_color_title),
+            summary = stringResource(R.string.manual_color_summary),
+            checked = settings.manualColorEnabled,
+            onCheckedChange = onManualColorChanged
+        )
+        if (settings.manualColorEnabled) {
+            ManualSeedColorRow(
+                color = settings.manualSeedColor,
+                colorText = manualSeedColorText,
+                isError = manualSeedColorError,
+                onColorTextChanged = onManualSeedColorTextChanged
+            )
+        }
+        ZToolSwitchRow(
+            title = stringResource(R.string.amoled_black_title),
+            summary = stringResource(R.string.amoled_black_summary),
+            checked = settings.amoledBlackEnabled,
+            onCheckedChange = onAmoledBlackChanged
+        )
+    }
+}
+
+private data class LabeledOption<T>(
+    val value: T,
+    val label: String
+)
+
+@Composable
+private fun <T> DropdownSettingRow(
+    title: String,
+    value: String,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onOptionSelected: (T) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        ZToolDropdownField(
+            label = "",
+            value = value,
+            options = options,
+            optionLabel = optionLabel,
+            onOptionSelected = onOptionSelected,
+            modifier = Modifier.widthIn(min = 160.dp, max = 220.dp)
+        )
+    }
+}
+
+@Composable
+private fun ManualSeedColorRow(
+    color: Long,
+    colorText: String,
+    isError: Boolean,
+    onColorTextChanged: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .width(36.dp)
+                .height(36.dp)
+                .background(Color(color), RoundedCornerShape(8.dp))
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        OutlinedTextField(
+            value = colorText,
+            onValueChange = onColorTextChanged,
+            modifier = Modifier.weight(1f),
+            label = { Text(stringResource(R.string.manual_seed_color_title)) },
+            supportingText = {
+                if (isError) {
+                    Text(stringResource(R.string.manual_seed_color_error))
+                } else {
+                    Text(stringResource(R.string.manual_seed_color_summary))
+                }
+            },
+            isError = isError,
+            singleLine = true
+        )
     }
 }
 

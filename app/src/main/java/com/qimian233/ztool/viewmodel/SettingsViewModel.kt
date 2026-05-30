@@ -4,6 +4,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.ThemeMode
+import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,6 +73,59 @@ class SettingsViewModel(
         repository.setHomepageYiyanEnabled(isEnabled)
     }
 
+    fun setFrontendStyle(style: FrontendStyle) {
+        repository.setFrontendStyle(style)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(frontendStyle = style)
+        )
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        repository.setThemeMode(mode)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(themeMode = mode)
+        )
+    }
+
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        repository.setDynamicColorEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(dynamicColorEnabled = enabled)
+        )
+    }
+
+    fun setAmoledBlackEnabled(enabled: Boolean) {
+        repository.setAmoledBlackEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(amoledBlackEnabled = enabled)
+        )
+    }
+
+    fun setManualColorEnabled(enabled: Boolean) {
+        repository.setManualColorEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(manualColorEnabled = enabled)
+        )
+    }
+
+    fun setManualSeedColorText(text: String) {
+        val parsed = repository.parseSeedColor(text)
+        if (parsed == null) {
+            _uiState.value = _uiState.value.copy(
+                manualSeedColorText = text,
+                manualSeedColorError = text.isNotBlank()
+            )
+            return
+        }
+
+        repository.setManualSeedColor(parsed)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(manualSeedColor = parsed),
+            manualSeedColorText = repository.formatSeedColor(parsed),
+            manualSeedColorError = false
+        )
+    }
+
     fun showAboutDialog() {
         _uiState.value = _uiState.value.copy(showAboutDialog = true)
     }
@@ -89,5 +145,8 @@ data class SettingsUiState(
     val isHomepageYiyanEnabled: Boolean = true,
     val showRestoreConfirmDialog: Boolean = false,
     val showAboutDialog: Boolean = false,
-    val moduleVersion: String = ""
+    val moduleVersion: String = "",
+    val themeSettings: ZToolThemeSettings = ZToolThemeSettings(),
+    val manualSeedColorText: String = "#%08X".format(ZToolThemeSettings.DEFAULT_MANUAL_SEED_COLOR),
+    val manualSeedColorError: Boolean = false
 )
