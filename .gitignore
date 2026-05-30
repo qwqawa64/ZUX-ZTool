@@ -51,4 +51,4 @@ local.properties
 # 其他
 .DS_Store
 /gradle/gradle-daemon-jvm.properties
-/app/release/baselineProfiles
+/app/release/*
