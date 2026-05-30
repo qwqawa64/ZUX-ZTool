@@ -737,6 +737,30 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the theme settings model and repository.
 
+### Phase 3 ZToolTheme Settings Resolution
+
+The second Phase 3 slice updated `ui/theme/ZToolTheme.kt` so the theme layer can resolve a final Material 3 color scheme from `ZToolThemeSettings`.
+
+Preserved behavior:
+
+- Existing `ZToolTheme { ... }` call sites remain source-compatible.
+- Existing default Material 3 Expressive rendering remains the default path.
+- Existing `FrontendStyle.Miuix` remains a placeholder that falls back to Material 3 colors until Miuix is introduced behind shared components.
+- Existing `MainActivity` launch contract, Fragment navigation, Hook/module preferences, and runtime assets are unchanged.
+
+Implementation note:
+
+- `ZToolTheme` now accepts an optional `settings: ZToolThemeSettings`.
+- Theme mode now resolves follow-system, light, and dark behavior.
+- Monet dynamic color is used only when enabled, supported by the platform, and manual color is disabled.
+- Manual color now derives a full Material 3 `ColorScheme` from the configured seed color.
+- AMOLED pure black is applied as a dark-theme post-processing step over background and surface container roles.
+- The persisted settings repository is still not wired into `MainActivity`; that remains the next slice.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after updating `ZToolTheme` settings resolution.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -943,13 +967,13 @@ Recommended next order:
    - Add a small `ThemePreferencesRepository` or equivalent wrapper for frontend style, theme mode, dynamic color, AMOLED black, manual color enabled, and manual seed color.
    - Keep these keys scoped to app UI preferences and do not change Hook/module preference keys.
 
-2. Next: update `ZToolTheme` to resolve the final Material 3 theme from settings.
+2. Update `ZToolTheme` to resolve the final Material 3 theme from settings. Completed on 2026-05-30.
    - Support follow-system, light, and dark modes.
    - Use Android 12+ Monet only when dynamic color is enabled and manual color is disabled.
    - Support manual seed color as a complete `ColorScheme` source rather than changing only `primary`.
    - Apply AMOLED pure black as a dark-theme post-processing step over `background`, `surface`, and `surfaceContainer*`.
 
-3. Wire the top-level app shell to the persisted theme settings.
+3. Next: wire the top-level app shell to the persisted theme settings.
    - Load theme settings before calling `ZToolTheme` in `MainActivity`.
    - Keep existing launch contracts, Fragment navigation, and system-bar behavior compatible.
    - Make sure dialogs and overlay Compose surfaces still receive the same theme context.
