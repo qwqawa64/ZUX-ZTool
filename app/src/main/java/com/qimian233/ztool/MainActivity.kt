@@ -11,8 +11,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -286,9 +287,8 @@ private fun MainTabletShell(
             .fillMaxSize()
     ) {
         if (environmentReady) {
-            ZToolNavigationRail(
-                modifier = Modifier.padding(top = 24.dp)
-            ) {
+            ZToolNavigationRail {
+                Spacer(modifier = Modifier.height(24.dp))
                 mainDestinations.forEach { destination ->
                     ZToolNavigationRailItem(
                         selected = selectedDestinationId == destination.id,

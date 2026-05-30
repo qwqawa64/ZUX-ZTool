@@ -942,6 +942,13 @@ Follow-up interaction fix:
 - Editing is finished on IME Done or focus loss; invalid text then falls back to the current saved `#AARRGGBB` value.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the input behavior fix.
 
+Follow-up dark-mode fix:
+
+- Fixed the top inset of the main navigation rail showing the underlying light/dynamic window background in dark mode.
+- Root cause: the main rail used external top padding, so the padded area was outside the `NavigationRail` themed surface.
+- Fix: move the top spacing inside the rail content so the rail container paints the full height with `MaterialTheme.colorScheme.surface`.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the rail spacing fix.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
