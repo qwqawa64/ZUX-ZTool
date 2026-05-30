@@ -1458,3 +1458,21 @@ Preserved behavior:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the Compose reboot menu migration.
+
+### Phase 6 Final Layout XML Cleanup
+
+The last layout XML resources were removed by deleting their unused RecyclerView adapter owners.
+
+Removed:
+
+- `FeaturesAdapter.java` and `item_feature.xml`.
+- `SettingsAdapter.java` and `item_setting.xml`.
+- `PackageAdapter.java` and `package_item.xml`.
+
+Preserved:
+
+- `PackageInfo.java` remains because the Compose magic-window search page and repository still use it as the result model.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after deleting the final layout XML resources.
