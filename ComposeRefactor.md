@@ -317,49 +317,36 @@ Record the completed target, verification result, and next planned target in thi
 
 Move to Phase 5: migrate settings pages through a shared settings model. Phase 4's main route graph now uses `navigation-compose`, while remaining Fragment/XML cleanup is intentionally deferred to Phase 6.
 
+Current Phase 5 status:
+
+- Shared settings model foundation, low-risk pilots, medium-complexity pages, System UI detail pages, and the System UI aggregate page are complete for the current candidate set.
+- Model coverage was reviewed on 2026-05-31. Keep the model limited to section/card structure and ordinary rows for now; do not add new model item types before migrating the remaining suitable pages.
+- Do not force complex query, format-preview, color-picker, app-picker, root/shell, or wizard workflows into generic `SettingItem` variants.
+
 Recommended next order:
 
-1. Add the shared settings model and renderer foundation. Completed on 2026-05-30.
-   - Define `SettingItem` and `SettingSection` types under the UI/settings or shared components package.
-   - Add renderer composables that map model items to existing ZTool shared components.
-   - Keep callbacks and state owned by existing ViewModels/screens.
-
-2. Pilot the model on `packageinstaller/packageinstallersettings.kt`. Completed on 2026-05-30.
-   - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package force-stop behavior.
+1. Migrate the ordinary rows in `settingactivity/setting/SettingsDetailActivity.kt` through the shared settings model. Next.
+   - This page still uses local `SettingsCard`, `ActionSettingRow`, and direct `ZToolSwitchRow` composition.
+   - Convert ordinary embedding, permission, Dolby, and suggestion switches to `SettingItem.Switch`.
+   - Convert simple action rows to `SettingItem.Action` or `SettingItem.Entry` where behavior stays obvious.
+   - Keep floating-window launch, strategy search, config selection, Magisk/module restore, OV config generation, font import, loading dialogs, and restart-scope behavior page-owned.
+   - Preserve all existing preference keys, external Activity launch contracts, root/Magisk behavior, embedding asset behavior, and config flashing behavior.
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
 
-3. Pilot the model on `safecenter/SafeCenterSettingsActivity.kt`. Completed on 2026-05-30.
-   - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package restart behavior.
-   - Run `.\gradlew.bat assembleDebug`.
-   - Record implementation notes and verification in `MigrationNotes.md`.
+2. Defer `settingactivity/setting/magicwindowsearch/searchPage.kt` from Phase 5 model migration unless a narrow card-shell cleanup is explicitly requested.
+   - The page is primarily a search/query/result/detail workflow rather than a settings-row page.
+   - Keep JSON loading, root fallback, search filtering, result cards, and details dialog outside the settings model.
 
-4. Review the pilots before expanding. Completed on 2026-05-30.
-   - Confirm Material 3 Expressive and Miuix rendering remain consistent.
-   - Confirm the model reduces duplication without hiding page-specific business behavior.
-   - Only then expand to framework, game tool, launcher, OTA, and System UI detail pages.
+3. Defer `settingactivity/setting/floatingwindow/FloatingWindow.kt` from Phase 5 model migration.
+   - The page is a floating overlay wizard backed by foreground-app polling, tutorial playback, generated config output, and close/hide behavior.
+   - Treat further work here as targeted overlay/wizard cleanup, not settings model expansion.
 
-5. Expand to medium-complexity pages. Completed on 2026-05-30 for the current candidate set.
-   - Start with `systemframework/FrameworkSettingsActivity.kt`, then continue through game tool, launcher, and OTA if the same model remains readable.
-   - Keep shell commands, root behavior, app chooser behavior, and existing saved values intact.
-   - Run `.\gradlew.bat assembleDebug` after each migrated page.
-
-6. Expand to high-complexity System UI detail pages. Completed on 2026-05-30 for the current candidate set.
-   - Candidates: lock screen, status bar, and control center pages.
-   - Preserve world-readable preference behavior and Hook compatibility paths where they exist.
-   - Keep semantic color previews and domain-specific dialogs behavior-compatible.
-   - Continue checking after each page whether the shared settings model improves readability or whether page-local `Custom` content should remain explicit.
-
-7. Review Phase 5 settings model coverage before wider expansion. Next.
-   - Confirm the model remains limited to section/card structure and ordinary rows.
-   - Do not force complex query, format-preview, color-picker, app-picker, or root/shell workflows into generic items.
-   - Decide whether remaining settings pages should migrate now or wait for targeted cleanup.
-
-8. Keep Phase 4 leftovers for Phase 6 cleanup.
+4. Keep Phase 4 leftovers for Phase 6 cleanup.
    - Do not delete `nav_graph.xml`, main Fragment wrappers, legacy Fragment XML layouts, navigation animation resources, or Fragment Navigation dependencies during Phase 5.
    - Cleanup starts only when active UI routes no longer depend on the old View/Fragment layer.
 
-9. Verification policy.
+5. Verification policy.
    - Run `.\gradlew.bat assembleDebug`.
    - Verify Material 3 Expressive and Miuix modes for each migrated page.
    - Verify preference persistence, restart confirmations, shell/root behavior, and Hook compatibility keys for each migrated page.

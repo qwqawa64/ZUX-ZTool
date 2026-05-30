@@ -1284,3 +1284,28 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Control Center settings model migration.
+
+### Phase 5 System UI Aggregate Settings Model Migration
+
+`settingactivity/systemui/systemUISettings.kt` now renders its aggregate settings sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `systemUISettings` Activity class name, package, and launch contract.
+- Existing `SystemUiSettingsViewModel` and `SystemUiSettingsRepository` boundaries.
+- Existing sub-settings navigation to status bar, lock screen, and control center pages.
+- Existing preference keys for native AOD, Lenovo AOD, charge animation disabling/fix, and guest-mode controller.
+- Existing restart confirmation dialog, package restart behavior, wallpaper settings restart behavior, root shell commands, and Lenovo AOD settings launch behavior.
+
+Model suitability review:
+
+- The shared model remains suitable for the aggregate System UI page when it owns only section/card structure and ordinary rows.
+- Detail-page navigation is represented as ordinary `SettingItem.Entry` rows with icon and trailing affordance slots.
+- AOD, charging animation, and guest-mode controls use `SettingItem.Switch`.
+- The conditional Lenovo AOD settings launcher uses `SettingItem.Action`; shell and restart behavior remain ViewModel/repository-owned.
+- No new settings model item types were added.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the System UI aggregate settings model migration.

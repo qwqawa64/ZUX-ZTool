@@ -6,14 +6,11 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -37,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.R
 import androidx.lifecycle.ViewModel
@@ -46,11 +42,11 @@ import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsActivity
 import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
-import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
@@ -218,127 +214,153 @@ private fun SystemUiSettingsScreen(
                     .padding(horizontal = 24.dp, vertical = 24.dp)
                     .padding(bottom = 88.dp)
             ) {
-                NavigationCard(
-                    title = stringResource(R.string.statusBarSettingTitle),
-                    summary = stringResource(R.string.statusBarSettingSummary),
-                    iconRes = R.drawable.ic_status_bar,
-                    onClick = onOpenStatusBar
+                ZToolSettingsList(
+                    sections = systemUiSettingsSections(
+                        state = state,
+                        onOpenStatusBar = onOpenStatusBar,
+                        onOpenLockScreen = onOpenLockScreen,
+                        onOpenControlCenter = onOpenControlCenter,
+                        onNativeAodChanged = onNativeAodChanged,
+                        onLenovoAodChanged = onLenovoAodChanged,
+                        onOpenLenovoAodSettings = onOpenLenovoAodSettings,
+                        onNoChargeAnimationChanged = onNoChargeAnimationChanged,
+                        onChargeAnimationFixChanged = onChargeAnimationFixChanged,
+                        onGuestModeChanged = onGuestModeChanged
+                    )
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                NavigationCard(
-                    title = stringResource(R.string.LockScreenSettingTitle),
-                    summary = stringResource(R.string.LockScreenSummary),
-                    iconRes = R.drawable.ic_lock,
-                    onClick = onOpenLockScreen
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                NavigationCard(
-                    title = stringResource(R.string.controlCenterTitle),
-                    summary = stringResource(R.string.controlCenterSummary),
-                    iconRes = R.drawable.ic_control_center,
-                    onClick = onOpenControlCenter
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.aod_title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.aod_native_enable_title),
-                        summary = stringResource(R.string.aod_native_enable_summary),
-                        checked = state.nativeAod,
-                        onCheckedChange = onNativeAodChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.aod_lenovo_enable_title),
-                        summary = stringResource(R.string.aod_lenovo_enable_summary),
-                        checked = state.lenovoAod,
-                        onCheckedChange = onLenovoAodChanged
-                    )
-                    if (state.lenovoAod) {
-                        ZToolSettingsDivider()
-                        ActionRow(
-                            title = stringResource(R.string.aod_lenovo_activity_title),
-                            summary = stringResource(R.string.aod_lenovo_activity_summary),
-                            onClick = onOpenLenovoAodSettings
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.noChargingAnimation_title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.noChargingAnimation_enable_title),
-                        summary = stringResource(R.string.noChargingAnimation_enable_summary),
-                        checked = state.noChargeAnimation,
-                        onCheckedChange = onNoChargeAnimationChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Charge_Animation_Fix),
-                        summary = stringResource(R.string.Charge_Animation_Fix_Summary),
-                        checked = state.chargeAnimationFix,
-                        onCheckedChange = onChargeAnimationFixChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.systemUIMisc)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.disable_guest_user_enable_title),
-                        summary = stringResource(R.string.disable_guest_user_enable_summary),
-                        checked = state.guestModeController,
-                        onCheckedChange = onGuestModeChanged
-                    )
-                }
             }
         }
     }
 }
 
 @Composable
-private fun NavigationCard(
+private fun systemUiSettingsSections(
+    state: SystemUiSettingsUiState,
+    onOpenStatusBar: () -> Unit,
+    onOpenLockScreen: () -> Unit,
+    onOpenControlCenter: () -> Unit,
+    onNativeAodChanged: (Boolean) -> Unit,
+    onLenovoAodChanged: (Boolean) -> Unit,
+    onOpenLenovoAodSettings: () -> Unit,
+    onNoChargeAnimationChanged: (Boolean) -> Unit,
+    onChargeAnimationFixChanged: (Boolean) -> Unit,
+    onGuestModeChanged: (Boolean) -> Unit
+): List<SettingSection> {
+    val aodItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.aod_native_enable_title),
+                summary = stringResource(R.string.aod_native_enable_summary),
+                checked = state.nativeAod,
+                onCheckedChange = onNativeAodChanged,
+                enabled = !state.isAodSwitchProcessing
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.aod_lenovo_enable_title),
+                summary = stringResource(R.string.aod_lenovo_enable_summary),
+                checked = state.lenovoAod,
+                onCheckedChange = onLenovoAodChanged,
+                enabled = !state.isAodSwitchProcessing
+            )
+        )
+        if (state.lenovoAod) {
+            add(
+                SettingItem.Action(
+                    title = stringResource(R.string.aod_lenovo_activity_title),
+                    summary = stringResource(R.string.aod_lenovo_activity_summary),
+                    onClick = onOpenLenovoAodSettings,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+            )
+        }
+    }
+
+    return listOf(
+        SettingSection(
+            items = listOf(
+                systemUiNavigationItem(
+                    title = stringResource(R.string.statusBarSettingTitle),
+                    summary = stringResource(R.string.statusBarSettingSummary),
+                    iconRes = R.drawable.ic_status_bar,
+                    onClick = onOpenStatusBar
+                ),
+                systemUiNavigationItem(
+                    title = stringResource(R.string.LockScreenSettingTitle),
+                    summary = stringResource(R.string.LockScreenSummary),
+                    iconRes = R.drawable.ic_lock,
+                    onClick = onOpenLockScreen
+                ),
+                systemUiNavigationItem(
+                    title = stringResource(R.string.controlCenterTitle),
+                    summary = stringResource(R.string.controlCenterSummary),
+                    iconRes = R.drawable.ic_control_center,
+                    onClick = onOpenControlCenter
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.aod_title),
+            items = aodItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.noChargingAnimation_title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.noChargingAnimation_enable_title),
+                    summary = stringResource(R.string.noChargingAnimation_enable_summary),
+                    checked = state.noChargeAnimation,
+                    onCheckedChange = onNoChargeAnimationChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.Charge_Animation_Fix),
+                    summary = stringResource(R.string.Charge_Animation_Fix_Summary),
+                    checked = state.chargeAnimationFix,
+                    onCheckedChange = onChargeAnimationFixChanged
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.systemUIMisc),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_guest_user_enable_title),
+                    summary = stringResource(R.string.disable_guest_user_enable_summary),
+                    checked = state.guestModeController,
+                    onCheckedChange = onGuestModeChanged
+                )
+            )
+        )
+    )
+}
+
+@Composable
+private fun systemUiNavigationItem(
     title: String,
     summary: String,
     iconRes: Int,
     onClick: () -> Unit
-) {
-    ZToolCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 12.dp)
+): SettingItem {
+    return SettingItem.Entry(
+        title = title,
+        summary = summary,
+        onClick = onClick,
+        leadingContent = {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        },
+        trailingContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = stringResource(R.string.seeDetail),
                     style = MaterialTheme.typography.labelMedium,
@@ -352,63 +374,7 @@ private fun NavigationCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
-    }
-}
-
-@Composable
-private fun ActionRow(
-    title: String,
-    summary: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 @Composable
