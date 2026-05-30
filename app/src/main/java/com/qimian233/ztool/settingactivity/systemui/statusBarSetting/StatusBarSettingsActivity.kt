@@ -11,7 +11,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,11 +47,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
@@ -216,14 +216,67 @@ private fun StatusBarSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.status_bar_clock_settings_title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.display_seconds_title),
-                        summary = stringResource(R.string.display_seconds_summary),
-                        checked = state.displaySeconds,
-                        onCheckedChange = onDisplaySecondsChanged
-                    )
-                    ZToolSettingsDivider()
+                ZToolSettingsList(
+                    sections = statusBarSettingsSections(
+                        state = state,
+                        onDisplaySecondsChanged = onDisplaySecondsChanged,
+                        onCustomClockChanged = onCustomClockChanged,
+                        onClockFormatChanged = onClockFormatChanged,
+                        onSaveClockFormat = onSaveClockFormat,
+                        onShowFormatHelp = onShowFormatHelp,
+                        onTextSizeEnabledChanged = onTextSizeEnabledChanged,
+                        onTextSizeChanged = onTextSizeChanged,
+                        onLetterSpacingEnabledChanged = onLetterSpacingEnabledChanged,
+                        onLetterSpacingChanged = onLetterSpacingChanged,
+                        onTextColorEnabledChanged = onTextColorEnabledChanged,
+                        onPickTextColor = onPickTextColor,
+                        onTextBoldChanged = onTextBoldChanged,
+                        onNotificationIconLimitChanged = onNotificationIconLimitChanged,
+                        onNativeNotificationIconChanged = onNativeNotificationIconChanged,
+                        onNetworkSpeedSizeChanged = onNetworkSpeedSizeChanged,
+                        onNetworkSpeedDoubleLayerChanged = onNetworkSpeedDoubleLayerChanged,
+                        onBatteryExternalChanged = onBatteryExternalChanged
+                    ),
+                    bottomPadding = 96.dp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun statusBarSettingsSections(
+    state: StatusBarSettingsUiState,
+    onDisplaySecondsChanged: (Boolean) -> Unit,
+    onCustomClockChanged: (Boolean) -> Unit,
+    onClockFormatChanged: (String) -> Unit,
+    onSaveClockFormat: () -> Unit,
+    onShowFormatHelp: () -> Unit,
+    onTextSizeEnabledChanged: (Boolean) -> Unit,
+    onTextSizeChanged: (Float) -> Unit,
+    onLetterSpacingEnabledChanged: (Boolean) -> Unit,
+    onLetterSpacingChanged: (Float) -> Unit,
+    onTextColorEnabledChanged: (Boolean) -> Unit,
+    onPickTextColor: () -> Unit,
+    onTextBoldChanged: (Boolean) -> Unit,
+    onNotificationIconLimitChanged: (String) -> Unit,
+    onNativeNotificationIconChanged: (Boolean) -> Unit,
+    onNetworkSpeedSizeChanged: (Boolean) -> Unit,
+    onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
+    onBatteryExternalChanged: (Boolean) -> Unit
+): List<SettingSection> {
+    val clockItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.display_seconds_title),
+                summary = stringResource(R.string.display_seconds_summary),
+                checked = state.displaySeconds,
+                onCheckedChange = onDisplaySecondsChanged
+            )
+        )
+        add(
+            SettingItem.Custom(
+                content = {
                     ZToolSwitchRow(
                         title = stringResource(R.string.custom_clock_title),
                         summary = stringResource(R.string.custom_clock_summary),
@@ -263,57 +316,66 @@ private fun StatusBarSettingsScreen(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.status_bar_notification_settings_title)) {
-                    DropdownSettingRow(
-                        title = stringResource(R.string.notification_icon_limit_title),
-                        summary = stringResource(R.string.notification_icon_limit_summary),
-                        options = stringArrayResource(R.array.notify_num_size_options).toList(),
-                        selectedOption = state.notificationIconLimitOption,
-                        onOptionSelected = onNotificationIconLimitChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.notification_icon_native_title),
-                        summary = stringResource(R.string.notification_icon_native_summary),
-                        checked = state.nativeNotificationIcon,
-                        onCheckedChange = onNativeNotificationIconChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.statusBarNetworkTitle)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.statusBarNetworkSizeTitle),
-                        summary = stringResource(R.string.statusBarNetworkSizeSummary),
-                        checked = state.networkSpeedSize,
-                        onCheckedChange = onNetworkSpeedSizeChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.statusBarNetworkSizeDoubleLayer),
-                        summary = stringResource(R.string.statusBarNetworkSizeDoubleLayerSummary),
-                        checked = state.networkSpeedDoubleLayer,
-                        onCheckedChange = onNetworkSpeedDoubleLayerChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.statusBarBatteryTitle)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.syatusBatteryExternalTitle),
-                        summary = stringResource(R.string.syatusBatteryExternalSummary),
-                        checked = state.batteryExternal,
-                        onCheckedChange = onBatteryExternalChanged
-                    )
-                }
-            }
-        }
+            )
+        )
     }
+
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.status_bar_clock_settings_title),
+            items = clockItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.status_bar_notification_settings_title),
+            items = listOf(
+                SettingItem.Custom(
+                    content = {
+                        DropdownSettingRow(
+                            title = stringResource(R.string.notification_icon_limit_title),
+                            summary = stringResource(R.string.notification_icon_limit_summary),
+                            options = stringArrayResource(R.array.notify_num_size_options).toList(),
+                            selectedOption = state.notificationIconLimitOption,
+                            onOptionSelected = onNotificationIconLimitChanged
+                        )
+                    }
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.notification_icon_native_title),
+                    summary = stringResource(R.string.notification_icon_native_summary),
+                    checked = state.nativeNotificationIcon,
+                    onCheckedChange = onNativeNotificationIconChanged
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.statusBarNetworkTitle),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.statusBarNetworkSizeTitle),
+                    summary = stringResource(R.string.statusBarNetworkSizeSummary),
+                    checked = state.networkSpeedSize,
+                    onCheckedChange = onNetworkSpeedSizeChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.statusBarNetworkSizeDoubleLayer),
+                    summary = stringResource(R.string.statusBarNetworkSizeDoubleLayerSummary),
+                    checked = state.networkSpeedDoubleLayer,
+                    onCheckedChange = onNetworkSpeedDoubleLayerChanged
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.statusBarBatteryTitle),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.syatusBatteryExternalTitle),
+                    summary = stringResource(R.string.syatusBatteryExternalSummary),
+                    checked = state.batteryExternal,
+                    onCheckedChange = onBatteryExternalChanged
+                )
+            )
+        )
+    )
 }
 
 @Composable
@@ -478,28 +540,6 @@ private fun DropdownSettingRow(
             onOptionSelected = onOptionSelected,
             modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
         )
-    }
-}
-
-@Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
     }
 }
 

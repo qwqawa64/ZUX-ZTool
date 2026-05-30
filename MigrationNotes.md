@@ -1240,3 +1240,26 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Lock Screen settings model migration.
+
+### Phase 5 Status Bar Settings Model Migration
+
+`settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `StatusBarSettingsActivity` class name, package, and launch contract.
+- Existing `StatusBarSettingsViewModel` and `StatusBarSettingsRepository` boundaries.
+- Existing preference keys for status bar seconds, custom clock format/style, notification icon limit/native icon, network speed, and external battery percentage.
+- Existing world-readable `StatusBar_notifyNumSize` preference behavior for Hook compatibility.
+- Existing clock format preview, format help copy action, color picker dialog, save confirmation dialog, and Toast behavior.
+
+Model suitability review:
+
+- The shared model remains suitable, but Status Bar is near the useful boundary for this abstraction.
+- The model owns section/card structure and ordinary switches.
+- Custom clock formatting, text style sliders, color preview/picker, and notification icon limit dropdown remain page-local composables hosted by `SettingItem.Custom`.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Status Bar settings model migration.
