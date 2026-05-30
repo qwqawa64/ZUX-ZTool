@@ -1,8 +1,13 @@
 package com.qimian233.ztool.viewmodel
 
 import android.os.Build
+import android.net.Uri
 import androidx.lifecycle.ViewModel
+import com.qimian233.ztool.data.settings.OvConfigSelection
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
+import com.qimian233.ztool.utils.EmbeddingConfigManager
+import com.qimian233.ztool.utils.OvCommonConfigManager
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,6 +17,7 @@ class SettingsDetailViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsDetailUiState())
     val uiState: StateFlow<SettingsDetailUiState> = _uiState.asStateFlow()
+    private var currentSelectedFontFile: File? = null
 
     fun loadSettings() {
         Thread {
@@ -89,8 +95,29 @@ class SettingsDetailViewModel(
 
     fun loadFlashedConfigs(): HashSet<String> = repository.loadFlashedConfigs()
 
-    fun addFlashedConfigKeys(keys: List<String>) {
-        repository.addFlashedConfigKeys(keys)
+    fun loadEmbeddingConfigFiles(): List<EmbeddingConfigManager.ConfigFileInfo> {
+        return repository.loadEmbeddingConfigFiles()
+    }
+
+    fun deleteEmbeddingConfigs(
+        configs: List<EmbeddingConfigManager.ConfigFileInfo>,
+        flashed: Set<String>
+    ): Int {
+        return repository.deleteEmbeddingConfigs(configs, flashed)
+    }
+
+    fun flashEmbeddingConfigs(
+        configs: List<EmbeddingConfigManager.ConfigFileInfo>,
+        onResult: (SettingsDetailConfigFlashResult) -> Unit
+    ) {
+        Thread {
+            try {
+                repository.flashEmbeddingConfigs(configs)
+                onResult(SettingsDetailConfigFlashResult.Success)
+            } catch (e: Exception) {
+                onResult(SettingsDetailConfigFlashResult.Failure(e.message.orEmpty()))
+            }
+        }.start()
     }
 
     fun restoreOriginalModule(onResult: (SettingsDetailRestoreResult) -> Unit) {
@@ -105,6 +132,64 @@ class SettingsDetailViewModel(
             }
         }.start()
     }
+
+    fun prepareFontImport(
+        uri: Uri,
+        onResult: (SettingsDetailFontPreparationResult) -> Unit
+    ) {
+        Thread {
+            try {
+                val preparation = repository.prepareFontImport(uri)
+                currentSelectedFontFile = preparation.file
+                onResult(SettingsDetailFontPreparationResult.Success(preparation.originalFileName))
+            } catch (e: Exception) {
+                onResult(SettingsDetailFontPreparationResult.Failure(e.message.orEmpty()))
+            }
+        }.start()
+    }
+
+    fun installFont(
+        fontName: String,
+        fontDescription: String,
+        onResult: (SettingsDetailFontInstallResult) -> Unit
+    ) {
+        Thread {
+            try {
+                repository.installFont(
+                    fontFile = currentSelectedFontFile,
+                    fontName = fontName,
+                    fontDescription = fontDescription
+                )
+                onResult(SettingsDetailFontInstallResult.Success)
+            } catch (e: Exception) {
+                onResult(SettingsDetailFontInstallResult.Failure(e.message.orEmpty()))
+            }
+        }.start()
+    }
+
+    fun loadOvConfigSelection(
+        mode: Int,
+        onResult: (SettingsDetailOvConfigSelectionResult) -> Unit
+    ) {
+        Thread {
+            try {
+                onResult(SettingsDetailOvConfigSelectionResult.Success(repository.loadOvConfigSelection(mode)))
+            } catch (e: Exception) {
+                onResult(SettingsDetailOvConfigSelectionResult.Failure(e.message.orEmpty()))
+            }
+        }.start()
+    }
+
+    fun saveOvConfig(
+        configMap: MutableMap<String, OvCommonConfigManager.AppConfig>,
+        selectedPackages: List<String>,
+        mode: Int,
+        onResult: (String) -> Unit
+    ) {
+        Thread {
+            onResult(repository.saveOvConfig(configMap, selectedPackages, mode))
+        }.start()
+    }
 }
 
 sealed interface SettingsDetailModuleResult {
@@ -116,6 +201,26 @@ sealed interface SettingsDetailModuleResult {
 sealed interface SettingsDetailRestoreResult {
     data object Success : SettingsDetailRestoreResult
     data class Failure(val message: String) : SettingsDetailRestoreResult
+}
+
+sealed interface SettingsDetailConfigFlashResult {
+    data object Success : SettingsDetailConfigFlashResult
+    data class Failure(val message: String) : SettingsDetailConfigFlashResult
+}
+
+sealed interface SettingsDetailFontPreparationResult {
+    data class Success(val originalFileName: String?) : SettingsDetailFontPreparationResult
+    data class Failure(val message: String) : SettingsDetailFontPreparationResult
+}
+
+sealed interface SettingsDetailFontInstallResult {
+    data object Success : SettingsDetailFontInstallResult
+    data class Failure(val message: String) : SettingsDetailFontInstallResult
+}
+
+sealed interface SettingsDetailOvConfigSelectionResult {
+    data class Success(val selection: OvConfigSelection) : SettingsDetailOvConfigSelectionResult
+    data class Failure(val message: String) : SettingsDetailOvConfigSelectionResult
 }
 
 data class SettingsDetailUiState(

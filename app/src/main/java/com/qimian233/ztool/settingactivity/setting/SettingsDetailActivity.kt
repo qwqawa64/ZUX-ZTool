@@ -3,11 +3,8 @@ package com.qimian233.ztool.settingactivity.setting
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.provider.Settings
 import android.view.ViewGroup
 import android.widget.Toast
@@ -87,24 +84,20 @@ import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.utils.EmbeddingConfigManager
-import com.qimian233.ztool.utils.FontInstallerManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
+import com.qimian233.ztool.viewmodel.SettingsDetailConfigFlashResult
+import com.qimian233.ztool.viewmodel.SettingsDetailFontInstallResult
+import com.qimian233.ztool.viewmodel.SettingsDetailFontPreparationResult
 import com.qimian233.ztool.viewmodel.SettingsDetailModuleResult
+import com.qimian233.ztool.viewmodel.SettingsDetailOvConfigSelectionResult
 import com.qimian233.ztool.viewmodel.SettingsDetailRestoreResult
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import com.qimian233.ztool.viewmodel.SettingsDetailViewModel
-import java.io.File
 
 class SettingsDetailActivity : ComponentActivity() {
 
-    private lateinit var configManager: EmbeddingConfigManager
-    private lateinit var fontManager: FontInstallerManager
-    private lateinit var ovConfigManager: OvCommonConfigManager
-
     private var appPackageName: String? = null
     private var floatingWindow: FloatingWindow? = null
-    private var currentSelectedFontFile: File? = null
-    private var allInstalledPackages: MutableList<String>? = null
     private var loadingDialog: LoadingDialog? = null
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
     private lateinit var fontPickerLauncher: ActivityResultLauncher<Intent>
@@ -115,9 +108,6 @@ class SettingsDetailActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        configManager = EmbeddingConfigManager()
-        fontManager = FontInstallerManager()
-        ovConfigManager = OvCommonConfigManager()
         viewModel = ViewModelProvider(
             this,
             SettingsDetailViewModelFactory(SettingsDetailRepository(applicationContext))
@@ -140,7 +130,7 @@ class SettingsDetailActivity : ComponentActivity() {
                     onModuleEnabledChanged = ::handleModuleSwitch,
                     onStartFloatingWindow = ::startFloatingWindow,
                     onOpenConfigSelection = {
-                        showConfigSelectionDialog(configManager.loadAndValidateConfigFiles(this))
+                        showConfigSelectionDialog(viewModel.loadEmbeddingConfigFiles())
                     },
                     onOpenStrategySearch = {
                         startActivity(Intent(this, searchPage::class.java))
@@ -211,39 +201,35 @@ class SettingsDetailActivity : ComponentActivity() {
             it.show(getString(R.string.loading_config))
         }
 
-        Thread {
-            if (allInstalledPackages == null) {
-                val packages = mutableListOf<String>()
-                val pm = packageManager
-                val apps = pm.getInstalledApplications(0)
-                for (app in apps) {
-                    if (pm.getLaunchIntentForPackage(app.packageName) != null) {
-                        packages.add(app.packageName)
-                    }
-                }
-                allInstalledPackages = packages
-            }
-
-            val currentConfig = ovConfigManager.loadConfig(this)
-            val selectedPackages = ovConfigManager.getPackagesForMode(currentConfig, mode)
-
+        viewModel.loadOvConfigSelection(mode) { result ->
             runOnUiThread {
                 loadingDialog?.dismiss()
-                AppChooserDialog.show(
-                    this,
-                    allInstalledPackages.orEmpty(),
-                    selectedPackages,
-                    title,
-                    object : AppChooserDialog.AppSelectionCallback {
-                        override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
-                            saveOvConfig(currentConfig, selectedApps, mode)
-                        }
+                when (result) {
+                    is SettingsDetailOvConfigSelectionResult.Success -> {
+                        AppChooserDialog.show(
+                            this,
+                            result.selection.allPackages,
+                            result.selection.selectedPackages,
+                            title,
+                            object : AppChooserDialog.AppSelectionCallback {
+                                override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
+                                    saveOvConfig(result.selection.configMap, selectedApps, mode)
+                                }
 
-                        override fun onCancel() = Unit
+                                override fun onCancel() = Unit
+                            }
+                        )
                     }
-                )
+                    is SettingsDetailOvConfigSelectionResult.Failure -> {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.error_title)
+                            .setMessage(getString(R.string.error_prefix) + result.message)
+                            .setPositiveButton(R.string.got_it_button, null)
+                            .show()
+                    }
+                }
             }
-        }.start()
+        }
     }
 
     private fun saveOvConfig(
@@ -255,11 +241,11 @@ class SettingsDetailActivity : ComponentActivity() {
             it.show(getString(R.string.saving_config))
         }
 
-        Thread {
-            val newSelectedPackages = selectedApps.map { it.packageName }
-            ovConfigManager.updateConfigForMode(configMap, newSelectedPackages, mode)
-            val result = ovConfigManager.saveConfig(this, configMap)
-
+        viewModel.saveOvConfig(
+            configMap = configMap,
+            selectedPackages = selectedApps.map { it.packageName },
+            mode = mode
+        ) { result ->
             runOnUiThread {
                 loadingDialog?.dismiss()
                 if (result == "success") {
@@ -276,7 +262,7 @@ class SettingsDetailActivity : ComponentActivity() {
                         .show()
                 }
             }
-        }.start()
+        }
     }
 
     private fun handleModuleSwitch(isChecked: Boolean) {
@@ -410,14 +396,10 @@ class SettingsDetailActivity : ComponentActivity() {
         flashed: Set<String>,
         dialog: AlertDialog
     ) {
-        var count = 0
-        for (config in toDelete) {
-            if (flashed.contains(config.timestamp + "_" + config.packageName)) continue
-            if (config.file.delete()) count++
-        }
+        val count = viewModel.deleteEmbeddingConfigs(toDelete, flashed)
         Toast.makeText(this, getString(R.string.delete_success, count), Toast.LENGTH_SHORT).show()
         dialog.dismiss()
-        showConfigSelectionDialog(configManager.loadAndValidateConfigFiles(this))
+        showConfigSelectionDialog(viewModel.loadEmbeddingConfigFiles())
     }
 
     private fun flashSelectedConfigs(selectedConfigs: List<EmbeddingConfigManager.ConfigFileInfo>) {
@@ -433,30 +415,25 @@ class SettingsDetailActivity : ComponentActivity() {
             it.show(getString(R.string.flashing_config))
         }
 
-        Thread {
-            try {
-                configManager.flashConfigs(this, selectedConfigs)
-                viewModel.addFlashedConfigKeys(
-                    selectedConfigs.map { config -> config.timestamp + "_" + config.packageName }
-                )
-
-                runOnUiThread {
-                    loadingDialog?.dismiss()
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.success_title)
-                        .setMessage(R.string.flash_success_message)
-                        .show()
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    loadingDialog?.dismiss()
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.error_title)
-                        .setMessage(getString(R.string.flash_failed_message, e.message))
-                        .show()
+        viewModel.flashEmbeddingConfigs(selectedConfigs) { result ->
+            runOnUiThread {
+                loadingDialog?.dismiss()
+                when (result) {
+                    SettingsDetailConfigFlashResult.Success -> {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.success_title)
+                            .setMessage(R.string.flash_success_message)
+                            .show()
+                    }
+                    is SettingsDetailConfigFlashResult.Failure -> {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.error_title)
+                            .setMessage(getString(R.string.flash_failed_message, result.message))
+                            .show()
+                    }
                 }
             }
-        }.start()
+        }
     }
 
     private fun restoreOriginalModule() {
@@ -513,21 +490,21 @@ class SettingsDetailActivity : ComponentActivity() {
             it.show(getString(R.string.preparing_font_file))
         }
 
-        Thread {
-            try {
-                currentSelectedFontFile = fontManager.copyFontToTemp(this, uri)
-                val fileName = getFileName(uri)
-                runOnUiThread {
-                    loadingDialog?.dismiss()
-                    showFontInputDialog(fileName ?: getString(R.string.unknown_font_filename))
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    loadingDialog?.dismiss()
-                    Toast.makeText(this, "File Error: " + e.message, Toast.LENGTH_SHORT).show()
+        viewModel.prepareFontImport(uri) { result ->
+            runOnUiThread {
+                loadingDialog?.dismiss()
+                when (result) {
+                    is SettingsDetailFontPreparationResult.Success -> {
+                        showFontInputDialog(
+                            result.originalFileName ?: getString(R.string.unknown_font_filename)
+                        )
+                    }
+                    is SettingsDetailFontPreparationResult.Failure -> {
+                        Toast.makeText(this, "File Error: " + result.message, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
-        }.start()
+        }
     }
 
     private fun showFontInputDialog(originalFileName: String) {
@@ -575,52 +552,26 @@ class SettingsDetailActivity : ComponentActivity() {
             it.show(getString(R.string.importing_font))
         }
 
-        Thread {
-            try {
-                fontManager.installFont(this, currentSelectedFontFile, fontName, fontDescription)
-                runOnUiThread {
-                    loadingDialog?.dismiss()
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.import_success_title)
-                        .setMessage(R.string.import_success_message)
-                        .setPositiveButton(R.string.restart_yes, null)
-                        .show()
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    loadingDialog?.dismiss()
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.import_failed_title)
-                        .setMessage(e.message)
-                        .show()
-                }
-            }
-        }.start()
-    }
-
-    private fun getFileName(uri: Uri): String? {
-        var result: String? = null
-        if (uri.scheme == "content") {
-            try {
-                val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
-                cursor.use {
-                    if (it != null && it.moveToFirst()) {
-                        val index = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                        if (index >= 0) result = it.getString(index)
+        viewModel.installFont(fontName, fontDescription) { result ->
+            runOnUiThread {
+                loadingDialog?.dismiss()
+                when (result) {
+                    SettingsDetailFontInstallResult.Success -> {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.import_success_title)
+                            .setMessage(R.string.import_success_message)
+                            .setPositiveButton(R.string.restart_yes, null)
+                            .show()
+                    }
+                    is SettingsDetailFontInstallResult.Failure -> {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.import_failed_title)
+                            .setMessage(result.message)
+                            .show()
                     }
                 }
-            } catch (_: Exception) {
             }
         }
-        if (result == null) {
-            result = uri.path
-            val value = result
-            if (value != null) {
-                val cut = value.lastIndexOf('/')
-                if (cut != -1) result = value.substring(cut + 1)
-            }
-        }
-        return result
     }
 
     override fun onDestroy() {

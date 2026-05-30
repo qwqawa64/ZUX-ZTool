@@ -1,18 +1,29 @@
 package com.qimian233.ztool.data.settings
 
 import android.content.Context
+import android.database.Cursor
+import android.net.Uri
 import android.os.Build
+import android.provider.OpenableColumns
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.utils.EmbeddingConfigManager
+import com.qimian233.ztool.utils.FontInstallerManager
 import com.qimian233.ztool.utils.MagiskModuleManager
+import com.qimian233.ztool.utils.OvCommonConfigManager
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
+import java.io.File
 
 class SettingsDetailRepository(
     private val context: Context,
     private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance(),
-    private val magiskManager: MagiskModuleManager = MagiskModuleManager()
+    private val magiskManager: MagiskModuleManager = MagiskModuleManager(),
+    private val embeddingConfigManager: EmbeddingConfigManager = EmbeddingConfigManager(),
+    private val fontInstallerManager: FontInstallerManager = FontInstallerManager(),
+    private val ovConfigManager: OvCommonConfigManager = OvCommonConfigManager()
 ) {
     private val prefsUtils = ModulePreferencesUtils(context)
+    private var cachedLaunchablePackages: List<String>? = null
 
     fun loadState(): SettingsDetailUiState {
         return SettingsDetailUiState(
@@ -94,6 +105,57 @@ class SettingsDetailRepository(
         saveFlashedConfigs(emptySet())
     }
 
+    fun loadEmbeddingConfigFiles(): List<EmbeddingConfigManager.ConfigFileInfo> {
+        return embeddingConfigManager.loadAndValidateConfigFiles(context)
+    }
+
+    fun deleteEmbeddingConfigs(
+        configs: List<EmbeddingConfigManager.ConfigFileInfo>,
+        flashed: Set<String>
+    ): Int {
+        var count = 0
+        for (config in configs) {
+            if (flashed.contains(config.toFlashedKey())) continue
+            if (config.file.delete()) count++
+        }
+        return count
+    }
+
+    fun flashEmbeddingConfigs(configs: List<EmbeddingConfigManager.ConfigFileInfo>) {
+        embeddingConfigManager.flashConfigs(context, configs)
+        addFlashedConfigKeys(configs.map { config -> config.toFlashedKey() })
+    }
+
+    fun prepareFontImport(uri: Uri): FontImportPreparation {
+        val fontFile = fontInstallerManager.copyFontToTemp(context, uri)
+        return FontImportPreparation(
+            file = fontFile,
+            originalFileName = getFileName(uri)
+        )
+    }
+
+    fun installFont(fontFile: File?, fontName: String, fontDescription: String) {
+        fontInstallerManager.installFont(context, fontFile, fontName, fontDescription)
+    }
+
+    fun loadOvConfigSelection(mode: Int): OvConfigSelection {
+        val config = ovConfigManager.loadConfig(context)
+        return OvConfigSelection(
+            allPackages = loadLaunchablePackageNames(),
+            configMap = config,
+            selectedPackages = ovConfigManager.getPackagesForMode(config, mode)
+        )
+    }
+
+    fun saveOvConfig(
+        configMap: MutableMap<String, OvCommonConfigManager.AppConfig>,
+        selectedPackages: List<String>,
+        mode: Int
+    ): String {
+        ovConfigManager.updateConfigForMode(configMap, selectedPackages, mode)
+        return ovConfigManager.saveConfig(context, configMap)
+    }
+
     private fun saveFlashedConfigs(set: Set<String>) {
         moduleSettings.edit().putStringSet(KEY_FLASHED_CONFIGS, HashSet(set)).apply()
     }
@@ -105,6 +167,50 @@ class SettingsDetailRepository(
 
     private val moduleSettings by lazy {
         context.getSharedPreferences(PREF_MODULE_SETTINGS, Context.MODE_PRIVATE)
+    }
+
+    private fun EmbeddingConfigManager.ConfigFileInfo.toFlashedKey(): String {
+        return timestamp + "_" + packageName
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            try {
+                val cursor: Cursor? = context.contentResolver.query(uri, null, null, null, null)
+                cursor.use {
+                    if (it != null && it.moveToFirst()) {
+                        val index = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (index >= 0) result = it.getString(index)
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val value = result
+            if (value != null) {
+                val cut = value.lastIndexOf('/')
+                if (cut != -1) result = value.substring(cut + 1)
+            }
+        }
+        return result
+    }
+
+    private fun loadLaunchablePackageNames(): List<String> {
+        cachedLaunchablePackages?.let { return it }
+
+        val packages = mutableListOf<String>()
+        val packageManager = context.packageManager
+        val apps = packageManager.getInstalledApplications(0)
+        for (app in apps) {
+            if (packageManager.getLaunchIntentForPackage(app.packageName) != null) {
+                packages.add(app.packageName)
+            }
+        }
+        cachedLaunchablePackages = packages
+        return packages
     }
 
     companion object {
@@ -119,3 +225,14 @@ class SettingsDetailRepository(
         private const val KEY_ALWAYS_DISPLAY_SUGGESTION = "AlwaysDisplaySuggestion"
     }
 }
+
+data class FontImportPreparation(
+    val file: File,
+    val originalFileName: String?
+)
+
+data class OvConfigSelection(
+    val allPackages: List<String>,
+    val configMap: MutableMap<String, OvCommonConfigManager.AppConfig>,
+    val selectedPackages: List<String>
+)

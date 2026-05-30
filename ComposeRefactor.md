@@ -629,6 +629,35 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Magisk and flashed config persistence extraction.
 
+### SettingsDetailActivity Remaining Business Boundary Slices
+
+`settingactivity/setting/SettingsDetailActivity.kt` now delegates the remaining embedding config, font import, and OV config business operations to:
+
+- `viewmodel/SettingsDetailViewModel.kt`.
+- `data/settings/SettingsDetailRepository.kt`.
+
+Preserved behavior:
+
+- Existing config file selection dialog, selected-state handling, disabled already-flashed configs, restore-module entry, and flashed key format.
+- Existing embedding config loading, deletion count behavior, config flashing, and flashed config persistence.
+- Existing font SAF picker launch contract, font name/description input dialog, temp font copy, font install behavior, and result dialogs.
+- Existing OV force split/freeform/fixed modes, launchable package filtering, current selected-package lookup, config update, save behavior, and `AppChooserDialog` flow.
+- Existing Activity class name, package, launch contract, user-visible strings, and result dialog sequencing.
+
+Implementation note:
+
+- The Activity no longer directly holds `EmbeddingConfigManager`, `FontInstallerManager`, or an `OvCommonConfigManager` instance.
+- The Activity no longer directly loads, deletes, flashes, or persists embedding configs.
+- The Activity no longer directly copies temp font files, resolves selected font filenames, or installs fonts.
+- The Activity no longer directly loads installed launchable packages or reads/updates/saves OV config XML.
+- The Activity remains responsible for Android launchers, overlay permission flow, Compose dialog rendering, loading indicators, Toasts, and result dialogs.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the embedding config load/delete/flash extraction.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the font import extraction.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the OV config extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -777,20 +806,16 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue Phase 2 ViewModel/repository extraction. Phase 2 is not complete yet: most active Compose screens now consume `UiState` and many heavy pages already have ViewModel/repository boundaries, but `SettingsDetailActivity.kt` still owns Magisk/config/font/OV business work, direct `Thread {}` blocks, and direct `module_settings` SharedPreferences access. The magic-window search page and floating-window guide also still contain direct root/runtime work that should be considered Phase 2 follow-up targets after the system settings detail page is cleaned up.
+Continue Phase 2 ViewModel/repository extraction. Phase 2 is not complete yet: most active Compose screens now consume `UiState` and many heavy pages already have ViewModel/repository boundaries, and `SettingsDetailActivity.kt` has now completed its planned business-boundary slices. The remaining Phase 2 follow-up targets are smaller Compose sub-pages that still contain direct root/runtime or Activity-local business work.
 
 Recommended next order:
 
-1. `settingactivity/setting/SettingsDetailActivity.kt`
-   - Move embedding config load/delete/flash coordination behind repository methods while leaving Compose dialog rendering in the Activity.
-   - Move font temp-copy/install coordination behind repository methods while preserving the SAF picker and font input dialog contract.
-   - Move OV config package loading/load/update/save coordination behind repository methods while keeping `AppChooserDialog` launched from the Activity.
-   - Run `.\gradlew.bat assembleDebug` after each small slice and record the completed slice here.
-
-2. `settingactivity/setting/magicwindowsearch/searchPage.kt`
-   - After `SettingsDetailActivity.kt` no longer owns business work directly, extract config loading, root file fallback, JSON parsing, and search state into a ViewModel/repository pair.
+1. `settingactivity/setting/magicwindowsearch/searchPage.kt`
+   - Extract config loading, root file fallback, JSON parsing, and search state into a ViewModel/repository pair.
    - Preserve the existing `searchPage` class name, Activity launch contract, module config path, asset fallback, result details dialog, and search behavior.
+   - Run `.\gradlew.bat assembleDebug` after the slice and record the result here.
 
-3. `settingactivity/setting/floatingwindow/FloatingWindow.kt`
+2. `settingactivity/setting/floatingwindow/FloatingWindow.kt`
    - After the search page boundary is stable, separate foreground app/activity lookup, wizard state, and generated config persistence from the overlay Compose UI.
    - Preserve the existing overlay lifecycle owner handling, wizard sequence, shell fallback behavior, generated Base64 config format, and storage path.
+   - Run `.\gradlew.bat assembleDebug` after the slice and record the result here.
