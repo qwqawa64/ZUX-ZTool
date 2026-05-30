@@ -273,14 +273,15 @@ Move to Phase 4: stabilize and migrate the main navigation host. Phase 3's theme
 
 Recommended next order:
 
-1. Stabilize `MainActivity`'s mixed Compose/Fragment navigation host.
+1. Stabilize `MainActivity`'s mixed Compose/Fragment navigation host. Completed on 2026-05-30.
    - Bug: when switching between portrait and landscape, all composable content except the navigation rail disappears.
    - Bug: when Android switches system light/dark mode, all composable content except the navigation rail disappears.
+   - Fix: `LegacyNavHost` now rebinds an existing `NavHostFragment` to the current `FragmentContainerView` through `bindLegacyNavHost(...)` when the host view changes.
+   - Verification: `.\gradlew.bat assembleDebug` succeeded, and manual observation confirmed both blank-content bugs are fixed.
    - Preserve the existing `MainActivity` class, XML navigation graph, Fragment routes, destination ids, external launch contracts, and environment-ready gating.
-   - Investigate `LegacyNavHost`, `AndroidView`, `FragmentContainerView` identity/recreation, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and recomposition/configuration-change interactions around the host.
    - Do not delete `nav_graph.xml`, legacy XML layouts, or Fragment classes in this stabilization slice.
 
-2. Introduce Compose-owned main route state after the host is stable.
+2. Introduce Compose-owned main route state. Next.
    - Keep Home, Features, Audit, and Settings as the active main destinations.
    - Keep existing Fragment screens as route content during the transition if that reduces risk.
    - Preserve the current navigation rail behavior and environment-ready gating.

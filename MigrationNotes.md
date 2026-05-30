@@ -985,4 +985,5 @@ Implementation note:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the host stabilization slice.
+- Manual observation confirmed both blank-content bugs are fixed: portrait/landscape switching and system light/dark switching no longer leave only the navigation rail visible.
 - Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.
