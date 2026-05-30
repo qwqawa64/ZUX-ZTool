@@ -21,6 +21,10 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
+import top.yukonga.miuix.kmp.theme.Colors
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.theme.darkColorScheme as miuixDarkColorScheme
+import top.yukonga.miuix.kmp.theme.lightColorScheme as miuixLightColorScheme
 
 data class ZToolThemeSpec(
     val style: FrontendStyle,
@@ -124,13 +128,97 @@ fun ZToolTheme(
         }
     )
 
-    CompositionLocalProvider(
-        LocalZToolThemeSpec provides ZToolThemeSpec(style = effectiveSettings.frontendStyle)
-    ) {
+    val themeSpec = ZToolThemeSpec(style = effectiveSettings.frontendStyle)
+    val themedContent: @Composable () -> Unit = {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = MaterialTheme.typography,
-            content = content
+        ) {
+            if (themeSpec.style == FrontendStyle.Miuix) {
+                MiuixTheme(
+                    colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
+                    content = content
+                )
+            } else {
+                content()
+            }
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalZToolThemeSpec provides themeSpec,
+        content = themedContent
+    )
+}
+
+private fun ColorScheme.toMiuixColors(darkTheme: Boolean): Colors {
+    return if (darkTheme) {
+        miuixDarkColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            primaryVariant = primaryContainer,
+            onPrimaryVariant = onPrimaryContainer,
+            error = error,
+            onError = onError,
+            errorContainer = errorContainer,
+            onErrorContainer = onErrorContainer,
+            primaryContainer = primaryContainer,
+            onPrimaryContainer = onPrimaryContainer,
+            secondary = secondaryContainer,
+            onSecondary = onSecondaryContainer,
+            secondaryVariant = surfaceVariant,
+            onSecondaryVariant = onSurfaceVariant,
+            secondaryContainer = surfaceContainer,
+            onSecondaryContainer = onSurfaceVariant,
+            tertiaryContainer = tertiaryContainer,
+            onTertiaryContainer = onTertiaryContainer,
+            background = background,
+            onBackground = onBackground,
+            surface = surface,
+            onSurface = onSurface,
+            surfaceVariant = surfaceVariant,
+            surfaceContainer = surfaceContainer,
+            onSurfaceContainer = onSurface,
+            surfaceContainerHigh = surfaceContainerHigh,
+            onSurfaceContainerHigh = onSurfaceVariant,
+            surfaceContainerHighest = surfaceContainerHighest,
+            onSurfaceContainerHighest = onSurface,
+            outline = outline,
+            dividerLine = outlineVariant
+        )
+    } else {
+        miuixLightColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            primaryVariant = primaryContainer,
+            onPrimaryVariant = onPrimaryContainer,
+            error = error,
+            onError = onError,
+            errorContainer = errorContainer,
+            onErrorContainer = onErrorContainer,
+            primaryContainer = primaryContainer,
+            onPrimaryContainer = onPrimaryContainer,
+            secondary = secondaryContainer,
+            onSecondary = onSecondaryContainer,
+            secondaryVariant = surfaceVariant,
+            onSecondaryVariant = onSurfaceVariant,
+            secondaryContainer = surfaceContainer,
+            onSecondaryContainer = onSurfaceVariant,
+            tertiaryContainer = tertiaryContainer,
+            onTertiaryContainer = onTertiaryContainer,
+            background = background,
+            onBackground = onBackground,
+            surface = surface,
+            onSurface = onSurface,
+            surfaceVariant = surfaceVariant,
+            surfaceContainer = surfaceContainer,
+            onSurfaceContainer = onSurface,
+            surfaceContainerHigh = surfaceContainerHigh,
+            onSurfaceContainerHigh = onSurfaceVariant,
+            surfaceContainerHighest = surfaceContainerHighest,
+            onSurfaceContainerHighest = onSurface,
+            outline = outline,
+            dividerLine = outlineVariant
         )
     }
 }

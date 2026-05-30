@@ -949,6 +949,31 @@ Follow-up dark-mode fix:
 - Fix: move the top spacing inside the rail content so the rail container paints the full height with `MaterialTheme.colorScheme.surface`.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the rail spacing fix.
 
+### Phase 3 Miuix Adapter First Slice
+
+The first Miuix rendering slice wires Miuix into the shared component/theme layer without adding style branches to business screens.
+
+Implemented:
+
+- `ZToolTheme` now provides Miuix theme locals when `FrontendStyle.Miuix` is selected.
+- Miuix colors are derived from the already-resolved Material `ColorScheme`, so theme mode, dynamic color, manual seed color, and AMOLED surface overrides continue to share the existing project theme resolution path.
+- `ZToolScaffold` uses Miuix `Scaffold` in Miuix mode.
+- `ZToolTopAppBar` uses Miuix `SmallTopAppBar` in Miuix mode.
+- `ZToolNavigationRail` uses Miuix `NavigationRail` as the rail container in Miuix mode.
+- `ZToolCard` uses Miuix `Card` in Miuix mode.
+- `ZToolSwitchRow` uses Miuix `Switch` in Miuix mode.
+- `ZToolDialogSurface` uses Miuix `Surface` in Miuix mode.
+
+Deferred:
+
+- `ZToolNavigationRailItem` still uses the Material implementation because Miuix `NavigationRailItem` in `0.8.8` accepts `ImageVector`, while the existing project wrapper accepts composable `Painter` icons. Changing that requires a separate navigation icon contract slice.
+- `ZToolDialog` still uses Material `AlertDialog` because the current wrapper accepts arbitrary composable title/text/button content, while Miuix `SuperDialog` is string/content-layout oriented. Dialog migration should be a dedicated compatibility slice.
+- `ZToolDropdownField` still uses Material `ExposedDropdownMenuBox` because it preserves the current non-editable anchor behavior and existing form layout.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the first Miuix adapter slice.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1162,12 +1187,13 @@ Recommended next order:
    - Keep Material 3 Expressive as the default and verified style path.
    - `.\gradlew.bat assembleDebug` succeeded after adding the dependency.
 
-3. Implement Miuix rendering behind the component and theme adapter layer. Next.
-   - Add Miuix behavior inside `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, `ZToolDropdownField`, `ZListItem`, and `ZToolDialog` only as needed.
+3. Implement Miuix rendering behind the component and theme adapter layer. In progress.
+   - First slice completed on 2026-05-30 for `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
+   - Remaining candidate slices: `ZToolNavigationRailItem` icon-contract migration, `ZToolDialog` compatibility migration, and `ZToolDropdownField`/`ZListItem` Miuix-specific rendering where the existing API can be preserved.
    - Keep `LocalZToolThemeSpec` as the style-selection boundary.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
 
-4. Verify style switching across active Compose surfaces.
+4. Verify style switching across active Compose surfaces. Next.
    - Check Material 3 and Miuix rendering for `MainActivity`, Fragment-hosted pages, settings Activities, dialogs, and overlay/dialog Compose hosts.
    - Verify follow-system/light/dark, Monet, manual color, and AMOLED black still behave correctly in the Material 3 path.
    - Run `.\gradlew.bat assembleDebug` and record the result here after each adapter slice.

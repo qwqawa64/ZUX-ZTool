@@ -13,6 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 
 @Composable
 fun ZToolPageSurface(
@@ -36,6 +40,20 @@ fun ZToolCard(
     defaultElevation: androidx.compose.ui.unit.Dp = 0.dp,
     content: @Composable () -> Unit
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixCard(
+            modifier = modifier,
+            cornerRadius = 16.dp,
+            colors = MiuixCardDefaults.defaultColors(
+                color = containerColor,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
+        ) {
+            content()
+        }
+        return
+    }
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
