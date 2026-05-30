@@ -1012,3 +1012,28 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after introducing Compose-owned main route state.
 - Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.
+
+### Phase 4 Navigation Compose Main Routes
+
+The third Phase 4 slice replaces the main in-app XML Navigation route graph with Compose Navigation while preserving the existing Fragment page implementations.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name and launch contract.
+- Existing Home, Features, Audit, and Settings Fragment classes.
+- Existing main navigation rail labels, icons, selected-route behavior, and environment-ready gating.
+- Existing Fragment-hosted Compose screen behavior.
+- Existing `nav_graph.xml` resource is intentionally left in place for the dedicated XML/View cleanup phase.
+
+Implementation note:
+
+- `MainActivity` now creates a Compose `NavHost` with `MainRoute` destinations.
+- `MainRoute` remains the main route model consumed by the Compose shell and navigation rail.
+- Each Compose route currently hosts the matching legacy Fragment through `LegacyFragmentRoute` and a `FragmentContainerView`.
+- Legacy XML destination ids are no longer used for main in-app navigation dispatch; they remain as compatibility metadata and cleanup candidates.
+- This slice does not migrate the main Fragment screens to pure composable route functions yet.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after replacing the main route graph with Compose Navigation.
+- Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.

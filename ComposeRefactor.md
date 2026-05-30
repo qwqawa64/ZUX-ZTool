@@ -288,12 +288,14 @@ Recommended next order:
    - Fix: `MainActivity` now models the main destinations as `MainRoute`; the Compose shell owns selected route state and only maps to XML destination ids at the legacy navigation dispatch boundary.
    - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
 
-3. Replace the main XML Navigation path with `navigation-compose`. Next.
+3. Replace the main XML Navigation path with `navigation-compose`. Completed on 2026-05-30.
    - Move main route definitions into Compose.
    - Preserve external launch contracts and old entry points.
    - Leave XML/View cleanup for the dedicated cleanup phase.
+   - Fix: `MainActivity` now uses Compose `NavHost` with `MainRoute` destinations; each route temporarily hosts the existing Fragment content through a `FragmentContainerView`.
+   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
 
-4. Verify each Phase 4 slice.
+4. Verify each Phase 4 slice. Next.
    - Run `.\gradlew.bat assembleDebug`.
    - Verify Material 3 Expressive and Miuix modes.
    - Verify portrait/landscape switching and system light/dark switching no longer blank the main content.

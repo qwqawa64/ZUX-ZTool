@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -27,10 +29,12 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
-import androidx.navigation.NavController
-import androidx.navigation.NavOptions
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.google.android.material.color.DynamicColors
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
@@ -46,7 +50,6 @@ class MainActivity : AppCompatActivity(),
     LogServiceManager.ServiceStatusListener,
     CountdownDialog.OnCountdownFinishListener {
 
-    private var navController: NavController? = null
     private var isEnvironmentReady by mutableStateOf(false)
     private var currentRoute by mutableStateOf(MainRoute.Home)
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
@@ -86,7 +89,7 @@ class MainActivity : AppCompatActivity(),
                     environmentReady = isEnvironmentReady,
                     selectedRoute = currentRoute,
                     onDestinationSelected = ::navigateFromRail,
-                    onNavHostReady = ::setupNavController
+                    onRouteChanged = ::setCurrentRouteFromHost
                 )
             }
         }
@@ -150,73 +153,29 @@ class MainActivity : AppCompatActivity(),
         val previousState = isEnvironmentReady
         isEnvironmentReady = environmentReady
 
-        if (!environmentReady && navController?.currentDestination?.id != R.id.homeFragment) {
-            navController?.navigate(R.id.homeFragment)
+        if (!environmentReady && currentRoute != MainRoute.Home) {
             currentRoute = MainRoute.Home
-        }
-
-        if (!previousState && environmentReady && currentRoute != MainRoute.Home) {
-            navigateToSavedDestination()
-        }
-    }
-
-    private fun setupNavController(navHostFragment: NavHostFragment) {
-        if (navController === navHostFragment.navController) return
-
-        navController = navHostFragment.navController.also { controller ->
-            controller.addOnDestinationChangedListener { _, destination, _ ->
-                currentRoute = MainRoute.fromDestinationId(destination.id)
-                if (!isEnvironmentReady && destination.id != R.id.homeFragment) {
-                    controller.navigate(R.id.homeFragment)
-                }
-            }
-        }
-
-        if (isEnvironmentReady && currentRoute != MainRoute.Home) {
-            navigateToSavedDestination()
         }
     }
 
     private fun navigateFromRail(route: MainRoute) {
         if (!isEnvironmentReady && route != MainRoute.Home) return
-
-        val controller = navController ?: return
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastClickTime < clickInterval) return
         lastClickTime = currentTime
 
-        if (controller.currentDestination?.id == route.destinationId) return
-
-        val navOptions = NavOptions.Builder()
-            .setLaunchSingleTop(true)
-            .setRestoreState(true)
-            .setEnterAnim(R.anim.nav_enter)
-            .setExitAnim(R.anim.nav_exit)
-            .setPopEnterAnim(R.anim.nav_pop_enter)
-            .setPopExitAnim(R.anim.nav_pop_exit)
-            .setPopUpTo(controller.graph.startDestinationId, false, true)
-            .build()
-
-        try {
-            controller.navigate(route.destinationId, null, navOptions)
-        } catch (_: IllegalArgumentException) {
-            controller.navigate(R.id.homeFragment)
+        if (currentRoute != route) {
+            currentRoute = route
         }
     }
 
-    private fun navigateToSavedDestination() {
-        val controller = navController ?: return
-        if (currentRoute == MainRoute.Home) return
-
-        val navOptions = NavOptions.Builder()
-            .setLaunchSingleTop(true)
-            .setRestoreState(true)
-            .build()
-
-        try {
-            controller.navigate(currentRoute.destinationId, null, navOptions)
-        } catch (_: IllegalArgumentException) {
-            controller.navigate(R.id.homeFragment)
+    private fun setCurrentRouteFromHost(route: MainRoute) {
+        if (!isEnvironmentReady && route != MainRoute.Home) {
+            currentRoute = MainRoute.Home
+            return
+        }
+        if (currentRoute != route) {
+            currentRoute = route
         }
     }
 
@@ -294,8 +253,30 @@ private fun MainTabletShell(
     environmentReady: Boolean,
     selectedRoute: MainRoute,
     onDestinationSelected: (MainRoute) -> Unit,
-    onNavHostReady: (NavHostFragment) -> Unit
+    onRouteChanged: (MainRoute) -> Unit
 ) {
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+
+    LaunchedEffect(backStackEntry?.destination?.route) {
+        backStackEntry?.destination?.route
+            ?.let(MainRoute::fromName)
+            ?.let(onRouteChanged)
+    }
+
+    LaunchedEffect(environmentReady, selectedRoute) {
+        val targetRoute = if (environmentReady) selectedRoute else MainRoute.Home
+        if (navController.currentDestination?.route != targetRoute.name) {
+            navController.navigate(targetRoute.name) {
+                launchSingleTop = true
+                restoreState = true
+                popUpTo(navController.graph.startDestinationId) {
+                    saveState = true
+                }
+            }
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -318,7 +299,7 @@ private fun MainTabletShell(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxSize(),
-            onNavHostReady = onNavHostReady
+            navController = navController
         )
     }
 }
@@ -326,15 +307,31 @@ private fun MainTabletShell(
 @Composable
 private fun LegacyNavHost(
     modifier: Modifier = Modifier,
-    onNavHostReady: (NavHostFragment) -> Unit
+    navController: androidx.navigation.NavHostController
 ) {
+    NavHost(
+        navController = navController,
+        startDestination = MainRoute.Home.name,
+        modifier = modifier
+    ) {
+        MainRoute.entriesInOrder.forEach { route ->
+            composable(route.name) {
+                LegacyFragmentRoute(route = route)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegacyFragmentRoute(route: MainRoute) {
     val activity = LocalContext.current as AppCompatActivity
+    val containerId = remember(route) { View.generateViewId() }
 
     AndroidView(
-        modifier = modifier,
+        modifier = Modifier.fillMaxSize(),
         factory = { context ->
             FragmentContainerView(context).apply {
-                id = R.id.nav_host_fragment
+                id = containerId
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -342,7 +339,7 @@ private fun LegacyNavHost(
                 addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
                     override fun onViewAttachedToWindow(view: View) {
                         removeOnAttachStateChangeListener(this)
-                        bindLegacyNavHost(activity, this@apply, onNavHostReady)
+                        bindLegacyFragmentRoute(activity, this@apply, route)
                     }
 
                     override fun onViewDetachedFromWindow(view: View) = Unit
@@ -352,40 +349,34 @@ private fun LegacyNavHost(
     )
 }
 
-private fun bindLegacyNavHost(
+private fun bindLegacyFragmentRoute(
     activity: AppCompatActivity,
     container: FragmentContainerView,
-    onNavHostReady: (NavHostFragment) -> Unit
+    route: MainRoute
 ) {
     val fragmentManager = activity.supportFragmentManager
-    val existing = fragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-    val navHostFragment = existing ?: NavHostFragment.create(R.navigation.nav_graph)
+    val current = fragmentManager.findFragmentById(container.id)
+    if (current?.javaClass == route.fragmentClass) return
 
-    if (existing == null) {
-        fragmentManager
-            .beginTransaction()
-            .replace(container.id, navHostFragment)
-            .setPrimaryNavigationFragment(navHostFragment)
-            .commitNow()
-    } else {
-        val currentParent = existing.view?.parent
-        if (currentParent !== container) {
-            fragmentManager
-                .beginTransaction()
-                .detach(existing)
-                .commitNow()
-            fragmentManager
-                .beginTransaction()
-                .attach(existing)
-                .setPrimaryNavigationFragment(existing)
-                .commitNow()
-        } else {
-            fragmentManager
-                .beginTransaction()
-                .setPrimaryNavigationFragment(existing)
-                .commitNow()
-        }
+    fragmentManager
+        .beginTransaction()
+        .replace(container.id, route.createFragment(), route.name)
+        .commitNow()
+}
+
+private val MainRoute.fragmentClass: Class<out Fragment>
+    get() = when (this) {
+        MainRoute.Home -> HomeFragment::class.java
+        MainRoute.Features -> FeaturesFragment::class.java
+        MainRoute.Audit -> AuditFragment::class.java
+        MainRoute.Settings -> SettingsFragment::class.java
     }
 
-    onNavHostReady(navHostFragment)
+private fun MainRoute.createFragment(): Fragment {
+    return when (this) {
+        MainRoute.Home -> HomeFragment()
+        MainRoute.Features -> FeaturesFragment()
+        MainRoute.Audit -> AuditFragment()
+        MainRoute.Settings -> SettingsFragment()
+    }
 }
