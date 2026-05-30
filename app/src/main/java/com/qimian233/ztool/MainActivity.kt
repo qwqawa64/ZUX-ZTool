@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.Toast
@@ -323,24 +324,53 @@ private fun LegacyNavHost(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
-                    override fun onViewAttachedToWindow(view: android.view.View) {
+                addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(view: View) {
                         removeOnAttachStateChangeListener(this)
-                        val existing = activity.supportFragmentManager
-                            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-                        val navHostFragment = existing ?: NavHostFragment.create(R.navigation.nav_graph).also {
-                            activity.supportFragmentManager
-                                .beginTransaction()
-                                .replace(R.id.nav_host_fragment, it)
-                                .setPrimaryNavigationFragment(it)
-                                .commitNow()
-                        }
-                        onNavHostReady(navHostFragment)
+                        bindLegacyNavHost(activity, this@apply, onNavHostReady)
                     }
 
-                    override fun onViewDetachedFromWindow(view: android.view.View) = Unit
+                    override fun onViewDetachedFromWindow(view: View) = Unit
                 })
             }
         }
     )
+}
+
+private fun bindLegacyNavHost(
+    activity: AppCompatActivity,
+    container: FragmentContainerView,
+    onNavHostReady: (NavHostFragment) -> Unit
+) {
+    val fragmentManager = activity.supportFragmentManager
+    val existing = fragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+    val navHostFragment = existing ?: NavHostFragment.create(R.navigation.nav_graph)
+
+    if (existing == null) {
+        fragmentManager
+            .beginTransaction()
+            .replace(container.id, navHostFragment)
+            .setPrimaryNavigationFragment(navHostFragment)
+            .commitNow()
+    } else {
+        val currentParent = existing.view?.parent
+        if (currentParent !== container) {
+            fragmentManager
+                .beginTransaction()
+                .detach(existing)
+                .commitNow()
+            fragmentManager
+                .beginTransaction()
+                .attach(existing)
+                .setPrimaryNavigationFragment(existing)
+                .commitNow()
+        } else {
+            fragmentManager
+                .beginTransaction()
+                .setPrimaryNavigationFragment(existing)
+                .commitNow()
+        }
+    }
+
+    onNavHostReady(navHostFragment)
 }

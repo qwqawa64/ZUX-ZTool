@@ -963,3 +963,26 @@ Follow-up dropdown adapter slice:
 - The dropdown popup and non-editable anchor behavior still use the current Material `ExposedDropdownMenuBox` path, so existing form layouts and option-selection behavior remain unchanged.
 - This completes the planned Phase 3 component adapter rendering pass without adding business-screen style branches.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the dropdown adapter slice.
+
+### Phase 4 Main Navigation Host Stabilization
+
+The first Phase 4 slice stabilizes the existing mixed Compose/Fragment navigation host without replacing XML Navigation yet.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name and launch contract.
+- Existing `nav_graph.xml`, Fragment routes, destination ids, and navigation animations.
+- Existing main navigation rail labels, icons, selected destination behavior, and environment-ready gating.
+- Existing external launch contracts and Fragment-hosted Compose screens.
+
+Implementation note:
+
+- `MainActivity.LegacyNavHost` now delegates Fragment host binding to `bindLegacyNavHost(...)`.
+- When a `NavHostFragment` already exists but its view is not attached to the newly created `FragmentContainerView`, the host is explicitly detached and attached so the Fragment view is recreated for the current container.
+- The existing `NavHostFragment` remains the route owner; this slice does not introduce `navigation-compose`, delete `nav_graph.xml`, or remove legacy Fragment entry points.
+- This targets the blank-content failure mode where configuration or theme changes leave the navigation rail visible while the Fragment-hosted content disappears.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the host stabilization slice.
+- Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.
