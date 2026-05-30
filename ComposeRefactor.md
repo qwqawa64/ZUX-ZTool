@@ -1082,37 +1082,26 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Execute Phase 3 first. The planned Phase 2 heavy-screen ViewModel/repository boundary pass is now complete for the active Compose screens listed in this document, including the floating-window guide. Before continuing broad settings-page model work in Phase 5, establish the theme settings model and style adapter layer so future screens can consume stable project components.
+Continue Phase 3 by completing user-facing style selection and the Miuix component adapter path. The Material 3 theme settings model, persisted repository, top-level wiring, hot switching, and page-level shared component migration are already complete.
 
 Recommended next order:
 
-1. Introduce persisted theme settings. Completed on 2026-05-30.
-   - Add `ZToolThemeSettings` and `ThemeMode`.
-   - Add a small `ThemePreferencesRepository` or equivalent wrapper for frontend style, theme mode, dynamic color, AMOLED black, manual color enabled, and manual seed color.
-   - Keep these keys scoped to app UI preferences and do not change Hook/module preference keys.
+1. Add a user-facing app UI theme settings entry.
+   - Expose frontend style, theme mode, Monet dynamic color, manual seed color, manual color enablement, and AMOLED black settings.
+   - Store changes through `ThemePreferencesRepository`; do not read or write Hook/module preference keys.
+   - Reuse shared ZTool components and preserve the existing settings Fragment launch contract.
 
-2. Update `ZToolTheme` to resolve the final Material 3 theme from settings. Completed on 2026-05-30.
-   - Support follow-system, light, and dark modes.
-   - Use Android 12+ Monet only when dynamic color is enabled and manual color is disabled.
-   - Support manual seed color as a complete `ColorScheme` source rather than changing only `primary`.
-   - Apply AMOLED pure black as a dark-theme post-processing step over `background`, `surface`, and `surfaceContainer*`.
+2. Add the Miuix dependency.
+   - Use the official `compose-miuix-ui/miuix` Android artifact form, such as `top.yukonga.miuix.kmp:miuix-ui-android`, with version pinning compatible with the current Kotlin/Compose setup.
+   - Keep Material 3 Expressive as the default and verified style path.
+   - Run `.\gradlew.bat assembleDebug` after adding the dependency.
 
-3. Wire the top-level app shell to the persisted theme settings. Completed on 2026-05-30.
-   - Load theme settings before calling `ZToolTheme` in `MainActivity`.
-   - Keep existing launch contracts, Fragment navigation, and system-bar behavior compatible.
-   - Make sure dialogs and overlay Compose surfaces still receive the same theme context.
+3. Implement Miuix rendering behind the component and theme adapter layer.
+   - Add Miuix behavior inside `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, `ZToolDropdownField`, `ZListItem`, and `ZToolDialog` only as needed.
+   - Keep `LocalZToolThemeSpec` as the style-selection boundary.
+   - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
 
-4. Expand the shared component adapter layer. Page-level migration completed on 2026-05-30 for active Compose business pages.
-   - Shared scaffold, top app bar, navigation rail, card, switch row, dropdown, list item, and dialog wrappers exist.
-   - Business pages now avoid direct Material 3 page-level `Scaffold`, `TopAppBar`, `Card`, and Compose `AlertDialog` usage.
-   - Keep style selection inside components through `LocalZToolThemeSpec`.
-   - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)`.
-
-5. Add the Miuix dependency only after the Material 3 theme settings path is verified.
-   - Implement Miuix rendering behind shared components and theme adapters.
-   - Keep Material 3 Expressive as the first complete and verified style.
-   - Treat Miuix as a component-layer alternative, not a separate business-screen implementation.
-
-6. Pilot Phase 3 on already-migrated settings pages. Completed for package installer, safe center, and the active Compose page set on 2026-05-30.
-   - Preserve the existing ViewModel/repository boundary.
-   - Run `.\gradlew.bat assembleDebug` after future adapter slices and record the result here.
+4. Verify style switching across active Compose surfaces.
+   - Check Material 3 and Miuix rendering for `MainActivity`, Fragment-hosted pages, settings Activities, dialogs, and overlay/dialog Compose hosts.
+   - Verify follow-system/light/dark, Monet, manual color, and AMOLED black still behave correctly in the Material 3 path.
+   - Run `.\gradlew.bat assembleDebug` and record the result here after each adapter slice.
