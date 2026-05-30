@@ -1549,3 +1549,18 @@ Preserved behavior:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after deleting the inactive Fragment wrappers.
+
+### Phase 7 Fragment Dependency Audit
+
+The post-wrapper Fragment dependency audit is clean for direct app usage.
+
+Audit result:
+
+- No source imports or type references remain for `androidx.fragment.app.Fragment`, `FragmentActivity`, Fragment KTX, or Fragment Navigation APIs.
+- No direct Gradle dependency remains for `androidx.fragment`, `navigation-fragment`, or `navigation-ui`.
+- Remaining `Fragment` text matches are either Hook target class names in other apps, such as DocumentsUI/Settings targets, or historical migration notes.
+- No dependency was removed in this slice because AppCompat is still intentionally retained for `MainActivity` and dialog bridge work; any transitive Fragment dependency from AppCompat belongs to the later AppCompat removal step.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the Fragment dependency audit.

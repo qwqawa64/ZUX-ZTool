@@ -390,12 +390,13 @@ Recommended next order:
    - Confirmed no Manifest, Hook, or active route references remain for the deleted Fragment classes.
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
 
-3. Remove remaining Fragment dependency. Next.
-   - Audit for `androidx.fragment.app` references.
-   - Remove Fragment dependency only when the audit is clean.
-   - Run `.\gradlew.bat assembleDebug`.
+3. Remove remaining Fragment dependency. Completed on 2026-05-31.
+   - Audited for `androidx.fragment.app`, `FragmentActivity`, Fragment KTX APIs, Fragment Navigation APIs, and direct Fragment Gradle dependencies.
+   - Confirmed no direct app source or Gradle dependency remains for Fragment APIs.
+   - No dependency was removed in this slice because any remaining Fragment artifact is transitive through AppCompat, which is intentionally retained until the later AppCompat cleanup.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
 
-4. Migrate `MainActivity` away from AppCompat.
+4. Migrate `MainActivity` away from AppCompat. Next.
    - Convert to `ComponentActivity` after verifying dynamic color, edge-to-edge, first-launch agreement, lifecycle, and service callbacks.
    - Run `.\gradlew.bat assembleDebug`.
 
