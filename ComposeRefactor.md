@@ -995,6 +995,13 @@ Follow-up navigation rail item slice:
 - Material mode still renders through Material `NavigationRailItem` inside the wrapper.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the navigation rail item slice.
 
+Follow-up navigation rail layout fix:
+
+- Fixed the Miuix style switch leaving only a centered, interactive navigation rail visible while the Fragment-hosted content disappeared.
+- Root cause: Miuix `NavigationRailItem` uses `fillMaxWidth()` internally; when hosted inside the retained Material `NavigationRail`, this could expand the rail measurement and squeeze the legacy `NavHost` content out of the main row.
+- Fix: constrain the Miuix item wrapper to the rail width before calling Miuix `NavigationRailItem`.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the navigation rail layout fix.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
