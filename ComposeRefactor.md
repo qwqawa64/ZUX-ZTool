@@ -325,7 +325,15 @@ Current Phase 5 status:
 
 Recommended next order:
 
-1. Migrate the ordinary rows in `settingactivity/setting/SettingsDetailActivity.kt` through the shared settings model. Next.
+1. Migrate `settingactivity/systemui/systemUISettings.kt` through the shared settings model. Completed on 2026-05-31.
+   - Converted detail-page navigation to `SettingItem.Entry`.
+   - Converted AOD, charging animation, and guest-mode rows to `SettingItem.Switch`.
+   - Kept the conditional Lenovo AOD settings launcher as `SettingItem.Action`.
+   - Preserved the existing Activity class, launch contract, sub-settings navigation, preference keys, restart confirmation behavior, root shell commands, and Lenovo AOD settings launch behavior.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
+   - Implementation notes and verification are recorded in `MigrationNotes.md`.
+
+2. Migrate the ordinary rows in `settingactivity/setting/SettingsDetailActivity.kt` through the shared settings model. Next.
    - This page still uses local `SettingsCard`, `ActionSettingRow`, and direct `ZToolSwitchRow` composition.
    - Convert ordinary embedding, permission, Dolby, and suggestion switches to `SettingItem.Switch`.
    - Convert simple action rows to `SettingItem.Action` or `SettingItem.Entry` where behavior stays obvious.
@@ -334,19 +342,19 @@ Recommended next order:
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
 
-2. Defer `settingactivity/setting/magicwindowsearch/searchPage.kt` from Phase 5 model migration unless a narrow card-shell cleanup is explicitly requested.
+3. Defer `settingactivity/setting/magicwindowsearch/searchPage.kt` from Phase 5 model migration unless a narrow card-shell cleanup is explicitly requested.
    - The page is primarily a search/query/result/detail workflow rather than a settings-row page.
    - Keep JSON loading, root fallback, search filtering, result cards, and details dialog outside the settings model.
 
-3. Defer `settingactivity/setting/floatingwindow/FloatingWindow.kt` from Phase 5 model migration.
+4. Defer `settingactivity/setting/floatingwindow/FloatingWindow.kt` from Phase 5 model migration.
    - The page is a floating overlay wizard backed by foreground-app polling, tutorial playback, generated config output, and close/hide behavior.
    - Treat further work here as targeted overlay/wizard cleanup, not settings model expansion.
 
-4. Keep Phase 4 leftovers for Phase 6 cleanup.
+5. Keep Phase 4 leftovers for Phase 6 cleanup.
    - Do not delete `nav_graph.xml`, main Fragment wrappers, legacy Fragment XML layouts, navigation animation resources, or Fragment Navigation dependencies during Phase 5.
    - Cleanup starts only when active UI routes no longer depend on the old View/Fragment layer.
 
-5. Verification policy.
+6. Verification policy.
    - Run `.\gradlew.bat assembleDebug`.
    - Verify Material 3 Expressive and Miuix modes for each migrated page.
    - Verify preference persistence, restart confirmations, shell/root behavior, and Hook compatibility keys for each migrated page.
