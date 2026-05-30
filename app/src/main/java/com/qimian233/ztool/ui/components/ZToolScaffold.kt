@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -39,11 +40,27 @@ fun ZToolTabletScaffold(
     }
 }
 
+@Composable
+fun ZToolScaffold(
+    modifier: Modifier = Modifier,
+    topBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    content: @Composable (PaddingValues) -> Unit
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = topBar,
+        floatingActionButton = floatingActionButton,
+        content = content
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ZToolTopAppBar(
     title: String,
     modifier: Modifier = Modifier,
+    navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
@@ -53,6 +70,7 @@ fun ZToolTopAppBar(
                 style = MaterialTheme.typography.headlineSmall
             )
         },
+        navigationIcon = navigationIcon,
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,

@@ -821,6 +821,15 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the shared component adapter foundation.
 
+Follow-up slice:
+
+- Added shared `ZToolScaffold` for non-tablet page scaffolds.
+- Added shared `ZListItem` for style-agnostic list rows.
+- Expanded `ZToolTopAppBar` with a navigation icon slot.
+- Migrated `settingactivity/packageinstaller/packageinstallersettings.kt` from direct Material 3 `Scaffold`, `TopAppBar`, `Card`, and `AlertDialog` usage to `ZToolScaffold`, `ZToolTopAppBar`, `ZToolCard`, and `ZToolDialog`.
+- Existing package installer Activity class name, launch contract, ViewModel/repository boundary, preference keys, restart confirmation behavior, and package force-stop behavior remain unchanged.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the package installer shared-component pilot.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic

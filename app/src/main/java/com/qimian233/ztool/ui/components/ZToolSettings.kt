@@ -2,6 +2,7 @@ package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,59 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+
+@Composable
+fun ZListItem(
+    title: String,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    enabled: Boolean = true,
+    onClick: (() -> Unit)? = null,
+    leadingContent: @Composable (RowScope.() -> Unit)? = null,
+    trailingContent: @Composable (RowScope.() -> Unit)? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(enabled = enabled) { onClick() }
+                } else {
+                    Modifier
+                }
+            )
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (leadingContent != null) {
+            leadingContent()
+            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .widthIn(max = 720.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+        if (trailingContent != null) {
+            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+            trailingContent()
+        }
+    }
+}
 
 @Composable
 fun ZToolSwitchRow(
