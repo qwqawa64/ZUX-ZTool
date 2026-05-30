@@ -1213,32 +1213,32 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue Phase 3 by completing user-facing style selection and the Miuix component adapter path. The Material 3 theme settings model, persisted repository, top-level wiring, hot switching, and page-level shared component migration are already complete.
+Continue Phase 3 by verifying and stabilizing style switching across active Compose surfaces. The Material 3 theme settings model, persisted repository, top-level wiring, user-facing controls, Miuix dependency, and planned component adapter rendering slices are complete.
 
 Recommended next order:
 
-1. Add a user-facing app UI theme settings entry. Completed on 2026-05-30.
-   - Exposes frontend style, theme mode, Monet dynamic color, manual seed color, manual color enablement, and AMOLED black settings.
-   - Stores changes through `ThemePreferencesRepository`; Hook/module preference keys are untouched.
-   - Reuses shared ZTool components and preserves the existing settings Fragment launch contract.
+1. Fix disappearing Fragment-hosted Compose content when configuration changes.
+   - Bug: when switching between portrait and landscape, all composable content except the navigation rail disappears.
+   - Scope: preserve the existing `MainActivity` class, XML navigation graph, Fragment routes, destination ids, and environment-ready gating.
+   - Likely investigation targets: `MainActivity.LegacyNavHost`, `FragmentContainerView` identity/recreation, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and recomposition/configuration-change interactions around the AndroidView host.
 
-2. Add the Miuix dependency. Completed on 2026-05-30.
-   - `top.yukonga.miuix.kmp:miuix-android:0.8.8` is pinned because it is compatible with the current AGP 8.13 and `compileSdk = 36` setup.
-   - `top.yukonga.miuix.kmp:miuix-ui-android:0.9.1` was tested and rejected for now because it requires `compileSdk >= 37`.
-   - Kotlin and the Compose compiler plugin were upgraded to `2.3.21`.
-   - Keep Material 3 Expressive as the default and verified style path.
-   - `.\gradlew.bat assembleDebug` succeeded after adding the dependency.
+2. Fix disappearing Fragment-hosted Compose content when system light/dark mode changes.
+   - Bug: when Android switches system light/dark mode, all composable content except the navigation rail disappears.
+   - Previous theme-local stability fixes did not resolve this.
+   - Scope: keep follow-system/light/dark theme behavior, Material 3 and Miuix style switching, and Fragment launch contracts intact.
+   - Likely investigation targets: top-level `themeSettings` observation, `ZToolTheme` recomposition, Activity configuration changes, and `LegacyNavHost` reattachment after theme/config updates.
 
-3. Implement Miuix rendering behind the component and theme adapter layer. Completed on 2026-05-30.
-   - First slice completed on 2026-05-30 for `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
-   - Settings component slice completed on 2026-05-30 for `ZListItem` and `ZToolSettingsDivider`.
-   - Navigation rail item slice completed on 2026-05-30 by moving the shared item wrapper to an `ImageVector` icon contract and using Miuix `NavigationRailItem` in Miuix mode.
-   - Dialog adapter slice completed on 2026-05-30 by adding a Miuix `Surface` dialog host while preserving the existing slot API.
-   - Dropdown adapter slice completed on 2026-05-30 by using Miuix `TextField` for the shared dropdown anchor while preserving popup behavior and call sites.
-   - Keep `LocalZToolThemeSpec` as the style-selection boundary.
-   - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
+3. Normalize main navigation item icon sizing.
+   - Bug: navigation item icons render at different sizes between Material 3 Expressive and Miuix modes.
+   - Scope: keep `ZToolNavigationRailItem` as the shared style boundary and avoid screen-level style branches in `MainActivity`.
+   - Target: one stable visual icon size across Material 3 Expressive and Miuix modes.
 
-4. Verify style switching across active Compose surfaces. Next.
+4. Align top title heights across main Fragment pages.
+   - Bug: `HomeFragment` and `AuditFragment` titles are aligned with each other, but `FeaturesFragment` and `SettingsFragment` titles sit at a different vertical height.
+   - Scope: preserve existing Fragment routes and page behavior.
+   - Target: shared top spacing/title placement for the four main pages, preferably through shared page/scaffold/title components rather than per-screen offsets.
+
+5. Verify style switching across active Compose surfaces after the fixes.
    - Check Material 3 and Miuix rendering for `MainActivity`, Fragment-hosted pages, settings Activities, dialogs, and overlay/dialog Compose hosts.
-   - Verify follow-system/light/dark, Monet, manual color, and AMOLED black still behave correctly in the Material 3 path.
-   - Run `.\gradlew.bat assembleDebug` and record the result here after each adapter slice.
+   - Verify follow-system/light/dark, Monet, manual color, and AMOLED black behavior.
+   - Run `.\gradlew.bat assembleDebug` and record the result here after each fix slice.
