@@ -1197,3 +1197,25 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Launcher settings model migration.
+
+### Phase 5 OTA Settings Model Migration
+
+`settingactivity/ota/OtaSettings.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `OtaSettings` Activity class name, package, and launch contract.
+- Existing `OtaSettingsViewModel` and `OtaSettingsRepository` boundaries.
+- Existing preference keys for disabling OTA checks, custom OTA target version, custom OTA target device ID, and the custom OTA parameters enable flag.
+- Existing OTA info fetch, firmware query, clipboard copy actions, error dialog, restart-scope dialog, package restart behavior, and restart failure Toast behavior.
+
+Model suitability review:
+
+- The shared model remains suitable, but OTA is near the useful boundary for this abstraction.
+- The model is used only for the section/card shell and the ordinary OTA-disable switch.
+- OTA info fetching, firmware fetching, result rendering, copy buttons, SN input, and custom OTA parameter fields remain page-local composables hosted by `SettingItem.Custom`.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the OTA settings model migration.
