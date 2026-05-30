@@ -955,17 +955,16 @@ The first Miuix rendering slice wires Miuix into the shared component/theme laye
 
 Implemented:
 
-- `ZToolTheme` now provides Miuix theme locals when `FrontendStyle.Miuix` is selected.
+- `ZToolTheme` now provides Miuix theme locals for shared components while `LocalZToolThemeSpec` controls which components render with the Miuix style.
 - Miuix colors are derived from the already-resolved Material `ColorScheme`, so theme mode, dynamic color, manual seed color, and AMOLED surface overrides continue to share the existing project theme resolution path.
-- `ZToolScaffold` uses Miuix `Scaffold` in Miuix mode.
 - `ZToolTopAppBar` uses Miuix `SmallTopAppBar` in Miuix mode.
-- `ZToolNavigationRail` uses Miuix `NavigationRail` as the rail container in Miuix mode.
 - `ZToolCard` uses Miuix `Card` in Miuix mode.
 - `ZToolSwitchRow` uses Miuix `Switch` in Miuix mode.
 - `ZToolDialogSurface` uses Miuix `Surface` in Miuix mode.
 
 Deferred:
 
+- `ZToolScaffold` and `ZToolNavigationRail` keep the Material container implementations for now because replacing these host-level containers can interfere with Fragment-hosted Compose trees and popup/spinner hosts during hot style switching.
 - `ZToolNavigationRailItem` still uses the Material implementation because Miuix `NavigationRailItem` in `0.8.8` accepts `ImageVector`, while the existing project wrapper accepts composable `Painter` icons. Changing that requires a separate navigation icon contract slice.
 - `ZToolDialog` still uses Material `AlertDialog` because the current wrapper accepts arbitrary composable title/text/button content, while Miuix `SuperDialog` is string/content-layout oriented. Dialog migration should be a dedicated compatibility slice.
 - `ZToolDropdownField` still uses Material `ExposedDropdownMenuBox` because it preserves the current non-editable anchor behavior and existing form layout.
@@ -973,6 +972,14 @@ Deferred:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the first Miuix adapter slice.
+
+Follow-up stability fix:
+
+- `ZToolTheme` now reads system night mode from `LocalConfiguration.current.uiMode`, so each independent Compose tree can re-resolve follow-system theme mode when Android toggles light/dark mode.
+- `ZToolTheme` keeps the `MiuixTheme` provider stable across md3e/miuix switches instead of inserting/removing it only for Miuix.
+- `ZToolScaffold` and `ZToolNavigationRail` no longer replace their Material host containers with Miuix host containers during style switching.
+- Miuix rendering remains enabled for lower-risk shared components: `ZToolTopAppBar`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the stability fix.
 
 ## Full Refactor Roadmap
 

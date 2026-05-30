@@ -1,6 +1,7 @@
 package com.qimian233.ztool.ui.theme
 
 import android.os.Build
+import android.content.res.Configuration
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import top.yukonga.miuix.kmp.theme.Colors
@@ -89,8 +91,12 @@ fun ZToolTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val systemDarkTheme = (
+        configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        ) == Configuration.UI_MODE_NIGHT_YES
     val repository = remember(context) { ThemePreferencesRepository(context.applicationContext) }
-    var observedSettings by remember(settings, style, darkTheme, dynamicColor) {
+    var observedSettings by remember(settings, style, darkTheme, dynamicColor, configuration.uiMode) {
         mutableStateOf(
             settings ?: repository.loadSettings()
         )
@@ -109,9 +115,15 @@ fun ZToolTheme(
         }
     }
 
-    val effectiveSettings = settings ?: observedSettings
+    val effectiveSettings = (settings ?: observedSettings).let { loadedSettings ->
+        if (settings == null && style != FrontendStyle.Material3Expressive) {
+            loadedSettings.copy(frontendStyle = style)
+        } else {
+            loadedSettings
+        }
+    }
     val effectiveDarkTheme = when (effectiveSettings.themeMode) {
-        ThemeMode.FollowSystem -> darkTheme
+        ThemeMode.FollowSystem -> systemDarkTheme
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
     }
@@ -134,14 +146,10 @@ fun ZToolTheme(
             colorScheme = colorScheme,
             typography = MaterialTheme.typography,
         ) {
-            if (themeSpec.style == FrontendStyle.Miuix) {
-                MiuixTheme(
-                    colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
-                    content = content
-                )
-            } else {
-                content()
-            }
+            MiuixTheme(
+                colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
+                content = content
+            )
         }
     }
 

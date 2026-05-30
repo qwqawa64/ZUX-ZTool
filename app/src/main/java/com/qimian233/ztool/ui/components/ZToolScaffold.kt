@@ -19,8 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import top.yukonga.miuix.kmp.basic.NavigationRail as MiuixNavigationRail
-import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar as MiuixSmallTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,17 +51,6 @@ fun ZToolScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
-    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        MiuixScaffold(
-            modifier = modifier,
-            topBar = topBar,
-            floatingActionButton = floatingActionButton,
-            containerColor = MaterialTheme.colorScheme.background,
-            content = content
-        )
-        return
-    }
-
     Scaffold(
         modifier = modifier,
         topBar = topBar,
@@ -116,16 +103,6 @@ fun ZToolNavigationRail(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        MiuixNavigationRail(
-            color = MaterialTheme.colorScheme.surface,
-            showDivider = true,
-            modifier = modifier,
-            content = content
-        )
-        return
-    }
-
     NavigationRail(
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
