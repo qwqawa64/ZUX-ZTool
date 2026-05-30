@@ -1074,3 +1074,23 @@ Deferred:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the shared settings model foundation.
+
+### Phase 5 Package Installer Settings Model Pilot
+
+`settingactivity/packageinstaller/packageinstallersettings.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `packageinstallersettings` Activity class name, package, and launch contract.
+- Existing `PackageInstallerSettingsViewModel` and `PackageInstallerSettingsRepository` boundaries.
+- Existing preference keys for scan APK, permission allow, warn page skip, installer ads, row style, and delete-package behavior.
+- Existing restart confirmation dialog and package force-stop behavior.
+
+Implementation note:
+
+- Replaced the page-local `SettingsCard` plus hand-written `ZToolSwitchRow`/divider layout with `SettingSection`, `SettingItem.Switch`, and `ZToolSettingsList`.
+- State and callbacks remain owned by the existing screen/ViewModel boundary, so the shared renderer does not hide package-installer business behavior.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the package installer model pilot.

@@ -7,10 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -22,7 +20,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,11 +33,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.packageinstaller.PackageInstallerSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
-import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsUiState
@@ -165,80 +162,81 @@ private fun PackageInstallerSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.sec_title_function)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Disable_ScanAPK_Title),
-                        summary = stringResource(R.string.Disable_ScanAPK_Summary),
-                        checked = state.disableScanApk,
-                        onCheckedChange = onDisableScanApkChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.OnlyAllow_Title),
-                        summary = stringResource(R.string.OnlyAllow_Summary),
-                        checked = state.alwaysAllowPermission,
-                        onCheckedChange = onAlwaysAllowPermissionChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.skip_warn_page_title),
-                        summary = stringResource(R.string.skip_warn_page_summary),
-                        checked = state.skipWarnPage,
-                        onCheckedChange = onSkipWarnPageChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.fun_title_function)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Disable_installerAD_Title),
-                        summary = stringResource(R.string.Disable_installerAD_Summary),
-                        checked = state.disableInstallerAd,
-                        onCheckedChange = onDisableInstallerAdChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Enable_rowStyle_title),
-                        summary = stringResource(R.string.Enable_rowStyle_summary),
-                        checked = state.packageInstallerStyleHook,
-                        onCheckedChange = onPackageInstallerStyleHookChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Disable_deletePackage_Title),
-                        summary = stringResource(R.string.Disable_deletePackage_Summary),
-                        checked = state.disableDeletePackage,
-                        onCheckedChange = onDisableDeletePackageChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(96.dp))
+                ZToolSettingsList(
+                    sections = packageInstallerSettingsSections(
+                        state = state,
+                        onDisableScanApkChanged = onDisableScanApkChanged,
+                        onAlwaysAllowPermissionChanged = onAlwaysAllowPermissionChanged,
+                        onSkipWarnPageChanged = onSkipWarnPageChanged,
+                        onDisableInstallerAdChanged = onDisableInstallerAdChanged,
+                        onPackageInstallerStyleHookChanged = onPackageInstallerStyleHookChanged,
+                        onDisableDeletePackageChanged = onDisableDeletePackageChanged
+                    ),
+                    bottomPadding = 96.dp
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
+private fun packageInstallerSettingsSections(
+    state: PackageInstallerSettingsUiState,
+    onDisableScanApkChanged: (Boolean) -> Unit,
+    onAlwaysAllowPermissionChanged: (Boolean) -> Unit,
+    onSkipWarnPageChanged: (Boolean) -> Unit,
+    onDisableInstallerAdChanged: (Boolean) -> Unit,
+    onPackageInstallerStyleHookChanged: (Boolean) -> Unit,
+    onDisableDeletePackageChanged: (Boolean) -> Unit
+): List<SettingSection> {
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.sec_title_function),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.Disable_ScanAPK_Title),
+                    summary = stringResource(R.string.Disable_ScanAPK_Summary),
+                    checked = state.disableScanApk,
+                    onCheckedChange = onDisableScanApkChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.OnlyAllow_Title),
+                    summary = stringResource(R.string.OnlyAllow_Summary),
+                    checked = state.alwaysAllowPermission,
+                    onCheckedChange = onAlwaysAllowPermissionChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.skip_warn_page_title),
+                    summary = stringResource(R.string.skip_warn_page_summary),
+                    checked = state.skipWarnPage,
+                    onCheckedChange = onSkipWarnPageChanged
+                )
             )
-            content()
-        }
-    }
+        ),
+        SettingSection(
+            title = stringResource(R.string.fun_title_function),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.Disable_installerAD_Title),
+                    summary = stringResource(R.string.Disable_installerAD_Summary),
+                    checked = state.disableInstallerAd,
+                    onCheckedChange = onDisableInstallerAdChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.Enable_rowStyle_title),
+                    summary = stringResource(R.string.Enable_rowStyle_summary),
+                    checked = state.packageInstallerStyleHook,
+                    onCheckedChange = onPackageInstallerStyleHookChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.Disable_deletePackage_Title),
+                    summary = stringResource(R.string.Disable_deletePackage_Summary),
+                    checked = state.disableDeletePackage,
+                    onCheckedChange = onDisableDeletePackageChanged
+                )
+            )
+        )
+    )
 }
 
 @Composable

@@ -324,12 +324,12 @@ Recommended next order:
    - Add renderer composables that map model items to existing ZTool shared components.
    - Keep callbacks and state owned by existing ViewModels/screens.
 
-2. Pilot the model on `packageinstaller/packageinstallersettings.kt`. Next.
+2. Pilot the model on `packageinstaller/packageinstallersettings.kt`. Completed on 2026-05-30.
    - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package force-stop behavior.
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
 
-3. Pilot the model on `safecenter/SafeCenterSettingsActivity.kt`.
+3. Pilot the model on `safecenter/SafeCenterSettingsActivity.kt`. Next.
    - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package restart behavior.
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
