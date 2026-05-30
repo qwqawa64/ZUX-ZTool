@@ -245,5 +245,5 @@ private fun contentColorFor(color: Color): Color {
 }
 
 private fun colorFromArgbLong(value: Long): Color {
-    return Color(value.toULong())
+    return Color((value and 0xFFFFFFFFL).toInt())
 }

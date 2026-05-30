@@ -928,6 +928,13 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after upgrading Kotlin and adding Miuix `0.8.8`.
 
+Follow-up fix:
+
+- Fixed a composition crash in the manual color theme path after the Kotlin/Compose upgrade.
+- Root cause: app UI manual seed colors are stored as ARGB `Long` values, but `ZToolTheme` converted them with the Compose packed-color `ULong` constructor. This could create an invalid color-space index and crash during `Color.lerp`.
+- Fix: convert stored ARGB values through `Color(Int)` after masking to 32 bits.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the fix.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
