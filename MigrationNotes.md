@@ -1094,3 +1094,23 @@ Implementation note:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the package installer model pilot.
+
+### Phase 5 Safe Center Settings Model Pilot
+
+`settingactivity/safecenter/SafeCenterSettingsActivity.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `SafeCenterSettingsActivity` class name, package, and launch contract.
+- Existing `SafeCenterSettingsViewModel` and `SafeCenterSettingsRepository` boundaries.
+- Existing preference keys for default autorun, Safe Center scan blocking, and DocumentsUI bypass.
+- Existing restart confirmation dialog, DocumentsUI restart scope, duplicate restart guard, and package restart result Toast behavior.
+
+Implementation note:
+
+- Replaced the page-local `SettingsCard` plus hand-written `ZToolSwitchRow`/divider layout with `SettingSection`, `SettingItem.Switch`, and `ZToolSettingsList`.
+- State and callbacks remain owned by the existing screen/ViewModel boundary, so the shared renderer does not hide Safe Center restart or preference behavior.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Safe Center model pilot.

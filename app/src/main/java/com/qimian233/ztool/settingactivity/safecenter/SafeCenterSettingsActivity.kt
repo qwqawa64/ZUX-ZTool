@@ -7,11 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -37,11 +33,11 @@ import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.safecenter.SafeCenterRestartResult
 import com.qimian233.ztool.data.safecenter.SafeCenterSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
-import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsUiState
@@ -185,59 +181,57 @@ private fun SafeCenterSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.default_allow_autorun_title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.default_allow_autorun_enable_title),
-                        summary = stringResource(R.string.default_allow_autorun_enable_summary),
-                        checked = state.defaultEnableAutorun,
-                        onCheckedChange = onDefaultEnableAutorunChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.DisableSafeScanTitle),
-                        summary = stringResource(R.string.DisableSafeScanSummary),
-                        checked = state.blockSafeCenterScan,
-                        onCheckedChange = onBlockSafeCenterScanChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.sec_title_function)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.bypassDocementsUI),
-                        summary = stringResource(R.string.bypassDocementsUISummary),
-                        checked = state.documentsUiBypass,
-                        onCheckedChange = onDocumentsUiBypassChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(96.dp))
+                ZToolSettingsList(
+                    sections = safeCenterSettingsSections(
+                        state = state,
+                        onDefaultEnableAutorunChanged = onDefaultEnableAutorunChanged,
+                        onBlockSafeCenterScanChanged = onBlockSafeCenterScanChanged,
+                        onDocumentsUiBypassChanged = onDocumentsUiBypassChanged
+                    ),
+                    bottomPadding = 96.dp
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
+private fun safeCenterSettingsSections(
+    state: SafeCenterSettingsUiState,
+    onDefaultEnableAutorunChanged: (Boolean) -> Unit,
+    onBlockSafeCenterScanChanged: (Boolean) -> Unit,
+    onDocumentsUiBypassChanged: (Boolean) -> Unit
+): List<SettingSection> {
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.default_allow_autorun_title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.default_allow_autorun_enable_title),
+                    summary = stringResource(R.string.default_allow_autorun_enable_summary),
+                    checked = state.defaultEnableAutorun,
+                    onCheckedChange = onDefaultEnableAutorunChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.DisableSafeScanTitle),
+                    summary = stringResource(R.string.DisableSafeScanSummary),
+                    checked = state.blockSafeCenterScan,
+                    onCheckedChange = onBlockSafeCenterScanChanged
+                )
             )
-            content()
-        }
-    }
+        ),
+        SettingSection(
+            title = stringResource(R.string.sec_title_function),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.bypassDocementsUI),
+                    summary = stringResource(R.string.bypassDocementsUISummary),
+                    checked = state.documentsUiBypass,
+                    onCheckedChange = onDocumentsUiBypassChanged
+                )
+            )
+        )
+    )
 }
 
 @Composable

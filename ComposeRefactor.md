@@ -329,12 +329,12 @@ Recommended next order:
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
 
-3. Pilot the model on `safecenter/SafeCenterSettingsActivity.kt`. Next.
+3. Pilot the model on `safecenter/SafeCenterSettingsActivity.kt`. Completed on 2026-05-30.
    - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package restart behavior.
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
 
-4. Review the pilots before expanding.
+4. Review the pilots before expanding. Next.
    - Confirm Material 3 Expressive and Miuix rendering remain consistent.
    - Confirm the model reduces duplication without hiding page-specific business behavior.
    - Only then expand to framework, game tool, launcher, OTA, and System UI detail pages.
