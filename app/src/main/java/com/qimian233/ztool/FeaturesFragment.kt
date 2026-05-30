@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -87,6 +88,22 @@ class FeaturesFragment : Fragment() {
             }
         )
     }
+}
+
+@Composable
+fun FeaturesMainRoute() {
+    val context = LocalContext.current
+    FeaturesRoute(
+        items = rememberFeatureItems(context),
+        onFeatureClick = { item ->
+            context.startActivity(
+                Intent(context, item.targetActivity).apply {
+                    putExtra("app_name", item.name)
+                    putExtra("app_package", item.packageName)
+                }
+            )
+        }
+    )
 }
 
 private data class FeatureItem(

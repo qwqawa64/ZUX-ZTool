@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -49,14 +50,17 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -195,6 +199,103 @@ class AuditFragment : Fragment() {
         Toast.makeText(requireContext(), R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
 
+}
+
+@Composable
+fun AuditMainRoute() {
+    val context = LocalContext.current
+    val activity = context as MainActivity
+    val viewModel = remember {
+        val repository = AuditRepository(context.applicationContext)
+        ViewModelProvider(
+            activity,
+            AuditViewModelFactory(repository)
+        )[AuditViewModel::class.java]
+    }
+    val uiState by viewModel.uiState.collectAsState()
+    val exportLogLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportLogsToUri(uri) { success, error ->
+                activity.runOnUiThread {
+                    Toast.makeText(
+                        context,
+                        when {
+                            success -> context.getString(R.string.export_logs_success)
+                            error != null -> context.getString(R.string.export_logs_failed) + error
+                            else -> context.getString(R.string.export_logs_failed)
+                        },
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.start()
+    }
+
+    AuditScreen(
+        state = uiState,
+        onCategorySelected = viewModel::selectCategory,
+        onModuleSelected = viewModel::selectModule,
+        onLevelSelected = viewModel::selectLevel,
+        onSearchTextChanged = viewModel::setSearchText,
+        onShowErrorsOnlyChanged = viewModel::setShowErrorsOnly,
+        onRefresh = viewModel::loadAllLogFiles,
+        onClear = viewModel::showClearDialog,
+        onShowStatistics = viewModel::showStatistics,
+        onSave = { exportLogLauncher.launch(viewModel.exportFileName()) },
+        onLogSelected = viewModel::selectLogEntry
+    )
+
+    uiState.selectedLogEntry?.let { entry ->
+        LogDetailDialog(
+            entry = entry,
+            onCopy = {
+                copyLogDetailsToClipboard(context, viewModel.buildLogDetails(entry))
+                viewModel.dismissLogEntry()
+            },
+            onDismiss = viewModel::dismissLogEntry
+        )
+    }
+
+    if (uiState.showClearDialog) {
+        ClearLogsDialog(
+            onConfirm = {
+                viewModel.clearAllLogs { success, error ->
+                    activity.runOnUiThread {
+                        Toast.makeText(
+                            context,
+                            if (success) {
+                                context.getString(R.string.clear_logs_success)
+                            } else {
+                                context.getString(R.string.clear_logs_failed) + error.orEmpty()
+                            },
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            },
+            onDismiss = viewModel::dismissClearDialog
+        )
+    }
+
+    uiState.statisticsMessage?.let { message ->
+        StatisticsDialog(
+            message = message,
+            onDismiss = viewModel::dismissStatistics
+        )
+    }
+}
+
+private fun copyLogDetailsToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = ClipData.newPlainText(context.getString(R.string.log_content), text)
+    clipboard.setPrimaryClip(clip)
+    Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
 }
 
 private class AuditViewModelFactory(

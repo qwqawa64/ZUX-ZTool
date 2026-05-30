@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
-import android.view.View
-import android.view.ViewGroup
 import android.view.Window
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -17,17 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -86,6 +79,7 @@ class MainActivity : AppCompatActivity(),
                     environmentReady = isEnvironmentReady,
                     selectedRoute = currentRoute,
                     onDestinationSelected = ::navigateFromRail,
+                    onEnvironmentStateChanged = ::onEnvironmentStateChanged,
                     onRouteChanged = ::setCurrentRouteFromHost
                 )
             }
@@ -250,6 +244,7 @@ private fun MainTabletShell(
     environmentReady: Boolean,
     selectedRoute: MainRoute,
     onDestinationSelected: (MainRoute) -> Unit,
+    onEnvironmentStateChanged: (Boolean) -> Unit,
     onRouteChanged: (MainRoute) -> Unit
 ) {
     val navController = rememberNavController()
@@ -291,88 +286,38 @@ private fun MainTabletShell(
             }
         }
 
-        LegacyNavHost(
+        MainRouteNavHost(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxSize(),
-            navController = navController
+            navController = navController,
+            onEnvironmentStateChanged = onEnvironmentStateChanged
         )
     }
 }
 
 @Composable
-private fun LegacyNavHost(
+private fun MainRouteNavHost(
     modifier: Modifier = Modifier,
-    navController: androidx.navigation.NavHostController
+    navController: androidx.navigation.NavHostController,
+    onEnvironmentStateChanged: (Boolean) -> Unit
 ) {
     NavHost(
         navController = navController,
         startDestination = MainRoute.Home.name,
         modifier = modifier
     ) {
-        MainRoute.entriesInOrder.forEach { route ->
-            composable(route.name) {
-                LegacyFragmentRoute(route = route)
-            }
+        composable(MainRoute.Home.name) {
+            HomeMainRoute(onEnvironmentStateChanged = onEnvironmentStateChanged)
         }
-    }
-}
-
-@Composable
-private fun LegacyFragmentRoute(route: MainRoute) {
-    val activity = LocalContext.current as AppCompatActivity
-    val containerId = remember(route) { View.generateViewId() }
-
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { context ->
-            FragmentContainerView(context).apply {
-                id = containerId
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                    override fun onViewAttachedToWindow(view: View) {
-                        removeOnAttachStateChangeListener(this)
-                        bindLegacyFragmentRoute(activity, this@apply, route)
-                    }
-
-                    override fun onViewDetachedFromWindow(view: View) = Unit
-                })
-            }
+        composable(MainRoute.Features.name) {
+            FeaturesMainRoute()
         }
-    )
-}
-
-private fun bindLegacyFragmentRoute(
-    activity: AppCompatActivity,
-    container: FragmentContainerView,
-    route: MainRoute
-) {
-    val fragmentManager = activity.supportFragmentManager
-    val current = fragmentManager.findFragmentById(container.id)
-    if (current?.javaClass == route.fragmentClass) return
-
-    fragmentManager
-        .beginTransaction()
-        .replace(container.id, route.createFragment(), route.name)
-        .commitNow()
-}
-
-private val MainRoute.fragmentClass: Class<out Fragment>
-    get() = when (this) {
-        MainRoute.Home -> HomeFragment::class.java
-        MainRoute.Features -> FeaturesFragment::class.java
-        MainRoute.Audit -> AuditFragment::class.java
-        MainRoute.Settings -> SettingsFragment::class.java
-    }
-
-private fun MainRoute.createFragment(): Fragment {
-    return when (this) {
-        MainRoute.Home -> HomeFragment()
-        MainRoute.Features -> FeaturesFragment()
-        MainRoute.Audit -> AuditFragment()
-        MainRoute.Settings -> SettingsFragment()
+        composable(MainRoute.Audit.name) {
+            AuditMainRoute()
+        }
+        composable(MainRoute.Settings.name) {
+            SettingsMainRoute()
+        }
     }
 }

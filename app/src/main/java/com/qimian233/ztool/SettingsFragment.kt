@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -31,14 +32,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -47,6 +52,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
@@ -196,6 +203,135 @@ class SettingsFragment : Fragment() {
         }
     }
 
+}
+
+@Composable
+fun SettingsMainRoute() {
+    val context = LocalContext.current
+    val activity = context as MainActivity
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val viewModel = remember {
+        val repository = SettingsRepository(context.applicationContext)
+        ViewModelProvider(
+            activity,
+            SettingsViewModelFactory(repository)
+        )[SettingsViewModel::class.java]
+    }
+    val uiState by viewModel.uiState.collectAsState()
+    val backupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.backupConfig(uri) { result ->
+                activity.runOnUiThread {
+                    if (result) {
+                        showSettingsToast(context, context.getString(R.string.config_backup_success))
+                    }
+                }
+            }
+        }
+    }
+    val restoreLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.restoreConfig(uri) { result ->
+                activity.runOnUiThread {
+                    if (result) {
+                        showSettingsToast(context, context.getString(R.string.config_restore_success))
+                    }
+                }
+            }
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    SettingsRoute(
+        state = uiState,
+        onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
+        onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
+        onRestoreDefault = viewModel::showRestoreConfirmDialog,
+        onLogServiceChanged = {
+            viewModel.setLogServiceEnabled(it)
+            showSettingsToast(
+                context,
+                context.getString(
+                    if (it) R.string.log_service_started else R.string.log_service_stopped
+                )
+            )
+        },
+        onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+        onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
+        onFrontendStyleChanged = viewModel::setFrontendStyle,
+        onThemeModeChanged = viewModel::setThemeMode,
+        onDynamicColorChanged = viewModel::setDynamicColorEnabled,
+        onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
+        onManualColorChanged = viewModel::setManualColorEnabled,
+        onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
+        onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
+        onAbout = viewModel::showAboutDialog
+    )
+
+    if (uiState.showRestoreConfirmDialog) {
+        RestoreDefaultDialog(
+            onConfirm = {
+                viewModel.restoreDefaultConfig()
+                showSettingsToast(context, context.getString(R.string.default_config_restored))
+            },
+            onDismiss = viewModel::dismissRestoreConfirmDialog
+        )
+    }
+
+    if (uiState.showAboutDialog) {
+        AboutDialog(
+            version = uiState.moduleVersion,
+            onDismiss = viewModel::dismissAboutDialog,
+            onOpenGithub = {
+                openSettingsExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool", false, "")
+            },
+            onOpenCredits = {
+                openSettingsExternalLink(context, "https://github.com/dantmnf/UnfuckZUI", false, "")
+            },
+            onOpenAuthor = {
+                openSettingsExternalLink(context, "http://www.coolapk.com/u/10099756", true, "com.coolapk.market")
+            },
+            onOpenCollaborator = {
+                openSettingsExternalLink(context, "http://www.coolapk.com/u/18634835", true, "com.coolapk.market")
+            }
+        )
+    }
+}
+
+private fun openSettingsExternalLink(
+    context: android.content.Context,
+    link: String,
+    shouldDeterminePackage: Boolean,
+    packageName: String
+) {
+    try {
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse(link)).apply {
+                if (shouldDeterminePackage) setPackage(packageName)
+            }
+        )
+    } catch (_: Exception) {
+        showSettingsToast(context, context.getString(R.string.open_web_link_failed))
+    }
+}
+
+private fun showSettingsToast(context: android.content.Context, message: String) {
+    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }
 
 private class SettingsViewModelFactory(

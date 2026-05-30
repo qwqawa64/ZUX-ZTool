@@ -1361,3 +1361,29 @@ Next phase:
 - Move to Phase 6 XML/View cleanup.
 - Start by removing the main-route Fragment hosting layer only after extracting Home, Features, Audit, and Settings routes into direct composable route functions.
 - Preserve `HomeFragment.isModuleActive()` as the LSPosed self-check Hook target until an explicitly approved compatibility replacement exists.
+
+### Phase 6 Main Route Fragment Host Removal
+
+`MainActivity` no longer hosts the main Compose routes through Fragment containers.
+
+Implemented:
+
+- Replaced the `LegacyFragmentRoute`/`FragmentContainerView` bridge in `MainActivity` with direct Compose Navigation destinations.
+- Added direct composable route entry points for Home, Features, Audit, and Settings.
+- Kept the existing Fragment classes in place for now so external class names and cleanup boundaries remain stable.
+- Preserved `HomeFragment.isModuleActive()` as the LSPosed self-check Hook target.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name and launch contract.
+- Main route names and navigation rail behavior.
+- Environment-ready gating.
+- Home environment checks, update card behavior, config-upgrade dialog, reboot menu, and reboot shell behavior.
+- Features page app launches and intent extras.
+- Audit log loading, filtering, detail copy, clear, statistics, and SAF export behavior.
+- Settings backup/restore SAF launchers, restore-default dialog, log service toggle, theme settings, and about links.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after removing the main-route Fragment host.
+- Remaining warnings: deprecated `LocalLifecycleOwner` import path in Home and Settings routes, and deprecated system bar color setters in `MainActivity`.

@@ -42,18 +42,24 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.home.HomeRepository
@@ -241,8 +247,155 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun isModuleActive(): Boolean {
+    fun isModuleActive(): Boolean {
         return false
+    }
+}
+
+@Composable
+fun HomeMainRoute(
+    onEnvironmentStateChanged: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val activity = context as MainActivity
+    val moduleActiveProbe = remember { HomeFragment() }
+    val viewModel = remember {
+        val repository = HomeRepository(
+            context = context.applicationContext,
+            moduleActiveChecker = moduleActiveProbe::isModuleActive
+        )
+        ViewModelProvider(
+            activity,
+            HomeViewModelFactory(repository)
+        )[HomeViewModel::class.java]
+    }
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.environmentReady) {
+        onEnvironmentStateChanged(uiState.environmentReady)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.start()
+    }
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> viewModel.refreshSystemInfoIfNeeded()
+                Lifecycle.Event.ON_DESTROY -> viewModel.clearShellCache()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    HomeScreen(
+        state = uiState,
+        onRestartClick = { anchor ->
+            showRebootMenu(
+                context = context,
+                anchor = anchor,
+                onTargetSelected = viewModel::showRebootConfirmation
+            )
+        },
+        onToggleUpdateExpanded = viewModel::toggleUpdateExpanded,
+        onIgnoreUpdate = {
+            viewModel.ignoreUpdate(it)
+            Toast.makeText(context, R.string.update_ignore_toast, Toast.LENGTH_SHORT).show()
+        },
+        onOpenUpdate = { url ->
+            openUpdateUrl(context, url)
+        }
+    )
+
+    if (uiState.configUpgradeDialogVisible) {
+        ConfigUpgradeDialog(
+            onRestart = {
+                viewModel.dismissConfigUpgradeDialog()
+                viewModel.restartAfterConfigUpgrade()
+            },
+            onLater = {
+                viewModel.dismissConfigUpgradeDialog()
+                Toast.makeText(context, R.string.have_not_restart_warn, Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    uiState.rebootConfirmation?.let { target ->
+        RebootConfirmDialog(
+            target = target,
+            onConfirm = {
+                viewModel.dismissRebootConfirmation()
+                executeReboot(context, viewModel, target)
+            },
+            onDismiss = viewModel::dismissRebootConfirmation
+        )
+    }
+}
+
+private fun openUpdateUrl(context: Context, url: String) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    } catch (e: Exception) {
+        Toast.makeText(context, R.string.open_web_link_failed, Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun showRebootMenu(
+    context: Context,
+    anchor: View,
+    onTargetSelected: (RebootTarget) -> Unit
+) {
+    PopupMenu(context, anchor).apply {
+        menuInflater.inflate(R.menu.reboot_menu, menu)
+        setOnMenuItemClickListener { item ->
+            val target = when (item.itemId) {
+                R.id.menu_soft_reboot -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        Toast.makeText(
+                            context,
+                            R.string.soft_reboot_not_supported,
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@setOnMenuItemClickListener true
+                    }
+                    RebootTarget.Userspace
+                }
+                R.id.menu_bootloader -> RebootTarget.Bootloader
+                R.id.menu_recovery -> RebootTarget.Recovery
+                R.id.menu_edl -> RebootTarget.Edl
+                R.id.menu_reboot -> RebootTarget.System
+                else -> return@setOnMenuItemClickListener false
+            }
+            onTargetSelected(target)
+            true
+        }
+        show()
+    }
+}
+
+private fun executeReboot(
+    context: Context,
+    viewModel: HomeViewModel,
+    target: RebootTarget
+) {
+    viewModel.executeReboot(target) { success, error ->
+        (context as? MainActivity)?.runOnUiThread {
+            if (success) {
+                Toast.makeText(context, R.string.reboot_success, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.reboot_failed, error),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 }
 

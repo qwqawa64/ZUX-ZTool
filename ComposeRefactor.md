@@ -326,17 +326,19 @@ Phase 5 closeout:
 
 Recommended next order:
 
-1. Start Phase 6 by removing the main-route Fragment hosting layer. Next.
-   - Current `MainActivity` still uses `LegacyFragmentRoute`, `FragmentContainerView`, and `HomeFragment`/`FeaturesFragment`/`AuditFragment`/`SettingsFragment` wrappers inside the Compose `NavHost`.
-   - Extract each main route's Compose screen into direct composable route functions while preserving existing Fragment class names until no active route depends on them.
-   - Preserve `HomeFragment.isModuleActive()` as the LSPosed self-check Hook target until an explicitly approved compatibility replacement exists.
-   - Preserve Home, Features, Audit, and Settings behavior, ViewModel/repository boundaries, SAF launchers, external intents, reboot shell behavior, and log export behavior.
-   - Run `.\gradlew.bat assembleDebug`.
-   - Record implementation notes and verification in `MigrationNotes.md`.
+1. Start Phase 6 by removing the main-route Fragment hosting layer. Completed on 2026-05-31.
+   - `MainActivity` no longer uses `LegacyFragmentRoute`, `FragmentContainerView`, or Fragment transactions inside the Compose `NavHost`.
+   - Home, Features, Audit, and Settings routes now have direct composable route entry points.
+   - Existing Fragment class names are preserved for now.
+   - `HomeFragment.isModuleActive()` remains available as the LSPosed self-check Hook target.
+   - Home, Features, Audit, and Settings behavior, ViewModel/repository boundaries, SAF launchers, external intents, reboot shell behavior, and log export behavior were preserved.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
+   - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-2. Remove obsolete XML Navigation only after the main routes no longer instantiate Fragment wrappers.
+2. Audit and remove obsolete XML Navigation references. Next.
    - Delete or detach `res/navigation/nav_graph.xml` only when no runtime path references it.
    - Remove legacy Navigation resource ids from `MainRoute` only after saved-state fallback compatibility is no longer needed.
+   - Confirm whether the retained Fragment wrappers and `HomeFragment.isModuleActive()` compatibility target require any XML metadata before deleting resources.
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
 
