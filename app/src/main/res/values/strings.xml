@@ -763,7 +763,7 @@
     <string name="SearchHint">搜索…</string>
     <string name="app_ui_theme_settings">应用主题模式</string>
     <string name="frontend_style_title">主题风格</string>
-    <string name="frontend_style_material3">Material 3 Expressive</string>
+    <string name="frontend_style_material3">Material</string>
     <string name="frontend_style_miuix">Miuix</string>
     <string name="theme_mode_title">主题模式</string>
     <string name="theme_mode_follow_system">跟随系统</string>
