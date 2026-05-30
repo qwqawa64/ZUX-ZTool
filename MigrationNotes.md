@@ -1476,3 +1476,29 @@ Preserved:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after deleting the final layout XML resources.
+
+### Phase 6 Dependency Cleanup
+
+Unused View-era dependencies were removed after code and resource reference audits.
+
+Removed:
+
+- `androidx.navigation:navigation-fragment`.
+- `androidx.navigation:navigation-ui`.
+- `androidx.constraintlayout:constraintlayout`.
+- `androidx.swiperefreshlayout:swiperefreshlayout`.
+- The local `swiperefreshlayout-1.1.0.pom` dependency declaration.
+- Direct `androidx.recyclerview:recyclerview`.
+- Duplicate direct `com.google.android.material:material` declaration, keeping the version-catalog Material dependency.
+- Unused version-catalog aliases for the removed dependencies.
+
+Preserved:
+
+- `androidx.appcompat:appcompat`, because `MainActivity`, `LoadingDialog`, `CountdownDialog`, `AppChooserDialog`, and `SettingsDetailActivity` still use AppCompat `Activity`/`AlertDialog` APIs.
+- `com.google.android.material:material`, because dynamic color and existing Material dialog builders still depend on Material Components.
+- `androidx.activity:activity-compose`, `navigation-compose`, Compose, Miuix, lifecycle, saved-state, Gson, lunar, hiddenapi bypass, and Xposed compile-only dependencies.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after dependency cleanup.
+- Remaining warnings are existing deprecated API warnings plus existing string-format/native-strip warnings emitted during the full rebuild.

@@ -351,7 +351,10 @@ Recommended next order:
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
    - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-4. Dependency cleanup comes last. Next.
-   - Remove Fragment Navigation/AppCompat/View dependencies only after code and resources no longer use them.
-   - Do not remove Material/Compose dependencies used by shared ZTool components or Miuix adapters.
-   - Run `.\gradlew.bat assembleDebug`.
+4. Dependency cleanup comes last. Completed on 2026-05-31.
+   - Removed Fragment Navigation, Navigation UI, ConstraintLayout, SwipeRefreshLayout, direct RecyclerView, the local SwipeRefreshLayout POM declaration, and the duplicate direct Material dependency.
+   - Removed the unused version-catalog aliases for deleted dependencies.
+   - Kept AppCompat and the version-catalog Material dependency because current Activity/dialog/dynamic-color code still uses them.
+   - Kept Compose, Miuix, lifecycle, saved-state, Gson, lunar, hiddenapi bypass, and Xposed compile-only dependencies.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
+   - Implementation notes and verification are recorded in `MigrationNotes.md`.
