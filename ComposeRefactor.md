@@ -797,38 +797,70 @@ Follow-up fix:
 
 ### Phase 3 Shared Component Adapter Foundation
 
-The fourth Phase 3 slice started the shared component adapter layer through:
+The fourth Phase 3 task is expanding the shared component adapter layer. Its goal is to make feature screens call project components while the component/theme layer decides Material 3 Expressive, Miuix, or future style rendering.
+
+Current status: in progress.
+
+Completed shared component surface:
 
 - `ui/components/ZToolScaffold.kt`.
 - `ui/components/ZToolDialog.kt`.
+- `ui/components/ZToolSettings.kt`.
+
+Completed component wrappers:
+
+- `ZToolScaffold` for ordinary page scaffolds.
+- `ZToolTabletScaffold` for tablet-style rail + content layouts.
+- `ZToolTopAppBar`, including navigation icon and action slots.
+- `ZToolNavigationRail`.
+- `ZToolNavigationRailItem`.
+- `ZToolCard`.
+- `ZToolSwitchRow`.
+- `ZToolDropdownField`.
+- `ZListItem`.
+- `ZToolDialog`.
+- `ZToolDialogSurface`.
+
+Completed pilots:
+
 - `MainActivity.kt`.
+- `settingactivity/packageinstaller/packageinstallersettings.kt`.
+- `settingactivity/safecenter/SafeCenterSettingsActivity.kt`.
 
 Preserved behavior:
 
 - Existing `MainActivity` class name, launch contract, Fragment navigation, and destination IDs.
 - Existing navigation rail labels, icons, selected destination behavior, and environment-ready gating.
+- Existing package installer Activity class name, package name, launch contract, ViewModel/repository boundary, preference keys, restart confirmation behavior, and package force-stop behavior.
+- Existing safe center Activity class name, package name, launch contract, ViewModel/repository boundary, preference keys, restart confirmation behavior, and package restart behavior.
 - Existing Material 3 rendering while keeping Miuix/future style switching behind project components for later slices.
 
 Implementation note:
 
 - Added shared `ZToolTopAppBar`, `ZToolNavigationRail`, and `ZToolNavigationRailItem` wrappers.
 - Added shared `ZToolDialog` and `ZToolDialogSurface` wrappers.
+- Added shared `ZToolScaffold` for non-tablet page scaffolds.
+- Added shared `ZListItem` for style-agnostic list rows.
 - Updated `ZToolTabletScaffold` to use the shared top app bar and navigation rail.
+- Updated `ZToolTopAppBar` to centralize single-line title ellipsizing.
 - Migrated the main navigation rail in `MainActivity` to `ZToolNavigationRail` and `ZToolNavigationRailItem`.
+- Migrated `settingactivity/packageinstaller/packageinstallersettings.kt` from direct Material 3 `Scaffold`, `TopAppBar`, `Card`, and `AlertDialog` usage to `ZToolScaffold`, `ZToolTopAppBar`, `ZToolCard`, and `ZToolDialog`.
+- Migrated `settingactivity/safecenter/SafeCenterSettingsActivity.kt` from direct Material 3 `Scaffold`, `TopAppBar`, `Card`, and `AlertDialog` usage to `ZToolScaffold`, `ZToolTopAppBar`, `ZToolCard`, and `ZToolDialog`.
 - Miuix is still not introduced; this is the adapter surface needed before adding style-specific rendering.
 
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the shared component adapter foundation.
-
-Follow-up slice:
-
-- Added shared `ZToolScaffold` for non-tablet page scaffolds.
-- Added shared `ZListItem` for style-agnostic list rows.
-- Expanded `ZToolTopAppBar` with a navigation icon slot.
-- Migrated `settingactivity/packageinstaller/packageinstallersettings.kt` from direct Material 3 `Scaffold`, `TopAppBar`, `Card`, and `AlertDialog` usage to `ZToolScaffold`, `ZToolTopAppBar`, `ZToolCard`, and `ZToolDialog`.
-- Existing package installer Activity class name, launch contract, ViewModel/repository boundary, preference keys, restart confirmation behavior, and package force-stop behavior remain unchanged.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the package installer shared-component pilot.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the safe center shared-component pilot.
+
+Remaining Phase 3 task 4 work:
+
+- Continue migrating small already-migrated pages from direct Material 3 primitives to project components, next considering `settingactivity/gametool/GameToolSettngs.kt`.
+- Broaden wrapper coverage only when a real page needs it; avoid adding speculative components.
+- Keep `LocalZToolThemeSpec` as the style-selection boundary and do not add screen-level `if (style == FrontendStyle.Miuix)` branches.
+- Do not add the Miuix dependency until the Material 3 adapter path is stable across a few pages.
+- After each page pilot, run `.\gradlew.bat assembleDebug` and record the result here.
 
 ## Full Refactor Roadmap
 
@@ -1047,7 +1079,7 @@ Recommended next order:
    - Keep existing launch contracts, Fragment navigation, and system-bar behavior compatible.
    - Make sure dialogs and overlay Compose surfaces still receive the same theme context.
 
-4. Expand the shared component adapter layer. In progress.
+4. Expand the shared component adapter layer. In progress: shared scaffold, top app bar, navigation rail, card, switch row, dropdown, list item, and dialog wrappers exist; `MainActivity`, package installer, and safe center have been piloted.
    - Add or refine `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZListItem`, and `ZDialog`.
    - Keep style selection inside components through `LocalZToolThemeSpec`.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)`.
