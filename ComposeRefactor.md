@@ -179,31 +179,42 @@ Preserve compatibility for existing external launch contracts while moving the m
 
 Phase 4 should proceed in small, verifiable slices rather than one full navigation rewrite:
 
-1. Stabilize the main navigation host boundary.
+1. Stabilize the main navigation host boundary. Completed on 2026-05-30.
    - Fix the current bug where configuration changes, such as portrait/landscape rotation, leave only the navigation rail visible while Fragment-hosted Compose content disappears.
    - Fix the current bug where system light/dark mode changes leave only the navigation rail visible while Fragment-hosted Compose content disappears.
    - Preserve `MainActivity`, existing Fragment classes, `nav_graph.xml`, destination ids, external launch contracts, and environment-ready gating while this stabilization is underway.
    - Investigate `LegacyNavHost`, `AndroidView`, `FragmentContainerView`, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and configuration-change/theme-change reattachment behavior.
 
-2. Introduce a Compose-owned main route state.
+2. Introduce a Compose-owned main route state. Completed on 2026-05-30.
    - Keep the current main destinations: Home, Features, Audit, and Settings.
    - Move selected destination state, navigation rail state, and route dispatch toward Compose-owned state.
    - Keep existing Fragment screens as route content during the transition if needed.
 
-3. Replace XML Navigation with `navigation-compose` for the main in-app routes.
+3. Replace XML Navigation with `navigation-compose` for the main in-app routes. Completed on 2026-05-30.
    - Move main navigation route definitions into Compose.
    - Preserve existing entry points and Activity/Fragment class names until a dedicated cleanup phase.
    - Avoid deleting `nav_graph.xml` or legacy XML resources during the ordinary Phase 4 migration.
 
-4. Convert main Fragment routes to pure Compose screens when their route host is stable.
+4. Convert main Fragment routes to pure Compose screens when their route host is stable. Deferred.
    - Reuse the existing ViewModel/repository boundaries for Home, Audit, and Settings.
    - Keep Hook, service, utility, configuration, shell, Xposed metadata, and asset behavior intact.
+   - Main route definitions now live in Compose, but the active route contents still host existing Fragment classes through `FragmentContainerView`.
+   - Fragment removal belongs to Phase 6 cleanup after active UI routes no longer need Fragment wrappers.
 
-5. Verify each Phase 4 slice.
+5. Verify each Phase 4 slice. Completed for the currently scoped Phase 4 work.
    - Run `.\gradlew.bat assembleDebug`.
    - Manually verify Material 3 Expressive and Miuix modes.
    - Manually verify portrait/landscape changes and system light/dark changes no longer blank the main content.
    - Record completed work, verification result, and next step in this file.
+
+Phase 4 leftovers intentionally deferred to Phase 6 cleanup:
+
+- `app/src/main/res/navigation/nav_graph.xml`, now no longer used for main in-app navigation dispatch but retained as a compatibility/cleanup-phase artifact.
+- Main Fragment wrapper classes: `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment`.
+- Fragment-hosted `ComposeView` wrappers for the main routes.
+- Legacy main route XML layout references under `res/layout/fragment_*.xml`.
+- Navigation animation resources if they are no longer referenced after the final cleanup pass.
+- Fragment Navigation dependencies if no other app paths still require them.
 
 ### Phase 5. Migrate Settings Pages Through A Shared Settings Model
 
@@ -228,8 +239,43 @@ This should speed up migration and reduce duplicated UI logic for:
 - `launcher`.
 - `ota`.
 - `packageinstaller`.
+- `safecenter`.
+- `systemframework`.
+- `statusBarSetting`.
+- `ControlCenter`.
+- `lockscreen`.
 
 Preserve all existing preference keys used by Hook modules.
+
+Phase 5 goals:
+
+1. Introduce a shared settings data model.
+   - Model sections, rows, switches, entries, sliders, dropdowns, text inputs, color previews, and action rows as data where practical.
+   - Keep callbacks explicit and page-owned so existing ViewModel/repository boundaries remain clear.
+   - Do not move Hook/module preference keys into UI components.
+
+2. Build shared settings renderers.
+   - Add project-level renderers such as `ZToolSettingsList`, `ZToolSettingsSection`, and typed row renderers.
+   - Render through existing shared components such as `ZToolCard`, `ZToolSwitchRow`, `ZListItem`, `ZToolDropdownField`, and `ZToolDialog`.
+   - Keep Material 3 Expressive and Miuix behavior behind shared components.
+
+3. Pilot the model on low-risk settings pages.
+   - Start with `packageinstaller/packageinstallersettings.kt` and `safecenter/SafeCenterSettingsActivity.kt`.
+   - Preserve Activity names, launch contracts, preference keys, restart confirmations, and package restart behavior.
+   - Run `.\gradlew.bat assembleDebug` after each pilot.
+
+4. Expand to medium-complexity pages.
+   - Candidates: `systemframework/FrameworkSettingsActivity.kt`, `gametool/GameToolSettngs.kt`, `launcher/LauncherSettingsActivity.kt`, and `ota/OtaSettings.kt`.
+   - Keep shell commands, root behavior, app chooser behavior, and existing saved values intact.
+
+5. Expand to high-complexity System UI detail pages.
+   - Candidates: lock screen, status bar, and control center pages.
+   - Preserve world-readable preference behavior and Hook compatibility paths where they exist.
+   - Keep semantic color previews and domain-specific dialogs behavior-compatible.
+
+6. Avoid cleanup during Phase 5.
+   - Do not delete legacy XML layouts, `nav_graph.xml`, old Fragment classes, or old View dependencies as part of settings model work.
+   - Leave deletion and dependency pruning for Phase 6.
 
 ### Phase 6. Clean Up The XML/View Layer
 
@@ -269,33 +315,35 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Move to Phase 4: stabilize and migrate the main navigation host. Phase 3's theme settings, Miuix dependency, and planned component adapter rendering slices are complete; the remaining blocking bugs are at the mixed Compose/Fragment navigation host boundary.
+Move to Phase 5: migrate settings pages through a shared settings model. Phase 4's main route graph now uses `navigation-compose`, while remaining Fragment/XML cleanup is intentionally deferred to Phase 6.
 
 Recommended next order:
 
-1. Stabilize `MainActivity`'s mixed Compose/Fragment navigation host. Completed on 2026-05-30.
-   - Bug: when switching between portrait and landscape, all composable content except the navigation rail disappears.
-   - Bug: when Android switches system light/dark mode, all composable content except the navigation rail disappears.
-   - Fix: `LegacyNavHost` now rebinds an existing `NavHostFragment` to the current `FragmentContainerView` through `bindLegacyNavHost(...)` when the host view changes.
-   - Verification: `.\gradlew.bat assembleDebug` succeeded, and manual observation confirmed both blank-content bugs are fixed.
-   - Preserve the existing `MainActivity` class, XML navigation graph, Fragment routes, destination ids, external launch contracts, and environment-ready gating.
-   - Do not delete `nav_graph.xml`, legacy XML layouts, or Fragment classes in this stabilization slice.
+1. Add the shared settings model and renderer foundation. Next.
+   - Define `SettingItem` and `SettingSection` types under the UI/settings or shared components package.
+   - Add renderer composables that map model items to existing ZTool shared components.
+   - Keep callbacks and state owned by existing ViewModels/screens.
 
-2. Introduce Compose-owned main route state. Completed on 2026-05-30.
-   - Keep Home, Features, Audit, and Settings as the active main destinations.
-   - Keep existing Fragment screens as route content during the transition if that reduces risk.
-   - Preserve the current navigation rail behavior and environment-ready gating.
-   - Fix: `MainActivity` now models the main destinations as `MainRoute`; the Compose shell owns selected route state and only maps to XML destination ids at the legacy navigation dispatch boundary.
-   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
-
-3. Replace the main XML Navigation path with `navigation-compose`. Completed on 2026-05-30.
-   - Move main route definitions into Compose.
-   - Preserve external launch contracts and old entry points.
-   - Leave XML/View cleanup for the dedicated cleanup phase.
-   - Fix: `MainActivity` now uses Compose `NavHost` with `MainRoute` destinations; each route temporarily hosts the existing Fragment content through a `FragmentContainerView`.
-   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
-
-4. Verify each Phase 4 slice. Next.
+2. Pilot the model on `packageinstaller/packageinstallersettings.kt`.
+   - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package force-stop behavior.
    - Run `.\gradlew.bat assembleDebug`.
-   - Verify Material 3 Expressive and Miuix modes.
-   - Verify portrait/landscape switching and system light/dark switching no longer blank the main content.
+   - Record implementation notes and verification in `MigrationNotes.md`.
+
+3. Pilot the model on `safecenter/SafeCenterSettingsActivity.kt`.
+   - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package restart behavior.
+   - Run `.\gradlew.bat assembleDebug`.
+   - Record implementation notes and verification in `MigrationNotes.md`.
+
+4. Review the pilots before expanding.
+   - Confirm Material 3 Expressive and Miuix rendering remain consistent.
+   - Confirm the model reduces duplication without hiding page-specific business behavior.
+   - Only then expand to framework, game tool, launcher, OTA, and System UI detail pages.
+
+5. Keep Phase 4 leftovers for Phase 6 cleanup.
+   - Do not delete `nav_graph.xml`, main Fragment wrappers, legacy Fragment XML layouts, navigation animation resources, or Fragment Navigation dependencies during Phase 5.
+   - Cleanup starts only when active UI routes no longer depend on the old View/Fragment layer.
+
+6. Verification policy.
+   - Run `.\gradlew.bat assembleDebug`.
+   - Verify Material 3 Expressive and Miuix modes for each migrated page.
+   - Verify preference persistence, restart confirmations, shell/root behavior, and Hook compatibility keys for each migrated page.
