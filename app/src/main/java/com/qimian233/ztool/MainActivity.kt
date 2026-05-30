@@ -15,10 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +35,8 @@ import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.color.DynamicColors
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
+import com.qimian233.ztool.ui.components.ZToolNavigationRail
+import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.ui.theme.ZToolTheme
@@ -288,13 +286,11 @@ private fun MainTabletShell(
             .fillMaxSize()
     ) {
         if (environmentReady) {
-            NavigationRail(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+            ZToolNavigationRail(
                 modifier = Modifier.padding(top = 24.dp)
             ) {
                 mainDestinations.forEach { destination ->
-                    NavigationRailItem(
+                    ZToolNavigationRailItem(
                         selected = selectedDestinationId == destination.id,
                         onClick = { onDestinationSelected(destination.id) },
                         icon = {
@@ -304,14 +300,7 @@ private fun MainTabletShell(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        label = { Text(stringResource(destination.labelRes)) },
-                        colors = NavigationRailItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        label = { Text(stringResource(destination.labelRes)) }
                     )
                 }
             }

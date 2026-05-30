@@ -795,6 +795,32 @@ Follow-up fix:
 - `MainActivity` also observes theme settings and updates system-bar icon appearance when theme mode changes.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the hot-switch observer fix.
 
+### Phase 3 Shared Component Adapter Foundation
+
+The fourth Phase 3 slice started the shared component adapter layer through:
+
+- `ui/components/ZToolScaffold.kt`.
+- `ui/components/ZToolDialog.kt`.
+- `MainActivity.kt`.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name, launch contract, Fragment navigation, and destination IDs.
+- Existing navigation rail labels, icons, selected destination behavior, and environment-ready gating.
+- Existing Material 3 rendering while keeping Miuix/future style switching behind project components for later slices.
+
+Implementation note:
+
+- Added shared `ZToolTopAppBar`, `ZToolNavigationRail`, and `ZToolNavigationRailItem` wrappers.
+- Added shared `ZToolDialog` and `ZToolDialogSurface` wrappers.
+- Updated `ZToolTabletScaffold` to use the shared top app bar and navigation rail.
+- Migrated the main navigation rail in `MainActivity` to `ZToolNavigationRail` and `ZToolNavigationRailItem`.
+- Miuix is still not introduced; this is the adapter surface needed before adding style-specific rendering.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the shared component adapter foundation.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1012,7 +1038,7 @@ Recommended next order:
    - Keep existing launch contracts, Fragment navigation, and system-bar behavior compatible.
    - Make sure dialogs and overlay Compose surfaces still receive the same theme context.
 
-4. Next: expand the shared component adapter layer.
+4. Expand the shared component adapter layer. In progress.
    - Add or refine `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZListItem`, and `ZDialog`.
    - Keep style selection inside components through `LocalZToolThemeSpec`.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)`.
