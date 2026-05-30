@@ -97,7 +97,7 @@ class HomeFragment : Fragment() {
         super.onCreate(savedInstanceState)
         val repository = HomeRepository(
             context = requireContext().applicationContext,
-            moduleActiveChecker = ::isModuleActive
+            moduleActiveChecker = ModuleActivationProbe::isModuleActive
         )
         viewModel = ViewModelProvider(
             this,
@@ -226,7 +226,7 @@ class HomeFragment : Fragment() {
     }
 
     fun isModuleActive(): Boolean {
-        return false
+        return ModuleActivationProbe.isModuleActive()
     }
 }
 
@@ -237,11 +237,10 @@ fun HomeMainRoute(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val activity = context as MainActivity
-    val moduleActiveProbe = remember { HomeFragment() }
     val viewModel = remember {
         val repository = HomeRepository(
             context = context.applicationContext,
-            moduleActiveChecker = moduleActiveProbe::isModuleActive
+            moduleActiveChecker = ModuleActivationProbe::isModuleActive
         )
         ViewModelProvider(
             activity,

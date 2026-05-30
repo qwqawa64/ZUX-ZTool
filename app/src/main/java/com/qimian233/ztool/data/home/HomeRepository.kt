@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
+import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.R
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ConfigUpgrade
@@ -20,7 +21,7 @@ import java.net.URL
 class HomeRepository(
     private val context: Context,
     private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance(),
-    private val moduleActiveChecker: () -> Boolean = { false }
+    private val moduleActiveChecker: () -> Boolean = ModuleActivationProbe::isModuleActive
 ) {
     private var cachedKernelVersion = ""
     private var cachedRootSource = ""

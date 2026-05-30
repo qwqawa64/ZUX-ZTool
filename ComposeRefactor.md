@@ -374,14 +374,15 @@ Phase 6 closeout:
 
 Recommended next order:
 
-1. Replace the `HomeFragment.isModuleActive()` Hook compatibility target. Next.
-   - Audit `hook/**` for the exact self-check target and document the current method signature.
-   - Add a non-Fragment self-check target with a stable package/class/method name.
-   - Update `HomeRepository`/`HomeMainRoute` to use the new self-check target.
-   - Update the Hook code to hook the new target.
-   - Decide whether to keep a temporary `HomeFragment.isModuleActive()` shim for one release or delete `HomeFragment` immediately after verification.
-   - Run `.\gradlew.bat assembleDebug`.
-   - Record implementation notes and verification in `MigrationNotes.md`.
+1. Replace the `HomeFragment.isModuleActive()` Hook compatibility target. Completed on 2026-05-31.
+   - Current audited self-check target: instance method `com.qimian233.ztool.HomeFragment.isModuleActive(): Boolean`.
+   - Preferred LSPosed activation detection decision: no project-local, public, stable LSPosed API is available here to confirm this module is enabled for this app without relying on LSPosed manager internals or private storage; retain self-hook detection for now.
+   - Added `com.qimian233.ztool.ModuleActivationProbe.isModuleActive(): Boolean` as the stable non-Fragment target.
+   - Updated `HomeRepository`/`HomeMainRoute` to use the new self-check target.
+   - Updated `HookInit` to hook the new target.
+   - Kept `HomeFragment.isModuleActive()` as a temporary shim for this slice; delete `HomeFragment` with the other inactive Fragment wrappers in the next Phase 7 slice.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
+   - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
 2. Delete inactive main Fragment wrapper classes.
    - Remove `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment` only after the self-check target is replaced.

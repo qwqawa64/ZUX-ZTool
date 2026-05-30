@@ -1502,3 +1502,29 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after dependency cleanup.
 - Remaining warnings are existing deprecated API warnings plus existing string-format/native-strip warnings emitted during the full rebuild.
+
+### Phase 7 Module Activation Probe
+
+`HomeFragment.isModuleActive()` is no longer the primary LSPosed self-check Hook target.
+
+Implemented:
+
+- Added `ModuleActivationProbe.isModuleActive()` as a stable non-Fragment compatibility target.
+- Updated `HookInit` to hook `com.qimian233.ztool.ModuleActivationProbe.isModuleActive(): boolean`.
+- Updated `HomeRepository` and `HomeMainRoute` to call the new probe directly.
+- Kept `HomeFragment.isModuleActive()` temporarily as a shim that delegates to the new probe, so wrapper deletion can happen in the next Phase 7 slice.
+
+Activation detection decision:
+
+- No project-local, public, stable LSPosed API is available here to ask "is this exact module enabled for this app" without depending on LSPosed manager internals or private storage.
+- Root/framework version checks remain environment checks only; they cannot prove the module is enabled for the app scope.
+- The self-hook approach is therefore retained for now, but it no longer depends on a Fragment class.
+
+Preserved behavior:
+
+- Existing package name, Xposed entry point, `assets/xposed_init`, Hook manager initialization, and normal Hook module dispatch.
+- Home environment status and root/framework display behavior.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after replacing the primary module activation Hook target.
