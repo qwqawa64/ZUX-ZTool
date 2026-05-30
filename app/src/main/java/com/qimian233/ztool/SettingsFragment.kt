@@ -35,10 +35,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
@@ -130,6 +135,7 @@ class SettingsFragment : Fragment() {
                         onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
                         onManualColorChanged = viewModel::setManualColorEnabled,
                         onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
+                        onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
                         onAbout = viewModel::showAboutDialog
                     )
 
@@ -218,6 +224,7 @@ private fun SettingsRoute(
     onAmoledBlackChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
     onManualSeedColorTextChanged: (String) -> Unit,
+    onManualSeedColorEditingFinished: () -> Unit,
     onAbout: () -> Unit
 ) {
     ZToolPageSurface(
@@ -264,7 +271,8 @@ private fun SettingsRoute(
                 onDynamicColorChanged = onDynamicColorChanged,
                 onAmoledBlackChanged = onAmoledBlackChanged,
                 onManualColorChanged = onManualColorChanged,
-                onManualSeedColorTextChanged = onManualSeedColorTextChanged
+                onManualSeedColorTextChanged = onManualSeedColorTextChanged,
+                onManualSeedColorEditingFinished = onManualSeedColorEditingFinished
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -313,7 +321,8 @@ private fun ThemeSettingsSection(
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
-    onManualSeedColorTextChanged: (String) -> Unit
+    onManualSeedColorTextChanged: (String) -> Unit,
+    onManualSeedColorEditingFinished: () -> Unit
 ) {
     val frontendStyleOptions = listOf(
         LabeledOption(
@@ -373,7 +382,8 @@ private fun ThemeSettingsSection(
                 color = settings.manualSeedColor,
                 colorText = manualSeedColorText,
                 isError = manualSeedColorError,
-                onColorTextChanged = onManualSeedColorTextChanged
+                onColorTextChanged = onManualSeedColorTextChanged,
+                onEditingFinished = onManualSeedColorEditingFinished
             )
         }
         ZToolSwitchRow(
@@ -427,8 +437,10 @@ private fun ManualSeedColorRow(
     color: Long,
     colorText: String,
     isError: Boolean,
-    onColorTextChanged: (String) -> Unit
+    onColorTextChanged: (String) -> Unit,
+    onEditingFinished: () -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -445,7 +457,13 @@ private fun ManualSeedColorRow(
         OutlinedTextField(
             value = colorText,
             onValueChange = onColorTextChanged,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { focusState ->
+                    if (!focusState.isFocused) {
+                        onEditingFinished()
+                    }
+                },
             label = { Text(stringResource(R.string.manual_seed_color_title)) },
             supportingText = {
                 if (isError) {
@@ -455,7 +473,14 @@ private fun ManualSeedColorRow(
                 }
             },
             isError = isError,
-            singleLine = true
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    onEditingFinished()
+                    focusManager.clearFocus()
+                }
+            )
         )
     }
 }

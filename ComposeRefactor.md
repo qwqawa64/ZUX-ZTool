@@ -935,6 +935,13 @@ Follow-up fix:
 - Fix: convert stored ARGB values through `Color(Int)` after masking to 32 bits.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the fix.
 
+Follow-up interaction fix:
+
+- Manual seed color input now preserves the user's in-progress text while the field is focused.
+- Valid partial input such as `1D5FA8` still updates the stored manual color, but the field is not rewritten to `#AARRGGBB` until editing is finished.
+- Editing is finished on IME Done or focus loss; invalid text then falls back to the current saved `#AARRGGBB` value.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the input behavior fix.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic

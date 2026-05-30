@@ -121,7 +121,17 @@ class SettingsViewModel(
         repository.setManualSeedColor(parsed)
         _uiState.value = _uiState.value.copy(
             themeSettings = _uiState.value.themeSettings.copy(manualSeedColor = parsed),
-            manualSeedColorText = repository.formatSeedColor(parsed),
+            manualSeedColorText = text,
+            manualSeedColorError = false
+        )
+    }
+
+    fun finishManualSeedColorEditing() {
+        val state = _uiState.value
+        val parsed = repository.parseSeedColor(state.manualSeedColorText)
+        val normalized = repository.formatSeedColor(parsed ?: state.themeSettings.manualSeedColor)
+        _uiState.value = state.copy(
+            manualSeedColorText = normalized,
             manualSeedColorError = false
         )
     }
