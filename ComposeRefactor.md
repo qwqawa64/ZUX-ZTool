@@ -1002,6 +1002,13 @@ Follow-up navigation rail layout fix:
 - Fix: constrain the Miuix item wrapper to the rail width before calling Miuix `NavigationRailItem`.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the navigation rail layout fix.
 
+Follow-up dialog adapter slice:
+
+- `ZToolDialog` now uses a Miuix `Surface` hosted by Compose `Dialog` in Miuix mode.
+- The existing composable slot API for title, text, confirm button, and dismiss button is preserved, so business screens do not need style-specific branches or call-site changes.
+- Material mode still uses Material `AlertDialog`.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the dialog adapter slice.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1219,7 +1226,8 @@ Recommended next order:
    - First slice completed on 2026-05-30 for `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
    - Settings component slice completed on 2026-05-30 for `ZListItem` and `ZToolSettingsDivider`.
    - Navigation rail item slice completed on 2026-05-30 by moving the shared item wrapper to an `ImageVector` icon contract and using Miuix `NavigationRailItem` in Miuix mode.
-   - Remaining candidate slices: `ZToolDialog` compatibility migration and a dedicated `ZToolDropdownField` UX-compatible replacement if needed.
+   - Dialog adapter slice completed on 2026-05-30 by adding a Miuix `Surface` dialog host while preserving the existing slot API.
+   - Remaining candidate slice: a dedicated `ZToolDropdownField` UX-compatible replacement if needed.
    - Keep `LocalZToolThemeSpec` as the style-selection boundary.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
 
