@@ -27,21 +27,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,15 +43,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
+import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
+import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
 import com.qimian233.ztool.viewmodel.StatusBarSettingsViewModel
@@ -124,7 +120,7 @@ class StatusBarSettingsActivity : ComponentActivity() {
                 }
 
                 if (uiState.showSaveSuccessDialog) {
-                    AlertDialog(
+                    ZToolDialog(
                         onDismissRequest = viewModel::dismissSaveSuccessDialog,
                         title = { Text(stringResource(R.string.save_success_title)) },
                         text = { Text(stringResource(R.string.clock_format_saved_message)) },
@@ -169,7 +165,6 @@ private class StatusBarSettingsViewModelFactory(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StatusBarSettingsScreen(
     title: String,
@@ -193,16 +188,10 @@ private fun StatusBarSettingsScreen(
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
     onBatteryExternalChanged: (Boolean) -> Unit
 ) {
-    Scaffold(
+    ZToolScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
+            ZToolTopAppBar(
+                title = title,
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -210,11 +199,7 @@ private fun StatusBarSettingsScreen(
                             contentDescription = null
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
+                }
             )
         }
     ) { innerPadding ->
@@ -457,7 +442,6 @@ private fun SliderSettingRow(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DropdownSettingRow(
     title: String,
@@ -502,14 +486,7 @@ private fun SettingsCard(
     title: String,
     content: @Composable () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    ZToolCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -531,7 +508,7 @@ private fun FormatHelpDialog(
     onDismiss: () -> Unit,
     onCopyExample: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.clock_format_help_title)) },
         text = { Text(stringResource(R.string.clock_format_help_content)) },
@@ -562,7 +539,7 @@ private fun ColorPickerDialog(
     )
     val colorNames = stringArrayResource(R.array.color_names).toList()
 
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.select_font_color_title)) },
         text = {

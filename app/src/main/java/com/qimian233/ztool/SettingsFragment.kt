@@ -20,16 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,7 +41,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.SettingsUiState
 import com.qimian233.ztool.viewmodel.SettingsViewModel
@@ -238,19 +236,19 @@ private fun SettingsRoute(
             Spacer(modifier = Modifier.height(16.dp))
 
             SettingsSection(title = stringResource(R.string.moreSettings)) {
-                SettingsSwitchRow(
+                ZToolSwitchRow(
                     title = stringResource(R.string.enableLogService),
                     summary = stringResource(R.string.enableLogServiceDescription),
                     checked = state.isLogServiceEnabled,
                     onCheckedChange = onLogServiceChanged
                 )
-                SettingsSwitchRow(
+                ZToolSwitchRow(
                     title = stringResource(R.string.enableDetailedLogging),
                     summary = stringResource(R.string.enableDetailedLoggingDescription),
                     checked = state.isDetailedLoggingEnabled,
                     onCheckedChange = onDetailedLoggingChanged
                 )
-                SettingsSwitchRow(
+                ZToolSwitchRow(
                     title = stringResource(R.string.enableHomePageYiyan),
                     summary = stringResource(R.string.enableHomePageYiyanSummary),
                     checked = state.isHomepageYiyanEnabled,
@@ -276,14 +274,7 @@ private fun SettingsSection(
     title: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    ZToolCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -332,49 +323,11 @@ private fun SettingsActionRow(
 }
 
 @Composable
-private fun SettingsSwitchRow(
-    title: String,
-    summary: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-    }
-}
-
-@Composable
 private fun RestoreDefaultDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.final_confirmation_title)) },
         text = { Text(stringResource(R.string.restore_default_confirmation)) },
@@ -400,7 +353,7 @@ private fun AboutDialog(
     onOpenAuthor: () -> Unit,
     onOpenCollaborator: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.about_ztool_title)) },
         text = {

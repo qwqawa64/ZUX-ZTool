@@ -21,25 +21,17 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,7 +45,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.MagicWindowSearchRepository
+import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.SearchPageUiState
 import com.qimian233.ztool.viewmodel.SearchPageViewModel
@@ -116,7 +112,6 @@ private class SearchPageViewModelFactory(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchPageScreen(
     state: SearchPageUiState,
@@ -125,15 +120,10 @@ private fun SearchPageScreen(
     onResultClick: (PackageInfo) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    Scaffold(
+    ZToolScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.FindRules),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
+            ZToolTopAppBar(
+                title = stringResource(R.string.FindRules),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -141,11 +131,7 @@ private fun SearchPageScreen(
                             contentDescription = stringResource(R.string.cancel)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
+                }
             )
         }
     ) { innerPadding ->
@@ -190,14 +176,7 @@ private fun SearchCard(
     onKeywordChanged: (String) -> Unit,
     onSearch: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    ZToolCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = stringResource(R.string.FindRules),
@@ -237,15 +216,10 @@ private fun ResultsCard(
     results: List<PackageInfo>,
     onResultClick: (PackageInfo) -> Unit
 ) {
-    Card(
+    ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .height(390.dp),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            .height(390.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -300,14 +274,7 @@ private fun PackageResultRow(
 
 @Composable
 private fun EmptyResultCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    ZToolCard(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -328,7 +295,7 @@ private fun PackageDetailsDialog(
     packageInfo: PackageInfo,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.parallel_window_details_title)) },
         text = {

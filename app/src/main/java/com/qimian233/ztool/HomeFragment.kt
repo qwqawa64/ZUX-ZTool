@@ -29,20 +29,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.SystemUpdate
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,7 +57,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.HomeViewModel
@@ -268,7 +266,7 @@ private fun HomeScreen(
     onIgnoreUpdate: (Int) -> Unit,
     onOpenUpdate: (String) -> Unit
 ) {
-    Scaffold { innerPadding ->
+    ZToolScaffold { innerPadding ->
         ZToolPageSurface(
             modifier = Modifier
                 .fillMaxSize()
@@ -367,12 +365,9 @@ private fun HomeScreen(
 
 @Composable
 private fun RequirementCard() {
-    Card(
+    ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
+        containerColor = MaterialTheme.colorScheme.errorContainer
     ) {
         Row(
             modifier = Modifier
@@ -403,14 +398,11 @@ private fun UpdateCard(
     onIgnore: () -> Unit,
     onOpenUpdate: () -> Unit
 ) {
-    Card(
+    ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onToggleExpanded),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-        )
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -460,13 +452,10 @@ private fun UpdateCard(
 
 @Composable
 private fun ModuleStatusCard(state: HomeUiState) {
-    Card(
+    ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        defaultElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(
@@ -551,12 +540,9 @@ private fun InfoBlock(
 
 @Composable
 private fun SystemInfoCard(state: HomeUiState) {
-    Card(
+    ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        )
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
@@ -623,7 +609,7 @@ private fun ConfigUpgradeDialog(
     onRestart: () -> Unit,
     onLater: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onLater,
         title = { Text(stringResource(R.string.config_upgraded_tip_title)) },
         text = { Text(stringResource(R.string.config_upgraded_tip_message)) },
@@ -646,7 +632,7 @@ private fun RebootConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.reboot_confirm_title)) },
         text = { Text(stringResource(target.messageRes)) },

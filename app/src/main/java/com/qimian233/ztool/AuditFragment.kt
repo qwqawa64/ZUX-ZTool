@@ -38,19 +38,14 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.TaskAlt
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -75,8 +70,11 @@ import com.qimian233.ztool.audit.LogParser
 import com.qimian233.ztool.audit.LogParser.LogEntry
 import com.qimian233.ztool.audit.LogParser.LogLevel
 import com.qimian233.ztool.data.audit.AuditRepository
+import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.AuditUiState
 import com.qimian233.ztool.viewmodel.AuditViewModel
@@ -211,7 +209,6 @@ private class AuditViewModelFactory(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AuditScreen(
     state: AuditUiState,
@@ -229,7 +226,7 @@ private fun AuditScreen(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    Scaffold(
+    ZToolScaffold(
         floatingActionButton = {
             if (state.filteredLogEntries.isNotEmpty()) {
                 ExtendedFloatingActionButton(
@@ -295,15 +292,11 @@ private fun AuditScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Card(
+                ZToolCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                 ) {
                     when {
                         state.isLoading -> {
@@ -347,7 +340,6 @@ private fun AuditScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterCard(
     categoryOptions: List<String>,
@@ -368,13 +360,9 @@ private fun FilterCard(
     onShowStatistics: () -> Unit,
     onSave: () -> Unit
 ) {
-    Card(
+    ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
             modifier = Modifier
@@ -634,7 +622,7 @@ private fun LogDetailDialog(
     onCopy: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.log_detail_title)) },
         text = {
@@ -688,7 +676,7 @@ private fun ClearLogsDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.clear_logs_title)) },
         text = { Text(stringResource(R.string.clear_logs_message)) },
@@ -710,7 +698,7 @@ private fun StatisticsDialog(
     message: String,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ZToolDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.log_statistics_title)) },
         text = { Text(message) },

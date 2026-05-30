@@ -827,12 +827,29 @@ Completed pilots:
 - `settingactivity/packageinstaller/packageinstallersettings.kt`.
 - `settingactivity/safecenter/SafeCenterSettingsActivity.kt`.
 
+Completed broad page migration:
+
+- `HomeFragment.kt`.
+- `AuditFragment.kt`.
+- `SettingsFragment.kt`.
+- `settingactivity/gametool/GameToolSettngs.kt`.
+- `settingactivity/launcher/LauncherSettingsActivity.kt`.
+- `settingactivity/systemframework/FrameworkSettingsActivity.kt`.
+- `settingactivity/systemui/systemUISettings.kt`.
+- `settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt`.
+- `settingactivity/systemui/statusBarSetting/StatusBarSettingsActivity.kt`.
+- `settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt`.
+- `settingactivity/ota/OtaSettings.kt`.
+- `settingactivity/setting/SettingsDetailActivity.kt`.
+- `settingactivity/setting/magicwindowsearch/searchPage.kt`.
+
 Preserved behavior:
 
 - Existing `MainActivity` class name, launch contract, Fragment navigation, and destination IDs.
 - Existing navigation rail labels, icons, selected destination behavior, and environment-ready gating.
 - Existing package installer Activity class name, package name, launch contract, ViewModel/repository boundary, preference keys, restart confirmation behavior, and package force-stop behavior.
 - Existing safe center Activity class name, package name, launch contract, ViewModel/repository boundary, preference keys, restart confirmation behavior, and package restart behavior.
+- Existing broad page Activity/Fragment class names, launch contracts, ViewModel/repository boundaries, preference keys, shell/restart behavior, log export behavior, SAF contracts, dialog actions, and overlay/font/config flows.
 - Existing Material 3 rendering while keeping Miuix/future style switching behind project components for later slices.
 
 Implementation note:
@@ -846,6 +863,10 @@ Implementation note:
 - Migrated the main navigation rail in `MainActivity` to `ZToolNavigationRail` and `ZToolNavigationRailItem`.
 - Migrated `settingactivity/packageinstaller/packageinstallersettings.kt` from direct Material 3 `Scaffold`, `TopAppBar`, `Card`, and `AlertDialog` usage to `ZToolScaffold`, `ZToolTopAppBar`, `ZToolCard`, and `ZToolDialog`.
 - Migrated `settingactivity/safecenter/SafeCenterSettingsActivity.kt` from direct Material 3 `Scaffold`, `TopAppBar`, `Card`, and `AlertDialog` usage to `ZToolScaffold`, `ZToolTopAppBar`, `ZToolCard`, and `ZToolDialog`.
+- Extended `ZToolCard` with optional container color and elevation so semantic cards can still use the shared component adapter.
+- Migrated remaining active Compose pages from direct Material 3 page-level `Scaffold`, `TopAppBar`, `Card`, and Compose `AlertDialog` usage to `ZToolScaffold`, `ZToolTopAppBar`, `ZToolCard`, and `ZToolDialog`.
+- Kept semantic data colors, including log levels and color-preview swatches, explicit.
+- Left AppCompat/MaterialAlertDialogBuilder host dialogs in utility and compatibility flows intact where they are not page-level Compose components.
 - Miuix is still not introduced; this is the adapter surface needed before adding style-specific rendering.
 
 Verification:
@@ -853,14 +874,16 @@ Verification:
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the shared component adapter foundation.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the package installer shared-component pilot.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the safe center shared-component pilot.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the broad shared-component page migration.
 
 Remaining Phase 3 task 4 work:
 
-- Continue migrating small already-migrated pages from direct Material 3 primitives to project components, next considering `settingactivity/gametool/GameToolSettngs.kt`.
+- Business pages no longer directly use Material 3 page-level `Scaffold`, `TopAppBar`, `Card`, or Compose `AlertDialog`; remaining direct Material 3 usage for those primitives is concentrated inside `ui/components`.
+- Keep AppCompat/MaterialAlertDialogBuilder compatibility dialogs as-is unless a later task explicitly migrates those host flows.
 - Broaden wrapper coverage only when a real page needs it; avoid adding speculative components.
 - Keep `LocalZToolThemeSpec` as the style-selection boundary and do not add screen-level `if (style == FrontendStyle.Miuix)` branches.
 - Do not add the Miuix dependency until the Material 3 adapter path is stable across a few pages.
-- After each page pilot, run `.\gradlew.bat assembleDebug` and record the result here.
+- After future adapter changes, run `.\gradlew.bat assembleDebug` and record the result here.
 
 ## Full Refactor Roadmap
 
@@ -1079,8 +1102,9 @@ Recommended next order:
    - Keep existing launch contracts, Fragment navigation, and system-bar behavior compatible.
    - Make sure dialogs and overlay Compose surfaces still receive the same theme context.
 
-4. Expand the shared component adapter layer. In progress: shared scaffold, top app bar, navigation rail, card, switch row, dropdown, list item, and dialog wrappers exist; `MainActivity`, package installer, and safe center have been piloted.
-   - Add or refine `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZListItem`, and `ZDialog`.
+4. Expand the shared component adapter layer. Page-level migration completed on 2026-05-30 for active Compose business pages.
+   - Shared scaffold, top app bar, navigation rail, card, switch row, dropdown, list item, and dialog wrappers exist.
+   - Business pages now avoid direct Material 3 page-level `Scaffold`, `TopAppBar`, `Card`, and Compose `AlertDialog` usage.
    - Keep style selection inside components through `LocalZToolThemeSpec`.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)`.
 
@@ -1089,7 +1113,6 @@ Recommended next order:
    - Keep Material 3 Expressive as the first complete and verified style.
    - Treat Miuix as a component-layer alternative, not a separate business-screen implementation.
 
-6. Pilot Phase 3 on a small already-migrated settings page.
-   - Prefer package installer or safe center before larger pages.
+6. Pilot Phase 3 on already-migrated settings pages. Completed for package installer, safe center, and the active Compose page set on 2026-05-30.
    - Preserve the existing ViewModel/repository boundary.
-   - Run `.\gradlew.bat assembleDebug` after each slice and record the result here.
+   - Run `.\gradlew.bat assembleDebug` after future adapter slices and record the result here.
