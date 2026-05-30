@@ -37,7 +37,10 @@ import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.color.DynamicColors
+import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
+import com.qimian233.ztool.ui.theme.ThemeMode
+import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.CountdownDialog
 
@@ -49,6 +52,7 @@ class MainActivity : AppCompatActivity(),
     private var navController: NavController? = null
     private var isEnvironmentReady by mutableStateOf(false)
     private var currentDestinationId by mutableIntStateOf(R.id.homeFragment)
+    private var themeSettings by mutableStateOf(ZToolThemeSettings())
     private var lastClickTime = 0L
 
     private val clickInterval = 300L
@@ -63,11 +67,12 @@ class MainActivity : AppCompatActivity(),
             isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false)
         }
 
-        setupSystemBars()
+        themeSettings = ThemePreferencesRepository(applicationContext).loadSettings()
+        setupSystemBars(themeSettings)
         LogServiceManager.setServiceStatusListener(this)
 
         setContent {
-            ZToolTheme {
+            ZToolTheme(settings = themeSettings) {
                 MainTabletShell(
                     environmentReady = isEnvironmentReady,
                     selectedDestinationId = currentDestinationId,
@@ -218,19 +223,27 @@ class MainActivity : AppCompatActivity(),
         }.build().show()
     }
 
-    private fun setupSystemBars() {
+    private fun setupSystemBars(settings: ZToolThemeSettings) {
         val window: Window = window
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
 
-        val isDarkTheme = (
-            resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-            ) == Configuration.UI_MODE_NIGHT_YES
+        val isDarkTheme = resolveDarkTheme(settings)
 
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = !isDarkTheme
             isAppearanceLightNavigationBars = !isDarkTheme
+        }
+    }
+
+    private fun resolveDarkTheme(settings: ZToolThemeSettings): Boolean {
+        return when (settings.themeMode) {
+            ThemeMode.FollowSystem -> (
+                resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+                ) == Configuration.UI_MODE_NIGHT_YES
+            ThemeMode.Light -> false
+            ThemeMode.Dark -> true
         }
     }
 

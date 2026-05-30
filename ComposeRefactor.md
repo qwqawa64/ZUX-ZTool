@@ -761,6 +761,32 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after updating `ZToolTheme` settings resolution.
 
+### Phase 3 Top-Level Theme Settings Wiring
+
+The third Phase 3 slice wired the top-level app shell to the persisted app UI theme settings through:
+
+- `MainActivity.kt`.
+- `data/theme/ThemePreferencesRepository.kt`.
+- `ui/theme/ZToolTheme.kt`.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name, launch contract, Fragment navigation, and first-run agreement flow.
+- Existing `ZToolTheme` defaults for callers that do not provide settings.
+- Existing Hook/module preference keys and runtime assets.
+- Existing system-bar transparent setup, including the known deprecated `statusBarColor` and `navigationBarColor` warnings.
+
+Implementation note:
+
+- `MainActivity` now loads `ZToolThemeSettings` from `ThemePreferencesRepository` before calling `ZToolTheme`.
+- The same settings are used to resolve light/dark system-bar icon appearance.
+- Theme settings are read from the dedicated app UI preference file and are not yet editable from a settings page.
+- Dialog and overlay surfaces still use their existing theme call sites; shared propagation and user-facing controls remain later Phase 3 work.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after wiring `MainActivity` to persisted theme settings.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -973,12 +999,12 @@ Recommended next order:
    - Support manual seed color as a complete `ColorScheme` source rather than changing only `primary`.
    - Apply AMOLED pure black as a dark-theme post-processing step over `background`, `surface`, and `surfaceContainer*`.
 
-3. Next: wire the top-level app shell to the persisted theme settings.
+3. Wire the top-level app shell to the persisted theme settings. Completed on 2026-05-30.
    - Load theme settings before calling `ZToolTheme` in `MainActivity`.
    - Keep existing launch contracts, Fragment navigation, and system-bar behavior compatible.
    - Make sure dialogs and overlay Compose surfaces still receive the same theme context.
 
-4. Expand the shared component adapter layer.
+4. Next: expand the shared component adapter layer.
    - Add or refine `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZListItem`, and `ZDialog`.
    - Keep style selection inside components through `LocalZToolThemeSpec`.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)`.
