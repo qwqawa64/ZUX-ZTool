@@ -1009,6 +1009,13 @@ Follow-up dialog adapter slice:
 - Material mode still uses Material `AlertDialog`.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the dialog adapter slice.
 
+Follow-up dropdown adapter slice:
+
+- `ZToolDropdownField` now uses Miuix `TextField` for the read-only anchor in Miuix mode while preserving the existing field-style API.
+- The dropdown popup and non-editable anchor behavior still use the current Material `ExposedDropdownMenuBox` path, so existing form layouts and option-selection behavior remain unchanged.
+- This completes the planned Phase 3 component adapter rendering pass without adding business-screen style branches.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the dropdown adapter slice.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1222,12 +1229,12 @@ Recommended next order:
    - Keep Material 3 Expressive as the default and verified style path.
    - `.\gradlew.bat assembleDebug` succeeded after adding the dependency.
 
-3. Implement Miuix rendering behind the component and theme adapter layer. In progress.
+3. Implement Miuix rendering behind the component and theme adapter layer. Completed on 2026-05-30.
    - First slice completed on 2026-05-30 for `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
    - Settings component slice completed on 2026-05-30 for `ZListItem` and `ZToolSettingsDivider`.
    - Navigation rail item slice completed on 2026-05-30 by moving the shared item wrapper to an `ImageVector` icon contract and using Miuix `NavigationRailItem` in Miuix mode.
    - Dialog adapter slice completed on 2026-05-30 by adding a Miuix `Surface` dialog host while preserving the existing slot API.
-   - Remaining candidate slice: a dedicated `ZToolDropdownField` UX-compatible replacement if needed.
+   - Dropdown adapter slice completed on 2026-05-30 by using Miuix `TextField` for the shared dropdown anchor while preserving popup behavior and call sites.
    - Keep `LocalZToolThemeSpec` as the style-selection boundary.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
 

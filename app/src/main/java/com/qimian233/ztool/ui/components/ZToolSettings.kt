@@ -38,6 +38,7 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
+import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 @Composable
 fun ZListItem(
@@ -216,22 +217,40 @@ fun <T> ZToolDropdownField(
         },
         modifier = modifier
     ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            enabled = enabled,
-            singleLine = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            modifier = Modifier
-                .menuAnchor(
-                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                    enabled = enabled
-                )
-                .fillMaxWidth()
-        )
+        if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+            MiuixTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true,
+                enabled = enabled,
+                singleLine = true,
+                label = label,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .menuAnchor(
+                        type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                        enabled = enabled
+                    )
+                    .fillMaxWidth()
+            )
+        } else {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true,
+                enabled = enabled,
+                singleLine = true,
+                label = { Text(label) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                modifier = Modifier
+                    .menuAnchor(
+                        type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                        enabled = enabled
+                    )
+                    .fillMaxWidth()
+            )
+        }
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
