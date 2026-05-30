@@ -1,7 +1,6 @@
 package com.qimian233.ztool.settingactivity.safecenter
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,28 +34,28 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.qimian233.ztool.EnhancedShellExecutor
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.data.safecenter.SafeCenterRestartResult
+import com.qimian233.ztool.data.safecenter.SafeCenterSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.viewmodel.SafeCenterSettingsUiState
+import com.qimian233.ztool.viewmodel.SafeCenterSettingsViewModel
 
 class SafeCenterSettingsActivity : ComponentActivity() {
 
     private var appPackageName: String? = null
-    private lateinit var prefsUtils: ModulePreferencesUtils
-    private lateinit var shellExecutor: EnhancedShellExecutor
-
-    private var uiState by mutableStateOf(SafeCenterSettingsUiState())
+    private lateinit var viewModel: SafeCenterSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,144 +63,79 @@ class SafeCenterSettingsActivity : ComponentActivity() {
 
         val appName = intent.getStringExtra("app_name").orEmpty()
         appPackageName = intent.getStringExtra("app_package")
-        prefsUtils = ModulePreferencesUtils(this)
-        shellExecutor = EnhancedShellExecutor.getInstance()
-        loadSettings()
+        val repository = SafeCenterSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            SafeCenterSettingsViewModelFactory(repository)
+        )[SafeCenterSettingsViewModel::class.java]
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 SafeCenterSettingsScreen(
                     title = appName + stringResource(R.string.safe_center_settings_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onRestart = {
-                        if (uiState.isRestartProcessing) {
-                            Log.d(TAG, "Restart is already processing, ignoring duplicate click")
-                        } else {
-                            uiState = uiState.copy(showRestartConfirmDialog = true)
-                        }
-                    },
-                    onDefaultEnableAutorunChanged = {
-                        uiState = uiState.copy(defaultEnableAutorun = it)
-                        saveSettings("default_enable_autorun", it)
-                    },
-                    onBlockSafeCenterScanChanged = {
-                        uiState = uiState.copy(blockSafeCenterScan = it)
-                        saveSettings("block_safecenter_scan", it)
-                    },
-                    onDocumentsUiBypassChanged = {
-                        uiState = uiState.copy(documentsUiBypass = it)
-                        saveSettings("documents_ui_bypass", it)
-                    }
+                    onRestart = viewModel::showRestartConfirmDialog,
+                    onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
+                    onBlockSafeCenterScanChanged = viewModel::setBlockSafeCenterScan,
+                    onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
                 )
 
                 if (uiState.showRestartConfirmDialog) {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            uiState = uiState.copy(showRestartConfirmDialog = false)
-                            forceStopApp()
+                            viewModel.restartPackages(
+                                packageName = appPackageName.orEmpty(),
+                                onResult = ::showRestartResult
+                            )
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
+                        onDismiss = viewModel::dismissRestartConfirmDialog
                     )
                 }
             }
         }
     }
 
-    private fun loadSettings() {
-        uiState = uiState.copy(
-            defaultEnableAutorun = prefsUtils.loadBooleanSetting("default_enable_autorun", false),
-            blockSafeCenterScan = prefsUtils.loadBooleanSetting("block_safecenter_scan", false),
-            documentsUiBypass = prefsUtils.loadBooleanSetting("documents_ui_bypass", false)
-        )
-    }
-
-    private fun saveSettings(moduleName: String, newValue: Boolean) {
-        prefsUtils.saveBooleanSetting(moduleName, newValue)
-    }
-
-    private fun forceStopApp() {
-        val packageName = appPackageName
-        if (packageName.isNullOrEmpty()) {
-            Toast.makeText(this, R.string.empty_package_name_message, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (uiState.isRestartProcessing) {
-            Log.d(TAG, "Restart is already processing")
-            return
-        }
-
-        uiState = uiState.copy(isRestartProcessing = true)
-
-        Thread {
-            try {
-                val appResult = shellExecutor.executeRootCommand("am force-stop $packageName", 5)
-                val documentsResult = shellExecutor.executeRootCommand("am force-stop com.android.documentsui", 5)
-                val success = appResult.isSuccess && documentsResult.isSuccess
-
-                if (!success) {
-                    Log.w(TAG, "am force-stop failed, trying killall")
-                    val fallbackResult = shellExecutor.executeRootCommand("killall $packageName", 5)
-                    runOnUiThread {
-                        if (fallbackResult.isSuccess) {
-                            Toast.makeText(
-                                this,
-                                R.string.app_process_restarted_message,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                this,
-                                getString(R.string.restart_fail_prefix) + fallbackResult.error,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        resetRestartButton()
-                    }
-                } else {
-                    runOnUiThread {
-                        Toast.makeText(
-                            this,
-                            R.string.app_process_restarted_message,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        resetRestartButton()
-                    }
+    private fun showRestartResult(result: SafeCenterRestartResult) {
+        runOnUiThread {
+            when (result) {
+                SafeCenterRestartResult.EmptyPackageName -> {
+                    Toast.makeText(this, R.string.empty_package_name_message, Toast.LENGTH_SHORT).show()
                 }
-
-                Log.d(TAG, "Force stop result: ${if (success) "success" else "failed"}")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to force stop app: ${e.message}")
-                runOnUiThread {
+                is SafeCenterRestartResult.Failure -> {
                     Toast.makeText(
                         this,
-                        getString(R.string.restart_fail_prefix) + e.message,
+                        getString(R.string.restart_fail_prefix) + result.error,
                         Toast.LENGTH_SHORT
                     ).show()
-                    resetRestartButton()
+                }
+                SafeCenterRestartResult.Success -> {
+                    Toast.makeText(
+                        this,
+                        R.string.app_process_restarted_message,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
-        }.start()
-    }
-
-    private fun resetRestartButton() {
-        uiState = uiState.copy(isRestartProcessing = false)
-    }
-
-    companion object {
-        private const val TAG = "SafeCenterSettings"
+        }
     }
 }
 
-private data class SafeCenterSettingsUiState(
-    val defaultEnableAutorun: Boolean = false,
-    val blockSafeCenterScan: Boolean = false,
-    val documentsUiBypass: Boolean = false,
-    val showRestartConfirmDialog: Boolean = false,
-    val isRestartProcessing: Boolean = false
-)
+private class SafeCenterSettingsViewModelFactory(
+    private val repository: SafeCenterSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SafeCenterSettingsViewModel::class.java)) {
+            return SafeCenterSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -469,6 +469,31 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `packageinstallersettings` ViewModel/repository extraction.
 
+### SafeCenterSettings ViewModel Boundary
+
+`settingactivity/safecenter/SafeCenterSettingsActivity.kt` now delegates security center preference state and restart command coordination to:
+
+- `viewmodel/SafeCenterSettingsViewModel.kt`.
+- `data/safecenter/SafeCenterSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `SafeCenterSettingsActivity` class name, package, and Activity launch contract.
+- Existing preference keys for default autorun enablement, Safe Center scan blocking, and DocumentsUI bypass.
+- Existing restart confirmation dialog text including the target app package and `com.android.documentsui`.
+- Existing root restart flow using `am force-stop <package>`, `am force-stop com.android.documentsui`, and `killall <package>` fallback.
+- Existing duplicate restart guard and restart success/failure Toast behavior.
+
+Implementation note:
+
+- `SafeCenterSettingsUiState` now lives with `SafeCenterSettingsViewModel`.
+- The Activity now hosts Compose, shows Toast effects, and forwards user actions to the ViewModel.
+- `SafeCenterSettingsRepository` wraps `ModulePreferencesUtils` and `EnhancedShellExecutor` for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `SafeCenterSettingsActivity` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -621,9 +646,6 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/safecenter/SafeCenterSettingsActivity.kt`
-   - Extract security center preference state into a ViewModel/repository boundary.
-   - Preserve existing preference keys and hook behavior.
-2. `settingactivity/gametool/GameToolSettngs.kt`
+1. `settingactivity/gametool/GameToolSettngs.kt`
    - Extract game tool preference and whitelist state into a ViewModel/repository boundary.
    - Preserve mistake-touch whitelist configuration and existing app chooser behavior.
