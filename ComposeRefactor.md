@@ -981,6 +981,13 @@ Follow-up stability fix:
 - Miuix rendering remains enabled for lower-risk shared components: `ZToolTopAppBar`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the stability fix.
 
+Follow-up settings component slice:
+
+- `ZListItem` now uses Miuix `BasicComponent` in Miuix mode while preserving the existing shared component API for business screens.
+- `ZToolSettingsDivider` now uses Miuix `HorizontalDivider` in Miuix mode.
+- `ZToolDropdownField` remains on Material `ExposedDropdownMenuBox` because it is used as a form field and the Miuix `SuperDropdown` API is row-oriented; replacing it should be a dedicated UX-compatible slice.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the settings component slice.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1196,7 +1203,8 @@ Recommended next order:
 
 3. Implement Miuix rendering behind the component and theme adapter layer. In progress.
    - First slice completed on 2026-05-30 for `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
-   - Remaining candidate slices: `ZToolNavigationRailItem` icon-contract migration, `ZToolDialog` compatibility migration, and `ZToolDropdownField`/`ZListItem` Miuix-specific rendering where the existing API can be preserved.
+   - Settings component slice completed on 2026-05-30 for `ZListItem` and `ZToolSettingsDivider`.
+   - Remaining candidate slices: `ZToolNavigationRailItem` icon-contract migration, `ZToolDialog` compatibility migration, and a dedicated `ZToolDropdownField` UX-compatible replacement if needed.
    - Keep `LocalZToolThemeSpec` as the style-selection boundary.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
 

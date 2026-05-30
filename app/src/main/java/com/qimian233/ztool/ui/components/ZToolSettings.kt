@@ -2,6 +2,7 @@ package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
+import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
 
 @Composable
@@ -40,6 +43,26 @@ fun ZListItem(
     leadingContent: @Composable (RowScope.() -> Unit)? = null,
     trailingContent: @Composable (RowScope.() -> Unit)? = null
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixBasicComponent(
+            modifier = modifier,
+            title = title,
+            summary = summary,
+            startAction = leadingContent?.let {
+                {
+                    Row {
+                        it()
+                    }
+                }
+            },
+            endActions = trailingContent,
+            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+            onClick = onClick,
+            enabled = enabled
+        )
+        return
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -137,6 +160,13 @@ fun ZToolSwitchRow(
 
 @Composable
 fun ZToolSettingsDivider(modifier: Modifier = Modifier) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixHorizontalDivider(
+            modifier = modifier.padding(start = 24.dp, end = 24.dp)
+        )
+        return
+    }
+
     HorizontalDivider(
         modifier = modifier.padding(start = 24.dp, end = 24.dp),
         color = MaterialTheme.colorScheme.outlineVariant
