@@ -421,6 +421,30 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `ControlCenterSettingsActivity` ViewModel/repository extraction.
 
+### FrameworkSettings ViewModel Boundary
+
+`settingactivity/systemframework/FrameworkSettingsActivity.kt` now delegates framework preference state, AI input expansion validation, and restart command coordination to:
+
+- `viewmodel/FrameworkSettingsViewModel.kt`.
+- `data/systemframework/FrameworkSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `FrameworkSettingsActivity` class name, package, and Activity launch contract.
+- Existing preference keys for keep rotation, package visibility, secure flag disabling, AI input expansion, and AI input expansion signs.
+- Existing AI input signs validation behavior, including rejecting full-width commas and empty comma-separated entries.
+- Existing restart confirmation countdown, root reboot command, and restart failure Toast behavior.
+
+Implementation note:
+
+- `FrameworkSettingsUiState` now lives with `FrameworkSettingsViewModel`.
+- The Activity now hosts Compose, shows Toast effects, and forwards user actions to the ViewModel.
+- `FrameworkSettingsRepository` wraps `ModulePreferencesUtils`, AI input validation, and the root reboot command for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `FrameworkSettingsActivity` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -573,6 +597,12 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/systemframework/FrameworkSettingsActivity.kt`
-   - Extract framework, AI input expansion, package visibility, secure flag, and password confirmation state into a ViewModel/repository boundary.
-   - Preserve existing preference keys and restart-scope behavior.
+1. `settingactivity/packageinstaller/packageinstallersettings.kt`
+   - Extract package installer preference state into a ViewModel/repository boundary.
+   - Preserve existing preference keys and package installer hook behavior.
+2. `settingactivity/safecenter/SafeCenterSettingsActivity.kt`
+   - Extract security center preference state into a ViewModel/repository boundary.
+   - Preserve existing preference keys and hook behavior.
+3. `settingactivity/gametool/GameToolSettngs.kt`
+   - Extract game tool preference and whitelist state into a ViewModel/repository boundary.
+   - Preserve mistake-touch whitelist configuration and existing app chooser behavior.

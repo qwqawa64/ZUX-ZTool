@@ -8,13 +8,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,153 +38,101 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
+import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
 import kotlinx.coroutines.delay
 
 class FrameworkSettingsActivity : ComponentActivity() {
 
-    private lateinit var prefsUtils: ModulePreferencesUtils
-
-    private var uiState by mutableStateOf(FrameworkSettingsUiState())
+    private lateinit var viewModel: FrameworkSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()
-        prefsUtils = ModulePreferencesUtils(this)
-        loadSettings()
+        val repository = FrameworkSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            FrameworkSettingsViewModelFactory(repository)
+        )[FrameworkSettingsViewModel::class.java]
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 FrameworkSettingsScreen(
-                    title = appName + getString(R.string.framework_settings_title_suffix),
+                    title = appName + stringResource(R.string.framework_settings_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
-                    onKeepRotationChanged = {
-                        uiState = uiState.copy(keepRotation = it)
-                        saveSettings("keep_rotation", it)
-                    },
-                    onAllowGetPackagesChanged = {
-                        uiState = uiState.copy(allowGetPackages = it)
-                        saveSettings("allow_get_packages", it)
-                    },
-                    onDisableFlagSecureChanged = {
-                        uiState = uiState.copy(disableFlagSecure = it)
-                        saveSettings("disable_flag_secure", it)
-                    },
-                    onAiInputExpandChanged = {
-                        uiState = uiState.copy(
-                            aiInputExpand = it,
-                            aiInputSignsError = if (it) uiState.aiInputSignsError else null
-                        )
-                        saveSettings("ai_input_expand", it)
-                    },
-                    onAiInputSignsChanged = ::handleAiInputSignsChanged,
-                    onShowAiInputInfo = { uiState = uiState.copy(showAiInputInfoDialog = true) }
+                    onRestart = viewModel::showRestartConfirmDialog,
+                    onKeepRotationChanged = viewModel::setKeepRotation,
+                    onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
+                    onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
+                    onAiInputExpandChanged = viewModel::setAiInputExpand,
+                    onAiInputSignsChanged = viewModel::setAiInputSigns,
+                    onShowAiInputInfo = viewModel::showAiInputInfoDialog
                 )
 
                 if (uiState.showAiInputInfoDialog) {
                     AiInputInfoDialog(
-                        onDismiss = { uiState = uiState.copy(showAiInputInfoDialog = false) }
+                        onDismiss = viewModel::dismissAiInputInfoDialog
                     )
                 }
 
                 if (uiState.showRestartConfirmDialog) {
                     RestartSystemDialog(
                         onConfirm = {
-                            uiState = uiState.copy(showRestartConfirmDialog = false)
-                            restartOS()
+                            viewModel.restartSystem(::showRestartFailure)
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
+                        onDismiss = viewModel::dismissRestartConfirmDialog
                     )
                 }
             }
         }
     }
 
-    private fun loadSettings() {
-        val aiInputSigns = prefsUtils.loadStringSetting("AI_INPUT_EXPAND_SIGNS", "")
-        uiState = uiState.copy(
-            allowGetPackages = prefsUtils.loadBooleanSetting("allow_get_packages", false),
-            keepRotation = prefsUtils.loadBooleanSetting("keep_rotation", false),
-            disableFlagSecure = prefsUtils.loadBooleanSetting("disable_flag_secure", false),
-            aiInputExpand = prefsUtils.loadBooleanSetting("ai_input_expand", false),
-            aiInputSigns = aiInputSigns,
-            aiInputSignsError = validateAiInputSigns(aiInputSigns)
-        )
-    }
-
-    private fun saveSettings(moduleName: String, newValue: Boolean) {
-        prefsUtils.saveBooleanSetting(moduleName, newValue)
-    }
-
-    private fun handleAiInputSignsChanged(value: String) {
-        val input = value.trim()
-        val error = validateAiInputSigns(input)
-        uiState = uiState.copy(
-            aiInputSigns = value,
-            aiInputSignsError = error
-        )
-
-        if (input.isEmpty()) {
-            prefsUtils.saveStringSetting("AI_INPUT_EXPAND_SIGNS", "")
-            return
-        }
-
-        if (error == null) {
-            prefsUtils.saveStringSetting("AI_INPUT_EXPAND_SIGNS", input)
-        }
-    }
-
-    private fun validateAiInputSigns(input: String): String? {
-        if (input.isEmpty()) return null
-        if (input.contains("，")) return getString(R.string.custom_detector_err)
-        return if (input.split(",").any { it.trim().isEmpty() }) {
-            getString(R.string.custom_detector_err)
-        } else {
-            null
-        }
-    }
-
-    private fun restartOS() {
-        try {
-            val process = Runtime.getRuntime().exec("su -c reboot")
-            process.waitFor()
-        } catch (e: Exception) {
+    private fun showRestartFailure(error: String) {
+        runOnUiThread {
             Toast.makeText(
                 this,
-                getString(R.string.restart_fail_prefix) + e.message,
+                getString(R.string.restart_fail_prefix) + error,
                 Toast.LENGTH_SHORT
             ).show()
         }
     }
 }
 
-private data class FrameworkSettingsUiState(
-    val keepRotation: Boolean = false,
-    val allowGetPackages: Boolean = false,
-    val disableFlagSecure: Boolean = false,
-    val aiInputExpand: Boolean = false,
-    val aiInputSigns: String = "",
-    val aiInputSignsError: String? = null,
-    val showAiInputInfoDialog: Boolean = false,
-    val showRestartConfirmDialog: Boolean = false
-)
+private class FrameworkSettingsViewModelFactory(
+    private val repository: FrameworkSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(FrameworkSettingsViewModel::class.java)) {
+            return FrameworkSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,10 +194,10 @@ private fun FrameworkSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = getStringResource(R.string.keep_rotation_title)) {
+                SettingsCard(title = stringResource(R.string.keep_rotation_title)) {
                     ZToolSwitchRow(
-                        title = getStringResource(R.string.keep_rotation_enable_title),
-                        summary = getStringResource(R.string.keep_rotation_enable_summary),
+                        title = stringResource(R.string.keep_rotation_enable_title),
+                        summary = stringResource(R.string.keep_rotation_enable_summary),
                         checked = state.keepRotation,
                         onCheckedChange = onKeepRotationChanged
                     )
@@ -259,17 +205,17 @@ private fun FrameworkSettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SettingsCard(title = getStringResource(R.string.disable_zui_applist_title)) {
+                SettingsCard(title = stringResource(R.string.disable_zui_applist_title)) {
                     ZToolSwitchRow(
-                        title = getStringResource(R.string.disable_zui_applist_enable_title),
-                        summary = getStringResource(R.string.disable_zui_applist_enable_summary),
+                        title = stringResource(R.string.disable_zui_applist_enable_title),
+                        summary = stringResource(R.string.disable_zui_applist_enable_summary),
                         checked = state.allowGetPackages,
                         onCheckedChange = onAllowGetPackagesChanged
                     )
                     ZToolSettingsDivider()
                     ZToolSwitchRow(
-                        title = getStringResource(R.string.disable_flag_secure_title),
-                        summary = getStringResource(R.string.disable_flag_secure_summary),
+                        title = stringResource(R.string.disable_flag_secure_title),
+                        summary = stringResource(R.string.disable_flag_secure_summary),
                         checked = state.disableFlagSecure,
                         onCheckedChange = onDisableFlagSecureChanged
                     )
@@ -277,10 +223,10 @@ private fun FrameworkSettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SettingsCard(title = getStringResource(R.string.ai_input_Title)) {
+                SettingsCard(title = stringResource(R.string.ai_input_Title)) {
                     ZToolSwitchRow(
-                        title = getStringResource(R.string.ai_input_expand_Title),
-                        summary = getStringResource(R.string.ai_input_expand_summary),
+                        title = stringResource(R.string.ai_input_expand_Title),
+                        summary = stringResource(R.string.ai_input_expand_summary),
                         checked = state.aiInputExpand,
                         onCheckedChange = onAiInputExpandChanged
                     )
@@ -301,7 +247,7 @@ private fun FrameworkSettingsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp, vertical = 8.dp),
-                            label = { Text(getStringResource(R.string.custom_detector_hint)) },
+                            label = { Text(stringResource(R.string.custom_detector_hint)) },
                             isError = state.aiInputSignsError != null,
                             supportingText = {
                                 if (state.aiInputSignsError != null) {
@@ -358,11 +304,11 @@ private fun AiInputInfoDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(getStringResource(R.string.Custom_attention)) },
+        title = { Text(stringResource(R.string.Custom_attention)) },
         text = {
             Column {
                 Text(
-                    text = getStringResource(R.string.Custom_Attention_content),
+                    text = stringResource(R.string.Custom_Attention_content),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -370,7 +316,7 @@ private fun AiInputInfoDialog(
                     value = testInput,
                     onValueChange = { testInput = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(getStringResource(R.string.test_Input)) },
+                    label = { Text(stringResource(R.string.test_Input)) },
                     minLines = 5,
                     maxLines = 10,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
@@ -379,7 +325,7 @@ private fun AiInputInfoDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(getStringResource(android.R.string.ok))
+                Text(stringResource(android.R.string.ok))
             }
         }
     )
@@ -401,8 +347,8 @@ private fun RestartSystemDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(getStringResource(R.string.restart_system_title)) },
-        text = { Text(getStringResource(R.string.restart_system_message)) },
+        title = { Text(stringResource(R.string.restart_system_title)) },
+        text = { Text(stringResource(R.string.restart_system_message)) },
         confirmButton = {
             TextButton(
                 enabled = countdown == 0,
@@ -410,22 +356,17 @@ private fun RestartSystemDialog(
             ) {
                 Text(
                     if (countdown > 0) {
-                        getStringResource(R.string.confirm) + " ($countdown)"
+                        stringResource(R.string.confirm) + " ($countdown)"
                     } else {
-                        getStringResource(R.string.confirm)
+                        stringResource(R.string.confirm)
                     }
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(getStringResource(R.string.restart_no))
+                Text(stringResource(R.string.restart_no))
             }
         }
     )
-}
-
-@Composable
-private fun getStringResource(id: Int): String {
-    return androidx.compose.ui.res.stringResource(id)
 }
