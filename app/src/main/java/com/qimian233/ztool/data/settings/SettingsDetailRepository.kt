@@ -8,7 +8,7 @@ import com.qimian233.ztool.utils.MagiskModuleManager
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 
 class SettingsDetailRepository(
-    context: Context,
+    private val context: Context,
     private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance(),
     private val magiskManager: MagiskModuleManager = MagiskModuleManager()
 ) {
@@ -60,13 +60,59 @@ class SettingsDetailRepository(
         shellExecutor.executeRootCommand("am force-stop com.zui.safecenter")
     }
 
+    fun isModuleEnabled(): Boolean = magiskManager.isModuleEnabled
+
+    fun setModuleEnabled(enabled: Boolean): String {
+        return if (enabled) {
+            magiskManager.installModule(context)
+        } else {
+            magiskManager.removeModule(context)
+        }
+    }
+
+    fun restoreOriginalModule(): String {
+        magiskManager.removeModule(context)
+        val result = magiskManager.installModule(context)
+        if (result == RESULT_SUCCESS) {
+            clearFlashedConfigs()
+        }
+        return result
+    }
+
+    fun loadFlashedConfigs(): HashSet<String> {
+        val result = moduleSettings.getStringSet(KEY_FLASHED_CONFIGS, null)
+        return if (result == null) hashSetOf() else HashSet(result)
+    }
+
+    fun addFlashedConfigKeys(keys: List<String>) {
+        val flashed = loadFlashedConfigs()
+        flashed.addAll(keys)
+        saveFlashedConfigs(flashed)
+    }
+
+    fun clearFlashedConfigs() {
+        saveFlashedConfigs(emptySet())
+    }
+
+    private fun saveFlashedConfigs(set: Set<String>) {
+        moduleSettings.edit().putStringSet(KEY_FLASHED_CONFIGS, HashSet(set)).apply()
+    }
+
     private fun isForceResizableActivitiesEnabled(): Boolean {
         val result = shellExecutor.executeRootCommand("settings get global force_resizable_activities", 2)
         return result.isSuccess && result.output == "1"
     }
 
+    private val moduleSettings by lazy {
+        context.getSharedPreferences(PREF_MODULE_SETTINGS, Context.MODE_PRIVATE)
+    }
+
     companion object {
+        const val RESULT_SUCCESS = "success"
+
+        private const val PREF_MODULE_SETTINGS = "module_settings"
         private const val KEY_REMOVE_BLACKLIST = "remove_blacklist"
+        private const val KEY_FLASHED_CONFIGS = "flashed_configs"
         private const val KEY_SPLIT_SCREEN_MANDATORY = "Split_Screen_mandatory"
         private const val KEY_ALLOW_DISPLAY_DOLBY = "allow_display_dolby"
         private const val KEY_PERMISSION_CONTROLLER_HOOK = "PermissionControllerHook"

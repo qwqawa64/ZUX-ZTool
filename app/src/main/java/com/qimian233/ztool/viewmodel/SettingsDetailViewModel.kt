@@ -24,8 +24,27 @@ class SettingsDetailViewModel(
         repository.saveRemoveBlacklist(enabled)
     }
 
-    fun setModuleEnabledFromActivity(enabled: Boolean) {
+    fun setModuleEnabled(
+        enabled: Boolean,
+        onResult: (SettingsDetailModuleResult) -> Unit
+    ) {
+        if (enabled && repository.isModuleEnabled()) {
+            _uiState.value = _uiState.value.copy(moduleEnabled = true)
+            onResult(SettingsDetailModuleResult.AlreadyEnabled)
+            return
+        }
+
         _uiState.value = _uiState.value.copy(moduleEnabled = enabled)
+        Thread {
+            val result = repository.setModuleEnabled(enabled)
+            if (result == SettingsDetailRepository.RESULT_SUCCESS) {
+                _uiState.value = _uiState.value.copy(moduleEnabled = enabled)
+                onResult(SettingsDetailModuleResult.Success(enabled))
+            } else {
+                _uiState.value = _uiState.value.copy(moduleEnabled = !enabled)
+                onResult(SettingsDetailModuleResult.Failure(enabled, result))
+            }
+        }.start()
     }
 
     fun setFloatMandatory(enabled: Boolean) {
@@ -67,6 +86,36 @@ class SettingsDetailViewModel(
             repository.forceStopScope(packageName)
         }.start()
     }
+
+    fun loadFlashedConfigs(): HashSet<String> = repository.loadFlashedConfigs()
+
+    fun addFlashedConfigKeys(keys: List<String>) {
+        repository.addFlashedConfigKeys(keys)
+    }
+
+    fun restoreOriginalModule(onResult: (SettingsDetailRestoreResult) -> Unit) {
+        Thread {
+            val result = repository.restoreOriginalModule()
+            if (result == SettingsDetailRepository.RESULT_SUCCESS) {
+                _uiState.value = _uiState.value.copy(moduleEnabled = true)
+                onResult(SettingsDetailRestoreResult.Success)
+            } else {
+                _uiState.value = _uiState.value.copy(moduleEnabled = repository.isModuleEnabled())
+                onResult(SettingsDetailRestoreResult.Failure(result))
+            }
+        }.start()
+    }
+}
+
+sealed interface SettingsDetailModuleResult {
+    data object AlreadyEnabled : SettingsDetailModuleResult
+    data class Success(val enabled: Boolean) : SettingsDetailModuleResult
+    data class Failure(val requestedEnabled: Boolean, val message: String) : SettingsDetailModuleResult
+}
+
+sealed interface SettingsDetailRestoreResult {
+    data object Success : SettingsDetailRestoreResult
+    data class Failure(val message: String) : SettingsDetailRestoreResult
 }
 
 data class SettingsDetailUiState(

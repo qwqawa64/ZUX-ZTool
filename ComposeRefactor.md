@@ -602,6 +602,33 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `SettingsDetailActivity` basic state/restart extraction.
 
+### SettingsDetailActivity Magisk And Flashed Config Persistence Slice
+
+`settingactivity/setting/SettingsDetailActivity.kt` now delegates Magisk module switching, module restore, and flashed config set persistence to:
+
+- `viewmodel/SettingsDetailViewModel.kt`.
+- `data/settings/SettingsDetailRepository.kt`.
+
+Preserved behavior:
+
+- Existing Magisk module install/remove behavior through `MagiskModuleManager`.
+- Existing restore-original-module behavior, including remove then install.
+- Existing success and failure dialog text from the Activity.
+- Existing `module_settings` SharedPreferences file name.
+- Existing `flashed_configs` string-set key.
+- Existing flashed config key format: `timestamp_packageName`.
+- Existing config selection dialog rendering and config flashing UI flow remain in the Activity for the next slice.
+
+Implementation note:
+
+- The Activity no longer holds `MagiskModuleManager`.
+- The Activity no longer directly reads or writes `flashed_configs`.
+- `SettingsDetailViewModel` now returns module and restore result objects while the Activity keeps loading/dialog effects.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Magisk and flashed config persistence extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -755,8 +782,6 @@ Continue Phase 2 ViewModel/repository extraction. Phase 2 is not complete yet: m
 Recommended next order:
 
 1. `settingactivity/setting/SettingsDetailActivity.kt`
-   - Extract the remaining Magisk module install/remove/restore flow into `SettingsDetailRepository` and `SettingsDetailViewModel`.
-   - Move `flashed_configs` persistence into the repository while preserving the `module_settings` file name and key exactly.
    - Move embedding config load/delete/flash coordination behind repository methods while leaving Compose dialog rendering in the Activity.
    - Move font temp-copy/install coordination behind repository methods while preserving the SAF picker and font input dialog contract.
    - Move OV config package loading/load/update/save coordination behind repository methods while keeping `AppChooserDialog` launched from the Activity.

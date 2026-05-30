@@ -3,7 +3,6 @@ package com.qimian233.ztool.settingactivity.setting
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.database.Cursor
 import android.net.Uri
@@ -89,15 +88,15 @@ import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager
-import com.qimian233.ztool.utils.MagiskModuleManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
+import com.qimian233.ztool.viewmodel.SettingsDetailModuleResult
+import com.qimian233.ztool.viewmodel.SettingsDetailRestoreResult
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import com.qimian233.ztool.viewmodel.SettingsDetailViewModel
 import java.io.File
 
 class SettingsDetailActivity : ComponentActivity() {
 
-    private lateinit var magiskManager: MagiskModuleManager
     private lateinit var configManager: EmbeddingConfigManager
     private lateinit var fontManager: FontInstallerManager
     private lateinit var ovConfigManager: OvCommonConfigManager
@@ -116,7 +115,6 @@ class SettingsDetailActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        magiskManager = MagiskModuleManager()
         configManager = EmbeddingConfigManager()
         fontManager = FontInstallerManager()
         ovConfigManager = OvCommonConfigManager()
@@ -282,47 +280,47 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 
     private fun handleModuleSwitch(isChecked: Boolean) {
-        if (isChecked && magiskManager.isModuleEnabled) {
-            viewModel.setModuleEnabledFromActivity(true)
-            return
-        }
-
-        viewModel.setModuleEnabledFromActivity(isChecked)
         loadingDialog = LoadingDialog(this).also {
             it.show(getString(if (isChecked) R.string.installing_module else R.string.removing_module))
         }
 
-        Thread {
-            val result = if (isChecked) {
-                magiskManager.installModule(this)
-            } else {
-                magiskManager.removeModule(this)
-            }
-
+        viewModel.setModuleEnabled(isChecked) { result ->
             runOnUiThread {
                 loadingDialog?.dismiss()
-                if (result == "success") {
-                    viewModel.setModuleEnabledFromActivity(isChecked)
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.tip_title)
-                        .setMessage(if (isChecked) R.string.install_success_message else R.string.remove_success_message)
-                        .setNegativeButton(R.string.got_it_button, null)
-                        .show()
-                } else {
-                    viewModel.setModuleEnabledFromActivity(!isChecked)
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.error_title)
-                        .setMessage(
-                            getString(
-                                if (isChecked) R.string.install_failed_message else R.string.remove_failed_message,
-                                result
+                when (result) {
+                    SettingsDetailModuleResult.AlreadyEnabled -> Unit
+                    is SettingsDetailModuleResult.Success -> {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.tip_title)
+                            .setMessage(
+                                if (result.enabled) {
+                                    R.string.install_success_message
+                                } else {
+                                    R.string.remove_success_message
+                                }
                             )
-                        )
-                        .setNegativeButton(R.string.got_it_button, null)
-                        .show()
+                            .setNegativeButton(R.string.got_it_button, null)
+                            .show()
+                    }
+                    is SettingsDetailModuleResult.Failure -> {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.error_title)
+                            .setMessage(
+                                getString(
+                                    if (result.requestedEnabled) {
+                                        R.string.install_failed_message
+                                    } else {
+                                        R.string.remove_failed_message
+                                    },
+                                    result.message
+                                )
+                            )
+                            .setNegativeButton(R.string.got_it_button, null)
+                            .show()
+                    }
                 }
             }
-        }.start()
+        }
     }
 
     private fun startFloatingWindow() {
@@ -379,7 +377,7 @@ class SettingsDetailActivity : ComponentActivity() {
             return
         }
 
-        val flashedConfigs = loadStringSetSetting("flashed_configs", hashSetOf())
+        val flashedConfigs = viewModel.loadFlashedConfigs()
         lateinit var dialog: AlertDialog
         dialog = showComposeDialog {
             ConfigSelectionDialogContent(
@@ -423,7 +421,7 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 
     private fun flashSelectedConfigs(selectedConfigs: List<EmbeddingConfigManager.ConfigFileInfo>) {
-        if (!magiskManager.isModuleEnabled) {
+        if (!viewModel.uiState.value.moduleEnabled) {
             MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.tip_title)
                 .setMessage(R.string.install_module_first)
@@ -438,11 +436,9 @@ class SettingsDetailActivity : ComponentActivity() {
         Thread {
             try {
                 configManager.flashConfigs(this, selectedConfigs)
-                val flashed = loadStringSetSetting("flashed_configs", hashSetOf())
-                for (config in selectedConfigs) {
-                    flashed.add(config.timestamp + "_" + config.packageName)
-                }
-                saveStringSetSetting("flashed_configs", flashed)
+                viewModel.addFlashedConfigKeys(
+                    selectedConfigs.map { config -> config.timestamp + "_" + config.packageName }
+                )
 
                 runOnUiThread {
                     loadingDialog?.dismiss()
@@ -471,25 +467,25 @@ class SettingsDetailActivity : ComponentActivity() {
                 loadingDialog = LoadingDialog(this).also {
                     it.show(getString(R.string.restoring_module))
                 }
-                Thread {
-                    magiskManager.removeModule(this)
-                    val result = magiskManager.installModule(this)
-                    saveStringSetSetting("flashed_configs", hashSetOf())
+                viewModel.restoreOriginalModule { result ->
                     runOnUiThread {
                         loadingDialog?.dismiss()
-                        if (result == "success") {
-                            MaterialAlertDialogBuilder(this)
-                                .setTitle(R.string.success_title)
-                                .setMessage(R.string.restore_success_message)
-                                .show()
-                        } else {
-                            MaterialAlertDialogBuilder(this)
-                                .setTitle(R.string.error_title)
-                                .setMessage(result)
-                                .show()
+                        when (result) {
+                            SettingsDetailRestoreResult.Success -> {
+                                MaterialAlertDialogBuilder(this)
+                                    .setTitle(R.string.success_title)
+                                    .setMessage(R.string.restore_success_message)
+                                    .show()
+                            }
+                            is SettingsDetailRestoreResult.Failure -> {
+                                MaterialAlertDialogBuilder(this)
+                                    .setTitle(R.string.error_title)
+                                    .setMessage(result.message)
+                                    .show()
+                            }
                         }
                     }
-                }.start()
+                }
             }
             .setNegativeButton(R.string.restart_no, null)
             .show()
@@ -600,17 +596,6 @@ class SettingsDetailActivity : ComponentActivity() {
                 }
             }
         }.start()
-    }
-
-    private fun loadStringSetSetting(key: String, defaultSet: HashSet<String>): HashSet<String> {
-        val sp: SharedPreferences = getSharedPreferences("module_settings", Context.MODE_PRIVATE)
-        val result = sp.getStringSet(key, null)
-        return if (result == null) defaultSet else HashSet(result)
-    }
-
-    private fun saveStringSetSetting(key: String, set: Set<String>) {
-        val sp: SharedPreferences = getSharedPreferences("module_settings", Context.MODE_PRIVATE)
-        sp.edit().putStringSet(key, HashSet(set)).apply()
     }
 
     private fun getFileName(uri: Uri): String? {
