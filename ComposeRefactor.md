@@ -344,12 +344,14 @@ Recommended next order:
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
    - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-3. Clean up legacy Fragment/XML resources in small slices. Next.
-   - Candidates: `fragment_*.xml`, unused `activity_*.xml`, navigation animation resources, and obsolete Fragment-only helpers.
-   - Use `rg` before deletion and preserve any resource still referenced by Activities, dialogs, assets, manifest metadata, or Hook compatibility paths.
-   - Run `.\gradlew.bat assembleDebug` after each cleanup slice.
+3. Clean up legacy Fragment/XML resources in small slices. Completed on 2026-05-31.
+   - Removed unreferenced `fragment_*.xml`, migrated `activity_*.xml`, legacy dialog XML, floating-window XML, legacy navigation/FAB animations, the old bottom navigation menu, and unused item layouts.
+   - Preserved `item_feature.xml`, `item_setting.xml`, and `package_item.xml` because legacy Java adapters still inflate them.
+   - Preserved `reboot_menu.xml` because Home still uses the PopupMenu reboot menu.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
+   - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-4. Dependency cleanup comes last.
+4. Dependency cleanup comes last. Next.
    - Remove Fragment Navigation/AppCompat/View dependencies only after code and resources no longer use them.
    - Do not remove Material/Compose dependencies used by shared ZTool components or Miuix adapters.
    - Run `.\gradlew.bat assembleDebug`.

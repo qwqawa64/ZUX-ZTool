@@ -1413,3 +1413,27 @@ Deferred:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after removing the obsolete XML Navigation references.
+
+### Phase 6 Legacy XML Resource Cleanup
+
+The remaining unreferenced legacy View/XML resources were removed after a resource-reference audit.
+
+Removed:
+
+- Legacy main/settings Activity layouts, including the v26 System UI variant.
+- Legacy main Fragment layouts for Home, Features, Audit, and Settings.
+- Legacy dialogs that have already been replaced by Compose flows.
+- The legacy floating-window XML layout.
+- Unused navigation and FAB animation resources.
+- The legacy bottom navigation menu.
+- Unused item layouts left behind by migrated dialogs and log rows.
+
+Preserved:
+
+- `item_feature.xml`, `item_setting.xml`, and `package_item.xml` remain because `FeaturesAdapter.java`, `SettingsAdapter.java`, and `PackageAdapter.java` still inflate them.
+- `reboot_menu.xml` remains because the Home reboot menu still uses it.
+- Hook, service, config, shell, Xposed metadata, and runtime assets were not touched.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the legacy XML cleanup.
