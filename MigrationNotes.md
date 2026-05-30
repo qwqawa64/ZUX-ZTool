@@ -1263,3 +1263,24 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Status Bar settings model migration.
+
+### Phase 5 Control Center Settings Model Migration
+
+`settingactivity/systemui/ControlCenter/ControlCenterSettingsActivity.kt` now renders its setting section through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `ControlCenterSettingsActivity` class name, package, and launch contract.
+- Existing `ControlCenterSettingsViewModel` and `ControlCenterSettingsRepository` boundaries.
+- Existing preference keys for custom control center date, date format, text size, letter spacing, text color, and bold style.
+- Existing date format preview, format help copy action, color picker dialog, and save confirmation dialog behavior.
+
+Model suitability review:
+
+- The shared model remains suitable for the current System UI detail pages, but should remain limited to section/card structure and ordinary rows.
+- Custom date formatting, preview, style sliders, color preview/picker, and help/save dialog flows remain page-local composables hosted by `SettingItem.Custom`.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Control Center settings model migration.

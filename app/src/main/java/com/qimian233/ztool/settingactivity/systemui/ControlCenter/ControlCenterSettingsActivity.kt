@@ -11,7 +11,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,9 +46,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.ControlCenterSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
@@ -194,40 +195,55 @@ private fun ControlCenterSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.ControllerDate)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ZToolSwitchRow(
-                            title = stringResource(R.string.CustomDateSettingTitle),
-                            summary = stringResource(R.string.CustomDateSettingSummary),
-                            checked = state.customDate,
-                            onCheckedChange = onCustomDateChanged,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(
-                            onClick = onShowFormatHelp,
-                            modifier = Modifier.padding(end = 12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Info,
-                                contentDescription = stringResource(R.string.tooltip_content_description),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                ZToolSettingsList(
+                    sections = controlCenterSettingsSections(
+                        state = state,
+                        onCustomDateChanged = onCustomDateChanged,
+                        onDateFormatChanged = onDateFormatChanged,
+                        onSaveDateFormat = onSaveDateFormat,
+                        onShowFormatHelp = onShowFormatHelp,
+                        onTextSizeEnabledChanged = onTextSizeEnabledChanged,
+                        onTextSizeChanged = onTextSizeChanged,
+                        onLetterSpacingEnabledChanged = onLetterSpacingEnabledChanged,
+                        onLetterSpacingChanged = onLetterSpacingChanged,
+                        onTextColorEnabledChanged = onTextColorEnabledChanged,
+                        onPickTextColor = onPickTextColor,
+                        onTextBoldChanged = onTextBoldChanged
+                    ),
+                    bottomPadding = 96.dp
+                )
+            }
+        }
+    }
+}
 
-                    if (state.customDate) {
-                        CustomDateConfig(
-                            dateFormat = state.dateFormat,
-                            datePreview = state.datePreview,
-                            textSizeEnabled = state.textSizeEnabled,
-                            textSize = state.textSize,
-                            letterSpacingEnabled = state.letterSpacingEnabled,
-                            letterSpacing = state.letterSpacing,
-                            textColorEnabled = state.textColorEnabled,
-                            textColor = state.textColor,
-                            textBold = state.textBold,
+@Composable
+private fun controlCenterSettingsSections(
+    state: ControlCenterSettingsUiState,
+    onCustomDateChanged: (Boolean) -> Unit,
+    onDateFormatChanged: (String) -> Unit,
+    onSaveDateFormat: () -> Unit,
+    onShowFormatHelp: () -> Unit,
+    onTextSizeEnabledChanged: (Boolean) -> Unit,
+    onTextSizeChanged: (Float) -> Unit,
+    onLetterSpacingEnabledChanged: (Boolean) -> Unit,
+    onLetterSpacingChanged: (Float) -> Unit,
+    onTextColorEnabledChanged: (Boolean) -> Unit,
+    onPickTextColor: () -> Unit,
+    onTextBoldChanged: (Boolean) -> Unit
+): List<SettingSection> {
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.ControllerDate),
+            items = listOf(
+                SettingItem.Custom(
+                    content = {
+                        CustomDateSettingsContent(
+                            state = state,
+                            onCustomDateChanged = onCustomDateChanged,
                             onDateFormatChanged = onDateFormatChanged,
                             onSaveDateFormat = onSaveDateFormat,
+                            onShowFormatHelp = onShowFormatHelp,
                             onTextSizeEnabledChanged = onTextSizeEnabledChanged,
                             onTextSizeChanged = onTextSizeChanged,
                             onLetterSpacingEnabledChanged = onLetterSpacingEnabledChanged,
@@ -237,9 +253,68 @@ private fun ControlCenterSettingsScreen(
                             onTextBoldChanged = onTextBoldChanged
                         )
                     }
-                }
-            }
+                )
+            )
+        )
+    )
+}
+
+@Composable
+private fun CustomDateSettingsContent(
+    state: ControlCenterSettingsUiState,
+    onCustomDateChanged: (Boolean) -> Unit,
+    onDateFormatChanged: (String) -> Unit,
+    onSaveDateFormat: () -> Unit,
+    onShowFormatHelp: () -> Unit,
+    onTextSizeEnabledChanged: (Boolean) -> Unit,
+    onTextSizeChanged: (Float) -> Unit,
+    onLetterSpacingEnabledChanged: (Boolean) -> Unit,
+    onLetterSpacingChanged: (Float) -> Unit,
+    onTextColorEnabledChanged: (Boolean) -> Unit,
+    onPickTextColor: () -> Unit,
+    onTextBoldChanged: (Boolean) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        ZToolSwitchRow(
+            title = stringResource(R.string.CustomDateSettingTitle),
+            summary = stringResource(R.string.CustomDateSettingSummary),
+            checked = state.customDate,
+            onCheckedChange = onCustomDateChanged,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            onClick = onShowFormatHelp,
+            modifier = Modifier.padding(end = 12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Info,
+                contentDescription = stringResource(R.string.tooltip_content_description),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
+    }
+
+    if (state.customDate) {
+        CustomDateConfig(
+            dateFormat = state.dateFormat,
+            datePreview = state.datePreview,
+            textSizeEnabled = state.textSizeEnabled,
+            textSize = state.textSize,
+            letterSpacingEnabled = state.letterSpacingEnabled,
+            letterSpacing = state.letterSpacing,
+            textColorEnabled = state.textColorEnabled,
+            textColor = state.textColor,
+            textBold = state.textBold,
+            onDateFormatChanged = onDateFormatChanged,
+            onSaveDateFormat = onSaveDateFormat,
+            onTextSizeEnabledChanged = onTextSizeEnabledChanged,
+            onTextSizeChanged = onTextSizeChanged,
+            onLetterSpacingEnabledChanged = onLetterSpacingEnabledChanged,
+            onLetterSpacingChanged = onLetterSpacingChanged,
+            onTextColorEnabledChanged = onTextColorEnabledChanged,
+            onPickTextColor = onPickTextColor,
+            onTextBoldChanged = onTextBoldChanged
+        )
     }
 }
 
@@ -367,28 +442,6 @@ private fun SliderSettingRow(
         steps = steps,
         modifier = Modifier.padding(horizontal = 24.dp)
     )
-}
-
-@Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
-    }
 }
 
 @Composable

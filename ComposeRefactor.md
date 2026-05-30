@@ -344,17 +344,22 @@ Recommended next order:
    - Keep shell commands, root behavior, app chooser behavior, and existing saved values intact.
    - Run `.\gradlew.bat assembleDebug` after each migrated page.
 
-6. Expand to high-complexity System UI detail pages. Next.
+6. Expand to high-complexity System UI detail pages. Completed on 2026-05-30 for the current candidate set.
    - Candidates: lock screen, status bar, and control center pages.
    - Preserve world-readable preference behavior and Hook compatibility paths where they exist.
    - Keep semantic color previews and domain-specific dialogs behavior-compatible.
    - Continue checking after each page whether the shared settings model improves readability or whether page-local `Custom` content should remain explicit.
 
-7. Keep Phase 4 leftovers for Phase 6 cleanup.
+7. Review Phase 5 settings model coverage before wider expansion. Next.
+   - Confirm the model remains limited to section/card structure and ordinary rows.
+   - Do not force complex query, format-preview, color-picker, app-picker, or root/shell workflows into generic items.
+   - Decide whether remaining settings pages should migrate now or wait for targeted cleanup.
+
+8. Keep Phase 4 leftovers for Phase 6 cleanup.
    - Do not delete `nav_graph.xml`, main Fragment wrappers, legacy Fragment XML layouts, navigation animation resources, or Fragment Navigation dependencies during Phase 5.
    - Cleanup starts only when active UI routes no longer depend on the old View/Fragment layer.
 
-8. Verification policy.
+9. Verification policy.
    - Run `.\gradlew.bat assembleDebug`.
    - Verify Material 3 Expressive and Miuix modes for each migrated page.
    - Verify preference persistence, restart confirmations, shell/root behavior, and Hook compatibility keys for each migrated page.
