@@ -908,6 +908,26 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the user-facing theme settings entry.
 
+### Phase 3 Miuix Dependency Introduction
+
+The Miuix dependency was introduced as the next component-adapter prerequisite.
+
+Changed build inputs:
+
+- Kotlin and the Compose compiler plugin were upgraded to `2.3.21`.
+- Kotlin `jvmTarget` configuration moved from the deprecated `kotlinOptions` DSL to `compilerOptions`.
+- Miuix was pinned to `top.yukonga.miuix.kmp:miuix-android:0.8.8`.
+
+Compatibility note:
+
+- The newer `top.yukonga.miuix.kmp:miuix-ui-android:0.9.1` artifact was tested first, but its AAR metadata requires `compileSdk >= 37`.
+- This project currently uses `compileSdk = 36` with AGP `8.13.0`, whose recommended maximum compile SDK is 36.
+- To keep this slice scoped and avoid an AGP/Gradle 9 migration, the compatible `0.8.8` artifact was selected. It keeps `minCompileSdk = 36`.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after upgrading Kotlin and adding Miuix `0.8.8`.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1114,12 +1134,14 @@ Recommended next order:
    - Stores changes through `ThemePreferencesRepository`; Hook/module preference keys are untouched.
    - Reuses shared ZTool components and preserves the existing settings Fragment launch contract.
 
-2. Add the Miuix dependency. Next.
-   - Use the official `compose-miuix-ui/miuix` Android artifact form, such as `top.yukonga.miuix.kmp:miuix-ui-android`, with version pinning compatible with the current Kotlin/Compose setup.
+2. Add the Miuix dependency. Completed on 2026-05-30.
+   - `top.yukonga.miuix.kmp:miuix-android:0.8.8` is pinned because it is compatible with the current AGP 8.13 and `compileSdk = 36` setup.
+   - `top.yukonga.miuix.kmp:miuix-ui-android:0.9.1` was tested and rejected for now because it requires `compileSdk >= 37`.
+   - Kotlin and the Compose compiler plugin were upgraded to `2.3.21`.
    - Keep Material 3 Expressive as the default and verified style path.
-   - Run `.\gradlew.bat assembleDebug` after adding the dependency.
+   - `.\gradlew.bat assembleDebug` succeeded after adding the dependency.
 
-3. Implement Miuix rendering behind the component and theme adapter layer.
+3. Implement Miuix rendering behind the component and theme adapter layer. Next.
    - Add Miuix behavior inside `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, `ZToolDropdownField`, `ZListItem`, and `ZToolDialog` only as needed.
    - Keep `LocalZToolThemeSpec` as the style-selection boundary.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
