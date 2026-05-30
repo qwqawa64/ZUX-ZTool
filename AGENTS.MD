@@ -1,5 +1,9 @@
 # AGENTS.MD
 
+## Agent Quick Start
+
+- Default to `rg` for searching and keep edits ASCII unless the file already uses non-ASCII.
+
 ## Project Overview
 
 ZUX-ZTool is an Android/Xposed tool project. The current refactor direction is a UI-layer migration from traditional XML/View/Fragment screens to Jetpack Compose, while preserving Hook, service, utility, configuration, and runtime asset behavior.
