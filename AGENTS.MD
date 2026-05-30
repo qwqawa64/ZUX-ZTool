@@ -61,9 +61,8 @@ Important resources and assets:
 
 ```text
 app/src/main/res/
-  layout/                      legacy XML layouts
-  menu/                        legacy menus
-  navigation/nav_graph.xml     legacy XML Navigation graph
+  drawable/
+  mipmap-anydpi-v26/
   values/
   values-night/
   raw/
@@ -81,9 +80,10 @@ Use Compose as the long-term UI layer.
 - Use `ComposeRefactor.md` as the detailed migration plan and status log. Before selecting the next migration target, consult the latest plan and verification notes there; keep this file as the concise operating guide.
 - `MainActivity` should move toward only hosting `setContent { ZToolApp() }`.
 - Screens should become composable screen implementations.
-- XML Navigation should eventually be replaced by `navigation-compose`.
+- XML Navigation has been replaced by `navigation-compose`; do not reintroduce XML navigation.
 - Existing `settingactivity/**` Activities may be migrated gradually, but new UI should not expand the old one-Activity-per-setting pattern unless compatibility requires preserving an entry point.
 - Business pages should consume stable state rather than directly running shell commands, starting raw threads, showing imperative dialogs, or reading/writing preferences inline.
+- Phase 7 cleanup may replace temporary Fragment/AppCompat/dialog compatibility wrappers after their Hook or API compatibility target has a stable replacement.
 
 Preferred state shape:
 
@@ -98,6 +98,8 @@ For example, logic from `HomeFragment` should be modeled around:
 - `HomeUiState`
 - `EnvironmentRepository`
 - `UpdateRepository`
+
+For Phase 7, avoid adding new dependencies on `HomeFragment`; use the replacement Hook compatibility target documented in `ComposeRefactor.md` once it exists.
 
 ## Compose And Design-System Rules
 
@@ -179,7 +181,7 @@ When changing UI, navigation, theme, design-system, or Compose migration code:
 4. Preserve Xposed metadata and `assets/xposed_init`.
 5. Preserve `assets/embedding/**`.
 6. Prefer small, reviewable patches and avoid coupling unrelated screen, theme, and build-system changes.
-7. Do not delete legacy XML layouts, old adapters, or `nav_graph.xml` during ordinary UI/theme work; leave cleanup for a dedicated XML/View cleanup phase.
+7. Do not reintroduce XML layouts, XML menus, XML navigation, old adapters, RecyclerView UI, Fragment Navigation, or View-based screen scaffolding during ordinary UI/theme work.
 8. After UI, theme, shared-component, or navigation changes, run `.\gradlew.bat assembleDebug`.
 9. Document the completed task, verification result, and next step in `ComposeRefactor.md`.
 10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md`; if the task entry is empty or stale, generate new tasks to push the refactor forward.
@@ -200,6 +202,15 @@ Do not casually refactor these as part of UI migration:
 - Xposed-related `AndroidManifest.xml` metadata
 
 These may be wrapped behind repositories or state holders, but behavior must remain compatible.
+
+## Phase 7 Compatibility Cleanup
+
+The remaining Compose cleanup may remove compatibility wrappers when replacement targets are in place:
+
+- `HomeFragment.isModuleActive()` may be replaced by a stable non-Fragment Hook target before deleting `HomeFragment`.
+- Inactive main Fragment wrappers may be deleted after Hook, route, reflection, and documentation references are audited.
+- `AppCompatActivity`, AppCompat `AlertDialog`, and `MaterialAlertDialogBuilder` bridges may be migrated to Compose-owned state/components while preserving public APIs and launch contracts.
+- AppCompat or Material Components dependencies may be removed only after source references are gone and `.\gradlew.bat assembleDebug` succeeds.
 
 ## Current Follow-Up Priorities
 

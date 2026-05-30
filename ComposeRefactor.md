@@ -183,7 +183,7 @@ Phase 4 should proceed in small, verifiable slices rather than one full navigati
    - Fix the current bug where configuration changes, such as portrait/landscape rotation, leave only the navigation rail visible while Fragment-hosted Compose content disappears.
    - Fix the current bug where system light/dark mode changes leave only the navigation rail visible while Fragment-hosted Compose content disappears.
    - Preserve `MainActivity`, existing Fragment classes, `nav_graph.xml`, destination ids, external launch contracts, and environment-ready gating while this stabilization is underway.
-   - Investigate `LegacyNavHost`, `AndroidView`, `FragmentContainerView`, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and configuration-change/theme-change reattachment behavior.
+   - Historical investigation covered `LegacyNavHost`, `AndroidView`, `FragmentContainerView`, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and configuration-change/theme-change reattachment behavior before the Fragment host was removed.
 
 2. Introduce a Compose-owned main route state. Completed on 2026-05-30.
    - Keep the current main destinations: Home, Features, Audit, and Settings.
@@ -195,11 +195,11 @@ Phase 4 should proceed in small, verifiable slices rather than one full navigati
    - Preserve existing entry points and Activity/Fragment class names until a dedicated cleanup phase.
    - Avoid deleting `nav_graph.xml` or legacy XML resources during the ordinary Phase 4 migration.
 
-4. Convert main Fragment routes to pure Compose screens when their route host is stable. Deferred.
+4. Convert main Fragment routes to pure Compose screens when their route host is stable. Completed during Phase 6.
    - Reuse the existing ViewModel/repository boundaries for Home, Audit, and Settings.
    - Keep Hook, service, utility, configuration, shell, Xposed metadata, and asset behavior intact.
-   - Main route definitions now live in Compose, but the active route contents still host existing Fragment classes through `FragmentContainerView`.
-   - Fragment removal belongs to Phase 6 cleanup after active UI routes no longer need Fragment wrappers.
+   - Main route definitions now live in Compose and active route contents use direct composable route entry points.
+   - Fragment wrapper class removal is deferred to Phase 7 because `HomeFragment.isModuleActive()` remains a Hook compatibility target.
 
 5. Verify each Phase 4 slice. Completed for the currently scoped Phase 4 work.
    - Run `.\gradlew.bat assembleDebug`.
@@ -210,11 +210,11 @@ Phase 4 should proceed in small, verifiable slices rather than one full navigati
 Phase 4 leftovers intentionally deferred to Phase 6 cleanup:
 
 - `app/src/main/res/navigation/nav_graph.xml`, removed during Phase 6 on 2026-05-31 after runtime references were audited.
-- Main Fragment wrapper classes: `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment`.
-- Fragment-hosted `ComposeView` wrappers for the main routes.
-- Legacy main route XML layout references under `res/layout/fragment_*.xml`.
-- Navigation animation resources if they are no longer referenced after the final cleanup pass.
-- Fragment Navigation dependencies if no other app paths still require them.
+- Main Fragment wrapper classes: `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment`, now deferred to Phase 7 compatibility-target cleanup.
+- Fragment-hosted `ComposeView` wrappers for the main routes, now inactive for main navigation and deferred to Phase 7 wrapper removal.
+- Legacy main route XML layout references under `res/layout/fragment_*.xml`, removed during Phase 6.
+- Navigation animation resources, removed during Phase 6.
+- Fragment Navigation dependencies, removed during Phase 6.
 
 ### Phase 5. Migrate Settings Pages Through A Shared Settings Model
 
@@ -274,23 +274,71 @@ Phase 5 goals:
    - Keep semantic color previews and domain-specific dialogs behavior-compatible.
 
 6. Avoid cleanup during Phase 5.
-   - Do not delete legacy XML layouts, `nav_graph.xml`, old Fragment classes, or old View dependencies as part of settings model work.
-   - Leave deletion and dependency pruning for Phase 6.
+   - During Phase 5, legacy XML layouts, `nav_graph.xml`, old Fragment classes, and old View dependencies were intentionally left for Phase 6.
+   - Phase 6 has since removed XML/navigation/adapters and pruned unused View dependencies; do not reintroduce them during Phase 7.
 
 ### Phase 6. Clean Up The XML/View Layer
 
-Only start this phase after active UI routes no longer depend on the old View layer.
+Completed on 2026-05-31 after active UI routes stopped depending on the old View layer.
 
 Cleanup candidates:
 
-- `res/layout/activity_*.xml`.
-- `res/layout/fragment_*.xml`.
-- `res/navigation/nav_graph.xml`.
-- Old adapters.
-- Obsolete Fragment classes.
-- Unneeded AppCompat or Material View dependencies.
+- `res/layout/activity_*.xml`: removed.
+- `res/layout/fragment_*.xml`: removed.
+- `res/navigation/nav_graph.xml`: removed.
+- Old adapters: removed.
+- Obsolete Fragment classes: deferred to Phase 7 until Hook compatibility is replaced.
+- Unneeded AppCompat or Material View dependencies: unused View-era dependencies were removed; AppCompat and Material Components remain because dialog and dynamic-color code still use them.
 
-Do not delete XML resources or legacy classes during ordinary page migrations unless the cleanup is explicitly part of the scoped task.
+Do not reintroduce XML layouts, XML navigation, old adapters, RecyclerView UI, or Fragment Navigation dependencies. Remaining Fragment/AppCompat/Material dialog bridges are Phase 7 compatibility cleanup targets.
+
+### Phase 7. Remove Compatibility Wrappers And Dialog Bridges
+
+Phase 7 is the final Compose-architecture cleanup after the XML/View layer has been removed. The goal is to remove compatibility wrappers that are no longer part of active UI while preserving Hook behavior, launch contracts, preference keys, shell behavior, services, Xposed metadata, and runtime assets.
+
+Implementation order:
+
+1. Replace the `HomeFragment.isModuleActive()` Hook compatibility target.
+   - Add a stable, non-Fragment compatibility class and method for the LSPosed self-check, for example a small `ModuleActivationProbe` object or class in the main app package.
+   - Update the app-side `HomeRepository` module-active checker to call the new target.
+   - Update the Hook implementation that currently targets `HomeFragment.isModuleActive()` to target the new method.
+   - Keep a temporary compatibility shim only if needed for one release; otherwise remove `HomeFragment` in the same slice after verifying the Hook target.
+   - Run `.\gradlew.bat assembleDebug`.
+
+2. Delete inactive main Fragment wrapper classes.
+   - Remove `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment` after the self-check Hook no longer depends on `HomeFragment`.
+   - Move any still-needed composable route functions or helper code into non-Fragment files under `ui/screens` or another package matching the existing code shape.
+   - Confirm no Manifest, Hook, route, reflection, or documentation path references the Fragment classes.
+   - Run `.\gradlew.bat assembleDebug`.
+
+3. Remove Fragment dependency if no code still uses `androidx.fragment.app.Fragment`.
+   - Audit for `Fragment`, `FragmentActivity`, Fragment KTX APIs, and transitive Fragment-only imports.
+   - Remove any remaining direct Fragment dependency or transitive workaround only after the audit is clean.
+   - Run `.\gradlew.bat assembleDebug`.
+
+4. Replace AppCompat Activity usage.
+   - Migrate `MainActivity` from `AppCompatActivity` to `ComponentActivity` only after confirming first-launch dialog, dynamic color, edge-to-edge, lifecycle, service callbacks, and Compose host behavior remain compatible.
+   - Keep Activity class names and Manifest entries stable.
+   - Run `.\gradlew.bat assembleDebug`.
+
+5. Replace `MaterialAlertDialogBuilder` / AppCompat `AlertDialog` bridges.
+   - Prioritize reusable dialog wrappers first: `LoadingDialog`, `CountdownDialog`, and `AppChooserDialog`.
+   - Then migrate remaining command-style dialogs in `SettingsDetailActivity`.
+   - Prefer Compose-owned state and `ZToolDialog`/project components for in-app dialogs; use platform dialogs only when a non-Compose context requires it.
+   - Preserve public APIs until all call sites are migrated.
+   - Run `.\gradlew.bat assembleDebug`.
+
+6. Remove AppCompat and any now-unused Material Components dependency.
+   - Remove AppCompat only after no `androidx.appcompat` APIs remain.
+   - Remove Material Components only after no `DynamicColors`, `MaterialAlertDialogBuilder`, Material Views, or Material themes remain.
+   - Keep Compose Material3 and Miuix dependencies.
+   - Run `.\gradlew.bat assembleDebug`.
+
+7. Final verification and documentation.
+   - Verify Material 3 Expressive and Miuix theme modes.
+   - Verify LSPosed self-check still reports active when hooked.
+   - Verify settings backup/restore, log export, app chooser flows, loading/progress flows, countdown confirmation, and Settings Detail command dialogs.
+   - Record completed work and residual risks in `MigrationNotes.md`.
 
 ## Preservation Boundaries
 
@@ -315,46 +363,47 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Move to Phase 6: clean up the XML/View layer. Phase 5's shared settings model work is complete for the current candidate set.
+Move to Phase 7: remove compatibility wrappers and dialog bridges.
 
-Phase 5 closeout:
+Phase 6 closeout:
 
-- Shared settings model foundation, low-risk pilots, medium-complexity pages, System UI detail pages, the System UI aggregate page, and Settings Detail ordinary rows are complete.
-- `settingactivity/setting/magicwindowsearch/searchPage.kt` and `settingactivity/setting/floatingwindow/FloatingWindow.kt` are intentionally not Phase 5 settings-model targets; they are query/result and overlay-wizard workflows.
-- Manual verification on 2026-05-31 confirmed Material 3 Expressive and Miuix rendering work, theme switching works, preference values read/write correctly, restart scope works, shell/root-dependent business flows work, and Hook compatibility remains intact.
-- Keep the shared settings model limited to section/card structure and ordinary rows for now; do not add generic query, format-preview, color-picker, app-picker, root/shell, or wizard model items.
+- Main active routes are Compose-owned and no longer use Fragment hosting.
+- XML layouts, XML menus, XML navigation, old animation XML, old RecyclerView adapters, and unused View-era dependencies have been removed.
+- AppCompat and Material Components remain only because current compatibility/dialog code still uses them.
+- `HomeFragment.isModuleActive()` is the main blocker for deleting the inactive Fragment wrappers.
 
 Recommended next order:
 
-1. Start Phase 6 by removing the main-route Fragment hosting layer. Completed on 2026-05-31.
-   - `MainActivity` no longer uses `LegacyFragmentRoute`, `FragmentContainerView`, or Fragment transactions inside the Compose `NavHost`.
-   - Home, Features, Audit, and Settings routes now have direct composable route entry points.
-   - Existing Fragment class names are preserved for now.
-   - `HomeFragment.isModuleActive()` remains available as the LSPosed self-check Hook target.
-   - Home, Features, Audit, and Settings behavior, ViewModel/repository boundaries, SAF launchers, external intents, reboot shell behavior, and log export behavior were preserved.
-   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
-   - Implementation notes and verification are recorded in `MigrationNotes.md`.
+1. Replace the `HomeFragment.isModuleActive()` Hook compatibility target. Next.
+   - Audit `hook/**` for the exact self-check target and document the current method signature.
+   - Add a non-Fragment self-check target with a stable package/class/method name.
+   - Update `HomeRepository`/`HomeMainRoute` to use the new self-check target.
+   - Update the Hook code to hook the new target.
+   - Decide whether to keep a temporary `HomeFragment.isModuleActive()` shim for one release or delete `HomeFragment` immediately after verification.
+   - Run `.\gradlew.bat assembleDebug`.
+   - Record implementation notes and verification in `MigrationNotes.md`.
 
-2. Audit and remove obsolete XML Navigation references. Completed on 2026-05-31.
-   - Runtime references to `res/navigation/nav_graph.xml`, `NavHostFragment`, and legacy main-route destination ids were audited.
-   - `res/navigation/nav_graph.xml` was deleted after confirming no runtime path references it.
-   - `activity_main.xml` was detached from `NavHostFragment` and `app:navGraph`, but retained as a legacy XML cleanup candidate.
-   - `MainRoute` no longer stores legacy Navigation resource ids or saved-state fallback destination ids.
-   - Retained Fragment wrappers and `HomeFragment.isModuleActive()` do not require XML Navigation metadata.
-   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
-   - Implementation notes and verification are recorded in `MigrationNotes.md`.
+2. Delete inactive main Fragment wrapper classes.
+   - Remove `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment` only after the self-check target is replaced.
+   - Move route composables/helpers into non-Fragment files before deleting wrappers.
+   - Confirm no class-name, Manifest, Hook, reflection, or documentation references remain.
+   - Run `.\gradlew.bat assembleDebug`.
 
-3. Clean up legacy Fragment/XML resources in small slices. Completed on 2026-05-31.
-   - Removed unreferenced `fragment_*.xml`, migrated `activity_*.xml`, legacy dialog XML, floating-window XML, legacy navigation/FAB animations, the old bottom navigation menu, and unused item layouts.
-   - Migrated the Home reboot menu from `PopupMenu`/`reboot_menu.xml` to a Compose `ZToolDialog` chooser, then deleted `reboot_menu.xml`.
-   - Deleted the unused RecyclerView adapters `FeaturesAdapter.java`, `SettingsAdapter.java`, and `PackageAdapter.java`, then removed the final layout XML resources: `item_feature.xml`, `item_setting.xml`, and `package_item.xml`.
-   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
-   - Implementation notes and verification are recorded in `MigrationNotes.md`.
+3. Remove remaining Fragment dependency.
+   - Audit for `androidx.fragment.app` references.
+   - Remove Fragment dependency only when the audit is clean.
+   - Run `.\gradlew.bat assembleDebug`.
 
-4. Dependency cleanup comes last. Completed on 2026-05-31.
-   - Removed Fragment Navigation, Navigation UI, ConstraintLayout, SwipeRefreshLayout, direct RecyclerView, the local SwipeRefreshLayout POM declaration, and the duplicate direct Material dependency.
-   - Removed the unused version-catalog aliases for deleted dependencies.
-   - Kept AppCompat and the version-catalog Material dependency because current Activity/dialog/dynamic-color code still uses them.
-   - Kept Compose, Miuix, lifecycle, saved-state, Gson, lunar, hiddenapi bypass, and Xposed compile-only dependencies.
-   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
-   - Implementation notes and verification are recorded in `MigrationNotes.md`.
+4. Migrate `MainActivity` away from AppCompat.
+   - Convert to `ComponentActivity` after verifying dynamic color, edge-to-edge, first-launch agreement, lifecycle, and service callbacks.
+   - Run `.\gradlew.bat assembleDebug`.
+
+5. Replace AppCompat/Material dialog bridges.
+   - Migrate `LoadingDialog`, `CountdownDialog`, `AppChooserDialog`, and remaining `SettingsDetailActivity` dialog flows to Compose-owned state/components.
+   - Preserve current public APIs until all call sites are migrated.
+   - Run `.\gradlew.bat assembleDebug`.
+
+6. Remove AppCompat and unused Material Components dependencies.
+   - Remove only after no `androidx.appcompat` or Material Components APIs remain.
+   - Keep Compose Material3 and Miuix.
+   - Run `.\gradlew.bat assembleDebug`.
