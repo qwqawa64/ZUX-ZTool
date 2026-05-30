@@ -1,7 +1,6 @@
 package com.qimian233.ztool.settingactivity.gametool
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,29 +38,30 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.qimian233.ztool.EnhancedShellExecutor
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.data.gametool.GameToolSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
+import com.qimian233.ztool.viewmodel.GameToolSettingsUiState
+import com.qimian233.ztool.viewmodel.GameToolSettingsViewModel
+import com.qimian233.ztool.viewmodel.MistakeTouchMode
 
 class GameToolSettngs : ComponentActivity() {
 
     private var appPackageName: String? = null
-    private lateinit var prefsUtils: ModulePreferencesUtils
-
-    private var uiState by mutableStateOf(GameToolSettingsUiState())
+    private lateinit var viewModel: GameToolSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,33 +69,27 @@ class GameToolSettngs : ComponentActivity() {
 
         val appName = intent.getStringExtra("app_name").orEmpty()
         appPackageName = intent.getStringExtra("app_package")
-        prefsUtils = ModulePreferencesUtils(this)
-        loadSettings()
+        val repository = GameToolSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            GameToolSettingsViewModelFactory(repository)
+        )[GameToolSettingsViewModel::class.java]
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 GameToolSettingsScreen(
                     title = appName + stringResource(R.string.game_tool_settings_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
-                    onDisableGameAudioChanged = {
-                        uiState = uiState.copy(disableGameAudio = it)
-                        saveSettings("disable_GameAudio", it)
-                    },
-                    onDisguiseDeviceChanged = {
-                        uiState = uiState.copy(disguiseDevice = it)
-                        saveSettings("disguise_TB322FC", it)
-                    },
-                    onFixCpuFrequencyChanged = {
-                        uiState = uiState.copy(fixCpuFrequency = it)
-                        saveSettings("Fix_CpuClock", it)
-                    },
-                    onFixSocTemperatureChanged = {
-                        uiState = uiState.copy(fixSocTemperature = it)
-                        saveSettings("Fix_SocTemp", it)
-                    },
-                    onMistakeTouchModeChanged = ::handleMistakeTouchModeChanged,
+                    onRestart = viewModel::showRestartConfirmDialog,
+                    onDisableGameAudioChanged = viewModel::setDisableGameAudio,
+                    onDisguiseDeviceChanged = viewModel::setDisguiseDevice,
+                    onFixCpuFrequencyChanged = viewModel::setFixCpuFrequency,
+                    onFixSocTemperatureChanged = viewModel::setFixSocTemperature,
+                    onMistakeTouchModeChanged = viewModel::setMistakeTouchMode,
                     onSelectWhitelist = ::selectGameApps
                 )
 
@@ -103,79 +97,29 @@ class GameToolSettngs : ComponentActivity() {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            uiState = uiState.copy(showRestartConfirmDialog = false)
-                            forceStopApp()
+                            viewModel.forceStopPackage(
+                                packageName = appPackageName.orEmpty(),
+                                onFailure = ::showRestartFailure
+                            )
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
+                        onDismiss = viewModel::dismissRestartConfirmDialog
                     )
                 }
             }
         }
     }
 
-    private fun loadSettings() {
-        val targetGamePackages = loadWhitelistPackages()
-
-        val autoMistakeTouch = prefsUtils.loadBooleanSetting("auto_mistake_touch", false)
-        val mistakeTouchWhiteList = prefsUtils.loadBooleanSetting("MistakeTouchWhiteList", false)
-        val mistakeTouchMode = when {
-            autoMistakeTouch && mistakeTouchWhiteList -> MistakeTouchMode.Whitelist
-            autoMistakeTouch -> MistakeTouchMode.AllGames
-            else -> MistakeTouchMode.Default
-        }
-
-        uiState = uiState.copy(
-            disableGameAudio = prefsUtils.loadBooleanSetting("disable_GameAudio", false),
-            disguiseDevice = prefsUtils.loadBooleanSetting("disguise_TB322FC", false),
-            fixCpuFrequency = prefsUtils.loadBooleanSetting("Fix_CpuClock", false),
-            fixSocTemperature = prefsUtils.loadBooleanSetting("Fix_SocTemp", false),
-            mistakeTouchMode = mistakeTouchMode,
-            targetGamePackages = targetGamePackages
-        )
-    }
-
-    private fun loadWhitelistPackages(): List<String> {
-        return prefsUtils.loadStringSetting("MistakeTouchWhiteListGame", "")
-            .split(",")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-    }
-
-    private fun handleMistakeTouchModeChanged(mode: MistakeTouchMode) {
-        uiState = uiState.copy(mistakeTouchMode = mode)
-        when (mode) {
-            MistakeTouchMode.Default -> {
-                saveSettings("auto_mistake_touch", false)
-                saveSettings("MistakeTouchWhiteList", false)
-            }
-            MistakeTouchMode.AllGames -> {
-                saveSettings("auto_mistake_touch", true)
-                saveSettings("MistakeTouchWhiteList", false)
-            }
-            MistakeTouchMode.Whitelist -> {
-                saveSettings("auto_mistake_touch", true)
-                saveSettings("MistakeTouchWhiteList", true)
-            }
-        }
-    }
-
     private fun selectGameApps() {
+        val uiState = viewModel.uiState.value
         AppChooserDialog.show(
             this,
-            getPackageNames(),
+            viewModel.loadManagedGamePackages(),
             uiState.targetGamePackages,
             getString(R.string.SelectGame),
             object : AppChooserDialog.AppSelectionCallback {
                 override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
                     val selectedPackageNames = selectedApps.map { it.packageName }
-                    selectedPackageNames.forEach {
-                        Log.d(TAG, "Selected game package: $it")
-                    }
-                    uiState = uiState.copy(targetGamePackages = selectedPackageNames)
-                    saveConfig(
-                        "MistakeTouchWhiteListGame",
-                        selectedPackageNames.joinToString(separator = ",", postfix = ",")
-                    )
+                    viewModel.setWhitelistPackages(selectedPackageNames)
                 }
 
                 override fun onCancel() = Unit
@@ -183,64 +127,23 @@ class GameToolSettngs : ComponentActivity() {
         )
     }
 
-    private fun forceStopApp() {
-        val packageName = appPackageName
-        if (packageName.isNullOrEmpty()) {
-            return
-        }
-
-        try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            process.waitFor()
-        } catch (_: Exception) {
+    private fun showRestartFailure() {
+        runOnUiThread {
             Toast.makeText(this, R.string.restart_fail_short, Toast.LENGTH_SHORT).show()
         }
     }
+}
 
-    private fun saveSettings(moduleName: String, newValue: Boolean) {
-        prefsUtils.saveBooleanSetting(moduleName, newValue)
-    }
-
-    private fun saveConfig(configName: String, newValue: String) {
-        prefsUtils.saveStringSetting(configName, newValue)
-    }
-
-    companion object {
-        private const val TAG = "GameToolSettngs"
-
-        fun getPackageNames(): List<String> {
-            val result = EnhancedShellExecutor.getInstance()
-                .executeRootCommand("ls /data/system_ce/0/managed_apps/")
-
-            if (!result.isSuccess) {
-                return emptyList()
-            }
-
-            return result.output
-                .trim()
-                .split(Regex("\\s+"))
-                .filter { it.isNotEmpty() }
+private class GameToolSettingsViewModelFactory(
+    private val repository: GameToolSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(GameToolSettingsViewModel::class.java)) {
+            return GameToolSettingsViewModel(repository) as T
         }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
-}
-
-private enum class MistakeTouchMode {
-    Default,
-    AllGames,
-    Whitelist
-}
-
-private data class GameToolSettingsUiState(
-    val disableGameAudio: Boolean = false,
-    val disguiseDevice: Boolean = false,
-    val fixCpuFrequency: Boolean = false,
-    val fixSocTemperature: Boolean = false,
-    val mistakeTouchMode: MistakeTouchMode = MistakeTouchMode.Default,
-    val targetGamePackages: List<String> = emptyList(),
-    val showRestartConfirmDialog: Boolean = false
-) {
-    val whitelistCount: Int
-        get() = targetGamePackages.size
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

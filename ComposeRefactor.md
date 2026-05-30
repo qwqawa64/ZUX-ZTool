@@ -494,6 +494,33 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `SafeCenterSettingsActivity` ViewModel/repository extraction.
 
+### GameToolSettings ViewModel Boundary
+
+`settingactivity/gametool/GameToolSettngs.kt` now delegates game tool preference state, mistake-touch mode mapping, whitelist persistence, managed-game package loading, and package restart coordination to:
+
+- `viewmodel/GameToolSettingsViewModel.kt`.
+- `data/gametool/GameToolSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `GameToolSettngs` class name, package, and Activity launch contract.
+- Existing preference keys for game audio disabling, TB322FC model disguise, CPU frequency fix, SoC temperature fix, automatic mistake touch, mistake-touch whitelist mode, and whitelist game package storage.
+- Existing whitelist string format using comma-separated package names with a trailing comma.
+- Existing managed-game package query command: `ls /data/system_ce/0/managed_apps/`.
+- Existing `AppChooserDialog` whitelist selection flow and selected package logging.
+- Existing restart confirmation dialog and `su -c killall <package>` restart command behavior.
+- Existing restart failure Toast behavior.
+
+Implementation note:
+
+- `GameToolSettingsUiState` and `MistakeTouchMode` now live with `GameToolSettingsViewModel`.
+- The Activity now hosts Compose, launches `AppChooserDialog`, shows Toast effects, and forwards user actions to the ViewModel.
+- `GameToolSettingsRepository` wraps `ModulePreferencesUtils`, `EnhancedShellExecutor`, whitelist serialization, and package force-stop execution for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `GameToolSettngs` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -646,6 +673,12 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/gametool/GameToolSettngs.kt`
-   - Extract game tool preference and whitelist state into a ViewModel/repository boundary.
-   - Preserve mistake-touch whitelist configuration and existing app chooser behavior.
+1. `settingactivity/launcher/LauncherSettingsActivity.kt`
+   - Extract launcher preference state, dock/grid configuration, app chooser coordination, and restart command behavior into a ViewModel/repository boundary.
+   - Preserve existing preference keys, force-stop behavior, and configured app-list serialization.
+2. `settingactivity/ota/OtaSettings.kt`
+   - Extract OTA preference state, OTA info parsing, firmware query, and restart command coordination into a ViewModel/repository boundary.
+   - Preserve existing OTA preference keys, shell behavior, clipboard behavior, and restart-scope behavior.
+3. `settingactivity/setting/SettingsDetailActivity.kt`
+   - Extract the remaining system settings detail business state behind ViewModel/repository boundaries in smaller follow-up slices.
+   - Preserve config flashing, font import, embedding, Magisk, overlay guide, and OV config behavior.
