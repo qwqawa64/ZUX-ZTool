@@ -1,7 +1,6 @@
 package com.qimian233.ztool.settingactivity.setting.magicwindowsearch
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,157 +41,80 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.settings.MagicWindowSearchRepository
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import org.json.JSONException
-import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.IOException
-import java.io.InputStreamReader
-import java.util.Locale
+import com.qimian233.ztool.viewmodel.SearchPageUiState
+import com.qimian233.ztool.viewmodel.SearchPageViewModel
 
 @Suppress("ClassName")
 class searchPage : ComponentActivity() {
 
-    private var embeddingConfig: JSONObject? = null
-    private var uiState by mutableStateOf(SearchPageUiState())
+    private lateinit var viewModel: SearchPageViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        loadEmbeddingConfig()
+        viewModel = ViewModelProvider(
+            this,
+            SearchPageViewModelFactory(MagicWindowSearchRepository(applicationContext))
+        )[SearchPageViewModel::class.java]
+        viewModel.loadEmbeddingConfig()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 SearchPageScreen(
                     state = uiState,
-                    onKeywordChanged = { uiState = uiState.copy(keyword = it) },
-                    onSearch = ::performSearch,
-                    onResultClick = { uiState = uiState.copy(selectedPackage = it) },
+                    onKeywordChanged = viewModel::setKeyword,
+                    onSearch = {
+                        viewModel.search {
+                            Toast.makeText(
+                                this,
+                                R.string.unable_to_find_application,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
+                    onResultClick = viewModel::selectPackage,
                     onNavigateBack = ::finish
                 )
 
                 uiState.selectedPackage?.let { packageInfo ->
                     PackageDetailsDialog(
                         packageInfo = packageInfo,
-                        onDismiss = { uiState = uiState.copy(selectedPackage = null) }
+                        onDismiss = viewModel::dismissPackageDetails
                     )
                 }
             }
         }
     }
-
-    private fun loadEmbeddingConfig() {
-        try {
-            embeddingConfig = JSONObject(requireNotNull(readFile(MODULE_CONFIG_PATH)))
-            val count = embeddingConfig?.getJSONArray("packages")?.length() ?: 0
-            uiState = uiState.copy(tipsText = getString(R.string.module_config_tips, count))
-        } catch (_: Exception) {
-            try {
-                embeddingConfig = JSONObject(requireNotNull(loadJsonFromAsset("embedding/embedding_config.json")))
-                uiState = uiState.copy(tipsText = getString(R.string.official_config_tips))
-            } catch (_: Exception) {
-                embeddingConfig = null
-                uiState = uiState.copy(tipsText = getString(R.string.config_not_exists_tips))
-            }
-        }
-    }
-
-    private fun performSearch() {
-        val query = uiState.keyword.trim()
-        if (query.isEmpty()) return
-
-        val config = embeddingConfig ?: return
-        val results = mutableListOf<PackageInfo>()
-
-        try {
-            val packages = config.getJSONArray("packages")
-            val normalizedQuery = query.lowercase(Locale.getDefault())
-            for (index in 0 until packages.length()) {
-                val packageObject = packages.getJSONObject(index)
-                val name = packageObject.optString("name", "")
-                if (name.lowercase(Locale.getDefault()).contains(normalizedQuery)) {
-                    results.add(PackageInfo(packageObject))
-                }
-            }
-            uiState = uiState.copy(
-                searchResults = results,
-                hasSearched = true
-            )
-
-            if (results.isEmpty()) {
-                Toast.makeText(this, R.string.unable_to_find_application, Toast.LENGTH_LONG).show()
-            }
-        } catch (e: JSONException) {
-            Log.e(TAG, "搜索策略失败", e)
-        }
-    }
-
-    private fun loadJsonFromAsset(fileName: String): String? {
-        return try {
-            assets.open(fileName).bufferedReader().use { it.readText() }
-        } catch (e: IOException) {
-            Log.e(TAG, "Error reading asset file: $fileName", e)
-            null
-        }
-    }
-
-    companion object {
-        private const val TAG = "searchPage"
-        private const val MODULE_CONFIG_PATH = "/data/system/zui/embedding/embedding_config.json"
-
-        @JvmStatic
-        fun readFile(filePath: String): String? {
-            var process: Process? = null
-            return try {
-                process = Runtime.getRuntime().exec("su")
-                val outputStream = DataOutputStream(process.outputStream)
-                val inputStream = DataInputStream(process.inputStream)
-
-                outputStream.writeBytes("cat $filePath\n")
-                outputStream.writeBytes("exit\n")
-                outputStream.flush()
-
-                val result = StringBuilder()
-                val reader = BufferedReader(InputStreamReader(inputStream))
-                var line = reader.readLine()
-                while (line != null) {
-                    result.append(line).append("\n")
-                    line = reader.readLine()
-                }
-
-                process.waitFor()
-                result.toString()
-            } catch (e: Exception) {
-                Log.e(TAG, "读取模块配置失败", e)
-                null
-            } finally {
-                process?.destroy()
-            }
-        }
-    }
 }
 
-private data class SearchPageUiState(
-    val tipsText: String = "",
-    val keyword: String = "",
-    val searchResults: List<PackageInfo> = emptyList(),
-    val selectedPackage: PackageInfo? = null,
-    val hasSearched: Boolean = false
-)
+private class SearchPageViewModelFactory(
+    private val repository: MagicWindowSearchRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SearchPageViewModel::class.java)) {
+            return SearchPageViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

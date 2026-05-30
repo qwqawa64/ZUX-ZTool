@@ -658,6 +658,34 @@ Verification:
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the font import extraction.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the OV config extraction.
 
+### MagicWindow Search ViewModel Boundary
+
+`settingactivity/setting/magicwindowsearch/searchPage.kt` now delegates config loading, root file fallback, JSON parsing, and search state to:
+
+- `viewmodel/SearchPageViewModel.kt`.
+- `data/settings/MagicWindowSearchRepository.kt`.
+
+Preserved behavior:
+
+- Existing `searchPage` class name, package, and Activity launch contract.
+- Existing module config path: `/data/system/zui/embedding/embedding_config.json`.
+- Existing asset fallback: `assets/embedding/embedding_config.json`.
+- Existing search by package `name`.
+- Existing empty-result Toast and empty result card behavior.
+- Existing package details dialog and displayed fields.
+- Existing root `su` + `cat` file read behavior, now behind the repository boundary.
+
+Implementation note:
+
+- `SearchPageUiState` now lives with `SearchPageViewModel`.
+- The Activity now hosts Compose, shows the empty-result Toast, opens package details, and forwards user actions to the ViewModel.
+- `MagicWindowSearchRepository` wraps root config reading, asset fallback reading, JSON storage, and search result creation.
+- Config loading now runs off the Activity initialization path in the ViewModel.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `searchPage` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -806,16 +834,11 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue Phase 2 ViewModel/repository extraction. Phase 2 is not complete yet: most active Compose screens now consume `UiState` and many heavy pages already have ViewModel/repository boundaries, and `SettingsDetailActivity.kt` has now completed its planned business-boundary slices. The remaining Phase 2 follow-up targets are smaller Compose sub-pages that still contain direct root/runtime or Activity-local business work.
+Continue Phase 2 ViewModel/repository extraction. Phase 2 is not complete yet: most active Compose screens now consume `UiState` and many heavy pages already have ViewModel/repository boundaries. `SettingsDetailActivity.kt` and `settingactivity/setting/magicwindowsearch/searchPage.kt` have now completed their planned business-boundary slices. The remaining Phase 2 follow-up target is the floating-window guide, which still contains direct root/runtime and wizard-state work in the overlay class.
 
 Recommended next order:
 
-1. `settingactivity/setting/magicwindowsearch/searchPage.kt`
-   - Extract config loading, root file fallback, JSON parsing, and search state into a ViewModel/repository pair.
-   - Preserve the existing `searchPage` class name, Activity launch contract, module config path, asset fallback, result details dialog, and search behavior.
-   - Run `.\gradlew.bat assembleDebug` after the slice and record the result here.
-
-2. `settingactivity/setting/floatingwindow/FloatingWindow.kt`
-   - After the search page boundary is stable, separate foreground app/activity lookup, wizard state, and generated config persistence from the overlay Compose UI.
+1. `settingactivity/setting/floatingwindow/FloatingWindow.kt`
+   - Separate foreground app/activity lookup, wizard state, and generated config persistence from the overlay Compose UI.
    - Preserve the existing overlay lifecycle owner handling, wizard sequence, shell fallback behavior, generated Base64 config format, and storage path.
    - Run `.\gradlew.bat assembleDebug` after the slice and record the result here.
