@@ -757,14 +757,52 @@ Use repository or manager wrappers for shell execution, logs, config, preference
 
 ### Phase 3. Implement The Frontend Style Adapter Layer
 
+Current feasibility assessment:
+
+- The codebase can support this phase, but it needs a theme settings model before real multi-style switching is useful.
+- `ZToolTheme.kt` already has `FrontendStyle`, `ZToolThemeSpec`, `LocalZToolThemeSpec`, Material 3 color schemes, and Android 12+ dynamic color calls.
+- `FrontendStyle.Miuix` currently exists only as a placeholder and still resolves to the Material 3 color scheme.
+- Many screens already use `MaterialTheme.colorScheme`, which makes dynamic color, user color, and AMOLED overrides practical.
+- Several screens still call Material 3 primitives such as `Scaffold`, `TopAppBar`, `NavigationRail`, `Switch`, and `Card` directly. These should gradually move behind project components before a real Miuix style is enabled.
+
 Define a project-level style model:
 
 ```kotlin
 enum class FrontendStyle {
-    MaterialExpressive,
+    Material3Expressive,
     Miuix
 }
 ```
+
+The model should stay open for future themes by keeping style-specific behavior in the theme/component layer rather than in business screens.
+
+Add a persisted theme settings shape before wiring style switches into pages:
+
+```kotlin
+data class ZToolThemeSettings(
+    val frontendStyle: FrontendStyle,
+    val themeMode: ThemeMode,
+    val dynamicColorEnabled: Boolean,
+    val amoledBlackEnabled: Boolean,
+    val manualColorEnabled: Boolean,
+    val manualSeedColor: Long
+)
+
+enum class ThemeMode {
+    FollowSystem,
+    Light,
+    Dark
+}
+```
+
+Store these preferences behind a small repository, for example `ThemePreferencesRepository`, rather than reading `SharedPreferences` directly inside `ZToolTheme` or screens.
+
+Color behavior:
+
+- Android 12+ Monet dynamic color should be used only when `dynamicColorEnabled` is true and manual color is not enabled.
+- Manual color should generate or derive a complete Material 3 `ColorScheme` from a seed color instead of only replacing `primary`.
+- AMOLED pure black should be a dark-theme post-processing step that overrides `background`, `surface`, and `surfaceContainer*` roles to black or near-black consistently.
+- Semantic colors, such as log severity and user-selected color previews, may remain hard-coded when they represent data rather than theme chrome.
 
 Feature screens should call project components instead of branching on style directly:
 
@@ -779,6 +817,17 @@ ZSwitchRow(
 Components and theme adapters, such as `ZToolTheme`, `ZToolScaffold`, `ZToolCard`, `ZToolDropdownField`, `ZSwitchRow`, `ZListItem`, and `ZDialog`, should choose the Material 3 Expressive, Miuix, or future ZUX/ZUI rendering internally.
 
 Avoid scattering checks such as `if (style == FrontendStyle.Miuix)` through business screens.
+
+Recommended Phase 3 implementation order:
+
+1. Introduce `ZToolThemeSettings`, `ThemeMode`, and a repository-backed source of persisted theme preferences.
+2. Update `ZToolTheme` to consume `ZToolThemeSettings` and resolve the final `ColorScheme` from theme mode, Monet, manual seed color, and AMOLED black options.
+3. Keep `FrontendStyle.Material3Expressive` as the first fully functional style and verify dynamic color/manual color/AMOLED behavior there.
+4. Expand shared components (`ZToolScaffold`, `ZToolCard`, `ZToolSwitchRow`, `ZToolDropdownField`, `ZListItem`, `ZDialog`) so screens can avoid direct Material 3 component usage.
+5. Add the Miuix dependency and implement Miuix rendering inside the shared components and theme adapter only.
+6. Pilot the adapter on a small already-migrated settings page before applying it to larger pages such as System UI, launcher, and settings detail.
+
+Do not start by adding `if (style == FrontendStyle.Miuix)` branches inside every screen. That would make future themes expensive and would violate the intended UI-layer boundary.
 
 ### Phase 4. Migrate Main Navigation
 
@@ -860,16 +909,37 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue toward Phase 3 and Phase 5. The planned Phase 2 heavy-screen ViewModel/repository boundary pass is now complete for the active Compose screens listed in this document, including the floating-window guide.
+Execute Phase 3 first. The planned Phase 2 heavy-screen ViewModel/repository boundary pass is now complete for the active Compose screens listed in this document, including the floating-window guide. Before continuing broad settings-page model work in Phase 5, establish the theme settings model and style adapter layer so future screens can consume stable project components.
 
 Recommended next order:
 
-1. Introduce a shared settings item model under the UI/component layer.
-   - Start with switch, entry, slider, text input, and category item shapes.
-   - Keep the model rendering behind shared components such as `ZSwitchRow`, `ZListItem`, and `ZToolDropdownField`.
-   - Do not change preference keys, restart behavior, shell behavior, or page launch contracts.
+1. Introduce persisted theme settings.
+   - Add `ZToolThemeSettings` and `ThemeMode`.
+   - Add a small `ThemePreferencesRepository` or equivalent wrapper for frontend style, theme mode, dynamic color, AMOLED black, manual color enabled, and manual seed color.
+   - Keep these keys scoped to app UI preferences and do not change Hook/module preference keys.
 
-2. Pilot the shared settings model on a small already-migrated settings page.
-   - Prefer a low-risk page such as package installer or safe center before touching larger pages.
+2. Update `ZToolTheme` to resolve the final Material 3 theme from settings.
+   - Support follow-system, light, and dark modes.
+   - Use Android 12+ Monet only when dynamic color is enabled and manual color is disabled.
+   - Support manual seed color as a complete `ColorScheme` source rather than changing only `primary`.
+   - Apply AMOLED pure black as a dark-theme post-processing step over `background`, `surface`, and `surfaceContainer*`.
+
+3. Wire the top-level app shell to the persisted theme settings.
+   - Load theme settings before calling `ZToolTheme` in `MainActivity`.
+   - Keep existing launch contracts, Fragment navigation, and system-bar behavior compatible.
+   - Make sure dialogs and overlay Compose surfaces still receive the same theme context.
+
+4. Expand the shared component adapter layer.
+   - Add or refine `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZListItem`, and `ZDialog`.
+   - Keep style selection inside components through `LocalZToolThemeSpec`.
+   - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)`.
+
+5. Add the Miuix dependency only after the Material 3 theme settings path is verified.
+   - Implement Miuix rendering behind shared components and theme adapters.
+   - Keep Material 3 Expressive as the first complete and verified style.
+   - Treat Miuix as a component-layer alternative, not a separate business-screen implementation.
+
+6. Pilot Phase 3 on a small already-migrated settings page.
+   - Prefer package installer or safe center before larger pages.
    - Preserve the existing ViewModel/repository boundary.
-   - Run `.\gradlew.bat assembleDebug` after the slice and record the result here.
+   - Run `.\gradlew.bat assembleDebug` after each slice and record the result here.

@@ -101,6 +101,25 @@ For example, logic from `HomeFragment` should be modeled around:
 
 ## Compose And Design-System Rules
 
+Phase 3 is centered on a project-level theme settings model and a component adapter layer. Business screens should stay style-agnostic and consume project components.
+
+Theme settings should be modeled and persisted outside feature screens. The durable shape should cover:
+
+- Frontend style: Material 3 Expressive, Miuix, and future styles.
+- Theme mode: follow system, light, and dark.
+- Android 12+ Monet dynamic color.
+- Manual seed color.
+- AMOLED pure black mode.
+
+Keep theme preference keys scoped to app UI preferences. Do not reuse or alter Hook/module preference keys for theme UI settings.
+
+`ZToolTheme` should resolve the final theme from settings:
+
+- Use Monet only when dynamic color is enabled, the device supports it, and manual color is disabled.
+- Manual color should derive a complete Material 3 `ColorScheme`, not only replace `primary`.
+- AMOLED black should be a dark-theme post-processing step that consistently overrides `background`, `surface`, and `surfaceContainer*`.
+- Semantic data colors, such as log severity and user-selected color previews, may remain explicit.
+
 Avoid placing frontend-style conditionals directly in business screens.
 
 Do not scatter code like:
@@ -113,13 +132,17 @@ inside feature screens. Instead, prefer project-level UI components and theme ad
 
 - `ZToolTheme`
 - `ZToolScaffold`
+- `ZToolTopAppBar`
+- `ZToolNavigationRail`
 - `ZToolCard`
 - `ZToolDropdownField`
-- `ZSwitchRow`
+- `ZToolSwitchRow`
 - `ZListItem`
 - `ZDialog`
 
 Business screens should call project components and let the component/theme layer choose the Material 3 Expressive, Miuix, or future ZUX/ZUI rendering.
+
+Material 3 Expressive should be the first complete and verified style path. Add and wire Miuix only after the Material 3 theme settings path is working for theme mode, Monet, manual color, and AMOLED black. Miuix rendering belongs inside shared components and theme adapters, not in separate business-screen implementations.
 
 Keep these conventions when editing Compose UI:
 
@@ -127,6 +150,7 @@ Keep these conventions when editing Compose UI:
 - Avoid hard-coded background/surface colors unless the color has semantic meaning, such as log severity or user-selected color preview.
 - Root screen containers should use the theme background/surface consistently.
 - Prefer shared components in `ui/components` over repeated local implementations.
+- Route direct Material 3 primitives such as `Scaffold`, `TopAppBar`, `NavigationRail`, `Switch`, `Card`, and dialogs behind shared ZTool components when touching a screen for Phase 3 work.
 - Use stable layout dimensions for grids, cards, controls, and rows to prevent text or state changes from shifting the UI unexpectedly.
 - For dropdowns, prefer a shared `ZToolDropdownField` using the current Material3 `menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)` pattern.
 
@@ -147,20 +171,19 @@ Miuix can be introduced as a Compose UI library. The official project is `compos
 
 ## Migration Rules
 
-When migrating a page to Compose:
+When changing UI, navigation, theme, design-system, or Compose migration code:
 
 1. Preserve the original class name, package name, Manifest entry, and external launch contract unless the user explicitly approves a breaking change.
 2. Preserve all existing SharedPreferences/config keys used by Hook modules.
 3. Preserve root shell behavior, restart scope behavior, and system package names exactly unless intentionally changing the behavior.
 4. Preserve Xposed metadata and `assets/xposed_init`.
 5. Preserve `assets/embedding/**`.
-6. Prefer converting one page or dialog at a time to keep regression scope small.
-7. When applying your changes, prefer smaller patches for modifying files that already exists.
-8. Do not delete legacy XML layouts, old adapters, or `nav_graph.xml` simply because a page was migrated; leave cleanup for a dedicated XML View cleanup phase.
-9. After a page migration, run `.\gradlew.bat assembleDebug`.
-10. Document the completed page, verification result, and next step in `ComposeRefactor.md`.
-11. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md` to mark it as completed. If the task entry is empty, generate new tasks to push forward the refactor progress.
-12. Commit your changes after documenting them unless user told you not to do so. When committing, include only the current page refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
+6. Prefer small, reviewable patches and avoid coupling unrelated screen, theme, and build-system changes.
+7. Do not delete legacy XML layouts, old adapters, or `nav_graph.xml` during ordinary UI/theme work; leave cleanup for a dedicated XML/View cleanup phase.
+8. After UI, theme, shared-component, or navigation changes, run `.\gradlew.bat assembleDebug`.
+9. Document the completed task, verification result, and next step in `ComposeRefactor.md`.
+10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md`; if the task entry is empty or stale, generate new tasks to push the refactor forward.
+11. Commit your changes after documenting them. When committing, include only the current scoped refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
 
 ## Areas To Preserve
 
