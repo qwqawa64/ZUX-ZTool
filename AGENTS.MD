@@ -2,7 +2,7 @@
 
 ## Agent Quick Start
 
-- Default to `rg` for searching and keep edits ASCII unless the file already uses non-ASCII.
+- Default to `rg` for searching and keep edits ASCII unless the file already uses non-ASCII, especially when touching old .java files, they may contain Chinese logging strings and hardcoded UI strings.
 
 ## Project Overview
 
