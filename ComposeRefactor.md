@@ -712,6 +712,31 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `FloatingWindow` ViewModel/repository extraction.
 
+### Phase 3 Theme Settings Foundation
+
+The first Phase 3 slice introduced persisted app UI theme settings through:
+
+- `ui/theme/ZToolThemeSettings.kt`.
+- `ui/theme/ThemeMode.kt`.
+- `data/theme/ThemePreferencesRepository.kt`.
+
+Preserved behavior:
+
+- Existing `ZToolTheme` rendering path is not changed yet.
+- Existing `MainActivity` launch contract and Fragment navigation are unchanged.
+- Existing Hook/module preference keys are untouched.
+- Theme preferences are stored in the app UI-only preference file `ztool_ui_theme_preferences`.
+
+Implementation note:
+
+- `ZToolThemeSettings` covers frontend style, follow-system/light/dark mode, Monet dynamic color, AMOLED black, manual color enablement, and manual seed color.
+- `ThemePreferencesRepository` wraps persistence for those values and falls back to defaults when stored enum names are missing or stale.
+- This slice intentionally does not wire settings into `ZToolTheme`; that is the next Phase 3 task.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the theme settings model and repository.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -913,12 +938,12 @@ Execute Phase 3 first. The planned Phase 2 heavy-screen ViewModel/repository bou
 
 Recommended next order:
 
-1. Introduce persisted theme settings.
+1. Introduce persisted theme settings. Completed on 2026-05-30.
    - Add `ZToolThemeSettings` and `ThemeMode`.
    - Add a small `ThemePreferencesRepository` or equivalent wrapper for frontend style, theme mode, dynamic color, AMOLED black, manual color enabled, and manual seed color.
    - Keep these keys scoped to app UI preferences and do not change Hook/module preference keys.
 
-2. Update `ZToolTheme` to resolve the final Material 3 theme from settings.
+2. Next: update `ZToolTheme` to resolve the final Material 3 theme from settings.
    - Support follow-system, light, and dark modes.
    - Use Android 12+ Monet only when dynamic color is enabled and manual color is disabled.
    - Support manual seed color as a complete `ColorScheme` source rather than changing only `primary`.
