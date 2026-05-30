@@ -577,6 +577,31 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `OtaSettings` ViewModel/repository extraction.
 
+### SettingsDetailActivity ViewModel Boundary, Slice 1
+
+`settingactivity/setting/SettingsDetailActivity.kt` now delegates its basic settings state and simple command coordination to:
+
+- `viewmodel/SettingsDetailViewModel.kt`.
+- `data/settings/SettingsDetailRepository.kt`.
+
+Preserved behavior:
+
+- Existing `SettingsDetailActivity` class name, package, and Activity launch contract.
+- Existing preference keys for remove blacklist, split-screen mandatory, native permission controller, Dolby display, and always-display suggestions.
+- Existing force-resizable global setting command for floating window mandatory mode.
+- Existing restart-scope commands for the target package, `com.android.permissioncontroller`, and `com.zui.safecenter`.
+- Existing Magisk module install/remove flow, embedding config flashing, font import, overlay guide, magic-window strategy search, and OV config flows remain in the Activity for later smaller slices.
+
+Implementation note:
+
+- `SettingsDetailUiState` now lives with `SettingsDetailViewModel`.
+- The Activity now hosts Compose, handles complex dialogs/file pickers, and forwards simple preference and restart actions to the ViewModel.
+- `SettingsDetailRepository` wraps `ModulePreferencesUtils`, `EnhancedShellExecutor`, and module-enabled state loading for this first slice.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `SettingsDetailActivity` basic state/restart extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -730,5 +755,5 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 Recommended next order:
 
 1. `settingactivity/setting/SettingsDetailActivity.kt`
-   - Extract the remaining system settings detail business state behind ViewModel/repository boundaries in smaller follow-up slices.
-   - Preserve config flashing, font import, embedding, Magisk, overlay guide, and OV config behavior.
+   - Continue extracting the remaining system settings detail business behavior behind ViewModel/repository boundaries in smaller follow-up slices.
+   - Suggested next slice: move Magisk module install/remove and flashed config set persistence behind repository methods while preserving config flashing, font import, embedding, overlay guide, and OV config behavior.

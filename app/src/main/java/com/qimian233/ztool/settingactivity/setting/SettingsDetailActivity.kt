@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.database.Cursor
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.provider.Settings
@@ -60,6 +59,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -72,14 +72,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.LoadingDialog
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.settingactivity.setting.floatingwindow.FloatingWindow
 import com.qimian233.ztool.settingactivity.setting.magicwindowsearch.searchPage
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
@@ -90,11 +91,12 @@ import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager
 import com.qimian233.ztool.utils.MagiskModuleManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
+import com.qimian233.ztool.viewmodel.SettingsDetailUiState
+import com.qimian233.ztool.viewmodel.SettingsDetailViewModel
 import java.io.File
 
 class SettingsDetailActivity : ComponentActivity() {
 
-    private lateinit var prefsUtils: ModulePreferencesUtils
     private lateinit var magiskManager: MagiskModuleManager
     private lateinit var configManager: EmbeddingConfigManager
     private lateinit var fontManager: FontInstallerManager
@@ -108,33 +110,35 @@ class SettingsDetailActivity : ComponentActivity() {
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
     private lateinit var fontPickerLauncher: ActivityResultLauncher<Intent>
 
-    private var uiState by mutableStateOf(SettingsDetailUiState())
+    private lateinit var viewModel: SettingsDetailViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        prefsUtils = ModulePreferencesUtils(this)
         magiskManager = MagiskModuleManager()
         configManager = EmbeddingConfigManager()
         fontManager = FontInstallerManager()
         ovConfigManager = OvCommonConfigManager()
+        viewModel = ViewModelProvider(
+            this,
+            SettingsDetailViewModelFactory(SettingsDetailRepository(applicationContext))
+        )[SettingsDetailViewModel::class.java]
         initActivityResultLaunchers()
 
         val appName = intent.getStringExtra("app_name").orEmpty()
         appPackageName = intent.getStringExtra("app_package")
-        loadSettings()
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 SettingsDetailScreen(
                     title = appName + stringResource(R.string.settings_detail_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onRemoveBlacklistChanged = {
-                        uiState = uiState.copy(removeBlacklist = it)
-                        prefsUtils.saveBooleanSetting("remove_blacklist", it)
-                    },
+                    onRemoveBlacklistChanged = viewModel::setRemoveBlacklist,
                     onModuleEnabledChanged = ::handleModuleSwitch,
                     onStartFloatingWindow = ::startFloatingWindow,
                     onOpenConfigSelection = {
@@ -161,65 +165,26 @@ class SettingsDetailActivity : ComponentActivity() {
                             getString(R.string.zui_force_fixed_title)
                         )
                     },
-                    onFloatMandatoryChanged = {
-                        uiState = uiState.copy(floatMandatory = it)
-                        EnhancedShellExecutor.getInstance().executeCommand(
-                            "su -c settings put global force_resizable_activities " + if (it) "1" else "0"
-                        )
-                    },
-                    onSplitScreenMandatoryChanged = {
-                        uiState = uiState.copy(splitScreenMandatory = it)
-                        prefsUtils.saveBooleanSetting("Split_Screen_mandatory", it)
-                    },
+                    onFloatMandatoryChanged = viewModel::setFloatMandatory,
+                    onSplitScreenMandatoryChanged = viewModel::setSplitScreenMandatory,
                     onImportFont = ::startFontImportProcess,
-                    onAllowNativePermissionControllerChanged = {
-                        uiState = uiState.copy(allowNativePermissionController = it)
-                        prefsUtils.saveBooleanSetting("PermissionControllerHook", it)
-                    },
-                    onAllowDisableDolbyChanged = {
-                        uiState = uiState.copy(allowDisableDolby = it)
-                        prefsUtils.saveBooleanSetting("allow_display_dolby", it)
-                    },
-                    onAlwaysDisplaySuggestionsChanged = {
-                        uiState = uiState.copy(alwaysDisplaySuggestions = it)
-                        prefsUtils.saveBooleanSetting("AlwaysDisplaySuggestion", it)
-                    },
-                    onRestartScope = { uiState = uiState.copy(showRestartDialog = true) }
+                    onAllowNativePermissionControllerChanged = viewModel::setAllowNativePermissionController,
+                    onAllowDisableDolbyChanged = viewModel::setAllowDisableDolby,
+                    onAlwaysDisplaySuggestionsChanged = viewModel::setAlwaysDisplaySuggestions,
+                    onRestartScope = viewModel::showRestartDialog
                 )
 
                 if (uiState.showRestartDialog) {
                     RestartScopeDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            uiState = uiState.copy(showRestartDialog = false)
-                            forceStopApp()
+                            viewModel.restartScope(appPackageName.orEmpty())
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartDialog = false) }
+                        onDismiss = viewModel::dismissRestartDialog
                     )
                 }
             }
         }
-    }
-
-    private fun loadSettings() {
-        uiState = uiState.copy(
-            removeBlacklist = prefsUtils.loadBooleanSetting("remove_blacklist", false),
-            splitScreenMandatory = prefsUtils.loadBooleanSetting("Split_Screen_mandatory", false),
-            allowDisableDolby = prefsUtils.loadBooleanSetting("allow_display_dolby", false),
-            allowNativePermissionController = prefsUtils.loadBooleanSetting("PermissionControllerHook", false),
-            alwaysDisplaySuggestions = prefsUtils.loadBooleanSetting("AlwaysDisplaySuggestion", false)
-        )
-
-        Thread {
-            val isModuleEnabled = magiskManager.isModuleEnabled
-            val isForceResize = isForceResizableActivitiesEnabled()
-            runOnUiThread {
-                uiState = uiState.copy(
-                    moduleEnabled = isModuleEnabled,
-                    floatMandatory = isForceResize
-                )
-            }
-        }.start()
     }
 
     private fun initActivityResultLaunchers() {
@@ -318,11 +283,11 @@ class SettingsDetailActivity : ComponentActivity() {
 
     private fun handleModuleSwitch(isChecked: Boolean) {
         if (isChecked && magiskManager.isModuleEnabled) {
-            uiState = uiState.copy(moduleEnabled = true)
+            viewModel.setModuleEnabledFromActivity(true)
             return
         }
 
-        uiState = uiState.copy(moduleEnabled = isChecked)
+        viewModel.setModuleEnabledFromActivity(isChecked)
         loadingDialog = LoadingDialog(this).also {
             it.show(getString(if (isChecked) R.string.installing_module else R.string.removing_module))
         }
@@ -337,14 +302,14 @@ class SettingsDetailActivity : ComponentActivity() {
             runOnUiThread {
                 loadingDialog?.dismiss()
                 if (result == "success") {
-                    uiState = uiState.copy(moduleEnabled = isChecked)
+                    viewModel.setModuleEnabledFromActivity(isChecked)
                     MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.tip_title)
                         .setMessage(if (isChecked) R.string.install_success_message else R.string.remove_success_message)
                         .setNegativeButton(R.string.got_it_button, null)
                         .show()
                 } else {
-                    uiState = uiState.copy(moduleEnabled = !isChecked)
+                    viewModel.setModuleEnabledFromActivity(!isChecked)
                     MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.error_title)
                         .setMessage(
@@ -637,22 +602,6 @@ class SettingsDetailActivity : ComponentActivity() {
         }.start()
     }
 
-    private fun forceStopApp() {
-        val packageName = appPackageName ?: return
-        Thread {
-            val executor = EnhancedShellExecutor.getInstance()
-            executor.executeRootCommand("am force-stop $packageName")
-            executor.executeRootCommand("am force-stop com.android.permissioncontroller")
-            executor.executeRootCommand("am force-stop com.zui.safecenter")
-        }.start()
-    }
-
-    private fun isForceResizableActivitiesEnabled(): Boolean {
-        val result = EnhancedShellExecutor.getInstance()
-            .executeRootCommand("settings get global force_resizable_activities", 2)
-        return result.isSuccess && result.output == "1"
-    }
-
     private fun loadStringSetSetting(key: String, defaultSet: HashSet<String>): HashSet<String> {
         val sp: SharedPreferences = getSharedPreferences("module_settings", Context.MODE_PRIVATE)
         val result = sp.getStringSet(key, null)
@@ -698,17 +647,17 @@ class SettingsDetailActivity : ComponentActivity() {
     }
 }
 
-private data class SettingsDetailUiState(
-    val removeBlacklist: Boolean = false,
-    val moduleEnabled: Boolean = false,
-    val floatMandatory: Boolean = false,
-    val splitScreenMandatory: Boolean = false,
-    val allowDisableDolby: Boolean = false,
-    val allowNativePermissionController: Boolean = false,
-    val alwaysDisplaySuggestions: Boolean = false,
-    val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
-    val showRestartDialog: Boolean = false
-)
+private class SettingsDetailViewModelFactory(
+    private val repository: SettingsDetailRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsDetailViewModel::class.java)) {
+            return SettingsDetailViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
