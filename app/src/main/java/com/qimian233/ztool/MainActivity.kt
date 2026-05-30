@@ -56,9 +56,7 @@ class MainActivity : AppCompatActivity(),
         if (savedInstanceState != null) {
             currentRoute = savedInstanceState.getString(KEY_CURRENT_ROUTE)
                 ?.let(MainRoute::fromName)
-                ?: MainRoute.fromDestinationId(
-                    savedInstanceState.getInt(KEY_CURRENT_DESTINATION, R.id.homeFragment)
-                )
+                ?: MainRoute.Home
             isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false)
         }
 
@@ -92,7 +90,6 @@ class MainActivity : AppCompatActivity(),
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(KEY_CURRENT_ROUTE, currentRoute.name)
-        outState.putInt(KEY_CURRENT_DESTINATION, currentRoute.destinationId)
         outState.putBoolean(KEY_ENVIRONMENT_READY, isEnvironmentReady)
     }
 
@@ -210,28 +207,22 @@ class MainActivity : AppCompatActivity(),
     }
 
     companion object {
-        private const val KEY_CURRENT_DESTINATION = "current_destination"
         private const val KEY_CURRENT_ROUTE = "current_route"
         private const val KEY_ENVIRONMENT_READY = "environment_ready"
     }
 }
 
 private enum class MainRoute(
-    val destinationId: Int,
     val labelRes: Int,
     val iconRes: Int
 ) {
-    Home(R.id.homeFragment, R.string.gotoHomePage, R.drawable.ic_home),
-    Features(R.id.featuresFragment, R.string.gotoFeaturePage, R.drawable.ic_features),
-    Audit(R.id.auditFragment, R.string.gotoLogPage, R.drawable.ic_audit),
-    Settings(R.id.settingsFragment, R.string.gotoSettingsPage, R.drawable.ic_settings);
+    Home(R.string.gotoHomePage, R.drawable.ic_home),
+    Features(R.string.gotoFeaturePage, R.drawable.ic_features),
+    Audit(R.string.gotoLogPage, R.drawable.ic_audit),
+    Settings(R.string.gotoSettingsPage, R.drawable.ic_settings);
 
     companion object {
         val entriesInOrder = listOf(Home, Features, Audit, Settings)
-
-        fun fromDestinationId(destinationId: Int): MainRoute {
-            return entriesInOrder.firstOrNull { it.destinationId == destinationId } ?: Home
-        }
 
         fun fromName(name: String): MainRoute? {
             return entriesInOrder.firstOrNull { it.name == name }

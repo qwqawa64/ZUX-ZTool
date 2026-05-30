@@ -1387,3 +1387,29 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after removing the main-route Fragment host.
 - Remaining warnings: deprecated `LocalLifecycleOwner` import path in Home and Settings routes, and deprecated system bar color setters in `MainActivity`.
+
+### Phase 6 XML Navigation Reference Removal
+
+The obsolete XML Navigation graph has been detached and removed after auditing runtime references.
+
+Implemented:
+
+- Deleted `app/src/main/res/navigation/nav_graph.xml`.
+- Removed the legacy `NavHostFragment` and `app:navGraph` attachment from the retained legacy `activity_main.xml` layout.
+- Removed main-route saved-state fallback through legacy Navigation destination ids in `MainActivity`.
+- `MainRoute` now stores only the Compose route label and icon metadata.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name and launch contract.
+- Compose-owned Home, Features, Audit, and Settings main routes.
+- Environment-ready gating and route restoration by Compose route name.
+- Existing Fragment wrapper classes, including `HomeFragment.isModuleActive()` as the LSPosed self-check Hook target.
+
+Deferred:
+
+- Legacy `activity_main.xml`, `bottom_nav_menu.xml`, Fragment wrappers, and Fragment Navigation dependencies remain for later Phase 6 cleanup slices.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after removing the obsolete XML Navigation references.

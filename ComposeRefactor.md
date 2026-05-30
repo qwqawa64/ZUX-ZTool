@@ -209,7 +209,7 @@ Phase 4 should proceed in small, verifiable slices rather than one full navigati
 
 Phase 4 leftovers intentionally deferred to Phase 6 cleanup:
 
-- `app/src/main/res/navigation/nav_graph.xml`, now no longer used for main in-app navigation dispatch but retained as a compatibility/cleanup-phase artifact.
+- `app/src/main/res/navigation/nav_graph.xml`, removed during Phase 6 on 2026-05-31 after runtime references were audited.
 - Main Fragment wrapper classes: `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment`.
 - Fragment-hosted `ComposeView` wrappers for the main routes.
 - Legacy main route XML layout references under `res/layout/fragment_*.xml`.
@@ -335,14 +335,16 @@ Recommended next order:
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
    - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-2. Audit and remove obsolete XML Navigation references. Next.
-   - Delete or detach `res/navigation/nav_graph.xml` only when no runtime path references it.
-   - Remove legacy Navigation resource ids from `MainRoute` only after saved-state fallback compatibility is no longer needed.
-   - Confirm whether the retained Fragment wrappers and `HomeFragment.isModuleActive()` compatibility target require any XML metadata before deleting resources.
-   - Run `.\gradlew.bat assembleDebug`.
-   - Record implementation notes and verification in `MigrationNotes.md`.
+2. Audit and remove obsolete XML Navigation references. Completed on 2026-05-31.
+   - Runtime references to `res/navigation/nav_graph.xml`, `NavHostFragment`, and legacy main-route destination ids were audited.
+   - `res/navigation/nav_graph.xml` was deleted after confirming no runtime path references it.
+   - `activity_main.xml` was detached from `NavHostFragment` and `app:navGraph`, but retained as a legacy XML cleanup candidate.
+   - `MainRoute` no longer stores legacy Navigation resource ids or saved-state fallback destination ids.
+   - Retained Fragment wrappers and `HomeFragment.isModuleActive()` do not require XML Navigation metadata.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
+   - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-3. Clean up legacy Fragment/XML resources in small slices.
+3. Clean up legacy Fragment/XML resources in small slices. Next.
    - Candidates: `fragment_*.xml`, unused `activity_*.xml`, navigation animation resources, and obsolete Fragment-only helpers.
    - Use `rg` before deletion and preserve any resource still referenced by Activities, dialogs, assets, manifest metadata, or Hook compatibility paths.
    - Run `.\gradlew.bat assembleDebug` after each cleanup slice.
