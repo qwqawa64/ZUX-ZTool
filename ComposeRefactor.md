@@ -1149,6 +1149,34 @@ Bottom navigation, top bars, page transitions, and route state should be impleme
 
 Preserve compatibility for existing external launch contracts while moving the main in-app navigation to `navigation-compose`.
 
+Phase 4 should proceed in small, verifiable slices rather than one full navigation rewrite:
+
+1. Stabilize the main navigation host boundary.
+   - Fix the current bug where configuration changes, such as portrait/landscape rotation, leave only the navigation rail visible while Fragment-hosted Compose content disappears.
+   - Fix the current bug where system light/dark mode changes leave only the navigation rail visible while Fragment-hosted Compose content disappears.
+   - Preserve `MainActivity`, existing Fragment classes, `nav_graph.xml`, destination ids, external launch contracts, and environment-ready gating while this stabilization is underway.
+   - Investigate `LegacyNavHost`, `AndroidView`, `FragmentContainerView`, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and configuration-change/theme-change reattachment behavior.
+
+2. Introduce a Compose-owned main route state.
+   - Keep the current main destinations: Home, Features, Audit, and Settings.
+   - Move selected destination state, navigation rail state, and route dispatch toward Compose-owned state.
+   - Keep existing Fragment screens as route content during the transition if needed.
+
+3. Replace XML Navigation with `navigation-compose` for the main in-app routes.
+   - Move main navigation route definitions into Compose.
+   - Preserve existing entry points and Activity/Fragment class names until a dedicated cleanup phase.
+   - Avoid deleting `nav_graph.xml` or legacy XML resources during the ordinary Phase 4 migration.
+
+4. Convert main Fragment routes to pure Compose screens when their route host is stable.
+   - Reuse the existing ViewModel/repository boundaries for Home, Audit, and Settings.
+   - Keep Hook, service, utility, configuration, shell, Xposed metadata, and asset behavior intact.
+
+5. Verify each Phase 4 slice.
+   - Run `.\gradlew.bat assembleDebug`.
+   - Manually verify Material 3 Expressive and Miuix modes.
+   - Manually verify portrait/landscape changes and system light/dark changes no longer blank the main content.
+   - Record completed work, verification result, and next step in this file.
+
 ### Phase 5. Migrate Settings Pages Through A Shared Settings Model
 
 Create a shared settings item model before migrating more setting pages:
@@ -1213,36 +1241,28 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue Phase 3 by verifying and stabilizing style switching across active Compose surfaces. The Material 3 theme settings model, persisted repository, top-level wiring, user-facing controls, Miuix dependency, and planned component adapter rendering slices are complete.
+Move to Phase 4: stabilize and migrate the main navigation host. Phase 3's theme settings, Miuix dependency, and planned component adapter rendering slices are complete; the remaining blocking bugs are at the mixed Compose/Fragment navigation host boundary.
 
 Recommended next order:
 
-1. Fix disappearing Fragment-hosted Compose content when configuration changes.
+1. Stabilize `MainActivity`'s mixed Compose/Fragment navigation host.
    - Bug: when switching between portrait and landscape, all composable content except the navigation rail disappears.
-   - Status: deferred for now because the likely fix may involve `LegacyNavHost`, `FragmentContainerView`, or navigation host lifecycle behavior.
-   - Scope: preserve the existing `MainActivity` class, XML navigation graph, Fragment routes, destination ids, and environment-ready gating.
-   - Likely investigation targets: `MainActivity.LegacyNavHost`, `FragmentContainerView` identity/recreation, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and recomposition/configuration-change interactions around the AndroidView host.
-
-2. Fix disappearing Fragment-hosted Compose content when system light/dark mode changes.
    - Bug: when Android switches system light/dark mode, all composable content except the navigation rail disappears.
-   - Status: deferred for now because the likely fix may involve `LegacyNavHost`, `FragmentContainerView`, or navigation host lifecycle behavior.
-   - Previous theme-local stability fixes did not resolve this.
-   - Scope: keep follow-system/light/dark theme behavior, Material 3 and Miuix style switching, and Fragment launch contracts intact.
-   - Likely investigation targets: top-level `themeSettings` observation, `ZToolTheme` recomposition, Activity configuration changes, and `LegacyNavHost` reattachment after theme/config updates.
+   - Preserve the existing `MainActivity` class, XML navigation graph, Fragment routes, destination ids, external launch contracts, and environment-ready gating.
+   - Investigate `LegacyNavHost`, `AndroidView`, `FragmentContainerView` identity/recreation, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and recomposition/configuration-change interactions around the host.
+   - Do not delete `nav_graph.xml`, legacy XML layouts, or Fragment classes in this stabilization slice.
 
-3. Normalize main navigation item icon sizing. Completed on 2026-05-30.
-   - Bug: navigation item icons render at different sizes between Material 3 Expressive and Miuix modes.
-   - Scope: keep `ZToolNavigationRailItem` as the shared style boundary and avoid screen-level style branches in `MainActivity`.
-   - Fix: Material `ZToolNavigationRailItem` now explicitly renders the icon at `28.dp`, matching the Miuix navigation item default.
-   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
+2. Introduce Compose-owned main route state after the host is stable.
+   - Keep Home, Features, Audit, and Settings as the active main destinations.
+   - Keep existing Fragment screens as route content during the transition if that reduces risk.
+   - Preserve the current navigation rail behavior and environment-ready gating.
 
-4. Align top title heights across main Fragment pages. Completed on 2026-05-30.
-   - Bug: `HomeFragment` and `AuditFragment` titles are aligned with each other, but `FeaturesFragment` and `SettingsFragment` titles sit at a different vertical height.
-   - Scope: preserve existing Fragment routes and page behavior.
-   - Fix: `FeaturesFragment` and `SettingsFragment` now use `ZToolScaffold` and apply `innerPadding` before `ZToolPageSurface`, matching the inset path already used by `HomeFragment` and `AuditFragment`.
-   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
+3. Replace the main XML Navigation path with `navigation-compose` only after the stabilization slice succeeds.
+   - Move main route definitions into Compose.
+   - Preserve external launch contracts and old entry points.
+   - Leave XML/View cleanup for the dedicated cleanup phase.
 
-5. Verify style switching across active Compose surfaces after the fixes.
-   - Check Material 3 and Miuix rendering for `MainActivity`, Fragment-hosted pages, settings Activities, dialogs, and overlay/dialog Compose hosts.
-   - Verify follow-system/light/dark, Monet, manual color, and AMOLED black behavior.
-   - Run `.\gradlew.bat assembleDebug` and record the result here after each fix slice.
+4. Verify each Phase 4 slice.
+   - Run `.\gradlew.bat assembleDebug`.
+   - Verify Material 3 Expressive and Miuix modes.
+   - Verify portrait/landscape switching and system light/dark switching no longer blank the main content.
