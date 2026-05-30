@@ -153,7 +153,13 @@ fun ZToolSwitchRow(
             MiuixSwitch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
-                enabled = enabled
+                enabled = enabled,
+                colors = top.yukonga.miuix.kmp.basic.SwitchDefaults.switchColors(
+                    disabledCheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
+                    disabledCheckedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.12f),
+                )
             )
         } else {
             Switch(
