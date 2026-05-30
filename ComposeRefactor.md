@@ -756,4 +756,43 @@ Recommended next order:
 
 1. `settingactivity/setting/SettingsDetailActivity.kt`
    - Continue extracting the remaining system settings detail business behavior behind ViewModel/repository boundaries in smaller follow-up slices.
-   - Suggested next slice: move Magisk module install/remove and flashed config set persistence behind repository methods while preserving config flashing, font import, embedding, overlay guide, and OV config behavior.
+   - Preserve config flashing, font import, embedding, Magisk, overlay guide, OV config behavior, existing preference keys, and the Activity launch contract.
+
+## Next Task Set
+
+Use this checklist for the next small commits. Complete one slice at a time and run `.\gradlew.bat assembleDebug` after each implementation slice.
+
+1. `SettingsDetailActivity` Magisk module slice.
+   - Move module enabled loading, install, remove, and restore-original-module coordination behind `SettingsDetailRepository` and `SettingsDetailViewModel`.
+   - Keep `MagiskModuleManager` behavior compatible and preserve existing success/failure dialog text from the Activity.
+   - Keep the Activity responsible only for showing loading/dialog effects and forwarding user actions.
+   - Mark complete after `.\gradlew.bat assembleDebug` succeeds.
+
+2. `SettingsDetailActivity` flashed-config persistence slice.
+   - Move `flashed_configs` SharedPreferences read/write into `SettingsDetailRepository`.
+   - Preserve the existing `module_settings` preference file and string-set key exactly.
+   - Keep config selection UI and delete/flash dialog rendering in Compose inside the Activity for now.
+   - Mark complete after config delete/flash behavior is verified by build.
+
+3. `SettingsDetailActivity` embedding config operation slice.
+   - Wrap `EmbeddingConfigManager.loadAndValidateConfigFiles`, `flashConfigs`, and config delete counting behind repository methods.
+   - Preserve the already-flashed disabled-state behavior and flashed key format: `timestamp_packageName`.
+   - Keep UI result dialogs in the Activity until a later effect model is introduced.
+   - Mark complete after `.\gradlew.bat assembleDebug` succeeds.
+
+4. `SettingsDetailActivity` font import slice.
+   - Move font temp-copy, original filename resolution helper, and `FontInstallerManager.installFont` coordination behind repository methods where possible.
+   - Preserve the existing SAF picker launch contract and font name/description dialog behavior.
+   - Keep Activity ownership of `ActivityResultLauncher` and Compose dialog rendering.
+   - Mark complete after `.\gradlew.bat assembleDebug` succeeds.
+
+5. `SettingsDetailActivity` OV config slice.
+   - Move installed launchable package loading, OV config load, selected-package lookup, update, and save into repository methods.
+   - Preserve `OvCommonConfigManager` modes and selected package behavior.
+   - Keep `AppChooserDialog` launch in Activity, but feed it repository-loaded data through the ViewModel.
+   - Mark complete after `.\gradlew.bat assembleDebug` succeeds.
+
+6. `SettingsDetailActivity` effect cleanup slice.
+   - Introduce a small one-shot effect model for Toasts, loading messages, and result dialogs if the previous slices leave repeated Activity callback code.
+   - Do not change user-visible strings or dialog sequencing unless required for correctness.
+   - After this slice, reassess whether `SettingsDetailActivity.kt` is ready for a larger UI component cleanup or shared settings model work.
