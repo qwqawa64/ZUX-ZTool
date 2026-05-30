@@ -54,6 +54,7 @@ import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.ThemeMode
@@ -227,10 +228,13 @@ private fun SettingsRoute(
     onManualSeedColorEditingFinished: () -> Unit,
     onAbout: () -> Unit
 ) {
-    ZToolPageSurface(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
+    ZToolScaffold { innerPadding ->
+        ZToolPageSurface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentAlignment = Alignment.TopCenter
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -308,6 +312,7 @@ private fun SettingsRoute(
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
     }
 }
 

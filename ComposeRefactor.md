@@ -1219,24 +1219,28 @@ Recommended next order:
 
 1. Fix disappearing Fragment-hosted Compose content when configuration changes.
    - Bug: when switching between portrait and landscape, all composable content except the navigation rail disappears.
+   - Status: deferred for now because the likely fix may involve `LegacyNavHost`, `FragmentContainerView`, or navigation host lifecycle behavior.
    - Scope: preserve the existing `MainActivity` class, XML navigation graph, Fragment routes, destination ids, and environment-ready gating.
    - Likely investigation targets: `MainActivity.LegacyNavHost`, `FragmentContainerView` identity/recreation, retained `NavHostFragment` lookup by `R.id.nav_host_fragment`, and recomposition/configuration-change interactions around the AndroidView host.
 
 2. Fix disappearing Fragment-hosted Compose content when system light/dark mode changes.
    - Bug: when Android switches system light/dark mode, all composable content except the navigation rail disappears.
+   - Status: deferred for now because the likely fix may involve `LegacyNavHost`, `FragmentContainerView`, or navigation host lifecycle behavior.
    - Previous theme-local stability fixes did not resolve this.
    - Scope: keep follow-system/light/dark theme behavior, Material 3 and Miuix style switching, and Fragment launch contracts intact.
    - Likely investigation targets: top-level `themeSettings` observation, `ZToolTheme` recomposition, Activity configuration changes, and `LegacyNavHost` reattachment after theme/config updates.
 
-3. Normalize main navigation item icon sizing.
+3. Normalize main navigation item icon sizing. Completed on 2026-05-30.
    - Bug: navigation item icons render at different sizes between Material 3 Expressive and Miuix modes.
    - Scope: keep `ZToolNavigationRailItem` as the shared style boundary and avoid screen-level style branches in `MainActivity`.
-   - Target: one stable visual icon size across Material 3 Expressive and Miuix modes.
+   - Fix: Material `ZToolNavigationRailItem` now explicitly renders the icon at `28.dp`, matching the Miuix navigation item default.
+   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
 
-4. Align top title heights across main Fragment pages.
+4. Align top title heights across main Fragment pages. Completed on 2026-05-30.
    - Bug: `HomeFragment` and `AuditFragment` titles are aligned with each other, but `FeaturesFragment` and `SettingsFragment` titles sit at a different vertical height.
    - Scope: preserve existing Fragment routes and page behavior.
-   - Target: shared top spacing/title placement for the four main pages, preferably through shared page/scaffold/title components rather than per-screen offsets.
+   - Fix: `FeaturesFragment` and `SettingsFragment` now use `ZToolScaffold` and apply `innerPadding` before `ZToolPageSurface`, matching the inset path already used by `HomeFragment` and `AuditFragment`.
+   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
 
 5. Verify style switching across active Compose surfaces after the fixes.
    - Check Material 3 and Miuix rendering for `MainActivity`, Fragment-hosted pages, settings Activities, dialogs, and overlay/dialog Compose hosts.

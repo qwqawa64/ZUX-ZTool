@@ -55,6 +55,7 @@ import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsActi
 import com.qimian233.ztool.settingactivity.systemui.systemUISettings
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.theme.ZToolTheme
 
 class FeaturesFragment : Fragment() {
@@ -194,35 +195,39 @@ private fun FeaturesRoute(
     items: List<FeatureItem>,
     onFeatureClick: (FeatureItem) -> Unit
 ) {
-    ZToolPageSurface(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Column(
+    ZToolScaffold { innerPadding ->
+        ZToolPageSurface(
             modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth()
-                .widthIn(max = 1280.dp)
-                .padding(horizontal = 32.dp, vertical = 32.dp)
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = stringResource(R.string.featuresFragment_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 320.dp),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 32.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .widthIn(max = 1280.dp)
+                    .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
-                items(items = items, key = { it.packageName }) { item ->
-                    FeatureCard(
-                        item = item,
-                        onClick = { onFeatureClick(item) }
-                    )
+                Text(
+                    text = stringResource(R.string.featuresFragment_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 320.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 32.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(items = items, key = { it.packageName }) { item ->
+                        FeatureCard(
+                            item = item,
+                            onClick = { onFeatureClick(item) }
+                        )
+                    }
                 }
             }
         }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -142,7 +143,8 @@ fun ZToolNavigationRailItem(
         icon = {
             androidx.compose.material3.Icon(
                 imageVector = icon,
-                contentDescription = label
+                contentDescription = label,
+                modifier = Modifier.size(28.dp)
             )
         },
         label = { Text(label) },
