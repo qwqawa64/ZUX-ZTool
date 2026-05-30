@@ -787,6 +787,14 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after wiring `MainActivity` to persisted theme settings.
 
+Follow-up fix:
+
+- Theme hot switching updated the main navigation rail, but Fragment-hosted Compose pages could disappear or fail to repaint because those pages own separate `ComposeView` trees and used default `ZToolTheme { ... }` calls outside the top-level composition.
+- `ThemePreferencesRepository` now exposes a preference observer for app UI theme settings.
+- Default `ZToolTheme { ... }` calls now observe `ThemePreferencesRepository` when explicit settings are not supplied, so Fragment, dialog, and overlay Compose trees can recompose on theme changes.
+- `MainActivity` also observes theme settings and updates system-bar icon appearance when theme mode changes.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the hot-switch observer fix.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic

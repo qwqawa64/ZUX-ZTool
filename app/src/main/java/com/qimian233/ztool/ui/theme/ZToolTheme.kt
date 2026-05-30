@@ -10,11 +10,17 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 
 data class ZToolThemeSpec(
     val style: FrontendStyle,
@@ -79,11 +85,27 @@ fun ZToolTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val effectiveSettings = settings ?: ZToolThemeSettings(
-        frontendStyle = style,
-        themeMode = if (darkTheme) ThemeMode.Dark else ThemeMode.Light,
-        dynamicColorEnabled = dynamicColor
-    )
+    val repository = remember(context) { ThemePreferencesRepository(context.applicationContext) }
+    var observedSettings by remember(settings, style, darkTheme, dynamicColor) {
+        mutableStateOf(
+            settings ?: repository.loadSettings()
+        )
+    }
+
+    DisposableEffect(repository, settings) {
+        if (settings != null) {
+            observedSettings = settings
+            onDispose { }
+        } else {
+            observedSettings = repository.loadSettings()
+            val unregister = repository.observeSettings { updatedSettings ->
+                observedSettings = updatedSettings
+            }
+            onDispose { unregister() }
+        }
+    }
+
+    val effectiveSettings = settings ?: observedSettings
     val effectiveDarkTheme = when (effectiveSettings.themeMode) {
         ThemeMode.FollowSystem -> darkTheme
         ThemeMode.Light -> false

@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity(),
     private var currentDestinationId by mutableIntStateOf(R.id.homeFragment)
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
     private var lastClickTime = 0L
+    private var unregisterThemeSettingsObserver: (() -> Unit)? = null
 
     private val clickInterval = 300L
 
@@ -67,7 +68,14 @@ class MainActivity : AppCompatActivity(),
             isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false)
         }
 
-        themeSettings = ThemePreferencesRepository(applicationContext).loadSettings()
+        val themeRepository = ThemePreferencesRepository(applicationContext)
+        themeSettings = themeRepository.loadSettings()
+        unregisterThemeSettingsObserver = themeRepository.observeSettings { updatedSettings ->
+            runOnUiThread {
+                themeSettings = updatedSettings
+                setupSystemBars(updatedSettings)
+            }
+        }
         setupSystemBars(themeSettings)
         LogServiceManager.setServiceStatusListener(this)
 
@@ -94,6 +102,8 @@ class MainActivity : AppCompatActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterThemeSettingsObserver?.invoke()
+        unregisterThemeSettingsObserver = null
         LogServiceManager.setServiceStatusListener(null)
     }
 

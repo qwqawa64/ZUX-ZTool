@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.theme
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
@@ -59,6 +60,18 @@ class ThemePreferencesRepository(
         prefs.edit().putLong(KEY_MANUAL_SEED_COLOR, color).apply()
     }
 
+    fun observeSettings(onChanged: (ZToolThemeSettings) -> Unit): () -> Unit {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key in THEME_KEYS) {
+                onChanged(loadSettings())
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        return {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
+
     private inline fun <reified T : Enum<T>> android.content.SharedPreferences.getEnum(
         key: String,
         defaultValue: T
@@ -75,5 +88,13 @@ class ThemePreferencesRepository(
         private const val KEY_AMOLED_BLACK_ENABLED = "amoled_black_enabled"
         private const val KEY_MANUAL_COLOR_ENABLED = "manual_color_enabled"
         private const val KEY_MANUAL_SEED_COLOR = "manual_seed_color"
+        private val THEME_KEYS = setOf(
+            KEY_FRONTEND_STYLE,
+            KEY_THEME_MODE,
+            KEY_DYNAMIC_COLOR_ENABLED,
+            KEY_AMOLED_BLACK_ENABLED,
+            KEY_MANUAL_COLOR_ENABLED,
+            KEY_MANUAL_SEED_COLOR
+        )
     }
 }
