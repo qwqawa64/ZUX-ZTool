@@ -1599,3 +1599,26 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after replacing the reusable dialog bridges.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after replacing the remaining `SettingsDetailActivity` dialog builder calls.
+
+### Phase 7 Dependency Closeout And Compose Clean Review
+
+AppCompat and Material Components runtime dependencies were removed.
+
+Implemented:
+
+- Removed `libs.appcompat` and `libs.material` from the app module dependencies and version catalog.
+- Removed `DynamicColors.applyToActivityIfAvailable`; Compose dynamic color remains handled by `ZToolTheme` through `dynamicLightColorScheme` and `dynamicDarkColorScheme`.
+- Replaced Material Components XML theme parents with platform no-action-bar themes.
+- Replaced old Material theme attrs in drawable XML with local `ztoolColor*` attrs.
+
+Clean Compose review:
+
+- No `res/layout`, `res/menu`, or `res/navigation` resources remain.
+- No direct AppCompat, Material Components, Fragment, Fragment Navigation, RecyclerView, ConstraintLayout, or SwipeRefreshLayout source or Gradle dependency references remain.
+- Remaining XML resources are drawables, mipmap icons, values, and backup/data-extraction XML.
+- Remaining `ComposeView` usage is limited to platform dialog hosting and the WindowManager overlay.
+- Remaining `AndroidView` usage is limited to platform interop where Compose does not own the underlying renderer, such as app icons and media/overlay previews.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after removing AppCompat and Material Components dependencies.

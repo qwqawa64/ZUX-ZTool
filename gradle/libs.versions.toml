@@ -5,8 +5,6 @@ composeBom = "2025.10.00"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
-appcompat = "1.7.1"
-material = "1.13.0"
 activity = "1.9.3"
 lifecycle = "2.9.4"
 savedstate = "1.3.3"
@@ -29,8 +27,6 @@ androidx-savedstate = { group = "androidx.savedstate", name = "savedstate-androi
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 miuix-android = { group = "top.yukonga.miuix.kmp", name = "miuix-android", version.ref = "miuix" }
 
 [plugins]

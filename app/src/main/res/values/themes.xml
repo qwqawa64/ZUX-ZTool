@@ -1,9 +1,17 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.ZTool" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<resources>
+    <attr name="ztoolColorPrimary" format="color" />
+    <attr name="ztoolColorOnPrimary" format="color" />
+    <attr name="ztoolColorAccent" format="color" />
+    <attr name="ztoolColorSurface" format="color" />
+    <attr name="ztoolColorOutline" format="color" />
+
+    <style name="Base.Theme.ZTool" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="ztoolColorPrimary">#1D5FA8</item>
+        <item name="ztoolColorOnPrimary">#FFFFFF</item>
+        <item name="ztoolColorAccent">#66587A</item>
+        <item name="ztoolColorSurface">#FAF8FF</item>
+        <item name="ztoolColorOutline">#73777F</item>
     </style>
 
-    <style name="Theme.ZTool" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="Theme.ZTool" parent="Base.Theme.ZTool" />
 </resources>
