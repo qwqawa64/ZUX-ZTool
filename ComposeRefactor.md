@@ -521,6 +521,33 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `GameToolSettngs` ViewModel/repository extraction.
 
+### LauncherSettings ViewModel Boundary
+
+`settingactivity/launcher/LauncherSettingsActivity.kt` now delegates launcher preference state, force-stop mode mapping, whitelist persistence, installed-app package loading, grid value persistence, and package restart coordination to:
+
+- `viewmodel/LauncherSettingsViewModel.kt`.
+- `data/launcher/LauncherSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `LauncherSettingsActivity` class name, package, and Activity launch contract.
+- Existing preference keys for force-stop disabling, force-stop whitelist enablement, force-stop whitelist packages, dock expansion, custom grid enablement, custom launcher row, and custom launcher column.
+- Existing whitelist string format using comma-separated package names with a trailing comma.
+- Existing user-installed app filtering behavior, including updated system apps.
+- Existing grid value bounds from 3 through 10.
+- Existing restart confirmation dialog and `su -c killall <package>` restart command behavior.
+- Existing empty-package restart behavior with no Toast, plus success/failure Toast behavior when a package is present.
+
+Implementation note:
+
+- `LauncherSettingsUiState` and `ForceStopMode` now live with `LauncherSettingsViewModel`.
+- The Activity now hosts Compose, launches `AppChooserDialog`, shows Toast effects, and forwards user actions to the ViewModel.
+- `LauncherSettingsRepository` wraps `ModulePreferencesUtils`, package-manager app filtering, whitelist serialization, grid persistence, and package force-stop execution for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `LauncherSettingsActivity` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -673,12 +700,9 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/launcher/LauncherSettingsActivity.kt`
-   - Extract launcher preference state, dock/grid configuration, app chooser coordination, and restart command behavior into a ViewModel/repository boundary.
-   - Preserve existing preference keys, force-stop behavior, and configured app-list serialization.
-2. `settingactivity/ota/OtaSettings.kt`
+1. `settingactivity/ota/OtaSettings.kt`
    - Extract OTA preference state, OTA info parsing, firmware query, and restart command coordination into a ViewModel/repository boundary.
    - Preserve existing OTA preference keys, shell behavior, clipboard behavior, and restart-scope behavior.
-3. `settingactivity/setting/SettingsDetailActivity.kt`
+2. `settingactivity/setting/SettingsDetailActivity.kt`
    - Extract the remaining system settings detail business state behind ViewModel/repository boundaries in smaller follow-up slices.
    - Preserve config flashing, font import, embedding, Magisk, overlay guide, and OV config behavior.

@@ -1,9 +1,6 @@
 package com.qimian233.ztool.settingactivity.launcher
 
-import android.content.Context
-import android.content.pm.ApplicationInfo
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,27 +39,30 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.data.launcher.LauncherRestartResult
+import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
+import com.qimian233.ztool.viewmodel.ForceStopMode
+import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
+import com.qimian233.ztool.viewmodel.LauncherSettingsViewModel
 
 class LauncherSettingsActivity : ComponentActivity() {
 
     private var appPackageName: String? = null
-    private lateinit var prefsUtils: ModulePreferencesUtils
-
-    private var uiState by mutableStateOf(LauncherSettingsUiState())
+    private lateinit var viewModel: LauncherSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,106 +70,57 @@ class LauncherSettingsActivity : ComponentActivity() {
 
         val appName = intent.getStringExtra("app_name").orEmpty()
         appPackageName = intent.getStringExtra("app_package")
-        prefsUtils = ModulePreferencesUtils(this)
-        loadSettings()
+        val repository = LauncherSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            LauncherSettingsViewModelFactory(repository)
+        )[LauncherSettingsViewModel::class.java]
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 LauncherSettingsScreen(
                     title = appName + stringResource(R.string.launcher_settings_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
-                    onForceStopModeChanged = ::handleForceStopModeChanged,
+                    onRestart = viewModel::showRestartConfirmDialog,
+                    onForceStopModeChanged = viewModel::setForceStopMode,
                     onSelectForceStopWhitelist = ::selectForceStopWhitelist,
-                    onMoreBigDockChanged = {
-                        uiState = uiState.copy(moreBigDock = it)
-                        saveSettings("zui_launcher_hotseat", it)
-                    },
-                    onCustomGridSizeChanged = {
-                        uiState = uiState.copy(customGridSize = it)
-                        saveSettings("CustomGridSize", it)
-                    },
-                    onCustomGridRowChanged = ::handleGridRowChanged,
-                    onCustomGridColumnChanged = ::handleGridColumnChanged
+                    onMoreBigDockChanged = viewModel::setMoreBigDock,
+                    onCustomGridSizeChanged = viewModel::setCustomGridSize,
+                    onCustomGridRowChanged = viewModel::setCustomGridRow,
+                    onCustomGridColumnChanged = viewModel::setCustomGridColumn
                 )
 
                 if (uiState.showRestartConfirmDialog) {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            uiState = uiState.copy(showRestartConfirmDialog = false)
-                            forceStopApp()
+                            viewModel.forceStopPackage(
+                                packageName = appPackageName.orEmpty(),
+                                onResult = ::showRestartResult
+                            )
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
+                        onDismiss = viewModel::dismissRestartConfirmDialog
                     )
                 }
             }
         }
     }
 
-    private fun loadSettings() {
-        val forceStopWhitelist = loadForceStopWhitelist()
-        val disableForceStop = prefsUtils.loadBooleanSetting("disable_force_stop", false)
-        val whitelistEnabled = prefsUtils.loadBooleanSetting("ForceStopWhiteListEnable", false)
-        val forceStopMode = when {
-            disableForceStop && whitelistEnabled -> ForceStopMode.Whitelist
-            disableForceStop -> ForceStopMode.AllApps
-            else -> ForceStopMode.Default
-        }
-
-        uiState = uiState.copy(
-            forceStopMode = forceStopMode,
-            forceStopWhitelist = forceStopWhitelist,
-            moreBigDock = prefsUtils.loadBooleanSetting("zui_launcher_hotseat", false),
-            customGridSize = prefsUtils.loadBooleanSetting("CustomGridSize", false),
-            customGridRow = prefsUtils.loadIntegerSetting("CustomLauncherRow", 4).coerceIn(GRID_MIN, GRID_MAX),
-            customGridColumn = prefsUtils.loadIntegerSetting("CustomLauncherColumn", 6).coerceIn(GRID_MIN, GRID_MAX)
-        )
-    }
-
-    private fun loadForceStopWhitelist(): List<String> {
-        return prefsUtils.loadStringSetting("ForceStopWhiteList", "")
-            .split(",")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-    }
-
-    private fun handleForceStopModeChanged(mode: ForceStopMode) {
-        uiState = uiState.copy(forceStopMode = mode)
-        when (mode) {
-            ForceStopMode.Default -> {
-                saveSettings("disable_force_stop", false)
-                saveSettings("ForceStopWhiteListEnable", false)
-            }
-            ForceStopMode.AllApps -> {
-                saveSettings("disable_force_stop", true)
-                saveSettings("ForceStopWhiteListEnable", false)
-            }
-            ForceStopMode.Whitelist -> {
-                saveSettings("disable_force_stop", true)
-                saveSettings("ForceStopWhiteListEnable", true)
-            }
-        }
-    }
-
     private fun selectForceStopWhitelist() {
+        val uiState = viewModel.uiState.value
         AppChooserDialog.show(
             this,
-            getUserInstalledPackageNames(this),
+            viewModel.loadUserInstalledPackageNames(),
             uiState.forceStopWhitelist,
             getString(R.string.force_stop_title),
             object : AppChooserDialog.AppSelectionCallback {
                 override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
                     val selectedPackageNames = selectedApps.map { it.packageName }
-                    selectedPackageNames.forEach {
-                        Log.d(TAG, "Selected protected app package: $it")
-                    }
-                    uiState = uiState.copy(forceStopWhitelist = selectedPackageNames)
-                    prefsUtils.saveStringSetting(
-                        "ForceStopWhiteList",
-                        selectedPackageNames.joinToString(separator = ",", postfix = ",")
-                    )
+                    viewModel.setForceStopWhitelist(selectedPackageNames)
                 }
 
                 override fun onCancel() = Unit
@@ -177,77 +128,31 @@ class LauncherSettingsActivity : ComponentActivity() {
         )
     }
 
-    private fun handleGridRowChanged(value: Int) {
-        uiState = uiState.copy(customGridRow = value.coerceIn(GRID_MIN, GRID_MAX))
-        saveGridValues()
-    }
-
-    private fun handleGridColumnChanged(value: Int) {
-        uiState = uiState.copy(customGridColumn = value.coerceIn(GRID_MIN, GRID_MAX))
-        saveGridValues()
-    }
-
-    private fun saveGridValues() {
-        prefsUtils.saveIntegerSetting("CustomLauncherRow", uiState.customGridRow)
-        prefsUtils.saveIntegerSetting("CustomLauncherColumn", uiState.customGridColumn)
-    }
-
-    private fun forceStopApp() {
-        val packageName = appPackageName
-        if (packageName.isNullOrEmpty()) {
-            return
-        }
-
-        try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            process.waitFor()
-            Toast.makeText(this, R.string.force_stop_success, Toast.LENGTH_SHORT).show()
-        } catch (_: Exception) {
-            Toast.makeText(this, R.string.force_stop_fail, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun saveSettings(moduleName: String, newValue: Boolean) {
-        prefsUtils.saveBooleanSetting(moduleName, newValue)
-    }
-
-    companion object {
-        private const val TAG = "LauncherSettings"
-        private const val GRID_MIN = 3
-        private const val GRID_MAX = 10
-
-        fun getUserInstalledPackageNames(context: Context): List<String> {
-            val packageManager = context.packageManager
-            return packageManager.getInstalledPackages(0)
-                .filter { packageInfo ->
-                    val appInfo = packageInfo.applicationInfo ?: return@filter false
-                    val isSystemApp = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
-                    val isUpdatedSystemApp =
-                        appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0
-                    !isSystemApp || isUpdatedSystemApp
+    private fun showRestartResult(result: LauncherRestartResult) {
+        runOnUiThread {
+            when (result) {
+                LauncherRestartResult.EmptyPackageName -> Unit
+                is LauncherRestartResult.Failure -> {
+                    Toast.makeText(this, R.string.force_stop_fail, Toast.LENGTH_SHORT).show()
                 }
-                .map { it.packageName }
+                LauncherRestartResult.Success -> {
+                    Toast.makeText(this, R.string.force_stop_success, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }
 
-private enum class ForceStopMode {
-    Default,
-    AllApps,
-    Whitelist
-}
-
-private data class LauncherSettingsUiState(
-    val forceStopMode: ForceStopMode = ForceStopMode.Default,
-    val forceStopWhitelist: List<String> = emptyList(),
-    val moreBigDock: Boolean = false,
-    val customGridSize: Boolean = false,
-    val customGridRow: Int = 4,
-    val customGridColumn: Int = 6,
-    val showRestartConfirmDialog: Boolean = false
-) {
-    val forceStopWhitelistCount: Int
-        get() = forceStopWhitelist.size
+private class LauncherSettingsViewModelFactory(
+    private val repository: LauncherSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LauncherSettingsViewModel::class.java)) {
+            return LauncherSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

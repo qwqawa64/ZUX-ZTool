@@ -1,0 +1,126 @@
+package com.qimian233.ztool.data.launcher
+
+import android.content.Context
+import android.content.pm.ApplicationInfo
+import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.viewmodel.ForceStopMode
+import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
+
+class LauncherSettingsRepository(
+    private val context: Context
+) {
+    private val prefsUtils = ModulePreferencesUtils(context)
+
+    fun loadState(): LauncherSettingsUiState {
+        val disableForceStop = prefsUtils.loadBooleanSetting(KEY_DISABLE_FORCE_STOP, false)
+        val whitelistEnabled = prefsUtils.loadBooleanSetting(KEY_FORCE_STOP_WHITE_LIST_ENABLE, false)
+        val forceStopMode = when {
+            disableForceStop && whitelistEnabled -> ForceStopMode.Whitelist
+            disableForceStop -> ForceStopMode.AllApps
+            else -> ForceStopMode.Default
+        }
+
+        return LauncherSettingsUiState(
+            forceStopMode = forceStopMode,
+            forceStopWhitelist = loadForceStopWhitelist(),
+            moreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false),
+            customGridSize = prefsUtils.loadBooleanSetting(KEY_CUSTOM_GRID_SIZE, false),
+            customGridRow = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LAUNCHER_ROW, DEFAULT_ROW)
+                .coerceIn(GRID_MIN, GRID_MAX),
+            customGridColumn = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LAUNCHER_COLUMN, DEFAULT_COLUMN)
+                .coerceIn(GRID_MIN, GRID_MAX)
+        )
+    }
+
+    fun saveForceStopMode(mode: ForceStopMode) {
+        when (mode) {
+            ForceStopMode.Default -> {
+                prefsUtils.saveBooleanSetting(KEY_DISABLE_FORCE_STOP, false)
+                prefsUtils.saveBooleanSetting(KEY_FORCE_STOP_WHITE_LIST_ENABLE, false)
+            }
+            ForceStopMode.AllApps -> {
+                prefsUtils.saveBooleanSetting(KEY_DISABLE_FORCE_STOP, true)
+                prefsUtils.saveBooleanSetting(KEY_FORCE_STOP_WHITE_LIST_ENABLE, false)
+            }
+            ForceStopMode.Whitelist -> {
+                prefsUtils.saveBooleanSetting(KEY_DISABLE_FORCE_STOP, true)
+                prefsUtils.saveBooleanSetting(KEY_FORCE_STOP_WHITE_LIST_ENABLE, true)
+            }
+        }
+    }
+
+    fun saveForceStopWhitelist(packageNames: List<String>) {
+        prefsUtils.saveStringSetting(
+            KEY_FORCE_STOP_WHITE_LIST,
+            packageNames.joinToString(separator = ",", postfix = ",")
+        )
+    }
+
+    fun saveMoreBigDock(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, enabled)
+    }
+
+    fun saveCustomGridSize(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOM_GRID_SIZE, enabled)
+    }
+
+    fun saveGridValues(row: Int, column: Int) {
+        prefsUtils.saveIntegerSetting(KEY_CUSTOM_LAUNCHER_ROW, row.coerceIn(GRID_MIN, GRID_MAX))
+        prefsUtils.saveIntegerSetting(KEY_CUSTOM_LAUNCHER_COLUMN, column.coerceIn(GRID_MIN, GRID_MAX))
+    }
+
+    fun loadUserInstalledPackageNames(): List<String> {
+        val packageManager = context.packageManager
+        return packageManager.getInstalledPackages(0)
+            .filter { packageInfo ->
+                val appInfo = packageInfo.applicationInfo ?: return@filter false
+                val isSystemApp = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+                val isUpdatedSystemApp =
+                    appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0
+                !isSystemApp || isUpdatedSystemApp
+            }
+            .map { it.packageName }
+    }
+
+    fun forceStopPackage(packageName: String): LauncherRestartResult {
+        if (packageName.isEmpty()) {
+            return LauncherRestartResult.EmptyPackageName
+        }
+
+        return try {
+            val process = Runtime.getRuntime().exec("su -c killall $packageName")
+            process.waitFor()
+            LauncherRestartResult.Success
+        } catch (e: Exception) {
+            LauncherRestartResult.Failure(e.message.orEmpty())
+        }
+    }
+
+    private fun loadForceStopWhitelist(): List<String> {
+        return prefsUtils.loadStringSetting(KEY_FORCE_STOP_WHITE_LIST, "")
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+    }
+
+    companion object {
+        const val GRID_MIN = 3
+        const val GRID_MAX = 10
+        private const val DEFAULT_ROW = 4
+        private const val DEFAULT_COLUMN = 6
+
+        private const val KEY_DISABLE_FORCE_STOP = "disable_force_stop"
+        private const val KEY_FORCE_STOP_WHITE_LIST_ENABLE = "ForceStopWhiteListEnable"
+        private const val KEY_FORCE_STOP_WHITE_LIST = "ForceStopWhiteList"
+        private const val KEY_ZUI_LAUNCHER_HOTSEAT = "zui_launcher_hotseat"
+        private const val KEY_CUSTOM_GRID_SIZE = "CustomGridSize"
+        private const val KEY_CUSTOM_LAUNCHER_ROW = "CustomLauncherRow"
+        private const val KEY_CUSTOM_LAUNCHER_COLUMN = "CustomLauncherColumn"
+    }
+}
+
+sealed interface LauncherRestartResult {
+    data object Success : LauncherRestartResult
+    data object EmptyPackageName : LauncherRestartResult
+    data class Failure(val error: String) : LauncherRestartResult
+}
