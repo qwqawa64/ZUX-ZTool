@@ -1037,3 +1037,20 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after replacing the main route graph with Compose Navigation.
 - Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.
+
+### Phase 4 Style Verification Fixes
+
+This slice fixes issues found while verifying Material 3 Expressive and Miuix behavior after the Phase 4 navigation work.
+
+Fixed:
+
+- Disabled Material 3 switches now use explicit disabled colors derived from the current `MaterialTheme.colorScheme`.
+- This keeps the disabled dynamic-color switch visually tied to the active manual seed color instead of falling back to default Material colors when manual color disables it.
+- Main navigation rail items are vertically centered in the rail for both Material 3 Expressive and Miuix modes.
+- Main navigation item width and height are constrained consistently across Material 3 Expressive and Miuix modes to reduce spacing differences.
+- The previous fixed top spacer in `MainActivity`'s navigation rail content was removed so all nav items can be centered as a group.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the style verification fixes.
+- Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.

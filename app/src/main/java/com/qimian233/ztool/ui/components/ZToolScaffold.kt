@@ -1,8 +1,12 @@
 package com.qimian233.ztool.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
@@ -111,9 +115,14 @@ fun ZToolNavigationRail(
     NavigationRail(
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier,
-        content = content
-    )
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.fillMaxHeight(),
+            verticalArrangement = Arrangement.Center,
+            content = content
+        )
+    }
 }
 
 @Composable
@@ -131,7 +140,9 @@ fun ZToolNavigationRailItem(
             onClick = onClick,
             icon = icon,
             label = label,
-            modifier = modifier.then(Modifier.width(80.dp)),
+            modifier = modifier
+                .width(80.dp)
+                .height(72.dp),
             enabled = enabled
         )
         return
@@ -157,5 +168,7 @@ fun ZToolNavigationRailItem(
             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         modifier = modifier
+            .width(80.dp)
+            .height(72.dp)
     )
 }

@@ -160,6 +160,15 @@ fun ZToolSwitchRow(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 enabled = enabled,
+                colors = SwitchDefaults.colors(
+                    disabledCheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
+                    disabledCheckedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    disabledCheckedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f),
+                    disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.12f),
+                    disabledUncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                    disabledUncheckedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                ),
                 thumbContent = if (checked) {
                     {
                         Icon(
