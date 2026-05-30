@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,11 +41,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.launcher.LauncherRestartResult
 import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
@@ -199,40 +199,71 @@ private fun LauncherSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.disable_force_stop_title)) {
+                ZToolSettingsList(
+                    sections = launcherSettingsSections(
+                        state = state,
+                        onForceStopModeChanged = onForceStopModeChanged,
+                        onSelectForceStopWhitelist = onSelectForceStopWhitelist,
+                        onMoreBigDockChanged = onMoreBigDockChanged,
+                        onCustomGridSizeChanged = onCustomGridSizeChanged,
+                        onCustomGridRowChanged = onCustomGridRowChanged,
+                        onCustomGridColumnChanged = onCustomGridColumnChanged
+                    ),
+                    bottomPadding = 96.dp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun launcherSettingsSections(
+    state: LauncherSettingsUiState,
+    onForceStopModeChanged: (ForceStopMode) -> Unit,
+    onSelectForceStopWhitelist: () -> Unit,
+    onMoreBigDockChanged: (Boolean) -> Unit,
+    onCustomGridSizeChanged: (Boolean) -> Unit,
+    onCustomGridRowChanged: (Int) -> Unit,
+    onCustomGridColumnChanged: (Int) -> Unit
+): List<SettingSection> {
+    val forceStopItems = buildList {
+        add(
+            SettingItem.Custom(
+                content = {
                     ForceStopModeRow(
                         selectedMode = state.forceStopMode,
                         onModeChanged = onForceStopModeChanged
                     )
-                    if (state.forceStopMode == ForceStopMode.Whitelist) {
+                }
+            )
+        )
+        if (state.forceStopMode == ForceStopMode.Whitelist) {
+            add(
+                SettingItem.Custom(
+                    content = {
                         WhitelistRow(
                             whitelistCount = state.forceStopWhitelistCount,
                             onClick = onSelectForceStopWhitelist
                         )
                     }
-                }
+                )
+            )
+        }
+    }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.dock_Title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.moreBig_dockTitle),
-                        summary = stringResource(R.string.moreBig_dockSummary),
-                        checked = state.moreBigDock,
-                        onCheckedChange = onMoreBigDockChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.customLauncherLayoutTitle)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.customGridTitle),
-                        summary = stringResource(R.string.customGridSummary),
-                        checked = state.customGridSize,
-                        onCheckedChange = onCustomGridSizeChanged
-                    )
-                    if (state.customGridSize) {
+    val launcherLayoutItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.customGridTitle),
+                summary = stringResource(R.string.customGridSummary),
+                checked = state.customGridSize,
+                onCheckedChange = onCustomGridSizeChanged
+            )
+        )
+        if (state.customGridSize) {
+            add(
+                SettingItem.Custom(
+                    content = {
                         Text(
                             text = stringResource(R.string.customGridInputZoneTitle),
                             style = MaterialTheme.typography.titleMedium,
@@ -246,12 +277,32 @@ private fun LauncherSettingsScreen(
                             onColumnChanged = onCustomGridColumnChanged
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(96.dp))
-            }
+                )
+            )
         }
     }
+
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.disable_force_stop_title),
+            items = forceStopItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.dock_Title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.moreBig_dockTitle),
+                    summary = stringResource(R.string.moreBig_dockSummary),
+                    checked = state.moreBigDock,
+                    onCheckedChange = onMoreBigDockChanged
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.customLauncherLayoutTitle),
+            items = launcherLayoutItems
+        )
+    )
 }
 
 @Composable
@@ -387,28 +438,6 @@ private fun GridSliderRow(
                 .width(40.dp)
                 .padding(start = 12.dp)
         )
-    }
-}
-
-@Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
     }
 }
 

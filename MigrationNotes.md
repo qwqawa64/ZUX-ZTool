@@ -1176,3 +1176,24 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Game Tool settings model migration.
+
+### Phase 5 Launcher Settings Model Migration
+
+`settingactivity/launcher/LauncherSettingsActivity.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `LauncherSettingsActivity` class name, package, and launch contract.
+- Existing `LauncherSettingsViewModel` and `LauncherSettingsRepository` boundaries.
+- Existing preference keys for force-stop mode, force-stop whitelist, big dock, custom grid enablement, and launcher row/column values.
+- Existing AppChooser force-stop whitelist flow, user-app loading, restart confirmation dialog, package force-stop behavior, and restart result Toast behavior.
+
+Model suitability review:
+
+- The shared model remains suitable for pages that mix ordinary switches with page-specific controls.
+- Force-stop mode selection, conditional whitelist entry, and conditional grid sliders remain page-local composables hosted by `SettingItem.Custom`.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Launcher settings model migration.
