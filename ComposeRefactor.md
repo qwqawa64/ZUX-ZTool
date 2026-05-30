@@ -334,16 +334,21 @@ Recommended next order:
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.
 
-4. Review the pilots before expanding. Next.
+4. Review the pilots before expanding. Completed on 2026-05-30.
    - Confirm Material 3 Expressive and Miuix rendering remain consistent.
    - Confirm the model reduces duplication without hiding page-specific business behavior.
    - Only then expand to framework, game tool, launcher, OTA, and System UI detail pages.
 
-5. Keep Phase 4 leftovers for Phase 6 cleanup.
+5. Expand to medium-complexity pages. Next.
+   - Start with `systemframework/FrameworkSettingsActivity.kt`, then continue through game tool, launcher, and OTA if the same model remains readable.
+   - Keep shell commands, root behavior, app chooser behavior, and existing saved values intact.
+   - Run `.\gradlew.bat assembleDebug` after each migrated page.
+
+6. Keep Phase 4 leftovers for Phase 6 cleanup.
    - Do not delete `nav_graph.xml`, main Fragment wrappers, legacy Fragment XML layouts, navigation animation resources, or Fragment Navigation dependencies during Phase 5.
    - Cleanup starts only when active UI routes no longer depend on the old View/Fragment layer.
 
-6. Verification policy.
+7. Verification policy.
    - Run `.\gradlew.bat assembleDebug`.
    - Verify Material 3 Expressive and Miuix modes for each migrated page.
    - Verify preference persistence, restart confirmations, shell/root behavior, and Hook compatibility keys for each migrated page.

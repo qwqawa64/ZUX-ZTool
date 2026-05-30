@@ -50,12 +50,12 @@ sealed interface SettingItem {
         override val key: String? = null
     ) : SettingItem
 
-    data class Dropdown(
+    data class Dropdown<T>(
         val label: String,
         val value: String,
-        val options: List<Any?>,
-        val optionLabel: (Any?) -> String,
-        val onOptionSelected: (Any?) -> Unit,
+        val options: List<T>,
+        val optionLabel: (T) -> String,
+        val onOptionSelected: (T) -> Unit,
         override val enabled: Boolean = true,
         override val key: String? = null
     ) : SettingItem
@@ -191,18 +191,8 @@ fun ZToolSettingItem(
             )
         }
 
-        is SettingItem.Dropdown -> {
-            ZToolDropdownField(
-                label = item.label,
-                value = item.value,
-                options = item.options,
-                optionLabel = item.optionLabel,
-                onOptionSelected = item.onOptionSelected,
-                enabled = item.enabled,
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
-            )
+        is SettingItem.Dropdown<*> -> {
+            ZToolDropdownSettingItem(item = item, modifier = modifier)
         }
 
         is SettingItem.Slider -> {
@@ -267,6 +257,24 @@ fun ZToolSettingItem(
             item.content()
         }
     }
+}
+
+@Composable
+private fun <T> ZToolDropdownSettingItem(
+    item: SettingItem.Dropdown<T>,
+    modifier: Modifier = Modifier
+) {
+    ZToolDropdownField(
+        label = item.label,
+        value = item.value,
+        options = item.options,
+        optionLabel = item.optionLabel,
+        onOptionSelected = item.onOptionSelected,
+        enabled = item.enabled,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp)
+    )
 }
 
 @Composable
