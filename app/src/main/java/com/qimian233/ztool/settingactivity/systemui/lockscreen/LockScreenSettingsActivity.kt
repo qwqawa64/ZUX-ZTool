@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,10 +40,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
@@ -169,14 +170,48 @@ private fun LockScreenSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.YiYanTile)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.YiYanSwitchTitle),
-                        summary = stringResource(R.string.YiYanSummary),
-                        checked = state.yiYanEnabled,
-                        onCheckedChange = onYiYanChanged
-                    )
-                    if (state.yiYanEnabled) {
+                ZToolSettingsList(
+                    sections = lockScreenSettingsSections(
+                        state = state,
+                        onYiYanChanged = onYiYanChanged,
+                        onApiAddressChanged = onApiAddressChanged,
+                        onRegexChanged = onRegexChanged,
+                        onTestApi = onTestApi,
+                        onChargeWattsOptionChanged = onChargeWattsOptionChanged,
+                        onRealWattsIntervalOptionChanged = onRealWattsIntervalOptionChanged,
+                        onRealWattsRefreshIntervalChanged = onRealWattsRefreshIntervalChanged
+                    ),
+                    bottomPadding = 96.dp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun lockScreenSettingsSections(
+    state: LockScreenSettingsUiState,
+    onYiYanChanged: (Boolean) -> Unit,
+    onApiAddressChanged: (String) -> Unit,
+    onRegexChanged: (String) -> Unit,
+    onTestApi: () -> Unit,
+    onChargeWattsOptionChanged: (String) -> Unit,
+    onRealWattsIntervalOptionChanged: (String) -> Unit,
+    onRealWattsRefreshIntervalChanged: (String) -> Unit
+): List<SettingSection> {
+    val yiYanItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.YiYanSwitchTitle),
+                summary = stringResource(R.string.YiYanSummary),
+                checked = state.yiYanEnabled,
+                onCheckedChange = onYiYanChanged
+            )
+        )
+        if (state.yiYanEnabled) {
+            add(
+                SettingItem.Custom(
+                    content = {
                         YiYanConfigFields(
                             apiAddress = state.apiAddress,
                             regex = state.regex,
@@ -186,50 +221,76 @@ private fun LockScreenSettingsScreen(
                             onTestApi = onTestApi
                         )
                     }
-                }
+                )
+            )
+        }
+    }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.ChargeWattsTitle)) {
-                    DropdownSettingRow(
-                        title = stringResource(R.string.ChargeWattsEnableTitle),
-                        summary = stringResource(R.string.ChargeWattsSummary),
-                        options = stringArrayResource(R.array.watt_options).toList(),
-                        selectedOption = state.chargeWattsOption,
-                        onOptionSelected = onChargeWattsOptionChanged
-                    )
-
-                    if (state.chargeWattsOption == stringResource(R.string.watt_option_actual)) {
-                        DropdownSettingRow(
-                            title = stringResource(R.string.RealWattsRefreshInterval),
-                            summary = stringResource(R.string.RealWattsRefreshIntervalSummary),
-                            options = stringArrayResource(R.array.real_watt_interval).toList(),
-                            selectedOption = state.realWattsIntervalOption,
-                            onOptionSelected = onRealWattsIntervalOptionChanged
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.YiYanTile),
+            items = yiYanItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.ChargeWattsTitle),
+            items = listOf(
+                SettingItem.Custom(
+                    content = {
+                        ChargeWattsSettingsContent(
+                            state = state,
+                            onChargeWattsOptionChanged = onChargeWattsOptionChanged,
+                            onRealWattsIntervalOptionChanged = onRealWattsIntervalOptionChanged,
+                            onRealWattsRefreshIntervalChanged = onRealWattsRefreshIntervalChanged
                         )
-
-                        if (state.realWattsIntervalOption == stringResource(R.string.real_watt_custom_refresh_interval_enabled)) {
-                            OutlinedTextField(
-                                value = state.realWattsRefreshInterval,
-                                onValueChange = onRealWattsRefreshIntervalChanged,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                                label = {
-                                    Text(
-                                        stringResource(
-                                            R.string.RealWattsRefreshIntervalInputTip,
-                                            state.realWattsRefreshInterval.toFloatOrNull() ?: 3.0f
-                                        )
-                                    )
-                                },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                            )
-                        }
                     }
-                }
-            }
+                )
+            )
+        )
+    )
+}
+
+@Composable
+private fun ChargeWattsSettingsContent(
+    state: LockScreenSettingsUiState,
+    onChargeWattsOptionChanged: (String) -> Unit,
+    onRealWattsIntervalOptionChanged: (String) -> Unit,
+    onRealWattsRefreshIntervalChanged: (String) -> Unit
+) {
+    DropdownSettingRow(
+        title = stringResource(R.string.ChargeWattsEnableTitle),
+        summary = stringResource(R.string.ChargeWattsSummary),
+        options = stringArrayResource(R.array.watt_options).toList(),
+        selectedOption = state.chargeWattsOption,
+        onOptionSelected = onChargeWattsOptionChanged
+    )
+
+    if (state.chargeWattsOption == stringResource(R.string.watt_option_actual)) {
+        DropdownSettingRow(
+            title = stringResource(R.string.RealWattsRefreshInterval),
+            summary = stringResource(R.string.RealWattsRefreshIntervalSummary),
+            options = stringArrayResource(R.array.real_watt_interval).toList(),
+            selectedOption = state.realWattsIntervalOption,
+            onOptionSelected = onRealWattsIntervalOptionChanged
+        )
+
+        if (state.realWattsIntervalOption == stringResource(R.string.real_watt_custom_refresh_interval_enabled)) {
+            OutlinedTextField(
+                value = state.realWattsRefreshInterval,
+                onValueChange = onRealWattsRefreshIntervalChanged,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                label = {
+                    Text(
+                        stringResource(
+                            R.string.RealWattsRefreshIntervalInputTip,
+                            state.realWattsRefreshInterval.toFloatOrNull() ?: 3.0f
+                        )
+                    )
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
         }
     }
 }
@@ -318,28 +379,6 @@ private fun DropdownSettingRow(
             onOptionSelected = onOptionSelected,
             modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
         )
-    }
-}
-
-@Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
     }
 }
 

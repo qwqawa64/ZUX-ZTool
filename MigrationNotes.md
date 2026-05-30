@@ -1219,3 +1219,24 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the OTA settings model migration.
+
+### Phase 5 Lock Screen Settings Model Migration
+
+`settingactivity/systemui/lockscreen/LockScreenSettingsActivity.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `LockScreenSettingsActivity` class name, package, and launch contract.
+- Existing `LockScreenSettingsViewModel` and `LockScreenSettingsRepository` boundaries.
+- Existing preference keys for YiYan, owner info, YiYan API URL/regex, charge watts, real watts, custom refresh interval, selected watts option, and SystemUI permission confirmation.
+- Existing YiYan API test flow, save confirmation, root-permission dialog, charge-watts option behavior, and custom refresh interval persistence.
+
+Model suitability review:
+
+- The shared model remains suitable for System UI detail pages when it only owns section/card structure and ordinary switches.
+- YiYan API configuration and the charge-watts cascading dropdown/input flow remain page-local composables hosted by `SettingItem.Custom`.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Lock Screen settings model migration.
