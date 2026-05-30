@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -49,7 +48,7 @@ class MainActivity : AppCompatActivity(),
 
     private var navController: NavController? = null
     private var isEnvironmentReady by mutableStateOf(false)
-    private var currentDestinationId by mutableIntStateOf(R.id.homeFragment)
+    private var currentRoute by mutableStateOf(MainRoute.Home)
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
     private var lastClickTime = 0L
     private var unregisterThemeSettingsObserver: (() -> Unit)? = null
@@ -62,7 +61,11 @@ class MainActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
 
         if (savedInstanceState != null) {
-            currentDestinationId = savedInstanceState.getInt(KEY_CURRENT_DESTINATION, R.id.homeFragment)
+            currentRoute = savedInstanceState.getString(KEY_CURRENT_ROUTE)
+                ?.let(MainRoute::fromName)
+                ?: MainRoute.fromDestinationId(
+                    savedInstanceState.getInt(KEY_CURRENT_DESTINATION, R.id.homeFragment)
+                )
             isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false)
         }
 
@@ -81,7 +84,7 @@ class MainActivity : AppCompatActivity(),
             ZToolTheme(settings = themeSettings) {
                 MainTabletShell(
                     environmentReady = isEnvironmentReady,
-                    selectedDestinationId = currentDestinationId,
+                    selectedRoute = currentRoute,
                     onDestinationSelected = ::navigateFromRail,
                     onNavHostReady = ::setupNavController
                 )
@@ -94,7 +97,8 @@ class MainActivity : AppCompatActivity(),
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putInt(KEY_CURRENT_DESTINATION, currentDestinationId)
+        outState.putString(KEY_CURRENT_ROUTE, currentRoute.name)
+        outState.putInt(KEY_CURRENT_DESTINATION, currentRoute.destinationId)
         outState.putBoolean(KEY_ENVIRONMENT_READY, isEnvironmentReady)
     }
 
@@ -148,10 +152,10 @@ class MainActivity : AppCompatActivity(),
 
         if (!environmentReady && navController?.currentDestination?.id != R.id.homeFragment) {
             navController?.navigate(R.id.homeFragment)
-            currentDestinationId = R.id.homeFragment
+            currentRoute = MainRoute.Home
         }
 
-        if (!previousState && environmentReady && currentDestinationId != R.id.homeFragment) {
+        if (!previousState && environmentReady && currentRoute != MainRoute.Home) {
             navigateToSavedDestination()
         }
     }
@@ -161,27 +165,27 @@ class MainActivity : AppCompatActivity(),
 
         navController = navHostFragment.navController.also { controller ->
             controller.addOnDestinationChangedListener { _, destination, _ ->
-                currentDestinationId = destination.id
+                currentRoute = MainRoute.fromDestinationId(destination.id)
                 if (!isEnvironmentReady && destination.id != R.id.homeFragment) {
                     controller.navigate(R.id.homeFragment)
                 }
             }
         }
 
-        if (isEnvironmentReady && currentDestinationId != R.id.homeFragment) {
+        if (isEnvironmentReady && currentRoute != MainRoute.Home) {
             navigateToSavedDestination()
         }
     }
 
-    private fun navigateFromRail(destinationId: Int) {
-        if (!isEnvironmentReady && destinationId != R.id.homeFragment) return
+    private fun navigateFromRail(route: MainRoute) {
+        if (!isEnvironmentReady && route != MainRoute.Home) return
 
         val controller = navController ?: return
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastClickTime < clickInterval) return
         lastClickTime = currentTime
 
-        if (controller.currentDestination?.id == destinationId) return
+        if (controller.currentDestination?.id == route.destinationId) return
 
         val navOptions = NavOptions.Builder()
             .setLaunchSingleTop(true)
@@ -194,7 +198,7 @@ class MainActivity : AppCompatActivity(),
             .build()
 
         try {
-            controller.navigate(destinationId, null, navOptions)
+            controller.navigate(route.destinationId, null, navOptions)
         } catch (_: IllegalArgumentException) {
             controller.navigate(R.id.homeFragment)
         }
@@ -202,7 +206,7 @@ class MainActivity : AppCompatActivity(),
 
     private fun navigateToSavedDestination() {
         val controller = navController ?: return
-        if (currentDestinationId == R.id.homeFragment) return
+        if (currentRoute == MainRoute.Home) return
 
         val navOptions = NavOptions.Builder()
             .setLaunchSingleTop(true)
@@ -210,7 +214,7 @@ class MainActivity : AppCompatActivity(),
             .build()
 
         try {
-            controller.navigate(currentDestinationId, null, navOptions)
+            controller.navigate(currentRoute.destinationId, null, navOptions)
         } catch (_: IllegalArgumentException) {
             controller.navigate(R.id.homeFragment)
         }
@@ -257,28 +261,39 @@ class MainActivity : AppCompatActivity(),
 
     companion object {
         private const val KEY_CURRENT_DESTINATION = "current_destination"
+        private const val KEY_CURRENT_ROUTE = "current_route"
         private const val KEY_ENVIRONMENT_READY = "environment_ready"
     }
 }
 
-private data class MainDestination(
-    val id: Int,
+private enum class MainRoute(
+    val destinationId: Int,
     val labelRes: Int,
     val iconRes: Int
-)
+) {
+    Home(R.id.homeFragment, R.string.gotoHomePage, R.drawable.ic_home),
+    Features(R.id.featuresFragment, R.string.gotoFeaturePage, R.drawable.ic_features),
+    Audit(R.id.auditFragment, R.string.gotoLogPage, R.drawable.ic_audit),
+    Settings(R.id.settingsFragment, R.string.gotoSettingsPage, R.drawable.ic_settings);
 
-private val mainDestinations = listOf(
-    MainDestination(R.id.homeFragment, R.string.gotoHomePage, R.drawable.ic_home),
-    MainDestination(R.id.featuresFragment, R.string.gotoFeaturePage, R.drawable.ic_features),
-    MainDestination(R.id.auditFragment, R.string.gotoLogPage, R.drawable.ic_audit),
-    MainDestination(R.id.settingsFragment, R.string.gotoSettingsPage, R.drawable.ic_settings)
-)
+    companion object {
+        val entriesInOrder = listOf(Home, Features, Audit, Settings)
+
+        fun fromDestinationId(destinationId: Int): MainRoute {
+            return entriesInOrder.firstOrNull { it.destinationId == destinationId } ?: Home
+        }
+
+        fun fromName(name: String): MainRoute? {
+            return entriesInOrder.firstOrNull { it.name == name }
+        }
+    }
+}
 
 @Composable
 private fun MainTabletShell(
     environmentReady: Boolean,
-    selectedDestinationId: Int,
-    onDestinationSelected: (Int) -> Unit,
+    selectedRoute: MainRoute,
+    onDestinationSelected: (MainRoute) -> Unit,
     onNavHostReady: (NavHostFragment) -> Unit
 ) {
     Row(
@@ -288,10 +303,10 @@ private fun MainTabletShell(
         if (environmentReady) {
             ZToolNavigationRail {
                 Spacer(modifier = Modifier.height(24.dp))
-                mainDestinations.forEach { destination ->
+                MainRoute.entriesInOrder.forEach { destination ->
                     ZToolNavigationRailItem(
-                        selected = selectedDestinationId == destination.id,
-                        onClick = { onDestinationSelected(destination.id) },
+                        selected = selectedRoute == destination,
+                        onClick = { onDestinationSelected(destination) },
                         icon = ImageVector.vectorResource(destination.iconRes),
                         label = stringResource(destination.labelRes)
                     )

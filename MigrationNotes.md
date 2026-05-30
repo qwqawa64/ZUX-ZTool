@@ -987,3 +987,28 @@ Verification:
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the host stabilization slice.
 - Manual observation confirmed both blank-content bugs are fixed: portrait/landscape switching and system light/dark switching no longer leave only the navigation rail visible.
 - Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.
+
+### Phase 4 Compose-Owned Main Route State
+
+The second Phase 4 slice moves main route state toward the Compose shell while keeping the legacy XML Navigation host intact.
+
+Preserved behavior:
+
+- Existing `MainActivity` class name and launch contract.
+- Existing `nav_graph.xml`, Fragment routes, destination ids, and navigation animations.
+- Existing Home, Features, Audit, and Settings destinations.
+- Existing navigation rail behavior, destination restore behavior, and environment-ready gating.
+- Existing Fragment-hosted screen content.
+
+Implementation note:
+
+- `MainActivity` now models the main destinations as `MainRoute`.
+- The Compose shell consumes `selectedRoute` and dispatches `MainRoute` values from the navigation rail.
+- XML Navigation destination ids are now mapped at the legacy navigation boundary through `MainRoute.destinationId`.
+- Saved instance state now stores the route name while retaining the old destination-id key as a fallback compatibility path.
+- This slice prepares for a future `navigation-compose` route graph without replacing `nav_graph.xml` yet.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after introducing Compose-owned main route state.
+- Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.

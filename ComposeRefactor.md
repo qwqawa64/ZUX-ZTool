@@ -281,12 +281,14 @@ Recommended next order:
    - Preserve the existing `MainActivity` class, XML navigation graph, Fragment routes, destination ids, external launch contracts, and environment-ready gating.
    - Do not delete `nav_graph.xml`, legacy XML layouts, or Fragment classes in this stabilization slice.
 
-2. Introduce Compose-owned main route state. Next.
+2. Introduce Compose-owned main route state. Completed on 2026-05-30.
    - Keep Home, Features, Audit, and Settings as the active main destinations.
    - Keep existing Fragment screens as route content during the transition if that reduces risk.
    - Preserve the current navigation rail behavior and environment-ready gating.
+   - Fix: `MainActivity` now models the main destinations as `MainRoute`; the Compose shell owns selected route state and only maps to XML destination ids at the legacy navigation dispatch boundary.
+   - Verification: `.\gradlew.bat assembleDebug` succeeded on 2026-05-30.
 
-3. Replace the main XML Navigation path with `navigation-compose` only after the stabilization slice succeeds.
+3. Replace the main XML Navigation path with `navigation-compose`. Next.
    - Move main route definitions into Compose.
    - Preserve external launch contracts and old entry points.
    - Leave XML/View cleanup for the dedicated cleanup phase.
