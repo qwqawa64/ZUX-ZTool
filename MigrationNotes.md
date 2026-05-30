@@ -1155,3 +1155,24 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Framework settings model migration.
+
+### Phase 5 Game Tool Settings Model Migration
+
+`settingactivity/gametool/GameToolSettngs.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `GameToolSettngs` Activity class name, package, and launch contract.
+- Existing `GameToolSettingsViewModel` and `GameToolSettingsRepository` boundaries.
+- Existing preference keys for game audio, device disguise, CPU frequency, SoC temperature, mistake-touch mode, and mistake-touch whitelist packages.
+- Existing AppChooser whitelist flow, managed game package loading, restart confirmation dialog, package force-stop behavior, and restart failure Toast behavior.
+
+Model suitability review:
+
+- The shared model remains suitable when ordinary switches are represented as `SettingItem.Switch`.
+- Mistake-touch mode selection and the conditional whitelist entry remain page-local composables hosted by `SettingItem.Custom`, keeping mode mapping and AppChooser behavior explicit.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Game Tool settings model migration.

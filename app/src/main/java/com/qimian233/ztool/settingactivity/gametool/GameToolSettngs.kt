@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,11 +39,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.gametool.GameToolSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
@@ -190,56 +190,99 @@ private fun GameToolSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.Game_Audio_Setting_Title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Game_Audio_title),
-                        summary = stringResource(R.string.Game_Audio_summary),
-                        checked = state.disableGameAudio,
-                        onCheckedChange = onDisableGameAudioChanged
-                    )
-                }
+                ZToolSettingsList(
+                    sections = gameToolSettingsSections(
+                        state = state,
+                        onDisableGameAudioChanged = onDisableGameAudioChanged,
+                        onDisguiseDeviceChanged = onDisguiseDeviceChanged,
+                        onFixCpuFrequencyChanged = onFixCpuFrequencyChanged,
+                        onFixSocTemperatureChanged = onFixSocTemperatureChanged,
+                        onMistakeTouchModeChanged = onMistakeTouchModeChanged,
+                        onSelectWhitelist = onSelectWhitelist
+                    ),
+                    bottomPadding = 96.dp
+                )
+            }
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.function_title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Device_Model_Disguise),
-                        summary = stringResource(R.string.Device_Model_Disguise_summary),
-                        checked = state.disguiseDevice,
-                        onCheckedChange = onDisguiseDeviceChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.FIx_CPU_Frequency),
-                        summary = stringResource(R.string.FIx_CPU_Frequency_summary),
-                        checked = state.fixCpuFrequency,
-                        onCheckedChange = onFixCpuFrequencyChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.Fix_SocTemp),
-                        summary = stringResource(R.string.Fix_SocTemp_summary),
-                        checked = state.fixSocTemperature,
-                        onCheckedChange = onFixSocTemperatureChanged
-                    )
-                    ZToolSettingsDivider()
+@Composable
+private fun gameToolSettingsSections(
+    state: GameToolSettingsUiState,
+    onDisableGameAudioChanged: (Boolean) -> Unit,
+    onDisguiseDeviceChanged: (Boolean) -> Unit,
+    onFixCpuFrequencyChanged: (Boolean) -> Unit,
+    onFixSocTemperatureChanged: (Boolean) -> Unit,
+    onMistakeTouchModeChanged: (MistakeTouchMode) -> Unit,
+    onSelectWhitelist: () -> Unit
+): List<SettingSection> {
+    val functionItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.Device_Model_Disguise),
+                summary = stringResource(R.string.Device_Model_Disguise_summary),
+                checked = state.disguiseDevice,
+                onCheckedChange = onDisguiseDeviceChanged
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.FIx_CPU_Frequency),
+                summary = stringResource(R.string.FIx_CPU_Frequency_summary),
+                checked = state.fixCpuFrequency,
+                onCheckedChange = onFixCpuFrequencyChanged
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.Fix_SocTemp),
+                summary = stringResource(R.string.Fix_SocTemp_summary),
+                checked = state.fixSocTemperature,
+                onCheckedChange = onFixSocTemperatureChanged
+            )
+        )
+        add(
+            SettingItem.Custom(
+                content = {
                     MistakeTouchModeRow(
                         selectedMode = state.mistakeTouchMode,
                         onModeChanged = onMistakeTouchModeChanged
                     )
-                    if (state.mistakeTouchMode == MistakeTouchMode.Whitelist) {
-                        ZToolSettingsDivider()
+                }
+            )
+        )
+        if (state.mistakeTouchMode == MistakeTouchMode.Whitelist) {
+            add(
+                SettingItem.Custom(
+                    content = {
                         WhitelistRow(
                             whitelistCount = state.whitelistCount,
                             onClick = onSelectWhitelist
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(96.dp))
-            }
+                )
+            )
         }
     }
+
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.Game_Audio_Setting_Title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.Game_Audio_title),
+                    summary = stringResource(R.string.Game_Audio_summary),
+                    checked = state.disableGameAudio,
+                    onCheckedChange = onDisableGameAudioChanged
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.function_title),
+            items = functionItems
+        )
+    )
 }
 
 @Composable
@@ -316,28 +359,6 @@ private fun WhitelistRow(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
     }
 }
 
