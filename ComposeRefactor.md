@@ -686,6 +686,32 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `searchPage` ViewModel/repository extraction.
 
+### FloatingWindow ViewModel Boundary
+
+`settingactivity/setting/floatingwindow/FloatingWindow.kt` now delegates foreground app/activity lookup, wizard state, generated config creation, and Base64 config persistence to:
+
+- `viewmodel/FloatingWindowViewModel.kt`.
+- `data/settings/FloatingWindowRepository.kt`.
+
+Preserved behavior:
+
+- Existing `FloatingWindow` class name, package, and `FloatingWindow(this)` launch contract from `SettingsDetailActivity`.
+- Existing overlay `ComposeView` lifecycle, ViewModelStore, saved-state owner, custom recomposer, and close/hide behavior.
+- Existing wizard sequence, selected-app blocking behavior, add-current-activity flow, tutorial video display, and option defaults.
+- Existing root shell foreground lookup command and fallback behavior.
+- Existing generated embedding config JSON shape.
+- Existing Base64 config storage path under app files `data/custom_EmbeddingConfig`.
+
+Implementation note:
+
+- The overlay class now owns only WindowManager, ComposeView hosting, periodic refresh scheduling, Toast effects, and close effects.
+- `FloatingWindowUiState` and `FloatingWizardStep` now live with `FloatingWindowViewModel`.
+- `FloatingWindowRepository` wraps package label lookup, usage-stats fallback, root/runtime foreground lookup, JSON generation, and file persistence.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `FloatingWindow` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -834,11 +860,16 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Continue Phase 2 ViewModel/repository extraction. Phase 2 is not complete yet: most active Compose screens now consume `UiState` and many heavy pages already have ViewModel/repository boundaries. `SettingsDetailActivity.kt` and `settingactivity/setting/magicwindowsearch/searchPage.kt` have now completed their planned business-boundary slices. The remaining Phase 2 follow-up target is the floating-window guide, which still contains direct root/runtime and wizard-state work in the overlay class.
+Continue toward Phase 3 and Phase 5. The planned Phase 2 heavy-screen ViewModel/repository boundary pass is now complete for the active Compose screens listed in this document, including the floating-window guide.
 
 Recommended next order:
 
-1. `settingactivity/setting/floatingwindow/FloatingWindow.kt`
-   - Separate foreground app/activity lookup, wizard state, and generated config persistence from the overlay Compose UI.
-   - Preserve the existing overlay lifecycle owner handling, wizard sequence, shell fallback behavior, generated Base64 config format, and storage path.
+1. Introduce a shared settings item model under the UI/component layer.
+   - Start with switch, entry, slider, text input, and category item shapes.
+   - Keep the model rendering behind shared components such as `ZSwitchRow`, `ZListItem`, and `ZToolDropdownField`.
+   - Do not change preference keys, restart behavior, shell behavior, or page launch contracts.
+
+2. Pilot the shared settings model on a small already-migrated settings page.
+   - Prefer a low-risk page such as package installer or safe center before touching larger pages.
+   - Preserve the existing ViewModel/repository boundary.
    - Run `.\gradlew.bat assembleDebug` after the slice and record the result here.
