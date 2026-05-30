@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,10 +43,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
-import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
@@ -178,98 +178,121 @@ private fun FrameworkSettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                SettingsCard(title = stringResource(R.string.keep_rotation_title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.keep_rotation_enable_title),
-                        summary = stringResource(R.string.keep_rotation_enable_summary),
-                        checked = state.keepRotation,
-                        onCheckedChange = onKeepRotationChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.disable_zui_applist_title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.disable_zui_applist_enable_title),
-                        summary = stringResource(R.string.disable_zui_applist_enable_summary),
-                        checked = state.allowGetPackages,
-                        onCheckedChange = onAllowGetPackagesChanged
-                    )
-                    ZToolSettingsDivider()
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.disable_flag_secure_title),
-                        summary = stringResource(R.string.disable_flag_secure_summary),
-                        checked = state.disableFlagSecure,
-                        onCheckedChange = onDisableFlagSecureChanged
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingsCard(title = stringResource(R.string.ai_input_Title)) {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.ai_input_expand_Title),
-                        summary = stringResource(R.string.ai_input_expand_summary),
-                        checked = state.aiInputExpand,
-                        onCheckedChange = onAiInputExpandChanged
-                    )
-                    IconButton(
-                        onClick = onShowAiInputInfo,
-                        modifier = Modifier.padding(start = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (state.aiInputExpand) {
-                        OutlinedTextField(
-                            value = state.aiInputSigns,
-                            onValueChange = onAiInputSignsChanged,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 8.dp),
-                            label = { Text(stringResource(R.string.custom_detector_hint)) },
-                            isError = state.aiInputSignsError != null,
-                            supportingText = {
-                                if (state.aiInputSignsError != null) {
-                                    Text(state.aiInputSignsError)
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                            minLines = 1,
-                            maxLines = 3
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(96.dp))
+                ZToolSettingsList(
+                    sections = frameworkSettingsSections(
+                        state = state,
+                        onKeepRotationChanged = onKeepRotationChanged,
+                        onAllowGetPackagesChanged = onAllowGetPackagesChanged,
+                        onDisableFlagSecureChanged = onDisableFlagSecureChanged,
+                        onAiInputExpandChanged = onAiInputExpandChanged,
+                        onAiInputSignsChanged = onAiInputSignsChanged,
+                        onShowAiInputInfo = onShowAiInputInfo
+                    ),
+                    bottomPadding = 96.dp
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
+private fun frameworkSettingsSections(
+    state: FrameworkSettingsUiState,
+    onKeepRotationChanged: (Boolean) -> Unit,
+    onAllowGetPackagesChanged: (Boolean) -> Unit,
+    onDisableFlagSecureChanged: (Boolean) -> Unit,
+    onAiInputExpandChanged: (Boolean) -> Unit,
+    onAiInputSignsChanged: (String) -> Unit,
+    onShowAiInputInfo: () -> Unit
+): List<SettingSection> {
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.keep_rotation_title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.keep_rotation_enable_title),
+                    summary = stringResource(R.string.keep_rotation_enable_summary),
+                    checked = state.keepRotation,
+                    onCheckedChange = onKeepRotationChanged
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.disable_zui_applist_title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_zui_applist_enable_title),
+                    summary = stringResource(R.string.disable_zui_applist_enable_summary),
+                    checked = state.allowGetPackages,
+                    onCheckedChange = onAllowGetPackagesChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_flag_secure_title),
+                    summary = stringResource(R.string.disable_flag_secure_summary),
+                    checked = state.disableFlagSecure,
+                    onCheckedChange = onDisableFlagSecureChanged
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.ai_input_Title),
+            items = listOf(
+                SettingItem.Custom(
+                    content = {
+                        AiInputSettingsContent(
+                            state = state,
+                            onAiInputExpandChanged = onAiInputExpandChanged,
+                            onAiInputSignsChanged = onAiInputSignsChanged,
+                            onShowAiInputInfo = onShowAiInputInfo
+                        )
+                    }
+                )
+            )
+        )
+    )
+}
+
+@Composable
+private fun AiInputSettingsContent(
+    state: FrameworkSettingsUiState,
+    onAiInputExpandChanged: (Boolean) -> Unit,
+    onAiInputSignsChanged: (String) -> Unit,
+    onShowAiInputInfo: () -> Unit
 ) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
+    ZToolSwitchRow(
+        title = stringResource(R.string.ai_input_expand_Title),
+        summary = stringResource(R.string.ai_input_expand_summary),
+        checked = state.aiInputExpand,
+        onCheckedChange = onAiInputExpandChanged
+    )
+    IconButton(
+        onClick = onShowAiInputInfo,
+        modifier = Modifier.padding(start = 12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Info,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+    if (state.aiInputExpand) {
+        OutlinedTextField(
+            value = state.aiInputSigns,
+            onValueChange = onAiInputSignsChanged,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(PaddingValues(horizontal = 24.dp, vertical = 8.dp))
-            )
-            content()
-        }
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            label = { Text(stringResource(R.string.custom_detector_hint)) },
+            isError = state.aiInputSignsError != null,
+            supportingText = {
+                if (state.aiInputSignsError != null) {
+                    Text(state.aiInputSignsError)
+                }
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            minLines = 1,
+            maxLines = 3
+        )
     }
 }
 

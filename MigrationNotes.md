@@ -1134,3 +1134,24 @@ Code complexity findings:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the pilot review and dropdown type-safety fix.
+
+### Phase 5 Framework Settings Model Migration
+
+`settingactivity/systemframework/FrameworkSettingsActivity.kt` now renders its setting sections through the shared Phase 5 settings model.
+
+Preserved behavior:
+
+- Existing `FrameworkSettingsActivity` class name, package, and launch contract.
+- Existing `FrameworkSettingsViewModel` and `FrameworkSettingsRepository` boundaries.
+- Existing preference keys for keep rotation, package visibility, secure flag disabling, AI input expansion, and AI input expansion signs.
+- Existing AI input signs validation, information dialog, restart countdown dialog, root reboot command, and restart failure Toast behavior.
+
+Model suitability review:
+
+- The shared model remains suitable for medium-complexity pages when it handles only sections and ordinary rows.
+- The AI input configuration remains a page-local composable hosted by `SettingItem.Custom`, so validation state, the info button, and conditional text input stay explicit and readable.
+- No Material 3 Expressive or Miuix style branches were added to the business screen.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the Framework settings model migration.
