@@ -1622,3 +1622,24 @@ Clean Compose review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after removing AppCompat and Material Components dependencies.
+
+### Compose Refactor Completion
+
+Manual device verification completed on 2026-05-31.
+
+Verified:
+
+- Material 3 Expressive and Miuix theme modes.
+- LSPosed self-check reports active when hooked.
+- Settings backup and restore.
+- Log export.
+- App chooser flows.
+- Loading/progress flows.
+- Countdown confirmation.
+- Settings Detail command dialogs.
+
+Outcome:
+
+- All verified functions are available on device.
+- No residual blocker remains for closing the Compose refactor.
+- `AGENTS.MD`, `ComposeRefactor.md`, and `MigrationNotes.md` were archived under `docs/compose_refactor/`.

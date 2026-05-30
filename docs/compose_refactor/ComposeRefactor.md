@@ -2,13 +2,13 @@
 
 This file is the detailed Compose migration plan and status log for ZUX-ZTool.
 
-Use `AGENTS.MD` for the concise operating rules and preservation boundaries. Use this file to decide the next migration target, understand recent work, and avoid repeating already completed tasks.
+Use `AGENTS.MD` for the concise operating rules and preservation boundaries. This file is now archived with the completed Compose migration history.
 
 ## Current Status
 
-Last updated: 2026-05-30.
+Last updated: 2026-05-31.
 
-The project is in a gradual UI-layer migration from XML/View/Fragment screens to Jetpack Compose. Hook modules, Xposed metadata, runtime assets, service behavior, shell behavior, existing preference keys, and external launch contracts must remain compatible.
+The Compose refactor is complete. The active app UI is Compose-owned, and the former XML/View/Fragment/AppCompat/Material Components compatibility layer has been removed where it was part of the UI shell. Hook modules, Xposed metadata, runtime assets, service behavior, shell behavior, existing preference keys, and external launch contracts remain compatible.
 
 The latest verified command is:
 
@@ -19,8 +19,9 @@ The latest verified command is:
 It succeeds. Remaining warnings are known compatibility warnings:
 
 - `MainActivity.kt`: deprecated `statusBarColor` and `navigationBarColor`.
-- `SettingsFragment.kt`: deprecated `versionCode`.
 - `StatusBarSettingsActivity.kt`: deprecated `MODE_WORLD_READABLE`, retained for Hook compatibility.
+
+Manual device verification on 2026-05-31 confirmed all previously listed final checks pass, including Material 3 Expressive and Miuix theme modes, LSPosed self-check, settings backup/restore, log export, app chooser flows, loading/progress flows, countdown confirmation, and Settings Detail command dialogs.
 
 ## Completed Compose Work
 
@@ -335,7 +336,7 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Phase 7 compatibility cleanup is complete in source and dependencies.
+No active Compose refactor task remains. This document and the operating notes have been archived under `docs/compose_refactor/`.
 
 Clean Compose app review:
 
@@ -344,10 +345,4 @@ Clean Compose app review:
 - No old adapters, RecyclerView UI, Fragment Navigation, AppCompat, or Material Components dependencies remain.
 - Platform interop remains only where it is still appropriate: `ComposeView` for platform dialog/overlay hosting and `AndroidView` for app icons or media/overlay renderer interop.
 
-Recommended next order:
-
-1. Perform final manual verification.
-   - Verify Material 3 Expressive and Miuix theme modes.
-   - Verify LSPosed self-check reports active when hooked.
-   - Verify settings backup/restore, log export, app chooser flows, loading/progress flows, countdown confirmation, and Settings Detail command dialogs.
-   - Record completed manual verification and any residual risks in `MigrationNotes.md`.
+Final manual verification is recorded in `MigrationNotes.md`.
