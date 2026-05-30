@@ -34,25 +34,26 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.data.packageinstaller.PackageInstallerSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.viewmodel.PackageInstallerSettingsUiState
+import com.qimian233.ztool.viewmodel.PackageInstallerSettingsViewModel
 
 class packageinstallersettings : ComponentActivity() {
 
     private var appPackageName: String? = null
-    private lateinit var prefsUtils: ModulePreferencesUtils
-
-    private var uiState by mutableStateOf(PackageInstallerSettingsUiState())
+    private lateinit var viewModel: PackageInstallerSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,95 +61,64 @@ class packageinstallersettings : ComponentActivity() {
 
         val appName = intent.getStringExtra("app_name").orEmpty()
         appPackageName = intent.getStringExtra("app_package")
-        prefsUtils = ModulePreferencesUtils(this)
-        loadSettings()
+        val repository = PackageInstallerSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            PackageInstallerSettingsViewModelFactory(repository)
+        )[PackageInstallerSettingsViewModel::class.java]
+        viewModel.loadSettings()
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 PackageInstallerSettingsScreen(
                     title = appName + stringResource(R.string.detailed_settings_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onRestart = { uiState = uiState.copy(showRestartConfirmDialog = true) },
-                    onDisableScanApkChanged = {
-                        uiState = uiState.copy(disableScanApk = it)
-                        saveSettings("disable_scanAPK", it)
-                    },
-                    onAlwaysAllowPermissionChanged = {
-                        uiState = uiState.copy(alwaysAllowPermission = it)
-                        saveSettings("Always_AllowPermission", it)
-                    },
-                    onSkipWarnPageChanged = {
-                        uiState = uiState.copy(skipWarnPage = it)
-                        saveSettings("Skip_WarnPage", it)
-                    },
-                    onDisableInstallerAdChanged = {
-                        uiState = uiState.copy(disableInstallerAd = it)
-                        saveSettings("disable_installerAD", it)
-                    },
-                    onPackageInstallerStyleHookChanged = {
-                        uiState = uiState.copy(packageInstallerStyleHook = it)
-                        saveSettings("packageInstallerStyle_hook", it)
-                    },
-                    onDisableDeletePackageChanged = {
-                        uiState = uiState.copy(disableDeletePackage = it)
-                        saveSettings("package_installer_disable_delete", it)
-                    }
+                    onRestart = viewModel::showRestartConfirmDialog,
+                    onDisableScanApkChanged = viewModel::setDisableScanApk,
+                    onAlwaysAllowPermissionChanged = viewModel::setAlwaysAllowPermission,
+                    onSkipWarnPageChanged = viewModel::setSkipWarnPage,
+                    onDisableInstallerAdChanged = viewModel::setDisableInstallerAd,
+                    onPackageInstallerStyleHookChanged = viewModel::setPackageInstallerStyleHook,
+                    onDisableDeletePackageChanged = viewModel::setDisableDeletePackage
                 )
 
                 if (uiState.showRestartConfirmDialog) {
                     RestartConfirmDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            uiState = uiState.copy(showRestartConfirmDialog = false)
-                            forceStopApp()
+                            viewModel.forceStopPackage(
+                                packageName = appPackageName.orEmpty(),
+                                onFailure = ::showRestartFailure
+                            )
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartConfirmDialog = false) }
+                        onDismiss = viewModel::dismissRestartConfirmDialog
                     )
                 }
             }
         }
     }
 
-    private fun loadSettings() {
-        uiState = uiState.copy(
-            disableScanApk = prefsUtils.loadBooleanSetting("disable_scanAPK", false),
-            alwaysAllowPermission = prefsUtils.loadBooleanSetting("Always_AllowPermission", false),
-            skipWarnPage = prefsUtils.loadBooleanSetting("Skip_WarnPage", false),
-            disableInstallerAd = prefsUtils.loadBooleanSetting("disable_installerAD", false),
-            packageInstallerStyleHook = prefsUtils.loadBooleanSetting("packageInstallerStyle_hook", false),
-            disableDeletePackage = prefsUtils.loadBooleanSetting("package_installer_disable_delete", false)
-        )
-    }
-
-    private fun saveSettings(moduleName: String, newValue: Boolean) {
-        prefsUtils.saveBooleanSetting(moduleName, newValue)
-    }
-
-    private fun forceStopApp() {
-        val packageName = appPackageName
-        if (packageName.isNullOrEmpty()) {
-            return
-        }
-
-        try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            process.waitFor()
-        } catch (_: Exception) {
+    private fun showRestartFailure() {
+        runOnUiThread {
             Toast.makeText(this, R.string.restart_fail_simple, Toast.LENGTH_SHORT).show()
         }
     }
 }
 
-private data class PackageInstallerSettingsUiState(
-    val disableScanApk: Boolean = false,
-    val alwaysAllowPermission: Boolean = false,
-    val skipWarnPage: Boolean = false,
-    val disableInstallerAd: Boolean = false,
-    val packageInstallerStyleHook: Boolean = false,
-    val disableDeletePackage: Boolean = false,
-    val showRestartConfirmDialog: Boolean = false
-)
+private class PackageInstallerSettingsViewModelFactory(
+    private val repository: PackageInstallerSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(PackageInstallerSettingsViewModel::class.java)) {
+            return PackageInstallerSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
