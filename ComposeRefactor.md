@@ -988,6 +988,13 @@ Follow-up settings component slice:
 - `ZToolDropdownField` remains on Material `ExposedDropdownMenuBox` because it is used as a form field and the Miuix `SuperDropdown` API is row-oriented; replacing it should be a dedicated UX-compatible slice.
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the settings component slice.
 
+Follow-up navigation rail item slice:
+
+- `ZToolNavigationRailItem` now accepts an `ImageVector` and label string so Miuix mode can use Miuix `NavigationRailItem` directly.
+- `MainActivity` now passes vector resources through the shared wrapper; navigation behavior, destination ids, labels, and environment-ready gating are unchanged.
+- Material mode still renders through Material `NavigationRailItem` inside the wrapper.
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the navigation rail item slice.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -1204,7 +1211,8 @@ Recommended next order:
 3. Implement Miuix rendering behind the component and theme adapter layer. In progress.
    - First slice completed on 2026-05-30 for `ZToolTheme`, `ZToolScaffold`, `ZToolTopAppBar`, `ZToolNavigationRail`, `ZToolCard`, `ZToolSwitchRow`, and `ZToolDialogSurface`.
    - Settings component slice completed on 2026-05-30 for `ZListItem` and `ZToolSettingsDivider`.
-   - Remaining candidate slices: `ZToolNavigationRailItem` icon-contract migration, `ZToolDialog` compatibility migration, and a dedicated `ZToolDropdownField` UX-compatible replacement if needed.
+   - Navigation rail item slice completed on 2026-05-30 by moving the shared item wrapper to an `ImageVector` icon contract and using Miuix `NavigationRailItem` in Miuix mode.
+   - Remaining candidate slices: `ZToolDialog` compatibility migration and a dedicated `ZToolDropdownField` UX-compatible replacement if needed.
    - Keep `LocalZToolThemeSpec` as the style-selection boundary.
    - Do not add screen-level branches such as `if (style == FrontendStyle.Miuix)` inside business pages.
 

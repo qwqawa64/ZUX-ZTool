@@ -14,18 +14,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
@@ -293,14 +291,8 @@ private fun MainTabletShell(
                     ZToolNavigationRailItem(
                         selected = selectedDestinationId == destination.id,
                         onClick = { onDestinationSelected(destination.id) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(destination.iconRes),
-                                contentDescription = stringResource(destination.labelRes),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        },
-                        label = { Text(stringResource(destination.labelRes)) }
+                        icon = ImageVector.vectorResource(destination.iconRes),
+                        label = stringResource(destination.labelRes)
                     )
                 }
             }

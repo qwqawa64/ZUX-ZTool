@@ -16,9 +16,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.basic.NavigationRailItem as MiuixNavigationRailItem
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar as MiuixSmallTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,16 +117,33 @@ fun ZToolNavigationRail(
 fun ZToolNavigationRailItem(
     selected: Boolean,
     onClick: () -> Unit,
-    icon: @Composable () -> Unit,
-    label: @Composable () -> Unit,
+    icon: ImageVector,
+    label: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixNavigationRailItem(
+            selected = selected,
+            onClick = onClick,
+            icon = icon,
+            label = label,
+            modifier = modifier,
+            enabled = enabled
+        )
+        return
+    }
+
     NavigationRailItem(
         selected = selected,
         onClick = onClick,
-        icon = icon,
-        label = label,
+        icon = {
+            androidx.compose.material3.Icon(
+                imageVector = icon,
+                contentDescription = label
+            )
+        },
+        label = { Text(label) },
         enabled = enabled,
         colors = NavigationRailItemDefaults.colors(
             selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
