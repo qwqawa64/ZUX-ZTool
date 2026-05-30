@@ -319,12 +319,12 @@ Move to Phase 5: migrate settings pages through a shared settings model. Phase 4
 
 Recommended next order:
 
-1. Add the shared settings model and renderer foundation. Next.
+1. Add the shared settings model and renderer foundation. Completed on 2026-05-30.
    - Define `SettingItem` and `SettingSection` types under the UI/settings or shared components package.
    - Add renderer composables that map model items to existing ZTool shared components.
    - Keep callbacks and state owned by existing ViewModels/screens.
 
-2. Pilot the model on `packageinstaller/packageinstallersettings.kt`.
+2. Pilot the model on `packageinstaller/packageinstallersettings.kt`. Next.
    - Preserve the existing Activity class, launch contract, preference keys, restart confirmation behavior, and package force-stop behavior.
    - Run `.\gradlew.bat assembleDebug`.
    - Record implementation notes and verification in `MigrationNotes.md`.

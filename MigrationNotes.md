@@ -1054,3 +1054,23 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the style verification fixes.
 - Remaining warnings: deprecated `statusBarColor` and `navigationBarColor` in `MainActivity.kt`, already known.
+
+### Phase 5 Shared Settings Model Foundation
+
+The first Phase 5 slice adds a shared settings data model and renderer foundation without changing any existing settings page behavior.
+
+Implemented:
+
+- Added `SettingSection` and `SettingItem` under `ui/components`.
+- Added renderer composables for settings lists, sections, switches, entries, dropdown fields, sliders, text inputs, color previews, actions, and custom rows.
+- Renderers route common rows through the existing ZTool shared components, including `ZToolCard`, `ZToolSwitchRow`, `ZListItem`, `ZToolDropdownField`, and `ZToolSettingsDivider`.
+- Callbacks remain page-owned, so existing ViewModels/screens continue to own state, preference keys, shell behavior, and restart flows when pages are piloted.
+
+Deferred:
+
+- No concrete settings page was migrated in this slice.
+- `packageinstaller/packageinstallersettings.kt` remains the next pilot target.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after adding the shared settings model foundation.
