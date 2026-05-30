@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -44,9 +43,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -54,32 +52,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.qimian233.ztool.EnhancedShellExecutor
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.data.ota.OtaSettingsRepository
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.utils.GetPCFlashFirmware
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserFactory
-import java.io.BufferedReader
-import java.io.DataOutputStream
-import java.io.IOException
-import java.io.InputStreamReader
-import java.io.StringReader
-import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlin.math.log10
-import kotlin.math.pow
+import com.qimian233.ztool.viewmodel.FirmwareResult
+import com.qimian233.ztool.viewmodel.OtaInfoResult
+import com.qimian233.ztool.viewmodel.OtaSettingsUiState
+import com.qimian233.ztool.viewmodel.OtaSettingsViewModel
 
 class OtaSettings : ComponentActivity() {
 
-    private lateinit var prefsUtils: ModulePreferencesUtils
     private var appPackageName: String? = null
-
-    private var uiState by mutableStateOf(OtaSettingsUiState())
+    private lateinit var viewModel: OtaSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,33 +74,31 @@ class OtaSettings : ComponentActivity() {
 
         val appName = intent.getStringExtra("app_name").orEmpty()
         appPackageName = intent.getStringExtra("app_package")
-        prefsUtils = ModulePreferencesUtils(this)
-        prefsUtils.saveBooleanSetting("custom_ota_parameters", true)
-
-        loadSettings()
-        loadCurrentDeviceInfo()
+        val repository = OtaSettingsRepository(applicationContext)
+        viewModel = ViewModelProvider(
+            this,
+            OtaSettingsViewModelFactory(repository)
+        )[OtaSettingsViewModel::class.java]
+        viewModel.initialize(getString(R.string.unknown))
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             ZToolTheme {
                 OtaSettingsScreen(
                     title = appName + stringResource(R.string.ota_settings_title_suffix),
                     state = uiState,
                     onBack = ::finish,
-                    onDisableOtaCheckChanged = {
-                        uiState = uiState.copy(disableOtaCheck = it)
-                        prefsUtils.saveBooleanSetting("disable_OtaCheck", it)
+                    onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
+                    onFetchOtaInfo = {
+                        viewModel.fetchOtaInfo(getString(R.string.ota_info_fetch_failed))
                     },
-                    onFetchOtaInfo = ::fetchOtaInfo,
-                    onFirmwareSnChanged = { uiState = uiState.copy(firmwareSnInput = it) },
-                    onFetchFirmware = ::fetchFirmware,
-                    onCustomVersionChanged = {
-                        uiState = uiState.copy(customVersion = it)
-                        prefsUtils.saveStringSetting("Custom_ota_target_versionName", it)
+                    onFirmwareSnChanged = viewModel::setFirmwareSnInput,
+                    onFetchFirmware = {
+                        viewModel.fetchFirmware(getString(R.string.SN_default_hint))
                     },
-                    onCustomDeviceIdChanged = {
-                        uiState = uiState.copy(customDeviceId = it)
-                        prefsUtils.saveStringSetting("Custom_ota_target_deviceID", it)
-                    },
+                    onCustomVersionChanged = viewModel::setCustomVersion,
+                    onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
                     onCopyDownloadLink = {
                         copyToClipboard(it)
                         Toast.makeText(this, R.string.download_link_copied, Toast.LENGTH_SHORT).show()
@@ -126,13 +111,13 @@ class OtaSettings : ComponentActivity() {
                         copyToClipboard(it)
                         Toast.makeText(this, R.string.password_copied, Toast.LENGTH_SHORT).show()
                     },
-                    onRestartScope = { uiState = uiState.copy(showRestartDialog = true) }
+                    onRestartScope = viewModel::showRestartDialog
                 )
 
                 uiState.errorDialogMessage?.let { message ->
                     ErrorDialog(
                         message = message,
-                        onDismiss = { uiState = uiState.copy(errorDialogMessage = null) }
+                        onDismiss = viewModel::dismissErrorDialog
                     )
                 }
 
@@ -140,258 +125,19 @@ class OtaSettings : ComponentActivity() {
                     RestartScopeDialog(
                         packageName = appPackageName.orEmpty(),
                         onConfirm = {
-                            uiState = uiState.copy(showRestartDialog = false)
-                            forceStopApp()
+                            viewModel.restartScope(
+                                packageName = appPackageName.orEmpty(),
+                                onFailure = ::showRestartFailure
+                            )
                         },
-                        onDismiss = { uiState = uiState.copy(showRestartDialog = false) }
+                        onDismiss = viewModel::dismissRestartDialog
                     )
                 }
             }
         }
     }
-
-    private fun loadSettings() {
-        uiState = uiState.copy(
-            disableOtaCheck = prefsUtils.loadBooleanSetting("disable_OtaCheck", false),
-            customVersion = prefsUtils.loadStringSetting("Custom_ota_target_versionName", ""),
-            customDeviceId = prefsUtils.loadStringSetting("Custom_ota_target_deviceID", ""),
-            currentVersion = getString(R.string.loading_ellipsis),
-            currentSn = getString(R.string.loading_ellipsis)
-        )
-    }
-
-    private fun loadCurrentDeviceInfo() {
-        Thread {
-            val executor = EnhancedShellExecutor.getInstance()
-            val versionResult = executor.executeCommand("getprop ro.build.display.id")
-            val version = if (versionResult.isSuccess && versionResult.output.isNotEmpty()) {
-                versionResult.output.trim()
-            } else {
-                getString(R.string.unknown)
-            }
-
-            val sn = getMachineSnByProps()?.takeIf { it.isNotEmpty() } ?: getString(R.string.unknown)
-            runOnUiThread {
-                uiState = uiState.copy(
-                    currentVersion = version,
-                    currentSn = sn,
-                    firmwareSnInput = if (
-                        uiState.firmwareSnInput.isEmpty() &&
-                        sn != getString(R.string.unknown)
-                    ) {
-                        sn
-                    } else {
-                        uiState.firmwareSnInput
-                    }
-                )
-            }
-        }.start()
-    }
-
-    private fun fetchOtaInfo() {
-        uiState = uiState.copy(isFetchingOtaInfo = true)
-        Thread {
-            try {
-                val filePath = "/data_mirror/data_ce/null/0/com.lenovo.tbengine/shared_prefs/lenovo_row_ota_package_info.xml"
-                val xmlContent = readFileWithRoot(filePath)
-                val otaInfo = parseOtaInfoXml(xmlContent)
-                val result = otaInfo.toOtaInfoResult()
-                runOnUiThread {
-                    uiState = uiState.copy(
-                        otaInfoResult = result,
-                        isFetchingOtaInfo = false
-                    )
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "读取OTA信息失败", e)
-                runOnUiThread {
-                    uiState = uiState.copy(
-                        isFetchingOtaInfo = false,
-                        errorDialogMessage = getString(R.string.ota_info_fetch_failed) + e.message
-                    )
-                }
-            }
-        }.start()
-    }
-
-    private fun fetchFirmware() {
-        val sn = uiState.firmwareSnInput.trim().ifEmpty { getMachineSnByProps().orEmpty() }
-        if (sn.isEmpty()) {
-            uiState = uiState.copy(errorDialogMessage = getString(R.string.SN_default_hint))
-            return
-        }
-
-        uiState = uiState.copy(isFetchingFirmware = true)
-        GetPCFlashFirmware().queryFirmwareAsync(sn) { firmwareInfo ->
-            runOnUiThread {
-                if (firmwareInfo != null && firmwareInfo.size >= 6) {
-                    uiState = uiState.copy(
-                        isFetchingFirmware = false,
-                        firmwareResult = FirmwareResult(
-                            downloadUrl = firmwareInfo[0].orEmpty(),
-                            password = firmwareInfo[1].orEmpty(),
-                            platform = firmwareInfo[2].orEmpty(),
-                            method = firmwareInfo[3].orEmpty(),
-                            firstUploadTime = formatTimestamp(firmwareInfo[4].toLongOrNull() ?: 0L),
-                            lastUpdateTime = formatTimestamp(firmwareInfo[5].toLongOrNull() ?: 0L)
-                        )
-                    )
-                } else {
-                    uiState = uiState.copy(
-                        isFetchingFirmware = false,
-                        errorDialogMessage = getString(R.string.PCFlashFirmwareFetch_failed_message)
-                    )
-                }
-            }
-        }
-    }
-
-    private fun getMachineSnByProps(): String? {
-        val shellExecutor = EnhancedShellExecutor.getInstance()
-        val keys = listOf("ro.odm.lenovo.gsn", "ro.serialno", "ro.boot.serialno")
-        for (key in keys) {
-            val result = shellExecutor.executeRootCommand("getprop $key", 3)
-            if (result.isSuccess && result.output.trim().isNotEmpty()) {
-                return result.output.trim()
-            }
-        }
-        return null
-    }
-
-    private fun readFileWithRoot(filePath: String): String {
-        val process = Runtime.getRuntime().exec("su")
-        val os = DataOutputStream(process.outputStream)
-        val reader = BufferedReader(InputStreamReader(process.inputStream))
-        val errorReader = BufferedReader(InputStreamReader(process.errorStream))
-
-        os.writeBytes("cat $filePath\n")
-        os.writeBytes("exit\n")
-        os.flush()
-
-        val content = StringBuilder()
-        val errorContent = StringBuilder()
-
-        reader.useLines { lines ->
-            lines.forEach { content.append(it).append("\n") }
-        }
-        errorReader.useLines { lines ->
-            lines.forEach { errorContent.append(it).append("\n") }
-        }
-        os.close()
-
-        val exitCode = process.waitFor()
-        Log.i(TAG, "readFileWithRoot exit code: $exitCode")
-        Log.i(TAG, "readFileWithRoot content length: ${content.length}")
-        Log.i(TAG, "readFileWithRoot error: $errorContent")
-
-        if (exitCode != 0 || content.isEmpty()) {
-            throw IOException("Root command failed. Exit code: $exitCode, Error: $errorContent")
-        }
-
-        return content.toString()
-    }
-
-    private fun parseOtaInfoXml(xmlContent: String): Map<String, String> {
-        val otaInfo = mutableMapOf<String, String>()
-        val factory = XmlPullParserFactory.newInstance()
-        val parser = factory.newPullParser()
-        parser.setInput(StringReader(xmlContent))
-
-        var eventType = parser.eventType
-        while (eventType != XmlPullParser.END_DOCUMENT) {
-            if (eventType == XmlPullParser.START_TAG) {
-                val tagName = parser.name
-                if (tagName == "string" || tagName == "int" || tagName == "long" || tagName == "boolean") {
-                    val currentKey = parser.getAttributeValue(null, "name")
-                    if (tagName == "string") {
-                        eventType = parser.next()
-                        if (eventType == XmlPullParser.TEXT) {
-                            otaInfo[currentKey] = parser.text
-                        }
-                    } else {
-                        otaInfo[currentKey] = parser.getAttributeValue(null, "value")
-                    }
-                }
-            }
-            eventType = parser.next()
-        }
-        return otaInfo
-    }
-
-    private fun Map<String, String>.toOtaInfoResult(): OtaInfoResult {
-        val fromVersion = getOrDefault("mUpdateFromVersion", getString(R.string.unknown))
-        val toVersion = getOrDefault("updateToVersion", getString(R.string.unknown))
-        val downloadUrl = getOrDefault("downloadUrl", getString(R.string.no_download_link))
-        val size = getOrDefault("size", "0").toLongOrNull() ?: 0L
-        val md5 = getOrDefault("md5", getString(R.string.unknown))
-        val changelog = getChangelogByLocale(this)
-        val formattedSize = formatFileSize(size)
-
-        return OtaInfoResult(
-            fromVersion = fromVersion,
-            toVersion = toVersion,
-            downloadUrl = downloadUrl,
-            formattedSize = formattedSize,
-            md5 = md5,
-            changelog = changelog,
-            changelogCopyText = getString(
-                R.string.changelog_full_format,
-                fromVersion,
-                toVersion,
-                changelog,
-                formattedSize,
-                md5
-            )
-        )
-    }
-
-    private fun getChangelogByLocale(otaInfo: Map<String, String>): String {
-        val locale = resources.configuration.locales[0] ?: Locale.getDefault()
-        val language = locale.language
-        val country = locale.country
-
-        val preciseKey = "HashMap.${language}_$country"
-        if (otaInfo.containsKey(preciseKey)) {
-            return otaInfo[preciseKey].orEmpty()
-        }
-
-        val languageKey = "HashMap.$language"
-        if (otaInfo.containsKey(languageKey)) {
-            return otaInfo[languageKey].orEmpty()
-        }
-
-        return otaInfo.getOrDefault("HashMap.en", getString(R.string.no_changelog_available))
-    }
-
-    private fun formatFileSize(size: Long): String {
-        if (size <= 0) return "0 B"
-        val units = arrayOf("B", "KB", "MB", "GB", "TB")
-        val digitGroups = (log10(size.toDouble()) / log10(1024.0)).toInt()
-        return DecimalFormat("#,##0.#").format(size / 1024.0.pow(digitGroups.toDouble())) +
-            " " +
-            units[digitGroups]
-    }
-
-    private fun formatTimestamp(timestamp: Long): String {
-        if (timestamp <= 0L) return timestamp.toString()
-        return try {
-            SimpleDateFormat("yyyy.MM.dd-HH:mm:ss", Locale.getDefault())
-                .format(Date(timestamp * 1000L))
-        } catch (_: Exception) {
-            timestamp.toString()
-        }
-    }
-
-    private fun forceStopApp() {
-        val packageName = appPackageName
-        if (packageName.isNullOrEmpty()) return
-
-        try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            val process2 = Runtime.getRuntime().exec("su -c killall com.lenovo.tbengine")
-            process.waitFor()
-            process2.waitFor()
-        } catch (_: Exception) {
+    private fun showRestartFailure() {
+        runOnUiThread {
             Toast.makeText(this, R.string.restart_failed, Toast.LENGTH_SHORT).show()
         }
     }
@@ -401,46 +147,19 @@ class OtaSettings : ComponentActivity() {
         val clip = ClipData.newPlainText(getString(R.string.ota_info_clipboard_label), text)
         clipboard.setPrimaryClip(clip)
     }
-
-    companion object {
-        private const val TAG = "OtaSettings"
-    }
 }
 
-private data class OtaInfoResult(
-    val fromVersion: String,
-    val toVersion: String,
-    val downloadUrl: String,
-    val formattedSize: String,
-    val md5: String,
-    val changelog: String,
-    val changelogCopyText: String
-)
-
-private data class FirmwareResult(
-    val downloadUrl: String,
-    val password: String,
-    val platform: String,
-    val method: String,
-    val firstUploadTime: String,
-    val lastUpdateTime: String
-)
-
-private data class OtaSettingsUiState(
-    val disableOtaCheck: Boolean = false,
-    val customVersion: String = "",
-    val customDeviceId: String = "",
-    val currentVersion: String = "",
-    val currentSn: String = "",
-    val firmwareSnInput: String = "",
-    val isFetchingOtaInfo: Boolean = false,
-    val isFetchingFirmware: Boolean = false,
-    val otaInfoResult: OtaInfoResult? = null,
-    val firmwareResult: FirmwareResult? = null,
-    val errorDialogMessage: String? = null,
-    val showRestartDialog: Boolean = false
-)
-
+private class OtaSettingsViewModelFactory(
+    private val repository: OtaSettingsRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(OtaSettingsViewModel::class.java)) {
+            return OtaSettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OtaSettingsScreen(

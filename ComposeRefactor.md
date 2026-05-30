@@ -548,6 +548,35 @@ Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `LauncherSettingsActivity` ViewModel/repository extraction.
 
+### OtaSettings ViewModel Boundary
+
+`settingactivity/ota/OtaSettings.kt` now delegates OTA preference state, current device info loading, OTA XML reading/parsing, firmware lookup, and restart-scope coordination to:
+
+- `viewmodel/OtaSettingsViewModel.kt`.
+- `data/ota/OtaSettingsRepository.kt`.
+
+Preserved behavior:
+
+- Existing `OtaSettings` class name, package, and Activity launch contract.
+- Existing preference keys: `custom_ota_parameters`, `disable_OtaCheck`, `Custom_ota_target_versionName`, and `Custom_ota_target_deviceID`.
+- Existing automatic enablement of `custom_ota_parameters`.
+- Existing current version and SN shell lookups.
+- Existing OTA package info path and root `cat` behavior.
+- Existing OTA XML parsing, locale-aware changelog selection, file-size formatting, and copy text formatting.
+- Existing PC flash firmware lookup through `GetPCFlashFirmware`.
+- Existing clipboard copy behavior and copied Toasts.
+- Existing restart confirmation dialog and restart scope behavior for the OTA package plus `com.lenovo.tbengine`.
+
+Implementation note:
+
+- `OtaSettingsUiState`, `OtaInfoResult`, and `FirmwareResult` now live with `OtaSettingsViewModel`.
+- The Activity now hosts Compose, handles clipboard/Toast effects, and forwards user actions to the ViewModel.
+- `OtaSettingsRepository` wraps `ModulePreferencesUtils`, `EnhancedShellExecutor`, root file reads, XML parsing, firmware lookup, localized result formatting, and restart-scope execution for this page.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-30 after the `OtaSettings` ViewModel/repository extraction.
+
 ## Full Refactor Roadmap
 
 ### Phase 1. Build the Compose Shell Without Touching Hook Logic
@@ -700,9 +729,6 @@ Begin Phase 2 ViewModel/repository extraction now that the active Compose screen
 
 Recommended next order:
 
-1. `settingactivity/ota/OtaSettings.kt`
-   - Extract OTA preference state, OTA info parsing, firmware query, and restart command coordination into a ViewModel/repository boundary.
-   - Preserve existing OTA preference keys, shell behavior, clipboard behavior, and restart-scope behavior.
-2. `settingactivity/setting/SettingsDetailActivity.kt`
+1. `settingactivity/setting/SettingsDetailActivity.kt`
    - Extract the remaining system settings detail business state behind ViewModel/repository boundaries in smaller follow-up slices.
    - Preserve config flashing, font import, embedding, Magisk, overlay guide, and OV config behavior.
