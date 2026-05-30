@@ -315,45 +315,37 @@ Record the completed target, verification result, and next planned target in thi
 
 ## Current Recommended Next Target
 
-Move to Phase 5: migrate settings pages through a shared settings model. Phase 4's main route graph now uses `navigation-compose`, while remaining Fragment/XML cleanup is intentionally deferred to Phase 6.
+Move to Phase 6: clean up the XML/View layer. Phase 5's shared settings model work is complete for the current candidate set.
 
-Current Phase 5 status:
+Phase 5 closeout:
 
-- Shared settings model foundation, low-risk pilots, medium-complexity pages, System UI detail pages, the System UI aggregate page, and Settings Detail ordinary rows are complete for the current candidate set.
-- Model coverage was reviewed on 2026-05-31. Keep the model limited to section/card structure and ordinary rows for now; do not add new model item types before migrating the remaining suitable pages.
-- Do not force complex query, format-preview, color-picker, app-picker, root/shell, or wizard workflows into generic `SettingItem` variants.
+- Shared settings model foundation, low-risk pilots, medium-complexity pages, System UI detail pages, the System UI aggregate page, and Settings Detail ordinary rows are complete.
+- `settingactivity/setting/magicwindowsearch/searchPage.kt` and `settingactivity/setting/floatingwindow/FloatingWindow.kt` are intentionally not Phase 5 settings-model targets; they are query/result and overlay-wizard workflows.
+- Manual verification on 2026-05-31 confirmed Material 3 Expressive and Miuix rendering work, theme switching works, preference values read/write correctly, restart scope works, shell/root-dependent business flows work, and Hook compatibility remains intact.
+- Keep the shared settings model limited to section/card structure and ordinary rows for now; do not add generic query, format-preview, color-picker, app-picker, root/shell, or wizard model items.
 
 Recommended next order:
 
-1. Migrate `settingactivity/systemui/systemUISettings.kt` through the shared settings model. Completed on 2026-05-31.
-   - Converted detail-page navigation to `SettingItem.Entry`.
-   - Converted AOD, charging animation, and guest-mode rows to `SettingItem.Switch`.
-   - Kept the conditional Lenovo AOD settings launcher as `SettingItem.Action`.
-   - Preserved the existing Activity class, launch contract, sub-settings navigation, preference keys, restart confirmation behavior, root shell commands, and Lenovo AOD settings launch behavior.
-   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
-   - Implementation notes and verification are recorded in `MigrationNotes.md`.
-
-2. Migrate the ordinary rows in `settingactivity/setting/SettingsDetailActivity.kt` through the shared settings model. Completed on 2026-05-31.
-   - Converted ordinary embedding, permission, Dolby, and suggestion switches to `SettingItem.Switch`.
-   - Converted simple action rows to `SettingItem.Action`.
-   - Kept floating-window launch, strategy search, config selection, Magisk/module restore, OV config generation, font import, loading dialogs, and restart-scope behavior page-owned.
-   - Preserved all existing preference keys, external Activity launch contracts, root/Magisk behavior, embedding asset behavior, and config flashing behavior.
-   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
-   - Implementation notes and verification are recorded in `MigrationNotes.md`.
-
-3. Defer `settingactivity/setting/magicwindowsearch/searchPage.kt` from Phase 5 model migration unless a narrow card-shell cleanup is explicitly requested. Next.
-   - The page is primarily a search/query/result/detail workflow rather than a settings-row page.
-   - Keep JSON loading, root fallback, search filtering, result cards, and details dialog outside the settings model.
-
-4. Defer `settingactivity/setting/floatingwindow/FloatingWindow.kt` from Phase 5 model migration.
-   - The page is a floating overlay wizard backed by foreground-app polling, tutorial playback, generated config output, and close/hide behavior.
-   - Treat further work here as targeted overlay/wizard cleanup, not settings model expansion.
-
-5. Keep Phase 4 leftovers for Phase 6 cleanup.
-   - Do not delete `nav_graph.xml`, main Fragment wrappers, legacy Fragment XML layouts, navigation animation resources, or Fragment Navigation dependencies during Phase 5.
-   - Cleanup starts only when active UI routes no longer depend on the old View/Fragment layer.
-
-6. Verification policy.
+1. Start Phase 6 by removing the main-route Fragment hosting layer. Next.
+   - Current `MainActivity` still uses `LegacyFragmentRoute`, `FragmentContainerView`, and `HomeFragment`/`FeaturesFragment`/`AuditFragment`/`SettingsFragment` wrappers inside the Compose `NavHost`.
+   - Extract each main route's Compose screen into direct composable route functions while preserving existing Fragment class names until no active route depends on them.
+   - Preserve `HomeFragment.isModuleActive()` as the LSPosed self-check Hook target until an explicitly approved compatibility replacement exists.
+   - Preserve Home, Features, Audit, and Settings behavior, ViewModel/repository boundaries, SAF launchers, external intents, reboot shell behavior, and log export behavior.
    - Run `.\gradlew.bat assembleDebug`.
-   - Verify Material 3 Expressive and Miuix modes for each migrated page.
-   - Verify preference persistence, restart confirmations, shell/root behavior, and Hook compatibility keys for each migrated page.
+   - Record implementation notes and verification in `MigrationNotes.md`.
+
+2. Remove obsolete XML Navigation only after the main routes no longer instantiate Fragment wrappers.
+   - Delete or detach `res/navigation/nav_graph.xml` only when no runtime path references it.
+   - Remove legacy Navigation resource ids from `MainRoute` only after saved-state fallback compatibility is no longer needed.
+   - Run `.\gradlew.bat assembleDebug`.
+   - Record implementation notes and verification in `MigrationNotes.md`.
+
+3. Clean up legacy Fragment/XML resources in small slices.
+   - Candidates: `fragment_*.xml`, unused `activity_*.xml`, navigation animation resources, and obsolete Fragment-only helpers.
+   - Use `rg` before deletion and preserve any resource still referenced by Activities, dialogs, assets, manifest metadata, or Hook compatibility paths.
+   - Run `.\gradlew.bat assembleDebug` after each cleanup slice.
+
+4. Dependency cleanup comes last.
+   - Remove Fragment Navigation/AppCompat/View dependencies only after code and resources no longer use them.
+   - Do not remove Material/Compose dependencies used by shared ZTool components or Miuix adapters.
+   - Run `.\gradlew.bat assembleDebug`.

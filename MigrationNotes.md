@@ -1335,3 +1335,29 @@ Model suitability review:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the Settings Detail ordinary rows model migration.
+
+### Phase 5 Closeout And Phase 6 Entry Decision
+
+Phase 5 settings-model work is complete for the current candidate set.
+
+Closeout decision:
+
+- The remaining `settingactivity/setting/magicwindowsearch/searchPage.kt` and `settingactivity/setting/floatingwindow/FloatingWindow.kt` flows are not Phase 5 settings-model targets.
+- `searchPage.kt` is a query/result/detail workflow.
+- `FloatingWindow.kt` is an overlay wizard backed by foreground-app polling, tutorial playback, generated config output, and close/hide behavior.
+- Further work on those pages should be targeted query/card-shell or overlay/wizard cleanup, not settings model expansion.
+
+Manual verification on 2026-05-31:
+
+- Material 3 Expressive and Miuix rendering work.
+- Theme switching works.
+- Preference values read and write correctly.
+- Restart scope works.
+- Shell/root-dependent business flows work.
+- Hook compatibility remains intact.
+
+Next phase:
+
+- Move to Phase 6 XML/View cleanup.
+- Start by removing the main-route Fragment hosting layer only after extracting Home, Features, Audit, and Settings routes into direct composable route functions.
+- Preserve `HomeFragment.isModuleActive()` as the LSPosed self-check Hook target until an explicitly approved compatibility replacement exists.
