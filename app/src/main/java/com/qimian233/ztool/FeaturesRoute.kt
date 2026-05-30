@@ -4,10 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,15 +33,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.fragment.app.Fragment
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettngs
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsActivity
 import com.qimian233.ztool.settingactivity.ota.OtaSettings
@@ -57,38 +50,6 @@ import com.qimian233.ztool.settingactivity.systemui.systemUISettings
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.theme.ZToolTheme
-
-class FeaturesFragment : Fragment() {
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        return ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                ZToolTheme {
-                    FeaturesRoute(
-                        items = rememberFeatureItems(requireContext()),
-                        onFeatureClick = ::openFeatureSettings
-                    )
-                }
-            }
-        }
-    }
-
-    private fun openFeatureSettings(item: FeatureItem) {
-        val context = requireContext()
-        context.startActivity(
-            Intent(context, item.targetActivity).apply {
-                putExtra("app_name", item.name)
-                putExtra("app_package", item.packageName)
-            }
-        )
-    }
-}
 
 @Composable
 fun FeaturesMainRoute() {

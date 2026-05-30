@@ -384,13 +384,13 @@ Recommended next order:
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
    - Implementation notes and verification are recorded in `MigrationNotes.md`.
 
-2. Delete inactive main Fragment wrapper classes.
-   - Remove `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment` only after the self-check target is replaced.
-   - Move route composables/helpers into non-Fragment files before deleting wrappers.
-   - Confirm no class-name, Manifest, Hook, reflection, or documentation references remain.
-   - Run `.\gradlew.bat assembleDebug`.
+2. Delete inactive main Fragment wrapper classes. Completed on 2026-05-31.
+   - Removed `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment` after the self-check target moved to `ModuleActivationProbe`.
+   - Retained route composables/helpers in non-Fragment route files: `HomeRoute.kt`, `FeaturesRoute.kt`, `AuditRoute.kt`, and `SettingsRoute.kt`.
+   - Confirmed no Manifest, Hook, or active route references remain for the deleted Fragment classes.
+   - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
 
-3. Remove remaining Fragment dependency.
+3. Remove remaining Fragment dependency. Next.
    - Audit for `androidx.fragment.app` references.
    - Remove Fragment dependency only when the audit is clean.
    - Run `.\gradlew.bat assembleDebug`.

@@ -1528,3 +1528,24 @@ Preserved behavior:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after replacing the primary module activation Hook target.
+
+### Phase 7 Main Fragment Wrapper Removal
+
+The inactive main Fragment wrapper classes were deleted after the module activation self-check moved to `ModuleActivationProbe`.
+
+Implemented:
+
+- Removed the `HomeFragment`, `FeaturesFragment`, `AuditFragment`, and `SettingsFragment` classes.
+- Renamed the retained pure Compose route files to `HomeRoute.kt`, `FeaturesRoute.kt`, `AuditRoute.kt`, and `SettingsRoute.kt`.
+- Moved `EnvironmentStateListener` out of `HomeFragment` into a top-level app package interface.
+- Confirmed the active main routes still use `HomeMainRoute`, `FeaturesMainRoute`, `AuditMainRoute`, and `SettingsMainRoute` from `MainActivity`.
+- Confirmed `HookInit` still targets `ModuleActivationProbe.isModuleActive()` and no longer references `HomeFragment`.
+
+Preserved behavior:
+
+- Existing `MainActivity` launch contract, Compose navigation routes, environment-ready gating, Home environment checks, feature launches, log export, settings backup/restore, and theme settings behavior.
+- Existing Hook manager entry point, Xposed metadata, assets, services, shell behavior, and preference keys.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after deleting the inactive Fragment wrappers.

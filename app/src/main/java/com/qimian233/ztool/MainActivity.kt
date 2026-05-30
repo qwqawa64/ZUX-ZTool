@@ -36,7 +36,7 @@ import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.CountdownDialog
 
 class MainActivity : AppCompatActivity(),
-    HomeFragment.EnvironmentStateListener,
+    EnvironmentStateListener,
     LogServiceManager.ServiceStatusListener,
     CountdownDialog.OnCountdownFinishListener {
 

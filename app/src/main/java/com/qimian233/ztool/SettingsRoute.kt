@@ -2,7 +2,6 @@ package com.qimian233.ztool
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
@@ -41,17 +40,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
@@ -65,145 +61,9 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.ThemeMode
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.viewmodel.SettingsUiState
 import com.qimian233.ztool.viewmodel.SettingsViewModel
-
-class SettingsFragment : Fragment() {
-
-    private lateinit var viewModel: SettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val repository = SettingsRepository(requireContext().applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            SettingsViewModelFactory(repository)
-        )[SettingsViewModel::class.java]
-    }
-
-    private val backupLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json")
-    ) { uri ->
-        if (uri != null) {
-            viewModel.backupConfig(uri) { result ->
-                activity?.runOnUiThread {
-                    if (result) {
-                        showToast(getString(R.string.config_backup_success))
-                    }
-                }
-            }
-        }
-    }
-
-    private val restoreLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            viewModel.restoreConfig(uri) { result ->
-                activity?.runOnUiThread {
-                    if (result) {
-                        showToast(getString(R.string.config_restore_success))
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onCreateView(
-        inflater: android.view.LayoutInflater,
-        container: android.view.ViewGroup?,
-        savedInstanceState: Bundle?
-    ): android.view.View {
-        return ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                val uiState by viewModel.uiState.collectAsState()
-
-                ZToolTheme {
-                    SettingsRoute(
-                        state = uiState,
-                        onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
-                        onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-                        onRestoreDefault = viewModel::showRestoreConfirmDialog,
-                        onLogServiceChanged = {
-                            viewModel.setLogServiceEnabled(it)
-                            showToast(
-                                getString(
-                                    if (it) R.string.log_service_started else R.string.log_service_stopped
-                                )
-                            )
-                        },
-                        onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
-                        onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-                        onFrontendStyleChanged = viewModel::setFrontendStyle,
-                        onThemeModeChanged = viewModel::setThemeMode,
-                        onDynamicColorChanged = viewModel::setDynamicColorEnabled,
-                        onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
-                        onManualColorChanged = viewModel::setManualColorEnabled,
-                        onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
-                        onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
-                        onAbout = viewModel::showAboutDialog
-                    )
-
-                    if (uiState.showRestoreConfirmDialog) {
-                        RestoreDefaultDialog(
-                            onConfirm = {
-                                viewModel.restoreDefaultConfig()
-                                showToast(getString(R.string.default_config_restored))
-                            },
-                            onDismiss = viewModel::dismissRestoreConfirmDialog
-                        )
-                    }
-
-                    if (uiState.showAboutDialog) {
-                        AboutDialog(
-                            version = uiState.moduleVersion,
-                            onDismiss = viewModel::dismissAboutDialog,
-                            onOpenGithub = {
-                                openExternalLink("https://github.com/qwqawa64/ZUX-ZTool", false, "")
-                            },
-                            onOpenCredits = {
-                                openExternalLink("https://github.com/dantmnf/UnfuckZUI", false, "")
-                            },
-                            onOpenAuthor = {
-                                openExternalLink("http://www.coolapk.com/u/10099756", true, "com.coolapk.market")
-                            },
-                            onOpenCollaborator = {
-                                openExternalLink("http://www.coolapk.com/u/18634835", true, "com.coolapk.market")
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.refresh()
-    }
-
-    private fun openExternalLink(link: String, shouldDeterminePackage: Boolean, packageName: String) {
-        try {
-            startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse(link)).apply {
-                    if (shouldDeterminePackage) setPackage(packageName)
-                }
-            )
-        } catch (_: Exception) {
-            showToast(getString(R.string.open_web_link_failed))
-        }
-    }
-
-    private fun showToast(message: String) {
-        if (context != null) {
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-}
 
 @Composable
 fun SettingsMainRoute() {

@@ -3,13 +3,8 @@ package com.qimian233.ztool
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,15 +54,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.audit.LogParser
@@ -79,127 +71,10 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.AuditUiState
 import com.qimian233.ztool.viewmodel.AuditViewModel
 import com.qimian233.ztool.viewmodel.ModuleOption
 import kotlinx.coroutines.launch
-
-class AuditFragment : Fragment() {
-
-    private lateinit var exportLogLauncher: ActivityResultLauncher<String>
-    private lateinit var viewModel: AuditViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val repository = AuditRepository(requireContext().applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            AuditViewModelFactory(repository)
-        )[AuditViewModel::class.java]
-
-        exportLogLauncher = registerForActivityResult(
-            ActivityResultContracts.CreateDocument("application/zip")
-        ) { uri ->
-            if (uri != null) {
-                viewModel.exportLogsToUri(uri) { success, error ->
-                    activity?.runOnUiThread {
-                        Toast.makeText(
-                            requireContext(),
-                            when {
-                                success -> getString(R.string.export_logs_success)
-                                error != null -> getString(R.string.export_logs_failed) + error
-                                else -> getString(R.string.export_logs_failed)
-                            },
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        return ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                val uiState by viewModel.uiState.collectAsState()
-
-                ZToolTheme {
-                    AuditScreen(
-                        state = uiState,
-                        onCategorySelected = viewModel::selectCategory,
-                        onModuleSelected = viewModel::selectModule,
-                        onLevelSelected = viewModel::selectLevel,
-                        onSearchTextChanged = viewModel::setSearchText,
-                        onShowErrorsOnlyChanged = viewModel::setShowErrorsOnly,
-                        onRefresh = viewModel::loadAllLogFiles,
-                        onClear = viewModel::showClearDialog,
-                        onShowStatistics = viewModel::showStatistics,
-                        onSave = { exportLogLauncher.launch(viewModel.exportFileName()) },
-                        onLogSelected = viewModel::selectLogEntry
-                    )
-
-                    uiState.selectedLogEntry?.let { entry ->
-                        LogDetailDialog(
-                            entry = entry,
-                            onCopy = {
-                                copyToClipboard(viewModel.buildLogDetails(entry))
-                                viewModel.dismissLogEntry()
-                            },
-                            onDismiss = viewModel::dismissLogEntry
-                        )
-                    }
-
-                    if (uiState.showClearDialog) {
-                        ClearLogsDialog(
-                            onConfirm = {
-                                viewModel.clearAllLogs { success, error ->
-                                    activity?.runOnUiThread {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            if (success) {
-                                                getString(R.string.clear_logs_success)
-                                            } else {
-                                                getString(R.string.clear_logs_failed) + error.orEmpty()
-                                            },
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            },
-                            onDismiss = viewModel::dismissClearDialog
-                        )
-                    }
-
-                    uiState.statisticsMessage?.let { message ->
-                        StatisticsDialog(
-                            message = message,
-                            onDismiss = viewModel::dismissStatistics
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        viewModel.start()
-    }
-
-    private fun copyToClipboard(text: String) {
-        val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText(getString(R.string.log_content), text)
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(requireContext(), R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-    }
-
-}
 
 @Composable
 fun AuditMainRoute() {

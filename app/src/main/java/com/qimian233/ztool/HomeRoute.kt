@@ -4,10 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -50,16 +46,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
@@ -69,165 +62,13 @@ import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.HomeViewModel
 import com.qimian233.ztool.viewmodel.RebootTarget
 import com.qimian233.ztool.viewmodel.UpdateInfo
 
-class HomeFragment : Fragment() {
-
-    interface EnvironmentStateListener {
-        fun onEnvironmentStateChanged(environmentReady: Boolean)
-    }
-
-    private var environmentStateListener: EnvironmentStateListener? = null
-    private var lastEnvironmentState = false
-
-    private lateinit var viewModel: HomeViewModel
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        if (context is EnvironmentStateListener) {
-            environmentStateListener = context
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val repository = HomeRepository(
-            context = requireContext().applicationContext,
-            moduleActiveChecker = ModuleActivationProbe::isModuleActive
-        )
-        viewModel = ViewModelProvider(
-            this,
-            HomeViewModelFactory(repository)
-        )[HomeViewModel::class.java]
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        return ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                val uiState by viewModel.uiState.collectAsState()
-
-                LaunchedEffect(uiState.environmentReady) {
-                    notifyEnvironmentState(uiState.environmentReady)
-                }
-
-                ZToolTheme {
-                    HomeScreen(
-                        state = uiState,
-                        onRestartTargetSelected = viewModel::showRebootConfirmation,
-                        onUnsupportedSoftReboot = {
-                            Toast.makeText(
-                                requireContext(),
-                                R.string.soft_reboot_not_supported,
-                                Toast.LENGTH_LONG
-                            ).show()
-                        },
-                        onToggleUpdateExpanded = viewModel::toggleUpdateExpanded,
-                        onIgnoreUpdate = {
-                            viewModel.ignoreUpdate(it)
-                            Toast.makeText(requireContext(), R.string.update_ignore_toast, Toast.LENGTH_SHORT).show()
-                        },
-                        onOpenUpdate = ::openUpdateUrl
-                    )
-
-                    if (uiState.configUpgradeDialogVisible) {
-                        ConfigUpgradeDialog(
-                            onRestart = {
-                                viewModel.dismissConfigUpgradeDialog()
-                                viewModel.restartAfterConfigUpgrade()
-                            },
-                            onLater = {
-                                viewModel.dismissConfigUpgradeDialog()
-                                Toast.makeText(
-                                    requireContext(),
-                                    R.string.have_not_restart_warn,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
-                    }
-
-                    uiState.rebootConfirmation?.let { target ->
-                        RebootConfirmDialog(
-                            target = target,
-                            onConfirm = {
-                                viewModel.dismissRebootConfirmation()
-                                executeReboot(target)
-                            },
-                            onDismiss = viewModel::dismissRebootConfirmation
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        view.postDelayed({
-            viewModel.start()
-        }, 100)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.refreshSystemInfoIfNeeded()
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        environmentStateListener = null
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::viewModel.isInitialized) {
-            viewModel.clearShellCache()
-        }
-    }
-
-    private fun notifyEnvironmentState(environmentReady: Boolean) {
-        if (environmentReady != lastEnvironmentState) {
-            environmentStateListener?.onEnvironmentStateChanged(environmentReady)
-            lastEnvironmentState = environmentReady
-        }
-    }
-
-    private fun openUpdateUrl(url: String) {
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), R.string.open_web_link_failed, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun executeReboot(target: RebootTarget) {
-        viewModel.executeReboot(target) { success, error ->
-            activity?.runOnUiThread {
-                if (success) {
-                    Toast.makeText(requireContext(), R.string.reboot_success, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.reboot_failed, error),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
-    }
-
-    fun isModuleActive(): Boolean {
-        return ModuleActivationProbe.isModuleActive()
-    }
+interface EnvironmentStateListener {
+    fun onEnvironmentStateChanged(environmentReady: Boolean)
 }
 
 @Composable
