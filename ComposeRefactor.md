@@ -347,7 +347,7 @@ Recommended next order:
 3. Clean up legacy Fragment/XML resources in small slices. Completed on 2026-05-31.
    - Removed unreferenced `fragment_*.xml`, migrated `activity_*.xml`, legacy dialog XML, floating-window XML, legacy navigation/FAB animations, the old bottom navigation menu, and unused item layouts.
    - Preserved `item_feature.xml`, `item_setting.xml`, and `package_item.xml` because legacy Java adapters still inflate them.
-   - Preserved `reboot_menu.xml` because Home still uses the PopupMenu reboot menu.
+   - Migrated the Home reboot menu from `PopupMenu`/`reboot_menu.xml` to a Compose `ZToolDialog` chooser, then deleted `reboot_menu.xml`.
    - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31.
    - Implementation notes and verification are recorded in `MigrationNotes.md`.
 

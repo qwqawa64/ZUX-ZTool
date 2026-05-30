@@ -6,10 +6,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -37,6 +35,7 @@ import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
@@ -46,13 +45,16 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,7 +122,14 @@ class HomeFragment : Fragment() {
                 ZToolTheme {
                     HomeScreen(
                         state = uiState,
-                        onRestartClick = ::showRebootMenu,
+                        onRestartTargetSelected = viewModel::showRebootConfirmation,
+                        onUnsupportedSoftReboot = {
+                            Toast.makeText(
+                                requireContext(),
+                                R.string.soft_reboot_not_supported,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        },
                         onToggleUpdateExpanded = viewModel::toggleUpdateExpanded,
                         onIgnoreUpdate = {
                             viewModel.ignoreUpdate(it)
@@ -200,37 +209,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun showRebootMenu(anchor: View) {
-        PopupMenu(requireContext(), anchor).apply {
-            menuInflater.inflate(R.menu.reboot_menu, menu)
-            setOnMenuItemClickListener(::handleMenuItemClick)
-            show()
-        }
-    }
-
-    private fun handleMenuItemClick(item: MenuItem): Boolean {
-        val target = when (item.itemId) {
-            R.id.menu_soft_reboot -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    Toast.makeText(
-                        requireContext(),
-                        R.string.soft_reboot_not_supported,
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return true
-                }
-                RebootTarget.Userspace
-            }
-            R.id.menu_bootloader -> RebootTarget.Bootloader
-            R.id.menu_recovery -> RebootTarget.Recovery
-            R.id.menu_edl -> RebootTarget.Edl
-            R.id.menu_reboot -> RebootTarget.System
-            else -> return false
-        }
-        viewModel.showRebootConfirmation(target)
-        return true
-    }
-
     private fun executeReboot(target: RebootTarget) {
         viewModel.executeReboot(target) { success, error ->
             activity?.runOnUiThread {
@@ -296,12 +274,13 @@ fun HomeMainRoute(
 
     HomeScreen(
         state = uiState,
-        onRestartClick = { anchor ->
-            showRebootMenu(
-                context = context,
-                anchor = anchor,
-                onTargetSelected = viewModel::showRebootConfirmation
-            )
+        onRestartTargetSelected = viewModel::showRebootConfirmation,
+        onUnsupportedSoftReboot = {
+            Toast.makeText(
+                context,
+                R.string.soft_reboot_not_supported,
+                Toast.LENGTH_LONG
+            ).show()
         },
         onToggleUpdateExpanded = viewModel::toggleUpdateExpanded,
         onIgnoreUpdate = {
@@ -346,39 +325,6 @@ private fun openUpdateUrl(context: Context, url: String) {
     }
 }
 
-private fun showRebootMenu(
-    context: Context,
-    anchor: View,
-    onTargetSelected: (RebootTarget) -> Unit
-) {
-    PopupMenu(context, anchor).apply {
-        menuInflater.inflate(R.menu.reboot_menu, menu)
-        setOnMenuItemClickListener { item ->
-            val target = when (item.itemId) {
-                R.id.menu_soft_reboot -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        Toast.makeText(
-                            context,
-                            R.string.soft_reboot_not_supported,
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return@setOnMenuItemClickListener true
-                    }
-                    RebootTarget.Userspace
-                }
-                R.id.menu_bootloader -> RebootTarget.Bootloader
-                R.id.menu_recovery -> RebootTarget.Recovery
-                R.id.menu_edl -> RebootTarget.Edl
-                R.id.menu_reboot -> RebootTarget.System
-                else -> return@setOnMenuItemClickListener false
-            }
-            onTargetSelected(target)
-            true
-        }
-        show()
-    }
-}
-
 private fun executeReboot(
     context: Context,
     viewModel: HomeViewModel,
@@ -414,11 +360,14 @@ private class HomeViewModelFactory(
 @Composable
 private fun HomeScreen(
     state: HomeUiState,
-    onRestartClick: (View) -> Unit,
+    onRestartTargetSelected: (RebootTarget) -> Unit,
+    onUnsupportedSoftReboot: () -> Unit,
     onToggleUpdateExpanded: () -> Unit,
     onIgnoreUpdate: (Int) -> Unit,
     onOpenUpdate: (String) -> Unit
 ) {
+    var showRebootTargets by remember { mutableStateOf(false) }
+
     ZToolScaffold { innerPadding ->
         ZToolPageSurface(
             modifier = Modifier
@@ -445,26 +394,16 @@ private fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                     if (state.isRootAvailable) {
-                        androidx.compose.ui.viewinterop.AndroidView(
-                            modifier = Modifier.size(48.dp),
-                            factory = { context ->
-                                android.widget.FrameLayout(context).apply {
-                                    val button = android.widget.ImageButton(context).apply {
-                                        setImageResource(R.drawable.ic_restart_menu)
-                                        background = null
-                                        contentDescription = context.getString(R.string.reboot_menu_description)
-                                        setOnClickListener { onRestartClick(this) }
-                                    }
-                                    addView(
-                                        button,
-                                        android.widget.FrameLayout.LayoutParams(
-                                            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                                            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-                                        )
-                                    )
-                                }
-                            }
-                        )
+                        IconButton(
+                            onClick = { showRebootTargets = true },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_restart_menu),
+                                contentDescription = stringResource(R.string.reboot_menu_description),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
 
@@ -513,6 +452,22 @@ private fun HomeScreen(
                 )
             }
         }
+    }
+
+    if (showRebootTargets) {
+        RebootTargetDialog(
+            onDismiss = { showRebootTargets = false },
+            onTargetSelected = { target ->
+                showRebootTargets = false
+                if (target == RebootTarget.Userspace &&
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                ) {
+                    onUnsupportedSoftReboot()
+                    return@RebootTargetDialog
+                }
+                onRestartTargetSelected(target)
+            }
+        )
     }
 }
 
@@ -774,6 +729,48 @@ private fun ConfigUpgradeDialog(
         dismissButton = {
             TextButton(onClick = onLater) {
                 Text(stringResource(R.string.do_not_restart_system_button))
+            }
+        }
+    )
+}
+
+@Composable
+private fun RebootTargetDialog(
+    onDismiss: () -> Unit,
+    onTargetSelected: (RebootTarget) -> Unit
+) {
+    val options = remember {
+        listOf(
+            RebootTarget.Userspace to R.string.soft_reboot,
+            RebootTarget.System to R.string.reboot,
+            RebootTarget.Bootloader to R.string.bootloader,
+            RebootTarget.Recovery to R.string.recovery,
+            RebootTarget.Edl to R.string.edl
+        )
+    }
+
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.reboot_menu_description)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                options.forEach { (target, titleRes) ->
+                    TextButton(
+                        onClick = { onTargetSelected(target) },
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(titleRes),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
             }
         }
     )

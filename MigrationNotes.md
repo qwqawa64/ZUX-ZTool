@@ -1437,3 +1437,24 @@ Preserved:
 Verification:
 
 - `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the legacy XML cleanup.
+
+### Phase 6 Compose Reboot Menu
+
+The Home reboot target menu now uses Compose instead of a View `PopupMenu`.
+
+Implemented:
+
+- Replaced the Home restart `AndroidView`/`ImageButton` bridge with a Compose `IconButton`.
+- Replaced `PopupMenu` plus `reboot_menu.xml` with a `ZToolDialog`-backed reboot target chooser.
+- Deleted `app/src/main/res/menu/reboot_menu.xml`.
+
+Preserved behavior:
+
+- Root-only visibility for the reboot action.
+- Reboot targets: userspace, system, bootloader, recovery, and EDL.
+- Android 15+ userspace reboot unsupported Toast behavior.
+- Existing reboot confirmation dialog and shell command execution.
+
+Verification:
+
+- `.\gradlew.bat assembleDebug` succeeded on 2026-05-31 after the Compose reboot menu migration.
