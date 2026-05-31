@@ -3,10 +3,10 @@ package com.qimian233.ztool.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,14 +19,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.NavigationRailItem as MiuixNavigationRailItem
-import top.yukonga.miuix.kmp.basic.SmallTopAppBar as MiuixSmallTopAppBar
+import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehaviorType
+import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
+
+private val LocalMiuixTopAppBarScrollBehavior = staticCompositionLocalOf<MiuixScrollBehaviorType?> { null }
 
 @Composable
 fun ZToolScaffold(
@@ -35,12 +42,20 @@ fun ZToolScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = topBar,
-        floatingActionButton = floatingActionButton,
-        content = content
-    )
+    val useMiuix = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
+    val scrollBehavior = if (useMiuix) MiuixScrollBehavior() else null
+    val scaffoldModifier = scrollBehavior?.let {
+        modifier.nestedScroll(it.nestedScrollConnection)
+    } ?: modifier
+
+    CompositionLocalProvider(LocalMiuixTopAppBarScrollBehavior provides scrollBehavior) {
+        Scaffold(
+            modifier = scaffoldModifier,
+            topBar = topBar,
+            floatingActionButton = floatingActionButton,
+            content = content
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,13 +67,14 @@ fun ZToolTopAppBar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        MiuixSmallTopAppBar(
+        MiuixTopAppBar(
             title = title,
             modifier = modifier,
             color = MaterialTheme.colorScheme.surface,
             titleColor = MaterialTheme.colorScheme.onSurface,
             navigationIcon = navigationIcon,
-            actions = actions
+            actions = actions,
+            scrollBehavior = LocalMiuixTopAppBarScrollBehavior.current,
         )
         return
     }
