@@ -55,8 +55,8 @@ class HomeRepository(
         }
         return ModuleStatus(
             moduleVersion = version,
-            rootSource = context.getString(R.string.root_manager_prefix, cachedRootSource),
-            frameworkVersion = context.getString(R.string.xp_framework_prefix, cachedFrameworkVersion)
+            rootSource = cachedRootSource,
+            frameworkVersion = cachedFrameworkVersion
         )
     }
 
@@ -208,10 +208,7 @@ class HomeRepository(
                 @Suppress("DEPRECATION")
                 packageInfo.versionCode
             }
-            context.getString(
-                R.string.module_version_prefix,
-                "${packageInfo.versionName} ($versionCode)"
-            )
+            "${packageInfo.versionName} ($versionCode)"
         } catch (e: PackageManager.NameNotFoundException) {
             Log.e(TAG, "Failed to get module version: ${e.message}")
             context.getString(R.string.module_version_unknown)

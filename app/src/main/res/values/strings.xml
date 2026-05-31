@@ -81,15 +81,12 @@
     <string name="root_not_available">Root权限不可用</string>
     <string name="module_active">模块已激活</string>
     <string name="module_inactive">模块未激活</string>
-    <string name="module_version_prefix">模块版本：%s</string>
     <string name="module_version_unknown">模块版本: 未知</string>
     <string name="module_version_unknown_activity">模块版本: 未知 (Activity 为空)</string>
-    <string name="root_manager_prefix">Root管理器: %s</string>
     <string name="magisk_su_format">MagiskSU (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>
     <string name="apatch_format">APatch (%s)</string>
     <string name="unknown_root_available">Unknown (但Root可用)</string>
-    <string name="xp_framework_prefix">XP框架: %s</string>
     <string name="lsposed_standard_format">LSPosed %s (Standard)</string>
     <string name="lsposed_zygisk">LSPosed (Zygisk)</string>
     <string name="unknown_framework">Unknown</string>
