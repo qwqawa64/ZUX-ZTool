@@ -64,18 +64,31 @@ fun ZToolTopAppBar(
     title: String,
     modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {},
-    actions: @Composable RowScope.() -> Unit = {}
+    actions: @Composable RowScope.() -> Unit = {},
+    addNavIcon : Boolean = true
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        MiuixTopAppBar(
-            title = title,
-            modifier = modifier,
-            color = MaterialTheme.colorScheme.surface,
-            titleColor = MaterialTheme.colorScheme.onSurface,
-            navigationIcon = navigationIcon,
-            actions = actions,
-            scrollBehavior = LocalMiuixTopAppBarScrollBehavior.current,
-        )
+        if (addNavIcon) {
+            MiuixTopAppBar(
+                title = title,
+                modifier = modifier,
+                color = MaterialTheme.colorScheme.surface,
+                titleColor = MaterialTheme.colorScheme.onSurface,
+                navigationIcon = navigationIcon,
+                actions = actions,
+                scrollBehavior = LocalMiuixTopAppBarScrollBehavior.current,
+            )
+        } else {
+            MiuixTopAppBar(
+                title = title,
+                modifier = modifier,
+                color = MaterialTheme.colorScheme.surface,
+                titleColor = MaterialTheme.colorScheme.onSurface,
+                actions = actions,
+                scrollBehavior = LocalMiuixTopAppBarScrollBehavior.current,
+            )
+        }
+
         return
     }
 
