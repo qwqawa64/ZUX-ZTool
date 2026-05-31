@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -48,6 +47,7 @@ import com.qimian233.ztool.settingactivity.systemui.systemUISettings
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 
 @Composable
 fun FeaturesMainRoute() {
@@ -171,7 +171,14 @@ private fun FeaturesRoute(
     items: List<FeatureItem>,
     onFeatureClick: (FeatureItem) -> Unit
 ) {
-    ZToolScaffold { innerPadding ->
+    ZToolScaffold(
+        topBar = {
+            ZToolTopAppBar(
+                title = "功能管理",
+                addNavIcon = false
+            )
+        }
+    ) { innerPadding ->
         ZToolPageSurface(
             modifier = Modifier
                 .fillMaxSize()
@@ -185,11 +192,6 @@ private fun FeaturesRoute(
                     .widthIn(max = 1280.dp)
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.featuresFragment_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
                 Spacer(modifier = Modifier.height(24.dp))
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 320.dp),
