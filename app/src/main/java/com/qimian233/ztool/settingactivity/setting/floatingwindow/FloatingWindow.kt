@@ -2,7 +2,6 @@ package com.qimian233.ztool.settingactivity.setting.floatingwindow
 
 import android.content.Context
 import android.graphics.PixelFormat
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
@@ -417,7 +417,7 @@ private fun TutorialVideo(videoResId: Int) {
         update = { videoView ->
             if (videoView.tag != videoResId) {
                 videoView.tag = videoResId
-                videoView.setVideoURI(Uri.parse("android.resource://${videoView.context.packageName}/$videoResId"))
+                videoView.setVideoURI("android.resource://${videoView.context.packageName}/$videoResId".toUri())
                 videoView.start()
             } else if (!videoView.isPlaying) {
                 videoView.start()

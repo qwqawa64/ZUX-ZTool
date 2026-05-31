@@ -33,6 +33,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -300,7 +301,7 @@ private fun AiInputSettingsContent(
 private fun AiInputInfoDialog(
     onDismiss: () -> Unit
 ) {
-    var testInput by mutableStateOf("")
+    var testInput by remember { mutableStateOf("") }
 
     ZToolDialog(
         onDismissRequest = onDismiss,
@@ -336,7 +337,7 @@ private fun RestartSystemDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var countdown by mutableIntStateOf(3)
+    var countdown by remember { mutableIntStateOf(3) }
 
     LaunchedEffect(Unit) {
         while (countdown > 0) {

@@ -17,6 +17,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import androidx.core.content.edit
 
 class HomeRepository(
     private val context: Context,
@@ -147,9 +148,9 @@ class HomeRepository(
     fun ignoreUpdate(versionCode: Int) {
         context
             .getSharedPreferences(PREF_NAME_UPDATE, Context.MODE_PRIVATE)
-            .edit()
-            .putInt(KEY_IGNORE_VERSION, versionCode)
-            .apply()
+            .edit {
+                putInt(KEY_IGNORE_VERSION, versionCode)
+            }
     }
 
     fun executeReboot(command: String): RebootResult {

@@ -1,8 +1,9 @@
+@file:Suppress("PackageName")
+
 package com.qimian233.ztool.settingactivity.systemui.ControlCenter
 
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -128,7 +129,7 @@ class ControlCenterSettingsActivity : ComponentActivity() {
     }
 
     private fun copyDateFormatExample() {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText(
             getString(R.string.date_format_example),
             getString(R.string.date_format_sample)

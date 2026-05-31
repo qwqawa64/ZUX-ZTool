@@ -11,7 +11,6 @@ import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesU
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.ThemeMode
-import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.utils.FileManager
 import com.qimian233.ztool.viewmodel.SettingsUiState
 

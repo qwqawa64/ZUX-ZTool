@@ -433,7 +433,7 @@
     <string name="welcome_message">欢迎使用适配向导，请按照上面步骤提示操作: </string>
     <string name="step_1_instruction">步骤 1，共 4 步: 请打开您想要适配的APP，然后点击下一步</string>
     <string name="set_main_page_title">设置主界面</string>
-    <string name="step_2_instruction">步骤 2，共 4 步: 请在%1$s中停留在主界面（如：哔哩哔哩的首页），然后点击下一步</string>
+    <string name="step_2_instruction">步骤 2，共 4 步: 请在%1$s中停留在主界面，然后点击下一步</string>
     <string name="add_activities_title">添加其他在左半屏的界面</string>
     <string name="step_3_instruction">步骤 3，共 4 步: 现在，你可以添加多个需要选择其他需要显示在左侧的界面，定位到需要的界面，点击\"添加当前活动\"按钮</string>
     <string name="config_options_title">配置选项</string>

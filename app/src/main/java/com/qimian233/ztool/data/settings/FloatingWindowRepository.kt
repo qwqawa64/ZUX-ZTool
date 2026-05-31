@@ -132,7 +132,7 @@ class FloatingWindowRepository(
             var line = reader.readLine()
             while (line != null) {
                 if (line.contains("ResumedActivity") || line.contains("mFocusedActivity")) {
-                    val pattern = Pattern.compile("u0\\s+([^/]+)/([^\\s\\},]+)")
+                    val pattern = Pattern.compile("u0\\s+([^/]+)/([^\\s},]+)")
                     val matcher = pattern.matcher(line)
                     if (matcher.find()) {
                         val packageName = matcher.group(1).orEmpty()

@@ -125,6 +125,7 @@ class OtaSettingsRepository(
         return null
     }
 
+    @Suppress("SameParameterValue")
     private fun readFileWithRoot(filePath: String): String {
         val process = Runtime.getRuntime().exec("su")
         val os = DataOutputStream(process.outputStream)

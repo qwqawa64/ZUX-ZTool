@@ -85,6 +85,7 @@ fun ZToolDialog(
     )
 }
 
+@Suppress("unused")
 @Composable
 fun ZToolDialogSurface(
     content: @Composable () -> Unit

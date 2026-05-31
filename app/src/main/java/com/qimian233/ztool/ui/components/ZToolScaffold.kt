@@ -1,13 +1,11 @@
 package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,29 +27,6 @@ import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.NavigationRailItem as MiuixNavigationRailItem
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar as MiuixSmallTopAppBar
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ZToolTabletScaffold(
-    title: String,
-    navigationRail: @Composable ColumnScope.() -> Unit,
-    modifier: Modifier = Modifier,
-    actions: @Composable RowScope.() -> Unit = {},
-    content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
-) {
-    Row(modifier = modifier.fillMaxSize()) {
-        ZToolNavigationRail(content = navigationRail)
-        Scaffold(
-            topBar = {
-                ZToolTopAppBar(
-                    title = title,
-                    actions = actions
-                )
-            },
-            content = content
-        )
-    }
-}
 
 @Composable
 fun ZToolScaffold(

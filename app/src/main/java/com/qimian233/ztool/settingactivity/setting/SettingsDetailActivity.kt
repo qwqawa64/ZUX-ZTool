@@ -2,7 +2,6 @@ package com.qimian233.ztool.settingactivity.setting
 
 import android.app.AppOpsManager
 import android.app.Dialog
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -83,6 +81,7 @@ import com.qimian233.ztool.viewmodel.SettingsDetailOvConfigSelectionResult
 import com.qimian233.ztool.viewmodel.SettingsDetailRestoreResult
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import com.qimian233.ztool.viewmodel.SettingsDetailViewModel
+import androidx.core.net.toUri
 
 class SettingsDetailActivity : ComponentActivity() {
 
@@ -308,13 +307,13 @@ class SettingsDetailActivity : ComponentActivity() {
     private fun requestOverlayPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName")
+            "package:$packageName".toUri()
         )
         overlayPermissionLauncher.launch(intent)
     }
 
     private fun hasUsageStatsPermission(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val appOps = getSystemService(APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
             android.os.Process.myUid(),
@@ -462,7 +461,7 @@ class SettingsDetailActivity : ComponentActivity() {
         }
         try {
             fontPickerLauncher.launch(Intent.createChooser(intent, getString(R.string.select_ttf_file)))
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Toast.makeText(this, R.string.no_file_manager_found, Toast.LENGTH_SHORT).show()
         }
     }
@@ -544,8 +543,7 @@ class SettingsDetailActivity : ComponentActivity() {
         hideFloatingWindow()
     }
 
-    companion object {
-    }
+    companion object;
 
     private fun showMessageDialog(
         title: String,

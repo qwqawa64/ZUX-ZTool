@@ -13,6 +13,7 @@ import com.qimian233.ztool.utils.MagiskModuleManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import java.io.File
+import androidx.core.content.edit
 
 class SettingsDetailRepository(
     private val context: Context,
@@ -157,7 +158,7 @@ class SettingsDetailRepository(
     }
 
     private fun saveFlashedConfigs(set: Set<String>) {
-        moduleSettings.edit().putStringSet(KEY_FLASHED_CONFIGS, HashSet(set)).apply()
+        moduleSettings.edit { putStringSet(KEY_FLASHED_CONFIGS, HashSet(set)) }
     }
 
     private fun isForceResizableActivitiesEnabled(): Boolean {

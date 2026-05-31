@@ -9,6 +9,7 @@ import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesU
 import com.qimian233.ztool.hook.modules.systemui.CustomDateFormatter
 import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
 import java.util.Date
+import androidx.core.content.edit
 
 class StatusBarSettingsRepository(
     private val context: Context
@@ -99,13 +100,13 @@ class StatusBarSettingsRepository(
 
         saveBooleanSetting(KEY_NOTIFICATION_ICON_LIMIT, true)
         if (option == context.getString(R.string.notify_num_unlimited)) {
-            notifyNumSizePrefs.edit().putInt(KEY_NOTIFY_NUM_SIZE, 100).apply()
+            notifyNumSizePrefs.edit { putInt(KEY_NOTIFY_NUM_SIZE, 100) }
             return true
         }
 
         val optionValue = option.toIntOrNull()
         return if (optionValue != null) {
-            notifyNumSizePrefs.edit().putInt(KEY_NOTIFY_NUM_SIZE, optionValue).apply()
+            notifyNumSizePrefs.edit { putInt(KEY_NOTIFY_NUM_SIZE, optionValue) }
             true
         } else {
             Log.e(TAG, "Invalid notification number option: $option")
@@ -127,9 +128,11 @@ class StatusBarSettingsRepository(
                 "com.qimian233.ztool",
                 Context.CONTEXT_IGNORE_SECURITY
             )
+            @Suppress("DEPRECATION")
             moduleContext.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_WORLD_READABLE)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get module preferences, using fallback", e)
+            @Suppress("DEPRECATION")
             context.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_WORLD_READABLE)
         }
     }

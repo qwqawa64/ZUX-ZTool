@@ -52,6 +52,7 @@ class MagicWindowSearchRepository(
         return results
     }
 
+    @Suppress("SameParameterValue")
     private fun loadJsonFromAsset(fileName: String): String? {
         return try {
             context.assets.open(fileName).bufferedReader().use { it.readText() }
@@ -61,6 +62,7 @@ class MagicWindowSearchRepository(
         }
     }
 
+    @Suppress("SameParameterValue")
     private fun readFileWithRoot(filePath: String): String? {
         var process: Process? = null
         return try {

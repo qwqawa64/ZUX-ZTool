@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
+import androidx.core.content.edit
 
 class ThemePreferencesRepository(
     context: Context
@@ -25,39 +26,40 @@ class ThemePreferencesRepository(
         )
     }
 
+    @Suppress("unused")
     fun saveSettings(settings: ZToolThemeSettings) {
-        prefs.edit()
-            .putString(KEY_FRONTEND_STYLE, settings.frontendStyle.name)
-            .putString(KEY_THEME_MODE, settings.themeMode.name)
-            .putBoolean(KEY_DYNAMIC_COLOR_ENABLED, settings.dynamicColorEnabled)
-            .putBoolean(KEY_AMOLED_BLACK_ENABLED, settings.amoledBlackEnabled)
-            .putBoolean(KEY_MANUAL_COLOR_ENABLED, settings.manualColorEnabled)
-            .putLong(KEY_MANUAL_SEED_COLOR, settings.manualSeedColor)
-            .apply()
+        prefs.edit {
+            putString(KEY_FRONTEND_STYLE, settings.frontendStyle.name)
+                .putString(KEY_THEME_MODE, settings.themeMode.name)
+                .putBoolean(KEY_DYNAMIC_COLOR_ENABLED, settings.dynamicColorEnabled)
+                .putBoolean(KEY_AMOLED_BLACK_ENABLED, settings.amoledBlackEnabled)
+                .putBoolean(KEY_MANUAL_COLOR_ENABLED, settings.manualColorEnabled)
+                .putLong(KEY_MANUAL_SEED_COLOR, settings.manualSeedColor)
+        }
     }
 
     fun saveFrontendStyle(style: FrontendStyle) {
-        prefs.edit().putString(KEY_FRONTEND_STYLE, style.name).apply()
+        prefs.edit { putString(KEY_FRONTEND_STYLE, style.name) }
     }
 
     fun saveThemeMode(mode: ThemeMode) {
-        prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
+        prefs.edit { putString(KEY_THEME_MODE, mode.name) }
     }
 
     fun saveDynamicColorEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_DYNAMIC_COLOR_ENABLED, enabled).apply()
+        prefs.edit { putBoolean(KEY_DYNAMIC_COLOR_ENABLED, enabled) }
     }
 
     fun saveAmoledBlackEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_AMOLED_BLACK_ENABLED, enabled).apply()
+        prefs.edit { putBoolean(KEY_AMOLED_BLACK_ENABLED, enabled) }
     }
 
     fun saveManualColorEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_MANUAL_COLOR_ENABLED, enabled).apply()
+        prefs.edit { putBoolean(KEY_MANUAL_COLOR_ENABLED, enabled) }
     }
 
     fun saveManualSeedColor(color: Long) {
-        prefs.edit().putLong(KEY_MANUAL_SEED_COLOR, color).apply()
+        prefs.edit { putLong(KEY_MANUAL_SEED_COLOR, color) }
     }
 
     fun observeSettings(onChanged: (ZToolThemeSettings) -> Unit): () -> Unit {
@@ -72,7 +74,7 @@ class ThemePreferencesRepository(
         }
     }
 
-    private inline fun <reified T : Enum<T>> android.content.SharedPreferences.getEnum(
+    private inline fun <reified T : Enum<T>> SharedPreferences.getEnum(
         key: String,
         defaultValue: T
     ): T {

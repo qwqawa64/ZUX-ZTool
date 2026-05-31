@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -333,9 +332,9 @@ private fun buildPackageDetails(packageInfo: PackageInfo): String {
             append("\n")
         }
 
-        appendStringList(stringResource(R.string.force_fullscreen_pages), packageInfo.forceFullscreenPages)
-        appendStringList(stringResource(R.string.transparent_activities), packageInfo.transActivities)
-        appendStringList(stringResource(R.string.left_transparent_activities), packageInfo.leftTransActivities)
+        AppendStringList(stringResource(R.string.force_fullscreen_pages), packageInfo.forceFullscreenPages)
+        AppendStringList(stringResource(R.string.transparent_activities), packageInfo.transActivities)
+        AppendStringList(stringResource(R.string.left_transparent_activities), packageInfo.leftTransActivities)
 
         append(stringResource(R.string.split_screen_config_header)).append("\n\n")
         append(stringResource(R.string.adjust_window_ratio)).append(packageInfo.showEmbeddingDivider).append("\n")
@@ -347,7 +346,7 @@ private fun buildPackageDetails(packageInfo: PackageInfo): String {
 }
 
 @Composable
-private fun StringBuilder.appendStringList(
+private fun StringBuilder.AppendStringList(
     title: String,
     values: List<String>
 ) {
