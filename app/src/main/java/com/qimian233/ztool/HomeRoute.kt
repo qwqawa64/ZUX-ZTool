@@ -25,11 +25,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
@@ -45,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,6 +60,7 @@ import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.HomeViewModel
 import com.qimian233.ztool.viewmodel.RebootTarget
@@ -206,7 +207,22 @@ private fun HomeScreen(
 ) {
     var showRebootTargets by remember { mutableStateOf(false) }
 
-    ZToolScaffold { innerPadding ->
+    ZToolScaffold (
+        topBar = {
+            ZToolTopAppBar(
+                title = stringResource(R.string.homeFragment_title),
+                addNavIcon = false
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showRebootTargets = true }) {
+                Icon(
+                    imageVector = Icons.Rounded.Refresh,
+                    contentDescription = null
+                )
+            }
+        }
+    ) { innerPadding ->
         ZToolPageSurface(
             modifier = Modifier
                 .fillMaxSize()
@@ -221,29 +237,6 @@ private fun HomeScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.homeFragment_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (state.isRootAvailable) {
-                        IconButton(
-                            onClick = { showRebootTargets = true },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_restart_menu),
-                                contentDescription = stringResource(R.string.reboot_menu_description),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -294,7 +287,10 @@ private fun HomeScreen(
 
     if (showRebootTargets) {
         RebootTargetDialog(
-            onDismiss = { },
+            onDismiss = {
+                @Suppress("AssignedValueIsNeverRead")
+                showRebootTargets = false
+            },
             onTargetSelected = { target ->
                 if (target == RebootTarget.Userspace &&
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
