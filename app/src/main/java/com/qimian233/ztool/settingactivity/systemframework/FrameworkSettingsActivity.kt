@@ -77,7 +77,7 @@ class FrameworkSettingsActivity : ComponentActivity() {
 
             ZToolTheme {
                 FrameworkSettingsScreen(
-                    title = appName + stringResource(R.string.framework_settings_title_suffix),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onRestart = viewModel::showRestartConfirmDialog,

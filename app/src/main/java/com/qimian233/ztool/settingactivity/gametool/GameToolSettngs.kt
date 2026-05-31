@@ -74,7 +74,7 @@ class GameToolSettngs : ComponentActivity() {
 
             ZToolTheme {
                 GameToolSettingsScreen(
-                    title = appName + stringResource(R.string.game_tool_settings_title_suffix),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onRestart = viewModel::showRestartConfirmDialog,

@@ -65,7 +65,7 @@ class packageinstallersettings : ComponentActivity() {
 
             ZToolTheme {
                 PackageInstallerSettingsScreen(
-                    title = appName + stringResource(R.string.detailed_settings_suffix),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onRestart = viewModel::showRestartConfirmDialog,

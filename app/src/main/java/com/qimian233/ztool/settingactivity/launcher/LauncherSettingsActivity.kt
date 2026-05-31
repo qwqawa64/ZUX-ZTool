@@ -77,7 +77,7 @@ class LauncherSettingsActivity : ComponentActivity() {
 
             ZToolTheme {
                 LauncherSettingsScreen(
-                    title = appName + stringResource(R.string.launcher_settings_title_suffix),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onRestart = viewModel::showRestartConfirmDialog,

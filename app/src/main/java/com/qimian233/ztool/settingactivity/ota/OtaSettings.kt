@@ -80,7 +80,7 @@ class OtaSettings : ComponentActivity() {
 
             ZToolTheme {
                 OtaSettingsScreen(
-                    title = appName + stringResource(R.string.ota_settings_title_suffix),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,

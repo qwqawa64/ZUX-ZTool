@@ -112,7 +112,7 @@ class SettingsDetailActivity : ComponentActivity() {
 
             ZToolTheme {
                 SettingsDetailScreen(
-                    title = appName + stringResource(R.string.settings_detail_title_suffix),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onRemoveBlacklistChanged = viewModel::setRemoveBlacklist,

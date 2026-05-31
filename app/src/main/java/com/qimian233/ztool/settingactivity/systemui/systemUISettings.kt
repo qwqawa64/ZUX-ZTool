@@ -78,7 +78,7 @@ class systemUISettings : ComponentActivity() {
 
             ZToolTheme {
                 SystemUiSettingsScreen(
-                    title = appName + stringResource(R.string.SystemUIActionBar),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onOpenStatusBar = {

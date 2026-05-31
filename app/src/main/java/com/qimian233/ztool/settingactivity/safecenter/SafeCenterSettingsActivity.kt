@@ -66,7 +66,7 @@ class SafeCenterSettingsActivity : ComponentActivity() {
 
             ZToolTheme {
                 SafeCenterSettingsScreen(
-                    title = appName + stringResource(R.string.safe_center_settings_title_suffix),
+                    title = appName,
                     state = uiState,
                     onBack = ::finish,
                     onRestart = viewModel::showRestartConfirmDialog,
