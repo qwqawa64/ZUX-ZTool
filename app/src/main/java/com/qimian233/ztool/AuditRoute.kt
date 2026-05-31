@@ -57,7 +57,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -71,6 +70,7 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.AuditUiState
 import com.qimian233.ztool.viewmodel.AuditViewModel
 import com.qimian233.ztool.viewmodel.ModuleOption
@@ -203,6 +203,12 @@ private fun AuditScreen(
     val scope = rememberCoroutineScope()
 
     ZToolScaffold(
+        topBar = {
+            ZToolTopAppBar(
+                title = stringResource(R.string.logsFragment_title),
+                addNavIcon = false
+            )
+        },
         floatingActionButton = {
             if (state.filteredLogEntries.isNotEmpty()) {
                 ExtendedFloatingActionButton(
@@ -227,16 +233,13 @@ private fun AuditScreen(
                     .fillMaxSize()
                     .padding(horizontal = 20.dp, vertical = 18.dp)
             ) {
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = stringResource(R.string.logsFragment_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
                     Text(
                         text = state.statsText.ifEmpty { stringResource(R.string.placeHolderLogStat) },
                         style = MaterialTheme.typography.bodySmall,
