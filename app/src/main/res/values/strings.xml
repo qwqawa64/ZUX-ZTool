@@ -19,9 +19,9 @@
     <string name="no_tip_next_time">下次将不再提示此内容</string>
     <string name="loadingUserAPP">加载用户应用列表…</string>
     <string name="unknown">未知</string>
-    <string name="version">Version</string>
-    <string name="root">Root</string>
-    <string name="framework">Framework</string>
+    <string name="version">模块版本</string>
+    <string name="root">Root 来源</string>
+    <string name="framework">框架信息</string>
     <string name="multiply">×</string>
     <string name="misc">杂项</string>
     <string name="app_icon">应用图标</string>
