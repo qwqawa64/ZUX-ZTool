@@ -58,6 +58,7 @@ import com.qimian233.ztool.ui.components.ZToolDropdownField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
@@ -224,7 +225,14 @@ private fun SettingsRoute(
     onManualSeedColorEditingFinished: () -> Unit,
     onAbout: () -> Unit
 ) {
-    ZToolScaffold { innerPadding ->
+    ZToolScaffold (
+        topBar = {
+            ZToolTopAppBar(
+                title = stringResource(R.string.settingsFragment_title),
+                addNavIcon = false
+            )
+        }
+    ) { innerPadding ->
         ZToolPageSurface(
             modifier = Modifier
                 .fillMaxSize()
@@ -238,11 +246,6 @@ private fun SettingsRoute(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 32.dp, vertical = 32.dp)
         ) {
-            Text(
-                text = stringResource(R.string.settingsFragment_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
             Spacer(modifier = Modifier.height(24.dp))
 
             SettingsSection(title = stringResource(R.string.backupAndRestore)) {
