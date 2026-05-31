@@ -9,9 +9,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
@@ -47,7 +47,7 @@ fun ZToolCard(
             colors = MiuixCardDefaults.defaultColors(
                 color = containerColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
-            )
+            ),
         ) {
             content()
         }
@@ -56,7 +56,7 @@ fun ZToolCard(
 
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
