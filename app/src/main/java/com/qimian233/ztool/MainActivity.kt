@@ -1,8 +1,6 @@
 package com.qimian233.ztool
 
-import android.content.Context
 import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Bundle
 import android.view.Window
 import android.widget.Toast
@@ -20,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,8 +29,8 @@ import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.theme.ThemeMode
-import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.utils.CountdownDialog
 
 class MainActivity : ComponentActivity(),
@@ -99,10 +98,10 @@ class MainActivity : ComponentActivity(),
     }
 
     override fun onPositiveButtonClick() {
-        getSharedPreferences("ZToolPrefs", Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean("isFirstLaunch", false)
-            .apply()
+        getSharedPreferences("ZToolPrefs", MODE_PRIVATE)
+            .edit {
+                putBoolean("isFirstLaunch", false)
+            }
         Toast.makeText(this, getString(R.string.user_confirm_agreement), Toast.LENGTH_SHORT).show()
     }
 
@@ -136,7 +135,7 @@ class MainActivity : ComponentActivity(),
     }
 
     override fun onEnvironmentStateChanged(environmentReady: Boolean) {
-        val previousState = isEnvironmentReady
+        isEnvironmentReady
         isEnvironmentReady = environmentReady
 
         if (!environmentReady && currentRoute != MainRoute.Home) {
@@ -166,7 +165,7 @@ class MainActivity : ComponentActivity(),
     }
 
     private fun maybeShowAgreementDialog() {
-        val prefs = getSharedPreferences("ZToolPrefs", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("ZToolPrefs", MODE_PRIVATE)
         if (!prefs.getBoolean("isFirstLaunch", true)) return
 
         CountdownDialog.Builder(this, this).apply {
@@ -182,10 +181,6 @@ class MainActivity : ComponentActivity(),
 
     private fun setupSystemBars(settings: ZToolThemeSettings) {
         val window: Window = window
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = Color.TRANSPARENT
-
         val isDarkTheme = resolveDarkTheme(settings)
 
         WindowCompat.getInsetsController(window, window.decorView).apply {
