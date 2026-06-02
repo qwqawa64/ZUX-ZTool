@@ -758,6 +758,9 @@
     <string name="theme_mode_follow_system">跟随系统</string>
     <string name="theme_mode_light">亮色</string>
     <string name="theme_mode_dark">暗色</string>
+    <string name="material_palette_mode_title">Material 调色板</string>
+    <string name="material_palette_mode_2021">2021 Material You</string>
+    <string name="material_palette_mode_2025">2025 Expressive</string>
     <string name="dynamic_color_title">动态取色</string>
     <string name="dynamic_color_summary">使用莫奈取色，需要 Android 12+</string>
     <string name="manual_color_title">手动指定种子色</string>

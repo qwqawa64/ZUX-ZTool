@@ -3,6 +3,7 @@ package com.qimian233.ztool.viewmodel
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.qimian233.ztool.ui.theme.MaterialPaletteMode
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.ThemeMode
@@ -84,6 +85,13 @@ class SettingsViewModel(
         repository.setThemeMode(mode)
         _uiState.value = _uiState.value.copy(
             themeSettings = _uiState.value.themeSettings.copy(themeMode = mode)
+        )
+    }
+
+    fun setMaterialPaletteMode(mode: MaterialPaletteMode) {
+        repository.setMaterialPaletteMode(mode)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(materialPaletteMode = mode)
         )
     }
 

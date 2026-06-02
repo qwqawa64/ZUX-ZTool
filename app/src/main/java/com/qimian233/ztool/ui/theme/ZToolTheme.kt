@@ -82,6 +82,50 @@ private val Md3eDarkColors = darkColorScheme(
     outline = Color(0xFF8D9199),
 )
 
+private val Md3YouLightColors = lightColorScheme(
+    primary = Color(0xFF00639B),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFCFE5FF),
+    onPrimaryContainer = Color(0xFF001D32),
+    secondary = Color(0xFF526070),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFD5E4F7),
+    onSecondaryContainer = Color(0xFF0E1D2A),
+    tertiary = Color(0xFF68587A),
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFEEDBFF),
+    onTertiaryContainer = Color(0xFF231533),
+    background = Color(0xFFFCFCFF),
+    onBackground = Color(0xFF1A1C1E),
+    surface = Color(0xFFFCFCFF),
+    onSurface = Color(0xFF1A1C1E),
+    surfaceVariant = Color(0xFFDEE3EB),
+    onSurfaceVariant = Color(0xFF42474E),
+    outline = Color(0xFF72787E),
+)
+
+private val Md3YouDarkColors = darkColorScheme(
+    primary = Color(0xFF99CBFF),
+    onPrimary = Color(0xFF003353),
+    primaryContainer = Color(0xFF004A75),
+    onPrimaryContainer = Color(0xFFCFE5FF),
+    secondary = Color(0xFFB9C8DA),
+    onSecondary = Color(0xFF243240),
+    secondaryContainer = Color(0xFF3A4857),
+    onSecondaryContainer = Color(0xFFD5E4F7),
+    tertiary = Color(0xFFD3BFE6),
+    onTertiary = Color(0xFF382A49),
+    tertiaryContainer = Color(0xFF4F4161),
+    onTertiaryContainer = Color(0xFFEEDBFF),
+    background = Color(0xFF1A1C1E),
+    onBackground = Color(0xFFE2E2E6),
+    surface = Color(0xFF1A1C1E),
+    onSurface = Color(0xFFE2E2E6),
+    surfaceVariant = Color(0xFF42474E),
+    onSurfaceVariant = Color(0xFFC2C7CE),
+    outline = Color(0xFF8C9198),
+)
+
 @Composable
 fun ZToolTheme(
     style: FrontendStyle = FrontendStyle.Material3Expressive,
@@ -239,15 +283,18 @@ private fun resolveZToolColorScheme(
     val baseScheme = when {
         settings.manualColorEnabled -> manualColorScheme(
             seedColor = colorFromArgbLong(settings.manualSeedColor),
-            darkTheme = darkTheme
+            darkTheme = darkTheme,
+            paletteMode = settings.materialPaletteMode
         )
         settings.dynamicColorEnabled -> dynamicColorScheme() ?: defaultColorScheme(
             style = settings.frontendStyle,
-            darkTheme = darkTheme
+            darkTheme = darkTheme,
+            paletteMode = settings.materialPaletteMode
         )
         else -> defaultColorScheme(
             style = settings.frontendStyle,
-            darkTheme = darkTheme
+            darkTheme = darkTheme,
+            paletteMode = settings.materialPaletteMode
         )
     }
 
@@ -258,17 +305,30 @@ private fun resolveZToolColorScheme(
     }
 }
 
-private fun defaultColorScheme(style: FrontendStyle, darkTheme: Boolean): ColorScheme {
+private fun defaultColorScheme(
+    style: FrontendStyle,
+    darkTheme: Boolean,
+    paletteMode: MaterialPaletteMode
+): ColorScheme {
     return when (style) {
-        FrontendStyle.Material3Expressive,
+        FrontendStyle.Material3Expressive -> when (paletteMode) {
+            MaterialPaletteMode.MaterialYou2021 -> if (darkTheme) Md3YouDarkColors else Md3YouLightColors
+            MaterialPaletteMode.Expressive2025 -> if (darkTheme) Md3eDarkColors else Md3eLightColors
+        }
         FrontendStyle.Miuix -> if (darkTheme) Md3eDarkColors else Md3eLightColors
     }
 }
 
-private fun manualColorScheme(seedColor: Color, darkTheme: Boolean): ColorScheme {
+private fun manualColorScheme(
+    seedColor: Color,
+    darkTheme: Boolean,
+    paletteMode: MaterialPaletteMode
+): ColorScheme {
     val primary = if (darkTheme) lerp(seedColor, Color.White, 0.35f) else seedColor
-    val secondary = lerp(primary, if (darkTheme) Color.White else Color.Black, 0.35f)
-    val tertiary = lerp(primary, Color(0xFF9C27B0), 0.35f)
+    val secondaryBlend = if (paletteMode == MaterialPaletteMode.MaterialYou2021) 0.48f else 0.35f
+    val tertiaryBlend = if (paletteMode == MaterialPaletteMode.MaterialYou2021) 0.24f else 0.35f
+    val secondary = lerp(primary, if (darkTheme) Color.White else Color.Black, secondaryBlend)
+    val tertiary = lerp(primary, Color(0xFF9C27B0), tertiaryBlend)
     val surface = if (darkTheme) Color(0xFF111418) else Color(0xFFFAF8FF)
     val onSurface = if (darkTheme) Color(0xFFE1E2E8) else Color(0xFF191C20)
 

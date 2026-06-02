@@ -60,6 +60,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.MaterialPaletteMode
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.viewmodel.SettingsUiState
@@ -136,6 +137,7 @@ fun SettingsMainRoute() {
         onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
         onFrontendStyleChanged = viewModel::setFrontendStyle,
         onThemeModeChanged = viewModel::setThemeMode,
+        onMaterialPaletteModeChanged = viewModel::setMaterialPaletteMode,
         onDynamicColorChanged = viewModel::setDynamicColorEnabled,
         onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
         onManualColorChanged = viewModel::setManualColorEnabled,
@@ -218,6 +220,7 @@ private fun SettingsRoute(
     onHomepageYiyanChanged: (Boolean) -> Unit,
     onFrontendStyleChanged: (FrontendStyle) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
+    onMaterialPaletteModeChanged: (MaterialPaletteMode) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
@@ -271,6 +274,7 @@ private fun SettingsRoute(
                 manualSeedColorError = state.manualSeedColorError,
                 onFrontendStyleChanged = onFrontendStyleChanged,
                 onThemeModeChanged = onThemeModeChanged,
+                onMaterialPaletteModeChanged = onMaterialPaletteModeChanged,
                 onDynamicColorChanged = onDynamicColorChanged,
                 onAmoledBlackChanged = onAmoledBlackChanged,
                 onManualColorChanged = onManualColorChanged,
@@ -322,6 +326,7 @@ private fun ThemeSettingsSection(
     manualSeedColorError: Boolean,
     onFrontendStyleChanged: (FrontendStyle) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
+    onMaterialPaletteModeChanged: (MaterialPaletteMode) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
@@ -352,6 +357,16 @@ private fun ThemeSettingsSection(
             label = stringResource(R.string.theme_mode_dark)
         )
     )
+    val paletteModeOptions = listOf(
+        LabeledOption(
+            value = MaterialPaletteMode.MaterialYou2021,
+            label = stringResource(R.string.material_palette_mode_2021)
+        ),
+        LabeledOption(
+            value = MaterialPaletteMode.Expressive2025,
+            label = stringResource(R.string.material_palette_mode_2025)
+        )
+    )
 
     SettingsSection(title = stringResource(R.string.app_ui_theme_settings)) {
         DropdownSettingRow(
@@ -368,6 +383,15 @@ private fun ThemeSettingsSection(
             optionLabel = { it.label },
             onOptionSelected = { onThemeModeChanged(it.value) }
         )
+        if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
+            DropdownSettingRow(
+                title = stringResource(R.string.material_palette_mode_title),
+                value = paletteModeOptions.first { it.value == settings.materialPaletteMode }.label,
+                options = paletteModeOptions,
+                optionLabel = { it.label },
+                onOptionSelected = { onMaterialPaletteModeChanged(it.value) }
+            )
+        }
         ZToolSwitchRow(
             title = stringResource(R.string.dynamic_color_title),
             summary = stringResource(R.string.dynamic_color_summary),

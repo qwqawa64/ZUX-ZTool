@@ -45,9 +45,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -55,6 +57,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.data.home.HomeRepository
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -75,7 +78,7 @@ fun HomeMainRoute(
     onEnvironmentStateChanged: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val activity = context as MainActivity
     val viewModel = remember {
         val repository = HomeRepository(
@@ -215,11 +218,13 @@ private fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showRebootTargets = true }) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = null
-                )
+            if (state.isRootAvailable) {
+                FloatingActionButton(onClick = { showRebootTargets = true }) {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = null
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -279,7 +284,7 @@ private fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -460,7 +465,7 @@ private fun ModuleStatusCard(state: HomeUiState) {
 private fun InfoBlock(
     label: String,
     value: String,
-    colorOnContainer: androidx.compose.ui.graphics.Color
+    colorOnContainer: Color
 ) {
     Column(modifier = Modifier.widthIn(min = 180.dp, max = 320.dp)) {
         Text(
