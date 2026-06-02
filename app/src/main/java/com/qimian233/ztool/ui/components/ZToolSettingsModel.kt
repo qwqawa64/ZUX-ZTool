@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -19,8 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 
 data class SettingSection(
     val title: String? = null,
@@ -137,6 +142,15 @@ fun ZToolSettingsSection(
     modifier: Modifier = Modifier,
     titlePadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 8.dp)
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
+        MaterialExpressiveSettingsSection(
+            section = section,
+            modifier = modifier,
+            titlePadding = titlePadding
+        )
+        return
+    }
+
     ZToolCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
@@ -159,6 +173,76 @@ fun ZToolSettingsSection(
                 ZToolSettingItem(item = item)
             }
         }
+    }
+}
+
+@Composable
+private fun MaterialExpressiveSettingsSection(
+    section: SettingSection,
+    modifier: Modifier = Modifier,
+    titlePadding: PaddingValues
+) {
+    ZToolCard(
+        modifier = modifier.fillMaxWidth(),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            if (section.title != null) {
+                Text(
+                    text = section.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(titlePadding)
+                )
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                section.items.forEachIndexed { index, item ->
+                    MaterialExpressiveSettingsItemSurface(
+                        index = index,
+                        count = section.items.size
+                    ) {
+                        ZToolSettingItem(item = item)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MaterialExpressiveSettingsItemSurface(
+    index: Int,
+    count: Int,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = expressiveItemShape(index = index, count = count),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        content = content
+    )
+}
+
+private fun expressiveItemShape(index: Int, count: Int): Shape {
+    if (count <= 1) {
+        return RoundedCornerShape(28.dp)
+    }
+
+    return when (index) {
+        0 -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
+        count - 1 -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
+        else -> RoundedCornerShape(16.dp)
     }
 }
 

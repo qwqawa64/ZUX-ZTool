@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,8 +39,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -60,6 +63,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.MaterialPaletteMode
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
@@ -252,18 +256,23 @@ private fun SettingsRoute(
             Spacer(modifier = Modifier.height(24.dp))
 
             SettingsSection(title = stringResource(R.string.backupAndRestore)) {
-                SettingsActionRow(
-                    title = stringResource(R.string.backupConfigToFile),
-                    onClick = onBackup
-                )
-                SettingsActionRow(
-                    title = stringResource(R.string.restoreConfigFromFile),
-                    onClick = onRestore
-                )
-                SettingsActionRow(
-                    title = stringResource(R.string.restoreDefaultConfig),
-                    onClick = onRestoreDefault
-                )
+                ExpressiveSectionItems(count = 3) { itemModifier ->
+                    SettingsActionRow(
+                        title = stringResource(R.string.backupConfigToFile),
+                        onClick = onBackup,
+                        modifier = itemModifier()
+                    )
+                    SettingsActionRow(
+                        title = stringResource(R.string.restoreConfigFromFile),
+                        onClick = onRestore,
+                        modifier = itemModifier()
+                    )
+                    SettingsActionRow(
+                        title = stringResource(R.string.restoreDefaultConfig),
+                        onClick = onRestoreDefault,
+                        modifier = itemModifier()
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -285,33 +294,41 @@ private fun SettingsRoute(
             Spacer(modifier = Modifier.height(16.dp))
 
             SettingsSection(title = stringResource(R.string.moreSettings)) {
-                ZToolSwitchRow(
-                    title = stringResource(R.string.enableLogService),
-                    summary = stringResource(R.string.enableLogServiceDescription),
-                    checked = state.isLogServiceEnabled,
-                    onCheckedChange = onLogServiceChanged
-                )
-                ZToolSwitchRow(
-                    title = stringResource(R.string.enableDetailedLogging),
-                    summary = stringResource(R.string.enableDetailedLoggingDescription),
-                    checked = state.isDetailedLoggingEnabled,
-                    onCheckedChange = onDetailedLoggingChanged
-                )
-                ZToolSwitchRow(
-                    title = stringResource(R.string.enableHomePageYiyan),
-                    summary = stringResource(R.string.enableHomePageYiyanSummary),
-                    checked = state.isHomepageYiyanEnabled,
-                    onCheckedChange = onHomepageYiyanChanged
-                )
+                ExpressiveSectionItems(count = 3) { itemModifier ->
+                    ZToolSwitchRow(
+                        title = stringResource(R.string.enableLogService),
+                        summary = stringResource(R.string.enableLogServiceDescription),
+                        checked = state.isLogServiceEnabled,
+                        onCheckedChange = onLogServiceChanged,
+                        modifier = itemModifier()
+                    )
+                    ZToolSwitchRow(
+                        title = stringResource(R.string.enableDetailedLogging),
+                        summary = stringResource(R.string.enableDetailedLoggingDescription),
+                        checked = state.isDetailedLoggingEnabled,
+                        onCheckedChange = onDetailedLoggingChanged,
+                        modifier = itemModifier()
+                    )
+                    ZToolSwitchRow(
+                        title = stringResource(R.string.enableHomePageYiyan),
+                        summary = stringResource(R.string.enableHomePageYiyanSummary),
+                        checked = state.isHomepageYiyanEnabled,
+                        onCheckedChange = onHomepageYiyanChanged,
+                        modifier = itemModifier()
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             SettingsSection {
-                SettingsActionRow(
-                    title = stringResource(R.string.showAboutPage),
-                    onClick = onAbout
-                )
+                ExpressiveSectionItems(count = 1) { itemModifier ->
+                    SettingsActionRow(
+                        title = stringResource(R.string.showAboutPage),
+                        onClick = onAbout,
+                        modifier = itemModifier()
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -369,57 +386,69 @@ private fun ThemeSettingsSection(
     )
 
     SettingsSection(title = stringResource(R.string.app_ui_theme_settings)) {
-        DropdownSettingRow(
-            title = stringResource(R.string.frontend_style_title),
-            value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
-            options = frontendStyleOptions,
-            optionLabel = { it.label },
-            onOptionSelected = { onFrontendStyleChanged(it.value) }
-        )
-        DropdownSettingRow(
-            title = stringResource(R.string.theme_mode_title),
-            value = themeModeOptions.first { it.value == settings.themeMode }.label,
-            options = themeModeOptions,
-            optionLabel = { it.label },
-            onOptionSelected = { onThemeModeChanged(it.value) }
-        )
-        if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
+        val themeItemCount = 5 +
+            if (settings.frontendStyle == FrontendStyle.Material3Expressive) 1 else 0 +
+            if (settings.manualColorEnabled) 1 else 0
+        ExpressiveSectionItems(count = themeItemCount) { itemModifier ->
             DropdownSettingRow(
-                title = stringResource(R.string.material_palette_mode_title),
-                value = paletteModeOptions.first { it.value == settings.materialPaletteMode }.label,
-                options = paletteModeOptions,
+                title = stringResource(R.string.frontend_style_title),
+                value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
+                options = frontendStyleOptions,
                 optionLabel = { it.label },
-                onOptionSelected = { onMaterialPaletteModeChanged(it.value) }
+                onOptionSelected = { onFrontendStyleChanged(it.value) },
+                modifier = itemModifier()
+            )
+            DropdownSettingRow(
+                title = stringResource(R.string.theme_mode_title),
+                value = themeModeOptions.first { it.value == settings.themeMode }.label,
+                options = themeModeOptions,
+                optionLabel = { it.label },
+                onOptionSelected = { onThemeModeChanged(it.value) },
+                modifier = itemModifier()
+            )
+            if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
+                DropdownSettingRow(
+                    title = stringResource(R.string.material_palette_mode_title),
+                    value = paletteModeOptions.first { it.value == settings.materialPaletteMode }.label,
+                    options = paletteModeOptions,
+                    optionLabel = { it.label },
+                    onOptionSelected = { onMaterialPaletteModeChanged(it.value) },
+                    modifier = itemModifier()
+                )
+            }
+            ZToolSwitchRow(
+                title = stringResource(R.string.dynamic_color_title),
+                summary = stringResource(R.string.dynamic_color_summary),
+                checked = settings.dynamicColorEnabled,
+                onCheckedChange = onDynamicColorChanged,
+                enabled = !settings.manualColorEnabled,
+                modifier = itemModifier()
+            )
+            ZToolSwitchRow(
+                title = stringResource(R.string.manual_color_title),
+                summary = stringResource(R.string.manual_color_summary),
+                checked = settings.manualColorEnabled,
+                onCheckedChange = onManualColorChanged,
+                modifier = itemModifier()
+            )
+            if (settings.manualColorEnabled) {
+                ManualSeedColorRow(
+                    color = settings.manualSeedColor,
+                    colorText = manualSeedColorText,
+                    isError = manualSeedColorError,
+                    onColorTextChanged = onManualSeedColorTextChanged,
+                    onEditingFinished = onManualSeedColorEditingFinished,
+                    modifier = itemModifier()
+                )
+            }
+            ZToolSwitchRow(
+                title = stringResource(R.string.amoled_black_title),
+                summary = stringResource(R.string.amoled_black_summary),
+                checked = settings.amoledBlackEnabled,
+                onCheckedChange = onAmoledBlackChanged,
+                modifier = itemModifier()
             )
         }
-        ZToolSwitchRow(
-            title = stringResource(R.string.dynamic_color_title),
-            summary = stringResource(R.string.dynamic_color_summary),
-            checked = settings.dynamicColorEnabled,
-            onCheckedChange = onDynamicColorChanged,
-            enabled = !settings.manualColorEnabled
-        )
-        ZToolSwitchRow(
-            title = stringResource(R.string.manual_color_title),
-            summary = stringResource(R.string.manual_color_summary),
-            checked = settings.manualColorEnabled,
-            onCheckedChange = onManualColorChanged
-        )
-        if (settings.manualColorEnabled) {
-            ManualSeedColorRow(
-                color = settings.manualSeedColor,
-                colorText = manualSeedColorText,
-                isError = manualSeedColorError,
-                onColorTextChanged = onManualSeedColorTextChanged,
-                onEditingFinished = onManualSeedColorEditingFinished
-            )
-        }
-        ZToolSwitchRow(
-            title = stringResource(R.string.amoled_black_title),
-            summary = stringResource(R.string.amoled_black_summary),
-            checked = settings.amoledBlackEnabled,
-            onCheckedChange = onAmoledBlackChanged
-        )
     }
 }
 
@@ -434,10 +463,11 @@ private fun <T> DropdownSettingRow(
     value: String,
     options: List<T>,
     optionLabel: (T) -> String,
-    onOptionSelected: (T) -> Unit
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -466,11 +496,12 @@ private fun ManualSeedColorRow(
     colorText: String,
     isError: Boolean,
     onColorTextChanged: (String) -> Unit,
-    onEditingFinished: () -> Unit
+    onEditingFinished: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -518,11 +549,20 @@ private fun SettingsSection(
     title: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
+    val isExpressive = LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive
+    ZToolCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = if (isExpressive) {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp)
+                .padding(if (isExpressive) 12.dp else 0.dp)
+                .padding(vertical = if (isExpressive) 0.dp else 12.dp)
         ) {
             if (title != null) {
                 Text(
@@ -538,12 +578,56 @@ private fun SettingsSection(
 }
 
 @Composable
+private fun ColumnScope.ExpressiveSectionItems(
+    count: Int,
+    content: @Composable ColumnScope.(() -> Modifier) -> Unit
+) {
+    if (LocalZToolThemeSpec.current.style != FrontendStyle.Material3Expressive) {
+        content { Modifier }
+        return
+    }
+
+    var index = 0
+    val itemColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        content {
+            val itemIndex = index
+            val shape = expressiveSettingsItemShape(index = itemIndex, count = count)
+            index += 1
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(
+                    color = itemColor,
+                    shape = shape
+                )
+        }
+    }
+}
+
+private fun expressiveSettingsItemShape(index: Int, count: Int): Shape {
+    if (count <= 1) {
+        return RoundedCornerShape(28.dp)
+    }
+
+    return when (index) {
+        0 -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
+        count - 1 -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
+        else -> RoundedCornerShape(16.dp)
+    }
+}
+
+@Composable
 private fun SettingsActionRow(
     title: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 16.dp),
