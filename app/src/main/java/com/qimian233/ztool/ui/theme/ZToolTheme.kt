@@ -286,7 +286,11 @@ private fun resolveZToolColorScheme(
             darkTheme = darkTheme,
             paletteMode = settings.materialPaletteMode
         )
-        settings.dynamicColorEnabled -> dynamicColorScheme() ?: defaultColorScheme(
+        settings.dynamicColorEnabled -> dynamicColorScheme()?.withMaterialPaletteMode(
+            style = settings.frontendStyle,
+            paletteMode = settings.materialPaletteMode,
+            darkTheme = darkTheme
+        ) ?: defaultColorScheme(
             style = settings.frontendStyle,
             darkTheme = darkTheme,
             paletteMode = settings.materialPaletteMode
@@ -317,6 +321,57 @@ private fun defaultColorScheme(
         }
         FrontendStyle.Miuix -> if (darkTheme) Md3eDarkColors else Md3eLightColors
     }
+}
+
+private fun ColorScheme.withMaterialPaletteMode(
+    style: FrontendStyle,
+    paletteMode: MaterialPaletteMode,
+    darkTheme: Boolean
+): ColorScheme {
+    if (style != FrontendStyle.Material3Expressive) {
+        return this
+    }
+
+    return when (paletteMode) {
+        MaterialPaletteMode.MaterialYou2021 -> withMaterialYou2021Tone(darkTheme)
+        MaterialPaletteMode.Expressive2025 -> withExpressive2025Tone(darkTheme)
+    }
+}
+
+private fun ColorScheme.withMaterialYou2021Tone(darkTheme: Boolean): ColorScheme {
+    val neutralSurface = if (darkTheme) Color(0xFF1A1C1E) else Color(0xFFFCFCFF)
+    val neutralSurfaceVariant = if (darkTheme) Color(0xFF42474E) else Color(0xFFDEE3EB)
+    return copy(
+        secondary = lerp(primary, if (darkTheme) Color.White else Color.Black, 0.48f),
+        secondaryContainer = lerp(primaryContainer, neutralSurfaceVariant, 0.48f),
+        tertiary = lerp(primary, tertiary, 0.22f),
+        tertiaryContainer = lerp(primaryContainer, tertiaryContainer, 0.22f),
+        background = neutralSurface,
+        surface = neutralSurface,
+        surfaceVariant = neutralSurfaceVariant,
+        surfaceContainer = lerp(neutralSurface, neutralSurfaceVariant, if (darkTheme) 0.18f else 0.28f),
+        surfaceContainerHigh = lerp(neutralSurface, neutralSurfaceVariant, if (darkTheme) 0.24f else 0.36f),
+        surfaceContainerHighest = lerp(neutralSurface, neutralSurfaceVariant, if (darkTheme) 0.30f else 0.44f)
+    )
+}
+
+private fun ColorScheme.withExpressive2025Tone(darkTheme: Boolean): ColorScheme {
+    val accent = if (darkTheme) Color(0xFFFFB1C2) else Color(0xFF9D4058)
+    val warmAccent = if (darkTheme) Color(0xFFE7C16D) else Color(0xFF765A00)
+    val expressiveSurface = if (darkTheme) Color(0xFF111512) else Color(0xFFFBFDF8)
+    val expressiveSurfaceVariant = if (darkTheme) Color(0xFF3F4946) else Color(0xFFDAE5E0)
+    return copy(
+        secondary = lerp(primary, warmAccent, 0.48f),
+        secondaryContainer = lerp(primaryContainer, warmAccent, if (darkTheme) 0.32f else 0.22f),
+        tertiary = lerp(primary, accent, 0.58f),
+        tertiaryContainer = lerp(primaryContainer, accent, if (darkTheme) 0.38f else 0.26f),
+        background = expressiveSurface,
+        surface = expressiveSurface,
+        surfaceVariant = expressiveSurfaceVariant,
+        surfaceContainer = lerp(expressiveSurface, primaryContainer, if (darkTheme) 0.16f else 0.20f),
+        surfaceContainerHigh = lerp(expressiveSurface, primaryContainer, if (darkTheme) 0.22f else 0.28f),
+        surfaceContainerHighest = lerp(expressiveSurface, tertiaryContainer, if (darkTheme) 0.26f else 0.34f)
+    )
 }
 
 private fun manualColorScheme(
