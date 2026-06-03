@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
@@ -184,7 +185,7 @@ private fun MaterialExpressiveSettingsSection(
 ) {
     ZToolCard(
         modifier = modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        containerColor = materialExpressiveSettingsSectionColor()
     ) {
         Column(
             modifier = Modifier
@@ -232,6 +233,16 @@ private fun MaterialExpressiveSettingsItemSurface(
         shadowElevation = 0.dp,
         content = content
     )
+}
+
+@Composable
+private fun materialExpressiveSettingsSectionColor(): Color {
+    val colorScheme = MaterialTheme.colorScheme
+    return if (colorScheme.surface.luminance() > 0.5f) {
+        colorScheme.surfaceContainerLowest
+    } else {
+        colorScheme.surfaceContainerLow
+    }
 }
 
 private fun expressiveItemShape(index: Int, count: Int): Shape {
