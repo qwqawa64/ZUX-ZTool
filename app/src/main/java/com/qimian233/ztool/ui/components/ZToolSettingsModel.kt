@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -13,13 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
@@ -201,17 +202,9 @@ private fun MaterialExpressiveSettingsSection(
                 )
             }
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                section.items.forEachIndexed { index, item ->
-                    MaterialExpressiveSettingsItemSurface(
-                        index = index,
-                        count = section.items.size
-                    ) {
-                        ZToolSettingItem(item = item)
-                    }
+            ExpressiveSectionItems(count = section.items.size) { itemModifier ->
+                section.items.forEach { item ->
+                    ZToolSettingItem(item = item, modifier = itemModifier())
                 }
             }
         }
@@ -219,24 +212,38 @@ private fun MaterialExpressiveSettingsSection(
 }
 
 @Composable
-private fun MaterialExpressiveSettingsItemSurface(
-    index: Int,
+fun ColumnScope.ExpressiveSectionItems(
     count: Int,
-    content: @Composable () -> Unit
+    content: @Composable ColumnScope.(() -> Modifier) -> Unit
 ) {
-    Surface(
+    if (LocalZToolThemeSpec.current.style != FrontendStyle.Material3Expressive) {
+        content { Modifier }
+        return
+    }
+
+    var index = 0
+    val itemColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = expressiveItemShape(index = index, count = count),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-        content = content
-    )
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        content {
+            val itemIndex = index
+            val shape = expressiveSettingsItemShape(index = itemIndex, count = count)
+            index += 1
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(
+                    color = itemColor,
+                    shape = shape
+                )
+        }
+    }
 }
 
 @Composable
-private fun materialExpressiveSettingsSectionColor(): Color {
+fun materialExpressiveSettingsSectionColor(): Color {
     val colorScheme = MaterialTheme.colorScheme
     return if (colorScheme.surface.luminance() > 0.5f) {
         colorScheme.surfaceContainerLowest
@@ -245,14 +252,14 @@ private fun materialExpressiveSettingsSectionColor(): Color {
     }
 }
 
-private fun expressiveItemShape(index: Int, count: Int): Shape {
+fun expressiveSettingsItemShape(index: Int, count: Int): Shape {
     if (count <= 1) {
-        return RoundedCornerShape(28.dp)
+        return RoundedCornerShape(16.dp)
     }
 
     return when (index) {
-        0 -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
-        count - 1 -> RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
+        0 -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+        count - 1 -> RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
         else -> RoundedCornerShape(8.dp)
     }
 }

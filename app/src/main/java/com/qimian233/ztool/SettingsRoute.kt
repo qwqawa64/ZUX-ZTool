@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,10 +38,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -62,6 +59,8 @@ import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.components.ExpressiveSectionItems
+import com.qimian233.ztool.ui.components.materialExpressiveSettingsSectionColor
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.MaterialPaletteMode
@@ -553,7 +552,7 @@ private fun SettingsSection(
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = if (isExpressive) {
-            MaterialTheme.colorScheme.surfaceContainerLow
+            materialExpressiveSettingsSectionColor()
         } else {
             MaterialTheme.colorScheme.surfaceContainer
         }
@@ -574,49 +573,6 @@ private fun SettingsSection(
             }
             content()
         }
-    }
-}
-
-@Composable
-private fun ColumnScope.ExpressiveSectionItems(
-    count: Int,
-    content: @Composable ColumnScope.(() -> Modifier) -> Unit
-) {
-    if (LocalZToolThemeSpec.current.style != FrontendStyle.Material3Expressive) {
-        content { Modifier }
-        return
-    }
-
-    var index = 0
-    val itemColor = MaterialTheme.colorScheme.surfaceContainerHigh
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        content {
-            val itemIndex = index
-            val shape = expressiveSettingsItemShape(index = itemIndex, count = count)
-            index += 1
-            Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(
-                    color = itemColor,
-                    shape = shape
-                )
-        }
-    }
-}
-
-private fun expressiveSettingsItemShape(index: Int, count: Int): Shape {
-    if (count <= 1) {
-        return RoundedCornerShape(28.dp)
-    }
-
-    return when (index) {
-        0 -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
-        count - 1 -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
-        else -> RoundedCornerShape(16.dp)
     }
 }
 
