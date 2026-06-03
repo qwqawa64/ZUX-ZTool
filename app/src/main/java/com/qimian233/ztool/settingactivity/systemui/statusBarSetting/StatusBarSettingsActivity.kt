@@ -48,7 +48,7 @@ import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolDropdownField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuField
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
@@ -328,7 +328,7 @@ private fun statusBarSettingsSections(
             items = listOf(
                 SettingItem.Custom(
                     content = {
-                        DropdownSettingRow(
+                        PopupMenuSettingRow(
                             title = stringResource(R.string.notification_icon_limit_title),
                             summary = stringResource(R.string.notification_icon_limit_summary),
                             options = stringArrayResource(R.array.notify_num_size_options).toList(),
@@ -503,7 +503,7 @@ private fun SliderSettingRow(
 }
 
 @Composable
-private fun DropdownSettingRow(
+private fun PopupMenuSettingRow(
     title: String,
     summary: String,
     options: List<String>,
@@ -530,8 +530,7 @@ private fun DropdownSettingRow(
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
-        ZToolDropdownField(
-            label = "",
+        ZToolPopupMenuField(
             value = selectedOption,
             options = options,
             optionLabel = { it },

@@ -41,7 +41,7 @@ import com.qimian233.ztool.data.gametool.GameToolSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolDropdownField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuField
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -315,8 +315,7 @@ private fun MistakeTouchModeRow(
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
-        ZToolDropdownField(
-            label = "",
+        ZToolPopupMenuField(
             value = selectedLabel,
             options = options,
             optionLabel = { it.second },

@@ -54,7 +54,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolDropdownField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
@@ -389,7 +389,7 @@ private fun ThemeSettingsSection(
             if (settings.frontendStyle == FrontendStyle.Material3Expressive) 1 else 0 +
             if (settings.manualColorEnabled) 1 else 0
         ExpressiveSectionItems(count = themeItemCount) { itemModifier ->
-            DropdownSettingRow(
+            PopupMenuSettingRow(
                 title = stringResource(R.string.frontend_style_title),
                 value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
                 options = frontendStyleOptions,
@@ -397,7 +397,7 @@ private fun ThemeSettingsSection(
                 onOptionSelected = { onFrontendStyleChanged(it.value) },
                 modifier = itemModifier()
             )
-            DropdownSettingRow(
+            PopupMenuSettingRow(
                 title = stringResource(R.string.theme_mode_title),
                 value = themeModeOptions.first { it.value == settings.themeMode }.label,
                 options = themeModeOptions,
@@ -406,7 +406,7 @@ private fun ThemeSettingsSection(
                 modifier = itemModifier()
             )
             if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
-                DropdownSettingRow(
+                PopupMenuSettingRow(
                     title = stringResource(R.string.material_palette_mode_title),
                     value = paletteModeOptions.first { it.value == settings.materialPaletteMode }.label,
                     options = paletteModeOptions,
@@ -457,7 +457,7 @@ private data class LabeledOption<T>(
 )
 
 @Composable
-private fun <T> DropdownSettingRow(
+private fun <T> PopupMenuSettingRow(
     title: String,
     value: String,
     options: List<T>,
@@ -478,8 +478,7 @@ private fun <T> DropdownSettingRow(
             modifier = Modifier.weight(1f)
         )
         Spacer(modifier = Modifier.width(16.dp))
-        ZToolDropdownField(
-            label = "",
+        ZToolPopupMenuField(
             value = value,
             options = options,
             optionLabel = optionLabel,

@@ -42,7 +42,7 @@ import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolDropdownField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuField
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -254,7 +254,7 @@ private fun ChargeWattsSettingsContent(
     onRealWattsIntervalOptionChanged: (String) -> Unit,
     onRealWattsRefreshIntervalChanged: (String) -> Unit
 ) {
-    DropdownSettingRow(
+    PopupMenuSettingRow(
         title = stringResource(R.string.ChargeWattsEnableTitle),
         summary = stringResource(R.string.ChargeWattsSummary),
         options = stringArrayResource(R.array.watt_options).toList(),
@@ -263,7 +263,7 @@ private fun ChargeWattsSettingsContent(
     )
 
     if (state.chargeWattsOption == stringResource(R.string.watt_option_actual)) {
-        DropdownSettingRow(
+        PopupMenuSettingRow(
             title = stringResource(R.string.RealWattsRefreshInterval),
             summary = stringResource(R.string.RealWattsRefreshIntervalSummary),
             options = stringArrayResource(R.array.real_watt_interval).toList(),
@@ -342,7 +342,7 @@ private fun YiYanConfigFields(
 }
 
 @Composable
-private fun DropdownSettingRow(
+private fun PopupMenuSettingRow(
     title: String,
     summary: String,
     options: List<String>,
@@ -369,8 +369,7 @@ private fun DropdownSettingRow(
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
-        ZToolDropdownField(
-            label = "",
+        ZToolPopupMenuField(
             value = selectedOption,
             options = options,
             optionLabel = { it },

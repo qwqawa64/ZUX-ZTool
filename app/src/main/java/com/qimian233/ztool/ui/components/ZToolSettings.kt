@@ -1,6 +1,7 @@
 package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,17 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -32,13 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
-import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 @Composable
 fun ZListItem(
@@ -212,10 +211,58 @@ fun ZToolSettingsDivider(modifier: Modifier = Modifier) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> ZToolDropdownField(
-    label: String,
+fun <T> ZToolPopupMenuField(
+    value: String,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        ZToolMiuixPopupMenuField(
+            value = value,
+            options = options,
+            optionLabel = optionLabel,
+            onOptionSelected = onOptionSelected,
+            modifier = modifier,
+            enabled = enabled
+        )
+        return
+    }
+
+    ZToolMaterialPopupMenuField(
+        value = value,
+        options = options,
+        optionLabel = optionLabel,
+        onOptionSelected = onOptionSelected,
+        modifier = modifier,
+        enabled = enabled
+    )
+}
+
+@Composable
+private fun <T> ZToolMiuixPopupMenuField(
+    value: String,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    ZToolMaterialPopupMenuField(
+        value = value,
+        options = options,
+        optionLabel = optionLabel,
+        onOptionSelected = onOptionSelected,
+        modifier = modifier,
+        enabled = enabled
+    )
+}
+
+@Composable
+private fun <T> ZToolMaterialPopupMenuField(
     value: String,
     options: List<T>,
     optionLabel: (T) -> String,
@@ -225,57 +272,45 @@ fun <T> ZToolDropdownField(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            if (enabled) expanded = !expanded
-        },
-        modifier = modifier
-    ) {
-        if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-            MiuixTextField(
-                value = value,
-                onValueChange = {},
-                readOnly = true,
-                enabled = enabled,
-                singleLine = true,
-                label = label,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier
-                    .menuAnchor(
-                        type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                        enabled = enabled
-                    )
-                    .fillMaxWidth()
+    Box(modifier = modifier) {
+        FilledTonalButton(
+            onClick = { expanded = true },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = value,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
-        } else {
-            OutlinedTextField(
-                value = value,
-                onValueChange = {},
-                readOnly = true,
-                enabled = enabled,
-                singleLine = true,
-                label = { Text(label) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                modifier = Modifier
-                    .menuAnchor(
-                        type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                        enabled = enabled
-                    )
-                    .fillMaxWidth()
+            Icon(
+                imageVector = Icons.Filled.ArrowDropDown,
+                contentDescription = null
             )
         }
-        ExposedDropdownMenu(
+
+        DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
             options.forEach { option ->
+                val label = optionLabel(option)
                 DropdownMenuItem(
-                    text = { Text(optionLabel(option)) },
+                    text = { Text(label) },
                     onClick = {
                         expanded = false
                         onOptionSelected(option)
+                    },
+                    trailingIcon = if (label == value) {
+                        {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null
+                            )
+                        }
+                    } else {
+                        null
                     }
                 )
             }

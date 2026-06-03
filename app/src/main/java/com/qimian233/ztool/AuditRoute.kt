@@ -67,7 +67,7 @@ import com.qimian233.ztool.audit.LogParser.LogLevel
 import com.qimian233.ztool.data.audit.AuditRepository
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolDropdownField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -360,22 +360,19 @@ private fun FilterCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DropdownField(
-                    label = stringResource(R.string.filterByType),
+                PopupMenuField(
                     value = selectedCategory,
                     options = categoryOptions,
                     optionLabel = { it },
                     onOptionSelected = onCategorySelected
                 )
-                DropdownField(
-                    label = stringResource(R.string.filterByModule),
+                PopupMenuField(
                     value = selectedModuleLabel,
                     options = moduleOptions,
                     optionLabel = { it.label },
                     onOptionSelected = onModuleSelected
                 )
-                DropdownField(
-                    label = stringResource(R.string.filterByLevel),
+                PopupMenuField(
                     value = selectedLevel,
                     options = levelOptions,
                     optionLabel = { it },
@@ -436,15 +433,13 @@ private fun FilterCard(
 }
 
 @Composable
-private fun <T> DropdownField(
-    label: String,
+private fun <T> PopupMenuField(
     value: String,
     options: List<T>,
     optionLabel: (T) -> String,
     onOptionSelected: (T) -> Unit
 ) {
-    ZToolDropdownField(
-        label = label,
+    ZToolPopupMenuField(
         value = value,
         options = options,
         optionLabel = optionLabel,

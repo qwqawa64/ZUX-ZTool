@@ -294,7 +294,7 @@ fun ZToolSettingItem(
         }
 
         is SettingItem.Dropdown<*> -> {
-            ZToolDropdownSettingItem(item = item, modifier = modifier)
+            ZToolPopupMenuSettingItem(item = item, modifier = modifier)
         }
 
         is SettingItem.Slider -> {
@@ -362,12 +362,11 @@ fun ZToolSettingItem(
 }
 
 @Composable
-private fun <T> ZToolDropdownSettingItem(
+private fun <T> ZToolPopupMenuSettingItem(
     item: SettingItem.Dropdown<T>,
     modifier: Modifier = Modifier
 ) {
-    ZToolDropdownField(
-        label = item.label,
+    ZToolPopupMenuField(
         value = item.value,
         options = item.options,
         optionLabel = item.optionLabel,
