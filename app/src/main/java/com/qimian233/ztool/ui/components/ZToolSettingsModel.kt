@@ -202,7 +202,7 @@ private fun MaterialExpressiveSettingsSection(
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 section.items.forEachIndexed { index, item ->
                     MaterialExpressiveSettingsItemSurface(
@@ -240,9 +240,9 @@ private fun expressiveItemShape(index: Int, count: Int): Shape {
     }
 
     return when (index) {
-        0 -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
-        count - 1 -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
-        else -> RoundedCornerShape(16.dp)
+        0 -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+        count - 1 -> RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
+        else -> RoundedCornerShape(8.dp)
     }
 }
 
