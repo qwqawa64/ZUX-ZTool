@@ -585,6 +585,7 @@ private fun SettingsActionRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .height(80.dp)
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
