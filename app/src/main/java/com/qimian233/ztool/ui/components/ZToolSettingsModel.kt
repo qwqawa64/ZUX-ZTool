@@ -375,7 +375,9 @@ fun ZToolSettingItem(
         }
 
         is SettingItem.Custom -> {
-            item.content()
+            Column(modifier = modifier.fillMaxWidth()) {
+                item.content()
+            }
         }
     }
 }
