@@ -19,6 +19,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 
@@ -133,17 +136,36 @@ fun ZToolSettingsList(
     sectionSpacing: Dp = 16.dp,
     bottomPadding: Dp = 0.dp
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(sectionSpacing)
-    ) {
-        sections.forEach { section ->
-            ZToolSettingsSection(section = section)
-        }
-        if (bottomPadding > 0.dp) {
-            Spacer(modifier = Modifier.height(bottomPadding))
+    ZToolSettingsNavigationEventProvider {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(sectionSpacing)
+        ) {
+            sections.forEach { section ->
+                ZToolSettingsSection(section = section)
+            }
+            if (bottomPadding > 0.dp) {
+                Spacer(modifier = Modifier.height(bottomPadding))
+            }
         }
     }
+}
+
+@Composable
+fun ZToolSettingsNavigationEventProvider(content: @Composable () -> Unit) {
+    val providedNavigationEventDispatcherOwner = LocalNavigationEventDispatcherOwner.current
+    if (LocalZToolThemeSpec.current.style != FrontendStyle.Miuix ||
+        providedNavigationEventDispatcherOwner != null
+    ) {
+        content()
+        return
+    }
+
+    val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
+    CompositionLocalProvider(
+        LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
+        content = content
+    )
 }
 
 @Composable

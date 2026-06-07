@@ -256,8 +256,22 @@ fun <T> ZToolPopupMenuField(
     icon: ImageVector? = null,
     dialogTitle: String? = null
 ) {
-    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        ZToolMiuixPopupMenuField(
+    ZToolSettingsNavigationEventProvider {
+        if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+            ZToolMiuixPopupMenuField(
+                value = value,
+                options = options,
+                optionLabel = optionLabel,
+                onOptionSelected = onOptionSelected,
+                modifier = modifier,
+                enabled = enabled,
+                icon = icon,
+                dialogTitle = dialogTitle
+            )
+            return@ZToolSettingsNavigationEventProvider
+        }
+
+        ZToolMaterialPopupMenuField(
             value = value,
             options = options,
             optionLabel = optionLabel,
@@ -267,19 +281,7 @@ fun <T> ZToolPopupMenuField(
             icon = icon,
             dialogTitle = dialogTitle
         )
-        return
     }
-
-    ZToolMaterialPopupMenuField(
-        value = value,
-        options = options,
-        optionLabel = optionLabel,
-        onOptionSelected = onOptionSelected,
-        modifier = modifier,
-        enabled = enabled,
-        icon = icon,
-        dialogTitle = dialogTitle
-    )
 }
 
 @Composable
