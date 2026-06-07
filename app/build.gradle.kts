@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Delete
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -63,16 +64,45 @@ kotlin {
     }
 }
 
-tasks.register<Copy>("copyRenamedReleaseApk") {
+val releaseOutputDir = layout.buildDirectory.dir("outputs/apk/release")
+val releaseDistributionDir = layout.projectDirectory.dir("release")
+val releaseApkName = provider {
+    val safeVersionName = android.defaultConfig.versionName.orEmpty().replace("/", "_")
+    val versionCode = android.defaultConfig.versionCode
+    "ZTool_${safeVersionName}_c${versionCode}.apk"
+}
+val releaseBaselineProfileName = releaseApkName.map { it.removeSuffix(".apk") + ".dm" }
+
+val cleanReleaseDistribution by tasks.registering(Delete::class) {
+    mustRunAfter("assembleRelease")
+    delete(releaseDistributionDir)
+}
+
+tasks.register<Copy>("copyReleaseDistribution") {
     dependsOn("assembleRelease")
-    from(layout.buildDirectory.dir("outputs/apk/release"))
-    include("*.apk")
-    into(layout.buildDirectory.dir("outputs/apk/release/renamed"))
-    rename {
-        val safeVersionName = android.defaultConfig.versionName.orEmpty().replace("/", "_")
-        val versionCode = android.defaultConfig.versionCode
-        "ZTool_${safeVersionName}_c${versionCode}.apk"
+    dependsOn(cleanReleaseDistribution)
+    from(releaseOutputDir) {
+        include("*.apk")
+        exclude("renamed/**")
+        rename(".*\\.apk", releaseApkName.get())
     }
+    from(releaseOutputDir) {
+        include("output-metadata.json")
+        filter { line: String ->
+            line
+                .replace("app-release-unsigned.apk", releaseApkName.get())
+                .replace("app-release-unsigned.dm", releaseBaselineProfileName.get())
+        }
+    }
+    from(releaseOutputDir.map { it.dir("baselineProfiles") }) {
+        into("baselineProfiles")
+        rename(".*\\.dm", releaseBaselineProfileName.get())
+    }
+    into(releaseDistributionDir)
+}
+
+tasks.register("copyRenamedReleaseApk") {
+    dependsOn("copyReleaseDistribution")
 }
 
 dependencies {

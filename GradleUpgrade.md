@@ -158,23 +158,23 @@ Current behavior to preserve:
 - Name format: `ZTool_${safeVersionName}_c${versionCode}.apk`
 - `/` in `versionName` is replaced with `_`.
 
-AGP `9.1.1` does not expose `outputFileName` on the public Kotlin DSL used by this project. Preserve the release filename contract with a separate copy task:
+AGP `9.1.1` does not expose `outputFileName` on the public Kotlin DSL used by this project. Preserve the release filename contract with a separate release distribution copy task:
 
 ```kotlin
-tasks.register<Copy>("copyRenamedReleaseApk") {
+tasks.register<Copy>("copyReleaseDistribution") {
     dependsOn("assembleRelease")
-    from(layout.buildDirectory.dir("outputs/apk/release"))
-    include("*.apk")
-    into(layout.buildDirectory.dir("outputs/apk/release/renamed"))
-    rename {
-        val safeVersionName = android.defaultConfig.versionName.orEmpty().replace("/", "_")
-        val versionCode = android.defaultConfig.versionCode
-        "ZTool_${safeVersionName}_c${versionCode}.apk"
+    from(releaseOutputDir) {
+        include("*.apk")
+        include("output-metadata.json")
     }
+    from(releaseOutputDir.map { it.dir("baselineProfiles") }) {
+        into("baselineProfiles")
+    }
+    into(layout.projectDirectory.dir("release"))
 }
 ```
 
-The default AGP output remains `app-release-unsigned.apk`; the compatibility filename is generated under `app/build/outputs/apk/release/renamed/`.
+The default AGP output remains under `app/build/outputs/apk/release/`. The release distribution task publishes the renamed APK, rewritten `output-metadata.json`, and renamed baseline profile `.dm` files under `app/release/`.
 
 ### 5. Resolve AGP 9/Kotlin Behavior Changes
 
@@ -201,7 +201,7 @@ Run in this order:
 If `assembleDebug` passes, also run:
 
 ```powershell
-.\gradlew.bat assembleRelease copyRenamedReleaseApk
+.\gradlew.bat assembleRelease copyReleaseDistribution
 ```
 
 Release build matters because this project has custom release output naming and minification/resource shrinking enabled only for release.
@@ -227,7 +227,7 @@ The upgrade is complete only when these pass or are explicitly documented as blo
 - `.\gradlew.bat help` completes.
 - `.\gradlew.bat assembleDebug` completes.
 - `.\gradlew.bat assembleRelease` completes or any release-only failure is documented with exact error text.
-- Release APK compatibility copy exists under `app/build/outputs/apk/release/renamed/` and follows `ZTool_${safeVersionName}_c${versionCode}.apk`.
+- Release distribution files exist under `app/release/`: renamed APK, `output-metadata.json`, and `baselineProfiles/**`, all following the `ZTool_${safeVersionName}_c${versionCode}` file naming contract.
 - `compileSdk = 37` is accepted by AGP and SDK tooling, or the exact AGP/API 37 blocker is documented with source links.
 - Miuix dependency resolves at the selected latest stable version.
 

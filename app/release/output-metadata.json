@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 346,
-      "versionName": "Beta/260325",
-      "outputFile": "ZTool_Beta_260325_c346.apk"
+      "versionCode": 545,
+      "versionName": "Beta/260608",
+      "outputFile": "ZTool_Beta_260608_c545.apk"
     }
   ],
   "elementType": "File",
@@ -22,14 +22,14 @@
       "minApi": 28,
       "maxApi": 30,
       "baselineProfiles": [
-        "baselineProfiles/1/ZTool_Beta_260325_c346.dm"
+        "baselineProfiles/1/ZTool_Beta_260608_c545.dm"
       ]
     },
     {
       "minApi": 31,
       "maxApi": 2147483647,
       "baselineProfiles": [
-        "baselineProfiles/0/ZTool_Beta_260325_c346.dm"
+        "baselineProfiles/0/ZTool_Beta_260608_c545.dm"
       ]
     }
   ],
