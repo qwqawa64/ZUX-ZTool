@@ -46,7 +46,9 @@ import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
+import top.yukonga.miuix.kmp.basic.ListPopupColumn as MiuixListPopupColumn
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
+import top.yukonga.miuix.kmp.window.WindowListPopup as MiuixWindowListPopup
 
 @Composable
 fun ZListItem(
@@ -346,16 +348,82 @@ private fun <T> ZToolMiuixPopupMenuField(
     icon: ImageVector? = null,
     dialogTitle: String? = null
 ) {
-    ZToolMaterialPopupMenuField(
-        value = value,
-        options = options,
-        optionLabel = optionLabel,
-        onOptionSelected = onOptionSelected,
-        modifier = modifier,
-        enabled = enabled,
-        icon = icon,
-        dialogTitle = dialogTitle
-    )
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled && options.isNotEmpty()) {
+                expanded = true
+            }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+        }
+        Text(
+            text = value,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            enabled = enabled && options.isNotEmpty(),
+            onClick = { expanded = true },
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                contentDescription = null,
+                tint = if (enabled && options.isNotEmpty()) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                }
+            )
+        }
+    }
+
+    MiuixWindowListPopup(
+        show = expanded,
+        onDismissRequest = { expanded = false },
+        maxHeight = 360.dp,
+        minWidth = 180.dp
+    ) {
+        MiuixListPopupColumn {
+            options.forEach { option ->
+                val label = optionLabel(option)
+                val selected = label == value
+                MiuixBasicComponent(
+                    title = label,
+                    insideMargin = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                    endActions = if (selected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
 
 @Composable
