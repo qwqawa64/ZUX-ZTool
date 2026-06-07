@@ -47,6 +47,7 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
 import top.yukonga.miuix.kmp.basic.ListPopupColumn as MiuixListPopupColumn
+import top.yukonga.miuix.kmp.basic.PopupPositionProvider as MiuixPopupPositionProvider
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
 import top.yukonga.miuix.kmp.window.WindowListPopup as MiuixWindowListPopup
 
@@ -395,6 +396,7 @@ private fun <T> ZToolMiuixPopupMenuField(
     MiuixWindowListPopup(
         show = expanded,
         onDismissRequest = { expanded = false },
+        alignment = MiuixPopupPositionProvider.Align.End,
         maxHeight = 360.dp,
         minWidth = 0.dp
     ) {
