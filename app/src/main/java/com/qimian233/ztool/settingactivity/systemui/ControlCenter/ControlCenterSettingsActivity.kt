@@ -275,29 +275,23 @@ private fun CustomDateSettingsContent(
     onPickTextColor: () -> Unit,
     onTextBoldChanged: (Boolean) -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        ZToolSwitchRow(
-            title = stringResource(R.string.CustomDateSettingTitle),
-            summary = stringResource(R.string.CustomDateSettingSummary),
-            checked = state.customDate,
-            onCheckedChange = onCustomDateChanged,
-            modifier = Modifier.weight(1f)
-        )
-        if (state.customDate) {
-            IconButton(
-                onClick = onShowFormatHelp,
-                modifier = Modifier.padding(end = 12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Info,
-                    contentDescription = stringResource(R.string.tooltip_content_description),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-
+    ZToolSwitchRow(
+        title = stringResource(R.string.CustomDateSettingTitle),
+        summary = stringResource(R.string.CustomDateSettingSummary),
+        checked = state.customDate,
+        onCheckedChange = onCustomDateChanged
+    )
     if (state.customDate) {
+        IconButton(
+            onClick = onShowFormatHelp,
+            modifier = Modifier.padding(start = 12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Info,
+                contentDescription = stringResource(R.string.tooltip_content_description),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         CustomDateConfig(
             dateFormat = state.dateFormat,
             datePreview = state.datePreview,
