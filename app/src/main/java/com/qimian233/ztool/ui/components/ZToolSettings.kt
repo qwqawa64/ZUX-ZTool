@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import top.yukonga.miuix.kmp.icon.MiuixIcons.Basic as MiuixIcons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.HorizontalDivider
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.icon.basic.ArrowUpDown
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
 import top.yukonga.miuix.kmp.basic.ListPopupColumn as MiuixListPopupColumn
@@ -384,7 +386,7 @@ private fun <T> ZToolMiuixPopupMenuField(
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                imageVector = MiuixIcons.ArrowUpDown,
                 contentDescription = null,
                 tint = if (enabled && options.isNotEmpty()) {
                     MaterialTheme.colorScheme.onSurfaceVariant
