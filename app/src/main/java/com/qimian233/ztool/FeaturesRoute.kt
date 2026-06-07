@@ -222,7 +222,8 @@ private fun FeatureCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(FeatureCardHeight)
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Row(
             modifier = Modifier
