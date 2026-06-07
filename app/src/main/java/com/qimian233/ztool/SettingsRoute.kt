@@ -26,7 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Article
+import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Contrast
@@ -73,7 +73,6 @@ import com.qimian233.ztool.ui.components.ZToolSettingLeadingIcon
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
-import com.qimian233.ztool.ui.components.materialExpressiveSettingsSectionColor
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.MaterialPaletteMode
@@ -315,7 +314,7 @@ private fun SettingsRoute(
                         summary = stringResource(R.string.enableLogServiceDescription),
                         checked = state.isLogServiceEnabled,
                         onCheckedChange = onLogServiceChanged,
-                        icon = Icons.Rounded.Article,
+                        icon = Icons.AutoMirrored.Rounded.Article,
                         modifier = itemModifier()
                     )
                     ZToolSwitchRow(
@@ -323,7 +322,7 @@ private fun SettingsRoute(
                         summary = stringResource(R.string.enableDetailedLoggingDescription),
                         checked = state.isDetailedLoggingEnabled,
                         onCheckedChange = onDetailedLoggingChanged,
-                        icon = Icons.Rounded.Article,
+                        icon = Icons.AutoMirrored.Rounded.Article,
                         modifier = itemModifier()
                     )
                     ZToolSwitchRow(
@@ -586,12 +585,7 @@ private fun SettingsSection(
 ) {
     val isExpressive = LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive
     ZToolCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = if (isExpressive) {
-            materialExpressiveSettingsSectionColor()
-        } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        }
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier

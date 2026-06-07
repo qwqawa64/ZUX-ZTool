@@ -36,7 +36,7 @@ fun ZToolPageSurface(
 @Composable
 fun ZToolCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
     defaultElevation: androidx.compose.ui.unit.Dp = 0.dp,
     content: @Composable () -> Unit
 ) {

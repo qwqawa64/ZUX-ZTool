@@ -193,8 +193,7 @@ private fun MaterialExpressiveSettingsSection(
     titlePadding: PaddingValues
 ) {
     ZToolCard(
-        modifier = modifier.fillMaxWidth(),
-        containerColor = materialExpressiveSettingsSectionColor()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier
