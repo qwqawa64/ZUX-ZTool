@@ -1,5 +1,5 @@
-import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.gradle.api.tasks.Copy
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -9,11 +9,10 @@ fun getGitCommitCount(): Int {
         process.waitFor()
         process.inputStream.bufferedReader().readText().trim().toInt()
     } catch (e: Exception) {
-        println("无法获取 Git 版本号，降级为 1")
+        println("Unable to get Git version count, fallback to 1")
         1
     }
 }
-
 
 fun getBuildTime(): String {
     return SimpleDateFormat("yyMMdd").format(Date())
@@ -21,18 +20,17 @@ fun getBuildTime(): String {
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "com.qimian233.ztool"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.qimian233.ztool"
         minSdk = 27
-        targetSdk = 36
+        targetSdk = 37
 
         versionCode = getGitCommitCount()
         versionName = "Beta/${getBuildTime()}"
@@ -57,32 +55,23 @@ android {
     buildFeatures {
         compose = true
     }
-    applicationVariants.all {
-        val variant = this
-        variant.outputs
-            .map { it as BaseVariantOutputImpl }
-            .forEach { output ->
-                if (variant.buildType.name == "release") {
-                    val appName = "ZTool"
-
-                    // 2. 获取版本信息
-                    // 注意：你的 versionName 含有 "/"，必须替换掉，否则会报错
-                    val safeVersionName = variant.versionName.replace("/", "_")
-                    val vCode = variant.versionCode
-
-                    // 3. 拼接新文件名
-                    val newFileName = "${appName}_${safeVersionName}_c${vCode}.apk"
-
-                    // 4. 应用新文件名
-                    output.outputFileName = newFileName
-                }
-            }
-    }
 }
 
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
+    }
+}
+
+tasks.register<Copy>("copyRenamedReleaseApk") {
+    dependsOn("assembleRelease")
+    from(layout.buildDirectory.dir("outputs/apk/release"))
+    include("*.apk")
+    into(layout.buildDirectory.dir("outputs/apk/release/renamed"))
+    rename {
+        val safeVersionName = android.defaultConfig.versionName.orEmpty().replace("/", "_")
+        val versionCode = android.defaultConfig.versionCode
+        "ZTool_${safeVersionName}_c${versionCode}.apk"
     }
 }
 
