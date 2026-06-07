@@ -362,8 +362,8 @@ private fun <T> ZToolMaterialPopupMenuField(
     if (showDialog) {
         ZToolDialog(
             onDismissRequest = { showDialog = false },
-            title = {
-                Text(dialogTitle ?: value)
+            title = dialogTitle?.let { titleText ->
+                { Text(titleText) }
             },
             text = {
                 Column(

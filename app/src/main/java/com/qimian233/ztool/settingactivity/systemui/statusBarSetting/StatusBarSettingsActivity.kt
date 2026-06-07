@@ -535,6 +535,7 @@ private fun PopupMenuSettingRow(
             options = options,
             optionLabel = { it },
             onOptionSelected = onOptionSelected,
+            dialogTitle = title,
             modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
         )
     }

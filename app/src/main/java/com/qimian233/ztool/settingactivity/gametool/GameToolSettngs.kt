@@ -320,6 +320,7 @@ private fun MistakeTouchModeRow(
             options = options,
             optionLabel = { it.second },
             onOptionSelected = { (mode, _) -> onModeChanged(mode) },
+            dialogTitle = stringResource(R.string.auto_open_prevent_touch_title),
             modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
         )
     }

@@ -342,6 +342,7 @@ private fun ForceStopModeRow(
             options = options,
             optionLabel = { it.second },
             onOptionSelected = { (mode, _) -> onModeChanged(mode) },
+            dialogTitle = stringResource(R.string.disable_force_stop_enable_title),
             modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
         )
     }

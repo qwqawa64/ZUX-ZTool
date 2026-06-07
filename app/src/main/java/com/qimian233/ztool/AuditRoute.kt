@@ -361,18 +361,21 @@ private fun FilterCard(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 PopupMenuField(
+                    title = stringResource(R.string.filterByType),
                     value = selectedCategory,
                     options = categoryOptions,
                     optionLabel = { it },
                     onOptionSelected = onCategorySelected
                 )
                 PopupMenuField(
+                    title = stringResource(R.string.filterByModule),
                     value = selectedModuleLabel,
                     options = moduleOptions,
                     optionLabel = { it.label },
                     onOptionSelected = onModuleSelected
                 )
                 PopupMenuField(
+                    title = stringResource(R.string.filterByLevel),
                     value = selectedLevel,
                     options = levelOptions,
                     optionLabel = { it },
@@ -434,6 +437,7 @@ private fun FilterCard(
 
 @Composable
 private fun <T> PopupMenuField(
+    title: String,
     value: String,
     options: List<T>,
     optionLabel: (T) -> String,
@@ -443,7 +447,8 @@ private fun <T> PopupMenuField(
         value = value,
         options = options,
         optionLabel = optionLabel,
-        onOptionSelected = onOptionSelected
+        onOptionSelected = onOptionSelected,
+        dialogTitle = title
     )
 }
 
