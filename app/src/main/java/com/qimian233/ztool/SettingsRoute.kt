@@ -73,6 +73,7 @@ import com.qimian233.ztool.ui.components.ZToolSettingLeadingIcon
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
+import com.qimian233.ztool.ui.components.expressiveSettingsItemShape
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.MaterialPaletteMode
@@ -407,7 +408,23 @@ private fun ThemeSettingsSection(
         val themeItemCount = 5 +
             if (settings.frontendStyle == FrontendStyle.Material3Expressive) 1 else 0 +
             if (settings.manualColorEnabled) 1 else 0
-        ExpressiveSectionItems(count = themeItemCount) { itemModifier ->
+        val manualColorSwitchIndex = themeItemCount - if (settings.manualColorEnabled) 2 else 1
+        val manualSeedColorIndex = themeItemCount - 1
+        ExpressiveSectionItems(
+            count = themeItemCount,
+            shapeForIndex = { index, count ->
+                when {
+                    settings.manualColorEnabled && index == manualColorSwitchIndex -> RoundedCornerShape(8.dp)
+                    settings.manualColorEnabled && index == manualSeedColorIndex -> RoundedCornerShape(
+                        topStart = 8.dp,
+                        topEnd = 8.dp,
+                        bottomStart = 16.dp,
+                        bottomEnd = 16.dp
+                    )
+                    else -> expressiveSettingsItemShape(index = index, count = count)
+                }
+            }
+        ) { itemModifier ->
             PopupMenuSettingRow(
                 title = stringResource(R.string.frontend_style_title),
                 value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,

@@ -221,6 +221,7 @@ private fun MaterialExpressiveSettingsSection(
 @Composable
 fun ColumnScope.ExpressiveSectionItems(
     count: Int,
+    shapeForIndex: ((index: Int, count: Int) -> Shape)? = null,
     content: @Composable ColumnScope.(() -> Modifier) -> Unit
 ) {
     if (LocalZToolThemeSpec.current.style != FrontendStyle.Material3Expressive) {
@@ -236,7 +237,8 @@ fun ColumnScope.ExpressiveSectionItems(
     ) {
         content {
             val itemIndex = index
-            val shape = expressiveSettingsItemShape(index = itemIndex, count = count)
+            val shape = shapeForIndex?.invoke(itemIndex, count)
+                ?: expressiveSettingsItemShape(index = itemIndex, count = count)
             index += 1
             Modifier
                 .fillMaxWidth()
