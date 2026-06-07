@@ -14,12 +14,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -313,13 +313,15 @@ private fun <T> ZToolMaterialPopupMenuField(
         mutableStateOf(selectedIndex())
     }
 
-    FilledTonalButton(
-        onClick = {
-            pendingIndex = selectedIndex()
-            showDialog = true
-        },
-        enabled = enabled && options.isNotEmpty(),
-        modifier = modifier.fillMaxWidth()
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled && options.isNotEmpty()) {
+                pendingIndex = selectedIndex()
+                showDialog = true
+            }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
             ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
@@ -329,12 +331,32 @@ private fun <T> ZToolMaterialPopupMenuField(
             text = value,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
             modifier = Modifier.weight(1f)
         )
-        Icon(
-            imageVector = Icons.Filled.ArrowDropDown,
-            contentDescription = null
-        )
+        IconButton(
+            enabled = enabled && options.isNotEmpty(),
+            onClick = {
+                pendingIndex = selectedIndex()
+                showDialog = true
+            },
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                contentDescription = null,
+                tint = if (enabled && options.isNotEmpty()) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                }
+            )
+        }
     }
 
     if (showDialog) {
