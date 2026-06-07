@@ -438,6 +438,14 @@ private fun ThemeSettingsSection(
                 )
             }
             ZToolSwitchRow(
+                title = stringResource(R.string.amoled_black_title),
+                summary = stringResource(R.string.amoled_black_summary),
+                checked = settings.amoledBlackEnabled,
+                onCheckedChange = onAmoledBlackChanged,
+                icon = Icons.Rounded.Contrast,
+                modifier = itemModifier()
+            )
+            ZToolSwitchRow(
                 title = stringResource(R.string.dynamic_color_title),
                 summary = stringResource(R.string.dynamic_color_summary),
                 checked = settings.dynamicColorEnabled,
@@ -465,14 +473,6 @@ private fun ThemeSettingsSection(
                     modifier = itemModifier()
                 )
             }
-            ZToolSwitchRow(
-                title = stringResource(R.string.amoled_black_title),
-                summary = stringResource(R.string.amoled_black_summary),
-                checked = settings.amoledBlackEnabled,
-                onCheckedChange = onAmoledBlackChanged,
-                icon = Icons.Rounded.Contrast,
-                modifier = itemModifier()
-            )
         }
     }
 }
