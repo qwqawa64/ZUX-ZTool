@@ -122,7 +122,7 @@ private fun QuickHelpRow(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(104.dp)
+            modifier = Modifier.width(192.dp)
         )
         Text(
             text = description,
