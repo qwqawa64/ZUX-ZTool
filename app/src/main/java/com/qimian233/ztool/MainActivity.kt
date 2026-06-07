@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity(),
         LogServiceManager.setServiceStatusListener(this)
 
         setContent {
-            val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner()
+            val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
             CompositionLocalProvider(
                 LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner
             ) {
