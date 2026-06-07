@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
@@ -275,6 +277,62 @@ fun <T> ZToolPopupMenuField(
         icon = icon,
         dialogTitle = dialogTitle
     )
+}
+
+@Composable
+fun <T> ZToolPopupMenuSettingRow(
+    title: String,
+    value: String,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    fieldMinWidth: Dp = 132.dp,
+    fieldMaxWidth: Dp = 180.dp
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.width(16.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        ZToolPopupMenuField(
+            value = value,
+            options = options,
+            optionLabel = optionLabel,
+            onOptionSelected = onOptionSelected,
+            enabled = enabled,
+            dialogTitle = title,
+            modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth)
+        )
+    }
 }
 
 @Composable

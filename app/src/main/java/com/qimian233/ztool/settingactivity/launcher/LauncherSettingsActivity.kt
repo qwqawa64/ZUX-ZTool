@@ -44,7 +44,7 @@ import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolPopupMenuField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -317,35 +317,14 @@ private fun ForceStopModeRow(
     )
     val selectedLabel = options.first { it.first == selectedMode }.second
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.disable_force_stop_enable_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = stringResource(R.string.disable_force_stop_enable_summary),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        ZToolPopupMenuField(
-            value = selectedLabel,
-            options = options,
-            optionLabel = { it.second },
-            onOptionSelected = { (mode, _) -> onModeChanged(mode) },
-            dialogTitle = stringResource(R.string.disable_force_stop_enable_title),
-            modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
-        )
-    }
+    ZToolPopupMenuSettingRow(
+        title = stringResource(R.string.disable_force_stop_enable_title),
+        summary = stringResource(R.string.disable_force_stop_enable_summary),
+        value = selectedLabel,
+        options = options,
+        optionLabel = { it.second },
+        onOptionSelected = { (mode, _) -> onModeChanged(mode) }
+    )
 }
 
 @Composable

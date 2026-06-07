@@ -42,7 +42,7 @@ import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolPopupMenuField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -254,20 +254,22 @@ private fun ChargeWattsSettingsContent(
     onRealWattsIntervalOptionChanged: (String) -> Unit,
     onRealWattsRefreshIntervalChanged: (String) -> Unit
 ) {
-    PopupMenuSettingRow(
+    ZToolPopupMenuSettingRow(
         title = stringResource(R.string.ChargeWattsEnableTitle),
         summary = stringResource(R.string.ChargeWattsSummary),
         options = stringArrayResource(R.array.watt_options).toList(),
-        selectedOption = state.chargeWattsOption,
+        value = state.chargeWattsOption,
+        optionLabel = { it },
         onOptionSelected = onChargeWattsOptionChanged
     )
 
     if (state.chargeWattsOption == stringResource(R.string.watt_option_actual)) {
-        PopupMenuSettingRow(
+        ZToolPopupMenuSettingRow(
             title = stringResource(R.string.RealWattsRefreshInterval),
             summary = stringResource(R.string.RealWattsRefreshIntervalSummary),
             options = stringArrayResource(R.array.real_watt_interval).toList(),
-            selectedOption = state.realWattsIntervalOption,
+            value = state.realWattsIntervalOption,
+            optionLabel = { it },
             onOptionSelected = onRealWattsIntervalOptionChanged
         )
 
@@ -337,45 +339,6 @@ private fun YiYanConfigFields(
                 .padding(top = 8.dp),
             label = { Text(stringResource(R.string.regex_label)) },
             singleLine = true
-        )
-    }
-}
-
-@Composable
-private fun PopupMenuSettingRow(
-    title: String,
-    summary: String,
-    options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        ZToolPopupMenuField(
-            value = selectedOption,
-            options = options,
-            optionLabel = { it },
-            onOptionSelected = onOptionSelected,
-            dialogTitle = title,
-            modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
         )
     }
 }

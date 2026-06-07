@@ -66,7 +66,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolPopupMenuField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingLeadingIcon
@@ -425,33 +425,39 @@ private fun ThemeSettingsSection(
                 }
             }
         ) { itemModifier ->
-            PopupMenuSettingRow(
+            ZToolPopupMenuSettingRow(
                 title = stringResource(R.string.frontend_style_title),
                 value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
                 options = frontendStyleOptions,
                 optionLabel = { it.label },
                 onOptionSelected = { onFrontendStyleChanged(it.value) },
                 icon = Icons.Rounded.Palette,
-                modifier = itemModifier()
+                modifier = itemModifier(),
+                fieldMinWidth = 80.dp,
+                fieldMaxWidth = 160.dp
             )
-            PopupMenuSettingRow(
+            ZToolPopupMenuSettingRow(
                 title = stringResource(R.string.theme_mode_title),
                 value = themeModeOptions.first { it.value == settings.themeMode }.label,
                 options = themeModeOptions,
                 optionLabel = { it.label },
                 onOptionSelected = { onThemeModeChanged(it.value) },
                 icon = Icons.Rounded.DarkMode,
-                modifier = itemModifier()
+                modifier = itemModifier(),
+                fieldMinWidth = 80.dp,
+                fieldMaxWidth = 160.dp
             )
             if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
-                PopupMenuSettingRow(
+                ZToolPopupMenuSettingRow(
                     title = stringResource(R.string.material_palette_mode_title),
                     value = paletteModeOptions.first { it.value == settings.materialPaletteMode }.label,
                     options = paletteModeOptions,
                     optionLabel = { it.label },
                     onOptionSelected = { onMaterialPaletteModeChanged(it.value) },
                     icon = Icons.Rounded.Tune,
-                    modifier = itemModifier()
+                    modifier = itemModifier(),
+                    fieldMinWidth = 80.dp,
+                    fieldMaxWidth = 160.dp
                 )
             }
             ZToolSwitchRow(
@@ -498,44 +504,6 @@ private data class LabeledOption<T>(
     val value: T,
     val label: String
 )
-
-@Composable
-private fun <T> PopupMenuSettingRow(
-    title: String,
-    value: String,
-    options: List<T>,
-    optionLabel: (T) -> String,
-    onOptionSelected: (T) -> Unit,
-    icon: ImageVector? = null,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (icon != null) {
-            ZToolSettingLeadingIcon(icon = icon)
-            Spacer(modifier = Modifier.width(16.dp))
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        ZToolPopupMenuField(
-            value = value,
-            options = options,
-            optionLabel = optionLabel,
-            onOptionSelected = onOptionSelected,
-            dialogTitle = title,
-            modifier = Modifier.widthIn(min = 160.dp, max = 220.dp)
-        )
-    }
-}
 
 @Composable
 private fun ManualSeedColorRow(

@@ -50,7 +50,7 @@ import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
-import com.qimian233.ztool.ui.components.ZToolPopupMenuField
+import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
@@ -331,11 +331,12 @@ private fun statusBarSettingsSections(
             items = listOf(
                 SettingItem.Custom(
                     content = {
-                        PopupMenuSettingRow(
+                        ZToolPopupMenuSettingRow(
                             title = stringResource(R.string.notification_icon_limit_title),
                             summary = stringResource(R.string.notification_icon_limit_summary),
                             options = stringArrayResource(R.array.notify_num_size_options).toList(),
-                            selectedOption = state.notificationIconLimitOption,
+                            value = state.notificationIconLimitOption,
+                            optionLabel = { it },
                             onOptionSelected = onNotificationIconLimitChanged
                         )
                     }
@@ -503,45 +504,6 @@ private fun SliderSettingRow(
         steps = steps,
         modifier = Modifier.padding(horizontal = 24.dp)
     )
-}
-
-@Composable
-private fun PopupMenuSettingRow(
-    title: String,
-    summary: String,
-    options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        ZToolPopupMenuField(
-            value = selectedOption,
-            options = options,
-            optionLabel = { it },
-            onOptionSelected = onOptionSelected,
-            dialogTitle = title,
-            modifier = Modifier.widthIn(min = 132.dp, max = 180.dp)
-        )
-    }
 }
 
 @Composable
