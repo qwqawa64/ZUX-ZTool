@@ -9,7 +9,7 @@ This document is an agent-readable plan for upgrading ZUX-ZTool from Gradle 8/AG
 - AGP: `8.13.0` in `gradle/libs.versions.toml`.
 - Kotlin: `2.3.21`.
 - Compose BOM: `2025.10.00`.
-- Miuix: `0.9.0`, dependency alias `miuix-android` -> `top.yukonga.miuix.kmp:miuix-ui-android`.
+- Miuix baseline before this upgrade: `0.8.8`, dependency alias `miuix-android` -> `top.yukonga.miuix.kmp:miuix-android`.
 - Android SDK: `compileSdk = 36`, `targetSdk = 36`, `minSdk = 27`.
 - JVM target: Java/Kotlin `11`.
 - Validation command required by project instructions: `.\gradlew.bat assembleDebug`.
@@ -18,8 +18,8 @@ This document is an agent-readable plan for upgrading ZUX-ZTool from Gradle 8/AG
 
 Recheck these immediately before implementation because Gradle, AGP, Android SDK, and Miuix versions change.
 
-- Gradle current stable: use the latest stable Gradle 9.x from https://gradle.org/releases/ and https://docs.gradle.org/current/release-notes.html. As of 2026-06-08, this is `9.5.1`.
-- AGP current stable: use the latest stable AGP 9.x from https://developer.android.com/build/releases/gradle-plugin and https://developer.android.com/build/releases/about-agp. As of 2026-06-08, the Android docs show `9.2.0` as the current documented stable example.
+- Gradle current stable: use the latest stable Gradle 9.x from https://gradle.org/releases/ and https://docs.gradle.org/current/release-notes.html. As of 2026-06-08, this upgrade uses `9.5.1`.
+- AGP current stable: use the latest stable AGP 9.x from https://developer.android.com/build/releases/gradle-plugin and https://developer.android.com/build/releases/about-agp. As of 2026-06-08, this upgrade uses `9.1.1` because it is the stable AGP version that explicitly supports API 37 in Android's compatibility table.
 - AGP/Gradle compatibility: Android docs state AGP `9.2` requires Gradle `9.4.1` minimum; AGP `9.1` requires Gradle `9.3.1`; AGP `9.0` requires Gradle `9.1.0`.
 - API 37 compatibility: Android docs state API level `37` requires Android Studio `Panda 3 | 2025.3.3 Patch 1` minimum and AGP `9.1.1` minimum.
 - Important discrepancy to verify during implementation: AGP `9.2.0` release notes may still state max supported API level `36.1`, while the AGP overview compatibility table states API level `37` requires AGP `9.1.1`. Treat `compileSdk = 37` as a build verification gate, not an assumed success.
@@ -30,12 +30,12 @@ Recheck these immediately before implementation because Gradle, AGP, Android SDK
 
 Primary target:
 
-- Gradle Wrapper: `9.5.1`, or the current latest stable Gradle 9.x if newer at implementation time.
-- AGP: `9.2.0`, or the current latest stable AGP 9.x if newer at implementation time.
+- Gradle Wrapper: `9.5.1`, using the Aliyun Gradle distribution mirror for mainland China availability.
+- AGP: `9.1.1`. Do not move to AGP `9.2.0` for this project until the release notes and a local build both confirm API 37 support.
 - Kotlin: keep `2.3.21` initially unless AGP, Compose compiler, or Miuix requires a newer stable Kotlin.
 - Compose compiler plugin: keep aligned with Kotlin by keeping `org.jetbrains.kotlin.plugin.compose` on the same Kotlin version.
-- Android SDK: move `compileSdk` to `37`; move `targetSdk` to `37` only after the build and runtime behavior are verified. If the request is strictly compile-only, update `compileSdk` first and keep `targetSdk = 36` until target behavior is audited.
-- Miuix: update from `0.9.0` to latest stable, currently `0.9.2`, after Gradle/AGP sync succeeds.
+- Android SDK: move `compileSdk` to `37` and `targetSdk` to `37`.
+- Miuix: switch from legacy `top.yukonga.miuix.kmp:miuix-android:0.8.8` to `top.yukonga.miuix.kmp:miuix-ui-android:0.9.2`.
 - JDK used by Gradle daemon: JDK `17` minimum. Keep Java/Kotlin compilation target at `11` unless there is a specific reason to raise app bytecode level.
 
 ## Files Expected To Change
@@ -105,7 +105,7 @@ Expected result: Gradle reports `9.5.1` or the selected latest stable Gradle 9.x
 Edit `gradle/libs.versions.toml`:
 
 ```toml
-agp = "9.2.0"
+agp = "9.1.1"
 kotlin = "2.3.21"
 miuix = "0.9.2"
 ```
@@ -142,7 +142,7 @@ android {
 
 Record the choice in the commit message or PR description.
 
-### 4. Replace Internal AGP Variant API If It Breaks
+### 4. Replace Internal AGP Variant API
 
 `app/build.gradle.kts` imports and casts to internal AGP API:
 
@@ -150,7 +150,7 @@ Record the choice in the commit message or PR description.
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 ```
 
-This is a risk under AGP 9. If `assembleDebug`, `assembleRelease`, or Gradle sync fails around `applicationVariants`, migrate release APK renaming to the stable Android Components API.
+This is not compatible with the AGP 9 upgrade path and must be removed.
 
 Current behavior to preserve:
 
@@ -158,33 +158,33 @@ Current behavior to preserve:
 - Name format: `ZTool_${safeVersionName}_c${versionCode}.apk`
 - `/` in `versionName` is replaced with `_`.
 
-Preferred migration shape:
+AGP `9.1.1` does not expose `outputFileName` on the public Kotlin DSL used by this project. Preserve the release filename contract with a separate release distribution copy task:
 
 ```kotlin
-androidComponents {
-    onVariants(selector().withBuildType("release")) { variant ->
-        variant.outputs.forEach { output ->
-            val appName = "ZTool"
-            val safeVersionName = output.versionName.get().replace("/", "_")
-            val vCode = output.versionCode.get()
-            output.outputFileName.set("${appName}_${safeVersionName}_c${vCode}.apk")
-        }
+tasks.register<Copy>("copyReleaseDistribution") {
+    dependsOn("assembleRelease")
+    from(releaseOutputDir) {
+        include("*.apk")
+        include("output-metadata.json")
     }
+    from(releaseOutputDir.map { it.dir("baselineProfiles") }) {
+        into("baselineProfiles")
+    }
+    into(layout.projectDirectory.dir("release"))
 }
 ```
 
-Verify the exact output API names against AGP 9 docs or IDE completion during implementation; do not keep using `com.android.build.gradle.internal.*` if it fails.
+The default AGP output remains under `app/build/outputs/apk/release/`. The release distribution task publishes the renamed APK, rewritten `output-metadata.json`, and renamed baseline profile `.dm` files under `app/release/`.
 
 ### 5. Resolve AGP 9/Kotlin Behavior Changes
 
-AGP 9 includes built-in Kotlin support, but this project should initially keep:
+AGP 9 includes built-in Kotlin support and rejects `org.jetbrains.kotlin.android`. Keep only the Compose compiler plugin:
 
 ```kotlin
-alias(libs.plugins.kotlin.android)
 alias(libs.plugins.compose.compiler)
 ```
 
-Only remove `org.jetbrains.kotlin.android` if AGP 9 produces a concrete duplicate-plugin or compatibility error and official AGP docs recommend removal for this project shape.
+Remove the `kotlin-android` plugin alias from `gradle/libs.versions.toml`, root `build.gradle.kts`, and `app/build.gradle.kts`.
 
 Keep `kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }` unless Kotlin/AGP validation requires a syntax update.
 
@@ -201,7 +201,7 @@ Run in this order:
 If `assembleDebug` passes, also run:
 
 ```powershell
-.\gradlew.bat assembleRelease
+.\gradlew.bat assembleRelease copyReleaseDistribution
 ```
 
 Release build matters because this project has custom release output naming and minification/resource shrinking enabled only for release.
@@ -227,7 +227,7 @@ The upgrade is complete only when these pass or are explicitly documented as blo
 - `.\gradlew.bat help` completes.
 - `.\gradlew.bat assembleDebug` completes.
 - `.\gradlew.bat assembleRelease` completes or any release-only failure is documented with exact error text.
-- Release APK filename still follows `ZTool_${safeVersionName}_c${versionCode}.apk`.
+- Release distribution files exist under `app/release/`: renamed APK, `output-metadata.json`, and `baselineProfiles/**`, all following the `ZTool_${safeVersionName}_c${versionCode}` file naming contract.
 - `compileSdk = 37` is accepted by AGP and SDK tooling, or the exact AGP/API 37 blocker is documented with source links.
 - Miuix dependency resolves at the selected latest stable version.
 
@@ -260,4 +260,3 @@ Use small commits so failures are easy to isolate:
 5. `build: migrate release APK naming for AGP 9` if needed
 
 For this repository, project instructions require committing completed requested tasks unless the user explicitly asks not to commit.
-
