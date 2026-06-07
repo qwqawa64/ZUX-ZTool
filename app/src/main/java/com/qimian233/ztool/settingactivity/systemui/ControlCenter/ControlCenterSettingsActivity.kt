@@ -283,15 +283,17 @@ private fun CustomDateSettingsContent(
             onCheckedChange = onCustomDateChanged,
             modifier = Modifier.weight(1f)
         )
-        IconButton(
-            onClick = onShowFormatHelp,
-            modifier = Modifier.padding(end = 12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Info,
-                contentDescription = stringResource(R.string.tooltip_content_description),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        if (state.customDate) {
+            IconButton(
+                onClick = onShowFormatHelp,
+                modifier = Modifier.padding(end = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Info,
+                    contentDescription = stringResource(R.string.tooltip_content_description),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 

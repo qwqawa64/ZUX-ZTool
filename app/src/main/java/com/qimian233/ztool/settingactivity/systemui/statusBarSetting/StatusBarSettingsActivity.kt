@@ -281,17 +281,17 @@ private fun statusBarSettingsSections(
                         checked = state.customClock,
                         onCheckedChange = onCustomClockChanged
                     )
-                    IconButton(
-                        onClick = onShowFormatHelp,
-                        modifier = Modifier.padding(start = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                     if (state.customClock) {
+                        IconButton(
+                            onClick = onShowFormatHelp,
+                            modifier = Modifier.padding(start = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                         CustomClockConfig(
                             clockFormat = state.clockFormat,
                             clockPreview = state.clockPreview,

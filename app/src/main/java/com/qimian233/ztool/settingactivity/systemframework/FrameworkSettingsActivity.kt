@@ -266,17 +266,17 @@ private fun AiInputSettingsContent(
         checked = state.aiInputExpand,
         onCheckedChange = onAiInputExpandChanged
     )
-    IconButton(
-        onClick = onShowAiInputInfo,
-        modifier = Modifier.padding(start = 12.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Info,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
     if (state.aiInputExpand) {
+        IconButton(
+            onClick = onShowAiInputInfo,
+            modifier = Modifier.padding(start = 12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         OutlinedTextField(
             value = state.aiInputSigns,
             onValueChange = onAiInputSignsChanged,
