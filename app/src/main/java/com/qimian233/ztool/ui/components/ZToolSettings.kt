@@ -1,29 +1,31 @@
 package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -242,7 +244,8 @@ fun <T> ZToolPopupMenuField(
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    dialogTitle: String? = null
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         ZToolMiuixPopupMenuField(
@@ -252,7 +255,8 @@ fun <T> ZToolPopupMenuField(
             onOptionSelected = onOptionSelected,
             modifier = modifier,
             enabled = enabled,
-            icon = icon
+            icon = icon,
+            dialogTitle = dialogTitle
         )
         return
     }
@@ -264,7 +268,8 @@ fun <T> ZToolPopupMenuField(
         onOptionSelected = onOptionSelected,
         modifier = modifier,
         enabled = enabled,
-        icon = icon
+        icon = icon,
+        dialogTitle = dialogTitle
     )
 }
 
@@ -276,7 +281,8 @@ private fun <T> ZToolMiuixPopupMenuField(
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    dialogTitle: String? = null
 ) {
     ZToolMaterialPopupMenuField(
         value = value,
@@ -285,7 +291,8 @@ private fun <T> ZToolMiuixPopupMenuField(
         onOptionSelected = onOptionSelected,
         modifier = modifier,
         enabled = enabled,
-        icon = icon
+        icon = icon,
+        dialogTitle = dialogTitle
     )
 }
 
@@ -297,56 +304,90 @@ private fun <T> ZToolMaterialPopupMenuField(
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    dialogTitle: String? = null
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+    fun selectedIndex(): Int = options.indexOfFirst { optionLabel(it) == value }.coerceAtLeast(0)
+    var pendingIndex by remember(value, options) {
+        mutableStateOf(selectedIndex())
+    }
 
-    Box(modifier = modifier) {
-        FilledTonalButton(
-            onClick = { expanded = true },
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (icon != null) {
-                ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
-                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-            }
-            Text(
-                text = value,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Filled.ArrowDropDown,
-                contentDescription = null
-            )
+    FilledTonalButton(
+        onClick = {
+            pendingIndex = selectedIndex()
+            showDialog = true
+        },
+        enabled = enabled && options.isNotEmpty(),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
         }
+        Text(
+            text = value,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.Filled.ArrowDropDown,
+            contentDescription = null
+        )
+    }
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                val label = optionLabel(option)
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        expanded = false
-                        onOptionSelected(option)
-                    },
-                    trailingIcon = if (label == value) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null
+    if (showDialog) {
+        ZToolDialog(
+            onDismissRequest = { showDialog = false },
+            title = {
+                Text(dialogTitle ?: value)
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    options.forEachIndexed { index, option ->
+                        val selected = index == pendingIndex
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { pendingIndex = index }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selected,
+                                onClick = { pendingIndex = index }
+                            )
+                            Text(
+                                text = optionLabel(option),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(start = 8.dp)
                             )
                         }
-                    } else {
-                        null
                     }
-                )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        options.getOrNull(pendingIndex)?.let(onOptionSelected)
+                        showDialog = false
+                    }
+                ) {
+                    Text(androidx.compose.ui.res.stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(androidx.compose.ui.res.stringResource(android.R.string.cancel))
+                }
             }
-        }
+        )
     }
 }

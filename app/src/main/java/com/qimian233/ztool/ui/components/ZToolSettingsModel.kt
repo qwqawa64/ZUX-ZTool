@@ -394,6 +394,7 @@ private fun <T> ZToolPopupMenuSettingItem(
         onOptionSelected = item.onOptionSelected,
         enabled = item.enabled,
         icon = item.icon,
+        dialogTitle = item.label,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 12.dp)
