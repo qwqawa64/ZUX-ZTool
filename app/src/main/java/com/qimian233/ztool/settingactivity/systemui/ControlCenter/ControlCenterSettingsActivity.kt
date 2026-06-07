@@ -47,9 +47,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.ControlCenterSettingsRepository
+import com.qimian233.ztool.ui.components.QuickHelpExample
+import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
@@ -446,20 +449,38 @@ private fun FormatHelpDialog(
     onDismiss: () -> Unit,
     onCopyExample: () -> Unit
 ) {
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.date_format_help_title)) },
-        text = { Text(stringResource(R.string.clock_format_help_content)) },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_yes))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCopyExample) {
-                Text(stringResource(R.string.copy_example_button))
-            }
-        }
+    ZToolQuickHelpDialog(
+        title = stringResource(R.string.date_format_help_title),
+        summary = stringResource(R.string.date_format_quick_help_summary),
+        quickLabel = stringResource(R.string.quick_help_lookup_title),
+        examplesLabel = stringResource(R.string.quick_help_examples_title),
+        items = listOf(
+            QuickHelpItem("yyyy", stringResource(R.string.format_help_year)),
+            QuickHelpItem("MM", stringResource(R.string.format_help_month)),
+            QuickHelpItem("dd", stringResource(R.string.format_help_day)),
+            QuickHelpItem("E", stringResource(R.string.format_help_weekday)),
+            QuickHelpItem("N", stringResource(R.string.format_help_lunar_date)),
+            QuickHelpItem("J", stringResource(R.string.format_help_solar_term))
+        ),
+        examples = listOf(
+            QuickHelpExample(
+                stringResource(R.string.format_help_date_pattern_full),
+                stringResource(R.string.format_help_date_example_full)
+            ),
+            QuickHelpExample(
+                stringResource(R.string.format_help_date_pattern_short),
+                stringResource(R.string.format_help_date_example_short)
+            ),
+            QuickHelpExample(
+                stringResource(R.string.format_help_date_pattern_time),
+                stringResource(R.string.format_help_date_example_time)
+            )
+        ),
+        note = stringResource(R.string.date_format_quick_help_note),
+        onDismiss = onDismiss,
+        onCopyExample = onCopyExample,
+        copyButtonText = stringResource(R.string.copy_example_button),
+        confirmButtonText = stringResource(R.string.restart_yes)
     )
 }
 

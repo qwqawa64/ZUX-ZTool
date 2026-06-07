@@ -48,7 +48,10 @@ import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.QuickHelpExample
+import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.ZToolPopupMenuField
+import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
@@ -546,20 +549,38 @@ private fun FormatHelpDialog(
     onDismiss: () -> Unit,
     onCopyExample: () -> Unit
 ) {
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.clock_format_help_title)) },
-        text = { Text(stringResource(R.string.clock_format_help_content)) },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_yes))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCopyExample) {
-                Text(stringResource(R.string.copy_example_button))
-            }
-        }
+    ZToolQuickHelpDialog(
+        title = stringResource(R.string.clock_format_help_title),
+        summary = stringResource(R.string.clock_format_quick_help_summary),
+        quickLabel = stringResource(R.string.quick_help_lookup_title),
+        examplesLabel = stringResource(R.string.quick_help_examples_title),
+        items = listOf(
+            QuickHelpItem("HH", stringResource(R.string.format_help_hour_24)),
+            QuickHelpItem("mm", stringResource(R.string.format_help_minute)),
+            QuickHelpItem("ss", stringResource(R.string.format_help_second)),
+            QuickHelpItem("E", stringResource(R.string.format_help_weekday)),
+            QuickHelpItem("N", stringResource(R.string.format_help_lunar_date)),
+            QuickHelpItem("T", stringResource(R.string.format_help_period))
+        ),
+        examples = listOf(
+            QuickHelpExample(
+                stringResource(R.string.format_help_clock_pattern_short),
+                stringResource(R.string.format_help_clock_example_short)
+            ),
+            QuickHelpExample(
+                stringResource(R.string.format_help_clock_pattern_seconds),
+                stringResource(R.string.format_help_clock_example_seconds)
+            ),
+            QuickHelpExample(
+                stringResource(R.string.format_help_clock_pattern_lunar),
+                stringResource(R.string.format_help_clock_example_lunar)
+            )
+        ),
+        note = stringResource(R.string.clock_format_quick_help_note),
+        onDismiss = onDismiss,
+        onCopyExample = onCopyExample,
+        copyButtonText = stringResource(R.string.copy_example_button),
+        confirmButtonText = stringResource(R.string.restart_yes)
     )
 }
 

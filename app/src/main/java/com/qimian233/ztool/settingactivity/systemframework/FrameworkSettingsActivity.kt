@@ -32,7 +32,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,9 +43,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
+import com.qimian233.ztool.ui.components.QuickHelpExample
+import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
@@ -301,34 +303,38 @@ private fun AiInputSettingsContent(
 private fun AiInputInfoDialog(
     onDismiss: () -> Unit
 ) {
-    var testInput by remember { mutableStateOf("") }
-
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.Custom_attention)) },
-        text = {
-            Column {
-                Text(
-                    text = stringResource(R.string.Custom_Attention_content),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = testInput,
-                    onValueChange = { testInput = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.test_Input)) },
-                    minLines = 5,
-                    maxLines = 10,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
-            }
-        }
+    ZToolQuickHelpDialog(
+        title = stringResource(R.string.ai_input_quick_help_title),
+        summary = stringResource(R.string.ai_input_quick_help_summary),
+        quickLabel = stringResource(R.string.quick_help_lookup_title),
+        examplesLabel = stringResource(R.string.quick_help_examples_title),
+        items = listOf(
+            QuickHelpItem(
+                stringResource(R.string.ai_input_quick_help_scope),
+                stringResource(R.string.ai_input_quick_help_scope_desc)
+            ),
+            QuickHelpItem(
+                stringResource(R.string.ai_input_quick_help_separator),
+                stringResource(R.string.ai_input_quick_help_separator_desc)
+            ),
+            QuickHelpItem(
+                stringResource(R.string.ai_input_quick_help_conflict),
+                stringResource(R.string.ai_input_quick_help_conflict_desc)
+            )
+        ),
+        examples = listOf(
+            QuickHelpExample(
+                stringResource(R.string.ai_input_quick_help_example_default_value),
+                stringResource(R.string.ai_input_quick_help_example_default)
+            ),
+            QuickHelpExample(
+                stringResource(R.string.ai_input_quick_help_example_custom_value),
+                stringResource(R.string.ai_input_quick_help_example_custom)
+            )
+        ),
+        note = stringResource(R.string.ai_input_quick_help_note),
+        onDismiss = onDismiss,
+        confirmButtonText = stringResource(android.R.string.ok)
     )
 }
 
