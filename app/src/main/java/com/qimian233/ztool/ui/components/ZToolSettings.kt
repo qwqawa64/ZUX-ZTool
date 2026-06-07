@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
@@ -113,13 +114,31 @@ fun ZListItem(
 }
 
 @Composable
+fun ZToolSettingLeadingIcon(
+    icon: ImageVector,
+    enabled: Boolean = true
+) {
+    Icon(
+        imageVector = icon,
+        contentDescription = null,
+        tint = if (enabled) {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+        },
+        modifier = Modifier.size(24.dp)
+    )
+}
+
+@Composable
 fun ZToolSwitchRow(
     title: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     summary: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     Row(
         modifier = modifier
@@ -128,6 +147,10 @@ fun ZToolSwitchRow(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+        }
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -218,7 +241,8 @@ fun <T> ZToolPopupMenuField(
     optionLabel: (T) -> String,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         ZToolMiuixPopupMenuField(
@@ -227,7 +251,8 @@ fun <T> ZToolPopupMenuField(
             optionLabel = optionLabel,
             onOptionSelected = onOptionSelected,
             modifier = modifier,
-            enabled = enabled
+            enabled = enabled,
+            icon = icon
         )
         return
     }
@@ -238,7 +263,8 @@ fun <T> ZToolPopupMenuField(
         optionLabel = optionLabel,
         onOptionSelected = onOptionSelected,
         modifier = modifier,
-        enabled = enabled
+        enabled = enabled,
+        icon = icon
     )
 }
 
@@ -249,7 +275,8 @@ private fun <T> ZToolMiuixPopupMenuField(
     optionLabel: (T) -> String,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     ZToolMaterialPopupMenuField(
         value = value,
@@ -257,7 +284,8 @@ private fun <T> ZToolMiuixPopupMenuField(
         optionLabel = optionLabel,
         onOptionSelected = onOptionSelected,
         modifier = modifier,
-        enabled = enabled
+        enabled = enabled,
+        icon = icon
     )
 }
 
@@ -268,7 +296,8 @@ private fun <T> ZToolMaterialPopupMenuField(
     optionLabel: (T) -> String,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -278,6 +307,10 @@ private fun <T> ZToolMaterialPopupMenuField(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth()
         ) {
+            if (icon != null) {
+                ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            }
             Text(
                 text = value,
                 maxLines = 1,

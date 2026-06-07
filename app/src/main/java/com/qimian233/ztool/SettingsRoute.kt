@@ -26,6 +26,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Article
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Contrast
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.FormatColorFill
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.RestorePage
+import androidx.compose.material.icons.rounded.SettingsBackupRestore
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -40,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -57,6 +69,7 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPopupMenuField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolSettingLeadingIcon
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
@@ -259,16 +272,19 @@ private fun SettingsRoute(
                     SettingsActionRow(
                         title = stringResource(R.string.backupConfigToFile),
                         onClick = onBackup,
+                        icon = Icons.Rounded.Backup,
                         modifier = itemModifier()
                     )
                     SettingsActionRow(
                         title = stringResource(R.string.restoreConfigFromFile),
                         onClick = onRestore,
+                        icon = Icons.Rounded.RestorePage,
                         modifier = itemModifier()
                     )
                     SettingsActionRow(
                         title = stringResource(R.string.restoreDefaultConfig),
                         onClick = onRestoreDefault,
+                        icon = Icons.Rounded.SettingsBackupRestore,
                         modifier = itemModifier()
                     )
                 }
@@ -299,6 +315,7 @@ private fun SettingsRoute(
                         summary = stringResource(R.string.enableLogServiceDescription),
                         checked = state.isLogServiceEnabled,
                         onCheckedChange = onLogServiceChanged,
+                        icon = Icons.Rounded.Article,
                         modifier = itemModifier()
                     )
                     ZToolSwitchRow(
@@ -306,6 +323,7 @@ private fun SettingsRoute(
                         summary = stringResource(R.string.enableDetailedLoggingDescription),
                         checked = state.isDetailedLoggingEnabled,
                         onCheckedChange = onDetailedLoggingChanged,
+                        icon = Icons.Rounded.Article,
                         modifier = itemModifier()
                     )
                     ZToolSwitchRow(
@@ -313,6 +331,7 @@ private fun SettingsRoute(
                         summary = stringResource(R.string.enableHomePageYiyanSummary),
                         checked = state.isHomepageYiyanEnabled,
                         onCheckedChange = onHomepageYiyanChanged,
+                        icon = Icons.Rounded.AutoAwesome,
                         modifier = itemModifier()
                     )
                 }
@@ -325,6 +344,7 @@ private fun SettingsRoute(
                     SettingsActionRow(
                         title = stringResource(R.string.showAboutPage),
                         onClick = onAbout,
+                        icon = Icons.Rounded.Info,
                         modifier = itemModifier()
                     )
                 }
@@ -395,6 +415,7 @@ private fun ThemeSettingsSection(
                 options = frontendStyleOptions,
                 optionLabel = { it.label },
                 onOptionSelected = { onFrontendStyleChanged(it.value) },
+                icon = Icons.Rounded.Palette,
                 modifier = itemModifier()
             )
             PopupMenuSettingRow(
@@ -403,6 +424,7 @@ private fun ThemeSettingsSection(
                 options = themeModeOptions,
                 optionLabel = { it.label },
                 onOptionSelected = { onThemeModeChanged(it.value) },
+                icon = Icons.Rounded.DarkMode,
                 modifier = itemModifier()
             )
             if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
@@ -412,6 +434,7 @@ private fun ThemeSettingsSection(
                     options = paletteModeOptions,
                     optionLabel = { it.label },
                     onOptionSelected = { onMaterialPaletteModeChanged(it.value) },
+                    icon = Icons.Rounded.Tune,
                     modifier = itemModifier()
                 )
             }
@@ -421,6 +444,7 @@ private fun ThemeSettingsSection(
                 checked = settings.dynamicColorEnabled,
                 onCheckedChange = onDynamicColorChanged,
                 enabled = !settings.manualColorEnabled,
+                icon = Icons.Rounded.AutoAwesome,
                 modifier = itemModifier()
             )
             ZToolSwitchRow(
@@ -428,6 +452,7 @@ private fun ThemeSettingsSection(
                 summary = stringResource(R.string.manual_color_summary),
                 checked = settings.manualColorEnabled,
                 onCheckedChange = onManualColorChanged,
+                icon = Icons.Rounded.FormatColorFill,
                 modifier = itemModifier()
             )
             if (settings.manualColorEnabled) {
@@ -437,6 +462,7 @@ private fun ThemeSettingsSection(
                     isError = manualSeedColorError,
                     onColorTextChanged = onManualSeedColorTextChanged,
                     onEditingFinished = onManualSeedColorEditingFinished,
+                    icon = Icons.Rounded.FormatColorFill,
                     modifier = itemModifier()
                 )
             }
@@ -445,6 +471,7 @@ private fun ThemeSettingsSection(
                 summary = stringResource(R.string.amoled_black_summary),
                 checked = settings.amoledBlackEnabled,
                 onCheckedChange = onAmoledBlackChanged,
+                icon = Icons.Rounded.Contrast,
                 modifier = itemModifier()
             )
         }
@@ -463,6 +490,7 @@ private fun <T> PopupMenuSettingRow(
     options: List<T>,
     optionLabel: (T) -> String,
     onOptionSelected: (T) -> Unit,
+    icon: ImageVector? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -471,6 +499,10 @@ private fun <T> PopupMenuSettingRow(
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon)
+            Spacer(modifier = Modifier.width(16.dp))
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
@@ -495,6 +527,7 @@ private fun ManualSeedColorRow(
     isError: Boolean,
     onColorTextChanged: (String) -> Unit,
     onEditingFinished: () -> Unit,
+    icon: ImageVector? = null,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -504,6 +537,10 @@ private fun ManualSeedColorRow(
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon)
+            Spacer(modifier = Modifier.width(16.dp))
+        }
         Box(
             modifier = Modifier
                 .width(36.dp)
@@ -579,6 +616,7 @@ private fun SettingsSection(
 private fun SettingsActionRow(
     title: String,
     onClick: () -> Unit,
+    icon: ImageVector? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -589,6 +627,10 @@ private fun SettingsActionRow(
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon)
+            Spacer(modifier = Modifier.width(16.dp))
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,

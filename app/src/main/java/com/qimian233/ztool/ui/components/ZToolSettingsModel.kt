@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
@@ -43,6 +44,7 @@ sealed interface SettingItem {
         val checked: Boolean,
         val onCheckedChange: (Boolean) -> Unit,
         val summary: String? = null,
+        val icon: ImageVector? = null,
         override val enabled: Boolean = true,
         override val key: String? = null
     ) : SettingItem
@@ -51,6 +53,7 @@ sealed interface SettingItem {
         val title: String,
         val onClick: () -> Unit,
         val summary: String? = null,
+        val icon: ImageVector? = null,
         val leadingContent: (@Composable RowScope.() -> Unit)? = null,
         val trailingContent: (@Composable RowScope.() -> Unit)? = null,
         override val enabled: Boolean = true,
@@ -63,6 +66,7 @@ sealed interface SettingItem {
         val options: List<T>,
         val optionLabel: (T) -> String,
         val onOptionSelected: (T) -> Unit,
+        val icon: ImageVector? = null,
         override val enabled: Boolean = true,
         override val key: String? = null
     ) : SettingItem
@@ -76,6 +80,7 @@ sealed interface SettingItem {
         val valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
         val steps: Int = 0,
         val onValueChangeFinished: (() -> Unit)? = null,
+        val icon: ImageVector? = null,
         override val enabled: Boolean = true,
         override val key: String? = null
     ) : SettingItem
@@ -88,6 +93,7 @@ sealed interface SettingItem {
         val summary: String? = null,
         val placeholder: String? = null,
         val singleLine: Boolean = true,
+        val icon: ImageVector? = null,
         override val enabled: Boolean = true,
         override val key: String? = null
     ) : SettingItem
@@ -97,6 +103,7 @@ sealed interface SettingItem {
         val color: Color,
         val onClick: () -> Unit,
         val summary: String? = null,
+        val icon: ImageVector? = null,
         override val enabled: Boolean = true,
         override val key: String? = null
     ) : SettingItem
@@ -105,6 +112,7 @@ sealed interface SettingItem {
         val title: String,
         val onClick: () -> Unit,
         val summary: String? = null,
+        val icon: ImageVector? = null,
         val leadingContent: (@Composable RowScope.() -> Unit)? = null,
         val trailingContent: (@Composable RowScope.() -> Unit)? = null,
         override val enabled: Boolean = true,
@@ -277,6 +285,7 @@ fun ZToolSettingItem(
                 checked = item.checked,
                 onCheckedChange = item.onCheckedChange,
                 enabled = item.enabled,
+                icon = item.icon,
                 modifier = modifier
             )
         }
@@ -287,7 +296,9 @@ fun ZToolSettingItem(
                 summary = item.summary,
                 enabled = item.enabled,
                 onClick = item.onClick,
-                leadingContent = item.leadingContent,
+                leadingContent = item.leadingContent ?: item.icon?.let { icon ->
+                    { ZToolSettingLeadingIcon(icon = icon, enabled = item.enabled) }
+                },
                 trailingContent = item.trailingContent,
                 modifier = modifier
             )
@@ -308,6 +319,7 @@ fun ZToolSettingItem(
                 onValueChange = item.onValueChange,
                 onValueChangeFinished = item.onValueChangeFinished,
                 enabled = item.enabled,
+                icon = item.icon,
                 modifier = modifier
             )
         }
@@ -322,6 +334,7 @@ fun ZToolSettingItem(
                 placeholder = item.placeholder,
                 singleLine = item.singleLine,
                 enabled = item.enabled,
+                icon = item.icon,
                 modifier = modifier
             )
         }
@@ -332,6 +345,9 @@ fun ZToolSettingItem(
                 summary = item.summary,
                 enabled = item.enabled,
                 onClick = item.onClick,
+                leadingContent = item.icon?.let { icon ->
+                    { ZToolSettingLeadingIcon(icon = icon, enabled = item.enabled) }
+                },
                 trailingContent = {
                     Box(
                         modifier = Modifier
@@ -349,7 +365,9 @@ fun ZToolSettingItem(
                 summary = item.summary,
                 enabled = item.enabled,
                 onClick = item.onClick,
-                leadingContent = item.leadingContent,
+                leadingContent = item.leadingContent ?: item.icon?.let { icon ->
+                    { ZToolSettingLeadingIcon(icon = icon, enabled = item.enabled) }
+                },
                 trailingContent = item.trailingContent,
                 modifier = modifier
             )
@@ -372,6 +390,7 @@ private fun <T> ZToolPopupMenuSettingItem(
         optionLabel = item.optionLabel,
         onOptionSelected = item.onOptionSelected,
         enabled = item.enabled,
+        icon = item.icon,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 12.dp)
@@ -389,26 +408,20 @@ fun ZToolSliderRow(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     steps: Int = 0,
     onValueChangeFinished: (() -> Unit)? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+        SettingsTitleBlock(
+            title = title,
+            summary = summary,
+            enabled = enabled,
+            icon = icon
         )
-        if (summary != null) {
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
         if (valueText != null) {
             Text(
                 text = valueText,
@@ -439,7 +452,8 @@ fun ZToolTextInputRow(
     summary: String? = null,
     placeholder: String? = null,
     singleLine: Boolean = true,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     Column(
         modifier = modifier
@@ -447,13 +461,13 @@ fun ZToolTextInputRow(
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         if (title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+            SettingsTitleBlock(
+                title = title,
+                summary = summary,
+                enabled = enabled,
+                icon = icon
             )
-        }
-        if (summary != null) {
+        } else if (summary != null) {
             Text(
                 text = summary,
                 style = MaterialTheme.typography.bodyMedium,
@@ -474,5 +488,37 @@ fun ZToolTextInputRow(
                 .fillMaxWidth()
                 .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
         )
+    }
+}
+
+@Composable
+private fun SettingsTitleBlock(
+    title: String,
+    summary: String?,
+    enabled: Boolean,
+    icon: ImageVector?
+) {
+    androidx.compose.foundation.layout.Row(
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+        }
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
     }
 }
