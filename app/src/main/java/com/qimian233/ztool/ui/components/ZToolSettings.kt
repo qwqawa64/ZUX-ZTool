@@ -396,31 +396,37 @@ private fun <T> ZToolMiuixPopupMenuField(
         show = expanded,
         onDismissRequest = { expanded = false },
         maxHeight = 360.dp,
-        minWidth = 180.dp
+        minWidth = 0.dp
     ) {
         MiuixListPopupColumn {
             options.forEach { option ->
                 val label = optionLabel(option)
                 val selected = label == value
-                MiuixBasicComponent(
-                    title = label,
-                    insideMargin = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                    endActions = if (selected) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onOptionSelected(option)
+                            expanded = false
                         }
-                    } else {
-                        null
-                    },
-                    onClick = {
-                        onOptionSelected(option)
-                        expanded = false
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (selected) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-                )
+                }
             }
         }
     }
