@@ -21,14 +21,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.packageinstaller.PackageInstallerSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
@@ -40,6 +44,59 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsUiState
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsViewModel
+
+@Composable
+fun PackageInstallerSettingsRoute(
+    title: String,
+    packageName: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("PackageInstallerSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            PackageInstallerSettingsViewModelFactory(
+                PackageInstallerSettingsRepository(context.applicationContext)
+            )
+        )[PackageInstallerSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    PackageInstallerSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onRestart = viewModel::showRestartConfirmDialog,
+        onDisableScanApkChanged = viewModel::setDisableScanApk,
+        onAlwaysAllowPermissionChanged = viewModel::setAlwaysAllowPermission,
+        onSkipWarnPageChanged = viewModel::setSkipWarnPage,
+        onDisableInstallerAdChanged = viewModel::setDisableInstallerAd,
+        onPackageInstallerStyleHookChanged = viewModel::setPackageInstallerStyleHook,
+        onDisableDeletePackageChanged = viewModel::setDisableDeletePackage
+    )
+
+    if (uiState.showRestartConfirmDialog) {
+        RestartConfirmDialog(
+            packageName = packageName,
+            onConfirm = {
+                viewModel.forceStopPackage(
+                    packageName = packageName,
+                    onFailure = {
+                        Toast.makeText(context, R.string.restart_fail_simple, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onDismiss = viewModel::dismissRestartConfirmDialog
+        )
+    }
+}
 
 @Suppress("ClassName")
 class packageinstallersettings : ZToolComponentActivity() {
@@ -100,7 +157,7 @@ class packageinstallersettings : ZToolComponentActivity() {
     }
 }
 
-private class PackageInstallerSettingsViewModelFactory(
+internal class PackageInstallerSettingsViewModelFactory(
     private val repository: PackageInstallerSettingsRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -113,7 +170,7 @@ private class PackageInstallerSettingsViewModelFactory(
 }
 
 @Composable
-private fun PackageInstallerSettingsScreen(
+internal fun PackageInstallerSettingsScreen(
     title: String,
     state: PackageInstallerSettingsUiState,
     onBack: () -> Unit,
@@ -179,7 +236,7 @@ private fun PackageInstallerSettingsScreen(
 }
 
 @Composable
-private fun packageInstallerSettingsSections(
+internal fun packageInstallerSettingsSections(
     state: PackageInstallerSettingsUiState,
     onDisableScanApkChanged: (Boolean) -> Unit,
     onAlwaysAllowPermissionChanged: (Boolean) -> Unit,
@@ -239,7 +296,7 @@ private fun packageInstallerSettingsSections(
 }
 
 @Composable
-private fun RestartConfirmDialog(
+internal fun RestartConfirmDialog(
     packageName: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit

@@ -33,6 +33,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
+import com.qimian233.ztool.settingactivity.packageinstaller.PackageInstallerSettingsRoute
+import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsRoute
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
@@ -388,7 +390,20 @@ private fun MainRouteNavHost(
             popEnterTransition = horizontalPopEnter,
             popExitTransition = horizontalPopExit
         ) {
-            FeaturesMainRoute()
+            FeaturesMainRoute(
+                onFeatureDestinationSelected = { destination ->
+                    when (destination) {
+                        FeatureDestination.PackageInstaller,
+                        FeatureDestination.SafeCenter -> {
+                            navController.navigate(destination.route) {
+                                launchSingleTop = true
+                            }
+                            true
+                        }
+                        else -> false
+                    }
+                }
+            )
         }
         composable(
             route = MainRoute.Audit.name,
@@ -431,6 +446,44 @@ private fun MainRouteNavHost(
                 }
             )
         }
+        composable(
+            route = FeatureDestination.PackageInstaller.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            PackageInstallerSettingsRoute(
+                title = stringResource(R.string.package_installer_app_name),
+                packageName = "com.android.packageinstaller",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = FeatureDestination.SafeCenter.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SafeCenterSettingsRoute(
+                title = stringResource(R.string.safe_center_app_name),
+                packageName = "com.zui.safecenter",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -443,9 +496,11 @@ private fun navigationRouteIndex(route: String?): Int {
     return when (route) {
         MainRoute.Home.name -> 0
         MainRoute.Features.name -> 1
-        MainRoute.Audit.name -> 2
-        MainRoute.Settings.name -> 3
-        HiddenRoute.SettingsTheme -> 4
+        FeatureDestination.PackageInstaller.route -> 2
+        FeatureDestination.SafeCenter.route -> 2
+        MainRoute.Audit.name -> 3
+        MainRoute.Settings.name -> 4
+        HiddenRoute.SettingsTheme -> 5
         else -> 0
     }
 }

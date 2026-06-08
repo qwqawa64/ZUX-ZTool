@@ -22,14 +22,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.safecenter.SafeCenterRestartResult
 import com.qimian233.ztool.data.safecenter.SafeCenterSettingsRepository
@@ -42,6 +46,78 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsUiState
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsViewModel
+
+@Composable
+fun SafeCenterSettingsRoute(
+    title: String,
+    packageName: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("SafeCenterSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            SafeCenterSettingsViewModelFactory(
+                SafeCenterSettingsRepository(context.applicationContext)
+            )
+        )[SafeCenterSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    SafeCenterSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onRestart = viewModel::showRestartConfirmDialog,
+        onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
+        onBlockSafeCenterScanChanged = viewModel::setBlockSafeCenterScan,
+        onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
+    )
+
+    if (uiState.showRestartConfirmDialog) {
+        RestartConfirmDialog(
+            packageName = packageName,
+            onConfirm = {
+                viewModel.restartPackages(
+                    packageName = packageName,
+                    onResult = { result ->
+                        when (result) {
+                            SafeCenterRestartResult.EmptyPackageName -> {
+                                Toast.makeText(
+                                    context,
+                                    R.string.empty_package_name_message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            is SafeCenterRestartResult.Failure -> {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.restart_fail_prefix) + result.error,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            SafeCenterRestartResult.Success -> {
+                                Toast.makeText(
+                                    context,
+                                    R.string.app_process_restarted_message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                )
+            },
+            onDismiss = viewModel::dismissRestartConfirmDialog
+        )
+    }
+}
 
 class SafeCenterSettingsActivity : ZToolComponentActivity() {
 
@@ -116,7 +192,7 @@ class SafeCenterSettingsActivity : ZToolComponentActivity() {
     }
 }
 
-private class SafeCenterSettingsViewModelFactory(
+internal class SafeCenterSettingsViewModelFactory(
     private val repository: SafeCenterSettingsRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -129,7 +205,7 @@ private class SafeCenterSettingsViewModelFactory(
 }
 
 @Composable
-private fun SafeCenterSettingsScreen(
+internal fun SafeCenterSettingsScreen(
     title: String,
     state: SafeCenterSettingsUiState,
     onBack: () -> Unit,
@@ -196,7 +272,7 @@ private fun SafeCenterSettingsScreen(
 }
 
 @Composable
-private fun safeCenterSettingsSections(
+internal fun safeCenterSettingsSections(
     state: SafeCenterSettingsUiState,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
     onBlockSafeCenterScanChanged: (Boolean) -> Unit,
@@ -235,7 +311,7 @@ private fun safeCenterSettingsSections(
 }
 
 @Composable
-private fun RestartConfirmDialog(
+internal fun RestartConfirmDialog(
     packageName: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit

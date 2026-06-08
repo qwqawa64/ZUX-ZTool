@@ -346,3 +346,38 @@ Clean Compose app review:
 - Platform interop remains only where it is still appropriate: `ComposeView` for platform dialog/overlay hosting and `AndroidView` for app icons or media/overlay renderer interop.
 
 Final manual verification is recorded in `MigrationNotes.md`.
+
+## Phase 8. Compose Feature Navigation
+
+Started on 2026-06-09 to move feature detail pages away from Activity boundaries and into
+the app-level Compose Navigation graph.
+
+Completed first slice:
+
+- Added root-level migration plan: `FEATURE_COMPOSE_NAV_MIGRATION.md`.
+- Added stable `FeatureDestination` route ids for all current Features entries.
+- Updated `FeaturesMainRoute` so migrated destinations can navigate through Compose while
+  non-migrated destinations temporarily keep the existing Activity launch path.
+- Added Compose NavHost destinations for:
+  - `feature/package-installer`
+  - `feature/safe-center`
+- Added reusable route entry points for package installer and safe center settings pages.
+- These two pages now share the same app-level predictive-back transition policy as Home,
+  Features, Audit, Settings, and theme settings when launched from the Features page.
+
+Verification:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Result: succeeded on 2026-06-09 after the first Compose feature navigation slice.
+
+Next targets:
+
+- Migrate `systemframework/FrameworkSettingsActivity.kt`.
+- Migrate `gametool/GameToolSettngs.kt`.
+- Migrate `launcher/LauncherSettingsActivity.kt`.
+- Migrate `ota/OtaSettings.kt`.
+- After top-level feature pages are Compose destinations, migrate the System UI subtree
+  and then the System Settings detail subtree.
