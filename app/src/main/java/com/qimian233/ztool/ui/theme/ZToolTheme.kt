@@ -288,7 +288,6 @@ private fun resolveZToolColorScheme(
             palette = settings.materialPalette
         )
         settings.dynamicColorEnabled -> dynamicColorScheme()?.withMaterialPalette(
-            style = settings.frontendStyle,
             colorSpec = settings.materialColorSpec,
             palette = settings.materialPalette,
             darkTheme = darkTheme
@@ -323,8 +322,11 @@ private fun defaultColorScheme(
         FrontendStyle.Material3Expressive -> defaultBaseColorScheme(
             colorSpec = effectiveMaterialColorSpec(colorSpec, palette),
             darkTheme = darkTheme
-        ).withMaterialPalette(style, colorSpec, palette, darkTheme)
-        FrontendStyle.Miuix -> if (darkTheme) Md3eDarkColors else Md3eLightColors
+        ).withMaterialPalette(colorSpec, palette, darkTheme)
+        FrontendStyle.Miuix -> defaultBaseColorScheme(
+            colorSpec = effectiveMaterialColorSpec(colorSpec, palette),
+            darkTheme = darkTheme
+        ).withMaterialPalette(colorSpec, palette, darkTheme)
     }
 }
 
@@ -367,15 +369,10 @@ private val MaterialPalette.supportsSpec2025: Boolean
     }
 
 private fun ColorScheme.withMaterialPalette(
-    style: FrontendStyle,
     colorSpec: MaterialColorSpec,
     palette: MaterialPalette,
     darkTheme: Boolean
 ): ColorScheme {
-    if (style != FrontendStyle.Material3Expressive) {
-        return this
-    }
-
     return when (palette) {
         MaterialPalette.TonalSpot -> withTonalSpotTone(darkTheme, effectiveMaterialColorSpec(colorSpec, palette))
         MaterialPalette.Neutral -> withNeutralTone(darkTheme)
