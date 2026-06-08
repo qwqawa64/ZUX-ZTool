@@ -364,43 +364,39 @@ private fun MainRouteNavHost(
         )
     }
     val predictiveHorizontalPopEnter:
-        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> EnterTransition = {
+        (AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> EnterTransition)? =
         if (predictiveBackGestureEnabled) {
-            slideIntoContainer(
-                if (isForwardNavigation()) {
-                    AnimatedContentTransitionScope.SlideDirection.Left
-                } else {
-                    AnimatedContentTransitionScope.SlideDirection.Right
-                },
-                animationSpec = tween(SettingsNavigationAnimationMillis)
-            )
+            {
+                slideIntoContainer(
+                    if (isForwardNavigation()) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    },
+                    animationSpec = tween(SettingsNavigationAnimationMillis)
+                )
+            }
         } else {
-            EnterTransition.None
+            null
         }
-    }
     val predictiveHorizontalPopExit:
-        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> ExitTransition = {
+        (AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> ExitTransition)? =
         if (predictiveBackGestureEnabled) {
-            slideOutOfContainer(
-                if (isForwardNavigation()) {
-                    AnimatedContentTransitionScope.SlideDirection.Left
-                } else {
-                    AnimatedContentTransitionScope.SlideDirection.Right
-                },
-                animationSpec = tween(SettingsNavigationAnimationMillis)
-            )
+            {
+                slideOutOfContainer(
+                    if (isForwardNavigation()) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    },
+                    animationSpec = tween(SettingsNavigationAnimationMillis)
+                )
+            }
         } else {
-            ExitTransition.None
+            null
         }
-    }
 
-    NavHost(
-        navController = navController,
-        startDestination = MainRoute.Home.name,
-        modifier = modifier,
-        predictivePopEnterTransition = predictiveHorizontalPopEnter,
-        predictivePopExitTransition = predictiveHorizontalPopExit
-    ) {
+    val mainNavGraph: androidx.navigation.NavGraphBuilder.() -> Unit = {
         composable(
             route = MainRoute.Home.name,
             enterTransition = horizontalEnter,
@@ -711,6 +707,24 @@ private fun MainRouteNavHost(
                 }
             )
         }
+    }
+
+    if (predictiveBackGestureEnabled) {
+        NavHost(
+            navController = navController,
+            startDestination = MainRoute.Home.name,
+            modifier = modifier,
+            predictivePopEnterTransition = requireNotNull(predictiveHorizontalPopEnter),
+            predictivePopExitTransition = requireNotNull(predictiveHorizontalPopExit),
+            builder = mainNavGraph
+        )
+    } else {
+        NavHost(
+            navController = navController,
+            startDestination = MainRoute.Home.name,
+            modifier = modifier,
+            builder = mainNavGraph
+        )
     }
 }
 
