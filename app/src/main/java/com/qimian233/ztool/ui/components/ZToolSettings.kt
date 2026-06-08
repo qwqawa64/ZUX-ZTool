@@ -2,6 +2,7 @@ package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
@@ -355,82 +356,84 @@ private fun <T> ZToolMiuixPopupMenuField(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled && options.isNotEmpty()) {
-                expanded = true
-            }
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (icon != null) {
-            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
-            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-        }
-        Text(
-            text = value,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (enabled) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(
-            enabled = enabled && options.isNotEmpty(),
-            onClick = { expanded = true },
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = MiuixIcons.ArrowUpDown,
-                contentDescription = null,
-                tint = if (enabled && options.isNotEmpty()) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+    Box(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = enabled && options.isNotEmpty()) {
+                    expanded = true
                 }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            }
+            Text(
+                text = value,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.weight(1f)
             )
+            IconButton(
+                enabled = enabled && options.isNotEmpty(),
+                onClick = { expanded = true },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = MiuixIcons.ArrowUpDown,
+                    contentDescription = null,
+                    tint = if (enabled && options.isNotEmpty()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    }
+                )
+            }
         }
-    }
 
-    MiuixWindowListPopup(
-        show = expanded,
-        onDismissRequest = { expanded = false },
-        alignment = MiuixPopupPositionProvider.Align.End,
-        maxHeight = 360.dp,
-        minWidth = 0.dp
-    ) {
-        MiuixListPopupColumn {
-            options.forEach { option ->
-                val label = optionLabel(option)
-                val selected = label == value
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onOptionSelected(option)
-                            expanded = false
-                        }
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (selected) {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+        MiuixWindowListPopup(
+            show = expanded,
+            onDismissRequest = { expanded = false },
+            alignment = MiuixPopupPositionProvider.Align.End,
+            maxHeight = 360.dp,
+            minWidth = 0.dp
+        ) {
+            MiuixListPopupColumn {
+                options.forEach { option ->
+                    val label = optionLabel(option)
+                    val selected = label == value
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onOptionSelected(option)
+                                expanded = false
+                            }
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f)
                         )
+                        if (selected) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
