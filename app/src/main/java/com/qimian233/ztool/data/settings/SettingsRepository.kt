@@ -94,6 +94,10 @@ class SettingsRepository(
         themePreferences.saveAmoledBlackEnabled(enabled)
     }
 
+    fun setPredictiveBackGestureEnabled(enabled: Boolean) {
+        themePreferences.savePredictiveBackGestureEnabled(enabled)
+    }
+
     fun setManualColorEnabled(enabled: Boolean) {
         themePreferences.saveManualColorEnabled(enabled)
     }

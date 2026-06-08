@@ -822,4 +822,6 @@
     <string name="manual_seed_color_error">输入一个有效的 #RRGGBB 或 #AARRGGBB 格式的颜色.</string>
     <string name="amoled_black_title">AMOLED 纯黑模式</string>
     <string name="amoled_black_summary">在暗色模式使用纯黑主题</string>
+    <string name="predictive_back_gesture_title">预测性返回手势</string>
+    <string name="predictive_back_gesture_summary">在子页面从左侧横滑时显示跟手返回动画</string>
 </resources>

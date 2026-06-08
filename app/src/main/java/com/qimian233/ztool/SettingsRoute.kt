@@ -3,11 +3,21 @@ package com.qimian233.ztool
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -17,6 +27,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -34,6 +45,7 @@ import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FormatColorFill
+import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
@@ -51,18 +63,26 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
@@ -88,6 +108,8 @@ import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.viewmodel.SettingsUiState
 import com.qimian233.ztool.viewmodel.SettingsViewModel
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -143,40 +165,66 @@ fun SettingsMainRoute() {
         }
     }
 
-    when (currentPage) {
-        SettingsPage.Main -> SettingsRoute(
-            state = uiState,
-            onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
-            onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-            onRestoreDefault = viewModel::showRestoreConfirmDialog,
-            onOpenThemeSettings = { currentPage = SettingsPage.Theme },
-            onLogServiceChanged = {
-                viewModel.setLogServiceEnabled(it)
-                showSettingsToast(
-                    context,
-                    context.getString(
-                        if (it) R.string.log_service_started else R.string.log_service_stopped
-                    )
-                )
-            },
-            onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
-            onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-            onAbout = viewModel::showAboutDialog
-        )
+    AnimatedContent(
+        targetState = currentPage,
+        transitionSpec = {
+            val forward = targetState.ordinal > initialState.ordinal
+            val enter = slideInHorizontally(
+                animationSpec = tween(320),
+                initialOffsetX = { width -> if (forward) width else -width / 3 }
+            ) + fadeIn(animationSpec = tween(220))
+            val exit = slideOutHorizontally(
+                animationSpec = tween(320),
+                targetOffsetX = { width -> if (forward) -width / 3 else width }
+            ) + fadeOut(animationSpec = tween(220))
 
-        SettingsPage.Theme -> ThemeSettingsRoute(
-            state = uiState,
-            onBack = { currentPage = SettingsPage.Main },
-            onFrontendStyleChanged = viewModel::setFrontendStyle,
-            onThemeModeChanged = viewModel::setThemeMode,
-            onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
-            onMaterialPaletteChanged = viewModel::setMaterialPalette,
-            onDynamicColorChanged = viewModel::setDynamicColorEnabled,
-            onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
-            onManualColorChanged = viewModel::setManualColorEnabled,
-            onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
-            onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing
-        )
+            enter togetherWith exit using SizeTransform(clip = false)
+        },
+        label = "SettingsPageTransition",
+        modifier = Modifier
+            .fillMaxSize()
+            .clipToBounds()
+    ) { page ->
+        when (page) {
+            SettingsPage.Main -> SettingsRoute(
+                state = uiState,
+                onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
+                onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
+                onRestoreDefault = viewModel::showRestoreConfirmDialog,
+                onOpenThemeSettings = { currentPage = SettingsPage.Theme },
+                onLogServiceChanged = {
+                    viewModel.setLogServiceEnabled(it)
+                    showSettingsToast(
+                        context,
+                        context.getString(
+                            if (it) R.string.log_service_started else R.string.log_service_stopped
+                        )
+                    )
+                },
+                onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+                onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
+                onAbout = viewModel::showAboutDialog
+            )
+
+            SettingsPage.Theme -> ThemeSettingsRoute(
+                state = uiState,
+                onBack = { currentPage = SettingsPage.Main },
+                onFrontendStyleChanged = viewModel::setFrontendStyle,
+                onThemeModeChanged = viewModel::setThemeMode,
+                onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
+                onMaterialPaletteChanged = viewModel::setMaterialPalette,
+                onDynamicColorChanged = viewModel::setDynamicColorEnabled,
+                onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
+                onPredictiveBackGestureChanged = viewModel::setPredictiveBackGestureEnabled,
+                onManualColorChanged = viewModel::setManualColorEnabled,
+                onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
+                onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
+                modifier = Modifier.predictiveBackGesture(
+                    enabled = uiState.themeSettings.predictiveBackGestureEnabled,
+                    onBack = { currentPage = SettingsPage.Main }
+                )
+            )
+        }
     }
 
     if (uiState.showRestoreConfirmDialog) {
@@ -377,13 +425,16 @@ private fun ThemeSettingsRoute(
     onMaterialPaletteChanged: (MaterialPalette) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
+    onPredictiveBackGestureChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
     onManualSeedColorTextChanged: (String) -> Unit,
-    onManualSeedColorEditingFinished: () -> Unit
+    onManualSeedColorEditingFinished: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBack)
 
     ZToolScaffold(
+        modifier = modifier,
         topBar = {
             ZToolTopAppBar(
                 title = stringResource(R.string.app_ui_theme_settings),
@@ -420,6 +471,7 @@ private fun ThemeSettingsRoute(
                     onMaterialPaletteChanged = onMaterialPaletteChanged,
                     onDynamicColorChanged = onDynamicColorChanged,
                     onAmoledBlackChanged = onAmoledBlackChanged,
+                    onPredictiveBackGestureChanged = onPredictiveBackGestureChanged,
                     onManualColorChanged = onManualColorChanged,
                     onManualSeedColorTextChanged = onManualSeedColorTextChanged,
                     onManualSeedColorEditingFinished = onManualSeedColorEditingFinished
@@ -442,6 +494,7 @@ private fun ThemeSettingsSection(
     onMaterialPaletteChanged: (MaterialPalette) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
+    onPredictiveBackGestureChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
     onManualSeedColorTextChanged: (String) -> Unit,
     onManualSeedColorEditingFinished: () -> Unit
@@ -524,7 +577,7 @@ private fun ThemeSettingsSection(
         ?: stringResource(R.string.material_palette_mode_tonal_spot)
 
     SettingsSection(title = stringResource(R.string.app_ui_theme_settings)) {
-        val themeItemCount = 5 +
+        val themeItemCount = 6 +
             (if (settings.frontendStyle == FrontendStyle.Material3Expressive) 2 else 0) +
             (if (settings.manualColorEnabled) 1 else 0)
         val manualColorSwitchIndex = themeItemCount - if (settings.manualColorEnabled) 2 else 1
@@ -590,6 +643,14 @@ private fun ThemeSettingsSection(
                 fieldMaxWidth = 160.dp
             )
             ZToolSwitchRow(
+                title = stringResource(R.string.predictive_back_gesture_title),
+                summary = stringResource(R.string.predictive_back_gesture_summary),
+                checked = settings.predictiveBackGestureEnabled,
+                onCheckedChange = onPredictiveBackGestureChanged,
+                icon = Icons.Rounded.Swipe,
+                modifier = itemModifier()
+            )
+            ZToolSwitchRow(
                 title = stringResource(R.string.amoled_black_title),
                 summary = stringResource(R.string.amoled_black_summary),
                 checked = settings.amoledBlackEnabled,
@@ -627,6 +688,70 @@ private fun ThemeSettingsSection(
             }
         }
     }
+}
+
+@Composable
+private fun Modifier.predictiveBackGesture(
+    enabled: Boolean,
+    onBack: () -> Unit
+): Modifier {
+    if (!enabled) return this
+
+    val scope = rememberCoroutineScope()
+    val offsetX = remember { Animatable(0f) }
+    var width by remember { mutableStateOf(1) }
+    val edgeWidthPx = with(LocalDensity.current) { 88.dp.toPx() }
+
+    return this
+        .onSizeChanged { width = it.width.coerceAtLeast(1) }
+        .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+        .graphicsLayer {
+            val progress = (offsetX.value / width).coerceIn(0f, 1f)
+            alpha = 1f - progress * 0.08f
+            scaleX = 1f - progress * 0.02f
+            scaleY = 1f - progress * 0.02f
+        }
+        .pointerInput(width) {
+            var startedFromEdge = false
+            detectHorizontalDragGestures(
+                onDragStart = { position ->
+                    startedFromEdge = position.x <= edgeWidthPx
+                    if (startedFromEdge) {
+                        scope.launch { offsetX.snapTo(0f) }
+                    }
+                },
+                onHorizontalDrag = { change, dragAmount ->
+                    if (!startedFromEdge) return@detectHorizontalDragGestures
+                    val horizontalDelta = change.positionChange().x
+                    if (horizontalDelta > 0f || offsetX.value > 0f) {
+                        change.consume()
+                        scope.launch {
+                            offsetX.snapTo(
+                                (offsetX.value + dragAmount)
+                                    .coerceIn(0f, width * 0.76f)
+                            )
+                        }
+                    }
+                },
+                onDragCancel = {
+                    if (startedFromEdge) {
+                        scope.launch { offsetX.animateTo(0f, tween(220)) }
+                    }
+                },
+                onDragEnd = {
+                    if (!startedFromEdge) return@detectHorizontalDragGestures
+                    scope.launch {
+                        if (offsetX.value >= width * 0.28f) {
+                            offsetX.animateTo(width.toFloat(), tween(180))
+                            offsetX.snapTo(0f)
+                            onBack()
+                        } else {
+                            offsetX.animateTo(0f, tween(220))
+                        }
+                    }
+                }
+            )
+        }
 }
 
 private data class LabeledOption<T>(

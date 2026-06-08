@@ -29,6 +29,7 @@ class ThemePreferencesRepository(
             ),
             dynamicColorEnabled = prefs.getBoolean(KEY_DYNAMIC_COLOR_ENABLED, true),
             amoledBlackEnabled = prefs.getBoolean(KEY_AMOLED_BLACK_ENABLED, false),
+            predictiveBackGestureEnabled = prefs.getBoolean(KEY_PREDICTIVE_BACK_GESTURE_ENABLED, true),
             manualColorEnabled = prefs.getBoolean(KEY_MANUAL_COLOR_ENABLED, false),
             manualSeedColor = prefs.getLong(
                 KEY_MANUAL_SEED_COLOR,
@@ -46,6 +47,7 @@ class ThemePreferencesRepository(
                 .putString(KEY_MATERIAL_PALETTE, settings.materialPalette.name)
                 .putBoolean(KEY_DYNAMIC_COLOR_ENABLED, settings.dynamicColorEnabled)
                 .putBoolean(KEY_AMOLED_BLACK_ENABLED, settings.amoledBlackEnabled)
+                .putBoolean(KEY_PREDICTIVE_BACK_GESTURE_ENABLED, settings.predictiveBackGestureEnabled)
                 .putBoolean(KEY_MANUAL_COLOR_ENABLED, settings.manualColorEnabled)
                 .putLong(KEY_MANUAL_SEED_COLOR, settings.manualSeedColor)
         }
@@ -73,6 +75,10 @@ class ThemePreferencesRepository(
 
     fun saveAmoledBlackEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_AMOLED_BLACK_ENABLED, enabled) }
+    }
+
+    fun savePredictiveBackGestureEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_PREDICTIVE_BACK_GESTURE_ENABLED, enabled) }
     }
 
     fun saveManualColorEnabled(enabled: Boolean) {
@@ -124,6 +130,7 @@ class ThemePreferencesRepository(
         private const val KEY_MATERIAL_PALETTE_MODE = "material_palette_mode"
         private const val KEY_DYNAMIC_COLOR_ENABLED = "dynamic_color_enabled"
         private const val KEY_AMOLED_BLACK_ENABLED = "amoled_black_enabled"
+        private const val KEY_PREDICTIVE_BACK_GESTURE_ENABLED = "predictive_back_gesture_enabled"
         private const val KEY_MANUAL_COLOR_ENABLED = "manual_color_enabled"
         private const val KEY_MANUAL_SEED_COLOR = "manual_seed_color"
         private val THEME_KEYS = setOf(
@@ -134,6 +141,7 @@ class ThemePreferencesRepository(
             KEY_MATERIAL_PALETTE_MODE,
             KEY_DYNAMIC_COLOR_ENABLED,
             KEY_AMOLED_BLACK_ENABLED,
+            KEY_PREDICTIVE_BACK_GESTURE_ENABLED,
             KEY_MANUAL_COLOR_ENABLED,
             KEY_MANUAL_SEED_COLOR
         )

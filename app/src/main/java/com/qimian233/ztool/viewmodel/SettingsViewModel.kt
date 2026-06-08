@@ -117,6 +117,13 @@ class SettingsViewModel(
         )
     }
 
+    fun setPredictiveBackGestureEnabled(enabled: Boolean) {
+        repository.setPredictiveBackGestureEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(predictiveBackGestureEnabled = enabled)
+        )
+    }
+
     fun setManualColorEnabled(enabled: Boolean) {
         repository.setManualColorEnabled(enabled)
         _uiState.value = _uiState.value.copy(

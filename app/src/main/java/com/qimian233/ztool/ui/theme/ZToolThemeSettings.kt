@@ -24,6 +24,7 @@ data class ZToolThemeSettings(
     val materialPalette: MaterialPalette = MaterialPalette.TonalSpot,
     val dynamicColorEnabled: Boolean = true,
     val amoledBlackEnabled: Boolean = false,
+    val predictiveBackGestureEnabled: Boolean = true,
     val manualColorEnabled: Boolean = false,
     val manualSeedColor: Long = DEFAULT_MANUAL_SEED_COLOR
 ) {
