@@ -231,6 +231,10 @@ private enum class MainRoute(
     }
 }
 
+private object HiddenRoute {
+    const val SettingsTheme = "SettingsTheme"
+}
+
 @Composable
 private fun MainTabletShell(
     environmentReady: Boolean,
@@ -309,7 +313,24 @@ private fun MainRouteNavHost(
             AuditMainRoute()
         }
         composable(MainRoute.Settings.name) {
-            SettingsMainRoute()
+            SettingsMainRoute(
+                onOpenThemeSettings = {
+                    navController.navigate(HiddenRoute.SettingsTheme) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable(HiddenRoute.SettingsTheme) {
+            SettingsThemeMainRoute(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Settings.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
         }
     }
 }

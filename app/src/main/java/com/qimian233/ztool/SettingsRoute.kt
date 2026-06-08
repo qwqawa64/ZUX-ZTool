@@ -3,15 +3,8 @@ package com.qimian233.ztool
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -65,7 +58,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -118,18 +110,19 @@ import kotlin.math.roundToInt
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun SettingsMainRoute() {
+    SettingsMainRoute(onOpenThemeSettings = {})
+}
+
+@SuppressLint("LocalContextGetResourceValueCall")
+@Composable
+fun SettingsMainRoute(
+    onOpenThemeSettings: () -> Unit
+) {
     val context = LocalContext.current
     val activity = context as MainActivity
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    val viewModel = remember {
-        val repository = SettingsRepository(context.applicationContext)
-        ViewModelProvider(
-            activity,
-            SettingsViewModelFactory(repository)
-        )[SettingsViewModel::class.java]
-    }
+    val viewModel = rememberSettingsViewModel(activity)
     val uiState by viewModel.uiState.collectAsState()
-    var currentPage by rememberSaveable { mutableStateOf(SettingsPage.Main) }
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -169,69 +162,91 @@ fun SettingsMainRoute() {
         }
     }
 
-    AnimatedContent(
-        targetState = currentPage,
-        transitionSpec = {
-            val forward = targetState.ordinal > initialState.ordinal
-            val enter = slideInHorizontally(
-                animationSpec = tween(320),
-                initialOffsetX = { width -> if (forward) width else -width / 3 }
-            ) + fadeIn(animationSpec = tween(220))
-            val exit = slideOutHorizontally(
-                animationSpec = tween(320),
-                targetOffsetX = { width -> if (forward) -width / 3 else width }
-            ) + fadeOut(animationSpec = tween(220))
-
-            enter togetherWith exit using SizeTransform(clip = false)
-        },
-        label = "SettingsPageTransition",
-        modifier = Modifier
-            .fillMaxSize()
-            .clipToBounds()
-    ) { page ->
-        when (page) {
-            SettingsPage.Main -> SettingsRoute(
-                state = uiState,
-                onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
-                onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-                onRestoreDefault = viewModel::showRestoreConfirmDialog,
-                onOpenThemeSettings = { currentPage = SettingsPage.Theme },
-                onLogServiceChanged = {
-                    viewModel.setLogServiceEnabled(it)
-                    showSettingsToast(
-                        context,
-                        context.getString(
-                            if (it) R.string.log_service_started else R.string.log_service_stopped
-                        )
-                    )
-                },
-                onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
-                onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-                onAbout = viewModel::showAboutDialog
-            )
-
-            SettingsPage.Theme -> ThemeSettingsRoute(
-                state = uiState,
-                onBack = { currentPage = SettingsPage.Main },
-                onFrontendStyleChanged = viewModel::setFrontendStyle,
-                onThemeModeChanged = viewModel::setThemeMode,
-                onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
-                onMaterialPaletteChanged = viewModel::setMaterialPalette,
-                onDynamicColorChanged = viewModel::setDynamicColorEnabled,
-                onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
-                onPredictiveBackGestureChanged = viewModel::setPredictiveBackGestureEnabled,
-                onManualColorChanged = viewModel::setManualColorEnabled,
-                onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
-                onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
-                modifier = Modifier.predictiveBackGesture(
-                    enabled = uiState.themeSettings.predictiveBackGestureEnabled,
-                    onBack = { currentPage = SettingsPage.Main }
+    SettingsRoute(
+        state = uiState,
+        onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
+        onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
+        onRestoreDefault = viewModel::showRestoreConfirmDialog,
+        onOpenThemeSettings = onOpenThemeSettings,
+        onLogServiceChanged = {
+            viewModel.setLogServiceEnabled(it)
+            showSettingsToast(
+                context,
+                context.getString(
+                    if (it) R.string.log_service_started else R.string.log_service_stopped
                 )
             )
+        },
+        onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+        onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
+        onAbout = viewModel::showAboutDialog
+    )
+
+    SettingsDialogs(
+        state = uiState,
+        viewModel = viewModel,
+        context = context
+    )
+}
+
+@Composable
+fun SettingsThemeMainRoute(
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val activity = context as MainActivity
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val viewModel = rememberSettingsViewModel(activity)
+    val uiState by viewModel.uiState.collectAsState()
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
-    if (uiState.showRestoreConfirmDialog) {
+    ThemeSettingsRoute(
+        state = uiState,
+        onBack = onBack,
+        onFrontendStyleChanged = viewModel::setFrontendStyle,
+        onThemeModeChanged = viewModel::setThemeMode,
+        onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
+        onMaterialPaletteChanged = viewModel::setMaterialPalette,
+        onDynamicColorChanged = viewModel::setDynamicColorEnabled,
+        onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
+        onPredictiveBackGestureChanged = viewModel::setPredictiveBackGestureEnabled,
+        onManualColorChanged = viewModel::setManualColorEnabled,
+        onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
+        onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
+        modifier = Modifier
+            .fillMaxSize()
+            .clipToBounds()
+            .predictiveBackGesture(
+                enabled = uiState.themeSettings.predictiveBackGestureEnabled,
+                onBack = onBack
+            )
+    )
+
+    SettingsDialogs(
+        state = uiState,
+        viewModel = viewModel,
+        context = context
+    )
+}
+
+@Composable
+private fun SettingsDialogs(
+    state: SettingsUiState,
+    viewModel: SettingsViewModel,
+    context: android.content.Context
+) {
+    if (state.showRestoreConfirmDialog) {
         RestoreDefaultDialog(
             onConfirm = {
                 viewModel.restoreDefaultConfig()
@@ -241,9 +256,9 @@ fun SettingsMainRoute() {
         )
     }
 
-    if (uiState.showAboutDialog) {
+    if (state.showAboutDialog) {
         AboutDialog(
-            version = uiState.moduleVersion,
+            version = state.moduleVersion,
             onDismiss = viewModel::dismissAboutDialog,
             onOpenGithub = {
                 openSettingsExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool", false, "")
@@ -258,6 +273,18 @@ fun SettingsMainRoute() {
                 openSettingsExternalLink(context, "http://www.coolapk.com/u/18634835", true, "com.coolapk.market")
             }
         )
+    }
+}
+
+@Composable
+private fun rememberSettingsViewModel(activity: MainActivity): SettingsViewModel {
+    val context = LocalContext.current
+    return remember(activity) {
+        val repository = SettingsRepository(context.applicationContext)
+        ViewModelProvider(
+            activity,
+            SettingsViewModelFactory(repository)
+        )[SettingsViewModel::class.java]
     }
 }
 
@@ -292,11 +319,6 @@ private class SettingsViewModelFactory(
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
-}
-
-private enum class SettingsPage {
-    Main,
-    Theme
 }
 
 @Composable
