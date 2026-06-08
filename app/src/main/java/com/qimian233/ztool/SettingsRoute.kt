@@ -3,6 +3,7 @@ package com.qimian233.ztool
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.rounded.RestorePage
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -46,7 +49,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -96,6 +102,7 @@ fun SettingsMainRoute() {
         )[SettingsViewModel::class.java]
     }
     val uiState by viewModel.uiState.collectAsState()
+    var currentPage by rememberSaveable { mutableStateOf(SettingsPage.Main) }
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -135,32 +142,40 @@ fun SettingsMainRoute() {
         }
     }
 
-    SettingsRoute(
-        state = uiState,
-        onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
-        onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-        onRestoreDefault = viewModel::showRestoreConfirmDialog,
-        onLogServiceChanged = {
-            viewModel.setLogServiceEnabled(it)
-            showSettingsToast(
-                context,
-                context.getString(
-                    if (it) R.string.log_service_started else R.string.log_service_stopped
+    when (currentPage) {
+        SettingsPage.Main -> SettingsRoute(
+            state = uiState,
+            onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
+            onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
+            onRestoreDefault = viewModel::showRestoreConfirmDialog,
+            onOpenThemeSettings = { currentPage = SettingsPage.Theme },
+            onLogServiceChanged = {
+                viewModel.setLogServiceEnabled(it)
+                showSettingsToast(
+                    context,
+                    context.getString(
+                        if (it) R.string.log_service_started else R.string.log_service_stopped
+                    )
                 )
-            )
-        },
-        onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
-        onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-        onFrontendStyleChanged = viewModel::setFrontendStyle,
-        onThemeModeChanged = viewModel::setThemeMode,
-        onMaterialPaletteModeChanged = viewModel::setMaterialPaletteMode,
-        onDynamicColorChanged = viewModel::setDynamicColorEnabled,
-        onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
-        onManualColorChanged = viewModel::setManualColorEnabled,
-        onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
-        onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
-        onAbout = viewModel::showAboutDialog
-    )
+            },
+            onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+            onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
+            onAbout = viewModel::showAboutDialog
+        )
+
+        SettingsPage.Theme -> ThemeSettingsRoute(
+            state = uiState,
+            onBack = { currentPage = SettingsPage.Main },
+            onFrontendStyleChanged = viewModel::setFrontendStyle,
+            onThemeModeChanged = viewModel::setThemeMode,
+            onMaterialPaletteModeChanged = viewModel::setMaterialPaletteMode,
+            onDynamicColorChanged = viewModel::setDynamicColorEnabled,
+            onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
+            onManualColorChanged = viewModel::setManualColorEnabled,
+            onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
+            onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing
+        )
+    }
 
     if (uiState.showRestoreConfirmDialog) {
         RestoreDefaultDialog(
@@ -225,23 +240,21 @@ private class SettingsViewModelFactory(
     }
 }
 
+private enum class SettingsPage {
+    Main,
+    Theme
+}
+
 @Composable
 private fun SettingsRoute(
     state: SettingsUiState,
     onBackup: () -> Unit,
     onRestore: () -> Unit,
     onRestoreDefault: () -> Unit,
+    onOpenThemeSettings: () -> Unit,
     onLogServiceChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
-    onFrontendStyleChanged: (FrontendStyle) -> Unit,
-    onThemeModeChanged: (ThemeMode) -> Unit,
-    onMaterialPaletteModeChanged: (MaterialPaletteMode) -> Unit,
-    onDynamicColorChanged: (Boolean) -> Unit,
-    onAmoledBlackChanged: (Boolean) -> Unit,
-    onManualColorChanged: (Boolean) -> Unit,
-    onManualSeedColorTextChanged: (String) -> Unit,
-    onManualSeedColorEditingFinished: () -> Unit,
     onAbout: () -> Unit
 ) {
     ZToolScaffold (
@@ -292,19 +305,16 @@ private fun SettingsRoute(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ThemeSettingsSection(
-                settings = state.themeSettings,
-                manualSeedColorText = state.manualSeedColorText,
-                manualSeedColorError = state.manualSeedColorError,
-                onFrontendStyleChanged = onFrontendStyleChanged,
-                onThemeModeChanged = onThemeModeChanged,
-                onMaterialPaletteModeChanged = onMaterialPaletteModeChanged,
-                onDynamicColorChanged = onDynamicColorChanged,
-                onAmoledBlackChanged = onAmoledBlackChanged,
-                onManualColorChanged = onManualColorChanged,
-                onManualSeedColorTextChanged = onManualSeedColorTextChanged,
-                onManualSeedColorEditingFinished = onManualSeedColorEditingFinished
-            )
+            SettingsSection {
+                ExpressiveSectionItems(count = 1) { itemModifier ->
+                    SettingsActionRow(
+                        title = stringResource(R.string.app_ui_theme_settings),
+                        onClick = onOpenThemeSettings,
+                        icon = Icons.Rounded.Palette,
+                        modifier = itemModifier()
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -352,6 +362,68 @@ private fun SettingsRoute(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+    }
+}
+
+@Composable
+private fun ThemeSettingsRoute(
+    state: SettingsUiState,
+    onBack: () -> Unit,
+    onFrontendStyleChanged: (FrontendStyle) -> Unit,
+    onThemeModeChanged: (ThemeMode) -> Unit,
+    onMaterialPaletteModeChanged: (MaterialPaletteMode) -> Unit,
+    onDynamicColorChanged: (Boolean) -> Unit,
+    onAmoledBlackChanged: (Boolean) -> Unit,
+    onManualColorChanged: (Boolean) -> Unit,
+    onManualSeedColorTextChanged: (String) -> Unit,
+    onManualSeedColorEditingFinished: () -> Unit
+) {
+    BackHandler(onBack = onBack)
+
+    ZToolScaffold(
+        topBar = {
+            ZToolTopAppBar(
+                title = stringResource(R.string.app_ui_theme_settings),
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        ZToolPageSurface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .widthIn(max = 960.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 32.dp, vertical = 32.dp)
+            ) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                ThemeSettingsSection(
+                    settings = state.themeSettings,
+                    manualSeedColorText = state.manualSeedColorText,
+                    manualSeedColorError = state.manualSeedColorError,
+                    onFrontendStyleChanged = onFrontendStyleChanged,
+                    onThemeModeChanged = onThemeModeChanged,
+                    onMaterialPaletteModeChanged = onMaterialPaletteModeChanged,
+                    onDynamicColorChanged = onDynamicColorChanged,
+                    onAmoledBlackChanged = onAmoledBlackChanged,
+                    onManualColorChanged = onManualColorChanged,
+                    onManualSeedColorTextChanged = onManualSeedColorTextChanged,
+                    onManualSeedColorEditingFinished = onManualSeedColorEditingFinished
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
     }
 }
 
