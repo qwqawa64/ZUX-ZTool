@@ -39,6 +39,7 @@ import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
+import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.utils.CountdownDialog
 
 class MainActivity : ZToolComponentActivity(),
@@ -67,9 +68,11 @@ class MainActivity : ZToolComponentActivity(),
 
         val themeRepository = ThemePreferencesRepository(applicationContext)
         themeSettings = themeRepository.loadSettings()
+        applyZToolActivityTransitions(themeSettings.predictiveBackGestureEnabled)
         unregisterThemeSettingsObserver = themeRepository.observeSettings { updatedSettings ->
             runOnUiThread {
                 themeSettings = updatedSettings
+                applyZToolActivityTransitions(updatedSettings.predictiveBackGestureEnabled)
                 setupSystemBars(updatedSettings)
             }
         }
@@ -318,7 +321,7 @@ private fun MainRouteNavHost(
                 animationSpec = tween(SettingsNavigationAnimationMillis)
             )
         } else {
-            null
+            EnterTransition.None
         }
     }
     val horizontalExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
@@ -332,7 +335,7 @@ private fun MainRouteNavHost(
                 animationSpec = tween(SettingsNavigationAnimationMillis)
             )
         } else {
-            null
+            ExitTransition.None
         }
     }
     val horizontalPopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
@@ -346,7 +349,7 @@ private fun MainRouteNavHost(
                 animationSpec = tween(SettingsNavigationAnimationMillis)
             )
         } else {
-            null
+            EnterTransition.None
         }
     }
     val horizontalPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
@@ -360,7 +363,7 @@ private fun MainRouteNavHost(
                 animationSpec = tween(SettingsNavigationAnimationMillis)
             )
         } else {
-            null
+            ExitTransition.None
         }
     }
 
