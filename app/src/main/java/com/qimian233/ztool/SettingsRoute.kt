@@ -568,6 +568,7 @@ private fun ThemeSettingsSection(
             )
             ZToolPopupMenuSettingRow(
                 title = stringResource(R.string.material_color_spec_title),
+                summary = stringResource(R.string.material_color_spec_summary),
                 value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
                 options = colorSpecOptions,
                 optionLabel = { it.label },

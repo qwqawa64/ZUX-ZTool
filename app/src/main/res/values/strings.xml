@@ -800,6 +800,7 @@
     <string name="theme_mode_light">亮色</string>
     <string name="theme_mode_dark">暗色</string>
     <string name="material_color_spec_title">Material 色彩标准</string>
+    <string name="material_color_spec_summary">仅 TonalSpot、Neutral、Vibrant 和 Expressive 调色板风格支持 SPEC 2025</string>
     <string name="material_color_spec_2021">SPEC_2021</string>
     <string name="material_color_spec_2025">SPEC_2025</string>
     <string name="material_palette_mode_title">Material 调色板</string>
