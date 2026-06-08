@@ -27,16 +27,20 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
@@ -50,6 +54,68 @@ import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.ApiTestResult
 import com.qimian233.ztool.viewmodel.LockScreenSettingsUiState
 import com.qimian233.ztool.viewmodel.LockScreenSettingsViewModel
+
+@Composable
+fun LockScreenSettingsRoute(
+    title: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("LockScreenSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            LockScreenSettingsViewModelFactory(
+                LockScreenSettingsRepository(context.applicationContext)
+            )
+        )[LockScreenSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    LockScreenSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onYiYanChanged = viewModel::setYiYanEnabled,
+        onApiAddressChanged = viewModel::setApiAddress,
+        onRegexChanged = viewModel::setRegex,
+        onTestApi = {
+            viewModel.testApiConnection {
+                Toast.makeText(context, R.string.please_input_api_address, Toast.LENGTH_SHORT).show()
+            }
+        },
+        onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
+        onRealWattsIntervalOptionChanged = viewModel::setRealWattsIntervalOption,
+        onRealWattsRefreshIntervalChanged = viewModel::setRealWattsRefreshInterval
+    )
+
+    if (uiState.showRootPermissionDialog) {
+        RootPermissionDialog(
+            onConfirm = viewModel::dismissRootPermissionDialog,
+            onDoNotShowAgain = {
+                viewModel.confirmSystemUiPermission()
+                Toast.makeText(context, R.string.no_tip_next_time, Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    uiState.apiTestResult?.let { result ->
+        ApiTestResultDialog(
+            result = result,
+            onSave = {
+                viewModel.saveYiYanConfiguration()
+                Toast.makeText(context, R.string.configuration_saved_message, Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = viewModel::dismissApiTestResult
+        )
+    }
+}
 
 class LockScreenSettingsActivity : ZToolComponentActivity() {
 

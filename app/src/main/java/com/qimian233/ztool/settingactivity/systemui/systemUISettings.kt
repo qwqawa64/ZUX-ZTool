@@ -60,7 +60,10 @@ import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
 fun SystemUiSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenStatusBar: () -> Unit,
+    onOpenLockScreen: () -> Unit,
+    onOpenControlCenter: () -> Unit
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -78,34 +81,15 @@ fun SystemUiSettingsRoute(
         viewModel.loadSettings()
     }
 
-    fun openSubSettings(target: Class<*>) {
-        val intent = Intent(context, target).apply {
-            putExtra("app_name", title)
-            putExtra("app_package", packageName)
-        }
-        val activity = context as? android.app.Activity
-        if (activity != null) {
-            activity.startActivityWithZToolTransition(intent)
-        } else {
-            context.startActivity(intent)
-        }
-    }
-
     val uiState by viewModel.uiState.collectAsState()
 
     SystemUiSettingsScreen(
         title = title,
         state = uiState,
         onBack = onBack,
-        onOpenStatusBar = {
-            openSubSettings(StatusBarSettingsActivity::class.java)
-        },
-        onOpenLockScreen = {
-            openSubSettings(LockScreenSettingsActivity::class.java)
-        },
-        onOpenControlCenter = {
-            openSubSettings(ControlCenterSettingsActivity::class.java)
-        },
+        onOpenStatusBar = onOpenStatusBar,
+        onOpenLockScreen = onOpenLockScreen,
+        onOpenControlCenter = onOpenControlCenter,
         onNativeAodChanged = { enabled ->
             viewModel.setNativeAodEnabled(
                 enabled = enabled,

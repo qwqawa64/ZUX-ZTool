@@ -40,7 +40,10 @@ import com.qimian233.ztool.settingactivity.packageinstaller.PackageInstallerSett
 import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsRoute
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailRoute
 import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.SystemUiSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsRoute
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
@@ -250,6 +253,9 @@ private enum class MainRoute(
 
 private object HiddenRoute {
     const val SettingsTheme = "SettingsTheme"
+    const val SystemUiStatusBar = "feature/system-ui/status-bar"
+    const val SystemUiLockScreen = "feature/system-ui/lock-screen"
+    const val SystemUiControlCenter = "feature/system-ui/control-center"
 }
 
 @Composable
@@ -530,6 +536,78 @@ private fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
+                },
+                onOpenStatusBar = {
+                    navController.navigate(HiddenRoute.SystemUiStatusBar) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenLockScreen = {
+                    navController.navigate(HiddenRoute.SystemUiLockScreen) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenControlCenter = {
+                    navController.navigate(HiddenRoute.SystemUiControlCenter) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SystemUiStatusBar,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            StatusBarSettingsRoute(
+                title = stringResource(R.string.system_ui_app_name) +
+                    stringResource(R.string.status_bar_settings_title_suffix),
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(FeatureDestination.SystemUi.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SystemUiLockScreen,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            LockScreenSettingsRoute(
+                title = stringResource(R.string.system_ui_app_name) +
+                    stringResource(R.string.lock_screen_settings_title_suffix),
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(FeatureDestination.SystemUi.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SystemUiControlCenter,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            ControlCenterSettingsRoute(
+                title = stringResource(R.string.system_ui_app_name) +
+                    stringResource(R.string.control_center_settings_title_suffix),
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(FeatureDestination.SystemUi.route) {
+                            launchSingleTop = true
+                        }
+                    }
                 }
             )
         }
@@ -625,12 +703,15 @@ private fun navigationRouteIndex(route: String?): Int {
         FeatureDestination.Ota.route -> 2
         FeatureDestination.PackageInstaller.route -> 2
         FeatureDestination.SystemUi.route -> 2
+        HiddenRoute.SystemUiStatusBar -> 3
+        HiddenRoute.SystemUiLockScreen -> 3
+        HiddenRoute.SystemUiControlCenter -> 3
         FeatureDestination.Launcher.route -> 2
         FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2
-        MainRoute.Audit.name -> 3
-        MainRoute.Settings.name -> 4
-        HiddenRoute.SettingsTheme -> 5
+        MainRoute.Audit.name -> 4
+        MainRoute.Settings.name -> 5
+        HiddenRoute.SettingsTheme -> 6
         else -> 0
     }
 }

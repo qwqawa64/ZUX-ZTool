@@ -418,10 +418,26 @@ Features entries to Compose destinations.
 
 Next targets:
 
-- Migrate the System UI subtree detail pages into Compose destinations:
-  - `StatusBarSettingsActivity`
-  - `LockScreenSettingsActivity`
-  - `ControlCenterSettingsActivity`
+- Migrated the System UI subtree detail pages into Compose destinations:
+  - `feature/system-ui/status-bar`
+  - `feature/system-ui/lock-screen`
+  - `feature/system-ui/control-center`
+- `systemUISettings` now navigates to those child pages through the app-level Compose
+  NavHost instead of starting their Activities from the in-app path.
+- Status bar, lock screen, and control center child pages now share the same predictive-back
+  transition policy as the System UI aggregate page.
+
+Verification:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Result: succeeded on 2026-06-09 after migrating the System UI child pages to Compose
+destinations.
+
+Next targets:
+
 - Migrate the System Settings detail subtree:
   - `searchPage`
   - floating-window/overlay guide entry if it should become a route instead of an overlay-only

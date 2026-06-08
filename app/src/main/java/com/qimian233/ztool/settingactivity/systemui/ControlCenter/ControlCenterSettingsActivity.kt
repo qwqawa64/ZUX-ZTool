@@ -35,16 +35,20 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.ControlCenterSettingsRepository
 import com.qimian233.ztool.ui.components.QuickHelpExample
@@ -60,6 +64,87 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsUiState
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsViewModel
+
+@Composable
+fun ControlCenterSettingsRoute(
+    title: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("ControlCenterSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            ControlCenterSettingsViewModelFactory(
+                ControlCenterSettingsRepository(context.applicationContext)
+            )
+        )[ControlCenterSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    fun copyDateFormatExample() {
+        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText(
+            context.getString(R.string.date_format_example),
+            context.getString(R.string.date_format_sample)
+        )
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(context, R.string.example_copied_message, Toast.LENGTH_SHORT).show()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    ControlCenterSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onCustomDateChanged = viewModel::setCustomDate,
+        onDateFormatChanged = viewModel::setDateFormat,
+        onSaveDateFormat = viewModel::saveDateFormat,
+        onShowFormatHelp = viewModel::showFormatHelpDialog,
+        onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
+        onTextSizeChanged = viewModel::setTextSize,
+        onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
+        onLetterSpacingChanged = viewModel::setLetterSpacing,
+        onTextColorEnabledChanged = viewModel::setTextColorEnabled,
+        onPickTextColor = viewModel::showColorPickerDialog,
+        onTextBoldChanged = viewModel::setTextBold
+    )
+
+    if (uiState.showFormatHelpDialog) {
+        FormatHelpDialog(
+            onDismiss = viewModel::dismissFormatHelpDialog,
+            onCopyExample = {
+                viewModel.dismissFormatHelpDialog()
+                copyDateFormatExample()
+            }
+        )
+    }
+
+    if (uiState.showColorPickerDialog) {
+        ColorPickerDialog(
+            onColorSelected = viewModel::setTextColor,
+            onDismiss = viewModel::dismissColorPickerDialog
+        )
+    }
+
+    if (uiState.showSaveSuccessDialog) {
+        ZToolDialog(
+            onDismissRequest = viewModel::dismissSaveSuccessDialog,
+            title = { Text(stringResource(R.string.save_success_title)) },
+            text = { Text(stringResource(R.string.date_format_saved_message)) },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissSaveSuccessDialog) {
+                    Text(stringResource(R.string.restart_yes))
+                }
+            }
+        )
+    }
+}
 
 class ControlCenterSettingsActivity : ZToolComponentActivity() {
 
