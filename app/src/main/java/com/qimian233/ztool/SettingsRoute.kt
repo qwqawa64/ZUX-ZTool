@@ -17,7 +17,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -73,12 +74,14 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -109,6 +112,7 @@ import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.viewmodel.SettingsUiState
 import com.qimian233.ztool.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @SuppressLint("LocalContextGetResourceValueCall")
@@ -701,6 +705,7 @@ private fun Modifier.predictiveBackGesture(
     val offsetX = remember { Animatable(0f) }
     var width by remember { mutableStateOf(1) }
     val edgeWidthPx = with(LocalDensity.current) { 88.dp.toPx() }
+    val touchSlop = LocalViewConfiguration.current.touchSlop
 
     return this
         .onSizeChanged { width = it.width.coerceAtLeast(1) }
@@ -711,46 +716,65 @@ private fun Modifier.predictiveBackGesture(
             scaleX = 1f - progress * 0.02f
             scaleY = 1f - progress * 0.02f
         }
-        .pointerInput(width) {
-            var startedFromEdge = false
-            detectHorizontalDragGestures(
-                onDragStart = { position ->
-                    startedFromEdge = position.x <= edgeWidthPx
-                    if (startedFromEdge) {
-                        scope.launch { offsetX.snapTo(0f) }
+        .pointerInput(width, edgeWidthPx, touchSlop) {
+            awaitEachGesture {
+                val down = awaitFirstDown(
+                    requireUnconsumed = false,
+                    pass = PointerEventPass.Initial
+                )
+                if (down.position.x > edgeWidthPx) return@awaitEachGesture
+
+                scope.launch { offsetX.snapTo(0f) }
+
+                val pointerId = down.id
+                var dragging = false
+                var cumulativeX = 0f
+                var cumulativeY = 0f
+
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = event.changes.firstOrNull { it.id == pointerId }
+                        ?: event.changes.firstOrNull { it.pressed }
+                        ?: break
+
+                    if (!change.pressed) break
+
+                    val positionChange = change.positionChange()
+                    cumulativeX += positionChange.x
+                    cumulativeY += positionChange.y
+
+                    if (!dragging) {
+                        val horizontalIntent = cumulativeX > touchSlop && abs(cumulativeX) > abs(cumulativeY)
+                        val oppositeOrVerticalIntent = cumulativeX < -touchSlop || abs(cumulativeY) > touchSlop * 1.4f
+                        when {
+                            horizontalIntent -> dragging = true
+                            oppositeOrVerticalIntent -> return@awaitEachGesture
+                        }
                     }
-                },
-                onHorizontalDrag = { change, dragAmount ->
-                    if (!startedFromEdge) return@detectHorizontalDragGestures
-                    val horizontalDelta = change.positionChange().x
-                    if (horizontalDelta > 0f || offsetX.value > 0f) {
+
+                    if (dragging) {
                         change.consume()
-                        scope.launch {
-                            offsetX.snapTo(
-                                (offsetX.value + dragAmount)
-                                    .coerceIn(0f, width * 0.76f)
-                            )
-                        }
-                    }
-                },
-                onDragCancel = {
-                    if (startedFromEdge) {
-                        scope.launch { offsetX.animateTo(0f, tween(220)) }
-                    }
-                },
-                onDragEnd = {
-                    if (!startedFromEdge) return@detectHorizontalDragGestures
-                    scope.launch {
-                        if (offsetX.value >= width * 0.28f) {
-                            offsetX.animateTo(width.toFloat(), tween(180))
-                            offsetX.snapTo(0f)
-                            onBack()
-                        } else {
-                            offsetX.animateTo(0f, tween(220))
-                        }
+                        val nextOffset = (offsetX.value + positionChange.x)
+                            .coerceIn(0f, width * 0.76f)
+                        scope.launch { offsetX.snapTo(nextOffset) }
                     }
                 }
-            )
+
+                if (!dragging) {
+                    scope.launch { offsetX.animateTo(0f, tween(220)) }
+                    return@awaitEachGesture
+                }
+
+                scope.launch {
+                    if (offsetX.value >= width * 0.28f) {
+                        offsetX.animateTo(width.toFloat(), tween(180))
+                        offsetX.snapTo(0f)
+                        onBack()
+                    } else {
+                        offsetX.animateTo(0f, tween(220))
+                    }
+                }
+            }
         }
 }
 
