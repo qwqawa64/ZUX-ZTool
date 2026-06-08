@@ -7,6 +7,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -80,6 +84,7 @@ class MainActivity : ComponentActivity(),
                     MainTabletShell(
                         environmentReady = isEnvironmentReady,
                         selectedRoute = currentRoute,
+                        themeSettings = themeSettings,
                         onDestinationSelected = ::navigateFromRail,
                         onEnvironmentStateChanged = ::onEnvironmentStateChanged,
                         onRouteChanged = ::setCurrentRouteFromHost
@@ -239,6 +244,7 @@ private object HiddenRoute {
 private fun MainTabletShell(
     environmentReady: Boolean,
     selectedRoute: MainRoute,
+    themeSettings: ZToolThemeSettings,
     onDestinationSelected: (MainRoute) -> Unit,
     onEnvironmentStateChanged: (Boolean) -> Unit,
     onRouteChanged: (MainRoute) -> Unit
@@ -287,6 +293,7 @@ private fun MainTabletShell(
                 .weight(1f)
                 .fillMaxSize(),
             navController = navController,
+            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
             onEnvironmentStateChanged = onEnvironmentStateChanged
         )
     }
@@ -296,8 +303,50 @@ private fun MainTabletShell(
 private fun MainRouteNavHost(
     modifier: Modifier = Modifier,
     navController: androidx.navigation.NavHostController,
+    predictiveBackGestureEnabled: Boolean,
     onEnvironmentStateChanged: (Boolean) -> Unit
 ) {
+    val settingsForwardEnter: AnimatedContentTransitionScope<*>.() -> EnterTransition? = {
+        if (predictiveBackGestureEnabled) {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        } else {
+            null
+        }
+    }
+    val settingsForwardExit: AnimatedContentTransitionScope<*>.() -> ExitTransition? = {
+        if (predictiveBackGestureEnabled) {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        } else {
+            null
+        }
+    }
+    val settingsBackEnter: AnimatedContentTransitionScope<*>.() -> EnterTransition? = {
+        if (predictiveBackGestureEnabled) {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        } else {
+            null
+        }
+    }
+    val settingsBackExit: AnimatedContentTransitionScope<*>.() -> ExitTransition? = {
+        if (predictiveBackGestureEnabled) {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        } else {
+            null
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = MainRoute.Home.name,
@@ -312,7 +361,10 @@ private fun MainRouteNavHost(
         composable(MainRoute.Audit.name) {
             AuditMainRoute()
         }
-        composable(MainRoute.Settings.name) {
+        composable(
+            route = MainRoute.Settings.name,
+            popEnterTransition = settingsBackEnter
+        ) {
             SettingsMainRoute(
                 onOpenThemeSettings = {
                     navController.navigate(HiddenRoute.SettingsTheme) {
@@ -321,7 +373,13 @@ private fun MainRouteNavHost(
                 }
             )
         }
-        composable(HiddenRoute.SettingsTheme) {
+        composable(
+            route = HiddenRoute.SettingsTheme,
+            enterTransition = settingsForwardEnter,
+            exitTransition = settingsForwardExit,
+            popEnterTransition = settingsBackEnter,
+            popExitTransition = settingsBackExit
+        ) {
             SettingsThemeMainRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -334,3 +392,5 @@ private fun MainRouteNavHost(
         }
     }
 }
+
+private const val SettingsNavigationAnimationMillis = 320
