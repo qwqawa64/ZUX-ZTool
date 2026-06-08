@@ -324,34 +324,47 @@ private fun MainRouteNavHost(
     onEnvironmentStateChanged: (Boolean) -> Unit
 ) {
     val horizontalEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
-        if (predictiveBackGestureEnabled) {
-            slideIntoContainer(
-                if (isForwardNavigation()) {
-                    AnimatedContentTransitionScope.SlideDirection.Left
-                } else {
-                    AnimatedContentTransitionScope.SlideDirection.Right
-                },
-                animationSpec = tween(SettingsNavigationAnimationMillis)
-            )
-        } else {
-            EnterTransition.None
-        }
+        slideIntoContainer(
+            if (isForwardNavigation()) {
+                AnimatedContentTransitionScope.SlideDirection.Left
+            } else {
+                AnimatedContentTransitionScope.SlideDirection.Right
+            },
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
     }
     val horizontalExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
-        if (predictiveBackGestureEnabled) {
-            slideOutOfContainer(
-                if (isForwardNavigation()) {
-                    AnimatedContentTransitionScope.SlideDirection.Left
-                } else {
-                    AnimatedContentTransitionScope.SlideDirection.Right
-                },
-                animationSpec = tween(SettingsNavigationAnimationMillis)
-            )
-        } else {
-            ExitTransition.None
-        }
+        slideOutOfContainer(
+            if (isForwardNavigation()) {
+                AnimatedContentTransitionScope.SlideDirection.Left
+            } else {
+                AnimatedContentTransitionScope.SlideDirection.Right
+            },
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
     }
     val horizontalPopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
+        slideIntoContainer(
+            if (isForwardNavigation()) {
+                AnimatedContentTransitionScope.SlideDirection.Left
+            } else {
+                AnimatedContentTransitionScope.SlideDirection.Right
+            },
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
+    }
+    val horizontalPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
+        slideOutOfContainer(
+            if (isForwardNavigation()) {
+                AnimatedContentTransitionScope.SlideDirection.Left
+            } else {
+                AnimatedContentTransitionScope.SlideDirection.Right
+            },
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
+    }
+    val predictiveHorizontalPopEnter:
+        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> EnterTransition = {
         if (predictiveBackGestureEnabled) {
             slideIntoContainer(
                 if (isForwardNavigation()) {
@@ -365,7 +378,8 @@ private fun MainRouteNavHost(
             EnterTransition.None
         }
     }
-    val horizontalPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
+    val predictiveHorizontalPopExit:
+        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> ExitTransition = {
         if (predictiveBackGestureEnabled) {
             slideOutOfContainer(
                 if (isForwardNavigation()) {
@@ -383,7 +397,9 @@ private fun MainRouteNavHost(
     NavHost(
         navController = navController,
         startDestination = MainRoute.Home.name,
-        modifier = modifier
+        modifier = modifier,
+        predictivePopEnterTransition = predictiveHorizontalPopEnter,
+        predictivePopExitTransition = predictiveHorizontalPopExit
     ) {
         composable(
             route = MainRoute.Home.name,

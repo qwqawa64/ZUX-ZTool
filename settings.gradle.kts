@@ -29,6 +29,14 @@ dependencyResolutionManagement {
                 includeGroup("top.yukonga.miuix.kmp")
             }
         }
+        exclusiveContent {
+            forRepository {
+                google()
+            }
+            filter {
+                includeGroup("androidx.navigation")
+            }
+        }
         maven { url = uri("https://maven.aliyun.com/repository/google") }
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven { url = uri("https://maven.aliyun.com/repository/central") }
