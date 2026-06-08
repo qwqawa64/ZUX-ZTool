@@ -15,7 +15,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,8 +30,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
-import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
@@ -90,20 +87,15 @@ class MainActivity : ComponentActivity(),
         LogServiceManager.setServiceStatusListener(this)
 
         setContent {
-            val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
-            CompositionLocalProvider(
-                LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner
-            ) {
-                ZToolTheme(settings = themeSettings) {
-                    MainTabletShell(
-                        environmentReady = isEnvironmentReady,
-                        selectedRoute = currentRoute,
-                        themeSettings = themeSettings,
-                        onDestinationSelected = ::navigateFromRail,
-                        onEnvironmentStateChanged = ::onEnvironmentStateChanged,
-                        onRouteChanged = ::setCurrentRouteFromHost
-                    )
-                }
+            ZToolTheme(settings = themeSettings) {
+                MainTabletShell(
+                    environmentReady = isEnvironmentReady,
+                    selectedRoute = currentRoute,
+                    themeSettings = themeSettings,
+                    onDestinationSelected = ::navigateFromRail,
+                    onEnvironmentStateChanged = ::onEnvironmentStateChanged,
+                    onRouteChanged = ::setCurrentRouteFromHost
+                )
             }
         }
 
