@@ -5,5 +5,6 @@
         <item name="ztoolColorAccent">#D1BFE6</item>
         <item name="ztoolColorSurface">#111418</item>
         <item name="ztoolColorOutline">#8D9199</item>
+        <item name="android:windowAnimationStyle">@style/Animation.ZTool.Activity</item>
     </style>
 </resources>

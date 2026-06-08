@@ -71,8 +71,10 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
+import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
+import com.qimian233.ztool.utils.startActivityWithZToolTransition
 import com.qimian233.ztool.viewmodel.SettingsDetailConfigFlashResult
 import com.qimian233.ztool.viewmodel.SettingsDetailFontInstallResult
 import com.qimian233.ztool.viewmodel.SettingsDetailFontPreparationResult
@@ -95,6 +97,7 @@ class SettingsDetailActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         viewModel = ViewModelProvider(
@@ -122,7 +125,7 @@ class SettingsDetailActivity : ComponentActivity() {
                         showConfigSelectionDialog(viewModel.loadEmbeddingConfigFiles())
                     },
                     onOpenStrategySearch = {
-                        startActivity(Intent(this, searchPage::class.java))
+                        startActivityWithZToolTransition(Intent(this, searchPage::class.java))
                     },
                     onZuiForceSplit = {
                         openOvConfigDialog(

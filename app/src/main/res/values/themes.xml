@@ -11,7 +11,15 @@
         <item name="ztoolColorAccent">#66587A</item>
         <item name="ztoolColorSurface">#FAF8FF</item>
         <item name="ztoolColorOutline">#73777F</item>
+        <item name="android:windowAnimationStyle">@style/Animation.ZTool.Activity</item>
     </style>
 
     <style name="Theme.ZTool" parent="Base.Theme.ZTool" />
+
+    <style name="Animation.ZTool.Activity" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/ztool_slide_in_from_right</item>
+        <item name="android:activityOpenExitAnimation">@anim/ztool_slide_out_to_left</item>
+        <item name="android:activityCloseEnterAnimation">@anim/ztool_slide_in_from_left</item>
+        <item name="android:activityCloseExitAnimation">@anim/ztool_slide_out_to_right</item>
+    </style>
 </resources>

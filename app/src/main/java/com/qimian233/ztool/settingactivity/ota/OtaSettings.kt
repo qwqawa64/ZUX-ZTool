@@ -52,6 +52,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
@@ -64,6 +65,7 @@ class OtaSettings : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()

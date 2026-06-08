@@ -57,6 +57,7 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
 import com.qimian233.ztool.viewmodel.StatusBarSettingsViewModel
 
@@ -66,6 +67,7 @@ class StatusBarSettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()

@@ -49,6 +49,7 @@ import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.utils.startActivityWithZToolTransition
 
 @Composable
 fun FeaturesMainRoute() {
@@ -56,12 +57,16 @@ fun FeaturesMainRoute() {
     FeaturesRoute(
         items = rememberFeatureItems(context),
         onFeatureClick = { item ->
-            context.startActivity(
-                Intent(context, item.targetActivity).apply {
-                    putExtra("app_name", item.name)
-                    putExtra("app_package", item.packageName)
-                }
-            )
+            val intent = Intent(context, item.targetActivity).apply {
+                putExtra("app_name", item.name)
+                putExtra("app_package", item.packageName)
+            }
+            val activity = context as? MainActivity
+            if (activity != null) {
+                activity.startActivityWithZToolTransition(intent)
+            } else {
+                context.startActivity(intent)
+            }
         }
     )
 }

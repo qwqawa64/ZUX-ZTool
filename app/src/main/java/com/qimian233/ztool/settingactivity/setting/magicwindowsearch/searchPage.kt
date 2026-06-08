@@ -50,6 +50,7 @@ import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.SearchPageUiState
 import com.qimian233.ztool.viewmodel.SearchPageViewModel
 
@@ -61,6 +62,7 @@ class searchPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        applyZToolActivityTransitions()
 
         viewModel = ViewModelProvider(
             this,

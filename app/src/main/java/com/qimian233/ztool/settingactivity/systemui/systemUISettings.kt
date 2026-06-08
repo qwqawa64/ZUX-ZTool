@@ -48,6 +48,8 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.utils.applyZToolActivityTransitions
+import com.qimian233.ztool.utils.startActivityWithZToolTransition
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
 
@@ -61,6 +63,7 @@ class systemUISettings : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         val repository = SystemUiSettingsRepository(applicationContext)
@@ -117,7 +120,7 @@ class systemUISettings : ComponentActivity() {
             putExtra("app_name", appName)
             putExtra("app_package", appPackageName)
         }
-        startActivity(intent)
+        startActivityWithZToolTransition(intent)
     }
 
 

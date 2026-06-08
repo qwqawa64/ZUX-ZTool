@@ -50,6 +50,7 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
+import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
 import com.qimian233.ztool.viewmodel.LauncherSettingsViewModel
@@ -61,6 +62,7 @@ class LauncherSettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()
