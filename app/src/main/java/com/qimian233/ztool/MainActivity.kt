@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -289,15 +290,11 @@ private fun MainTabletShell(
             .fillMaxSize()
     ) {
         if (environmentReady) {
-            ZToolNavigationRail {
-                MainRoute.entriesInOrder.forEach { destination ->
-                    ZToolNavigationRailItem(
-                        selected = selectedRoute == destination,
-                        onClick = { onDestinationSelected(destination) },
-                        icon = ImageVector.vectorResource(destination.iconRes),
-                        label = stringResource(destination.labelRes)
-                    )
-                }
+            key(MainNavigationRailKey) {
+                MainNavigationRail(
+                    selectedRoute = selectedRoute,
+                    onDestinationSelected = onDestinationSelected
+                )
             }
         }
 
@@ -309,6 +306,23 @@ private fun MainTabletShell(
             predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
             onEnvironmentStateChanged = onEnvironmentStateChanged
         )
+    }
+}
+
+@Composable
+private fun MainNavigationRail(
+    selectedRoute: MainRoute,
+    onDestinationSelected: (MainRoute) -> Unit
+) {
+    ZToolNavigationRail {
+        MainRoute.entriesInOrder.forEach { destination ->
+            ZToolNavigationRailItem(
+                selected = selectedRoute == destination,
+                onClick = { onDestinationSelected(destination) },
+                icon = ImageVector.vectorResource(destination.iconRes),
+                label = stringResource(destination.labelRes)
+            )
+        }
     }
 }
 
@@ -747,3 +761,4 @@ private fun navigationRouteIndex(route: String?): Int {
 }
 
 private const val SettingsNavigationAnimationMillis = 320
+private const val MainNavigationRailKey = "main_navigation_rail"
