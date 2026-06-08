@@ -82,7 +82,8 @@ import com.qimian233.ztool.ui.components.ExpressiveSectionItems
 import com.qimian233.ztool.ui.components.expressiveSettingsItemShape
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import com.qimian233.ztool.ui.theme.MaterialPaletteMode
+import com.qimian233.ztool.ui.theme.MaterialColorSpec
+import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.viewmodel.SettingsUiState
@@ -168,7 +169,8 @@ fun SettingsMainRoute() {
             onBack = { currentPage = SettingsPage.Main },
             onFrontendStyleChanged = viewModel::setFrontendStyle,
             onThemeModeChanged = viewModel::setThemeMode,
-            onMaterialPaletteModeChanged = viewModel::setMaterialPaletteMode,
+            onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
+            onMaterialPaletteChanged = viewModel::setMaterialPalette,
             onDynamicColorChanged = viewModel::setDynamicColorEnabled,
             onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
             onManualColorChanged = viewModel::setManualColorEnabled,
@@ -371,7 +373,8 @@ private fun ThemeSettingsRoute(
     onBack: () -> Unit,
     onFrontendStyleChanged: (FrontendStyle) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
-    onMaterialPaletteModeChanged: (MaterialPaletteMode) -> Unit,
+    onMaterialColorSpecChanged: (MaterialColorSpec) -> Unit,
+    onMaterialPaletteChanged: (MaterialPalette) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
@@ -413,7 +416,8 @@ private fun ThemeSettingsRoute(
                     manualSeedColorError = state.manualSeedColorError,
                     onFrontendStyleChanged = onFrontendStyleChanged,
                     onThemeModeChanged = onThemeModeChanged,
-                    onMaterialPaletteModeChanged = onMaterialPaletteModeChanged,
+                    onMaterialColorSpecChanged = onMaterialColorSpecChanged,
+                    onMaterialPaletteChanged = onMaterialPaletteChanged,
                     onDynamicColorChanged = onDynamicColorChanged,
                     onAmoledBlackChanged = onAmoledBlackChanged,
                     onManualColorChanged = onManualColorChanged,
@@ -434,7 +438,8 @@ private fun ThemeSettingsSection(
     manualSeedColorError: Boolean,
     onFrontendStyleChanged: (FrontendStyle) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
-    onMaterialPaletteModeChanged: (MaterialPaletteMode) -> Unit,
+    onMaterialColorSpecChanged: (MaterialColorSpec) -> Unit,
+    onMaterialPaletteChanged: (MaterialPalette) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
@@ -465,21 +470,63 @@ private fun ThemeSettingsSection(
             label = stringResource(R.string.theme_mode_dark)
         )
     )
-    val paletteModeOptions = listOf(
+    val colorSpecOptions = listOf(
         LabeledOption(
-            value = MaterialPaletteMode.MaterialYou2021,
-            label = stringResource(R.string.material_palette_mode_2021)
+            value = MaterialColorSpec.Spec2021,
+            label = stringResource(R.string.material_color_spec_2021)
         ),
         LabeledOption(
-            value = MaterialPaletteMode.Expressive2025,
-            label = stringResource(R.string.material_palette_mode_2025)
+            value = MaterialColorSpec.Spec2025,
+            label = stringResource(R.string.material_color_spec_2025)
         )
     )
+    val paletteOptions = listOf(
+        LabeledOption(
+            value = MaterialPalette.TonalSpot,
+            label = stringResource(R.string.material_palette_mode_tonal_spot)
+        ),
+        LabeledOption(
+            value = MaterialPalette.Neutral,
+            label = stringResource(R.string.material_palette_mode_neutral)
+        ),
+        LabeledOption(
+            value = MaterialPalette.Vibrant,
+            label = stringResource(R.string.material_palette_mode_vibrant)
+        ),
+        LabeledOption(
+            value = MaterialPalette.Expressive,
+            label = stringResource(R.string.material_palette_mode_expressive)
+        ),
+        LabeledOption(
+            value = MaterialPalette.Rainbow,
+            label = stringResource(R.string.material_palette_mode_rainbow)
+        ),
+        LabeledOption(
+            value = MaterialPalette.FruitSalad,
+            label = stringResource(R.string.material_palette_mode_fruit_salad)
+        ),
+        LabeledOption(
+            value = MaterialPalette.MonoChrome,
+            label = stringResource(R.string.material_palette_mode_mono_chrome)
+        ),
+        LabeledOption(
+            value = MaterialPalette.Fidelity,
+            label = stringResource(R.string.material_palette_mode_fidelity)
+        ),
+        LabeledOption(
+            value = MaterialPalette.Content,
+            label = stringResource(R.string.material_palette_mode_content)
+        )
+    )
+    val selectedPaletteLabel = paletteOptions
+        .firstOrNull { it.value == settings.materialPalette }
+        ?.label
+        ?: stringResource(R.string.material_palette_mode_tonal_spot)
 
     SettingsSection(title = stringResource(R.string.app_ui_theme_settings)) {
         val themeItemCount = 5 +
-            if (settings.frontendStyle == FrontendStyle.Material3Expressive) 1 else 0 +
-            if (settings.manualColorEnabled) 1 else 0
+            (if (settings.frontendStyle == FrontendStyle.Material3Expressive) 2 else 0) +
+            (if (settings.manualColorEnabled) 1 else 0)
         val manualColorSwitchIndex = themeItemCount - if (settings.manualColorEnabled) 2 else 1
         val manualSeedColorIndex = themeItemCount - 1
         ExpressiveSectionItems(
@@ -521,11 +568,22 @@ private fun ThemeSettingsSection(
             )
             if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
                 ZToolPopupMenuSettingRow(
-                    title = stringResource(R.string.material_palette_mode_title),
-                    value = paletteModeOptions.first { it.value == settings.materialPaletteMode }.label,
-                    options = paletteModeOptions,
+                    title = stringResource(R.string.material_color_spec_title),
+                    value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
+                    options = colorSpecOptions,
                     optionLabel = { it.label },
-                    onOptionSelected = { onMaterialPaletteModeChanged(it.value) },
+                    onOptionSelected = { onMaterialColorSpecChanged(it.value) },
+                    icon = Icons.Rounded.Tune,
+                    modifier = itemModifier(),
+                    fieldMinWidth = 80.dp,
+                    fieldMaxWidth = 160.dp
+                )
+                ZToolPopupMenuSettingRow(
+                    title = stringResource(R.string.material_palette_mode_title),
+                    value = selectedPaletteLabel,
+                    options = paletteOptions,
+                    optionLabel = { it.label },
+                    onOptionSelected = { onMaterialPaletteChanged(it.value) },
                     icon = Icons.Rounded.Tune,
                     modifier = itemModifier(),
                     fieldMinWidth = 80.dp,

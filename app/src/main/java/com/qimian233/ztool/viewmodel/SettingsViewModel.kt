@@ -3,9 +3,10 @@ package com.qimian233.ztool.viewmodel
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.qimian233.ztool.ui.theme.MaterialPaletteMode
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.MaterialColorSpec
+import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,10 +89,17 @@ class SettingsViewModel(
         )
     }
 
-    fun setMaterialPaletteMode(mode: MaterialPaletteMode) {
-        repository.setMaterialPaletteMode(mode)
+    fun setMaterialColorSpec(spec: MaterialColorSpec) {
+        repository.setMaterialColorSpec(spec)
         _uiState.value = _uiState.value.copy(
-            themeSettings = _uiState.value.themeSettings.copy(materialPaletteMode = mode)
+            themeSettings = _uiState.value.themeSettings.copy(materialColorSpec = spec)
+        )
+    }
+
+    fun setMaterialPalette(palette: MaterialPalette) {
+        repository.setMaterialPalette(palette)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(materialPalette = palette)
         )
     }
 

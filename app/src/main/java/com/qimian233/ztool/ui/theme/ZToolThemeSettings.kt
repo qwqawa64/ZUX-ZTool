@@ -1,14 +1,27 @@
 package com.qimian233.ztool.ui.theme
 
-enum class MaterialPaletteMode {
-    MaterialYou2021,
-    Expressive2025
+enum class MaterialColorSpec {
+    Spec2021,
+    Spec2025
+}
+
+enum class MaterialPalette {
+    TonalSpot,
+    Neutral,
+    Vibrant,
+    Expressive,
+    Rainbow,
+    FruitSalad,
+    MonoChrome,
+    Fidelity,
+    Content
 }
 
 data class ZToolThemeSettings(
     val frontendStyle: FrontendStyle = FrontendStyle.Material3Expressive,
     val themeMode: ThemeMode = ThemeMode.FollowSystem,
-    val materialPaletteMode: MaterialPaletteMode = MaterialPaletteMode.Expressive2025,
+    val materialColorSpec: MaterialColorSpec = MaterialColorSpec.Spec2025,
+    val materialPalette: MaterialPalette = MaterialPalette.TonalSpot,
     val dynamicColorEnabled: Boolean = true,
     val amoledBlackEnabled: Boolean = false,
     val manualColorEnabled: Boolean = false,

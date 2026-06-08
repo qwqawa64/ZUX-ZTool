@@ -3,7 +3,8 @@ package com.qimian233.ztool.data.theme
 import android.content.Context
 import android.content.SharedPreferences
 import com.qimian233.ztool.ui.theme.FrontendStyle
-import com.qimian233.ztool.ui.theme.MaterialPaletteMode
+import com.qimian233.ztool.ui.theme.MaterialColorSpec
+import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import androidx.core.content.edit
@@ -14,10 +15,18 @@ class ThemePreferencesRepository(
     private val prefs = context.applicationContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     fun loadSettings(): ZToolThemeSettings {
+        val legacyPaletteMode = prefs.getString(KEY_MATERIAL_PALETTE_MODE, null)
         return ZToolThemeSettings(
             frontendStyle = prefs.getEnum(KEY_FRONTEND_STYLE, FrontendStyle.Material3Expressive),
             themeMode = prefs.getEnum(KEY_THEME_MODE, ThemeMode.FollowSystem),
-            materialPaletteMode = prefs.getEnum(KEY_MATERIAL_PALETTE_MODE, MaterialPaletteMode.Expressive2025),
+            materialColorSpec = prefs.getEnum(
+                KEY_MATERIAL_COLOR_SPEC,
+                legacyColorSpec(legacyPaletteMode)
+            ),
+            materialPalette = prefs.getEnum(
+                KEY_MATERIAL_PALETTE,
+                legacyPalette(legacyPaletteMode)
+            ),
             dynamicColorEnabled = prefs.getBoolean(KEY_DYNAMIC_COLOR_ENABLED, true),
             amoledBlackEnabled = prefs.getBoolean(KEY_AMOLED_BLACK_ENABLED, false),
             manualColorEnabled = prefs.getBoolean(KEY_MANUAL_COLOR_ENABLED, false),
@@ -33,7 +42,8 @@ class ThemePreferencesRepository(
         prefs.edit {
             putString(KEY_FRONTEND_STYLE, settings.frontendStyle.name)
                 .putString(KEY_THEME_MODE, settings.themeMode.name)
-                .putString(KEY_MATERIAL_PALETTE_MODE, settings.materialPaletteMode.name)
+                .putString(KEY_MATERIAL_COLOR_SPEC, settings.materialColorSpec.name)
+                .putString(KEY_MATERIAL_PALETTE, settings.materialPalette.name)
                 .putBoolean(KEY_DYNAMIC_COLOR_ENABLED, settings.dynamicColorEnabled)
                 .putBoolean(KEY_AMOLED_BLACK_ENABLED, settings.amoledBlackEnabled)
                 .putBoolean(KEY_MANUAL_COLOR_ENABLED, settings.manualColorEnabled)
@@ -49,8 +59,12 @@ class ThemePreferencesRepository(
         prefs.edit { putString(KEY_THEME_MODE, mode.name) }
     }
 
-    fun saveMaterialPaletteMode(mode: MaterialPaletteMode) {
-        prefs.edit { putString(KEY_MATERIAL_PALETTE_MODE, mode.name) }
+    fun saveMaterialColorSpec(spec: MaterialColorSpec) {
+        prefs.edit { putString(KEY_MATERIAL_COLOR_SPEC, spec.name) }
+    }
+
+    fun saveMaterialPalette(palette: MaterialPalette) {
+        prefs.edit { putString(KEY_MATERIAL_PALETTE, palette.name) }
     }
 
     fun saveDynamicColorEnabled(enabled: Boolean) {
@@ -89,10 +103,24 @@ class ThemePreferencesRepository(
         return enumValues<T>().firstOrNull { it.name == value } ?: defaultValue
     }
 
+    private fun legacyColorSpec(value: String?): MaterialColorSpec {
+        return when (value) {
+            "MaterialYou2021" -> MaterialColorSpec.Spec2021
+            "Expressive2025" -> MaterialColorSpec.Spec2025
+            else -> MaterialColorSpec.Spec2025
+        }
+    }
+
+    private fun legacyPalette(value: String?): MaterialPalette {
+        return enumValues<MaterialPalette>().firstOrNull { it.name == value } ?: MaterialPalette.TonalSpot
+    }
+
     companion object {
         private const val PREF_NAME = "ztool_ui_theme_preferences"
         private const val KEY_FRONTEND_STYLE = "frontend_style"
         private const val KEY_THEME_MODE = "theme_mode"
+        private const val KEY_MATERIAL_COLOR_SPEC = "material_color_spec"
+        private const val KEY_MATERIAL_PALETTE = "material_palette"
         private const val KEY_MATERIAL_PALETTE_MODE = "material_palette_mode"
         private const val KEY_DYNAMIC_COLOR_ENABLED = "dynamic_color_enabled"
         private const val KEY_AMOLED_BLACK_ENABLED = "amoled_black_enabled"
@@ -101,6 +129,8 @@ class ThemePreferencesRepository(
         private val THEME_KEYS = setOf(
             KEY_FRONTEND_STYLE,
             KEY_THEME_MODE,
+            KEY_MATERIAL_COLOR_SPEC,
+            KEY_MATERIAL_PALETTE,
             KEY_MATERIAL_PALETTE_MODE,
             KEY_DYNAMIC_COLOR_ENABLED,
             KEY_AMOLED_BLACK_ENABLED,

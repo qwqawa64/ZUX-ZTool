@@ -284,21 +284,25 @@ private fun resolveZToolColorScheme(
         settings.manualColorEnabled -> manualColorScheme(
             seedColor = colorFromArgbLong(settings.manualSeedColor),
             darkTheme = darkTheme,
-            paletteMode = settings.materialPaletteMode
+            colorSpec = settings.materialColorSpec,
+            palette = settings.materialPalette
         )
-        settings.dynamicColorEnabled -> dynamicColorScheme()?.withMaterialPaletteMode(
+        settings.dynamicColorEnabled -> dynamicColorScheme()?.withMaterialPalette(
             style = settings.frontendStyle,
-            paletteMode = settings.materialPaletteMode,
+            colorSpec = settings.materialColorSpec,
+            palette = settings.materialPalette,
             darkTheme = darkTheme
         ) ?: defaultColorScheme(
             style = settings.frontendStyle,
             darkTheme = darkTheme,
-            paletteMode = settings.materialPaletteMode
+            colorSpec = settings.materialColorSpec,
+            palette = settings.materialPalette
         )
         else -> defaultColorScheme(
             style = settings.frontendStyle,
             darkTheme = darkTheme,
-            paletteMode = settings.materialPaletteMode
+            colorSpec = settings.materialColorSpec,
+            palette = settings.materialPalette
         )
     }
 
@@ -312,29 +316,76 @@ private fun resolveZToolColorScheme(
 private fun defaultColorScheme(
     style: FrontendStyle,
     darkTheme: Boolean,
-    paletteMode: MaterialPaletteMode
+    colorSpec: MaterialColorSpec,
+    palette: MaterialPalette
 ): ColorScheme {
     return when (style) {
-        FrontendStyle.Material3Expressive -> when (paletteMode) {
-            MaterialPaletteMode.MaterialYou2021 -> if (darkTheme) Md3YouDarkColors else Md3YouLightColors
-            MaterialPaletteMode.Expressive2025 -> if (darkTheme) Md3eDarkColors else Md3eLightColors
-        }
+        FrontendStyle.Material3Expressive -> defaultBaseColorScheme(
+            colorSpec = effectiveMaterialColorSpec(colorSpec, palette),
+            darkTheme = darkTheme
+        ).withMaterialPalette(style, colorSpec, palette, darkTheme)
         FrontendStyle.Miuix -> if (darkTheme) Md3eDarkColors else Md3eLightColors
     }
 }
 
-private fun ColorScheme.withMaterialPaletteMode(
+private fun defaultBaseColorScheme(
+    colorSpec: MaterialColorSpec,
+    darkTheme: Boolean
+): ColorScheme {
+    return when (colorSpec) {
+        MaterialColorSpec.Spec2021 -> if (darkTheme) Md3YouDarkColors else Md3YouLightColors
+        MaterialColorSpec.Spec2025 -> if (darkTheme) Md3eDarkColors else Md3eLightColors
+    }
+}
+
+private fun effectiveMaterialColorSpec(
+    colorSpec: MaterialColorSpec,
+    palette: MaterialPalette
+): MaterialColorSpec {
+    if (colorSpec == MaterialColorSpec.Spec2021) {
+        return MaterialColorSpec.Spec2021
+    }
+
+    return if (palette.supportsSpec2025) {
+        MaterialColorSpec.Spec2025
+    } else {
+        MaterialColorSpec.Spec2021
+    }
+}
+
+private val MaterialPalette.supportsSpec2025: Boolean
+    get() = when (this) {
+        MaterialPalette.TonalSpot,
+        MaterialPalette.Neutral,
+        MaterialPalette.Vibrant,
+        MaterialPalette.Expressive -> true
+        MaterialPalette.Rainbow,
+        MaterialPalette.FruitSalad,
+        MaterialPalette.MonoChrome,
+        MaterialPalette.Fidelity,
+        MaterialPalette.Content -> false
+    }
+
+private fun ColorScheme.withMaterialPalette(
     style: FrontendStyle,
-    paletteMode: MaterialPaletteMode,
+    colorSpec: MaterialColorSpec,
+    palette: MaterialPalette,
     darkTheme: Boolean
 ): ColorScheme {
     if (style != FrontendStyle.Material3Expressive) {
         return this
     }
 
-    return when (paletteMode) {
-        MaterialPaletteMode.MaterialYou2021 -> withMaterialYou2021Tone(darkTheme)
-        MaterialPaletteMode.Expressive2025 -> withExpressive2025Tone(darkTheme)
+    return when (palette) {
+        MaterialPalette.TonalSpot -> withTonalSpotTone(darkTheme, effectiveMaterialColorSpec(colorSpec, palette))
+        MaterialPalette.Neutral -> withNeutralTone(darkTheme)
+        MaterialPalette.Vibrant -> withVibrantTone(darkTheme)
+        MaterialPalette.Expressive -> withExpressiveTone(darkTheme, effectiveMaterialColorSpec(colorSpec, palette))
+        MaterialPalette.Rainbow -> withRainbowTone(darkTheme)
+        MaterialPalette.FruitSalad -> withFruitSaladTone(darkTheme)
+        MaterialPalette.MonoChrome -> withMonoChromeTone(darkTheme)
+        MaterialPalette.Fidelity -> withFidelityTone(darkTheme)
+        MaterialPalette.Content -> withContentTone(darkTheme)
     }
 }
 
@@ -374,17 +425,168 @@ private fun ColorScheme.withExpressive2025Tone(darkTheme: Boolean): ColorScheme 
     )
 }
 
+private fun ColorScheme.withTonalSpotTone(
+    darkTheme: Boolean,
+    colorSpec: MaterialColorSpec
+): ColorScheme {
+    return when (colorSpec) {
+        MaterialColorSpec.Spec2021 -> withMaterialYou2021Tone(darkTheme)
+        MaterialColorSpec.Spec2025 -> withExpressive2025Tone(darkTheme)
+    }
+}
+
+private fun ColorScheme.withNeutralTone(darkTheme: Boolean): ColorScheme {
+    val neutralSurface = if (darkTheme) Color(0xFF17181A) else Color(0xFFFCFCFD)
+    val neutralVariant = if (darkTheme) Color(0xFF45474A) else Color(0xFFE1E3E6)
+    val neutralAccent = if (darkTheme) Color(0xFFC6C6CA) else Color(0xFF5E6267)
+    return copy(
+        primary = lerp(primary, neutralAccent, 0.58f),
+        primaryContainer = lerp(primaryContainer, neutralVariant, 0.54f),
+        secondary = lerp(secondary, neutralAccent, 0.72f),
+        secondaryContainer = lerp(secondaryContainer, neutralVariant, 0.68f),
+        tertiary = lerp(tertiary, neutralAccent, 0.68f),
+        tertiaryContainer = lerp(tertiaryContainer, neutralVariant, 0.64f),
+        background = neutralSurface,
+        surface = neutralSurface,
+        surfaceVariant = neutralVariant,
+        surfaceContainer = lerp(neutralSurface, neutralVariant, if (darkTheme) 0.16f else 0.24f),
+        surfaceContainerHigh = lerp(neutralSurface, neutralVariant, if (darkTheme) 0.22f else 0.32f),
+        surfaceContainerHighest = lerp(neutralSurface, neutralVariant, if (darkTheme) 0.28f else 0.40f)
+    )
+}
+
+private fun ColorScheme.withVibrantTone(darkTheme: Boolean): ColorScheme {
+    val hotAccent = if (darkTheme) Color(0xFFFFB1C8) else Color(0xFFA7335F)
+    val coolAccent = if (darkTheme) Color(0xFF8ED8FF) else Color(0xFF00658A)
+    val surfaceBase = if (darkTheme) Color(0xFF121317) else Color(0xFFFFF8FB)
+    return copy(
+        secondary = lerp(primary, hotAccent, 0.52f),
+        secondaryContainer = lerp(primaryContainer, hotAccent, if (darkTheme) 0.30f else 0.18f),
+        tertiary = lerp(primary, coolAccent, 0.62f),
+        tertiaryContainer = lerp(primaryContainer, coolAccent, if (darkTheme) 0.34f else 0.20f),
+        background = surfaceBase,
+        surface = surfaceBase,
+        surfaceContainer = lerp(surfaceBase, primaryContainer, if (darkTheme) 0.18f else 0.22f),
+        surfaceContainerHigh = lerp(surfaceBase, secondaryContainer, if (darkTheme) 0.22f else 0.30f),
+        surfaceContainerHighest = lerp(surfaceBase, tertiaryContainer, if (darkTheme) 0.26f else 0.36f)
+    )
+}
+
+private fun ColorScheme.withExpressiveTone(
+    darkTheme: Boolean,
+    colorSpec: MaterialColorSpec
+): ColorScheme {
+    return when (colorSpec) {
+        MaterialColorSpec.Spec2021 -> withMaterialYou2021Tone(darkTheme)
+        MaterialColorSpec.Spec2025 -> withExpressive2025Tone(darkTheme)
+    }
+}
+
+private fun ColorScheme.withRainbowTone(darkTheme: Boolean): ColorScheme {
+    val greenAccent = if (darkTheme) Color(0xFF9DD67D) else Color(0xFF3E6F00)
+    val violetAccent = if (darkTheme) Color(0xFFD9B8FF) else Color(0xFF72529B)
+    val surfaceBase = if (darkTheme) Color(0xFF111511) else Color(0xFFFCFCEF)
+    return copy(
+        secondary = lerp(primary, greenAccent, 0.62f),
+        secondaryContainer = lerp(primaryContainer, greenAccent, if (darkTheme) 0.34f else 0.22f),
+        tertiary = lerp(primary, violetAccent, 0.58f),
+        tertiaryContainer = lerp(primaryContainer, violetAccent, if (darkTheme) 0.36f else 0.24f),
+        background = surfaceBase,
+        surface = surfaceBase,
+        surfaceVariant = lerp(surfaceVariant, greenAccent, if (darkTheme) 0.18f else 0.12f),
+        surfaceContainer = lerp(surfaceBase, secondaryContainer, if (darkTheme) 0.16f else 0.22f),
+        surfaceContainerHigh = lerp(surfaceBase, primaryContainer, if (darkTheme) 0.20f else 0.28f),
+        surfaceContainerHighest = lerp(surfaceBase, tertiaryContainer, if (darkTheme) 0.24f else 0.34f)
+    )
+}
+
+private fun ColorScheme.withFruitSaladTone(darkTheme: Boolean): ColorScheme {
+    val limeAccent = if (darkTheme) Color(0xFFB8D96B) else Color(0xFF5D6F00)
+    val berryAccent = if (darkTheme) Color(0xFFFFB0B6) else Color(0xFF9A4048)
+    val surfaceBase = if (darkTheme) Color(0xFF15140F) else Color(0xFFFFFAEF)
+    return copy(
+        primary = lerp(primary, limeAccent, 0.20f),
+        primaryContainer = lerp(primaryContainer, limeAccent, if (darkTheme) 0.22f else 0.14f),
+        secondary = lerp(primary, limeAccent, 0.58f),
+        secondaryContainer = lerp(primaryContainer, limeAccent, if (darkTheme) 0.34f else 0.24f),
+        tertiary = lerp(primary, berryAccent, 0.58f),
+        tertiaryContainer = lerp(primaryContainer, berryAccent, if (darkTheme) 0.36f else 0.24f),
+        background = surfaceBase,
+        surface = surfaceBase,
+        surfaceContainer = lerp(surfaceBase, primaryContainer, if (darkTheme) 0.18f else 0.24f),
+        surfaceContainerHigh = lerp(surfaceBase, secondaryContainer, if (darkTheme) 0.24f else 0.34f),
+        surfaceContainerHighest = lerp(surfaceBase, tertiaryContainer, if (darkTheme) 0.28f else 0.40f)
+    )
+}
+
+private fun ColorScheme.withMonoChromeTone(darkTheme: Boolean): ColorScheme {
+    val neutralSurface = if (darkTheme) Color(0xFF111111) else Color(0xFFFCFCFC)
+    val neutralVariant = if (darkTheme) Color(0xFF444444) else Color(0xFFE2E2E2)
+    val accent = if (darkTheme) Color(0xFFE2E2E2) else Color(0xFF4D4D4D)
+    return copy(
+        primary = accent,
+        primaryContainer = if (darkTheme) Color(0xFF333333) else Color(0xFFE8E8E8),
+        secondary = if (darkTheme) Color(0xFFC6C6C6) else Color(0xFF5F5F5F),
+        secondaryContainer = if (darkTheme) Color(0xFF3F3F3F) else Color(0xFFE0E0E0),
+        tertiary = if (darkTheme) Color(0xFFDBDBDB) else Color(0xFF525252),
+        tertiaryContainer = if (darkTheme) Color(0xFF363636) else Color(0xFFE5E5E5),
+        background = neutralSurface,
+        surface = neutralSurface,
+        surfaceVariant = neutralVariant,
+        surfaceContainer = lerp(neutralSurface, neutralVariant, if (darkTheme) 0.18f else 0.26f),
+        surfaceContainerHigh = lerp(neutralSurface, neutralVariant, if (darkTheme) 0.24f else 0.34f),
+        surfaceContainerHighest = lerp(neutralSurface, neutralVariant, if (darkTheme) 0.30f else 0.42f),
+        outline = if (darkTheme) Color(0xFF8E8E8E) else Color(0xFF747474)
+    )
+}
+
+private fun ColorScheme.withFidelityTone(darkTheme: Boolean): ColorScheme {
+    val surfaceBase = if (darkTheme) Color(0xFF111418) else Color(0xFFFCFBFF)
+    return copy(
+        secondary = lerp(primary, secondary, 0.28f),
+        secondaryContainer = lerp(primaryContainer, secondaryContainer, 0.28f),
+        tertiary = lerp(primary, tertiary, 0.22f),
+        tertiaryContainer = lerp(primaryContainer, tertiaryContainer, 0.22f),
+        background = surfaceBase,
+        surface = surfaceBase,
+        surfaceContainer = lerp(surfaceBase, primaryContainer, if (darkTheme) 0.12f else 0.18f),
+        surfaceContainerHigh = lerp(surfaceBase, primaryContainer, if (darkTheme) 0.18f else 0.26f),
+        surfaceContainerHighest = lerp(surfaceBase, primaryContainer, if (darkTheme) 0.24f else 0.34f)
+    )
+}
+
+private fun ColorScheme.withContentTone(darkTheme: Boolean): ColorScheme {
+    val surfaceBase = if (darkTheme) Color(0xFF111418) else Color(0xFFFBFCFF)
+    return copy(
+        secondary = lerp(primary, secondary, 0.46f),
+        secondaryContainer = lerp(primaryContainer, secondaryContainer, 0.46f),
+        tertiary = lerp(primary, tertiary, 0.42f),
+        tertiaryContainer = lerp(primaryContainer, tertiaryContainer, 0.42f),
+        background = surfaceBase,
+        surface = surfaceBase,
+        surfaceVariant = lerp(surfaceVariant, primaryContainer, if (darkTheme) 0.14f else 0.12f),
+        surfaceContainer = lerp(surfaceBase, primaryContainer, if (darkTheme) 0.14f else 0.20f),
+        surfaceContainerHigh = lerp(surfaceBase, secondaryContainer, if (darkTheme) 0.18f else 0.28f),
+        surfaceContainerHighest = lerp(surfaceBase, tertiaryContainer, if (darkTheme) 0.22f else 0.34f)
+    )
+}
+
 private fun manualColorScheme(
     seedColor: Color,
     darkTheme: Boolean,
-    paletteMode: MaterialPaletteMode
+    colorSpec: MaterialColorSpec,
+    palette: MaterialPalette
 ): ColorScheme {
-    val primary = if (darkTheme) lerp(seedColor, Color.White, 0.35f) else seedColor
-    val secondaryBlend = if (paletteMode == MaterialPaletteMode.MaterialYou2021) 0.48f else 0.35f
-    val tertiaryBlend = if (paletteMode == MaterialPaletteMode.MaterialYou2021) 0.24f else 0.35f
-    val secondary = lerp(primary, if (darkTheme) Color.White else Color.Black, secondaryBlend)
-    val tertiary = lerp(primary, Color(0xFF9C27B0), tertiaryBlend)
-    val surface = if (darkTheme) Color(0xFF111418) else Color(0xFFFAF8FF)
+    val paletteColors = manualPaletteColors(
+        seedColor = seedColor,
+        darkTheme = darkTheme,
+        colorSpec = effectiveMaterialColorSpec(colorSpec, palette),
+        palette = palette
+    )
+    val primary = paletteColors.primary
+    val secondary = paletteColors.secondary
+    val tertiary = paletteColors.tertiary
+    val surface = paletteColors.surface
     val onSurface = if (darkTheme) Color(0xFFE1E2E8) else Color(0xFF191C20)
 
     return if (darkTheme) {
@@ -430,6 +632,93 @@ private fun manualColorScheme(
             surfaceVariant = Color(0xFFDFE2EB),
             onSurfaceVariant = Color(0xFF43474E),
             outline = Color(0xFF73777F)
+        )
+    }
+}
+
+private data class ManualPaletteColors(
+    val primary: Color,
+    val secondary: Color,
+    val tertiary: Color,
+    val surface: Color
+)
+
+private fun manualPaletteColors(
+    seedColor: Color,
+    darkTheme: Boolean,
+    colorSpec: MaterialColorSpec,
+    palette: MaterialPalette
+): ManualPaletteColors {
+    val primary = if (darkTheme) lerp(seedColor, Color.White, 0.35f) else seedColor
+    val darkNeutral = if (darkTheme) Color.White else Color.Black
+    val monoPrimary = if (darkTheme) Color(0xFFE2E2E2) else Color(0xFF4D4D4D)
+
+    return when (palette) {
+        MaterialPalette.TonalSpot -> if (colorSpec == MaterialColorSpec.Spec2025) {
+            ManualPaletteColors(
+                primary = primary,
+                secondary = lerp(primary, if (darkTheme) Color(0xFFE7C16D) else Color(0xFF765A00), 0.48f),
+                tertiary = lerp(primary, if (darkTheme) Color(0xFFFFB1C2) else Color(0xFF9D4058), 0.58f),
+                surface = if (darkTheme) Color(0xFF111512) else Color(0xFFFBFDF8)
+            )
+        } else ManualPaletteColors(
+            primary = primary,
+            secondary = lerp(primary, darkNeutral, 0.48f),
+            tertiary = lerp(primary, Color(0xFF9C27B0), 0.24f),
+            surface = if (darkTheme) Color(0xFF111418) else Color(0xFFFAF8FF)
+        )
+        MaterialPalette.Expressive -> if (colorSpec == MaterialColorSpec.Spec2025) ManualPaletteColors(
+            primary = primary,
+            secondary = lerp(primary, if (darkTheme) Color(0xFFE7C16D) else Color(0xFF765A00), 0.48f),
+            tertiary = lerp(primary, if (darkTheme) Color(0xFFFFB1C2) else Color(0xFF9D4058), 0.58f),
+            surface = if (darkTheme) Color(0xFF111512) else Color(0xFFFBFDF8)
+        ) else ManualPaletteColors(
+            primary = primary,
+            secondary = lerp(primary, darkNeutral, 0.48f),
+            tertiary = lerp(primary, Color(0xFF9C27B0), 0.24f),
+            surface = if (darkTheme) Color(0xFF111418) else Color(0xFFFAF8FF)
+        )
+        MaterialPalette.Neutral -> ManualPaletteColors(
+            primary = lerp(primary, if (darkTheme) Color.White else Color.Black, 0.45f),
+            secondary = lerp(primary, darkNeutral, 0.70f),
+            tertiary = lerp(primary, darkNeutral, 0.62f),
+            surface = if (darkTheme) Color(0xFF17181A) else Color(0xFFFCFCFD)
+        )
+        MaterialPalette.Vibrant -> ManualPaletteColors(
+            primary = primary,
+            secondary = lerp(primary, if (darkTheme) Color(0xFFFFB1C8) else Color(0xFFA7335F), 0.52f),
+            tertiary = lerp(primary, if (darkTheme) Color(0xFF8ED8FF) else Color(0xFF00658A), 0.62f),
+            surface = if (darkTheme) Color(0xFF121317) else Color(0xFFFFF8FB)
+        )
+        MaterialPalette.Rainbow -> ManualPaletteColors(
+            primary = primary,
+            secondary = lerp(primary, if (darkTheme) Color(0xFF9DD67D) else Color(0xFF3E6F00), 0.62f),
+            tertiary = lerp(primary, if (darkTheme) Color(0xFFD9B8FF) else Color(0xFF72529B), 0.58f),
+            surface = if (darkTheme) Color(0xFF111511) else Color(0xFFFCFCEF)
+        )
+        MaterialPalette.FruitSalad -> ManualPaletteColors(
+            primary = lerp(primary, if (darkTheme) Color(0xFFB8D96B) else Color(0xFF5D6F00), 0.20f),
+            secondary = lerp(primary, if (darkTheme) Color(0xFFB8D96B) else Color(0xFF5D6F00), 0.58f),
+            tertiary = lerp(primary, if (darkTheme) Color(0xFFFFB0B6) else Color(0xFF9A4048), 0.58f),
+            surface = if (darkTheme) Color(0xFF15140F) else Color(0xFFFFFAEF)
+        )
+        MaterialPalette.MonoChrome -> ManualPaletteColors(
+            primary = monoPrimary,
+            secondary = if (darkTheme) Color(0xFFC6C6C6) else Color(0xFF5F5F5F),
+            tertiary = if (darkTheme) Color(0xFFDBDBDB) else Color(0xFF525252),
+            surface = if (darkTheme) Color(0xFF111111) else Color(0xFFFCFCFC)
+        )
+        MaterialPalette.Fidelity -> ManualPaletteColors(
+            primary = primary,
+            secondary = lerp(primary, darkNeutral, 0.26f),
+            tertiary = lerp(primary, Color(0xFF9C27B0), 0.18f),
+            surface = if (darkTheme) Color(0xFF111418) else Color(0xFFFCFBFF)
+        )
+        MaterialPalette.Content -> ManualPaletteColors(
+            primary = primary,
+            secondary = lerp(primary, darkNeutral, 0.42f),
+            tertiary = lerp(primary, Color(0xFF9C27B0), 0.38f),
+            surface = if (darkTheme) Color(0xFF111418) else Color(0xFFFBFCFF)
         )
     }
 }

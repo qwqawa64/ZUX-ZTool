@@ -10,7 +10,8 @@ import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.theme.FrontendStyle
-import com.qimian233.ztool.ui.theme.MaterialPaletteMode
+import com.qimian233.ztool.ui.theme.MaterialColorSpec
+import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.utils.FileManager
 import com.qimian233.ztool.viewmodel.SettingsUiState
@@ -77,8 +78,12 @@ class SettingsRepository(
         themePreferences.saveThemeMode(mode)
     }
 
-    fun setMaterialPaletteMode(mode: MaterialPaletteMode) {
-        themePreferences.saveMaterialPaletteMode(mode)
+    fun setMaterialColorSpec(spec: MaterialColorSpec) {
+        themePreferences.saveMaterialColorSpec(spec)
+    }
+
+    fun setMaterialPalette(palette: MaterialPalette) {
+        themePreferences.saveMaterialPalette(palette)
     }
 
     fun setDynamicColorEnabled(enabled: Boolean) {
