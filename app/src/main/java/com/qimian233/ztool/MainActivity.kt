@@ -6,6 +6,7 @@ import android.view.Window
 import android.widget.Toast
 import androidx.activity.BackEventCompat
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -698,6 +699,12 @@ private fun MainRouteNavHost(
                 }
             )
         }
+    }
+
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val canNavigateBack = backStackEntry?.destination?.route != MainRoute.Home.name
+    BackHandler(enabled = !predictiveBackGestureEnabled && canNavigateBack) {
+        navController.popBackStack()
     }
 
     NavHost(
