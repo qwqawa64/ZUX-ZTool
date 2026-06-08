@@ -1,7 +1,6 @@
 package com.qimian233.ztool
 
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
@@ -37,19 +36,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.qimian233.ztool.settingactivity.gametool.GameToolSettngs
-import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsActivity
-import com.qimian233.ztool.settingactivity.ota.OtaSettings
-import com.qimian233.ztool.settingactivity.packageinstaller.packageinstallersettings
-import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsActivity
-import com.qimian233.ztool.settingactivity.setting.SettingsDetailActivity
-import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsActivity
-import com.qimian233.ztool.settingactivity.systemui.systemUISettings
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.utils.startActivityWithZToolTransition
 
 enum class FeatureDestination(
     val route: String
@@ -66,25 +56,13 @@ enum class FeatureDestination(
 
 @Composable
 fun FeaturesMainRoute(
-    onFeatureDestinationSelected: (FeatureDestination) -> Boolean = { false }
+    onFeatureDestinationSelected: (FeatureDestination) -> Unit = {}
 ) {
     val context = LocalContext.current
     FeaturesRoute(
         items = rememberFeatureItems(context),
         onFeatureClick = { item ->
-            if (onFeatureDestinationSelected(item.destination)) return@FeaturesRoute
-
-            val targetActivity = item.targetActivity ?: return@FeaturesRoute
-            val intent = Intent(context, targetActivity).apply {
-                putExtra("app_name", item.name)
-                putExtra("app_package", item.packageName)
-            }
-            val activity = context as? MainActivity
-            if (activity != null) {
-                activity.startActivityWithZToolTransition(intent)
-            } else {
-                context.startActivity(intent)
-            }
+            onFeatureDestinationSelected(item.destination)
         }
     )
 }
@@ -94,8 +72,7 @@ private data class FeatureItem(
     val description: String,
     val packageName: String,
     val icon: Drawable?,
-    val destination: FeatureDestination,
-    val targetActivity: Class<*>?
+    val destination: FeatureDestination
 )
 
 private val FeatureCardHeight: Dp = 112.dp
@@ -109,64 +86,56 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 nameRes = R.string.settings_app_name,
                 descriptionRes = R.string.settings_app_description,
                 packageName = "com.android.settings",
-                destination = FeatureDestination.SettingsDetail,
-                targetActivity = SettingsDetailActivity::class.java
+                destination = FeatureDestination.SettingsDetail
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.game_tool_app_name,
                 descriptionRes = R.string.game_tool_app_description,
                 packageName = "com.zui.game.service",
-                destination = FeatureDestination.GameTool,
-                targetActivity = GameToolSettngs::class.java
+                destination = FeatureDestination.GameTool
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.system_update_app_name,
                 descriptionRes = R.string.system_update_app_description,
                 packageName = "com.lenovo.ota",
-                destination = FeatureDestination.Ota,
-                targetActivity = OtaSettings::class.java
+                destination = FeatureDestination.Ota
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.package_installer_app_name,
                 descriptionRes = R.string.package_installer_app_description,
                 packageName = "com.android.packageinstaller",
-                destination = FeatureDestination.PackageInstaller,
-                targetActivity = packageinstallersettings::class.java
+                destination = FeatureDestination.PackageInstaller
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.system_ui_app_name,
                 descriptionRes = R.string.system_ui_app_description,
                 packageName = "com.android.systemui",
-                destination = FeatureDestination.SystemUi,
-                targetActivity = systemUISettings::class.java
+                destination = FeatureDestination.SystemUi
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.launcher_app_name,
                 descriptionRes = R.string.launcher_app_description,
                 packageName = "com.zui.launcher",
-                destination = FeatureDestination.Launcher,
-                targetActivity = LauncherSettingsActivity::class.java
+                destination = FeatureDestination.Launcher
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.system_framework_app_name,
                 descriptionRes = R.string.system_framework_app_description,
                 packageName = "android",
-                destination = FeatureDestination.Framework,
-                targetActivity = FrameworkSettingsActivity::class.java
+                destination = FeatureDestination.Framework
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.safe_center_app_name,
                 descriptionRes = R.string.safe_center_app_description,
                 packageName = "com.zui.safecenter",
-                destination = FeatureDestination.SafeCenter,
-                targetActivity = SafeCenterSettingsActivity::class.java
+                destination = FeatureDestination.SafeCenter
             )
         )
     }
@@ -177,16 +146,14 @@ private fun featureItem(
     nameRes: Int,
     descriptionRes: Int,
     packageName: String,
-    destination: FeatureDestination,
-    targetActivity: Class<*>
+    destination: FeatureDestination
 ): FeatureItem {
     return FeatureItem(
         name = context.getString(nameRes),
         description = context.getString(descriptionRes),
         packageName = packageName,
         icon = getApplicationIcon(context, packageName),
-        destination = destination,
-        targetActivity = targetActivity
+        destination = destination
     )
 }
 

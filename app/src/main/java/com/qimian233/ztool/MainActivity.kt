@@ -4,7 +4,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Window
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -51,10 +51,9 @@ import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
-import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.utils.CountdownDialog
 
-class MainActivity : ZToolComponentActivity(),
+class MainActivity : ComponentActivity(),
     EnvironmentStateListener,
     LogServiceManager.ServiceStatusListener,
     CountdownDialog.OnCountdownFinishListener {
@@ -80,11 +79,9 @@ class MainActivity : ZToolComponentActivity(),
 
         val themeRepository = ThemePreferencesRepository(applicationContext)
         themeSettings = themeRepository.loadSettings()
-        applyZToolActivityTransitions(themeSettings.predictiveBackGestureEnabled)
         unregisterThemeSettingsObserver = themeRepository.observeSettings { updatedSettings ->
             runOnUiThread {
                 themeSettings = updatedSettings
-                applyZToolActivityTransitions(updatedSettings.predictiveBackGestureEnabled)
                 setupSystemBars(updatedSettings)
             }
         }
@@ -406,20 +403,8 @@ private fun MainRouteNavHost(
         ) {
             FeaturesMainRoute(
                 onFeatureDestinationSelected = { destination ->
-                    when (destination) {
-                        FeatureDestination.SettingsDetail,
-                        FeatureDestination.GameTool,
-                        FeatureDestination.Ota,
-                        FeatureDestination.PackageInstaller,
-                        FeatureDestination.SystemUi,
-                        FeatureDestination.Launcher,
-                        FeatureDestination.Framework,
-                        FeatureDestination.SafeCenter -> {
-                            navController.navigate(destination.route) {
-                                launchSingleTop = true
-                            }
-                            true
-                        }
+                    navController.navigate(destination.route) {
+                        launchSingleTop = true
                     }
                 }
             )

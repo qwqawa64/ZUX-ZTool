@@ -461,5 +461,30 @@ Next targets:
   Compose route graph.
 - Remove obsolete Manifest Activity entries after direct source references are gone.
 - Remove Activity transition helpers if no remaining in-app path uses Activity transitions.
+
+Cleanup slice completed:
+
+- `FeaturesRoute` no longer imports feature Activity classes or stores `targetActivity`.
+- Feature cards now route only by stable `FeatureDestination` ids.
+- `MainActivity` now extends `ComponentActivity` directly and no longer registers Activity
+  transition overrides for feature navigation.
+- Removed obsolete feature Activity entries from `AndroidManifest.xml`; the app Manifest now
+  keeps only `MainActivity`, `LogCollectorService`, permissions, and Xposed metadata.
+
+Verification:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Result: succeeded on 2026-06-09 after removing the in-app Activity fallback and feature
+Activity Manifest entries.
+
+Remaining cleanup:
+
+- Split reusable Routes/Screens out of the old `settingactivity/**` files or remove the
+  obsolete Activity shells in place.
+- Delete `ZToolComponentActivity`, `ZToolActivityTransitions`, and unused activity animation
+  resources after no source file references them.
 - After those subtrees are Compose-owned, remove the old feature Activity launch paths,
   Manifest entries, and Activity transition helpers.

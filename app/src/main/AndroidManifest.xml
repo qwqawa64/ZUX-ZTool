@@ -42,55 +42,6 @@
             android:exported="false"
             android:foregroundServiceType="specialUse" />
         <activity
-            android:name=".settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.systemui.lockscreen.LockScreenSettingsActivity"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize|stateHidden"/>
-        <activity
-            android:name=".settingactivity.systemui.systemUISettings"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.packageinstaller.packageinstallersettings"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.setting.magicwindowsearch.searchPage"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.ota.OtaSettings"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.gametool.GameToolSettngs"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.setting.SettingsDetailActivity"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.launcher.LauncherSettingsActivity"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.systemframework.FrameworkSettingsActivity"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.safecenter.SafeCenterSettingsActivity"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
