@@ -2,7 +2,7 @@ package com.qimian233.ztool.settingactivity.gametool
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import com.qimian233.ztool.utils.ZToolComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
@@ -47,19 +47,17 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
-import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.GameToolSettingsUiState
 import com.qimian233.ztool.viewmodel.GameToolSettingsViewModel
 import com.qimian233.ztool.viewmodel.MistakeTouchMode
 
-class GameToolSettngs : ComponentActivity() {
+class GameToolSettngs : ZToolComponentActivity() {
 
     private var appPackageName: String? = null
     private lateinit var viewModel: GameToolSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()

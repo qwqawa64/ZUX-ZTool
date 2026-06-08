@@ -2,7 +2,7 @@ package com.qimian233.ztool.settingactivity.setting.magicwindowsearch
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import com.qimian233.ztool.utils.ZToolComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
@@ -50,19 +50,17 @@ import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.SearchPageUiState
 import com.qimian233.ztool.viewmodel.SearchPageViewModel
 
 @Suppress("ClassName")
-class searchPage : ComponentActivity() {
+class searchPage : ZToolComponentActivity() {
 
     private lateinit var viewModel: SearchPageViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        applyZToolActivityTransitions()
 
         viewModel = ViewModelProvider(
             this,

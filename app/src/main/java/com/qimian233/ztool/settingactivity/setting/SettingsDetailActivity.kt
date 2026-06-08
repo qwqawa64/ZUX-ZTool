@@ -7,7 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import com.qimian233.ztool.utils.ZToolComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
@@ -71,7 +71,6 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
-import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
 import com.qimian233.ztool.utils.startActivityWithZToolTransition
@@ -85,7 +84,7 @@ import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import com.qimian233.ztool.viewmodel.SettingsDetailViewModel
 import androidx.core.net.toUri
 
-class SettingsDetailActivity : ComponentActivity() {
+class SettingsDetailActivity : ZToolComponentActivity() {
 
     private var appPackageName: String? = null
     private var floatingWindow: FloatingWindow? = null
@@ -97,7 +96,6 @@ class SettingsDetailActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         viewModel = ViewModelProvider(

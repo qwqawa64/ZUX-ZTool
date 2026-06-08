@@ -22,11 +22,18 @@ fun Activity.applyZToolActivityTransitions() {
 
 fun Activity.startActivityWithZToolTransition(intent: Intent) {
     startActivity(intent)
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        @Suppress("DEPRECATION")
-        overridePendingTransition(
-            R.anim.ztool_slide_in_from_right,
-            R.anim.ztool_slide_out_to_left
-        )
-    }
+    @Suppress("DEPRECATION")
+    overridePendingTransition(
+        R.anim.ztool_slide_in_from_right,
+        R.anim.ztool_slide_out_to_left
+    )
+}
+
+fun Activity.finishWithZToolTransition() {
+    finish()
+    @Suppress("DEPRECATION")
+    overridePendingTransition(
+        R.anim.ztool_slide_in_from_left,
+        R.anim.ztool_slide_out_to_right
+    )
 }

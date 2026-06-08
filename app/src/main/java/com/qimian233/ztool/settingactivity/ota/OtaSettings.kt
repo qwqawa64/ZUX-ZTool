@@ -4,7 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import com.qimian233.ztool.utils.ZToolComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -52,20 +52,18 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
 import com.qimian233.ztool.viewmodel.OtaSettingsViewModel
 
-class OtaSettings : ComponentActivity() {
+class OtaSettings : ZToolComponentActivity() {
 
     private var appPackageName: String? = null
     private lateinit var viewModel: OtaSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()

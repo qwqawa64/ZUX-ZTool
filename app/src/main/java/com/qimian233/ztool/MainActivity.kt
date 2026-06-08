@@ -4,7 +4,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Window
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import com.qimian233.ztool.utils.ZToolComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -39,10 +39,9 @@ import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
-import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.utils.CountdownDialog
 
-class MainActivity : ComponentActivity(),
+class MainActivity : ZToolComponentActivity(),
     EnvironmentStateListener,
     LogServiceManager.ServiceStatusListener,
     CountdownDialog.OnCountdownFinishListener {
@@ -58,7 +57,6 @@ class MainActivity : ComponentActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        applyZToolActivityTransitions()
 
         if (savedInstanceState != null) {
             currentRoute = savedInstanceState.getString(KEY_CURRENT_ROUTE)

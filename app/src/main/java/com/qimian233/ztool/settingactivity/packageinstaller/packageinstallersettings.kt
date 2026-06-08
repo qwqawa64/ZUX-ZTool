@@ -2,7 +2,7 @@ package com.qimian233.ztool.settingactivity.packageinstaller
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import com.qimian233.ztool.utils.ZToolComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -38,19 +38,17 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.utils.applyZToolActivityTransitions
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsUiState
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsViewModel
 
 @Suppress("ClassName")
-class packageinstallersettings : ComponentActivity() {
+class packageinstallersettings : ZToolComponentActivity() {
 
     private var appPackageName: String? = null
     private lateinit var viewModel: PackageInstallerSettingsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        applyZToolActivityTransitions()
         enableEdgeToEdge()
 
         val appName = intent.getStringExtra("app_name").orEmpty()
