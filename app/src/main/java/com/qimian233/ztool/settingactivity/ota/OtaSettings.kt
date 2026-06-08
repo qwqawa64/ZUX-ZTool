@@ -33,16 +33,20 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.ota.OtaSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
@@ -56,6 +60,92 @@ import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
 import com.qimian233.ztool.viewmodel.OtaSettingsViewModel
+
+@Composable
+fun OtaSettingsRoute(
+    title: String,
+    packageName: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("OtaSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            OtaSettingsViewModelFactory(
+                OtaSettingsRepository(context.applicationContext)
+            )
+        )[OtaSettingsViewModel::class.java]
+    }
+    val unknownText = stringResource(R.string.unknown)
+    val otaInfoFetchFailed = stringResource(R.string.ota_info_fetch_failed)
+    val snDefaultHint = stringResource(R.string.SN_default_hint)
+    val clipboardLabel = stringResource(R.string.ota_info_clipboard_label)
+
+    LaunchedEffect(viewModel) {
+        viewModel.initialize(unknownText)
+    }
+
+    fun copyToClipboard(text: String) {
+        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText(clipboardLabel, text)
+        clipboard.setPrimaryClip(clip)
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    OtaSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
+        onFetchOtaInfo = {
+            viewModel.fetchOtaInfo(otaInfoFetchFailed)
+        },
+        onFirmwareSnChanged = viewModel::setFirmwareSnInput,
+        onFetchFirmware = {
+            viewModel.fetchFirmware(snDefaultHint)
+        },
+        onCustomVersionChanged = viewModel::setCustomVersion,
+        onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
+        onCopyDownloadLink = {
+            copyToClipboard(it)
+            Toast.makeText(context, R.string.download_link_copied, Toast.LENGTH_SHORT).show()
+        },
+        onCopyChangelog = {
+            copyToClipboard(it)
+            Toast.makeText(context, R.string.changelog_copied, Toast.LENGTH_SHORT).show()
+        },
+        onCopyPassword = {
+            copyToClipboard(it)
+            Toast.makeText(context, R.string.password_copied, Toast.LENGTH_SHORT).show()
+        },
+        onRestartScope = viewModel::showRestartDialog
+    )
+
+    uiState.errorDialogMessage?.let { message ->
+        ErrorDialog(
+            message = message,
+            onDismiss = viewModel::dismissErrorDialog
+        )
+    }
+
+    if (uiState.showRestartDialog) {
+        RestartScopeDialog(
+            packageName = packageName,
+            onConfirm = {
+                viewModel.restartScope(
+                    packageName = packageName,
+                    onFailure = {
+                        Toast.makeText(context, R.string.restart_failed, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onDismiss = viewModel::dismissRestartDialog
+        )
+    }
+}
 
 class OtaSettings : ZToolComponentActivity() {
 

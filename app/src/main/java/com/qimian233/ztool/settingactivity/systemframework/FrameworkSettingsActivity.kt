@@ -36,11 +36,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
 import com.qimian233.ztool.ui.components.QuickHelpExample
@@ -57,6 +59,64 @@ import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
 import kotlinx.coroutines.delay
+
+@Composable
+fun FrameworkSettingsRoute(
+    title: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("FrameworkSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            FrameworkSettingsViewModelFactory(
+                FrameworkSettingsRepository(context.applicationContext)
+            )
+        )[FrameworkSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    FrameworkSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onRestart = viewModel::showRestartConfirmDialog,
+        onKeepRotationChanged = viewModel::setKeepRotation,
+        onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
+        onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
+        onAiInputExpandChanged = viewModel::setAiInputExpand,
+        onAiInputSignsChanged = viewModel::setAiInputSigns,
+        onShowAiInputInfo = viewModel::showAiInputInfoDialog
+    )
+
+    if (uiState.showAiInputInfoDialog) {
+        AiInputInfoDialog(
+            onDismiss = viewModel::dismissAiInputInfoDialog
+        )
+    }
+
+    if (uiState.showRestartConfirmDialog) {
+        RestartSystemDialog(
+            onConfirm = {
+                viewModel.restartSystem { error ->
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.restart_fail_prefix) + error,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            },
+            onDismiss = viewModel::dismissRestartConfirmDialog
+        )
+    }
+}
 
 class FrameworkSettingsActivity : ZToolComponentActivity() {
 

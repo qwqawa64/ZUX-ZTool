@@ -375,9 +375,32 @@ Result: succeeded on 2026-06-09 after the first Compose feature navigation slice
 
 Next targets:
 
-- Migrate `systemframework/FrameworkSettingsActivity.kt`.
-- Migrate `gametool/GameToolSettngs.kt`.
-- Migrate `launcher/LauncherSettingsActivity.kt`.
-- Migrate `ota/OtaSettings.kt`.
-- After top-level feature pages are Compose destinations, migrate the System UI subtree
-  and then the System Settings detail subtree.
+- Migrated additional top-level Features pages into the app-level Compose NavHost:
+  - `feature/framework`
+  - `feature/game-tool`
+  - `feature/launcher`
+  - `feature/ota`
+- These pages now share the same predictive-back transition policy when launched from
+  the Features page. Their existing Activity classes remain temporarily as compatibility
+  hosts until the old launch paths are deleted in a later cleanup.
+
+Verification:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Result: succeeded on 2026-06-09 after migrating framework, game tool, launcher, and OTA
+to Compose feature destinations.
+
+Next targets:
+
+- Migrate the System UI subtree:
+  - `systemUISettings`
+  - `StatusBarSettingsActivity`
+  - `LockScreenSettingsActivity`
+  - `ControlCenterSettingsActivity`
+- Then migrate the System Settings detail subtree:
+  - `SettingsDetailActivity`
+  - `searchPage`
+  - floating-window/overlay guide entry.

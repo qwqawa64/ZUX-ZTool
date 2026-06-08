@@ -33,8 +33,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
+import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
+import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
+import com.qimian233.ztool.settingactivity.ota.OtaSettingsRoute
 import com.qimian233.ztool.settingactivity.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsRoute
+import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsRoute
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
@@ -393,7 +397,11 @@ private fun MainRouteNavHost(
             FeaturesMainRoute(
                 onFeatureDestinationSelected = { destination ->
                     when (destination) {
+                        FeatureDestination.GameTool,
+                        FeatureDestination.Ota,
                         FeatureDestination.PackageInstaller,
+                        FeatureDestination.Launcher,
+                        FeatureDestination.Framework,
                         FeatureDestination.SafeCenter -> {
                             navController.navigate(destination.route) {
                                 launchSingleTop = true
@@ -466,6 +474,81 @@ private fun MainRouteNavHost(
             )
         }
         composable(
+            route = FeatureDestination.GameTool.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            GameToolSettingsRoute(
+                title = stringResource(R.string.game_tool_app_name),
+                packageName = "com.zui.game.service",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = FeatureDestination.Ota.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            OtaSettingsRoute(
+                title = stringResource(R.string.system_update_app_name),
+                packageName = "com.lenovo.ota",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = FeatureDestination.Framework.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            FrameworkSettingsRoute(
+                title = stringResource(R.string.system_framework_app_name),
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = FeatureDestination.Launcher.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            LauncherSettingsRoute(
+                title = stringResource(R.string.launcher_app_name),
+                packageName = "com.zui.launcher",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
             route = FeatureDestination.SafeCenter.route,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -496,7 +579,11 @@ private fun navigationRouteIndex(route: String?): Int {
     return when (route) {
         MainRoute.Home.name -> 0
         MainRoute.Features.name -> 1
+        FeatureDestination.GameTool.route -> 2
+        FeatureDestination.Ota.route -> 2
         FeatureDestination.PackageInstaller.route -> 2
+        FeatureDestination.Launcher.route -> 2
+        FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2
         MainRoute.Audit.name -> 3
         MainRoute.Settings.name -> 4

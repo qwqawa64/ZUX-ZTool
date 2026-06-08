@@ -28,14 +28,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.gametool.GameToolSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
@@ -50,6 +54,76 @@ import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.viewmodel.GameToolSettingsUiState
 import com.qimian233.ztool.viewmodel.GameToolSettingsViewModel
 import com.qimian233.ztool.viewmodel.MistakeTouchMode
+
+@Composable
+fun GameToolSettingsRoute(
+    title: String,
+    packageName: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("GameToolSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            GameToolSettingsViewModelFactory(
+                GameToolSettingsRepository(context.applicationContext)
+            )
+        )[GameToolSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    GameToolSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onRestart = viewModel::showRestartConfirmDialog,
+        onDisableGameAudioChanged = viewModel::setDisableGameAudio,
+        onDisguiseDeviceChanged = viewModel::setDisguiseDevice,
+        onFixCpuFrequencyChanged = viewModel::setFixCpuFrequency,
+        onFixSocTemperatureChanged = viewModel::setFixSocTemperature,
+        onMistakeTouchModeChanged = viewModel::setMistakeTouchMode,
+        onSelectWhitelist = {
+            val activity = context as? android.app.Activity
+            if (activity != null) {
+                AppChooserDialog.show(
+                    activity,
+                    viewModel.loadManagedGamePackages(),
+                    uiState.targetGamePackages,
+                    context.getString(R.string.SelectGame),
+                    object : AppChooserDialog.AppSelectionCallback {
+                        override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
+                            viewModel.setWhitelistPackages(selectedApps.map { it.packageName })
+                        }
+
+                        override fun onCancel() = Unit
+                    }
+                )
+            }
+        }
+    )
+
+    if (uiState.showRestartConfirmDialog) {
+        RestartConfirmDialog(
+            packageName = packageName,
+            onConfirm = {
+                viewModel.forceStopPackage(
+                    packageName = packageName,
+                    onFailure = {
+                        Toast.makeText(context, R.string.restart_fail_short, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onDismiss = viewModel::dismissRestartConfirmDialog
+        )
+    }
+}
 
 class GameToolSettngs : ZToolComponentActivity() {
 

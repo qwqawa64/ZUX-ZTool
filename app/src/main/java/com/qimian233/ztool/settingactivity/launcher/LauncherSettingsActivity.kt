@@ -30,14 +30,18 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.launcher.LauncherRestartResult
 import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
@@ -53,6 +57,84 @@ import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
 import com.qimian233.ztool.viewmodel.LauncherSettingsViewModel
+
+@Composable
+fun LauncherSettingsRoute(
+    title: String,
+    packageName: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("LauncherSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            LauncherSettingsViewModelFactory(
+                LauncherSettingsRepository(context.applicationContext)
+            )
+        )[LauncherSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    LauncherSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onRestart = viewModel::showRestartConfirmDialog,
+        onForceStopModeChanged = viewModel::setForceStopMode,
+        onSelectForceStopWhitelist = {
+            val activity = context as? android.app.Activity
+            if (activity != null) {
+                AppChooserDialog.show(
+                    activity,
+                    viewModel.loadUserInstalledPackageNames(),
+                    uiState.forceStopWhitelist,
+                    context.getString(R.string.force_stop_title),
+                    object : AppChooserDialog.AppSelectionCallback {
+                        override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
+                            viewModel.setForceStopWhitelist(selectedApps.map { it.packageName })
+                        }
+
+                        override fun onCancel() = Unit
+                    }
+                )
+            }
+        },
+        onMoreBigDockChanged = viewModel::setMoreBigDock,
+        onCustomGridSizeChanged = viewModel::setCustomGridSize,
+        onCustomGridRowChanged = viewModel::setCustomGridRow,
+        onCustomGridColumnChanged = viewModel::setCustomGridColumn
+    )
+
+    if (uiState.showRestartConfirmDialog) {
+        RestartConfirmDialog(
+            packageName = packageName,
+            onConfirm = {
+                viewModel.forceStopPackage(
+                    packageName = packageName,
+                    onResult = { result ->
+                        when (result) {
+                            LauncherRestartResult.EmptyPackageName -> Unit
+                            is LauncherRestartResult.Failure -> {
+                                Toast.makeText(context, R.string.force_stop_fail, Toast.LENGTH_SHORT).show()
+                            }
+                            LauncherRestartResult.Success -> {
+                                Toast.makeText(context, R.string.force_stop_success, Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                )
+            },
+            onDismiss = viewModel::dismissRestartConfirmDialog
+        )
+    }
+}
 
 class LauncherSettingsActivity : ZToolComponentActivity() {
 
