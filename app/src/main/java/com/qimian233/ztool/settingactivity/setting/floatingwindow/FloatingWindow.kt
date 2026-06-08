@@ -42,10 +42,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.activity.ComponentActivity
+import androidx.lifecycle.LifecycleOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.qimian233.ztool.R
@@ -59,7 +60,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class FloatingWindow(private val context: Context) {
+class FloatingWindow private constructor(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val lifecycleOwner = context as? LifecycleOwner
@@ -208,6 +209,10 @@ class FloatingWindow(private val context: Context) {
 
     companion object {
         private const val UPDATE_INTERVAL = 1000L
+
+        fun create(hostActivity: ComponentActivity): FloatingWindow {
+            return FloatingWindow(hostActivity)
+        }
     }
 }
 

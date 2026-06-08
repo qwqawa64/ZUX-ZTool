@@ -32,16 +32,20 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.MagicWindowSearchRepository
 import com.qimian233.ztool.ui.components.ZToolCard
@@ -52,6 +56,52 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.SearchPageUiState
 import com.qimian233.ztool.viewmodel.SearchPageViewModel
+
+@Composable
+fun SearchPageRoute(
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("SearchPageRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            SearchPageViewModelFactory(
+                MagicWindowSearchRepository(context.applicationContext)
+            )
+        )[SearchPageViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadEmbeddingConfig()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    SearchPageScreen(
+        state = uiState,
+        onKeywordChanged = viewModel::setKeyword,
+        onSearch = {
+            viewModel.search {
+                Toast.makeText(
+                    context,
+                    R.string.unable_to_find_application,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        },
+        onResultClick = viewModel::selectPackage,
+        onNavigateBack = onBack
+    )
+
+    uiState.selectedPackage?.let { packageInfo ->
+        PackageDetailsDialog(
+            packageInfo = packageInfo,
+            onDismiss = viewModel::dismissPackageDetails
+        )
+    }
+}
 
 @Suppress("ClassName")
 class searchPage : ZToolComponentActivity() {

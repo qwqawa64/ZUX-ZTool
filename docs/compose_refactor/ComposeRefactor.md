@@ -438,9 +438,28 @@ destinations.
 
 Next targets:
 
-- Migrate the System Settings detail subtree:
-  - `searchPage`
-  - floating-window/overlay guide entry if it should become a route instead of an overlay-only
-    controller.
+- Migrated the System Settings detail subtree search page into a Compose destination:
+  - `feature/settings-detail/magic-window-search`
+- `SettingsDetailRoute` now opens magic-window search through the app-level Compose NavHost
+  instead of starting `searchPage` from the in-app path.
+- The floating-window guide remains a WindowManager overlay because that is its domain
+  behavior, but it now exposes `FloatingWindow.create(ComponentActivity)` so it no longer
+  implicitly depends on the old `SettingsDetailActivity` shell.
+
+Verification:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Result: succeeded on 2026-06-09 after migrating magic-window search and tightening the
+floating-window overlay host boundary.
+
+Next targets:
+
+- Audit and remove old feature Activity launch paths that are no longer used by the in-app
+  Compose route graph.
+- Remove obsolete Manifest Activity entries after direct source references are gone.
+- Remove Activity transition helpers if no remaining in-app path uses Activity transitions.
 - After those subtrees are Compose-owned, remove the old feature Activity launch paths,
   Manifest entries, and Activity transition helpers.

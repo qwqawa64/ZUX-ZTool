@@ -39,6 +39,7 @@ import com.qimian233.ztool.settingactivity.ota.OtaSettingsRoute
 import com.qimian233.ztool.settingactivity.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsRoute
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailRoute
+import com.qimian233.ztool.settingactivity.setting.magicwindowsearch.SearchPageRoute
 import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.SystemUiSettingsRoute
@@ -256,6 +257,7 @@ private object HiddenRoute {
     const val SystemUiStatusBar = "feature/system-ui/status-bar"
     const val SystemUiLockScreen = "feature/system-ui/lock-screen"
     const val SystemUiControlCenter = "feature/system-ui/control-center"
+    const val SettingsDetailMagicWindowSearch = "feature/settings-detail/magic-window-search"
 }
 
 @Composable
@@ -498,6 +500,28 @@ private fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
+                },
+                onOpenStrategySearch = {
+                    navController.navigate(HiddenRoute.SettingsDetailMagicWindowSearch) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SettingsDetailMagicWindowSearch,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SearchPageRoute(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(FeatureDestination.SettingsDetail.route) {
+                            launchSingleTop = true
+                        }
+                    }
                 }
             )
         }
@@ -706,6 +730,7 @@ private fun navigationRouteIndex(route: String?): Int {
         HiddenRoute.SystemUiStatusBar -> 3
         HiddenRoute.SystemUiLockScreen -> 3
         HiddenRoute.SystemUiControlCenter -> 3
+        HiddenRoute.SettingsDetailMagicWindowSearch -> 3
         FeatureDestination.Launcher.route -> 2
         FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2

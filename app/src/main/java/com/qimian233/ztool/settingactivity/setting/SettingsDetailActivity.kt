@@ -93,7 +93,8 @@ import androidx.core.net.toUri
 fun SettingsDetailRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenStrategySearch: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as? android.app.Activity
@@ -164,12 +165,12 @@ fun SettingsDetailRoute(
     }
 
     fun showFloatingWindow() {
-        if (activity == null) return
+        val hostActivity = activity as? androidx.activity.ComponentActivity ?: return
         if (floatingWindow != null) {
             hideFloatingWindow()
             return
         }
-        floatingWindow = FloatingWindow(activity)
+        floatingWindow = FloatingWindow.create(hostActivity)
         Toast.makeText(context, R.string.floating_window_started, Toast.LENGTH_SHORT).show()
     }
 
@@ -547,14 +548,7 @@ fun SettingsDetailRoute(
         onOpenConfigSelection = {
             showConfigSelectionDialog(viewModel.loadEmbeddingConfigFiles())
         },
-        onOpenStrategySearch = {
-            val intent = Intent(context, searchPage::class.java)
-            if (activity != null) {
-                activity.startActivityWithZToolTransition(intent)
-            } else {
-                context.startActivity(intent)
-            }
-        },
+        onOpenStrategySearch = onOpenStrategySearch,
         onZuiForceSplit = {
             openOvConfigDialog(
                 OvCommonConfigManager.MODE_SPLIT_SCREEN,
@@ -837,7 +831,7 @@ class SettingsDetailActivity : ZToolComponentActivity() {
             hideFloatingWindow()
             return
         }
-        floatingWindow = FloatingWindow(this)
+        floatingWindow = FloatingWindow.create(this)
         Toast.makeText(this, R.string.floating_window_started, Toast.LENGTH_SHORT).show()
     }
 
