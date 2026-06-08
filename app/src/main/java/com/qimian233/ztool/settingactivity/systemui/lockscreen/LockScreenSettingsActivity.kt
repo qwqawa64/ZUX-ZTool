@@ -1,10 +1,6 @@
 package com.qimian233.ztool.settingactivity.systemui.lockscreen
 
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -114,70 +110,6 @@ fun LockScreenSettingsRoute(
             },
             onDismiss = viewModel::dismissApiTestResult
         )
-    }
-}
-
-class LockScreenSettingsActivity : ZToolComponentActivity() {
-
-    private lateinit var viewModel: LockScreenSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        val repository = LockScreenSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            LockScreenSettingsViewModelFactory(repository)
-        )[LockScreenSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                LockScreenSettingsScreen(
-                    title = appName + stringResource(R.string.lock_screen_settings_title_suffix),
-                    state = uiState,
-                    onBack = ::finish,
-                    onYiYanChanged = viewModel::setYiYanEnabled,
-                    onApiAddressChanged = viewModel::setApiAddress,
-                    onRegexChanged = viewModel::setRegex,
-                    onTestApi = ::testApiConnection,
-                    onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
-                    onRealWattsIntervalOptionChanged = viewModel::setRealWattsIntervalOption,
-                    onRealWattsRefreshIntervalChanged = viewModel::setRealWattsRefreshInterval
-                )
-
-                if (uiState.showRootPermissionDialog) {
-                    RootPermissionDialog(
-                        onConfirm = viewModel::dismissRootPermissionDialog,
-                        onDoNotShowAgain = {
-                            viewModel.confirmSystemUiPermission()
-                            Toast.makeText(this, R.string.no_tip_next_time, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                }
-
-                uiState.apiTestResult?.let { result ->
-                    ApiTestResultDialog(
-                        result = result,
-                        onSave = {
-                            viewModel.saveYiYanConfiguration()
-                            Toast.makeText(this, R.string.configuration_saved_message, Toast.LENGTH_SHORT).show()
-                        },
-                        onDismiss = viewModel::dismissApiTestResult
-                    )
-                }
-            }
-        }
-    }
-
-    private fun testApiConnection() {
-        viewModel.testApiConnection {
-            Toast.makeText(this, R.string.please_input_api_address, Toast.LENGTH_SHORT).show()
-        }
     }
 }
 

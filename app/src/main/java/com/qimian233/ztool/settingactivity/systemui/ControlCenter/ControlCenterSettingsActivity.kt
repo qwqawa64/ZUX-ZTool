@@ -4,11 +4,7 @@ package com.qimian233.ztool.settingactivity.systemui.ControlCenter
 
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -143,87 +139,6 @@ fun ControlCenterSettingsRoute(
                 }
             }
         )
-    }
-}
-
-class ControlCenterSettingsActivity : ZToolComponentActivity() {
-
-    private lateinit var viewModel: ControlCenterSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        val repository = ControlCenterSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            ControlCenterSettingsViewModelFactory(repository)
-        )[ControlCenterSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                ControlCenterSettingsScreen(
-                    title = appName + stringResource(R.string.control_center_settings_title_suffix),
-                    state = uiState,
-                    onBack = ::finish,
-                    onCustomDateChanged = viewModel::setCustomDate,
-                    onDateFormatChanged = viewModel::setDateFormat,
-                    onSaveDateFormat = viewModel::saveDateFormat,
-                    onShowFormatHelp = viewModel::showFormatHelpDialog,
-                    onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
-                    onTextSizeChanged = viewModel::setTextSize,
-                    onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
-                    onLetterSpacingChanged = viewModel::setLetterSpacing,
-                    onTextColorEnabledChanged = viewModel::setTextColorEnabled,
-                    onPickTextColor = viewModel::showColorPickerDialog,
-                    onTextBoldChanged = viewModel::setTextBold
-                )
-
-                if (uiState.showFormatHelpDialog) {
-                    FormatHelpDialog(
-                        onDismiss = viewModel::dismissFormatHelpDialog,
-                        onCopyExample = {
-                            viewModel.dismissFormatHelpDialog()
-                            copyDateFormatExample()
-                        }
-                    )
-                }
-
-                if (uiState.showColorPickerDialog) {
-                    ColorPickerDialog(
-                        onColorSelected = viewModel::setTextColor,
-                        onDismiss = viewModel::dismissColorPickerDialog
-                    )
-                }
-
-                if (uiState.showSaveSuccessDialog) {
-                    ZToolDialog(
-                        onDismissRequest = viewModel::dismissSaveSuccessDialog,
-                        title = { Text(stringResource(R.string.save_success_title)) },
-                        text = { Text(stringResource(R.string.date_format_saved_message)) },
-                        confirmButton = {
-                            TextButton(onClick = viewModel::dismissSaveSuccessDialog) {
-                                Text(stringResource(R.string.restart_yes))
-                            }
-                        }
-                    )
-                }
-            }
-        }
-    }
-
-    private fun copyDateFormatExample() {
-        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText(
-            getString(R.string.date_format_example),
-            getString(R.string.date_format_sample)
-        )
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.example_copied_message, Toast.LENGTH_SHORT).show()
     }
 }
 

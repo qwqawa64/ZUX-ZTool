@@ -2,11 +2,7 @@ package com.qimian233.ztool.settingactivity.systemui.statusBarSetting
 
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -153,100 +149,6 @@ fun StatusBarSettingsRoute(
             }
         )
     }
-}
-
-class StatusBarSettingsActivity : ZToolComponentActivity() {
-
-    private lateinit var viewModel: StatusBarSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        val repository = StatusBarSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            StatusBarSettingsViewModelFactory(repository)
-        )[StatusBarSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                StatusBarSettingsScreen(
-                    title = appName + stringResource(R.string.status_bar_settings_title_suffix),
-                    state = uiState,
-                    onBack = ::finish,
-                    onDisplaySecondsChanged = viewModel::setDisplaySeconds,
-                    onCustomClockChanged = viewModel::setCustomClock,
-                    onClockFormatChanged = viewModel::setClockFormat,
-                    onSaveClockFormat = viewModel::saveClockFormat,
-                    onShowFormatHelp = viewModel::showFormatHelpDialog,
-                    onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
-                    onTextSizeChanged = viewModel::setTextSize,
-                    onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
-                    onLetterSpacingChanged = viewModel::setLetterSpacing,
-                    onTextColorEnabledChanged = viewModel::setTextColorEnabled,
-                    onPickTextColor = viewModel::showColorPickerDialog,
-                    onTextBoldChanged = viewModel::setTextBold,
-                    onNotificationIconLimitChanged = ::handleNotificationIconLimitChanged,
-                    onNativeNotificationIconChanged = viewModel::setNativeNotificationIcon,
-                    onNetworkSpeedSizeChanged = viewModel::setNetworkSpeedSize,
-                    onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
-                    onBatteryExternalChanged = viewModel::setBatteryExternal
-                )
-
-                if (uiState.showFormatHelpDialog) {
-                    FormatHelpDialog(
-                        onDismiss = viewModel::dismissFormatHelpDialog,
-                        onCopyExample = {
-                            viewModel.dismissFormatHelpDialog()
-                            copyClockFormatExample()
-                        }
-                    )
-                }
-
-                if (uiState.showColorPickerDialog) {
-                    ColorPickerDialog(
-                        onColorSelected = viewModel::setTextColor,
-                        onDismiss = viewModel::dismissColorPickerDialog
-                    )
-                }
-
-                if (uiState.showSaveSuccessDialog) {
-                    ZToolDialog(
-                        onDismissRequest = viewModel::dismissSaveSuccessDialog,
-                        title = { Text(stringResource(R.string.save_success_title)) },
-                        text = { Text(stringResource(R.string.clock_format_saved_message)) },
-                        confirmButton = {
-                            TextButton(onClick = viewModel::dismissSaveSuccessDialog) {
-                                Text(stringResource(R.string.restart_yes))
-                            }
-                        }
-                    )
-                }
-            }
-        }
-    }
-
-    private fun handleNotificationIconLimitChanged(option: String) {
-        if (!viewModel.setNotificationIconLimit(option)) {
-            Toast.makeText(this, R.string.save_failed_message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun copyClockFormatExample() {
-        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText(
-            getString(R.string.clock_format_example),
-            getString(R.string.clock_format_sample)
-        )
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.example_copied_message, Toast.LENGTH_SHORT).show()
-    }
-
 }
 
 private class StatusBarSettingsViewModelFactory(

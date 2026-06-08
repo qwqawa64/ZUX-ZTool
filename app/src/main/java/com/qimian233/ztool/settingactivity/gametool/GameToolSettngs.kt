@@ -1,10 +1,6 @@
 package com.qimian233.ztool.settingactivity.gametool
 
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -122,82 +118,6 @@ fun GameToolSettingsRoute(
             },
             onDismiss = viewModel::dismissRestartConfirmDialog
         )
-    }
-}
-
-class GameToolSettngs : ZToolComponentActivity() {
-
-    private var appPackageName: String? = null
-    private lateinit var viewModel: GameToolSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        appPackageName = intent.getStringExtra("app_package")
-        val repository = GameToolSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            GameToolSettingsViewModelFactory(repository)
-        )[GameToolSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                GameToolSettingsScreen(
-                    title = appName,
-                    state = uiState,
-                    onBack = ::finish,
-                    onRestart = viewModel::showRestartConfirmDialog,
-                    onDisableGameAudioChanged = viewModel::setDisableGameAudio,
-                    onDisguiseDeviceChanged = viewModel::setDisguiseDevice,
-                    onFixCpuFrequencyChanged = viewModel::setFixCpuFrequency,
-                    onFixSocTemperatureChanged = viewModel::setFixSocTemperature,
-                    onMistakeTouchModeChanged = viewModel::setMistakeTouchMode,
-                    onSelectWhitelist = ::selectGameApps
-                )
-
-                if (uiState.showRestartConfirmDialog) {
-                    RestartConfirmDialog(
-                        packageName = appPackageName.orEmpty(),
-                        onConfirm = {
-                            viewModel.forceStopPackage(
-                                packageName = appPackageName.orEmpty(),
-                                onFailure = ::showRestartFailure
-                            )
-                        },
-                        onDismiss = viewModel::dismissRestartConfirmDialog
-                    )
-                }
-            }
-        }
-    }
-
-    private fun selectGameApps() {
-        val uiState = viewModel.uiState.value
-        AppChooserDialog.show(
-            this,
-            viewModel.loadManagedGamePackages(),
-            uiState.targetGamePackages,
-            getString(R.string.SelectGame),
-            object : AppChooserDialog.AppSelectionCallback {
-                override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
-                    val selectedPackageNames = selectedApps.map { it.packageName }
-                    viewModel.setWhitelistPackages(selectedPackageNames)
-                }
-
-                override fun onCancel() = Unit
-            }
-        )
-    }
-
-    private fun showRestartFailure() {
-        runOnUiThread {
-            Toast.makeText(this, R.string.restart_fail_short, Toast.LENGTH_SHORT).show()
-        }
     }
 }
 

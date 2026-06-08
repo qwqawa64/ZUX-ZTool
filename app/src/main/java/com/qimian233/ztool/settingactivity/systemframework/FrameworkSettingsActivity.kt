@@ -1,10 +1,6 @@
 package com.qimian233.ztool.settingactivity.systemframework
 
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -115,68 +111,6 @@ fun FrameworkSettingsRoute(
             },
             onDismiss = viewModel::dismissRestartConfirmDialog
         )
-    }
-}
-
-class FrameworkSettingsActivity : ZToolComponentActivity() {
-
-    private lateinit var viewModel: FrameworkSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        val repository = FrameworkSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            FrameworkSettingsViewModelFactory(repository)
-        )[FrameworkSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                FrameworkSettingsScreen(
-                    title = appName,
-                    state = uiState,
-                    onBack = ::finish,
-                    onRestart = viewModel::showRestartConfirmDialog,
-                    onKeepRotationChanged = viewModel::setKeepRotation,
-                    onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
-                    onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
-                    onAiInputExpandChanged = viewModel::setAiInputExpand,
-                    onAiInputSignsChanged = viewModel::setAiInputSigns,
-                    onShowAiInputInfo = viewModel::showAiInputInfoDialog
-                )
-
-                if (uiState.showAiInputInfoDialog) {
-                    AiInputInfoDialog(
-                        onDismiss = viewModel::dismissAiInputInfoDialog
-                    )
-                }
-
-                if (uiState.showRestartConfirmDialog) {
-                    RestartSystemDialog(
-                        onConfirm = {
-                            viewModel.restartSystem(::showRestartFailure)
-                        },
-                        onDismiss = viewModel::dismissRestartConfirmDialog
-                    )
-                }
-            }
-        }
-    }
-
-    private fun showRestartFailure(error: String) {
-        runOnUiThread {
-            Toast.makeText(
-                this,
-                getString(R.string.restart_fail_prefix) + error,
-                Toast.LENGTH_SHORT
-            ).show()
-        }
     }
 }
 

@@ -1,10 +1,6 @@
 package com.qimian233.ztool.settingactivity.setting.magicwindowsearch
 
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -100,52 +96,6 @@ fun SearchPageRoute(
             packageInfo = packageInfo,
             onDismiss = viewModel::dismissPackageDetails
         )
-    }
-}
-
-@Suppress("ClassName")
-class searchPage : ZToolComponentActivity() {
-
-    private lateinit var viewModel: SearchPageViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
-
-        viewModel = ViewModelProvider(
-            this,
-            SearchPageViewModelFactory(MagicWindowSearchRepository(applicationContext))
-        )[SearchPageViewModel::class.java]
-        viewModel.loadEmbeddingConfig()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                SearchPageScreen(
-                    state = uiState,
-                    onKeywordChanged = viewModel::setKeyword,
-                    onSearch = {
-                        viewModel.search {
-                            Toast.makeText(
-                                this,
-                                R.string.unable_to_find_application,
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    },
-                    onResultClick = viewModel::selectPackage,
-                    onNavigateBack = ::finish
-                )
-
-                uiState.selectedPackage?.let { packageInfo ->
-                    PackageDetailsDialog(
-                        packageInfo = packageInfo,
-                        onDismiss = viewModel::dismissPackageDetails
-                    )
-                }
-            }
-        }
     }
 }
 

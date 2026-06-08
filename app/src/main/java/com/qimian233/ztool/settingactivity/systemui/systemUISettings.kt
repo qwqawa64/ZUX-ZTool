@@ -1,11 +1,6 @@
 package com.qimian233.ztool.settingactivity.systemui
 
-import android.content.Intent
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,9 +37,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
-import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity
-import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsActivity
-import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -52,7 +44,6 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.utils.startActivityWithZToolTransition
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
 
@@ -128,106 +119,6 @@ fun SystemUiSettingsRoute(
             onDismiss = viewModel::dismissRestartDialog
         )
     }
-}
-
-@Suppress("ClassName")
-class systemUISettings : ZToolComponentActivity() {
-
-    private lateinit var viewModel: SystemUiSettingsViewModel
-
-    private var appName: String = ""
-    private var appPackageName: String? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val repository = SystemUiSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            SystemUiSettingsViewModelFactory(repository)
-        )[SystemUiSettingsViewModel::class.java]
-        appName = intent.getStringExtra("app_name").orEmpty()
-        appPackageName = intent.getStringExtra("app_package")
-
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                SystemUiSettingsScreen(
-                    title = appName,
-                    state = uiState,
-                    onBack = ::finish,
-                    onOpenStatusBar = {
-                        openSubSettings(StatusBarSettingsActivity::class.java)
-                    },
-                    onOpenLockScreen = {
-                        openSubSettings(LockScreenSettingsActivity::class.java)
-                    },
-                    onOpenControlCenter = {
-                        openSubSettings(ControlCenterSettingsActivity::class.java)
-                    },
-                    onNativeAodChanged = ::handleNativeAodChanged,
-                    onLenovoAodChanged = viewModel::setLenovoAodEnabled,
-                    onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
-                    onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
-                    onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
-                    onGuestModeChanged = viewModel::setGuestModeController,
-                    onRestartScope = viewModel::showRestartDialog
-                )
-
-                if (uiState.showRestartDialog) {
-                    RestartScopeDialog(
-                        packageName = appPackageName.orEmpty(),
-                        onConfirm = {
-                            forceStopScope()
-                        },
-                        onDismiss = viewModel::dismissRestartDialog
-                    )
-                }
-            }
-        }
-    }
-
-    private fun <T> openSubSettings(target: Class<T>) {
-        val intent = Intent(this, target).apply {
-            putExtra("app_name", appName)
-            putExtra("app_package", appPackageName)
-        }
-        startActivityWithZToolTransition(intent)
-    }
-
-
-    private fun handleNativeAodChanged(enabled: Boolean) {
-        viewModel.setNativeAodEnabled(
-            enabled = enabled,
-            onLenovoAodDisabled = {
-                runOnUiThread {
-                    Toast.makeText(this, R.string.restart_scope_required, Toast.LENGTH_SHORT).show()
-                }
-            },
-            onFailure = { error ->
-                runOnUiThread {
-                    Toast.makeText(this, "设置失败: $error", Toast.LENGTH_SHORT).show()
-                }
-            }
-        )
-    }
-
-    private fun forceStopScope() {
-        viewModel.forceStopScope(appPackageName.orEmpty()) { success, error ->
-            runOnUiThread {
-                if (success) {
-                    Toast.makeText(this, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, getString(R.string.restartFail) + error, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
 }
 
 private class SystemUiSettingsViewModelFactory(

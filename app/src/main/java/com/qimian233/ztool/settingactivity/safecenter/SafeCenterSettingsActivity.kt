@@ -1,10 +1,6 @@
 package com.qimian233.ztool.settingactivity.safecenter
 
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -116,79 +112,6 @@ fun SafeCenterSettingsRoute(
             },
             onDismiss = viewModel::dismissRestartConfirmDialog
         )
-    }
-}
-
-class SafeCenterSettingsActivity : ZToolComponentActivity() {
-
-    private var appPackageName: String? = null
-    private lateinit var viewModel: SafeCenterSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        appPackageName = intent.getStringExtra("app_package")
-        val repository = SafeCenterSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            SafeCenterSettingsViewModelFactory(repository)
-        )[SafeCenterSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                SafeCenterSettingsScreen(
-                    title = appName,
-                    state = uiState,
-                    onBack = ::finish,
-                    onRestart = viewModel::showRestartConfirmDialog,
-                    onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
-                    onBlockSafeCenterScanChanged = viewModel::setBlockSafeCenterScan,
-                    onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
-                )
-
-                if (uiState.showRestartConfirmDialog) {
-                    RestartConfirmDialog(
-                        packageName = appPackageName.orEmpty(),
-                        onConfirm = {
-                            viewModel.restartPackages(
-                                packageName = appPackageName.orEmpty(),
-                                onResult = ::showRestartResult
-                            )
-                        },
-                        onDismiss = viewModel::dismissRestartConfirmDialog
-                    )
-                }
-            }
-        }
-    }
-
-    private fun showRestartResult(result: SafeCenterRestartResult) {
-        runOnUiThread {
-            when (result) {
-                SafeCenterRestartResult.EmptyPackageName -> {
-                    Toast.makeText(this, R.string.empty_package_name_message, Toast.LENGTH_SHORT).show()
-                }
-                is SafeCenterRestartResult.Failure -> {
-                    Toast.makeText(
-                        this,
-                        getString(R.string.restart_fail_prefix) + result.error,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                SafeCenterRestartResult.Success -> {
-                    Toast.makeText(
-                        this,
-                        R.string.app_process_restarted_message,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
     }
 }
 

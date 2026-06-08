@@ -1,10 +1,6 @@
 package com.qimian233.ztool.settingactivity.launcher
 
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -133,90 +129,6 @@ fun LauncherSettingsRoute(
             },
             onDismiss = viewModel::dismissRestartConfirmDialog
         )
-    }
-}
-
-class LauncherSettingsActivity : ZToolComponentActivity() {
-
-    private var appPackageName: String? = null
-    private lateinit var viewModel: LauncherSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        appPackageName = intent.getStringExtra("app_package")
-        val repository = LauncherSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            LauncherSettingsViewModelFactory(repository)
-        )[LauncherSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                LauncherSettingsScreen(
-                    title = appName,
-                    state = uiState,
-                    onBack = ::finish,
-                    onRestart = viewModel::showRestartConfirmDialog,
-                    onForceStopModeChanged = viewModel::setForceStopMode,
-                    onSelectForceStopWhitelist = ::selectForceStopWhitelist,
-                    onMoreBigDockChanged = viewModel::setMoreBigDock,
-                    onCustomGridSizeChanged = viewModel::setCustomGridSize,
-                    onCustomGridRowChanged = viewModel::setCustomGridRow,
-                    onCustomGridColumnChanged = viewModel::setCustomGridColumn
-                )
-
-                if (uiState.showRestartConfirmDialog) {
-                    RestartConfirmDialog(
-                        packageName = appPackageName.orEmpty(),
-                        onConfirm = {
-                            viewModel.forceStopPackage(
-                                packageName = appPackageName.orEmpty(),
-                                onResult = ::showRestartResult
-                            )
-                        },
-                        onDismiss = viewModel::dismissRestartConfirmDialog
-                    )
-                }
-            }
-        }
-    }
-
-    private fun selectForceStopWhitelist() {
-        val uiState = viewModel.uiState.value
-        AppChooserDialog.show(
-            this,
-            viewModel.loadUserInstalledPackageNames(),
-            uiState.forceStopWhitelist,
-            getString(R.string.force_stop_title),
-            object : AppChooserDialog.AppSelectionCallback {
-                override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
-                    val selectedPackageNames = selectedApps.map { it.packageName }
-                    viewModel.setForceStopWhitelist(selectedPackageNames)
-                }
-
-                override fun onCancel() = Unit
-            }
-        )
-    }
-
-    private fun showRestartResult(result: LauncherRestartResult) {
-        runOnUiThread {
-            when (result) {
-                LauncherRestartResult.EmptyPackageName -> Unit
-                is LauncherRestartResult.Failure -> {
-                    Toast.makeText(this, R.string.force_stop_fail, Toast.LENGTH_SHORT).show()
-                }
-                LauncherRestartResult.Success -> {
-                    Toast.makeText(this, R.string.force_stop_success, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
     }
 }
 

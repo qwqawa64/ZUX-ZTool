@@ -1,10 +1,6 @@
 package com.qimian233.ztool.settingactivity.packageinstaller
 
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -95,65 +91,6 @@ fun PackageInstallerSettingsRoute(
             },
             onDismiss = viewModel::dismissRestartConfirmDialog
         )
-    }
-}
-
-@Suppress("ClassName")
-class packageinstallersettings : ZToolComponentActivity() {
-
-    private var appPackageName: String? = null
-    private lateinit var viewModel: PackageInstallerSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        appPackageName = intent.getStringExtra("app_package")
-        val repository = PackageInstallerSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            PackageInstallerSettingsViewModelFactory(repository)
-        )[PackageInstallerSettingsViewModel::class.java]
-        viewModel.loadSettings()
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                PackageInstallerSettingsScreen(
-                    title = appName,
-                    state = uiState,
-                    onBack = ::finish,
-                    onRestart = viewModel::showRestartConfirmDialog,
-                    onDisableScanApkChanged = viewModel::setDisableScanApk,
-                    onAlwaysAllowPermissionChanged = viewModel::setAlwaysAllowPermission,
-                    onSkipWarnPageChanged = viewModel::setSkipWarnPage,
-                    onDisableInstallerAdChanged = viewModel::setDisableInstallerAd,
-                    onPackageInstallerStyleHookChanged = viewModel::setPackageInstallerStyleHook,
-                    onDisableDeletePackageChanged = viewModel::setDisableDeletePackage
-                )
-
-                if (uiState.showRestartConfirmDialog) {
-                    RestartConfirmDialog(
-                        packageName = appPackageName.orEmpty(),
-                        onConfirm = {
-                            viewModel.forceStopPackage(
-                                packageName = appPackageName.orEmpty(),
-                                onFailure = ::showRestartFailure
-                            )
-                        },
-                        onDismiss = viewModel::dismissRestartConfirmDialog
-                    )
-                }
-            }
-        }
-    }
-
-    private fun showRestartFailure() {
-        runOnUiThread {
-            Toast.makeText(this, R.string.restart_fail_simple, Toast.LENGTH_SHORT).show()
-        }
     }
 }
 

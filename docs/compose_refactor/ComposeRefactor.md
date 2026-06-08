@@ -486,5 +486,29 @@ Remaining cleanup:
   obsolete Activity shells in place.
 - Delete `ZToolComponentActivity`, `ZToolActivityTransitions`, and unused activity animation
   resources after no source file references them.
+
+Final feature Activity cleanup completed:
+
+- Removed obsolete feature Activity shells from the former `settingactivity/**` files while
+  retaining their Compose Route/Screen implementations.
+- Deleted `ZToolComponentActivity` and `ZToolActivityTransitions`.
+- Deleted unused activity transition animation resources:
+  - `ztool_no_animation`
+  - `ztool_slide_in_from_left`
+  - `ztool_slide_in_from_right`
+  - `ztool_slide_out_to_left`
+  - `ztool_slide_out_to_right`
+- Removed the old activity `windowAnimationStyle` entries from app themes.
+- Source audit shows no remaining references to feature Activity shells or activity transition
+  helpers; the only app Activity is `MainActivity`.
+
+Verification:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Result: succeeded on 2026-06-09 after removing obsolete feature Activity shells and activity
+transition helpers.
 - After those subtrees are Compose-owned, remove the old feature Activity launch paths,
   Manifest entries, and Activity transition helpers.

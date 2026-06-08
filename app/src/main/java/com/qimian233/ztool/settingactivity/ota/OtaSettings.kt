@@ -2,11 +2,7 @@ package com.qimian233.ztool.settingactivity.ota
 
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.os.Bundle
 import android.widget.Toast
-import com.qimian233.ztool.utils.ZToolComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -144,92 +140,6 @@ fun OtaSettingsRoute(
             },
             onDismiss = viewModel::dismissRestartDialog
         )
-    }
-}
-
-class OtaSettings : ZToolComponentActivity() {
-
-    private var appPackageName: String? = null
-    private lateinit var viewModel: OtaSettingsViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val appName = intent.getStringExtra("app_name").orEmpty()
-        appPackageName = intent.getStringExtra("app_package")
-        val repository = OtaSettingsRepository(applicationContext)
-        viewModel = ViewModelProvider(
-            this,
-            OtaSettingsViewModelFactory(repository)
-        )[OtaSettingsViewModel::class.java]
-        viewModel.initialize(getString(R.string.unknown))
-
-        setContent {
-            val uiState by viewModel.uiState.collectAsState()
-
-            ZToolTheme {
-                OtaSettingsScreen(
-                    title = appName,
-                    state = uiState,
-                    onBack = ::finish,
-                    onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
-                    onFetchOtaInfo = {
-                        viewModel.fetchOtaInfo(getString(R.string.ota_info_fetch_failed))
-                    },
-                    onFirmwareSnChanged = viewModel::setFirmwareSnInput,
-                    onFetchFirmware = {
-                        viewModel.fetchFirmware(getString(R.string.SN_default_hint))
-                    },
-                    onCustomVersionChanged = viewModel::setCustomVersion,
-                    onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
-                    onCopyDownloadLink = {
-                        copyToClipboard(it)
-                        Toast.makeText(this, R.string.download_link_copied, Toast.LENGTH_SHORT).show()
-                    },
-                    onCopyChangelog = {
-                        copyToClipboard(it)
-                        Toast.makeText(this, R.string.changelog_copied, Toast.LENGTH_SHORT).show()
-                    },
-                    onCopyPassword = {
-                        copyToClipboard(it)
-                        Toast.makeText(this, R.string.password_copied, Toast.LENGTH_SHORT).show()
-                    },
-                    onRestartScope = viewModel::showRestartDialog
-                )
-
-                uiState.errorDialogMessage?.let { message ->
-                    ErrorDialog(
-                        message = message,
-                        onDismiss = viewModel::dismissErrorDialog
-                    )
-                }
-
-                if (uiState.showRestartDialog) {
-                    RestartScopeDialog(
-                        packageName = appPackageName.orEmpty(),
-                        onConfirm = {
-                            viewModel.restartScope(
-                                packageName = appPackageName.orEmpty(),
-                                onFailure = ::showRestartFailure
-                            )
-                        },
-                        onDismiss = viewModel::dismissRestartDialog
-                    )
-                }
-            }
-        }
-    }
-    private fun showRestartFailure() {
-        runOnUiThread {
-            Toast.makeText(this, R.string.restart_failed, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun copyToClipboard(text: String) {
-        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText(getString(R.string.ota_info_clipboard_label), text)
-        clipboard.setPrimaryClip(clip)
     }
 }
 
