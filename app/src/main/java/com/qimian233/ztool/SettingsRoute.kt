@@ -566,30 +566,28 @@ private fun ThemeSettingsSection(
                 fieldMinWidth = 80.dp,
                 fieldMaxWidth = 160.dp
             )
-            if (settings.frontendStyle == FrontendStyle.Material3Expressive) {
-                ZToolPopupMenuSettingRow(
-                    title = stringResource(R.string.material_color_spec_title),
-                    value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
-                    options = colorSpecOptions,
-                    optionLabel = { it.label },
-                    onOptionSelected = { onMaterialColorSpecChanged(it.value) },
-                    icon = Icons.Rounded.Tune,
-                    modifier = itemModifier(),
-                    fieldMinWidth = 80.dp,
-                    fieldMaxWidth = 160.dp
-                )
-                ZToolPopupMenuSettingRow(
-                    title = stringResource(R.string.material_palette_mode_title),
-                    value = selectedPaletteLabel,
-                    options = paletteOptions,
-                    optionLabel = { it.label },
-                    onOptionSelected = { onMaterialPaletteChanged(it.value) },
-                    icon = Icons.Rounded.Tune,
-                    modifier = itemModifier(),
-                    fieldMinWidth = 80.dp,
-                    fieldMaxWidth = 160.dp
-                )
-            }
+            ZToolPopupMenuSettingRow(
+                title = stringResource(R.string.material_color_spec_title),
+                value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
+                options = colorSpecOptions,
+                optionLabel = { it.label },
+                onOptionSelected = { onMaterialColorSpecChanged(it.value) },
+                icon = Icons.Rounded.Tune,
+                modifier = itemModifier(),
+                fieldMinWidth = 80.dp,
+                fieldMaxWidth = 160.dp
+            )
+            ZToolPopupMenuSettingRow(
+                title = stringResource(R.string.material_palette_mode_title),
+                value = selectedPaletteLabel,
+                options = paletteOptions,
+                optionLabel = { it.label },
+                onOptionSelected = { onMaterialPaletteChanged(it.value) },
+                icon = Icons.Rounded.Tune,
+                modifier = itemModifier(),
+                fieldMinWidth = 80.dp,
+                fieldMaxWidth = 160.dp
+            )
             ZToolSwitchRow(
                 title = stringResource(R.string.amoled_black_title),
                 summary = stringResource(R.string.amoled_black_summary),
