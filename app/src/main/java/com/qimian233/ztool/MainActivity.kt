@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Window
 import android.widget.Toast
+import androidx.activity.BackEventCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -364,37 +365,35 @@ private fun MainRouteNavHost(
         )
     }
     val predictiveHorizontalPopEnter:
-        (AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> EnterTransition)? =
-        if (predictiveBackGestureEnabled) {
-            {
-                slideIntoContainer(
-                    if (isForwardNavigation()) {
-                        AnimatedContentTransitionScope.SlideDirection.Left
-                    } else {
-                        AnimatedContentTransitionScope.SlideDirection.Right
-                    },
-                    animationSpec = tween(SettingsNavigationAnimationMillis)
-                )
-            }
+        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> EnterTransition = { swipeEdge ->
+        if (predictiveBackGestureEnabled || swipeEdge == BackEventCompat.EDGE_NONE) {
+            slideIntoContainer(
+                if (isForwardNavigation()) {
+                    AnimatedContentTransitionScope.SlideDirection.Left
+                } else {
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                },
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
         } else {
-            null
+            EnterTransition.None
         }
+    }
     val predictiveHorizontalPopExit:
-        (AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> ExitTransition)? =
-        if (predictiveBackGestureEnabled) {
-            {
-                slideOutOfContainer(
-                    if (isForwardNavigation()) {
-                        AnimatedContentTransitionScope.SlideDirection.Left
-                    } else {
-                        AnimatedContentTransitionScope.SlideDirection.Right
-                    },
-                    animationSpec = tween(SettingsNavigationAnimationMillis)
-                )
-            }
+        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> ExitTransition = { swipeEdge ->
+        if (predictiveBackGestureEnabled || swipeEdge == BackEventCompat.EDGE_NONE) {
+            slideOutOfContainer(
+                if (isForwardNavigation()) {
+                    AnimatedContentTransitionScope.SlideDirection.Left
+                } else {
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                },
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
         } else {
-            null
+            ExitTransition.None
         }
+    }
 
     val mainNavGraph: androidx.navigation.NavGraphBuilder.() -> Unit = {
         composable(
@@ -709,23 +708,14 @@ private fun MainRouteNavHost(
         }
     }
 
-    if (predictiveBackGestureEnabled) {
-        NavHost(
-            navController = navController,
-            startDestination = MainRoute.Home.name,
-            modifier = modifier,
-            predictivePopEnterTransition = requireNotNull(predictiveHorizontalPopEnter),
-            predictivePopExitTransition = requireNotNull(predictiveHorizontalPopExit),
-            builder = mainNavGraph
-        )
-    } else {
-        NavHost(
-            navController = navController,
-            startDestination = MainRoute.Home.name,
-            modifier = modifier,
-            builder = mainNavGraph
-        )
-    }
+    NavHost(
+        navController = navController,
+        startDestination = MainRoute.Home.name,
+        modifier = modifier,
+        predictivePopEnterTransition = predictiveHorizontalPopEnter,
+        predictivePopExitTransition = predictiveHorizontalPopExit,
+        builder = mainNavGraph
+    )
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardNavigation(): Boolean {
