@@ -27,15 +27,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity
@@ -51,6 +55,96 @@ import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.startActivityWithZToolTransition
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
+
+@Composable
+fun SystemUiSettingsRoute(
+    title: String,
+    packageName: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val owner = LocalViewModelStoreOwner.current
+        ?: error("SystemUiSettingsRoute requires a ViewModelStoreOwner")
+    val viewModel = remember(owner) {
+        ViewModelProvider(
+            owner,
+            SystemUiSettingsViewModelFactory(
+                SystemUiSettingsRepository(context.applicationContext)
+            )
+        )[SystemUiSettingsViewModel::class.java]
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadSettings()
+    }
+
+    fun openSubSettings(target: Class<*>) {
+        val intent = Intent(context, target).apply {
+            putExtra("app_name", title)
+            putExtra("app_package", packageName)
+        }
+        val activity = context as? android.app.Activity
+        if (activity != null) {
+            activity.startActivityWithZToolTransition(intent)
+        } else {
+            context.startActivity(intent)
+        }
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    SystemUiSettingsScreen(
+        title = title,
+        state = uiState,
+        onBack = onBack,
+        onOpenStatusBar = {
+            openSubSettings(StatusBarSettingsActivity::class.java)
+        },
+        onOpenLockScreen = {
+            openSubSettings(LockScreenSettingsActivity::class.java)
+        },
+        onOpenControlCenter = {
+            openSubSettings(ControlCenterSettingsActivity::class.java)
+        },
+        onNativeAodChanged = { enabled ->
+            viewModel.setNativeAodEnabled(
+                enabled = enabled,
+                onLenovoAodDisabled = {
+                    Toast.makeText(context, R.string.restart_scope_required, Toast.LENGTH_SHORT).show()
+                },
+                onFailure = { error ->
+                    Toast.makeText(context, "设置失败: $error", Toast.LENGTH_SHORT).show()
+                }
+            )
+        },
+        onLenovoAodChanged = viewModel::setLenovoAodEnabled,
+        onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
+        onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
+        onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
+        onGuestModeChanged = viewModel::setGuestModeController,
+        onRestartScope = viewModel::showRestartDialog
+    )
+
+    if (uiState.showRestartDialog) {
+        RestartScopeDialog(
+            packageName = packageName,
+            onConfirm = {
+                viewModel.forceStopScope(packageName) { success, error ->
+                    if (success) {
+                        Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.restartFail) + error,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            },
+            onDismiss = viewModel::dismissRestartDialog
+        )
+    }
+}
 
 @Suppress("ClassName")
 class systemUISettings : ZToolComponentActivity() {

@@ -38,7 +38,9 @@ import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.settingactivity.ota.OtaSettingsRoute
 import com.qimian233.ztool.settingactivity.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsRoute
+import com.qimian233.ztool.settingactivity.setting.SettingsDetailRoute
 import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.SystemUiSettingsRoute
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
@@ -397,9 +399,11 @@ private fun MainRouteNavHost(
             FeaturesMainRoute(
                 onFeatureDestinationSelected = { destination ->
                     when (destination) {
+                        FeatureDestination.SettingsDetail,
                         FeatureDestination.GameTool,
                         FeatureDestination.Ota,
                         FeatureDestination.PackageInstaller,
+                        FeatureDestination.SystemUi,
                         FeatureDestination.Launcher,
                         FeatureDestination.Framework,
                         FeatureDestination.SafeCenter -> {
@@ -408,7 +412,6 @@ private fun MainRouteNavHost(
                             }
                             true
                         }
-                        else -> false
                     }
                 }
             )
@@ -474,6 +477,25 @@ private fun MainRouteNavHost(
             )
         }
         composable(
+            route = FeatureDestination.SettingsDetail.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SettingsDetailRoute(
+                title = stringResource(R.string.settings_app_name),
+                packageName = "com.android.settings",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
             route = FeatureDestination.GameTool.route,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -483,6 +505,25 @@ private fun MainRouteNavHost(
             GameToolSettingsRoute(
                 title = stringResource(R.string.game_tool_app_name),
                 packageName = "com.zui.game.service",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = FeatureDestination.SystemUi.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SystemUiSettingsRoute(
+                title = stringResource(R.string.system_ui_app_name),
+                packageName = "com.android.systemui",
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -579,9 +620,11 @@ private fun navigationRouteIndex(route: String?): Int {
     return when (route) {
         MainRoute.Home.name -> 0
         MainRoute.Features.name -> 1
+        FeatureDestination.SettingsDetail.route -> 2
         FeatureDestination.GameTool.route -> 2
         FeatureDestination.Ota.route -> 2
         FeatureDestination.PackageInstaller.route -> 2
+        FeatureDestination.SystemUi.route -> 2
         FeatureDestination.Launcher.route -> 2
         FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2

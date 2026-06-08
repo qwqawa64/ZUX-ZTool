@@ -395,12 +395,36 @@ to Compose feature destinations.
 
 Next targets:
 
-- Migrate the System UI subtree:
-  - `systemUISettings`
+- Migrated the remaining complex top-level Features entries into the app-level Compose
+  NavHost:
+  - `feature/system-ui`
+  - `feature/settings-detail`
+- All top-level Features cards now enter Compose destinations and share the same app-level
+  predictive-back transition policy.
+- `system-ui` still opens status bar, lock screen, and control center through their existing
+  Activity launch paths. These are now the next System UI subtree migration targets.
+- `settings-detail` now has a Compose route host for its existing screen and platform effects,
+  while magic-window search still uses its existing Activity path and floating-window remains
+  a WindowManager overlay controller.
+
+Verification:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Result: succeeded on 2026-06-09 after migrating the system UI and settings detail top-level
+Features entries to Compose destinations.
+
+Next targets:
+
+- Migrate the System UI subtree detail pages into Compose destinations:
   - `StatusBarSettingsActivity`
   - `LockScreenSettingsActivity`
   - `ControlCenterSettingsActivity`
-- Then migrate the System Settings detail subtree:
-  - `SettingsDetailActivity`
+- Migrate the System Settings detail subtree:
   - `searchPage`
-  - floating-window/overlay guide entry.
+  - floating-window/overlay guide entry if it should become a route instead of an overlay-only
+    controller.
+- After those subtrees are Compose-owned, remove the old feature Activity launch paths,
+  Manifest entries, and Activity transition helpers.
