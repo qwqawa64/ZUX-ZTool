@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -265,6 +267,8 @@ private fun MainTabletShell(
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val selectedRouteState = rememberUpdatedState(selectedRoute)
+    val onDestinationSelectedState = rememberUpdatedState(onDestinationSelected)
 
     LaunchedEffect(backStackEntry?.destination?.route) {
         backStackEntry?.destination?.route
@@ -292,8 +296,8 @@ private fun MainTabletShell(
         if (environmentReady) {
             key(MainNavigationRailKey) {
                 MainNavigationRail(
-                    selectedRoute = selectedRoute,
-                    onDestinationSelected = onDestinationSelected
+                    selectedRouteState = selectedRouteState,
+                    onDestinationSelectedState = onDestinationSelectedState
                 )
             }
         }
@@ -311,19 +315,32 @@ private fun MainTabletShell(
 
 @Composable
 private fun MainNavigationRail(
-    selectedRoute: MainRoute,
-    onDestinationSelected: (MainRoute) -> Unit
+    selectedRouteState: State<MainRoute>,
+    onDestinationSelectedState: State<(MainRoute) -> Unit>
 ) {
     ZToolNavigationRail {
         MainRoute.entriesInOrder.forEach { destination ->
-            ZToolNavigationRailItem(
-                selected = selectedRoute == destination,
-                onClick = { onDestinationSelected(destination) },
-                icon = ImageVector.vectorResource(destination.iconRes),
-                label = stringResource(destination.labelRes)
+            MainNavigationRailItem(
+                destination = destination,
+                selectedRouteState = selectedRouteState,
+                onDestinationSelectedState = onDestinationSelectedState
             )
         }
     }
+}
+
+@Composable
+private fun MainNavigationRailItem(
+    destination: MainRoute,
+    selectedRouteState: State<MainRoute>,
+    onDestinationSelectedState: State<(MainRoute) -> Unit>
+) {
+    ZToolNavigationRailItem(
+        selected = selectedRouteState.value == destination,
+        onClick = { onDestinationSelectedState.value(destination) },
+        icon = ImageVector.vectorResource(destination.iconRes),
+        label = stringResource(destination.labelRes)
+    )
 }
 
 @Composable
