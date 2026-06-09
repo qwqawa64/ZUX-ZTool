@@ -2,6 +2,9 @@ package com.qimian233.ztool
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +38,7 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FormatColorFill
 import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
@@ -150,6 +154,7 @@ fun SettingsMainRoute(
         onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
         onRestoreDefault = viewModel::showRestoreConfirmDialog,
         onOpenThemeSettings = onOpenThemeSettings,
+        onOpenLanguageSettings = { openAppLanguageSettings(context) },
         onLogServiceChanged = {
             viewModel.setLogServiceEnabled(it)
             showSettingsToast(
@@ -283,6 +288,23 @@ private fun openSettingsExternalLink(
     }
 }
 
+private fun openAppLanguageSettings(context: android.content.Context) {
+    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
+    } else {
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
+    }
+    try {
+        context.startActivity(intent)
+    } catch (_: Exception) {
+        showSettingsToast(context, context.getString(R.string.open_app_language_settings_failed))
+    }
+}
+
 private fun showSettingsToast(context: android.content.Context, message: String) {
     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }
@@ -306,6 +328,7 @@ private fun SettingsRoute(
     onRestore: () -> Unit,
     onRestoreDefault: () -> Unit,
     onOpenThemeSettings: () -> Unit,
+    onOpenLanguageSettings: () -> Unit,
     onLogServiceChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
@@ -360,11 +383,17 @@ private fun SettingsRoute(
             Spacer(modifier = Modifier.height(16.dp))
 
             SettingsSection {
-                ExpressiveSectionItems(count = 1) { itemModifier ->
+                ExpressiveSectionItems(count = 2) { itemModifier ->
                     SettingsActionRow(
                         title = stringResource(R.string.app_ui_theme_settings),
                         onClick = onOpenThemeSettings,
                         icon = Icons.Rounded.Palette,
+                        modifier = itemModifier()
+                    )
+                    SettingsActionRow(
+                        title = stringResource(R.string.app_language_settings),
+                        onClick = onOpenLanguageSettings,
+                        icon = Icons.Rounded.Language,
                         modifier = itemModifier()
                     )
                 }
