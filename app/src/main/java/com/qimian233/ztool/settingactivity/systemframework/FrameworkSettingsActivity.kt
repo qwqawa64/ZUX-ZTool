@@ -3,10 +3,8 @@ package com.qimian233.ztool.settingactivity.systemframework
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -16,7 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,7 +49,6 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
 import kotlinx.coroutines.delay
@@ -154,12 +151,10 @@ private fun FrameworkSettingsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onRestart) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = null
-                )
-            }
+            ExtendedFloatingActionButton(
+                onClick = onRestart,
+                icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
+                text = {Text(stringResource(R.string.restart_yes))})
         }
     ) { innerPadding ->
         Box(

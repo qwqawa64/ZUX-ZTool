@@ -17,7 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +45,6 @@ import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.viewmodel.GameToolSettingsUiState
 import com.qimian233.ztool.viewmodel.GameToolSettingsViewModel
@@ -161,12 +160,10 @@ private fun GameToolSettingsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onRestart) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = null
-                )
-            }
+            ExtendedFloatingActionButton(
+                onClick = onRestart,
+                icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
+                text = {Text(stringResource(R.string.restart_yes))})
         }
     ) { innerPadding ->
         Box(

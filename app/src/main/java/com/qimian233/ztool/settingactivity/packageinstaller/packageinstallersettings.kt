@@ -11,7 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -37,7 +37,6 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsUiState
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsViewModel
 
@@ -134,12 +133,10 @@ internal fun PackageInstallerSettingsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onRestart) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = null
-                )
-            }
+            ExtendedFloatingActionButton(
+                onClick = onRestart,
+                icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
+                text = {Text(stringResource(R.string.restart_yes))})
         }
     ) { innerPadding ->
         Box(
