@@ -56,7 +56,7 @@ fun ZToolCard(
 
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
