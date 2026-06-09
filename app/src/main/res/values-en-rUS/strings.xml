@@ -57,8 +57,8 @@
     <string name="AndroidVersion">Android</string>
     <string name="buildVersion">Build</string>
     <string name="kernelVersion">Kernel</string>
-    <string name="currentSlot">Active Slot</string>
-    <string name="romRegion">ROM Region</string>
+    <string name="currentSlot">"Active Slot: "</string>
+    <string name="romRegion">"ROM Region: "</string>
     <string name="workConditionTip">Root permission and LSPosed required</string>
     <string name="placeHolderUnknown">Unknown</string>
     <string name="homeFragment_title">Homepage</string>
@@ -99,7 +99,7 @@
     <string name="system_framework_app_description">Change AI input symbols and other useful features.</string>
     <string name="safe_center_app_name">Safe Center</string>
     <string name="safe_center_app_description">Allow selection Internal Storage, disable safe scan and manage APP auto start.</string>
-    <string name="logsFragment_title">Log</string>
+    <string name="logsFragment_title">Logs</string>
     <string name="logFilter">Filter</string>
     <string name="filterByType">Category</string>
     <string name="filterByModule">Module</string>
@@ -115,7 +115,7 @@
     <string name="all_categories">All categories</string>
     <string name="all_levels">All levels</string>
     <string name="all_modules">All modules</string>
-    <string name="log_directory_not_exists">Log directory does not exist!</string>
+    <string name="log_directory_not_exists">Log directory does not exist</string>
     <string name="no_log_records_found">No log entry found!</string>
     <string name="load_logs_failed">"Failed to load log: "</string>
     <string name="no_matching_log_records">No matching log entries found.</string>
@@ -135,15 +135,8 @@
     <string name="log_files_unit">" "</string>
     <string name="module_statistics_header">=== Module Stats ===</string>
     <string name="log_count_unit">" "</string>
-    <string name="multiply" translatable="false">×</string>
     <string name="agreement_text">Welcome to ZTool.\nThis tool uses Root permission and the LSPosed framework to provide customization and system optimization features for Lenovo devices running ZUXOS. Because this module has high-level control over the device, read and understand the following notice carefully.\nIf you do not agree, exit immediately and uninstall this app.\nNotice\n1. This module is officially distributed only through the GitHub Releases page. Do not install any ZTool copy from third parties, including websites, groups, or personal redistribution. Such builds may be malicious and may put your device at risk. If you have installed a copy from an unknown source, uninstall it immediately, check system permissions and sensitive directories, and consider removing Root and reflashing the device.\n2. Some features may stop working after system updates. If that happens, report it to the developers with detailed ZTool and LSPosed logs.\n3. The features provided by this module and any issues caused by them are unrelated to Lenovo. Do not mention this module in official channels, including groups and feedback platforms. If a changed option causes problems, restore the setting and restart the scope first. Violating this may affect future update support.\n4. This module is open-source software released under the Apache 2.0 license and distributed for free on GitHub. If you paid for it, you were scammed. Stop using that copy and switch to the official GitHub Releases build.\n5. The ZTool developers reserve the final interpretation of module features and the terms above.\nIf you have read and agree to the above, tap "I agree" after the countdown ends. Otherwise, tap "I disagree, exit" to leave the app.</string>
-    <string name="app_name" translatable="false">ZTool</string>
-    <string name="buildCode" translatable="false">%s (Build %d)</string>
     <string name="workModeRequirementDetail">• Root permission required • LSPosed framework required</string>
-    <string name="homepage_yiyan" translatable="false">%1$s - %2$s</string>
-    <string name="lsposed_standard_format" translatable="false">LSPosed %s (Standard)</string>
-    <string name="lsposed_zygisk" translatable="false">LSPosed (Zygisk)</string>
-    <string name="android_version_prefix" translatable="false">Android %s</string>
     <string name="config_upgraded_tip_message">The current version changed the configuration file format.\nRestart the system to keep configuration reading and writing working correctly.</string>
     <string name="log_detail_title">Log Details</string>
     <string name="log_detail_time">Time: </string>
@@ -171,17 +164,17 @@
     <string name="settingsFragment_title">Settings</string>
     <string name="SettingsTitle">Setting title</string>
     <string name="SettingsDescription">Setting description</string>
-    <string name="enableLogService">Log collection service</string>
-    <string name="enableLogServiceDescription">Collect Hook module runtime logs in the background and save them to the app private directory.</string>
-    <string name="enableDetailedLogging">Enable detailed logging</string>
-    <string name="enableDetailedLoggingDescription">Show more detailed Hook information. Restart the scope after changing this switch. Enable this when reporting issues.</string>
+    <string name="enableLogService">Log service</string>
+    <string name="enableLogServiceDescription">Log hook info in the background and save them to the app storage.</string>
+    <string name="enableDetailedLogging">Detailed logging</string>
+    <string name="enableDetailedLoggingDescription">Enable this when reporting issues. Restart the scope after changing this switch.</string>
     <string name="backupAndRestore">Backup and restore</string>
     <string name="backupConfigToFile">Back up configuration to file</string>
     <string name="restoreConfigFromFile">Restore configuration from file</string>
     <string name="restoreDefaultConfig">Restore default configuration</string>
     <string name="moreSettings">More settings</string>
     <string name="enableHomePageYiyan">Random quote</string>
-    <string name="enableHomePageYiyanSummary">Show a random quote at the bottom of the home page. This feature requires network access.</string>
+    <string name="enableHomePageYiyanSummary">Show a random quote fetched from network at the home page.</string>
     <string name="open_browser_failed">Unable to open browser</string>
     <string name="open_web_link_failed">Unable to open link</string>
     <string name="showAboutPage">About ZTool</string>
@@ -192,18 +185,16 @@
     <string name="restore_default_confirmation">Are you sure you want to restore the default configuration? This will reset all settings to their initial state.</string>
     <string name="default_config_restored">Default configuration restored</string>
     <string name="config_restore_success">Configuration restored from file</string>
-    <string name="log_service_started">Log collection service started</string>
-    <string name="log_service_stopped">Log collection service stopped</string>
+    <string name="log_service_started">Log service started</string>
+    <string name="log_service_stopped">Log service stopped</string>
     <string name="log_service_require_manual_restart">Failed to restart the log service automatically. Please start it manually.</string>
     <string name="unknown_activity_null">Unknown (Activity is null)</string>
     <string name="button_project_homepage">Our GitHub</string>
     <string name="button_credits">UnfuckZUI</string>
-    <string name="button_qimian233_coolapk">七眠233</string>
-    <string name="button_wasddestroy_coolapk">WASD_Destroy</string>
-    <string name="restart_xp_title">Restart XP Module Scope</string>
-    <string name="restart_xp_message_header">Restart the XP module scope for this page? This will force stop </string>
+    <string name="restart_xp_title">Restart Scope</string>
+    <string name="restart_xp_message_header">"Restart the scope for this page? This will force stop "</string>
     <string name="restart_xp_message"> process.</string>
-    <string name="restart_yes">OK</string>
+    <string name="restart_yes">Restart scope</string>
     <string name="restart_no">Cancel</string>
     <string name="restartSuccess">Restarted</string>
     <string name="restartFail">Restart failed: </string>
@@ -420,7 +411,7 @@
     <string name="embedding_setting_removeBlacklist_summary">Remove blacklist restrictions and allow all apps to be embedded.</string>
     <string name="RoleModule_Title">Parallel Window extension module</string>
     <string name="RoleModule_Summary">Install the Parallel Window KSU/Magisk extension module. Parallel Window split-screen configurations are mounted through this module, which initially includes 1995 app adaptation policies.</string>
-    <string name="custom_landscape_view">Start/stop adaptation wizard</string>
+    <string name="custom_landscape_view">Launch/close adaptation wizard</string>
     <string name="custom_landscape_view_summary">Manually adapt apps for Parallel Window. Usage Access and overlay permissions are required. Policies will be mounted through the module.</string>
     <string name="custom_landscapeResult_Title">Manually adapted policies</string>
     <string name="custom_landscapeResult_Summary">View Parallel Window policies created by the configuration wizard and decide whether to append them to the module.</string>
@@ -537,7 +528,7 @@
     <string name="regex_match_result_prefix">Regex match result: </string>
     <string name="original_response_prefix">Original response: </string>
     <string name="watt_option_disabled">Disabled</string>
-    <string name="watt_option_handshake">Negotiated power</string>
+    <string name="watt_option_handshake">Protocol power</string>
     <string name="watt_option_actual">Actual power</string>
     <string name="real_watt_custom_refresh_interval_enabled">After a fixed interval</string>
     <string name="real_watt_custom_refresh_interval_disabled">When power changes</string>

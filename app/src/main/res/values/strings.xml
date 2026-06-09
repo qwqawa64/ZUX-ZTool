@@ -205,14 +205,14 @@
     <string name="unknown_activity_null">未知 (Activity 为空)</string>
     <string name="button_project_homepage">Our GitHub</string>
     <string name="button_credits">UnfuckZUI</string>
-    <string name="button_qimian233_coolapk">七眠233</string>
-    <string name="button_wasddestroy_coolapk">WASD_Destroy</string>
+    <string name="button_qimian233_coolapk" translatable="false">七眠233</string>
+    <string name="button_wasddestroy_coolapk" translatable="false">WASD_Destroy</string>
 
     <!--通用重启作用域资源-->
-    <string name="restart_xp_title">重启XP模块作用域</string>
-    <string name="restart_xp_message_header">是否重启此页的XP模块作用域？这将强行停止 </string>
+    <string name="restart_xp_title">重启作用域</string>
+    <string name="restart_xp_message_header">"是否重启此页的作用域？这将强行停止 "</string>
     <string name="restart_xp_message"> 的进程。</string>
-    <string name="restart_yes">确定</string>
+    <string name="restart_yes">重启作用域</string>
     <string name="restart_no">取消</string>
     <string name="restartSuccess">重启成功</string>
     <string name="restartFail">重启失败：</string>
@@ -591,7 +591,7 @@
         <item>一定时长后</item>
     </string-array>
     <string name="watt_option_disabled">不启用</string>
-    <string name="watt_option_handshake">握手功率</string>
+    <string name="watt_option_handshake">协议功率</string>
     <string name="watt_option_actual">实际功率</string>
     <string name="real_watt_custom_refresh_interval_enabled">一定时长后</string>
     <string name="real_watt_custom_refresh_interval_disabled">功率变化时</string>
