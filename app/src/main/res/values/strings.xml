@@ -724,7 +724,7 @@
     <string name="ai_input_quick_help_conflict">建议</string>
     <string name="ai_input_quick_help_conflict_desc">避免使用日常输入里容易误触的短词</string>
     <string name="ai_input_quick_help_example_default_value">&amp;&amp;你好&amp;&amp;</string>
-    <string name="ai_input_quick_help_example_custom_value">@ai,/ai,#问</string>
+    <string name="ai_input_quick_help_example_custom_value">#ai,@ai,#问</string>
     <string name="ai_input_quick_help_example_default">官方默认触发方式</string>
     <string name="ai_input_quick_help_example_custom">多个自定义触发符</string>
     <string name="ai_input_quick_help_note">如果只配置模块本身、不勾选目标应用作用域，目标应用仍可能只能使用官方默认唤起符。</string>
