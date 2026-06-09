@@ -218,7 +218,7 @@ private fun AuditScreen(
                         }
                     },
                     icon = { Icon(Icons.Rounded.ArrowUpward, contentDescription = null) },
-                    text = { stringResource(R.string.back_to_top) }
+                    text = { Text(stringResource(R.string.back_to_top)) }
                 )
             }
         }

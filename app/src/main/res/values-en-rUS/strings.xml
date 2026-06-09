@@ -762,4 +762,5 @@
         <item>Deep orange</item>
         <item>Brown</item>
     </string-array>
+    <string name="back_to_top">Back to top</string>
 </resources>
