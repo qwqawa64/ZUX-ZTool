@@ -56,7 +56,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="为ZUXOS的优化与自定义选项" />
+            android:value="Make ZUXOS/ZUI Great, not Again." />
         <meta-data
             android:name="xposedminversion"
             android:value="93" />
