@@ -6,7 +6,7 @@
     <string name="save">保存</string>
     <string name="delete">删除</string>
     <string name="confirm">确认</string>
-    <string name="customizedConfirmWithCountdown">%s（%d秒）</string>
+    <string name="customizedConfirmWithCountdown">%1$s（%2$d秒）</string>
     <string name="cancel">取消</string>
     <string name="test">测试</string>
     <string name="retry">重试</string>
@@ -24,7 +24,7 @@
     <string name="version">模块版本</string>
     <string name="root">Root 来源</string>
     <string name="framework">框架信息</string>
-    <string name="multiply">×</string>
+    <string name="multiply" translatable="false">×</string>
     <string name="misc">杂项</string>
     <string name="app_icon">应用图标</string>
     <!--FirstRun资源值-->
@@ -46,7 +46,7 @@
     <string name="reboot_confirm_message">确定要重启设备吗？</string>
     <string name="bootloader_confirm_message">确定要重启到Bootloader模式吗？\n\n你最好知道怎么退出！</string>
     <string name="recovery_confirm_message">确定要重启到Recovery模式吗？\n\n你最好知道怎么退出！</string>
-    <string name="edl_confirm_message">确定要重启到EDL模式吗？\n\n你最好知道怎么退出！</string>
+    <string name="edl_confirm_message">确定要重启到EDL模式吗？\n\n按电源键和音量下键可以退出。如果无效，尝试同时按住三个按键直到看到屏幕亮起。</string>
     <string name="reboot_success">重启命令已发送</string>
     <string name="reboot_failed">重启失败：%s</string>
     <string name="soft_reboot_not_supported">软重启仅支持Android 14及以下版本</string>
@@ -57,42 +57,37 @@
     <string name="update_button_ignore">跳过此版本</string>
     <string name="update_ignore_toast">已忽略此版本，将不再提醒</string>
     <string name="update_check_failed">检查更新失败</string>
-    <string name="app_name">ZTool</string>
-    <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
-    <string name="buildCode">%s (Build %d)</string>
-    <string name="rootManagerVersion">Root管理器: R6687BB53-kitsune:MAGISKSU (27001)</string>
-    <string name="XPosedManagerVersion">XP框架: Zygisk - LSPosed v1.10.1 (7115)</string>
+    <string name="app_name" translatable="false">ZTool</string>
+    <string name="buildCode" translatable="false">%s (Build %d)</string>
     <string name="deviceInfo">设备信息</string>
     <string name="deviceCodeName">设备代号</string>
-    <string name="AndroidVersion">Android版本:</string>
-    <string name="buildVersion">构建版本:</string>
-    <string name="kernelVersion">内核版本:</string>
-    <string name="currentSlot">当前槽位：</string>
-    <string name="romRegion">ROM地区：</string>
+    <string name="AndroidVersion">Android版本</string>
+    <string name="buildVersion">构建版本</string>
+    <string name="kernelVersion">内核版本</string>
+    <string name="currentSlot">当前槽位</string>
+    <string name="romRegion">ROM地区</string>
     <string name="workConditionTip">提示：模块正常工作需要Root权限和LSPosed框架支持</string>
     <string name="placeHolderUnknown">未知</string>
     <string name="homeFragment_title">主页</string>
     <string name="workModeRequirement">工作模式要求</string>
-    <string name="workModeRequirementDetail">• 需要Root权限\n• 需要LSPosed框架</string>
+    <string name="workModeRequirementDetail">• 需要Root权限 • 需要LSPosed框架</string>
     <string name="environmentState">状态</string>
-    <string name="moduleActivated">模块已激活</string>
     <string name="environment_ready">环境就绪</string>
-    <string name="homepage_yiyan">%1$s - %2$s</string>
+    <string name="homepage_yiyan" translatable="false">%1$s - %2$s</string>
     <string name="missing_environment">缺少必要环境: </string>
     <string name="module_not_active">模块未激活 </string>
     <string name="root_not_available">Root权限不可用</string>
     <string name="module_active">模块已激活</string>
     <string name="module_inactive">模块未激活</string>
     <string name="module_version_unknown">模块版本: 未知</string>
-    <string name="module_version_unknown_activity">模块版本: 未知 (Activity 为空)</string>
-    <string name="magisk_su_format">MagiskSU (%s)</string>
+    <string name="magisk_su_format">Magisk (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>
     <string name="apatch_format">APatch (%s)</string>
-    <string name="unknown_root_available">Unknown (但Root可用)</string>
-    <string name="lsposed_standard_format">LSPosed %s (Standard)</string>
-    <string name="lsposed_zygisk">LSPosed (Zygisk)</string>
-    <string name="unknown_framework">Unknown</string>
-    <string name="android_version_prefix">Android %s</string>
+    <string name="unknown_root_available">未知 Root 实现</string>
+    <string name="lsposed_standard_format" translatable="false">LSPosed %s (Standard)</string>
+    <string name="lsposed_zygisk" translatable="false">LSPosed (Zygisk)</string>
+    <string name="unknown_framework">未知框架</string>
+    <string name="android_version_prefix" translatable="false">Android %s</string>
     <string name="config_upgraded_tip_title">注意：配置更新</string>
     <string name="config_upgraded_tip_message">当前版本变更了配置文件格式。\n为了保证配置存取正常，请重启系统。</string>
     <string name="restart_system_button">立即重启</string>
@@ -102,8 +97,6 @@
     <string name="slot_b">B槽</string>
     <!--功能管理页资源值-->
     <string name="featuresFragment_title">功能管理</string>
-    <string name="itemFeatures_appName">应用名称</string>
-    <string name="itemFeatures_appDescription">应用描述</string>
     <string name="settings_app_name">设置</string>
     <string name="settings_app_description">管理一视界、窗口交互模式及系统个性化设置。</string>
     <string name="game_tool_app_name">游戏助手</string>
@@ -132,11 +125,6 @@
     <string name="logClear">清除</string>
     <string name="logStatistic">统计</string>
     <string name="placeHolderLogStat">总计: 0 条 | 显示: 0 条 | 模块: 0 个 | 文件: 0</string>
-    <string name="placeHolderNoLogAvailable">暂无日志数据</string>
-    <string name="placeHolderTimeStamp">14:43:26.087</string>
-    <string name="placeHolderMessage">[notification_icon_limit] 修改图标限制 7 -&gt; 3 (图标总数: 3)</string>
-    <string name="placeHolderDetail">Tag: ZToolXposedModule | PID: 3470 | Mode: ROOT | Function: 修改 图标限制</string>
-    <string name="placeHolderLogLevel">I</string>
     <string name="notificationIcon">通知图标</string>
     <string name="multiLineStackTrace">多行堆栈</string>
     <string name="all_categories">所有类别</string>
@@ -269,8 +257,8 @@
     <string name="no_changelog_available">无可用更新日志</string>
     <string name="no_download_link">无下载链接</string>
     <string name="firmware_query_failed">获取固件信息失败</string>
-    <string name="version_info_format">当前版本: %s\n新版本: %s</string>
-    <string name="download_info_format">下载链接: %s\n文件大小: %s\nMD5: %s</string>
+    <string name="version_info_format">当前版本: %1$s\n新版本: %2$s</string>
+    <string name="download_info_format">下载链接: %1$s\n文件大小: %2$s\nMD5: %3$s</string>
     <string name="ota_update_info_title">OTA更新信息</string>
     <string name="copy_download_link">复制下载链接</string>
     <string name="copy_changelog">复制更新日志</string>
