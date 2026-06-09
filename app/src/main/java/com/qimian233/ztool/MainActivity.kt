@@ -13,8 +13,11 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -27,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
@@ -289,10 +293,24 @@ private fun MainTabletShell(
         }
     }
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
+        val contentModifier = if (environmentReady) {
+            Modifier.padding(start = MainNavigationRailWidth)
+        } else {
+            Modifier
+        }
+
+        MainRouteNavHost(
+            modifier = contentModifier
+                .fillMaxSize(),
+            navController = navController,
+            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+            onEnvironmentStateChanged = onEnvironmentStateChanged
+        )
+
         if (environmentReady) {
             key(MainNavigationRailKey) {
                 MainNavigationRail(
@@ -301,15 +319,6 @@ private fun MainTabletShell(
                 )
             }
         }
-
-        MainRouteNavHost(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize(),
-            navController = navController,
-            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
-            onEnvironmentStateChanged = onEnvironmentStateChanged
-        )
     }
 }
 
@@ -318,7 +327,11 @@ private fun MainNavigationRail(
     selectedRouteState: State<MainRoute>,
     onDestinationSelectedState: State<(MainRoute) -> Unit>
 ) {
-    ZToolNavigationRail {
+    ZToolNavigationRail(
+        modifier = Modifier
+            .width(MainNavigationRailWidth)
+            .fillMaxHeight()
+    ) {
         MainRoute.entriesInOrder.forEach { destination ->
             MainNavigationRailItem(
                 destination = destination,
@@ -779,3 +792,4 @@ private fun navigationRouteIndex(route: String?): Int {
 
 private const val SettingsNavigationAnimationMillis = 320
 private const val MainNavigationRailKey = "main_navigation_rail"
+private val MainNavigationRailWidth = 80.dp
