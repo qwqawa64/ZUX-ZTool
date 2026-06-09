@@ -363,6 +363,50 @@ private fun MainRouteNavHost(
     predictiveBackGestureEnabled: Boolean,
     onEnvironmentStateChanged: (Boolean) -> Unit
 ) {
+    val mainRouteEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
+        slideIntoContainer(
+            towards = routeSlideDirection(
+                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
+                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
+                nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
+            ),
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
+    }
+    val mainRouteExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
+        slideOutOfContainer(
+            towards = routeSlideDirection(
+                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
+                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
+                nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
+            ),
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
+    }
+    val mainRoutePopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
+        slideIntoContainer(
+            towards = routeSlideDirection(
+                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
+                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
+                nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
+            ),
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
+    }
+    val mainRoutePopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
+        slideOutOfContainer(
+            towards = routeSlideDirection(
+                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
+                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
+                nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
+            ),
+            animationSpec = tween(SettingsNavigationAnimationMillis)
+        )
+    }
     val horizontalEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
         slideIntoContainer(
             if (isForwardNavigation()) {
@@ -429,19 +473,19 @@ private fun MainRouteNavHost(
     val mainNavGraph: androidx.navigation.NavGraphBuilder.() -> Unit = {
         composable(
             route = MainRoute.Home.name,
-            enterTransition = horizontalEnter,
-            exitTransition = horizontalExit,
-            popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
+            enterTransition = mainRouteEnter,
+            exitTransition = mainRouteExit,
+            popEnterTransition = mainRoutePopEnter,
+            popExitTransition = mainRoutePopExit
         ) {
             HomeMainRoute(onEnvironmentStateChanged = onEnvironmentStateChanged)
         }
         composable(
             route = MainRoute.Features.name,
-            enterTransition = horizontalEnter,
-            exitTransition = horizontalExit,
-            popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
+            enterTransition = mainRouteEnter,
+            exitTransition = mainRouteExit,
+            popEnterTransition = mainRoutePopEnter,
+            popExitTransition = mainRoutePopExit
         ) {
             FeaturesMainRoute(
                 onFeatureDestinationSelected = { destination ->
@@ -453,19 +497,19 @@ private fun MainRouteNavHost(
         }
         composable(
             route = MainRoute.Audit.name,
-            enterTransition = horizontalEnter,
-            exitTransition = horizontalExit,
-            popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
+            enterTransition = mainRouteEnter,
+            exitTransition = mainRouteExit,
+            popEnterTransition = mainRoutePopEnter,
+            popExitTransition = mainRoutePopExit
         ) {
             AuditMainRoute()
         }
         composable(
             route = MainRoute.Settings.name,
-            enterTransition = horizontalEnter,
-            exitTransition = horizontalExit,
-            popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
+            enterTransition = mainRouteEnter,
+            exitTransition = mainRouteExit,
+            popEnterTransition = mainRoutePopEnter,
+            popExitTransition = mainRoutePopExit
         ) {
             SettingsMainRoute(
                 onOpenThemeSettings = {
@@ -765,6 +809,41 @@ private fun MainRouteNavHost(
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardNavigation(): Boolean {
     return navigationRouteIndex(targetState.destination.route) >
         navigationRouteIndex(initialState.destination.route)
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeSlideDirection(
+    mainForwardDirection: AnimatedContentTransitionScope.SlideDirection,
+    mainBackwardDirection: AnimatedContentTransitionScope.SlideDirection,
+    nestedForwardDirection: AnimatedContentTransitionScope.SlideDirection,
+    nestedBackwardDirection: AnimatedContentTransitionScope.SlideDirection
+): AnimatedContentTransitionScope.SlideDirection {
+    return if (isNavigateBetweenMainRoutes()) {
+        if (isForwardMainRouteNavigation()) mainForwardDirection else mainBackwardDirection
+    } else if (isForwardNavigation()) {
+        nestedForwardDirection
+    } else {
+        nestedBackwardDirection
+    }
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardMainRouteNavigation(): Boolean {
+    return mainRouteIndex(targetState.destination.route) >
+        mainRouteIndex(initialState.destination.route)
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isNavigateBetweenMainRoutes(): Boolean {
+    return mainRouteIndex(targetState.destination.route) <= MainRoute.Settings.ordinal &&
+        mainRouteIndex(initialState.destination.route) <= MainRoute.Settings.ordinal
+}
+
+private fun mainRouteIndex(route: String?): Int {
+    return when (route) {
+        MainRoute.Home.name -> 0
+        MainRoute.Features.name -> 1
+        MainRoute.Audit.name -> 2
+        MainRoute.Settings.name -> 3
+        else -> Int.MAX_VALUE
+    }
 }
 
 private fun navigationRouteIndex(route: String?): Int {
