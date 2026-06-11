@@ -42,7 +42,7 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
 
     @Override
     public String getModuleName() {
-        return "hook_test";
+        return "app_details";
     }
 
     @Override
