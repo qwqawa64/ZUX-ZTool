@@ -154,6 +154,7 @@ public class HookManager {
         registerHookModule(new CustomGridSize());
         // 注册模块，一直显示或者一直隐藏建议
         registerHookModule(new AlwaysDisplaySuggestion());
+        // 注册模块: 应用信息补全
         registerHookModule(new AppInfoHeaderDetailsHook());
         initialized = true;
     }
