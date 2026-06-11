@@ -39,7 +39,7 @@ https://compose-miuix-ui.github.io/miuix/dokka/index.html
   docs/material_enhancement/    Material UI notes
   gradle/                       Gradle wrapper and version catalog
   libs/                         Root local dependencies
-  Add_New_Hook_zh-CN.md         Frontend guide for adding Hook settings
+  Add_New_Hook_zh-CN.md         Frontend guide for adding Hook settings, UTF-8 encoding
   AGENTS.MD                     This root agent guide
   README.md
   UpdateCheck.json
