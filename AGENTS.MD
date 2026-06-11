@@ -1,5 +1,9 @@
 # AGENTS.MD
 
+## Agent Quick Start
+
+Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
+
 ## Project Summary
 
 ZUX-ZTool is a single-module Android project for ZUX OS/ZUI devices. It combines a normal Android app UI, LSPosed/Xposed Hook modules, root/shell utilities, foreground log collection, configuration backup/restore, and embedded Magisk module assets.
