@@ -1,10 +1,12 @@
 <resources>
     <!--将常用的字符串资源放置在下面-->
     <string name="tooltip_content_description">提示</string>
+    <string name="quick_help_lookup_title">速查</string>
+    <string name="quick_help_examples_title">示例</string>
     <string name="save">保存</string>
     <string name="delete">删除</string>
     <string name="confirm">确认</string>
-    <string name="customizedConfirmWithCountdown">%s（%d秒）</string>
+    <string name="customizedConfirmWithCountdown">%1$s（%2$d秒）</string>
     <string name="cancel">取消</string>
     <string name="test">测试</string>
     <string name="retry">重试</string>
@@ -19,10 +21,10 @@
     <string name="no_tip_next_time">下次将不再提示此内容</string>
     <string name="loadingUserAPP">加载用户应用列表…</string>
     <string name="unknown">未知</string>
-    <string name="version">Version</string>
-    <string name="root">Root</string>
-    <string name="framework">Framework</string>
-    <string name="multiply">×</string>
+    <string name="version">模块版本</string>
+    <string name="root">Root 来源</string>
+    <string name="framework">框架信息</string>
+    <string name="multiply" translatable="false">×</string>
     <string name="misc">杂项</string>
     <string name="app_icon">应用图标</string>
     <!--FirstRun资源值-->
@@ -44,7 +46,7 @@
     <string name="reboot_confirm_message">确定要重启设备吗？</string>
     <string name="bootloader_confirm_message">确定要重启到Bootloader模式吗？\n\n你最好知道怎么退出！</string>
     <string name="recovery_confirm_message">确定要重启到Recovery模式吗？\n\n你最好知道怎么退出！</string>
-    <string name="edl_confirm_message">确定要重启到EDL模式吗？\n\n你最好知道怎么退出！</string>
+    <string name="edl_confirm_message">确定要重启到EDL模式吗？\n\n按电源键和音量下键可以退出。如果无效，尝试同时按住三个按键直到看到屏幕亮起。</string>
     <string name="reboot_success">重启命令已发送</string>
     <string name="reboot_failed">重启失败：%s</string>
     <string name="soft_reboot_not_supported">软重启仅支持Android 14及以下版本</string>
@@ -55,45 +57,37 @@
     <string name="update_button_ignore">跳过此版本</string>
     <string name="update_ignore_toast">已忽略此版本，将不再提醒</string>
     <string name="update_check_failed">检查更新失败</string>
-    <string name="app_name">ZTool</string>
-    <string name="appVersion">ZTool版本: 1.3.1 (19350)</string>
-    <string name="buildCode">%s (Build %d)</string>
-    <string name="rootManagerVersion">Root管理器: R6687BB53-kitsune:MAGISKSU (27001)</string>
-    <string name="XPosedManagerVersion">XP框架: Zygisk - LSPosed v1.10.1 (7115)</string>
+    <string name="app_name" translatable="false">ZTool</string>
+    <string name="buildCode" translatable="false">%s (Build %d)</string>
     <string name="deviceInfo">设备信息</string>
     <string name="deviceCodeName">设备代号</string>
-    <string name="AndroidVersion">Android版本:</string>
-    <string name="buildVersion">构建版本:</string>
-    <string name="kernelVersion">内核版本:</string>
-    <string name="currentSlot">当前槽位：</string>
-    <string name="romRegion">ROM地区：</string>
+    <string name="AndroidVersion">Android版本</string>
+    <string name="buildVersion">构建版本</string>
+    <string name="kernelVersion">内核版本</string>
+    <string name="currentSlot">当前槽位</string>
+    <string name="romRegion">ROM地区</string>
     <string name="workConditionTip">提示：模块正常工作需要Root权限和LSPosed框架支持</string>
     <string name="placeHolderUnknown">未知</string>
     <string name="homeFragment_title">主页</string>
     <string name="workModeRequirement">工作模式要求</string>
-    <string name="workModeRequirementDetail">• 需要Root权限\n• 需要LSPosed框架</string>
+    <string name="workModeRequirementDetail">• 需要Root权限 • 需要LSPosed框架</string>
     <string name="environmentState">状态</string>
-    <string name="moduleActivated">模块已激活</string>
     <string name="environment_ready">环境就绪</string>
-    <string name="homepage_yiyan">%1$s - %2$s</string>
+    <string name="homepage_yiyan" translatable="false">%1$s - %2$s</string>
     <string name="missing_environment">缺少必要环境: </string>
     <string name="module_not_active">模块未激活 </string>
     <string name="root_not_available">Root权限不可用</string>
     <string name="module_active">模块已激活</string>
     <string name="module_inactive">模块未激活</string>
-    <string name="module_version_prefix">模块版本：%s</string>
     <string name="module_version_unknown">模块版本: 未知</string>
-    <string name="module_version_unknown_activity">模块版本: 未知 (Activity 为空)</string>
-    <string name="root_manager_prefix">Root管理器: %s</string>
-    <string name="magisk_su_format">MagiskSU (%s)</string>
+    <string name="magisk_su_format">Magisk (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>
     <string name="apatch_format">APatch (%s)</string>
-    <string name="unknown_root_available">Unknown (但Root可用)</string>
-    <string name="xp_framework_prefix">XP框架: %s</string>
-    <string name="lsposed_standard_format">LSPosed %s (Standard)</string>
-    <string name="lsposed_zygisk">LSPosed (Zygisk)</string>
-    <string name="unknown_framework">Unknown</string>
-    <string name="android_version_prefix">Android %s</string>
+    <string name="unknown_root_available">未知 Root 实现</string>
+    <string name="lsposed_standard_format" translatable="false">LSPosed %s (Standard)</string>
+    <string name="lsposed_zygisk" translatable="false">LSPosed (Zygisk)</string>
+    <string name="unknown_framework">未知框架</string>
+    <string name="android_version_prefix" translatable="false">Android %s</string>
     <string name="config_upgraded_tip_title">注意：配置更新</string>
     <string name="config_upgraded_tip_message">当前版本变更了配置文件格式。\n为了保证配置存取正常，请重启系统。</string>
     <string name="restart_system_button">立即重启</string>
@@ -103,8 +97,6 @@
     <string name="slot_b">B槽</string>
     <!--功能管理页资源值-->
     <string name="featuresFragment_title">功能管理</string>
-    <string name="itemFeatures_appName">应用名称</string>
-    <string name="itemFeatures_appDescription">应用描述</string>
     <string name="settings_app_name">设置</string>
     <string name="settings_app_description">管理一视界、窗口交互模式及系统个性化设置。</string>
     <string name="game_tool_app_name">游戏助手</string>
@@ -133,11 +125,6 @@
     <string name="logClear">清除</string>
     <string name="logStatistic">统计</string>
     <string name="placeHolderLogStat">总计: 0 条 | 显示: 0 条 | 模块: 0 个 | 文件: 0</string>
-    <string name="placeHolderNoLogAvailable">暂无日志数据</string>
-    <string name="placeHolderTimeStamp">14:43:26.087</string>
-    <string name="placeHolderMessage">[notification_icon_limit] 修改图标限制 7 -&gt; 3 (图标总数: 3)</string>
-    <string name="placeHolderDetail">Tag: ZToolXposedModule | PID: 3470 | Mode: ROOT | Function: 修改 图标限制</string>
-    <string name="placeHolderLogLevel">I</string>
     <string name="notificationIcon">通知图标</string>
     <string name="multiLineStackTrace">多行堆栈</string>
     <string name="all_categories">所有类别</string>
@@ -218,14 +205,14 @@
     <string name="unknown_activity_null">未知 (Activity 为空)</string>
     <string name="button_project_homepage">Our GitHub</string>
     <string name="button_credits">UnfuckZUI</string>
-    <string name="button_qimian233_coolapk">七眠233</string>
-    <string name="button_wasddestroy_coolapk">WASD_Destroy</string>
+    <string name="button_qimian233_coolapk" translatable="false">七眠233</string>
+    <string name="button_wasddestroy_coolapk" translatable="false">WASD_Destroy</string>
 
     <!--通用重启作用域资源-->
-    <string name="restart_xp_title">重启XP模块作用域</string>
-    <string name="restart_xp_message_header">是否重启此页的XP模块作用域？这将强行停止 </string>
+    <string name="restart_xp_title">重启作用域</string>
+    <string name="restart_xp_message_header">"是否重启此页的作用域？这将强行停止 "</string>
     <string name="restart_xp_message"> 的进程。</string>
-    <string name="restart_yes">确定</string>
+    <string name="restart_yes">重启作用域</string>
     <string name="restart_no">取消</string>
     <string name="restartSuccess">重启成功</string>
     <string name="restartFail">重启失败：</string>
@@ -240,7 +227,6 @@
     <string name="whitelist_count">已启用 %d 个游戏</string>
     <string name="auto_open_prevent_touch_title">自动开启防误触</string>
     <string name="auto_open_prevent_touch_summary">在游戏启动时候，允许白名单内或所有游戏自动开启防误触</string>
-    <string name="game_tool_settings_title_suffix"> - 详细设置</string>
     <string name="restart_fail_short">重启失败</string>
     <string name="function_title">功能拓展</string>
     <string name="Game_Audio_title">禁止处理游戏音频</string>
@@ -267,13 +253,12 @@
     <string name="OtaDisable_summary">开启后在系统更新-右上角更多中找到本地安装选项</string>
     <string name="OtaInfoFetch_summary">获取当前版本/新版本的更新日志和下载链接</string>
     <string name="OtaInfoFetch_title">OTA信息拉取</string>
-    <string name="ota_settings_title_suffix"> - 详细设置</string>
     <string name="ota_info_fetch_failed">读取OTA信息失败: </string>
     <string name="no_changelog_available">无可用更新日志</string>
     <string name="no_download_link">无下载链接</string>
     <string name="firmware_query_failed">获取固件信息失败</string>
-    <string name="version_info_format">当前版本: %s\n新版本: %s</string>
-    <string name="download_info_format">下载链接: %s\n文件大小: %s\nMD5: %s</string>
+    <string name="version_info_format">当前版本: %1$s\n新版本: %2$s</string>
+    <string name="download_info_format">下载链接: %1$s\n文件大小: %2$s\nMD5: %3$s</string>
     <string name="ota_update_info_title">OTA更新信息</string>
     <string name="copy_download_link">复制下载链接</string>
     <string name="copy_changelog">复制更新日志</string>
@@ -302,7 +287,6 @@
     <string name="loading_ellipsis">加载中…</string>
     <!--设置页：代码内资源值-->
     <!-- 详细设置相关字符串 -->
-    <string name="settings_detail_title_suffix"> - 详细设置</string>
     <string name="warning_title">警告</string>
     <string name="module_uninstall_warning">APP内暂不支持卸载模块，请在Magisk/KSU模块管理中卸载模块后再重启APP</string>
     <string name="got_it_button">知道了</string>
@@ -433,7 +417,7 @@
     <string name="welcome_message">欢迎使用适配向导，请按照上面步骤提示操作: </string>
     <string name="step_1_instruction">步骤 1，共 4 步: 请打开您想要适配的APP，然后点击下一步</string>
     <string name="set_main_page_title">设置主界面</string>
-    <string name="step_2_instruction">步骤 2，共 4 步: 请在%1$s中停留在主界面（如：哔哩哔哩的首页），然后点击下一步</string>
+    <string name="step_2_instruction">步骤 2，共 4 步: 请在%1$s中停留在主界面，然后点击下一步</string>
     <string name="add_activities_title">添加其他在左半屏的界面</string>
     <string name="step_3_instruction">步骤 3，共 4 步: 现在，你可以添加多个需要选择其他需要显示在左侧的界面，定位到需要的界面，点击\"添加当前活动\"按钮</string>
     <string name="config_options_title">配置选项</string>
@@ -481,7 +465,6 @@
     <string name="AlwaysDisplaySuggestionsTitle">显示设置首页的建议项目</string>
     <string name="AlwaysDisplaySuggestionsSummary">“自欺欺人术之假装设备全新未使用”</string>
     <!--应用包安装程序功能页资源值-->
-    <string name="detailed_settings_suffix"> - 详细设置</string>
     <string name="restart_fail_simple">重启失败</string>
     <string name="Disable_ScanAPK_Title">跳过安全扫描</string>
     <string name="Disable_ScanAPK_Summary">跳过安全扫描，节省时间</string>
@@ -499,7 +482,6 @@
     <string name="Disable_deletePackage_Summary">拦截安装器安装完成后的删除安装包行为</string>
     <!--系统界面 一级功能页导航资源值-->
     <string name="SystemUI_title">系统界面</string>
-    <string name="SystemUIActionBar"> - 系统界面设置</string>
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>
@@ -540,7 +522,7 @@
     <string name="notification_icon_limit_summary">设置状态栏显示的通知图标最大数量，系统默认为4</string>
     <string name="notification_icon_native_title">使用原生通知图标</string>
     <string name="notification_icon_native_summary">对未适配APP无效</string>
-    <string name="status_bar_settings_title_suffix"> - 状态栏设置</string>
+    <string name="status_bar_settings_title_suffix">\ - 状态栏设置</string>
     <string-array name="notify_num_size_options">
         <item>1</item>
         <item>2</item>
@@ -583,7 +565,7 @@
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
     <!-- 锁屏设置相关字符串 -->
-    <string name="lock_screen_settings_title_suffix"> - 锁屏设置</string>
+    <string name="lock_screen_settings_title_suffix">\ - 锁屏设置</string>
     <string name="please_input_api_address">请输入API地址</string>
     <string name="testing_api_connection">正在测试API连接…</string>
     <string name="request_failed">请求失败</string>
@@ -609,7 +591,7 @@
         <item>一定时长后</item>
     </string-array>
     <string name="watt_option_disabled">不启用</string>
-    <string name="watt_option_handshake">握手功率</string>
+    <string name="watt_option_handshake">协议功率</string>
     <string name="watt_option_actual">实际功率</string>
     <string name="real_watt_custom_refresh_interval_enabled">一定时长后</string>
     <string name="real_watt_custom_refresh_interval_disabled">功率变化时</string>
@@ -627,7 +609,7 @@
     <string name="useBoldDate">启用日期文字的粗体显示效果</string>
     <string name="ControllerDateFormat">输入时间格式</string>
     <string name="DateFormateExample">M月d日 EEE</string>
-    <string name="control_center_settings_title_suffix"> - 控制中心时间设置</string>
+    <string name="control_center_settings_title_suffix">\ - 控制中心设置</string>
     <string name="date_format_saved_message">自定义时间格式已保存</string>
     <string name="date_format_help_title">时间格式帮助</string>
     <string name="date_format_example">时间格式示例</string>
@@ -647,6 +629,32 @@
     <string name="select_font_color_title">选择字体颜色</string>
     <string name="clock_format_help_title">时钟格式帮助</string>
     <string name="copy_example_button">复制示例</string>
+    <string name="clock_format_quick_help_summary">输入时间格式后可直接查看预览。常用格式符区分大小写，保存后重启作用域生效。</string>
+    <string name="clock_format_quick_help_note">需要日期时也可以使用 yyyy、MM、dd。农历、时辰等扩展符号只在支持的系统界面中显示。</string>
+    <string name="date_format_quick_help_summary">输入日期格式后可直接查看预览。常用格式符区分大小写，保存后重启作用域生效。</string>
+    <string name="date_format_quick_help_note">也可以组合时间字段，例如 HH:mm。农历、节气等扩展符号只在支持的系统界面中显示。</string>
+    <string name="format_help_year">年份</string>
+    <string name="format_help_month">月份</string>
+    <string name="format_help_day">日期</string>
+    <string name="format_help_hour_24">24 小时</string>
+    <string name="format_help_minute">分钟</string>
+    <string name="format_help_second">秒</string>
+    <string name="format_help_weekday">星期</string>
+    <string name="format_help_lunar_date">农历日期</string>
+    <string name="format_help_solar_term">节气</string>
+    <string name="format_help_period">时辰</string>
+    <string name="format_help_clock_example_lunar">14:30 腊月廿三</string>
+    <string name="format_help_clock_pattern_short">HH:mm</string>
+    <string name="format_help_clock_pattern_seconds">HH:mm:ss</string>
+    <string name="format_help_clock_pattern_lunar">HH:mm N</string>
+    <string name="format_help_clock_example_short">14:30</string>
+    <string name="format_help_clock_example_seconds">14:30:45</string>
+    <string name="format_help_date_pattern_full">yyyy年MM月dd日 EEEE</string>
+    <string name="format_help_date_pattern_short">MM月dd日 E</string>
+    <string name="format_help_date_pattern_time">yyyy/MM/dd HH:mm</string>
+    <string name="format_help_date_example_full">2026年06月07日 星期日</string>
+    <string name="format_help_date_example_short">06月07日 周日</string>
+    <string name="format_help_date_example_time">2026/06/07 14:30</string>
     <string name="clock_format_example">时钟格式示例</string>
     <string name="clock_format_sample">HH:mm N</string>
     <string name="example_copied_message">示例已复制到剪贴板</string>
@@ -675,7 +683,6 @@
     <string name="clock_format_help_content">时间格式基于ISO 8601进行拓展，自定义时钟格式说明：\n\n📅 ISO 8601标准日期格式：\n  yyyy – 年份(2024)\n  yy   – 年份后两位(24)\n  MM   – 月份(12)\n  MMM  – 月份缩写(12月)\n  MMMM – 月份全称(十二月)\n  dd   – 日期(25)\n  HH   – 24小时制(14)\n  hh   – 12小时制(02)\n  mm   – 分钟(30)\n  ss   – 秒(45)\n  SSS  – 毫秒(123)\n\n📅 星期格式：\n  E    – 星期缩写(周一)\n  EE   – 星期缩写(周一)\n  EEE  – 星期缩写(周一)\n  EEEE – 星期全称(星期一)\n  u    – 数字星期(1–7,1=周一)\n  W    – 自定义星期格式(周一)\n\n🌙 农历相关：\n  N – 农历日期(腊月廿三)\n  J – 节气(仅当天显示，如立春)\n  A – 生肖(龙)\n\n⏰ 时间相关：\n  T – 时辰(子时)\n  a – 凌晨/上午/下午/晚上 标记\n  k – 24小时制(1–24)\n  K – 12小时制(0–11)\n\n✨ 其他特殊格式：\n  C – 星座(水瓶座)\n  D – 一年中的第几天(1–365)\n  F – 一个月中的第几个星期\n  w – 一年中的第几周(1–53)\n  W – 一个月中的第几周(1–5)\n  z – 时区名称(GMT+08:00)\n  Z – 时区偏移量(+0800)\n\n🎯 使用示例：\n  \"yyyy–MM–dd HH:mm:ss\" → \"2024–12–25 14:30:45\"\n  \"MM月dd日 EEEE\" → \"12月25日 星期三\"\n  \"HH:mm T\" → \"14:30 午时\"\n  \"yyyy年MM月dd日 N A\" → \"2024年12月25日 腊月廿三 龙\"\n  \"yyyy/MM/dd E C\" → \"2024/12/25 周三 摩羯座\"\n\n💡 注意事项：\n  • 农历和节气基于中国农历算法\n  • 时辰按2小时一个时段划分\n  • 星座基于公历日期计算\n  • 生肖基于农历年份确定\n  • 自定义格式符(N,J,T,C,A,W)区分大小写</string>
     <!--启动器功能页的资源值-->
     <string name="force_stop_title">选择需要保护的APP</string>
-    <string name="launcher_settings_title_suffix"> - 启动器设置</string>
     <string name="protected_apps_summary">已保护%d个应用后台</string>
     <string name="force_stop_success">已重启应用进程</string>
     <string name="force_stop_fail">重启失败</string>
@@ -696,6 +703,19 @@
     <string name="Custom_attention">注意！</string>
     <string name="Custom_Attention_content">自定义唤醒符后，一定一定需要额外勾选使用全局输入的APP作用域（如QQ）不勾选只能使用官方的唤醒符号，效果测试可在下面输入框进行，比如打出&amp;&amp;你好，你是谁&amp;&amp;。</string>
     <string name="test_Input">在此输入测试文本…</string>
+    <string name="ai_input_quick_help_title">唤起符帮助</string>
+    <string name="ai_input_quick_help_summary">自定义唤起符会替换官方默认的全角/半角“&amp;&amp;”。多个唤起符请用英文逗号分隔。</string>
+    <string name="ai_input_quick_help_scope">作用域</string>
+    <string name="ai_input_quick_help_scope_desc">需要给使用全局输入的应用勾选 LSPosed 作用域</string>
+    <string name="ai_input_quick_help_separator">分隔符</string>
+    <string name="ai_input_quick_help_separator_desc">多个检测符使用英文逗号</string>
+    <string name="ai_input_quick_help_conflict">建议</string>
+    <string name="ai_input_quick_help_conflict_desc">避免使用日常输入里容易误触的短词</string>
+    <string name="ai_input_quick_help_example_default_value">&amp;&amp;你好&amp;&amp;</string>
+    <string name="ai_input_quick_help_example_custom_value">#ai,@ai,#问</string>
+    <string name="ai_input_quick_help_example_default">官方默认触发方式</string>
+    <string name="ai_input_quick_help_example_custom">多个自定义触发符</string>
+    <string name="ai_input_quick_help_note">如果只配置模块本身、不勾选目标应用作用域，目标应用仍可能只能使用官方默认唤起符。</string>
     <string name="custom_detector_err">格式错误：请使用英文逗号分隔多个检测符</string>
     <string name="custom_detector_hint">请输入自定义的检测符，多个使用英文逗号分隔</string>
     <string name="ai_input_Title">AI全局输入</string>
@@ -712,7 +732,6 @@
     <string name="framework_lockscreen_settings_title">锁屏</string>
     <string name="disable_lockscreen_password_per24h">禁止每24小时验证一次锁屏密码</string>
     <string name="disable_lockscreen_password_per24h_summary">注意：此功能很可能降低设备安全性，如非刚需不建议开启</string>
-    <string name="framework_settings_title_suffix"> - 系统框架设置</string>
     <string name="restart_system_title">重启系统</string>
     <string name="restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
     <!--安全中心功能页的资源值-->
@@ -723,7 +742,6 @@
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
     <string name="DisableSafeScanTitle">禁止安全扫描</string>
     <string name="DisableSafeScanSummary">阻止联想安全中心每七天的后台安全扫描行为，这可以阻止“病毒警报”类的弹窗</string>
-    <string name="safe_center_settings_title_suffix"> - 启动器设置</string>
     <string name="empty_package_name_message">应用包名为空</string>
     <string name="app_process_restarted_message">已重启应用进程</string>
     <string name="restart_fail_prefix">重启失败: </string>
@@ -761,4 +779,40 @@
     <string name="gotoSettingsPage">设置</string>
     <!--应用名单选择界面弹窗-->
     <string name="SearchHint">搜索…</string>
+    <string name="app_ui_theme_settings">应用主题模式</string>
+    <string name="app_language_settings">应用语言</string>
+    <string name="open_app_language_settings_failed">无法打开应用语言设置</string>
+    <string name="frontend_style_title">主题风格</string>
+    <string name="frontend_style_material3">Material</string>
+    <string name="frontend_style_miuix">Miuix</string>
+    <string name="theme_mode_title">主题模式</string>
+    <string name="theme_mode_follow_system">跟随系统</string>
+    <string name="theme_mode_light">亮色</string>
+    <string name="theme_mode_dark">暗色</string>
+    <string name="material_color_spec_title">Material 色彩标准</string>
+    <string name="material_color_spec_summary">仅 TonalSpot、Neutral、Vibrant 和 Expressive 调色板风格支持 SPEC 2025</string>
+    <string name="material_color_spec_2021">SPEC_2021</string>
+    <string name="material_color_spec_2025">SPEC_2025</string>
+    <string name="material_palette_mode_title">Material 调色板</string>
+    <string name="material_palette_mode_tonal_spot">TonalSpot</string>
+    <string name="material_palette_mode_neutral">Neutral</string>
+    <string name="material_palette_mode_vibrant">Vibrant</string>
+    <string name="material_palette_mode_expressive">Expressive</string>
+    <string name="material_palette_mode_rainbow">Rainbow</string>
+    <string name="material_palette_mode_fruit_salad">FruitSalad</string>
+    <string name="material_palette_mode_mono_chrome">MonoChrome</string>
+    <string name="material_palette_mode_fidelity">Fidelity</string>
+    <string name="material_palette_mode_content">Content</string>
+    <string name="dynamic_color_title">动态取色</string>
+    <string name="dynamic_color_summary">使用莫奈取色，需要 Android 12+</string>
+    <string name="manual_color_title">手动指定种子色</string>
+    <string name="manual_color_summary">从手动指定的种子色派生出本应用使用的调色板</string>
+    <string name="manual_seed_color_title">种子色</string>
+    <string name="manual_seed_color_summary">使用 #RRGGBB 或者 #AARRGGBB 来指定颜色</string>
+    <string name="manual_seed_color_error">输入一个有效的 #RRGGBB 或 #AARRGGBB 格式的颜色.</string>
+    <string name="amoled_black_title">AMOLED 纯黑模式</string>
+    <string name="amoled_black_summary">在暗色模式使用纯黑主题</string>
+    <string name="predictive_back_gesture_title">预测性返回手势</string>
+    <string name="predictive_back_gesture_summary">启用预测性返回手势动画</string>
+    <string name="back_to_top">回顶部</string>
 </resources>

@@ -1,7 +1,9 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.ZTool" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+<resources>
+    <style name="Base.Theme.ZTool" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="ztoolColorPrimary">#A7C8FF</item>
+        <item name="ztoolColorOnPrimary">#00315F</item>
+        <item name="ztoolColorAccent">#D1BFE6</item>
+        <item name="ztoolColorSurface">#111418</item>
+        <item name="ztoolColorOutline">#8D9199</item>
     </style>
 </resources>

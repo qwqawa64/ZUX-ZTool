@@ -1,0 +1,185 @@
+package com.qimian233.ztool.viewmodel
+
+import android.net.Uri
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.MaterialColorSpec
+import com.qimian233.ztool.ui.theme.MaterialPalette
+import com.qimian233.ztool.ui.theme.ThemeMode
+import com.qimian233.ztool.ui.theme.ZToolThemeSettings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class SettingsViewModel(
+    private val repository: SettingsRepository
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(repository.loadState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    fun refresh() {
+        _uiState.value = repository.loadState().copy(
+            showRestoreConfirmDialog = _uiState.value.showRestoreConfirmDialog,
+            showAboutDialog = _uiState.value.showAboutDialog
+        )
+    }
+
+    fun backupFileName(): String = repository.backupFileName()
+
+    fun backupConfig(uri: Uri, onResult: (Boolean) -> Unit) {
+        Thread {
+            val result = runCatching { repository.backupConfig(uri) }
+                .onFailure { Log.e(TAG, "Config backup failed", it) }
+                .getOrDefault(false)
+            onResult(result)
+        }.start()
+    }
+
+    fun restoreConfig(uri: Uri, onResult: (Boolean) -> Unit) {
+        Thread {
+            val result = runCatching { repository.restoreConfig(uri) }
+                .onFailure { Log.e(TAG, "Config restore failed", it) }
+                .getOrDefault(false)
+            refresh()
+            onResult(result)
+        }.start()
+    }
+
+    fun showRestoreConfirmDialog() {
+        _uiState.value = _uiState.value.copy(showRestoreConfirmDialog = true)
+    }
+
+    fun dismissRestoreConfirmDialog() {
+        _uiState.value = _uiState.value.copy(showRestoreConfirmDialog = false)
+    }
+
+    fun restoreDefaultConfig() {
+        repository.restoreDefaultConfig()
+        _uiState.value = repository.loadState().copy(showRestoreConfirmDialog = false)
+    }
+
+    fun setLogServiceEnabled(isEnabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isLogServiceEnabled = isEnabled)
+        repository.setLogServiceEnabled(isEnabled)
+    }
+
+    fun setDetailedLoggingEnabled(isEnabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isDetailedLoggingEnabled = isEnabled)
+        repository.setDetailedLoggingEnabled(isEnabled)
+    }
+
+    fun setHomepageYiyanEnabled(isEnabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isHomepageYiyanEnabled = isEnabled)
+        repository.setHomepageYiyanEnabled(isEnabled)
+    }
+
+    fun setFrontendStyle(style: FrontendStyle) {
+        repository.setFrontendStyle(style)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(frontendStyle = style)
+        )
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        repository.setThemeMode(mode)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(themeMode = mode)
+        )
+    }
+
+    fun setMaterialColorSpec(spec: MaterialColorSpec) {
+        repository.setMaterialColorSpec(spec)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(materialColorSpec = spec)
+        )
+    }
+
+    fun setMaterialPalette(palette: MaterialPalette) {
+        repository.setMaterialPalette(palette)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(materialPalette = palette)
+        )
+    }
+
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        repository.setDynamicColorEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(dynamicColorEnabled = enabled)
+        )
+    }
+
+    fun setAmoledBlackEnabled(enabled: Boolean) {
+        repository.setAmoledBlackEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(amoledBlackEnabled = enabled)
+        )
+    }
+
+    fun setPredictiveBackGestureEnabled(enabled: Boolean) {
+        repository.setPredictiveBackGestureEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(predictiveBackGestureEnabled = enabled)
+        )
+    }
+
+    fun setManualColorEnabled(enabled: Boolean) {
+        repository.setManualColorEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(manualColorEnabled = enabled)
+        )
+    }
+
+    fun setManualSeedColorText(text: String) {
+        val parsed = repository.parseSeedColor(text)
+        if (parsed == null) {
+            _uiState.value = _uiState.value.copy(
+                manualSeedColorText = text,
+                manualSeedColorError = text.isNotBlank()
+            )
+            return
+        }
+
+        repository.setManualSeedColor(parsed)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(manualSeedColor = parsed),
+            manualSeedColorText = text,
+            manualSeedColorError = false
+        )
+    }
+
+    fun finishManualSeedColorEditing() {
+        val state = _uiState.value
+        val parsed = repository.parseSeedColor(state.manualSeedColorText)
+        val normalized = repository.formatSeedColor(parsed ?: state.themeSettings.manualSeedColor)
+        _uiState.value = state.copy(
+            manualSeedColorText = normalized,
+            manualSeedColorError = false
+        )
+    }
+
+    fun showAboutDialog() {
+        _uiState.value = _uiState.value.copy(showAboutDialog = true)
+    }
+
+    fun dismissAboutDialog() {
+        _uiState.value = _uiState.value.copy(showAboutDialog = false)
+    }
+
+    companion object {
+        private const val TAG = "SettingsViewModel"
+    }
+}
+
+data class SettingsUiState(
+    val isLogServiceEnabled: Boolean = false,
+    val isDetailedLoggingEnabled: Boolean = false,
+    val isHomepageYiyanEnabled: Boolean = true,
+    val showRestoreConfirmDialog: Boolean = false,
+    val showAboutDialog: Boolean = false,
+    val moduleVersion: String = "",
+    val themeSettings: ZToolThemeSettings = ZToolThemeSettings(),
+    val manualSeedColorText: String = "#%08X".format(ZToolThemeSettings.DEFAULT_MANUAL_SEED_COLOR),
+    val manualSeedColorError: Boolean = false
+)

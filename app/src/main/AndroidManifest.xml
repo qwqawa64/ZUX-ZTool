@@ -31,6 +31,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.ZTool"
@@ -41,43 +42,6 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
-        <activity
-            android:name=".settingactivity.systemui.ControlCenter.ControlCenterSettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.systemui.lockscreen.LockScreenSettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.systemui.statusBarSetting.StatusBarSettingsActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize|stateHidden"/>
-        <activity
-            android:name=".settingactivity.systemui.systemUISettings"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.packageinstaller.packageinstallersettings"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.setting.magicwindowsearch.searchPage"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.ota.OtaSettings"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.gametool.GameToolSettngs"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.setting.SettingsDetailActivity"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.launcher.LauncherSettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.systemframework.FrameworkSettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".settingactivity.safecenter.SafeCenterSettingsActivity"
-            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -92,7 +56,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="为ZUXOS的优化与自定义选项" />
+            android:value="Make ZUXOS/ZUI Great, not Again." />
         <meta-data
             android:name="xposedminversion"
             android:value="93" />

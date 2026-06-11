@@ -19,6 +19,9 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class HookInit implements IXposedHookLoadPackage {
 
     private static final String TAG = "ZTool-Hook";
+    private static final String SELF_PACKAGE = "com.qimian233.ztool";
+    private static final String SELF_CHECK_CLASS = "com.qimian233.ztool.ModuleActivationProbe";
+    private static final String SELF_CHECK_METHOD = "isModuleActive";
 
     static {
         // 预初始化Hook管理器
@@ -37,7 +40,7 @@ public class HookInit implements IXposedHookLoadPackage {
             }
         }
 
-        if (lpparam.packageName.equals("com.qimian233.ztool")) {
+        if (lpparam.packageName.equals(SELF_PACKAGE)) {
             Log.d(TAG, "检测到自身应用，开始Hook自检测方法");
             hookSelfStatus(lpparam);
         }
@@ -51,9 +54,9 @@ public class HookInit implements IXposedHookLoadPackage {
     private void hookSelfStatus(XC_LoadPackage.LoadPackageParam lpparam) {
         try {
             XposedHelpers.findAndHookMethod(
-                    "com.qimian233.ztool.HomeFragment", // 确保类名路径正确，不要混淆此 Fragment
+                    SELF_CHECK_CLASS,
                     lpparam.classLoader,
-                    "isModuleActive",
+                    SELF_CHECK_METHOD,
                     XC_MethodReplacement.returnConstant(true)
             );
             Log.i(TAG, "模块自检测Hook成功");

@@ -31,3 +31,5 @@
 -keepattributes Signature
 -keepattributes Exceptions
 -keepattributes InnerClasses
+# 6. 保护自 Hook 方法 com.qimian233.ztool.ModuleActivationProbe.isModuleActive 不被混淆
+-keepclasseswithmembernames class com.qimian233.ztool.ModuleActivationProbe { isModuleActive(); }

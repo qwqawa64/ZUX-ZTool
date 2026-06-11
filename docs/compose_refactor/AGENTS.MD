@@ -1,0 +1,237 @@
+# AGENTS.MD
+
+## Agent Quick Start
+
+- Default to `rg` for searching and keep edits ASCII unless the file already uses non-ASCII, especially when touching old .java files, they may contain Chinese logging strings and hardcoded UI strings.
+
+## Project Overview
+
+ZUX-ZTool is an Android/Xposed tool project. The current refactor direction is a UI-layer migration from traditional XML/View/Fragment screens to Jetpack Compose, while preserving Hook, service, utility, configuration, and runtime asset behavior.
+
+The preferred boundary is:
+
+- Refactor UI, navigation, state handling, dialogs, and theme/design-system code.
+- Keep `hook/**`, Xposed metadata, module assets, shell behavior, service behavior, existing preference keys, and existing launch entry points intact unless explicitly requested.
+- Do not turn the migration into a mixed View/Compose layout swap when a screen contains business logic that should first be separated into state and reusable logic.
+
+## Repository Shape
+
+Root:
+
+```text
+ZUX-ZTool/
+  app/                         Android application module
+  gradle/                      Gradle wrapper files
+  libs/                        root-level local dependencies
+  build.gradle.kts             root build script
+  settings.gradle.kts          Gradle module configuration
+  gradle.properties            Gradle/Android build settings
+  ComposeRefactor.md           historical Compose refactor notes, UTF-8 encoding
+  README.md
+  UpdateCheck.json
+  ZToolLogo.png
+  ZToolLogoForeground.svg
+  更新日志.txt
+```
+
+Main application areas:
+
+```text
+app/src/main/java/com/qimian233/ztool/
+  MainActivity.kt
+  HomeFragment.kt / HomeFragment.java history
+  FeaturesFragment.kt
+  SettingsFragment.kt
+  AuditFragment.kt / AuditFragment.java history
+  EnhancedShellExecutor.java
+  LoadingDialog.kt
+
+  audit/
+  config/
+  hook/
+  service/
+  settingactivity/
+  ui/
+    components/
+    theme/
+  utils/
+```
+
+Important resources and assets:
+
+```text
+app/src/main/res/
+  drawable/
+  mipmap-anydpi-v26/
+  values/
+  values-night/
+  raw/
+  xml/
+
+app/src/main/assets/
+  xposed_init
+  embedding/
+```
+
+## Architecture Direction
+
+Use Compose as the long-term UI layer.
+
+- Use `ComposeRefactor.md` as the detailed migration plan and status log. Before selecting the next migration target, consult the latest plan and verification notes there; keep this file as the concise operating guide.
+- `MainActivity` should move toward only hosting `setContent { ZToolApp() }`.
+- Screens should become composable screen implementations.
+- XML Navigation has been replaced by `navigation-compose`; do not reintroduce XML navigation.
+- Existing `settingactivity/**` Activities may be migrated gradually, but new UI should not expand the old one-Activity-per-setting pattern unless compatibility requires preserving an entry point.
+- Business pages should consume stable state rather than directly running shell commands, starting raw threads, showing imperative dialogs, or reading/writing preferences inline.
+- Phase 7 cleanup may replace temporary Fragment/AppCompat/dialog compatibility wrappers after their Hook or API compatibility target has a stable replacement.
+
+Preferred state shape:
+
+- `ViewModel`
+- `UiState`
+- `StateFlow`
+- Repository/Manager wrappers for shell, logs, config, preferences, update checks, and system services.
+
+For example, logic from `HomeFragment` should be modeled around:
+
+- `HomeViewModel`
+- `HomeUiState`
+- `EnvironmentRepository`
+- `UpdateRepository`
+
+For Phase 7, avoid adding new dependencies on `HomeFragment`; use the replacement Hook compatibility target documented in `ComposeRefactor.md` once it exists.
+
+## Compose And Design-System Rules
+
+Phase 3 is centered on a project-level theme settings model and a component adapter layer. Business screens should stay style-agnostic and consume project components.
+
+Theme settings should be modeled and persisted outside feature screens. The durable shape should cover:
+
+- Frontend style: Material 3 Expressive, Miuix, and future styles.
+- Theme mode: follow system, light, and dark.
+- Android 12+ Monet dynamic color.
+- Manual seed color.
+- AMOLED pure black mode.
+
+Keep theme preference keys scoped to app UI preferences. Do not reuse or alter Hook/module preference keys for theme UI settings.
+
+`ZToolTheme` should resolve the final theme from settings:
+
+- Use Monet only when dynamic color is enabled, the device supports it, and manual color is disabled.
+- Manual color should derive a complete Material 3 `ColorScheme`, not only replace `primary`.
+- AMOLED black should be a dark-theme post-processing step that consistently overrides `background`, `surface`, and `surfaceContainer*`.
+- Semantic data colors, such as log severity and user-selected color previews, may remain explicit.
+
+Avoid placing frontend-style conditionals directly in business screens.
+
+Do not scatter code like:
+
+```kotlin
+if (style == FrontendStyle.Miuix) { ... }
+```
+
+inside feature screens. Instead, prefer project-level UI components and theme adapters:
+
+- `ZToolTheme`
+- `ZToolScaffold`
+- `ZToolTopAppBar`
+- `ZToolNavigationRail`
+- `ZToolCard`
+- `ZToolDropdownField`
+- `ZToolSwitchRow`
+- `ZListItem`
+- `ZDialog`
+
+Business screens should call project components and let the component/theme layer choose the Material 3 Expressive, Miuix, or future ZUX/ZUI rendering.
+
+Material 3 Expressive should be the first complete and verified style path. Add and wire Miuix only after the Material 3 theme settings path is working for theme mode, Monet, manual color, and AMOLED black. Miuix rendering belongs inside shared components and theme adapters, not in separate business-screen implementations.
+
+Keep these conventions when editing Compose UI:
+
+- Use `MaterialTheme.colorScheme` for normal UI colors.
+- Avoid hard-coded background/surface colors unless the color has semantic meaning, such as log severity or user-selected color preview.
+- Root screen containers should use the theme background/surface consistently.
+- Prefer shared components in `ui/components` over repeated local implementations.
+- Route direct Material 3 primitives such as `Scaffold`, `TopAppBar`, `NavigationRail`, `Switch`, `Card`, and dialogs behind shared ZTool components when touching a screen for Phase 3 work.
+- Use stable layout dimensions for grids, cards, controls, and rows to prevent text or state changes from shifting the UI unexpectedly.
+- For dropdowns, prefer a shared `ZToolDropdownField` using the current Material3 `menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)` pattern.
+
+## Build System Notes
+
+Compose support requires:
+
+- Kotlin Android plugin
+- `buildFeatures { compose = true }`
+- Compose BOM
+- `androidx.activity:activity-compose`
+- `androidx.navigation:navigation-compose`
+- `androidx.compose.material3:material3`
+
+Material 3 Expressive is provided through the Compose Material3 family; some APIs may require experimental opt-ins and version pinning based on AndroidX Material3 release notes.
+
+Miuix can be introduced as a Compose UI library. The official project is `compose-miuix-ui/miuix`, with Android dependency forms such as `top.yukonga.miuix.kmp:miuix-ui-android`.
+
+## Migration Rules
+
+When changing UI, navigation, theme, design-system, or Compose migration code:
+
+1. Preserve the original class name, package name, Manifest entry, and external launch contract unless the user explicitly approves a breaking change.
+2. Preserve all existing SharedPreferences/config keys used by Hook modules.
+3. Preserve root shell behavior, restart scope behavior, and system package names exactly unless intentionally changing the behavior.
+4. Preserve Xposed metadata and `assets/xposed_init`.
+5. Preserve `assets/embedding/**`.
+6. Prefer small, reviewable patches and avoid coupling unrelated screen, theme, and build-system changes.
+7. Do not reintroduce XML layouts, XML menus, XML navigation, old adapters, RecyclerView UI, Fragment Navigation, or View-based screen scaffolding during ordinary UI/theme work.
+8. After UI, theme, shared-component, or navigation changes, run `.\gradlew.bat assembleDebug`.
+9. Document the completed task, verification result, and next step in `ComposeRefactor.md`.
+10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md`; if the task entry is empty or stale, generate new tasks to push the refactor forward.
+11. Commit your changes after documenting them. When committing, include only the current scoped refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
+
+## Areas To Preserve
+
+Do not casually refactor these as part of UI migration:
+
+- `app/src/main/java/com/qimian233/ztool/hook/**`
+- `app/src/main/java/com/qimian233/ztool/service/**`
+- `app/src/main/java/com/qimian233/ztool/config/**`
+- `app/src/main/java/com/qimian233/ztool/EnhancedShellExecutor.java`
+- `app/src/main/java/com/qimian233/ztool/utils/MagiskModuleManager.java`
+- `app/src/main/java/com/qimian233/ztool/utils/EmbeddingConfigManager.java`
+- `app/src/main/assets/embedding/**`
+- `app/src/main/assets/xposed_init`
+- Xposed-related `AndroidManifest.xml` metadata
+
+These may be wrapped behind repositories or state holders, but behavior must remain compatible.
+
+## Phase 7 Compatibility Cleanup
+
+The remaining Compose cleanup may remove compatibility wrappers when replacement targets are in place:
+
+- `HomeFragment.isModuleActive()` may be replaced by a stable non-Fragment Hook target before deleting `HomeFragment`.
+- Inactive main Fragment wrappers may be deleted after Hook, route, reflection, and documentation references are audited.
+- `AppCompatActivity`, AppCompat `AlertDialog`, and `MaterialAlertDialogBuilder` bridges may be migrated to Compose-owned state/components while preserving public APIs and launch contracts.
+- AppCompat or Material Components dependencies may be removed only after source references are gone and `.\gradlew.bat assembleDebug` succeeds.
+
+## Current Follow-Up Priorities
+
+Use `ComposeRefactor.md` as the source of truth for the detailed migration order, rationale, completed work log, and next-step notes.
+
+- Keep all follow-up plans only in `ComposeRefactor.md`.
+- Do not record work completion progress in `AGENTS.MD`.
+- Keep `AGENTS.MD` stable as an operating guide; update it only for durable workflow rules, preservation boundaries, or project-wide instructions.
+
+## Current Working Branch
+
+The historical refactor notes refer to branch `compose-refactor`. Confirm the active branch with Git before committing.
+
+## Verification Command
+
+Use this command after UI migrations:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+The command is expected to build successfully even if the known deprecated warnings listed above remain.
+
+If gradle reaches timeout, stop workflow and ask user to manually trigger gradle sync and build in Android Studio for once.
