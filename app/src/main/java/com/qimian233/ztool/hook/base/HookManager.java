@@ -14,6 +14,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDelet
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
 import com.qimian233.ztool.hook.modules.safecenter.SafeCenterScanBlocker;
 import com.qimian233.ztool.hook.modules.setting.AlwaysDisplaySuggestion;
+import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
 import com.qimian233.ztool.hook.modules.setting.KeepRotation;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
@@ -153,6 +154,7 @@ public class HookManager {
         registerHookModule(new CustomGridSize());
         // 注册模块，一直显示或者一直隐藏建议
         registerHookModule(new AlwaysDisplaySuggestion());
+        registerHookModule(new AppInfoHeaderDetailsHook());
         initialized = true;
     }
 
