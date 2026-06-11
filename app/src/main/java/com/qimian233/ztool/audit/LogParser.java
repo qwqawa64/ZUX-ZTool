@@ -137,6 +137,8 @@ public class LogParser {
                 Pattern.compile("\\[remove_blacklist]\\s*(.*)"));
         MODULE_PATTERNS.put("AlwaysDisplaySuggestion",
                 Pattern.compile("\\[AlwaysDisplaySuggestion]\\s*(.*)"));
+        MODULE_PATTERNS.put("app_details",
+                Pattern.compile("\\[app_details]\\s*(.*)"));
 
         // 系统框架相关
         MODULE_PATTERNS.put("allow_get_packages",
@@ -213,6 +215,7 @@ public class LogParser {
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
         MODULE_NAMES.put("AlwaysDisplaySuggestion", "始终显示建议");
+        MODULE_NAMES.put("app_details", "应用详细信息");
 
         // 文件相关
         MODULE_NAMES.put("documents_ui_bypass", "允许选择根目录");
@@ -602,7 +605,8 @@ public class LogParser {
         // 设置相关
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
-                "Split_Screen_mandatory", "remove_blacklist", "AlwaysDisplaySuggestion"
+                "Split_Screen_mandatory", "remove_blacklist", "AlwaysDisplaySuggestion",
+                "app_details"
         ));
 
         // 启动器相关
