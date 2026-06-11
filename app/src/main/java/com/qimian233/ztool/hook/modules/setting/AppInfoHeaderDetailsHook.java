@@ -17,6 +17,7 @@ import com.qimian233.ztool.hook.base.BaseHookModule;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
@@ -28,6 +29,16 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
             "com.android.settings.applications.appinfo.AppHeaderViewPreferenceController";
     private static final String APP_ENTRY_CLASS =
             "com.android.settingslib.applications.ApplicationsState$AppEntry";
+
+    private String SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
+    private final String[] DISPLAY_STRINGS_CN = {"包名", "首次安装", "最后更新", "安装自", "已复制到剪贴板", "未知"};
+    private final String[] DISPLAY_STRINGS_ALTERNATIVE = {"Package Name", "First Installed", "Last Updated", "Source", "Copied to clipboard", "Unknown"};
+
+    private String getDisplayString(int stringIndex) {
+        if (stringIndex <= 3) return this.SYSTEM_LANGUAGE.equals("zh") ? this.DISPLAY_STRINGS_CN[stringIndex] + ": " : this.DISPLAY_STRINGS_ALTERNATIVE[stringIndex] + ": ";
+        return this.SYSTEM_LANGUAGE.equals("zh") ? this.DISPLAY_STRINGS_CN[stringIndex] : this.DISPLAY_STRINGS_ALTERNATIVE[stringIndex];
+
+    }
 
     @Override
     public String getModuleName() {
@@ -50,7 +61,6 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
             log("AppEntry class not found, skip app info header hook.");
             return;
         }
-
         XposedHelpers.findAndHookMethod(
                 CONTROLLER_CLASS,
                 lpparam.classLoader,
@@ -118,25 +128,25 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
     }
 
     private String buildAppInfo(Context context, PackageInfo pkgInfo) {
+        this.SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
         ApplicationInfo appInfo = pkgInfo.applicationInfo;
-        StringBuilder builder = new StringBuilder();
-        builder.append("包名: ").append(pkgInfo.packageName);
-        builder.append('\n').append("SDK版本: min ")
-                .append(appInfo.minSdkVersion)
-                .append(" / target ")
-                .append(appInfo.targetSdkVersion);
-        builder.append('\n').append("首次安装时间: ").append(formatTime(pkgInfo.firstInstallTime));
-        builder.append('\n').append("最后更新时间: ").append(formatTime(pkgInfo.lastUpdateTime));
-        builder.append('\n').append("安装来源: ").append(getInstallSource(context, pkgInfo.packageName));
-        return builder.toString();
+        return this.getDisplayString(0) + pkgInfo.packageName +
+                '\n' + "minSDK " +
+                Objects.requireNonNull(appInfo).minSdkVersion +
+                " / target " +
+                appInfo.targetSdkVersion +
+                '\n' + this.getDisplayString(1) + formatTime(pkgInfo.firstInstallTime) +
+                '\n' + this.getDisplayString(2) + formatTime(pkgInfo.lastUpdateTime) +
+                '\n' + this.getDisplayString(3) + getInstallSource(context, pkgInfo.packageName);
     }
 
     private String mergeSummary(CharSequence originalSummary, String appInfo) {
+        this.SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
         if (TextUtils.isEmpty(originalSummary)) {
             return appInfo;
         }
         String original = originalSummary.toString();
-        if (original.contains("包名: ") && original.contains("安装来源: ")) {
+        if (original.contains(this.getDisplayString(0)) && original.contains(this.getDisplayString(3))) {
             return appInfo;
         }
         return original + "\n" + appInfo;
@@ -144,7 +154,8 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
 
     private String formatTime(long timeMillis) {
         if (timeMillis <= 0L) {
-            return "未知";
+            this.SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
+            return this.getDisplayString(5);
         }
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 .format(new Date(timeMillis));
@@ -159,7 +170,8 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
                     sourceInfo.getInitiatingPackageName(),
                     sourceInfo.getOriginatingPackageName());
             if (TextUtils.isEmpty(source)) {
-                return "未知";
+                this.SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
+                return this.getDisplayString(5);
             }
 
             CharSequence label = getApplicationLabel(pm, source);
@@ -168,7 +180,8 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
             }
             return source;
         } catch (Throwable t) {
-            return "未知";
+            this.SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
+            return this.getDisplayString(5);
         }
     }
 
@@ -195,7 +208,8 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
                 (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
         if (clipboard != null) {
             clipboard.setPrimaryClip(ClipData.newPlainText("app_info", text));
-            Toast.makeText(context, "已复制应用信息", Toast.LENGTH_SHORT).show();
+            this.SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
+            Toast.makeText(context, this.getDisplayString(4), Toast.LENGTH_SHORT).show();
         }
     }
 }
