@@ -35,6 +35,7 @@ class SettingsDetailRepository(
             allowDisableDolby = prefsUtils.loadBooleanSetting(KEY_ALLOW_DISPLAY_DOLBY, false),
             allowNativePermissionController = prefsUtils.loadBooleanSetting(KEY_PERMISSION_CONTROLLER_HOOK, false),
             alwaysDisplaySuggestions = prefsUtils.loadBooleanSetting(KEY_ALWAYS_DISPLAY_SUGGESTION, false),
+            appDetail = prefsUtils.loadBooleanSetting(KEY_APP_DETAILS, false),
             showZuiForceConfig = Build.VERSION.SDK_INT >= 36
         )
     }
@@ -63,6 +64,10 @@ class SettingsDetailRepository(
 
     fun saveAlwaysDisplaySuggestions(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_ALWAYS_DISPLAY_SUGGESTION, enabled)
+    }
+
+    fun saveAppDetails(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_APP_DETAILS, enabled)
     }
 
     fun forceStopScope(packageName: String) {
@@ -224,6 +229,7 @@ class SettingsDetailRepository(
         private const val KEY_ALLOW_DISPLAY_DOLBY = "allow_display_dolby"
         private const val KEY_PERMISSION_CONTROLLER_HOOK = "PermissionControllerHook"
         private const val KEY_ALWAYS_DISPLAY_SUGGESTION = "AlwaysDisplaySuggestion"
+        private const val KEY_APP_DETAILS = "app_details"
     }
 }
 

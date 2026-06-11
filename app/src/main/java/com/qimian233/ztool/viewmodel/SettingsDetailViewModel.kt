@@ -78,6 +78,11 @@ class SettingsDetailViewModel(
         repository.saveAlwaysDisplaySuggestions(enabled)
     }
 
+    fun setAppDetails(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(appDetail = enabled)
+        repository.saveAppDetails(enabled)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }
@@ -232,5 +237,6 @@ data class SettingsDetailUiState(
     val allowNativePermissionController: Boolean = false,
     val alwaysDisplaySuggestions: Boolean = false,
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
-    val showRestartDialog: Boolean = false
+    val showRestartDialog: Boolean = false,
+    val appDetail: Boolean = false,
 )

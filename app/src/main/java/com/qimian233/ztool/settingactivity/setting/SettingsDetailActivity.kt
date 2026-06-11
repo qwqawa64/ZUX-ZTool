@@ -6,8 +6,8 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,6 +54,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -68,7 +69,6 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
@@ -80,7 +80,6 @@ import com.qimian233.ztool.viewmodel.SettingsDetailOvConfigSelectionResult
 import com.qimian233.ztool.viewmodel.SettingsDetailRestoreResult
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import com.qimian233.ztool.viewmodel.SettingsDetailViewModel
-import androidx.core.net.toUri
 
 @Composable
 fun SettingsDetailRoute(
@@ -566,6 +565,7 @@ fun SettingsDetailRoute(
         onAllowNativePermissionControllerChanged = viewModel::setAllowNativePermissionController,
         onAllowDisableDolbyChanged = viewModel::setAllowDisableDolby,
         onAlwaysDisplaySuggestionsChanged = viewModel::setAlwaysDisplaySuggestions,
+        onAppDetailsChanged = viewModel::setAppDetails,
         onRestartScope = viewModel::showRestartDialog
     )
 
@@ -659,6 +659,7 @@ private fun SettingsDetailScreen(
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
     onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit,
+    onAppDetailsChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit
 ) {
     ZToolScaffold(
@@ -718,7 +719,8 @@ private fun SettingsDetailScreen(
                         onImportFont = onImportFont,
                         onAllowNativePermissionControllerChanged = onAllowNativePermissionControllerChanged,
                         onAllowDisableDolbyChanged = onAllowDisableDolbyChanged,
-                        onAlwaysDisplaySuggestionsChanged = onAlwaysDisplaySuggestionsChanged
+                        onAlwaysDisplaySuggestionsChanged = onAlwaysDisplaySuggestionsChanged,
+                        onAppDetailsChanged = onAppDetailsChanged,
                     )
                 )
             }
@@ -742,7 +744,8 @@ private fun settingsDetailSections(
     onImportFont: () -> Unit,
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
-    onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit
+    onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit,
+    onAppDetailsChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return buildList {
         add(
@@ -877,6 +880,12 @@ private fun settingsDetailSections(
                         summary = stringResource(R.string.AllowDisableDolby_summary),
                         checked = state.allowDisableDolby,
                         onCheckedChange = onAllowDisableDolbyChanged
+                    ),
+                    SettingItem.Switch(
+                        title = stringResource(R.string.app_details_completion),
+                        summary = stringResource(R.string.app_details_completion_summary),
+                        checked = state.appDetail,
+                        onCheckedChange = onAppDetailsChanged
                     ),
                     SettingItem.Switch(
                         title = stringResource(R.string.AlwaysDisplaySuggestionsTitle),

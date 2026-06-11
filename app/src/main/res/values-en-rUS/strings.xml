@@ -763,4 +763,6 @@
         <item>Brown</item>
     </string-array>
     <string name="back_to_top">Back to top</string>
+    <string name="app_details_completion">Detailed APP information</string>
+    <string name="app_details_completion_summary">Add packagename, SDK info, installation, update and install source info to APP detail page</string>
 </resources>
