@@ -71,6 +71,7 @@ public class ModuleConfig {
     }
 
     public static boolean isModuleEnabled(String moduleName) {
+        if (moduleName.equals("hook_test")) return true;
         XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
         prefs.reload();
         if (prefs != null) {
