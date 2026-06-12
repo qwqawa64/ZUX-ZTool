@@ -64,6 +64,10 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.components.ZToolButton
+import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.HomeViewModel
 import com.qimian233.ztool.viewmodel.RebootTarget
@@ -219,7 +223,7 @@ private fun HomeScreen(
         },
         floatingActionButton = {
             if (state.isRootAvailable) {
-                FloatingActionButton(onClick = { showRebootTargets = true }) {
+                ZToolFloatingActionButton(onClick = { showRebootTargets = true }) {
                     Icon(
                         imageVector = Icons.Rounded.Refresh,
                         contentDescription = null
@@ -384,11 +388,9 @@ private fun UpdateCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onIgnore) {
-                    Text(stringResource(R.string.update_button_ignore))
-                }
+                ZToolTextButton(onClick = onIgnore, text = stringResource(R.string.update_button_ignore), isPrimary = false)
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = onOpenUpdate) {
+                ZToolButton(onClick = onOpenUpdate) {
                     Text(stringResource(R.string.update_button_update))
                 }
             }
@@ -560,14 +562,10 @@ private fun ConfigUpgradeDialog(
         title = { Text(stringResource(R.string.config_upgraded_tip_title)) },
         text = { Text(stringResource(R.string.config_upgraded_tip_message)) },
         confirmButton = {
-            TextButton(onClick = onRestart) {
-                Text(stringResource(R.string.restart_system_button))
-            }
+            ZToolTextButton(onClick = onRestart, text = stringResource(R.string.restart_system_button))
         },
         dismissButton = {
-            TextButton(onClick = onLater) {
-                Text(stringResource(R.string.do_not_restart_system_button))
-            }
+            ZToolTextButton(onClick = onLater, text = stringResource(R.string.do_not_restart_system_button), isPrimary = false)
         }
     )
 }

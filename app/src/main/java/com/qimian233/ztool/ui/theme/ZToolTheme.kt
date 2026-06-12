@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -190,6 +191,8 @@ fun ZToolTheme(
 
     val themeSpec = ZToolThemeSpec(style = effectiveSettings.frontendStyle)
     val isMiuixStyle = effectiveSettings.frontendStyle == FrontendStyle.Miuix
+    val movableContent = remember(content) { movableContentOf(content) }
+    
     val themedContent: @Composable () -> Unit = {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -234,12 +237,12 @@ fun ZToolTheme(
 
                 MiuixTheme(
                     controller = controller,
-                    content = content
+                    content = { movableContent() }
                 )
             } else {
                 MiuixTheme(
                     colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
-                    content = content
+                    content = { movableContent() }
                 )
             }
         }
