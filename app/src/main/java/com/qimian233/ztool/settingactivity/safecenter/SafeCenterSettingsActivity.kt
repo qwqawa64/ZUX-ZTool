@@ -73,6 +73,7 @@ fun SafeCenterSettingsRoute(
         onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
         onBlockSafeCenterScanChanged = viewModel::setBlockSafeCenterScan,
         onDisableAllVirusScanChanged = viewModel::setDisableAllVirusScan,
+        onDisableVirusPopupChanged = viewModel::setDisableVirusPopup,
         onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
     )
 
@@ -135,6 +136,7 @@ internal fun SafeCenterSettingsScreen(
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
     onBlockSafeCenterScanChanged: (Boolean) -> Unit,
     onDisableAllVirusScanChanged: (Boolean) -> Unit,
+    onDisableVirusPopupChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
@@ -177,6 +179,7 @@ internal fun SafeCenterSettingsScreen(
                         onDefaultEnableAutorunChanged = onDefaultEnableAutorunChanged,
                         onBlockSafeCenterScanChanged = onBlockSafeCenterScanChanged,
                         onDisableAllVirusScanChanged = onDisableAllVirusScanChanged,
+                        onDisableVirusPopupChanged = onDisableVirusPopupChanged,
                         onDocumentsUiBypassChanged = onDocumentsUiBypassChanged
                     ),
                     bottomPadding = 96.dp
@@ -192,6 +195,7 @@ internal fun safeCenterSettingsSections(
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
     onBlockSafeCenterScanChanged: (Boolean) -> Unit,
     onDisableAllVirusScanChanged: (Boolean) -> Unit,
+    onDisableVirusPopupChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
@@ -215,6 +219,12 @@ internal fun safeCenterSettingsSections(
                     summary = stringResource(R.string.disable_all_virus_scan_summary),
                     checked = state.disableAllVirusScan,
                  onCheckedChange = onDisableAllVirusScanChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_virus_popup),
+                    summary = stringResource(R.string.disable_virus_popup_summary),
+                    checked = state.disableVirusPopup,
+                    onCheckedChange = onDisableVirusPopupChanged
                 )
             )
         ),

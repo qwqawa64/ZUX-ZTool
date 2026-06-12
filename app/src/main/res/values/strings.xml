@@ -822,4 +822,6 @@
     <string name="screen_on_off_animation_duration">设置亮灭屏动画时长</string>
     <string name="disable_all_virus_scan">禁止病毒扫描</string>
     <string name="disable_all_virus_scan_summary">禁止在安全中心内进行病毒扫描操作</string>
+    <string name="disable_virus_popup">关闭“病毒警报”弹窗</string>
+    <string name="disable_virus_popup_summary">自欺欺人2.0，不阻止扫描也不阻止风险结果写入数据库</string>
 </resources>

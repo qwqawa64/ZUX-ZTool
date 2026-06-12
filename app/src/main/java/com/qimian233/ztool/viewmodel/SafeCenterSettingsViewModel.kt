@@ -41,6 +41,11 @@ class SafeCenterSettingsViewModel(
         repository.saveDisableAllVirusScan(enabled)
     }
 
+    fun setDisableVirusPopup(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableVirusPopup = enabled)
+        repository.saveDisableVirusPopup(enabled)
+    }
+
     fun setDocumentsUiBypass(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(documentsUiBypass = enabled)
         repository.saveDocumentsUiBypass(enabled)
@@ -90,6 +95,7 @@ data class SafeCenterSettingsUiState(
     val defaultEnableAutorun: Boolean = false,
     val blockSafeCenterScan: Boolean = false,
     val disableAllVirusScan: Boolean = false,
+    val disableVirusPopup: Boolean = false,
     val documentsUiBypass: Boolean = false,
     val showRestartConfirmDialog: Boolean = false,
     val isRestartProcessing: Boolean = false
