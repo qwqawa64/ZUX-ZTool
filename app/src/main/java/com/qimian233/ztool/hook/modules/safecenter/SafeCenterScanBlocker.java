@@ -29,7 +29,7 @@ public class SafeCenterScanBlocker extends BaseHookModule {
     }
 
     private void hookAutoScanEntry(XC_LoadPackage.LoadPackageParam lpparam) {
-        if (lpparam.packageName.equals("com.lenovo.safecenter")) {
+        if (lpparam.packageName.equals("com.lenovo.safecenter") || lpparam.packageName.equals("com.zui.safecenter")) {
             try {
                 XposedHelpers.findAndHookMethod(
                         "com.lenovo.safecenter.antivirus.autoscan.AutoOverallScan",
@@ -46,32 +46,6 @@ public class SafeCenterScanBlocker extends BaseHookModule {
                         }
                 );
                 log("Successfully hooked SafeCenter auto scan entry");
-            } catch (Throwable t) {
-                logError("Failed to hook SafeCenter auto scan", t);
-            }
-        } else if (lpparam.packageName.equals("com.zui.safecenter")) {
-            String romRegion = getRomRegion();
-            if (!romRegion.equals("PRC")) {
-                if (DEBUG) log("Non-PRC device, no need to hook safecenter, value:" + romRegion);
-                return;
-            } else {
-                if (DEBUG) log("PRC device, hooking safecenter");
-            }
-            try {
-                XposedHelpers.findAndHookMethod(
-                        "com.lenovo.safecenter.antivirus.autoscan.AutoOverallScan",
-                        lpparam.classLoader,
-                        "LocalOverallScanVirus",
-                        android.content.Context.class,
-                        new XC_MethodReplacement() {
-                            @Override
-                            protected Object replaceHookedMethod(MethodHookParam param) {
-                                // 直接返回null，阻止自动扫描执行
-                                log("Auto virus scan blocked at entry point");
-                                return null;
-                            }
-                        }
-                );
             } catch (Throwable t) {
                 logError("Failed to hook SafeCenter auto scan", t);
             }

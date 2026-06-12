@@ -19,12 +19,12 @@ public class EnableAutorunByDefault extends BaseHookModule {
     }
 
     public String[] getTargetPackages() {
-        return new String[] {"com.zui.safecenter"};
+        return new String[] {"com.lenovo.safecenter", "com.zui.safecenter"};
     }
 
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if ("com.zui.safecenter".equals(lpparam.packageName)) {
-            log("Start hooking com.zui.safecenter");
+        if ("com.zui.safecenter".equals(lpparam.packageName) || "com.lenovo.safecenter".equals(lpparam.packageName)) {
+            log("Start hooking safecenter");
             try {
                 var cls = XposedHelpers.findClass("com.lenovo.performance.autorun.beans.AutoRunDbItem", lpparam.classLoader);
                 var fld = XposedHelpers.findField(cls, "mAttrs");
@@ -39,9 +39,9 @@ public class EnableAutorunByDefault extends BaseHookModule {
                         setter.invoke(param.thisObject, attrs);
                     }
                 });
-                log("Hooked com.zui.safecenter [OK]");
+                log("Hooked safecenter [OK]");
             }catch (Exception e) {
-                logError("Failed hooking com.zui.safecenter", e);
+                logError("Failed hooking safecenter", e);
             }
         }
     }
