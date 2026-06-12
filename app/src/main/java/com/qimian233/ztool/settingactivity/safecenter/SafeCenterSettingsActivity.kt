@@ -72,6 +72,7 @@ fun SafeCenterSettingsRoute(
         onRestart = viewModel::showRestartConfirmDialog,
         onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
         onBlockSafeCenterScanChanged = viewModel::setBlockSafeCenterScan,
+        onDisableAllVirusScanChanged = viewModel::setDisableAllVirusScan,
         onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
     )
 
@@ -133,6 +134,7 @@ internal fun SafeCenterSettingsScreen(
     onRestart: () -> Unit,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
     onBlockSafeCenterScanChanged: (Boolean) -> Unit,
+    onDisableAllVirusScanChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
@@ -174,6 +176,7 @@ internal fun SafeCenterSettingsScreen(
                         state = state,
                         onDefaultEnableAutorunChanged = onDefaultEnableAutorunChanged,
                         onBlockSafeCenterScanChanged = onBlockSafeCenterScanChanged,
+                        onDisableAllVirusScanChanged = onDisableAllVirusScanChanged,
                         onDocumentsUiBypassChanged = onDocumentsUiBypassChanged
                     ),
                     bottomPadding = 96.dp
@@ -188,6 +191,7 @@ internal fun safeCenterSettingsSections(
     state: SafeCenterSettingsUiState,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
     onBlockSafeCenterScanChanged: (Boolean) -> Unit,
+    onDisableAllVirusScanChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
@@ -205,6 +209,12 @@ internal fun safeCenterSettingsSections(
                     summary = stringResource(R.string.DisableSafeScanSummary),
                     checked = state.blockSafeCenterScan,
                     onCheckedChange = onBlockSafeCenterScanChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_all_virus_scan),
+                    summary = stringResource(R.string.disable_all_virus_scan_summary),
+                    checked = state.disableAllVirusScan,
+                 onCheckedChange = onDisableAllVirusScanChanged
                 )
             )
         ),
