@@ -47,6 +47,8 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.viewmodel.ApiTestResult
 import com.qimian233.ztool.viewmodel.LockScreenSettingsUiState
 import com.qimian233.ztool.viewmodel.LockScreenSettingsViewModel
@@ -316,7 +318,7 @@ private fun YiYanConfigFields(
                 singleLine = true
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Button(
+            ZToolButton(
                 onClick = onTestApi,
                 enabled = !isTestingApi
             ) {
@@ -351,14 +353,10 @@ private fun RootPermissionDialog(
         title = { Text(stringResource(R.string.tooltip_content_description)) },
         text = { Text(stringResource(R.string.systemui_root_permission_required_message)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.confirm))
-            }
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.confirm))
         },
         dismissButton = {
-            TextButton(onClick = onDoNotShowAgain) {
-                Text(stringResource(R.string.do_not_show_again))
-            }
+            ZToolTextButton(onClick = onDoNotShowAgain, text = stringResource(R.string.do_not_show_again), isPrimary = false)
         }
     )
 }
@@ -375,15 +373,11 @@ private fun ApiTestResultDialog(
         text = { Text(result.message) },
         confirmButton = {
             if (result.success) {
-                TextButton(onClick = onSave) {
-                    Text(stringResource(R.string.save_configuration_button))
-                }
+                ZToolTextButton(onClick = onSave, text = stringResource(R.string.save_configuration_button))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
         }
     )
 }

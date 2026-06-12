@@ -3,14 +3,18 @@ package com.qimian233.ztool.viewmodel
 import android.os.Build
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.settings.OvConfigSelection
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
 import java.io.File
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsDetailViewModel(
     private val repository: SettingsDetailRepository
@@ -20,9 +24,12 @@ class SettingsDetailViewModel(
     private var currentSelectedFontFile: File? = null
 
     fun loadSettings() {
-        Thread {
-            _uiState.value = repository.loadState()
-        }.start()
+        viewModelScope.launch(Dispatchers.IO) {
+            val state = repository.loadState()
+            withContext(Dispatchers.Main) {
+                _uiState.value = state
+            }
+        }
     }
 
     fun setRemoveBlacklist(enabled: Boolean) {
@@ -41,16 +48,18 @@ class SettingsDetailViewModel(
         }
 
         _uiState.value = _uiState.value.copy(moduleEnabled = enabled)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.setModuleEnabled(enabled)
-            if (result == SettingsDetailRepository.RESULT_SUCCESS) {
-                _uiState.value = _uiState.value.copy(moduleEnabled = enabled)
-                onResult(SettingsDetailModuleResult.Success(enabled))
-            } else {
-                _uiState.value = _uiState.value.copy(moduleEnabled = !enabled)
-                onResult(SettingsDetailModuleResult.Failure(enabled, result))
+            withContext(Dispatchers.Main) {
+                if (result == SettingsDetailRepository.RESULT_SUCCESS) {
+                    _uiState.value = _uiState.value.copy(moduleEnabled = enabled)
+                    onResult(SettingsDetailModuleResult.Success(enabled))
+                } else {
+                    _uiState.value = _uiState.value.copy(moduleEnabled = !enabled)
+                    onResult(SettingsDetailModuleResult.Failure(enabled, result))
+                }
             }
-        }.start()
+        }
     }
 
     fun setFloatMandatory(enabled: Boolean) {
@@ -93,9 +102,9 @@ class SettingsDetailViewModel(
 
     fun restartScope(packageName: String) {
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.forceStopScope(packageName)
-        }.start()
+        }
     }
 
     fun loadFlashedConfigs(): HashSet<String> = repository.loadFlashedConfigs()
@@ -115,42 +124,52 @@ class SettingsDetailViewModel(
         configs: List<EmbeddingConfigManager.ConfigFileInfo>,
         onResult: (SettingsDetailConfigFlashResult) -> Unit
     ) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.flashEmbeddingConfigs(configs)
-                onResult(SettingsDetailConfigFlashResult.Success)
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailConfigFlashResult.Success)
+                }
             } catch (e: Exception) {
-                onResult(SettingsDetailConfigFlashResult.Failure(e.message.orEmpty()))
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailConfigFlashResult.Failure(e.message.orEmpty()))
+                }
             }
-        }.start()
+        }
     }
 
     fun restoreOriginalModule(onResult: (SettingsDetailRestoreResult) -> Unit) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.restoreOriginalModule()
-            if (result == SettingsDetailRepository.RESULT_SUCCESS) {
-                _uiState.value = _uiState.value.copy(moduleEnabled = true)
-                onResult(SettingsDetailRestoreResult.Success)
-            } else {
-                _uiState.value = _uiState.value.copy(moduleEnabled = repository.isModuleEnabled())
-                onResult(SettingsDetailRestoreResult.Failure(result))
+            withContext(Dispatchers.Main) {
+                if (result == SettingsDetailRepository.RESULT_SUCCESS) {
+                    _uiState.value = _uiState.value.copy(moduleEnabled = true)
+                    onResult(SettingsDetailRestoreResult.Success)
+                } else {
+                    _uiState.value = _uiState.value.copy(moduleEnabled = repository.isModuleEnabled())
+                    onResult(SettingsDetailRestoreResult.Failure(result))
+                }
             }
-        }.start()
+        }
     }
 
     fun prepareFontImport(
         uri: Uri,
         onResult: (SettingsDetailFontPreparationResult) -> Unit
     ) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val preparation = repository.prepareFontImport(uri)
                 currentSelectedFontFile = preparation.file
-                onResult(SettingsDetailFontPreparationResult.Success(preparation.originalFileName))
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailFontPreparationResult.Success(preparation.originalFileName))
+                }
             } catch (e: Exception) {
-                onResult(SettingsDetailFontPreparationResult.Failure(e.message.orEmpty()))
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailFontPreparationResult.Failure(e.message.orEmpty()))
+                }
             }
-        }.start()
+        }
     }
 
     fun installFont(
@@ -158,31 +177,40 @@ class SettingsDetailViewModel(
         fontDescription: String,
         onResult: (SettingsDetailFontInstallResult) -> Unit
     ) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.installFont(
                     fontFile = currentSelectedFontFile,
                     fontName = fontName,
                     fontDescription = fontDescription
                 )
-                onResult(SettingsDetailFontInstallResult.Success)
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailFontInstallResult.Success)
+                }
             } catch (e: Exception) {
-                onResult(SettingsDetailFontInstallResult.Failure(e.message.orEmpty()))
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailFontInstallResult.Failure(e.message.orEmpty()))
+                }
             }
-        }.start()
+        }
     }
 
     fun loadOvConfigSelection(
         mode: Int,
         onResult: (SettingsDetailOvConfigSelectionResult) -> Unit
     ) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                onResult(SettingsDetailOvConfigSelectionResult.Success(repository.loadOvConfigSelection(mode)))
+                val result = repository.loadOvConfigSelection(mode)
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailOvConfigSelectionResult.Success(result))
+                }
             } catch (e: Exception) {
-                onResult(SettingsDetailOvConfigSelectionResult.Failure(e.message.orEmpty()))
+                withContext(Dispatchers.Main) {
+                    onResult(SettingsDetailOvConfigSelectionResult.Failure(e.message.orEmpty()))
+                }
             }
-        }.start()
+        }
     }
 
     fun saveOvConfig(
@@ -191,9 +219,12 @@ class SettingsDetailViewModel(
         mode: Int,
         onResult: (String) -> Unit
     ) {
-        Thread {
-            onResult(repository.saveOvConfig(configMap, selectedPackages, mode))
-        }.start()
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = repository.saveOvConfig(configMap, selectedPackages, mode)
+            withContext(Dispatchers.Main) {
+                onResult(result)
+            }
+        }
     }
 }
 

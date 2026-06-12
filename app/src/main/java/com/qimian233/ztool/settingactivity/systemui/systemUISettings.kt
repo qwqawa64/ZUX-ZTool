@@ -44,6 +44,8 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
 
@@ -161,9 +163,8 @@ private fun SystemUiSettingsScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            ZToolExtendedFloatingActionButton(
                 onClick = onRestartScope,
-                expanded = !state.isRestartProcessing,
                 icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                 text = { Text(stringResource(R.string.restart_yes)) }
             )
@@ -364,14 +365,10 @@ private fun RestartScopeDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.restart_yes))
-            }
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
         }
     )
 }

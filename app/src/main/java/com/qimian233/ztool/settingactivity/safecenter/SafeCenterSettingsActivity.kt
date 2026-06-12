@@ -38,6 +38,8 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsUiState
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsViewModel
 
@@ -154,7 +156,7 @@ internal fun SafeCenterSettingsScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            ZToolExtendedFloatingActionButton(
                 onClick = onRestart,
                 icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
                 text = {Text(stringResource(R.string.restart_yes))})
@@ -260,14 +262,10 @@ internal fun RestartConfirmDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.restart_yes))
-            }
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
         }
     )
 }

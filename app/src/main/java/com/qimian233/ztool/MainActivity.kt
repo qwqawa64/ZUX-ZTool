@@ -98,14 +98,16 @@ class MainActivity : ComponentActivity(),
 
         setContent {
             ZToolTheme(settings = themeSettings) {
-                MainTabletShell(
-                    environmentReady = isEnvironmentReady,
-                    selectedRoute = currentRoute,
-                    themeSettings = themeSettings,
-                    onDestinationSelected = ::navigateFromRail,
-                    onEnvironmentStateChanged = ::onEnvironmentStateChanged,
-                    onRouteChanged = ::setCurrentRouteFromHost
-                )
+                com.qimian233.ztool.ui.theme.ThemeRevealProvider {
+                    MainTabletShell(
+                        environmentReady = isEnvironmentReady,
+                        selectedRoute = currentRoute,
+                        themeSettings = themeSettings,
+                        onDestinationSelected = ::navigateFromRail,
+                        onEnvironmentStateChanged = ::onEnvironmentStateChanged,
+                        onRouteChanged = ::setCurrentRouteFromHost
+                    )
+                }
             }
         }
 
@@ -832,17 +834,19 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardMainRoute
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isNavigateBetweenMainRoutes(): Boolean {
-    return mainRouteIndex(targetState.destination.route) <= MainRoute.Settings.ordinal &&
-        mainRouteIndex(initialState.destination.route) <= MainRoute.Settings.ordinal
+    val targetIndex = mainRouteIndex(targetState.destination.route)
+    val initialIndex = mainRouteIndex(initialState.destination.route)
+    return targetIndex != initialIndex && targetIndex != -1 && initialIndex != -1
 }
 
 private fun mainRouteIndex(route: String?): Int {
-    return when (route) {
-        MainRoute.Home.name -> 0
-        MainRoute.Features.name -> 1
-        MainRoute.Audit.name -> 2
-        MainRoute.Settings.name -> 3
-        else -> Int.MAX_VALUE
+    if (route == null) return -1
+    return when {
+        route == MainRoute.Home.name -> 0
+        route == MainRoute.Features.name || route.startsWith("feature/") -> 1
+        route == MainRoute.Audit.name -> 2
+        route == MainRoute.Settings.name || route.startsWith("Settings") -> 3
+        else -> -1
     }
 }
 

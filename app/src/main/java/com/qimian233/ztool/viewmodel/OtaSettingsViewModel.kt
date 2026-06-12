@@ -30,19 +30,21 @@ class OtaSettingsViewModel(
     }
 
     fun loadCurrentDeviceInfo(unknownText: String) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val info = repository.loadCurrentDeviceInfo()
-            val current = _uiState.value
-            _uiState.value = current.copy(
-                currentVersion = info.version,
-                currentSn = info.sn,
-                firmwareSnInput = if (current.firmwareSnInput.isEmpty() && info.sn != unknownText) {
-                    info.sn
-                } else {
-                    current.firmwareSnInput
-                }
-            )
-        }.start()
+            withContext(Dispatchers.Main) {
+                val current = _uiState.value
+                _uiState.value = current.copy(
+                    currentVersion = info.version,
+                    currentSn = info.sn,
+                    firmwareSnInput = if (current.firmwareSnInput.isEmpty() && info.sn != unknownText) {
+                        info.sn
+                    } else {
+                        current.firmwareSnInput
+                    }
+                )
+            }
+        }
     }
 
     fun setDisableOtaCheck(enabled: Boolean) {
@@ -66,21 +68,25 @@ class OtaSettingsViewModel(
 
     fun fetchOtaInfo(errorPrefix: String) {
         _uiState.value = _uiState.value.copy(isFetchingOtaInfo = true)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = repository.fetchOtaInfo()
-                _uiState.value = _uiState.value.copy(
-                    otaInfoResult = result,
-                    isFetchingOtaInfo = false
-                )
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        otaInfoResult = result,
+                        isFetchingOtaInfo = false
+                    )
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "读取OTA信息失败", e)
-                _uiState.value = _uiState.value.copy(
-                    isFetchingOtaInfo = false,
-                    errorDialogMessage = errorPrefix + e.message
-                )
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        isFetchingOtaInfo = false,
+                        errorDialogMessage = errorPrefix + e.message
+                    )
+                }
             }
-        }.start()
+        }
     }
 
     fun fetchFirmware(emptySnMessage: String) {

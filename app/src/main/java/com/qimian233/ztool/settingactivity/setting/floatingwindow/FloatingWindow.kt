@@ -52,6 +52,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.FloatingWindowRepository
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.viewmodel.FloatingWindowEffect
 import com.qimian233.ztool.viewmodel.FloatingWindowUiState
 import com.qimian233.ztool.viewmodel.FloatingWindowViewModel
@@ -338,7 +339,7 @@ private fun FloatingWindowContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Button(
+                    ZToolButton(
                         onClick = onNext,
                         enabled = !state.shouldBlockProgress,
                     ) {

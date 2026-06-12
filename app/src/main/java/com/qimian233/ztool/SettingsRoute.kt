@@ -198,10 +198,16 @@ fun SettingsThemeMainRoute(
         }
     }
 
+    val revealController = com.qimian233.ztool.ui.theme.LocalThemeRevealController.current
+
     ThemeSettingsRoute(
         state = uiState,
         onBack = onBack,
-        onFrontendStyleChanged = viewModel::setFrontendStyle,
+        onFrontendStyleChanged = { newStyle ->
+            if (newStyle != uiState.themeSettings.frontendStyle) {
+                revealController.triggerReveal(onAction = { viewModel.setFrontendStyle(newStyle) })
+            }
+        },
         onThemeModeChanged = viewModel::setThemeMode,
         onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
         onMaterialPaletteChanged = viewModel::setMaterialPalette,
@@ -791,24 +797,34 @@ private fun SettingsSection(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val isExpressive = LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive
-    ZToolCard(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(if (isExpressive) 12.dp else 0.dp)
-                .padding(vertical = if (isExpressive) 0.dp else 12.dp)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (!isExpressive && title != null) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
+            )
+        }
+        ZToolCard(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            if (title != null) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(if (isExpressive) 12.dp else 0.dp)
+                    .padding(vertical = if (isExpressive) 0.dp else 12.dp)
+            ) {
+                if (isExpressive && title != null) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                }
+                content()
             }
-            content()
         }
     }
 }

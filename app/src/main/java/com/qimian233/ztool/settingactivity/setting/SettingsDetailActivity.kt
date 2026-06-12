@@ -68,6 +68,8 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.utils.EmbeddingConfigManager
@@ -677,7 +679,7 @@ private fun SettingsDetailScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            ZToolExtendedFloatingActionButton(
                 onClick = onRestartScope,
                 icon = {
                     Icon(
@@ -994,31 +996,26 @@ private fun ConfigSelectionDialogContent(
                     .padding(top = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(
+                ZToolTextButton(
                     onClick = {
                         val selectedConfigs = selectedIndexes.map { configs[it] }
                         if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
-                    }
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
-                TextButton(
+                    },
+                    text = stringResource(R.string.delete),
+                    isPrimary = false
+                )
+                ZToolTextButton(
                     onClick = {
                         val selectedConfigs = selectedIndexes.map { configs[it] }
                         if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
-                    }
-                ) {
-                    Text(stringResource(R.string.flashAddedConfig))
-                }
+                    },
+                    text = stringResource(R.string.flashAddedConfig)
+                )
                 if (flashedConfigs.isNotEmpty()) {
-                    TextButton(onClick = onRestore) {
-                        Text(stringResource(R.string.restoreModule))
-                    }
+                    ZToolTextButton(onClick = onRestore, text = stringResource(R.string.restoreModule))
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onCancel) {
-                    Text(stringResource(R.string.cancel))
-                }
+                ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
             }
         }
     }
@@ -1112,16 +1109,13 @@ private fun FontInputDialogContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onCancel) {
-                    Text(stringResource(R.string.cancel))
-                }
-                TextButton(
+                ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
+                ZToolTextButton(
                     onClick = {
                         onConfirm(fontName.trim(), fontDescription.trim())
-                    }
-                ) {
-                    Text(stringResource(R.string.confirm_button))
-                }
+                    },
+                    text = stringResource(R.string.confirm_button)
+                )
             }
         }
     }

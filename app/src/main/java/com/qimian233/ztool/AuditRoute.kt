@@ -71,6 +71,8 @@ import com.qimian233.ztool.ui.components.ZToolPopupMenuField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.viewmodel.AuditUiState
 import com.qimian233.ztool.viewmodel.AuditViewModel
 import com.qimian233.ztool.viewmodel.ModuleOption
@@ -211,7 +213,7 @@ private fun AuditScreen(
         },
         floatingActionButton = {
             if (state.filteredLogEntries.isNotEmpty()) {
-                ExtendedFloatingActionButton(
+                ZToolExtendedFloatingActionButton(
                     onClick = {
                         scope.launch {
                             listState.animateScrollToItem(0)
@@ -660,14 +662,10 @@ private fun ClearLogsDialog(
         title = { Text(stringResource(R.string.clear_logs_title)) },
         text = { Text(stringResource(R.string.clear_logs_message)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.clear_button))
-            }
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.clear_button))
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
         }
     )
 }

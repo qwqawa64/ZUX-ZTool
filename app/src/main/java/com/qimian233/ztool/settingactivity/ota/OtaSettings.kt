@@ -52,6 +52,9 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
@@ -182,7 +185,7 @@ private fun OtaSettingsScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            ZToolExtendedFloatingActionButton(
                 onClick = onRestartScope,
                 icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                 text = { Text(stringResource(R.string.restart_yes)) }
@@ -314,7 +317,7 @@ private fun OtaInfoContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Button(
+        ZToolButton(
             onClick = onFetch,
             enabled = !isFetching
         ) {
@@ -410,7 +413,7 @@ private fun FirmwareContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Button(
+        ZToolButton(
             onClick = onFetch,
             enabled = !isFetching
         ) {
@@ -530,9 +533,7 @@ private fun ErrorDialog(
         title = { Text(stringResource(R.string.error_title)) },
         text = { Text(message) },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.confirm))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.confirm))
         }
     )
 }
@@ -555,14 +556,10 @@ private fun RestartScopeDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.restart_yes))
-            }
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
         }
     )
 }

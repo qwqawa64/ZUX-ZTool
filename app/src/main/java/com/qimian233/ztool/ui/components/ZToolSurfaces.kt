@@ -24,6 +24,15 @@ fun ZToolPageSurface(
     contentAlignment: Alignment = Alignment.TopStart,
     content: @Composable BoxScope.() -> Unit
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = contentAlignment,
+            content = content
+        )
+        return
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -41,13 +50,15 @@ fun ZToolCard(
     content: @Composable () -> Unit
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        MiuixCard(
+        val actualColor = if (containerColor == Color.Transparent || containerColor == MaterialTheme.colorScheme.surfaceContainer) {
+            top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.surfaceContainer
+        } else {
+            containerColor
+        }
+        top.yukonga.miuix.kmp.basic.Surface(
             modifier = modifier,
-            cornerRadius = 16.dp,
-            colors = MiuixCardDefaults.defaultColors(
-                color = containerColor,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            ),
+            shape = RoundedCornerShape(16.dp),
+            color = actualColor
         ) {
             content()
         }

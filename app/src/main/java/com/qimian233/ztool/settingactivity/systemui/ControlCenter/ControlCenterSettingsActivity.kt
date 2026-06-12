@@ -58,6 +58,8 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.ZToolTheme
+import com.qimian233.ztool.ui.components.ZToolButton
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsUiState
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsViewModel
 
@@ -134,9 +136,7 @@ fun ControlCenterSettingsRoute(
             title = { Text(stringResource(R.string.save_success_title)) },
             text = { Text(stringResource(R.string.date_format_saved_message)) },
             confirmButton = {
-                TextButton(onClick = viewModel::dismissSaveSuccessDialog) {
-                    Text(stringResource(R.string.restart_yes))
-                }
+                ZToolTextButton(onClick = viewModel::dismissSaveSuccessDialog, text = stringResource(R.string.restart_yes))
             }
         )
     }
@@ -353,7 +353,7 @@ private fun CustomDateConfig(
                 singleLine = true
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Button(onClick = onSaveDateFormat) {
+            ZToolButton(onClick = onSaveDateFormat) {
                 Text(stringResource(R.string.save))
             }
         }
@@ -403,7 +403,7 @@ private fun CustomDateConfig(
                         .background(Color(textColor), RoundedCornerShape(4.dp))
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Button(onClick = onPickTextColor) {
+                ZToolButton(onClick = onPickTextColor) {
                     Text(stringResource(R.string.pick_color))
                 }
             }
@@ -520,18 +520,14 @@ private fun ColorPickerDialog(
                             text = colorNames.getOrElse(index) { "#%08X".format(color) },
                             modifier = Modifier.weight(1f)
                         )
-                        TextButton(onClick = { onColorSelected(color) }) {
-                            Text(stringResource(R.string.confirm))
-                        }
+                        ZToolTextButton(onClick = { onColorSelected(color) }, text = stringResource(R.string.confirm))
                     }
                 }
             }
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
         }
     )
 }

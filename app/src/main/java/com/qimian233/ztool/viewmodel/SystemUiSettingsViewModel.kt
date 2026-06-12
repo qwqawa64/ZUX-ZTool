@@ -3,6 +3,9 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,14 +21,17 @@ class SystemUiSettingsViewModel(
     val uiState: StateFlow<SystemUiSettingsUiState> = _uiState.asStateFlow()
 
     fun loadSettings() {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                _uiState.value = repository.loadState()
+                val state = repository.loadState()
+                withContext(Dispatchers.Main) {
+                    _uiState.value = state
+                }
                 Log.d(TAG, "Settings loaded")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load settings: ${e.message}")
             }
-        }.start()
+        }
     }
 
     fun setNativeAodEnabled(
@@ -54,8 +60,8 @@ class SystemUiSettingsViewModel(
             try {
                 val result = repository.setNativeAodEnabled(enabled)
                 Log.d(TAG, "Native AOD command result: success=${result.success}, exitCode=${result.exitCode}")
-                if (!result.success) {
-                    withContext(Dispatchers.Main) {
+                withContext(Dispatchers.Main) {
+                    if (!result.success) {
                         _uiState.value = _uiState.value.copy(nativeAod = !enabled)
                         onFailure(result.error)
                     }
@@ -86,20 +92,24 @@ class SystemUiSettingsViewModel(
         )
         repository.saveLenovoAod(enabled)
 
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             if (repository.isNativeAodEnabled()) {
                 repository.setNativeAodEnabled(false)
-                _uiState.value = _uiState.value.copy(nativeAod = false)
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(nativeAod = false)
+                }
             }
-            _uiState.value = _uiState.value.copy(isAodSwitchProcessing = false)
-        }.start()
+            withContext(Dispatchers.Main) {
+                _uiState.value = _uiState.value.copy(isAodSwitchProcessing = false)
+            }
+        }
     }
 
     fun openLenovoAodSettings() {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.openLenovoAodSettings()
             Log.d(TAG, "Lenovo AOD settings result: $result")
-        }.start()
+        }
     }
 
     fun setNoChargeAnimation(enabled: Boolean) {
@@ -154,14 +164,14 @@ class SystemUiSettingsViewModel(
             }
         }
 
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = repository.forceStopWallpaperSettings()
                 Log.d(TAG, "Force stop wallpaper settings result: success=${result.success}")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to force stop wallpaper settings: ${e.message}")
             }
-        }.start()
+        }
     }
 
     companion object {

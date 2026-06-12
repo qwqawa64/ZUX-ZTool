@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.qimian233.ztool.ui.theme.FrontendStyle
@@ -183,26 +185,28 @@ fun ZToolSettingsSection(
         return
     }
 
-    ZToolCard(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            if (section.title != null) {
-                Text(
-                    text = section.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(titlePadding)
-                )
-            }
-
-            section.items.forEachIndexed { index, item ->
-                if (index > 0) {
-                    ZToolSettingsDivider()
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (section.title != null) {
+            Text(
+                text = section.title,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
+            )
+        }
+        ZToolCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
+                    .padding(vertical = 12.dp)
+            ) {
+                section.items.forEachIndexed { index, item ->
+                    if (index > 0) {
+                        ZToolSettingsDivider()
+                    }
+                    ZToolSettingItem(item = item)
                 }
-                ZToolSettingItem(item = item)
             }
         }
     }
@@ -220,6 +224,7 @@ private fun MaterialExpressiveSettingsSection(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .padding(12.dp)
         ) {
             if (section.title != null) {
