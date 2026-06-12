@@ -44,6 +44,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             );
             hookDisplayPowerControllerConstructor(lpparam.classLoader);
             hookDisplayPowerControllerInitialize(lpparam.classLoader);
+            hookDisplayPowerControllerScreenOnAnimation(lpparam.classLoader);
         } catch (Exception e) {
             logError("Failed to hook DisplayPowerController: ", e);
         }
@@ -142,9 +143,83 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
+    private void hookDisplayPowerControllerScreenOnAnimation(ClassLoader classLoader) {
+        XposedHelpers.findAndHookMethod(
+                DISPLAY_POWER_CONTROLLER,
+                classLoader,
+                "animateScreenStateChange",
+                int.class,
+                int.class,
+                boolean.class,
+                boolean.class,
+                boolean.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        if (tryStartPreparedScreenOnAnimation(param.thisObject,
+                                (Integer) param.args[0])) {
+                            param.setResult(null);
+                        }
+                    }
+                }
+        );
+    }
+
+    private boolean tryStartPreparedScreenOnAnimation(Object controller, int targetState) {
+        if (targetState != 2) {
+            return false;
+        }
+        Object powerState = getObjectField(controller, "mPowerState");
+        if (powerState == null
+                || !getBooleanField(powerState, "mColorFadePrepared")
+                || getFloatByMethod(powerState, "getColorFadeLevel", 1.0f) >= 1.0f) {
+            return false;
+        }
+        Object onAnimator = getObjectField(controller, "mColorFadeOnAnimator");
+        if (onAnimator == null) {
+            return false;
+        }
+
+        try {
+            XposedHelpers.callMethod(onAnimator, "cancel");
+            XposedHelpers.callMethod(onAnimator, "setDuration", SCREEN_ON_ANIMATION_DURATION_MS);
+            XposedHelpers.callMethod(onAnimator, "setFloatValues",
+                    new float[] {getFloatByMethod(powerState, "getColorFadeLevel", 0.0f), 1.0f});
+            XposedHelpers.callMethod(onAnimator, "start");
+            log("Started prepared screen-on color fade animation.");
+            return true;
+        } catch (Throwable t) {
+            logError("Failed to start prepared screen-on color fade animation: ", t);
+            return false;
+        }
+    }
+
     private void updateAnimationDurationFromPrefs() {
         PreferenceHelper prefs = PreferenceHelper.getInstance();
         SCREEN_OFF_ANIMATION_DURATION_MS = prefs.getInt("screen_on_off_animation_ms", 400);
         SCREEN_ON_ANIMATION_DURATION_MS = prefs.getInt("screen_on_off_animation_ms", 400);
+    }
+
+    private boolean getBooleanField(Object object, String fieldName) {
+        if (object == null) {
+            return false;
+        }
+        try {
+            return XposedHelpers.getBooleanField(object, fieldName);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private float getFloatByMethod(Object object, String methodName, float defaultValue) {
+        if (object == null) {
+            return defaultValue;
+        }
+        try {
+            Object result = XposedHelpers.callMethod(object, methodName);
+            return result instanceof Float ? (Float) result : defaultValue;
+        } catch (Throwable ignored) {
+            return defaultValue;
+        }
     }
 }
