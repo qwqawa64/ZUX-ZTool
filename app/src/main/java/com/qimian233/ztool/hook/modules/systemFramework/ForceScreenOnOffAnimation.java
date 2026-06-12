@@ -86,6 +86,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
     }
 
     private void hookDiagnostics(ClassLoader classLoader) {
+        if (! DEBUG) return;
         hookDisplayStateControllerDiagnostics(classLoader);
         hookDisplayPowerControllerDiagnostics(classLoader);
         hookDisplayPowerStateDiagnostics(classLoader);
@@ -296,6 +297,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private int getIntField(Object object, String fieldName) {
         if (object == null) {
             return 0;
@@ -307,6 +309,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private float getFloatField(Object object, String fieldName) {
         if (object == null) {
             return 0.0f;
@@ -318,6 +321,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private int callIntMethod(Object object, String methodName) {
         if (object == null) {
             return 0;
@@ -330,6 +334,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private float callFloatMethod(Object object, String methodName) {
         if (object == null) {
             return 0.0f;
