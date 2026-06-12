@@ -48,7 +48,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             );
             hookDisplayPowerControllerConstructor(lpparam.classLoader);
             hookDisplayPowerControllerInitialize(lpparam.classLoader);
-            hookDiagnostics(lpparam.classLoader);
+            //hookDiagnostics(lpparam.classLoader);
         } catch (Exception e) {
             logError("Failed to hook DisplayPowerController: ", e);
         }
@@ -115,6 +115,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 XposedHelpers.callMethod(offAnimator, "setDuration",
                         SCREEN_OFF_ANIMATION_DURATION_MS);
             }
+            //noinspection ConstantValue
             log("Configured color fade animator durations: on="
                     + getAnimatorDuration(onAnimator)
                     + ", off=" + getAnimatorDuration(offAnimator));
@@ -123,6 +124,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
+    @SuppressWarnings("unused")
     private void hookDiagnostics(ClassLoader classLoader) {
         if (! DEBUG) return;
         hookDisplayStateControllerDiagnostics(classLoader);
@@ -215,7 +217,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             XposedHelpers.callMethod(powerState, "setColorFadeLevel", 0.0f);
             XposedHelpers.callMethod(onAnimator, "cancel");
             XposedHelpers.callMethod(onAnimator, "setDuration", SCREEN_ON_ANIMATION_DURATION_MS);
-            XposedHelpers.callMethod(onAnimator, "setFloatValues", new float[] {0.0f, 1.0f});
+            XposedHelpers.callMethod(onAnimator, "setFloatValues", (Object) new float[] {0.0f, 1.0f});
             XposedHelpers.callMethod(onAnimator, "start");
             screenOnAnimationStarted = true;
             log("Forced screen-on color fade animator start.");
