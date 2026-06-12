@@ -18,6 +18,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             "com.android.server.display.DisplayPowerState";
     private static final String COLOR_FADE =
             "com.android.server.display.ColorFade";
+    private static boolean screenOnAnimationStarted = false;
 
     @Override
     public String getModuleName() {
@@ -123,6 +124,10 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) {
+                        int targetState = (Integer) param.args[0];
+                        if (targetState != 2) {
+                            screenOnAnimationStarted = false;
+                        }
                         log("DisplayPowerController.animateScreenStateChange before: targetState="
                                 + param.args[0]
                                 + ", reason=" + param.args[1]
@@ -134,11 +139,49 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
+                        maybeStartScreenOnAnimation(param);
                         log("DisplayPowerController.animateScreenStateChange after: "
                                 + describeDisplayPowerController(param.thisObject));
                     }
                 }
         );
+    }
+
+    private void maybeStartScreenOnAnimation(XC_MethodHook.MethodHookParam param) {
+        int targetState = (Integer) param.args[0];
+        boolean specialOnAnimation = (Boolean) param.args[4];
+        if (targetState != 2 || !specialOnAnimation || screenOnAnimationStarted) {
+            return;
+        }
+
+        Object powerState = getObjectField(param.thisObject, "mPowerState");
+        Object onAnimator = getObjectField(param.thisObject, "mColorFadeOnAnimator");
+        Object context = getObjectField(param.thisObject, "mContext");
+        if (powerState == null || onAnimator == null || context == null) {
+            log("Skip forced screen-on animation: powerState/onAnimator/context is null.");
+            return;
+        }
+        if (getBooleanField(powerState, "mColorFadePrepared")
+                || callFloatMethod(powerState, "getColorFadeLevel") < 1.0f) {
+            return;
+        }
+
+        try {
+            Object prepared = XposedHelpers.callMethod(powerState, "prepareColorFade", context, 2);
+            if (!(prepared instanceof Boolean) || !((Boolean) prepared)) {
+                log("Skip forced screen-on animation: prepareColorFade returned " + prepared);
+                return;
+            }
+
+            XposedHelpers.callMethod(powerState, "setColorFadeLevel", 0.0f);
+            XposedHelpers.callMethod(onAnimator, "cancel");
+            XposedHelpers.callMethod(onAnimator, "setFloatValues", new float[] {0.0f, 1.0f});
+            XposedHelpers.callMethod(onAnimator, "start");
+            screenOnAnimationStarted = true;
+            log("Forced screen-on color fade animator start.");
+        } catch (Throwable t) {
+            logError("Failed to force screen-on color fade animator: ", t);
+        }
     }
 
     private void hookDisplayPowerStateDiagnostics(ClassLoader classLoader) {
