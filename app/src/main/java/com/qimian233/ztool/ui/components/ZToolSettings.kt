@@ -259,97 +259,31 @@ fun <T> ZToolPopupMenuField(
     icon: ImageVector? = null,
     dialogTitle: String? = null
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val themeSpec = LocalZToolThemeSpec.current
-    val isMiuix = themeSpec.style == FrontendStyle.Miuix
-
-    Box(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .clickable(enabled = enabled && options.isNotEmpty()) {
-                    expanded = true
-                }
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (icon != null) {
-                ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
-                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-            }
-            Text(
-                text = value,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (enabled) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                modifier = Modifier.weight(1f)
+    ZToolSettingsNavigationEventProvider {
+        if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+            ZToolMiuixPopupMenuField(
+                value = value,
+                options = options,
+                optionLabel = optionLabel,
+                onOptionSelected = onOptionSelected,
+                modifier = modifier,
+                enabled = enabled,
+                icon = icon,
+                dialogTitle = dialogTitle
             )
-            IconButton(
-                enabled = enabled && options.isNotEmpty(),
-                onClick = { expanded = true },
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = if (isMiuix) MiuixIcons.ArrowUpDown else Icons.AutoMirrored.Rounded.ArrowForward,
-                    contentDescription = null,
-                    tint = if (enabled && options.isNotEmpty()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                    }
-                )
-            }
+            return@ZToolSettingsNavigationEventProvider
         }
 
-        androidx.compose.material3.DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .widthIn(min = 180.dp)
-                .background(
-                    if (isMiuix) {
-                        top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.surface
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainer
-                    }
-                )
-        ) {
-            options.forEach { option ->
-                val label = optionLabel(option)
-                val selected = label == value
-                
-                androidx.compose.material3.DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    },
-                    trailingIcon = if (selected) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    } else null,
-                    onClick = {
-                        onOptionSelected(option)
-                        expanded = false
-                    },
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
-                )
-            }
-        }
+        ZToolMaterialPopupMenuField(
+            value = value,
+            options = options,
+            optionLabel = optionLabel,
+            onOptionSelected = onOptionSelected,
+            modifier = modifier,
+            enabled = enabled,
+            icon = icon,
+            dialogTitle = dialogTitle
+        )
     }
 }
 
@@ -405,6 +339,230 @@ fun <T> ZToolPopupMenuSettingRow(
             enabled = enabled,
             dialogTitle = title,
             modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth)
+        )
+    }
+}
+
+@Composable
+private fun <T> ZToolMiuixPopupMenuField(
+    value: String,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: ImageVector? = null,
+    dialogTitle: String? = null
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = enabled && options.isNotEmpty()) {
+                    expanded = true
+                }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            }
+            Text(
+                text = value,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                enabled = enabled && options.isNotEmpty(),
+                onClick = { expanded = true },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = MiuixIcons.ArrowUpDown,
+                    contentDescription = null,
+                    tint = if (enabled && options.isNotEmpty()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    }
+                )
+            }
+        }
+
+        MiuixWindowListPopup(
+            show = expanded,
+            onDismissRequest = { expanded = false },
+            alignment = MiuixPopupPositionProvider.Align.End,
+            maxHeight = 360.dp,
+            minWidth = 0.dp
+        ) {
+            MiuixListPopupColumn {
+                options.forEach { option ->
+                    val label = optionLabel(option)
+                    val selected = label == value
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onOptionSelected(option)
+                                expanded = false
+                            }
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (selected) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T> ZToolMaterialPopupMenuField(
+    value: String,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: ImageVector? = null,
+    dialogTitle: String? = null
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    fun selectedIndex(): Int = options.indexOfFirst { optionLabel(it) == value }.coerceAtLeast(0)
+    var pendingIndex by remember(value, options) {
+        mutableStateOf(selectedIndex())
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled && options.isNotEmpty()) {
+                pendingIndex = selectedIndex()
+                showDialog = true
+            }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+        }
+        Text(
+            text = value,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            enabled = enabled && options.isNotEmpty(),
+            onClick = {
+                pendingIndex = selectedIndex()
+                showDialog = true
+            },
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                contentDescription = null,
+                tint = if (enabled && options.isNotEmpty()) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                }
+            )
+        }
+    }
+
+    if (showDialog) {
+        ZToolDialog(
+            onDismissRequest = { showDialog = false },
+            title = dialogTitle?.let { titleText ->
+                { Text(titleText) }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    options.forEachIndexed { index, option ->
+                        val selected = index == pendingIndex
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    color = if (selected) {
+                                        MaterialTheme.colorScheme.secondaryContainer
+                                    } else {
+                                        Color.Transparent
+                                    }
+                                )
+                                .clickable { pendingIndex = index }
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selected,
+                                onClick = { pendingIndex = index }
+                            )
+                            Text(
+                                text = optionLabel(option),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        options.getOrNull(pendingIndex)?.let(onOptionSelected)
+                        showDialog = false
+                    }
+                ) {
+                    Text(androidx.compose.ui.res.stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(androidx.compose.ui.res.stringResource(android.R.string.cancel))
+                }
+            }
         )
     }
 }
