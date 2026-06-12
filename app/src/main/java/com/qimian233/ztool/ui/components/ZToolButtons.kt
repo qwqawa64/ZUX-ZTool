@@ -17,7 +17,6 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 
 import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 @Composable
 fun ZToolButton(
@@ -70,13 +69,18 @@ fun ZToolTextButton(
     isPrimary: Boolean = true
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        MiuixTextButton(
-            text = text,
+        val colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
+        MiuixButton(
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
-            colors = if (isPrimary) MiuixButtonDefaults.textButtonColorsPrimary() else MiuixButtonDefaults.textButtonColors()
-        )
+            colors = colors
+        ) {
+            androidx.compose.material3.Text(
+                text = text,
+                color = if (enabled) colors.contentColor else colors.disabledContentColor
+            )
+        }
         return
     }
 

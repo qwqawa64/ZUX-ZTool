@@ -3,6 +3,7 @@ package com.qimian233.ztool.ui.theme
 import android.os.Build
 import android.content.res.Configuration
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -243,7 +244,13 @@ fun ZToolTheme(
 
                 MiuixTheme(
                     controller = controller,
-                    content = { movableContent() }
+                    content = { 
+                        top.yukonga.miuix.kmp.basic.Scaffold { paddingValues ->
+                            androidx.compose.foundation.layout.Box(modifier = androidx.compose.ui.Modifier.padding(paddingValues)) {
+                                movableContent()
+                            }
+                        }
+                    }
                 )
             } else {
                 MiuixTheme(
