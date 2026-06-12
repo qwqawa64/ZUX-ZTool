@@ -3,11 +3,15 @@ package com.qimian233.ztool.viewmodel
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.audit.LogParser.LogEntry
 import com.qimian233.ztool.data.audit.AuditRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AuditViewModel(
     private val repository: AuditRepository
@@ -105,7 +109,7 @@ class AuditViewModel(
     fun clearAllLogs(onResult: (Boolean, String?) -> Unit) {
         dismissClearDialog()
         setLoading(true)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.clearLogs()
                 allLogEntries.clear()
@@ -115,13 +119,17 @@ class AuditViewModel(
                     statsText = repository.statsText(emptyList(), emptyList()),
                     isLoading = false
                 )
-                onResult(true, null)
+                withContext(Dispatchers.Main) {
+                    onResult(true, null)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to clear logs", e)
-                setLoading(false)
-                onResult(false, e.message)
+                withContext(Dispatchers.Main) {
+                    setLoading(false)
+                    onResult(false, e.message)
+                }
             }
-        }.start()
+        }
     }
 
     fun showStatistics() {
@@ -136,17 +144,21 @@ class AuditViewModel(
 
     fun exportLogsToUri(uri: Uri, onResult: (Boolean, String?) -> Unit) {
         setLoading(true)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = repository.exportLogsToUri(uri)
-                setLoading(false)
-                onResult(result, null)
+                withContext(Dispatchers.Main) {
+                    setLoading(false)
+                    onResult(result, null)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to export logs", e)
-                setLoading(false)
-                onResult(false, e.message)
+                withContext(Dispatchers.Main) {
+                    setLoading(false)
+                    onResult(false, e.message)
+                }
             }
-        }.start()
+        }
     }
 
     fun buildLogDetails(entry: LogEntry): String = repository.buildLogDetails(entry)

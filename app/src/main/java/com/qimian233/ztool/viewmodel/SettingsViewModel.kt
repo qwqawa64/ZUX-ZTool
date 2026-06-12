@@ -3,15 +3,19 @@ package com.qimian233.ztool.viewmodel
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsViewModel(
     private val repository: SettingsRepository
@@ -29,22 +33,26 @@ class SettingsViewModel(
     fun backupFileName(): String = repository.backupFileName()
 
     fun backupConfig(uri: Uri, onResult: (Boolean) -> Unit) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching { repository.backupConfig(uri) }
                 .onFailure { Log.e(TAG, "Config backup failed", it) }
                 .getOrDefault(false)
-            onResult(result)
-        }.start()
+            withContext(Dispatchers.Main) {
+                onResult(result)
+            }
+        }
     }
 
     fun restoreConfig(uri: Uri, onResult: (Boolean) -> Unit) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching { repository.restoreConfig(uri) }
                 .onFailure { Log.e(TAG, "Config restore failed", it) }
                 .getOrDefault(false)
-            refresh()
-            onResult(result)
-        }.start()
+            withContext(Dispatchers.Main) {
+                refresh()
+                onResult(result)
+            }
+        }
     }
 
     fun showRestoreConfirmDialog() {

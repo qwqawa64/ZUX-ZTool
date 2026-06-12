@@ -2,11 +2,15 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
 import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FrameworkSettingsViewModel(
     private val repository: FrameworkSettingsRepository
@@ -86,12 +90,14 @@ class FrameworkSettingsViewModel(
 
     fun restartSystem(onFailure: (String) -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.restartSystem()
             if (!result.success) {
-                onFailure(result.error)
+                withContext(Dispatchers.Main) {
+                    onFailure(result.error)
+                }
             }
-        }.start()
+        }
     }
 
     companion object {

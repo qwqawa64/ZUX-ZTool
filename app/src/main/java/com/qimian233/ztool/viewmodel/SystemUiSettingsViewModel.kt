@@ -2,10 +2,14 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SystemUiSettingsViewModel(
     private val repository: SystemUiSettingsRepository
@@ -46,22 +50,28 @@ class SystemUiSettingsViewModel(
             onLenovoAodDisabled()
         }
 
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = repository.setNativeAodEnabled(enabled)
                 Log.d(TAG, "Native AOD command result: success=${result.success}, exitCode=${result.exitCode}")
                 if (!result.success) {
-                    _uiState.value = _uiState.value.copy(nativeAod = !enabled)
-                    onFailure(result.error)
+                    withContext(Dispatchers.Main) {
+                        _uiState.value = _uiState.value.copy(nativeAod = !enabled)
+                        onFailure(result.error)
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to set native AOD: ${e.message}")
-                _uiState.value = _uiState.value.copy(nativeAod = !enabled)
-                onFailure(e.message.orEmpty())
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(nativeAod = !enabled)
+                    onFailure(e.message.orEmpty())
+                }
             } finally {
-                _uiState.value = _uiState.value.copy(isAodSwitchProcessing = false)
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(isAodSwitchProcessing = false)
+                }
             }
-        }.start()
+        }
     }
 
     fun setLenovoAodEnabled(enabled: Boolean) {
@@ -125,18 +135,24 @@ class SystemUiSettingsViewModel(
             isRestartProcessing = true
         )
 
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = repository.forceStop(packageName)
-                onResult(result.success, result.error)
+                withContext(Dispatchers.Main) {
+                    onResult(result.success, result.error)
+                }
                 Log.d(TAG, "Force stop app result: success=${result.success}")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to force stop app: ${e.message}")
-                onResult(false, e.message.orEmpty())
+                withContext(Dispatchers.Main) {
+                    onResult(false, e.message.orEmpty())
+                }
             } finally {
-                _uiState.value = _uiState.value.copy(isRestartProcessing = false)
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(isRestartProcessing = false)
+                }
             }
-        }.start()
+        }
 
         Thread {
             try {

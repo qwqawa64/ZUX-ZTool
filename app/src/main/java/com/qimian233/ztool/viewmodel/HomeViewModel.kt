@@ -2,11 +2,15 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.HomeRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 class HomeViewModel(
@@ -91,10 +95,12 @@ class HomeViewModel(
     }
 
     fun executeReboot(target: RebootTarget, onResult: (Boolean, String) -> Unit) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.executeReboot(target.command)
-            onResult(result.success, result.error)
-        }.start()
+            withContext(Dispatchers.Main) {
+                onResult(result.success, result.error)
+            }
+        }
     }
 
     fun restartAfterConfigUpgrade() {

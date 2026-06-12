@@ -39,8 +39,9 @@ class SafeCenterSettingsRepository(
 
         return try {
             val appResult = shellExecutor.executeRootCommand("am force-stop $packageName", 5)
+            val appResult2nd = shellExecutor.executeRootCommand("am force-stop com.lenovo.safecenter", 5)
             val documentsResult = shellExecutor.executeRootCommand("am force-stop com.android.documentsui", 5)
-            val success = appResult.isSuccess && documentsResult.isSuccess
+            val success = (appResult.isSuccess || appResult2nd.isSuccess) && documentsResult.isSuccess
 
             if (success) {
                 Log.d(TAG, "Force stop result: success")
@@ -48,11 +49,16 @@ class SafeCenterSettingsRepository(
             } else {
                 Log.w(TAG, "am force-stop failed, trying killall")
                 val fallbackResult = shellExecutor.executeRootCommand("killall $packageName", 5)
+                val fallbackResult2nd = shellExecutor.executeRootCommand("killall com.lenovo.safecenter", 5)
                 Log.d(TAG, "Force stop result: failed")
-                if (fallbackResult.isSuccess) {
+                if (fallbackResult.isSuccess || fallbackResult2nd.isSuccess) {
                     SafeCenterRestartResult.Success
                 } else {
-                    SafeCenterRestartResult.Failure(fallbackResult.error)
+                    if (!fallbackResult.isSuccess) {
+                        SafeCenterRestartResult.Failure(fallbackResult.error)
+                    } else {
+                        SafeCenterRestartResult.Failure(fallbackResult2nd.error)
+                    }
                 }
             }
         } catch (e: Exception) {

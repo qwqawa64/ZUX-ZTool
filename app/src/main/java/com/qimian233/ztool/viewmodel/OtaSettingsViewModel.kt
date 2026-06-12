@@ -2,12 +2,16 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.ota.FirmwareFetchResult
 import com.qimian233.ztool.data.ota.OtaRestartResult
 import com.qimian233.ztool.data.ota.OtaSettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class OtaSettingsViewModel(
     private val repository: OtaSettingsRepository
@@ -121,12 +125,14 @@ class OtaSettingsViewModel(
 
     fun restartScope(packageName: String, onFailure: () -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.restartScope(packageName)
             if (result is OtaRestartResult.Failure) {
-                onFailure()
+                withContext(Dispatchers.Main) {
+                    onFailure()
+                }
             }
-        }.start()
+        }
     }
 
     companion object {

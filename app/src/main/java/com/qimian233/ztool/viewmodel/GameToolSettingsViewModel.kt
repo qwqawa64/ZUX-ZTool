@@ -2,11 +2,15 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.gametool.GameToolRestartResult
 import com.qimian233.ztool.data.gametool.GameToolSettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class GameToolSettingsViewModel(
     private val repository: GameToolSettingsRepository
@@ -69,12 +73,14 @@ class GameToolSettingsViewModel(
 
     fun forceStopPackage(packageName: String, onFailure: () -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.forceStopPackage(packageName)
             if (result is GameToolRestartResult.Failure) {
-                onFailure()
+                withContext(Dispatchers.Main) {
+                    onFailure()
+                }
             }
-        }.start()
+        }
     }
 
     companion object {
