@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -197,6 +198,7 @@ fun ZToolSettingsSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .animateContentSize()
                     .padding(vertical = 12.dp)
             ) {
                 section.items.forEachIndexed { index, item ->
@@ -222,6 +224,7 @@ private fun MaterialExpressiveSettingsSection(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .padding(12.dp)
         ) {
             if (section.title != null) {
