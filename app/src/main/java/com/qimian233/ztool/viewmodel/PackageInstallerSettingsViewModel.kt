@@ -2,10 +2,14 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.packageinstaller.PackageInstallerSettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PackageInstallerSettingsViewModel(
     private val repository: PackageInstallerSettingsRepository
@@ -61,12 +65,14 @@ class PackageInstallerSettingsViewModel(
 
     fun forceStopPackage(packageName: String, onFailure: () -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.forceStopPackage(packageName)
             if (!result.success) {
-                onFailure()
+                withContext(Dispatchers.Main) {
+                    onFailure()
+                }
             }
-        }.start()
+        }
     }
 
     companion object {

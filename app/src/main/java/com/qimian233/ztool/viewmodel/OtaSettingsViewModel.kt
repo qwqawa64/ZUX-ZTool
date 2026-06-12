@@ -2,12 +2,16 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.ota.FirmwareFetchResult
 import com.qimian233.ztool.data.ota.OtaRestartResult
 import com.qimian233.ztool.data.ota.OtaSettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class OtaSettingsViewModel(
     private val repository: OtaSettingsRepository
@@ -26,19 +30,21 @@ class OtaSettingsViewModel(
     }
 
     fun loadCurrentDeviceInfo(unknownText: String) {
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val info = repository.loadCurrentDeviceInfo()
-            val current = _uiState.value
-            _uiState.value = current.copy(
-                currentVersion = info.version,
-                currentSn = info.sn,
-                firmwareSnInput = if (current.firmwareSnInput.isEmpty() && info.sn != unknownText) {
-                    info.sn
-                } else {
-                    current.firmwareSnInput
-                }
-            )
-        }.start()
+            withContext(Dispatchers.Main) {
+                val current = _uiState.value
+                _uiState.value = current.copy(
+                    currentVersion = info.version,
+                    currentSn = info.sn,
+                    firmwareSnInput = if (current.firmwareSnInput.isEmpty() && info.sn != unknownText) {
+                        info.sn
+                    } else {
+                        current.firmwareSnInput
+                    }
+                )
+            }
+        }
     }
 
     fun setDisableOtaCheck(enabled: Boolean) {
@@ -62,21 +68,25 @@ class OtaSettingsViewModel(
 
     fun fetchOtaInfo(errorPrefix: String) {
         _uiState.value = _uiState.value.copy(isFetchingOtaInfo = true)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = repository.fetchOtaInfo()
-                _uiState.value = _uiState.value.copy(
-                    otaInfoResult = result,
-                    isFetchingOtaInfo = false
-                )
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        otaInfoResult = result,
+                        isFetchingOtaInfo = false
+                    )
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "读取OTA信息失败", e)
-                _uiState.value = _uiState.value.copy(
-                    isFetchingOtaInfo = false,
-                    errorDialogMessage = errorPrefix + e.message
-                )
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        isFetchingOtaInfo = false,
+                        errorDialogMessage = errorPrefix + e.message
+                    )
+                }
             }
-        }.start()
+        }
     }
 
     fun fetchFirmware(emptySnMessage: String) {
@@ -121,12 +131,14 @@ class OtaSettingsViewModel(
 
     fun restartScope(packageName: String, onFailure: () -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.restartScope(packageName)
             if (result is OtaRestartResult.Failure) {
-                onFailure()
+                withContext(Dispatchers.Main) {
+                    onFailure()
+                }
             }
-        }.start()
+        }
     }
 
     companion object {

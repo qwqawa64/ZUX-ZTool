@@ -2,11 +2,15 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.safecenter.SafeCenterRestartResult
 import com.qimian233.ztool.data.safecenter.SafeCenterSettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SafeCenterSettingsViewModel(
     private val repository: SafeCenterSettingsRepository
@@ -63,11 +67,13 @@ class SafeCenterSettingsViewModel(
             isRestartProcessing = true
         )
 
-        Thread {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.restartPackages(packageName)
-            onResult(result)
-            _uiState.value = _uiState.value.copy(isRestartProcessing = false)
-        }.start()
+            withContext(Dispatchers.Main) {
+                onResult(result)
+                _uiState.value = _uiState.value.copy(isRestartProcessing = false)
+            }
+        }
     }
 
     companion object {
