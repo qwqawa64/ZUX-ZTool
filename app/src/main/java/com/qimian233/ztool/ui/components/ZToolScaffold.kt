@@ -1,14 +1,18 @@
 package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -49,12 +53,30 @@ fun ZToolScaffold(
     } ?: modifier
 
     CompositionLocalProvider(LocalMiuixTopAppBarScrollBehavior provides scrollBehavior) {
-        Scaffold(
-            modifier = scaffoldModifier,
-            topBar = topBar,
-            floatingActionButton = floatingActionButton,
-            content = content
-        )
+        if (useMiuix) {
+            androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+                top.yukonga.miuix.kmp.basic.Scaffold(
+                    modifier = scaffoldModifier,
+                    topBar = topBar,
+                    content = content
+                )
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.BottomEnd)
+                        .padding(24.dp)
+                ) {
+                    floatingActionButton()
+                }
+            }
+        } else {
+            Scaffold(
+                modifier = scaffoldModifier,
+                topBar = topBar,
+                floatingActionButton = floatingActionButton,
+                containerColor = MaterialTheme.colorScheme.background,
+                content = content
+            )
+        }
     }
 }
 
@@ -72,8 +94,6 @@ fun ZToolTopAppBar(
             MiuixTopAppBar(
                 title = title,
                 modifier = modifier,
-                color = MaterialTheme.colorScheme.surface,
-                titleColor = MaterialTheme.colorScheme.onSurface,
                 navigationIcon = navigationIcon,
                 actions = actions,
                 scrollBehavior = LocalMiuixTopAppBarScrollBehavior.current,
@@ -82,8 +102,6 @@ fun ZToolTopAppBar(
             MiuixTopAppBar(
                 title = title,
                 modifier = modifier,
-                color = MaterialTheme.colorScheme.surface,
-                titleColor = MaterialTheme.colorScheme.onSurface,
                 actions = actions,
                 scrollBehavior = LocalMiuixTopAppBarScrollBehavior.current,
             )
@@ -116,6 +134,21 @@ fun ZToolNavigationRail(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        NavigationRail(
+            containerColor = top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            modifier = modifier
+        ) {
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.Center,
+                content = content
+            )
+        }
+        return
+    }
+
     NavigationRail(
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,

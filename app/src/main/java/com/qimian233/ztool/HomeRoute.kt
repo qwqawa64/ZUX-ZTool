@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -400,9 +401,31 @@ private fun UpdateCard(
 
 @Composable
 private fun ModuleStatusCard(state: HomeUiState) {
+    val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
+    val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
+    val isDefaultColor = !themeSpec.dynamicColorEnabled && !themeSpec.manualColorEnabled
+    val isGreen = isMiuix && state.isModuleActive && isDefaultColor
+    
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val containerColor = if (isGreen) {
+        if (isDark) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFFA5D6A7)
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val contentColor = if (isGreen) {
+        if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+    val iconColor = if (isGreen) {
+        if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+    
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        containerColor = containerColor,
         defaultElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -414,7 +437,7 @@ private fun ModuleStatusCard(state: HomeUiState) {
                     Text(
                         text = stringResource(R.string.environmentState),
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        color = contentColor.copy(alpha = 0.8f)
                     )
                     Text(
                         text = if (state.isModuleActive) {
@@ -424,19 +447,19 @@ private fun ModuleStatusCard(state: HomeUiState) {
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = contentColor
                     )
                 }
                 Icon(
                     imageVector = Icons.Rounded.CheckCircle,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = iconColor,
                     modifier = Modifier.size(32.dp)
                 )
             }
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 16.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                color = contentColor.copy(alpha = 0.2f)
             )
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -446,17 +469,17 @@ private fun ModuleStatusCard(state: HomeUiState) {
                 InfoBlock(
                     label = stringResource(R.string.version),
                     value = state.moduleVersion.ifBlank { stringResource(R.string.loading) },
-                    colorOnContainer = MaterialTheme.colorScheme.onPrimaryContainer
+                    colorOnContainer = contentColor
                 )
                 InfoBlock(
                     label = stringResource(R.string.root),
                     value = state.rootSource.ifBlank { stringResource(R.string.loading) },
-                    colorOnContainer = MaterialTheme.colorScheme.onPrimaryContainer
+                    colorOnContainer = contentColor
                 )
                 InfoBlock(
                     label = stringResource(R.string.framework),
                     value = state.frameworkVersion.ifBlank { stringResource(R.string.loading) },
-                    colorOnContainer = MaterialTheme.colorScheme.onPrimaryContainer
+                    colorOnContainer = contentColor
                 )
             }
         }
@@ -488,9 +511,18 @@ private fun InfoBlock(
 
 @Composable
 private fun SystemInfoCard(state: HomeUiState) {
+    val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
+    val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val containerColor = if (isMiuix) {
+        if (isDark) MaterialTheme.colorScheme.surfaceContainer else Color.White
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        containerColor = containerColor
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
@@ -536,6 +568,11 @@ private fun DeviceInfoItem(
     label: String,
     value: String
 ) {
+    val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
+    val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val valueColor = if (isMiuix && isDark) Color.White else Color.Unspecified
+    
     Column(modifier = Modifier.widthIn(min = 220.dp, max = 420.dp)) {
         Text(
             text = label,
@@ -546,11 +583,13 @@ private fun DeviceInfoItem(
             text = value.ifBlank { stringResource(R.string.placeHolderUnknown) },
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
+            color = valueColor,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
     }
 }
+
 
 @Composable
 private fun ConfigUpgradeDialog(

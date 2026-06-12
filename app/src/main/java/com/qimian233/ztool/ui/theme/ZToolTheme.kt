@@ -36,7 +36,9 @@ import top.yukonga.miuix.kmp.theme.lightColorScheme as miuixLightColorScheme
 data class ZToolThemeSpec(
     val style: FrontendStyle,
     val useExpressiveMotion: Boolean = true,
-    val tabletOnly: Boolean = true
+    val tabletOnly: Boolean = true,
+    val dynamicColorEnabled: Boolean = true,
+    val manualColorEnabled: Boolean = false
 )
 
 val LocalZToolThemeSpec = staticCompositionLocalOf {
@@ -189,7 +191,11 @@ fun ZToolTheme(
         }
     )
 
-    val themeSpec = ZToolThemeSpec(style = effectiveSettings.frontendStyle)
+    val themeSpec = ZToolThemeSpec(
+        style = effectiveSettings.frontendStyle,
+        dynamicColorEnabled = effectiveSettings.dynamicColorEnabled,
+        manualColorEnabled = effectiveSettings.manualColorEnabled
+    )
     val isMiuixStyle = effectiveSettings.frontendStyle == FrontendStyle.Miuix
     val movableContent = remember(content) { movableContentOf(content) }
     

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
@@ -29,13 +28,19 @@ fun ZToolButton(
     content: @Composable RowScope.() -> Unit
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        val colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
         MiuixButton(
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
-            colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors(),
-            content = content
-        )
+            colors = colors
+        ) {
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material3.LocalContentColor provides if (enabled) colors.contentColor else colors.disabledContentColor
+            ) {
+                content()
+            }
+        }
         return
     }
 
@@ -93,14 +98,19 @@ fun ZToolExtendedFloatingActionButton(
     isPrimary: Boolean = true
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        val colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
         MiuixButton(
             onClick = onClick,
             modifier = modifier,
-            colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
+            colors = colors
         ) {
-            icon()
-            Spacer(modifier = Modifier.width(8.dp))
-            text()
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material3.LocalContentColor provides colors.contentColor
+            ) {
+                icon()
+                Spacer(modifier = Modifier.width(8.dp))
+                text()
+            }
         }
         return
     }
@@ -121,12 +131,17 @@ fun ZToolFloatingActionButton(
     content: @Composable () -> Unit
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        val colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
         MiuixButton(
             onClick = onClick,
             modifier = modifier,
-            colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
+            colors = colors
         ) {
-            content()
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material3.LocalContentColor provides colors.contentColor
+            ) {
+                content()
+            }
         }
         return
     }
