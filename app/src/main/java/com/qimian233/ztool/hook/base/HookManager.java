@@ -29,6 +29,7 @@ import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemFramework.AiInputExpand;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
+import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
@@ -156,6 +157,8 @@ public class HookManager {
         registerHookModule(new AlwaysDisplaySuggestion());
         // 注册模块: 应用信息补全
         registerHookModule(new AppInfoHeaderDetailsHook());
+        // 注册模块: 启用亮灭屏动画
+        registerHookModule(new ForceScreenOnOffAnimation());
         initialized = true;
     }
 
