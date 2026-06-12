@@ -28,3 +28,12 @@ jobs:
       run: chmod +x gradlew
     - name: Build debug with Gradle
       run: ./gradlew assembleDebug
+
+    - name: Upload debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ZTool-debug-apk
+        path: |
+          app/build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/debug/output-metadata.json
+        if-no-files-found: error
