@@ -18,6 +18,9 @@ class FrameworkSettingsRepository(
             disableFlagSecure = prefsUtils.loadBooleanSetting(KEY_DISABLE_FLAG_SECURE, false),
             aiInputExpand = prefsUtils.loadBooleanSetting(KEY_AI_INPUT_EXPAND, false),
             forceOnOffAnimation = prefsUtils.loadBooleanSetting(KEY_FORCE_ON_OFF_ANIMATION, false),
+            forceOnOffAnimationDuration = normalizeScreenOnOffAnimationDuration(
+                prefsUtils.loadIntegerSetting(KEY_SCREEN_ON_OFF_ANIMATION_DURATION, 400)
+            ),
             aiInputSigns = aiInputSigns,
             aiInputSignsError = validateAiInputSigns(aiInputSigns)
         )
@@ -47,6 +50,22 @@ class FrameworkSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_FORCE_ON_OFF_ANIMATION, value)
     }
 
+    fun saveScreenOnOffAnimationDuration(value: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_SCREEN_ON_OFF_ANIMATION_DURATION,
+            normalizeScreenOnOffAnimationDuration(value)
+        )
+    }
+
+    fun normalizeScreenOnOffAnimationDuration(value: Int): Int {
+        val clampedValue = value.coerceIn(
+            SCREEN_ON_OFF_ANIMATION_MIN_MS,
+            SCREEN_ON_OFF_ANIMATION_MAX_MS
+        )
+        return ((clampedValue + SCREEN_ON_OFF_ANIMATION_STEP_MS / 2) /
+            SCREEN_ON_OFF_ANIMATION_STEP_MS) * SCREEN_ON_OFF_ANIMATION_STEP_MS
+    }
+
     fun validateAiInputSigns(input: String): String? {
         if (input.isEmpty()) return null
         if (input.contains("\uFF0C")) return context.getString(R.string.custom_detector_err)
@@ -74,6 +93,10 @@ class FrameworkSettingsRepository(
         private const val KEY_AI_INPUT_EXPAND = "ai_input_expand"
         private const val KEY_AI_INPUT_EXPAND_SIGNS = "AI_INPUT_EXPAND_SIGNS"
         private const val KEY_FORCE_ON_OFF_ANIMATION = "force_screen_on_off_animation"
+        private const val KEY_SCREEN_ON_OFF_ANIMATION_DURATION = "screen_on_off_animation_ms"
+        private const val SCREEN_ON_OFF_ANIMATION_MIN_MS = 0
+        private const val SCREEN_ON_OFF_ANIMATION_MAX_MS = 1000
+        private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
     }
 }
 

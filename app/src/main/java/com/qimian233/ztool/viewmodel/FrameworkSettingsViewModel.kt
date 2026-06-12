@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
-import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +43,12 @@ class FrameworkSettingsViewModel(
     fun setForceOnOffAnimation(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(forceOnOffAnimation = enabled)
         repository.saveForceScreenOnOffAnimation(enabled)
+    }
+
+    fun setOnOffScreenAnimationDuration(value: Int) {
+        val snappedValue = repository.normalizeScreenOnOffAnimationDuration(value)
+        _uiState.value = _uiState.value.copy(forceOnOffAnimationDuration = snappedValue)
+        repository.saveScreenOnOffAnimationDuration(snappedValue)
     }
 
     fun setAiInputExpand(enabled: Boolean) {
@@ -114,5 +119,6 @@ data class FrameworkSettingsUiState(
     val aiInputSignsError: String? = null,
     val showAiInputInfoDialog: Boolean = false,
     val showRestartConfirmDialog: Boolean = false,
-    val forceOnOffAnimation: Boolean = false
+    val forceOnOffAnimation: Boolean = false,
+    val forceOnOffAnimationDuration: Int = 400,
 )

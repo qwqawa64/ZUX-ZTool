@@ -767,4 +767,5 @@
     <string name="app_details_completion_summary">Add packagename, SDK info, installation, update and install source info to APP detail page</string>
     <string name="force_on_off_animation">Enable screen on/off animation</string>
     <string name="force_on_off_animation_summary">Get a more elegant screen on/off experience</string>
+    <string name="screen_on_off_animation_duration">Set duration of on/off screen animator</string>
 </resources>

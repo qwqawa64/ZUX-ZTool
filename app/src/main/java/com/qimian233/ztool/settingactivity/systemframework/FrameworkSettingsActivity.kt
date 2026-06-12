@@ -3,9 +3,11 @@ package com.qimian233.ztool.settingactivity.systemframework
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,6 +55,7 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 @Composable
 fun FrameworkSettingsRoute(
@@ -85,6 +89,7 @@ fun FrameworkSettingsRoute(
         onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
         onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
         onForceOnOffAnimationChanged = viewModel::setForceOnOffAnimation,
+        onForceOnOffAnimationDurationChanged = viewModel::setOnOffScreenAnimationDuration,
         onAiInputExpandChanged = viewModel::setAiInputExpand,
         onAiInputSignsChanged = viewModel::setAiInputSigns,
         onShowAiInputInfo = viewModel::showAiInputInfoDialog
@@ -134,6 +139,7 @@ private fun FrameworkSettingsScreen(
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
+    onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
@@ -179,6 +185,7 @@ private fun FrameworkSettingsScreen(
                         onAllowGetPackagesChanged = onAllowGetPackagesChanged,
                         onDisableFlagSecureChanged = onDisableFlagSecureChanged,
                         onForceOnOffAnimationChanged = onForceOnOffAnimationChanged,
+                        onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged,
                         onAiInputExpandChanged = onAiInputExpandChanged,
                         onAiInputSignsChanged = onAiInputSignsChanged,
                         onShowAiInputInfo = onShowAiInputInfo
@@ -197,6 +204,7 @@ private fun frameworkSettingsSections(
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
+    onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
@@ -233,6 +241,14 @@ private fun frameworkSettingsSections(
                     summary = stringResource(R.string.force_on_off_animation_summary),
                     checked = state.forceOnOffAnimation,
                     onCheckedChange = onForceOnOffAnimationChanged
+                ),
+                SettingItem.Custom(
+                    content = {
+                        ScreenOnOffAnimationDuration(
+                            state = state,
+                            onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged
+                        )
+                    }
                 )
             )
         ),
@@ -252,6 +268,58 @@ private fun frameworkSettingsSections(
             )
         )
     )
+}
+
+@Composable
+private fun ScreenOnOffAnimationDuration(
+    state: FrameworkSettingsUiState,
+    onForceOnOffAnimationDurationChanged: (Int) -> Unit,
+) {
+    if (state.forceOnOffAnimation) {
+        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Text(
+                text = stringResource(R.string.screen_on_off_animation_duration),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+            Row (
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+            ) {
+                Slider(
+                    value = state.forceOnOffAnimationDuration.toFloat(),
+                    onValueChange = {
+                        onForceOnOffAnimationDurationChanged(
+                            snapToAnimationDuration(it)
+                        )
+                    },
+                    steps = ANIMATION_DURATION_STEPS,
+                    valueRange = 0f..1000f,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = state.forceOnOffAnimationDuration.toString() + "ms",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .width(100.dp)
+                        .padding(start = 24.dp, top = 8.dp)
+                )
+            }
+        }
+
+    }
+}
+
+private const val ANIMATION_DURATION_MIN_MS = 0
+private const val ANIMATION_DURATION_MAX_MS = 1000
+private const val ANIMATION_DURATION_STEP_MS = 50
+private const val ANIMATION_DURATION_STEPS =
+    (ANIMATION_DURATION_MAX_MS - ANIMATION_DURATION_MIN_MS) / ANIMATION_DURATION_STEP_MS - 1
+
+private fun snapToAnimationDuration(value: Float): Int {
+    return ((value / ANIMATION_DURATION_STEP_MS).roundToInt() * ANIMATION_DURATION_STEP_MS)
+        .coerceIn(ANIMATION_DURATION_MIN_MS, ANIMATION_DURATION_MAX_MS)
 }
 
 @Composable

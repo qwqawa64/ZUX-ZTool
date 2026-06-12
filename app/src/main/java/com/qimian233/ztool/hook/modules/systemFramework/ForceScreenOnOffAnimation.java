@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemFramework;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.PreferenceHelper;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
@@ -12,15 +13,8 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             "com.android.server.display.DisplayPowerController";
     private static final String DISPLAY_POWER_CONTROLLER_INJECTOR =
             DISPLAY_POWER_CONTROLLER + "$Injector";
-    private static final String DISPLAY_STATE_CONTROLLER =
-            "com.android.server.display.state.DisplayStateController";
-    private static final String DISPLAY_POWER_STATE =
-            "com.android.server.display.DisplayPowerState";
-    private static final String COLOR_FADE =
-            "com.android.server.display.ColorFade";
-    private static final long SCREEN_ON_ANIMATION_DURATION_MS = 250L;
-    private static final long SCREEN_OFF_ANIMATION_DURATION_MS = 400L;
-    private static boolean screenOnAnimationStarted = false;
+    private static long SCREEN_ON_ANIMATION_DURATION_MS = 400L;
+    private static long SCREEN_OFF_ANIMATION_DURATION_MS = 250L;
 
     @Override
     public String getModuleName() {
@@ -37,7 +31,9 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         if (!"android".equals(lpparam.packageName)) {
             return;
         }
-
+        this.updateAnimationDurationFromPrefs();
+        log("Screen on animation duration (ms): " + SCREEN_ON_ANIMATION_DURATION_MS);
+        log("Screen off animation duration (ms): " + SCREEN_OFF_ANIMATION_DURATION_MS);
         try {
             log("Executing hook for DisplayPowerController screen on/off animation...");
             XposedHelpers.findAndHookMethod(
@@ -48,7 +44,6 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             );
             hookDisplayPowerControllerConstructor(lpparam.classLoader);
             hookDisplayPowerControllerInitialize(lpparam.classLoader);
-            //hookDiagnostics(lpparam.classLoader);
         } catch (Exception e) {
             logError("Failed to hook DisplayPowerController: ", e);
         }
@@ -124,200 +119,6 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
-    @SuppressWarnings("unused")
-    private void hookDiagnostics(ClassLoader classLoader) {
-        if (! DEBUG) return;
-        hookDisplayStateControllerDiagnostics(classLoader);
-        hookDisplayPowerControllerDiagnostics(classLoader);
-        hookDisplayPowerStateDiagnostics(classLoader);
-        hookColorFadeDiagnostics(classLoader);
-    }
-
-    private void hookDisplayStateControllerDiagnostics(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod(
-                DISPLAY_STATE_CONTROLLER,
-                classLoader,
-                "shouldPerformScreenOffTransition",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        log("DisplayStateController.shouldPerformScreenOffTransition result="
-                                + param.getResult()
-                                + ", perform=" + getBooleanField(param.thisObject,
-                                        "mPerformScreenOffTransition")
-                                + ", skip=" + getBooleanField(param.thisObject,
-                                        "mShouldSkipScreenOffTransition"));
-                    }
-                }
-        );
-    }
-
-    private void hookDisplayPowerControllerDiagnostics(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod(
-                DISPLAY_POWER_CONTROLLER,
-                classLoader,
-                "animateScreenStateChange",
-                int.class,
-                int.class,
-                boolean.class,
-                boolean.class,
-                boolean.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        int targetState = (Integer) param.args[0];
-                        if (targetState != 2) {
-                            screenOnAnimationStarted = false;
-                        }
-                        log("DisplayPowerController.animateScreenStateChange before: targetState="
-                                + param.args[0]
-                                + ", reason=" + param.args[1]
-                                + ", performOffTransition=" + param.args[2]
-                                + ", skipBecauseOfProximity=" + param.args[3]
-                                + ", specialOnAnimation=" + param.args[4]
-                                + ", " + describeDisplayPowerController(param.thisObject));
-                    }
-
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        maybeStartScreenOnAnimation(param);
-                        log("DisplayPowerController.animateScreenStateChange after: "
-                                + describeDisplayPowerController(param.thisObject));
-                    }
-                }
-        );
-    }
-
-    private void maybeStartScreenOnAnimation(XC_MethodHook.MethodHookParam param) {
-        int targetState = (Integer) param.args[0];
-        boolean specialOnAnimation = (Boolean) param.args[4];
-        if (targetState != 2 || !specialOnAnimation || screenOnAnimationStarted) {
-            return;
-        }
-
-        Object powerState = getObjectField(param.thisObject, "mPowerState");
-        Object onAnimator = getObjectField(param.thisObject, "mColorFadeOnAnimator");
-        Object context = getObjectField(param.thisObject, "mContext");
-        if (powerState == null || onAnimator == null || context == null) {
-            log("Skip forced screen-on animation: powerState/onAnimator/context is null.");
-            return;
-        }
-        if (getBooleanField(powerState, "mColorFadePrepared")
-                || callFloatMethod(powerState, "getColorFadeLevel") < 1.0f) {
-            return;
-        }
-
-        try {
-            Object prepared = XposedHelpers.callMethod(powerState, "prepareColorFade", context, 2);
-            if (!(prepared instanceof Boolean) || !((Boolean) prepared)) {
-                log("Skip forced screen-on animation: prepareColorFade returned " + prepared);
-                return;
-            }
-
-            XposedHelpers.callMethod(powerState, "setColorFadeLevel", 0.0f);
-            XposedHelpers.callMethod(onAnimator, "cancel");
-            XposedHelpers.callMethod(onAnimator, "setDuration", SCREEN_ON_ANIMATION_DURATION_MS);
-            XposedHelpers.callMethod(onAnimator, "setFloatValues", (Object) new float[] {0.0f, 1.0f});
-            XposedHelpers.callMethod(onAnimator, "start");
-            screenOnAnimationStarted = true;
-            log("Forced screen-on color fade animator start.");
-        } catch (Throwable t) {
-            logError("Failed to force screen-on color fade animator: ", t);
-        }
-    }
-
-    private void hookDisplayPowerStateDiagnostics(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod(
-                DISPLAY_POWER_STATE,
-                classLoader,
-                "prepareColorFade",
-                XposedHelpers.findClass("android.content.Context", classLoader),
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        log("DisplayPowerState.prepareColorFade mode=" + param.args[1]
-                                + ", result=" + param.getResult()
-                                + ", " + describeDisplayPowerState(param.thisObject));
-                    }
-                }
-        );
-        XposedHelpers.findAndHookMethod(
-                DISPLAY_POWER_STATE,
-                classLoader,
-                "setColorFadeLevel",
-                float.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        log("DisplayPowerState.setColorFadeLevel level=" + param.args[0]
-                                + ", " + describeDisplayPowerState(param.thisObject));
-                    }
-                }
-        );
-    }
-
-    private void hookColorFadeDiagnostics(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod(
-                COLOR_FADE,
-                classLoader,
-                "showSurface",
-                float.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        log("ColorFade.showSurface alpha=" + param.args[0]
-                                + ", result=" + param.getResult()
-                                + ", mode=" + getIntField(param.thisObject, "mMode")
-                                + ", prepared=" + getBooleanField(param.thisObject, "mPrepared")
-                                + ", visible=" + getBooleanField(param.thisObject, "mSurfaceVisible")
-                                + ", surfaceAlpha=" + getFloatField(param.thisObject,
-                                        "mSurfaceAlpha"));
-                    }
-                }
-        );
-    }
-
-    private String describeDisplayPowerController(Object controller) {
-        Object powerState = getObjectField(controller, "mPowerState");
-        Object onAnimator = getObjectField(controller, "mColorFadeOnAnimator");
-        Object offAnimator = getObjectField(controller, "mColorFadeOffAnimator");
-        return "colorFadeEnabled=" + getBooleanField(controller, "mColorFadeEnabled")
-                + ", colorFadeFades=" + getBooleanField(controller, "mColorFadeFadesConfig")
-                + ", pendingScreenOff=" + getBooleanField(controller, "mPendingScreenOff")
-                + ", powerRequest=" + getObjectField(controller, "mPowerRequest")
-                + ", powerState={" + describeDisplayPowerState(powerState) + "}"
-                + ", onAnimatorStarted=" + isAnimatorStarted(onAnimator)
-                + ", onAnimatorDuration=" + getAnimatorDuration(onAnimator)
-                + ", offAnimatorStarted=" + isAnimatorStarted(offAnimator)
-                + ", offAnimatorDuration=" + getAnimatorDuration(offAnimator);
-    }
-
-    private String describeDisplayPowerState(Object powerState) {
-        if (powerState == null) {
-            return "null";
-        }
-        return "screenState=" + callIntMethod(powerState, "getScreenState")
-                + ", colorFadeLevel=" + callFloatMethod(powerState, "getColorFadeLevel")
-                + ", colorFadePrepared=" + getBooleanField(powerState, "mColorFadePrepared")
-                + ", colorFadeReady=" + getBooleanField(powerState, "mColorFadeReady")
-                + ", colorFadeDrawPending=" + getBooleanField(powerState,
-                        "mColorFadeDrawPending")
-                + ", screenReady=" + getBooleanField(powerState, "mScreenReady");
-    }
-
-    private boolean isAnimatorStarted(Object animator) {
-        if (animator == null) {
-            return false;
-        }
-        try {
-            Object result = XposedHelpers.callMethod(animator, "isStarted");
-            return result instanceof Boolean && (Boolean) result;
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
     private long getAnimatorDuration(Object animator) {
         if (animator == null) {
             return -1L;
@@ -341,64 +142,9 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
-    private boolean getBooleanField(Object object, String fieldName) {
-        if (object == null) {
-            return false;
-        }
-        try {
-            return XposedHelpers.getBooleanField(object, fieldName);
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private int getIntField(Object object, String fieldName) {
-        if (object == null) {
-            return 0;
-        }
-        try {
-            return XposedHelpers.getIntField(object, fieldName);
-        } catch (Throwable ignored) {
-            return 0;
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private float getFloatField(Object object, String fieldName) {
-        if (object == null) {
-            return 0.0f;
-        }
-        try {
-            return XposedHelpers.getFloatField(object, fieldName);
-        } catch (Throwable ignored) {
-            return 0.0f;
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private int callIntMethod(Object object, String methodName) {
-        if (object == null) {
-            return 0;
-        }
-        try {
-            Object result = XposedHelpers.callMethod(object, methodName);
-            return result instanceof Integer ? (Integer) result : 0;
-        } catch (Throwable ignored) {
-            return 0;
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private float callFloatMethod(Object object, String methodName) {
-        if (object == null) {
-            return 0.0f;
-        }
-        try {
-            Object result = XposedHelpers.callMethod(object, methodName);
-            return result instanceof Float ? (Float) result : 0.0f;
-        } catch (Throwable ignored) {
-            return 0.0f;
-        }
+    private void updateAnimationDurationFromPrefs() {
+        PreferenceHelper prefs = PreferenceHelper.getInstance();
+        SCREEN_OFF_ANIMATION_DURATION_MS = prefs.getInt("screen_on_off_animation_ms", 400);
+        SCREEN_ON_ANIMATION_DURATION_MS = prefs.getInt("screen_on_off_animation_ms", 400);
     }
 }
