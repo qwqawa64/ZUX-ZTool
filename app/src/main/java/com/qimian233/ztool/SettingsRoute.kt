@@ -204,7 +204,9 @@ fun SettingsThemeMainRoute(
         state = uiState,
         onBack = onBack,
         onFrontendStyleChanged = { newStyle ->
-            revealController.triggerReveal(onAction = { viewModel.setFrontendStyle(newStyle) })
+            if (newStyle != uiState.themeSettings.frontendStyle) {
+                revealController.triggerReveal(onAction = { viewModel.setFrontendStyle(newStyle) })
+            }
         },
         onThemeModeChanged = viewModel::setThemeMode,
         onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
