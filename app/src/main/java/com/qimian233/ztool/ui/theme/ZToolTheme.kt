@@ -24,7 +24,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import top.yukonga.miuix.kmp.theme.Colors
+import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.theme.ThemeColorSpec
+import top.yukonga.miuix.kmp.theme.ThemeController
+import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
 import top.yukonga.miuix.kmp.theme.darkColorScheme as miuixDarkColorScheme
 import top.yukonga.miuix.kmp.theme.lightColorScheme as miuixLightColorScheme
 
@@ -185,15 +189,59 @@ fun ZToolTheme(
     )
 
     val themeSpec = ZToolThemeSpec(style = effectiveSettings.frontendStyle)
+    val isMiuixStyle = effectiveSettings.frontendStyle == FrontendStyle.Miuix
     val themedContent: @Composable () -> Unit = {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = MaterialTheme.typography,
         ) {
-            MiuixTheme(
-                colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
-                content = content
-            )
+            if (isMiuixStyle) {
+                val miuixMode = when (effectiveSettings.themeMode) {
+                    ThemeMode.FollowSystem -> if (effectiveSettings.dynamicColorEnabled || effectiveSettings.manualColorEnabled) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
+                    ThemeMode.Light -> if (effectiveSettings.dynamicColorEnabled || effectiveSettings.manualColorEnabled) ColorSchemeMode.MonetLight else ColorSchemeMode.Light
+                    ThemeMode.Dark -> if (effectiveSettings.dynamicColorEnabled || effectiveSettings.manualColorEnabled) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
+                }
+
+                val miuixPalette = when (effectiveSettings.materialPalette) {
+                    MaterialPalette.TonalSpot -> ThemePaletteStyle.TonalSpot
+                    MaterialPalette.Neutral -> ThemePaletteStyle.Neutral
+                    MaterialPalette.Vibrant -> ThemePaletteStyle.Vibrant
+                    MaterialPalette.Expressive -> ThemePaletteStyle.Expressive
+                    MaterialPalette.Rainbow -> ThemePaletteStyle.Rainbow
+                    MaterialPalette.FruitSalad -> ThemePaletteStyle.FruitSalad
+                    MaterialPalette.MonoChrome -> ThemePaletteStyle.Monochrome
+                    MaterialPalette.Fidelity -> ThemePaletteStyle.Fidelity
+                    MaterialPalette.Content -> ThemePaletteStyle.Content
+                }
+
+                val miuixSpec = when (effectiveSettings.materialColorSpec) {
+                    MaterialColorSpec.Spec2021 -> ThemeColorSpec.Spec2021
+                    MaterialColorSpec.Spec2025 -> ThemeColorSpec.Spec2025
+                }
+
+                val miuixKeyColor = if (effectiveSettings.manualColorEnabled) {
+                    colorFromArgbLong(effectiveSettings.manualSeedColor)
+                } else null
+
+                val controller = remember(miuixMode, miuixKeyColor, miuixPalette, miuixSpec) {
+                    ThemeController(
+                        colorSchemeMode = miuixMode,
+                        keyColor = miuixKeyColor,
+                        paletteStyle = miuixPalette,
+                        colorSpec = miuixSpec
+                    )
+                }
+
+                MiuixTheme(
+                    controller = controller,
+                    content = content
+                )
+            } else {
+                MiuixTheme(
+                    colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
+                    content = content
+                )
+            }
         }
     }
 
