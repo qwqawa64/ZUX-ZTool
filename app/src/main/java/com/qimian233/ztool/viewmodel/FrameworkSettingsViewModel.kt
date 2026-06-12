@@ -3,6 +3,7 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
+import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,11 @@ class FrameworkSettingsViewModel(
     fun setDisableFlagSecure(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(disableFlagSecure = enabled)
         repository.saveDisableFlagSecure(enabled)
+    }
+
+    fun setForceOnOffAnimation(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(forceOnOffAnimation = enabled)
+        repository.saveForceScreenOnOffAnimation(enabled)
     }
 
     fun setAiInputExpand(enabled: Boolean) {
@@ -101,5 +107,6 @@ data class FrameworkSettingsUiState(
     val aiInputSigns: String = "",
     val aiInputSignsError: String? = null,
     val showAiInputInfoDialog: Boolean = false,
-    val showRestartConfirmDialog: Boolean = false
+    val showRestartConfirmDialog: Boolean = false,
+    val forceOnOffAnimation: Boolean = false
 )

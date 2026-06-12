@@ -17,6 +17,7 @@ class FrameworkSettingsRepository(
             keepRotation = prefsUtils.loadBooleanSetting(KEY_KEEP_ROTATION, false),
             disableFlagSecure = prefsUtils.loadBooleanSetting(KEY_DISABLE_FLAG_SECURE, false),
             aiInputExpand = prefsUtils.loadBooleanSetting(KEY_AI_INPUT_EXPAND, false),
+            forceOnOffAnimation = prefsUtils.loadBooleanSetting(KEY_FORCE_ON_OFF_ANIMATION, false),
             aiInputSigns = aiInputSigns,
             aiInputSignsError = validateAiInputSigns(aiInputSigns)
         )
@@ -40,6 +41,10 @@ class FrameworkSettingsRepository(
 
     fun saveAiInputSigns(value: String) {
         prefsUtils.saveStringSetting(KEY_AI_INPUT_EXPAND_SIGNS, value)
+    }
+
+    fun saveForceScreenOnOffAnimation (value: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_FORCE_ON_OFF_ANIMATION, value)
     }
 
     fun validateAiInputSigns(input: String): String? {
@@ -68,6 +73,7 @@ class FrameworkSettingsRepository(
         private const val KEY_DISABLE_FLAG_SECURE = "disable_flag_secure"
         private const val KEY_AI_INPUT_EXPAND = "ai_input_expand"
         private const val KEY_AI_INPUT_EXPAND_SIGNS = "AI_INPUT_EXPAND_SIGNS"
+        private const val KEY_FORCE_ON_OFF_ANIMATION = "force_screen_on_off_animation"
     }
 }
 

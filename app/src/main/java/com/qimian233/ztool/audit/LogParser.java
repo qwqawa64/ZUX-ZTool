@@ -151,6 +151,8 @@ public class LogParser {
                 Pattern.compile("\\[disable_flag_secure]\\s*(.*)"));
         MODULE_PATTERNS.put("ai_input_expand",
                 Pattern.compile("\\[ai_input_expand]\\s*(.*)"));
+        MODULE_PATTERNS.put("force_screen_on_off_animation",
+                Pattern.compile("\\[force_screen_on_off_animation]\\s*(.*)"));
 
         // 安全中心相关
         MODULE_PATTERNS.put("default_enable_autorun",
@@ -231,6 +233,7 @@ public class LogParser {
         MODULE_NAMES.put("NoMorePasswordPer24H", "无需每24H验证一次锁屏密码");
         MODULE_NAMES.put("disable_flag_secure", "强制允许截屏");
         MODULE_NAMES.put("ai_input_expand", "自定义AI全局输入触发符");
+        MODULE_NAMES.put("force_screen_on_off_animation", "开启亮灭屏动画");
 
         // 安全中心相关
         MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
@@ -622,7 +625,8 @@ public class LogParser {
 
         // 系统框架相关
         categories.put("系统框架", Arrays.asList(
-                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H", "disable_flag_secure", "ai_input_expand"
+                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H", "disable_flag_secure", "ai_input_expand",
+                "force_screen_on_off_animation"
         ));
 
         // 安全中心相关

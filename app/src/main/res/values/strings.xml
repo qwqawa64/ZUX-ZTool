@@ -817,4 +817,6 @@
     <string name="back_to_top">回顶部</string>
     <string name="app_details_completion">补全应用信息</string>
     <string name="app_details_completion_summary">为设置的应用页面补全应用包名、SDK信息、安装和更新信息以及安装来源</string>
+    <string name="force_on_off_animation">启用亮灭屏渐变动画</string>
+    <string name="force_on_off_animation_summary">获取更加优雅的亮灭屏效果</string>
 </resources>

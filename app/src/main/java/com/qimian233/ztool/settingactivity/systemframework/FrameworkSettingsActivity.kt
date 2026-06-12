@@ -84,6 +84,7 @@ fun FrameworkSettingsRoute(
         onKeepRotationChanged = viewModel::setKeepRotation,
         onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
         onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
+        onForceOnOffAnimationChanged = viewModel::setForceOnOffAnimation,
         onAiInputExpandChanged = viewModel::setAiInputExpand,
         onAiInputSignsChanged = viewModel::setAiInputSigns,
         onShowAiInputInfo = viewModel::showAiInputInfoDialog
@@ -132,6 +133,7 @@ private fun FrameworkSettingsScreen(
     onKeepRotationChanged: (Boolean) -> Unit,
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
+    onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
@@ -176,6 +178,7 @@ private fun FrameworkSettingsScreen(
                         onKeepRotationChanged = onKeepRotationChanged,
                         onAllowGetPackagesChanged = onAllowGetPackagesChanged,
                         onDisableFlagSecureChanged = onDisableFlagSecureChanged,
+                        onForceOnOffAnimationChanged = onForceOnOffAnimationChanged,
                         onAiInputExpandChanged = onAiInputExpandChanged,
                         onAiInputSignsChanged = onAiInputSignsChanged,
                         onShowAiInputInfo = onShowAiInputInfo
@@ -193,6 +196,7 @@ private fun frameworkSettingsSections(
     onKeepRotationChanged: (Boolean) -> Unit,
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
+    onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
@@ -223,6 +227,12 @@ private fun frameworkSettingsSections(
                     summary = stringResource(R.string.disable_flag_secure_summary),
                     checked = state.disableFlagSecure,
                     onCheckedChange = onDisableFlagSecureChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.force_on_off_animation),
+                    summary = stringResource(R.string.force_on_off_animation_summary),
+                    checked = state.forceOnOffAnimation,
+                    onCheckedChange = onForceOnOffAnimationChanged
                 )
             )
         ),

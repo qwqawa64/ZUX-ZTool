@@ -15,7 +15,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
 
     @Override
     public String getModuleName() {
-        return "ForceScreenOnOffAnimation";
+        return "force_screen_on_off_animation";
     }
 
     @Override
