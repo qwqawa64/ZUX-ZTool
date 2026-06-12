@@ -40,7 +40,7 @@ jobs:
         if-no-files-found: error
 
     - name: Prepare release keystore
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/')
       env:
         ZTOOL_RELEASE_KEYSTORE_BASE64: ${{ secrets.ZTOOL_RELEASE_KEYSTORE_BASE64 }}
         ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
