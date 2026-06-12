@@ -37,3 +37,37 @@ jobs:
           app/build/outputs/apk/debug/*.apk
           app/build/outputs/apk/debug/output-metadata.json
         if-no-files-found: error
+
+    - name: Prepare release keystore
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      env:
+        ZTOOL_RELEASE_KEYSTORE_BASE64: ${{ secrets.ZTOOL_RELEASE_KEYSTORE_BASE64 }}
+        ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
+        ZTOOL_RELEASE_KEY_ALIAS: ${{ secrets.ZTOOL_RELEASE_KEY_ALIAS }}
+        ZTOOL_RELEASE_KEY_PASSWORD: ${{ secrets.ZTOOL_RELEASE_KEY_PASSWORD }}
+      run: |
+        test -n "$ZTOOL_RELEASE_KEYSTORE_BASE64"
+        test -n "$ZTOOL_RELEASE_STORE_PASSWORD"
+        test -n "$ZTOOL_RELEASE_KEY_ALIAS"
+        test -n "$ZTOOL_RELEASE_KEY_PASSWORD"
+        printf '%s' "$ZTOOL_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ztool-release.jks"
+        chmod 600 "$RUNNER_TEMP/ztool-release.jks"
+
+    - name: Build signed release with Gradle
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      env:
+        ZTOOL_RELEASE_STORE_FILE: ${{ runner.temp }}/ztool-release.jks
+        ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
+        ZTOOL_RELEASE_KEY_ALIAS: ${{ secrets.ZTOOL_RELEASE_KEY_ALIAS }}
+        ZTOOL_RELEASE_KEY_PASSWORD: ${{ secrets.ZTOOL_RELEASE_KEY_PASSWORD }}
+      run: ./gradlew assembleRelease
+
+    - name: Upload signed release APK
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: ZTool-release-signed-apk
+        path: |
+          app/build/outputs/apk/release/*.apk
+          app/build/outputs/apk/release/output-metadata.json
+        if-no-files-found: error

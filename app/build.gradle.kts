@@ -24,6 +24,24 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+val releaseSigningEnvironment = mapOf(
+    "ZTOOL_RELEASE_STORE_FILE" to System.getenv("ZTOOL_RELEASE_STORE_FILE"),
+    "ZTOOL_RELEASE_STORE_PASSWORD" to System.getenv("ZTOOL_RELEASE_STORE_PASSWORD"),
+    "ZTOOL_RELEASE_KEY_ALIAS" to System.getenv("ZTOOL_RELEASE_KEY_ALIAS"),
+    "ZTOOL_RELEASE_KEY_PASSWORD" to System.getenv("ZTOOL_RELEASE_KEY_PASSWORD")
+)
+val releaseSigningEnabled = releaseSigningEnvironment.values.all { !it.isNullOrBlank() }
+val partialReleaseSigningEnvironment = releaseSigningEnvironment
+    .filterValues { !it.isNullOrBlank() }
+    .keys
+
+if (!releaseSigningEnabled && partialReleaseSigningEnvironment.isNotEmpty()) {
+    error(
+        "Incomplete release signing environment. Required variables: " +
+            releaseSigningEnvironment.keys.joinToString()
+    )
+}
+
 android {
     namespace = "com.qimian233.ztool"
     compileSdk = 37
@@ -39,10 +57,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigningEnabled) {
+            create("release") {
+                storeFile = file(releaseSigningEnvironment.getValue("ZTOOL_RELEASE_STORE_FILE")!!)
+                storePassword = releaseSigningEnvironment.getValue("ZTOOL_RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigningEnvironment.getValue("ZTOOL_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigningEnvironment.getValue("ZTOOL_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (releaseSigningEnabled) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
