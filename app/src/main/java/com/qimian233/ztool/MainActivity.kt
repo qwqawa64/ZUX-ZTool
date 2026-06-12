@@ -98,14 +98,16 @@ class MainActivity : ComponentActivity(),
 
         setContent {
             ZToolTheme(settings = themeSettings) {
-                MainTabletShell(
-                    environmentReady = isEnvironmentReady,
-                    selectedRoute = currentRoute,
-                    themeSettings = themeSettings,
-                    onDestinationSelected = ::navigateFromRail,
-                    onEnvironmentStateChanged = ::onEnvironmentStateChanged,
-                    onRouteChanged = ::setCurrentRouteFromHost
-                )
+                com.qimian233.ztool.ui.theme.ThemeRevealProvider {
+                    MainTabletShell(
+                        environmentReady = isEnvironmentReady,
+                        selectedRoute = currentRoute,
+                        themeSettings = themeSettings,
+                        onDestinationSelected = ::navigateFromRail,
+                        onEnvironmentStateChanged = ::onEnvironmentStateChanged,
+                        onRouteChanged = ::setCurrentRouteFromHost
+                    )
+                }
             }
         }
 

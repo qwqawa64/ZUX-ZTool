@@ -245,11 +245,7 @@ fun ZToolTheme(
                 MiuixTheme(
                     controller = controller,
                     content = { 
-                        top.yukonga.miuix.kmp.basic.Scaffold { paddingValues ->
-                            androidx.compose.foundation.layout.Box(modifier = androidx.compose.ui.Modifier.padding(paddingValues)) {
-                                movableContent()
-                            }
-                        }
+                        movableContent()
                     }
                 )
             } else {

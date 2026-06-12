@@ -198,10 +198,14 @@ fun SettingsThemeMainRoute(
         }
     }
 
+    val revealController = com.qimian233.ztool.ui.theme.LocalThemeRevealController.current
+
     ThemeSettingsRoute(
         state = uiState,
         onBack = onBack,
-        onFrontendStyleChanged = viewModel::setFrontendStyle,
+        onFrontendStyleChanged = { newStyle ->
+            revealController.triggerReveal(onAction = { viewModel.setFrontendStyle(newStyle) })
+        },
         onThemeModeChanged = viewModel::setThemeMode,
         onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
         onMaterialPaletteChanged = viewModel::setMaterialPalette,
