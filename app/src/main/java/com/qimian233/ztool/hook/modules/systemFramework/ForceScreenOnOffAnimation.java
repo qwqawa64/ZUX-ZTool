@@ -18,6 +18,8 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             "com.android.server.display.DisplayPowerState";
     private static final String COLOR_FADE =
             "com.android.server.display.ColorFade";
+    private static final long SCREEN_ON_ANIMATION_DURATION_MS = 250L;
+    private static final long SCREEN_OFF_ANIMATION_DURATION_MS = 400L;
     private static boolean screenOnAnimationStarted = false;
 
     @Override
@@ -45,6 +47,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                     XC_MethodReplacement.returnConstant(true)
             );
             hookDisplayPowerControllerConstructor(lpparam.classLoader);
+            hookDisplayPowerControllerInitialize(lpparam.classLoader);
             hookDiagnostics(lpparam.classLoader);
         } catch (Exception e) {
             logError("Failed to hook DisplayPowerController: ", e);
@@ -83,6 +86,41 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                     }
                 }
         );
+    }
+
+    private void hookDisplayPowerControllerInitialize(ClassLoader classLoader) {
+        XposedHelpers.findAndHookMethod(
+                DISPLAY_POWER_CONTROLLER,
+                classLoader,
+                "initialize",
+                int.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        configureColorFadeAnimators(param.thisObject);
+                    }
+                }
+        );
+    }
+
+    private void configureColorFadeAnimators(Object controller) {
+        Object onAnimator = getObjectField(controller, "mColorFadeOnAnimator");
+        Object offAnimator = getObjectField(controller, "mColorFadeOffAnimator");
+        try {
+            if (onAnimator != null) {
+                XposedHelpers.callMethod(onAnimator, "setDuration",
+                        SCREEN_ON_ANIMATION_DURATION_MS);
+            }
+            if (offAnimator != null) {
+                XposedHelpers.callMethod(offAnimator, "setDuration",
+                        SCREEN_OFF_ANIMATION_DURATION_MS);
+            }
+            log("Configured color fade animator durations: on="
+                    + getAnimatorDuration(onAnimator)
+                    + ", off=" + getAnimatorDuration(offAnimator));
+        } catch (Throwable t) {
+            logError("Failed to configure color fade animator durations: ", t);
+        }
     }
 
     private void hookDiagnostics(ClassLoader classLoader) {
@@ -176,6 +214,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
 
             XposedHelpers.callMethod(powerState, "setColorFadeLevel", 0.0f);
             XposedHelpers.callMethod(onAnimator, "cancel");
+            XposedHelpers.callMethod(onAnimator, "setDuration", SCREEN_ON_ANIMATION_DURATION_MS);
             XposedHelpers.callMethod(onAnimator, "setFloatValues", new float[] {0.0f, 1.0f});
             XposedHelpers.callMethod(onAnimator, "start");
             screenOnAnimationStarted = true;
@@ -247,7 +286,9 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 + ", powerRequest=" + getObjectField(controller, "mPowerRequest")
                 + ", powerState={" + describeDisplayPowerState(powerState) + "}"
                 + ", onAnimatorStarted=" + isAnimatorStarted(onAnimator)
-                + ", offAnimatorStarted=" + isAnimatorStarted(offAnimator);
+                + ", onAnimatorDuration=" + getAnimatorDuration(onAnimator)
+                + ", offAnimatorStarted=" + isAnimatorStarted(offAnimator)
+                + ", offAnimatorDuration=" + getAnimatorDuration(offAnimator);
     }
 
     private String describeDisplayPowerState(Object powerState) {
@@ -272,6 +313,18 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             return result instanceof Boolean && (Boolean) result;
         } catch (Throwable ignored) {
             return false;
+        }
+    }
+
+    private long getAnimatorDuration(Object animator) {
+        if (animator == null) {
+            return -1L;
+        }
+        try {
+            Object result = XposedHelpers.callMethod(animator, "getDuration");
+            return result instanceof Long ? (Long) result : -1L;
+        } catch (Throwable ignored) {
+            return -1L;
         }
     }
 
