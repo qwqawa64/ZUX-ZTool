@@ -23,7 +23,7 @@ fun createPlatformComposeDialog(
     val composeView = ComposeView(context).apply {
         bindOwners(context)
         setContent {
-            ZToolTheme {
+            ZToolTheme(isPlatformDialog = true) {
                 content(dialog)
             }
         }

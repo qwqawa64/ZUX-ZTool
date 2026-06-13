@@ -140,6 +140,7 @@ fun ZToolTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     settings: ZToolThemeSettings? = null,
+    isPlatformDialog: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -245,8 +246,12 @@ fun ZToolTheme(
                 MiuixTheme(
                     controller = controller,
                     content = { 
-                        top.yukonga.miuix.kmp.basic.Scaffold { _ ->
+                        if (isPlatformDialog) {
                             movableContent()
+                        } else {
+                            top.yukonga.miuix.kmp.basic.Scaffold { _ ->
+                                movableContent()
+                            }
                         }
                     }
                 )

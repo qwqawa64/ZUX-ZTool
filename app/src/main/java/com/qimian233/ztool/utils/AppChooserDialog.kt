@@ -45,6 +45,8 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import java.util.concurrent.Executors
 
+import com.qimian233.ztool.ui.components.ZToolDialogSurface
+
 object AppChooserDialog {
     interface AppSelectionCallback {
         fun onSelected(selectedApps: List<AppInfo>)
@@ -195,7 +197,7 @@ object AppChooserDialog {
 
 @Composable
 private fun LoadingContent(message: String) {
-    Surface(color = MaterialTheme.colorScheme.surface) {
+    ZToolDialogSurface {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -238,7 +240,7 @@ private fun AppChooserContent(
         }
     }
 
-    Surface(color = MaterialTheme.colorScheme.surface) {
+    ZToolDialogSurface {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
