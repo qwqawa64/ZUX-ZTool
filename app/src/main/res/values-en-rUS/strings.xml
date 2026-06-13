@@ -437,8 +437,6 @@
     <string name="AlwaysDisplaySuggestionsTitle">Show suggestions on Settings home</string>
     <string name="AlwaysDisplaySuggestionsSummary">"Pretend the device is brand new and unused"</string>
     <string name="restart_fail_simple">Restart failed</string>
-    <string name="Disable_ScanAPK_Title">Skip security scan</string>
-    <string name="Disable_ScanAPK_Summary">Skip security scan to save time.</string>
     <string name="sec_title_function">Security</string>
     <string name="OnlyAllow_Title">Always grant app permissions</string>
     <string name="OnlyAllow_Summary">Always allow permissions required by apps during installation.</string>
@@ -770,6 +768,4 @@
     <string name="screen_on_off_animation_duration">Set duration of on/off screen animator</string>
     <string name="disable_all_virus_scan">Block virus scan</string>
     <string name="disable_all_virus_scan_summary">Block virus scan operation in safe center</string>
-    <string name="disable_virus_popup">Disable \"Virus Alert\" popup</string>
-    <string name="disable_virus_popup_summary">Just a comfort, this feature does not block scan or database I/O</string>
 </resources>

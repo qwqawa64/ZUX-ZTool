@@ -17,7 +17,6 @@ class SafeCenterSettingsRepository(
             defaultEnableAutorun = prefsUtils.loadBooleanSetting(KEY_DEFAULT_ENABLE_AUTORUN, false),
             blockSafeCenterScan = prefsUtils.loadBooleanSetting(KEY_BLOCK_SAFE_CENTER_SCAN, false),
             disableAllVirusScan = prefsUtils.loadBooleanSetting(KEY_DISABLE_ALL_VIRUS_SCANS, false),
-            disableVirusPopup = prefsUtils.loadBooleanSetting(KEY_DISABLE_VIRUS_POPUP, false),
             documentsUiBypass = prefsUtils.loadBooleanSetting(KEY_DOCUMENTS_UI_BYPASS, false)
         )
     }
@@ -36,10 +35,6 @@ class SafeCenterSettingsRepository(
 
     fun saveDisableAllVirusScan(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISABLE_ALL_VIRUS_SCANS, enabled)
-    }
-
-    fun saveDisableVirusPopup(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_DISABLE_VIRUS_POPUP, enabled)
     }
 
     fun restartPackages(packageName: String): SafeCenterRestartResult {
@@ -83,7 +78,6 @@ class SafeCenterSettingsRepository(
         private const val KEY_BLOCK_SAFE_CENTER_SCAN = "block_safecenter_scan"
         private const val KEY_DOCUMENTS_UI_BYPASS = "documents_ui_bypass"
         private const val KEY_DISABLE_ALL_VIRUS_SCANS = "disable_all_virus_scans"
-        private const val KEY_DISABLE_VIRUS_POPUP = "disable_virus_popup"
     }
 }
 

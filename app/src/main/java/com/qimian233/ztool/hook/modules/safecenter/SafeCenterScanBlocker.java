@@ -2,7 +2,6 @@ package com.qimian233.ztool.hook.modules.safecenter;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -52,10 +51,4 @@ public class SafeCenterScanBlocker extends BaseHookModule {
         }
     }
 
-    // 利用XSharedPreferences来读取设备ROM所在区域
-    private String getRomRegion() {
-        return  new XSharedPreferences("com.qimian233.ztool",
-                "xposed_module_config")
-                .getString("RomRegion", "ROW");
-    }
 }

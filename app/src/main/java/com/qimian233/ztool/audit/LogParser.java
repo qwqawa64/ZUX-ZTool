@@ -161,10 +161,6 @@ public class LogParser {
                 Pattern.compile("\\[block_safecenter_scan]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_all_virus_scans",
                 Pattern.compile("\\[disable_all_virus_scans]\\s*(.*)"));
-        MODULE_PATTERNS.put("disable_install_scan",
-                Pattern.compile("\\[disable_install_scan]\\s*(.*)"));
-        MODULE_PATTERNS.put("disable_virus_popup",
-                Pattern.compile("\\[disable_virus_popup]\\s*(.*)"));
 
         // 文件相关
         MODULE_PATTERNS.put("documents_ui_bypass",
@@ -245,8 +241,6 @@ public class LogParser {
         MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
         MODULE_NAMES.put("block_safecenter_scan", "阻止安全中心扫描");
         MODULE_NAMES.put("disable_all_virus_scans", "阻止安全中心扫描病毒");
-        MODULE_NAMES.put("disable_install_scan", "禁用安装病毒扫描");
-        MODULE_NAMES.put("disable_virus_popup", "禁用发现病毒弹窗");
 
         // 壁纸相关
         MODULE_NAMES.put("charge_animation_fix", "充电动画列表修复");
@@ -640,8 +634,7 @@ public class LogParser {
 
         // 安全中心相关
         categories.put("安全中心", Arrays.asList(
-                "default_enable_autorun", "block_safecenter_scan", "disable_all_virus_scans",
-                "disable_install_scan", "disable_virus_popup"
+                "default_enable_autorun", "block_safecenter_scan", "disable_all_virus_scans"
         ));
 
         // 壁纸相关
