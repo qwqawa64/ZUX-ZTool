@@ -653,8 +653,6 @@
     <string name="default_allow_autorun_title">Background behavior management</string>
     <string name="default_allow_autorun_enable_title">Allow app auto-start by default</string>
     <string name="default_allow_autorun_enable_summary">Allow all apps to auto-start by default.</string>
-    <string name="DisableSafeScanTitle">Disable security scan</string>
-    <string name="DisableSafeScanSummary">Block Lenovo Safe Center\'s seven-day background security scan to prevent virus warning popups.</string>
     <string name="empty_package_name_message">App package name is empty</string>
     <string name="app_process_restarted_message">App process restarted</string>
     <string name="restart_fail_prefix">Restart failed: </string>
@@ -768,4 +766,6 @@
     <string name="screen_on_off_animation_duration">Set duration of on/off screen animator</string>
     <string name="disable_all_virus_scan">Block virus scan</string>
     <string name="disable_all_virus_scan_summary">Block virus scan operation in safe center</string>
+    <string name="Disable_ScanAPK_Title">Skip security scan</string>
+    <string name="Disable_ScanAPK_Summary">Skip security scan to save time.</string>
 </resources>

@@ -71,7 +71,6 @@ fun SafeCenterSettingsRoute(
         onBack = onBack,
         onRestart = viewModel::showRestartConfirmDialog,
         onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
-        onBlockSafeCenterScanChanged = viewModel::setBlockSafeCenterScan,
         onDisableAllVirusScanChanged = viewModel::setDisableAllVirusScan,
         onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
     )
@@ -133,7 +132,6 @@ internal fun SafeCenterSettingsScreen(
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
-    onBlockSafeCenterScanChanged: (Boolean) -> Unit,
     onDisableAllVirusScanChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ) {
@@ -175,7 +173,6 @@ internal fun SafeCenterSettingsScreen(
                     sections = safeCenterSettingsSections(
                         state = state,
                         onDefaultEnableAutorunChanged = onDefaultEnableAutorunChanged,
-                        onBlockSafeCenterScanChanged = onBlockSafeCenterScanChanged,
                         onDisableAllVirusScanChanged = onDisableAllVirusScanChanged,
                         onDocumentsUiBypassChanged = onDocumentsUiBypassChanged
                     ),
@@ -190,7 +187,6 @@ internal fun SafeCenterSettingsScreen(
 internal fun safeCenterSettingsSections(
     state: SafeCenterSettingsUiState,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
-    onBlockSafeCenterScanChanged: (Boolean) -> Unit,
     onDisableAllVirusScanChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ): List<SettingSection> {
@@ -203,12 +199,6 @@ internal fun safeCenterSettingsSections(
                     summary = stringResource(R.string.default_allow_autorun_enable_summary),
                     checked = state.defaultEnableAutorun,
                     onCheckedChange = onDefaultEnableAutorunChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.DisableSafeScanTitle),
-                    summary = stringResource(R.string.DisableSafeScanSummary),
-                    checked = state.blockSafeCenterScan,
-                    onCheckedChange = onBlockSafeCenterScanChanged
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.disable_all_virus_scan),

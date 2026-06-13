@@ -32,6 +32,7 @@ public class DisableAllVirusScans extends BaseHookModule {
         blockIconNumChange(lpparam);
         blockDynamicIconSettings(lpparam);
         forceActiveViewNormalIcon(lpparam);
+        disableAutoScan(lpparam);
     }
 
     private void hookGetManager(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -195,6 +196,28 @@ public class DisableAllVirusScans extends BaseHookModule {
 
     private boolean isSafeCenterIconSetting(String key) {
         return KEY_DYNAMIC_ICONS.equals(key) || KEY_SAFE_CENTER_ICON.equals(key);
+    }
+
+    private void disableAutoScan(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            XposedHelpers.findAndHookMethod(
+                    "com.lenovo.safecenter.antivirus.autoscan.AutoOverallScan",
+                    lpparam.classLoader,
+                    "LocalOverallScanVirus",
+                    android.content.Context.class,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam param) {
+                            // 直接返回null，阻止自动扫描执行
+                            log("Auto virus scan blocked at entry point");
+                            return null;
+                        }
+                    }
+            );
+            log("Successfully hooked SafeCenter auto scan entry");
+        } catch (Throwable t) {
+            logError("Failed to hook SafeCenter auto scan", t);
+        }
     }
 
 }
