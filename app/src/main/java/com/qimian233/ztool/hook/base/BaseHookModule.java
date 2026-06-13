@@ -76,7 +76,7 @@ public abstract class BaseHookModule {
      */
     public void safeHandleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         refreshDebugLoggingEnabled();
-        if (!supportsPackage(lpparam.packageName) || Arrays.asList(getTargetPackages()).contains(lpparam.packageName))
+        if (!supportsPackage(lpparam.packageName))
             return; // If not supported, return directly.
         if (!isEnabled()) {
             if (DEBUG)
