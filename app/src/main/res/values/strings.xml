@@ -818,6 +818,6 @@
     <string name="force_on_off_animation">启用亮灭屏渐变动画</string>
     <string name="force_on_off_animation_summary">获取更加优雅的亮灭屏效果</string>
     <string name="screen_on_off_animation_duration">设置亮灭屏动画时长</string>
-    <string name="disable_all_virus_scan">禁止病毒扫描</string>
-    <string name="disable_all_virus_scan_summary">禁止在安全中心内进行病毒扫描操作</string>
+    <string name="disable_all_virus_scan">禁止病毒提示</string>
+    <string name="disable_all_virus_scan_summary">禁止在安全中心内提示病毒，暂时无法解决桌面图标提示病毒。启用后请清除一次安全中心的应用数据</string>
 </resources>

@@ -764,8 +764,8 @@
     <string name="force_on_off_animation">Enable screen on/off animation</string>
     <string name="force_on_off_animation_summary">Get a more elegant screen on/off experience</string>
     <string name="screen_on_off_animation_duration">Set duration of on/off screen animator</string>
-    <string name="disable_all_virus_scan">Block virus scan</string>
-    <string name="disable_all_virus_scan_summary">Block virus scan operation in safe center</string>
+    <string name="disable_all_virus_scan">Block virus alert</string>
+    <string name="disable_all_virus_scan_summary">Block virus alert in safe center, unable to handle launcher alert icon. Wipe app data of safe center after enabling this hook</string>
     <string name="Disable_ScanAPK_Title">Skip security scan</string>
     <string name="Disable_ScanAPK_Summary">Skip security scan to save time.</string>
 </resources>
