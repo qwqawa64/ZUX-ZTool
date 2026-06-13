@@ -4,7 +4,6 @@ import android.util.Log;
 
 import com.qimian233.ztool.config.ModuleConfig;
 
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 /**
@@ -13,10 +12,10 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public abstract class BaseHookModule {
     protected static final String TAG = "XposedHook";
+    private static final long DEBUG_REFRESH_INTERVAL_MS = 1000L;
 
-    public static boolean DEBUG = new XSharedPreferences("com.qimian233.ztool",
-            "xposed_module_config")
-            .getBoolean("isDetailedLogging", false);
+    public static volatile boolean DEBUG = false;
+    private static volatile long lastDebugRefreshTime = 0L;
 
     /**
      * 获取模块名称（用于日志和配置）
@@ -50,6 +49,21 @@ public abstract class BaseHookModule {
         return ModuleConfig.isModuleEnabled(getModuleName());
     }
 
+    protected static boolean refreshDebugLoggingEnabled() {
+        long now = System.currentTimeMillis();
+        if (now - lastDebugRefreshTime < DEBUG_REFRESH_INTERVAL_MS) {
+            return DEBUG;
+        }
+
+        synchronized (BaseHookModule.class) {
+            if (now - lastDebugRefreshTime >= DEBUG_REFRESH_INTERVAL_MS) {
+                DEBUG = ModuleConfig.isDetailedLoggingEnabled();
+                lastDebugRefreshTime = now;
+            }
+            return DEBUG;
+        }
+    }
+
     /**
      * 执行Hook操作
      */
@@ -59,6 +73,7 @@ public abstract class BaseHookModule {
      * 安全执行Hook（捕获异常，防止一个模块崩溃影响其他模块）
      */
     public void safeHandleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+        refreshDebugLoggingEnabled();
         if (!isEnabled()) {
             if (DEBUG)
                 Log.d(TAG, "module disabled: " + getModuleName()); // If module is disabled, log it and return.
@@ -83,6 +98,7 @@ public abstract class BaseHookModule {
     }
 
     protected void logError(String message, Throwable t) {
+        refreshDebugLoggingEnabled();
         String finalMessage = "[" + getModuleName() + "] " + message + "\n";
         String fullStackTrace = android.util.Log.getStackTraceString(t);
         StringBuilder truncatedStack = new StringBuilder();

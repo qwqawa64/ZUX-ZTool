@@ -43,18 +43,26 @@ public final class ModuleConfig {
         if ("hook_test".equals(moduleName)) return true;
         if (moduleName == null) return false;
 
+        return getBoolean(moduleName, false);
+    }
+
+    public static boolean isDetailedLoggingEnabled() {
+        return getBoolean("isDetailedLogging", false);
+    }
+
+    private static boolean getBoolean(String key, boolean defaultValue) {
         XSharedPreferences prefs = getPreferences();
         if (!reloadPreferences(prefs)) {
             prefs = getPreferences();
             if (!reloadPreferences(prefs)) {
-                return false;
+                return defaultValue;
             }
         }
 
         try {
-            return prefs.getBoolean(moduleName, false);
+            return prefs.getBoolean(key, defaultValue);
         } catch (Throwable ignored) {
-            return false;
+            return defaultValue;
         }
     }
 }
