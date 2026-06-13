@@ -241,7 +241,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                         }
                 );
             } catch (Throwable t) {
-                if (DEBUG) logError("Hook addToWorkspace失败", t);
+                logError("Hook addToWorkspace失败", t);
             }
 
         } catch (Throwable t) {
@@ -283,7 +283,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             }
 
         } catch (Throwable t) {
-            if (DEBUG) logError("Hook数据库Hotseat限制失败", t);
+            logError("Hook数据库Hotseat限制失败", t);
         }
     }
 
@@ -358,7 +358,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             );
 
         } catch (Throwable t) {
-            if (DEBUG) logError("Hook LoaderCursor失败", t);
+            logError("Hook LoaderCursor失败", t);
         }
     }
 
@@ -392,7 +392,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             );
 
         } catch (Throwable t) {
-            if (DEBUG) logError("Hook数据库操作失败", t);
+            logError("Hook数据库操作失败", t);
         }
     }
 
@@ -417,7 +417,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                                     XposedHelpers.setIntField(invDeviceProfile, "numDatabaseHotseatIcons", 20);
                                     log("修改InvariantDeviceProfile的numDatabaseHotseatIcons为20");
                                 } catch (Throwable t) {
-                                    if (DEBUG) logError("修改InvariantDeviceProfile失败", t);
+                                    logError("修改InvariantDeviceProfile失败", t);
                                 }
                             }
                         }
