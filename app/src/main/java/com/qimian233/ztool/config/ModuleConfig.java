@@ -86,27 +86,4 @@ public class ModuleConfig {
             return false;
         }
     }
-
-//    public static void setModuleEnabled(String moduleName, boolean enabled) {
-//        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
-//        if (prefs != null) {
-//            boolean success = prefs.edit()
-//                    .putBoolean(moduleName, enabled)
-//                    .commit();
-//            if (!success) {
-//                dumpAllPreferences();
-//            }
-//        }
-//    }
-
-    // 调试方法
-//    public static void dumpAllPreferences() {
-//        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
-//        if (prefs != null) {
-//            Log.d("ModuleConfig", "=== All Preferences ===");
-//            for (String key : prefs.getAll().keySet()) {
-//                Log.d("ModuleConfig", key + " = " + prefs.getAll().get(key));
-//            }
-//        }
-//    }
 }
