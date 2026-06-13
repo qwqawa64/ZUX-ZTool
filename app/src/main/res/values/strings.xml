@@ -465,9 +465,9 @@
     <string name="AlwaysDisplaySuggestionsTitle">显示设置首页的建议项目</string>
     <string name="AlwaysDisplaySuggestionsSummary">“自欺欺人术之假装设备全新未使用”</string>
     <!--应用包安装程序功能页资源值-->
-    <string name="restart_fail_simple">重启失败</string>
     <string name="Disable_ScanAPK_Title">跳过安全扫描</string>
     <string name="Disable_ScanAPK_Summary">跳过安全扫描，节省时间</string>
+    <string name="restart_fail_simple">重启失败</string>
     <string name="sec_title_function">安全相关</string>
     <string name="OnlyAllow_Title">总是给予应用权限</string>
     <string name="OnlyAllow_Summary">安装应用时，总是允许安装应用所需的权限</string>
@@ -740,8 +740,6 @@
     <string name="default_allow_autorun_title">后台行为管理</string>
     <string name="default_allow_autorun_enable_title">默认允许APP自启</string>
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
-    <string name="DisableSafeScanTitle">禁止安全扫描</string>
-    <string name="DisableSafeScanSummary">阻止联想安全中心每七天的后台安全扫描行为，这可以阻止“病毒警报”类的弹窗</string>
     <string name="empty_package_name_message">应用包名为空</string>
     <string name="app_process_restarted_message">已重启应用进程</string>
     <string name="restart_fail_prefix">重启失败: </string>
@@ -820,8 +818,6 @@
     <string name="force_on_off_animation">启用亮灭屏渐变动画</string>
     <string name="force_on_off_animation_summary">获取更加优雅的亮灭屏效果</string>
     <string name="screen_on_off_animation_duration">设置亮灭屏动画时长</string>
-    <string name="disable_all_virus_scan">禁止病毒扫描</string>
-    <string name="disable_all_virus_scan_summary">禁止在安全中心内进行病毒扫描操作</string>
-    <string name="disable_virus_popup">关闭“病毒警报”弹窗</string>
-    <string name="disable_virus_popup_summary">自欺欺人2.0，不阻止扫描也不阻止风险结果写入数据库</string>
+    <string name="disable_all_virus_scan">禁止病毒提示</string>
+    <string name="disable_all_virus_scan_summary">禁止在安全中心内提示病毒，暂时无法解决桌面图标提示病毒。启用后请清除一次安全中心的应用数据</string>
 </resources>

@@ -12,10 +12,7 @@ import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
-import com.qimian233.ztool.hook.modules.safecenter.DisableInstallScan;
-import com.qimian233.ztool.hook.modules.safecenter.DisableVirusPopup;
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
-import com.qimian233.ztool.hook.modules.safecenter.SafeCenterScanBlocker;
 import com.qimian233.ztool.hook.modules.setting.AlwaysDisplaySuggestion;
 import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
 import com.qimian233.ztool.hook.modules.setting.KeepRotation;
@@ -130,8 +127,6 @@ public class HookManager {
         registerHookModule(new SystemUINetworkSpeedSIzeHook());
         // 注册模块：状态栏双层网速
         registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
-        // 注册模块：阻止安全中心的扫描行为
-        registerHookModule(new SafeCenterScanBlocker());
         // 注册模块：更大的dock栏
         registerHookModule(new ZuiLauncherHotseatHook());
         // 注册模块：强制电量外部显示
@@ -164,10 +159,6 @@ public class HookManager {
         registerHookModule(new ForceScreenOnOffAnimation());
         // 注册模块: 关闭安全中心内病毒扫描
         registerHookModule(new DisableAllVirusScans());
-        // 注册模块: 禁用安装 APP 时病毒扫描
-        registerHookModule(new DisableInstallScan());
-        // 注册模块: 禁用发现病毒时的弹窗
-        registerHookModule(new DisableVirusPopup());
         initialized = true;
     }
 

@@ -437,8 +437,6 @@
     <string name="AlwaysDisplaySuggestionsTitle">Show suggestions on Settings home</string>
     <string name="AlwaysDisplaySuggestionsSummary">"Pretend the device is brand new and unused"</string>
     <string name="restart_fail_simple">Restart failed</string>
-    <string name="Disable_ScanAPK_Title">Skip security scan</string>
-    <string name="Disable_ScanAPK_Summary">Skip security scan to save time.</string>
     <string name="sec_title_function">Security</string>
     <string name="OnlyAllow_Title">Always grant app permissions</string>
     <string name="OnlyAllow_Summary">Always allow permissions required by apps during installation.</string>
@@ -655,8 +653,6 @@
     <string name="default_allow_autorun_title">Background behavior management</string>
     <string name="default_allow_autorun_enable_title">Allow app auto-start by default</string>
     <string name="default_allow_autorun_enable_summary">Allow all apps to auto-start by default.</string>
-    <string name="DisableSafeScanTitle">Disable security scan</string>
-    <string name="DisableSafeScanSummary">Block Lenovo Safe Center\'s seven-day background security scan to prevent virus warning popups.</string>
     <string name="empty_package_name_message">App package name is empty</string>
     <string name="app_process_restarted_message">App process restarted</string>
     <string name="restart_fail_prefix">Restart failed: </string>
@@ -768,8 +764,8 @@
     <string name="force_on_off_animation">Enable screen on/off animation</string>
     <string name="force_on_off_animation_summary">Get a more elegant screen on/off experience</string>
     <string name="screen_on_off_animation_duration">Set duration of on/off screen animator</string>
-    <string name="disable_all_virus_scan">Block virus scan</string>
-    <string name="disable_all_virus_scan_summary">Block virus scan operation in safe center</string>
-    <string name="disable_virus_popup">Disable \"Virus Alert\" popup</string>
-    <string name="disable_virus_popup_summary">Just a comfort, this feature does not block scan or database I/O</string>
+    <string name="disable_all_virus_scan">Block virus alert</string>
+    <string name="disable_all_virus_scan_summary">Block virus alert in safe center, unable to handle launcher alert icon. Wipe app data of safe center after enabling this hook</string>
+    <string name="Disable_ScanAPK_Title">Skip security scan</string>
+    <string name="Disable_ScanAPK_Summary">Skip security scan to save time.</string>
 </resources>

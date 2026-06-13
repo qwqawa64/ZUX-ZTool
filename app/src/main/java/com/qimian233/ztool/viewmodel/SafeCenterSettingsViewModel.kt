@@ -31,19 +31,9 @@ class SafeCenterSettingsViewModel(
         repository.saveDefaultEnableAutorun(enabled)
     }
 
-    fun setBlockSafeCenterScan(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(blockSafeCenterScan = enabled)
-        repository.saveBlockSafeCenterScan(enabled)
-    }
-
     fun setDisableAllVirusScan(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(disableAllVirusScan = enabled)
         repository.saveDisableAllVirusScan(enabled)
-    }
-
-    fun setDisableVirusPopup(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(disableVirusPopup = enabled)
-        repository.saveDisableVirusPopup(enabled)
     }
 
     fun setDocumentsUiBypass(enabled: Boolean) {
@@ -93,9 +83,7 @@ class SafeCenterSettingsViewModel(
 
 data class SafeCenterSettingsUiState(
     val defaultEnableAutorun: Boolean = false,
-    val blockSafeCenterScan: Boolean = false,
     val disableAllVirusScan: Boolean = false,
-    val disableVirusPopup: Boolean = false,
     val documentsUiBypass: Boolean = false,
     val showRestartConfirmDialog: Boolean = false,
     val isRestartProcessing: Boolean = false

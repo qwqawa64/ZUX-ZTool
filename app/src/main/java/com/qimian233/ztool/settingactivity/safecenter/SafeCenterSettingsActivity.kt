@@ -73,9 +73,7 @@ fun SafeCenterSettingsRoute(
         onBack = onBack,
         onRestart = viewModel::showRestartConfirmDialog,
         onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
-        onBlockSafeCenterScanChanged = viewModel::setBlockSafeCenterScan,
         onDisableAllVirusScanChanged = viewModel::setDisableAllVirusScan,
-        onDisableVirusPopupChanged = viewModel::setDisableVirusPopup,
         onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
     )
 
@@ -136,9 +134,7 @@ internal fun SafeCenterSettingsScreen(
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
-    onBlockSafeCenterScanChanged: (Boolean) -> Unit,
     onDisableAllVirusScanChanged: (Boolean) -> Unit,
-    onDisableVirusPopupChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
@@ -179,9 +175,7 @@ internal fun SafeCenterSettingsScreen(
                     sections = safeCenterSettingsSections(
                         state = state,
                         onDefaultEnableAutorunChanged = onDefaultEnableAutorunChanged,
-                        onBlockSafeCenterScanChanged = onBlockSafeCenterScanChanged,
                         onDisableAllVirusScanChanged = onDisableAllVirusScanChanged,
-                        onDisableVirusPopupChanged = onDisableVirusPopupChanged,
                         onDocumentsUiBypassChanged = onDocumentsUiBypassChanged
                     ),
                     bottomPadding = 96.dp
@@ -195,9 +189,7 @@ internal fun SafeCenterSettingsScreen(
 internal fun safeCenterSettingsSections(
     state: SafeCenterSettingsUiState,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
-    onBlockSafeCenterScanChanged: (Boolean) -> Unit,
     onDisableAllVirusScanChanged: (Boolean) -> Unit,
-    onDisableVirusPopupChanged: (Boolean) -> Unit,
     onDocumentsUiBypassChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
@@ -211,23 +203,11 @@ internal fun safeCenterSettingsSections(
                     onCheckedChange = onDefaultEnableAutorunChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.DisableSafeScanTitle),
-                    summary = stringResource(R.string.DisableSafeScanSummary),
-                    checked = state.blockSafeCenterScan,
-                    onCheckedChange = onBlockSafeCenterScanChanged
-                ),
-                SettingItem.Switch(
                     title = stringResource(R.string.disable_all_virus_scan),
                     summary = stringResource(R.string.disable_all_virus_scan_summary),
                     checked = state.disableAllVirusScan,
                  onCheckedChange = onDisableAllVirusScanChanged
                 ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.disable_virus_popup),
-                    summary = stringResource(R.string.disable_virus_popup_summary),
-                    checked = state.disableVirusPopup,
-                    onCheckedChange = onDisableVirusPopupChanged
-                )
             )
         ),
         SettingSection(
