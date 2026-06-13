@@ -4,6 +4,8 @@ import android.util.Log;
 
 import com.qimian233.ztool.config.ModuleConfig;
 
+import java.util.Arrays;
+
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 /**
@@ -74,13 +76,13 @@ public abstract class BaseHookModule {
      */
     public void safeHandleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         refreshDebugLoggingEnabled();
+        if (!supportsPackage(lpparam.packageName) || Arrays.asList(getTargetPackages()).contains(lpparam.packageName))
+            return; // If not supported, return directly.
         if (!isEnabled()) {
             if (DEBUG)
                 Log.d(TAG, "module disabled: " + getModuleName()); // If module is disabled, log it and return.
             return;
         }
-        if (!supportsPackage(lpparam.packageName) || !isEnabled())
-            return; // If not supported, return directly.
 
         try {
             if (DEBUG)
