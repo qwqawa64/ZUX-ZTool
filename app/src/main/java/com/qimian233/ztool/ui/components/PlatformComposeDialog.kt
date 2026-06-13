@@ -23,13 +23,14 @@ fun createPlatformComposeDialog(
     val composeView = ComposeView(context).apply {
         bindOwners(context)
         setContent {
-            ZToolTheme {
+            ZToolTheme(isPlatformDialog = true) {
                 content(dialog)
             }
         }
     }
 
     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+    dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
     dialog.setContentView(composeView)
     dialog.setCancelable(cancelable)
     dialog.setCanceledOnTouchOutside(cancelable)

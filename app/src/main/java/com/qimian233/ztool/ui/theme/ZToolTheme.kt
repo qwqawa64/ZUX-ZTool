@@ -46,6 +46,8 @@ val LocalZToolThemeSpec = staticCompositionLocalOf {
     ZToolThemeSpec(style = FrontendStyle.Material3Expressive)
 }
 
+val LocalIsPlatformDialog = staticCompositionLocalOf { false }
+
 private val Md3eLightColors = lightColorScheme(
     primary = Color(0xFF1D5FA8),
     onPrimary = Color.White,
@@ -140,6 +142,7 @@ fun ZToolTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     settings: ZToolThemeSettings? = null,
+    isPlatformDialog: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -245,8 +248,12 @@ fun ZToolTheme(
                 MiuixTheme(
                     controller = controller,
                     content = { 
-                        top.yukonga.miuix.kmp.basic.Scaffold { _ ->
+                        if (isPlatformDialog) {
                             movableContent()
+                        } else {
+                            top.yukonga.miuix.kmp.basic.Scaffold { _ ->
+                                movableContent()
+                            }
                         }
                     }
                 )
@@ -261,6 +268,7 @@ fun ZToolTheme(
 
     CompositionLocalProvider(
         LocalZToolThemeSpec provides themeSpec,
+        LocalIsPlatformDialog provides isPlatformDialog,
         content = themedContent
     )
 }

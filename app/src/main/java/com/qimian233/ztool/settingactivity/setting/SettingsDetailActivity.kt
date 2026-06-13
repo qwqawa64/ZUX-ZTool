@@ -65,6 +65,7 @@ import com.qimian233.ztool.settingactivity.setting.floatingwindow.FloatingWindow
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolDialogSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -345,12 +346,8 @@ fun SettingsDetailRoute(
 
     fun openOvConfigDialog(mode: Int, dialogTitle: String) {
         if (activity == null) return
-        loadingDialog = LoadingDialog(context).also {
-            it.show(context.getString(R.string.loading_config))
-        }
         viewModel.loadOvConfigSelection(mode) { result ->
             activity.runOnUiThread {
-                loadingDialog?.dismiss()
                 when (result) {
                     is SettingsDetailOvConfigSelectionResult.Success -> {
                         AppChooserDialog.show(
@@ -591,43 +588,23 @@ private fun SimpleSettingsDetailDialogContent(
     onConfirm: () -> Unit,
     onDismiss: (() -> Unit)? = null
 ) {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 20.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(modifier = Modifier.weight(1f))
-                if (dismissText != null && onDismiss != null) {
-                    TextButton(onClick = onDismiss) {
-                        Text(dismissText)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                TextButton(onClick = onConfirm) {
-                    Text(confirmText)
+    ZToolDialog(
+        onDismissRequest = { onDismiss?.invoke() ?: onConfirm() },
+        title = { Text(text = title) },
+        text = { Text(text = message) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(confirmText)
+            }
+        },
+        dismissButton = if (dismissText != null && onDismiss != null) {
+            {
+                TextButton(onClick = onDismiss) {
+                    Text(dismissText)
                 }
             }
-        }
-    }
+        } else null
+    )
 }
 
 private class SettingsDetailViewModelFactory(
@@ -939,35 +916,29 @@ private fun ConfigSelectionDialogContent(
 ) {
     val selectedIndexes = remember { mutableStateListOf<Int>() }
 
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.select_config_files),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            if (flashedConfigs.isNotEmpty()) {
+    ZToolDialog(
+        onDismissRequest = onCancel,
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = stringResource(R.string.flashed_configs_count, flashedConfigs.size),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(top = 8.dp)
+                    text = stringResource(R.string.select_config_files),
+                    fontWeight = FontWeight.SemiBold
                 )
+                if (flashedConfigs.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.flashed_configs_count, flashedConfigs.size),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
-
+        },
+        text = {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 420.dp)
-                    .padding(top = 12.dp)
+                    .heightIn(max = 360.dp)
             ) {
                 itemsIndexed(configs) { index, config ->
                     val configKey = config.timestamp + "_" + config.packageName
@@ -989,13 +960,18 @@ private fun ConfigSelectionDialogContent(
                     )
                 }
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        },
+        confirmButton = {
+            ZToolTextButton(
+                onClick = {
+                    val selectedConfigs = selectedIndexes.map { configs[it] }
+                    if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
+                },
+                text = stringResource(R.string.flashAddedConfig)
+            )
+        },
+        dismissButton = {
+            Row {
                 ZToolTextButton(
                     onClick = {
                         val selectedConfigs = selectedIndexes.map { configs[it] }
@@ -1004,13 +980,6 @@ private fun ConfigSelectionDialogContent(
                     text = stringResource(R.string.delete),
                     isPrimary = false
                 )
-                ZToolTextButton(
-                    onClick = {
-                        val selectedConfigs = selectedIndexes.map { configs[it] }
-                        if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
-                    },
-                    text = stringResource(R.string.flashAddedConfig)
-                )
                 if (flashedConfigs.isNotEmpty()) {
                     ZToolTextButton(onClick = onRestore, text = stringResource(R.string.restoreModule))
                 }
@@ -1018,7 +987,7 @@ private fun ConfigSelectionDialogContent(
                 ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
             }
         }
-    }
+    )
 }
 
 @Composable
@@ -1065,60 +1034,55 @@ private fun FontInputDialogContent(
     var fontName by remember { mutableStateOf("") }
     var fontDescription by remember { mutableStateOf(originalDescription) }
 
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.input_font_info_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(R.string.doNotUseDuplicatedFontName),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            OutlinedTextField(
-                value = fontName,
-                onValueChange = { fontName = it },
-                label = { Text(stringResource(R.string.fontName)) },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            )
-            OutlinedTextField(
-                value = fontDescription,
-                onValueChange = { fontDescription = it },
-                label = { Text(stringResource(R.string.fontDescription)) },
-                minLines = 3,
-                maxLines = 5,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(modifier = Modifier.weight(1f))
-                ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
-                ZToolTextButton(
-                    onClick = {
-                        onConfirm(fontName.trim(), fontDescription.trim())
-                    },
-                    text = stringResource(R.string.confirm_button)
+    ZToolDialog(
+        onDismissRequest = onCancel,
+        title = {
+            Column {
+                Text(
+                    text = stringResource(R.string.input_font_info_title),
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(R.string.doNotUseDuplicatedFontName),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = fontName,
+                    onValueChange = { fontName = it },
+                    label = { Text(stringResource(R.string.fontName)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = fontDescription,
+                    onValueChange = { fontDescription = it },
+                    label = { Text(stringResource(R.string.fontDescription)) },
+                    minLines = 3,
+                    maxLines = 5,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            ZToolTextButton(
+                onClick = {
+                    onConfirm(fontName.trim(), fontDescription.trim())
+                },
+                text = stringResource(R.string.confirm_button)
+            )
+        },
+        dismissButton = {
+            ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
         }
-    }
+    )
 }
 
 @Composable
