@@ -60,13 +60,16 @@ public abstract class BaseHookModule {
      */
     public void safeHandleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         if (!isEnabled()) {
-            if (DEBUG) Log.d(TAG, "module disabled: " + getModuleName()); // If module is disabled, log it and return.
+            if (DEBUG)
+                Log.d(TAG, "module disabled: " + getModuleName()); // If module is disabled, log it and return.
             return;
         }
-        if (!supportsPackage(lpparam.packageName) || !isEnabled()) return; // If not supported, return directly.
+        if (!supportsPackage(lpparam.packageName) || !isEnabled())
+            return; // If not supported, return directly.
 
         try {
-            if (DEBUG) Log.d(TAG, "Executing hook module: " + getModuleName() + " for package: " + lpparam.packageName);
+            if (DEBUG)
+                Log.d(TAG, "Executing hook module: " + getModuleName() + " for package: " + lpparam.packageName);
             handleLoadPackage(lpparam);
             if (DEBUG) Log.d(TAG, "Hook module executed successfully: " + getModuleName());
         } catch (Throwable t) {
@@ -80,20 +83,29 @@ public abstract class BaseHookModule {
     }
 
     protected void logError(String message, Throwable t) {
-        final int MAX_STACK_LINES = 10;
-
+        String finalMessage = "[" + getModuleName() + "] " + message + "\n";
         String fullStackTrace = android.util.Log.getStackTraceString(t);
-        String[] lines = fullStackTrace.split("\n");
         StringBuilder truncatedStack = new StringBuilder();
-        int linesToTake = Math.min(lines.length, MAX_STACK_LINES);
-        for (int i = 0; i < linesToTake; i++) {
-            truncatedStack.append(lines[i]);
-            if (i < linesToTake - 1) {
+        String[] lines = fullStackTrace.split("\n");
+        if (DEBUG) {
+            // 调试模式只取前 10 行
+            final int MAX_STACK_LINES = 10;
+            int linesToTake = Math.min(lines.length, MAX_STACK_LINES);
+            for (int i = 0; i < linesToTake; i++) {
+                truncatedStack.append(lines[i]);
+                if (i < linesToTake - 1) {
+                    truncatedStack.append("\n");
+                }
+            }
+            finalMessage += truncatedStack.toString();
+        } else {
+            // 非调试模式只看错误消息
+            if (lines.length > 0) {
+                truncatedStack.append(lines[0]);
                 truncatedStack.append("\n");
             }
+            finalMessage += truncatedStack;
         }
-
-        String finalMessage = "[" + getModuleName() + "] " + message + "\n" + truncatedStack;
         android.util.Log.e("ZToolXposedModule", finalMessage);
     }
 }
