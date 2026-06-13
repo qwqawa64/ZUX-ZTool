@@ -245,7 +245,9 @@ fun ZToolTheme(
                 MiuixTheme(
                     controller = controller,
                     content = { 
-                        movableContent()
+                        top.yukonga.miuix.kmp.basic.Scaffold { _ ->
+                            movableContent()
+                        }
                     }
                 )
             } else {
