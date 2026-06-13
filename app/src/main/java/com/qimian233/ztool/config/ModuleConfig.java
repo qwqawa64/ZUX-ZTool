@@ -1,8 +1,9 @@
 package com.qimian233.ztool.config;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
+//import android.util.Log;
 
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
@@ -51,7 +52,7 @@ public class ModuleConfig {
         try {
             ClassLoader cl = ModuleConfig.class.getClassLoader();
             if (cl != null) {
-                Class<?> activityThread = Class.forName("android.app.ActivityThread", false, cl);
+                @SuppressLint("PrivateApi") Class<?> activityThread = Class.forName("android.app.ActivityThread", false, cl);
                 Object currentActivityThread = XposedHelpers.callStaticMethod(activityThread, "currentActivityThread");
                 Context appContext = (Context) XposedHelpers.callMethod(currentActivityThread, "getApplication");
 
@@ -86,27 +87,26 @@ public class ModuleConfig {
         }
     }
 
-    @SuppressWarnings("unused")
-    public static void setModuleEnabled(String moduleName, boolean enabled) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
-        if (prefs != null) {
-            boolean success = prefs.edit()
-                    .putBoolean(moduleName, enabled)
-                    .commit();
-            if (!success) {
-                dumpAllPreferences();
-            }
-        }
-    }
+//    public static void setModuleEnabled(String moduleName, boolean enabled) {
+//        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
+//        if (prefs != null) {
+//            boolean success = prefs.edit()
+//                    .putBoolean(moduleName, enabled)
+//                    .commit();
+//            if (!success) {
+//                dumpAllPreferences();
+//            }
+//        }
+//    }
 
     // 调试方法
-    public static void dumpAllPreferences() {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
-        if (prefs != null) {
-            Log.d("ModuleConfig", "=== All Preferences ===");
-            for (String key : prefs.getAll().keySet()) {
-                Log.d("ModuleConfig", key + " = " + prefs.getAll().get(key));
-            }
-        }
-    }
+//    public static void dumpAllPreferences() {
+//        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE,PREFS_NAME);
+//        if (prefs != null) {
+//            Log.d("ModuleConfig", "=== All Preferences ===");
+//            for (String key : prefs.getAll().keySet()) {
+//                Log.d("ModuleConfig", key + " = " + prefs.getAll().get(key));
+//            }
+//        }
+//    }
 }

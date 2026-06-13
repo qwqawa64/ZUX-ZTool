@@ -94,6 +94,7 @@ public class ModulePreferencesUtils {
      * @param featureName 功能名称
      * @param value       要保存的值
      */
+    @SuppressLint("ApplySharedPref")
     public void saveStringSetting(String featureName, String value) {
         SharedPreferences prefs = getModulePreferences();
         prefs.edit()
@@ -101,6 +102,7 @@ public class ModulePreferencesUtils {
                 .commit();
     }
 
+    @SuppressLint("ApplySharedPref")
     public void saveIntegerSetting(String featureName, int value) {
         SharedPreferences prefs = getModulePreferences();
         prefs.edit()
@@ -113,6 +115,7 @@ public class ModulePreferencesUtils {
         return prefs.getInt(featureName, defaultValue);
     }
 
+    @SuppressLint("ApplySharedPref")
     public void saveFloatSetting(String featureName, float value) {
         SharedPreferences prefs = getModulePreferences();
         prefs.edit()
@@ -128,7 +131,7 @@ public class ModulePreferencesUtils {
     /**
      * 清除所有设置
      */
-    @SuppressLint("WorldReadableFiles")
+    @SuppressLint({"WorldReadableFiles", "ApplySharedPref"})
     public void clearAllSettings() {
         SharedPreferences prefs = getModulePreferences();
         prefs.edit().clear().commit();
