@@ -70,14 +70,16 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
 
                             try {
                                 Field[] fields = mAdapter.getClass().getDeclaredFields();
-                                ArrayList dataList = null;
+                                ArrayList<Object> dataList = null;
 
                                 for (Field field : fields) {
                                     field.setAccessible(true);
                                     if (ArrayList.class.isAssignableFrom(field.getType())) {
                                         Object fieldValue = field.get(mAdapter);
                                         if (fieldValue instanceof ArrayList) {
-                                            dataList = (ArrayList<?>) fieldValue;
+                                            @SuppressWarnings("unchecked")
+                                            ArrayList<Object> list = (ArrayList<Object>) fieldValue;
+                                            dataList = list;
                                             break;
                                         }
                                     }
@@ -120,7 +122,8 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                         protected void afterHookedMethod(MethodHookParam param) {
                             if (!isEnabled()) return;
 
-                            ArrayList originalList = (ArrayList) param.args[1];
+                            @SuppressWarnings("unchecked")
+                            ArrayList<Object> originalList = (ArrayList<Object>) param.args[1];
                             if (originalList == null || originalList.isEmpty()) return;
 
                             Object trustItem = findTrustItem(originalList);
@@ -180,13 +183,13 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
         }
     }
 
-    private Object findTrustItem(ArrayList dataList) {
+    private Object findTrustItem(ArrayList<?> dataList) {
         for (Object item : dataList) {
             try {
                 Field indexField = item.getClass().getDeclaredField("index");
                 indexField.setAccessible(true);
-                int index = (int) indexField.get(item);
-                if (index == 2) {
+                Object indexObj = indexField.get(item);
+                if (indexObj instanceof Integer && (Integer) indexObj == 2) {
                     return item;
                 }
             } catch (Exception e) {
