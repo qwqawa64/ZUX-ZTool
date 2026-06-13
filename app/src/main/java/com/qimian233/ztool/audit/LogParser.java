@@ -237,7 +237,7 @@ public class LogParser {
 
         // 安全中心相关
         MODULE_NAMES.put("default_enable_autorun", "默认允许应用自启");
-        MODULE_NAMES.put("disable_all_virus_scans", "阻止安全中心扫描病毒");
+        MODULE_NAMES.put("disable_all_virus_scans", "阻止安全中心提示病毒");
 
         // 壁纸相关
         MODULE_NAMES.put("charge_animation_fix", "充电动画列表修复");
