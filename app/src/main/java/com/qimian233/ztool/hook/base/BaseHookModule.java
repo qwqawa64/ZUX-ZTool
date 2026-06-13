@@ -80,6 +80,20 @@ public abstract class BaseHookModule {
     }
 
     protected void logError(String message, Throwable t) {
-        android.util.Log.e("ZToolXposedModule", "[" + getModuleName() + "] " + message, t);
+        final int MAX_STACK_LINES = 10;
+
+        String fullStackTrace = android.util.Log.getStackTraceString(t);
+        String[] lines = fullStackTrace.split("\n");
+        StringBuilder truncatedStack = new StringBuilder();
+        int linesToTake = Math.min(lines.length, MAX_STACK_LINES);
+        for (int i = 0; i < linesToTake; i++) {
+            truncatedStack.append(lines[i]);
+            if (i < linesToTake - 1) {
+                truncatedStack.append("\n");
+            }
+        }
+
+        String finalMessage = "[" + getModuleName() + "] " + message + "\n" + truncatedStack;
+        android.util.Log.e("ZToolXposedModule", finalMessage);
     }
 }
