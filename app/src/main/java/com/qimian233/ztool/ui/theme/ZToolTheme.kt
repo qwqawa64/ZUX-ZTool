@@ -46,6 +46,8 @@ val LocalZToolThemeSpec = staticCompositionLocalOf {
     ZToolThemeSpec(style = FrontendStyle.Material3Expressive)
 }
 
+val LocalIsPlatformDialog = staticCompositionLocalOf { false }
+
 private val Md3eLightColors = lightColorScheme(
     primary = Color(0xFF1D5FA8),
     onPrimary = Color.White,
@@ -266,6 +268,7 @@ fun ZToolTheme(
 
     CompositionLocalProvider(
         LocalZToolThemeSpec provides themeSpec,
+        LocalIsPlatformDialog provides isPlatformDialog,
         content = themedContent
     )
 }

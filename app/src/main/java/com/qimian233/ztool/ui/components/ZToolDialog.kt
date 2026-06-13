@@ -20,6 +20,10 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.Surface as MiuixSurface
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
+import com.qimian233.ztool.ui.theme.LocalIsPlatformDialog
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+
 @Composable
 fun ZToolDialog(
     onDismissRequest: () -> Unit,
@@ -28,14 +32,12 @@ fun ZToolDialog(
     text: @Composable (() -> Unit)? = null,
     dismissButton: @Composable (() -> Unit)? = null
 ) {
+    val isPlatformDialog = LocalIsPlatformDialog.current
+
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        OverlayDialog(
-            show = true,
-            onDismissRequest = onDismissRequest,
-            backgroundColor = MaterialTheme.colorScheme.surface,
-        ) {
+        val miuixContent = @Composable {
             Column(
-                modifier = Modifier
+                modifier = Modifier.padding(if (isPlatformDialog) 24.dp else 0.dp)
             ) {
                 if (title != null) {
                     ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
@@ -64,6 +66,23 @@ fun ZToolDialog(
                     }
                     confirmButton()
                 }
+            }
+        }
+
+        if (isPlatformDialog) {
+            MiuixSurface(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                miuixContent()
+            }
+        } else {
+            OverlayDialog(
+                show = true,
+                onDismissRequest = onDismissRequest,
+                backgroundColor = MaterialTheme.colorScheme.surface,
+            ) {
+                miuixContent()
             }
         }
         return

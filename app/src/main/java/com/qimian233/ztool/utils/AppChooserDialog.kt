@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -42,10 +41,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.qimian233.ztool.R
+import com.qimian233.ztool.ui.components.ZToolCircularProgressIndicator
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import java.util.concurrent.Executors
 
-import com.qimian233.ztool.ui.components.ZToolDialogSurface
+import com.qimian233.ztool.ui.components.ZToolDialog
 
 object AppChooserDialog {
     interface AppSelectionCallback {
@@ -197,22 +198,26 @@ object AppChooserDialog {
 
 @Composable
 private fun LoadingContent(message: String) {
-    ZToolDialogSurface {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(28.dp))
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+    ZToolDialog(
+        onDismissRequest = {},
+        confirmButton = {},
+        text = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ZToolCircularProgressIndicator(modifier = Modifier.size(28.dp))
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
-    }
+    )
 }
 
 @Composable
@@ -240,80 +245,68 @@ private fun AppChooserContent(
         }
     }
 
-    ZToolDialogSurface {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            if (!title.isNullOrBlank()) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold
+    ZToolDialog(
+        onDismissRequest = onCancel,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selectedPackages.toSet()) }) {
+                Text(stringResource(R.string.restart_yes))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.restart_no))
+            }
+        },
+        title = if (!title.isNullOrBlank()) {
+            { Text(text = title, fontWeight = FontWeight.SemiBold) }
+        } else null,
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.SearchHint)) }
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
 
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(stringResource(R.string.SearchHint)) }
-            )
+                Text(
+                    text = selectedPackages.size.toString(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                )
 
-            Text(
-                text = selectedPackages.size.toString(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 420.dp)
-                    .padding(top = 8.dp)
-            ) {
-                items(
-                    items = filteredApps,
-                    key = { it.packageName }
-                ) { app ->
-                    val selected = app.packageName in selectedPackages
-                    AppChooserRow(
-                        app = app,
-                        selected = selected,
-                        onSelectedChange = { checked ->
-                            if (checked) {
-                                if (app.packageName !in selectedPackages) {
-                                    selectedPackages += app.packageName
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 360.dp)
+                ) {
+                    items(
+                        items = filteredApps,
+                        key = { it.packageName }
+                    ) { app ->
+                        val selected = app.packageName in selectedPackages
+                        AppChooserRow(
+                            app = app,
+                            selected = selected,
+                            onSelectedChange = { checked ->
+                                if (checked) {
+                                    if (app.packageName !in selectedPackages) {
+                                        selectedPackages.add(app.packageName)
+                                    }
+                                } else {
+                                    selectedPackages.remove(app.packageName)
                                 }
-                            } else {
-                                selectedPackages -= app.packageName
                             }
-                        }
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onCancel) {
-                    Text(stringResource(R.string.restart_no))
-                }
-                TextButton(onClick = { onConfirm(selectedPackages.toSet()) }) {
-                    Text(stringResource(R.string.restart_yes))
+                        )
+                    }
                 }
             }
         }
-    }
+    )
 }
 
 @Composable
