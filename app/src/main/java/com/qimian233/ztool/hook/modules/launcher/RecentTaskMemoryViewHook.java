@@ -1,10 +1,10 @@
 package com.qimian233.ztool.hook.modules.launcher;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -35,6 +35,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     public String getModuleName() {
         return "launcher_recent_task_memory_view";
     }
+    // launcher_recent_task_memory_view
 
     @Override
     public String[] getTargetPackages() {
@@ -163,13 +164,13 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         TextView textView = new TextView(context);
         textView.setTag(MEMORY_VIEW_TAG);
         textView.setTextColor(Color.WHITE);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        textView.setAlpha(0.8f);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         textView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         textView.setGravity(Gravity.CENTER);
         textView.setSingleLine(true);
         textView.setIncludeFontPadding(false);
         textView.setPadding(dp(context, 12), dp(context, 6), dp(context, 12), dp(context, 6));
-        textView.setBackground(createBackground());
         textView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         textView.setClickable(false);
         textView.setFocusable(false);
@@ -177,21 +178,14 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         return textView;
     }
 
-    private GradientDrawable createBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(0x99000000);
-        background.setCornerRadius(999f);
-        background.setStroke(1, 0x33FFFFFF);
-        return background;
-    }
-
     private FrameLayout.LayoutParams createLayoutParams(Context context) {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        params.bottomMargin = dp(context, 96);
+        params.gravity = Gravity.TOP | Gravity.END;
+        params.topMargin = dp(context, 26);
+        params.rightMargin = dp(context, 24);
         return params;
     }
 
@@ -203,11 +197,15 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         }
 
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) currentParams;
-        int bottomMargin = dp(context, 96);
-        if (params.gravity != (Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL)
-                || params.bottomMargin != bottomMargin) {
-            params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-            params.bottomMargin = bottomMargin;
+        int topMargin = dp(context, 52);
+        int rightMargin = dp(context, 224);
+        if (params.gravity != (Gravity.TOP | Gravity.END)
+                || params.topMargin != topMargin
+                || params.rightMargin != rightMargin) {
+            params.gravity = Gravity.TOP | Gravity.END;
+            params.topMargin = topMargin;
+            params.rightMargin = rightMargin;
+            params.bottomMargin = 0;
             memoryView.setLayoutParams(params);
         }
     }
@@ -278,6 +276,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateMemoryText(TextView memoryView) {
         try {
             Context context = memoryView.getContext();
@@ -305,9 +304,6 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
 
     private String formatBytes(long bytes) {
         double gib = bytes / 1073741824.0d;
-        if (gib >= 10.0d) {
-            return String.format(Locale.US, "%.0f GB", gib);
-        }
         return String.format(Locale.US, "%.1f GB", gib);
     }
 

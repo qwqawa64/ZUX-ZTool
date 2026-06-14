@@ -82,6 +82,11 @@ class LauncherSettingsViewModel(
         repository.saveRemoveHotWordView(value)
     }
 
+    fun setShowRamInfo(value: Boolean) {
+        _uiState.value = _uiState.value.copy(showRamInfo = value)
+        repository.saveShowRamInfo(value)
+    }
+
     fun showRestartConfirmDialog() {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = true)
     }
@@ -121,7 +126,8 @@ data class LauncherSettingsUiState(
     val cleanGlobalSearch: Boolean = false,
     val removeHotWordView: Boolean = false,
     val removeSearchRecommend: Boolean = false,
-    val showRestartConfirmDialog: Boolean = false
+    val showRestartConfirmDialog: Boolean = false,
+    val showRamInfo : Boolean = false,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size

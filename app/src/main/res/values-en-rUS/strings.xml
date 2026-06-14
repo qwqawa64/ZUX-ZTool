@@ -773,4 +773,7 @@
     <string name="remove_search_recommend">Remove search recommendations</string>
     <string name="remove_hot_word_view">Remove hot word card</string>
     <string name="global_search">Global Search</string>
+    <string name="recent_task">Recent Tasks</string>
+    <string name="show_ram_info">Show RAM usage</string>
+    <string name="show_ram_info_summary">This is not physical RAM amount.</string>
 </resources>

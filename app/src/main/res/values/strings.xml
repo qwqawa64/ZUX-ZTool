@@ -825,4 +825,7 @@
     <string name="remove_search_recommend">移除搜索栏的搜索推荐</string>
     <string name="remove_hot_word_view">移除热门搜索卡片</string>
     <string name="global_search">全局搜索</string>
+    <string name="recent_task">最近任务</string>
+    <string name="show_ram_info">显示内存信息</string>
+    <string name="show_ram_info_summary">内存信息不能完全反映设备真实安装的物理内存量</string>
 </resources>

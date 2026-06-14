@@ -107,7 +107,8 @@ fun LauncherSettingsRoute(
         onCustomGridColumnChanged = viewModel::setCustomGridColumn,
         onCleanSearchChanged = viewModel::setCleanSearch,
         onRemoveSearchRecommendationChanged = viewModel::setRemoveSearchRecommend,
-        onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView
+        onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView,
+        onShowRamInfoChanged = viewModel::setShowRamInfo
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -160,7 +161,8 @@ private fun LauncherSettingsScreen(
     onCustomGridColumnChanged: (Int) -> Unit,
     onCleanSearchChanged: (Boolean) -> Unit,
     onRemoveSearchRecommendationChanged: (Boolean) -> Unit,
-    onRemoveHotWordViewChanged: (Boolean) -> Unit
+    onRemoveHotWordViewChanged: (Boolean) -> Unit,
+    onShowRamInfoChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -207,7 +209,8 @@ private fun LauncherSettingsScreen(
                         onCustomGridColumnChanged = onCustomGridColumnChanged,
                         onCleanSearchChanged = onCleanSearchChanged,
                         onRemoveSearchRecommendationChanged = onRemoveSearchRecommendationChanged,
-                        onRemoveHotWordViewChanged = onRemoveHotWordViewChanged
+                        onRemoveHotWordViewChanged = onRemoveHotWordViewChanged,
+                        onShowRamInfoChanged = onShowRamInfoChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -227,7 +230,8 @@ private fun launcherSettingsSections(
     onCustomGridColumnChanged: (Int) -> Unit,
     onCleanSearchChanged: (Boolean) -> Unit,
     onRemoveSearchRecommendationChanged: (Boolean) -> Unit,
-    onRemoveHotWordViewChanged: (Boolean) -> Unit
+    onRemoveHotWordViewChanged: (Boolean) -> Unit,
+    onShowRamInfoChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -329,13 +333,24 @@ private fun launcherSettingsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.customLauncherLayoutTitle),
-            items = launcherLayoutItems
+            title = stringResource(R.string.recent_task),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.show_ram_info),
+                    summary = stringResource(R.string.show_ram_info_summary),
+                    checked = state.showRamInfo,
+                    onCheckedChange = onShowRamInfoChanged
+                )
+            )
         ),
         SettingSection(
             title = stringResource(R.string.global_search),
             items = cleanGlobalSearchLayoutItems
-        )
+        ),
+        SettingSection(
+            title = stringResource(R.string.customLauncherLayoutTitle),
+            items = launcherLayoutItems
+        ),
     )
 }
 

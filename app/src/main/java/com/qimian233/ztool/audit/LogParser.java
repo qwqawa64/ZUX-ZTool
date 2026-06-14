@@ -45,7 +45,7 @@ public class LogParser {
         @NonNull
         @Override
         public String toString() {
-            return String.format("[%s] [%s] %s/%s(%d): %s",
+            return String.format(Locale.ROOT, "[%s] [%s] %s/%s(%d): %s",
                     timestamp, mode, level, tag, pid, message);
         }
 
@@ -173,6 +173,8 @@ public class LogParser {
                 Pattern.compile("\\[CustomGridSize]\\s*(.*)"));
         MODULE_PATTERNS.put("clean_global_search",
                 Pattern.compile("\\[clean_global_search]\\s*(.*)"));
+        MODULE_PATTERNS.put("launcher_recent_task_memory_view",
+                Pattern.compile("\\[launcher_recent_task_memory_view]\\s*(.*)"));
 
         // 壁纸相关
         MODULE_PATTERNS.put("charge_animation_fix",
@@ -229,6 +231,7 @@ public class LogParser {
         MODULE_NAMES.put("zui_launcher_hotseat", "Dock扩容");
         MODULE_NAMES.put("CustomGridSize", "自定义桌面网格大小");
         MODULE_NAMES.put("clean_global_search", "净化全局搜索");
+        MODULE_NAMES.put("launcher_recent_task_memory_view", "显示内存信息");
 
         // 系统框架相关
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
@@ -294,7 +297,7 @@ public class LogParser {
         // Android logcat 格式: MM-DD HH:MM:SS.mmm Level/Tag(PID): Message
         Pattern logPattern = Pattern.compile(
                 "^(\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+" +
-                        "(V|D|I|W|E|F|S)/(.+?)\\((\\s*\\d+)\\):\\s*(.*)$");
+                        "([VDIWEFS])/(.+?)\\((\\s*\\d+)\\):\\s*(.*)$");
 
         Matcher matcher = logPattern.matcher(line);
 
@@ -618,12 +621,11 @@ public class LogParser {
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
                 "disable_force_stop", "zui_launcher_hotseat", "CustomGridSize",
-                "clean_global_search"
+                "clean_global_search", "launcher_recent_task_memory_view"
         ));
 
         // 文件选择器相关
-        //noinspection ArraysAsListWithZeroOrOneArgument
-        categories.put("文件", Arrays.asList(
+        categories.put("文件", Collections.singletonList(
                 "documents_ui_bypass"
         ));
 
@@ -639,8 +641,7 @@ public class LogParser {
         ));
 
         // 壁纸相关
-        //noinspection ArraysAsListWithZeroOrOneArgument
-        categories.put("壁纸", Arrays.asList(
+        categories.put("壁纸", Collections.singletonList(
                 "charge_animation_fix"
         ));
         return categories;
@@ -781,7 +782,7 @@ public class LogParser {
         Arrays.sort(logFiles, (f1, f2) -> {
             try {
                 // 从文件名提取时间戳进行比较
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
                 String time1 = extractTimeFromFilename(f1.getName());
                 String time2 = extractTimeFromFilename(f2.getName());
                 Date date1 = sdf.parse(time1);
@@ -888,7 +889,7 @@ public class LogParser {
         Map<String, Integer> stats = new HashMap<>();
         for (LogEntry entry : entries) {
             if (entry.module != null) {
-                stats.put(entry.module, stats.getOrDefault(entry.module, 0) + 1);
+                stats.merge(entry.module, 1, Integer::sum);
             }
         }
         return stats;
@@ -909,13 +910,13 @@ public class LogParser {
 
                 // 按模块统计
                 if (entry.module != null) {
-                    errorByModule.put(entry.module, errorByModule.getOrDefault(entry.module, 0) + 1);
+                    errorByModule.merge(entry.module, 1, Integer::sum);
                 }
 
                 // 按错误类型统计
                 String errorType = entry.extractedData.get("error_type");
                 if (errorType != null) {
-                    errorByType.put(errorType, errorByType.getOrDefault(errorType, 0) + 1);
+                    errorByType.merge(errorType, 1, Integer::sum);
                 }
             }
         }
