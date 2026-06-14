@@ -28,7 +28,10 @@ class LauncherSettingsRepository(
             customGridRow = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LAUNCHER_ROW, DEFAULT_ROW)
                 .coerceIn(GRID_MIN, GRID_MAX),
             customGridColumn = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LAUNCHER_COLUMN, DEFAULT_COLUMN)
-                .coerceIn(GRID_MIN, GRID_MAX)
+                .coerceIn(GRID_MIN, GRID_MAX),
+            cleanGlobalSearch = prefsUtils.loadBooleanSetting(KEY_CLEAN_GLOBAL_SEARCH, false),
+            removeSearchRecommend = prefsUtils.loadBooleanSetting(KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX, false),
+            removeHotWordView = prefsUtils.loadBooleanSetting(KEY_REMOVE_HOT_WORD_VIEW, false)
         )
     }
 
@@ -67,6 +70,18 @@ class LauncherSettingsRepository(
     fun saveGridValues(row: Int, column: Int) {
         prefsUtils.saveIntegerSetting(KEY_CUSTOM_LAUNCHER_ROW, row.coerceIn(GRID_MIN, GRID_MAX))
         prefsUtils.saveIntegerSetting(KEY_CUSTOM_LAUNCHER_COLUMN, column.coerceIn(GRID_MIN, GRID_MAX))
+    }
+
+    fun saveCleanSearch(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CLEAN_GLOBAL_SEARCH, enabled)
+    }
+
+    fun saveRemoveSearchRecommend(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX, enabled)
+    }
+
+    fun saveRemoveHotWordView(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_REMOVE_HOT_WORD_VIEW, enabled)
     }
 
     fun loadUserInstalledPackageNames(): List<String> {
@@ -116,6 +131,9 @@ class LauncherSettingsRepository(
         private const val KEY_CUSTOM_GRID_SIZE = "CustomGridSize"
         private const val KEY_CUSTOM_LAUNCHER_ROW = "CustomLauncherRow"
         private const val KEY_CUSTOM_LAUNCHER_COLUMN = "CustomLauncherColumn"
+        private const val KEY_CLEAN_GLOBAL_SEARCH = "clean_global_search"
+        private const val KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX = "remove_search_recommend"
+        private const val KEY_REMOVE_HOT_WORD_VIEW = "remove_hot_word_view"
     }
 }
 

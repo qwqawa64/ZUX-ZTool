@@ -18,13 +18,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,12 +42,12 @@ import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
@@ -106,7 +104,10 @@ fun LauncherSettingsRoute(
         onMoreBigDockChanged = viewModel::setMoreBigDock,
         onCustomGridSizeChanged = viewModel::setCustomGridSize,
         onCustomGridRowChanged = viewModel::setCustomGridRow,
-        onCustomGridColumnChanged = viewModel::setCustomGridColumn
+        onCustomGridColumnChanged = viewModel::setCustomGridColumn,
+        onCleanSearchChanged = viewModel::setCleanSearch,
+        onRemoveSearchRecommendationChanged = viewModel::setRemoveSearchRecommend,
+        onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -156,7 +157,10 @@ private fun LauncherSettingsScreen(
     onMoreBigDockChanged: (Boolean) -> Unit,
     onCustomGridSizeChanged: (Boolean) -> Unit,
     onCustomGridRowChanged: (Int) -> Unit,
-    onCustomGridColumnChanged: (Int) -> Unit
+    onCustomGridColumnChanged: (Int) -> Unit,
+    onCleanSearchChanged: (Boolean) -> Unit,
+    onRemoveSearchRecommendationChanged: (Boolean) -> Unit,
+    onRemoveHotWordViewChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -200,7 +204,10 @@ private fun LauncherSettingsScreen(
                         onMoreBigDockChanged = onMoreBigDockChanged,
                         onCustomGridSizeChanged = onCustomGridSizeChanged,
                         onCustomGridRowChanged = onCustomGridRowChanged,
-                        onCustomGridColumnChanged = onCustomGridColumnChanged
+                        onCustomGridColumnChanged = onCustomGridColumnChanged,
+                        onCleanSearchChanged = onCleanSearchChanged,
+                        onRemoveSearchRecommendationChanged = onRemoveSearchRecommendationChanged,
+                        onRemoveHotWordViewChanged = onRemoveHotWordViewChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -217,7 +224,10 @@ private fun launcherSettingsSections(
     onMoreBigDockChanged: (Boolean) -> Unit,
     onCustomGridSizeChanged: (Boolean) -> Unit,
     onCustomGridRowChanged: (Int) -> Unit,
-    onCustomGridColumnChanged: (Int) -> Unit
+    onCustomGridColumnChanged: (Int) -> Unit,
+    onCleanSearchChanged: (Boolean) -> Unit,
+    onRemoveSearchRecommendationChanged: (Boolean) -> Unit,
+    onRemoveHotWordViewChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -275,6 +285,33 @@ private fun launcherSettingsSections(
         }
     }
 
+    val cleanGlobalSearchLayoutItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.clean_search),
+                summary = stringResource(R.string.clean_search_summary),
+                checked = state.cleanGlobalSearch,
+                onCheckedChange = onCleanSearchChanged
+            )
+        )
+        if (state.cleanGlobalSearch) {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.remove_search_recommend),
+                    checked = state.removeSearchRecommend,
+                    onCheckedChange = onRemoveSearchRecommendationChanged
+                )
+            )
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.remove_hot_word_view),
+                    checked = state.removeHotWordView,
+                    onCheckedChange = onRemoveHotWordViewChanged
+                )
+            )
+        }
+    }
+
     return listOf(
         SettingSection(
             title = stringResource(R.string.disable_force_stop_title),
@@ -294,6 +331,10 @@ private fun launcherSettingsSections(
         SettingSection(
             title = stringResource(R.string.customLauncherLayoutTitle),
             items = launcherLayoutItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.global_search),
+            items = cleanGlobalSearchLayoutItems
         )
     )
 }

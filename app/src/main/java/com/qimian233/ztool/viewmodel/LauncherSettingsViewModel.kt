@@ -67,6 +67,21 @@ class LauncherSettingsViewModel(
         repository.saveGridValues(current.customGridRow, column)
     }
 
+    fun setCleanSearch(value: Boolean) {
+        _uiState.value = _uiState.value.copy(cleanGlobalSearch = value)
+        repository.saveCleanSearch(value)
+    }
+
+    fun setRemoveSearchRecommend(value: Boolean) {
+        _uiState.value = _uiState.value.copy(removeSearchRecommend = value)
+        repository.saveRemoveSearchRecommend(value)
+    }
+
+    fun setRemoveHotWordView(value: Boolean) {
+        _uiState.value = _uiState.value.copy(removeHotWordView = value)
+        repository.saveRemoveHotWordView(value)
+    }
+
     fun showRestartConfirmDialog() {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = true)
     }
@@ -103,6 +118,9 @@ data class LauncherSettingsUiState(
     val customGridSize: Boolean = false,
     val customGridRow: Int = 4,
     val customGridColumn: Int = 6,
+    val cleanGlobalSearch: Boolean = false,
+    val removeHotWordView: Boolean = false,
+    val removeSearchRecommend: Boolean = false,
     val showRestartConfirmDialog: Boolean = false
 ) {
     val forceStopWhitelistCount: Int

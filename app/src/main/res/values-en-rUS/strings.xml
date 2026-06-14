@@ -768,4 +768,9 @@
     <string name="disable_all_virus_scan_summary">Block virus alert in safe center, unable to handle launcher alert icon. Wipe app data of safe center after enabling this hook</string>
     <string name="Disable_ScanAPK_Title">Skip security scan</string>
     <string name="Disable_ScanAPK_Summary">Skip security scan to save time.</string>
+    <string name="clean_search">Greenify global search</string>
+    <string name="clean_search_summary">Remove annoying recommendations</string>
+    <string name="remove_search_recommend">Remove search recommendations</string>
+    <string name="remove_hot_word_view">Remove hot word card</string>
+    <string name="global_search">Global Search</string>
 </resources>

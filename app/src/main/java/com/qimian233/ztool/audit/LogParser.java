@@ -171,6 +171,8 @@ public class LogParser {
                 Pattern.compile("\\[zui_launcher_hotseat]\\s*(.*)"));
         MODULE_PATTERNS.put("CustomGridSize",
                 Pattern.compile("\\[CustomGridSize]\\s*(.*)"));
+        MODULE_PATTERNS.put("clean_global_search",
+                Pattern.compile("\\[clean_global_search]\\s*(.*)"));
 
         // 壁纸相关
         MODULE_PATTERNS.put("charge_animation_fix",
@@ -226,6 +228,7 @@ public class LogParser {
         MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
         MODULE_NAMES.put("zui_launcher_hotseat", "Dock扩容");
         MODULE_NAMES.put("CustomGridSize", "自定义桌面网格大小");
+        MODULE_NAMES.put("clean_global_search", "净化全局搜索");
 
         // 系统框架相关
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
@@ -614,7 +617,8 @@ public class LogParser {
 
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
-                "disable_force_stop", "zui_launcher_hotseat", "CustomGridSize"
+                "disable_force_stop", "zui_launcher_hotseat", "CustomGridSize",
+                "clean_global_search"
         ));
 
         // 文件选择器相关

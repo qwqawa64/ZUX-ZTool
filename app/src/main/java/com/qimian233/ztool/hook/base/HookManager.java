@@ -6,6 +6,7 @@ import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
+import com.qimian233.ztool.hook.modules.launcher.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
@@ -159,6 +160,8 @@ public class HookManager {
         registerHookModule(new ForceScreenOnOffAnimation());
         // 注册模块: 关闭安全中心内病毒扫描
         registerHookModule(new DisableAllVirusScans());
+        // 注册模块: 关闭全局搜索热词提示
+        registerHookModule(new CleanGlobalSearch());
         initialized = true;
     }
 
