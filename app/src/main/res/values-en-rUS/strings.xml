@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="tooltip_content_description">Tip</string>
     <string name="quick_help_lookup_title">Quick lookup</string>
     <string name="quick_help_examples_title">Example</string>
@@ -585,8 +585,8 @@
     <string name="format_help_date_pattern_full">yyyy-MM-dd EEEE</string>
     <string name="format_help_date_pattern_short">MM-dd E</string>
     <string name="format_help_date_pattern_time">yyyy/MM/dd HH:mm</string>
-    <string name="format_help_date_example_full">2026-06-07 Sunday</string>
-    <string name="format_help_date_example_short">06-07 Sun</string>
+    <string name="format_help_date_example_full" tools:ignore="TypographyDashes">2026-06-07 Sunday</string>
+    <string name="format_help_date_example_short" tools:ignore="TypographyDashes">06-07 Sun</string>
     <string name="format_help_date_example_time">2026/06/07 14:30</string>
     <string name="clock_format_example">Clock format examples</string>
     <string name="clock_format_sample">HH:mm N</string>
@@ -596,7 +596,7 @@
     <string name="error_prefix">Error: </string>
     <string name="notify_num_default">4</string>
     <string name="notify_num_unlimited">Unlimited</string>
-    <string name="clock_format_help_content">Time formats extend ISO 8601. Custom clock format reference:\n\nISO 8601 date formats:\n  yyyy - Year (2024)\n  yy   - Last two year digits (24)\n  MM   - Month (12)\n  MMM  - Abbreviated month (Dec)\n  MMMM - Full month name (December)\n  dd   - Day (25)\n  HH   - 24-hour clock (14)\n  hh   - 12-hour clock (02)\n  mm   - Minute (30)\n  ss   - Second (45)\n  SSS  - Millisecond (123)\n\nWeekday formats:\n  E    - Abbreviated weekday (Mon)\n  EE   - Abbreviated weekday (Mon)\n  EEE  - Abbreviated weekday (Mon)\n  EEEE - Full weekday name (Monday)\n  u    - Numeric weekday (1-7, 1=Monday)\n  W    - Custom weekday format (Mon)\n\nLunar calendar:\n  N - Lunar date\n  J - Solar term (shown only on that day)\n  A - Zodiac animal\n\nTime-related:\n  T - Traditional two-hour period\n  a - AM/PM marker\n  k - 24-hour clock (1-24)\n  K - 12-hour clock (0-11)\n\nOther special formats:\n  C - Zodiac sign\n  D - Day of year (1-365)\n  F - Week of month\n  w - Week of year (1-53)\n  W - Week of month (1-5)\n  z - Time zone name (GMT+08:00)\n  Z - Time zone offset (+0800)\n\nExamples:\n  \"yyyy-MM-dd HH:mm:ss\" -> \"2024-12-25 14:30:45\"\n  \"MM-dd EEEE\" -> \"12-25 Wednesday\"\n  \"HH:mm T\" -> \"14:30 noon period\"\n  \"yyyy-MM-dd N A\" -> \"2024-12-25 Lunar 23rd Dragon\"\n  \"yyyy/MM/dd E C\" -> \"2024/12/25 Wed Capricorn\"\n\nNotes:\n  • Lunar dates and solar terms use the Chinese lunar calendar algorithm\n  • Traditional periods are divided into two-hour blocks\n  • Zodiac signs are calculated from the Gregorian date\n  • Zodiac animals are based on lunar year\n  • Custom format symbols (N,J,T,C,A,W) are case-sensitive</string>
+    <string name="clock_format_help_content" tools:ignore="TypographyDashes">Time formats extend ISO 8601. Custom clock format reference:\n\nISO 8601 date formats:\n  yyyy - Year (2024)\n  yy   - Last two year digits (24)\n  MM   - Month (12)\n  MMM  - Abbreviated month (Dec)\n  MMMM - Full month name (December)\n  dd   - Day (25)\n  HH   - 24-hour clock (14)\n  hh   - 12-hour clock (02)\n  mm   - Minute (30)\n  ss   - Second (45)\n  SSS  - Millisecond (123)\n\nWeekday formats:\n  E    - Abbreviated weekday (Mon)\n  EE   - Abbreviated weekday (Mon)\n  EEE  - Abbreviated weekday (Mon)\n  EEEE - Full weekday name (Monday)\n  u    - Numeric weekday (1-7, 1=Monday)\n  W    - Custom weekday format (Mon)\n\nLunar calendar:\n  N - Lunar date\n  J - Solar term (shown only on that day)\n  A - Zodiac animal\n\nTime-related:\n  T - Traditional two-hour period\n  a - AM/PM marker\n  k - 24-hour clock (1-24)\n  K - 12-hour clock (0-11)\n\nOther special formats:\n  C - Zodiac sign\n  D - Day of year (1-365)\n  F - Week of month\n  w - Week of year (1-53)\n  W - Week of month (1-5)\n  z - Time zone name (GMT+08:00)\n  Z - Time zone offset (+0800)\n\nExamples:\n  \"yyyy-MM-dd HH:mm:ss\" -> \"2024-12-25 14:30:45\"\n  \"MM-dd EEEE\" -> \"12-25 Wednesday\"\n  \"HH:mm T\" -> \"14:30 noon period\"\n  \"yyyy-MM-dd N A\" -> \"2024-12-25 Lunar 23rd Dragon\"\n  \"yyyy/MM/dd E C\" -> \"2024/12/25 Wed Capricorn\"\n\nNotes:\n  • Lunar dates and solar terms use the Chinese lunar calendar algorithm\n  • Traditional periods are divided into two-hour blocks\n  • Zodiac signs are calculated from the Gregorian date\n  • Zodiac animals are based on lunar year\n  • Custom format symbols (N,J,T,C,A,W) are case-sensitive</string>
     <string name="force_stop_title">Select apps to protect</string>
     <string name="protected_apps_summary">%d background apps protected</string>
     <string name="force_stop_success">App process restarted</string>
