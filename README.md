@@ -1,4 +1,14 @@
-# ZTool - 更适合ZUXOS体质的LSPosed自定义模块
+# <p align="center">ZTool - 更适合 ZUXOS 体质的 LSPosed 自定义模块</p>
+
+<div align="center">
+  <img src="/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="ZTool Logo">
+
+  <a href="https://github.com/qwqawa64/ZUX-ZTool"><img alt="Static Badge" src="https://img.shields.io/badge/GitHub-ZUX--ZTool-%23ADD8E6?style=for-the-badge"></a>
+  <a href="https://github.com/LSPosed/LSPosed"><img alt="Static Badge" src="https://img.shields.io/badge/Framework-LSPosed-%23F48FB1?style=for-the-badge&color=%23F48FB1">
+  <a href="https://www.zuxos.com/"><img alt="Static Badge" src="https://img.shields.io/badge/Target-ZUXOS%2FZUI-%23E2231A?style=for-the-badge"></a>
+  <a href="https://github.com/qwqawa64/ZUX-ZTool/commits/master/"><img alt="GitHub commits since latest release" src="https://img.shields.io/github/commits-since/qwqawa64/ZUX-ZTool/latest?style=for-the-badge"></a>
+</a>
+</div>
 
 > Make ZUXOS Great, not Again.
 
@@ -75,7 +85,9 @@ ZTool 是一个针对 ZUXOS 的 LSPosed 功能增强模块。
 
 ## 注意事项
 
-- 部分功能需要 Magisk/KernelSU 模块支持
+- 本模块仅供学习交流使用，请勿用于非法用途。
+- 部分功能需要 Magisk/KernelSU 模块支持。
+- 部分修改可能导致设备运行异常，请提前备份数据并确保掌握紧急恢复的方法。
 
 ## 致谢
 
