@@ -18,9 +18,8 @@ public class HideOtaUpdateHint extends BaseHookModule {
 
     @Override
     public String getModuleName() {
-        return "hook_test";
+        return "hide_ota_update_hint";
     }
-    //hide_ota_update_hint
 
     @Override
     public String[] getTargetPackages() {

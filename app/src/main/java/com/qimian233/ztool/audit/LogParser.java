@@ -610,7 +610,7 @@ public class LogParser {
 
         // 系统更新相关
         categories.put("系统更新", Arrays.asList(
-                "custom_ota_parameters", "disable_ota_check"
+                "custom_ota_parameters", "disable_ota_check", "hide_ota_update_hint"
 
         ));
 
