@@ -776,4 +776,5 @@
     <string name="recent_task">Recent Tasks</string>
     <string name="show_ram_info">Show RAM usage</string>
     <string name="show_ram_info_summary">This is not physical RAM amount.</string>
+    <string name="hide_ota_update_hint">Hide the red \"update available\" indicator</string>
 </resources>

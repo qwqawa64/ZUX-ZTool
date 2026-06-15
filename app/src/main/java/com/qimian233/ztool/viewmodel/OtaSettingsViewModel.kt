@@ -66,6 +66,11 @@ class OtaSettingsViewModel(
         repository.saveCustomDeviceId(value)
     }
 
+    fun setHideOtaUpdate(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(hideOtaUpdateHint = enabled)
+        repository.saveHideOtaUpdateHint(enabled)
+    }
+
     fun fetchOtaInfo(errorPrefix: String) {
         _uiState.value = _uiState.value.copy(isFetchingOtaInfo = true)
         viewModelScope.launch(Dispatchers.IO) {
@@ -177,5 +182,6 @@ data class OtaSettingsUiState(
     val otaInfoResult: OtaInfoResult? = null,
     val firmwareResult: FirmwareResult? = null,
     val errorDialogMessage: String? = null,
-    val showRestartDialog: Boolean = false
+    val showRestartDialog: Boolean = false,
+    val hideOtaUpdateHint: Boolean = false,
 )

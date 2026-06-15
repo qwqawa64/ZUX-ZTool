@@ -36,6 +36,7 @@ class OtaSettingsRepository(
     fun loadState(): OtaSettingsUiState {
         return OtaSettingsUiState(
             disableOtaCheck = prefsUtils.loadBooleanSetting(KEY_DISABLE_OTA_CHECK, false),
+            hideOtaUpdateHint = prefsUtils.loadBooleanSetting(KEY_HIDE_OTA_UPDATE_HINT, false),
             customVersion = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_VERSION, ""),
             customDeviceId = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_DEVICE_ID, ""),
             currentVersion = context.getString(R.string.loading_ellipsis),
@@ -53,6 +54,10 @@ class OtaSettingsRepository(
 
     fun saveCustomDeviceId(value: String) {
         prefsUtils.saveStringSetting(KEY_CUSTOM_OTA_TARGET_DEVICE_ID, value)
+    }
+
+    fun saveHideOtaUpdateHint(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_HIDE_OTA_UPDATE_HINT, enabled)
     }
 
     fun loadCurrentDeviceInfo(): CurrentDeviceInfo {
@@ -106,8 +111,10 @@ class OtaSettingsRepository(
         return try {
             val process = Runtime.getRuntime().exec("su -c killall $packageName")
             val process2 = Runtime.getRuntime().exec("su -c killall com.lenovo.tbengine")
+            val process3 = Runtime.getRuntime().exec("su -c killall com.android.settings")
             process.waitFor()
             process2.waitFor()
+            process3.waitFor()
             OtaRestartResult.Success
         } catch (e: Exception) {
             OtaRestartResult.Failure(e.message.orEmpty())
@@ -259,6 +266,7 @@ class OtaSettingsRepository(
         private const val KEY_DISABLE_OTA_CHECK = "disable_OtaCheck"
         private const val KEY_CUSTOM_OTA_TARGET_VERSION = "Custom_ota_target_versionName"
         private const val KEY_CUSTOM_OTA_TARGET_DEVICE_ID = "Custom_ota_target_deviceID"
+        private const val KEY_HIDE_OTA_UPDATE_HINT = "hide_ota_update_hint"
     }
 }
 

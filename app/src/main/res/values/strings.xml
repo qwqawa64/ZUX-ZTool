@@ -828,4 +828,5 @@
     <string name="recent_task">最近任务</string>
     <string name="show_ram_info">显示内存信息</string>
     <string name="show_ram_info_summary">内存信息不能完全反映设备真实安装的物理内存量</string>
+    <string name="hide_ota_update_hint">隐藏新版本提示红点</string>
 </resources>

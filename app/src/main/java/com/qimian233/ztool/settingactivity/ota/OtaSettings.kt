@@ -21,7 +21,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,14 +46,13 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.ota.OtaSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
-import com.qimian233.ztool.ui.components.ZToolButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
@@ -99,6 +97,7 @@ fun OtaSettingsRoute(
         state = uiState,
         onBack = onBack,
         onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
+        onHideOtaUpdateHintChanged = viewModel::setHideOtaUpdate,
         onFetchOtaInfo = {
             viewModel.fetchOtaInfo(otaInfoFetchFailed)
         },
@@ -163,6 +162,7 @@ private fun OtaSettingsScreen(
     state: OtaSettingsUiState,
     onBack: () -> Unit,
     onDisableOtaCheckChanged: (Boolean) -> Unit,
+    onHideOtaUpdateHintChanged: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -209,6 +209,7 @@ private fun OtaSettingsScreen(
                     sections = otaSettingsSections(
                         state = state,
                         onDisableOtaCheckChanged = onDisableOtaCheckChanged,
+                        onHideOtaUpdateHintChanged = onHideOtaUpdateHintChanged,
                         onFetchOtaInfo = onFetchOtaInfo,
                         onFirmwareSnChanged = onFirmwareSnChanged,
                         onFetchFirmware = onFetchFirmware,
@@ -229,6 +230,7 @@ private fun OtaSettingsScreen(
 private fun otaSettingsSections(
     state: OtaSettingsUiState,
     onDisableOtaCheckChanged: (Boolean) -> Unit,
+    onHideOtaUpdateHintChanged: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -247,6 +249,11 @@ private fun otaSettingsSections(
                     summary = stringResource(R.string.OtaDisable_summary),
                     checked = state.disableOtaCheck,
                     onCheckedChange = onDisableOtaCheckChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.hide_ota_update_hint),
+                    checked = state.hideOtaUpdateHint,
+                    onCheckedChange = onHideOtaUpdateHintChanged
                 )
             )
         ),
@@ -551,7 +558,8 @@ private fun RestartScopeDialog(
             Text(
                 stringResource(R.string.restart_xp_message_header) +
                     packageName +
-                    ",com.lenovo.tbengine" +
+                    ", com.lenovo.tbengine" +
+                        ", com.android.settings " +
                     stringResource(R.string.restart_xp_message)
             )
         },
