@@ -12,7 +12,7 @@ import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
-import com.qimian233.ztool.hook.modules.ota.HideOtaUpdateHint;
+import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
