@@ -107,6 +107,8 @@ public class LogParser {
         // 系统更新相关模块
         MODULE_PATTERNS.put("disable_OtaCheck",
                 Pattern.compile("\\[disable_OtaCheck]\\s*(.*)"));
+        MODULE_PATTERNS.put("hide_ota_update_hint",
+                Pattern.compile("\\[hide_ota_update_hint]\\s*(.*)"));
         MODULE_PATTERNS.put("custom_ota_parameters",
                 Pattern.compile("\\[custom_ota_parameters]\\s*(.*)"));
 
@@ -204,6 +206,7 @@ public class LogParser {
 
         // OTA相关
         MODULE_NAMES.put("disable_OtaCheck", "开启本地安装");
+        MODULE_NAMES.put("hide_ota_update_hint", "隐藏OTA更新提示");
         MODULE_NAMES.put("custom_ota_parameters", "自定义OTA请求参数");
 
         // 包安装器相关

@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
+import com.qimian233.ztool.hook.modules.ota.HideOtaUpdateHint;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
@@ -75,6 +76,8 @@ public class HookManager {
         registerHookModule(new DisableGameAudio());
         // 注册模块：禁用OTA检查
         registerHookModule(new DisableOtaCheck());
+        // 注册模块：隐藏设置页OTA更新提示
+        registerHookModule(new HideOtaUpdateHint());
         // 注册模块：机型伪装Y700四代
         registerHookModule(new DeviceModelDisguiseHook());
         // 注册模块：cpu频率修复
