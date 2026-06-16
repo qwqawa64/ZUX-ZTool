@@ -174,7 +174,7 @@ The durable rules from that guide are:
 To add a new Hook implementation on the backend:
 
 1. Create a Hook class that extends `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`.
-2. Implement `getModuleName()`, `getTargetPackages()`, and `handleLoadPackage(...)`.
+2. Implement `getModuleName()`, `getTargetPackages()`, and `handleLoadPackage(...)`. **When implementing test hook, return "hook_test" in getModuleName() will always enable this test hook without bothering to add frontend switch.**
 3. Read Hook settings using the same keys/defaults that the frontend writes.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
 5. Add the required log handling in `app/src/main/java/com/qimian233/ztool/audit/LogParser.java`, including module pattern/display name/category and any module-specific extracted data needed by the Audit UI.
