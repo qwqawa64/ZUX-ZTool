@@ -42,10 +42,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
 import top.yukonga.miuix.kmp.icon.basic.ArrowUpDown
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.ListPopupColumn as MiuixListPopupColumn
 import top.yukonga.miuix.kmp.basic.PopupPositionProvider as MiuixPopupPositionProvider
@@ -173,14 +176,22 @@ fun ZToolSwitchRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
+                            (if (enabled) BasicComponentDefaults.titleColor().color else BasicComponentDefaults.titleColor().disabledColor)
+                        else
+                            (if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant),
+                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
+                    color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
+                                (if (enabled) BasicComponentDefaults.summaryColor().color else BasicComponentDefaults.summaryColor().disabledColor)
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) 0.dp else 4.dp),
+                    fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.body2.fontSize else TextUnit.Unspecified
                 )
             }
         }
