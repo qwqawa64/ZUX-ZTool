@@ -11,11 +11,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,11 +33,11 @@ import com.qimian233.ztool.data.safecenter.SafeCenterSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsUiState
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsViewModel
 
@@ -202,17 +200,17 @@ internal fun safeCenterSettingsSections(
                     checked = state.defaultEnableAutorun,
                     onCheckedChange = onDefaultEnableAutorunChanged
                 ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.disable_all_virus_scan),
-                    summary = stringResource(R.string.disable_all_virus_scan_summary),
-                    checked = state.disableAllVirusScan,
-                 onCheckedChange = onDisableAllVirusScanChanged
-                ),
             )
         ),
         SettingSection(
             title = stringResource(R.string.sec_title_function),
             items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_all_virus_scan),
+                    summary = stringResource(R.string.disable_all_virus_scan_summary),
+                    checked = state.disableAllVirusScan,
+                    onCheckedChange = onDisableAllVirusScanChanged
+                ),
                 SettingItem.Switch(
                     title = stringResource(R.string.bypassDocementsUI),
                     summary = stringResource(R.string.bypassDocementsUISummary),
