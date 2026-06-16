@@ -638,13 +638,14 @@ private fun CustomDateConfig(
             title = stringResource(R.string.custom_clock_text_color_title),
             summary = "#%08X".format(textColor),
             checked = textColorEnabled,
-            onCheckedChange = onTextColorEnabledChanged
+            onCheckedChange = onTextColorEnabledChanged,
+            padding = 0.dp
         )
         if (textColorEnabled) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                    .padding(horizontal = 0.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
@@ -662,7 +663,8 @@ private fun CustomDateConfig(
             title = stringResource(R.string.custom_clock_text_bold_title),
             summary = stringResource(R.string.useBoldDate),
             checked = textBold,
-            onCheckedChange = onTextBoldChanged
+            onCheckedChange = onTextBoldChanged,
+            padding = 0.dp
         )
     }
 }
@@ -682,7 +684,8 @@ private fun SliderSettingRow(
         title = title,
         summary = valueLabel,
         checked = enabled,
-        onCheckedChange = onEnabledChanged
+        onCheckedChange = onEnabledChanged,
+        padding = 0.dp
     )
     Slider(
         value = value,
@@ -690,7 +693,7 @@ private fun SliderSettingRow(
         enabled = enabled,
         valueRange = valueRange,
         steps = steps,
-        modifier = Modifier.padding(horizontal = 24.dp)
+        modifier = Modifier.padding(horizontal = 0.dp)
     )
 }
 
