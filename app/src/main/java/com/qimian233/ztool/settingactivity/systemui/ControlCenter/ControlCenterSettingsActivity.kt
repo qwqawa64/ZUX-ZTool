@@ -4,6 +4,7 @@ package com.qimian233.ztool.settingactivity.systemui.ControlCenter
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,14 +23,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,17 +50,28 @@ import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsUiState
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsViewModel
+import kotlin.math.roundToInt
+
+private const val QS_ROUND_CORNER_MIN_RADIUS = 0
+private const val QS_ROUND_CORNER_MAX_RADIUS = 96
+private const val QS_ROUND_CORNER_STEP_INCREMENTAL = 8
+private const val QS_ROUND_CORNER_STEPS =
+    (QS_ROUND_CORNER_MAX_RADIUS - QS_ROUND_CORNER_MIN_RADIUS) / QS_ROUND_CORNER_STEP_INCREMENTAL - 1
+
+private fun snapToAccurateRadius(value: Float): Int {
+    return ((value / QS_ROUND_CORNER_STEP_INCREMENTAL).roundToInt() * QS_ROUND_CORNER_STEP_INCREMENTAL)
+        .coerceIn(QS_ROUND_CORNER_MIN_RADIUS, QS_ROUND_CORNER_MAX_RADIUS)
+}
 
 @Composable
 fun ControlCenterSettingsRoute(
@@ -85,7 +95,7 @@ fun ControlCenterSettingsRoute(
     }
 
     fun copyDateFormatExample() {
-        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText(
             context.getString(R.string.date_format_example),
             context.getString(R.string.date_format_sample)
@@ -110,7 +120,10 @@ fun ControlCenterSettingsRoute(
         onLetterSpacingChanged = viewModel::setLetterSpacing,
         onTextColorEnabledChanged = viewModel::setTextColorEnabled,
         onPickTextColor = viewModel::showColorPickerDialog,
-        onTextBoldChanged = viewModel::setTextBold
+        onTextBoldChanged = viewModel::setTextBold,
+        onQsRoundCornerChanged = viewModel::setQsRoundCorner,
+        onQsHeadUpRoundCornerRadiusChanged = viewModel::setQsHeadUpRoundCornerRadius,
+        onQsTileRoundCornerRadiusChanged = viewModel::setQsTileRoundCornerRadius
     )
 
     if (uiState.showFormatHelpDialog) {
@@ -169,7 +182,10 @@ private fun ControlCenterSettingsScreen(
     onLetterSpacingChanged: (Float) -> Unit,
     onTextColorEnabledChanged: (Boolean) -> Unit,
     onPickTextColor: () -> Unit,
-    onTextBoldChanged: (Boolean) -> Unit
+    onTextBoldChanged: (Boolean) -> Unit,
+    onQsRoundCornerChanged: (Boolean) -> Unit,
+    onQsHeadUpRoundCornerRadiusChanged: (Int) -> Unit,
+    onQsTileRoundCornerRadiusChanged: (Int) -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -212,7 +228,10 @@ private fun ControlCenterSettingsScreen(
                         onLetterSpacingChanged = onLetterSpacingChanged,
                         onTextColorEnabledChanged = onTextColorEnabledChanged,
                         onPickTextColor = onPickTextColor,
-                        onTextBoldChanged = onTextBoldChanged
+                        onTextBoldChanged = onTextBoldChanged,
+                        onQsRoundCornerChanged = onQsRoundCornerChanged,
+                        onQsHeadUpRoundCornerRadiusChanged = onQsHeadUpRoundCornerRadiusChanged,
+                        onQsTileRoundCornerRadiusChanged = onQsTileRoundCornerRadiusChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -234,9 +253,32 @@ private fun controlCenterSettingsSections(
     onLetterSpacingChanged: (Float) -> Unit,
     onTextColorEnabledChanged: (Boolean) -> Unit,
     onPickTextColor: () -> Unit,
-    onTextBoldChanged: (Boolean) -> Unit
+    onTextBoldChanged: (Boolean) -> Unit,
+    onQsRoundCornerChanged: (Boolean) -> Unit,
+    onQsHeadUpRoundCornerRadiusChanged: (Int) -> Unit,
+    onQsTileRoundCornerRadiusChanged: (Int) -> Unit
 ): List<SettingSection> {
     return listOf(
+        SettingSection(
+            title = stringResource(R.string.control_center_tiles),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.custom_control_center_tile_radius),
+                    summary = stringResource(R.string.custom_control_center_tile_radius_summary),
+                    checked = state.qsRoundCorner,
+                    onCheckedChange = onQsRoundCornerChanged,
+                ),
+                SettingItem.Custom(
+                    content = {
+                        QsRoundCornerRadius(
+                            state = state,
+                            onQsHeadUpRoundCornerRadiusChanged = onQsHeadUpRoundCornerRadiusChanged,
+                            onQsTileRoundCornerRadiusChanged = onQsTileRoundCornerRadiusChanged
+                        )
+                    }
+                )
+            )
+        ),
         SettingSection(
             title = stringResource(R.string.ControllerDate),
             items = listOf(
@@ -261,6 +303,76 @@ private fun controlCenterSettingsSections(
             )
         )
     )
+}
+
+@Composable
+private fun QsRoundCornerRadius(
+    state: ControlCenterSettingsUiState,
+    onQsHeadUpRoundCornerRadiusChanged: (Int) -> Unit,
+    onQsTileRoundCornerRadiusChanged: (Int) -> Unit
+) {
+    if (state.qsRoundCorner) {
+        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Text(
+                text = stringResource(R.string.head_up_corner_radius),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+            Row (
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+            ) {
+                Slider(
+                    value = state.qsHeadUpRoundCornerRadius.toFloat(),
+                    onValueChange = {
+                        onQsHeadUpRoundCornerRadiusChanged(
+                            snapToAccurateRadius(it)
+                        )
+                    },
+                    steps = QS_ROUND_CORNER_STEPS,
+                    valueRange = 0.0f..96.0f,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = state.qsHeadUpRoundCornerRadius.toString() + "dp",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .width(100.dp)
+                        .padding(start = 24.dp, top = 8.dp)
+                )
+            }
+            Text(
+                text = stringResource(R.string.normal_tile_corner_radius),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+            Row (
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+            ) {
+                Slider(
+                    value = state.qsTileRoundCornerRadius.toFloat(),
+                    onValueChange = {
+                        onQsTileRoundCornerRadiusChanged(
+                            snapToAccurateRadius(it)
+                        )
+                    },
+                    steps = QS_ROUND_CORNER_STEPS,
+                    valueRange = 0.0f..96.0f,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = state.qsTileRoundCornerRadius.toString() + "dp",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .width(100.dp)
+                        .padding(start = 24.dp, top = 8.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable

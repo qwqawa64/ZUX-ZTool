@@ -87,6 +87,21 @@ class ControlCenterSettingsViewModel(
         repository.saveTextBold(enabled)
     }
 
+    fun setQsRoundCorner(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(qsRoundCorner = enabled)
+        repository.saveQsRoundCorner(enabled)
+    }
+
+    fun setQsHeadUpRoundCornerRadius(value: Int) {
+        _uiState.value = _uiState.value.copy(qsHeadUpRoundCornerRadius = value)
+        repository.saveQsHeadUpRoundCornerRadius(value)
+    }
+
+    fun setQsTileRoundCornerRadius(value: Int) {
+        _uiState.value = _uiState.value.copy(qsTileRoundCornerRadius = value)
+        repository.saveQsTileRoundCornerRadius(value)
+    }
+
     fun showFormatHelpDialog() {
         _uiState.value = _uiState.value.copy(showFormatHelpDialog = true)
     }
@@ -125,5 +140,8 @@ data class ControlCenterSettingsUiState(
     val textBold: Boolean = false,
     val showFormatHelpDialog: Boolean = false,
     val showColorPickerDialog: Boolean = false,
-    val showSaveSuccessDialog: Boolean = false
+    val showSaveSuccessDialog: Boolean = false,
+    val qsRoundCorner: Boolean = false,
+    val qsHeadUpRoundCornerRadius: Int = 32,
+    val qsTileRoundCornerRadius: Int = 96,
 )

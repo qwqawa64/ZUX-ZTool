@@ -6,12 +6,17 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.RippleDrawable;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.PreferenceHelper;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import de.robv.android.xposed.XposedHelpers;
 
 public class CustomizedQsRoundCorner extends BaseHookModule {
+
+    private static int headUpTileRoundCornerRadius = 32;
+    private static int normalTileRoundCornerRadius = 96;
+
     @Override
     public String getModuleName() {
         return "qs_round_corner";
@@ -24,6 +29,7 @@ public class CustomizedQsRoundCorner extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        updateRoundCornerPrefs();
         XposedHelpers.findAndHookMethod("com.android.systemui.qs.tileimpl.QSTileViewImpl",
                 lpparam.classLoader,
                 "changeCornerRadius",
@@ -31,10 +37,10 @@ public class CustomizedQsRoundCorner extends BaseHookModule {
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) {
-                        param.args[0] = 80.0f;
+                        param.args[0] = (float) headUpTileRoundCornerRadius;
                     }
                 });
-        // Wifi and bluetooth QS radius, max 96.0f
+        // Wi-Fi and bluetooth QS radius, max 96.0f
 
         XposedHelpers.findAndHookMethod("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl",
                 lpparam.classLoader,
@@ -48,7 +54,7 @@ public class CustomizedQsRoundCorner extends BaseHookModule {
                         if (rippleDrawable != null) {
                             Drawable mask = rippleDrawable.findDrawableByLayerId(android.R.id.mask);
                             if (mask instanceof GradientDrawable) {
-                                ((GradientDrawable) mask).setCornerRadius(0.0f);
+                                ((GradientDrawable) mask).setCornerRadius((float) normalTileRoundCornerRadius);
                             }
                         }
 
@@ -60,7 +66,7 @@ public class CustomizedQsRoundCorner extends BaseHookModule {
                             for (int i = 0; i < count; i++) {
                                 Drawable layer = backgroundDrawable.getDrawable(i);
                                 if (layer instanceof GradientDrawable) {
-                                    ((GradientDrawable) layer).setCornerRadius(0.0f);
+                                    ((GradientDrawable) layer).setCornerRadius((float) normalTileRoundCornerRadius);
                                 }
                             }
                         }
@@ -68,4 +74,11 @@ public class CustomizedQsRoundCorner extends BaseHookModule {
                 });
         // Small QS radius, 96.0f is the max value.
     }
+
+    private void updateRoundCornerPrefs() {
+        PreferenceHelper prefs = PreferenceHelper.getInstance();
+        headUpTileRoundCornerRadius = prefs.getInt("head_up_round_corner_radius", 32);
+        normalTileRoundCornerRadius = prefs.getInt("tile_round_corner_radius", 96);
+    }
+
 }

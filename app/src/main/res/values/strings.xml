@@ -829,4 +829,9 @@
     <string name="show_ram_info">显示内存信息</string>
     <string name="show_ram_info_summary">内存信息不能完全反映设备真实安装的物理内存量</string>
     <string name="hide_ota_update_hint">隐藏新版本提示红点</string>
+    <string name="control_center_tiles">控制中心磁贴</string>
+    <string name="custom_control_center_tile_radius">自定义控制中心磁贴圆角半径</string>
+    <string name="custom_control_center_tile_radius_summary">最大 96 dp ，最小 0 dp ，可能造成轻微的组件显示问题</string>
+    <string name="head_up_corner_radius">大磁贴圆角半径</string>
+    <string name="normal_tile_corner_radius">小磁贴圆角半径</string>
 </resources>

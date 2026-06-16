@@ -12,10 +12,9 @@ class ControlCenterSettingsRepository(
     private val context: Context
 ) {
     private val prefsUtils = ModulePreferencesUtils(context)
-    private val zToolPrefs = ModulePreferencesUtils(context)
 
     fun loadState(): ControlCenterSettingsUiState {
-        val loadedDateFormat = zToolPrefs.loadStringSetting(
+        val loadedDateFormat = prefsUtils.loadStringSetting(
             KEY_DATE_FORMAT,
             context.getString(R.string.default_date_format)
         )
@@ -23,13 +22,16 @@ class ControlCenterSettingsRepository(
             customDate = prefsUtils.loadBooleanSetting(KEY_CUSTOM_DATE, false),
             dateFormat = loadedDateFormat,
             datePreview = buildDatePreview(loadedDateFormat),
-            textSize = zToolPrefs.loadFloatSetting(KEY_TEXT_SIZE, 16.0f),
-            textSizeEnabled = zToolPrefs.loadBooleanSetting(KEY_TEXT_SIZE_ENABLED, false),
-            letterSpacing = zToolPrefs.loadFloatSetting(KEY_LETTER_SPACING, 0.1f),
-            letterSpacingEnabled = zToolPrefs.loadBooleanSetting(KEY_LETTER_SPACING_ENABLED, false),
-            textColor = zToolPrefs.loadIntegerSetting(KEY_TEXT_COLOR, 0xFFFFFFFF.toInt()),
-            textColorEnabled = zToolPrefs.loadBooleanSetting(KEY_TEXT_COLOR_ENABLED, false),
-            textBold = zToolPrefs.loadBooleanSetting(KEY_TEXT_BOLD, false)
+            textSize = prefsUtils.loadFloatSetting(KEY_TEXT_SIZE, 16.0f),
+            textSizeEnabled = prefsUtils.loadBooleanSetting(KEY_TEXT_SIZE_ENABLED, false),
+            letterSpacing = prefsUtils.loadFloatSetting(KEY_LETTER_SPACING, 0.1f),
+            letterSpacingEnabled = prefsUtils.loadBooleanSetting(KEY_LETTER_SPACING_ENABLED, false),
+            textColor = prefsUtils.loadIntegerSetting(KEY_TEXT_COLOR, 0xFFFFFFFF.toInt()),
+            textColorEnabled = prefsUtils.loadBooleanSetting(KEY_TEXT_COLOR_ENABLED, false),
+            textBold = prefsUtils.loadBooleanSetting(KEY_TEXT_BOLD, false),
+            qsRoundCorner = prefsUtils.loadBooleanSetting(KEY_QS_ROUND_CORNER, false),
+            qsTileRoundCornerRadius = prefsUtils.loadIntegerSetting(KEY_TILE_QS_ROUND_CORNER_RADIUS, 96),
+            qsHeadUpRoundCornerRadius = prefsUtils.loadIntegerSetting(KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS, 32)
         )
     }
 
@@ -58,35 +60,47 @@ class ControlCenterSettingsRepository(
     }
 
     fun saveDateFormat(format: String) {
-        zToolPrefs.saveStringSetting(KEY_DATE_FORMAT, format)
+        prefsUtils.saveStringSetting(KEY_DATE_FORMAT, format)
     }
 
     fun saveTextSizeEnabled(enabled: Boolean) {
-        zToolPrefs.saveBooleanSetting(KEY_TEXT_SIZE_ENABLED, enabled)
+        prefsUtils.saveBooleanSetting(KEY_TEXT_SIZE_ENABLED, enabled)
     }
 
     fun saveTextSize(value: Float) {
-        zToolPrefs.saveFloatSetting(KEY_TEXT_SIZE, value)
+        prefsUtils.saveFloatSetting(KEY_TEXT_SIZE, value)
     }
 
     fun saveLetterSpacingEnabled(enabled: Boolean) {
-        zToolPrefs.saveBooleanSetting(KEY_LETTER_SPACING_ENABLED, enabled)
+        prefsUtils.saveBooleanSetting(KEY_LETTER_SPACING_ENABLED, enabled)
     }
 
     fun saveLetterSpacing(value: Float) {
-        zToolPrefs.saveFloatSetting(KEY_LETTER_SPACING, value)
+        prefsUtils.saveFloatSetting(KEY_LETTER_SPACING, value)
     }
 
     fun saveTextColorEnabled(enabled: Boolean) {
-        zToolPrefs.saveBooleanSetting(KEY_TEXT_COLOR_ENABLED, enabled)
+        prefsUtils.saveBooleanSetting(KEY_TEXT_COLOR_ENABLED, enabled)
     }
 
     fun saveTextColor(color: Int) {
-        zToolPrefs.saveIntegerSetting(KEY_TEXT_COLOR, color)
+        prefsUtils.saveIntegerSetting(KEY_TEXT_COLOR, color)
     }
 
     fun saveTextBold(enabled: Boolean) {
-        zToolPrefs.saveBooleanSetting(KEY_TEXT_BOLD, enabled)
+        prefsUtils.saveBooleanSetting(KEY_TEXT_BOLD, enabled)
+    }
+
+    fun saveQsRoundCorner(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_QS_ROUND_CORNER, enabled)
+    }
+
+    fun saveQsHeadUpRoundCornerRadius(value: Int) {
+        prefsUtils.saveIntegerSetting(KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS, value)
+    }
+
+    fun saveQsTileRoundCornerRadius(value: Int) {
+        prefsUtils.saveIntegerSetting(KEY_TILE_QS_ROUND_CORNER_RADIUS, value)
     }
 
     companion object {
@@ -100,5 +114,8 @@ class ControlCenterSettingsRepository(
         private const val KEY_TEXT_COLOR = "Custom_ControlCenterDateTextColor"
         private const val KEY_TEXT_COLOR_ENABLED = "Custom_ControlCenterDateTextColorEnabled"
         private const val KEY_TEXT_BOLD = "Custom_ControlCenterDateTextBold"
+        private const val KEY_QS_ROUND_CORNER = "qs_round_corner"
+        private const val KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS = "head_up_round_corner_radius"
+        private const val KEY_TILE_QS_ROUND_CORNER_RADIUS = "tile_round_corner_radius"
     }
 }
