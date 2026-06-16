@@ -20,14 +20,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,20 +43,19 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
-import com.qimian233.ztool.ui.components.SettingItem
-import com.qimian233.ztool.ui.components.SettingSection
-import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolButton
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
 import com.qimian233.ztool.viewmodel.StatusBarSettingsViewModel
 
@@ -447,13 +444,14 @@ private fun CustomClockConfig(
             title = stringResource(R.string.text_color_title),
             summary = "#%08X".format(textColor),
             checked = textColorEnabled,
-            onCheckedChange = onTextColorEnabledChanged
+            onCheckedChange = onTextColorEnabledChanged,
+            padding = 0.dp
         )
         if (textColorEnabled) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                    .padding(horizontal = 0.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
@@ -471,7 +469,8 @@ private fun CustomClockConfig(
             title = stringResource(R.string.text_bold_title),
             summary = null,
             checked = textBold,
-            onCheckedChange = onTextBoldChanged
+            onCheckedChange = onTextBoldChanged,
+            padding = 0.dp
         )
     }
 }
@@ -491,7 +490,8 @@ private fun SliderSettingRow(
         title = title,
         summary = valueLabel,
         checked = enabled,
-        onCheckedChange = onEnabledChanged
+        onCheckedChange = onEnabledChanged,
+        padding = 0.dp
     )
     Slider(
         value = value,
@@ -499,7 +499,7 @@ private fun SliderSettingRow(
         enabled = enabled,
         valueRange = valueRange,
         steps = steps,
-        modifier = Modifier.padding(horizontal = 24.dp)
+        modifier = Modifier.padding(horizontal = 0.dp)
     )
 }
 
