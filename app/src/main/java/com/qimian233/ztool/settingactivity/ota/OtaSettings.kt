@@ -351,7 +351,8 @@ private fun OtaInfoContent(
             Text(
                 text = stringResource(R.string.updateLog),
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = result.changelog,
@@ -519,7 +520,8 @@ private fun ResultText(
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = body,
