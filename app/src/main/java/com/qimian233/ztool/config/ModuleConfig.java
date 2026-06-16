@@ -40,7 +40,7 @@ public final class ModuleConfig {
     }
 
     public static boolean isModuleEnabled(String moduleName) {
-        if ("hook_test".equals(moduleName)) return true;
+        if ("hook_test".equals(moduleName) || "test_hook".equals(moduleName)) return true;
         if (moduleName == null) return false;
 
         return getBoolean(moduleName, false);
