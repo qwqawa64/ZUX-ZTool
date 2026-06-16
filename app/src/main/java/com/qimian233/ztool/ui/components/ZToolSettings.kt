@@ -4,8 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import top.yukonga.miuix.kmp.icon.MiuixIcons.Basic as MiuixIcons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.HorizontalDivider
@@ -48,10 +47,10 @@ import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.icon.basic.ArrowUpDown
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
-import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
 import top.yukonga.miuix.kmp.basic.ListPopupColumn as MiuixListPopupColumn
 import top.yukonga.miuix.kmp.basic.PopupPositionProvider as MiuixPopupPositionProvider
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
+import top.yukonga.miuix.kmp.icon.MiuixIcons.Basic as MiuixIcons
 import top.yukonga.miuix.kmp.window.WindowListPopup as MiuixWindowListPopup
 
 @Composable
@@ -236,9 +235,9 @@ fun ZToolSwitchRow(
 @Composable
 fun ZToolSettingsDivider(modifier: Modifier = Modifier) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        MiuixHorizontalDivider(
-            modifier = modifier.padding(start = 24.dp, end = 24.dp)
-        )
+//        MiuixHorizontalDivider(
+//            modifier = modifier.padding(start = 24.dp, end = 24.dp)
+//        )
         return
     }
 
