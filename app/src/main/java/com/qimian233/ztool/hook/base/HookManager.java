@@ -35,6 +35,7 @@ import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
+import com.qimian233.ztool.hook.modules.systemui.CustomQsColor;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsRoundCorner;
 import com.qimian233.ztool.hook.modules.systemui.ForceLenovoAOD;
@@ -171,6 +172,8 @@ public class HookManager {
         registerHookModule(new RecentTaskMemoryViewHook());
         // 注册模块: 控制中心磁贴圆角自定义
         registerHookModule(new CustomQsRoundCorner());
+        // 注册模块: 控制中心磁贴颜色自定义
+        registerHookModule(new CustomQsColor());
         initialized = true;
     }
 
