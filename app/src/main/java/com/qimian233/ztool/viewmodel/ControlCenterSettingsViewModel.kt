@@ -143,6 +143,11 @@ class ControlCenterSettingsViewModel(
         _uiState.value = _uiState.value.copy(customSecondLabelActiveColorText = value.sanitizeArgbColorText())
     }
 
+    fun setCustomQsColorSwitch(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(customQsColorGeneralSwitch = enabled)
+        repository.saveCustomQsColorSwitch(enabled)
+    }
+
     fun finishCustomQsActiveColorEditing() {
         saveColorText(
             text = _uiState.value.customQsActiveColorText,
@@ -252,4 +257,5 @@ data class ControlCenterSettingsUiState(
     val customQsActiveColorText: String = "",
     val customLabelActiveColorText: String = "",
     val customSecondLabelActiveColorText: String = "",
+    val customQsColorGeneralSwitch: Boolean = false,
 )

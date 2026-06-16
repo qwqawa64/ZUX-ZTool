@@ -41,7 +41,8 @@ class ControlCenterSettingsRepository(
             customSecondLabelActiveColor = prefsUtils.loadIntegerSetting(
                 KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL,
                 DEFAULT_SECOND_LABEL_ACTIVE_COLOR
-            )
+            ),
+            customQsColorGeneralSwitch = prefsUtils.loadBooleanSetting(KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH, false)
         )
     }
 
@@ -137,6 +138,10 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveIntegerSetting(KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL, color)
     }
 
+    fun saveCustomQsColorSwitch(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH, enabled)
+    }
+
     companion object {
         private const val TAG = "ControlCenterSettingsRepository"
         val DEFAULT_QS_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xad, 0xd8, 0xe6)
@@ -160,5 +165,6 @@ class ControlCenterSettingsRepository(
         private const val KEY_CUSTOM_QS_ACTIVE_COLOR_VAL = "custom_qs_active_color_val"
         private const val KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL = "custom_label_active_color_val"
         private const val KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = "custom_second_label_active_color_val"
+        private const val KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH = "qs_color"
     }
 }

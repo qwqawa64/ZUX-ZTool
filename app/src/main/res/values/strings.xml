@@ -847,4 +847,5 @@
     <string name="custom_second_label_active_color_title">次要说明文本颜色</string>
     <string name="custom_second_label_active_color_summary">输入 AARRGGBB 格式的颜色值。</string>
     <string name="argb_color_input_error">请输入 6 位 RRGGBB 或 8 位 AARRGGBB 颜色值。</string>
+    <string name="custom_qs_color_general_switch">自定义磁贴颜色</string>
 </resources>

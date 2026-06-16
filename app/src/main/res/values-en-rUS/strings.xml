@@ -795,4 +795,5 @@
     <string name="custom_second_label_active_color_title">Secondary label color</string>
     <string name="custom_second_label_active_color_summary">Enter an AARRGGBB color value.</string>
     <string name="argb_color_input_error">Enter a 6-digit RRGGBB or 8-digit AARRGGBB color value.</string>
+    <string name="custom_qs_color_general_switch">Customized tile color</string>
 </resources>
