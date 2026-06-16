@@ -93,6 +93,8 @@ public class LogParser {
                 Pattern.compile("\\[systemui_network_speed_doublelayer]\\s*(.*)"));
         MODULE_PATTERNS.put("systemui_battery_percentage",
                 Pattern.compile("\\[systemui_battery_percentage]\\s*(.*)"));
+        MODULE_PATTERNS.put("qs_round_corner",
+                Pattern.compile("\\[qs_round_corner]\\s*(.*)"));
 
         // 游戏工具相关模块
         MODULE_PATTERNS.put("Fix_CpuClock",
@@ -197,6 +199,7 @@ public class LogParser {
         MODULE_NAMES.put("systemui_network_speed_doublelayer", "网速双层显示");
         MODULE_NAMES.put("systemui_battery_percentage", "电池外百分比");
         MODULE_NAMES.put("ForceLenovoAOD", "强制开启联想AOD");
+        MODULE_NAMES.put("qs_round_corner", "控制中心磁贴自定义圆角");
 
         // 游戏工具相关
         MODULE_NAMES.put("Fix_CpuClock", "CPU频率修复");
@@ -594,7 +597,8 @@ public class LogParser {
                 "notification_icon_limit", "systemUI_RealWatts", "systemui_charge_watts",
                 "Custom_StatusBarClock", "StatusBarDisplay_Seconds", "Custom_ControlCenterDate",
                 "NativeNotificationIcon", "No_ChargeAnimation", "systemui_network_speed_size",
-                "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceLenovoAOD"
+                "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceLenovoAOD",
+                "qs_round_corner"
         ));
 
         // 游戏工具相关
