@@ -782,4 +782,17 @@
     <string name="custom_control_center_tile_radius_summary">Max 96 dp, min 0 dp, slight display incorrectness may happen,</string>
     <string name="head_up_corner_radius">Head-up tile round corner radius</string>
     <string name="normal_tile_corner_radius">Normal tile round corner radius</string>
+    <string name="custom_qs_color_title">Background color override</string>
+    <string name="custom_qs_color_summary">Change the enabled-state background color for control center tiles.</string>
+    <string name="custom_qs_active_color_title">Tile background color</string>
+    <string name="custom_qs_active_color_summary">Enter an AARRGGBB color value.</string>
+    <string name="custom_label_color_title">Primary label color override</string>
+    <string name="custom_label_color_summary">Change the enabled-state primary label color for control center tiles.</string>
+    <string name="custom_label_active_color_title">Primary label color</string>
+    <string name="custom_label_active_color_summary">Enter an AARRGGBB color value.</string>
+    <string name="custom_second_label_color_title">Secondary label color override</string>
+    <string name="custom_second_label_color_summary">Change the enabled-state secondary label color for control center tiles.</string>
+    <string name="custom_second_label_active_color_title">Secondary label color</string>
+    <string name="custom_second_label_active_color_summary">Enter an AARRGGBB color value.</string>
+    <string name="argb_color_input_error">Enter a 6-digit RRGGBB or 8-digit AARRGGBB color value.</string>
 </resources>

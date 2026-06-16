@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.systemui
 
 import android.content.Context
+import android.graphics.Color
 import android.util.Log
 import com.qimian233.ztool.R
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
@@ -31,7 +32,16 @@ class ControlCenterSettingsRepository(
             textBold = prefsUtils.loadBooleanSetting(KEY_TEXT_BOLD, false),
             qsRoundCorner = prefsUtils.loadBooleanSetting(KEY_QS_ROUND_CORNER, false),
             qsTileRoundCornerRadius = prefsUtils.loadIntegerSetting(KEY_TILE_QS_ROUND_CORNER_RADIUS, 96),
-            qsHeadUpRoundCornerRadius = prefsUtils.loadIntegerSetting(KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS, 32)
+            qsHeadUpRoundCornerRadius = prefsUtils.loadIntegerSetting(KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS, 32),
+            customQsColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_QS_COLOR, false),
+            customLabelColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_LABEL_COLOR, false),
+            customSecondLabelColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_SECOND_LABEL_COLOR, false),
+            customQsActiveColor = prefsUtils.loadIntegerSetting(KEY_CUSTOM_QS_ACTIVE_COLOR_VAL, DEFAULT_QS_ACTIVE_COLOR),
+            customLabelActiveColor = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL, DEFAULT_LABEL_ACTIVE_COLOR),
+            customSecondLabelActiveColor = prefsUtils.loadIntegerSetting(
+                KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL,
+                DEFAULT_SECOND_LABEL_ACTIVE_COLOR
+            )
         )
     }
 
@@ -103,8 +113,35 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveIntegerSetting(KEY_TILE_QS_ROUND_CORNER_RADIUS, value)
     }
 
+    fun saveCustomQsColor(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOM_QS_COLOR, enabled)
+    }
+
+    fun saveCustomLabelColor(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOM_LABEL_COLOR, enabled)
+    }
+
+    fun saveCustomSecondLabelColor(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOM_SECOND_LABEL_COLOR, enabled)
+    }
+
+    fun saveCustomQsActiveColor(color: Int) {
+        prefsUtils.saveIntegerSetting(KEY_CUSTOM_QS_ACTIVE_COLOR_VAL, color)
+    }
+
+    fun saveCustomLabelActiveColor(color: Int) {
+        prefsUtils.saveIntegerSetting(KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL, color)
+    }
+
+    fun saveCustomSecondLabelActiveColor(color: Int) {
+        prefsUtils.saveIntegerSetting(KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL, color)
+    }
+
     companion object {
         private const val TAG = "ControlCenterSettingsRepository"
+        val DEFAULT_QS_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xad, 0xd8, 0xe6)
+        val DEFAULT_LABEL_ACTIVE_COLOR: Int = Color.argb(0xff, 0xff, 0xff, 0xff)
+        val DEFAULT_SECOND_LABEL_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xff, 0xff, 0xff)
         private const val KEY_CUSTOM_DATE = "Custom_ControlCenterDate"
         private const val KEY_DATE_FORMAT = "Custom_ControlCenterDateFormat"
         private const val KEY_TEXT_SIZE = "Custom_ControlCenterDateTextSize"
@@ -117,5 +154,11 @@ class ControlCenterSettingsRepository(
         private const val KEY_QS_ROUND_CORNER = "qs_round_corner"
         private const val KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS = "head_up_round_corner_radius"
         private const val KEY_TILE_QS_ROUND_CORNER_RADIUS = "tile_round_corner_radius"
+        private const val KEY_CUSTOM_QS_COLOR = "custom_qs_color"
+        private const val KEY_CUSTOM_LABEL_COLOR = "custom_label_color"
+        private const val KEY_CUSTOM_SECOND_LABEL_COLOR = "custom_second_label_color"
+        private const val KEY_CUSTOM_QS_ACTIVE_COLOR_VAL = "custom_qs_active_color_val"
+        private const val KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL = "custom_label_active_color_val"
+        private const val KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = "custom_second_label_active_color_val"
     }
 }

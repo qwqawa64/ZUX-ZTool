@@ -3,6 +3,8 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.qimian233.ztool.data.systemui.ControlCenterSettingsRepository
+import com.qimian233.ztool.ui.components.normalizeArgbColorTextOrNull
+import com.qimian233.ztool.ui.components.sanitizeArgbColorText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,7 @@ class ControlCenterSettingsViewModel(
 
     fun loadSettings() {
         try {
-            _uiState.value = repository.loadState()
+            _uiState.value = repository.loadState().withColorText()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load control center settings", e)
         }
@@ -102,6 +104,81 @@ class ControlCenterSettingsViewModel(
         repository.saveQsTileRoundCornerRadius(value)
     }
 
+    fun setCustomQsColor(enabled: Boolean) {
+        val current = _uiState.value
+        _uiState.value = current.copy(customQsColor = enabled)
+        repository.saveCustomQsColor(enabled)
+        if (enabled) {
+            repository.saveCustomQsActiveColor(current.customQsActiveColor)
+        }
+    }
+
+    fun setCustomLabelColor(enabled: Boolean) {
+        val current = _uiState.value
+        _uiState.value = current.copy(customLabelColor = enabled)
+        repository.saveCustomLabelColor(enabled)
+        if (enabled) {
+            repository.saveCustomLabelActiveColor(current.customLabelActiveColor)
+        }
+    }
+
+    fun setCustomSecondLabelColor(enabled: Boolean) {
+        val current = _uiState.value
+        _uiState.value = current.copy(customSecondLabelColor = enabled)
+        repository.saveCustomSecondLabelColor(enabled)
+        if (enabled) {
+            repository.saveCustomSecondLabelActiveColor(current.customSecondLabelActiveColor)
+        }
+    }
+
+    fun setCustomQsActiveColorText(value: String) {
+        _uiState.value = _uiState.value.copy(customQsActiveColorText = value.sanitizeArgbColorText())
+    }
+
+    fun setCustomLabelActiveColorText(value: String) {
+        _uiState.value = _uiState.value.copy(customLabelActiveColorText = value.sanitizeArgbColorText())
+    }
+
+    fun setCustomSecondLabelActiveColorText(value: String) {
+        _uiState.value = _uiState.value.copy(customSecondLabelActiveColorText = value.sanitizeArgbColorText())
+    }
+
+    fun finishCustomQsActiveColorEditing() {
+        saveColorText(
+            text = _uiState.value.customQsActiveColorText,
+            fallback = ControlCenterSettingsRepository.DEFAULT_QS_ACTIVE_COLOR,
+            update = { color, text ->
+                _uiState.value = _uiState.value.copy(customQsActiveColor = color, customQsActiveColorText = text)
+                repository.saveCustomQsActiveColor(color)
+            }
+        )
+    }
+
+    fun finishCustomLabelActiveColorEditing() {
+        saveColorText(
+            text = _uiState.value.customLabelActiveColorText,
+            fallback = ControlCenterSettingsRepository.DEFAULT_LABEL_ACTIVE_COLOR,
+            update = { color, text ->
+                _uiState.value = _uiState.value.copy(customLabelActiveColor = color, customLabelActiveColorText = text)
+                repository.saveCustomLabelActiveColor(color)
+            }
+        )
+    }
+
+    fun finishCustomSecondLabelActiveColorEditing() {
+        saveColorText(
+            text = _uiState.value.customSecondLabelActiveColorText,
+            fallback = ControlCenterSettingsRepository.DEFAULT_SECOND_LABEL_ACTIVE_COLOR,
+            update = { color, text ->
+                _uiState.value = _uiState.value.copy(
+                    customSecondLabelActiveColor = color,
+                    customSecondLabelActiveColorText = text
+                )
+                repository.saveCustomSecondLabelActiveColor(color)
+            }
+        )
+    }
+
     fun showFormatHelpDialog() {
         _uiState.value = _uiState.value.copy(showFormatHelpDialog = true)
     }
@@ -127,6 +204,28 @@ class ControlCenterSettingsViewModel(
     }
 }
 
+private fun ControlCenterSettingsViewModel.saveColorText(
+    text: String,
+    fallback: Int,
+    update: (color: Int, text: String) -> Unit
+) {
+    val normalized = text.normalizeArgbColorTextOrNull() ?: fallback.toArgbText()
+    val color = normalized.toLongOrNull(16)?.toInt() ?: fallback
+    update(color, normalized)
+}
+
+private fun ControlCenterSettingsUiState.withColorText(): ControlCenterSettingsUiState {
+    return copy(
+        customQsActiveColorText = customQsActiveColor.toArgbText(),
+        customLabelActiveColorText = customLabelActiveColor.toArgbText(),
+        customSecondLabelActiveColorText = customSecondLabelActiveColor.toArgbText()
+    )
+}
+
+private fun Int.toArgbText(): String {
+    return "%08X".format(this)
+}
+
 data class ControlCenterSettingsUiState(
     val customDate: Boolean = false,
     val dateFormat: String = "",
@@ -144,4 +243,13 @@ data class ControlCenterSettingsUiState(
     val qsRoundCorner: Boolean = false,
     val qsHeadUpRoundCornerRadius: Int = 32,
     val qsTileRoundCornerRadius: Int = 96,
+    val customQsColor: Boolean = false,
+    val customLabelColor: Boolean = false,
+    val customSecondLabelColor: Boolean = false,
+    val customQsActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_QS_ACTIVE_COLOR,
+    val customLabelActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_LABEL_ACTIVE_COLOR,
+    val customSecondLabelActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_SECOND_LABEL_ACTIVE_COLOR,
+    val customQsActiveColorText: String = "",
+    val customLabelActiveColorText: String = "",
+    val customSecondLabelActiveColorText: String = "",
 )

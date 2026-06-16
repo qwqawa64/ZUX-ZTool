@@ -834,4 +834,17 @@
     <string name="custom_control_center_tile_radius_summary">最大 96 dp ，最小 0 dp ，可能造成轻微的组件显示问题</string>
     <string name="head_up_corner_radius">大磁贴圆角半径</string>
     <string name="normal_tile_corner_radius">小磁贴圆角半径</string>
+    <string name="custom_qs_color_title">背景色修改</string>
+    <string name="custom_qs_color_summary">修改控制中心磁贴启用状态下的背景颜色。</string>
+    <string name="custom_qs_active_color_title">磁贴背景色</string>
+    <string name="custom_qs_active_color_summary">输入 AARRGGBB 格式的颜色值。</string>
+    <string name="custom_label_color_title">主要说明文本颜色修改</string>
+    <string name="custom_label_color_summary">修改控制中心磁贴启用状态下的主要说明文本颜色。</string>
+    <string name="custom_label_active_color_title">主要说明文本颜色</string>
+    <string name="custom_label_active_color_summary">输入 AARRGGBB 格式的颜色值。</string>
+    <string name="custom_second_label_color_title">次要说明文本颜色修改</string>
+    <string name="custom_second_label_color_summary">修改控制中心磁贴启用状态下的次要说明文本颜色。</string>
+    <string name="custom_second_label_active_color_title">次要说明文本颜色</string>
+    <string name="custom_second_label_active_color_summary">输入 AARRGGBB 格式的颜色值。</string>
+    <string name="argb_color_input_error">请输入 6 位 RRGGBB 或 8 位 AARRGGBB 颜色值。</string>
 </resources>

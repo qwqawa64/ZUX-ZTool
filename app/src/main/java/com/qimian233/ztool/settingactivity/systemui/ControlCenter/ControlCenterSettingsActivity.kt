@@ -51,6 +51,7 @@ import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolButton
+import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
@@ -123,7 +124,16 @@ fun ControlCenterSettingsRoute(
         onTextBoldChanged = viewModel::setTextBold,
         onQsRoundCornerChanged = viewModel::setQsRoundCorner,
         onQsHeadUpRoundCornerRadiusChanged = viewModel::setQsHeadUpRoundCornerRadius,
-        onQsTileRoundCornerRadiusChanged = viewModel::setQsTileRoundCornerRadius
+        onQsTileRoundCornerRadiusChanged = viewModel::setQsTileRoundCornerRadius,
+        onCustomQsColorChanged = viewModel::setCustomQsColor,
+        onCustomQsActiveColorTextChanged = viewModel::setCustomQsActiveColorText,
+        onCustomQsActiveColorEditingFinished = viewModel::finishCustomQsActiveColorEditing,
+        onCustomLabelColorChanged = viewModel::setCustomLabelColor,
+        onCustomLabelActiveColorTextChanged = viewModel::setCustomLabelActiveColorText,
+        onCustomLabelActiveColorEditingFinished = viewModel::finishCustomLabelActiveColorEditing,
+        onCustomSecondLabelColorChanged = viewModel::setCustomSecondLabelColor,
+        onCustomSecondLabelActiveColorTextChanged = viewModel::setCustomSecondLabelActiveColorText,
+        onCustomSecondLabelActiveColorEditingFinished = viewModel::finishCustomSecondLabelActiveColorEditing
     )
 
     if (uiState.showFormatHelpDialog) {
@@ -185,7 +195,16 @@ private fun ControlCenterSettingsScreen(
     onTextBoldChanged: (Boolean) -> Unit,
     onQsRoundCornerChanged: (Boolean) -> Unit,
     onQsHeadUpRoundCornerRadiusChanged: (Int) -> Unit,
-    onQsTileRoundCornerRadiusChanged: (Int) -> Unit
+    onQsTileRoundCornerRadiusChanged: (Int) -> Unit,
+    onCustomQsColorChanged: (Boolean) -> Unit,
+    onCustomQsActiveColorTextChanged: (String) -> Unit,
+    onCustomQsActiveColorEditingFinished: () -> Unit,
+    onCustomLabelColorChanged: (Boolean) -> Unit,
+    onCustomLabelActiveColorTextChanged: (String) -> Unit,
+    onCustomLabelActiveColorEditingFinished: () -> Unit,
+    onCustomSecondLabelColorChanged: (Boolean) -> Unit,
+    onCustomSecondLabelActiveColorTextChanged: (String) -> Unit,
+    onCustomSecondLabelActiveColorEditingFinished: () -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -231,7 +250,16 @@ private fun ControlCenterSettingsScreen(
                         onTextBoldChanged = onTextBoldChanged,
                         onQsRoundCornerChanged = onQsRoundCornerChanged,
                         onQsHeadUpRoundCornerRadiusChanged = onQsHeadUpRoundCornerRadiusChanged,
-                        onQsTileRoundCornerRadiusChanged = onQsTileRoundCornerRadiusChanged
+                        onQsTileRoundCornerRadiusChanged = onQsTileRoundCornerRadiusChanged,
+                        onCustomQsColorChanged = onCustomQsColorChanged,
+                        onCustomQsActiveColorTextChanged = onCustomQsActiveColorTextChanged,
+                        onCustomQsActiveColorEditingFinished = onCustomQsActiveColorEditingFinished,
+                        onCustomLabelColorChanged = onCustomLabelColorChanged,
+                        onCustomLabelActiveColorTextChanged = onCustomLabelActiveColorTextChanged,
+                        onCustomLabelActiveColorEditingFinished = onCustomLabelActiveColorEditingFinished,
+                        onCustomSecondLabelColorChanged = onCustomSecondLabelColorChanged,
+                        onCustomSecondLabelActiveColorTextChanged = onCustomSecondLabelActiveColorTextChanged,
+                        onCustomSecondLabelActiveColorEditingFinished = onCustomSecondLabelActiveColorEditingFinished
                     ),
                     bottomPadding = 96.dp
                 )
@@ -256,28 +284,116 @@ private fun controlCenterSettingsSections(
     onTextBoldChanged: (Boolean) -> Unit,
     onQsRoundCornerChanged: (Boolean) -> Unit,
     onQsHeadUpRoundCornerRadiusChanged: (Int) -> Unit,
-    onQsTileRoundCornerRadiusChanged: (Int) -> Unit
+    onQsTileRoundCornerRadiusChanged: (Int) -> Unit,
+    onCustomQsColorChanged: (Boolean) -> Unit,
+    onCustomQsActiveColorTextChanged: (String) -> Unit,
+    onCustomQsActiveColorEditingFinished: () -> Unit,
+    onCustomLabelColorChanged: (Boolean) -> Unit,
+    onCustomLabelActiveColorTextChanged: (String) -> Unit,
+    onCustomLabelActiveColorEditingFinished: () -> Unit,
+    onCustomSecondLabelColorChanged: (Boolean) -> Unit,
+    onCustomSecondLabelActiveColorTextChanged: (String) -> Unit,
+    onCustomSecondLabelActiveColorEditingFinished: () -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
             title = stringResource(R.string.control_center_tiles),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.custom_control_center_tile_radius),
-                    summary = stringResource(R.string.custom_control_center_tile_radius_summary),
-                    checked = state.qsRoundCorner,
-                    onCheckedChange = onQsRoundCornerChanged,
-                ),
-                SettingItem.Custom(
-                    content = {
-                        QsRoundCornerRadius(
-                            state = state,
-                            onQsHeadUpRoundCornerRadiusChanged = onQsHeadUpRoundCornerRadiusChanged,
-                            onQsTileRoundCornerRadiusChanged = onQsTileRoundCornerRadiusChanged
-                        )
-                    }
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.custom_control_center_tile_radius),
+                        summary = stringResource(R.string.custom_control_center_tile_radius_summary),
+                        checked = state.qsRoundCorner,
+                        onCheckedChange = onQsRoundCornerChanged,
+                    )
                 )
-            )
+                add(
+                    SettingItem.Custom(
+                        content = {
+                            QsRoundCornerRadius(
+                                state = state,
+                                onQsHeadUpRoundCornerRadiusChanged = onQsHeadUpRoundCornerRadiusChanged,
+                                onQsTileRoundCornerRadiusChanged = onQsTileRoundCornerRadiusChanged
+                            )
+                        }
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.custom_qs_color_title),
+                        summary = stringResource(R.string.custom_qs_color_summary),
+                        checked = state.customQsColor,
+                        onCheckedChange = onCustomQsColorChanged
+                    )
+                )
+                if (state.customQsColor) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ZToolArgbColorTextFieldRow(
+                                    label = stringResource(R.string.custom_qs_active_color_title),
+                                    value = state.customQsActiveColorText,
+                                    onValueChange = onCustomQsActiveColorTextChanged,
+                                    defaultText = "BFADD8E6",
+                                    summary = stringResource(R.string.custom_qs_active_color_summary),
+                                    errorText = stringResource(R.string.argb_color_input_error),
+                                    onEditingFinished = onCustomQsActiveColorEditingFinished
+                                )
+                            }
+                        )
+                    )
+                }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.custom_label_color_title),
+                        summary = stringResource(R.string.custom_label_color_summary),
+                        checked = state.customLabelColor,
+                        onCheckedChange = onCustomLabelColorChanged
+                    )
+                )
+                if (state.customLabelColor) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ZToolArgbColorTextFieldRow(
+                                    label = stringResource(R.string.custom_label_active_color_title),
+                                    value = state.customLabelActiveColorText,
+                                    onValueChange = onCustomLabelActiveColorTextChanged,
+                                    defaultText = "FFFFFFFF",
+                                    summary = stringResource(R.string.custom_label_active_color_summary),
+                                    errorText = stringResource(R.string.argb_color_input_error),
+                                    onEditingFinished = onCustomLabelActiveColorEditingFinished
+                                )
+                            }
+                        )
+                    )
+                }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.custom_second_label_color_title),
+                        summary = stringResource(R.string.custom_second_label_color_summary),
+                        checked = state.customSecondLabelColor,
+                        onCheckedChange = onCustomSecondLabelColorChanged
+                    )
+                )
+                if (state.customSecondLabelColor) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ZToolArgbColorTextFieldRow(
+                                    label = stringResource(R.string.custom_second_label_active_color_title),
+                                    value = state.customSecondLabelActiveColorText,
+                                    onValueChange = onCustomSecondLabelActiveColorTextChanged,
+                                    defaultText = "BFFFFFFF",
+                                    summary = stringResource(R.string.custom_second_label_active_color_summary),
+                                    errorText = stringResource(R.string.argb_color_input_error),
+                                    onEditingFinished = onCustomSecondLabelActiveColorEditingFinished
+                                )
+                            }
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.ControllerDate),
