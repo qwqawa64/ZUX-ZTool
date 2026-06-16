@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.animateContentSize
@@ -21,12 +23,18 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -520,6 +528,111 @@ fun ZToolTextInputRow(
                 .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
         )
     }
+}
+
+@Composable
+fun ZToolArgbColorTextFieldRow(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    defaultText: String? = null,
+    errorText: String? = null,
+    enabled: Boolean = true,
+    icon: ImageVector? = null,
+    previewSize: Dp = 36.dp,
+    onEditingFinished: (() -> Unit)? = null
+) {
+    val focusManager = LocalFocusManager.current
+    val normalizedDefault = defaultText?.normalizeArgbColorTextOrNull()
+    val previewColor = value.parseArgbColorOrNull()
+        ?: normalizedDefault?.parseArgbColorOrNull()
+        ?: Color.Transparent
+    val hasError = value.isNotEmpty() && value.parseArgbColorOrNull() == null
+
+    fun finishEditing() {
+        val fixedValue = value.normalizeArgbColorTextOrNull()
+            ?: normalizedDefault
+        if (fixedValue != null && fixedValue != value) {
+            onValueChange(fixedValue)
+        }
+        onEditingFinished?.invoke()
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.width(16.dp))
+        }
+        Box(
+            modifier = Modifier
+                .size(previewSize)
+                .background(previewColor, RoundedCornerShape(8.dp))
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = { onValueChange(it.sanitizeArgbColorText()) },
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { focusState ->
+                    if (!focusState.isFocused) {
+                        finishEditing()
+                    }
+                },
+            label = { Text(label) },
+            placeholder = defaultText?.let { text ->
+                { Text(text.sanitizeArgbColorText()) }
+            },
+            supportingText = when {
+                hasError && errorText != null -> {
+                    { Text(errorText) }
+                }
+                summary != null -> {
+                    { Text(summary) }
+                }
+                else -> null
+            },
+            isError = hasError,
+            singleLine = true,
+            enabled = enabled,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    finishEditing()
+                    focusManager.clearFocus()
+                }
+            )
+        )
+    }
+}
+
+fun String.sanitizeArgbColorText(): String {
+    return trim()
+        .removePrefix("#")
+        .filter { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+        .take(8)
+        .uppercase()
+}
+
+fun String.normalizeArgbColorTextOrNull(): String? {
+    val sanitized = sanitizeArgbColorText()
+    return when (sanitized.length) {
+        8 -> sanitized
+        6 -> "FF$sanitized"
+        else -> null
+    }
+}
+
+fun String.parseArgbColorOrNull(): Color? {
+    val normalized = normalizeArgbColorTextOrNull() ?: return null
+    return normalized.toLongOrNull(16)?.let { Color(it) }
 }
 
 @Composable
