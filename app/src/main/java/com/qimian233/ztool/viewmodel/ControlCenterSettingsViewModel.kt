@@ -72,16 +72,25 @@ class ControlCenterSettingsViewModel(
     }
 
     fun setTextColorEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(textColorEnabled = enabled)
+        _uiState.value = _uiState.value.copy(controlCenterTextColorEnabled = enabled)
         repository.saveTextColorEnabled(enabled)
     }
 
-    fun setTextColor(color: Int) {
-        _uiState.value = _uiState.value.copy(
-            showColorPickerDialog = false,
-            textColor = color
-        )
-        repository.saveTextColor(color)
+    fun finishControlCenterClockColorEditing() {
+        saveColorText(
+            text = _uiState.value.controlCenterTextColorText,
+            fallback = ControlCenterSettingsRepository.DEFAULT_CONTROL_CENTER_DATE_COLOR
+        ) { color, text ->
+            _uiState.value = _uiState.value.copy(
+                controlCenterTextColor = color,
+                controlCenterTextColorText = text
+            )
+            repository.saveTextColor(color)
+        }
+    }
+
+    fun setControlCenterClockColorText(value: String) {
+        _uiState.value = _uiState.value.copy(controlCenterTextColorText = value.sanitizeArgbColorText())
     }
 
     fun setTextBold(enabled: Boolean) {
@@ -151,37 +160,38 @@ class ControlCenterSettingsViewModel(
     fun finishCustomQsActiveColorEditing() {
         saveColorText(
             text = _uiState.value.customQsActiveColorText,
-            fallback = ControlCenterSettingsRepository.DEFAULT_QS_ACTIVE_COLOR,
-            update = { color, text ->
-                _uiState.value = _uiState.value.copy(customQsActiveColor = color, customQsActiveColorText = text)
-                repository.saveCustomQsActiveColor(color)
-            }
-        )
+            fallback = ControlCenterSettingsRepository.DEFAULT_QS_ACTIVE_COLOR
+        ) { color, text ->
+            _uiState.value =
+                _uiState.value.copy(customQsActiveColor = color, customQsActiveColorText = text)
+            repository.saveCustomQsActiveColor(color)
+        }
     }
 
     fun finishCustomLabelActiveColorEditing() {
         saveColorText(
             text = _uiState.value.customLabelActiveColorText,
-            fallback = ControlCenterSettingsRepository.DEFAULT_LABEL_ACTIVE_COLOR,
-            update = { color, text ->
-                _uiState.value = _uiState.value.copy(customLabelActiveColor = color, customLabelActiveColorText = text)
-                repository.saveCustomLabelActiveColor(color)
-            }
-        )
+            fallback = ControlCenterSettingsRepository.DEFAULT_LABEL_ACTIVE_COLOR
+        ) { color, text ->
+            _uiState.value = _uiState.value.copy(
+                customLabelActiveColor = color,
+                customLabelActiveColorText = text
+            )
+            repository.saveCustomLabelActiveColor(color)
+        }
     }
 
     fun finishCustomSecondLabelActiveColorEditing() {
         saveColorText(
             text = _uiState.value.customSecondLabelActiveColorText,
-            fallback = ControlCenterSettingsRepository.DEFAULT_SECOND_LABEL_ACTIVE_COLOR,
-            update = { color, text ->
-                _uiState.value = _uiState.value.copy(
-                    customSecondLabelActiveColor = color,
-                    customSecondLabelActiveColorText = text
-                )
-                repository.saveCustomSecondLabelActiveColor(color)
-            }
-        )
+            fallback = ControlCenterSettingsRepository.DEFAULT_SECOND_LABEL_ACTIVE_COLOR
+        ) { color, text ->
+            _uiState.value = _uiState.value.copy(
+                customSecondLabelActiveColor = color,
+                customSecondLabelActiveColorText = text
+            )
+            repository.saveCustomSecondLabelActiveColor(color)
+        }
     }
 
     fun showFormatHelpDialog() {
@@ -190,14 +200,6 @@ class ControlCenterSettingsViewModel(
 
     fun dismissFormatHelpDialog() {
         _uiState.value = _uiState.value.copy(showFormatHelpDialog = false)
-    }
-
-    fun showColorPickerDialog() {
-        _uiState.value = _uiState.value.copy(showColorPickerDialog = true)
-    }
-
-    fun dismissColorPickerDialog() {
-        _uiState.value = _uiState.value.copy(showColorPickerDialog = false)
     }
 
     fun dismissSaveSuccessDialog() {
@@ -209,7 +211,7 @@ class ControlCenterSettingsViewModel(
     }
 }
 
-private fun ControlCenterSettingsViewModel.saveColorText(
+private fun saveColorText(
     text: String,
     fallback: Int,
     update: (color: Int, text: String) -> Unit
@@ -239,8 +241,9 @@ data class ControlCenterSettingsUiState(
     val textSize: Float = 16.0f,
     val letterSpacingEnabled: Boolean = false,
     val letterSpacing: Float = 0.1f,
-    val textColorEnabled: Boolean = false,
-    val textColor: Int = 0xFFFFFFFF.toInt(),
+    val controlCenterTextColorEnabled: Boolean = false,
+    val controlCenterTextColor: Int = 0xFFFFFFFF.toInt(),
+    val controlCenterTextColorText: String = "",
     val textBold: Boolean = false,
     val showFormatHelpDialog: Boolean = false,
     val showColorPickerDialog: Boolean = false,

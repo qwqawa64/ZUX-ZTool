@@ -642,8 +642,8 @@ private fun SettingsTitleBlock(
     enabled: Boolean,
     icon: ImageVector?
 ) {
-    androidx.compose.foundation.layout.Row(
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    Row(
+        verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
             ZToolSettingLeadingIcon(icon = icon, enabled = enabled)

@@ -27,8 +27,8 @@ class ControlCenterSettingsRepository(
             textSizeEnabled = prefsUtils.loadBooleanSetting(KEY_TEXT_SIZE_ENABLED, false),
             letterSpacing = prefsUtils.loadFloatSetting(KEY_LETTER_SPACING, 0.1f),
             letterSpacingEnabled = prefsUtils.loadBooleanSetting(KEY_LETTER_SPACING_ENABLED, false),
-            textColor = prefsUtils.loadIntegerSetting(KEY_TEXT_COLOR, 0xFFFFFFFF.toInt()),
-            textColorEnabled = prefsUtils.loadBooleanSetting(KEY_TEXT_COLOR_ENABLED, false),
+            controlCenterTextColor = prefsUtils.loadIntegerSetting(KEY_TEXT_COLOR, 0xFFFFFFFF.toInt()),
+            controlCenterTextColorEnabled = prefsUtils.loadBooleanSetting(KEY_TEXT_COLOR_ENABLED, false),
             textBold = prefsUtils.loadBooleanSetting(KEY_TEXT_BOLD, false),
             qsRoundCorner = prefsUtils.loadBooleanSetting(KEY_QS_ROUND_CORNER, false),
             qsTileRoundCornerRadius = prefsUtils.loadIntegerSetting(KEY_TILE_QS_ROUND_CORNER_RADIUS, 96),
@@ -147,6 +147,7 @@ class ControlCenterSettingsRepository(
         val DEFAULT_QS_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xad, 0xd8, 0xe6)
         val DEFAULT_LABEL_ACTIVE_COLOR: Int = Color.argb(0xff, 0xff, 0xff, 0xff)
         val DEFAULT_SECOND_LABEL_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xff, 0xff, 0xff)
+        val DEFAULT_CONTROL_CENTER_DATE_COLOR: Int = Color.argb(0xff, 0xff, 0xff, 0xff)
         private const val KEY_CUSTOM_DATE = "Custom_ControlCenterDate"
         private const val KEY_DATE_FORMAT = "Custom_ControlCenterDateFormat"
         private const val KEY_TEXT_SIZE = "Custom_ControlCenterDateTextSize"
