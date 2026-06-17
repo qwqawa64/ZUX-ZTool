@@ -68,8 +68,8 @@ fun FeaturesMainRoute(
 }
 
 private data class FeatureItem(
-    val name: String,
-    val description: String,
+    val nameRes: Int,
+    val descriptionRes: Int,
     val packageName: String,
     val icon: Drawable?,
     val destination: FeatureDestination
@@ -149,8 +149,8 @@ private fun featureItem(
     destination: FeatureDestination
 ): FeatureItem {
     return FeatureItem(
-        name = context.getString(nameRes),
-        description = context.getString(descriptionRes),
+        nameRes = nameRes,
+        descriptionRes = descriptionRes,
         packageName = packageName,
         icon = getApplicationIcon(context, packageName),
         destination = destination
@@ -235,12 +235,12 @@ private fun FeatureCard(
         ) {
             AppIcon(
                 icon = item.icon,
-                contentDescription = item.name
+                contentDescription = stringResource(item.nameRes)
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.name,
+                    text = stringResource(item.nameRes),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -248,7 +248,7 @@ private fun FeatureCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = item.description,
+                    text = stringResource(item.descriptionRes),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

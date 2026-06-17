@@ -15,12 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,7 +41,6 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
@@ -103,6 +100,7 @@ fun SystemUiSettingsRoute(
     )
 
     if (uiState.showRestartDialog) {
+        val restartFailString = stringResource(R.string.restartFail)
         RestartScopeDialog(
             packageName = packageName,
             onConfirm = {
@@ -112,7 +110,7 @@ fun SystemUiSettingsRoute(
                     } else {
                         Toast.makeText(
                             context,
-                            context.getString(R.string.restartFail) + error,
+                            restartFailString + error,
                             Toast.LENGTH_SHORT
                         ).show()
                     }

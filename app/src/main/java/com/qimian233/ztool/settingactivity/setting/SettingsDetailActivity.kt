@@ -98,20 +98,49 @@ fun SettingsDetailRoute(
             SettingsDetailViewModelFactory(SettingsDetailRepository(context.applicationContext))
         )[SettingsDetailViewModel::class.java]
     }
+    val gotItButtonText = stringResource(R.string.got_it_button)
+    val savingConfigText = stringResource(R.string.saving_config)
+    val saveSuccessTitleText = stringResource(R.string.success_title)
+    val saveSuccessMessageText = stringResource(R.string.save_success_message)
+    val errorTitleText = stringResource(R.string.error_title)
+    val errorPrefixText = stringResource(R.string.error_prefix)
+    val configSuffixText = stringResource(R.string.config_suffix)
+    val tipTitleText = stringResource(R.string.tip_title)
+    val installModuleFirstText = stringResource(R.string.install_module_first)
+    val flashingConfigText = stringResource(R.string.flashing_config)
+    val confirmRestoreTitleText = stringResource(R.string.confirm_restore_title)
+    val confirmRestoreMessageText = stringResource(R.string.confirm_restore_message)
+    val confirmButtonText = stringResource(R.string.confirm_button)
+    val restartNoText = stringResource(R.string.restart_no)
+    val restoringModuleText = stringResource(R.string.restoring_module)
+    val restoreSuccessMessageText = stringResource(R.string.restore_success_message)
+    val importingFontText = stringResource(R.string.importing_font)
+    val importSuccessTitleText = stringResource(R.string.import_success_title)
+    val importSuccessMessageText = stringResource(R.string.import_success_message)
+    val importFailedTitleText = stringResource(R.string.import_failed_title)
+    val preparingFontFileText = stringResource(R.string.preparing_font_file)
+    val unknownFontFilenameText = stringResource(R.string.unknown_font_filename)
+    val selectTtfFileText = stringResource(R.string.select_ttf_file)
+    val zuiForceSplitTitleText = stringResource(R.string.zui_force_split_title)
+    val zuiForceFreeformTitleText = stringResource(R.string.zui_force_freeform_title)
+    val zuiForceFixedTitleText = stringResource(R.string.zui_force_fixed_title)
+    val installingModuleText = stringResource(R.string.installing_module)
+    val removingModuleText = stringResource(R.string.removing_module)
+    val installSuccessText = stringResource(R.string.install_success_message)
+    val removeSuccessText = stringResource(R.string.remove_success_message)
     var floatingWindow by remember { mutableStateOf<FloatingWindow?>(null) }
     var loadingDialog by remember { mutableStateOf<LoadingDialog?>(null) }
 
     fun showMessageDialog(
         dialogTitle: String,
-        message: String,
-        buttonText: String = context.getString(R.string.got_it_button)
+        message: String
     ) {
         if (activity == null) return
         showPlatformComposeDialog(activity) { dialog ->
             SimpleSettingsDetailDialogContent(
                 title = dialogTitle,
                 message = message,
-                confirmText = buttonText,
+                confirmText = gotItButtonText,
                 onConfirm = { dialog.dismiss() }
             )
         }
@@ -214,7 +243,7 @@ fun SettingsDetailRoute(
         mode: Int
     ) {
         loadingDialog = LoadingDialog(context).also {
-            it.show(context.getString(R.string.saving_config))
+            it.show(savingConfigText)
         }
         viewModel.saveOvConfig(
             configMap = configMap,
@@ -225,13 +254,13 @@ fun SettingsDetailRoute(
                 loadingDialog?.dismiss()
                 if (result == "success") {
                     showMessageDialog(
-                        dialogTitle = context.getString(R.string.success_title),
-                        message = context.getString(R.string.save_success_message)
+                        dialogTitle = saveSuccessTitleText,
+                        message = saveSuccessMessageText
                     )
                 } else {
                     showMessageDialog(
-                        dialogTitle = context.getString(R.string.error_title),
-                        message = context.getString(R.string.error_prefix) + result
+                        dialogTitle = errorTitleText,
+                        message = errorPrefixText + result
                     )
                 }
             }
@@ -251,7 +280,7 @@ fun SettingsDetailRoute(
                 configs = configs,
                 flashedConfigs = flashedConfigs,
                 configLabel = { config ->
-                    config.timestamp + " " + config.appName + context.getString(R.string.config_suffix)
+                    config.timestamp + " " + config.appName + configSuffixText
                 },
                 onAlreadyFlashedClick = {
                     Toast.makeText(context, R.string.config_already_flashed, Toast.LENGTH_SHORT).show()
@@ -260,7 +289,7 @@ fun SettingsDetailRoute(
                     val count = viewModel.deleteEmbeddingConfigs(selectedConfigs, flashedConfigs)
                     Toast.makeText(
                         context,
-                        context.getString(R.string.delete_success, count),
+                        context.resources.getString(R.string.delete_success, count),
                         Toast.LENGTH_SHORT
                     ).show()
                     dialog.dismiss()
@@ -270,13 +299,13 @@ fun SettingsDetailRoute(
                     dialog.dismiss()
                     if (!viewModel.uiState.value.moduleEnabled) {
                         showMessageDialog(
-                            dialogTitle = context.getString(R.string.tip_title),
-                            message = context.getString(R.string.install_module_first)
+                            dialogTitle = tipTitleText,
+                            message = installModuleFirstText
                         )
                         return@ConfigSelectionDialogContent
                     }
                     loadingDialog = LoadingDialog(context).also {
-                        it.show(context.getString(R.string.flashing_config))
+                        it.show(flashingConfigText)
                     }
                     viewModel.flashEmbeddingConfigs(selectedConfigs) { result ->
                         activity.runOnUiThread {
@@ -284,17 +313,14 @@ fun SettingsDetailRoute(
                             when (result) {
                                 SettingsDetailConfigFlashResult.Success -> {
                                     showMessageDialog(
-                                        dialogTitle = context.getString(R.string.success_title),
-                                        message = context.getString(R.string.flash_success_message)
+                                        dialogTitle = saveSuccessTitleText,
+                                        message = saveSuccessMessageText
                                     )
                                 }
                                 is SettingsDetailConfigFlashResult.Failure -> {
                                     showMessageDialog(
-                                        dialogTitle = context.getString(R.string.error_title),
-                                        message = context.getString(
-                                            R.string.flash_failed_message,
-                                            result.message
-                                        )
+                                        dialogTitle = errorTitleText,
+                                        message = context.resources.getString(R.string.flash_failed_message, result.message)
                                     )
                                 }
                             }
@@ -304,13 +330,13 @@ fun SettingsDetailRoute(
                 onRestore = {
                     dialog.dismiss()
                     showConfirmDialog(
-                        dialogTitle = context.getString(R.string.confirm_restore_title),
-                        message = context.getString(R.string.confirm_restore_message),
-                        confirmText = context.getString(R.string.confirm_button),
-                        dismissText = context.getString(R.string.restart_no)
+                        dialogTitle = confirmRestoreTitleText,
+                        message = confirmRestoreMessageText,
+                        confirmText = confirmButtonText,
+                        dismissText = restartNoText
                     ) {
                         loadingDialog = LoadingDialog(context).also {
-                            it.show(context.getString(R.string.restoring_module))
+                            it.show(restoringModuleText)
                         }
                         viewModel.restoreOriginalModule { result ->
                             activity.runOnUiThread {
@@ -318,13 +344,13 @@ fun SettingsDetailRoute(
                                 when (result) {
                                     SettingsDetailRestoreResult.Success -> {
                                         showMessageDialog(
-                                            dialogTitle = context.getString(R.string.success_title),
-                                            message = context.getString(R.string.restore_success_message)
+                                            dialogTitle = saveSuccessTitleText,
+                                            message = restoreSuccessMessageText
                                         )
                                     }
                                     is SettingsDetailRestoreResult.Failure -> {
                                         showMessageDialog(
-                                            dialogTitle = context.getString(R.string.error_title),
+                                            dialogTitle = errorTitleText,
                                             message = result.message
                                         )
                                     }
@@ -363,8 +389,8 @@ fun SettingsDetailRoute(
                     }
                     is SettingsDetailOvConfigSelectionResult.Failure -> {
                         showMessageDialog(
-                            dialogTitle = context.getString(R.string.error_title),
-                            message = context.getString(R.string.error_prefix) + result.message
+                            dialogTitle = errorTitleText,
+                            message = errorPrefixText + result.message
                         )
                     }
                 }
@@ -375,11 +401,7 @@ fun SettingsDetailRoute(
     fun handleModuleSwitch(isChecked: Boolean) {
         if (activity == null) return
         loadingDialog = LoadingDialog(context).also {
-            it.show(
-                context.getString(
-                    if (isChecked) R.string.installing_module else R.string.removing_module
-                )
-            )
+            it.show(if (isChecked) installingModuleText else removingModuleText)
         }
         viewModel.setModuleEnabled(isChecked) { result ->
             activity.runOnUiThread {
@@ -388,27 +410,18 @@ fun SettingsDetailRoute(
                     SettingsDetailModuleResult.AlreadyEnabled -> Unit
                     is SettingsDetailModuleResult.Success -> {
                         showMessageDialog(
-                            dialogTitle = context.getString(R.string.tip_title),
-                            message = context.getString(
-                                if (result.enabled) {
-                                    R.string.install_success_message
-                                } else {
-                                    R.string.remove_success_message
-                                }
-                            )
+                            dialogTitle = tipTitleText,
+                            message = if (result.enabled) installSuccessText else removeSuccessText
                         )
                     }
                     is SettingsDetailModuleResult.Failure -> {
                         showMessageDialog(
-                            dialogTitle = context.getString(R.string.error_title),
-                            message = context.getString(
-                                if (result.requestedEnabled) {
-                                    R.string.install_failed_message
-                                } else {
-                                    R.string.remove_failed_message
-                                },
-                                result.message
-                            )
+                            dialogTitle = errorTitleText,
+                            message = if (result.requestedEnabled) {
+                                context.resources.getString(R.string.install_failed_message, result.message)
+                            } else {
+                                context.resources.getString(R.string.remove_failed_message, result.message)
+                            }
                         )
                     }
                 }
@@ -429,22 +442,22 @@ fun SettingsDetailRoute(
     fun startFontImport(fontName: String, fontDescription: String) {
         if (activity == null) return
         loadingDialog = LoadingDialog(context).also {
-            it.show(context.getString(R.string.importing_font))
+            it.show(importingFontText)
         }
+
         viewModel.installFont(fontName, fontDescription) { result ->
             activity.runOnUiThread {
                 loadingDialog?.dismiss()
                 when (result) {
                     SettingsDetailFontInstallResult.Success -> {
                         showMessageDialog(
-                            dialogTitle = context.getString(R.string.import_success_title),
-                            message = context.getString(R.string.import_success_message),
-                            buttonText = context.getString(R.string.restart_yes)
-                        )
-                    }
+                        dialogTitle = importSuccessTitleText,
+                        message = importSuccessMessageText
+                    )
+                }
                     is SettingsDetailFontInstallResult.Failure -> {
                         showMessageDialog(
-                            dialogTitle = context.getString(R.string.import_failed_title),
+                            dialogTitle = importFailedTitleText,
                             message = result.message
                         )
                     }
@@ -457,7 +470,7 @@ fun SettingsDetailRoute(
         lateinit var dialog: Dialog
         val shownDialog = showComposeDialog {
             FontInputDialogContent(
-                originalDescription = context.getString(R.string.default_font_description, originalFileName),
+                originalDescription = stringResource(R.string.default_font_description, originalFileName),
                 onConfirm = { name, description ->
                     if (name.isNotEmpty() && description.isNotEmpty()) {
                         dialog.dismiss()
@@ -475,7 +488,7 @@ fun SettingsDetailRoute(
     handleFontSelection = { uri ->
         if (uri != null && activity != null) {
             loadingDialog = LoadingDialog(context).also {
-                it.show(context.getString(R.string.preparing_font_file))
+                it.show(preparingFontFileText)
             }
             viewModel.prepareFontImport(uri) { result ->
                 activity.runOnUiThread {
@@ -483,7 +496,7 @@ fun SettingsDetailRoute(
                     when (result) {
                         is SettingsDetailFontPreparationResult.Success -> {
                             showFontInputDialog(
-                                result.originalFileName ?: context.getString(R.string.unknown_font_filename)
+                                result.originalFileName ?: unknownFontFilenameText
                             )
                         }
                         is SettingsDetailFontPreparationResult.Failure -> {
@@ -506,7 +519,7 @@ fun SettingsDetailRoute(
         }
         try {
             fontPickerLauncher.launch(
-                Intent.createChooser(intent, context.getString(R.string.select_ttf_file))
+                Intent.createChooser(intent, selectTtfFileText)
             )
         } catch (_: Exception) {
             Toast.makeText(context, R.string.no_file_manager_found, Toast.LENGTH_SHORT).show()
@@ -540,19 +553,19 @@ fun SettingsDetailRoute(
         onZuiForceSplit = {
             openOvConfigDialog(
                 OvCommonConfigManager.MODE_SPLIT_SCREEN,
-                context.getString(R.string.zui_force_split_title)
+                zuiForceSplitTitleText
             )
         },
         onZuiForceFreeform = {
             openOvConfigDialog(
                 OvCommonConfigManager.MODE_FREEFORM_FREE,
-                context.getString(R.string.zui_force_freeform_title)
+                zuiForceFreeformTitleText
             )
         },
         onZuiForceFixed = {
             openOvConfigDialog(
                 OvCommonConfigManager.MODE_FREEFORM_FIXED,
-                context.getString(R.string.zui_force_fixed_title)
+                zuiForceFixedTitleText
             )
         },
         onFloatMandatoryChanged = viewModel::setFloatMandatory,

@@ -32,12 +32,12 @@ import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FormatColorFill
-import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
+import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,9 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -65,16 +63,16 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.ui.components.ExpressiveSectionItems
+import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingLeadingIcon
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
-import com.qimian233.ztool.ui.components.ExpressiveSectionItems
 import com.qimian233.ztool.ui.components.expressiveSettingsItemShape
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
@@ -101,6 +99,10 @@ fun SettingsMainRoute(
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val viewModel = rememberSettingsViewModel(activity)
     val uiState by viewModel.uiState.collectAsState()
+    
+    val backupSuccessStr = stringResource(R.string.config_backup_success)
+    val restoreSuccessStr = stringResource(R.string.config_restore_success)
+    
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -108,7 +110,7 @@ fun SettingsMainRoute(
             viewModel.backupConfig(uri) { result ->
                 activity.runOnUiThread {
                     if (result) {
-                        showSettingsToast(context, context.getString(R.string.config_backup_success))
+                        showSettingsToast(context, backupSuccessStr)
                     }
                 }
             }
@@ -121,7 +123,7 @@ fun SettingsMainRoute(
             viewModel.restoreConfig(uri) { result ->
                 activity.runOnUiThread {
                     if (result) {
-                        showSettingsToast(context, context.getString(R.string.config_restore_success))
+                        showSettingsToast(context, restoreSuccessStr)
                     }
                 }
             }
@@ -140,6 +142,9 @@ fun SettingsMainRoute(
         }
     }
 
+    val logServiceStartedStr = stringResource(R.string.log_service_started)
+    val logServiceStoppedStr = stringResource(R.string.log_service_stopped)
+
     SettingsRoute(
         state = uiState,
         onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
@@ -151,9 +156,7 @@ fun SettingsMainRoute(
             viewModel.setLogServiceEnabled(it)
             showSettingsToast(
                 context,
-                context.getString(
-                    if (it) R.string.log_service_started else R.string.log_service_stopped
-                )
+                if (it) logServiceStartedStr else logServiceStoppedStr
             )
         },
         onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
@@ -227,11 +230,13 @@ private fun SettingsDialogs(
     viewModel: SettingsViewModel,
     context: android.content.Context
 ) {
+    val defaultConfigRestoredStr = stringResource(R.string.default_config_restored)
+
     if (state.showRestoreConfirmDialog) {
         RestoreDefaultDialog(
             onConfirm = {
                 viewModel.restoreDefaultConfig()
-                showSettingsToast(context, context.getString(R.string.default_config_restored))
+                showSettingsToast(context, defaultConfigRestoredStr)
             },
             onDismiss = viewModel::dismissRestoreConfirmDialog
         )

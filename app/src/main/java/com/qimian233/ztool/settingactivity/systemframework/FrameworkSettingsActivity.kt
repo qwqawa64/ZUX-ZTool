@@ -16,14 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -102,14 +100,14 @@ fun FrameworkSettingsRoute(
             onDismiss = viewModel::dismissAiInputInfoDialog
         )
     }
-
+    val restartFailPrefix = stringResource(R.string.restart_fail_prefix)
     if (uiState.showRestartConfirmDialog) {
         RestartSystemDialog(
             onConfirm = {
                 viewModel.restartSystem { error ->
                     Toast.makeText(
                         context,
-                        context.getString(R.string.restart_fail_prefix) + error,
+                        restartFailPrefix + error,
                         Toast.LENGTH_SHORT
                     ).show()
                 }

@@ -35,8 +35,6 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -91,6 +89,9 @@ fun AuditMainRoute() {
         )[AuditViewModel::class.java]
     }
     val uiState by viewModel.uiState.collectAsState()
+    val exportLogsSuccessStr = stringResource(R.string.export_logs_success)
+    val exportLogsFailedStr = stringResource(R.string.export_logs_failed)
+    
     val exportLogLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
@@ -100,9 +101,9 @@ fun AuditMainRoute() {
                     Toast.makeText(
                         context,
                         when {
-                            success -> context.getString(R.string.export_logs_success)
-                            error != null -> context.getString(R.string.export_logs_failed) + error
-                            else -> context.getString(R.string.export_logs_failed)
+                            success -> exportLogsSuccessStr
+                            error != null -> exportLogsFailedStr + error
+                            else -> exportLogsFailedStr
                         },
                         Toast.LENGTH_SHORT
                     ).show()
@@ -140,6 +141,9 @@ fun AuditMainRoute() {
         )
     }
 
+    val clearLogsSuccessStr = stringResource(R.string.clear_logs_success)
+    val clearLogsFailedStr = stringResource(R.string.clear_logs_failed)
+    
     if (uiState.showClearDialog) {
         ClearLogsDialog(
             onConfirm = {
@@ -148,9 +152,9 @@ fun AuditMainRoute() {
                         Toast.makeText(
                             context,
                             if (success) {
-                                context.getString(R.string.clear_logs_success)
+                                clearLogsSuccessStr
                             } else {
-                                context.getString(R.string.clear_logs_failed) + error.orEmpty()
+                                clearLogsFailedStr + error.orEmpty()
                             },
                             Toast.LENGTH_SHORT
                         ).show()

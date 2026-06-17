@@ -76,6 +76,7 @@ fun LauncherSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val forceStopTitleString = stringResource(R.string.force_stop_title)
 
     LauncherSettingsScreen(
         title = title,
@@ -90,7 +91,7 @@ fun LauncherSettingsRoute(
                     activity,
                     viewModel.loadUserInstalledPackageNames(),
                     uiState.forceStopWhitelist,
-                    context.getString(R.string.force_stop_title),
+                    forceStopTitleString,
                     object : AppChooserDialog.AppSelectionCallback {
                         override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
                             viewModel.setForceStopWhitelist(selectedApps.map { it.packageName })

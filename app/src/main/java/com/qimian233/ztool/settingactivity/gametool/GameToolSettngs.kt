@@ -17,12 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -75,6 +73,7 @@ fun GameToolSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val selectGameString = stringResource(R.string.SelectGame)
 
     GameToolSettingsScreen(
         title = title,
@@ -93,7 +92,7 @@ fun GameToolSettingsRoute(
                     activity,
                     viewModel.loadManagedGamePackages(),
                     uiState.targetGamePackages,
-                    context.getString(R.string.SelectGame),
+                    selectGameString,
                     object : AppChooserDialog.AppSelectionCallback {
                         override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
                             viewModel.setWhitelistPackages(selectedApps.map { it.packageName })

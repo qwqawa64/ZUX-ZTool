@@ -90,11 +90,14 @@ fun ControlCenterSettingsRoute(
         viewModel.loadSettings()
     }
 
+    val dateFormatExample = stringResource(R.string.date_format_example)
+    val dateFormatSample = stringResource(R.string.date_format_sample)
+
     fun copyDateFormatExample() {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText(
-            context.getString(R.string.date_format_example),
-            context.getString(R.string.date_format_sample)
+            dateFormatExample,
+            dateFormatSample
         )
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, R.string.example_copied_message, Toast.LENGTH_SHORT).show()

@@ -76,6 +76,7 @@ fun SafeCenterSettingsRoute(
     )
 
     if (uiState.showRestartConfirmDialog) {
+        val restartFailPrefixString = stringResource(R.string.restart_fail_prefix)
         RestartConfirmDialog(
             packageName = packageName,
             onConfirm = {
@@ -93,7 +94,7 @@ fun SafeCenterSettingsRoute(
                             is SafeCenterRestartResult.Failure -> {
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.restart_fail_prefix) + result.error,
+                                    restartFailPrefixString + result.error,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }

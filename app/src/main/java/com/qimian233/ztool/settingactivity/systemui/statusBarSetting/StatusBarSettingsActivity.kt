@@ -77,11 +77,14 @@ fun StatusBarSettingsRoute(
         viewModel.loadSettings()
     }
 
+    val clockFormatExampleString = stringResource(R.string.clock_format_example)
+    val clockFormatSampleString = stringResource(R.string.clock_format_sample)
+
     fun copyClockFormatExample() {
         val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText(
-            context.getString(R.string.clock_format_example),
-            context.getString(R.string.clock_format_sample)
+            clockFormatExampleString,
+            clockFormatSampleString
         )
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, R.string.example_copied_message, Toast.LENGTH_SHORT).show()
