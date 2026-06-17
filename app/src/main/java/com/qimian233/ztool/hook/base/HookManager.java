@@ -42,6 +42,7 @@ import com.qimian233.ztool.hook.modules.systemui.ForceLenovoAOD;
 import com.qimian233.ztool.hook.modules.systemui.GuestModeController;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
+import com.qimian233.ztool.hook.modules.systemui.NotificationCenterTransparency;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIBatteryHook;
@@ -174,6 +175,8 @@ public class HookManager {
         registerHookModule(new CustomQsRoundCorner());
         // 注册模块: 控制中心磁贴颜色自定义
         registerHookModule(new CustomQsColor());
+        // 注册模块: 控制中心背景模糊自定义
+        registerHookModule(new NotificationCenterTransparency());
         initialized = true;
     }
 
