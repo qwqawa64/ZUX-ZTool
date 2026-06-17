@@ -69,6 +69,10 @@ private fun snapToAccurateRadius(value: Float): Int {
         .coerceIn(QS_ROUND_CORNER_MIN_RADIUS, QS_ROUND_CORNER_MAX_RADIUS)
 }
 
+private fun snapToAccuratePercent(value: Float): Int {
+    return ((value / 5f).roundToInt() * 5).coerceIn(0, 100)
+}
+
 @Composable
 fun ControlCenterSettingsRoute(
     title: String,
@@ -133,7 +137,9 @@ fun ControlCenterSettingsRoute(
         onCustomSecondLabelColorChanged = viewModel::setCustomSecondLabelColor,
         onCustomSecondLabelActiveColorTextChanged = viewModel::setCustomSecondLabelActiveColorText,
         onCustomSecondLabelActiveColorEditingFinished = viewModel::finishCustomSecondLabelActiveColorEditing,
-        onCustomQsColorSwitchChanged = viewModel::setCustomQsColorSwitch
+        onCustomQsColorSwitchChanged = viewModel::setCustomQsColorSwitch,
+        onNotificationCenterBlurEnabledChanged = viewModel::setNotificationCenterBlurEnabled,
+        onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent
     )
 
     if (uiState.showFormatHelpDialog) {
@@ -201,6 +207,8 @@ private fun ControlCenterSettingsScreen(
     onCustomSecondLabelActiveColorTextChanged: (String) -> Unit,
     onCustomSecondLabelActiveColorEditingFinished: () -> Unit,
     onCustomQsColorSwitchChanged: (Boolean) -> Unit,
+    onNotificationCenterBlurEnabledChanged: (Boolean) -> Unit,
+    onNotificationCenterBlurPercentChanged: (Int) -> Unit,
     onControlCenterClockColorChange: (String) -> Unit,
     onFinishControlCenterClockTextColorEditing: () -> Unit,
 ) {
@@ -258,6 +266,8 @@ private fun ControlCenterSettingsScreen(
                         onCustomSecondLabelActiveColorTextChanged = onCustomSecondLabelActiveColorTextChanged,
                         onCustomSecondLabelActiveColorEditingFinished = onCustomSecondLabelActiveColorEditingFinished,
                         onCustomQsColorSwitchChanged = onCustomQsColorSwitchChanged,
+                        onNotificationCenterBlurEnabledChanged = onNotificationCenterBlurEnabledChanged,
+                        onNotificationCenterBlurPercentChanged = onNotificationCenterBlurPercentChanged,
                         onFinishControlCenterClockTextColorEditing = onFinishControlCenterClockTextColorEditing,
                         onControlCenterClockColorChange = onControlCenterClockColorChange
                     ),
@@ -295,9 +305,40 @@ private fun controlCenterSettingsSections(
     onCustomSecondLabelColorChanged: (Boolean) -> Unit,
     onCustomSecondLabelActiveColorTextChanged: (String) -> Unit,
     onCustomSecondLabelActiveColorEditingFinished: () -> Unit,
-    onCustomQsColorSwitchChanged: (Boolean) -> Unit
+    onCustomQsColorSwitchChanged: (Boolean) -> Unit,
+    onNotificationCenterBlurEnabledChanged: (Boolean) -> Unit,
+    onNotificationCenterBlurPercentChanged: (Int) -> Unit
 ): List<SettingSection> {
     return listOf(
+        SettingSection(
+            title = stringResource(R.string.notification_center_background),
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.notification_center_blur_title),
+                        summary = stringResource(R.string.notification_center_blur_summary),
+                        checked = state.notificationCenterBlurEnabled,
+                        onCheckedChange = onNotificationCenterBlurEnabledChanged
+                    )
+                )
+                if (state.notificationCenterBlurEnabled) {
+                    add(
+                        SettingItem.Slider(
+                            title = stringResource(R.string.notification_center_blur_strength_title),
+                            summary = stringResource(R.string.notification_center_blur_strength_summary),
+                            value = state.notificationCenterBlurPercent.toFloat(),
+                            valueText = stringResource(
+                                R.string.percent_unit,
+                                state.notificationCenterBlurPercent
+                            ),
+                            valueRange = 0f..100f,
+                            steps = 19,
+                            onValueChange = { onNotificationCenterBlurPercentChanged(snapToAccuratePercent(it)) }
+                        )
+                    )
+                }
+            }
+        ),
         SettingSection(
             title = stringResource(R.string.control_center_tiles),
             items = buildList {

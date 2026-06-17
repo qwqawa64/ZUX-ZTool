@@ -42,7 +42,12 @@ class ControlCenterSettingsRepository(
                 KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL,
                 DEFAULT_SECOND_LABEL_ACTIVE_COLOR
             ),
-            customQsColorGeneralSwitch = prefsUtils.loadBooleanSetting(KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH, false)
+            customQsColorGeneralSwitch = prefsUtils.loadBooleanSetting(KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH, false),
+            notificationCenterBlurEnabled = prefsUtils.loadBooleanSetting(KEY_NOTIFICATION_CENTER_BLUR_ENABLED, false),
+            notificationCenterBlurPercent = prefsUtils.loadIntegerSetting(
+                KEY_NOTIFICATION_CENTER_BLUR_PERCENT,
+                DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT
+            ).coerceIn(NOTIFICATION_CENTER_BLUR_MIN_PERCENT, NOTIFICATION_CENTER_BLUR_MAX_PERCENT)
         )
     }
 
@@ -142,8 +147,22 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH, enabled)
     }
 
+    fun saveNotificationCenterBlurEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_NOTIFICATION_CENTER_BLUR_ENABLED, enabled)
+    }
+
+    fun saveNotificationCenterBlurPercent(value: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_NOTIFICATION_CENTER_BLUR_PERCENT,
+            value.coerceIn(NOTIFICATION_CENTER_BLUR_MIN_PERCENT, NOTIFICATION_CENTER_BLUR_MAX_PERCENT)
+        )
+    }
+
     companion object {
         private const val TAG = "ControlCenterSettingsRepository"
+        const val NOTIFICATION_CENTER_BLUR_MIN_PERCENT = 0
+        const val NOTIFICATION_CENTER_BLUR_MAX_PERCENT = 100
+        const val DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT = 0
         val DEFAULT_QS_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xad, 0xd8, 0xe6)
         val DEFAULT_LABEL_ACTIVE_COLOR: Int = Color.argb(0xff, 0xff, 0xff, 0xff)
         val DEFAULT_SECOND_LABEL_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xff, 0xff, 0xff)
@@ -167,5 +186,7 @@ class ControlCenterSettingsRepository(
         private const val KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL = "custom_label_active_color_val"
         private const val KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = "custom_second_label_active_color_val"
         private const val KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH = "qs_color"
+        private const val KEY_NOTIFICATION_CENTER_BLUR_ENABLED = "notification_center_blur"
+        private const val KEY_NOTIFICATION_CENTER_BLUR_PERCENT = "notification_center_blur_percent"
     }
 }

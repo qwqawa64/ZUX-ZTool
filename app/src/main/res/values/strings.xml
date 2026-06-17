@@ -848,4 +848,10 @@
     <string name="custom_second_label_active_color_summary">输入 AARRGGBB 格式的颜色值。</string>
     <string name="argb_color_input_error">请输入 6 位 RRGGBB 或 8 位 AARRGGBB 颜色值。</string>
     <string name="custom_qs_color_general_switch">自定义磁贴颜色</string>
+    <string name="notification_center_background">通知中心背景</string>
+    <string name="notification_center_blur_title">控制通知中心模糊</string>
+    <string name="notification_center_blur_summary">调整通知中心和控制中心展开时的背景模糊强度，0% 为关闭模糊。</string>
+    <string name="notification_center_blur_strength_title">模糊强度</string>
+    <string name="notification_center_blur_strength_summary">按系统原始模糊强度缩放，重启 SystemUI 后生效。</string>
+    <string name="percent_unit">%d%%</string>
 </resources>

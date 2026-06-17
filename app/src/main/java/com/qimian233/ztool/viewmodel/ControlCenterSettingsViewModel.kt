@@ -157,6 +157,20 @@ class ControlCenterSettingsViewModel(
         repository.saveCustomQsColorSwitch(enabled)
     }
 
+    fun setNotificationCenterBlurEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(notificationCenterBlurEnabled = enabled)
+        repository.saveNotificationCenterBlurEnabled(enabled)
+    }
+
+    fun setNotificationCenterBlurPercent(value: Int) {
+        val coercedValue = value.coerceIn(
+            ControlCenterSettingsRepository.NOTIFICATION_CENTER_BLUR_MIN_PERCENT,
+            ControlCenterSettingsRepository.NOTIFICATION_CENTER_BLUR_MAX_PERCENT
+        )
+        _uiState.value = _uiState.value.copy(notificationCenterBlurPercent = coercedValue)
+        repository.saveNotificationCenterBlurPercent(coercedValue)
+    }
+
     fun finishCustomQsActiveColorEditing() {
         saveColorText(
             text = _uiState.value.customQsActiveColorText,
@@ -261,4 +275,6 @@ data class ControlCenterSettingsUiState(
     val customLabelActiveColorText: String = "",
     val customSecondLabelActiveColorText: String = "",
     val customQsColorGeneralSwitch: Boolean = false,
+    val notificationCenterBlurEnabled: Boolean = false,
+    val notificationCenterBlurPercent: Int = ControlCenterSettingsRepository.DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT,
 )
