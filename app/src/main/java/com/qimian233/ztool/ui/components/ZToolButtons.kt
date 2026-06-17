@@ -76,7 +76,7 @@ fun ZToolTextButton(
             enabled = enabled,
             colors = colors
         ) {
-            androidx.compose.material3.Text(
+            Text(
                 text = text,
                 color = if (enabled) colors.contentColor else colors.disabledContentColor
             )
@@ -106,7 +106,8 @@ fun ZToolExtendedFloatingActionButton(
         MiuixButton(
             onClick = onClick,
             modifier = modifier,
-            colors = colors
+            colors = colors,
+            minHeight = 64.dp
         ) {
             androidx.compose.runtime.CompositionLocalProvider(
                 androidx.compose.material3.LocalContentColor provides colors.contentColor
@@ -139,7 +140,9 @@ fun ZToolFloatingActionButton(
         MiuixButton(
             onClick = onClick,
             modifier = modifier,
-            colors = colors
+            colors = colors,
+            minWidth = 64.dp,
+            minHeight = 64.dp
         ) {
             androidx.compose.runtime.CompositionLocalProvider(
                 androidx.compose.material3.LocalContentColor provides colors.contentColor
