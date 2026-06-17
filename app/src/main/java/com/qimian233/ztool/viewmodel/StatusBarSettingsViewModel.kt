@@ -3,6 +3,8 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
+import com.qimian233.ztool.ui.components.normalizeArgbColorTextOrNull
+import com.qimian233.ztool.ui.components.sanitizeArgbColorText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,7 @@ class StatusBarSettingsViewModel(
 
     fun loadSettings() {
         try {
-            _uiState.value = repository.loadState()
+            _uiState.value = repository.loadState().withTextColorText()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load status bar settings", e)
         }
@@ -72,10 +74,18 @@ class StatusBarSettingsViewModel(
         repository.saveTextColorEnabled(enabled)
     }
 
-    fun setTextColor(color: Int) {
-        _uiState.value = _uiState.value.copy(
-            showColorPickerDialog = false,
-            textColor = color
+    fun setTextColorText(value: String) {
+        _uiState.value = _uiState.value.copy(textColorText = value.sanitizeArgbColorText())
+    }
+
+    fun finishTextColorEditing() {
+        val current = _uiState.value
+        val normalized = current.textColorText.normalizeArgbColorTextOrNull()
+            ?: current.textColor.toArgbText()
+        val color = normalized.toLongOrNull(16)?.toInt() ?: current.textColor
+        _uiState.value = current.copy(
+            textColor = color,
+            textColorText = normalized
         )
         repository.saveTextColor(color)
     }
@@ -118,14 +128,6 @@ class StatusBarSettingsViewModel(
         _uiState.value = _uiState.value.copy(showFormatHelpDialog = false)
     }
 
-    fun showColorPickerDialog() {
-        _uiState.value = _uiState.value.copy(showColorPickerDialog = true)
-    }
-
-    fun dismissColorPickerDialog() {
-        _uiState.value = _uiState.value.copy(showColorPickerDialog = false)
-    }
-
     fun dismissSaveSuccessDialog() {
         _uiState.value = _uiState.value.copy(showSaveSuccessDialog = false)
     }
@@ -141,6 +143,14 @@ class StatusBarSettingsViewModel(
     }
 }
 
+private fun StatusBarSettingsUiState.withTextColorText(): StatusBarSettingsUiState {
+    return copy(textColorText = textColor.toArgbText())
+}
+
+private fun Int.toArgbText(): String {
+    return "%08X".format(this)
+}
+
 data class StatusBarSettingsUiState(
     val displaySeconds: Boolean = false,
     val customClock: Boolean = false,
@@ -152,6 +162,7 @@ data class StatusBarSettingsUiState(
     val letterSpacing: Float = 0.1f,
     val textColorEnabled: Boolean = false,
     val textColor: Int = 0xFFFFFFFF.toInt(),
+    val textColorText: String = "",
     val textBold: Boolean = false,
     val notificationIconLimitOption: String = "",
     val nativeNotificationIcon: Boolean = false,
@@ -159,6 +170,5 @@ data class StatusBarSettingsUiState(
     val networkSpeedDoubleLayer: Boolean = false,
     val batteryExternal: Boolean = false,
     val showFormatHelpDialog: Boolean = false,
-    val showColorPickerDialog: Boolean = false,
     val showSaveSuccessDialog: Boolean = false
 )
