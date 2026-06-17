@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -574,6 +576,7 @@ fun ZToolArgbColorTextFieldRow(
             modifier = Modifier
                 .size(previewSize)
                 .background(previewColor, RoundedCornerShape(8.dp))
+                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant), shape = RoundedCornerShape(8.dp))
         )
         Spacer(modifier = Modifier.width(16.dp))
         OutlinedTextField(
