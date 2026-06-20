@@ -38,9 +38,9 @@ https://compose-miuix-ui.github.io/miuix/dokka/index.html
 ```text
 .
   app/                         Android app module
-  docs/compose_refactor/        Compose migration notes and scoped agent guide
-  docs/gradle_upgrade/          Gradle upgrade notes
-  docs/material_enhancement/    Material UI notes
+  docs_archive/compose_refactor/        Compose migration notes and scoped agent guide
+  docs_archive/gradle_upgrade/          Gradle upgrade notes
+  docs_archive/material_enhancement/    Material UI notes
   gradle/                       Gradle wrapper and version catalog
   libs/                         Root local dependencies
   Add_New_Hook_zh-CN.md         Frontend guide for adding Hook settings, UTF-8 encoding
