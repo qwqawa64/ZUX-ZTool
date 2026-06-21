@@ -7,9 +7,11 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.TextView;
 
 /**
  * ZUI包安装器Hook模块
@@ -36,6 +38,7 @@ public class packageInstallerStyleHook extends BaseHookModule {
 
         if ("com.android.packageinstaller".equals(packageName)) {
             hookZuiPackageInstaller(lpparam);
+            doNotShowWarnTextHook(lpparam);
         }
     }
 
@@ -134,5 +137,27 @@ public class packageInstallerStyleHook extends BaseHookModule {
         } catch (Throwable t) {
             logError("Hook Activity样式修改失败", t);
         }
+    }
+
+    private void doNotShowWarnTextHook(XC_LoadPackage.LoadPackageParam lpparam) {
+        XposedHelpers.findAndHookMethod("com.android.packageinstaller.PackageInstallerActivity",
+                lpparam.classLoader,
+                "startInstallConfirm",
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            Class<?> resourcesClass = XposedHelpers.findClass("com.android.packageinstaller.R$id", lpparam.classLoader);
+                            int warnTextViewId = XposedHelpers.getStaticIntField(resourcesClass, "install_confirm_question_warning");
+                            AlertDialog dialog = (AlertDialog) XposedHelpers.getObjectField(param.thisObject, "mDialog");
+                            TextView tv = dialog.findViewById(warnTextViewId);
+                            tv.setVisibility(TextView.GONE);
+                            log("Successfully set install warn visibility to GONE");
+                        } catch (Exception e) {
+                            logError("Exception happened when trying to set warn text to GONE!", e);
+                        }
+                    }
+        });
+
     }
 }
