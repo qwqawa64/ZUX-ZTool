@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
+import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo;
 import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
@@ -180,6 +181,8 @@ public class HookManager {
         registerHookModule(new CustomQsColor());
         // 注册模块: 控制中心背景模糊自定义
         registerHookModule(new NotificationCenterTransparency());
+        // 注册模块: 关于设备信息自定义
+        registerHookModule(new CustomizeAboutDeviceInfo());
         initialized = true;
     }
 
