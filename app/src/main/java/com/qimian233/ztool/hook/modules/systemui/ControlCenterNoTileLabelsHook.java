@@ -38,10 +38,8 @@ public class ControlCenterNoTileLabelsHook extends BaseHookModule {
                             labelContainer.setVisibility(View.GONE);
                             labelContainer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
                         }
-                        log("无字模式已应用到控制中心磁贴");
                     }
                 }
         );
-        log("无字模式Hook模块初始化成功");
     }
 }
