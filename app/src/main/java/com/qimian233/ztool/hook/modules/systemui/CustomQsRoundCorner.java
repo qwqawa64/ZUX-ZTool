@@ -19,7 +19,6 @@ public class CustomQsRoundCorner extends BaseHookModule {
 
     private static int headUpTileRoundCornerRadius = 32;
     private static int normalTileRoundCornerRadius = 96;
-    private static Class<?> shellResourceIdClass;
 
     @Override
     public String getModuleName() {
@@ -96,7 +95,10 @@ public class CustomQsRoundCorner extends BaseHookModule {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         log("updateBrightnessSlider afterHookedMethod called!");
-                        applySeekBarRoundCorner((ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mBrightnessSlider"), "updateBrightnessSlider");
+                        ProgressBar brightnessSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mBrightnessSlider");
+                        if (brightnessSlider != null) {
+                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", brightnessSlider);
+                        }
                     }
                 });
 
@@ -107,7 +109,10 @@ public class CustomQsRoundCorner extends BaseHookModule {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         log("updateVolumeSlider afterHookedMethod called!");
-                        applySeekBarRoundCorner((ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mMediaVolumeSlider"), "updateVolumeSlider");
+                        ProgressBar mediaSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mMediaVolumeSlider");
+                        if (mediaSlider != null) {
+                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", mediaSlider);
+                        }
                     }
                 });
 
@@ -121,8 +126,12 @@ public class CustomQsRoundCorner extends BaseHookModule {
                     protected void afterHookedMethod(MethodHookParam param) {
                         ProgressBar brightnessSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mBrightnessSlider");
                         ProgressBar mediaSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mMediaVolumeSlider");
-                        applySeekBarRoundCorner(brightnessSlider, "constructor");
-                        applySeekBarRoundCorner(mediaSlider, "constructor");
+                        if (brightnessSlider != null) {
+                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", brightnessSlider);
+                        }
+                        if (mediaSlider != null) {
+                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", mediaSlider);
+                        }
                     }
                 });
     }
@@ -139,17 +148,9 @@ public class CustomQsRoundCorner extends BaseHookModule {
             return;
         }
 
-        Class<?> resourceIdClass = getShellResourceIdClass();
-        if (resourceIdClass == null) {
-            log("applySeekBarRoundCorner skipped from " + source + ": resource id class is null");
-            return;
-        }
-
         try {
             LayerDrawable layerDrawable = (LayerDrawable) progressDrawable;
-            int backgroundId = XposedHelpers.getIntField(resourceIdClass, "background");
-
-            Drawable backgroundDrawable = layerDrawable.findDrawableByLayerId(backgroundId);
+            Drawable backgroundDrawable = layerDrawable.findDrawableByLayerId(android.R.id.background);
             if (backgroundDrawable instanceof GradientDrawable) {
                 ((GradientDrawable) backgroundDrawable).setCornerRadius((float) headUpTileRoundCornerRadius);
             } else {
@@ -173,20 +174,6 @@ public class CustomQsRoundCorner extends BaseHookModule {
             }
         } catch (Throwable t) {
             logError("applySeekBarRoundCorner failed from " + source, t);
-        }
-    }
-
-    private Class<?> getShellResourceIdClass() {
-        if (shellResourceIdClass != null) {
-            return shellResourceIdClass;
-        }
-        try {
-            shellResourceIdClass = Class.forName("com.android.wm.shell.R$id");
-            log("Successfully found resource ID class via reflection.");
-            return shellResourceIdClass;
-        } catch (Exception e) {
-            logError("Failed to find resource ID class!", e);
-            return null;
         }
     }
 
