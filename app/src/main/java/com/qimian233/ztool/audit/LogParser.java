@@ -83,6 +83,8 @@ public class LogParser {
                 Pattern.compile("\\[StatusBarDisplay_Seconds]\\s*(.*)"));
         MODULE_PATTERNS.put("Custom_ControlCenterDate",
                 Pattern.compile("\\[Custom_ControlCenterDate]\\s*(.*)"));
+        MODULE_PATTERNS.put("control_center_no_tile_labels",
+                Pattern.compile("\\[control_center_no_tile_labels]\\s*(.*)"));
         MODULE_PATTERNS.put("NativeNotificationIcon",
                 Pattern.compile("\\[NativeNotificationIcon]\\s*(.*)"));
         MODULE_PATTERNS.put("No_ChargeAnimation",
@@ -195,6 +197,7 @@ public class LogParser {
         MODULE_NAMES.put("Custom_StatusBarClock", "状态栏时钟");
         MODULE_NAMES.put("StatusBarDisplay_Seconds", "秒数显示");
         MODULE_NAMES.put("Custom_ControlCenterDate", "控制中心日期");
+        MODULE_NAMES.put("control_center_no_tile_labels", "控制中心磁贴无字模式");
         MODULE_NAMES.put("NativeNotificationIcon", "原生通知图标");
         MODULE_NAMES.put("No_ChargeAnimation", "无充电动画");
         MODULE_NAMES.put("systemui_network_speed_size", "网速布局优化");
@@ -599,6 +602,7 @@ public class LogParser {
         categories.put("系统UI", Arrays.asList(
                 "notification_icon_limit", "systemUI_RealWatts", "systemui_charge_watts",
                 "Custom_StatusBarClock", "StatusBarDisplay_Seconds", "Custom_ControlCenterDate",
+                "control_center_no_tile_labels",
                 "NativeNotificationIcon", "No_ChargeAnimation", "systemui_network_speed_size",
                 "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceLenovoAOD",
                 "qs_round_corner", "qs_color"

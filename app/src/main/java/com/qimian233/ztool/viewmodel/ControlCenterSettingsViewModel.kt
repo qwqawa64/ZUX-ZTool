@@ -140,6 +140,11 @@ class ControlCenterSettingsViewModel(
         }
     }
 
+    fun setNoTileLabels(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(noTileLabels = enabled)
+        repository.saveNoTileLabels(enabled)
+    }
+
     fun setCustomQsActiveColorText(value: String) {
         _uiState.value = _uiState.value.copy(customQsActiveColorText = value.sanitizeArgbColorText())
     }
@@ -239,7 +244,8 @@ private fun ControlCenterSettingsUiState.withColorText(): ControlCenterSettingsU
     return copy(
         customQsActiveColorText = customQsActiveColor.toArgbText(),
         customLabelActiveColorText = customLabelActiveColor.toArgbText(),
-        customSecondLabelActiveColorText = customSecondLabelActiveColor.toArgbText()
+        customSecondLabelActiveColorText = customSecondLabelActiveColor.toArgbText(),
+        noTileLabels = noTileLabels
     )
 }
 
@@ -268,6 +274,7 @@ data class ControlCenterSettingsUiState(
     val customQsColor: Boolean = false,
     val customLabelColor: Boolean = false,
     val customSecondLabelColor: Boolean = false,
+    val noTileLabels: Boolean = false,
     val customQsActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_QS_ACTIVE_COLOR,
     val customLabelActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_LABEL_ACTIVE_COLOR,
     val customSecondLabelActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_SECOND_LABEL_ACTIVE_COLOR,

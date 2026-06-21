@@ -36,6 +36,7 @@ class ControlCenterSettingsRepository(
             customQsColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_QS_COLOR, false),
             customLabelColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_LABEL_COLOR, false),
             customSecondLabelColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_SECOND_LABEL_COLOR, false),
+            noTileLabels = prefsUtils.loadBooleanSetting(KEY_NO_TILE_LABELS, false),
             customQsActiveColor = prefsUtils.loadIntegerSetting(KEY_CUSTOM_QS_ACTIVE_COLOR_VAL, DEFAULT_QS_ACTIVE_COLOR),
             customLabelActiveColor = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL, DEFAULT_LABEL_ACTIVE_COLOR),
             customSecondLabelActiveColor = prefsUtils.loadIntegerSetting(
@@ -131,6 +132,10 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_CUSTOM_SECOND_LABEL_COLOR, enabled)
     }
 
+    fun saveNoTileLabels(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_NO_TILE_LABELS, enabled)
+    }
+
     fun saveCustomQsActiveColor(color: Int) {
         prefsUtils.saveIntegerSetting(KEY_CUSTOM_QS_ACTIVE_COLOR_VAL, color)
     }
@@ -182,6 +187,7 @@ class ControlCenterSettingsRepository(
         private const val KEY_CUSTOM_QS_COLOR = "custom_qs_color"
         private const val KEY_CUSTOM_LABEL_COLOR = "custom_label_color"
         private const val KEY_CUSTOM_SECOND_LABEL_COLOR = "custom_second_label_color"
+        private const val KEY_NO_TILE_LABELS = "control_center_no_tile_labels"
         private const val KEY_CUSTOM_QS_ACTIVE_COLOR_VAL = "custom_qs_active_color_val"
         private const val KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL = "custom_label_active_color_val"
         private const val KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = "custom_second_label_active_color_val"

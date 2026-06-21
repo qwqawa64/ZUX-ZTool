@@ -35,6 +35,7 @@ import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
+import com.qimian233.ztool.hook.modules.systemui.ControlCenterNoTileLabelsHook;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsColor;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsRoundCorner;
@@ -111,6 +112,8 @@ public class HookManager {
         registerHookModule(new NotificationIconHook());
         // 注册模块：自定义控制中心月份时钟
         registerHookModule(new CustomControlCenterDate());
+        // 注册模块：控制中心磁贴无字模式
+        registerHookModule(new ControlCenterNoTileLabelsHook());
         // 注册模块：移除充电动画
         registerHookModule(new NoChargeAnimation());
         // 注册模块：启用原生安装器
