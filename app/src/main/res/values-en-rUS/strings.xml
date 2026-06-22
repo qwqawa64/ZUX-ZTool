@@ -822,4 +822,6 @@
     <string name="about_device_info_ram_title">Modify RAM info</string>
     <string name="about_device_info_rom_label">ROM info</string>
     <string name="about_device_info_rom_title">Modify ROM info</string>
+    <string name="no_password_per_24h">No password per 24h</string>
+    <string name="no_password_per_24h_summary">Won\'t work when interval between password use is longer than 1 month</string>
 </resources>

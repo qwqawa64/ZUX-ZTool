@@ -77,6 +77,11 @@ class FrameworkSettingsViewModel(
         }
     }
 
+    fun setNoPasswordPer24H(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(noPasswordPer24H = enabled)
+        repository.saveNoPaswordPer24H(enabled)
+    }
+
     fun showAiInputInfoDialog() {
         _uiState.value = _uiState.value.copy(showAiInputInfoDialog = true)
     }
@@ -121,4 +126,5 @@ data class FrameworkSettingsUiState(
     val showRestartConfirmDialog: Boolean = false,
     val forceOnOffAnimation: Boolean = false,
     val forceOnOffAnimationDuration: Int = 400,
+    val noPasswordPer24H: Boolean = false,
 )

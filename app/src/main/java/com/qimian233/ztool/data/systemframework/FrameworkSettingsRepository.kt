@@ -21,8 +21,9 @@ class FrameworkSettingsRepository(
             forceOnOffAnimationDuration = normalizeScreenOnOffAnimationDuration(
                 prefsUtils.loadIntegerSetting(KEY_SCREEN_ON_OFF_ANIMATION_DURATION, 400)
             ),
+            noPasswordPer24H = prefsUtils.loadBooleanSetting(NO_PASSWORD_PER_24H, false),
             aiInputSigns = aiInputSigns,
-            aiInputSignsError = validateAiInputSigns(aiInputSigns)
+            aiInputSignsError = validateAiInputSigns(aiInputSigns),
         )
     }
 
@@ -55,6 +56,10 @@ class FrameworkSettingsRepository(
             KEY_SCREEN_ON_OFF_ANIMATION_DURATION,
             normalizeScreenOnOffAnimationDuration(value)
         )
+    }
+
+    fun saveNoPaswordPer24H(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(NO_PASSWORD_PER_24H, enabled)
     }
 
     fun normalizeScreenOnOffAnimationDuration(value: Int): Int {
@@ -97,6 +102,7 @@ class FrameworkSettingsRepository(
         private const val SCREEN_ON_OFF_ANIMATION_MIN_MS = 0
         private const val SCREEN_ON_OFF_ANIMATION_MAX_MS = 1000
         private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
+        private const val NO_PASSWORD_PER_24H = "NoMorePasswordPer24H"
     }
 }
 

@@ -92,7 +92,8 @@ fun FrameworkSettingsRoute(
         onForceOnOffAnimationDurationChanged = viewModel::setOnOffScreenAnimationDuration,
         onAiInputExpandChanged = viewModel::setAiInputExpand,
         onAiInputSignsChanged = viewModel::setAiInputSigns,
-        onShowAiInputInfo = viewModel::showAiInputInfoDialog
+        onShowAiInputInfo = viewModel::showAiInputInfoDialog,
+        onNoPasswordPer24H = viewModel::setNoPasswordPer24H
     )
 
     if (uiState.showAiInputInfoDialog) {
@@ -139,6 +140,7 @@ private fun FrameworkSettingsScreen(
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
+    onNoPasswordPer24H: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
@@ -188,7 +190,8 @@ private fun FrameworkSettingsScreen(
                         onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged,
                         onAiInputExpandChanged = onAiInputExpandChanged,
                         onAiInputSignsChanged = onAiInputSignsChanged,
-                        onShowAiInputInfo = onShowAiInputInfo
+                        onShowAiInputInfo = onShowAiInputInfo,
+                        onNoPasswordPer24H = onNoPasswordPer24H
                     ),
                     bottomPadding = 96.dp
                 )
@@ -204,6 +207,7 @@ private fun frameworkSettingsSections(
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
+    onNoPasswordPer24H: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
@@ -235,6 +239,12 @@ private fun frameworkSettingsSections(
                     summary = stringResource(R.string.disable_flag_secure_summary),
                     checked = state.disableFlagSecure,
                     onCheckedChange = onDisableFlagSecureChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.no_password_per_24h),
+                    summary = stringResource(R.string.no_password_per_24h_summary),
+                    checked = state.noPasswordPer24H,
+                    onCheckedChange = onNoPasswordPer24H
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.force_on_off_animation),

@@ -874,4 +874,6 @@
     <string name="notification_center_blur_strength_title">模糊强度</string>
     <string name="notification_center_blur_strength_summary">按系统原始模糊强度缩放，重启 SystemUI 后生效。</string>
     <string name="percent_unit">%d%%</string>
+    <string name="no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
+    <string name="no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
 </resources>
