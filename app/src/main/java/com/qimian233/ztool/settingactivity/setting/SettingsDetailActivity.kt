@@ -58,6 +58,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.LoadingDialog
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.settingactivity.setting.floatingwindow.FloatingWindow
 import com.qimian233.ztool.ui.components.SettingItem
@@ -95,7 +96,10 @@ fun SettingsDetailRoute(
     val viewModel = remember(owner) {
         ViewModelProvider(
             owner,
-            SettingsDetailViewModelFactory(SettingsDetailRepository(context.applicationContext))
+            SettingsDetailViewModelFactory(
+                SettingsDetailRepository(context.applicationContext),
+                CustomizeAboutDeviceInfoRepository(context.applicationContext)
+            )
         )[SettingsDetailViewModel::class.java]
     }
     val gotItButtonText = stringResource(R.string.got_it_button)
@@ -128,8 +132,22 @@ fun SettingsDetailRoute(
     val removingModuleText = stringResource(R.string.removing_module)
     val installSuccessText = stringResource(R.string.install_success_message)
     val removeSuccessText = stringResource(R.string.remove_success_message)
+    val aboutDeviceInfoImageSavedText = stringResource(R.string.about_device_info_image_saved)
+    val aboutDeviceInfoImageSaveFailedText = stringResource(R.string.about_device_info_image_save_failed)
     var floatingWindow by remember { mutableStateOf<FloatingWindow?>(null) }
     var loadingDialog by remember { mutableStateOf<LoadingDialog?>(null) }
+    val aboutDeviceInfoImageLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val saved = viewModel.saveAboutDeviceInfoHeaderImage(uri)
+            Toast.makeText(
+                context,
+                if (saved) aboutDeviceInfoImageSavedText else aboutDeviceInfoImageSaveFailedText,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     fun showMessageDialog(
         dialogTitle: String,
@@ -575,6 +593,20 @@ fun SettingsDetailRoute(
         onAllowDisableDolbyChanged = viewModel::setAllowDisableDolby,
         onAlwaysDisplaySuggestionsChanged = viewModel::setAlwaysDisplaySuggestions,
         onAppDetailsChanged = viewModel::setAppDetails,
+        aboutDeviceInfoState = uiState.aboutDeviceInfoState,
+        onAboutDeviceInfoEnabledChanged = viewModel::setAboutDeviceInfoEnabled,
+        onAboutDeviceInfoModelEnabledChanged = viewModel::setAboutDeviceInfoModelEnabled,
+        onAboutDeviceInfoCpuEnabledChanged = viewModel::setAboutDeviceInfoCpuEnabled,
+        onAboutDeviceInfoRamEnabledChanged = viewModel::setAboutDeviceInfoRamEnabled,
+        onAboutDeviceInfoRomEnabledChanged = viewModel::setAboutDeviceInfoRomEnabled,
+        onAboutDeviceInfoSoftwareEnabledChanged = viewModel::setAboutDeviceInfoSoftwareEnabled,
+        onAboutDeviceInfoHeaderEnabledChanged = viewModel::setAboutDeviceInfoHeaderEnabled,
+        onAboutDeviceInfoModelChanged = viewModel::setAboutDeviceInfoModel,
+        onAboutDeviceInfoCpuChanged = viewModel::setAboutDeviceInfoCpu,
+        onAboutDeviceInfoRamChanged = viewModel::setAboutDeviceInfoRam,
+        onAboutDeviceInfoRomChanged = viewModel::setAboutDeviceInfoRom,
+        onAboutDeviceInfoSoftwareChanged = viewModel::setAboutDeviceInfoSoftware,
+        onAboutDeviceInfoHeaderSelected = { aboutDeviceInfoImageLauncher.launch(arrayOf("image/*")) },
         onRestartScope = viewModel::showRestartDialog
     )
 
@@ -618,12 +650,13 @@ private fun SimpleSettingsDetailDialogContent(
 }
 
 private class SettingsDetailViewModelFactory(
-    private val repository: SettingsDetailRepository
+    private val repository: SettingsDetailRepository,
+    private val aboutDeviceInfoRepository: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsDetailViewModel::class.java)) {
-            return SettingsDetailViewModel(repository) as T
+            return SettingsDetailViewModel(repository, aboutDeviceInfoRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
@@ -649,6 +682,20 @@ private fun SettingsDetailScreen(
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
     onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit,
     onAppDetailsChanged: (Boolean) -> Unit,
+    aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState,
+    onAboutDeviceInfoEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoModelEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoCpuEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoRamEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoRomEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoSoftwareEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoHeaderEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoModelChanged: (String) -> Unit,
+    onAboutDeviceInfoCpuChanged: (String) -> Unit,
+    onAboutDeviceInfoRamChanged: (String) -> Unit,
+    onAboutDeviceInfoRomChanged: (String) -> Unit,
+    onAboutDeviceInfoSoftwareChanged: (String) -> Unit,
+    onAboutDeviceInfoHeaderSelected: (Uri) -> Unit,
     onRestartScope: () -> Unit
 ) {
     ZToolScaffold(
@@ -710,6 +757,20 @@ private fun SettingsDetailScreen(
                         onAllowDisableDolbyChanged = onAllowDisableDolbyChanged,
                         onAlwaysDisplaySuggestionsChanged = onAlwaysDisplaySuggestionsChanged,
                         onAppDetailsChanged = onAppDetailsChanged,
+                        aboutDeviceInfoState = aboutDeviceInfoState,
+                        onAboutDeviceInfoEnabledChanged = onAboutDeviceInfoEnabledChanged,
+                        onAboutDeviceInfoModelEnabledChanged = onAboutDeviceInfoModelEnabledChanged,
+                        onAboutDeviceInfoCpuEnabledChanged = onAboutDeviceInfoCpuEnabledChanged,
+                        onAboutDeviceInfoRamEnabledChanged = onAboutDeviceInfoRamEnabledChanged,
+                        onAboutDeviceInfoRomEnabledChanged = onAboutDeviceInfoRomEnabledChanged,
+                        onAboutDeviceInfoSoftwareEnabledChanged = onAboutDeviceInfoSoftwareEnabledChanged,
+                        onAboutDeviceInfoHeaderEnabledChanged = onAboutDeviceInfoHeaderEnabledChanged,
+                        onAboutDeviceInfoModelChanged = onAboutDeviceInfoModelChanged,
+                        onAboutDeviceInfoCpuChanged = onAboutDeviceInfoCpuChanged,
+                        onAboutDeviceInfoRamChanged = onAboutDeviceInfoRamChanged,
+                        onAboutDeviceInfoRomChanged = onAboutDeviceInfoRomChanged,
+                        onAboutDeviceInfoSoftwareChanged = onAboutDeviceInfoSoftwareChanged,
+                        onAboutDeviceInfoHeaderSelected = onAboutDeviceInfoHeaderSelected,
                     )
                 )
             }
@@ -735,6 +796,20 @@ private fun settingsDetailSections(
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
     onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit,
     onAppDetailsChanged: (Boolean) -> Unit,
+    aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState,
+    onAboutDeviceInfoEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoModelEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoCpuEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoRamEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoRomEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoSoftwareEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoHeaderEnabledChanged: (Boolean) -> Unit,
+    onAboutDeviceInfoModelChanged: (String) -> Unit,
+    onAboutDeviceInfoCpuChanged: (String) -> Unit,
+    onAboutDeviceInfoRamChanged: (String) -> Unit,
+    onAboutDeviceInfoRomChanged: (String) -> Unit,
+    onAboutDeviceInfoSoftwareChanged: (String) -> Unit,
+    onAboutDeviceInfoHeaderSelected: (Uri) -> Unit,
 ): List<SettingSection> {
     return buildList {
         add(
@@ -885,6 +960,111 @@ private fun settingsDetailSections(
                 )
             )
         )
+
+        add(
+            SettingSection(
+                title = stringResource(R.string.about_device_info_title),
+                items = buildList {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.about_device_info_master),
+                            summary = stringResource(R.string.about_device_info_master_summary),
+                            checked = aboutDeviceInfoState.enabled,
+                            onCheckedChange = onAboutDeviceInfoEnabledChanged
+                        )
+                    )
+                    if (aboutDeviceInfoState.enabled) {
+                        add(
+                            SettingItem.Switch(
+                                title = stringResource(R.string.about_device_info_model_title),
+                                checked = aboutDeviceInfoState.modelEnabled,
+                                onCheckedChange = onAboutDeviceInfoModelEnabledChanged
+                            )
+                        )
+                        if (aboutDeviceInfoState.modelEnabled) {
+                            add(SettingItem.TextInput(
+                                label = stringResource(R.string.about_device_info_model_label),
+                                value = aboutDeviceInfoState.model,
+                                onValueChange = onAboutDeviceInfoModelChanged
+                            ))
+                        }
+                        add(
+                            SettingItem.Switch(
+                                title = stringResource(R.string.about_device_info_cpu_title),
+                                checked = aboutDeviceInfoState.cpuEnabled,
+                                onCheckedChange = onAboutDeviceInfoCpuEnabledChanged
+                            )
+                        )
+                        if (aboutDeviceInfoState.cpuEnabled) {
+                            add(SettingItem.TextInput(
+                                label = stringResource(R.string.about_device_info_cpu_label),
+                                value = aboutDeviceInfoState.cpu,
+                                onValueChange = onAboutDeviceInfoCpuChanged
+                            ))
+                        }
+                        add(
+                            SettingItem.Switch(
+                                title = stringResource(R.string.about_device_info_ram_title),
+                                checked = aboutDeviceInfoState.ramEnabled,
+                                onCheckedChange = onAboutDeviceInfoRamEnabledChanged
+                            )
+                        )
+                        if (aboutDeviceInfoState.ramEnabled) {
+                            add(SettingItem.TextInput(
+                                label = stringResource(R.string.about_device_info_ram_label),
+                                value = aboutDeviceInfoState.ram,
+                                onValueChange = onAboutDeviceInfoRamChanged
+                            ))
+                        }
+                        add(
+                            SettingItem.Switch(
+                                title = stringResource(R.string.about_device_info_rom_title),
+                                checked = aboutDeviceInfoState.romEnabled,
+                                onCheckedChange = onAboutDeviceInfoRomEnabledChanged
+                            )
+                        )
+                        if (aboutDeviceInfoState.romEnabled) {
+                            add(SettingItem.TextInput(
+                                label = stringResource(R.string.about_device_info_rom_label),
+                                value = aboutDeviceInfoState.rom,
+                                onValueChange = onAboutDeviceInfoRomChanged
+                            ))
+                        }
+                        add(
+                            SettingItem.Switch(
+                                title = stringResource(R.string.about_device_info_software_title),
+                                checked = aboutDeviceInfoState.softwareEnabled,
+                                onCheckedChange = onAboutDeviceInfoSoftwareEnabledChanged
+                            )
+                        )
+                        if (aboutDeviceInfoState.softwareEnabled) {
+                            add(SettingItem.TextInput(
+                                label = stringResource(R.string.about_device_info_software_label),
+                                value = aboutDeviceInfoState.software,
+                                onValueChange = onAboutDeviceInfoSoftwareChanged
+                            ))
+                        }
+                        add(
+                            SettingItem.Switch(
+                                title = stringResource(R.string.about_device_info_header_title),
+                                checked = aboutDeviceInfoState.headerEnabled,
+                                onCheckedChange = onAboutDeviceInfoHeaderEnabledChanged
+                            )
+                        )
+                        if (aboutDeviceInfoState.headerEnabled) {
+                            add(
+                                settingsDetailActionItem(
+                                    title = stringResource(R.string.about_device_info_header_action),
+                                    summary = stringResource(R.string.about_device_info_header_action_summary),
+                                    onClick = { onAboutDeviceInfoHeaderSelected(Uri.EMPTY) }
+                                )
+                            )
+                        }
+                    }
+                }
+            )
+        )
+
     }
 }
 

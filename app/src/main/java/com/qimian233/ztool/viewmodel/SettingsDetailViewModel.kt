@@ -4,6 +4,7 @@ import android.os.Build
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 import com.qimian233.ztool.data.settings.OvConfigSelection
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.utils.EmbeddingConfigManager
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SettingsDetailViewModel(
-    private val repository: SettingsDetailRepository
+    private val repository: SettingsDetailRepository,
+    private val aboutDeviceInfoRepository: CustomizeAboutDeviceInfoRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsDetailUiState())
     val uiState: StateFlow<SettingsDetailUiState> = _uiState.asStateFlow()
@@ -27,7 +29,9 @@ class SettingsDetailViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val state = repository.loadState()
             withContext(Dispatchers.Main) {
-                _uiState.value = state
+                _uiState.value = state.copy(
+                    aboutDeviceInfoState = aboutDeviceInfoRepository.loadState()
+                )
             }
         }
     }
@@ -90,6 +94,94 @@ class SettingsDetailViewModel(
     fun setAppDetails(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(appDetail = enabled)
         repository.saveAppDetails(enabled)
+    }
+
+    fun setAboutDeviceInfoEnabled(enabled: Boolean) {
+        aboutDeviceInfoRepository.setEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(enabled = enabled)
+        )
+    }
+
+    fun setAboutDeviceInfoModelEnabled(enabled: Boolean) {
+        aboutDeviceInfoRepository.setModelEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(modelEnabled = enabled)
+        )
+    }
+
+    fun setAboutDeviceInfoCpuEnabled(enabled: Boolean) {
+        aboutDeviceInfoRepository.setCpuEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(cpuEnabled = enabled)
+        )
+    }
+
+    fun setAboutDeviceInfoRamEnabled(enabled: Boolean) {
+        aboutDeviceInfoRepository.setRamEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(ramEnabled = enabled)
+        )
+    }
+
+    fun setAboutDeviceInfoRomEnabled(enabled: Boolean) {
+        aboutDeviceInfoRepository.setRomEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(romEnabled = enabled)
+        )
+    }
+
+    fun setAboutDeviceInfoSoftwareEnabled(enabled: Boolean) {
+        aboutDeviceInfoRepository.setSoftwareEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(softwareEnabled = enabled)
+        )
+    }
+
+    fun setAboutDeviceInfoHeaderEnabled(enabled: Boolean) {
+        aboutDeviceInfoRepository.setHeaderEnabled(enabled)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(headerEnabled = enabled)
+        )
+    }
+
+    fun setAboutDeviceInfoModel(value: String) {
+        aboutDeviceInfoRepository.setModel(value)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(model = value)
+        )
+    }
+
+    fun setAboutDeviceInfoCpu(value: String) {
+        aboutDeviceInfoRepository.setCpu(value)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(cpu = value)
+        )
+    }
+
+    fun setAboutDeviceInfoRam(value: String) {
+        aboutDeviceInfoRepository.setRam(value)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(ram = value)
+        )
+    }
+
+    fun setAboutDeviceInfoRom(value: String) {
+        aboutDeviceInfoRepository.setRom(value)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(rom = value)
+        )
+    }
+
+    fun setAboutDeviceInfoSoftware(value: String) {
+        aboutDeviceInfoRepository.setSoftware(value)
+        _uiState.value = _uiState.value.copy(
+            aboutDeviceInfoState = _uiState.value.aboutDeviceInfoState.copy(software = value)
+        )
+    }
+
+    fun saveAboutDeviceInfoHeaderImage(uri: Uri): Boolean {
+        return aboutDeviceInfoRepository.saveDeviceHeaderImage(repository.context, uri)
     }
 
     fun showRestartDialog() {
@@ -270,4 +362,5 @@ data class SettingsDetailUiState(
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val showRestartDialog: Boolean = false,
     val appDetail: Boolean = false,
+    val aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState = com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState(),
 )

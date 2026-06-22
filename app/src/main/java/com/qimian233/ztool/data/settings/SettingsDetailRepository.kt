@@ -16,7 +16,7 @@ import java.io.File
 import androidx.core.content.edit
 
 class SettingsDetailRepository(
-    private val context: Context,
+    val context: Context,
     private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance(),
     private val magiskManager: MagiskModuleManager = MagiskModuleManager(),
     private val embeddingConfigManager: EmbeddingConfigManager = EmbeddingConfigManager(),

@@ -761,6 +761,8 @@
     <string name="back_to_top">Back to top</string>
     <string name="app_details_completion">Detailed APP information</string>
     <string name="app_details_completion_summary">Add packagename, SDK info, installation, update and install source info to APP detail page</string>
+    <string name="about_device_info_image_saved">Saved device illustration</string>
+    <string name="about_device_info_image_save_failed">Failed to save device illustration</string>
     <string name="force_on_off_animation">Enable screen on/off animation</string>
     <string name="force_on_off_animation_summary">Get a more elegant screen on/off experience</string>
     <string name="screen_on_off_animation_duration">Set duration of on/off screen animator</string>
@@ -794,6 +796,8 @@
     <string name="custom_second_label_color_summary">Change the enabled-state secondary label color for control center tiles.</string>
     <string name="custom_second_label_active_color_title">Secondary label color</string>
     <string name="custom_second_label_active_color_summary">Enter an AARRGGBB color value.</string>
+    <string name="control_center_no_tile_labels_title">No label mode</string>
+    <string name="control_center_no_tile_labels_summary">Hide label of normal tiles</string>
     <string name="argb_color_input_error">Enter a 6-digit RRGGBB or 8-digit AARRGGBB color value.</string>
     <string name="custom_qs_color_general_switch">Customized tile color</string>
     <string name="notification_center_background">Notification center background</string>
@@ -802,4 +806,20 @@
     <string name="notification_center_blur_strength_title">Blur strength</string>
     <string name="notification_center_blur_strength_summary">Scales the system blur strength. Restart SystemUI to apply.</string>
     <string name="percent_unit">%d%%</string>
+    <string name="about_device_info_model_label">Device model</string>
+    <string name="about_device_info_cpu_label">CPU Info</string>
+    <string name="about_device_info_model_title">Modify device model string</string>
+    <string name="about_device_info_cpu_title">CPU info modification</string>
+    <string name="about_device_info_software_label">Software version</string>
+    <string name="about_device_info_header_action">Select an image</string>
+    <string name="about_device_info_header_action_summary">Recommended image size is 500 × 300</string>
+    <string name="about_device_info_software_title">Modify software version</string>
+    <string name="about_device_info_header_title">Modify device illustration</string>
+    <string name="about_device_info_title">About device info</string>
+    <string name="about_device_info_master">Enable modification</string>
+    <string name="about_device_info_master_summary">Just for fun.</string>
+    <string name="about_device_info_ram_label">RAM info</string>
+    <string name="about_device_info_ram_title">Modify RAM info</string>
+    <string name="about_device_info_rom_label">ROM info</string>
+    <string name="about_device_info_rom_title">Modify ROM info</string>
 </resources>
