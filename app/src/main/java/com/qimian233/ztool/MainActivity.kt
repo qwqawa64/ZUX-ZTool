@@ -39,6 +39,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
+import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.settingactivity.ota.OtaSettingsRoute
@@ -57,18 +58,17 @@ import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
-import com.qimian233.ztool.utils.CountdownDialog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
 
 class MainActivity : ComponentActivity(),
     EnvironmentStateListener,
-    LogServiceManager.ServiceStatusListener,
-    CountdownDialog.OnCountdownFinishListener {
+    LogServiceManager.ServiceStatusListener {
 
     private var isEnvironmentReady by mutableStateOf(false)
     private var currentRoute by mutableStateOf(MainRoute.Home)
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
+    private var showFirstrun by mutableStateOf(false)
     private var lastClickTime = 0L
     private var unregisterThemeSettingsObserver: (() -> Unit)? = null
     private val agreementRepository by lazy { AgreementRepository(this) }
@@ -84,6 +84,10 @@ class MainActivity : ComponentActivity(),
                 ?.let(MainRoute::fromName)
                 ?: MainRoute.Home
             isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false)
+            showFirstrun = savedInstanceState.getBoolean(KEY_SHOW_FIRSTRUN, false)
+        }
+        if (!agreementRepository.hasAcceptedAgreement()) {
+            showFirstrun = true
         }
 
         val themeRepository = ThemePreferencesRepository(applicationContext)
@@ -100,19 +104,27 @@ class MainActivity : ComponentActivity(),
         setContent {
             ZToolTheme(settings = themeSettings) {
                 com.qimian233.ztool.ui.theme.ThemeRevealProvider {
-                    MainTabletShell(
-                        environmentReady = isEnvironmentReady,
-                        selectedRoute = currentRoute,
-                        themeSettings = themeSettings,
-                        onDestinationSelected = ::navigateFromRail,
-                        onEnvironmentStateChanged = ::onEnvironmentStateChanged,
-                        onRouteChanged = ::setCurrentRouteFromHost
-                    )
+                    if (!showFirstrun && agreementRepository.hasAcceptedAgreement()) {
+                        MainTabletShell(
+                            environmentReady = isEnvironmentReady,
+                            selectedRoute = currentRoute,
+                            themeSettings = themeSettings,
+                            onDestinationSelected = ::navigateFromRail,
+                            onEnvironmentStateChanged = ::onEnvironmentStateChanged,
+                            onRouteChanged = ::setCurrentRouteFromHost
+                        )
+                    } else {
+                        FirstrunAgreementRoute(
+                            onAgreementAccepted = {
+                                showFirstrun = false
+                            },
+                            onAgreementDeclined = { finishAffinity() }
+                        )
+                    }
                 }
             }
         }
 
-        maybeShowAgreementDialog()
         LogServiceManager.restartServiceIfNeeded(this)
     }
 
@@ -120,6 +132,7 @@ class MainActivity : ComponentActivity(),
         super.onSaveInstanceState(outState)
         outState.putString(KEY_CURRENT_ROUTE, currentRoute.name)
         outState.putBoolean(KEY_ENVIRONMENT_READY, isEnvironmentReady)
+        outState.putBoolean(KEY_SHOW_FIRSTRUN, showFirstrun)
     }
 
     override fun onDestroy() {
@@ -128,18 +141,6 @@ class MainActivity : ComponentActivity(),
         unregisterThemeSettingsObserver = null
         LogServiceManager.setServiceStatusListener(null)
     }
-
-    override fun onPositiveButtonClick() {
-        agreementRepository.markAgreementAccepted()
-        Toast.makeText(this, getString(R.string.user_confirm_agreement), Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onNegativeButtonClick() {
-        Toast.makeText(this, getString(R.string.user_dismiss_agreement), Toast.LENGTH_SHORT).show()
-        finishAffinity()
-    }
-
-    override fun onCountdownFinished() = Unit
 
     override fun onServiceStarted() {
         runOnUiThread {
@@ -193,20 +194,6 @@ class MainActivity : ComponentActivity(),
         }
     }
 
-    private fun maybeShowAgreementDialog() {
-        if (agreementRepository.hasAcceptedAgreement()) return
-
-        CountdownDialog.Builder(this, this).apply {
-            setTitle(getString(R.string.agreement_title))
-            setMessage(getString(R.string.agreement_text))
-            setCancelable(false)
-            setCountdownSeconds(30)
-            setNegativeText(getString(R.string.agreement_dismiss))
-            setPositiveText(getString(R.string.agreement_confirm))
-            setOnCountdownFinishListener(this@MainActivity)
-        }.build().show()
-    }
-
     private fun setupSystemBars(settings: ZToolThemeSettings) {
         val window: Window = window
         val isDarkTheme = resolveDarkTheme(settings)
@@ -230,6 +217,7 @@ class MainActivity : ComponentActivity(),
     companion object {
         private const val KEY_CURRENT_ROUTE = "current_route"
         private const val KEY_ENVIRONMENT_READY = "environment_ready"
+        private const val KEY_SHOW_FIRSTRUN = "show_firstrun"
     }
 }
 
