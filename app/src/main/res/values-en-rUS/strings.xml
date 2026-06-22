@@ -28,11 +28,11 @@
     <string name="app_icon">App Icon</string>
     <string name="user_confirm_agreement">You accepted the agreement</string>
     <string name="user_dismiss_agreement">Agreement declined, exiting…</string>
-    <string name="agreement_title">User Agreement</string>
+    <string name="agreement_title">Swipe to read the complete user agreement</string>
     <string name="agreement_confirm">I agree</string>
     <string name="agreement_dismiss">I disagree, exit</string>
     <string name="agreement_screen_title">First-run notice</string>
-    <string name="agreement_screen_subtitle">Scroll to read the complete user agreement</string>
+    <string name="agreement_screen_subtitle">First, please read this user agreement carefully</string>
     <string name="firstrun_start">Start</string>
     <string name="firstrun_permissions_title">Permission setup</string>
     <string name="firstrun_permissions_subtitle">The module could not work properly without these permissions</string>

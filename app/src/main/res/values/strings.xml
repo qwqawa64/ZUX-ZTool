@@ -30,11 +30,11 @@
     <!--FirstRun资源值-->
     <string name="user_confirm_agreement">已确认声明</string>
     <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
-    <string name="agreement_title">用户协议</string>
+    <string name="agreement_title">请滑动阅读用户协议</string>
     <string name="agreement_confirm">同意并进入</string>
     <string name="agreement_dismiss">不同意并退出</string>
     <string name="agreement_screen_title">首次运行说明</string>
-    <string name="agreement_screen_subtitle">请滑动阅读用户协议</string>
+    <string name="agreement_screen_subtitle">首先，请仔细阅读用户协议</string>
     <string name="firstrun_start">开始</string>
     <string name="firstrun_permissions_title">权限配置</string>
     <string name="firstrun_permissions_subtitle">授权后方可使用模块功能</string>
