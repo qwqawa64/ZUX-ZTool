@@ -1,6 +1,5 @@
 package com.qimian233.ztool.ui.firstrun
 
-import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -9,7 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -38,6 +36,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -83,7 +82,7 @@ fun FirstrunAgreementRoute(
     val scrollState = rememberScrollState()
     val gate = remember { ScrollToBottomAgreementGate() }
     val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Agreement) }
-    val countdownSecondsState = rememberSaveable { mutableStateOf(30) }
+    val countdownSecondsState = rememberSaveable { mutableIntStateOf(30) }
 
     val usageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -100,10 +99,10 @@ fun FirstrunAgreementRoute(
 
     LaunchedEffect(currentPageState.value) {
         if (currentPageState.value != FirstrunPage.Agreement) return@LaunchedEffect
-        countdownSecondsState.value = 30
-        while (countdownSecondsState.value > 0 && currentPageState.value == FirstrunPage.Agreement) {
+        countdownSecondsState.intValue = 30
+        while (countdownSecondsState.intValue > 0 && currentPageState.value == FirstrunPage.Agreement) {
             delay(1000)
-            countdownSecondsState.value -= 1
+            countdownSecondsState.intValue -= 1
         }
     }
 
@@ -112,7 +111,7 @@ fun FirstrunAgreementRoute(
         onDispose { }
     }
 
-    val firstPageReady = gate.satisfied && countdownSecondsState.value == 0
+    val firstPageReady = gate.satisfied && countdownSecondsState.intValue == 0
     val allGranted = uiState.checkState.allGranted && gate.satisfied
     val markdownText = stringResource(R.string.agreement_text)
 
@@ -131,7 +130,7 @@ fun FirstrunAgreementRoute(
                     markdownText = markdownText,
                     scrollState = scrollState,
                     firstPageReady = firstPageReady,
-                    countdownSeconds = countdownSecondsState.value,
+                    countdownSeconds = countdownSecondsState.intValue,
                     onNext = { currentPageState.value = FirstrunPage.Permissions },
                     onDisagree = {
                         viewModel.declineAgreement()
@@ -221,13 +220,6 @@ private fun AgreementPage(
                 }
             }
         }
-
-        Text(
-            text = stringResource(R.string.firstrun_agreement_hint),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
 
         BottomActionBar(
             nextText = if (countdownSeconds > 0) {
