@@ -16,13 +16,16 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun ZToolMarkdownText(
     markdown: String,
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
-    color: Color = MaterialTheme.colorScheme.onSurfaceVariant
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    fontSize: TextUnit = TextUnit.Unspecified
 ) {
     val annotated = remember(markdown, style, color) {
         parseMarkdown(markdown, baseStyle = style, baseColor = color)
@@ -33,7 +36,9 @@ fun ZToolMarkdownText(
             text = annotated,
             modifier = modifier.semantics { },
             style = style,
-            color = color
+            color = color,
+            fontSize = fontSize,
+            lineHeight = 32.sp
         )
     }
 }
@@ -61,7 +66,7 @@ private fun parseMarkdown(
     }
 }
 
-private fun androidx.compose.ui.text.AnnotatedString.Builder.appendStyledBlock(
+private fun AnnotatedString.Builder.appendStyledBlock(
     text: String,
     baseStyle: TextStyle,
     baseColor: Color,
@@ -83,7 +88,7 @@ private fun androidx.compose.ui.text.AnnotatedString.Builder.appendStyledBlock(
     }
 }
 
-private fun androidx.compose.ui.text.AnnotatedString.Builder.appendBullet(
+private fun AnnotatedString.Builder.appendBullet(
     text: String,
     baseStyle: TextStyle,
     baseColor: Color
@@ -92,7 +97,7 @@ private fun androidx.compose.ui.text.AnnotatedString.Builder.appendBullet(
     appendInlineMarkdown(text, baseStyle, baseColor)
 }
 
-private fun androidx.compose.ui.text.AnnotatedString.Builder.appendNumbered(
+private fun AnnotatedString.Builder.appendNumbered(
     text: String,
     baseStyle: TextStyle,
     baseColor: Color
@@ -104,7 +109,7 @@ private fun androidx.compose.ui.text.AnnotatedString.Builder.appendNumbered(
     appendInlineMarkdown(text.substring(dotIndex + 1).trimStart(), baseStyle, baseColor)
 }
 
-private fun androidx.compose.ui.text.AnnotatedString.Builder.appendInlineMarkdown(
+private fun AnnotatedString.Builder.appendInlineMarkdown(
     text: String,
     baseStyle: TextStyle,
     baseColor: Color

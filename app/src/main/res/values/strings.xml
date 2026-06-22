@@ -30,13 +30,25 @@
     <!--FirstRun资源值-->
     <string name="user_confirm_agreement">已确认声明</string>
     <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
-    <string name="agreement_title">重要提示</string>
-    <string name="agreement_text">欢迎使用 ZTool。\n本工具基于 Root 权限与 LSPosed 框架，为运行 ZUXOS 的联想设备提供自定义功能与系统优化选项。由于本模块在设备中拥有最高控制权，请您务必仔细阅读并理解以下声明。\n如不同意，请立即退出并卸载本应用。\n声明条款\n1. 本模块仅通过 GitHub Releases 页面 官方发布。请勿安装任何来自第三方（包括但不限于网页、群组、个人分发）的 ZTool 副本，此类版本可能为恶意软件，会导致设备安全风险。若已安装不明来源的副本，请立即卸载并彻底检查系统权限及敏感目录，建议清除 Root 并重新刷机，以防潜在病毒利用高权限漏洞。\n2. 部分功能可能随系统更新而失效。如遇此类情况，请向开发者反馈，并附上本模块与 LSPosed 的详细日志。\n3. 本模块提供的功能及可能出现的异常与联想官方无关。请勿在官方渠道（包括群组、反馈平台等）中提及本模块或因此质疑官方。如更改选项后出现问题，请先恢复设置并重启作用域。违反本条可能影响后续更新支持。\n4. 本模块为遵循 Apache 2.0 协议的开源软件，在 GitHub 上免费发布。如果您为此付费，即遭遇诈骗。请立即停止使用该副本，转用本项目 GitHub Releases 页面的官方版本。\n5. ZTool 开发者保留对模块功能及上述条款的最终解释权。\n若您已阅读并同意以上内容，请在倒计时结束后点击“同意并进入”按钮。否则，点击“不同意并退出”按钮退出本应用。</string>
+    <string name="agreement_title">用户协议</string>
+    <string name="agreement_text">欢迎使用 ZTool。
+        \n本工具基于 Root 权限与 LSPosed 框架，为运行 ZUXOS 的联想设备提供自定义功能与系统优化选项。
+        \n由于本模块在设备中拥有最高控制权，请您务必仔细阅读并理解以下声明。 如不同意，请立即退出并卸载本应用。
+        \n1. 本模块仅通过 [GitHub Releases 页面](https://github.com/qwqawa64/ZUX-ZTool/releases) 官方发布。请勿安装**任何**来自第三方（包括但不限于网页、群组、个人分发）的 ZTool 副本，此类版本可能为恶意软件，会导致设备安全风险。若已安装不明来源的副本，请立即卸载并彻底检查系统权限及敏感目录，建议清除 Root 并重新刷机，以防潜在病毒利用高权限漏洞。
+        \n2. 部分功能可能随系统更新而失效。如遇此类情况，请向开发者反馈，并附上**本模块与 LSPosed 的详细日志**。
+        \n3. 本模块提供的功能及可能出现的异常**与联想官方无关**。请勿在官方渠道（包括群组、反馈平台等）中提及本模块或因此质疑官方。如更改选项后出现问题，请先恢复设置并重启作用域。**违反本条可能影响后续更新支持。**
+        \n4. 本模块为遵循 Apache 2.0 协议的开源软件，在 GitHub 上免费发布。如果您为此付费，即遭遇诈骗。请立即停止使用该副本，转用本项目 GitHub Releases 页面的官方版本。
+        \n5. ZTool 开发者保留对模块功能及上述条款的最终解释权。</string>
     <string name="agreement_confirm">同意并进入</string>
     <string name="agreement_dismiss">不同意并退出</string>
     <string name="agreement_screen_title">首次运行说明</string>
     <string name="agreement_screen_subtitle">请完成阅读和权限检查后再继续使用模块</string>
-    <string name="firstrun_check_hint">以下项目全部就绪后，才可点击“同意并进入”</string>
+    <string name="firstrun_agreement_hint">滚动到底部视为已阅读；等待倒计时结束后可进入下一步</string>
+    <string name="firstrun_permissions_title">权限配置</string>
+    <string name="firstrun_permissions_subtitle">仅处理模块运行所需的五项关键检查</string>
+    <string name="firstrun_permissions_check_title">权限检查与处理</string>
+    <string name="firstrun_permissions_ready">五项关键条件已满足，可以继续</string>
+    <string name="firstrun_permissions_pending">还有项目未完成，请逐项处理</string>
     <string name="firstrun_root_title">Root</string>
     <string name="firstrun_root_summary">检查是否已获取 Root 权限</string>
     <string name="firstrun_module_title">LSPosed</string>
