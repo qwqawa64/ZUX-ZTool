@@ -60,6 +60,7 @@ import com.qimian233.ztool.LoadingDialog
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
+import com.qimian233.ztool.settingactivity.safecenter.RestartConfirmDialog
 import com.qimian233.ztool.settingactivity.setting.floatingwindow.FloatingWindow
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
@@ -611,7 +612,7 @@ fun SettingsDetailRoute(
     )
 
     if (uiState.showRestartDialog) {
-        RestartScopeDialog(
+        RestartConfirmDialog(
             packageName = packageName,
             onConfirm = {
                 viewModel.restartScope(packageName)
@@ -651,7 +652,7 @@ private fun SimpleSettingsDetailDialogContent(
 
 private class SettingsDetailViewModelFactory(
     private val repository: SettingsDetailRepository,
-    private val aboutDeviceInfoRepository: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
+    private val aboutDeviceInfoRepository: CustomizeAboutDeviceInfoRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1271,35 +1272,6 @@ private fun FontInputDialogContent(
         },
         dismissButton = {
             ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
-        }
-    )
-}
-
-@Composable
-private fun RestartScopeDialog(
-    packageName: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
-        text = {
-            Text(
-                stringResource(R.string.restart_xp_message_header) +
-                    packageName +
-                    stringResource(R.string.restart_xp_message)
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.restart_yes))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
         }
     )
 }
