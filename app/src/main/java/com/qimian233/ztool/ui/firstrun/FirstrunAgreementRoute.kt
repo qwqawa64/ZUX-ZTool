@@ -31,9 +31,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.QueryStats
-import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -475,14 +475,14 @@ private fun ActionRow(
             title = stringResource(R.string.firstrun_root_title),
             summary = stringResource(R.string.firstrun_root_summary),
             checked = state.hasRoot,
-            icon = Icons.Rounded.Lock,
+            icon = Icons.Rounded.Numbers,
             onClick = onRequestRoot
         )
         FirstrunActionCard(
             title = stringResource(R.string.firstrun_module_title),
             summary = stringResource(R.string.firstrun_module_summary),
             checked = state.isModuleActive,
-            icon = Icons.Rounded.Verified,
+            icon = Icons.Rounded.Extension,
             onClick = onCheckModule
         )
         FirstrunActionCard(
