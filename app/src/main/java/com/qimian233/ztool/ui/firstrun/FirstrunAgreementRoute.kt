@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -90,7 +91,8 @@ fun FirstrunAgreementRoute(
     val overlayLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { viewModel.refreshChecks() }
-
+    val agreementPageScrollState = rememberScrollState()
+    val permissionPageScrollState = rememberScrollState()
     LaunchedEffect(currentPageState.value) {
         if (currentPageState.value == FirstrunPage.Permissions) {
             viewModel.refreshChecks()
@@ -128,7 +130,8 @@ fun FirstrunAgreementRoute(
             when (currentPageState.value) {
                 FirstrunPage.Agreement -> AgreementPage(
                     markdownText = markdownText,
-                    scrollState = scrollState,
+                    pageScrollState = agreementPageScrollState,
+                    agreementScrollState = scrollState,
                     firstPageReady = firstPageReady,
                     countdownSeconds = countdownSecondsState.intValue,
                     onNext = { currentPageState.value = FirstrunPage.Permissions },
@@ -140,6 +143,7 @@ fun FirstrunAgreementRoute(
                 FirstrunPage.Permissions -> PermissionPage(
                     state = uiState.checkState,
                     allGranted = allGranted,
+                    pageScrollState = permissionPageScrollState,
                     onRequestRoot = { viewModel.refreshChecks() },
                     onCheckModule = { viewModel.refreshChecks() },
                     onRequestPackages = { viewModel.refreshChecks() },
@@ -171,57 +175,65 @@ fun FirstrunAgreementRoute(
 @Composable
 private fun AgreementPage(
     markdownText: String,
-    scrollState: androidx.compose.foundation.ScrollState,
+    pageScrollState: androidx.compose.foundation.ScrollState,
+    agreementScrollState: androidx.compose.foundation.ScrollState,
     firstPageReady: Boolean,
     countdownSeconds: Int,
     onNext: () -> Unit,
     onDisagree: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(20.dp)
     ) {
-        HeaderCard(
-            title = stringResource(R.string.agreement_screen_title),
-            subtitle = stringResource(R.string.agreement_screen_subtitle)
-        )
-
-        ZToolCard(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(pageScrollState)
+                    .padding(bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = stringResource(R.string.agreement_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(400.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
-                ) {
-                    ZToolMarkdownText(
-                        markdown = markdownText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 18.sp
+            HeaderCard(
+                title = stringResource(R.string.agreement_screen_title),
+                subtitle = stringResource(R.string.agreement_screen_subtitle)
+            )
+
+            ZToolCard(
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = stringResource(R.string.agreement_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .verticalScroll(agreementScrollState)
+                            .padding(16.dp)
+                    ) {
+                        ZToolMarkdownText(
+                            markdown = markdownText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 18.sp
+                        )
+                    }
                 }
             }
         }
 
         BottomActionBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
             nextText = if (countdownSeconds > 0) {
                 stringResource(
                     R.string.customizedConfirmWithCountdown,
@@ -242,6 +254,7 @@ private fun AgreementPage(
 private fun PermissionPage(
     state: com.qimian233.ztool.data.home.FirstrunCheckState,
     allGranted: Boolean,
+    pageScrollState: androidx.compose.foundation.ScrollState,
     onRequestRoot: () -> Unit,
     onCheckModule: () -> Unit,
     onRequestPackages: () -> Unit,
@@ -249,50 +262,58 @@ private fun PermissionPage(
     onRequestOverlay: () -> Unit,
     onAgree: () -> Unit,
     onDisagree: () -> Unit
-) {
-    Column(
+){
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(20.dp)
     ) {
-        HeaderCard(
-            title = stringResource(R.string.firstrun_permissions_title),
-            subtitle = stringResource(R.string.firstrun_permissions_subtitle)
-        )
-
-        ZToolCard(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(pageScrollState)
+                    .padding(bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = stringResource(R.string.firstrun_permissions_check_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ActionRow(
-                    state = state,
-                    onRequestRoot = onRequestRoot,
-                    onCheckModule = onCheckModule,
-                    onRequestPackages = onRequestPackages,
-                    onRequestUsage = onRequestUsage,
-                    onRequestOverlay = onRequestOverlay
-                )
+            HeaderCard(
+                title = stringResource(R.string.firstrun_permissions_title),
+                subtitle = stringResource(R.string.firstrun_permissions_subtitle)
+            )
+
+            ZToolCard(
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = stringResource(R.string.firstrun_permissions_check_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ActionRow(
+                        state = state,
+                        onRequestRoot = onRequestRoot,
+                        onCheckModule = onCheckModule,
+                        onRequestPackages = onRequestPackages,
+                        onRequestUsage = onRequestUsage,
+                        onRequestOverlay = onRequestOverlay
+                    )
+                }
             }
+
+            StatusBanner(
+                text = if (allGranted) {
+                    stringResource(R.string.firstrun_permissions_ready)
+                } else {
+                    stringResource(R.string.firstrun_permissions_pending)
+                },
+                ready = allGranted
+            )
         }
 
-        StatusBanner(
-            text = if (allGranted) {
-                stringResource(R.string.firstrun_permissions_ready)
-            } else {
-                stringResource(R.string.firstrun_permissions_pending)
-            },
-            ready = allGranted
-        )
-
         BottomActionBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
             nextText = stringResource(R.string.agreement_confirm),
             nextEnabled = allGranted,
             onNext = onAgree,
@@ -456,13 +477,16 @@ private fun FirstrunActionCard(
 
 @Composable
 private fun BottomActionBar(
+    modifier: Modifier = Modifier,
     nextText: String,
     nextEnabled: Boolean,
     onNext: () -> Unit,
     onDisagree: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
