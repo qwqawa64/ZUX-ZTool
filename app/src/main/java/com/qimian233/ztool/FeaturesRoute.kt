@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,8 +60,23 @@ fun FeaturesMainRoute(
     onFeatureDestinationSelected: (FeatureDestination) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val allItems = rememberFeatureItems(context)
+    val installedPackages = rememberInstalledPackages(context)
+    val (visibleItems, warningMessageRes) = remember(allItems, installedPackages) {
+        val visible = allItems.filter { item ->
+            item.alwaysVisible || item.packageName in installedPackages
+        }
+        if (installedPackages.isEmpty()) {
+            allItems to R.string.features_app_list_permission_warning
+        } else if (visible.isEmpty()) {
+            allItems to R.string.features_all_filtered_warning
+        } else {
+            visible to null
+        }
+    }
     FeaturesRoute(
-        items = rememberFeatureItems(context),
+        items = visibleItems,
+        warningMessageRes = warningMessageRes,
         onFeatureClick = { item ->
             onFeatureDestinationSelected(item.destination)
         }
@@ -72,7 +88,8 @@ private data class FeatureItem(
     val descriptionRes: Int,
     val packageName: String,
     val icon: Drawable?,
-    val destination: FeatureDestination
+    val destination: FeatureDestination,
+    val alwaysVisible: Boolean = false
 )
 
 private val FeatureCardHeight: Dp = 112.dp
@@ -128,7 +145,8 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 nameRes = R.string.system_framework_app_name,
                 descriptionRes = R.string.system_framework_app_description,
                 packageName = "android",
-                destination = FeatureDestination.Framework
+                destination = FeatureDestination.Framework,
+                alwaysVisible = true
             ),
             featureItem(
                 context = context,
@@ -146,14 +164,16 @@ private fun featureItem(
     nameRes: Int,
     descriptionRes: Int,
     packageName: String,
-    destination: FeatureDestination
+    destination: FeatureDestination,
+    alwaysVisible: Boolean = false
 ): FeatureItem {
     return FeatureItem(
         nameRes = nameRes,
         descriptionRes = descriptionRes,
         packageName = packageName,
         icon = getApplicationIcon(context, packageName),
-        destination = destination
+        destination = destination,
+        alwaysVisible = alwaysVisible
     )
 }
 
@@ -169,8 +189,22 @@ private fun getApplicationIcon(context: Context, packageName: String): Drawable?
 }
 
 @Composable
+private fun rememberInstalledPackages(context: Context): Set<String> {
+    return remember(context) {
+        try {
+            context.packageManager.getInstalledApplications(0)
+                .mapTo(mutableSetOf()) { it.packageName }
+                .minus(context.packageName)
+        } catch (_: Throwable) {
+            emptySet()
+        }
+    }
+}
+
+@Composable
 private fun FeaturesRoute(
     items: List<FeatureItem>,
+    warningMessageRes: Int?,
     onFeatureClick: (FeatureItem) -> Unit
 ) {
     ZToolScaffold(
@@ -195,21 +229,54 @@ private fun FeaturesRoute(
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 320.dp),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 32.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(items = items, key = { it.packageName }) { item ->
-                        FeatureCard(
-                            item = item,
-                            onClick = { onFeatureClick(item) }
-                        )
+                if (warningMessageRes != null) {
+                    FeatureWarningCard(message = stringResource(warningMessageRes))
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                if (items.isNotEmpty()) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 320.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 32.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(items = items, key = { it.packageName }) { item ->
+                            FeatureCard(
+                                item = item,
+                                onClick = { onFeatureClick(item) }
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FeatureWarningCard(message: String) {
+    ZToolCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = MaterialTheme.colorScheme.errorContainer
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
         }
     }
 }

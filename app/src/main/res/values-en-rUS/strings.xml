@@ -118,6 +118,8 @@
     <string name="system_framework_app_description">Change AI input symbols and other useful features.</string>
     <string name="safe_center_app_name">Safe Center</string>
     <string name="safe_center_app_description">Allow selection Internal Storage, disable safe scan and manage APP auto start.</string>
+    <string name="features_app_list_permission_warning">Unable to get all installed APPs. Please, check the permission of querying APP list and restart ZTool to fix this problem.</string>
+    <string name="features_all_filtered_warning">All applications are filtered!</string>
     <string name="logsFragment_title">Logs</string>
     <string name="logFilter">Filter</string>
     <string name="filterByType">Category</string>

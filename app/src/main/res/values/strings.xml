@@ -131,6 +131,8 @@
     <string name="system_framework_app_description">配置屏幕方向、安全策略及AI全局输入设置</string>
     <string name="safe_center_app_name">安全中心</string>
     <string name="safe_center_app_description">存储选择，安全扫描设置，app自启</string>
+    <string name="features_app_list_permission_warning">无法读取已安装的应用，请检查是否已授权本应用读取应用列表，然后重启 APP 。</string>
+    <string name="features_all_filtered_warning">全部应用包都被过滤！</string>
     <!--日志页资源值-->
     <string name="logsFragment_title">日志</string>
     <string name="logFilter">过滤器</string>
