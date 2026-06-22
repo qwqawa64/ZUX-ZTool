@@ -37,7 +37,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.qimian233.ztool.data.settings.AgreementRepository
+import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute

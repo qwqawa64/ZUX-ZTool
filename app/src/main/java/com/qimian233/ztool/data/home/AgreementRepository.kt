@@ -1,7 +1,6 @@
-package com.qimian233.ztool.data.settings
+package com.qimian233.ztool.data.home
 
 import android.content.Context
-import android.content.SharedPreferences
 import java.io.File
 
 class AgreementRepository(context: Context) {
