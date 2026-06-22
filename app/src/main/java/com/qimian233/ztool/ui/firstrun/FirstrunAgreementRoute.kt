@@ -230,11 +230,15 @@ private fun AgreementPage(
         )
 
         BottomActionBar(
-            nextText = stringResource(
-                R.string.customizedConfirmWithCountdown,
-                stringResource(R.string.nextStep),
-                countdownSeconds
-            ),
+            nextText = if (countdownSeconds > 0) {
+                stringResource(
+                    R.string.customizedConfirmWithCountdown,
+                    stringResource(R.string.nextStep),
+                    countdownSeconds
+                )
+            } else {
+                stringResource(R.string.nextStep)
+            },
             nextEnabled = firstPageReady,
             onNext = onNext,
             onDisagree = onDisagree
