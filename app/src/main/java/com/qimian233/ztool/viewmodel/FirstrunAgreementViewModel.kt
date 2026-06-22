@@ -39,7 +39,10 @@ class FirstrunAgreementViewModel(
     }
 
     init {
-        _uiState.value = _uiState.value.copy(checkState = repository.loadInitialState())
+        _uiState.value = _uiState.value.copy(
+            checkState = repository.loadInitialState(),
+            agreementMarkdown = agreementRepository.loadAgreementMarkdown()
+        )
     }
 }
 
@@ -47,5 +50,6 @@ data class FirstrunAgreementUiState(
     val isRefreshing: Boolean = false,
     val accepted: Boolean = false,
     val declined: Boolean = false,
-    val checkState: FirstrunCheckState = FirstrunCheckState()
+    val checkState: FirstrunCheckState = FirstrunCheckState(),
+    val agreementMarkdown: String = ""
 )

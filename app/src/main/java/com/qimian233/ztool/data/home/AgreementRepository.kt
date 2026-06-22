@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.home
 
 import android.content.Context
+import com.qimian233.ztool.R
 import java.io.File
 
 class AgreementRepository(context: Context) {
@@ -19,6 +20,12 @@ class AgreementRepository(context: Context) {
     fun markAgreementAccepted() {
         agreementFile.parentFile?.mkdirs()
         agreementFile.writeText(ACCEPTED_STATE_CONTENT)
+    }
+
+    fun loadAgreementMarkdown(): String {
+        appContext.resources.openRawResource(R.raw.agreement).bufferedReader(Charsets.UTF_8).use {
+            return it.readText().trim()
+        }
     }
 
     private fun readAgreementState(): Boolean? {

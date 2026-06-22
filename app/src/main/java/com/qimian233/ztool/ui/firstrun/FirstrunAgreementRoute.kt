@@ -2,15 +2,16 @@ package com.qimian233.ztool.ui.firstrun
 
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,8 +49,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,6 +65,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.FirstrunAgreementRepository
+import com.qimian233.ztool.data.home.FirstrunCheckState
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolMarkdownText
@@ -75,7 +81,7 @@ fun FirstrunAgreementRoute(
     onAgreementDeclined: () -> Unit
 ) {
     val context = LocalContext.current
-    val activity = context as androidx.activity.ComponentActivity
+    val activity = context as ComponentActivity
     val viewModel = remember {
         ViewModelProvider(
             activity,
@@ -162,7 +168,7 @@ fun FirstrunAgreementRoute(
                         }
                     )
                     FirstrunPage.Agreement -> AgreementPage(
-                        markdownText = stringResource(R.string.agreement_text),
+                        markdownText = uiState.agreementMarkdown,
                         pageScrollState = agreementPageScrollState,
                         readScrollState = agreementReadScrollState,
                         firstPageReady = gate.satisfied && countdownSecondsState.intValue == 0,
@@ -216,19 +222,28 @@ private fun SplashPage(
         contentAlignment = Alignment.BottomCenter
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxWidth().padding(bottom = 200.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            Image(
+                bitmap = ImageBitmap.imageResource(R.drawable.splash_logo),
+                contentDescription = stringResource(R.string.splash_logo_description),
+            )
+            Spacer(modifier = Modifier.height(64.dp))
             Text(
-                text = stringResource(R.string.app_name),
+                text = stringResource(R.string.splash_welcome_text),
                 style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontSize = 48.sp,
+                fontFamily = FontFamily.Monospace
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = stringResource(R.string.agreement_screen_subtitle),
+                text = stringResource(R.string.splash_slogan),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Monospace
             )
         }
 
@@ -246,8 +261,8 @@ private fun SplashPage(
 @Composable
 private fun AgreementPage(
     markdownText: String,
-    pageScrollState: androidx.compose.foundation.ScrollState,
-    readScrollState: androidx.compose.foundation.ScrollState,
+    pageScrollState: ScrollState,
+    readScrollState: ScrollState,
     firstPageReady: Boolean,
     countdownSeconds: Int,
     onNext: () -> Unit,
@@ -323,9 +338,9 @@ private fun AgreementPage(
 
 @Composable
 private fun PermissionPage(
-    state: com.qimian233.ztool.data.home.FirstrunCheckState,
+    state: FirstrunCheckState,
     allGranted: Boolean,
-    pageScrollState: androidx.compose.foundation.ScrollState,
+    pageScrollState: ScrollState,
     onRequestRoot: () -> Unit,
     onCheckModule: () -> Unit,
     onRequestPackages: () -> Unit,
@@ -444,7 +459,7 @@ private fun HeaderCard(
 
 @Composable
 private fun ActionRow(
-    state: com.qimian233.ztool.data.home.FirstrunCheckState,
+    state: FirstrunCheckState,
     onRequestRoot: () -> Unit,
     onCheckModule: () -> Unit,
     onRequestPackages: () -> Unit,
@@ -499,7 +514,7 @@ private fun FirstrunActionCard(
     title: String,
     summary: String,
     checked: Boolean,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     onClick: () -> Unit
 ) {
     val containerColor = if (checked) {

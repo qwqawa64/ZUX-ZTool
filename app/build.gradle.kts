@@ -156,6 +156,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     compileOnly("de.robv.android.xposed:api:82")
+    implementation("org.commonmark:commonmark:0.24.0")
     implementation("cn.6tail:lunar:1.7.5")
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3")
     implementation("com.google.code.gson:gson:2.10.1")

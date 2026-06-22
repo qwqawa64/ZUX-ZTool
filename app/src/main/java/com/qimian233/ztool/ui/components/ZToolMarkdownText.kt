@@ -18,6 +18,23 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import org.commonmark.node.BlockQuote
+import org.commonmark.node.BulletList
+import org.commonmark.node.Code
+import org.commonmark.node.Document
+import org.commonmark.node.Emphasis
+import org.commonmark.node.HardLineBreak
+import org.commonmark.node.Heading
+import org.commonmark.node.Image
+import org.commonmark.node.Link
+import org.commonmark.node.ListItem
+import org.commonmark.node.Node
+import org.commonmark.node.OrderedList
+import org.commonmark.node.Paragraph
+import org.commonmark.node.SoftLineBreak
+import org.commonmark.node.StrongEmphasis
+import org.commonmark.node.Text as MarkdownText
+import org.commonmark.parser.Parser
 
 @Composable
 fun ZToolMarkdownText(
@@ -27,180 +44,133 @@ fun ZToolMarkdownText(
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     fontSize: TextUnit = TextUnit.Unspecified
 ) {
-    val annotated = remember(markdown, style, color) {
-        parseMarkdown(markdown, baseStyle = style, baseColor = color)
+    val blocks = remember(markdown, style, color) {
+        parseMarkdownBlocks(markdown, style, color)
     }
 
     SelectionContainer {
-        Text(
-            text = annotated,
-            modifier = modifier.semantics { },
-            style = style,
-            color = color,
-            fontSize = fontSize,
-            lineHeight = 32.sp
-        )
+        androidx.compose.foundation.layout.Column(modifier = modifier.semantics { }) {
+            blocks.forEachIndexed { index, block ->
+                Text(
+                    text = block,
+                    style = style,
+                    color = color,
+                    fontSize = fontSize,
+                    lineHeight = 32.sp
+                )
+                if (index != blocks.lastIndex) {
+                    Text(text = "")
+                }
+            }
+        }
     }
 }
 
-private fun parseMarkdown(
+private fun parseMarkdownBlocks(
     markdown: String,
     baseStyle: TextStyle,
     baseColor: Color
+): List<AnnotatedString> {
+    val parser = Parser.builder().build()
+    val document = parser.parse(markdown) as Document
+    val blocks = mutableListOf<AnnotatedString>()
+    var child: Node? = document.firstChild
+    while (child != null) {
+        blocks += renderBlock(child, baseStyle, baseColor)
+        child = child.next
+    }
+    return blocks
+}
+
+private fun renderBlock(
+    node: Node,
+    baseStyle: TextStyle,
+    baseColor: Color
 ): AnnotatedString {
-    return buildAnnotatedString {
-        val lines = markdown.replace("\r\n", "\n").split('\n')
-        lines.forEachIndexed { index, rawLine ->
-            val line = rawLine.trimEnd()
-            when {
-                line.startsWith("# ") -> appendStyledBlock(line.removePrefix("# "), baseStyle, baseColor, FontWeight.Bold, 1.35f, false)
-                line.startsWith("## ") -> appendStyledBlock(line.removePrefix("## "), baseStyle, baseColor, FontWeight.Bold, 1.2f, false)
-                line.startsWith("### ") -> appendStyledBlock(line.removePrefix("### "), baseStyle, baseColor, FontWeight.SemiBold, 1.1f, false)
-                line.startsWith("- ") || line.startsWith("* ") -> appendBullet(line.substring(2), baseStyle, baseColor)
-                line.matches(Regex("""\d+\.\s+.*""")) -> appendNumbered(line, baseStyle, baseColor)
-                line.isBlank() -> append('\n')
-                else -> appendInlineMarkdown(line, baseStyle, baseColor)
+    return when (node) {
+        is Heading -> buildAnnotatedString {
+            val weight = when (node.level) {
+                1 -> FontWeight.Bold
+                2 -> FontWeight.Bold
+                3 -> FontWeight.SemiBold
+                else -> FontWeight.Medium
             }
-            if (index != lines.lastIndex) append('\n')
+            withStyle(SpanStyle(fontWeight = weight, color = baseColor)) {
+                appendInlineChildren(node, this, baseStyle, baseColor)
+            }
+        }
+        is Paragraph, is BlockQuote -> buildAnnotatedString {
+            appendInlineChildren(node, this, baseStyle, baseColor)
+        }
+        is BulletList -> buildAnnotatedString {
+            var item = node.firstChild
+            while (item != null) {
+                if (item is ListItem) {
+                    append("• ")
+                    appendInlineChildren(item, this, baseStyle, baseColor)
+                    append('\n')
+                }
+                item = item.next
+            }
+        }
+        is OrderedList -> buildAnnotatedString {
+            var item = node.firstChild
+            var index = 1
+            while (item != null) {
+                if (item is ListItem) {
+                    append("$index. ")
+                    appendInlineChildren(item, this, baseStyle, baseColor)
+                    append('\n')
+                    index++
+                }
+                item = item.next
+            }
+        }
+        else -> buildAnnotatedString {
+            appendInlineChildren(node, this, baseStyle, baseColor)
         }
     }
 }
 
-private fun AnnotatedString.Builder.appendStyledBlock(
-    text: String,
-    baseStyle: TextStyle,
-    baseColor: Color,
-    weight: FontWeight,
-    lineHeightMultiplier: Float,
-    withBullet: Boolean
-) {
-    if (withBullet) append("• ")
-    withStyle(
-        SpanStyle(
-            fontWeight = weight,
-            color = baseColor
-        )
-    ) {
-        appendInlineMarkdown(text, baseStyle, baseColor)
-    }
-    if (lineHeightMultiplier > 1f) {
-        // no-op marker for readability, line height follows style
-    }
-}
-
-private fun AnnotatedString.Builder.appendBullet(
-    text: String,
+private fun appendInlineChildren(
+    node: Node,
+    builder: AnnotatedString.Builder,
     baseStyle: TextStyle,
     baseColor: Color
 ) {
-    append("• ")
-    appendInlineMarkdown(text, baseStyle, baseColor)
-}
-
-private fun AnnotatedString.Builder.appendNumbered(
-    text: String,
-    baseStyle: TextStyle,
-    baseColor: Color
-) {
-    val dotIndex = text.indexOf('.')
-    val prefix = text.substring(0, dotIndex + 1)
-    append(prefix)
-    append(" ")
-    appendInlineMarkdown(text.substring(dotIndex + 1).trimStart(), baseStyle, baseColor)
-}
-
-private fun AnnotatedString.Builder.appendInlineMarkdown(
-    text: String,
-    baseStyle: TextStyle,
-    baseColor: Color
-) {
-    var index = 0
-    while (index < text.length) {
-        when {
-            text.startsWith("**", index) -> {
-                val end = text.indexOf("**", startIndex = index + 2)
-                if (end > index + 2) {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = baseColor)) {
-                        append(text.substring(index + 2, end))
-                    }
-                    index = end + 2
-                } else {
-                    append(text[index])
-                    index += 1
-                }
+    var child = node.firstChild
+    while (child != null) {
+        when (child) {
+            is MarkdownText -> builder.append(child.literal)
+            is Emphasis -> builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic, color = baseColor)) {
+                appendInlineChildren(child, this, baseStyle, baseColor)
             }
-            text.startsWith("__", index) -> {
-                val end = text.indexOf("__", startIndex = index + 2)
-                if (end > index + 2) {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = baseColor)) {
-                        append(text.substring(index + 2, end))
-                    }
-                    index = end + 2
-                } else {
-                    append(text[index])
-                    index += 1
-                }
+            is StrongEmphasis -> builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = baseColor)) {
+                appendInlineChildren(child, this, baseStyle, baseColor)
             }
-            text.startsWith("`", index) -> {
-                val end = text.indexOf('`', startIndex = index + 1)
-                if (end > index + 1) {
-                    withStyle(
-                        SpanStyle(
-                            fontFamily = baseStyle.fontFamily,
-                            background = baseColor.copy(alpha = 0.1f),
-                            color = baseColor
-                        )
-                    ) {
-                        append(text.substring(index + 1, end))
-                    }
-                    index = end + 1
-                } else {
-                    append(text[index])
-                    index += 1
-                }
+            is Code -> builder.withStyle(
+                SpanStyle(
+                    fontFamily = baseStyle.fontFamily,
+                    background = baseColor.copy(alpha = 0.1f),
+                    color = baseColor
+                )
+            ) {
+                append(child.literal)
             }
-            text.startsWith("[", index) -> {
-                val close = text.indexOf(']', startIndex = index + 1)
-                val openParen = if (close >= 0) text.indexOf('(', startIndex = close + 1) else -1
-                val closeParen = if (openParen >= 0) text.indexOf(')', startIndex = openParen + 1) else -1
-                if (close > index + 1 && openParen == close + 1 && closeParen > openParen + 1) {
-                    val label = text.substring(index + 1, close)
-                    val url = text.substring(openParen + 1, closeParen)
-                    pushStringAnnotation(tag = LINK_TAG, annotation = url)
-                    withStyle(
-                        SpanStyle(
-                            color = baseColor,
-                            textDecoration = TextDecoration.Underline,
-                            fontWeight = FontWeight.Medium
-                        )
-                    ) {
-                        append(label)
-                    }
-                    pop()
-                    index = closeParen + 1
-                } else {
-                    append(text[index])
-                    index += 1
-                }
+            is Link -> builder.withStyle(
+                SpanStyle(
+                    color = baseColor,
+                    textDecoration = TextDecoration.Underline,
+                    fontWeight = FontWeight.Medium
+                )
+            ) {
+                appendInlineChildren(child, this, baseStyle, baseColor)
             }
-            text.startsWith("*", index) -> {
-                val end = text.indexOf('*', startIndex = index + 1)
-                if (end > index + 1) {
-                    withStyle(SpanStyle(fontStyle = FontStyle.Italic, color = baseColor)) {
-                        append(text.substring(index + 1, end))
-                    }
-                    index = end + 1
-                } else {
-                    append(text[index])
-                    index += 1
-                }
-            }
-            else -> {
-                append(text[index])
-                index += 1
-            }
+            is Image -> builder.append(child.title ?: child.destination)
+            is HardLineBreak -> builder.append('\n')
+            is SoftLineBreak -> builder.append(' ')
+            else -> appendInlineChildren(child, builder, baseStyle, baseColor)
         }
+        child = child.next
     }
 }
-
-private const val LINK_TAG = "markdown_link"

@@ -31,14 +31,6 @@
     <string name="user_confirm_agreement">已确认声明</string>
     <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
     <string name="agreement_title">用户协议</string>
-    <string name="agreement_text">欢迎使用 ZTool。
-        \n本工具基于 Root 权限与 LSPosed 框架，为运行 ZUXOS 的联想设备提供自定义功能与系统优化选项。
-        \n由于本模块在设备中拥有最高控制权，请您务必仔细阅读并理解以下声明。 如不同意，请立即退出并卸载本应用。
-        \n1. 本模块仅通过 [GitHub Releases 页面](https://github.com/qwqawa64/ZUX-ZTool/releases) 官方发布。请勿安装**任何**来自第三方（包括但不限于网页、群组、个人分发）的 ZTool 副本，此类版本可能为恶意软件，会导致设备安全风险。若已安装不明来源的副本，请立即卸载并彻底检查系统权限及敏感目录，建议清除 Root 并重新刷机，以防潜在病毒利用高权限漏洞。
-        \n2. 部分功能可能随系统更新而失效。如遇此类情况，请向开发者反馈，并附上**本模块与 LSPosed 的详细日志**。
-        \n3. 本模块提供的功能及可能出现的异常**与联想官方无关**。请勿在官方渠道（包括群组、反馈平台等）中提及本模块或因此质疑官方。如更改选项后出现问题，请先恢复设置并重启作用域。**违反本条可能影响后续更新支持。**
-        \n4. 本模块为遵循 Apache 2.0 协议的开源软件，在 GitHub 上免费发布。如果您为此付费，即遭遇诈骗。请立即停止使用该副本，转用本项目 GitHub Releases 页面的官方版本。
-        \n5. ZTool 开发者保留对模块功能及上述条款的最终解释权。</string>
     <string name="agreement_confirm">同意并进入</string>
     <string name="agreement_dismiss">不同意并退出</string>
     <string name="agreement_screen_title">首次运行说明</string>
@@ -903,4 +895,7 @@
     <string name="no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
     <string name="no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
     <string name="allow_untrusted_touch">允许不受信任的触摸</string>
+    <string name="splash_logo_description" translatable="false">ZTool Logo</string>
+    <string name="splash_slogan" translatable="false">Make ZUXOS Great, not Again.</string>
+    <string name="splash_welcome_text">欢迎使用 ZTool</string>
 </resources>
