@@ -140,7 +140,8 @@ class HomeViewModel(
                     buildVersion = systemInfo.buildVersion,
                     kernelVersion = systemInfo.kernelVersion,
                     currentSlot = systemInfo.currentSlot,
-                    romRegion = systemInfo.romRegion
+                    romRegion = systemInfo.romRegion,
+                    isZuxOsDevice = systemInfo.isZuxOsDevice,
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "System info update failed", e)
@@ -198,6 +199,7 @@ data class HomeUiState(
     val isCheckingEnvironment: Boolean = true,
     val isModuleActive: Boolean = false,
     val isRootAvailable: Boolean = false,
+    val isZuxOsDevice: Boolean = true,
     val hintText: String = "",
     val moduleVersion: String = "",
     val rootSource: String = "",

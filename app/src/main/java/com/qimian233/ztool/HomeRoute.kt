@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -247,6 +248,11 @@ private fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                if (!state.isZuxOsDevice) {
+                    NonZuxOsCard()
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 if (!state.environmentReady) {
                     RequirementCard()
                     Spacer(modifier = Modifier.height(16.dp))
@@ -308,6 +314,34 @@ private fun HomeScreen(
                 onRestartTargetSelected(target)
             }
         )
+    }
+}
+
+@Composable
+private fun NonZuxOsCard() {
+    ZToolCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = MaterialTheme.colorScheme.errorContainer
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = stringResource(R.string.non_zuxos_warn),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
     }
 }
 

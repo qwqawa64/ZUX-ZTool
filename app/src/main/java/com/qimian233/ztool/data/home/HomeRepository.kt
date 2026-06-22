@@ -29,6 +29,7 @@ class HomeRepository(
     private var cachedFrameworkVersion = ""
     private var cachedCurrentSlot = ""
     private var cachedRomRegion = ""
+    private var cachedIsZuxOsDevice = true
     private var lastSystemInfoUpdate = 0L
 
     fun checkEnvironment(): EnvironmentStatus {
@@ -75,7 +76,9 @@ class HomeRepository(
         }
         if (cachedRomRegion.isEmpty() || isSystemInfoCacheExpired()) {
             cachedRomRegion = getRomRegion()
-            ModulePreferencesUtils(context).saveStringSetting("RomRegion", cachedRomRegion)
+        }
+        if (isSystemInfoCacheExpired()) {
+            cachedIsZuxOsDevice = Build.DISPLAY.contains("ZUXOS") || Build.DISPLAY.contains("ZUI")
         }
 
         lastSystemInfoUpdate = System.currentTimeMillis()
@@ -86,7 +89,8 @@ class HomeRepository(
             buildVersion = buildVersion,
             kernelVersion = cachedKernelVersion.ifBlank { unknown },
             currentSlot = cachedCurrentSlot.ifBlank { unknown },
-            romRegion = cachedRomRegion.ifBlank { unknown }
+            romRegion = cachedRomRegion.ifBlank { unknown },
+            isZuxOsDevice = cachedIsZuxOsDevice
         )
     }
 
@@ -348,7 +352,8 @@ data class SystemInfo(
     val buildVersion: String,
     val kernelVersion: String,
     val currentSlot: String,
-    val romRegion: String
+    val romRegion: String,
+    val isZuxOsDevice: Boolean
 )
 
 data class RebootResult(

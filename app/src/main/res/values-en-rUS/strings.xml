@@ -844,4 +844,5 @@
     <string name="no_password_per_24h_summary">Won\'t work when interval between password use is longer than 1 month</string>
     <string name="allow_untrusted_touch">Allow untrusted touch</string>
     <string name="splash_welcome_text">Welcome to ZTool</string>
+    <string name="non_zuxos_warn">Non-ZUXOS/ZUI device detected, hooks may not function normally!</string>
 </resources>

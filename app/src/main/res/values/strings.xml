@@ -898,4 +898,5 @@
     <string name="splash_logo_description" translatable="false">ZTool Logo</string>
     <string name="splash_slogan" translatable="false">Make ZUXOS Great, not Again.</string>
     <string name="splash_welcome_text">欢迎使用 ZTool</string>
+    <string name="non_zuxos_warn">当前设备运行的系统很可能不是 ZUXOS/ZUI ，无法保证 Hook 正确执行!</string>
 </resources>
