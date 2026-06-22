@@ -5,6 +5,12 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -60,6 +65,7 @@ import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolMarkdownText
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.theme.LocalThemeRevealController
 import com.qimian233.ztool.viewmodel.FirstrunAgreementViewModel
 import kotlinx.coroutines.delay
 
@@ -80,9 +86,12 @@ fun FirstrunAgreementRoute(
         )[FirstrunAgreementViewModel::class.java]
     }
     val uiState by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState()
+    val agreementReadScrollState = rememberScrollState()
+    val agreementPageScrollState = rememberScrollState()
+    val permissionPageScrollState = rememberScrollState()
+    val revealController = LocalThemeRevealController.current
     val gate = remember { ScrollToBottomAgreementGate() }
-    val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Agreement) }
+    val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Splash) }
     val countdownSecondsState = rememberSaveable { mutableIntStateOf(30) }
 
     val usageLauncher = rememberLauncherForActivityResult(
@@ -91,8 +100,7 @@ fun FirstrunAgreementRoute(
     val overlayLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { viewModel.refreshChecks() }
-    val agreementPageScrollState = rememberScrollState()
-    val permissionPageScrollState = rememberScrollState()
+
     LaunchedEffect(currentPageState.value) {
         if (currentPageState.value == FirstrunPage.Permissions) {
             viewModel.refreshChecks()
@@ -108,66 +116,129 @@ fun FirstrunAgreementRoute(
         }
     }
 
-    DisposableEffect(scrollState.value, scrollState.maxValue) {
-        gate.onScrollChanged(scrollState.value < scrollState.maxValue)
+    DisposableEffect(agreementReadScrollState.value, agreementReadScrollState.maxValue) {
+        gate.onScrollChanged(agreementReadScrollState.value < agreementReadScrollState.maxValue)
         onDispose { }
     }
 
-    val firstPageReady = gate.satisfied && countdownSecondsState.intValue == 0
-    val allGranted = uiState.checkState.allGranted && gate.satisfied
-    val markdownText = stringResource(R.string.agreement_text)
-
     BackHandler(enabled = true) {
-        if (currentPageState.value == FirstrunPage.Permissions) {
-            currentPageState.value = FirstrunPage.Agreement
-        } else {
-            onAgreementDeclined()
+        when (currentPageState.value) {
+            FirstrunPage.Splash -> onAgreementDeclined()
+            FirstrunPage.Agreement -> onAgreementDeclined()
+            FirstrunPage.Permissions -> currentPageState.value = FirstrunPage.Agreement
         }
     }
 
     ZToolPageSurface(modifier = Modifier.fillMaxSize()) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            when (currentPageState.value) {
-                FirstrunPage.Agreement -> AgreementPage(
-                    markdownText = markdownText,
-                    pageScrollState = agreementPageScrollState,
-                    agreementScrollState = scrollState,
-                    firstPageReady = firstPageReady,
-                    countdownSeconds = countdownSecondsState.intValue,
-                    onNext = { currentPageState.value = FirstrunPage.Permissions },
-                    onDisagree = {
-                        viewModel.declineAgreement()
-                        onAgreementDeclined()
+            AnimatedContent(
+                targetState = currentPageState.value,
+                label = "firstrun_pages",
+                transitionSpec = {
+                    val forward = targetState.pageOrder() > initialState.pageOrder()
+                    val enterDirection = if (forward) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
                     }
-                )
-                FirstrunPage.Permissions -> PermissionPage(
-                    state = uiState.checkState,
-                    allGranted = allGranted,
-                    pageScrollState = permissionPageScrollState,
-                    onRequestRoot = { viewModel.refreshChecks() },
-                    onCheckModule = { viewModel.refreshChecks() },
-                    onRequestPackages = { viewModel.refreshChecks() },
-                    onRequestUsage = {
-                        usageLauncher.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-                    },
-                    onRequestOverlay = {
-                        overlayLauncher.launch(
-                            Intent(
-                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                "package:${context.packageName}".toUri()
+                    val exitDirection = if (forward) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    }
+                    slideIntoContainer(
+                        towards = enterDirection,
+                        animationSpec = tween(FirstrunPageTransitionMillis)
+                    ) togetherWith slideOutOfContainer(
+                        towards = exitDirection,
+                        animationSpec = tween(FirstrunPageTransitionMillis)
+                    )
+                }
+            ) { page ->
+                when (page) {
+                    FirstrunPage.Splash -> SplashPage(
+                        onStart = {
+                            currentPageState.value = FirstrunPage.Agreement
+                        }
+                    )
+                    FirstrunPage.Agreement -> AgreementPage(
+                        markdownText = stringResource(R.string.agreement_text),
+                        pageScrollState = agreementPageScrollState,
+                        readScrollState = agreementReadScrollState,
+                        firstPageReady = gate.satisfied && countdownSecondsState.intValue == 0,
+                        countdownSeconds = countdownSecondsState.intValue,
+                        onNext = { currentPageState.value = FirstrunPage.Permissions },
+                        onDisagree = {
+                            viewModel.declineAgreement()
+                            onAgreementDeclined()
+                        }
+                    )
+                    FirstrunPage.Permissions -> PermissionPage(
+                        state = uiState.checkState,
+                        allGranted = uiState.checkState.allGranted && gate.satisfied,
+                        pageScrollState = permissionPageScrollState,
+                        onRequestRoot = { viewModel.refreshChecks() },
+                        onCheckModule = { viewModel.refreshChecks() },
+                        onRequestPackages = { viewModel.refreshChecks() },
+                        onRequestUsage = {
+                            usageLauncher.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                        },
+                        onRequestOverlay = {
+                            overlayLauncher.launch(
+                                Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    "package:${context.packageName}".toUri()
+                                )
                             )
-                        )
-                    },
-                    onAgree = {
-                        viewModel.acceptAgreement()
-                        onAgreementAccepted()
-                    },
-                    onDisagree = {
-                        viewModel.declineAgreement()
-                        onAgreementDeclined()
-                    }
-                )
+                        },
+                        onAgree = {
+                            viewModel.acceptAgreement()
+                            revealController.triggerReveal(onAction = onAgreementAccepted)
+                        },
+                        onBack = {
+                            currentPageState.value = FirstrunPage.Agreement
+                        }
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun SplashPage(
+    onStart: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(R.string.agreement_screen_subtitle),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        ZToolButton(
+            onClick = onStart,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text(stringResource(R.string.firstrun_start))
         }
     }
 }
@@ -176,7 +247,7 @@ fun FirstrunAgreementRoute(
 private fun AgreementPage(
     markdownText: String,
     pageScrollState: androidx.compose.foundation.ScrollState,
-    agreementScrollState: androidx.compose.foundation.ScrollState,
+    readScrollState: androidx.compose.foundation.ScrollState,
     firstPageReady: Boolean,
     countdownSeconds: Int,
     onNext: () -> Unit,
@@ -187,11 +258,11 @@ private fun AgreementPage(
             .fillMaxSize()
             .padding(20.dp)
     ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(pageScrollState)
-                    .padding(bottom = 88.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(pageScrollState)
+                .padding(bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             HeaderCard(
@@ -218,7 +289,7 @@ private fun AgreementPage(
                                 color = MaterialTheme.colorScheme.surfaceContainerHighest,
                                 shape = RoundedCornerShape(16.dp)
                             )
-                            .verticalScroll(agreementScrollState)
+                            .verticalScroll(readScrollState)
                             .padding(16.dp)
                     ) {
                         ZToolMarkdownText(
@@ -261,18 +332,18 @@ private fun PermissionPage(
     onRequestUsage: () -> Unit,
     onRequestOverlay: () -> Unit,
     onAgree: () -> Unit,
-    onDisagree: () -> Unit
-){
+    onBack: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(20.dp)
     ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(pageScrollState)
-                    .padding(bottom = 88.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(pageScrollState)
+                .padding(bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             HeaderCard(
@@ -317,7 +388,8 @@ private fun PermissionPage(
             nextText = stringResource(R.string.agreement_confirm),
             nextEnabled = allGranted,
             onNext = onAgree,
-            onDisagree = onDisagree
+            onDisagree = onBack,
+            negativeText = stringResource(R.string.firstrun_previous)
         )
     }
 }
@@ -449,7 +521,7 @@ private fun FirstrunActionCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(imageVector = icon, contentDescription = null, tint = contentColor)
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
@@ -481,7 +553,8 @@ private fun BottomActionBar(
     nextText: String,
     nextEnabled: Boolean,
     onNext: () -> Unit,
-    onDisagree: () -> Unit
+    onDisagree: () -> Unit,
+    negativeText: String = stringResource(R.string.agreement_dismiss)
 ) {
     Row(
         modifier = modifier
@@ -491,7 +564,7 @@ private fun BottomActionBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         ZToolTextButton(
-            text = stringResource(R.string.agreement_dismiss),
+            text = negativeText,
             onClick = onDisagree,
             isPrimary = false,
             modifier = Modifier.weight(1f)
@@ -520,6 +593,15 @@ private class FirstrunAgreementViewModelFactory(
 }
 
 private enum class FirstrunPage {
+    Splash,
     Agreement,
     Permissions
 }
+
+private fun FirstrunPage.pageOrder(): Int = when (this) {
+    FirstrunPage.Splash -> 0
+    FirstrunPage.Agreement -> 1
+    FirstrunPage.Permissions -> 2
+}
+
+private const val FirstrunPageTransitionMillis = 320
