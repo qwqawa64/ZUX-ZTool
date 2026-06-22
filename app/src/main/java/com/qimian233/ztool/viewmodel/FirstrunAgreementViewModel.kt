@@ -31,7 +31,10 @@ class FirstrunAgreementViewModel(
 
     fun acceptAgreement() {
         agreementRepository.markAgreementAccepted()
-        _uiState.value = _uiState.value.copy(accepted = true)
+        _uiState.value = _uiState.value.copy(
+            accepted = true,
+            acceptedAgreementVersion = agreementRepository.getCurrentAgreementVersion()
+        )
     }
 
     fun declineAgreement() {
@@ -41,7 +44,9 @@ class FirstrunAgreementViewModel(
     init {
         _uiState.value = _uiState.value.copy(
             checkState = repository.loadInitialState(),
-            agreementMarkdown = agreementRepository.loadAgreementMarkdown()
+            agreementMarkdown = agreementRepository.loadAgreementMarkdown(),
+            agreementVersion = agreementRepository.getCurrentAgreementVersion(),
+            acceptedAgreementVersion = agreementRepository.getAcceptedAgreementVersion()
         )
     }
 }
@@ -51,5 +56,7 @@ data class FirstrunAgreementUiState(
     val accepted: Boolean = false,
     val declined: Boolean = false,
     val checkState: FirstrunCheckState = FirstrunCheckState(),
-    val agreementMarkdown: String = ""
+    val agreementMarkdown: String = "",
+    val agreementVersion: String = "",
+    val acceptedAgreementVersion: String? = null
 )

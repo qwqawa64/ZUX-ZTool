@@ -39,6 +39,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
+import com.qimian233.ztool.ui.firstrun.AgreementDisplayMode
 import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
@@ -68,7 +69,7 @@ class MainActivity : ComponentActivity(),
     private var isEnvironmentReady by mutableStateOf(false)
     private var currentRoute by mutableStateOf(MainRoute.Home)
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
-    private var showFirstrun by mutableStateOf(false)
+    private var agreementDisplayMode by mutableStateOf<AgreementDisplayMode?>(null)
     private var lastClickTime = 0L
     private var unregisterThemeSettingsObserver: (() -> Unit)? = null
     private val agreementRepository by lazy { AgreementRepository(this) }
@@ -84,10 +85,11 @@ class MainActivity : ComponentActivity(),
                 ?.let(MainRoute::fromName)
                 ?: MainRoute.Home
             isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false)
-            showFirstrun = savedInstanceState.getBoolean(KEY_SHOW_FIRSTRUN, false)
+            agreementDisplayMode = savedInstanceState.getString(KEY_AGREEMENT_DISPLAY_MODE)
+                ?.let(AgreementDisplayMode::valueOf)
         }
-        if (!agreementRepository.hasAcceptedAgreement()) {
-            showFirstrun = true
+        if (agreementDisplayMode == null) {
+            agreementDisplayMode = resolveAgreementDisplayMode()
         }
 
         val themeRepository = ThemePreferencesRepository(applicationContext)
@@ -104,7 +106,8 @@ class MainActivity : ComponentActivity(),
         setContent {
             ZToolTheme(settings = themeSettings) {
                 com.qimian233.ztool.ui.theme.ThemeRevealProvider {
-                    if (!showFirstrun && agreementRepository.hasAcceptedAgreement()) {
+                    val currentAgreementMode = agreementDisplayMode
+                    if (currentAgreementMode == null) {
                         MainTabletShell(
                             environmentReady = isEnvironmentReady,
                             selectedRoute = currentRoute,
@@ -115,8 +118,9 @@ class MainActivity : ComponentActivity(),
                         )
                     } else {
                         FirstrunAgreementRoute(
+                            agreementDisplayMode = currentAgreementMode,
                             onAgreementAccepted = {
-                                showFirstrun = false
+                                agreementDisplayMode = null
                             },
                             onAgreementDeclined = { finishAffinity() }
                         )
@@ -132,7 +136,7 @@ class MainActivity : ComponentActivity(),
         super.onSaveInstanceState(outState)
         outState.putString(KEY_CURRENT_ROUTE, currentRoute.name)
         outState.putBoolean(KEY_ENVIRONMENT_READY, isEnvironmentReady)
-        outState.putBoolean(KEY_SHOW_FIRSTRUN, showFirstrun)
+        agreementDisplayMode?.let { outState.putString(KEY_AGREEMENT_DISPLAY_MODE, it.name) }
     }
 
     override fun onDestroy() {
@@ -145,6 +149,15 @@ class MainActivity : ComponentActivity(),
     override fun onServiceStarted() {
         runOnUiThread {
             Toast.makeText(this, getString(R.string.log_service_started), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun resolveAgreementDisplayMode(): AgreementDisplayMode? {
+        val acceptedVersion = agreementRepository.getAcceptedAgreementVersion() ?: return AgreementDisplayMode.FirstRun
+        return if (compareAgreementVersions(acceptedVersion, agreementRepository.getCurrentAgreementVersion()) < 0) {
+            AgreementDisplayMode.UpdateOnly
+        } else {
+            null
         }
     }
 
@@ -217,8 +230,22 @@ class MainActivity : ComponentActivity(),
     companion object {
         private const val KEY_CURRENT_ROUTE = "current_route"
         private const val KEY_ENVIRONMENT_READY = "environment_ready"
-        private const val KEY_SHOW_FIRSTRUN = "show_firstrun"
+        private const val KEY_AGREEMENT_DISPLAY_MODE = "agreement_display_mode"
     }
+}
+
+private fun compareAgreementVersions(left: String, right: String): Int {
+    val leftParts = left.split('.').map { it.toIntOrNull() ?: 0 }
+    val rightParts = right.split('.').map { it.toIntOrNull() ?: 0 }
+    val maxSize = maxOf(leftParts.size, rightParts.size)
+    for (index in 0 until maxSize) {
+        val leftPart = leftParts.getOrElse(index) { 0 }
+        val rightPart = rightParts.getOrElse(index) { 0 }
+        if (leftPart != rightPart) {
+            return leftPart.compareTo(rightPart)
+        }
+    }
+    return 0
 }
 
 private enum class MainRoute(

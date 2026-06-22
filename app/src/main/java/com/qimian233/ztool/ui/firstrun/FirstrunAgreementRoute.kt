@@ -77,19 +77,20 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun FirstrunAgreementRoute(
+    agreementDisplayMode: AgreementDisplayMode = AgreementDisplayMode.FirstRun,
     onAgreementAccepted: () -> Unit,
     onAgreementDeclined: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as ComponentActivity
     val viewModel = remember {
-        ViewModelProvider(
-            activity,
-            FirstrunAgreementViewModelFactory(
-                repository = FirstrunAgreementRepository(context),
-                agreementRepository = AgreementRepository(context)
-            )
-        )[FirstrunAgreementViewModel::class.java]
+            ViewModelProvider(
+                activity,
+                FirstrunAgreementViewModelFactory(
+                    repository = FirstrunAgreementRepository(context),
+                    agreementRepository = AgreementRepository(context)
+                )
+            )[FirstrunAgreementViewModel::class.java]
     }
     val uiState by viewModel.uiState.collectAsState()
     val agreementReadScrollState = rememberScrollState()
@@ -168,6 +169,7 @@ fun FirstrunAgreementRoute(
                         }
                     )
                     FirstrunPage.Agreement -> AgreementPage(
+                        showHeader = agreementDisplayMode == AgreementDisplayMode.FirstRun,
                         markdownText = uiState.agreementMarkdown,
                         pageScrollState = agreementPageScrollState,
                         readScrollState = agreementReadScrollState,
@@ -260,6 +262,7 @@ private fun SplashPage(
 
 @Composable
 private fun AgreementPage(
+    showHeader: Boolean,
     markdownText: String,
     pageScrollState: ScrollState,
     readScrollState: ScrollState,
@@ -280,10 +283,12 @@ private fun AgreementPage(
                 .padding(bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            HeaderCard(
-                title = stringResource(R.string.agreement_screen_title),
-                subtitle = stringResource(R.string.agreement_screen_subtitle)
-            )
+            if (showHeader) {
+                HeaderCard(
+                    title = stringResource(R.string.agreement_screen_title),
+                    subtitle = stringResource(R.string.agreement_screen_subtitle)
+                )
+            }
 
             ZToolCard(
                 modifier = Modifier.fillMaxWidth(),
