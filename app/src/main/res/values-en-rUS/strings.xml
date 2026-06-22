@@ -37,7 +37,7 @@
     <string name="firstrun_permissions_title">Permission setup</string>
     <string name="firstrun_permissions_subtitle">The module could not work properly without these permissions</string>
     <string name="firstrun_permissions_check_title">Permission checks and actions</string>
-    <string name="firstrun_permissions_ready">All premission requirements satisfied, you can continue.</string>
+    <string name="firstrun_permissions_ready">All permission requirements satisfied, you can continue.</string>
     <string name="firstrun_permissions_pending">Some items are still pending</string>
     <string name="firstrun_previous">Previous</string>
     <string name="firstrun_root_title">Root</string>
