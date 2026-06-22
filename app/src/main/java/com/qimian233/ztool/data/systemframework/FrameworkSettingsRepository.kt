@@ -22,8 +22,10 @@ class FrameworkSettingsRepository(
                 prefsUtils.loadIntegerSetting(KEY_SCREEN_ON_OFF_ANIMATION_DURATION, 400)
             ),
             noPasswordPer24H = prefsUtils.loadBooleanSetting(NO_PASSWORD_PER_24H, false),
+            allowUntrustedTouch = prefsUtils.loadBooleanSetting(ALLOW_UNTRUSTED_TOUCH, false),
             aiInputSigns = aiInputSigns,
             aiInputSignsError = validateAiInputSigns(aiInputSigns),
+
         )
     }
 
@@ -58,8 +60,12 @@ class FrameworkSettingsRepository(
         )
     }
 
-    fun saveNoPaswordPer24H(enabled: Boolean) {
+    fun saveNoPasswordPer24H(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(NO_PASSWORD_PER_24H, enabled)
+    }
+
+    fun saveAllowUntrustedTouch(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(ALLOW_UNTRUSTED_TOUCH, enabled)
     }
 
     fun normalizeScreenOnOffAnimationDuration(value: Int): Int {
@@ -103,6 +109,7 @@ class FrameworkSettingsRepository(
         private const val SCREEN_ON_OFF_ANIMATION_MAX_MS = 1000
         private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
         private const val NO_PASSWORD_PER_24H = "NoMorePasswordPer24H"
+        private const val ALLOW_UNTRUSTED_TOUCH = "allow_untrusted_touch"
     }
 }
 

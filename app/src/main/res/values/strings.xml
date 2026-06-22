@@ -876,4 +876,5 @@
     <string name="percent_unit">%d%%</string>
     <string name="no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
     <string name="no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
+    <string name="allow_untrusted_touch">允许不受信任的触摸</string>
 </resources>

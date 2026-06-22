@@ -32,6 +32,7 @@ import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemFramework.AiInputExpand;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
+import com.qimian233.ztool.hook.modules.systemFramework.AllowUntrustedTouch;
 import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
@@ -183,6 +184,8 @@ public class HookManager {
         registerHookModule(new NotificationCenterTransparency());
         // 注册模块: 关于设备信息自定义
         registerHookModule(new CustomizeAboutDeviceInfo());
+        // 注册模块: 允许不受信任的触摸
+        registerHookModule(new AllowUntrustedTouch());
         initialized = true;
     }
 

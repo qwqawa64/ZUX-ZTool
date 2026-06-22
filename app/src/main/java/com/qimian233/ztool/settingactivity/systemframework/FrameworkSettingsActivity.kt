@@ -93,7 +93,8 @@ fun FrameworkSettingsRoute(
         onAiInputExpandChanged = viewModel::setAiInputExpand,
         onAiInputSignsChanged = viewModel::setAiInputSigns,
         onShowAiInputInfo = viewModel::showAiInputInfoDialog,
-        onNoPasswordPer24H = viewModel::setNoPasswordPer24H
+        onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
+        onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch
     )
 
     if (uiState.showAiInputInfoDialog) {
@@ -141,10 +142,11 @@ private fun FrameworkSettingsScreen(
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onNoPasswordPer24H: (Boolean) -> Unit,
+    onAllowUntrustedTouch: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
-    onShowAiInputInfo: () -> Unit
+    onShowAiInputInfo: () -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -191,7 +193,8 @@ private fun FrameworkSettingsScreen(
                         onAiInputExpandChanged = onAiInputExpandChanged,
                         onAiInputSignsChanged = onAiInputSignsChanged,
                         onShowAiInputInfo = onShowAiInputInfo,
-                        onNoPasswordPer24H = onNoPasswordPer24H
+                        onNoPasswordPer24H = onNoPasswordPer24H,
+                        onAllowUntrustedTouch = onAllowUntrustedTouch,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -208,6 +211,7 @@ private fun frameworkSettingsSections(
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onNoPasswordPer24H: (Boolean) -> Unit,
+    onAllowUntrustedTouch: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
@@ -245,6 +249,11 @@ private fun frameworkSettingsSections(
                     summary = stringResource(R.string.no_password_per_24h_summary),
                     checked = state.noPasswordPer24H,
                     onCheckedChange = onNoPasswordPer24H
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.allow_untrusted_touch),
+                    checked = state.allowUntrustedTouch,
+                    onCheckedChange = onAllowUntrustedTouch
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.force_on_off_animation),

@@ -79,7 +79,12 @@ class FrameworkSettingsViewModel(
 
     fun setNoPasswordPer24H(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(noPasswordPer24H = enabled)
-        repository.saveNoPaswordPer24H(enabled)
+        repository.saveNoPasswordPer24H(enabled)
+    }
+
+    fun setAllowUntrustedTouch(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(allowUntrustedTouch = enabled)
+        repository.saveAllowUntrustedTouch(enabled)
     }
 
     fun showAiInputInfoDialog() {
@@ -127,4 +132,5 @@ data class FrameworkSettingsUiState(
     val forceOnOffAnimation: Boolean = false,
     val forceOnOffAnimationDuration: Int = 400,
     val noPasswordPer24H: Boolean = false,
+    val allowUntrustedTouch: Boolean = false,
 )
