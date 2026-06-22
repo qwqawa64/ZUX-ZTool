@@ -31,13 +31,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.qimian233.ztool.data.settings.AgreementRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
@@ -71,6 +71,7 @@ class MainActivity : ComponentActivity(),
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
     private var lastClickTime = 0L
     private var unregisterThemeSettingsObserver: (() -> Unit)? = null
+    private val agreementRepository by lazy { AgreementRepository(this) }
 
     private val clickInterval = 300L
 
@@ -129,10 +130,7 @@ class MainActivity : ComponentActivity(),
     }
 
     override fun onPositiveButtonClick() {
-        getSharedPreferences("ZToolPrefs", MODE_PRIVATE)
-            .edit {
-                putBoolean("isFirstLaunch", false)
-            }
+        agreementRepository.markAgreementAccepted()
         Toast.makeText(this, getString(R.string.user_confirm_agreement), Toast.LENGTH_SHORT).show()
     }
 
@@ -196,8 +194,7 @@ class MainActivity : ComponentActivity(),
     }
 
     private fun maybeShowAgreementDialog() {
-        val prefs = getSharedPreferences("ZToolPrefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("isFirstLaunch", true)) return
+        if (agreementRepository.hasAcceptedAgreement()) return
 
         CountdownDialog.Builder(this, this).apply {
             setTitle(getString(R.string.agreement_title))
