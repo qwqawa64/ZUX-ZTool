@@ -30,7 +30,7 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
     private static final String PREF_KEY_RAM = "about_device_info_ram";
     private static final String PREF_KEY_ROM = "about_device_info_rom";
     private static final String PREF_KEY_SOFTWARE = "about_device_info_software";
-    private static final String DEVICE_IMAGE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Download/ZTool/device_info.jpg";
+    private static final String DEVICE_IMAGE_PATH = "/Download/ZTool/device_info.jpg";
     private static final String HEADER_VIEW_CLASS = "com.lenovo.settings.deviceinfo.aboutphone.PadTopImgPreference";
     private static final String CPU_CLASS = "com.lenovo.settings.deviceinfo.controller.CpuInfoDisplayPreferenceController";
     private static final String RAM_CLASS = "com.lenovo.settings.deviceinfo.controller.RamSizePreferenceController";
@@ -108,11 +108,11 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
                             }
                             Bitmap bitmap = decodeHeaderBitmap();
                             if (bitmap == null) {
-                                log("Header image file missing: " + DEVICE_IMAGE_PATH);
+                                log("Header image file missing: " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
                                 return;
                             }
                             ((ImageView) param.args[0]).setImageBitmap(bitmap);
-                            log("Header image loaded from " + DEVICE_IMAGE_PATH);
+                            log("Header image loaded from " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
                         }
                     }
             );
@@ -148,7 +148,7 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
     }
 
     private Bitmap decodeHeaderBitmap() {
-        File imageFile = new File(DEVICE_IMAGE_PATH);
+        File imageFile = new File(Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
         if (!imageFile.exists() || !imageFile.isFile()) {
             return null;
         }
