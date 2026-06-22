@@ -44,8 +44,9 @@ fun ZToolMarkdownText(
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     fontSize: TextUnit = TextUnit.Unspecified
 ) {
+    val resolvedBaseFontSize = if (fontSize == TextUnit.Unspecified) style.fontSize else fontSize
     val blocks = remember(markdown, style, color) {
-        parseMarkdownBlocks(markdown, style, color)
+        parseMarkdownBlocks(markdown, style, color, resolvedBaseFontSize)
     }
 
     SelectionContainer {
@@ -69,14 +70,15 @@ fun ZToolMarkdownText(
 private fun parseMarkdownBlocks(
     markdown: String,
     baseStyle: TextStyle,
-    baseColor: Color
+    baseColor: Color,
+    baseFontSize: TextUnit
 ): List<AnnotatedString> {
     val parser = Parser.builder().build()
     val document = parser.parse(markdown) as Document
     val blocks = mutableListOf<AnnotatedString>()
     var child: Node? = document.firstChild
     while (child != null) {
-        blocks += renderBlock(child, baseStyle, baseColor)
+        blocks += renderBlock(child, baseStyle, baseColor, baseFontSize)
         child = child.next
     }
     return blocks
@@ -85,7 +87,8 @@ private fun parseMarkdownBlocks(
 private fun renderBlock(
     node: Node,
     baseStyle: TextStyle,
-    baseColor: Color
+    baseColor: Color,
+    baseFontSize: TextUnit
 ): AnnotatedString {
     return when (node) {
         is Heading -> buildAnnotatedString {
@@ -95,19 +98,25 @@ private fun renderBlock(
                 3 -> FontWeight.SemiBold
                 else -> FontWeight.Medium
             }
-            withStyle(SpanStyle(fontWeight = weight, color = baseColor)) {
-                appendInlineChildren(node, this, baseStyle, baseColor)
+            withStyle(
+                SpanStyle(
+                    fontWeight = weight,
+                    fontSize = headingFontSize(node.level, baseFontSize),
+                    color = baseColor
+                )
+            ) {
+                appendInlineChildren(node, this, baseStyle, baseColor, baseFontSize)
             }
         }
         is Paragraph, is BlockQuote -> buildAnnotatedString {
-            appendInlineChildren(node, this, baseStyle, baseColor)
+            appendInlineChildren(node, this, baseStyle, baseColor, baseFontSize)
         }
         is BulletList -> buildAnnotatedString {
             var item = node.firstChild
             while (item != null) {
                 if (item is ListItem) {
                     append("• ")
-                    appendInlineChildren(item, this, baseStyle, baseColor)
+                    appendInlineChildren(item, this, baseStyle, baseColor, baseFontSize)
                     append('\n')
                 }
                 item = item.next
@@ -119,7 +128,7 @@ private fun renderBlock(
             while (item != null) {
                 if (item is ListItem) {
                     append("$index. ")
-                    appendInlineChildren(item, this, baseStyle, baseColor)
+                    appendInlineChildren(item, this, baseStyle, baseColor, baseFontSize)
                     append('\n')
                     index++
                 }
@@ -127,7 +136,7 @@ private fun renderBlock(
             }
         }
         else -> buildAnnotatedString {
-            appendInlineChildren(node, this, baseStyle, baseColor)
+            appendInlineChildren(node, this, baseStyle, baseColor, baseFontSize)
         }
     }
 }
@@ -136,17 +145,18 @@ private fun appendInlineChildren(
     node: Node,
     builder: AnnotatedString.Builder,
     baseStyle: TextStyle,
-    baseColor: Color
+    baseColor: Color,
+    baseFontSize: TextUnit
 ) {
     var child = node.firstChild
     while (child != null) {
         when (child) {
             is MarkdownText -> builder.append(child.literal)
             is Emphasis -> builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic, color = baseColor)) {
-                appendInlineChildren(child, this, baseStyle, baseColor)
+                appendInlineChildren(child, this, baseStyle, baseColor, baseFontSize)
             }
             is StrongEmphasis -> builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = baseColor)) {
-                appendInlineChildren(child, this, baseStyle, baseColor)
+                appendInlineChildren(child, this, baseStyle, baseColor, baseFontSize)
             }
             is Code -> builder.withStyle(
                 SpanStyle(
@@ -164,13 +174,24 @@ private fun appendInlineChildren(
                     fontWeight = FontWeight.Medium
                 )
             ) {
-                appendInlineChildren(child, this, baseStyle, baseColor)
+                appendInlineChildren(child, this, baseStyle, baseColor, baseFontSize)
             }
             is Image -> builder.append(child.title ?: child.destination)
             is HardLineBreak -> builder.append('\n')
             is SoftLineBreak -> builder.append(' ')
-            else -> appendInlineChildren(child, builder, baseStyle, baseColor)
+            else -> appendInlineChildren(child, builder, baseStyle, baseColor, baseFontSize)
         }
         child = child.next
+    }
+}
+
+private fun headingFontSize(level: Int, baseFontSize: TextUnit): TextUnit {
+    val fallback = if (baseFontSize == TextUnit.Unspecified) 16.sp else baseFontSize
+    return when (level) {
+        1 -> fallback * 1.9f
+        2 -> fallback * 1.5f
+        3 -> fallback * 1.25f
+        4 -> fallback * 1.1f
+        else -> fallback
     }
 }
