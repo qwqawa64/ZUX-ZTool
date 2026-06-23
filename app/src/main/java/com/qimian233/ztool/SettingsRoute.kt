@@ -408,7 +408,7 @@ private fun SettingsRoute(
             Spacer(modifier = Modifier.height(16.dp))
 
             SettingsSection(title = stringResource(R.string.moreSettings)) {
-                ExpressiveSectionItems(count = 3) { itemModifier ->
+                ExpressiveSectionItems(count = 4) { itemModifier ->
                     ZToolSwitchRow(
                         title = stringResource(R.string.display_entry_in_settings),
                         summary = stringResource(R.string.display_entry_in_settings_summary),
