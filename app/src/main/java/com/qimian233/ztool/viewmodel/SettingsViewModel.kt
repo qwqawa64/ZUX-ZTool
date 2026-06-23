@@ -78,6 +78,11 @@ class SettingsViewModel(
         repository.setDetailedLoggingEnabled(isEnabled)
     }
 
+    fun setDisplayEntryInSettings(isEnabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isEntryDisplayedInSettings = isEnabled)
+        repository.setEntryInSettingsEnabled(isEnabled)
+    }
+
     fun setHomepageYiyanEnabled(isEnabled: Boolean) {
         _uiState.value = _uiState.value.copy(isHomepageYiyanEnabled = isEnabled)
         repository.setHomepageYiyanEnabled(isEnabled)
@@ -183,6 +188,7 @@ class SettingsViewModel(
 data class SettingsUiState(
     val isLogServiceEnabled: Boolean = false,
     val isDetailedLoggingEnabled: Boolean = false,
+    val isEntryDisplayedInSettings: Boolean = false,
     val isHomepageYiyanEnabled: Boolean = true,
     val showRestoreConfirmDialog: Boolean = false,
     val showAboutDialog: Boolean = false,

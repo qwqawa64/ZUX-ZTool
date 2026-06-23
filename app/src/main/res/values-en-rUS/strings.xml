@@ -847,4 +847,6 @@
     <string name="allow_untrusted_touch">Allow untrusted touch</string>
     <string name="splash_welcome_text">Welcome to ZTool</string>
     <string name="non_zuxos_warn">Non-ZUXOS/ZUI device detected, hooks may not function normally!</string>
+    <string name="display_entry_in_settings">Display module entrance in settings</string>
+    <string name="display_entry_in_settings_summary">A restart of settings APP is required</string>
 </resources>

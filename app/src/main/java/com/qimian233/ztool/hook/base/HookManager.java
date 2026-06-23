@@ -30,6 +30,7 @@ import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
+import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook;
 import com.qimian233.ztool.hook.modules.systemFramework.AiInputExpand;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowUntrustedTouch;
@@ -184,6 +185,8 @@ public class HookManager {
         registerHookModule(new NotificationCenterTransparency());
         // 注册模块: 关于设备信息自定义
         registerHookModule(new CustomizeAboutDeviceInfo());
+        // 注册模块: 设置主页添加ZTool入口
+        registerHookModule(new ZToolSettingsEntryHook());
         // 注册模块: 允许不受信任的触摸
         registerHookModule(new AllowUntrustedTouch());
         initialized = true;

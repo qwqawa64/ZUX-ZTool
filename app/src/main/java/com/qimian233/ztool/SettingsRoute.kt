@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Article
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Contrast
@@ -160,6 +161,7 @@ fun SettingsMainRoute(
             )
         },
         onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+        onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
         onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
         onAbout = viewModel::showAboutDialog
     )
@@ -333,6 +335,7 @@ private fun SettingsRoute(
     onOpenThemeSettings: () -> Unit,
     onOpenLanguageSettings: () -> Unit,
     onLogServiceChanged: (Boolean) -> Unit,
+    onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
     onAbout: () -> Unit
@@ -406,6 +409,14 @@ private fun SettingsRoute(
 
             SettingsSection(title = stringResource(R.string.moreSettings)) {
                 ExpressiveSectionItems(count = 3) { itemModifier ->
+                    ZToolSwitchRow(
+                        title = stringResource(R.string.display_entry_in_settings),
+                        summary = stringResource(R.string.display_entry_in_settings_summary),
+                        checked = state.isEntryDisplayedInSettings,
+                        onCheckedChange = onEntryDisplayChanged,
+                        icon = Icons.AutoMirrored.Rounded.OpenInNew,
+                        modifier = itemModifier()
+                    )
                     ZToolSwitchRow(
                         title = stringResource(R.string.enableLogService),
                         summary = stringResource(R.string.enableLogServiceDescription),

@@ -149,6 +149,8 @@ public class LogParser {
                 Pattern.compile("\\[app_details]\\s*(.*)"));
         MODULE_PATTERNS.put("about_device_info",
                 Pattern.compile("\\[about_device_info]\\s*(.*)"));
+        MODULE_PATTERNS.put("ztool_settings_entry",
+                Pattern.compile("\\[ztool_settings_entry]\\s*(.*)"));
 
         // 系统框架相关
         MODULE_PATTERNS.put("allow_get_packages",
@@ -239,6 +241,7 @@ public class LogParser {
         MODULE_NAMES.put("AlwaysDisplaySuggestion", "始终显示建议");
         MODULE_NAMES.put("app_details", "应用详细信息");
         MODULE_NAMES.put("about_device_info", "关于设备信息");
+        MODULE_NAMES.put("ztool_settings_entry", "ZTool 设置入口");
 
         // 文件相关
         MODULE_NAMES.put("documents_ui_bypass", "允许选择根目录");
@@ -635,7 +638,7 @@ public class LogParser {
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
                 "Split_Screen_mandatory", "remove_blacklist", "AlwaysDisplaySuggestion",
-                "app_details", "about_device_info"
+                "app_details", "about_device_info", "ztool_settings_entry"
         ));
 
         // 启动器相关

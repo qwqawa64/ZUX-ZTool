@@ -27,6 +27,7 @@ class SettingsRepository(
         return SettingsUiState(
             isLogServiceEnabled = LogServiceManager.isServiceEnabled(context),
             isDetailedLoggingEnabled = prefs.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
+            isEntryDisplayedInSettings = prefs.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
             isHomepageYiyanEnabled = prefs.loadBooleanSetting(KEY_HOMEPAGE_YIYAN, true),
             moduleVersion = getModuleVersion(),
             themeSettings = themeSettings,
@@ -64,6 +65,10 @@ class SettingsRepository(
 
     fun setDetailedLoggingEnabled(isEnabled: Boolean) {
         ModulePreferencesUtils(context).saveBooleanSetting(KEY_DETAILED_LOGGING, isEnabled)
+    }
+
+    fun setEntryInSettingsEnabled(isEnabled: Boolean) {
+        ModulePreferencesUtils(context).saveBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, isEnabled)
     }
 
     fun setHomepageYiyanEnabled(isEnabled: Boolean) {
@@ -152,5 +157,6 @@ class SettingsRepository(
         private const val TAG = "SettingsRepository"
         private const val KEY_DETAILED_LOGGING = "isDetailedLogging"
         private const val KEY_HOMEPAGE_YIYAN = "enable_homepage_yiyan"
+        private const val KEY_DISPLAY_ENTRY_IN_SETTINGS = "ztool_settings_entry"
     }
 }
