@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -279,8 +280,7 @@ fun <T> ZToolPopupMenuField(
                 onOptionSelected = onOptionSelected,
                 modifier = modifier,
                 enabled = enabled,
-                icon = icon,
-                dialogTitle = dialogTitle
+                icon = icon
             )
             return@ZToolSettingsNavigationEventProvider
         }
@@ -326,18 +326,22 @@ fun <T> ZToolPopupMenuSettingRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
+                    (if (enabled) BasicComponentDefaults.titleColor().color else BasicComponentDefaults.titleColor().disabledColor)
+                else
+                    (if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant),
+                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
+                    color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
+                        (if (enabled) BasicComponentDefaults.summaryColor().color else BasicComponentDefaults.summaryColor().disabledColor)
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) 0.dp else 4.dp),
+                    fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.body2.fontSize else TextUnit.Unspecified
                 )
             }
         }
@@ -362,8 +366,7 @@ private fun <T> ZToolMiuixPopupMenuField(
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null,
-    dialogTitle: String? = null
+    icon: ImageVector? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -466,7 +469,7 @@ private fun <T> ZToolMaterialPopupMenuField(
     var showDialog by remember { mutableStateOf(false) }
     fun selectedIndex(): Int = options.indexOfFirst { optionLabel(it) == value }.coerceAtLeast(0)
     var pendingIndex by remember(value, options) {
-        mutableStateOf(selectedIndex())
+        mutableIntStateOf(selectedIndex())
     }
 
     Row(
@@ -517,7 +520,10 @@ private fun <T> ZToolMaterialPopupMenuField(
 
     if (showDialog) {
         ZToolDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = {
+                @Suppress("AssignedValueIsNeverRead")
+                showDialog = false
+            },
             title = dialogTitle?.let { titleText ->
                 { Text(titleText) }
             },
@@ -563,6 +569,7 @@ private fun <T> ZToolMaterialPopupMenuField(
                 TextButton(
                     onClick = {
                         options.getOrNull(pendingIndex)?.let(onOptionSelected)
+                        @Suppress("AssignedValueIsNeverRead")
                         showDialog = false
                     }
                 ) {
@@ -570,7 +577,10 @@ private fun <T> ZToolMaterialPopupMenuField(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
+                TextButton(onClick = {
+                    @Suppress("AssignedValueIsNeverRead")
+                    showDialog = false
+                }) {
                     Text(androidx.compose.ui.res.stringResource(android.R.string.cancel))
                 }
             }
