@@ -379,16 +379,19 @@ private fun OtaInfoContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            ResultText(
-                title = stringResource(R.string.copy_download_link),
-                body = stringResource(
-                    R.string.download_info_format,
-                    result.downloadUrl,
-                    result.formattedSize,
-                    result.md5
+            if (result.isNewVersionAvailable) {
+                Spacer(modifier = Modifier.height(12.dp))
+                ResultText(
+                    title = stringResource(R.string.copy_download_link),
+                    body =
+                        stringResource(
+                            R.string.download_info_format,
+                            result.downloadUrl,
+                            result.formattedSize,
+                            result.md5
+                        )
                 )
-            )
+            }
             Spacer(modifier = Modifier.height(12.dp))
             Row {
                 Spacer(modifier = Modifier.weight(1f))
@@ -396,7 +399,10 @@ private fun OtaInfoContent(
                     Text(stringResource(R.string.copy_changelog))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { onCopyDownloadLink(result.downloadUrl) }) {
+                Button(
+                    onClick = { onCopyDownloadLink(result.downloadUrl) },
+                    enabled = result.isNewVersionAvailable
+                ) {
                     Icon(Icons.Rounded.ContentCopy, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.copy_download_link))

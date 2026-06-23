@@ -158,7 +158,8 @@ data class OtaInfoResult(
     val formattedSize: String,
     val md5: String,
     val changelog: String,
-    val changelogCopyText: String
+    val changelogCopyText: String,
+    val isNewVersionAvailable: Boolean,
 )
 
 data class FirmwareResult(

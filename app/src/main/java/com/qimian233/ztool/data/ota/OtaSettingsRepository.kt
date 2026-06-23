@@ -201,6 +201,7 @@ class OtaSettingsRepository(
         val md5 = getOrDefault("md5", context.getString(R.string.unknown))
         val changelog = getChangelogByLocale(this)
         val formattedSize = formatFileSize(size)
+        val isNewVersionAvailable = formattedSize != "0 B"
 
         return OtaInfoResult(
             fromVersion = fromVersion,
@@ -216,7 +217,8 @@ class OtaSettingsRepository(
                 changelog,
                 formattedSize,
                 md5
-            )
+            ),
+            isNewVersionAvailable = isNewVersionAvailable
         )
     }
 
