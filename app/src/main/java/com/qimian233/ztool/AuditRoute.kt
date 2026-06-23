@@ -602,7 +602,6 @@ private fun LogEntry.detailsText(): String {
     if (tag != null && tag != "ZToolXposedModule") details.add("Tag: $tag")
     if (pid != -1) details.add("PID: $pid")
     if (mode != null) details.add("Mode: $mode")
-    if (function != null) details.add("Function: $function")
     return details.joinToString(" | ")
 }
 
