@@ -41,7 +41,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -619,16 +618,11 @@ private fun LogDetailDialog(
                 style = MaterialTheme.typography.bodyMedium
             )
         },
-        confirmButton = {
-            TextButton(onClick = onCopy) {
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.copy_button))
-            }
-        },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close_button))
-            }
+            ZToolTextButton(onClick = onCopy, text = stringResource(R.string.copy_button), isPrimary = false)
+        },
+        confirmButton = {
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.close_button))
         }
     )
 }
@@ -686,9 +680,7 @@ private fun StatisticsDialog(
         title = { Text(stringResource(R.string.log_statistics_title)) },
         text = { Text(message) },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.confirm))
-            }
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.confirm))
         }
     )
 }
