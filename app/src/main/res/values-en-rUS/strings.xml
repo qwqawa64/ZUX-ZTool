@@ -201,6 +201,7 @@
     <string name="config_backup_success">Configuration backed up</string>
     <string name="about_ztool_title">About ZTool</string>
     <string name="about_description">ZTool is an LSPosed enhancement module for ZUXOS.&lt;br&gt;Developers: Qimian233, WASDDestroy&lt;br&gt;This project is released under the Apache 2.0 license.&lt;br&gt;Some features are from dantmnf\'s UnfuckZUI.</string>
+    <string name="about_zuxos_plus_summary">Feature inspirations</string>
     <string name="final_confirmation_title">Final Confirmation</string>
     <string name="restore_default_confirmation">Are you sure you want to restore the default configuration? This will reset all settings to their initial state.</string>
     <string name="default_config_restored">Default configuration restored</string>
@@ -852,4 +853,13 @@
     <string name="show_slider_percentage">Show slider percentage</string>
     <string name="show_brightness_slider_percentage">Show brightness slider percentage</string>
     <string name="show_volume_slider_percentage">Show volume slider percentage</string>
+    <string name="about_developers_title">Developers</string>
+    <string name="about_acknowledgements_title">Credits</string>
+    <string name="about_view_source_title">Review source code on our GitHub</string>
+    <string name="about_license_title">License Information</string>
+    <string name="about_license_summary">This project is released under Apache License 2.0</string>
+    <string name="about_open_source_title">Open-Source Information</string>
+    <string name="about_qimian233_summary">Initiator, Hooks and User Interface</string>
+    <string name="about_wasd_destroy_summary">Hooks and User Interface</string>
+    <string name="about_unfuckzui_summary">Fearure references and inspirations</string>
 </resources>

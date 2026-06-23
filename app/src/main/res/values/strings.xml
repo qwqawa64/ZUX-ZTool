@@ -215,6 +215,16 @@
     <string name="config_backup_success">配置已备份</string>
     <string name="about_ztool_title">关于ZTool</string>
     <string name="about_description">ZTool是个针对ZUXOS的LSPosed功能增强模块。&lt;br&gt;开发者: Qimian233, WASDDestroy&lt;br&gt;本项目遵守Apache 2.0协议发布。&lt;br&gt;本项目部分功能来自于dantmnf的UnfuckZUI。</string>
+    <string name="about_developers_title">开发者</string>
+    <string name="about_acknowledgements_title">致谢</string>
+    <string name="about_open_source_title">开源信息</string>
+    <string name="about_view_source_title">在 GitHub 查看源码</string>
+    <string name="about_license_title">许可证信息</string>
+    <string name="about_license_summary">本项目遵守 Apache 2.0 协议发布</string>
+    <string name="about_qimian233_summary">项目发起者、Hook、用户界面</string>
+    <string name="about_wasd_destroy_summary">部分 Hook、部分用户界面</string>
+    <string name="about_unfuckzui_summary">部分功能灵感和参考</string>
+    <string name="about_zuxos_plus_summary">部分功能灵感</string>
     <string name="final_confirmation_title">最后一次确认</string>
     <string name="restore_default_confirmation">你确定要恢复默认配置吗？这将重置所有设置到初始状态。</string>
     <string name="default_config_restored">已恢复默认配置</string>
@@ -898,7 +908,7 @@
     <string name="no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
     <string name="allow_untrusted_touch">允许不受信任的触摸</string>
     <string name="splash_logo_description" translatable="false">ZTool Logo</string>
-    <string name="splash_slogan" translatable="false">Make ZUXOS Great, not Again.</string>
+    <string name="splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
     <string name="splash_welcome_text">欢迎使用 ZTool</string>
     <string name="non_zuxos_warn">当前设备运行的系统很可能不是 ZUXOS/ZUI ，无法保证 Hook 正确执行!</string>
     <string name="display_entry_in_settings">在设置中显示入口</string>
