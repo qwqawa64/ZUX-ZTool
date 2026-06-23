@@ -143,7 +143,7 @@ class MainActivity : ComponentActivity(),
         super.onDestroy()
         unregisterThemeSettingsObserver?.invoke()
         unregisterThemeSettingsObserver = null
-        LogServiceManager.setServiceStatusListener(null)
+        LogServiceManager.clearCallbacks()
     }
 
     override fun onServiceStarted() {

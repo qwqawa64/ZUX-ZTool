@@ -34,20 +34,25 @@ public class LogServiceManager {
         statusListener = listener;
     }
 
+    public static void clearCallbacks() {
+        statusListener = null;
+    }
+
     /**
      * 启动日志采集服务（自动选择Root模式）
      */
     public static void startLogService(Context context) {
-        startLogService(context, false);
+        startLogService(context.getApplicationContext(), false);
     }
 
     /**
      * 启动日志采集服务（支持重启模式）
      */
     private static boolean startLogService(Context context, boolean isRestart) {
+        Context appContext = context.getApplicationContext();
         // 检查权限状态
         boolean hasRoot = PermissionChecker.hasRootPermission();
-        boolean hasReadLogs = PermissionChecker.hasReadLogsPermission(context);
+        boolean hasReadLogs = PermissionChecker.hasReadLogsPermission(appContext);
         // 检查前台服务权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             if (context.checkSelfPermission(android.Manifest.permission.FOREGROUND_SERVICE)
@@ -63,7 +68,7 @@ public class LogServiceManager {
                         hasRoot, hasReadLogs, isRestart));
 
         // 自动选择最佳模式
-        setUseRootMode(context, hasRoot);
+        setUseRootMode(appContext, hasRoot);
 
         if (hasRoot) {
             android.util.Log.d("LogServiceManager", "使用Root模式启动日志服务");
@@ -73,14 +78,14 @@ public class LogServiceManager {
         }
 
         try {
-            Intent intent = new Intent(context, LogCollectorService.class);
+            Intent intent = new Intent(appContext, LogCollectorService.class);
             intent.putExtra("is_restart", isRestart);
 
             // 对于 Android 8.0+ 使用 startForegroundService，其他使用 startService
-            context.startForegroundService(intent);
+            appContext.startForegroundService(intent);
 
-            setServiceEnabled(context, true);
-            resetRestartAttempts(context);
+            setServiceEnabled(appContext, true);
+            resetRestartAttempts(appContext);
 
             android.util.Log.d("LogServiceManager", "日志服务启动成功");
 
@@ -104,11 +109,12 @@ public class LogServiceManager {
      * 停止日志采集服务
      */
     public static void stopLogService(Context context) {
+        Context appContext = context.getApplicationContext();
         try {
-            Intent intent = new Intent(context, LogCollectorService.class);
-            context.stopService(intent);
-            setServiceEnabled(context, false);
-            resetRestartAttempts(context);
+            Intent intent = new Intent(appContext, LogCollectorService.class);
+            appContext.stopService(intent);
+            setServiceEnabled(appContext, false);
+            resetRestartAttempts(appContext);
 
             android.util.Log.d("LogServiceManager", "日志服务停止成功");
 
@@ -128,8 +134,9 @@ public class LogServiceManager {
      */
     // 在 restartServiceIfNeeded 方法中添加延迟
     public static void restartServiceIfNeeded(Context context) {
-        if (isServiceEnabled(context)) {
-            int attempts = getRestartAttempts(context);
+        Context appContext = context.getApplicationContext();
+        if (isServiceEnabled(appContext)) {
+            int attempts = getRestartAttempts(appContext);
 
             if (attempts < MAX_RESTART_ATTEMPTS) {
                 android.util.Log.d("LogServiceManager",
@@ -137,7 +144,7 @@ public class LogServiceManager {
 
                 // 增加延迟时间，确保系统稳定
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    boolean success = startLogService(context, true);
+                    boolean success = startLogService(appContext, true);
                     if (!success) {
                         android.util.Log.w("LogServiceManager", "服务重启失败");
                     }
@@ -146,7 +153,7 @@ public class LogServiceManager {
             } else {
                 android.util.Log.w("LogServiceManager",
                         "已达到最大重启尝试次数，停止自动重启");
-                setServiceEnabled(context, false);
+                setServiceEnabled(appContext, false);
 
                 if (statusListener != null) {
                     new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceRestartFailed());

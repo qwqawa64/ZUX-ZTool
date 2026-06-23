@@ -129,6 +129,8 @@ class CountdownDialog private constructor(
             countDownTimer?.cancel()
             countDownTimer = null
             dialog?.takeIf { it.isShowing }?.dismiss()
+            handler.removeCallbacksAndMessages(null)
+            dialog = null
         }
     }
 

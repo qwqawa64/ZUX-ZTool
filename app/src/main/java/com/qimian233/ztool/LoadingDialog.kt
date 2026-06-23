@@ -52,6 +52,8 @@ class LoadingDialog(private val context: Context) {
                 dialog?.dismiss()
                 showing = false
             }
+            handler.removeCallbacksAndMessages(null)
+            dialog = null
         }
     }
 
