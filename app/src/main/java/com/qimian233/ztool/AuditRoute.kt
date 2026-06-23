@@ -233,66 +233,70 @@ private fun AuditScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 20.dp, vertical = 18.dp)
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                state = listState,
+                contentPadding = PaddingValues(bottom = 18.dp)
             ) {
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = state.statsText.ifEmpty { stringResource(R.string.placeHolderLogStat) },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                item {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = state.statsText.ifEmpty { stringResource(R.string.placeHolderLogStat) },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                item {
+                    FilterCard(
+                        categoryOptions = state.categoryOptions,
+                        selectedCategory = state.selectedCategory,
+                        moduleOptions = state.moduleOptions,
+                        selectedModuleLabel = state.selectedModuleLabel,
+                        levelOptions = state.levelOptions,
+                        selectedLevel = state.selectedLevel,
+                        searchText = state.searchText,
+                        showErrorsOnly = state.showErrorsOnly,
+                        onCategorySelected = onCategorySelected,
+                        onModuleSelected = onModuleSelected,
+                        onLevelSelected = onLevelSelected,
+                        onSearchTextChanged = onSearchTextChanged,
+                        onShowErrorsOnlyChanged = onShowErrorsOnlyChanged,
+                        onRefresh = onRefresh,
+                        onClear = onClear,
+                        onShowStatistics = onShowStatistics,
+                        onSave = onSave
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
-                FilterCard(
-                    categoryOptions = state.categoryOptions,
-                    selectedCategory = state.selectedCategory,
-                    moduleOptions = state.moduleOptions,
-                    selectedModuleLabel = state.selectedModuleLabel,
-                    levelOptions = state.levelOptions,
-                    selectedLevel = state.selectedLevel,
-                    searchText = state.searchText,
-                    showErrorsOnly = state.showErrorsOnly,
-                    onCategorySelected = onCategorySelected,
-                    onModuleSelected = onModuleSelected,
-                    onLevelSelected = onLevelSelected,
-                    onSearchTextChanged = onSearchTextChanged,
-                    onShowErrorsOnlyChanged = onShowErrorsOnlyChanged,
-                    onRefresh = onRefresh,
-                    onClear = onClear,
-                    onShowStatistics = onShowStatistics,
-                    onSave = onSave
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ZToolCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) {
-                    when {
-                        state.isLoading -> {
+                when {
+                    state.isLoading -> {
+                        item {
                             Box(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(280.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 ZToolCircularProgressIndicator()
                             }
                         }
-                        state.emptyMessage.isNotEmpty() -> {
+                    }
+                    state.emptyMessage.isNotEmpty() -> {
+                        item {
                             Box(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(280.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -302,19 +306,13 @@ private fun AuditScreen(
                                 )
                             }
                         }
-                        else -> {
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(vertical = 10.dp)
-                            ) {
-                                items(state.filteredLogEntries) { entry ->
-                                    LogEntryRow(
-                                        entry = entry,
-                                        onClick = { onLogSelected(entry) }
-                                    )
-                                }
-                            }
+                    }
+                    else -> {
+                        items(state.filteredLogEntries) { entry ->
+                            LogEntryRow(
+                                entry = entry,
+                                onClick = { onLogSelected(entry) }
+                            )
                         }
                     }
                 }
