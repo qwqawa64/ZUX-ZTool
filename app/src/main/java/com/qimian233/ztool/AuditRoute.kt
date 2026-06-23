@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Error
+import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Search
@@ -53,7 +54,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,14 +64,14 @@ import com.qimian233.ztool.audit.LogParser.LogEntry
 import com.qimian233.ztool.audit.LogParser.LogLevel
 import com.qimian233.ztool.data.audit.AuditRepository
 import com.qimian233.ztool.ui.components.ZToolCard
-import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.ZToolPopupMenuField
-import com.qimian233.ztool.ui.components.ZToolPageSurface
-import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.ZToolCircularProgressIndicator
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolPopupMenuField
+import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.AuditUiState
 import com.qimian233.ztool.viewmodel.AuditViewModel
 import com.qimian233.ztool.viewmodel.ModuleOption
@@ -408,7 +408,8 @@ private fun FilterCard(
                     )
                     Text(
                         text = stringResource(R.string.advancedFilterError),
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -416,19 +417,21 @@ private fun FilterCard(
                     Icon(
                         imageVector = Icons.Rounded.Clear,
                         contentDescription = stringResource(R.string.logClear),
-                        tint = MaterialTheme.colorScheme.error
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(onClick = onShowStatistics) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_stats),
-                        contentDescription = stringResource(R.string.logStatistic)
+                        imageVector = Icons.Rounded.QueryStats,
+                        contentDescription = stringResource(R.string.logStatistic),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(onClick = onSave) {
                     Icon(
                         imageVector = Icons.Rounded.Save,
-                        contentDescription = stringResource(R.string.export_logs_success)
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 FilledTonalIconButton(onClick = onRefresh) {
@@ -686,7 +689,7 @@ private fun StatisticsDialog(
         text = { Text(message) },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_yes))
+                Text(stringResource(R.string.confirm))
             }
         }
     )
