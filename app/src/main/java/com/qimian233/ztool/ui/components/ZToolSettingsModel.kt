@@ -449,17 +449,15 @@ private fun <T> ZToolPopupMenuSettingItem(
     item: SettingItem.Dropdown<T>,
     modifier: Modifier = Modifier
 ) {
-    ZToolPopupMenuField(
+    ZToolPopupMenuSettingRow(
+        title = item.label,
         value = item.value,
         options = item.options,
         optionLabel = item.optionLabel,
         onOptionSelected = item.onOptionSelected,
         enabled = item.enabled,
         icon = item.icon,
-        dialogTitle = item.label,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp)
     )
 }
 
