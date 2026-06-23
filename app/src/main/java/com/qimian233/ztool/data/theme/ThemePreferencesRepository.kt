@@ -27,7 +27,7 @@ class ThemePreferencesRepository(
                 KEY_MATERIAL_PALETTE,
                 legacyPalette(legacyPaletteMode)
             ),
-            dynamicColorEnabled = prefs.getBoolean(KEY_DYNAMIC_COLOR_ENABLED, true),
+            dynamicColorEnabled = prefs.getBoolean(KEY_DYNAMIC_COLOR_ENABLED, false),
             amoledBlackEnabled = prefs.getBoolean(KEY_AMOLED_BLACK_ENABLED, false),
             predictiveBackGestureEnabled = prefs.getBoolean(KEY_PREDICTIVE_BACK_GESTURE_ENABLED, true),
             manualColorEnabled = prefs.getBoolean(KEY_MANUAL_COLOR_ENABLED, false),
