@@ -489,7 +489,7 @@ private fun LogEntryRow(
                 Text(
                     text = entry.timestamp?.takeIf { it.length >= 12 }?.substring(11) ?: "--:--:--",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
                 )
                 entry.module?.let {
@@ -509,6 +509,7 @@ private fun LogEntryRow(
             Text(
                 text = entry.previewMessage(stringResource(R.string.more_lines_suffix)),
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 4.dp)
