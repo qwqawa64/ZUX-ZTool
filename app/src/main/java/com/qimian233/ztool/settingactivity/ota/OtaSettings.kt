@@ -437,31 +437,42 @@ private fun FirmwareContent(
                 fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified
             )
             Spacer(modifier = Modifier.height(12.dp))
-            OutlinedTextField(
-                value = sn,
-                onValueChange = onSnChanged,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text(
-                        if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
-                            stringResource(R.string.SN_current_machine_hint, currentSn)
-                        } else {
-                            stringResource(R.string.SN_default_hint)
-                        }
-                    )
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            ZToolButton(
-                onClick = onFetch,
-                enabled = !isFetching,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(if (isFetching) stringResource(R.string.fetching_firmware_info) else stringResource(R.string.confirm))
+                OutlinedTextField(
+                    value = sn,
+                    onValueChange = onSnChanged,
+                    modifier = Modifier.fillMaxWidth().weight(1f).widthIn(720.dp),
+                    label = {
+                        Text(
+                            if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
+                                stringResource(R.string.SN_current_machine_hint, currentSn)
+                            } else {
+                                stringResource(R.string.SN_default_hint)
+                            }
+                        )
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
+                )
+                Spacer(modifier = Modifier.width(32.dp))
+                ZToolButton(
+                    onClick = onFetch,
+                    enabled = !isFetching,
+                ) {
+                    Text(
+                        if (isFetching) stringResource(R.string.fetching_firmware_info) else stringResource(
+                            R.string.confirm
+                        )
+                    )
+                }
             }
 
             if (result != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(modifier = Modifier.padding(start = 24.dp, end = 24.dp))
                 Spacer(modifier = Modifier.height(16.dp))
                 ResultText(
                     title = stringResource(R.string.PCFlashFirmwareFetch_result),
@@ -482,14 +493,15 @@ private fun FirmwareContent(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row {
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(onClick = { onCopyPassword(result.password) }) {
+                        Text(stringResource(R.string.copy_password))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = { onCopyDownloadLink(result.downloadUrl) }) {
                         Icon(Icons.Rounded.ContentCopy, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(stringResource(R.string.copy_download_link))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = { onCopyPassword(result.password) }) {
-                        Text(stringResource(R.string.copy_password))
                     }
                 }
             }
