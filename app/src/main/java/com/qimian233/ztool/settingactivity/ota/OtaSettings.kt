@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -53,10 +55,14 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
 import com.qimian233.ztool.viewmodel.OtaSettingsViewModel
+import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun OtaSettingsRoute(
@@ -85,7 +91,8 @@ fun OtaSettingsRoute(
     }
 
     fun copyToClipboard(text: String) {
-        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipboard =
+            context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText(clipboardLabel, text)
         clipboard.setPrimaryClip(clip)
     }
@@ -156,6 +163,7 @@ private class OtaSettingsViewModelFactory(
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
+
 @Composable
 private fun OtaSettingsScreen(
     title: String,
@@ -317,27 +325,38 @@ private fun OtaInfoContent(
     onCopyDownloadLink: (String) -> Unit,
     onCopyChangelog: (String) -> Unit
 ) {
-    Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-        Text(
-            text = stringResource(R.string.OtaInfoFetch_summary),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        ZToolButton(
-            onClick = onFetch,
-            enabled = !isFetching
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                if (isFetching) {
-                    stringResource(R.string.loading_ellipsis)
-                } else {
-                    stringResource(R.string.OtaInfoFetch_title)
-                }
+                text = stringResource(R.string.OtaInfoFetch_summary),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) BasicComponentDefaults.titleColor().color else MaterialTheme.colorScheme.onSurface,
+                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified,
+                modifier = Modifier.weight(1f).widthIn(max = 720.dp)
             )
+            Spacer(modifier = Modifier.width(12.dp))
+            ZToolButton(
+                onClick = onFetch,
+                enabled = !isFetching
+            ) {
+                Text(
+                    if (isFetching) {
+                        stringResource(R.string.loading_ellipsis)
+                    } else {
+                        stringResource(R.string.OtaInfoFetch_title)
+                    }
+                )
+            }
         }
-
         if (result != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(modifier = Modifier.padding(start = 24.dp, end = 24.dp))
             Spacer(modifier = Modifier.height(16.dp))
             ResultText(
                 title = stringResource(R.string.ota_update_info_title),
@@ -372,14 +391,15 @@ private fun OtaInfoContent(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Row {
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = { onCopyChangelog(result.changelogCopyText) }) {
+                    Text(stringResource(R.string.copy_changelog))
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Button(onClick = { onCopyDownloadLink(result.downloadUrl) }) {
                     Icon(Icons.Rounded.ContentCopy, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.copy_download_link))
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = { onCopyChangelog(result.changelogCopyText) }) {
-                    Text(stringResource(R.string.copy_changelog))
                 }
             }
         }
@@ -397,69 +417,74 @@ private fun FirmwareContent(
     onCopyDownloadLink: (String) -> Unit,
     onCopyPassword: (String) -> Unit
 ) {
-    Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-        Text(
-            text = stringResource(R.string.PCFlashFirmwareFetch_summary),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = sn,
-            onValueChange = onSnChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = {
-                Text(
-                    if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
-                        stringResource(R.string.SN_current_machine_hint, currentSn)
-                    } else {
-                        stringResource(R.string.SN_default_hint)
-                    }
-                )
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        ZToolButton(
-            onClick = onFetch,
-            enabled = !isFetching
-        ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                if (isFetching) {
-                    stringResource(R.string.fetching_firmware_info)
-                } else {
-                    stringResource(R.string.confirm)
-                }
-            )
-        }
-
-        if (result != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            ResultText(
-                title = stringResource(R.string.PCFlashFirmwareFetch_result),
-                body = buildString {
-                    append(stringResource(R.string.firmware_download_link)).append(result.downloadUrl).append("\n")
-                    append(stringResource(R.string.firmware_extract_password)).append(result.password).append("\n")
-                    append(stringResource(R.string.firmware_platform_and_method))
-                        .append(result.platform)
-                        .append(stringResource(R.string.firmware_platform_suffix))
-                        .append(result.method)
-                        .append("\n")
-                    append(stringResource(R.string.firmware_first_upload_time)).append(result.firstUploadTime).append("\n")
-                    append(stringResource(R.string.firmware_last_update_time)).append(result.lastUpdateTime)
-                }
+                text = stringResource(R.string.PCFlashFirmwareFetch_summary),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) BasicComponentDefaults.titleColor().color else MaterialTheme.colorScheme.onSurface,
+                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Row {
-                Button(onClick = { onCopyDownloadLink(result.downloadUrl) }) {
-                    Icon(Icons.Rounded.ContentCopy, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.copy_download_link))
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = { onCopyPassword(result.password) }) {
-                    Text(stringResource(R.string.copy_password))
+            OutlinedTextField(
+                value = sn,
+                onValueChange = onSnChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text(
+                        if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
+                            stringResource(R.string.SN_current_machine_hint, currentSn)
+                        } else {
+                            stringResource(R.string.SN_default_hint)
+                        }
+                    )
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            ZToolButton(
+                onClick = onFetch,
+                enabled = !isFetching,
+            ) {
+                Text(if (isFetching) stringResource(R.string.fetching_firmware_info) else stringResource(R.string.confirm))
+            }
+
+            if (result != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                ResultText(
+                    title = stringResource(R.string.PCFlashFirmwareFetch_result),
+                    body = buildString {
+                        append(stringResource(R.string.firmware_download_link)).append(result.downloadUrl)
+                            .append("\n")
+                        append(stringResource(R.string.firmware_extract_password)).append(result.password)
+                            .append("\n")
+                        append(stringResource(R.string.firmware_platform_and_method))
+                            .append(result.platform)
+                            .append(stringResource(R.string.firmware_platform_suffix))
+                            .append(result.method)
+                            .append("\n")
+                        append(stringResource(R.string.firmware_first_upload_time)).append(result.firstUploadTime)
+                            .append("\n")
+                        append(stringResource(R.string.firmware_last_update_time)).append(result.lastUpdateTime)
+                    }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row {
+                    Button(onClick = { onCopyDownloadLink(result.downloadUrl) }) {
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.copy_download_link))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(onClick = { onCopyPassword(result.password) }) {
+                        Text(stringResource(R.string.copy_password))
+                    }
                 }
             }
         }
@@ -559,17 +584,21 @@ private fun RestartScopeDialog(
         text = {
             Text(
                 stringResource(R.string.restart_xp_message_header) +
-                    packageName +
-                    ", com.lenovo.tbengine" +
+                        packageName +
+                        ", com.lenovo.tbengine" +
                         ", com.android.settings " +
-                    stringResource(R.string.restart_xp_message)
+                        stringResource(R.string.restart_xp_message)
             )
         },
         confirmButton = {
             ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.restart_no),
+                isPrimary = false
+            )
         }
     )
 }
