@@ -3,8 +3,8 @@ package com.qimian233.ztool.data.settings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.util.Log
+import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
@@ -29,7 +29,9 @@ class SettingsRepository(
             isDetailedLoggingEnabled = prefs.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
             isEntryDisplayedInSettings = prefs.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
             isHomepageYiyanEnabled = prefs.loadBooleanSetting(KEY_HOMEPAGE_YIYAN, true),
-            moduleVersion = getModuleVersion(),
+            versionName = getVersionName(),
+            commitCount = BuildConfig.GIT_COMMIT_COUNT,
+            commitHash = BuildConfig.GIT_COMMIT_HASH,
             themeSettings = themeSettings,
             manualSeedColorText = formatSeedColor(themeSettings.manualSeedColor)
         )
@@ -134,16 +136,10 @@ class SettingsRepository(
         return argb.toLong(16)
     }
 
-    private fun getModuleVersion(): String {
+    private fun getVersionName(): String {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                packageInfo.longVersionCode.toInt()
-            } else {
-                @Suppress("DEPRECATION")
-                packageInfo.versionCode
-            }
-            "${packageInfo.versionName} ($versionCode)"
+            packageInfo.versionName.orEmpty()
         } catch (e: PackageManager.NameNotFoundException) {
             Log.w(TAG, "Unable to get module version: ${e.message}")
             context.getString(R.string.unknown)

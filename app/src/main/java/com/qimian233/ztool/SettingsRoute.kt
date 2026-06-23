@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -58,7 +57,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
@@ -87,13 +85,14 @@ import com.qimian233.ztool.viewmodel.SettingsViewModel
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun SettingsMainRoute() {
-    SettingsMainRoute(onOpenThemeSettings = {})
+    SettingsMainRoute(onOpenThemeSettings = {}, onOpenAbout = {})
 }
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun SettingsMainRoute(
-    onOpenThemeSettings: () -> Unit
+    onOpenThemeSettings: () -> Unit,
+    onOpenAbout: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as MainActivity
@@ -163,13 +162,7 @@ fun SettingsMainRoute(
         onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
         onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
         onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-        onAbout = viewModel::showAboutDialog
-    )
-
-    SettingsDialogs(
-        state = uiState,
-        viewModel = viewModel,
-        context = context
+        onAbout = onOpenAbout
     )
 }
 
@@ -244,24 +237,6 @@ private fun SettingsDialogs(
         )
     }
 
-    if (state.showAboutDialog) {
-        AboutDialog(
-            version = state.moduleVersion,
-            onDismiss = viewModel::dismissAboutDialog,
-            onOpenGithub = {
-                openSettingsExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool", false, "")
-            },
-            onOpenCredits = {
-                openSettingsExternalLink(context, "https://github.com/dantmnf/UnfuckZUI", false, "")
-            },
-            onOpenAuthor = {
-                openSettingsExternalLink(context, "http://www.coolapk.com/u/10099756", true, "com.coolapk.market")
-            },
-            onOpenCollaborator = {
-                openSettingsExternalLink(context, "http://www.coolapk.com/u/18634835", true, "com.coolapk.market")
-            }
-        )
-    }
 }
 
 @Composable
@@ -273,23 +248,6 @@ private fun rememberSettingsViewModel(activity: MainActivity): SettingsViewModel
             activity,
             SettingsViewModelFactory(repository)
         )[SettingsViewModel::class.java]
-    }
-}
-
-private fun openSettingsExternalLink(
-    context: android.content.Context,
-    link: String,
-    shouldDeterminePackage: Boolean,
-    packageName: String
-) {
-    try {
-        context.startActivity(
-            Intent(Intent.ACTION_VIEW, link.toUri()).apply {
-                if (shouldDeterminePackage) setPackage(packageName)
-            }
-        )
-    } catch (_: Exception) {
-        showSettingsToast(context, context.getString(R.string.open_web_link_failed))
     }
 }
 
@@ -854,70 +812,6 @@ private fun RestoreDefaultDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.restart_no))
-            }
-        }
-    )
-}
-
-@Composable
-private fun AboutDialog(
-    version: String,
-    onDismiss: () -> Unit,
-    onOpenGithub: () -> Unit,
-    onOpenCredits: () -> Unit,
-    onOpenAuthor: () -> Unit,
-    onOpenCollaborator: () -> Unit
-) {
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.about_ztool_title)) },
-        text = {
-            Column {
-                Text(
-                    text = version,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.about_description)
-                        .replace("<br>", "\n")
-                        .replace("&lt;br&gt;", "\n"),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenGithub
-                ) {
-                    Text(stringResource(R.string.button_project_homepage))
-                }
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenCredits
-                ) {
-                    Text("Credits")
-                }
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenAuthor
-                ) {
-                    Text("Qimian233")
-                }
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenCollaborator
-                ) {
-                    Text("WASD")
-                }
             }
         }
     )

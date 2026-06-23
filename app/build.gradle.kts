@@ -15,6 +15,17 @@ fun getGitCommitCount(): Int {
     }
 }
 
+fun getGitCommitHash(): String {
+    return try {
+        val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD").start()
+        process.waitFor()
+        process.inputStream.bufferedReader().readText().trim()
+    } catch (e: Exception) {
+        println("Unable to get Git commit hash, fallback to unknown")
+        "unknown"
+    }
+}
+
 fun getBuildTime(): String {
     return SimpleDateFormat("yyMMdd").format(Date())
 }
@@ -53,6 +64,8 @@ android {
 
         versionCode = getGitCommitCount()
         versionName = "Beta/${getBuildTime()}"
+        buildConfigField("int", "GIT_COMMIT_COUNT", "${getGitCommitCount()}")
+        buildConfigField("String", "GIT_COMMIT_HASH", "\"${getGitCommitHash()}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -87,6 +100,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

@@ -25,8 +25,7 @@ class SettingsViewModel(
 
     fun refresh() {
         _uiState.value = repository.loadState().copy(
-            showRestoreConfirmDialog = _uiState.value.showRestoreConfirmDialog,
-            showAboutDialog = _uiState.value.showAboutDialog
+            showRestoreConfirmDialog = _uiState.value.showRestoreConfirmDialog
         )
     }
 
@@ -172,14 +171,6 @@ class SettingsViewModel(
         )
     }
 
-    fun showAboutDialog() {
-        _uiState.value = _uiState.value.copy(showAboutDialog = true)
-    }
-
-    fun dismissAboutDialog() {
-        _uiState.value = _uiState.value.copy(showAboutDialog = false)
-    }
-
     companion object {
         private const val TAG = "SettingsViewModel"
     }
@@ -191,8 +182,9 @@ data class SettingsUiState(
     val isEntryDisplayedInSettings: Boolean = false,
     val isHomepageYiyanEnabled: Boolean = true,
     val showRestoreConfirmDialog: Boolean = false,
-    val showAboutDialog: Boolean = false,
-    val moduleVersion: String = "",
+    val versionName: String = "",
+    val commitCount: Int = 0,
+    val commitHash: String = "",
     val themeSettings: ZToolThemeSettings = ZToolThemeSettings(),
     val manualSeedColorText: String = "#%08X".format(ZToolThemeSettings.DEFAULT_MANUAL_SEED_COLOR),
     val manualSeedColorError: Boolean = false
