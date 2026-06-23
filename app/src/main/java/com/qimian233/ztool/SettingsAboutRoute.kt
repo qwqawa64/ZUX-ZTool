@@ -33,6 +33,7 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
@@ -42,6 +43,8 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun SettingsAboutRoute(
@@ -276,6 +279,11 @@ private fun AboutActionRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
+                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
+                    BasicComponentDefaults.titleColor().color
+                else
+                    MaterialTheme.colorScheme.onSurface,
+                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -285,7 +293,11 @@ private fun AboutActionRow(
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
+                        BasicComponentDefaults.summaryColor().color
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.body2.fontSize else TextUnit.Unspecified,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
