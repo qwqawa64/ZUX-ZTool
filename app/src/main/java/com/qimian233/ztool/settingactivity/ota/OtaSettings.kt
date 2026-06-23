@@ -338,7 +338,9 @@ private fun OtaInfoContent(
                 style = MaterialTheme.typography.titleMedium,
                 color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) BasicComponentDefaults.titleColor().color else MaterialTheme.colorScheme.onSurface,
                 fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified,
-                modifier = Modifier.weight(1f).widthIn(max = 720.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(max = 720.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             ZToolButton(
@@ -444,7 +446,10 @@ private fun FirmwareContent(
                 OutlinedTextField(
                     value = sn,
                     onValueChange = onSnChanged,
-                    modifier = Modifier.fillMaxWidth().weight(1f).widthIn(720.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .widthIn(720.dp),
                     label = {
                         Text(
                             if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
@@ -515,12 +520,21 @@ private fun OtaCustomParamsContent(
     onCustomVersionChanged: (String) -> Unit,
     onCustomDeviceIdChanged: (String) -> Unit
 ) {
-    Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-        Text(
-            text = stringResource(R.string.Ota_Custom_Params_Desc),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.Ota_Custom_Params_Desc),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) BasicComponentDefaults.titleColor().color else MaterialTheme.colorScheme.onSurface,
+                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified,
+            )
+        }
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = stringResource(R.string.current_version_fmt, state.currentVersion),
