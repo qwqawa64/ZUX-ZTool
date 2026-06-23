@@ -9,7 +9,7 @@ fun getGitCommitCount(): Int {
         val process = ProcessBuilder("git", "rev-list", "--count", "HEAD").start()
         process.waitFor()
         process.inputStream.bufferedReader().readText().trim().toInt()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         println("Unable to get Git version count, fallback to 1")
         1
     }
@@ -20,7 +20,7 @@ fun getGitCommitHash(): String {
         val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD").start()
         process.waitFor()
         process.inputStream.bufferedReader().readText().trim()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         println("Unable to get Git commit hash, fallback to unknown")
         "unknown"
     }
@@ -169,9 +169,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    compileOnly("de.robv.android.xposed:api:82")
-    implementation("org.commonmark:commonmark:0.24.0")
-    implementation("cn.6tail:lunar:1.7.5")
-    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3")
-    implementation("com.google.code.gson:gson:2.10.1")
+    compileOnly(libs.xposed.api)
+    implementation(libs.commonmark)
+    implementation(libs.lunar)
+    implementation(libs.hiddenapibypass)
+    implementation(libs.gson)
 }
