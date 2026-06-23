@@ -246,11 +246,7 @@ private fun MaterialExpressiveSettingsSection(
                 )
             }
 
-            ExpressiveSectionItems(count = section.items.size) { itemModifier ->
-                section.items.forEach { item ->
-                    ZToolSettingItem(item = item, modifier = itemModifier())
-                }
-            }
+            ExpressiveSectionItems(items = section.items, itemSpacing = 4.dp)
         }
     }
 }
@@ -284,6 +280,35 @@ fun ColumnScope.ExpressiveSectionItems(
                     color = itemColor,
                     shape = shape
                 )
+        }
+    }
+}
+
+@Composable
+fun ExpressiveSectionItems(
+    items: List<SettingItem>,
+    modifier: Modifier = Modifier,
+    itemSpacing: Dp = 4.dp,
+    shapeForIndex: ((index: Int, count: Int) -> Shape)? = null
+) {
+    val itemColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(itemSpacing)
+    ) {
+        items.forEachIndexed { index, item ->
+            val shape = shapeForIndex?.invoke(index, items.size)
+                ?: expressiveSettingsItemShape(index = index, count = items.size)
+            ZToolSettingItem(
+                item = item,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(
+                        color = itemColor,
+                        shape = shape
+                    )
+            )
         }
     }
 }
