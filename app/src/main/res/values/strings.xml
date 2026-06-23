@@ -903,4 +903,7 @@
     <string name="non_zuxos_warn">当前设备运行的系统很可能不是 ZUXOS/ZUI ，无法保证 Hook 正确执行!</string>
     <string name="display_entry_in_settings">在设置中显示入口</string>
     <string name="display_entry_in_settings_summary">需要重启系统设置 APP</string>
+    <string name="show_slider_percentage">显示滑动条百分比</string>
+    <string name="show_brightness_slider_percentage">显示亮度滑动条百分比</string>
+    <string name="show_volume_slider_percentage">显示音量滑动条百分比</string>
 </resources>

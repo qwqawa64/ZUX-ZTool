@@ -140,7 +140,10 @@ fun ControlCenterSettingsRoute(
         onNoTileLabelsChanged = viewModel::setNoTileLabels,
         onCustomQsColorSwitchChanged = viewModel::setCustomQsColorSwitch,
         onNotificationCenterBlurEnabledChanged = viewModel::setNotificationCenterBlurEnabled,
-        onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent
+        onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent,
+        onBrightnessSliderPercentageChanged = viewModel::setBrightnessSliderPercentageEnabled,
+        onSliderShowPercentageMainChanged = viewModel::setSliderPercentageDisplayEnabled,
+        onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled
     )
 
     if (uiState.showFormatHelpDialog) {
@@ -213,6 +216,9 @@ private fun ControlCenterSettingsScreen(
     onNotificationCenterBlurPercentChanged: (Int) -> Unit,
     onControlCenterClockColorChange: (String) -> Unit,
     onFinishControlCenterClockTextColorEditing: () -> Unit,
+    onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
+    onVolumeSliderPercentageChanged: (Boolean) -> Unit,
+    onSliderShowPercentageMainChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -272,7 +278,10 @@ private fun ControlCenterSettingsScreen(
                         onNotificationCenterBlurEnabledChanged = onNotificationCenterBlurEnabledChanged,
                         onNotificationCenterBlurPercentChanged = onNotificationCenterBlurPercentChanged,
                         onFinishControlCenterClockTextColorEditing = onFinishControlCenterClockTextColorEditing,
-                        onControlCenterClockColorChange = onControlCenterClockColorChange
+                        onControlCenterClockColorChange = onControlCenterClockColorChange,
+                        onBrightnessSliderPercentageChanged = onBrightnessSliderPercentageChanged,
+                        onSliderShowPercentageMainChanged = onSliderShowPercentageMainChanged,
+                        onVolumeSliderPercentageChanged = onVolumeSliderPercentageChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -311,7 +320,10 @@ private fun controlCenterSettingsSections(
     onNoTileLabelsChanged: (Boolean) -> Unit,
     onCustomQsColorSwitchChanged: (Boolean) -> Unit,
     onNotificationCenterBlurEnabledChanged: (Boolean) -> Unit,
-    onNotificationCenterBlurPercentChanged: (Int) -> Unit
+    onNotificationCenterBlurPercentChanged: (Int) -> Unit,
+    onSliderShowPercentageMainChanged: (Boolean) -> Unit,
+    onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
+    onVolumeSliderPercentageChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -365,6 +377,29 @@ private fun controlCenterSettingsSections(
                         }
                     )
                 )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.show_slider_percentage),
+                        checked = state.sliderPercentageDisplayEnabledMain,
+                        onCheckedChange = onSliderShowPercentageMainChanged
+                    )
+                )
+                if (state.sliderPercentageDisplayEnabledMain) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.show_brightness_slider_percentage),
+                            checked = state.brightnessSliderPercentageEnabled,
+                            onCheckedChange = onBrightnessSliderPercentageChanged
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.show_volume_slider_percentage),
+                            checked = state.volumeSliderPercentageEnabled,
+                            onCheckedChange = onVolumeSliderPercentageChanged
+                        )
+                    )
+                }
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.custom_qs_color_general_switch),

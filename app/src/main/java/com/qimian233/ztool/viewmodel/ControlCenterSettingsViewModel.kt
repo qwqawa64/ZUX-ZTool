@@ -167,6 +167,21 @@ class ControlCenterSettingsViewModel(
         repository.saveNotificationCenterBlurEnabled(enabled)
     }
 
+    fun setSliderPercentageDisplayEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(sliderPercentageDisplayEnabledMain = enabled)
+        repository.saveSliderPercentageMainSwitchEnabled(enabled)
+    }
+
+    fun setBrightnessSliderPercentageEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(brightnessSliderPercentageEnabled = enabled)
+        repository.saveBrightnessSliderPercentageEnabled(enabled)
+    }
+
+    fun setVolumeSliderPercentageEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(volumeSliderPercentageEnabled = enabled)
+        repository.saveVolumeSliderPercentageEnabled(enabled)
+    }
+
     fun setNotificationCenterBlurPercent(value: Int) {
         val coercedValue = value.coerceIn(
             ControlCenterSettingsRepository.NOTIFICATION_CENTER_BLUR_MIN_PERCENT,
@@ -284,4 +299,7 @@ data class ControlCenterSettingsUiState(
     val customQsColorGeneralSwitch: Boolean = false,
     val notificationCenterBlurEnabled: Boolean = false,
     val notificationCenterBlurPercent: Int = ControlCenterSettingsRepository.DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT,
+    val sliderPercentageDisplayEnabledMain: Boolean = false,
+    val volumeSliderPercentageEnabled: Boolean = false,
+    val brightnessSliderPercentageEnabled: Boolean = false
 )

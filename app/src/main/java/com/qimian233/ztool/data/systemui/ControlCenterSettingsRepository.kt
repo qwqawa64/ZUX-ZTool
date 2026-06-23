@@ -48,7 +48,10 @@ class ControlCenterSettingsRepository(
             notificationCenterBlurPercent = prefsUtils.loadIntegerSetting(
                 KEY_NOTIFICATION_CENTER_BLUR_PERCENT,
                 DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT
-            ).coerceIn(NOTIFICATION_CENTER_BLUR_MIN_PERCENT, NOTIFICATION_CENTER_BLUR_MAX_PERCENT)
+            ).coerceIn(NOTIFICATION_CENTER_BLUR_MIN_PERCENT, NOTIFICATION_CENTER_BLUR_MAX_PERCENT),
+            sliderPercentageDisplayEnabledMain = prefsUtils.loadBooleanSetting(KEY_PERCENTAGE_DISPLAY_MAIN_SWITCH, false),
+            brightnessSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, false),
+            volumeSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, false)
         )
     }
 
@@ -163,6 +166,18 @@ class ControlCenterSettingsRepository(
         )
     }
 
+    fun saveSliderPercentageMainSwitchEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PERCENTAGE_DISPLAY_MAIN_SWITCH, enabled)
+    }
+
+    fun saveVolumeSliderPercentageEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, enabled)
+    }
+
+    fun saveBrightnessSliderPercentageEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, enabled)
+    }
+
     companion object {
         private const val TAG = "ControlCenterSettingsRepository"
         const val NOTIFICATION_CENTER_BLUR_MIN_PERCENT = 0
@@ -194,5 +209,8 @@ class ControlCenterSettingsRepository(
         private const val KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH = "qs_color"
         private const val KEY_NOTIFICATION_CENTER_BLUR_ENABLED = "notification_center_blur"
         private const val KEY_NOTIFICATION_CENTER_BLUR_PERCENT = "notification_center_blur_percent"
+        private const val KEY_PERCENTAGE_DISPLAY_MAIN_SWITCH = "control_center_slider_percentage"
+        private const val KEY_VOLUME_SLIDER_PERCENTAGE = "volume_slider_percentage"
+        private const val KEY_BRIGHTNESS_SLIDER_PERCENTAGE = "brightness_slider_percentage"
     }
 }

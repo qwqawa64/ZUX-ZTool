@@ -4,16 +4,19 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.View;
-import android.view.ViewParent;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.PreferenceHelper;
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
@@ -25,6 +28,14 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
     private static final String SLIDER_PERCENT_TAG = "ztool_control_center_slider_percent";
     private static final String BRIGHTNESS_ROOT_FIELD = "mBrightnessSliderRoot";
     private static final String VOLUME_ROOT_FIELD = "mVolumeSliderRoot";
+    private static final String BRIGHTNESS_ICON_FIELD = "mBrightnessIconMark";
+    private static final String VOLUME_ICON_FIELD = "mMediaVolumeIconMark";
+    private static final int LABEL_GAP_DP = 2;
+
+    private static boolean VOLUME_PERCENTAGE_ENABLED = false;
+    private static boolean BRIGHTNESS_PERCENTAGE_ENABLED = false;
+
+    private final Map<View, View.OnLayoutChangeListener> layoutListeners = new WeakHashMap<>();
 
     @Override
     public String getModuleName() {
@@ -38,9 +49,72 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        updatePrefs();
         hookToggleSliderViewLifecycle(lpparam);
+        hookBrightnessControllerCallbacks(lpparam);
+        hookVolumeControllerCallbacks(lpparam);
         hookSeekProgressChanges(lpparam);
         log("Control center slider percentage hooks installed");
+    }
+
+    private void hookBrightnessControllerCallbacks(XC_LoadPackage.LoadPackageParam lpparam) {
+        XposedHelpers.findAndHookMethod(
+                "com.android.systemui.settings.brightness.BrightnessController",
+                lpparam.classLoader,
+                "onChanged",
+                int.class,
+                boolean.class,
+                boolean.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        refreshBrightnessFromController(param.thisObject, (Integer) param.args[0]);
+                    }
+                }
+        );
+
+        XposedHelpers.findAndHookMethod(
+                "com.android.systemui.settings.brightness.BrightnessSliderController",
+                lpparam.classLoader,
+                "setValue",
+                int.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        Object sliderController = param.thisObject;
+                        Object view = XposedHelpers.getObjectField(sliderController, "mView");
+                        if (view instanceof View) {
+                            refreshBrightnessFromView((View) view, (Integer) param.args[0]);
+                        }
+                    }
+                }
+        );
+    }
+
+    private void hookVolumeControllerCallbacks(XC_LoadPackage.LoadPackageParam lpparam) {
+        XposedHelpers.findAndHookMethod(
+                TOGGLE_SLIDER_VIEW_CLASS,
+                lpparam.classLoader,
+                "updateMusicSlider",
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        refreshVolumeFromToggleSlider(param.thisObject);
+                    }
+                }
+        );
+
+        XposedHelpers.findAndHookMethod(
+                TOGGLE_SLIDER_VIEW_CLASS,
+                lpparam.classLoader,
+                "registerVolumeObserver",
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        refreshVolumeFromToggleSlider(param.thisObject);
+                    }
+                }
+        );
     }
 
     private void hookToggleSliderViewLifecycle(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -137,28 +211,65 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
                     }
                 }
         );
+
+        XposedHelpers.findAndHookMethod(
+                "com.android.systemui.settings.ToggleSliderView$2",
+                lpparam.classLoader,
+                "onProgressChanged",
+                SeekBar.class,
+                int.class,
+                boolean.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        SeekBar seekBar = (SeekBar) param.args[0];
+                        Object sliderView = findToggleSliderView(seekBar);
+                        if (sliderView == null || !isVolumeSlider(sliderView, seekBar)) {
+                            return;
+                        }
+                        if (Boolean.TRUE.equals(param.args[2])) {
+                            refreshVolumeLabel(sliderView, (Integer) param.args[1]);
+                        }
+                    }
+                }
+        );
     }
 
     private void attachSliderLabels(Object sliderView) {
         try {
-            attachLabelToRoot(sliderView, BRIGHTNESS_ROOT_FIELD, true);
-            attachLabelToRoot(sliderView, VOLUME_ROOT_FIELD, false);
+            attachLabelToRoot(sliderView, BRIGHTNESS_ROOT_FIELD, BRIGHTNESS_ICON_FIELD, true, BRIGHTNESS_PERCENTAGE_ENABLED);
+            attachLabelToRoot(sliderView, VOLUME_ROOT_FIELD, VOLUME_ICON_FIELD, false, VOLUME_PERCENTAGE_ENABLED);
         } catch (Throwable t) {
             logError("Failed to attach slider labels", t);
         }
     }
 
-    private void attachLabelToRoot(Object sliderView, String rootFieldName, boolean brightness) {
+    private void attachLabelToRoot(
+            Object sliderView,
+            String rootFieldName,
+            String iconFieldName,
+            boolean brightness,
+            boolean enabled
+    ) {
         FrameLayout root = getFrameLayoutField(sliderView, rootFieldName);
-        if (root == null) {
+        View icon = getViewField(sliderView, iconFieldName);
+        if (root == null || icon == null) {
+            return;
+        }
+
+        if (!enabled) {
+            removePercentView(root);
             return;
         }
 
         TextView percentView = findPercentView(root);
         if (percentView == null) {
             percentView = createPercentView(root.getContext());
-            root.addView(percentView, createLayoutParams(root.getContext()));
+            root.addView(percentView, createLayoutParams());
         }
+
+        ensureLayoutTracking(root, icon, percentView);
+        updatePercentColor(percentView, brightness);
 
         if (brightness) {
             refreshBrightnessLabel(sliderView, percentView);
@@ -168,6 +279,10 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
     }
 
     private void refreshBrightnessLabel(Object sliderView) {
+        if (!BRIGHTNESS_PERCENTAGE_ENABLED) {
+            detachBrightnessLabel(sliderView);
+            return;
+        }
         FrameLayout root = getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD);
         if (root == null) {
             return;
@@ -179,41 +294,145 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
     }
 
     private void refreshVolumeLabel(Object sliderView) {
+        refreshVolumeLabel(sliderView, (Integer) null);
+    }
+
+    private void refreshVolumeLabel(Object sliderView, Integer rawProgress) {
+        if (!VOLUME_PERCENTAGE_ENABLED) {
+            detachVolumeLabel(sliderView);
+            return;
+        }
         FrameLayout root = getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD);
         if (root == null) {
             return;
         }
         TextView percentView = findPercentView(root);
         if (percentView != null) {
-            refreshVolumeLabel(sliderView, percentView);
+            refreshVolumeLabel(sliderView, percentView, rawProgress);
         }
     }
 
     private void refreshBrightnessLabel(Object sliderView, TextView percentView) {
+        if (!BRIGHTNESS_PERCENTAGE_ENABLED) {
+            removePercentView(getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD));
+            return;
+        }
         try {
             SeekBar brightnessSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
             if (brightnessSlider == null) {
                 percentView.setText("--%");
                 return;
             }
-            percentView.setText(formatPercent(brightnessSlider.getProgress(), brightnessSlider.getMin(), brightnessSlider.getMax()));
+            updateBrightnessPercentColor(percentView);
+            percentView.setText(formatPercent(
+                    brightnessSlider.getProgress(),
+                    brightnessSlider.getMin(),
+                    brightnessSlider.getMax()
+            ));
+            schedulePositionUpdate(sliderView, BRIGHTNESS_ROOT_FIELD, BRIGHTNESS_ICON_FIELD);
         } catch (Throwable t) {
             percentView.setText("--%");
-            if (DEBUG) logError("Failed to refresh brightness percent", t);
+            if (DEBUG) {
+                logError("Failed to refresh brightness percent", t);
+            }
         }
     }
 
     private void refreshVolumeLabel(Object sliderView, TextView percentView) {
+        refreshVolumeLabel(sliderView, percentView, null);
+    }
+
+    private void refreshVolumeLabel(Object sliderView, TextView percentView, Integer rawProgress) {
+        if (!VOLUME_PERCENTAGE_ENABLED) {
+            removePercentView(getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD));
+            return;
+        }
         try {
-            SeekBar volumeSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mMediaVolumeSlider");
-            if (volumeSlider == null) {
+            Integer volumeProgress = getVolumeProgress(sliderView, rawProgress);
+            if (volumeProgress == null) {
                 percentView.setText("--%");
                 return;
             }
-            percentView.setText(formatPercent(volumeSlider.getProgress(), volumeSlider.getMin(), volumeSlider.getMax()));
+            updateVolumePercentColor(percentView);
+            percentView.setText(formatPercent(volumeProgress, 0, 100));
+            schedulePositionUpdate(sliderView, VOLUME_ROOT_FIELD, VOLUME_ICON_FIELD);
         } catch (Throwable t) {
             percentView.setText("--%");
-            if (DEBUG) logError("Failed to refresh volume percent", t);
+            if (DEBUG) {
+                logError("Failed to refresh volume percent", t);
+            }
+        }
+    }
+
+    private void refreshVolumeFromToggleSlider(Object sliderView) {
+        refreshVolumeFromToggleSlider(sliderView, null);
+    }
+
+    private void refreshVolumeFromToggleSlider(Object sliderView, Integer rawProgress) {
+        if (!VOLUME_PERCENTAGE_ENABLED || sliderView == null) {
+            return;
+        }
+        try {
+            Integer volumeProgress = getVolumeProgress(sliderView, rawProgress);
+            if (volumeProgress == null) {
+                return;
+            }
+            FrameLayout root = getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD);
+            if (root == null) {
+                return;
+            }
+            TextView percentView = findPercentView(root);
+            if (percentView == null) {
+                return;
+            }
+            percentView.setText(formatPercent(volumeProgress, 0, 100));
+            schedulePositionUpdate(sliderView, VOLUME_ROOT_FIELD, VOLUME_ICON_FIELD);
+        } catch (Throwable t) {
+            if (DEBUG) {
+                logError("Failed to refresh volume from toggle slider", t);
+            }
+        }
+    }
+
+    private Integer getVolumeProgress(Object sliderView, Integer rawProgress) {
+        try {
+            SeekBar volumeSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mMediaVolumeSlider");
+            if (volumeSlider == null) {
+                return null;
+            }
+            int progress = rawProgress != null ? rawProgress : volumeSlider.getProgress();
+            int min = volumeSlider.getMin();
+            int max = volumeSlider.getMax();
+            int range = Math.max(1, max - min);
+            int percent = Math.round(((progress - min) * 100f) / range);
+            percent = Math.max(0, Math.min(100, percent));
+            if (percent < 100 && isStreamVolumeAtMax(sliderView)) {
+                return 100;
+            }
+            return percent;
+        } catch (Throwable t) {
+            if (DEBUG) {
+                logError("Failed to resolve volume progress", t);
+            }
+            return null;
+        }
+    }
+
+    private boolean isStreamVolumeAtMax(Object sliderView) {
+        try {
+            Object audio = XposedHelpers.getObjectField(sliderView, "mAudio");
+            if (!(audio instanceof android.media.AudioManager)) {
+                return false;
+            }
+            android.media.AudioManager audioManager = (android.media.AudioManager) audio;
+            int current = audioManager.getStreamVolume(3);
+            int max = audioManager.getStreamMaxVolume(3);
+            return max > 0 && current >= max;
+        } catch (Throwable t) {
+            if (DEBUG) {
+                logError("Failed to resolve stream volume max state", t);
+            }
+            return false;
         }
     }
 
@@ -237,17 +456,17 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
         textView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         textView.setClickable(false);
         textView.setFocusable(false);
-        textView.setPadding(dp(context, 8), dp(context, 2), dp(context, 8), dp(context, 2));
+        textView.setPadding(dp(context, 6), dp(context, 2), dp(context, 6), dp(context, 2));
         textView.setElevation(dp(context, 2));
         return textView;
     }
 
-    private FrameLayout.LayoutParams createLayoutParams(Context context) {
+    private FrameLayout.LayoutParams createLayoutParams() {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        params.gravity = android.view.Gravity.CENTER;
+        params.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
         return params;
     }
 
@@ -261,6 +480,11 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
         return field instanceof FrameLayout ? (FrameLayout) field : null;
     }
 
+    private View getViewField(Object sliderView, String fieldName) {
+        Object field = XposedHelpers.getObjectField(sliderView, fieldName);
+        return field instanceof View ? (View) field : null;
+    }
+
     private boolean isBrightnessSlider(Object sliderView, Object view) {
         Object slider = XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
         return slider == view;
@@ -272,23 +496,13 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
     }
 
     private Object findToggleSliderView(View seekBar) {
-        ViewParent parent = seekBar.getParent();
-        if (parent instanceof View) {
-            View grandParent = ((View) parent).getParent() instanceof View ? (View) ((View) parent).getParent() : null;
-            if (grandParent != null && TOGGLE_SLIDER_VIEW_CLASS.equals(grandParent.getClass().getName())) {
-                return grandParent;
-            }
-            if (TOGGLE_SLIDER_VIEW_CLASS.equals(parent.getClass().getName())) {
-                return parent;
-            }
-        }
         View current = seekBar;
-        for (int i = 0; i < 4 && current != null; i++) {
-            ViewParent viewParent = current.getParent();
-            if (!(viewParent instanceof View)) {
+        for (int i = 0; i < 5 && current != null; i++) {
+            ViewParent parent = current.getParent();
+            if (!(parent instanceof View)) {
                 break;
             }
-            current = (View) viewParent;
+            current = (View) parent;
             if (TOGGLE_SLIDER_VIEW_CLASS.equals(current.getClass().getName())) {
                 return current;
             }
@@ -296,7 +510,176 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
         return null;
     }
 
+    private void ensureLayoutTracking(FrameLayout root, View icon, TextView percentView) {
+        if (layoutListeners.containsKey(root)) {
+            root.post(() -> positionLabel(root, icon, percentView));
+            return;
+        }
+
+        View.OnLayoutChangeListener listener = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> positionLabel(root, icon, percentView);
+        layoutListeners.put(root, listener);
+        root.addOnLayoutChangeListener(listener);
+        root.post(() -> positionLabel(root, icon, percentView));
+    }
+
+    private void detachBrightnessLabel(Object sliderView) {
+        removePercentView(getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD));
+    }
+
+    private void detachVolumeLabel(Object sliderView) {
+        removePercentView(getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD));
+    }
+
+    private void removePercentView(FrameLayout root) {
+        if (root == null) {
+            return;
+        }
+        View view = root.findViewWithTag(SLIDER_PERCENT_TAG);
+        if (view != null) {
+            root.removeView(view);
+        }
+        View.OnLayoutChangeListener listener = layoutListeners.remove(root);
+        if (listener != null) {
+            root.removeOnLayoutChangeListener(listener);
+        }
+    }
+
+    private void schedulePositionUpdate(Object sliderView, String rootFieldName, String iconFieldName) {
+        FrameLayout root = getFrameLayoutField(sliderView, rootFieldName);
+        View icon = getViewField(sliderView, iconFieldName);
+        if (root == null || icon == null) {
+            return;
+        }
+        TextView percentView = findPercentView(root);
+        if (percentView == null) {
+            return;
+        }
+        root.post(() -> positionLabel(root, icon, percentView));
+    }
+
+    private void positionLabel(FrameLayout root, View icon, TextView percentView) {
+        if (root == null || icon == null || percentView == null) {
+            return;
+        }
+
+        int rootWidth = root.getWidth();
+        int rootHeight = root.getHeight();
+        if (rootWidth <= 0 || rootHeight <= 0) {
+            return;
+        }
+
+        if (percentView.getMeasuredWidth() == 0 || percentView.getMeasuredHeight() == 0) {
+            percentView.measure(
+                    View.MeasureSpec.makeMeasureSpec(rootWidth, View.MeasureSpec.AT_MOST),
+                    View.MeasureSpec.makeMeasureSpec(rootHeight, View.MeasureSpec.AT_MOST)
+            );
+        }
+
+        int labelWidth = Math.max(1, percentView.getMeasuredWidth());
+        int labelHeight = Math.max(1, percentView.getMeasuredHeight());
+        int iconCenterX = icon.getLeft() + (icon.getWidth() / 2);
+        int targetLeft = iconCenterX - (labelWidth / 2);
+        int targetTop = icon.getBottom() + dp(root.getContext(), LABEL_GAP_DP);
+
+        targetLeft = Math.max(0, Math.min(targetLeft, Math.max(0, rootWidth - labelWidth)));
+        targetTop = Math.max(0, Math.min(targetTop, Math.max(0, rootHeight - labelHeight)));
+
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) percentView.getLayoutParams();
+        if (params == null) {
+            params = createLayoutParams();
+        }
+        params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+        params.leftMargin = targetLeft;
+        params.topMargin = targetTop;
+        percentView.setLayoutParams(params);
+    }
+
+    private void refreshBrightnessFromController(Object brightnessController, int progress) {
+        if (!BRIGHTNESS_PERCENTAGE_ENABLED || brightnessController == null) {
+            return;
+        }
+        try {
+            Object control = XposedHelpers.getObjectField(brightnessController, "mControl");
+            if (control == null) {
+                return;
+            }
+            Object view = XposedHelpers.getObjectField(control, "mView");
+            if (!(view instanceof View)) {
+                return;
+            }
+            refreshBrightnessFromView((View) view, progress);
+        } catch (Throwable t) {
+            if (DEBUG) {
+                logError("Failed to refresh brightness from controller", t);
+            }
+        }
+    }
+
+    private void refreshBrightnessFromView(View view, int progress) {
+        if (view == null) {
+            return;
+        }
+        Object sliderView = findToggleSliderView(view);
+        if (sliderView == null) {
+            return;
+        }
+        FrameLayout root = getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD);
+        if (root == null) {
+            return;
+        }
+        TextView percentView = findPercentView(root);
+        if (percentView == null) {
+            return;
+        }
+
+        try {
+            updateBrightnessPercentColor(percentView);
+            SeekBar brightnessSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
+            int max = brightnessSlider != null ? brightnessSlider.getMax() : 65535;
+            max = Math.max(1, max);
+            int percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)));
+            percentView.setText(String.format(Locale.US, "%d%%", percent));
+            schedulePositionUpdate(sliderView, BRIGHTNESS_ROOT_FIELD, BRIGHTNESS_ICON_FIELD);
+        } catch (Throwable t) {
+            if (DEBUG) {
+                logError("Failed to refresh brightness from view", t);
+            }
+        }
+    }
+
     private int dp(Context context, int value) {
         return Math.round(value * context.getResources().getDisplayMetrics().density);
+    }
+
+    private void updateBrightnessPercentColor(TextView percentView) {
+        percentView.setTextColor(resolveBrightnessPercentColor());
+    }
+
+    private void updateVolumePercentColor(TextView percentView) {
+        percentView.setTextColor(resolveVolumePercentColor());
+    }
+
+    private void updatePercentColor(TextView percentView, boolean brightness) {
+        if (brightness) {
+            updateBrightnessPercentColor(percentView);
+        } else {
+            updateVolumePercentColor(percentView);
+        }
+    }
+
+    private int resolveBrightnessPercentColor() {
+        return Color.parseColor("#FFFFFF");
+    }
+
+    private int resolveVolumePercentColor() {
+        return Color.parseColor("#FFFFFF");
+    }
+
+    private void updatePrefs() {
+        PreferenceHelper prefs = PreferenceHelper.getInstance();
+        VOLUME_PERCENTAGE_ENABLED = prefs.getBoolean("volume_slider_percentage", false);
+        BRIGHTNESS_PERCENTAGE_ENABLED = prefs.getBoolean("brightness_slider_percentage", false);
     }
 }
