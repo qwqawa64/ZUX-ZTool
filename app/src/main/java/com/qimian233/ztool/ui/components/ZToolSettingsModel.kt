@@ -313,16 +313,6 @@ fun ExpressiveSectionItems(
     }
 }
 
-@Composable
-fun materialExpressiveSettingsSectionColor(): Color {
-    val colorScheme = MaterialTheme.colorScheme
-    return if (colorScheme.surface.luminance() > 0.5f) {
-        colorScheme.surfaceContainerLowest
-    } else {
-        colorScheme.surfaceContainerLow
-    }
-}
-
 fun expressiveSettingsItemShape(index: Int, count: Int): Shape {
     if (count <= 1) {
         return RoundedCornerShape(16.dp)
