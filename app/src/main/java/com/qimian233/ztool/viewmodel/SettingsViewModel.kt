@@ -54,14 +54,6 @@ class SettingsViewModel(
         }
     }
 
-    fun showRestoreConfirmDialog() {
-        _uiState.value = _uiState.value.copy(showRestoreConfirmDialog = true)
-    }
-
-    fun dismissRestoreConfirmDialog() {
-        _uiState.value = _uiState.value.copy(showRestoreConfirmDialog = false)
-    }
-
     fun restoreDefaultConfig() {
         repository.restoreDefaultConfig()
         _uiState.value = repository.loadState().copy(showRestoreConfirmDialog = false)
