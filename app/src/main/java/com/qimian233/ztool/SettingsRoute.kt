@@ -8,13 +8,8 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -43,9 +38,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -58,6 +53,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
@@ -69,16 +66,8 @@ import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
-import com.qimian233.ztool.ui.components.SettingItem
-import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.viewmodel.SettingsUiState
 import com.qimian233.ztool.viewmodel.SettingsViewModel
-
-@SuppressLint("LocalContextGetResourceValueCall")
-@Composable
-fun SettingsMainRoute() {
-    SettingsMainRoute(onOpenThemeSettings = {}, onOpenAbout = {})
-}
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -169,10 +158,14 @@ fun SettingsMainRoute(
         showRestoreConfirmDialog = showRestoreConfirmDialog,
         onConfirm = {
             viewModel.restoreDefaultConfig()
+            @Suppress("AssignedValueIsNeverRead")
             showRestoreConfirmDialog = false
             showSettingsToast(context, defaultConfigRestoredStr)
         },
-        onDismiss = { showRestoreConfirmDialog = false },
+        onDismiss = {
+            @Suppress("AssignedValueIsNeverRead")
+            showRestoreConfirmDialog = false
+        },
     )
 }
 
@@ -605,7 +598,7 @@ private fun themeSettingsSections(
             title = stringResource(R.string.app_ui_theme_settings),
             items = buildList {
                 add(
-                    SettingItem.Dropdown<LabeledOption<FrontendStyle>>(
+                    SettingItem.Dropdown(
                         key = "frontend_style",
                         label = stringResource(R.string.frontend_style_title),
                         value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
@@ -616,7 +609,7 @@ private fun themeSettingsSections(
                     )
                 )
                 add(
-                    SettingItem.Dropdown<LabeledOption<ThemeMode>>(
+                    SettingItem.Dropdown(
                         key = "theme_mode",
                         label = stringResource(R.string.theme_mode_title),
                         value = themeModeOptions.first { it.value == settings.themeMode }.label,
@@ -627,7 +620,7 @@ private fun themeSettingsSections(
                     )
                 )
                 add(
-                    SettingItem.Dropdown<LabeledOption<MaterialColorSpec>>(
+                    SettingItem.Dropdown(
                         key = "material_color_spec",
                         label = stringResource(R.string.material_color_spec_title),
                         value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
@@ -638,7 +631,7 @@ private fun themeSettingsSections(
                     )
                 )
                 add(
-                    SettingItem.Dropdown<LabeledOption<MaterialPalette>>(
+                    SettingItem.Dropdown(
                         key = "material_palette_mode",
                         label = stringResource(R.string.material_palette_mode_title),
                         value = selectedPaletteLabel,
@@ -718,13 +711,13 @@ private data class LabeledOption<T>(
 
 @Composable
 private fun ManualSeedColorRow(
+    modifier: Modifier = Modifier,
     color: Long,
     colorText: String,
     isError: Boolean,
     onColorTextChanged: (String) -> Unit,
     onEditingFinished: () -> Unit,
     icon: ImageVector? = null,
-    modifier: Modifier = Modifier
 ) {
     ZToolArgbColorTextFieldRow(
         label = stringResource(R.string.manual_seed_color_title),
