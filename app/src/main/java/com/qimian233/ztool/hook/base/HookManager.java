@@ -39,6 +39,7 @@ import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimatio
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.ControlCenterNoTileLabelsHook;
+import com.qimian233.ztool.hook.modules.systemui.ControlCenterSliderPercentageHook;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsColor;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsRoundCorner;
@@ -179,6 +180,8 @@ public class HookManager {
         registerHookModule(new RecentTaskMemoryViewHook());
         // 注册模块: 控制中心磁贴圆角自定义
         registerHookModule(new CustomQsRoundCorner());
+        // 注册模块: 控制中心滑条百分比显示
+        registerHookModule(new ControlCenterSliderPercentageHook());
         // 注册模块: 控制中心磁贴颜色自定义
         registerHookModule(new CustomQsColor());
         // 注册模块: 控制中心背景模糊自定义

@@ -97,6 +97,8 @@ public class LogParser {
                 Pattern.compile("\\[systemui_battery_percentage]\\s*(.*)"));
         MODULE_PATTERNS.put("qs_round_corner",
                 Pattern.compile("\\[qs_round_corner]\\s*(.*)"));
+        MODULE_PATTERNS.put("control_center_slider_percentage",
+                Pattern.compile("\\[control_center_slider_percentage]\\s*(.*)"));
         MODULE_PATTERNS.put("qs_color",
                 Pattern.compile("\\[qs_color]\\s*(.*)"));
 
@@ -211,6 +213,7 @@ public class LogParser {
         MODULE_NAMES.put("systemui_battery_percentage", "电池外百分比");
         MODULE_NAMES.put("ForceLenovoAOD", "强制开启联想AOD");
         MODULE_NAMES.put("qs_round_corner", "控制中心磁贴自定义圆角");
+        MODULE_NAMES.put("control_center_slider_percentage", "控制中心滑条百分比显示");
         MODULE_NAMES.put("qs_color", "控制中心磁贴自定义颜色");
 
         // 游戏工具相关
@@ -614,7 +617,7 @@ public class LogParser {
                 "control_center_no_tile_labels",
                 "NativeNotificationIcon", "No_ChargeAnimation", "systemui_network_speed_size",
                 "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceLenovoAOD",
-                "qs_round_corner", "qs_color"
+                "qs_round_corner", "control_center_slider_percentage", "qs_color"
         ));
 
         // 游戏工具相关
