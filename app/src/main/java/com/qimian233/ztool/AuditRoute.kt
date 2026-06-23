@@ -280,7 +280,6 @@ private fun AuditScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                 ) {
                     when {
                         state.isLoading -> {
@@ -469,60 +468,68 @@ private fun LogEntryRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .padding(vertical = 8.dp)
+            .background(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(8.dp))
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .width(4.dp)
-                .height(76.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(levelColor(entry.logLevel))
-        )
-        Spacer(modifier = Modifier.width(8.dp))
+                .fillMaxWidth()
+                .padding(vertical = 16.dp, horizontal = 10.dp)
+                .background(color = Color.Transparent)
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(levelColor(entry.logLevel))
+            )
+            Spacer(modifier = Modifier.width(8.dp))
 
-        StatusIcon(entry)
+            StatusIcon(entry)
 
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = entry.timestamp?.takeIf { it.length >= 12 }?.substring(11) ?: "--:--:--",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
-                entry.module?.let {
-                    LogTag(text = LogParser.getModuleDisplayName(it), color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(6.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = entry.timestamp?.takeIf { it.length >= 12 }?.substring(11) ?: "--:--:--",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    entry.module?.let {
+                        LogTag(text = LogParser.getModuleDisplayName(it), color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    LogTag(text = entry.level ?: "?", color = levelColor(entry.logLevel))
+                    if (entry.isMultiLine) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        LogTag(
+                            text = stringResource(R.string.multiLineStackTrace),
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
                 }
-                LogTag(text = entry.level ?: "?", color = levelColor(entry.logLevel))
-                if (entry.isMultiLine) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    LogTag(
-                        text = stringResource(R.string.multiLineStackTrace),
-                        color = MaterialTheme.colorScheme.tertiary
+
+                Text(
+                    text = entry.previewMessage(stringResource(R.string.more_lines_suffix)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+                val details = entry.detailsText()
+                if (details.isNotEmpty()) {
+                    Text(
+                        text = details,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
-            }
-
-            Text(
-                text = entry.previewMessage(stringResource(R.string.more_lines_suffix)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            val details = entry.detailsText()
-            if (details.isNotEmpty()) {
-                Text(
-                    text = details,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
             }
         }
     }

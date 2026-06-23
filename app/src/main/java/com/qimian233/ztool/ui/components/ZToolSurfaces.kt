@@ -67,15 +67,14 @@ fun ZToolPageSurface(
 @Composable
 fun ZToolCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = Color.Transparent,
+    containerColor: Color = Color.Unspecified,
     defaultElevation: androidx.compose.ui.unit.Dp = 0.dp,
     content: @Composable () -> Unit
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        val actualColor = if (containerColor == Color.Transparent || containerColor == MaterialTheme.colorScheme.surfaceContainer) {
-            top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.surfaceContainer
-        } else {
-            containerColor
+        val actualColor = when (containerColor) {
+            Color.Unspecified -> top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.surfaceContainer
+            else -> containerColor
         }
         top.yukonga.miuix.kmp.basic.Surface(
             modifier = modifier,
@@ -91,7 +90,7 @@ fun ZToolCard(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = containerColor
+            containerColor = if (containerColor == Color.Unspecified) Color.Transparent else containerColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = defaultElevation)
     ) {
