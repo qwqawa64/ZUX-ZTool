@@ -28,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Refresh
@@ -622,7 +621,6 @@ private fun LogDetailDialog(
         },
         confirmButton = {
             TextButton(onClick = onCopy) {
-                Icon(Icons.Rounded.ContentCopy, contentDescription = null)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(stringResource(R.string.copy_button))
             }
