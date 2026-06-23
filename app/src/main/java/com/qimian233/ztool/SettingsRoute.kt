@@ -49,6 +49,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -99,6 +102,8 @@ fun SettingsMainRoute(
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val viewModel = rememberSettingsViewModel(activity)
     val uiState by viewModel.uiState.collectAsState()
+    var showRestoreConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    val defaultConfigRestoredStr = stringResource(R.string.default_config_restored)
     
     val backupSuccessStr = stringResource(R.string.config_backup_success)
     val restoreSuccessStr = stringResource(R.string.config_restore_success)
@@ -149,8 +154,11 @@ fun SettingsMainRoute(
         state = uiState,
         onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
         onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-        onRestoreDefault = viewModel::showRestoreConfirmDialog,
-        onOpenThemeSettings = onOpenThemeSettings,
+        onRestoreDefault = { showRestoreConfirmDialog = true },
+        onOpenThemeSettings = {
+            showRestoreConfirmDialog = false
+            onOpenThemeSettings()
+        },
         onOpenLanguageSettings = { openAppLanguageSettings(context) },
         onLogServiceChanged = {
             viewModel.setLogServiceEnabled(it)
@@ -162,7 +170,20 @@ fun SettingsMainRoute(
         onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
         onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
         onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-        onAbout = onOpenAbout
+        onAbout = {
+            showRestoreConfirmDialog = false
+            onOpenAbout()
+        }
+    )
+
+    SettingsDialogs(
+        showRestoreConfirmDialog = showRestoreConfirmDialog,
+        onConfirm = {
+            viewModel.restoreDefaultConfig()
+            showRestoreConfirmDialog = false
+            showSettingsToast(context, defaultConfigRestoredStr)
+        },
+        onDismiss = { showRestoreConfirmDialog = false },
     )
 }
 
@@ -212,28 +233,18 @@ fun SettingsThemeMainRoute(
             .clipToBounds()
     )
 
-    SettingsDialogs(
-        state = uiState,
-        viewModel = viewModel,
-        context = context
-    )
 }
 
 @Composable
 private fun SettingsDialogs(
-    state: SettingsUiState,
-    viewModel: SettingsViewModel,
-    context: android.content.Context
+    showRestoreConfirmDialog: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
 ) {
-    val defaultConfigRestoredStr = stringResource(R.string.default_config_restored)
-
-    if (state.showRestoreConfirmDialog) {
+    if (showRestoreConfirmDialog) {
         RestoreDefaultDialog(
-            onConfirm = {
-                viewModel.restoreDefaultConfig()
-                showSettingsToast(context, defaultConfigRestoredStr)
-            },
-            onDismiss = viewModel::dismissRestoreConfirmDialog
+            onConfirm = onConfirm,
+            onDismiss = onDismiss
         )
     }
 
@@ -320,7 +331,6 @@ private fun SettingsRoute(
                 .padding(horizontal = 32.dp, vertical = 32.dp)
         ) {
             Spacer(modifier = Modifier.height(24.dp))
-
             SettingsSection(title = stringResource(R.string.backupAndRestore)) {
                 ExpressiveSectionItems(count = 3) { itemModifier ->
                     SettingsActionRow(
@@ -806,7 +816,7 @@ private fun RestoreDefaultDialog(
         text = { Text(stringResource(R.string.restore_default_confirmation)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.restart_yes))
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {

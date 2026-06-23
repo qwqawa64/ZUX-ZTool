@@ -249,7 +249,7 @@ private fun AppChooserContent(
         onDismissRequest = onCancel,
         confirmButton = {
             TextButton(onClick = { onConfirm(selectedPackages.toSet()) }) {
-                Text(stringResource(R.string.restart_yes))
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
