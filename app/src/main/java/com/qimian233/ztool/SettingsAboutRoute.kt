@@ -53,7 +53,8 @@ fun SettingsAboutRoute(
     onOpenUnfuckZUI: () -> Unit,
     onOpenZuxOsPlus: () -> Unit,
     onOpenQimian233: () -> Unit,
-    onOpenWasdDestroy: () -> Unit
+    onOpenWasdDestroy: () -> Unit,
+    onOpenUdl: () -> Unit
 ) {
     val context = LocalContext.current
     val unknownString = stringResource(R.string.unknown)
@@ -107,6 +108,12 @@ fun SettingsAboutRoute(
                         title = "WASDDestroy",
                         summary = stringResource(R.string.about_wasd_destroy_summary),
                         onClick = onOpenWasdDestroy,
+                        modifier = itemModifier()
+                    )
+                    AboutActionRow(
+                        title = "uuuddddl",
+                        summary = stringResource(R.string.about_uuuddddl),
+                        onClick = onOpenUdl,
                         modifier = itemModifier()
                     )
                 }
@@ -168,7 +175,8 @@ private fun AboutHeaderCard(
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "$versionName - $commitCount - $commitHash",

@@ -587,6 +587,9 @@ private fun MainRouteNavHost(
                 },
                 onOpenZuxOsPlus = {
                     openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos")
+                },
+                onOpenUdl = {
+                    openExternalLink(context, "https://github.com/uuuddddl")
                 }
             )
         }

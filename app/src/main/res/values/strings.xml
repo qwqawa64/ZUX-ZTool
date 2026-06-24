@@ -221,8 +221,9 @@
     <string name="about_view_source_title">在 GitHub 查看源码</string>
     <string name="about_license_title">许可证信息</string>
     <string name="about_license_summary">本项目遵守 Apache 2.0 协议发布</string>
-    <string name="about_qimian233_summary">项目发起者、Hook、用户界面</string>
+    <string name="about_qimian233_summary">项目发起人、Hook、用户界面</string>
     <string name="about_wasd_destroy_summary">部分 Hook、部分用户界面</string>
+    <string name="about_uuuddddl">部分 Hook</string>
     <string name="about_unfuckzui_summary">部分功能灵感和参考</string>
     <string name="about_zuxos_plus_summary">部分功能灵感</string>
     <string name="final_confirmation_title">最后一次确认</string>
