@@ -1,6 +1,11 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.text.Html;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
+
+import java.util.Locale;
+
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -178,7 +183,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
                     // 记录调试信息
                     if (DEBUG) {
-                        log(String.format("Successfully updated speed - downSpeed=%d, upSpeed=%d, timeDiff=%d",
+                        log(String.format(Locale.US, "Successfully updated speed - downSpeed=%d, upSpeed=%d, timeDiff=%d",
                                 downSpeed, upSpeed, timeDiff));
                     }
 
@@ -225,7 +230,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
             // 使用HTML格式设置文本
             XposedHelpers.callMethod(networkSpeedView, "setText",
-                    android.text.Html.fromHtml(displayText));
+                    android.text.Html.fromHtml(displayText, Html.FROM_HTML_MODE_LEGACY));
 
         } catch (Throwable t) {
             logError("Error in speed display", t);
