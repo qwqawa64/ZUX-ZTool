@@ -69,7 +69,7 @@ fun ZListItem(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier,
+            modifier = modifier.padding(vertical = 8.dp, horizontal = 24.dp),
             title = title,
             summary = summary,
             startAction = leadingContent?.let {
@@ -80,7 +80,7 @@ fun ZListItem(
                 }
             },
             endActions = trailingContent,
-            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+            insideMargin = PaddingValues(vertical = 16.dp),
             onClick = onClick,
             enabled = enabled
         )
@@ -90,6 +90,7 @@ fun ZListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .padding(vertical = 16.dp)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(enabled = enabled) { onClick() }

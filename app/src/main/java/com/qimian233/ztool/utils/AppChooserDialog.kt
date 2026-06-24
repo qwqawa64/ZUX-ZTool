@@ -1,12 +1,12 @@
 package com.qimian233.ztool.utils
 
+import android.app.Dialog
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
-import android.app.Dialog
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.compose.foundation.clickable
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,7 +23,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,8 +43,6 @@ import com.qimian233.ztool.ui.components.ZToolCircularProgressIndicator
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import java.util.concurrent.Executors
-
-import com.qimian233.ztool.ui.components.ZToolDialog
 
 object AppChooserDialog {
     interface AppSelectionCallback {
@@ -249,7 +245,7 @@ private fun AppChooserContent(
         onDismissRequest = onCancel,
         confirmButton = {
             TextButton(onClick = { onConfirm(selectedPackages.toSet()) }) {
-                Text(stringResource(R.string.restart_yes))
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {

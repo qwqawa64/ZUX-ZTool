@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -39,8 +40,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
-import com.qimian233.ztool.ui.firstrun.AgreementDisplayMode
-import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
+import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.settingactivity.ota.OtaSettingsRoute
@@ -53,9 +53,10 @@ import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterS
 import com.qimian233.ztool.settingactivity.systemui.SystemUiSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsRoute
-import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
+import com.qimian233.ztool.ui.firstrun.AgreementDisplayMode
+import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
@@ -267,11 +268,12 @@ private enum class MainRoute(
 }
 
 private object HiddenRoute {
-    const val SettingsTheme = "SettingsTheme"
-    const val SystemUiStatusBar = "feature/system-ui/status-bar"
-    const val SystemUiLockScreen = "feature/system-ui/lock-screen"
-    const val SystemUiControlCenter = "feature/system-ui/control-center"
-    const val SettingsDetailMagicWindowSearch = "feature/settings-detail/magic-window-search"
+    const val SETTINGS_THEME = "SettingsTheme"
+    const val SETTINGS_ABOUT = "SettingsAbout"
+    const val SYSTEM_UI_STATUS_BAR = "feature/system-ui/status-bar"
+    const val SYSTEM_UI_LOCK_SCREEN = "feature/system-ui/lock-screen"
+    const val SYSTEM_UI_CONTROL_CENTER = "feature/system-ui/control-center"
+    const val SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH = "feature/settings-detail/magic-window-search"
 }
 
 @Composable
@@ -377,6 +379,7 @@ private fun MainRouteNavHost(
     predictiveBackGestureEnabled: Boolean,
     onEnvironmentStateChanged: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     val mainRouteEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
         slideIntoContainer(
             towards = routeSlideDirection(
@@ -527,14 +530,19 @@ private fun MainRouteNavHost(
         ) {
             SettingsMainRoute(
                 onOpenThemeSettings = {
-                    navController.navigate(HiddenRoute.SettingsTheme) {
+                    navController.navigate(HiddenRoute.SETTINGS_THEME) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenAbout = {
+                    navController.navigate(SettingsAboutRouteName) {
                         launchSingleTop = true
                     }
                 }
             )
         }
         composable(
-            route = HiddenRoute.SettingsTheme,
+            route = HiddenRoute.SETTINGS_THEME,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
@@ -547,6 +555,38 @@ private fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
+                }
+            )
+        }
+        composable(
+            route = SettingsAboutRouteName,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SettingsAboutRoute(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Settings.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                onOpenGithub = {
+                    openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool")
+                },
+                onOpenUnfuckZUI = {
+                    openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI")
+                },
+                onOpenQimian233 = {
+                    openExternalLink(context, "http://www.coolapk.com/u/10099756", true, "com.coolapk.market")
+                },
+                onOpenWasdDestroy = {
+                    openExternalLink(context, "http://www.coolapk.com/u/18634835", true, "com.coolapk.market")
+                },
+                onOpenZuxOsPlus = {
+                    openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos")
                 }
             )
         }
@@ -587,14 +627,14 @@ private fun MainRouteNavHost(
                     }
                 },
                 onOpenStrategySearch = {
-                    navController.navigate(HiddenRoute.SettingsDetailMagicWindowSearch) {
+                    navController.navigate(HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH) {
                         launchSingleTop = true
                     }
                 }
             )
         }
         composable(
-            route = HiddenRoute.SettingsDetailMagicWindowSearch,
+            route = HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
@@ -647,24 +687,24 @@ private fun MainRouteNavHost(
                     }
                 },
                 onOpenStatusBar = {
-                    navController.navigate(HiddenRoute.SystemUiStatusBar) {
+                    navController.navigate(HiddenRoute.SYSTEM_UI_STATUS_BAR) {
                         launchSingleTop = true
                     }
                 },
                 onOpenLockScreen = {
-                    navController.navigate(HiddenRoute.SystemUiLockScreen) {
+                    navController.navigate(HiddenRoute.SYSTEM_UI_LOCK_SCREEN) {
                         launchSingleTop = true
                     }
                 },
                 onOpenControlCenter = {
-                    navController.navigate(HiddenRoute.SystemUiControlCenter) {
+                    navController.navigate(HiddenRoute.SYSTEM_UI_CONTROL_CENTER) {
                         launchSingleTop = true
                     }
                 }
             )
         }
         composable(
-            route = HiddenRoute.SystemUiStatusBar,
+            route = HiddenRoute.SYSTEM_UI_STATUS_BAR,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
@@ -683,7 +723,7 @@ private fun MainRouteNavHost(
             )
         }
         composable(
-            route = HiddenRoute.SystemUiLockScreen,
+            route = HiddenRoute.SYSTEM_UI_LOCK_SCREEN,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
@@ -702,7 +742,7 @@ private fun MainRouteNavHost(
             )
         }
         composable(
-            route = HiddenRoute.SystemUiControlCenter,
+            route = HiddenRoute.SYSTEM_UI_CONTROL_CENTER,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
@@ -871,16 +911,17 @@ private fun navigationRouteIndex(route: String?): Int {
         FeatureDestination.Ota.route -> 2
         FeatureDestination.PackageInstaller.route -> 2
         FeatureDestination.SystemUi.route -> 2
-        HiddenRoute.SystemUiStatusBar -> 3
-        HiddenRoute.SystemUiLockScreen -> 3
-        HiddenRoute.SystemUiControlCenter -> 3
-        HiddenRoute.SettingsDetailMagicWindowSearch -> 3
+        HiddenRoute.SYSTEM_UI_STATUS_BAR -> 3
+        HiddenRoute.SYSTEM_UI_LOCK_SCREEN -> 3
+        HiddenRoute.SYSTEM_UI_CONTROL_CENTER -> 3
+        HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH -> 3
         FeatureDestination.Launcher.route -> 2
         FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2
         MainRoute.Audit.name -> 4
         MainRoute.Settings.name -> 5
-        HiddenRoute.SettingsTheme -> 6
+        HiddenRoute.SETTINGS_THEME -> 6
+        HiddenRoute.SETTINGS_ABOUT -> 6
         else -> 0
     }
 }

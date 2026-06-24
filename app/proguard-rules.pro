@@ -33,3 +33,7 @@
 -keepattributes InnerClasses
 # 6. 保护自 Hook 方法 com.qimian233.ztool.ModuleActivationProbe.isModuleActive 不被混淆
 -keepclasseswithmembernames class com.qimian233.ztool.ModuleActivationProbe { isModuleActive(); }
+
+# Gson TypeToken rules to preserve generic signatures
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken

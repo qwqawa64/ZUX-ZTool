@@ -1,6 +1,9 @@
 package com.qimian233.ztool.ui.components
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,9 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -31,11 +33,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -313,16 +312,6 @@ fun ExpressiveSectionItems(
     }
 }
 
-@Composable
-fun materialExpressiveSettingsSectionColor(): Color {
-    val colorScheme = MaterialTheme.colorScheme
-    return if (colorScheme.surface.luminance() > 0.5f) {
-        colorScheme.surfaceContainerLowest
-    } else {
-        colorScheme.surfaceContainerLow
-    }
-}
-
 fun expressiveSettingsItemShape(index: Int, count: Int): Shape {
     if (count <= 1) {
         return RoundedCornerShape(16.dp)
@@ -449,17 +438,15 @@ private fun <T> ZToolPopupMenuSettingItem(
     item: SettingItem.Dropdown<T>,
     modifier: Modifier = Modifier
 ) {
-    ZToolPopupMenuField(
+    ZToolPopupMenuSettingRow(
+        title = item.label,
         value = item.value,
         options = item.options,
         optionLabel = item.optionLabel,
         onOptionSelected = item.onOptionSelected,
         enabled = item.enabled,
         icon = item.icon,
-        dialogTitle = item.label,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp)
     )
 }
 

@@ -8,24 +8,14 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -42,41 +32,36 @@ import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
-import com.qimian233.ztool.ui.components.ExpressiveSectionItems
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
-import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
-import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingLeadingIcon
-import com.qimian233.ztool.ui.components.ZToolSwitchRow
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.components.expressiveSettingsItemShape
 import com.qimian233.ztool.ui.theme.FrontendStyle
-import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
@@ -86,20 +71,17 @@ import com.qimian233.ztool.viewmodel.SettingsViewModel
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
-fun SettingsMainRoute() {
-    SettingsMainRoute(onOpenThemeSettings = {})
-}
-
-@SuppressLint("LocalContextGetResourceValueCall")
-@Composable
 fun SettingsMainRoute(
-    onOpenThemeSettings: () -> Unit
+    onOpenThemeSettings: () -> Unit,
+    onOpenAbout: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as MainActivity
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val viewModel = rememberSettingsViewModel(activity)
     val uiState by viewModel.uiState.collectAsState()
+    var showRestoreConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    val defaultConfigRestoredStr = stringResource(R.string.default_config_restored)
     
     val backupSuccessStr = stringResource(R.string.config_backup_success)
     val restoreSuccessStr = stringResource(R.string.config_restore_success)
@@ -150,8 +132,11 @@ fun SettingsMainRoute(
         state = uiState,
         onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
         onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-        onRestoreDefault = viewModel::showRestoreConfirmDialog,
-        onOpenThemeSettings = onOpenThemeSettings,
+        onRestoreDefault = { showRestoreConfirmDialog = true },
+        onOpenThemeSettings = {
+            showRestoreConfirmDialog = false
+            onOpenThemeSettings()
+        },
         onOpenLanguageSettings = { openAppLanguageSettings(context) },
         onLogServiceChanged = {
             viewModel.setLogServiceEnabled(it)
@@ -163,13 +148,24 @@ fun SettingsMainRoute(
         onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
         onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
         onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-        onAbout = viewModel::showAboutDialog
+        onAbout = {
+            showRestoreConfirmDialog = false
+            onOpenAbout()
+        }
     )
 
     SettingsDialogs(
-        state = uiState,
-        viewModel = viewModel,
-        context = context
+        showRestoreConfirmDialog = showRestoreConfirmDialog,
+        onConfirm = {
+            viewModel.restoreDefaultConfig()
+            @Suppress("AssignedValueIsNeverRead")
+            showRestoreConfirmDialog = false
+            showSettingsToast(context, defaultConfigRestoredStr)
+        },
+        onDismiss = {
+            @Suppress("AssignedValueIsNeverRead")
+            showRestoreConfirmDialog = false
+        },
     )
 }
 
@@ -219,49 +215,21 @@ fun SettingsThemeMainRoute(
             .clipToBounds()
     )
 
-    SettingsDialogs(
-        state = uiState,
-        viewModel = viewModel,
-        context = context
-    )
 }
 
 @Composable
 private fun SettingsDialogs(
-    state: SettingsUiState,
-    viewModel: SettingsViewModel,
-    context: android.content.Context
+    showRestoreConfirmDialog: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
 ) {
-    val defaultConfigRestoredStr = stringResource(R.string.default_config_restored)
-
-    if (state.showRestoreConfirmDialog) {
+    if (showRestoreConfirmDialog) {
         RestoreDefaultDialog(
-            onConfirm = {
-                viewModel.restoreDefaultConfig()
-                showSettingsToast(context, defaultConfigRestoredStr)
-            },
-            onDismiss = viewModel::dismissRestoreConfirmDialog
+            onConfirm = onConfirm,
+            onDismiss = onDismiss
         )
     }
 
-    if (state.showAboutDialog) {
-        AboutDialog(
-            version = state.moduleVersion,
-            onDismiss = viewModel::dismissAboutDialog,
-            onOpenGithub = {
-                openSettingsExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool", false, "")
-            },
-            onOpenCredits = {
-                openSettingsExternalLink(context, "https://github.com/dantmnf/UnfuckZUI", false, "")
-            },
-            onOpenAuthor = {
-                openSettingsExternalLink(context, "http://www.coolapk.com/u/10099756", true, "com.coolapk.market")
-            },
-            onOpenCollaborator = {
-                openSettingsExternalLink(context, "http://www.coolapk.com/u/18634835", true, "com.coolapk.market")
-            }
-        )
-    }
 }
 
 @Composable
@@ -273,23 +241,6 @@ private fun rememberSettingsViewModel(activity: MainActivity): SettingsViewModel
             activity,
             SettingsViewModelFactory(repository)
         )[SettingsViewModel::class.java]
-    }
-}
-
-private fun openSettingsExternalLink(
-    context: android.content.Context,
-    link: String,
-    shouldDeterminePackage: Boolean,
-    packageName: String
-) {
-    try {
-        context.startActivity(
-            Intent(Intent.ACTION_VIEW, link.toUri()).apply {
-                if (shouldDeterminePackage) setPackage(packageName)
-            }
-        )
-    } catch (_: Exception) {
-        showSettingsToast(context, context.getString(R.string.open_web_link_failed))
     }
 }
 
@@ -352,113 +303,32 @@ private fun SettingsRoute(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .widthIn(max = 960.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp, vertical = 32.dp)
-        ) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            SettingsSection(title = stringResource(R.string.backupAndRestore)) {
-                ExpressiveSectionItems(count = 3) { itemModifier ->
-                    SettingsActionRow(
-                        title = stringResource(R.string.backupConfigToFile),
-                        onClick = onBackup,
-                        icon = Icons.Rounded.Backup,
-                        modifier = itemModifier()
-                    )
-                    SettingsActionRow(
-                        title = stringResource(R.string.restoreConfigFromFile),
-                        onClick = onRestore,
-                        icon = Icons.Rounded.RestorePage,
-                        modifier = itemModifier()
-                    )
-                    SettingsActionRow(
-                        title = stringResource(R.string.restoreDefaultConfig),
-                        onClick = onRestoreDefault,
-                        icon = Icons.Rounded.SettingsBackupRestore,
-                        modifier = itemModifier()
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .widthIn(max = 960.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
+            ) {
+                ZToolSettingsList(
+                    sections = settingsSections(
+                        state = state,
+                        onBackup = onBackup,
+                        onRestore = onRestore,
+                        onRestoreDefault = onRestoreDefault,
+                        onOpenThemeSettings = onOpenThemeSettings,
+                        onOpenLanguageSettings = onOpenLanguageSettings,
+                        onLogServiceChanged = onLogServiceChanged,
+                        onEntryDisplayChanged = onEntryDisplayChanged,
+                        onDetailedLoggingChanged = onDetailedLoggingChanged,
+                        onHomepageYiyanChanged = onHomepageYiyanChanged,
+                        onAbout = onAbout
+                    ),
+                    bottomPadding = 32.dp
+                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingsSection {
-                ExpressiveSectionItems(count = 2) { itemModifier ->
-                    SettingsActionRow(
-                        title = stringResource(R.string.app_ui_theme_settings),
-                        onClick = onOpenThemeSettings,
-                        icon = Icons.Rounded.Palette,
-                        modifier = itemModifier()
-                    )
-                    SettingsActionRow(
-                        title = stringResource(R.string.app_language_settings),
-                        onClick = onOpenLanguageSettings,
-                        icon = Icons.Rounded.Language,
-                        modifier = itemModifier()
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingsSection(title = stringResource(R.string.moreSettings)) {
-                ExpressiveSectionItems(count = 4) { itemModifier ->
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.display_entry_in_settings),
-                        summary = stringResource(R.string.display_entry_in_settings_summary),
-                        checked = state.isEntryDisplayedInSettings,
-                        onCheckedChange = onEntryDisplayChanged,
-                        icon = Icons.AutoMirrored.Rounded.OpenInNew,
-                        modifier = itemModifier()
-                    )
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.enableLogService),
-                        summary = stringResource(R.string.enableLogServiceDescription),
-                        checked = state.isLogServiceEnabled,
-                        onCheckedChange = onLogServiceChanged,
-                        icon = Icons.AutoMirrored.Rounded.Article,
-                        modifier = itemModifier()
-                    )
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.enableDetailedLogging),
-                        summary = stringResource(R.string.enableDetailedLoggingDescription),
-                        checked = state.isDetailedLoggingEnabled,
-                        onCheckedChange = onDetailedLoggingChanged,
-                        icon = Icons.AutoMirrored.Rounded.Article,
-                        modifier = itemModifier()
-                    )
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.enableHomePageYiyan),
-                        summary = stringResource(R.string.enableHomePageYiyanSummary),
-                        checked = state.isHomepageYiyanEnabled,
-                        onCheckedChange = onHomepageYiyanChanged,
-                        icon = Icons.Rounded.AutoAwesome,
-                        modifier = itemModifier()
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingsSection {
-                ExpressiveSectionItems(count = 1) { itemModifier ->
-                    SettingsActionRow(
-                        title = stringResource(R.string.showAboutPage),
-                        onClick = onAbout,
-                        icon = Icons.Rounded.Info,
-                        modifier = itemModifier()
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(32.dp))
         }
-    }
     }
 }
 
@@ -495,41 +365,143 @@ private fun ThemeSettingsRoute(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 32.dp, vertical = 32.dp)
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                ThemeSettingsSection(
-                    settings = state.themeSettings,
-                    manualSeedColorText = state.manualSeedColorText,
-                    manualSeedColorError = state.manualSeedColorError,
-                    onFrontendStyleChanged = onFrontendStyleChanged,
-                    onThemeModeChanged = onThemeModeChanged,
-                    onMaterialColorSpecChanged = onMaterialColorSpecChanged,
-                    onMaterialPaletteChanged = onMaterialPaletteChanged,
-                    onDynamicColorChanged = onDynamicColorChanged,
-                    onAmoledBlackChanged = onAmoledBlackChanged,
-                    onPredictiveBackGestureChanged = onPredictiveBackGestureChanged,
-                    onManualColorChanged = onManualColorChanged,
-                    onManualSeedColorTextChanged = onManualSeedColorTextChanged,
-                    onManualSeedColorEditingFinished = onManualSeedColorEditingFinished
+                ZToolSettingsList(
+                    sections = themeSettingsSections(
+                        settings = state.themeSettings,
+                        manualSeedColorText = state.manualSeedColorText,
+                        manualSeedColorError = state.manualSeedColorError,
+                        onFrontendStyleChanged = onFrontendStyleChanged,
+                        onThemeModeChanged = onThemeModeChanged,
+                        onMaterialColorSpecChanged = onMaterialColorSpecChanged,
+                        onMaterialPaletteChanged = onMaterialPaletteChanged,
+                        onDynamicColorChanged = onDynamicColorChanged,
+                        onAmoledBlackChanged = onAmoledBlackChanged,
+                        onPredictiveBackGestureChanged = onPredictiveBackGestureChanged,
+                        onManualColorChanged = onManualColorChanged,
+                        onManualSeedColorTextChanged = onManualSeedColorTextChanged,
+                        onManualSeedColorEditingFinished = onManualSeedColorEditingFinished
+                    ),
+                    bottomPadding = 32.dp
                 )
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 }
 
 @Composable
-private fun ThemeSettingsSection(
+private fun settingsSections(
+    state: SettingsUiState,
+    onBackup: () -> Unit,
+    onRestore: () -> Unit,
+    onRestoreDefault: () -> Unit,
+    onOpenThemeSettings: () -> Unit,
+    onOpenLanguageSettings: () -> Unit,
+    onLogServiceChanged: (Boolean) -> Unit,
+    onEntryDisplayChanged: (Boolean) -> Unit,
+    onDetailedLoggingChanged: (Boolean) -> Unit,
+    onHomepageYiyanChanged: (Boolean) -> Unit,
+    onAbout: () -> Unit
+): List<SettingSection> {
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.backupAndRestore),
+            items = listOf(
+                SettingItem.Action(
+                    key = "backup_config",
+                    title = stringResource(R.string.backupConfigToFile),
+                    onClick = onBackup,
+                    icon = Icons.Rounded.Backup
+                ),
+                SettingItem.Action(
+                    key = "restore_config",
+                    title = stringResource(R.string.restoreConfigFromFile),
+                    onClick = onRestore,
+                    icon = Icons.Rounded.RestorePage
+                ),
+                SettingItem.Action(
+                    key = "restore_default",
+                    title = stringResource(R.string.restoreDefaultConfig),
+                    onClick = onRestoreDefault,
+                    icon = Icons.Rounded.SettingsBackupRestore
+                )
+            )
+        ),
+        SettingSection(
+            items = listOf(
+                SettingItem.Action(
+                    key = "open_theme_settings",
+                    title = stringResource(R.string.app_ui_theme_settings),
+                    onClick = onOpenThemeSettings,
+                    icon = Icons.Rounded.Palette
+                ),
+                SettingItem.Action(
+                    key = "open_language_settings",
+                    title = stringResource(R.string.app_language_settings),
+                    onClick = onOpenLanguageSettings,
+                    icon = Icons.Rounded.Language
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.moreSettings),
+            items = listOf(
+                SettingItem.Switch(
+                    key = "display_entry_in_settings",
+                    title = stringResource(R.string.display_entry_in_settings),
+                    summary = stringResource(R.string.display_entry_in_settings_summary),
+                    checked = state.isEntryDisplayedInSettings,
+                    onCheckedChange = onEntryDisplayChanged,
+                    icon = Icons.AutoMirrored.Rounded.OpenInNew
+                ),
+                SettingItem.Switch(
+                    key = "enable_log_service",
+                    title = stringResource(R.string.enableLogService),
+                    summary = stringResource(R.string.enableLogServiceDescription),
+                    checked = state.isLogServiceEnabled,
+                    onCheckedChange = onLogServiceChanged,
+                    icon = Icons.AutoMirrored.Rounded.Article
+                ),
+                SettingItem.Switch(
+                    key = "enable_detailed_logging",
+                    title = stringResource(R.string.enableDetailedLogging),
+                    summary = stringResource(R.string.enableDetailedLoggingDescription),
+                    checked = state.isDetailedLoggingEnabled,
+                    onCheckedChange = onDetailedLoggingChanged,
+                    icon = Icons.AutoMirrored.Rounded.Article
+                ),
+                SettingItem.Switch(
+                    key = "enable_homepage_yiyan",
+                    title = stringResource(R.string.enableHomePageYiyan),
+                    summary = stringResource(R.string.enableHomePageYiyanSummary),
+                    checked = state.isHomepageYiyanEnabled,
+                    onCheckedChange = onHomepageYiyanChanged,
+                    icon = Icons.Rounded.AutoAwesome
+                )
+            )
+        ),
+        SettingSection(
+            items = listOf(
+                SettingItem.Action(
+                    key = "show_about",
+                    title = stringResource(R.string.showAboutPage),
+                    onClick = onAbout,
+                    icon = Icons.Rounded.Info
+                )
+            )
+        )
+    )
+}
+
+@Composable
+private fun themeSettingsSections(
     settings: ZToolThemeSettings,
     manualSeedColorText: String,
     manualSeedColorError: Boolean,
@@ -543,8 +515,8 @@ private fun ThemeSettingsSection(
     onManualColorChanged: (Boolean) -> Unit,
     onManualSeedColorTextChanged: (String) -> Unit,
     onManualSeedColorEditingFinished: () -> Unit
-) {
-    val frontendStyleOptions = listOf(
+) : List<SettingSection> {
+    val frontendStyleOptions: List<LabeledOption<FrontendStyle>> = listOf(
         LabeledOption(
             value = FrontendStyle.Material3Expressive,
             label = stringResource(R.string.frontend_style_material3)
@@ -554,7 +526,7 @@ private fun ThemeSettingsSection(
             label = stringResource(R.string.frontend_style_miuix)
         )
     )
-    val themeModeOptions = listOf(
+    val themeModeOptions: List<LabeledOption<ThemeMode>> = listOf(
         LabeledOption(
             value = ThemeMode.FollowSystem,
             label = stringResource(R.string.theme_mode_follow_system)
@@ -568,7 +540,7 @@ private fun ThemeSettingsSection(
             label = stringResource(R.string.theme_mode_dark)
         )
     )
-    val colorSpecOptions = listOf(
+    val colorSpecOptions: List<LabeledOption<MaterialColorSpec>> = listOf(
         LabeledOption(
             value = MaterialColorSpec.Spec2021,
             label = stringResource(R.string.material_color_spec_2021)
@@ -578,7 +550,7 @@ private fun ThemeSettingsSection(
             label = stringResource(R.string.material_color_spec_2025)
         )
     )
-    val paletteOptions = listOf(
+    val paletteOptions: List<LabeledOption<MaterialPalette>> = listOf(
         LabeledOption(
             value = MaterialPalette.TonalSpot,
             label = stringResource(R.string.material_palette_mode_tonal_spot)
@@ -621,118 +593,115 @@ private fun ThemeSettingsSection(
         ?.label
         ?: stringResource(R.string.material_palette_mode_tonal_spot)
 
-    SettingsSection(title = stringResource(R.string.app_ui_theme_settings)) {
-        val themeItemCount = 6 +
-            (if (settings.frontendStyle == FrontendStyle.Material3Expressive) 2 else 0) +
-            (if (settings.manualColorEnabled) 1 else 0)
-        val manualColorSwitchIndex = themeItemCount - if (settings.manualColorEnabled) 2 else 1
-        val manualSeedColorIndex = themeItemCount - 1
-        ExpressiveSectionItems(
-            count = themeItemCount,
-            shapeForIndex = { index, count ->
-                when {
-                    settings.manualColorEnabled && index == manualColorSwitchIndex -> RoundedCornerShape(8.dp)
-                    settings.manualColorEnabled && index == manualSeedColorIndex -> RoundedCornerShape(
-                        topStart = 8.dp,
-                        topEnd = 8.dp,
-                        bottomStart = 16.dp,
-                        bottomEnd = 16.dp
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.app_ui_theme_settings),
+            items = buildList {
+                add(
+                    SettingItem.Dropdown(
+                        key = "frontend_style",
+                        label = stringResource(R.string.frontend_style_title),
+                        value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
+                        options = frontendStyleOptions,
+                        optionLabel = { it.label },
+                        onOptionSelected = { onFrontendStyleChanged(it.value) },
+                        icon = Icons.Rounded.Palette
                     )
-                    else -> expressiveSettingsItemShape(index = index, count = count)
+                )
+                add(
+                    SettingItem.Dropdown(
+                        key = "theme_mode",
+                        label = stringResource(R.string.theme_mode_title),
+                        value = themeModeOptions.first { it.value == settings.themeMode }.label,
+                        options = themeModeOptions,
+                        optionLabel = { it.label },
+                        onOptionSelected = { onThemeModeChanged(it.value) },
+                        icon = Icons.Rounded.DarkMode
+                    )
+                )
+                add(
+                    SettingItem.Dropdown(
+                        key = "material_color_spec",
+                        label = stringResource(R.string.material_color_spec_title),
+                        value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
+                        options = colorSpecOptions,
+                        optionLabel = { it.label },
+                        onOptionSelected = { onMaterialColorSpecChanged(it.value) },
+                        icon = Icons.Rounded.Tune
+                    )
+                )
+                add(
+                    SettingItem.Dropdown(
+                        key = "material_palette_mode",
+                        label = stringResource(R.string.material_palette_mode_title),
+                        value = selectedPaletteLabel,
+                        options = paletteOptions,
+                        optionLabel = { it.label },
+                        onOptionSelected = { onMaterialPaletteChanged(it.value) },
+                        icon = Icons.Rounded.Tune
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        key = "predictive_back_gesture",
+                        title = stringResource(R.string.predictive_back_gesture_title),
+                        summary = stringResource(R.string.predictive_back_gesture_summary),
+                        checked = settings.predictiveBackGestureEnabled,
+                        onCheckedChange = onPredictiveBackGestureChanged,
+                        icon = Icons.Rounded.Swipe
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        key = "amoled_black",
+                        title = stringResource(R.string.amoled_black_title),
+                        summary = stringResource(R.string.amoled_black_summary),
+                        checked = settings.amoledBlackEnabled,
+                        onCheckedChange = onAmoledBlackChanged,
+                        icon = Icons.Rounded.Contrast
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        key = "dynamic_color",
+                        title = stringResource(R.string.dynamic_color_title),
+                        summary = stringResource(R.string.dynamic_color_summary),
+                        checked = settings.dynamicColorEnabled,
+                        onCheckedChange = onDynamicColorChanged,
+                        enabled = !settings.manualColorEnabled,
+                        icon = Icons.Rounded.AutoAwesome
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        key = "manual_color",
+                        title = stringResource(R.string.manual_color_title),
+                        summary = stringResource(R.string.manual_color_summary),
+                        checked = settings.manualColorEnabled,
+                        onCheckedChange = onManualColorChanged,
+                        icon = Icons.Rounded.FormatColorFill
+                    )
+                )
+                if (settings.manualColorEnabled) {
+                    add(
+                        SettingItem.Custom(
+                            key = "manual_seed_color",
+                            content = {
+                                ManualSeedColorRow(
+                                    color = settings.manualSeedColor,
+                                    colorText = manualSeedColorText,
+                                    isError = manualSeedColorError,
+                                    onColorTextChanged = onManualSeedColorTextChanged,
+                                    onEditingFinished = onManualSeedColorEditingFinished,
+                                    icon = Icons.Rounded.FormatColorFill
+                                )
+                            }
+                        )
+                    )
                 }
             }
-        ) { itemModifier ->
-            ZToolPopupMenuSettingRow(
-                title = stringResource(R.string.frontend_style_title),
-                value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
-                options = frontendStyleOptions,
-                optionLabel = { it.label },
-                onOptionSelected = { onFrontendStyleChanged(it.value) },
-                icon = Icons.Rounded.Palette,
-                modifier = itemModifier(),
-                fieldMinWidth = 80.dp,
-                fieldMaxWidth = 160.dp
-            )
-            ZToolPopupMenuSettingRow(
-                title = stringResource(R.string.theme_mode_title),
-                value = themeModeOptions.first { it.value == settings.themeMode }.label,
-                options = themeModeOptions,
-                optionLabel = { it.label },
-                onOptionSelected = { onThemeModeChanged(it.value) },
-                icon = Icons.Rounded.DarkMode,
-                modifier = itemModifier(),
-                fieldMinWidth = 80.dp,
-                fieldMaxWidth = 160.dp
-            )
-            ZToolPopupMenuSettingRow(
-                title = stringResource(R.string.material_color_spec_title),
-                summary = stringResource(R.string.material_color_spec_summary),
-                value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
-                options = colorSpecOptions,
-                optionLabel = { it.label },
-                onOptionSelected = { onMaterialColorSpecChanged(it.value) },
-                icon = Icons.Rounded.Tune,
-                modifier = itemModifier(),
-                fieldMinWidth = 80.dp,
-                fieldMaxWidth = 160.dp
-            )
-            ZToolPopupMenuSettingRow(
-                title = stringResource(R.string.material_palette_mode_title),
-                value = selectedPaletteLabel,
-                options = paletteOptions,
-                optionLabel = { it.label },
-                onOptionSelected = { onMaterialPaletteChanged(it.value) },
-                icon = Icons.Rounded.Tune,
-                modifier = itemModifier(),
-                fieldMinWidth = 80.dp,
-                fieldMaxWidth = 160.dp
-            )
-            ZToolSwitchRow(
-                title = stringResource(R.string.predictive_back_gesture_title),
-                summary = stringResource(R.string.predictive_back_gesture_summary),
-                checked = settings.predictiveBackGestureEnabled,
-                onCheckedChange = onPredictiveBackGestureChanged,
-                icon = Icons.Rounded.Swipe,
-                modifier = itemModifier()
-            )
-            ZToolSwitchRow(
-                title = stringResource(R.string.amoled_black_title),
-                summary = stringResource(R.string.amoled_black_summary),
-                checked = settings.amoledBlackEnabled,
-                onCheckedChange = onAmoledBlackChanged,
-                icon = Icons.Rounded.Contrast,
-                modifier = itemModifier()
-            )
-            ZToolSwitchRow(
-                title = stringResource(R.string.dynamic_color_title),
-                summary = stringResource(R.string.dynamic_color_summary),
-                checked = settings.dynamicColorEnabled,
-                onCheckedChange = onDynamicColorChanged,
-                enabled = !settings.manualColorEnabled,
-                icon = Icons.Rounded.AutoAwesome,
-                modifier = itemModifier()
-            )
-            ZToolSwitchRow(
-                title = stringResource(R.string.manual_color_title),
-                summary = stringResource(R.string.manual_color_summary),
-                checked = settings.manualColorEnabled,
-                onCheckedChange = onManualColorChanged,
-                icon = Icons.Rounded.FormatColorFill,
-                modifier = itemModifier()
-            )
-            if (settings.manualColorEnabled) {
-                ManualSeedColorRow(
-                    color = settings.manualSeedColor,
-                    colorText = manualSeedColorText,
-                    isError = manualSeedColorError,
-                    onColorTextChanged = onManualSeedColorTextChanged,
-                    onEditingFinished = onManualSeedColorEditingFinished,
-                    icon = Icons.Rounded.FormatColorFill,
-                    modifier = itemModifier()
-                )
-            }
-        }
-    }
+        )
+    )
 }
 
 private data class LabeledOption<T>(
@@ -742,13 +711,13 @@ private data class LabeledOption<T>(
 
 @Composable
 private fun ManualSeedColorRow(
+    modifier: Modifier = Modifier,
     color: Long,
     colorText: String,
     isError: Boolean,
     onColorTextChanged: (String) -> Unit,
     onEditingFinished: () -> Unit,
     icon: ImageVector? = null,
-    modifier: Modifier = Modifier
 ) {
     ZToolArgbColorTextFieldRow(
         label = stringResource(R.string.manual_seed_color_title),
@@ -764,80 +733,6 @@ private fun ManualSeedColorRow(
 }
 
 @Composable
-private fun SettingsSection(
-    title: String? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val isExpressive = LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive
-    Column(modifier = Modifier.fillMaxWidth()) {
-        if (!isExpressive && title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
-            )
-        }
-        ZToolCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(if (isExpressive) 12.dp else 0.dp)
-                    .padding(vertical = if (isExpressive) 0.dp else 12.dp)
-            ) {
-                if (isExpressive && title != null) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                    )
-                }
-                content()
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingsActionRow(
-    title: String,
-    onClick: () -> Unit,
-    icon: ImageVector? = null,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(80.dp)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (icon != null) {
-            ZToolSettingLeadingIcon(icon = icon)
-            Spacer(modifier = Modifier.width(16.dp))
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Icon(
-            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
 private fun RestoreDefaultDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
@@ -848,76 +743,12 @@ private fun RestoreDefaultDialog(
         text = { Text(stringResource(R.string.restore_default_confirmation)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.restart_yes))
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.restart_no))
-            }
-        }
-    )
-}
-
-@Composable
-private fun AboutDialog(
-    version: String,
-    onDismiss: () -> Unit,
-    onOpenGithub: () -> Unit,
-    onOpenCredits: () -> Unit,
-    onOpenAuthor: () -> Unit,
-    onOpenCollaborator: () -> Unit
-) {
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.about_ztool_title)) },
-        text = {
-            Column {
-                Text(
-                    text = version,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.about_description)
-                        .replace("<br>", "\n")
-                        .replace("&lt;br&gt;", "\n"),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenGithub
-                ) {
-                    Text(stringResource(R.string.button_project_homepage))
-                }
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenCredits
-                ) {
-                    Text("Credits")
-                }
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenAuthor
-                ) {
-                    Text("Qimian233")
-                }
-                TextButton(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    onClick = onOpenCollaborator
-                ) {
-                    Text("WASD")
-                }
             }
         }
     )
