@@ -811,7 +811,7 @@
     <string name="app_ui_theme_settings">应用主题模式</string>
     <string name="app_language_settings">应用语言</string>
     <string name="open_app_language_settings_failed">无法打开应用语言设置</string>
-    <string name="frontend_style_title">主题风格</string>
+    <string name="frontend_style_title">主题风格（实验性）</string>
     <string name="frontend_style_material3">Material</string>
     <string name="frontend_style_miuix">Miuix</string>
     <string name="theme_mode_title">主题模式</string>
