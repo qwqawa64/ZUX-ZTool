@@ -52,3 +52,4 @@ local.properties
 .DS_Store
 /gradle/gradle-daemon-jvm.properties
 /app/release/*
+/reasonix.toml
