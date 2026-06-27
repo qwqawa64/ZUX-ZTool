@@ -4,8 +4,6 @@ import android.util.Log;
 
 import com.qimian233.ztool.config.ModuleConfig;
 
-import java.util.Arrays;
-
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 /**
@@ -51,10 +49,10 @@ public abstract class BaseHookModule {
         return ModuleConfig.isModuleEnabled(getModuleName());
     }
 
-    protected static boolean refreshDebugLoggingEnabled() {
+    protected static void refreshDebugLoggingEnabled() {
         long now = System.currentTimeMillis();
         if (now - lastDebugRefreshTime < DEBUG_REFRESH_INTERVAL_MS) {
-            return DEBUG;
+            return;
         }
 
         synchronized (BaseHookModule.class) {
@@ -62,7 +60,6 @@ public abstract class BaseHookModule {
                 DEBUG = ModuleConfig.isDetailedLoggingEnabled();
                 lastDebugRefreshTime = now;
             }
-            return DEBUG;
         }
     }
 
