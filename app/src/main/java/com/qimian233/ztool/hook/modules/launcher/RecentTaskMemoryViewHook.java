@@ -170,9 +170,9 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     private TextView createMemoryView(Context context) {
         TextView textView = new TextView(context);
         textView.setTag(MEMORY_VIEW_TAG);
-        textView.setTextColor(Color.WHITE);
+        textView.setTextColor(Color.argb(0xd9, 0xff, 0xff, 0xff));
         textView.setAlpha(0.8f);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         textView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         textView.setGravity(Gravity.CENTER);
         textView.setSingleLine(true);
