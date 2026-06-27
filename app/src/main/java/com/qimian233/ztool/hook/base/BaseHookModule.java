@@ -13,7 +13,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  * 所有具体的Hook模块都应该继承这个类
  */
 public abstract class BaseHookModule {
-    protected static final String TAG = "XposedHook";
+    protected static final String TAG = "ZToolXposedModule";
     private static final long DEBUG_REFRESH_INTERVAL_MS = 1000L;
 
     public static volatile boolean DEBUG = false;
@@ -96,7 +96,7 @@ public abstract class BaseHookModule {
 
     protected void log(String message) {
         // 使用统一的标签，便于日志收集服务过滤
-        android.util.Log.i("ZToolXposedModule", "[" + getModuleName() + "] " + message);
+        android.util.Log.i(TAG, "[" + getModuleName() + "] " + message);
     }
 
     protected void logError(String message, Throwable t) {
@@ -124,6 +124,6 @@ public abstract class BaseHookModule {
             }
             finalMessage += truncatedStack;
         }
-        android.util.Log.e("ZToolXposedModule", finalMessage);
+        android.util.Log.e(TAG, finalMessage);
     }
 }
