@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Color;
@@ -343,7 +344,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 return fallback;
             }
 
-            int resId = resources.getIdentifier(resourceName, "string", MODULE_PACKAGE);
+            @SuppressLint("DiscouragedApi") int resId = resources.getIdentifier(resourceName, "string", MODULE_PACKAGE);
             if (resId == 0) {
                 return fallback;
             }
