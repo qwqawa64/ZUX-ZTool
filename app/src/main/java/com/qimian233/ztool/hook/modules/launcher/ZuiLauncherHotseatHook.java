@@ -416,8 +416,10 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                                     Object invDeviceProfile = XposedHelpers.getObjectField(launcherAppState, "mInvariantDeviceProfile");
                                     XposedHelpers.setIntField(invDeviceProfile, "numDatabaseHotseatIcons", 20);
                                     log("修改InvariantDeviceProfile的numDatabaseHotseatIcons为20");
-                                } catch (Throwable t) {
-                                    logError("修改InvariantDeviceProfile失败", t);
+                                } catch (NoSuchFieldError ignored) {
+                                    log("修改InvariantDeviceProfile失败, 无法找到对应字段");
+                                } catch (Exception e) {
+                                    logError("Unhandle exception happened when attempting to modify mInvariantDeviceProfile: ", e);
                                 }
                             }
                         }
