@@ -917,4 +917,6 @@
     <string name="show_slider_percentage">显示滑动条百分比</string>
     <string name="show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="show_volume_slider_percentage">显示音量滑动条百分比</string>
+    <string name="ram_unavailable" translatable="false">-- | --</string>
+    <string name="ram_formatter">%s 已用 | %s</string>
 </resources>

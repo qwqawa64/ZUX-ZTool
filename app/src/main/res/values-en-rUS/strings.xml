@@ -863,4 +863,5 @@
     <string name="about_wasd_destroy_summary">Hooks and User Interface</string>
     <string name="about_uuuddddl">Hooks</string>
     <string name="about_unfuckzui_summary">Fearure references and inspirations</string>
+    <string name="ram_formatter">%s Used | %s</string>
 </resources>
