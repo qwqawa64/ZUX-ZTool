@@ -269,7 +269,7 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
         }
 
         ensureLayoutTracking(root, icon, percentView);
-        updatePercentColor(percentView, brightness);
+        updatePercentColor(sliderView, percentView, brightness);
 
         if (brightness) {
             refreshBrightnessLabel(sliderView, percentView);
@@ -323,12 +323,12 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
                 percentView.setText("--%");
                 return;
             }
-            updateBrightnessPercentColor(percentView);
             percentView.setText(formatPercent(
                     brightnessSlider.getProgress(),
                     brightnessSlider.getMin(),
                     brightnessSlider.getMax()
             ));
+            updateBrightnessPercentColor(sliderView, percentView);
             schedulePositionUpdate(sliderView, BRIGHTNESS_ROOT_FIELD, BRIGHTNESS_ICON_FIELD);
         } catch (Throwable t) {
             percentView.setText("--%");
@@ -635,12 +635,12 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
         }
 
         try {
-            updateBrightnessPercentColor(percentView);
             SeekBar brightnessSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
             int max = brightnessSlider != null ? brightnessSlider.getMax() : 65535;
             max = Math.max(1, max);
             int percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)));
             percentView.setText(String.format(Locale.US, "%d%%", percent));
+            updateBrightnessPercentColor(sliderView, percentView);
             schedulePositionUpdate(sliderView, BRIGHTNESS_ROOT_FIELD, BRIGHTNESS_ICON_FIELD);
         } catch (Throwable t) {
             if (DEBUG) {
@@ -653,24 +653,39 @@ public class ControlCenterSliderPercentageHook extends BaseHookModule {
         return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
 
-    private void updateBrightnessPercentColor(TextView percentView) {
-        percentView.setTextColor(resolveBrightnessPercentColor());
+    private void updateBrightnessPercentColor(Object sliderView, TextView percentView) {
+        percentView.setTextColor(resolveBrightnessPercentColor(sliderView));
     }
 
     private void updateVolumePercentColor(TextView percentView) {
         percentView.setTextColor(resolveVolumePercentColor());
     }
 
-    private void updatePercentColor(TextView percentView, boolean brightness) {
+    private void updatePercentColor(Object sliderView, TextView percentView, boolean brightness) {
         if (brightness) {
-            updateBrightnessPercentColor(percentView);
+            updateBrightnessPercentColor(sliderView, percentView);
         } else {
             updateVolumePercentColor(percentView);
         }
     }
 
-    private int resolveBrightnessPercentColor() {
-        return Color.parseColor("#FFFFFF");
+    private int resolveBrightnessPercentColor(Object sliderView) {
+        SeekBar brightnessSlider = sliderView instanceof SeekBar
+                ? (SeekBar) sliderView
+                : (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
+        if (brightnessSlider == null) {
+            return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
+        }
+        float progress = ((brightnessSlider.getProgress() - brightnessSlider.getMin()) * 1.0f)
+                / Math.max(1, brightnessSlider.getMax() - brightnessSlider.getMin());
+        int alpha = Math.min(((int) Math.floor(progress * 85.0f)) + 170, 255);
+        if (progress < 0.2f) {
+            return Color.argb(alpha, 0xd8, 0xd8, 0xd8);
+        }
+
+        int gray = (int) Math.max(((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f), 0xd8);
+
+        return Color.argb(alpha, gray, gray, gray);
     }
 
     private int resolveVolumePercentColor() {
