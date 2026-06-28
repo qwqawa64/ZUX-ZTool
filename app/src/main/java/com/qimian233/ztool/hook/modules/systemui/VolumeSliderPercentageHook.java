@@ -3,7 +3,6 @@ package com.qimian233.ztool.hook.modules.systemui;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.media.AudioManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -173,8 +172,8 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     }
 
     private void attachLabelToRoot(Object sliderView) {
-        FrameLayout root = getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD);
-        View icon = getViewField(sliderView, VOLUME_ICON_FIELD);
+        FrameLayout root = getFrameLayoutField(sliderView);
+        View icon = getViewField(sliderView);
         if (root == null || icon == null) {
             return;
         }
@@ -196,7 +195,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     }
 
     private void refreshVolumeLabel(Object sliderView) {
-        refreshVolumeLabel(sliderView, (Integer) null);
+        refreshVolumeLabel(sliderView, null);
     }
 
     private void refreshVolumeLabel(Object sliderView, Integer rawProgress) {
@@ -204,7 +203,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             detachVolumeLabel(sliderView);
             return;
         }
-        FrameLayout root = getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD);
+        FrameLayout root = getFrameLayoutField(sliderView);
         if (root == null) {
             return;
         }
@@ -216,7 +215,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
 
     private void refreshVolumeLabel(Object sliderView, TextView percentView, Integer rawProgress) {
         if (!PERCENTAGE_ENABLED) {
-            removePercentView(getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD));
+            removePercentView(getFrameLayoutField(sliderView));
             return;
         }
         try {
@@ -226,8 +225,8 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
                 return;
             }
             updateVolumePercentColor(percentView, volumeProgress);
-            percentView.setText(formatPercent(volumeProgress, 0, 100));
-            schedulePositionUpdate(sliderView, VOLUME_ROOT_FIELD, VOLUME_ICON_FIELD);
+            percentView.setText(formatPercent(volumeProgress));
+            schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             percentView.setText("--%");
             if (DEBUG) {
@@ -249,7 +248,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             if (volumeProgress == null) {
                 return;
             }
-            FrameLayout root = getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD);
+            FrameLayout root = getFrameLayoutField(sliderView);
             if (root == null) {
                 return;
             }
@@ -258,8 +257,8 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
                 return;
             }
             updateVolumePercentColor(percentView, volumeProgress);
-            percentView.setText(formatPercent(volumeProgress, 0, 100));
-            schedulePositionUpdate(sliderView, VOLUME_ROOT_FIELD, VOLUME_ICON_FIELD);
+            percentView.setText(formatPercent(volumeProgress));
+            schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             if (DEBUG) {
                 logError("Failed to refresh volume from toggle slider", t);
@@ -288,9 +287,9 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         }
     }
 
-    private String formatPercent(int progress, int min, int max) {
-        int range = Math.max(1, max - min);
-        int value = Math.round(((progress - min) * 100f) / range);
+    private String formatPercent(int progress) {
+        int range = Math.max(1, 100);
+        int value = Math.round(((progress) * 100f) / range);
         value = Math.max(0, Math.min(100, value));
         return String.format(Locale.US, "%d%%", value);
     }
@@ -327,13 +326,13 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         return view instanceof TextView ? (TextView) view : null;
     }
 
-    private FrameLayout getFrameLayoutField(Object sliderView, String fieldName) {
-        Object field = XposedHelpers.getObjectField(sliderView, fieldName);
+    private FrameLayout getFrameLayoutField(Object sliderView) {
+        Object field = XposedHelpers.getObjectField(sliderView, VolumeSliderPercentageHook.VOLUME_ROOT_FIELD);
         return field instanceof FrameLayout ? (FrameLayout) field : null;
     }
 
-    private View getViewField(Object sliderView, String fieldName) {
-        Object field = XposedHelpers.getObjectField(sliderView, fieldName);
+    private View getViewField(Object sliderView) {
+        Object field = XposedHelpers.getObjectField(sliderView, VolumeSliderPercentageHook.VOLUME_ICON_FIELD);
         return field instanceof View ? (View) field : null;
     }
 
@@ -370,7 +369,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     }
 
     private void detachVolumeLabel(Object sliderView) {
-        removePercentView(getFrameLayoutField(sliderView, VOLUME_ROOT_FIELD));
+        removePercentView(getFrameLayoutField(sliderView));
     }
 
     private void removePercentView(FrameLayout root) {
@@ -387,9 +386,9 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         }
     }
 
-    private void schedulePositionUpdate(Object sliderView, String rootFieldName, String iconFieldName) {
-        FrameLayout root = getFrameLayoutField(sliderView, rootFieldName);
-        View icon = getViewField(sliderView, iconFieldName);
+    private void schedulePositionUpdate(Object sliderView) {
+        FrameLayout root = getFrameLayoutField(sliderView);
+        View icon = getViewField(sliderView);
         if (root == null || icon == null) {
             return;
         }

@@ -164,8 +164,8 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     }
 
     private void attachLabelToRoot(Object sliderView) {
-        FrameLayout root = getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD);
-        View icon = getViewField(sliderView, BRIGHTNESS_ICON_FIELD);
+        FrameLayout root = getFrameLayoutField(sliderView);
+        View icon = getViewField(sliderView);
         if (root == null || icon == null) {
             return;
         }
@@ -191,7 +191,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             detachBrightnessLabel(sliderView);
             return;
         }
-        FrameLayout root = getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD);
+        FrameLayout root = getFrameLayoutField(sliderView);
         if (root == null) {
             return;
         }
@@ -203,7 +203,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
 
     private void refreshBrightnessLabel(Object sliderView, TextView percentView) {
         if (!PERCENTAGE_ENABLED) {
-            removePercentView(getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD));
+            removePercentView(getFrameLayoutField(sliderView));
             return;
         }
         try {
@@ -218,7 +218,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
                     brightnessSlider.getMax()
             ));
             updateBrightnessPercentColor(sliderView, percentView);
-            schedulePositionUpdate(sliderView, BRIGHTNESS_ROOT_FIELD, BRIGHTNESS_ICON_FIELD);
+            schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             percentView.setText("--%");
             if (DEBUG) {
@@ -256,7 +256,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         if (sliderView == null) {
             return;
         }
-        FrameLayout root = getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD);
+        FrameLayout root = getFrameLayoutField(sliderView);
         if (root == null) {
             return;
         }
@@ -272,7 +272,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             int percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)));
             percentView.setText(String.format(Locale.US, "%d%%", percent));
             updateBrightnessPercentColor(sliderView, percentView);
-            schedulePositionUpdate(sliderView, BRIGHTNESS_ROOT_FIELD, BRIGHTNESS_ICON_FIELD);
+            schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             if (DEBUG) {
                 logError("Failed to refresh brightness from view", t);
@@ -341,13 +341,13 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         return view instanceof TextView ? (TextView) view : null;
     }
 
-    private FrameLayout getFrameLayoutField(Object sliderView, String fieldName) {
-        Object field = XposedHelpers.getObjectField(sliderView, fieldName);
+    private FrameLayout getFrameLayoutField(Object sliderView) {
+        Object field = XposedHelpers.getObjectField(sliderView, BrightnessSliderPercentageHook.BRIGHTNESS_ROOT_FIELD);
         return field instanceof FrameLayout ? (FrameLayout) field : null;
     }
 
-    private View getViewField(Object sliderView, String fieldName) {
-        Object field = XposedHelpers.getObjectField(sliderView, fieldName);
+    private View getViewField(Object sliderView) {
+        Object field = XposedHelpers.getObjectField(sliderView, BrightnessSliderPercentageHook.BRIGHTNESS_ICON_FIELD);
         return field instanceof View ? (View) field : null;
     }
 
@@ -384,7 +384,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     }
 
     private void detachBrightnessLabel(Object sliderView) {
-        removePercentView(getFrameLayoutField(sliderView, BRIGHTNESS_ROOT_FIELD));
+        removePercentView(getFrameLayoutField(sliderView));
     }
 
     private void removePercentView(FrameLayout root) {
@@ -401,9 +401,9 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         }
     }
 
-    private void schedulePositionUpdate(Object sliderView, String rootFieldName, String iconFieldName) {
-        FrameLayout root = getFrameLayoutField(sliderView, rootFieldName);
-        View icon = getViewField(sliderView, iconFieldName);
+    private void schedulePositionUpdate(Object sliderView) {
+        FrameLayout root = getFrameLayoutField(sliderView);
+        View icon = getViewField(sliderView);
         if (root == null || icon == null) {
             return;
         }
