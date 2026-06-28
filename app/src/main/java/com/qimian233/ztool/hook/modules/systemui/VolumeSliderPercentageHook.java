@@ -190,7 +190,10 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         }
 
         ensureLayoutTracking(root, icon, percentView);
-        updateVolumePercentColor(percentView, getVolumeProgress(sliderView, null));
+        Integer rawProgress = getVolumeRawProgress(sliderView, null);
+        if (rawProgress != null) {
+            updateVolumePercentColor(percentView, rawProgress);
+        }
         refreshVolumeLabel(sliderView, percentView, null);
     }
 
@@ -219,12 +222,13 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             return;
         }
         try {
+            Integer rawProgress2 = getVolumeRawProgress(sliderView, rawProgress);
             Integer volumeProgress = getVolumeProgress(sliderView, rawProgress);
-            if (volumeProgress == null) {
+            if (rawProgress2 == null || volumeProgress == null) {
                 percentView.setText("--%");
                 return;
             }
-            updateVolumePercentColor(percentView, volumeProgress);
+            updateVolumePercentColor(percentView, rawProgress2);
             percentView.setText(formatPercent(volumeProgress));
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
@@ -244,8 +248,9 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             return;
         }
         try {
+            Integer rawProgress2 = getVolumeRawProgress(sliderView, rawProgress);
             Integer volumeProgress = getVolumeProgress(sliderView, rawProgress);
-            if (volumeProgress == null) {
+            if (rawProgress2 == null || volumeProgress == null) {
                 return;
             }
             FrameLayout root = getFrameLayoutField(sliderView);
@@ -256,13 +261,25 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             if (percentView == null) {
                 return;
             }
-            updateVolumePercentColor(percentView, volumeProgress);
+            updateVolumePercentColor(percentView, rawProgress2);
             percentView.setText(formatPercent(volumeProgress));
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             if (DEBUG) {
                 logError("Failed to refresh volume from toggle slider", t);
             }
+        }
+    }
+
+    private Integer getVolumeRawProgress(Object sliderView, Integer rawProgress) {
+        try {
+            SeekBar volumeSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mMediaVolumeSlider");
+            if (volumeSlider == null) {
+                return null;
+            }
+            return rawProgress != null ? rawProgress : volumeSlider.getProgress();
+        } catch (Throwable t) {
+            return null;
         }
     }
 
@@ -297,9 +314,9 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     private TextView createPercentView(Context context) {
         TextView textView = new TextView(context);
         textView.setTag(SLIDER_PERCENT_TAG);
-        textView.setTextColor(Color.WHITE);
+        textView.setTextColor(Color.argb(0xff, 0xd8, 0xd8, 0xd8));
         textView.setTypeface(Typeface.DEFAULT_BOLD);
-        textView.setTextSize(11f);
+        textView.setTextSize(13f);
         textView.setShadowLayer(2f, 0f, 0f, Color.BLACK);
         textView.setSingleLine(true);
         textView.setIncludeFontPadding(false);
@@ -442,18 +459,18 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
 
-    private void updateVolumePercentColor(TextView percentView, int volumeProgress) {
-        percentView.setTextColor(resolveVolumePercentColor(volumeProgress));
+    private void updateVolumePercentColor(TextView percentView, int seekBarProgress) {
+        percentView.setTextColor(resolveVolumePercentColor(seekBarProgress));
     }
 
-    private int resolveVolumePercentColor(int volumeProgress) {
-        int progress = Math.max(0, Math.min(100, volumeProgress));
-        if (progress < 3) {
+    private int resolveVolumePercentColor(int seekBarProgress) {
+        float progress = (seekBarProgress * 1.0f) / 15000.0f;
+        if (progress < 0.2f) {
             return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
         }
-
-        int alpha = Math.min(((int) Math.floor((progress / 100.0f) * 85.0f)) + 170, 255);
-        int gray = (int) Math.max(((1.0f - Math.min((progress - 2) / 3.0f, 1.0f)) * 216.0f), 0xd8);
+        int gray = (int) ((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f);
+        gray = Math.max(gray, 0x80);
+        int alpha = Math.min(((int) Math.floor(progress * 85.0f)) + 170, 255);
         return Color.argb(alpha, gray, gray, gray);
     }
 

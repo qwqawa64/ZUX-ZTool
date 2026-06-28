@@ -293,12 +293,12 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         }
         float progress = ((brightnessSlider.getProgress() - brightnessSlider.getMin()) * 1.0f)
                 / Math.max(1, brightnessSlider.getMax() - brightnessSlider.getMin());
-        int alpha = Math.min(((int) Math.floor(progress * 85.0f)) + 170, 255);
         if (progress < 0.2f) {
-            return Color.argb(alpha, 0xd8, 0xd8, 0xd8);
+            return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
         }
-
-        int gray = (int) Math.max(((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f), 0xd8);
+        int gray = (int) ((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f);
+        gray = Math.max(gray, 0x80);
+        int alpha = Math.min(((int) Math.floor(progress * 85.0f)) + 170, 255);
         return Color.argb(alpha, gray, gray, gray);
     }
 
@@ -312,9 +312,9 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     private TextView createPercentView(Context context) {
         TextView textView = new TextView(context);
         textView.setTag(SLIDER_PERCENT_TAG);
-        textView.setTextColor(Color.WHITE);
+        textView.setTextColor(Color.argb(0xff, 0xd8, 0xd8, 0xd8));
         textView.setTypeface(Typeface.DEFAULT_BOLD);
-        textView.setTextSize(11f);
+        textView.setTextSize(13f);
         textView.setShadowLayer(2f, 0f, 0f, Color.BLACK);
         textView.setSingleLine(true);
         textView.setIncludeFontPadding(false);
