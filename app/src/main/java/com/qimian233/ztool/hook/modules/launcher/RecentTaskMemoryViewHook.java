@@ -14,10 +14,12 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.PreferenceHelper;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.lang.reflect.Method;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
@@ -34,10 +36,17 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     private static final String FALLBACK_RAM_FORMATTER = "%s / %s";
     private static final String FALLBACK_RAM_UNAVAILABLE = "-- / --";
 
+    private static final String PROP_MEMORY_EXPANSION_LIST = "persist.sys.zram_wb_list";
+    private static final String PROP_MEMORY_EXPANSION_ENABLED = "persist.sys.zram_wb_enabled";
+    private static final String PROP_MEMORY_EXPANSION_SIZE = "persist.sys.zram_wb_size";
+    private static final String SYSTEM_PROPERTIES_CLASS = "android.os.SystemProperties";
+    private static final String SYSTEM_PROPERTIES_GET_WITH_DEFAULT = "get";
+
     private final Map<TextView, Runnable> updateRunnables = new WeakHashMap<>();
     private final Map<View, Boolean> overviewEnabledStates = new WeakHashMap<>();
     private volatile String cachedRamFormatter;
     private volatile String cachedRamUnavailable;
+    private volatile Method systemPropertiesGetWithDefaultMethod;
 
     @Override
     public String getModuleName() {
@@ -298,17 +307,24 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             activityManager.getMemoryInfo(memoryInfo);
             long usedMemory = Math.max(0L, memoryInfo.totalMem - memoryInfo.availMem);
             memoryView.setText(getRamFormatterText(context,
-                    formatBytes(usedMemory),
-                    formatBytes(memoryInfo.totalMem)));
+                    formatBytesToGigSuffix(usedMemory),
+                    getTotalRamInfo(Math.max(0L, memoryInfo.totalMem))));
         } catch (Throwable t) {
             memoryView.setText(getRamUnavailableText(memoryView.getContext()));
             if (DEBUG) logError("Failed to update memory text", t);
         }
     }
 
-    private String formatBytes(long bytes) {
-        double gib = bytes / 1073741824.0d;
-        return String.format(Locale.US, "%.1f GB", gib);
+    private String formatBytesToGigSuffix(long bytes) {
+        return String.format(Locale.US, "%.1f GB", formatBytes(bytes));
+    }
+
+    private String formatBytesToGigSuffix(String gig) {
+        return String.format(Locale.US, "%s GB", gig);
+    }
+
+    private double formatBytes(long bytes) {
+        return bytes / 1073741824.0d;
     }
 
     private int dp(Context context, int value) {
@@ -365,6 +381,102 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         } catch (Throwable t) {
             if (DEBUG) logError("Failed to create module context for resources", t);
             return null;
+        }
+    }
+
+    private String getTotalRamInfo(long availableMem) {
+        if (!PreferenceHelper.getInstance().getBoolean("beautify_ram_info", false)) {
+            return formatBytesToGigSuffix(availableMem);
+        }
+
+        String guessedRam = guessRamSize(availableMem);
+        String expansionSize = getMemoryExpansionSize();
+        if (expansionSize == null || expansionSize.isEmpty() || "0".equals(expansionSize)) {
+            log("RAM expansion disabled, return guessed value");
+            return guessedRam;
+        }
+        return String.format(Locale.getDefault(), "%s + %s", guessedRam, normalizeExpansionSize(expansionSize));
+    }
+
+    private String getMemoryExpansionSize() {
+        if (!"true".equals(getSystemProperty(PROP_MEMORY_EXPANSION_ENABLED, "false"))) {
+            return null;
+        }
+
+        String list = getSystemProperty(PROP_MEMORY_EXPANSION_LIST, "");
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+
+        return getSystemProperty(PROP_MEMORY_EXPANSION_SIZE, "0");
+    }
+
+    private String normalizeExpansionSize(String size) {
+        String value = size == null ? "" : size.trim();
+        if (value.isEmpty()
+                || "0".equals(value) || "0G".equalsIgnoreCase(value) || "0GB".equalsIgnoreCase(value)
+                || "0.0".equals(value) || "0 G".equalsIgnoreCase(value) || "0 GB".equalsIgnoreCase(value)) {
+            return "0.0 GB";
+        }
+        value = value.replace("GB", "").replace("G", "").trim();
+        try {
+            return String.format(Locale.getDefault(), "%.1f GB", Double.parseDouble(value));
+        } catch (Throwable t) {
+            if (DEBUG) logError("Failed to normalize expansion size: " + size, t);
+            return size.endsWith("GB") ? size : value + ".0 GB";
+        }
+    }
+
+    private String guessRamSize(long availableMem) {
+        double ramInGig = formatBytes(availableMem);
+        double[] ramSizes = {
+                1f, 2f, 3f, 4f, 6f, 8f, 10f, 12f,
+                14f, 16f, 18f, 20f, 22f, 24f, 26f,
+                28f, 30f, 32f, 34f, 36f, 38f, 40f,
+                42f, 44f, 46f, 48f, 50f, 52f, 54f,
+                56f, 58f, 60f, 62f, 64f, 128f
+        };
+        for (double ramSize : ramSizes) {
+            if (ramSize >= ramInGig) {
+                return formatBytesToGigSuffix(String.format(Locale.US, "%.1f", ramSize));
+            }
+        }
+        return formatBytesToGigSuffix(availableMem);
+    }
+
+    private String getSystemProperty(String key, String defValue) {
+        try {
+            Method method = getSystemPropertiesGetWithDefaultMethod();
+            if (method != null) {
+                Object result = method.invoke(null, key, defValue);
+                return result instanceof String ? (String) result : defValue;
+            }
+        } catch (Throwable t) {
+            if (DEBUG) logError("Failed to read system property: " + key, t);
+        }
+        return defValue;
+    }
+
+    private Method getSystemPropertiesGetWithDefaultMethod() {
+        Method method = systemPropertiesGetWithDefaultMethod;
+        if (method != null) {
+            return method;
+        }
+        synchronized (this) {
+            method = systemPropertiesGetWithDefaultMethod;
+            if (method != null) {
+                return method;
+            }
+            try {
+                Class<?> clz = Class.forName(SYSTEM_PROPERTIES_CLASS);
+                method = clz.getMethod(SYSTEM_PROPERTIES_GET_WITH_DEFAULT, String.class, String.class);
+                method.setAccessible(true);
+                systemPropertiesGetWithDefaultMethod = method;
+                return method;
+            } catch (Throwable t) {
+                if (DEBUG) logError("Failed to resolve SystemProperties.get(String, String)", t);
+                return null;
+            }
         }
     }
 }

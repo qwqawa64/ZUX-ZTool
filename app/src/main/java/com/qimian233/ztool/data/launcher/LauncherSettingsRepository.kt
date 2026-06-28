@@ -32,7 +32,8 @@ class LauncherSettingsRepository(
             cleanGlobalSearch = prefsUtils.loadBooleanSetting(KEY_CLEAN_GLOBAL_SEARCH, false),
             removeSearchRecommend = prefsUtils.loadBooleanSetting(KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX, false),
             removeHotWordView = prefsUtils.loadBooleanSetting(KEY_REMOVE_HOT_WORD_VIEW, false),
-            showRamInfo = prefsUtils.loadBooleanSetting(KEY_SHOW_RAM_INFO, false)
+            showRamInfo = prefsUtils.loadBooleanSetting(KEY_SHOW_RAM_INFO, false),
+            beautifyRamInfo = prefsUtils.loadBooleanSetting(KEY_BEAUTIFY_RAM_INFO, false)
         )
     }
 
@@ -89,6 +90,10 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_SHOW_RAM_INFO, enabled)
     }
 
+    fun saveBeautifyRamInfo(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_BEAUTIFY_RAM_INFO, enabled)
+    }
+
     fun loadUserInstalledPackageNames(): List<String> {
         val packageManager = context.packageManager
         return packageManager.getInstalledPackages(0)
@@ -140,6 +145,7 @@ class LauncherSettingsRepository(
         private const val KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX = "remove_search_recommend"
         private const val KEY_REMOVE_HOT_WORD_VIEW = "remove_hot_word_view"
         private const val KEY_SHOW_RAM_INFO = "launcher_recent_task_memory_view"
+        private const val KEY_BEAUTIFY_RAM_INFO = "beautify_ram_info"
     }
 }
 

@@ -864,4 +864,6 @@
     <string name="about_uuuddddl">Hooks</string>
     <string name="about_unfuckzui_summary">Fearure references and inspirations</string>
     <string name="ram_formatter">%s Used | %s</string>
+    <string name="beautify_ram_info">Beautify total RAM info</string>
+    <string name="beautify_ram_info_summary">Replace total RAM value with guessed total physical RAM + RAM expansion value</string>
 </resources>

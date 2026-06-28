@@ -87,6 +87,11 @@ class LauncherSettingsViewModel(
         repository.saveShowRamInfo(value)
     }
 
+    fun setBeautifyRamInfo(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(beautifyRamInfo = enabled)
+        repository.saveBeautifyRamInfo(enabled)
+    }
+
     fun showRestartConfirmDialog() {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = true)
     }
@@ -128,6 +133,7 @@ data class LauncherSettingsUiState(
     val removeSearchRecommend: Boolean = false,
     val showRestartConfirmDialog: Boolean = false,
     val showRamInfo : Boolean = false,
+    val beautifyRamInfo : Boolean = false
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size

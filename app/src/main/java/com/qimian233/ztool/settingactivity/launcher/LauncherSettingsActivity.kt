@@ -109,7 +109,8 @@ fun LauncherSettingsRoute(
         onCleanSearchChanged = viewModel::setCleanSearch,
         onRemoveSearchRecommendationChanged = viewModel::setRemoveSearchRecommend,
         onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView,
-        onShowRamInfoChanged = viewModel::setShowRamInfo
+        onShowRamInfoChanged = viewModel::setShowRamInfo,
+        onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -164,6 +165,7 @@ private fun LauncherSettingsScreen(
     onRemoveSearchRecommendationChanged: (Boolean) -> Unit,
     onRemoveHotWordViewChanged: (Boolean) -> Unit,
     onShowRamInfoChanged: (Boolean) -> Unit,
+    onBeautifyRamInfoChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -211,7 +213,8 @@ private fun LauncherSettingsScreen(
                         onCleanSearchChanged = onCleanSearchChanged,
                         onRemoveSearchRecommendationChanged = onRemoveSearchRecommendationChanged,
                         onRemoveHotWordViewChanged = onRemoveHotWordViewChanged,
-                        onShowRamInfoChanged = onShowRamInfoChanged
+                        onShowRamInfoChanged = onShowRamInfoChanged,
+                        onBeautifyRamInfoChanged = onBeautifyRamInfoChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -232,7 +235,8 @@ private fun launcherSettingsSections(
     onCleanSearchChanged: (Boolean) -> Unit,
     onRemoveSearchRecommendationChanged: (Boolean) -> Unit,
     onRemoveHotWordViewChanged: (Boolean) -> Unit,
-    onShowRamInfoChanged: (Boolean) -> Unit
+    onShowRamInfoChanged: (Boolean) -> Unit,
+    onBeautifyRamInfoChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -317,6 +321,27 @@ private fun launcherSettingsSections(
         }
     }
 
+    val ramInfoLayoutItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.show_ram_info),
+                summary = stringResource(R.string.show_ram_info_summary),
+                checked = state.showRamInfo,
+                onCheckedChange = onShowRamInfoChanged
+            )
+        )
+        if (state.showRamInfo) {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.beautify_ram_info),
+                    summary = stringResource(R.string.beautify_ram_info_summary),
+                    checked = state.beautifyRamInfo,
+                    onCheckedChange = onBeautifyRamInfoChanged
+                )
+            )
+        }
+    }
+
     return listOf(
         SettingSection(
             title = stringResource(R.string.disable_force_stop_title),
@@ -335,14 +360,7 @@ private fun launcherSettingsSections(
         ),
         SettingSection(
             title = stringResource(R.string.recent_task),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.show_ram_info),
-                    summary = stringResource(R.string.show_ram_info_summary),
-                    checked = state.showRamInfo,
-                    onCheckedChange = onShowRamInfoChanged
-                )
-            )
+            items = ramInfoLayoutItems
         ),
         SettingSection(
             title = stringResource(R.string.global_search),
