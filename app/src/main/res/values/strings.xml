@@ -918,7 +918,7 @@
     <string name="show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="show_volume_slider_percentage">显示音量滑动条百分比</string>
     <string name="ram_unavailable" translatable="false">-- | --</string>
-    <string name="ram_formatter">%s 已用 | %s</string>
+    <string name="ram_formatter">%1$s 已用 | %2$s</string>
     <string name="beautify_ram_info">美化总内存信息</string>
     <string name="beautify_ram_info_summary">显示猜测的物理内存总量并显示内存扩展值（如果有）</string>
 </resources>
