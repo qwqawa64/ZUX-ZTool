@@ -279,33 +279,12 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             int range = Math.max(1, max - min);
             int percent = Math.round(((progress - min) * 100f) / range);
             percent = Math.max(0, Math.min(100, percent));
-            if (percent < 100 && isStreamVolumeAtMax(sliderView)) {
-                return 100;
-            }
             return percent;
         } catch (Throwable t) {
             if (DEBUG) {
                 logError("Failed to resolve volume progress", t);
             }
             return null;
-        }
-    }
-
-    private boolean isStreamVolumeAtMax(Object sliderView) {
-        try {
-            Object audio = XposedHelpers.getObjectField(sliderView, "mAudio");
-            if (!(audio instanceof AudioManager)) {
-                return false;
-            }
-            AudioManager audioManager = (AudioManager) audio;
-            int current = audioManager.getStreamVolume(3);
-            int max = audioManager.getStreamMaxVolume(3);
-            return max > 0 && current >= max;
-        } catch (Throwable t) {
-            if (DEBUG) {
-                logError("Failed to resolve stream volume max state", t);
-            }
-            return false;
         }
     }
 
