@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -34,6 +35,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     private static boolean PERCENTAGE_ENABLED = false;
 
     private final Map<View, View.OnLayoutChangeListener> layoutListeners = new WeakHashMap<>();
+    private final Map<FrameLayout, Boolean> pendingPositionUpdates = new WeakHashMap<>();
 
     @Override
     public String getModuleName() {
@@ -207,12 +209,17 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             return;
         }
         try {
-            SeekBar brightnessSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
-            if (brightnessSlider == null) {
-                percentView.setText("--%");
+            FrameLayout root = getFrameLayoutField(sliderView);
+            if (root != null && root.isInLayout()) {
+                schedulePositionUpdate(sliderView);
                 return;
             }
-            percentView.setText(formatPercent(
+            SeekBar brightnessSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
+            if (brightnessSlider == null) {
+                setPercentTextIfChanged(percentView, "--%");
+                return;
+            }
+            setPercentTextIfChanged(percentView, formatPercent(
                     brightnessSlider.getProgress(),
                     brightnessSlider.getMin(),
                     brightnessSlider.getMax()
@@ -220,7 +227,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             updateBrightnessPercentColor(sliderView, percentView);
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
-            percentView.setText("--%");
+            setPercentTextIfChanged(percentView, "--%");
             if (DEBUG) {
                 logError("Failed to refresh brightness percent", t);
             }
@@ -270,7 +277,11 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             int max = brightnessSlider != null ? brightnessSlider.getMax() : 65535;
             max = Math.max(1, max);
             int percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)));
-            percentView.setText(String.format(Locale.US, "%d%%", percent));
+            if (root != null && root.isInLayout()) {
+                schedulePositionUpdate(sliderView);
+                return;
+            }
+            setPercentTextIfChanged(percentView, String.format(Locale.US, "%d%%", percent));
             updateBrightnessPercentColor(sliderView, percentView);
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
@@ -373,14 +384,14 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
 
     private void ensureLayoutTracking(FrameLayout root, View icon, TextView percentView) {
         if (layoutListeners.containsKey(root)) {
-            root.post(() -> positionLabel(root, icon, percentView));
+            schedulePositionUpdate(root, icon, percentView);
             return;
         }
 
-        View.OnLayoutChangeListener listener = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> positionLabel(root, icon, percentView);
+        View.OnLayoutChangeListener listener = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> schedulePositionUpdate(root, icon, percentView);
         layoutListeners.put(root, listener);
         root.addOnLayoutChangeListener(listener);
-        root.post(() -> positionLabel(root, icon, percentView));
+        schedulePositionUpdate(root, icon, percentView);
     }
 
     private void detachBrightnessLabel(Object sliderView) {
@@ -411,7 +422,24 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         if (percentView == null) {
             return;
         }
-        root.post(() -> positionLabel(root, icon, percentView));
+        schedulePositionUpdate(root, icon, percentView);
+    }
+
+    private void schedulePositionUpdate(FrameLayout root, View icon, TextView percentView) {
+        if (root == null || icon == null || percentView == null) {
+            return;
+        }
+        if (Boolean.TRUE.equals(pendingPositionUpdates.get(root))) {
+            return;
+        }
+        pendingPositionUpdates.put(root, Boolean.TRUE);
+        root.post(() -> {
+            try {
+                positionLabel(root, icon, percentView);
+            } finally {
+                pendingPositionUpdates.remove(root);
+            }
+        });
     }
 
     private void positionLabel(FrameLayout root, View icon, TextView percentView) {
@@ -445,12 +473,25 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         if (params == null) {
             params = createLayoutParams();
         }
+        if (params.leftMargin == targetLeft && params.topMargin == targetTop
+                && params.width == ViewGroup.LayoutParams.WRAP_CONTENT
+                && params.height == ViewGroup.LayoutParams.WRAP_CONTENT
+                && params.gravity == (android.view.Gravity.TOP | android.view.Gravity.START)) {
+            return;
+        }
         params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
         params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         params.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
         params.leftMargin = targetLeft;
         params.topMargin = targetTop;
         percentView.setLayoutParams(params);
+    }
+
+    private void setPercentTextIfChanged(TextView percentView, String text) {
+        if (percentView == null || TextUtils.equals(percentView.getText(), text)) {
+            return;
+        }
+        percentView.setText(text);
     }
 
     private int dp(Context context, int value) {
