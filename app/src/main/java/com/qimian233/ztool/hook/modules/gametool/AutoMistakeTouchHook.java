@@ -26,6 +26,9 @@ public class AutoMistakeTouchHook extends BaseHookModule {
     // 配置工具类实例
     private final PreferenceHelper mPrefHelper = PreferenceHelper.getInstance();
 
+    // 持久化拦截标志：当通过本Hook自动开启防误触时，阻止写入Settings.Global
+    private volatile boolean mBlockPersistence = false;
+
     @Override
     public String getModuleName() {
         return "auto_mistake_touch";
@@ -55,6 +58,9 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
             // Hook LiveData 的状态同步
             hookLiveDataPostValue(lpparam);
+
+            // Hook setPreventMisoperation 持久化拦截
+            hookPreventMisoperationPersistence(lpparam);
 
             log("AutoMistakeTouch Hook initialized successfully");
 
@@ -146,6 +152,32 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         }
     }
 
+    private void hookPreventMisoperationPersistence(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            // Hook SettingsValueUtilKt.setPreventMisoperation 静态方法
+            // 当通过本Hook自动开启防误触时(mBlockPersistence=true)，阻止写入Settings.Global
+            // 这样防误触行为仅在内存态生效，关闭Hook后自动恢复原始设置
+            XposedHelpers.findAndHookMethod(
+                    SETTINGS_UTIL_CLASS, lpparam.classLoader,
+                    "setPreventMisoperation",
+                    Context.class, int.class,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) {
+                            if (mBlockPersistence) {
+                                if (DEBUG) log("Blocked setPreventMisoperation persistence");
+                                param.setResult(null);
+                            }
+                        }
+                    });
+
+            log("Successfully hooked setPreventMisoperation for anti-persistence");
+
+        } catch (Throwable e) {
+            logError("Hook setPreventMisoperation failed", e);
+        }
+    }
+
     private void enableMistakeTouchWithSync(Object gameHelper) {
         try {
             // 获取Context
@@ -176,16 +208,28 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
     private void setMistakeTouchThroughGameHelper(Object gameHelper) {
         try {
+            // 开启持久化拦截，阻止 changeMistouchStatus 异步 observer
+            // 将防误触状态写入 Settings.Global
+            mBlockPersistence = true;
+
             // 调用游戏助手内部的changeMistouchStatus方法
             XposedHelpers.callMethod(gameHelper, "changeMistouchStatus", true);
 
             // 同时确保ItemBlockMistakeTouch的状态同步
-            Object mItemBlockMistakeTouch = XposedHelpers.getObjectField(gameHelper, "mItemBlockMistakeTouch");
+            // 注意：mItemBlockMistakeTouch 是 Kotlin Lazy 委托，必须通过 getter 获取
+            Object mItemBlockMistakeTouch = XposedHelpers.callMethod(gameHelper, "getMItemBlockMistakeTouch");
             if (mItemBlockMistakeTouch != null) {
                 XposedHelpers.callMethod(mItemBlockMistakeTouch, "change2Status", 0);
             }
 
+            // 延迟清除拦截标志，确保所有异步 observer 回调执行完毕
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                mBlockPersistence = false;
+                if (DEBUG) log("Persistence block cleared");
+            }, 3000);
+
         } catch (Throwable e) {
+            mBlockPersistence = false;
             logError("Set through game helper failed", e);
         }
     }
