@@ -5,6 +5,7 @@ import android.content.Context;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -28,6 +29,7 @@ public class BypassShareWarningHook extends BaseHookModule {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         try {
+            // 磁贴 Hook, 直接拦截监听器就可以干掉弹窗
             XposedHelpers.findAndHookMethod(
                     TARGET_CLASS,
                     lpparam.classLoader,
@@ -57,6 +59,29 @@ public class BypassShareWarningHook extends BaseHookModule {
             log("Installed hook for BaseFileUnionTile.onClick");
         } catch (Throwable t) {
             logError("Failed to hook BaseFileUnionTile.onClick", t);
+        }
+        try {
+            // 处理其它弹窗场景，例如在超级互联活动内部打开互传开关
+            // 这里用了另外一个方法，直接启动一个 Intent 而且初始化逻辑非常复杂（大量的 if 还有无法修改的 final 局部变量），直接替换创建和启动 Intent 的方法反而会比较经济
+            XposedHelpers.findAndHookMethod("com.motorola.readyfor.common.dialog.ActionNoticeCommonDialogActivity",
+                    lpparam.classLoader,
+                    "p",
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam param) {
+                            Object myObject = param.thisObject;
+                            Context context = getContext(myObject);
+                            Object manager = XposedHelpers.callStaticMethod(
+                                    XposedHelpers.findClass(TARGET_MANAGER_CLASS, lpparam.classLoader),
+                                    "l",
+                                    context
+                            );
+                            XposedHelpers.callMethod(manager, "z", true);
+                            return null;
+                        }
+                    });
+        } catch (Exception e) {
+            logError("Failed to hook createAndStartExposureWarnIntent: ", e);
         }
     }
 
