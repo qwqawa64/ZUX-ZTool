@@ -12,5 +12,6 @@
         <item>com.zui.launcher</item>
         <item>com.zui.wallpapersetting</item>
         <item>com.android.documentsui</item>
+        <item>com.motorola.mobiledesktop</item>
     </string-array>
 </resources>

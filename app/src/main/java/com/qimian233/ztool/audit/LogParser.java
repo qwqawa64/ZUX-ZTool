@@ -185,6 +185,8 @@ public class LogParser {
         // 桌面相关
         MODULE_PATTERNS.put("disable_force_stop",
                 Pattern.compile("\\[disable_force_stop]\\s*(.*)"));
+        MODULE_PATTERNS.put("bypass_share_warning",
+                Pattern.compile("\\[bypass_share_warning]\\s*(.*)"));
         MODULE_PATTERNS.put("zui_launcher_hotseat",
                 Pattern.compile("\\[zui_launcher_hotseat]\\s*(.*)"));
         MODULE_PATTERNS.put("CustomGridSize",
@@ -254,6 +256,7 @@ public class LogParser {
 
         // 启动器相关
         MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
+        MODULE_NAMES.put("bypass_share_warning", "超级互联磁贴跳过警告");
         MODULE_NAMES.put("zui_launcher_hotseat", "Dock扩容");
         MODULE_NAMES.put("CustomGridSize", "自定义桌面网格大小");
         MODULE_NAMES.put("clean_global_search", "净化全局搜索");
@@ -649,7 +652,7 @@ public class LogParser {
 
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
-                "disable_force_stop", "zui_launcher_hotseat", "CustomGridSize",
+                "disable_force_stop", "bypass_share_warning", "zui_launcher_hotseat", "CustomGridSize",
                 "clean_global_search", "launcher_recent_task_memory_view"
         ));
 

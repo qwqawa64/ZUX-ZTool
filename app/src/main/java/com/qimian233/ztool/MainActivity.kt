@@ -42,6 +42,7 @@ import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
+import com.qimian233.ztool.settingactivity.mobiledesktop.MobileDesktopSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.settingactivity.ota.OtaSettingsRoute
 import com.qimian233.ztool.settingactivity.packageinstaller.PackageInstallerSettingsRoute
@@ -820,6 +821,25 @@ private fun MainRouteNavHost(
             )
         }
         composable(
+            route = FeatureDestination.MobileDesktop.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            MobileDesktopSettingsRoute(
+                title = stringResource(R.string.mobile_desktop_app_name),
+                packageName = "com.motorola.mobiledesktop",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
             route = FeatureDestination.SafeCenter.route,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -919,6 +939,7 @@ private fun navigationRouteIndex(route: String?): Int {
         HiddenRoute.SYSTEM_UI_CONTROL_CENTER -> 3
         HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH -> 3
         FeatureDestination.Launcher.route -> 2
+        FeatureDestination.MobileDesktop.route -> 2
         FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2
         MainRoute.Audit.name -> 4

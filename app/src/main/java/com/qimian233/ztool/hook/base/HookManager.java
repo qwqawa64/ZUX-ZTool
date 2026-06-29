@@ -5,6 +5,7 @@ import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook;
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
+import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
@@ -195,6 +196,8 @@ public class HookManager {
         registerHookModule(new ZToolSettingsEntryHook());
         // 注册模块: 允许不受信任的触摸
         registerHookModule(new AllowUntrustedTouch());
+        // 注册模块: 超级互联磁贴跳过警告
+        registerHookModule(new BypassShareWarningHook());
         initialized = true;
     }
 

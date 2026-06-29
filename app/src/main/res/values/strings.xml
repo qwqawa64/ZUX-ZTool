@@ -101,6 +101,8 @@
     <string name="magisk_su_format">Magisk (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>
     <string name="apatch_format">APatch (%s)</string>
+    <string name="mobile_desktop_app_name">超级互联</string>
+    <string name="super_connect_scope_title">超级互联</string>
     <string name="unknown_root_available">未知 Root 实现</string>
     <string name="lsposed_standard_format" translatable="false">LSPosed %s (Standard)</string>
     <string name="lsposed_zygisk" translatable="false">LSPosed (Zygisk)</string>
@@ -127,6 +129,7 @@
     <string name="system_ui_app_description">状态栏、锁屏、控制中心及充电动画等系统界面的自定义设置</string>
     <string name="launcher_app_name">桌面</string>
     <string name="launcher_app_description">Dock栏，后台管理策略</string>
+    <string name="mobile_desktop_app_description">跳过警告、禁止自动关闭互传等</string>
     <string name="system_framework_app_name">系统框架</string>
     <string name="system_framework_app_description">配置屏幕方向、安全策略及AI全局输入设置</string>
     <string name="safe_center_app_name">安全中心</string>
@@ -921,4 +924,6 @@
     <string name="ram_formatter">%1$s 已用 | %2$s</string>
     <string name="beautify_ram_info">美化总内存信息</string>
     <string name="beautify_ram_info_summary">显示猜测的物理内存总量并显示内存扩展值（如果有）</string>
+    <string name="skip_nearby_exposure_warn">跳过互传开启警告</string>
+    <string name="skip_nearby_exposure_warn_summary">跳过反人类的警告弹窗，让联想互传磁贴恢复点按开启</string>
 </resources>

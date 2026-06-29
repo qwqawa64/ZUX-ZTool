@@ -51,6 +51,7 @@ enum class FeatureDestination(
     PackageInstaller("feature/package-installer"),
     SystemUi("feature/system-ui"),
     Launcher("feature/launcher"),
+    MobileDesktop("feature/mobile-desktop"),
     Framework("feature/framework"),
     SafeCenter("feature/safe-center")
 }
@@ -139,6 +140,13 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 descriptionRes = R.string.launcher_app_description,
                 packageName = "com.zui.launcher",
                 destination = FeatureDestination.Launcher
+            ),
+            featureItem(
+                context = context,
+                nameRes = R.string.mobile_desktop_app_name,
+                descriptionRes = R.string.mobile_desktop_app_description,
+                packageName = "com.motorola.mobiledesktop",
+                destination = FeatureDestination.MobileDesktop
             ),
             featureItem(
                 context = context,
