@@ -110,7 +110,8 @@ fun LauncherSettingsRoute(
         onRemoveSearchRecommendationChanged = viewModel::setRemoveSearchRecommend,
         onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView,
         onShowRamInfoChanged = viewModel::setShowRamInfo,
-        onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo
+        onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
+        onDisableDockBarChanged = viewModel::setDisableDockBar
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -133,6 +134,16 @@ fun LauncherSettingsRoute(
                 )
             },
             onDismiss = viewModel::dismissRestartConfirmDialog
+        )
+    }
+
+    if (uiState.showDisableDockWarningDialog) {
+        DisableDockWarningDialog(
+            onConfirm = viewModel::dismissDisableDockWarningDialog,
+            onDoNotShowAgain = {
+                viewModel.confirmDisableDockWarning()
+                Toast.makeText(context, R.string.no_tip_next_time, Toast.LENGTH_SHORT).show()
+            }
         )
     }
 }
@@ -166,6 +177,7 @@ private fun LauncherSettingsScreen(
     onRemoveHotWordViewChanged: (Boolean) -> Unit,
     onShowRamInfoChanged: (Boolean) -> Unit,
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
+    onDisableDockBarChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -214,7 +226,8 @@ private fun LauncherSettingsScreen(
                         onRemoveSearchRecommendationChanged = onRemoveSearchRecommendationChanged,
                         onRemoveHotWordViewChanged = onRemoveHotWordViewChanged,
                         onShowRamInfoChanged = onShowRamInfoChanged,
-                        onBeautifyRamInfoChanged = onBeautifyRamInfoChanged
+                        onBeautifyRamInfoChanged = onBeautifyRamInfoChanged,
+                        onDisableDockBarChanged = onDisableDockBarChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -236,7 +249,8 @@ private fun launcherSettingsSections(
     onRemoveSearchRecommendationChanged: (Boolean) -> Unit,
     onRemoveHotWordViewChanged: (Boolean) -> Unit,
     onShowRamInfoChanged: (Boolean) -> Unit,
-    onBeautifyRamInfoChanged: (Boolean) -> Unit
+    onBeautifyRamInfoChanged: (Boolean) -> Unit,
+    onDisableDockBarChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -342,14 +356,17 @@ private fun launcherSettingsSections(
         }
     }
 
-    return listOf(
-        SettingSection(
-            title = stringResource(R.string.disable_force_stop_title),
-            items = forceStopItems
-        ),
-        SettingSection(
-            title = stringResource(R.string.dock_Title),
-            items = listOf(
+    val dockBarLayoutItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.disable_dock_bar_title),
+                summary = stringResource(R.string.disable_dock_bar_summary),
+                checked = state.disableDockBar,
+                onCheckedChange = onDisableDockBarChanged
+            )
+        )
+        if (!state.disableDockBar) {
+            add(
                 SettingItem.Switch(
                     title = stringResource(R.string.moreBig_dockTitle),
                     summary = stringResource(R.string.moreBig_dockSummary),
@@ -357,6 +374,17 @@ private fun launcherSettingsSections(
                     onCheckedChange = onMoreBigDockChanged
                 )
             )
+        }
+    }
+
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.disable_force_stop_title),
+            items = forceStopItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.dock_Title),
+            items = dockBarLayoutItems
         ),
         SettingSection(
             title = stringResource(R.string.recent_task),
@@ -509,6 +537,24 @@ private fun RestartConfirmDialog(
         },
         dismissButton = {
             ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+        }
+    )
+}
+
+@Composable
+private fun DisableDockWarningDialog(
+    onConfirm: () -> Unit,
+    onDoNotShowAgain: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onConfirm,
+        title = { Text(stringResource(R.string.disable_dock_warning_title)) },
+        text = { Text(stringResource(R.string.disable_dock_warning_message)) },
+        confirmButton = {
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.confirm))
+        },
+        dismissButton = {
+            ZToolTextButton(onClick = onDoNotShowAgain, text = stringResource(R.string.do_not_show_again), isPrimary = false)
         }
     )
 }

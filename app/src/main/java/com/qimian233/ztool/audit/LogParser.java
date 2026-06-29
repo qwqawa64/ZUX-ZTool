@@ -193,6 +193,8 @@ public class LogParser {
                 Pattern.compile("\\[CustomGridSize]\\s*(.*)"));
         MODULE_PATTERNS.put("clean_global_search",
                 Pattern.compile("\\[clean_global_search]\\s*(.*)"));
+        MODULE_PATTERNS.put("disable_dock_bar",
+                Pattern.compile("\\[disable_dock_bar]\\s*(.*)"));
         MODULE_PATTERNS.put("launcher_recent_task_memory_view",
                 Pattern.compile("\\[launcher_recent_task_memory_view]\\s*(.*)"));
 
@@ -260,6 +262,7 @@ public class LogParser {
         MODULE_NAMES.put("zui_launcher_hotseat", "Dock扩容");
         MODULE_NAMES.put("CustomGridSize", "自定义桌面网格大小");
         MODULE_NAMES.put("clean_global_search", "净化全局搜索");
+        MODULE_NAMES.put("disable_dock_bar", "关闭桌面Dock栏");
         MODULE_NAMES.put("launcher_recent_task_memory_view", "显示内存信息");
 
         // 系统框架相关
@@ -653,7 +656,7 @@ public class LogParser {
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
                 "disable_force_stop", "bypass_share_warning", "zui_launcher_hotseat", "CustomGridSize",
-                "clean_global_search", "launcher_recent_task_memory_view"
+                "clean_global_search", "disable_dock_bar", "launcher_recent_task_memory_view"
         ));
 
         // 文件选择器相关

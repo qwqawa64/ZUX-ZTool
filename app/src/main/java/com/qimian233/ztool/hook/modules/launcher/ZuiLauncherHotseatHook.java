@@ -1,6 +1,8 @@
 package com.qimian233.ztool.hook.modules.launcher;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.PreferenceHelper;
+
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -26,6 +28,12 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (!LAUNCHER_PACKAGE.equals(lpparam.packageName)) {
+            return;
+        }
+
+        // 避让逻辑做到 Hook 层，repository 保持干净
+        if (PreferenceHelper.getInstance().getBoolean("disable_dock_bar", false)) {
+            log("Disable dock bar hook enabled, will not expand dock bar.");
             return;
         }
 

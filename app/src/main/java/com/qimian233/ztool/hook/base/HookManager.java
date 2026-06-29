@@ -9,6 +9,7 @@ import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
+import com.qimian233.ztool.hook.modules.launcher.DisableDockBar;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
@@ -178,6 +179,8 @@ public class HookManager {
         registerHookModule(new DisableAllVirusScans());
         // 注册模块: 关闭全局搜索热词提示
         registerHookModule(new CleanGlobalSearch());
+        // 注册模块: 关闭桌面Dock栏
+        registerHookModule(new DisableDockBar());
         // 注册模块: 最近任务内存显示
         registerHookModule(new RecentTaskMemoryViewHook());
         // 注册模块: 控制中心磁贴圆角自定义

@@ -871,4 +871,8 @@
     <string name="mobile_desktop_app_name">Readyfor</string>
     <string name="skip_nearby_exposure_warn">Skip exposure warnings when enabling nearby share</string>
     <string name="skip_nearby_exposure_warn_summary">Allow switching state of Lenovo Share tile with a click</string>
+    <string name="disable_dock_bar_title">Disable dock bar</string>
+    <string name="disable_dock_bar_summary">Conflicts with dock bar expansion and will not provide extra desktop grid space</string>
+    <string name="disable_dock_warning_title">Important Warn</string>
+    <string name="disable_dock_warning_message">Move all apps in dock bar hotseat to desktop. Otherwise they will be "swallowed" by the disappeared dock bar. If the module is among them…</string>
 </resources>
