@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.systemFramework;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
+import android.annotation.SuppressLint;
 import android.os.Binder;
 import android.os.IBinder;
 
@@ -21,6 +22,8 @@ import io.github.libxposed.api.XposedModuleInterface;
  *   2. Hook Binder.unlinkToDeath 防止 death recipient 被提前清理
  *   3. 保留对关键 service binder 的强引用，防止 GC
  */
+
+@SuppressLint({"PrivateApi"})
 public class LsposedServiceProtector extends BaseHookModule {
 
     /** 需要保护的进程/包名关键字 */
@@ -33,7 +36,6 @@ public class LsposedServiceProtector extends BaseHookModule {
             "activity_task"  // ActivityTaskManager
     };
 
-    private static boolean amsHookApplied = false;
     private static boolean serviceBinderHeld = false;
     private static boolean binderDeathHooked = false;
 
@@ -51,8 +53,12 @@ public class LsposedServiceProtector extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
+
+    }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
+        ClassLoader classLoader = param.getClassLoader();
 
         // 第1层：Hook AMS 防止进程被强制杀掉
         hookAmsKillPrevention(classLoader);
@@ -79,7 +85,7 @@ public class LsposedServiceProtector extends BaseHookModule {
                 hookMethodBySignature(amsClass, "killPackageProcessesLocked",
                         chain -> {
                             // 第1个参数通常是包名 String
-                            if (chain.getArgs().size() > 0 && chain.getArg(0) instanceof String) {
+                            if (!chain.getArgs().isEmpty() && chain.getArg(0) instanceof String) {
                                 String pkg = (String) chain.getArg(0);
                                 if (pkg != null && pkg.toLowerCase().contains(LSPOSED_PROCESS_KEYWORD)) {
                                     log("Intercepted killPackageProcessesLocked for: " + pkg);
@@ -96,7 +102,7 @@ public class LsposedServiceProtector extends BaseHookModule {
             try {
                 hookMethodBySignature(amsClass, "forceStopPackageLocked",
                         chain -> {
-                            if (chain.getArgs().size() > 0 && chain.getArg(0) instanceof String) {
+                            if (!chain.getArgs().isEmpty() && chain.getArg(0) instanceof String) {
                                 String pkg = (String) chain.getArg(0);
                                 if (pkg != null && pkg.toLowerCase().contains(LSPOSED_PROCESS_KEYWORD)) {
                                     log("Intercepted forceStopPackageLocked for: " + pkg);
@@ -132,7 +138,6 @@ public class LsposedServiceProtector extends BaseHookModule {
                 log("killServicesLocked hook not available on this ROM");
             }
 
-            amsHookApplied = true;
             log("AMS kill-prevention hooks applied successfully");
         } catch (Throwable t) {
             logError("Failed to apply AMS hooks", t);
