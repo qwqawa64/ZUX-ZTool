@@ -1,14 +1,16 @@
 package com.qimian233.ztool.hook.modules.systemFramework;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+@SuppressLint("PrivateApi")
 public class ForceScreenOnOffAnimation extends BaseHookModule {
     private static final String DISPLAY_POWER_CONTROLLER =
             "com.android.server.display.DisplayPowerController";
@@ -31,8 +33,11 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
+    }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
+        ClassLoader classLoader = param.getClassLoader();
         this.updateAnimationDurationFromPrefs();
         log("Screen on animation duration (ms): " + SCREEN_ON_ANIMATION_DURATION_MS);
         log("Screen off animation duration (ms): " + SCREEN_OFF_ANIMATION_DURATION_MS);
@@ -109,7 +114,6 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 safeCallMethod(offAnimator, "setDuration",
                         SCREEN_OFF_ANIMATION_DURATION_MS);
             }
-            //noinspection ConstantValue
             log("Configured color fade animator durations: on="
                     + getAnimatorDuration(onAnimator)
                     + ", off=" + getAnimatorDuration(offAnimator));
@@ -180,8 +184,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             return false;
         }
         Object powerState = safeGetObjectField(controller, "mPowerState");
-        if (powerState == null
-                || !safeGetBooleanField(powerState, "mColorFadePrepared")
+        if (!safeGetBooleanField(powerState, "mColorFadePrepared")
                 || getFloatByMethod(powerState, "getColorFadeLevel", 1.0f) >= 1.0f) {
             return false;
         }
