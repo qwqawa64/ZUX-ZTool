@@ -161,6 +161,8 @@ public class LogParser {
                 Pattern.compile("\\[allow_get_packages]\\s*(.*)"));
         MODULE_PATTERNS.put("keep_rotation",
                 Pattern.compile("\\[keep_rotation]\\s*(.*)"));
+        MODULE_PATTERNS.put("lsposed_service_protector",
+                Pattern.compile("\\[lsposed_service_protector]\\s*(.*)"));
         MODULE_PATTERNS.put("NoMorePasswordPer24H",
                 Pattern.compile("\\[NoMorePasswordPer24H]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_flag_secure",
@@ -268,6 +270,7 @@ public class LogParser {
         // 系统框架相关
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
         MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
+        MODULE_NAMES.put("lsposed_service_protector", "LSPosed 服务守护");
         MODULE_NAMES.put("NoMorePasswordPer24H", "无需每24H验证一次锁屏密码");
         MODULE_NAMES.put("disable_flag_secure", "强制允许截屏");
         MODULE_NAMES.put("ai_input_expand", "自定义AI全局输入触发符");
@@ -666,7 +669,7 @@ public class LogParser {
 
         // 系统框架相关
         categories.put("系统框架", Arrays.asList(
-                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H", "disable_flag_secure", "ai_input_expand",
+                "allow_get_packages", "keep_rotation", "lsposed_service_protector", "NoMorePasswordPer24H", "disable_flag_secure", "ai_input_expand",
                 "force_screen_on_off_animation", "allow_untrusted_touch"
         ));
 

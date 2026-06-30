@@ -182,6 +182,46 @@ To add a new Hook implementation on the backend:
 
 Use `BaseHookModule.log(...)` / `logError(...)` for module logs when possible. The log module name should match the parser pattern in `LogParser.java`.
 
+## Service, Scope, And Activation Rules
+
+### Scope Management
+
+The `xposed_scope` array in `app/src/main/res/values/array.xml` declares which packages LSPosed should inject the module into. Rules for managing scope:
+
+- **When a new Hook targets a package not already in the scope, add it to `xposed_scope`.** The `getTargetPackages()` returned by each module must be a subset of the declared scope.
+- **`android` (system framework) is already in scope** — no change needed for system-framework hooks.
+- **Always verify scope coverage after adding a new Hook module.** If a target package is missing from scope, the Hook will silently never execute.
+- Do NOT remove scope entries unless their corresponding Hook modules are also removed.
+- The scope is a build-time declaration; users must also configure it in LSPosed Manager.
+
+### Activation Chain
+
+Module activation follows this chain:
+
+1. **`HookInit.handleLoadPackage`** → calls `HookManager.handleLoadPackage(lpparam)` for every loaded package in scope.
+2. **`HookManager`** → iterates all registered `BaseHookModule` instances, calling `safeHandleLoadPackage`.
+3. **`BaseHookModule.safeHandleLoadPackage`** → checks `supportsPackage()` (package name match) then `isEnabled()` (via `ModuleConfig.isModuleEnabled(getModuleName())`). Only when both pass does `handleLoadPackage()` execute.
+4. **`ModuleConfig`** → reads `XSharedPreferences("com.qimian233.ztool", "xposed_module_config")`. Module name is the key; default is `false` (disabled).
+5. **`ModuleActivationProbe`** → `HookInit.hookSelfStatus` replaces `isModuleActive()` with `return true`. The app UI polls this to show "Module Activated" status.
+
+### Service Protection Hook Guidelines
+
+When creating hooks that protect or interact with Android system services (e.g. keeping daemon processes alive, preventing service GC):
+
+- **Target `android`** (system framework) for hooks that intercept AMS, process management, or Binder behavior.
+- **Use `hookMethodBySignature`** when hooking AMS or ActiveServices methods — Android version differences change method parameter counts across releases. Iterate declared methods by name to cover all overloads.
+- **Wrap every hook attempt in its own try-catch** — missing methods on a particular ROM/version should not prevent other hooks from applying.
+- **For binder anti-GC**: hold `ServiceManager.getService(...)` references in a static `List<IBinder>` to prevent weak-reference-only GC.
+- **For death recipient protection**: hook `Binder.unlinkToDeath` and inspect the call stack for LSPosed-related classes before deciding to intercept.
+- **Log each defense layer** independently so the Audit UI can show which protections are active.
+- Such hooks typically require a system reboot to take effect after enabling.
+
+### Service Declaration In Manifest
+
+- The only current service is `LogCollectorService` (foreground, `specialUse`, not exported). Declared in `AndroidManifest.xml:40-44`.
+- New services must be declared with appropriate `foregroundServiceType` for the target SDK.
+- Services that interact with Hook modules should stay in `com.qimian233.ztool.service`.
+
 ## UI And Compose Guidance
 
 The current UI direction is Compose-first. For Compose migration-specific work, also read:

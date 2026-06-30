@@ -94,7 +94,8 @@ fun FrameworkSettingsRoute(
         onAiInputSignsChanged = viewModel::setAiInputSigns,
         onShowAiInputInfo = viewModel::showAiInputInfoDialog,
         onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
-        onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch
+        onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
+        onLsposedServiceProtector = viewModel::setLsposedServiceProtector
     )
 
     if (uiState.showAiInputInfoDialog) {
@@ -143,6 +144,7 @@ private fun FrameworkSettingsScreen(
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onNoPasswordPer24H: (Boolean) -> Unit,
     onAllowUntrustedTouch: (Boolean) -> Unit,
+    onLsposedServiceProtector: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
@@ -195,6 +197,7 @@ private fun FrameworkSettingsScreen(
                         onShowAiInputInfo = onShowAiInputInfo,
                         onNoPasswordPer24H = onNoPasswordPer24H,
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
+                        onLsposedServiceProtector = onLsposedServiceProtector,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -212,6 +215,7 @@ private fun frameworkSettingsSections(
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onNoPasswordPer24H: (Boolean) -> Unit,
     onAllowUntrustedTouch: (Boolean) -> Unit,
+    onLsposedServiceProtector: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
@@ -268,6 +272,17 @@ private fun frameworkSettingsSections(
                             onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged
                         )
                     }
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.lsposed_service_protector_title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.lsposed_service_protector_enable_title),
+                    summary = stringResource(R.string.lsposed_service_protector_enable_summary),
+                    checked = state.lsposedServiceProtector,
+                    onCheckedChange = onLsposedServiceProtector
                 )
             )
         ),

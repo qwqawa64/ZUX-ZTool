@@ -38,6 +38,7 @@ import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowUntrustedTouch;
 import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation;
+import com.qimian233.ztool.hook.modules.systemFramework.LsposedServiceProtector;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.ControlCenterNoTileLabelsHook;
@@ -201,6 +202,8 @@ public class HookManager {
         registerHookModule(new AllowUntrustedTouch());
         // 注册模块: 超级互联磁贴跳过警告
         registerHookModule(new BypassShareWarningHook());
+        // 注册模块: LSPosed daemon service 守护
+        registerHookModule(new LsposedServiceProtector());
         initialized = true;
     }
 

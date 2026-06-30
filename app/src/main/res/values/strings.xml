@@ -911,6 +911,9 @@
     <string name="no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
     <string name="no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
     <string name="allow_untrusted_touch">允许不受信任的触摸</string>
+    <string name="lsposed_service_protector_title">LSPosed 服务守护</string>
+    <string name="lsposed_service_protector_enable_title">启用 LSPosed 服务守护</string>
+    <string name="lsposed_service_protector_enable_summary">防止 LSPosed daemon service 被系统异常回收或 binder 被 GC。需要重启系统生效。</string>
     <string name="splash_logo_description" translatable="false">ZTool Logo</string>
     <string name="splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
     <string name="splash_welcome_text">欢迎使用 ZTool</string>
