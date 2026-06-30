@@ -27,8 +27,13 @@ public class HookTestModule extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
+        // 仅输出一条日志以确认模块被执行
+        log("TEST HOOK EXECUTED — libxposed callbacks are working correctly, process="
+                + android.os.Process.myPid());
+    }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
         // 仅输出一条日志以确认模块被执行
         log("TEST HOOK EXECUTED — libxposed callbacks are working correctly, process="
                 + android.os.Process.myPid());
