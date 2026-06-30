@@ -29,7 +29,7 @@ import com.qimian233.ztool.hook.modules.setting.AlwaysDisplaySuggestion;
 import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
 import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo;
 import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
-import com.qimian233.ztool.hook.modules.setting.KeepRotation;
+import com.qimian233.ztool.hook.modules.systemFramework.KeepRotation;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
