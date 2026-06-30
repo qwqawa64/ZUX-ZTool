@@ -1,12 +1,14 @@
 package com.qimian233.ztool.hook.modules.systemFramework;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
+@SuppressLint({"PrivateApi"})
 public class NoMorePasswordPer24H extends BaseHookModule {
     private static final String TAG = "NoMorePasswordPer24H";
 
@@ -19,8 +21,12 @@ public class NoMorePasswordPer24H extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
+
+    }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
+        ClassLoader classLoader = param.getClassLoader();
 
         Class<?> lockSettingsClass = classLoader.loadClass(
                 "com.android.server.locksettings.LockSettingsStrongAuth");
