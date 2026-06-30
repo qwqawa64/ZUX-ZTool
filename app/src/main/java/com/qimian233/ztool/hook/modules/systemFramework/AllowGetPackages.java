@@ -1,11 +1,14 @@
 package com.qimian233.ztool.hook.modules.systemFramework;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
+@SuppressLint({"SoonBlockedPrivateApi", "PrivateApi"})
 public class AllowGetPackages extends BaseHookModule {
     public static final String FEATURE_NAME = "allow_get_packages";
 

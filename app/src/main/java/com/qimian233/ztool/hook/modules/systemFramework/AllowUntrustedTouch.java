@@ -2,10 +2,13 @@ package com.qimian233.ztool.hook.modules.systemFramework;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
+import android.annotation.SuppressLint;
+
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
+@SuppressLint("PrivateApi")
 public class AllowUntrustedTouch extends BaseHookModule {
 
     public AllowUntrustedTouch() {}
