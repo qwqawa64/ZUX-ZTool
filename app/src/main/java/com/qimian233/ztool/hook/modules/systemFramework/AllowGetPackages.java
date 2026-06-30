@@ -2,7 +2,6 @@ package com.qimian233.ztool.hook.modules.systemFramework;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -22,9 +21,13 @@ public class AllowGetPackages extends BaseHookModule {
         return new String[] {"system"};
     }
 
+    @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
+        log("System server package, handleLoadPackage should not be loaded. Check getTargetPackages if you see this log.");
+    }
+
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
+        ClassLoader classLoader = param.getClassLoader();
         try {
             log("Start hooking android.app.AppOpsManager, SystemFramework");
             Method opToDefaultMode = classLoader.loadClass("android.app.AppOpsManager")
