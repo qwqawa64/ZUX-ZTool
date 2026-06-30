@@ -5,14 +5,17 @@ import android.content.Context;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 public class DisableAllVirusScans extends BaseHookModule {
     private static final String KEY_DYNAMIC_ICONS = "com.zui.safecenter.dynamic_icons";
     private static final String KEY_SAFE_CENTER_ICON = "safecentericon";
+
+    public DisableAllVirusScans() {}
 
     @Override
     public String getModuleName() {
@@ -25,169 +28,150 @@ public class DisableAllVirusScans extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        hookGetManager(lpparam);
-        hookDbManager(lpparam);
-        disableVirusPopup(lpparam);
-        blockIconNumChange(lpparam);
-        blockDynamicIconSettings(lpparam);
-        forceActiveViewNormalIcon(lpparam);
-        disableAutoScan(lpparam);
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        hookGetManager(classLoader);
+        hookDbManager(classLoader);
+        disableVirusPopup(classLoader);
+        blockIconNumChange(classLoader);
+        blockDynamicIconSettings(classLoader);
+        forceActiveViewNormalIcon(classLoader);
+        disableAutoScan(classLoader);
     }
 
-    private void hookGetManager(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookGetManager(ClassLoader classLoader) {
         try {
             log("Hooking safecenter to block manager initialization.");
-            XposedHelpers.findAndHookMethod("tmsdk.fg.creator.ManagerCreatorF",
-                    lpparam.classLoader,
-                    "getManager",
-                    "java.lang.Class",
-                    XC_MethodReplacement.returnConstant(null));
+            Class<?> managerCreatorFClass = classLoader.loadClass("tmsdk.fg.creator.ManagerCreatorF");
+            Method getManagerMethod = managerCreatorFClass.getDeclaredMethod("getManager", Class.class);
+            this.xposed.hook(getManagerMethod).intercept(chain -> null);
             log("Successfully hooked safecenter!");
         } catch (Exception e) {
             logError("Failed to hook scan manager! ", e);
         }
     }
 
-    private void hookDbManager(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookDbManager(ClassLoader classLoader) {
         try {
             log("Set getVirusAppsCount return value to int 0");
-            XposedHelpers.findAndHookMethod("com.lenovo.safecenter.antivirus.db.AntiVirusDBManager",
-                    lpparam.classLoader,
-                    "getVirusAppsCount",
-                    XC_MethodReplacement.returnConstant(0));
+            Class<?> antiVirusDBManagerClass = classLoader.loadClass(
+                    "com.lenovo.safecenter.antivirus.db.AntiVirusDBManager");
+            Method getVirusAppsCountMethod = antiVirusDBManagerClass.getDeclaredMethod("getVirusAppsCount");
+            this.xposed.hook(getVirusAppsCountMethod).intercept(chain -> 0);
             log("getVirusAppsCount is set to 0.");
+
             log("Blocking AntiVirusDBHelper initialization.");
-            XposedHelpers.findAndHookConstructor("com.lenovo.safecenter.antivirus.db.AntiVirusDBHelper",
-                    lpparam.classLoader,
-                    "android.content.Context",
-                    XC_MethodReplacement.returnConstant(null));
+            Class<?> antiVirusDBHelperClass = classLoader.loadClass(
+                    "com.lenovo.safecenter.antivirus.db.AntiVirusDBHelper");
+            Constructor<?> ctor = antiVirusDBHelperClass.getDeclaredConstructor(Context.class);
+            this.xposed.hook(ctor).intercept(chain -> null);
         } catch (Exception e) {
             logError("Failed to hook DB manager! ", e);
         }
     }
 
-    private void disableVirusPopup(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookMethod("com.lenovo.safecenter.antivirus.views.NotiSMSActivity",
-                lpparam.classLoader,
-                "onCreate",
-                "android.os.Bundle",
-                XC_MethodReplacement.returnConstant(null)
-        );
-        log("Virus popup blocked successfully.");
+    private void disableVirusPopup(ClassLoader classLoader) {
+        try {
+            Class<?> notiSMSActivityClass = classLoader.loadClass(
+                    "com.lenovo.safecenter.antivirus.views.NotiSMSActivity");
+            Method onCreateMethod = notiSMSActivityClass.getDeclaredMethod("onCreate",
+                    android.os.Bundle.class);
+            this.xposed.hook(onCreateMethod).intercept(chain -> null);
+            log("Virus popup blocked successfully.");
+        } catch (Exception e) {
+            logError("Failed to disable virus popup! ", e);
+        }
     }
 
-    private void blockInstallVirusHandler(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void blockInstallVirusHandler(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod("com.lenovo.safecenter.antivirus.support.InstallJudgeService",
-                    lpparam.classLoader,
-                    "dealVirus",
-                    "com.lesafe.utils.mode.ResultEntity",
-                    boolean.class,
-                    new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) {
-                            log("Blocked installed-virus handler from switching SafeCenter icon");
-                            return null;
-                        }
-                    });
+            Class<?> installJudgeServiceClass = classLoader.loadClass(
+                    "com.lenovo.safecenter.antivirus.support.InstallJudgeService");
+            Class<?> resultEntityClass = classLoader.loadClass("com.lesafe.utils.mode.ResultEntity");
+            Method dealVirusMethod = installJudgeServiceClass.getDeclaredMethod("dealVirus",
+                    resultEntityClass, boolean.class);
+            this.xposed.hook(dealVirusMethod).intercept(chain -> {
+                log("Blocked installed-virus handler from switching SafeCenter icon");
+                return null;
+            });
             log("InstallJudgeService virus icon handler blocked.");
         } catch (Throwable t) {
             logError("Failed to hook InstallJudgeService virus icon handler! ", t);
         }
     }
 
-    private void blockIconNumChange(XC_LoadPackage.LoadPackageParam lpparam) {
-        blockInstallVirusHandler(lpparam);
+    private void blockIconNumChange(ClassLoader classLoader) {
+        blockInstallVirusHandler(classLoader);
         try {
-            XposedHelpers.findAndHookMethod("com.lenovo.safecenter.services.HealthScanner",
-                    lpparam.classLoader,
-                    "setNumIcon",
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            int originalCount = (int) param.args[0];
-                            if (originalCount != 0) {
-                                log("Forced HealthScanner icon warning count " + originalCount + " to 0");
-                            }
-                            param.args[0] = 0;
-                        }
-                    });
+            Class<?> healthScannerClass = classLoader.loadClass(
+                    "com.lenovo.safecenter.services.HealthScanner");
+            Method setNumIconMethod = healthScannerClass.getDeclaredMethod("setNumIcon", int.class);
+            this.xposed.hook(setNumIconMethod).intercept(chain -> {
+                int originalCount = (int) chain.getArg(0);
+                if (originalCount != 0) {
+                    log("Forced HealthScanner icon warning count " + originalCount + " to 0");
+                }
+                return chain.proceed(new Object[]{0});
+            });
             log("HealthScanner icon count changes blocked.");
         } catch (Throwable t) {
             logError("Failed to hook HealthScanner icon count! ", t);
         }
     }
 
-    private void blockDynamicIconSettings(XC_LoadPackage.LoadPackageParam lpparam) {
-        hookSystemPutInt(lpparam);
-        hookSystemGetInt(lpparam);
+    private void blockDynamicIconSettings(ClassLoader classLoader) {
+        hookSystemPutInt();
+        hookSystemGetInt();
     }
 
-    private void hookSystemPutInt(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemPutInt() {
         try {
-            XposedHelpers.findAndHookMethod("android.provider.Settings$System",
-                    lpparam.classLoader,
-                    "putInt",
-                    ContentResolver.class,
-                    String.class,
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            String key = (String) param.args[1];
-                            if (isSafeCenterIconSetting(key)) {
-                                int value = (int) param.args[2];
-                                if (value != 0) {
-                                    log("Blocked SafeCenter dynamic icon setting " + key + "=" + value);
-                                }
-                                param.args[2] = 0;
-                            }
-                        }
-                    });
+            Method putIntMethod = android.provider.Settings.System.class.getDeclaredMethod(
+                    "putInt", ContentResolver.class, String.class, int.class);
+            this.xposed.hook(putIntMethod).intercept(chain -> {
+                String key = (String) chain.getArg(1);
+                if (isSafeCenterIconSetting(key)) {
+                    int value = (int) chain.getArg(2);
+                    if (value != 0) {
+                        log("Blocked SafeCenter dynamic icon setting " + key + "=" + value);
+                    }
+                    return chain.proceed(new Object[]{chain.getArg(0), key, 0});
+                }
+                return chain.proceed();
+            });
             log("SafeCenter dynamic icon Settings.System.putInt writes blocked.");
         } catch (Throwable t) {
             logError("Failed to hook dynamic icon Settings.System.putInt! ", t);
         }
     }
 
-    private void hookSystemGetInt(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemGetInt() {
         try {
-            XposedHelpers.findAndHookMethod("android.provider.Settings$System",
-                    lpparam.classLoader,
-                    "getInt",
-                    ContentResolver.class,
-                    String.class,
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            String key = (String) param.args[1];
-                            if (isSafeCenterIconSetting(key)) {
-                                param.setResult(0);
-                            }
-                        }
-                    });
+            Method getIntMethod = android.provider.Settings.System.class.getDeclaredMethod(
+                    "getInt", ContentResolver.class, String.class, int.class);
+            this.xposed.hook(getIntMethod).intercept(chain -> {
+                String key = (String) chain.getArg(1);
+                if (isSafeCenterIconSetting(key)) {
+                    return 0;
+                }
+                return chain.proceed();
+            });
             log("SafeCenter dynamic icon Settings.System.getInt reads forced to normal.");
         } catch (Throwable t) {
             logError("Failed to hook dynamic icon Settings.System.getInt! ", t);
         }
     }
 
-    private void forceActiveViewNormalIcon(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void forceActiveViewNormalIcon(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod("com.lenovo.safecenter.MainTab.ActiveView",
-                    lpparam.classLoader,
-                    "getBitmapDrawable",
-                    Context.class,
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            param.args[1] = 0;
-                        }
-                    });
+            Class<?> activeViewClass = classLoader.loadClass(
+                    "com.lenovo.safecenter.MainTab.ActiveView");
+            Method getBitmapDrawableMethod = activeViewClass.getDeclaredMethod(
+                    "getBitmapDrawable", Context.class, int.class);
+            this.xposed.hook(getBitmapDrawableMethod).intercept(chain -> {
+                return chain.proceed(new Object[]{chain.getArg(0), 0});
+            });
             log("ActiveView dynamic icon rendering forced to normal.");
         } catch (Throwable t) {
             logError("Failed to hook ActiveView dynamic icon rendering! ", t);
@@ -198,22 +182,17 @@ public class DisableAllVirusScans extends BaseHookModule {
         return KEY_DYNAMIC_ICONS.equals(key) || KEY_SAFE_CENTER_ICON.equals(key);
     }
 
-    private void disableAutoScan(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void disableAutoScan(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.lenovo.safecenter.antivirus.autoscan.AutoOverallScan",
-                    lpparam.classLoader,
-                    "LocalOverallScanVirus",
-                    android.content.Context.class,
-                    new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) {
-                            // 直接返回null，阻止自动扫描执行
-                            log("Auto virus scan blocked at entry point");
-                            return null;
-                        }
-                    }
-            );
+            Class<?> autoOverallScanClass = classLoader.loadClass(
+                    "com.lenovo.safecenter.antivirus.autoscan.AutoOverallScan");
+            Method localOverallScanVirusMethod = autoOverallScanClass.getDeclaredMethod(
+                    "LocalOverallScanVirus", Context.class);
+            this.xposed.hook(localOverallScanVirusMethod).intercept(chain -> {
+                // 直接返回null，阻止自动扫描执行
+                log("Auto virus scan blocked at entry point");
+                return null;
+            });
             log("Successfully hooked SafeCenter auto scan entry");
         } catch (Throwable t) {
             logError("Failed to hook SafeCenter auto scan", t);

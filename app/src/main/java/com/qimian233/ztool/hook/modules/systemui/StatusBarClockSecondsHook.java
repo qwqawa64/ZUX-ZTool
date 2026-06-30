@@ -1,9 +1,11 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * SystemUI状态栏时钟秒显示Hook模块
@@ -12,6 +14,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class StatusBarClockSecondsHook extends BaseHookModule {
 
     private static final String CLOCK_CLASS = "com.android.systemui.statusbar.policy.Clock";
+
+    public StatusBarClockSecondsHook() {}
 
     @Override
     public String getModuleName() {
@@ -26,25 +30,23 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
-            hookSystemUIClock(lpparam);
+            hookSystemUIClock(classLoader);
         }
     }
 
-    private void hookSystemUIClock(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemUIClock(ClassLoader classLoader) {
         try {
             // Hook 1: 在 Clock 对象创建时强制启用秒显示
-            XposedHelpers.findAndHookMethod(CLOCK_CLASS, lpparam.classLoader,
-                    "onAttachedToWindow", new XC_MethodHook() {
-
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            forceEnableClockSeconds(param.thisObject);
-                        }
-                    });
+            Method onAttachedMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("onAttachedToWindow");
+            this.xposed.hook(onAttachedMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                forceEnableClockSeconds(chain.getThisObject());
+                return result;
+            });
 
             log("Successfully hooked Clock.onAttachedToWindow");
         } catch (Throwable t) {
@@ -53,28 +55,22 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
 
         try {
             // Hook 2: 防止系统设置覆盖我们的修改
-            XposedHelpers.findAndHookMethod(CLOCK_CLASS, lpparam.classLoader,
-                    "onTuningChanged", String.class, String.class, new XC_MethodHook() {
-
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            String key = (String) param.args[0];
-                            if ("clock_seconds".equals(key)) {
-                                // 强制覆盖设置为开启
-                                param.args[1] = "1";
-                                XposedHelpers.setBooleanField(param.thisObject, "mShowSeconds", true);
-                            }
-                        }
-
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            String key = (String) param.args[0];
-                            if ("clock_seconds".equals(key)) {
-                                // 确保秒显示更新
-                                XposedHelpers.callMethod(param.thisObject, "updateShowSeconds");
-                            }
-                        }
-                    });
+            Method onTuningMethod = classLoader.loadClass(CLOCK_CLASS)
+                    .getDeclaredMethod("onTuningChanged", String.class, String.class);
+            this.xposed.hook(onTuningMethod).intercept(chain -> {
+                String key = (String) chain.getArg(0);
+                if ("clock_seconds".equals(key)) {
+                    // 强制覆盖设置为开启
+                    Class<?> clockCls = chain.getThisObject().getClass();
+                    clockCls.getDeclaredField("mShowSeconds").setBoolean(chain.getThisObject(), true);
+                    // 调用原始方法，但修改第二个参数为 "1"
+                    Object result = chain.proceed(new Object[]{key, "1"});
+                    // 确保秒显示更新
+                    clockCls.getDeclaredMethod("updateShowSeconds").invoke(chain.getThisObject());
+                    return result;
+                }
+                return chain.proceed();
+            });
 
             log("Successfully hooked Clock.onTuningChanged");
         } catch (Throwable t) {
@@ -83,15 +79,13 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
 
         try {
             // Hook 3: 直接修改 updateShowSeconds 方法
-            XposedHelpers.findAndHookMethod(CLOCK_CLASS, lpparam.classLoader,
-                    "updateShowSeconds", new XC_MethodHook() {
-
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            // 强制启用秒显示
-                            XposedHelpers.setBooleanField(param.thisObject, "mShowSeconds", true);
-                        }
-                    });
+            Method updateMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("updateShowSeconds");
+            this.xposed.hook(updateMethod).intercept(chain -> {
+                // 强制启用秒显示
+                chain.getThisObject().getClass().getDeclaredField("mShowSeconds")
+                        .setBoolean(chain.getThisObject(), true);
+                return chain.proceed();
+            });
 
             log("Successfully hooked Clock.updateShowSeconds");
         } catch (Throwable t) {
@@ -104,20 +98,23 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
      */
     private void forceEnableClockSeconds(Object clockInstance) {
         try {
+            Class<?> cl = clockInstance.getClass();
             // 设置秒显示标志
-            XposedHelpers.setBooleanField(clockInstance, "mShowSeconds", true);
+            cl.getDeclaredField("mShowSeconds").setBoolean(clockInstance, true);
 
             // 确保秒更新处理器存在
-            Object secondsHandler = XposedHelpers.getObjectField(clockInstance, "mSecondsHandler");
+            java.lang.reflect.Field handlerField = cl.getDeclaredField("mSecondsHandler");
+            handlerField.setAccessible(true);
+            Object secondsHandler = handlerField.get(clockInstance);
             if (secondsHandler == null) {
-                ClassLoader cl = clockInstance.getClass().getClassLoader();
-                Class<?> handlerClass = XposedHelpers.findClass("android.os.Handler", cl);
-                Object newHandler = XposedHelpers.newInstance(handlerClass);
-                XposedHelpers.setObjectField(clockInstance, "mSecondsHandler", newHandler);
+                ClassLoader clLoader = clockInstance.getClass().getClassLoader();
+                Class<?> handlerClass = clLoader.loadClass("android.os.Handler");
+                Object newHandler = handlerClass.getDeclaredConstructor().newInstance();
+                handlerField.set(clockInstance, newHandler);
             }
 
             // 触发秒显示更新
-            XposedHelpers.callMethod(clockInstance, "updateShowSeconds");
+            cl.getDeclaredMethod("updateShowSeconds").invoke(clockInstance);
 
             log("Force enabled clock seconds display");
         } catch (Throwable t) {

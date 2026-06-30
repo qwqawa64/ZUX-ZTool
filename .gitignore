@@ -53,3 +53,4 @@ local.properties
 /gradle/gradle-daemon-jvm.properties
 /app/release/*
 /reasonix.toml
+/reasonix.bat

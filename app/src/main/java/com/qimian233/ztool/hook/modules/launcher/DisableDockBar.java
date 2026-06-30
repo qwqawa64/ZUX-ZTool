@@ -4,13 +4,16 @@ import android.view.View;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 public class DisableDockBar extends BaseHookModule {
 
     private static final String LAUNCHER_PACKAGE = "com.zui.launcher";
+
+    public DisableDockBar() {}
 
     @Override
     public String getModuleName() {
@@ -23,15 +26,17 @@ public class DisableDockBar extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!LAUNCHER_PACKAGE.equals(lpparam.packageName)) {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        if (!LAUNCHER_PACKAGE.equals(packageName)) {
             return;
         }
 
         log("开始Hook ZUI Launcher Dock栏");
 
         try {
-            hookDockVisibility(lpparam);
+            hookDockVisibility(classLoader);
 
             log("ZUI Launcher Dock栏隐藏Hook完成");
         } catch (Throwable t) {
@@ -42,23 +47,18 @@ public class DisableDockBar extends BaseHookModule {
     /**
      * Hook ZuiHotseat.setVisibility() 强制隐藏Dock栏视图
      */
-    private void hookDockVisibility(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookDockVisibility(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.zui.launcher.uiextend.ZuiHotseat",
-                    lpparam.classLoader,
-                    "setVisibility",
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            int visibility = (int) param.args[0];
-                            if (visibility == View.VISIBLE) {
-                                param.args[0] = View.GONE;
-                            }
-                        }
-                    }
-            );
+            Class<?> zuiHotseatClass = classLoader.loadClass("com.zui.launcher.uiextend.ZuiHotseat");
+            Method setVisibilityMethod = zuiHotseatClass.getDeclaredMethod("setVisibility", int.class);
+            this.xposed.hook(setVisibilityMethod).intercept(chain -> {
+                int visibility = (int) chain.getArg(0);
+                if (visibility == View.VISIBLE) {
+                    // Block setting visibility to VISIBLE, effectively hiding the dock
+                    return null;
+                }
+                return chain.proceed();
+            });
             log("ZuiHotseat.setVisibility Hook完成");
         } catch (Throwable t) {
             logError("Hook ZuiHotseat.setVisibility失败", t);

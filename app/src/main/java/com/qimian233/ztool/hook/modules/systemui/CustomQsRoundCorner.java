@@ -9,16 +9,19 @@ import android.graphics.drawable.StateListDrawable;
 import android.widget.ProgressBar;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 public class CustomQsRoundCorner extends BaseHookModule {
 
     private static int headUpTileRoundCornerRadius = 32;
     private static int normalTileRoundCornerRadius = 96;
+
+    public CustomQsRoundCorner() {}
 
     @Override
     public String getModuleName() {
@@ -31,109 +34,109 @@ public class CustomQsRoundCorner extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         updateRoundCornerPrefs();
 
-        XposedHelpers.findAndHookMethod("com.android.systemui.qs.tileimpl.QSTileViewImpl",
-                lpparam.classLoader,
-                "changeCornerRadius",
-                float.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        param.args[0] = (float) headUpTileRoundCornerRadius;
+        Method changeCornerRadiusMethod = classLoader
+                .loadClass("com.android.systemui.qs.tileimpl.QSTileViewImpl")
+                .getDeclaredMethod("changeCornerRadius", float.class);
+        this.xposed.hook(changeCornerRadiusMethod).intercept(chain -> {
+            return chain.proceed(new Object[]{(float) headUpTileRoundCornerRadius});
+        });
+
+        Method updateRippleRadiusMethod = classLoader
+                .loadClass("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl")
+                .getDeclaredMethod("updateRippleRadius");
+        this.xposed.hook(updateRippleRadiusMethod).intercept(chain -> {
+            Object result = chain.proceed();
+            Class<?> cl = chain.getThisObject().getClass();
+
+            RippleDrawable rippleDrawable =
+                    (RippleDrawable) cl.getDeclaredField("qsTileBackground").get(chain.getThisObject());
+
+            if (rippleDrawable != null) {
+                Drawable mask = rippleDrawable.findDrawableByLayerId(android.R.id.mask);
+                if (mask instanceof GradientDrawable) {
+                    ((GradientDrawable) mask).setCornerRadius((float) normalTileRoundCornerRadius);
+                }
+            }
+
+            LayerDrawable backgroundDrawable =
+                    (LayerDrawable) cl.getDeclaredField("backgroundDrawable").get(chain.getThisObject());
+
+            if (backgroundDrawable != null) {
+                int count = backgroundDrawable.getNumberOfLayers();
+                for (int i = 0; i < count; i++) {
+                    Drawable layer = backgroundDrawable.getDrawable(i);
+                    if (layer instanceof GradientDrawable) {
+                        ((GradientDrawable) layer).setCornerRadius((float) normalTileRoundCornerRadius);
                     }
-                });
+                }
+            }
+            return result;
+        });
 
-        XposedHelpers.findAndHookMethod("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl",
-                lpparam.classLoader,
-                "updateRippleRadius",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        RippleDrawable rippleDrawable =
-                                (RippleDrawable) XposedHelpers.getObjectField(param.thisObject, "qsTileBackground");
+        Class<?> toggleSliderViewClass = classLoader.loadClass("com.android.systemui.settings.ToggleSliderView");
 
-                        if (rippleDrawable != null) {
-                            Drawable mask = rippleDrawable.findDrawableByLayerId(android.R.id.mask);
-                            if (mask instanceof GradientDrawable) {
-                                ((GradientDrawable) mask).setCornerRadius((float) normalTileRoundCornerRadius);
-                            }
-                        }
+        Method refreshSeekBarMethod = toggleSliderViewClass.getDeclaredMethod("refreshSeekBar", ProgressBar.class);
+        this.xposed.hook(refreshSeekBarMethod).intercept(chain -> {
+            log("refreshSeekBar afterHookedMethod called!");
+            Object result = chain.proceed();
+            applySeekBarRoundCorner((ProgressBar) chain.getArg(0), "refreshSeekBar");
+            return result;
+        });
 
-                        LayerDrawable backgroundDrawable =
-                                (LayerDrawable) XposedHelpers.getObjectField(param.thisObject, "backgroundDrawable");
+        Method updateBrightnessSliderMethod = toggleSliderViewClass.getDeclaredMethod("updateBrightnessSlider");
+        this.xposed.hook(updateBrightnessSliderMethod).intercept(chain -> {
+            Object result = chain.proceed();
+            log("updateBrightnessSlider afterHookedMethod called!");
+            Class<?> cl = chain.getThisObject().getClass();
+            ProgressBar brightnessSlider = (ProgressBar) cl.getDeclaredField("mBrightnessSlider")
+                    .get(chain.getThisObject());
+            if (brightnessSlider != null) {
+                cl.getDeclaredMethod("refreshSeekBar", ProgressBar.class)
+                        .invoke(chain.getThisObject(), brightnessSlider);
+            }
+            return result;
+        });
 
-                        if (backgroundDrawable != null) {
-                            int count = backgroundDrawable.getNumberOfLayers();
-                            for (int i = 0; i < count; i++) {
-                                Drawable layer = backgroundDrawable.getDrawable(i);
-                                if (layer instanceof GradientDrawable) {
-                                    ((GradientDrawable) layer).setCornerRadius((float) normalTileRoundCornerRadius);
-                                }
-                            }
-                        }
-                    }
-                });
+        Method updateVolumeSliderMethod = toggleSliderViewClass.getDeclaredMethod("updateVolumeSlider");
+        this.xposed.hook(updateVolumeSliderMethod).intercept(chain -> {
+            Object result = chain.proceed();
+            log("updateVolumeSlider afterHookedMethod called!");
+            Class<?> cl = chain.getThisObject().getClass();
+            ProgressBar mediaSlider = (ProgressBar) cl.getDeclaredField("mMediaVolumeSlider")
+                    .get(chain.getThisObject());
+            if (mediaSlider != null) {
+                cl.getDeclaredMethod("refreshSeekBar", ProgressBar.class)
+                        .invoke(chain.getThisObject(), mediaSlider);
+            }
+            return result;
+        });
 
-        XposedHelpers.findAndHookMethod("com.android.systemui.settings.ToggleSliderView",
-                lpparam.classLoader,
-                "refreshSeekBar",
-                ProgressBar.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        log("refreshSeekBar afterHookedMethod called!");
-                        applySeekBarRoundCorner((ProgressBar) param.args[0], "refreshSeekBar");
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("com.android.systemui.settings.ToggleSliderView",
-                lpparam.classLoader,
-                "updateBrightnessSlider",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        log("updateBrightnessSlider afterHookedMethod called!");
-                        ProgressBar brightnessSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mBrightnessSlider");
-                        if (brightnessSlider != null) {
-                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", brightnessSlider);
-                        }
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("com.android.systemui.settings.ToggleSliderView",
-                lpparam.classLoader,
-                "updateVolumeSlider",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        log("updateVolumeSlider afterHookedMethod called!");
-                        ProgressBar mediaSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mMediaVolumeSlider");
-                        if (mediaSlider != null) {
-                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", mediaSlider);
-                        }
-                    }
-                });
-
-        XposedHelpers.findAndHookConstructor("com.android.systemui.settings.ToggleSliderView",
-                lpparam.classLoader,
-                "android.content.Context",
-                "android.util.AttributeSet",
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        ProgressBar brightnessSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mBrightnessSlider");
-                        ProgressBar mediaSlider = (ProgressBar) XposedHelpers.getObjectField(param.thisObject, "mMediaVolumeSlider");
-                        if (brightnessSlider != null) {
-                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", brightnessSlider);
-                        }
-                        if (mediaSlider != null) {
-                            XposedHelpers.callMethod(param.thisObject, "refreshSeekBar", mediaSlider);
-                        }
-                    }
-                });
+        Constructor<?> toggleCtor = toggleSliderViewClass.getDeclaredConstructor(
+                android.content.Context.class,
+                android.util.AttributeSet.class,
+                int.class);
+        this.xposed.hook(toggleCtor).intercept(chain -> {
+            chain.proceed();
+            Class<?> cl = chain.getThisObject().getClass();
+            ProgressBar brightnessSlider = (ProgressBar) cl.getDeclaredField("mBrightnessSlider")
+                    .get(chain.getThisObject());
+            ProgressBar mediaSlider = (ProgressBar) cl.getDeclaredField("mMediaVolumeSlider")
+                    .get(chain.getThisObject());
+            if (brightnessSlider != null) {
+                cl.getDeclaredMethod("refreshSeekBar", ProgressBar.class)
+                        .invoke(chain.getThisObject(), brightnessSlider);
+            }
+            if (mediaSlider != null) {
+                cl.getDeclaredMethod("refreshSeekBar", ProgressBar.class)
+                        .invoke(chain.getThisObject(), mediaSlider);
+            }
+            return null;
+        });
     }
 
     private void applySeekBarRoundCorner(ProgressBar progressBar, String source) {
@@ -182,8 +185,15 @@ public class CustomQsRoundCorner extends BaseHookModule {
     }
 
     private void updateRoundCornerPrefs() {
-        PreferenceHelper prefs = PreferenceHelper.getInstance();
-        headUpTileRoundCornerRadius = prefs.getInt("head_up_round_corner_radius", 32);
-        normalTileRoundCornerRadius = prefs.getInt("tile_round_corner_radius", 96);
+        try {
+            headUpTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt("head_up_round_corner_radius", 32);
+        } catch (Throwable t) {
+            headUpTileRoundCornerRadius = 32;
+        }
+        try {
+            normalTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt("tile_round_corner_radius", 96);
+        } catch (Throwable t) {
+            normalTileRoundCornerRadius = 96;
+        }
     }
 }

@@ -1,10 +1,13 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.content.SharedPreferences;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
 
 /**
  * SystemUI通知图标限制Hook模块
@@ -15,7 +18,8 @@ public class NotificationIconHook extends BaseHookModule {
 
     private int NEW_MAX_ICONS;
     private static final String PREFS_NAME = "StatusBar_notifyNumSize";
-    private static final String MODULE_PACKAGE = "com.qimian233.ztool";
+
+    public NotificationIconHook() {}
 
     @Override
     public String getModuleName() {
@@ -30,28 +34,28 @@ public class NotificationIconHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
-            XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
+            SharedPreferences prefs = this.xposed.getRemotePreferences(PREFS_NAME);
             NEW_MAX_ICONS = prefs.getInt("notify_num_size", 4);
-            hookSystemUIIconLimit(lpparam);
+            hookSystemUIIconLimit(classLoader);
         }
     }
 
-    private void hookSystemUIIconLimit(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemUIIconLimit(ClassLoader classLoader) {
         log("开始 Hook SystemUI 通知图标限制，设置最大图标数: " + NEW_MAX_ICONS);
 
         try {
             // Hook 1: 修改资源获取的最大图标数量
-//            hookResourceInteger(lpparam);
+//            hookResourceInteger(classLoader);
 
             // Hook 2: 修改 NotificationIconContainerStatusBarViewModel 的 maxIcons 字段
-            hookViewModelConstructor(lpparam);
+            hookViewModelConstructor(classLoader);
 
             // Hook 3: 修改 NotificationIconsViewData 构造函数，应用数量限制
-            hookViewDataConstructor(lpparam);
+            hookViewDataConstructor(classLoader);
 
             log("SystemUI 通知图标限制Hook设置完成");
         } catch (Throwable e) {
@@ -59,75 +63,74 @@ public class NotificationIconHook extends BaseHookModule {
         }
     }
 
-    private void hookViewModelConstructor(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookViewModelConstructor(ClassLoader classLoader) {
         try {
-            Class<?> viewModelClass = XposedHelpers.findClass(
-                    "com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconContainerStatusBarViewModel",
-                    lpparam.classLoader
+            Class<?> viewModelClass = classLoader.loadClass(
+                    "com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconContainerStatusBarViewModel"
             );
 
-            XposedHelpers.findAndHookConstructor(
-                    viewModelClass,
-                    "kotlin.coroutines.CoroutineContext",
-                    "com.android.systemui.statusbar.phone.domain.interactor.DarkIconInteractor",
-                    "com.android.systemui.statusbar.notification.icon.domain.interactor.StatusBarNotificationIconsInteractor",
-                    "com.android.systemui.statusbar.notification.domain.interactor.HeadsUpNotificationIconInteractor",
-                    "com.android.systemui.keyguard.domain.interactor.KeyguardInteractor",
-                    "android.content.res.Resources",
-                    "com.android.systemui.shade.domain.interactor.ShadeInteractor",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                XposedHelpers.setIntField(param.thisObject, "maxIcons", NEW_MAX_ICONS);
-                                log("成功修改 ViewModel maxIcons 为 " + NEW_MAX_ICONS);
-                            } catch (Exception e) {
-                                logError("修改 ViewModel maxIcons 字段失败", e);
-                            }
-                        }
-                    }
+            Constructor<?> ctor = viewModelClass.getDeclaredConstructor(
+                    classLoader.loadClass("kotlin.coroutines.CoroutineContext"),
+                    classLoader.loadClass("com.android.systemui.statusbar.phone.domain.interactor.DarkIconInteractor"),
+                    classLoader.loadClass("com.android.systemui.statusbar.notification.icon.domain.interactor.StatusBarNotificationIconsInteractor"),
+                    classLoader.loadClass("com.android.systemui.statusbar.notification.domain.interactor.HeadsUpNotificationIconInteractor"),
+                    classLoader.loadClass("com.android.systemui.keyguard.domain.interactor.KeyguardInteractor"),
+                    android.content.res.Resources.class,
+                    classLoader.loadClass("com.android.systemui.shade.domain.interactor.ShadeInteractor")
             );
+
+            this.xposed.hook(ctor).intercept(chain -> {
+                // after constructor: chain.proceed() then set field
+                chain.proceed();
+                try {
+                    chain.getThisObject().getClass().getDeclaredField("maxIcons")
+                            .setInt(chain.getThisObject(), NEW_MAX_ICONS);
+                    log("成功修改 ViewModel maxIcons 为 " + NEW_MAX_ICONS);
+                } catch (Exception e) {
+                    logError("修改 ViewModel maxIcons 字段失败", e);
+                }
+                return null;
+            });
+
             log("ViewModel构造函数Hook设置成功");
         } catch (Throwable e) {
             log("找不到 ViewModel 类，可能系统版本不兼容: " + e.getMessage());
         }
     }
 
-    private void hookViewDataConstructor(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookViewDataConstructor(ClassLoader classLoader) {
         try {
-            Class<?> viewDataClass = XposedHelpers.findClass(
-                    "com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData",
-                    lpparam.classLoader
+            Class<?> viewDataClass = classLoader.loadClass(
+                    "com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData"
             );
 
-            XposedHelpers.findAndHookConstructor(
-                    viewDataClass,
-                    "java.util.List",
+            Constructor<?> ctor = viewDataClass.getDeclaredConstructor(
+                    java.util.List.class,
                     int.class,
-                    "com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData$LimitType",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            try {
-                                // 获取图标列表
-                                Object iconList = param.args[0];
-                                int listSize = getListSize(iconList);
-
-                                // 使用NEW_MAX_ICONS作为限制，但不超过实际图标数量
-                                int effectiveLimit = Math.min(NEW_MAX_ICONS, listSize);
-                                int currentLimit = (int) param.args[1];
-
-                                // 只有当当前限制不等于我们设置的有效限制时才修改
-                                if (currentLimit != effectiveLimit) {
-                                    param.args[1] = effectiveLimit;
-                                    log("修改图标限制 " + currentLimit + " -> " + effectiveLimit + " (图标总数: " + listSize + ")");
-                                }
-                            } catch (Exception e) {
-                                logError("ViewData Hook过程中发生错误", e);
-                            }
-                        }
-                    }
+                    classLoader.loadClass("com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData$LimitType")
             );
+
+            this.xposed.hook(ctor).intercept(chain -> {
+                try {
+                    // 获取图标列表
+                    Object iconList = chain.getArg(0);
+                    int listSize = getListSize(iconList);
+
+                    // 使用NEW_MAX_ICONS作为限制，但不超过实际图标数量
+                    int effectiveLimit = Math.min(NEW_MAX_ICONS, listSize);
+                    int currentLimit = (int) chain.getArg(1);
+
+                    // 只有当当前限制不等于我们设置的有效限制时才修改
+                    if (currentLimit != effectiveLimit) {
+                        log("修改图标限制 " + currentLimit + " -> " + effectiveLimit + " (图标总数: " + listSize + ")");
+                        return chain.proceed(new Object[]{iconList, effectiveLimit, chain.getArg(2)});
+                    }
+                } catch (Exception e) {
+                    logError("ViewData Hook过程中发生错误", e);
+                }
+                return chain.proceed();
+            });
+
             log("ViewData构造函数Hook设置成功");
         } catch (Throwable e) {
             log("找不到 ViewData 类，可能系统版本不兼容: " + e.getMessage());
@@ -137,7 +140,7 @@ public class NotificationIconHook extends BaseHookModule {
     // 辅助方法：获取列表大小
     private int getListSize(Object list) {
         try {
-            return (int) XposedHelpers.callMethod(list, "size");
+            return (int) list.getClass().getDeclaredMethod("size").invoke(list);
         } catch (Exception e) {
             return 0;
         }

@@ -1,13 +1,14 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 
 /**
@@ -16,6 +17,8 @@ import java.util.Arrays;
  * 使其始终读取最后一个CPU核心的频率数据
  */
 public class CpuFrequencyFix extends BaseHookModule {
+
+    public CpuFrequencyFix() {}
 
     @Override
     public String getModuleName() {
@@ -28,37 +31,25 @@ public class CpuFrequencyFix extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (DEBUG) log("CpuFrequencyFix: Targeting " + lpparam.packageName);
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        if (DEBUG) log("CpuFrequencyFix: Targeting " + packageName);
 
         try {
+            Class<?> hwDataClass = classLoader.loadClass("com.zui.game.service.util.HWDataInterface");
+
             // Hook HWDataInterface 的 getCpuCurFreq() 方法（无参数）
-            XposedHelpers.findAndHookMethod("com.zui.game.service.util.HWDataInterface",
-                    lpparam.classLoader, "getCpuCurFreq", new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) {
-                            return getLastCpuCoreCurrentFreq();
-                        }
-                    });
+            Method getCpuCurFreqMethod = hwDataClass.getDeclaredMethod("getCpuCurFreq");
+            this.xposed.hook(getCpuCurFreqMethod).intercept(chain -> getLastCpuCoreCurrentFreq());
 
             // Hook HWDataInterface 的 getCpuCurFreq(int coreIndex) 方法
-            XposedHelpers.findAndHookMethod("com.zui.game.service.util.HWDataInterface",
-                    lpparam.classLoader, "getCpuCurFreq", int.class, new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) {
-                            // 忽略传入的coreIndex，始终读取最后一个核心
-                            return getLastCpuCoreCurrentFreq();
-                        }
-                    });
+            Method getCpuCurFreqIndexMethod = hwDataClass.getDeclaredMethod("getCpuCurFreq", int.class);
+            this.xposed.hook(getCpuCurFreqIndexMethod).intercept(chain -> getLastCpuCoreCurrentFreq());
 
             // Hook HWDataInterface 的 getCpuMaxFreq() 方法
-            XposedHelpers.findAndHookMethod("com.zui.game.service.util.HWDataInterface",
-                    lpparam.classLoader, "getCpuMaxFreq", new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) {
-                            return getLastCpuCoreMaxFreq();
-                        }
-                    });
+            Method getCpuMaxFreqMethod = hwDataClass.getDeclaredMethod("getCpuMaxFreq");
+            this.xposed.hook(getCpuMaxFreqMethod).intercept(chain -> getLastCpuCoreMaxFreq());
 
             log("CpuFrequencyFix: Successfully hooked CPU frequency methods");
 

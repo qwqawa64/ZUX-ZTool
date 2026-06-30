@@ -129,11 +129,11 @@ class StatusBarSettingsRepository(
                 Context.CONTEXT_IGNORE_SECURITY
             )
             @Suppress("DEPRECATION")
-            moduleContext.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_WORLD_READABLE)
+            moduleContext.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_PRIVATE)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get module preferences, using fallback", e)
             @Suppress("DEPRECATION")
-            context.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_WORLD_READABLE)
+            context.getSharedPreferences(PREF_STATUS_BAR_NOTIFY_NUM_SIZE, Context.MODE_PRIVATE)
         }
     }
 

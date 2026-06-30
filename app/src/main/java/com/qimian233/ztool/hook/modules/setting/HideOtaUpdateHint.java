@@ -5,9 +5,10 @@ import android.provider.Settings;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * Hides the red OTA update hint in Settings while keeping the OTA entry usable.
@@ -15,6 +16,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class HideOtaUpdateHint extends BaseHookModule {
     private static final String TARGET_PACKAGE = "com.android.settings";
     private static final String OTA_NEW_VERSION_FOUND = "lenovo_ota_new_version_found";
+
+    public HideOtaUpdateHint() {}
 
     @Override
     public String getModuleName() {
@@ -27,37 +30,30 @@ public class HideOtaUpdateHint extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         try {
-            XposedHelpers.findAndHookMethod(
-                    Settings.Secure.class,
-                    "getInt",
-                    ContentResolver.class,
-                    String.class,
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            if (OTA_NEW_VERSION_FOUND.equals(param.args[1])) {
-                                param.setResult(0);
-                            }
-                        }
-                    }
-            );
-            XposedHelpers.findAndHookMethod(
-                    Settings.Secure.class,
-                    "getInt",
-                    ContentResolver.class,
-                    String.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            if (OTA_NEW_VERSION_FOUND.equals(param.args[1])) {
-                                param.setResult(0);
-                            }
-                        }
-                    }
-            );
+            // getInt(ContentResolver, String, int)
+            Method getInt3 = Settings.Secure.class.getDeclaredMethod(
+                    "getInt", ContentResolver.class, String.class, int.class);
+            this.xposed.hook(getInt3).intercept(chain -> {
+                if (OTA_NEW_VERSION_FOUND.equals(chain.getArg(1))) {
+                    return 0;
+                }
+                return chain.proceed();
+            });
+
+            // getInt(ContentResolver, String)
+            Method getInt2 = Settings.Secure.class.getDeclaredMethod(
+                    "getInt", ContentResolver.class, String.class);
+            this.xposed.hook(getInt2).intercept(chain -> {
+                if (OTA_NEW_VERSION_FOUND.equals(chain.getArg(1))) {
+                    return 0;
+                }
+                return chain.proceed();
+            });
+
             log("Hooked Settings OTA new-version flag reads");
         } catch (Throwable t) {
             logError("Failed to hook Settings OTA new-version flag reads", t);

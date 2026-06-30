@@ -13,15 +13,15 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
 
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class BrightnessSliderPercentageHook extends BaseHookModule {
     private static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
@@ -37,6 +37,8 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     private final Map<View, View.OnLayoutChangeListener> layoutListeners = new WeakHashMap<>();
     private final Map<FrameLayout, Boolean> pendingPositionUpdates = new WeakHashMap<>();
 
+    public BrightnessSliderPercentageHook() {}
+
     @Override
     public String getModuleName() {
         return PREF_KEY;
@@ -48,113 +50,98 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         updatePrefs();
-        hookToggleSliderViewLifecycle(lpparam);
-        hookBrightnessControllerCallbacks(lpparam);
+        hookToggleSliderViewLifecycle(classLoader);
+        hookBrightnessControllerCallbacks(classLoader);
         hookSeekProgressChanges();
         log("Brightness slider percentage hooks installed");
     }
 
-    private void hookBrightnessControllerCallbacks(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookMethod(
-                "com.android.systemui.settings.brightness.BrightnessController",
-                lpparam.classLoader,
-                "onChanged",
-                int.class,
-                boolean.class,
-                boolean.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        refreshBrightnessFromController(param.thisObject, (Integer) param.args[0]);
-                    }
-                }
-        );
+    private void hookBrightnessControllerCallbacks(ClassLoader classLoader) {
+        try {
+            Method onChangedMethod = classLoader
+                    .loadClass("com.android.systemui.settings.brightness.BrightnessController")
+                    .getDeclaredMethod("onChanged", int.class, boolean.class, boolean.class);
+            this.xposed.hook(onChangedMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                refreshBrightnessFromController(chain.getThisObject(), (Integer) chain.getArg(0));
+                return result;
+            });
+        } catch (Throwable ignored) {}
 
-        XposedHelpers.findAndHookMethod(
-                "com.android.systemui.settings.brightness.BrightnessSliderController",
-                lpparam.classLoader,
-                "setValue",
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        Object sliderController = param.thisObject;
-                        Object view = XposedHelpers.getObjectField(sliderController, "mView");
-                        if (view instanceof View) {
-                            refreshBrightnessFromView((View) view, (Integer) param.args[0]);
-                        }
-                    }
+        try {
+            Method setValueMethod = classLoader
+                    .loadClass("com.android.systemui.settings.brightness.BrightnessSliderController")
+                    .getDeclaredMethod("setValue", int.class);
+            this.xposed.hook(setValueMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                Object sliderController = chain.getThisObject();
+                Class<?> scCls = sliderController.getClass();
+                Object view = scCls.getDeclaredField("mView").get(sliderController);
+                if (view instanceof View) {
+                    refreshBrightnessFromView((View) view, (Integer) chain.getArg(0));
                 }
-        );
+                return result;
+            });
+        } catch (Throwable ignored) {}
     }
 
-    private void hookToggleSliderViewLifecycle(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookConstructor(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                Context.class,
-                android.util.AttributeSet.class,
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        attachSliderLabel(param.thisObject);
-                    }
-                }
-        );
+    private void hookToggleSliderViewLifecycle(ClassLoader classLoader) {
+        try {
+            Constructor<?> ctor = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredConstructor(Context.class, android.util.AttributeSet.class, int.class);
+            this.xposed.hook(ctor).intercept(chain -> {
+                chain.proceed();
+                attachSliderLabel(chain.getThisObject());
+                return null;
+            });
+        } catch (Throwable ignored) {}
 
-        XposedHelpers.findAndHookMethod(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                "updateBrightnessSlider",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        attachSliderLabel(param.thisObject);
-                        refreshBrightnessLabel(param.thisObject);
-                    }
-                }
-        );
+        try {
+            Method updateBrightnessMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("updateBrightnessSlider");
+            this.xposed.hook(updateBrightnessMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                attachSliderLabel(chain.getThisObject());
+                refreshBrightnessLabel(chain.getThisObject());
+                return result;
+            });
+        } catch (Throwable ignored) {}
 
-        XposedHelpers.findAndHookMethod(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                "refreshSeekBar",
-                ProgressBar.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        Object sliderView = param.thisObject;
-                        ProgressBar progressBar = (ProgressBar) param.args[0];
-                        if (isBrightnessSlider(sliderView, progressBar)) {
-                            refreshBrightnessLabel(sliderView);
-                        }
-                    }
+        try {
+            Method refreshSeekBarMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("refreshSeekBar", ProgressBar.class);
+            this.xposed.hook(refreshSeekBarMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                Object sliderView = chain.getThisObject();
+                ProgressBar progressBar = (ProgressBar) chain.getArg(0);
+                if (isBrightnessSlider(sliderView, progressBar)) {
+                    refreshBrightnessLabel(sliderView);
                 }
-        );
+                return result;
+            });
+        } catch (Throwable ignored) {}
     }
 
     private void hookSeekProgressChanges() {
-        XposedHelpers.findAndHookMethod(
-                SeekBar.class,
-                "setProgress",
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        SeekBar seekBar = (SeekBar) param.thisObject;
-                        Object sliderView = findToggleSliderView(seekBar);
-                        if (sliderView == null) {
-                            return;
-                        }
-                        if (isBrightnessSlider(sliderView, seekBar)) {
-                            refreshBrightnessLabel(sliderView);
-                        }
-                    }
+        try {
+            Method setProgressMethod = SeekBar.class.getDeclaredMethod("setProgress", int.class);
+            this.xposed.hook(setProgressMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                SeekBar seekBar = (SeekBar) chain.getThisObject();
+                Object sliderView = findToggleSliderView(seekBar);
+                if (sliderView == null) {
+                    return result;
                 }
-        );
+                if (isBrightnessSlider(sliderView, seekBar)) {
+                    refreshBrightnessLabel(sliderView);
+                }
+                return result;
+            });
+        } catch (Throwable ignored) {}
     }
 
     private void attachSliderLabel(Object sliderView) {
@@ -214,7 +201,8 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
                 schedulePositionUpdate(sliderView);
                 return;
             }
-            SeekBar brightnessSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
+            Class<?> cl = sliderView.getClass();
+            SeekBar brightnessSlider = (SeekBar) cl.getDeclaredField("mBrightnessSlider").get(sliderView);
             if (brightnessSlider == null) {
                 setPercentTextIfChanged(percentView, "--%");
                 return;
@@ -239,11 +227,12 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             return;
         }
         try {
-            Object control = XposedHelpers.getObjectField(brightnessController, "mControl");
+            Class<?> bcCls = brightnessController.getClass();
+            Object control = bcCls.getDeclaredField("mControl").get(brightnessController);
             if (control == null) {
                 return;
             }
-            Object view = XposedHelpers.getObjectField(control, "mView");
+            Object view = control.getClass().getDeclaredField("mView").get(control);
             if (!(view instanceof View)) {
                 return;
             }
@@ -273,7 +262,8 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         }
 
         try {
-            SeekBar brightnessSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
+            Class<?> cl = sliderView.getClass();
+            SeekBar brightnessSlider = (SeekBar) cl.getDeclaredField("mBrightnessSlider").get(sliderView);
             int max = brightnessSlider != null ? brightnessSlider.getMax() : 65535;
             max = Math.max(1, max);
             int percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)));
@@ -296,9 +286,14 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     }
 
     private int resolveBrightnessPercentColor(Object sliderView) {
-        SeekBar brightnessSlider = sliderView instanceof SeekBar
-                ? (SeekBar) sliderView
-                : (SeekBar) XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
+        SeekBar brightnessSlider;
+        try {
+            brightnessSlider = sliderView instanceof SeekBar
+                    ? (SeekBar) sliderView
+                    : (SeekBar) sliderView.getClass().getDeclaredField("mBrightnessSlider").get(sliderView);
+        } catch (Throwable t) {
+            return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
+        }
         if (brightnessSlider == null) {
             return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
         }
@@ -353,18 +348,30 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     }
 
     private FrameLayout getFrameLayoutField(Object sliderView) {
-        Object field = XposedHelpers.getObjectField(sliderView, BrightnessSliderPercentageHook.BRIGHTNESS_ROOT_FIELD);
-        return field instanceof FrameLayout ? (FrameLayout) field : null;
+        try {
+            Object field = sliderView.getClass().getDeclaredField(BRIGHTNESS_ROOT_FIELD).get(sliderView);
+            return field instanceof FrameLayout ? (FrameLayout) field : null;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private View getViewField(Object sliderView) {
-        Object field = XposedHelpers.getObjectField(sliderView, BrightnessSliderPercentageHook.BRIGHTNESS_ICON_FIELD);
-        return field instanceof View ? (View) field : null;
+        try {
+            Object field = sliderView.getClass().getDeclaredField(BRIGHTNESS_ICON_FIELD).get(sliderView);
+            return field instanceof View ? (View) field : null;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private boolean isBrightnessSlider(Object sliderView, Object view) {
-        Object slider = XposedHelpers.getObjectField(sliderView, "mBrightnessSlider");
-        return slider == view;
+        try {
+            Object slider = sliderView.getClass().getDeclaredField("mBrightnessSlider").get(sliderView);
+            return slider == view;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private Object findToggleSliderView(View seekBar) {
@@ -388,7 +395,8 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             return;
         }
 
-        View.OnLayoutChangeListener listener = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> schedulePositionUpdate(root, icon, percentView);
+        View.OnLayoutChangeListener listener = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                schedulePositionUpdate(root, icon, percentView);
         layoutListeners.put(root, listener);
         root.addOnLayoutChangeListener(listener);
         schedulePositionUpdate(root, icon, percentView);
@@ -499,7 +507,10 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     }
 
     private void updatePrefs() {
-        PreferenceHelper prefs = PreferenceHelper.getInstance();
-        PERCENTAGE_ENABLED = prefs.getBoolean(PREF_KEY, false);
+        try {
+            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY, false);
+        } catch (Throwable t) {
+            PERCENTAGE_ENABLED = false;
+        }
     }
 }

@@ -4,10 +4,15 @@ import android.content.Context;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 public class AlwaysDisplaySuggestion extends BaseHookModule {
+
+    public AlwaysDisplaySuggestion() {}
+
     @Override
     public String getModuleName() {
         return "AlwaysDisplaySuggestion";
@@ -19,25 +24,23 @@ public class AlwaysDisplaySuggestion extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam lpparam) {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if (DEBUG) log("Load AlwaysDisplaySuggestion!");
         try {
             // Suggestion for screen timeout
-            XposedHelpers.findAndHookMethod(
-                    "com.lenovo.settings.suggestion.ScreenTimeoutSuggestionActivity",
-                    lpparam.classLoader,
-                    "isSuggestionComplete",
-                    Context.class,
-                    XC_MethodReplacement.returnConstant(false)
-            );
+            Method m1 = classLoader
+                    .loadClass("com.lenovo.settings.suggestion.ScreenTimeoutSuggestionActivity")
+                    .getDeclaredMethod("isSuggestionComplete", Context.class);
+            this.xposed.hook(m1).intercept(chain -> false);
+
             // Suggestion for join user experience project
-            XposedHelpers.findAndHookMethod(
-                    "com.lenovo.settings.suggestion.UserExperienceSuggestionActivity",
-                    lpparam.classLoader,
-                    "isSuggestionComplete",
-                    Context.class,
-                    XC_MethodReplacement.returnConstant(false)
-            );
+            Method m2 = classLoader
+                    .loadClass("com.lenovo.settings.suggestion.UserExperienceSuggestionActivity")
+                    .getDeclaredMethod("isSuggestionComplete", Context.class);
+            this.xposed.hook(m2).intercept(chain -> false);
+
             log("Hook executed successfully!");
         } catch (Exception e) {
             logError("Error in AlwaysDisplaySuggestion: ", e);

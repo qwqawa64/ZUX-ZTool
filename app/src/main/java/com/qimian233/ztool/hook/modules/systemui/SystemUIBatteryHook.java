@@ -1,20 +1,26 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.util.TypedValue;
 
+import com.qimian233.ztool.hook.base.BaseHookModule;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+
 /**
  * 系统UI电池百分比Hook模块
  * 功能：强制显示电池百分比，调整布局位置和字体大小
  */
 public class SystemUIBatteryHook extends BaseHookModule {
+
+    public SystemUIBatteryHook() {}
 
     @Override
     public String getModuleName() {
@@ -27,67 +33,54 @@ public class SystemUIBatteryHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
-            hookSystemUIBattery(lpparam);
+            hookSystemUIBattery(classLoader);
         }
     }
 
-    private void hookSystemUIBattery(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemUIBattery(ClassLoader classLoader) {
         try {
             // Hook BatteryMeterView 类
-            Class<?> batteryMeterViewClass = XposedHelpers.findClass(
-                    "com.android.systemui.battery.BatteryMeterView",
-                    lpparam.classLoader
-            );
+            Class<?> batteryMeterViewClass = classLoader.loadClass(
+                    "com.android.systemui.battery.BatteryMeterView");
 
             // Hook 构造函数，在视图创建时修改布局
-            XposedHelpers.findAndHookConstructor(batteryMeterViewClass,
+            Constructor<?> ctor = batteryMeterViewClass.getDeclaredConstructor(
                     android.content.Context.class,
                     android.util.AttributeSet.class,
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            modifyBatteryLayout(param.thisObject);
-                        }
-                    }
-            );
+                    int.class);
+            this.xposed.hook(ctor).intercept(chain -> {
+                chain.proceed();
+                modifyBatteryLayout(chain.getThisObject());
+                return null;
+            });
 
             // Hook updateShowPercent 方法
-            XposedHelpers.findAndHookMethod(batteryMeterViewClass,
-                    "updateShowPercent",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            forceShowPercentage(param.thisObject);
-                        }
-                    }
-            );
+            Method updateShowPercentMethod = batteryMeterViewClass.getDeclaredMethod("updateShowPercent");
+            this.xposed.hook(updateShowPercentMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                forceShowPercentage(chain.getThisObject());
+                return result;
+            });
 
             // Hook updatePercentText 方法
-            XposedHelpers.findAndHookMethod(batteryMeterViewClass,
-                    "updatePercentText",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            updatePercentageText(param.thisObject);
-                        }
-                    }
-            );
+            Method updatePercentTextMethod = batteryMeterViewClass.getDeclaredMethod("updatePercentText");
+            this.xposed.hook(updatePercentTextMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                updatePercentageText(chain.getThisObject());
+                return result;
+            });
 
             // Hook scaleBatteryMeterViews 方法，调整字体大小
-            XposedHelpers.findAndHookMethod(batteryMeterViewClass,
-                    "scaleBatteryMeterViews",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            adjustTextSize(param.thisObject);
-                        }
-                    }
-            );
+            Method scaleMethod = batteryMeterViewClass.getDeclaredMethod("scaleBatteryMeterViews");
+            this.xposed.hook(scaleMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                adjustTextSize(chain.getThisObject());
+                return result;
+            });
 
             log("SystemUI电池百分比Hook模块加载成功");
 
@@ -98,11 +91,13 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
     private void modifyBatteryLayout(Object batteryMeterView) {
         try {
+            Class<?> cl = batteryMeterView.getClass();
+
             // 获取关键的视图组件
-            FrameLayout container = (FrameLayout) XposedHelpers.getObjectField(
-                    batteryMeterView, "mBatteryPercentViewContainer");
-            TextView percentView = (TextView) XposedHelpers.getObjectField(
-                    batteryMeterView, "mBatteryPercentView");
+            FrameLayout container = (FrameLayout) cl.getDeclaredField("mBatteryPercentViewContainer")
+                    .get(batteryMeterView);
+            TextView percentView = (TextView) cl.getDeclaredField("mBatteryPercentView")
+                    .get(batteryMeterView);
 
             if (container == null || percentView == null) {
                 return;
@@ -137,8 +132,9 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
     private void adjustTextSize(Object batteryMeterView) {
         try {
-            TextView percentView = (TextView) XposedHelpers.getObjectField(
-                    batteryMeterView, "mBatteryPercentView");
+            Class<?> cl = batteryMeterView.getClass();
+            TextView percentView = (TextView) cl.getDeclaredField("mBatteryPercentView")
+                    .get(batteryMeterView);
 
             if (percentView == null) {
                 return;
@@ -183,8 +179,9 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
     private void forceShowPercentage(Object batteryMeterView) {
         try {
-            TextView percentView = (TextView) XposedHelpers.getObjectField(
-                    batteryMeterView, "mBatteryPercentView");
+            Class<?> cl = batteryMeterView.getClass();
+            TextView percentView = (TextView) cl.getDeclaredField("mBatteryPercentView")
+                    .get(batteryMeterView);
 
             if (percentView == null) {
                 return;
@@ -205,21 +202,22 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
     private void updatePercentageText(Object batteryMeterView) {
         try {
-            TextView percentView = (TextView) XposedHelpers.getObjectField(
-                    batteryMeterView, "mBatteryPercentView");
+            Class<?> cl = batteryMeterView.getClass();
+            TextView percentView = (TextView) cl.getDeclaredField("mBatteryPercentView")
+                    .get(batteryMeterView);
 
             if (percentView == null) {
                 return;
             }
 
             // 获取当前电量级别
-            int level = XposedHelpers.getIntField(batteryMeterView, "mLevel");
+            int level = cl.getDeclaredField("mLevel").getInt(batteryMeterView);
 
             // 设置百分比文本
             percentView.setText(level + "%");
 
             // 更新内容描述（辅助功能）
-            boolean charging = XposedHelpers.getBooleanField(batteryMeterView, "mCharging");
+            boolean charging = cl.getDeclaredField("mCharging").getBoolean(batteryMeterView);
             String description = getContext(batteryMeterView).getString(
                     charging ?
                             getResourceId(batteryMeterView, "accessibility_battery_level_charging") :
@@ -260,6 +258,11 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
     // 工具方法：获取Context
     private android.content.Context getContext(Object batteryMeterView) {
-        return (android.content.Context) XposedHelpers.getObjectField(batteryMeterView, "mContext");
+        try {
+            return (android.content.Context) batteryMeterView.getClass()
+                    .getDeclaredField("mContext").get(batteryMeterView);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 }

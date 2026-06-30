@@ -1,14 +1,15 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 /**
  * SOC温度修复Hook模块
@@ -17,6 +18,8 @@ import java.io.IOException;
 public class SocTemperatureFix extends BaseHookModule {
 
     private static final String THERMAL_FILE_PATH = "/sys/class/thermal/thermal_zone9/temp";
+
+    public SocTemperatureFix() {}
 
     @Override
     public String getModuleName() {
@@ -33,77 +36,55 @@ public class SocTemperatureFix extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if (DEBUG) log("SocTemperatureFix: 开始处理包 " + packageName);
 
         if ("com.zui.game.service".equals(packageName)) {
-            hookZuiGameService(lpparam);
+            hookZuiGameService(classLoader);
         } else if ("com.lenovo.gamingservice".equals(packageName)) {
-            hookLenovoGamingService(lpparam);
+            hookLenovoGamingService(classLoader);
         } else {
             // 通用游戏服务的Hook
-            hookGenericGamingService(lpparam);
+            hookGenericGamingService(classLoader);
         }
     }
 
-    private void hookZuiGameService(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookZuiGameService(ClassLoader classLoader) {
         try {
-            Class<?> hwDataInterfaceClass = XposedHelpers.findClass(
-                    "com.zui.game.service.util.HWDataInterface",
-                    lpparam.classLoader
-            );
+            Class<?> hwDataInterfaceClass = classLoader.loadClass("com.zui.game.service.util.HWDataInterface");
 
             // Hook getTemp 方法
-            XposedHelpers.findAndHookMethod(
-                    hwDataInterfaceClass,
-                    "getTemp",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            log("Block call to getTemp()");
-                        }
+            Method getTempMethod = hwDataInterfaceClass.getDeclaredMethod("getTemp");
+            this.xposed.hook(getTempMethod).intercept(chain -> {
+                log("Block call to getTemp()");
+                int originalResult = (int) chain.proceed();
+                int newTemperature = readTemperatureFromFile();
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            int originalResult = (int) param.getResult();
-                            int newTemperature = readTemperatureFromFile();
-
-                            if (newTemperature > 0) {
-                                if (DEBUG) log("getTemp - Original temperature: " + originalResult + ", new temperature: " + newTemperature);
-                                param.setResult(newTemperature);
-                            } else {
-                                log("Failed to read temperature file, use original value: " + originalResult);
-                            }
-                        }
-                    }
-            );
+                if (newTemperature > 0) {
+                    if (DEBUG) log("getTemp - Original temperature: " + originalResult + ", new temperature: " + newTemperature);
+                    return newTemperature;
+                } else {
+                    log("Failed to read temperature file, use original value: " + originalResult);
+                    return originalResult;
+                }
+            });
 
             // Hook getThermalTemp 方法
-            XposedHelpers.findAndHookMethod(
-                    hwDataInterfaceClass,
-                    "getThermalTemp",
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            int type = (int) param.args[0];
-                            if (DEBUG) log("Blocked getThermalTemp(), type: " + type);
-                        }
+            Method getThermalTempMethod = hwDataInterfaceClass.getDeclaredMethod("getThermalTemp", int.class);
+            this.xposed.hook(getThermalTempMethod).intercept(chain -> {
+                int type = (int) chain.getArg(0);
+                if (DEBUG) log("Blocked getThermalTemp(), type: " + type);
+                int originalResult = (int) chain.proceed();
+                int newTemperature = readTemperatureFromFile();
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            int originalResult = (int) param.getResult();
-                            int newTemperature = readTemperatureFromFile();
-
-                            if (newTemperature > 0) {
-                                if (DEBUG) log("getThermalTemp - Original: " + originalResult + ", new: " + newTemperature);
-                                param.setResult(newTemperature);
-                            }
-                        }
-                    }
-            );
+                if (newTemperature > 0) {
+                    if (DEBUG) log("getThermalTemp - Original: " + originalResult + ", new: " + newTemperature);
+                    return newTemperature;
+                }
+                return originalResult;
+            });
 
             log("Hook executed successfully.");
 
@@ -112,34 +93,31 @@ public class SocTemperatureFix extends BaseHookModule {
         }
     }
 
-    private void hookLenovoGamingService(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookLenovoGamingService(ClassLoader classLoader) {
         try {
             // 尝试Hook联想游戏服务中的温度相关方法
-            Class<?> thermalManagerClass = XposedHelpers.findClassIfExists(
-                    "com.lenovo.gamingservice.ThermalManager",
-                    lpparam.classLoader
-            );
+            Class<?> thermalManagerClass;
+            try {
+                thermalManagerClass = classLoader.loadClass("com.lenovo.gamingservice.ThermalManager");
+            } catch (ClassNotFoundException e) {
+                thermalManagerClass = null;
+            }
 
             if (thermalManagerClass != null) {
-                XposedHelpers.findAndHookMethod(
-                        thermalManagerClass,
-                        "getCurrentTemperature",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void afterHookedMethod(MethodHookParam param) {
-                                int originalResult = (int) param.getResult();
-                                int newTemperature = readTemperatureFromFile();
+                Method getCurrentTempMethod = thermalManagerClass.getDeclaredMethod("getCurrentTemperature");
+                this.xposed.hook(getCurrentTempMethod).intercept(chain -> {
+                    int originalResult = (int) chain.proceed();
+                    int newTemperature = readTemperatureFromFile();
 
-                                if (newTemperature > 0) {
-                                    if (DEBUG) log("Lenovo Game Service - temperature fix: "
-                                            + originalResult
-                                            + " -> "
-                                            + newTemperature);
-                                    param.setResult(newTemperature);
-                                }
-                            }
-                        }
-                );
+                    if (newTemperature > 0) {
+                        if (DEBUG) log("Lenovo Game Service - temperature fix: "
+                                + originalResult
+                                + " -> "
+                                + newTemperature);
+                        return newTemperature;
+                    }
+                    return originalResult;
+                });
                 log("Hook for gaming service executed successfully.");
             } else {
                 log("Unable to find class ThermalManager");
@@ -150,7 +128,7 @@ public class SocTemperatureFix extends BaseHookModule {
         }
     }
 
-    private void hookGenericGamingService(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookGenericGamingService(ClassLoader classLoader) {
         try {
             // 尝试Hook通用的温度读取方法
             String[] temperatureMethods = {
@@ -160,26 +138,22 @@ public class SocTemperatureFix extends BaseHookModule {
                     "getThermalValue"
             };
 
+            Class<?> sysPropsClass = classLoader.loadClass("android.os.SystemProperties");
+
             for (String methodName : temperatureMethods) {
                 try {
-                    XposedHelpers.findAndHookMethod(
-                            "android.os.SystemProperties",
-                            lpparam.classLoader,
-                            methodName,
-                            new XC_MethodHook() {
-                                @Override
-                                protected void afterHookedMethod(MethodHookParam param) {
-                                    int newTemperature = readTemperatureFromFile();
-                                    if (newTemperature > 0) {
-                                        if (DEBUG) log("Generic temperature detection method "
-                                                + methodName
-                                                + " fixed, new temperature: "
-                                                + newTemperature);
-                                        param.setResult(newTemperature);
-                                    }
-                                }
-                            }
-                    );
+                    Method method = sysPropsClass.getDeclaredMethod(methodName);
+                    this.xposed.hook(method).intercept(chain -> {
+                        int newTemperature = readTemperatureFromFile();
+                        if (newTemperature > 0) {
+                            if (DEBUG) log("Generic temperature detection method "
+                                    + methodName
+                                    + " fixed, new temperature: "
+                                    + newTemperature);
+                            return newTemperature;
+                        }
+                        return chain.proceed();
+                    });
                 } catch (Throwable t) {
                     // 方法不存在是正常的，继续尝试下一个
                 }

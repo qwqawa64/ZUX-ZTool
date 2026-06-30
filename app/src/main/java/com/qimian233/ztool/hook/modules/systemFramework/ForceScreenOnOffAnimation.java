@@ -1,12 +1,13 @@
 package com.qimian233.ztool.hook.modules.systemFramework;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public class ForceScreenOnOffAnimation extends BaseHookModule {
     private static final String DISPLAY_POWER_CONTROLLER =
@@ -16,6 +17,8 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
     private static long SCREEN_ON_ANIMATION_DURATION_MS = 400L;
     private static long SCREEN_OFF_ANIMATION_DURATION_MS = 250L;
 
+    public ForceScreenOnOffAnimation() {}
+
     @Override
     public String getModuleName() {
         return "force_screen_on_off_animation";
@@ -23,92 +26,87 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[] {"android"};
+        return new String[] {"system"};
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        if (!"android".equals(lpparam.packageName)) {
-            return;
-        }
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         this.updateAnimationDurationFromPrefs();
         log("Screen on animation duration (ms): " + SCREEN_ON_ANIMATION_DURATION_MS);
         log("Screen off animation duration (ms): " + SCREEN_OFF_ANIMATION_DURATION_MS);
         try {
             log("Executing hook for DisplayPowerController screen on/off animation...");
-            XposedHelpers.findAndHookMethod(
-                    DISPLAY_POWER_CONTROLLER_INJECTOR,
-                    lpparam.classLoader,
-                    "isColorFadeEnabled",
-                    XC_MethodReplacement.returnConstant(true)
-            );
-            hookDisplayPowerControllerConstructor(lpparam.classLoader);
-            hookDisplayPowerControllerInitialize(lpparam.classLoader);
-            hookDisplayPowerControllerScreenOnAnimation(lpparam.classLoader);
+            Method isColorFadeEnabledMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER_INJECTOR)
+                    .getDeclaredMethod("isColorFadeEnabled");
+            this.xposed.hook(isColorFadeEnabledMethod).intercept(chain -> true);
+            hookDisplayPowerControllerConstructor(classLoader);
+            hookDisplayPowerControllerInitialize(classLoader);
+            hookDisplayPowerControllerScreenOnAnimation(classLoader);
         } catch (Exception e) {
             logError("Failed to hook DisplayPowerController: ", e);
         }
     }
 
     private void hookDisplayPowerControllerConstructor(ClassLoader classLoader) {
-        XposedHelpers.findAndHookConstructor(
-                DISPLAY_POWER_CONTROLLER,
-                classLoader,
-                XposedHelpers.findClass("android.content.Context", classLoader),
-                XposedHelpers.findClass(DISPLAY_POWER_CONTROLLER_INJECTOR, classLoader),
-                XposedHelpers.findClass(
-                        "android.hardware.display.DisplayManagerInternal$DisplayPowerCallbacks",
-                        classLoader),
-                XposedHelpers.findClass("android.os.Handler", classLoader),
-                XposedHelpers.findClass("android.hardware.SensorManager", classLoader),
-                XposedHelpers.findClass("com.android.server.display.DisplayBlanker", classLoader),
-                XposedHelpers.findClass("com.android.server.display.LogicalDisplay", classLoader),
-                XposedHelpers.findClass("com.android.server.display.BrightnessTracker", classLoader),
-                XposedHelpers.findClass("com.android.server.display.BrightnessSetting", classLoader),
-                XposedHelpers.findClass("java.lang.Runnable", classLoader),
-                XposedHelpers.findClass(
-                        "com.android.server.display.HighBrightnessModeMetadata",
-                        classLoader),
-                boolean.class,
-                XposedHelpers.findClass(
-                        "com.android.server.display.feature.DisplayManagerFlags",
-                        classLoader),
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        XposedHelpers.setBooleanField(param.thisObject, "mColorFadeEnabled", true);
-                        XposedHelpers.setBooleanField(param.thisObject, "mColorFadeFadesConfig", true);
-                        log("Forced DisplayPowerController color fade animation enabled.");
-                    }
-                }
-        );
+        try {
+            Constructor<?> constructor = classLoader.loadClass(DISPLAY_POWER_CONTROLLER)
+                    .getDeclaredConstructor(
+                            classLoader.loadClass("android.content.Context"),
+                            classLoader.loadClass(DISPLAY_POWER_CONTROLLER_INJECTOR),
+                            classLoader.loadClass(
+                                    "android.hardware.display.DisplayManagerInternal$DisplayPowerCallbacks"),
+                            classLoader.loadClass("android.os.Handler"),
+                            classLoader.loadClass("android.hardware.SensorManager"),
+                            classLoader.loadClass("com.android.server.display.DisplayBlanker"),
+                            classLoader.loadClass("com.android.server.display.LogicalDisplay"),
+                            classLoader.loadClass("com.android.server.display.BrightnessTracker"),
+                            classLoader.loadClass("com.android.server.display.BrightnessSetting"),
+                            classLoader.loadClass("java.lang.Runnable"),
+                            classLoader.loadClass(
+                                    "com.android.server.display.HighBrightnessModeMetadata"),
+                            boolean.class,
+                            classLoader.loadClass(
+                                    "com.android.server.display.feature.DisplayManagerFlags")
+                    );
+            this.xposed.hook(constructor).intercept(chain -> {
+                Object result = chain.proceed();
+                Object thisObject = chain.getThisObject();
+                safeSetBooleanField(thisObject, "mColorFadeEnabled", true);
+                safeSetBooleanField(thisObject, "mColorFadeFadesConfig", true);
+                log("Forced DisplayPowerController color fade animation enabled.");
+                return result;
+            });
+        } catch (Exception e) {
+            logError("Failed to hook DisplayPowerController constructor", e);
+        }
     }
 
     private void hookDisplayPowerControllerInitialize(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod(
-                DISPLAY_POWER_CONTROLLER,
-                classLoader,
-                "initialize",
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        configureColorFadeAnimators(param.thisObject);
-                    }
-                }
-        );
+        try {
+            Method initializeMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER)
+                    .getDeclaredMethod("initialize", int.class);
+            this.xposed.hook(initializeMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                configureColorFadeAnimators(chain.getThisObject());
+                return result;
+            });
+        } catch (Exception e) {
+            logError("Failed to hook DisplayPowerController.initialize", e);
+        }
     }
 
     private void configureColorFadeAnimators(Object controller) {
-        Object onAnimator = getObjectField(controller, "mColorFadeOnAnimator");
-        Object offAnimator = getObjectField(controller, "mColorFadeOffAnimator");
+        Object onAnimator = safeGetObjectField(controller, "mColorFadeOnAnimator");
+        Object offAnimator = safeGetObjectField(controller, "mColorFadeOffAnimator");
         try {
             if (onAnimator != null) {
-                XposedHelpers.callMethod(onAnimator, "setDuration",
+                safeCallMethod(onAnimator, "setDuration",
                         SCREEN_ON_ANIMATION_DURATION_MS);
             }
             if (offAnimator != null) {
-                XposedHelpers.callMethod(offAnimator, "setDuration",
+                safeCallMethod(offAnimator, "setDuration",
                         SCREEN_OFF_ANIMATION_DURATION_MS);
             }
             //noinspection ConstantValue
@@ -125,67 +123,79 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             return -1L;
         }
         try {
-            Object result = XposedHelpers.callMethod(animator, "getDuration");
+            Object result = safeCallMethod(animator, "getDuration");
             return result instanceof Long ? (Long) result : -1L;
         } catch (Throwable ignored) {
             return -1L;
         }
     }
 
-    private Object getObjectField(Object object, String fieldName) {
+    private Object safeGetObjectField(Object object, String fieldName) {
         if (object == null) {
             return null;
         }
         try {
-            return XposedHelpers.getObjectField(object, fieldName);
+            Field field = safeFindField(object.getClass(), fieldName);
+            if (field != null) {
+                field.setAccessible(true);
+                return field.get(object);
+            }
+            return null;
         } catch (Throwable ignored) {
             return null;
         }
     }
 
+    private void safeSetBooleanField(Object object, String fieldName, boolean value) {
+        if (object == null) return;
+        try {
+            Field field = safeFindField(object.getClass(), fieldName);
+            if (field != null) {
+                field.setAccessible(true);
+                field.setBoolean(object, value);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     private void hookDisplayPowerControllerScreenOnAnimation(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod(
-                DISPLAY_POWER_CONTROLLER,
-                classLoader,
-                "animateScreenStateChange",
-                int.class,
-                int.class,
-                boolean.class,
-                boolean.class,
-                boolean.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        if (tryStartPreparedScreenOnAnimation(param.thisObject,
-                                (Integer) param.args[0])) {
-                            param.setResult(null);
-                        }
-                    }
+        try {
+            Method animateMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER)
+                    .getDeclaredMethod("animateScreenStateChange",
+                            int.class, int.class, boolean.class, boolean.class, boolean.class);
+            this.xposed.hook(animateMethod).intercept(chain -> {
+                if (tryStartPreparedScreenOnAnimation(chain.getThisObject(),
+                        (Integer) chain.getArg(0))) {
+                    return null;
                 }
-        );
+                return chain.proceed();
+            });
+        } catch (Exception e) {
+            logError("Failed to hook animateScreenStateChange", e);
+        }
     }
 
     private boolean tryStartPreparedScreenOnAnimation(Object controller, int targetState) {
         if (targetState != 2) {
             return false;
         }
-        Object powerState = getObjectField(controller, "mPowerState");
+        Object powerState = safeGetObjectField(controller, "mPowerState");
         if (powerState == null
-                || !getBooleanField(powerState, "mColorFadePrepared")
+                || !safeGetBooleanField(powerState, "mColorFadePrepared")
                 || getFloatByMethod(powerState, "getColorFadeLevel", 1.0f) >= 1.0f) {
             return false;
         }
-        Object onAnimator = getObjectField(controller, "mColorFadeOnAnimator");
+        Object onAnimator = safeGetObjectField(controller, "mColorFadeOnAnimator");
         if (onAnimator == null) {
             return false;
         }
 
         try {
-            XposedHelpers.callMethod(onAnimator, "cancel");
-            XposedHelpers.callMethod(onAnimator, "setDuration", SCREEN_ON_ANIMATION_DURATION_MS);
-            XposedHelpers.callMethod(onAnimator, "setFloatValues",
+            safeCallMethod(onAnimator, "cancel");
+            safeCallMethod(onAnimator, "setDuration", SCREEN_ON_ANIMATION_DURATION_MS);
+            safeCallMethod(onAnimator, "setFloatValues",
                     new float[] {getFloatByMethod(powerState, "getColorFadeLevel", 0.0f), 1.0f});
-            XposedHelpers.callMethod(onAnimator, "start");
+            safeCallMethod(onAnimator, "start");
             log("Started prepared screen-on color fade animation.");
             return true;
         } catch (Throwable t) {
@@ -195,17 +205,29 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
     }
 
     private void updateAnimationDurationFromPrefs() {
-        PreferenceHelper prefs = PreferenceHelper.getInstance();
-        SCREEN_OFF_ANIMATION_DURATION_MS = prefs.getInt("screen_on_off_animation_ms", 400);
-        SCREEN_ON_ANIMATION_DURATION_MS = prefs.getInt("screen_on_off_animation_ms", 400);
+        try {
+            SCREEN_OFF_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt("screen_on_off_animation_ms", 400);
+        } catch (Throwable t) {
+            SCREEN_OFF_ANIMATION_DURATION_MS = 400;
+        }
+        try {
+            SCREEN_ON_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt("screen_on_off_animation_ms", 400);
+        } catch (Throwable t) {
+            SCREEN_ON_ANIMATION_DURATION_MS = 400;
+        }
     }
 
-    private boolean getBooleanField(Object object, String fieldName) {
+    private boolean safeGetBooleanField(Object object, String fieldName) {
         if (object == null) {
             return false;
         }
         try {
-            return XposedHelpers.getBooleanField(object, fieldName);
+            Field field = safeFindField(object.getClass(), fieldName);
+            if (field != null) {
+                field.setAccessible(true);
+                return field.getBoolean(object);
+            }
+            return false;
         } catch (Throwable ignored) {
             return false;
         }
@@ -216,10 +238,76 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             return defaultValue;
         }
         try {
-            Object result = XposedHelpers.callMethod(object, methodName);
+            Object result = safeCallMethod(object, methodName);
             return result instanceof Float ? (Float) result : defaultValue;
         } catch (Throwable ignored) {
             return defaultValue;
         }
+    }
+
+    // ── reflection helpers ──
+
+    private static Field safeFindField(Class<?> clazz, String name) {
+        Class<?> current = clazz;
+        while (current != null && current != Object.class) {
+            try {
+                return current.getDeclaredField(name);
+            } catch (NoSuchFieldException e) {
+                current = current.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private static Object safeCallMethod(Object obj, String methodName, Object... args) {
+        Class<?> clazz = obj.getClass();
+        Method method = safeFindMethod(clazz, methodName, args);
+        if (method != null) {
+            method.setAccessible(true);
+            try {
+                return method.invoke(obj, args);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        throw new NoSuchMethodError(clazz.getName() + "." + methodName);
+    }
+
+    private static Method safeFindMethod(Class<?> clazz, String name, Object... args) {
+        Class<?> current = clazz;
+        while (current != null && current != Object.class) {
+            for (Method m : current.getDeclaredMethods()) {
+                if (m.getName().equals(name) && parameterTypesMatch(m.getParameterTypes(), args)) {
+                    return m;
+                }
+            }
+            current = current.getSuperclass();
+        }
+        return null;
+    }
+
+    private static boolean parameterTypesMatch(Class<?>[] paramTypes, Object[] args) {
+        if (paramTypes.length != args.length) return false;
+        for (int i = 0; i < paramTypes.length; i++) {
+            if (args[i] == null) continue;
+            Class<?> paramType = paramTypes[i];
+            if (paramType.isPrimitive()) {
+                paramType = boxed(paramType);
+            }
+            if (!paramType.isAssignableFrom(args[i].getClass())) return false;
+        }
+        return true;
+    }
+
+    private static Class<?> boxed(Class<?> primitive) {
+        if (primitive == boolean.class) return Boolean.class;
+        if (primitive == byte.class) return Byte.class;
+        if (primitive == char.class) return Character.class;
+        if (primitive == short.class) return Short.class;
+        if (primitive == int.class) return Integer.class;
+        if (primitive == long.class) return Long.class;
+        if (primitive == float.class) return Float.class;
+        if (primitive == double.class) return Double.class;
+        return primitive;
     }
 }

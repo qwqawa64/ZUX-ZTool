@@ -1,9 +1,11 @@
 package com.qimian233.ztool.hook.modules.wallpaper;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 充电动画修复模块
@@ -12,6 +14,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public class ChargeAnimationFixModule extends BaseHookModule {
     private static final String UTILS_CLASS = "com.zui.wallpapersetting.util.Utilities";
+
+    public ChargeAnimationFixModule() {}
 
     @Override
     public String getModuleName() {
@@ -26,8 +30,10 @@ public class ChargeAnimationFixModule extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!"com.zui.wallpapersetting".equals(lpparam.packageName)) {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        if (!"com.zui.wallpapersetting".equals(packageName)) {
             return;  // 提前返回，避免不必要的处理
         }
 
@@ -38,7 +44,7 @@ public class ChargeAnimationFixModule extends BaseHookModule {
         }
 
         try {
-            hookChargeAnimationUtils(lpparam);
+            hookChargeAnimationUtils(classLoader);
         } catch (Throwable t) {
             logError("Failed to hook charge animation utilities", t);
         }
@@ -47,33 +53,23 @@ public class ChargeAnimationFixModule extends BaseHookModule {
     /**
      * Hook Utilities类的关键方法，修复充电动画显示
      */
-    private void hookChargeAnimationUtils(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookChargeAnimationUtils(ClassLoader classLoader) {
         try {
+            Class<?> utilsClass = classLoader.loadClass(UTILS_CLASS);
+
             // 修改Utilities.isLegiony()返回true
             // 原逻辑：(!Utilities.isLegiony() || Utilities.isOversea) ? "chargeStyle_row" : "chargeStyle"
             // 通过强制isLegiony返回true，确保使用"chargeStyle"数组
-            XposedHelpers.findAndHookMethod(
-                    UTILS_CLASS,
-                    lpparam.classLoader,
-                    "isLegiony",
-                    XC_MethodReplacement.returnConstant(true)
-            );
+            Method isLegionyMethod = utilsClass.getDeclaredMethod("isLegiony");
+            this.xposed.hook(isLegionyMethod).intercept(chain -> true);
 
             // 修改Utilities.isOversea()返回false
-            XposedHelpers.findAndHookMethod(
-                    UTILS_CLASS,
-                    lpparam.classLoader,
-                    "isOversea",
-                    XC_MethodReplacement.returnConstant(false)
-            );
+            Method isOverseaMethod = utilsClass.getDeclaredMethod("isOversea");
+            this.xposed.hook(isOverseaMethod).intercept(chain -> false);
 
             // 修复平板设备的充电动画显示问题
-            XposedHelpers.findAndHookMethod(
-                    UTILS_CLASS,
-                    lpparam.classLoader,
-                    "isPad",
-                    XC_MethodReplacement.returnConstant(false)
-            );
+            Method isPadMethod = utilsClass.getDeclaredMethod("isPad");
+            this.xposed.hook(isPadMethod).intercept(chain -> false);
 
             log("Successfully enabled all charge animations");
             log("Now showing: default, particle, turbo, triangle, girl");

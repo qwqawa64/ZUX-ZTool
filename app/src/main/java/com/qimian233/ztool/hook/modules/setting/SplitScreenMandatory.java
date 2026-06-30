@@ -1,10 +1,12 @@
 package com.qimian233.ztool.hook.modules.setting;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 
 /**
@@ -12,6 +14,8 @@ import java.util.HashMap;
  * 通过Hook OneModeService清空分屏黑名单，实现强制分屏功能
  */
 public class SplitScreenMandatory extends BaseHookModule {
+
+    public SplitScreenMandatory() {}
 
     @Override
     public String getModuleName() {
@@ -27,48 +31,45 @@ public class SplitScreenMandatory extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("android".equals(packageName)) {
-            hookSystemProcess(lpparam);
+            hookSystemProcess(classLoader);
         }
     }
 
     /**
      * Hook系统进程中的OneModeService
      */
-    private void hookSystemProcess(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemProcess(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.android.server.wm.OneModeService",
-                    lpparam.classLoader,
-                    "initLocalBlackList",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            // 检查模块是否启用
-                            if (!isEnabled()) {
-                                return;
-                            }
+            Method m = classLoader
+                    .loadClass("com.android.server.wm.OneModeService")
+                    .getDeclaredMethod("initLocalBlackList");
+            this.xposed.hook(m).intercept(chain -> {
+                // 检查模块是否启用
+                if (!isEnabled()) {
+                    return chain.proceed();
+                }
 
-                            // 获取OneModeService实例
-                            Object instance = param.thisObject;
+                // 获取OneModeService实例
+                Object instance = chain.getThisObject();
 
-                            // 获取mLocalmap字段（存储分屏黑名单的HashMap）
-                            HashMap<?, ?> mLocalmap = (HashMap<?, ?>) XposedHelpers.getObjectField(instance, "mLocalmap");
+                // 获取mLocalmap字段（存储分屏黑名单的HashMap）
+                Field field = instance.getClass().getDeclaredField("mLocalmap");
+                field.setAccessible(true);
+                HashMap<?, ?> mLocalmap = (HashMap<?, ?>) field.get(instance);
 
-                            // 清空mLocalmap，确保分屏黑名单为空
-                            if (mLocalmap != null) {
-                                mLocalmap.clear();
-                                log("Successfully cleared split screen blacklist");
-                            }
+                // 清空mLocalmap，确保分屏黑名单为空
+                if (mLocalmap != null) {
+                    mLocalmap.clear();
+                    log("Successfully cleared split screen blacklist");
+                }
 
-                            // 跳过原方法执行，防止从XML文件读取黑名单数据
-                            param.setResult(null);
-                        }
-                    }
-            );
+                // 跳过原方法执行，防止从XML文件读取黑名单数据
+                return null;
+            });
 
             log("Successfully hooked OneModeService.initLocalBlackList");
 

@@ -1,11 +1,11 @@
 package com.qimian233.ztool.hook.base;
 
+import com.qimian233.ztool.hook.modules.HookTestModule;
 import com.qimian233.ztool.hook.modules.documentsui.DocumentsUIBypass;
 import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook;
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
-import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
@@ -13,26 +13,28 @@ import com.qimian233.ztool.hook.modules.launcher.DisableDockBar;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
+import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
-import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo;
-import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
-import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
-import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
-import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
-import com.qimian233.ztool.hook.modules.setting.AlwaysDisplaySuggestion;
-import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
-import com.qimian233.ztool.hook.modules.setting.KeepRotation;
+import com.qimian233.ztool.hook.modules.ota.LenovoOTAHook;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
+import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
 import com.qimian233.ztool.hook.modules.packageinstaller.packageInstallerStyleHook;
+import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
+import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
 import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook;
+import com.qimian233.ztool.hook.modules.setting.AlwaysDisplaySuggestion;
+import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
+import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo;
+import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
+import com.qimian233.ztool.hook.modules.setting.KeepRotation;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
-import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook;
+import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
 import com.qimian233.ztool.hook.modules.systemFramework.AiInputExpand;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowUntrustedTouch;
@@ -40,12 +42,12 @@ import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation;
 import com.qimian233.ztool.hook.modules.systemFramework.LsposedServiceProtector;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
-import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
-import com.qimian233.ztool.hook.modules.systemui.ControlCenterNoTileLabelsHook;
 import com.qimian233.ztool.hook.modules.systemui.BrightnessSliderPercentageHook;
+import com.qimian233.ztool.hook.modules.systemui.ControlCenterNoTileLabelsHook;
+import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsColor;
-import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsRoundCorner;
+import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.ForceLenovoAOD;
 import com.qimian233.ztool.hook.modules.systemui.GuestModeController;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
@@ -60,169 +62,136 @@ import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeeddoublelayer
 import com.qimian233.ztool.hook.modules.systemui.SystemUIRealWatts;
 import com.qimian233.ztool.hook.modules.systemui.VolumeSliderPercentageHook;
 import com.qimian233.ztool.hook.modules.wallpaper.ChargeAnimationFixModule;
-import com.qimian233.ztool.hook.modules.ota.LenovoOTAHook;
 
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Hook模块管理器
- * 负责注册、管理和执行所有Hook模块
+ * Hook 模块管理器（libxposed 版）。
+ * <p>
+ * 按进程类型将模块分为 systemServerModules 和 appModules，
+ * 由 {@link com.qimian233.ztool.hook.HookInit} 在对应的生命周期回调中调度。
  */
 public class HookManager {
+
     private static final List<BaseHookModule> hookModules = new ArrayList<>();
     private static boolean initialized = false;
 
-    /**
-     * 初始化所有Hook模块
-     */
-    public static void initialize() {
+    public static void initialize(XposedInterface xposed) {
         if (initialized) return;
 
-        // 注册所有Hook模块
-
-        // 注册模块：一视界黑名单屏蔽
-        registerHookModule(new yishijiecompletion());
-        // 注册模块：禁用游戏音频优化
-        registerHookModule(new DisableGameAudio());
-        // 注册模块：禁用OTA检查
-        registerHookModule(new DisableOtaCheck());
-        // 注册模块：隐藏设置页OTA更新提示
-        registerHookModule(new HideOtaUpdateHint());
-        // 注册模块：机型伪装Y700四代
-        registerHookModule(new DeviceModelDisguiseHook());
-        // 注册模块：cpu频率修复
-        registerHookModule(new CpuFrequencyFix());
-        // 注册模块：SOC温度修复
-        registerHookModule(new SocTemperatureFix());
-        // 注册模块：跳过APK扫描
-        registerHookModule(new PackageInstallerHookScan());
-        // 注册模块：包安装器权限Hook模块
-        registerHookModule(new PackageInstallerPermissionHook());
-        // 注册模块：包安装器跳过警告页面模块
-        registerHookModule(new Hook_Skip_WarnPage());
-        // 注册模块：PackageInstaller广告屏蔽模块
-        registerHookModule(new Hook_disable_installerAD());
-        // 注册模块：状态栏时间显秒
-        registerHookModule(new StatusBarClockSecondsHook());
-        // 注册模块：自定义状态栏时钟
-        registerHookModule(new CustomStatusBarClock());
-        // 注册模块：移除分屏黑名单
-        registerHookModule(new SplitScreenMandatory());
-        // 注册模块：自定义锁屏一言
-        registerHookModule(new OwnerInfoHook());
-        // 注册模块：SystemUI充电瓦数显示模块
-        registerHookModule(new SystemUIChargeWattsHook());
-        // 注册模块：SystemUI实际充电瓦数显示模块
-        registerHookModule(new SystemUIRealWatts());
-        // 注册模块：自定义状态栏图标数量
-        registerHookModule(new NotificationIconHook());
-        // 注册模块：自定义控制中心月份时钟
-        registerHookModule(new CustomControlCenterDate());
-        // 注册模块：控制中心磁贴无字模式
-        registerHookModule(new ControlCenterNoTileLabelsHook());
-        // 注册模块：移除充电动画
-        registerHookModule(new NoChargeAnimation());
-        // 注册模块：启用原生安装器
-        registerHookModule(new packageInstallerStyleHook());
-        // 注册模块：允许关闭Dolby
-        registerHookModule(new AllowDisplayDolbyHook());
-        // 注册模块：权限控制器样式Hook
-        registerHookModule(new PermissionControllerHook());
-        // 注册模块，使用原生通知图标
-        registerHookModule(new NativeNotificationIcon());
-        // 注册模块，重启后保持屏幕方向不变
-        registerHookModule(new KeepRotation());
-        // 注册模块，停用划卡杀后台
-        registerHookModule(new DisableForceStop());
-        // 注册模块，停用系统的“禁止读取应用列表”
-        registerHookModule(new AllowGetPackages());
-        // 注册模块，默认允许应用自启
-        registerHookModule(new EnableAutorunByDefault());
-        // 注册模块：禁止访客用户自动创建
-        registerHookModule(new GuestModeController());
-        // 注册模块：调整合适的状态栏网速
-        registerHookModule(new SystemUINetworkSpeedSIzeHook());
-        // 注册模块：状态栏双层网速
-        registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
-        // 注册模块：更大的dock栏
-        registerHookModule(new ZuiLauncherHotseatHook());
-        // 注册模块：强制电量外部显示
-        registerHookModule(new SystemUIBatteryHook());
-        // 注册模块：充电动画修复模块
-        registerHookModule(new ChargeAnimationFixModule());
-        // 注册模块：强开联想AOD和原生AOD
-        registerHookModule(new ForceLenovoAOD());
-        // 注册模块：拦截删除安装包行为
-        registerHookModule(new PackageInstallerNoDeleteModule());
-        // 注册模块：自动开启防误触
-        registerHookModule(new AutoMistakeTouchHook());
-        // 注册模块：禁止每24H必须强制验证一次锁屏密码
-        registerHookModule(new NoMorePasswordPer24H());
-        // 注册模块：移除FlagSecure
+        // ── 系统框架 (target: system — 由 onSystemServerStarting 调度) ──
+        registerHookModule(new HookTestModule());
         registerHookModule(new DisableFlagSecure());
-        // 注册模块：允许用户选择受限的目录
-        registerHookModule(new DocumentsUIBypass());
-        // 注册模块：自定义AI输入检测符
-        registerHookModule(new AiInputExpand());
-        // 注册模块：自定义OTA参数
-        registerHookModule(new LenovoOTAHook());
-        // 注册模块：自定义桌面网格大小
-        registerHookModule(new CustomGridSize());
-        // 注册模块，一直显示或者一直隐藏建议
-        registerHookModule(new AlwaysDisplaySuggestion());
-        // 注册模块: 应用信息补全
-        registerHookModule(new AppInfoHeaderDetailsHook());
-        // 注册模块: 启用亮灭屏动画
-        registerHookModule(new ForceScreenOnOffAnimation());
-        // 注册模块: 关闭安全中心内病毒扫描
-        registerHookModule(new DisableAllVirusScans());
-        // 注册模块: 关闭全局搜索热词提示
-        registerHookModule(new CleanGlobalSearch());
-        // 注册模块: 关闭桌面Dock栏
-        registerHookModule(new DisableDockBar());
-        // 注册模块: 最近任务内存显示
-        registerHookModule(new RecentTaskMemoryViewHook());
-        // 注册模块: 控制中心磁贴圆角自定义
-        registerHookModule(new CustomQsRoundCorner());
-        // 注册模块: 控制中心亮度滑条百分比显示
-        registerHookModule(new BrightnessSliderPercentageHook());
-        // 注册模块: 控制中心音量滑条百分比显示
-        registerHookModule(new VolumeSliderPercentageHook());
-        // 注册模块: 控制中心磁贴颜色自定义
-        registerHookModule(new CustomQsColor());
-        // 注册模块: 控制中心背景模糊自定义
-        registerHookModule(new NotificationCenterTransparency());
-        // 注册模块: 关于设备信息自定义
-        registerHookModule(new CustomizeAboutDeviceInfo());
-        // 注册模块: 设置主页添加ZTool入口
-        registerHookModule(new ZToolSettingsEntryHook());
-        // 注册模块: 允许不受信任的触摸
+        registerHookModule(new NoMorePasswordPer24H());
+        registerHookModule(new AllowGetPackages());
         registerHookModule(new AllowUntrustedTouch());
-        // 注册模块: 超级互联磁贴跳过警告
-        registerHookModule(new BypassShareWarningHook());
-        // 注册模块: LSPosed daemon service 守护
+        registerHookModule(new ForceScreenOnOffAnimation());
+        registerHookModule(new AiInputExpand());
         registerHookModule(new LsposedServiceProtector());
+        registerHookModule(new KeepRotation());
+
+        // ── SystemUI (target: com.android.systemui) ──
+        registerHookModule(new StatusBarClockSecondsHook());
+        registerHookModule(new CustomStatusBarClock());
+        registerHookModule(new SystemUIChargeWattsHook());
+        registerHookModule(new SystemUIRealWatts());
+        registerHookModule(new NotificationIconHook());
+        registerHookModule(new CustomControlCenterDate());
+        registerHookModule(new ControlCenterNoTileLabelsHook());
+        registerHookModule(new NoChargeAnimation());
+        registerHookModule(new NativeNotificationIcon());
+        registerHookModule(new SystemUINetworkSpeedSIzeHook());
+        registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
+        registerHookModule(new SystemUIBatteryHook());
+        registerHookModule(new ForceLenovoAOD());
+        registerHookModule(new CustomQsRoundCorner());
+        registerHookModule(new BrightnessSliderPercentageHook());
+        registerHookModule(new VolumeSliderPercentageHook());
+        registerHookModule(new CustomQsColor());
+        registerHookModule(new NotificationCenterTransparency());
+        registerHookModule(new GuestModeController());
+
+        // ── Settings (target: com.android.settings) ──
+        registerHookModule(new yishijiecompletion());
+        registerHookModule(new AllowDisplayDolbyHook());
+        registerHookModule(new PermissionControllerHook());
+        registerHookModule(new OwnerInfoHook());
+        registerHookModule(new SplitScreenMandatory());
+        registerHookModule(new AlwaysDisplaySuggestion());
+        registerHookModule(new AppInfoHeaderDetailsHook());
+        registerHookModule(new CustomizeAboutDeviceInfo());
+        registerHookModule(new ZToolSettingsEntryHook());
+        registerHookModule(new HideOtaUpdateHint());
+
+        // ── PackageInstaller (target: com.android.packageinstaller) ──
+        registerHookModule(new PackageInstallerHookScan());
+        registerHookModule(new PackageInstallerPermissionHook());
+        registerHookModule(new Hook_Skip_WarnPage());
+        registerHookModule(new Hook_disable_installerAD());
+        registerHookModule(new packageInstallerStyleHook());
+        registerHookModule(new PackageInstallerNoDeleteModule());
+
+        // ── Launcher (target: com.zui.launcher) ──
+        registerHookModule(new DisableForceStop());
+        registerHookModule(new ZuiLauncherHotseatHook());
+        registerHookModule(new CustomGridSize());
+        registerHookModule(new CleanGlobalSearch());
+        registerHookModule(new DisableDockBar());
+        registerHookModule(new RecentTaskMemoryViewHook());
+
+        // ── GameTool (target: com.zui.game.service) ──
+        registerHookModule(new AutoMistakeTouchHook());
+        registerHookModule(new DisableGameAudio());
+        registerHookModule(new DeviceModelDisguiseHook());
+        registerHookModule(new CpuFrequencyFix());
+        registerHookModule(new SocTemperatureFix());
+
+        // ── OTA (target: com.lenovo.ota) ──
+        registerHookModule(new DisableOtaCheck());
+        registerHookModule(new LenovoOTAHook());
+
+        // ── Wallpaper (target: com.zui.wallpapersetting) ──
+        registerHookModule(new ChargeAnimationFixModule());
+
+        // ── DocumentsUI (target: com.android.documentsui) ──
+        registerHookModule(new DocumentsUIBypass());
+
+        // ── SafeCenter (target: com.zui.safecenter) ──
+        registerHookModule(new DisableAllVirusScans());
+        registerHookModule(new EnableAutorunByDefault());
+
+        // ── MobileDesktop (target: com.motorola.mobiledesktop) ──
+        registerHookModule(new BypassShareWarningHook());
+
+        // 注入 XposedInterface
+        for (BaseHookModule module : hookModules) {
+            module.setXposedInterface(xposed);
+        }
+
         initialized = true;
     }
 
-    /**
-     * 注册Hook模块
-     */
     public static void registerHookModule(BaseHookModule module) {
         if (module != null && !hookModules.contains(module)) {
             hookModules.add(module);
         }
     }
 
-    /**
-     * 执行所有适用的Hook模块
-     */
-    public static void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    public static void handlePackageLoaded(
+            XposedInterface xposed, XposedModuleInterface.PackageLoadedParam param) {
         for (BaseHookModule module : hookModules) {
-            module.safeHandleLoadPackage(lpparam);
+            module.safeHandleLoadPackage(param);
         }
     }
 
+    public static void handleSystemServerStarting(
+            XposedInterface xposed, XposedModuleInterface.SystemServerStartingParam param) {
+        for (BaseHookModule module : hookModules) {
+            module.safeHandleSystemServerStarting(param);
+        }
+    }
 }

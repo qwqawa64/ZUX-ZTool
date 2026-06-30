@@ -1,16 +1,22 @@
 package com.qimian233.ztool.hook.modules.setting;
 
+import android.content.Context;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * 允许显示杜比音效Hook模块
  * 功能：绕过耳机检测，使杜比音效在非耳机状态下可用
  */
 public class AllowDisplayDolbyHook extends BaseHookModule {
+
+    public AllowDisplayDolbyHook() {}
 
     @Override
     public String getModuleName() {
@@ -27,18 +33,18 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         switch (packageName) {
             case "com.android.settings":
-                hookSettingsPackage(lpparam);
+                hookSettingsPackage(classLoader);
                 break;
             case "com.android.systemui":
-                hookSystemUIPackage(lpparam);
+                hookSystemUIPackage(classLoader);
                 break;
             case "com.zui.game.service":
-                hookGameServicePackage(lpparam);
+                hookGameServicePackage(classLoader);
                 break;
         }
     }
@@ -46,81 +52,75 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
     /**
      * Hook设置应用中的杜比音效相关功能
      */
-    private void hookSettingsPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSettingsPackage(ClassLoader classLoader) {
         try {
             // Android 13 (SDK 33)
             if (android.os.Build.VERSION.SDK_INT == 33) {
-                XposedHelpers.findAndHookMethod(
-                        "com.android.settings.dolby.DolbyAtmosPreferenceFragment",
-                        lpparam.classLoader,
-                        "getheadsetStatus",
-                        XC_MethodReplacement.returnConstant(1)
-                );
+                Method m = classLoader
+                        .loadClass("com.android.settings.dolby.DolbyAtmosPreferenceFragment")
+                        .getDeclaredMethod("getheadsetStatus");
+                this.xposed.hook(m).intercept(chain -> 1);
                 log("Successfully hooked Android 13 DolbyAtmosPreferenceFragment.getheadsetStatus");
             }
             // Android 14 (SDK 34)
             else if (android.os.Build.VERSION.SDK_INT == 34) {
                 // Hook 耳机连接状态检测
-                XposedHelpers.findAndHookMethod(
-                        "com.lenovo.settings.sound.dolby.DolbyAtmosFragment",
-                        lpparam.classLoader,
-                        "isHeadsetConnected",
-                        XC_MethodReplacement.returnConstant(Boolean.TRUE)
-                );
+                Method isHeadsetMethod = classLoader
+                        .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosFragment")
+                        .getDeclaredMethod("isHeadsetConnected");
+                this.xposed.hook(isHeadsetMethod).intercept(chain -> Boolean.TRUE);
 
                 // Hook 初始化视图，清除摘要显示
-                XposedHelpers.findAndHookMethod(
-                        "com.lenovo.settings.sound.dolby.DolbyAtmosFragment",
-                        lpparam.classLoader,
-                        "initView",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void afterHookedMethod(MethodHookParam param) {
-                                try {
-                                    Object preference = XposedHelpers.getObjectField(param.thisObject, "mDolbySwitchPreference");
-                                    if (preference != null) {
-                                        XposedHelpers.callMethod(preference, "setSummary", new Object[]{null});
-                                        log("Successfully cleared Dolby switch preference summary");
-                                    }
-                                } catch (Throwable t) {
-                                    logError("Failed to clear Dolby switch preference summary", t);
-                                }
-                            }
+                Method initViewMethod = classLoader
+                        .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosFragment")
+                        .getDeclaredMethod("initView");
+                this.xposed.hook(initViewMethod).intercept(chain -> {
+                    Object result = chain.proceed();
+                    try {
+                        Field field = chain.getThisObject().getClass()
+                                .getDeclaredField("mDolbySwitchPreference");
+                        field.setAccessible(true);
+                        Object preference = field.get(chain.getThisObject());
+                        if (preference != null) {
+                            Method setSummary = preference.getClass()
+                                    .getDeclaredMethod("setSummary", CharSequence.class);
+                            setSummary.invoke(preference, (Object) null);
+                            log("Successfully cleared Dolby switch preference summary");
                         }
-                );
+                    } catch (Throwable t) {
+                        logError("Failed to clear Dolby switch preference summary", t);
+                    }
+                    return result;
+                });
                 log("Successfully hooked Android 14 DolbyAtmosFragment methods");
             }
             // Android 15 (SDK 35)
             else if (android.os.Build.VERSION.SDK_INT == 35) {
                 // Hook 工具类中的耳机连接检测
-                XposedHelpers.findAndHookMethod(
-                        "com.lenovo.settings.sound.dolby.DolbyAtmosUtils",
-                        lpparam.classLoader,
-                        "isHeadsetConnected",
-                        android.content.Context.class,
-                        XC_MethodReplacement.returnConstant(Boolean.TRUE)
-                );
+                Method isHeadsetMethod = classLoader
+                        .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosUtils")
+                        .getDeclaredMethod("isHeadsetConnected", Context.class);
+                this.xposed.hook(isHeadsetMethod).intercept(chain -> Boolean.TRUE);
 
                 // Hook 控制器更新状态，清除摘要
-                XposedHelpers.findAndHookMethod(
-                        "com.lenovo.settings.sound.dolby.DolbySwitchPreferenceController",
-                        lpparam.classLoader,
-                        "updateState",
-                        "androidx.preference.Preference",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void beforeHookedMethod(MethodHookParam param) {
-                                try {
-                                    if (param.args[0] != null) {
-                                        XposedHelpers.callMethod(param.args[0], "setSummary", new Object[]{null});
-                                        log("Successfully cleared preference summary in updateState");
-                                    }
-                                } catch (Throwable t) {
-                                    logError("Failed to clear preference summary in updateState", t);
-                                }
-                            }
+                Class<?> prefClass = classLoader.loadClass("androidx.preference.Preference");
+                Method updateStateMethod = classLoader
+                        .loadClass("com.lenovo.settings.sound.dolby.DolbySwitchPreferenceController")
+                        .getDeclaredMethod("updateState", prefClass);
+                this.xposed.hook(updateStateMethod).intercept(chain -> {
+                    try {
+                        Object arg0 = chain.getArg(0);
+                        if (arg0 != null) {
+                            Method setSummary = arg0.getClass()
+                                    .getDeclaredMethod("setSummary", CharSequence.class);
+                            setSummary.invoke(arg0, (Object) null);
+                            log("Successfully cleared preference summary in updateState");
                         }
-                );
+                    } catch (Throwable t) {
+                        logError("Failed to clear preference summary in updateState", t);
+                    }
+                    return chain.proceed();
+                });
                 log("Successfully hooked Android 15 DolbyAtmosUtils and DolbySwitchPreferenceController");
             }
         } catch (Throwable t) {
@@ -131,34 +131,28 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
     /**
      * Hook SystemUI中的杜比音效磁贴
      */
-    private void hookSystemUIPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemUIPackage(ClassLoader classLoader) {
         try {
             // Hook QDolbyAtmosTile 耳机检测方法
             if (android.os.Build.VERSION.SDK_INT <= 34) {
-                XposedHelpers.findAndHookMethod(
-                        "com.android.systemui.qs.tiles.QDolbyAtmosTile",
-                        lpparam.classLoader,
-                        "isHeadSetConnect",
-                        XC_MethodReplacement.returnConstant(Boolean.TRUE)
-                );
+                Method m = classLoader
+                        .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosTile")
+                        .getDeclaredMethod("isHeadSetConnect");
+                this.xposed.hook(m).intercept(chain -> Boolean.TRUE);
                 log("Successfully hooked QDolbyAtmosTile.isHeadSetConnect (SDK <= 34)");
             } else {
-                XposedHelpers.findAndHookMethod(
-                        "com.android.systemui.qs.tiles.QDolbyAtmosTile",
-                        lpparam.classLoader,
-                        "isHeadSetConnect$2",
-                        XC_MethodReplacement.returnConstant(Boolean.TRUE)
-                );
+                Method m = classLoader
+                        .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosTile")
+                        .getDeclaredMethod("isHeadSetConnect$2");
+                this.xposed.hook(m).intercept(chain -> Boolean.TRUE);
                 log("Successfully hooked QDolbyAtmosTile.isHeadSetConnect$2 (SDK > 34)");
             }
 
             // Hook 详情视图中的耳机检测
-            XposedHelpers.findAndHookMethod(
-                    "com.android.systemui.qs.tiles.QDolbyAtmosDetailView",
-                    lpparam.classLoader,
-                    "isHeadSetConnect",
-                    XC_MethodReplacement.returnConstant(Boolean.TRUE)
-            );
+            Method detailMethod = classLoader
+                    .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosDetailView")
+                    .getDeclaredMethod("isHeadSetConnect");
+            this.xposed.hook(detailMethod).intercept(chain -> Boolean.TRUE);
             log("Successfully hooked QDolbyAtmosDetailView.isHeadSetConnect");
 
         } catch (Throwable t) {
@@ -169,16 +163,12 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
     /**
      * Hook 游戏服务中的杜比音效处理
      */
-    private void hookGameServicePackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookGameServicePackage(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.zui.game.service.util.DolbyUtils",
-                    lpparam.classLoader,
-                    "handleDolbyGameSound",
-                    android.content.Context.class,
-                    Integer.TYPE,
-                    XC_MethodReplacement.returnConstant(null)
-            );
+            Method m = classLoader
+                    .loadClass("com.zui.game.service.util.DolbyUtils")
+                    .getDeclaredMethod("handleDolbyGameSound", Context.class, Integer.TYPE);
+            this.xposed.hook(m).intercept(chain -> null);
             log("Successfully hooked DolbyUtils.handleDolbyGameSound - disabled game sound processing");
         } catch (Throwable t) {
             logError("Failed to hook GameService package", t);

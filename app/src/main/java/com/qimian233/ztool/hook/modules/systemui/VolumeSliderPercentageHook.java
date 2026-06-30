@@ -13,15 +13,15 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
 
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class VolumeSliderPercentageHook extends BaseHookModule {
     private static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
@@ -37,6 +37,8 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     private final Map<View, View.OnLayoutChangeListener> layoutListeners = new WeakHashMap<>();
     private final Map<FrameLayout, Boolean> pendingPositionUpdates = new WeakHashMap<>();
 
+    public VolumeSliderPercentageHook() {}
+
     @Override
     public String getModuleName() {
         return PREF_KEY;
@@ -48,121 +50,103 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         updatePrefs();
-        hookToggleSliderViewLifecycle(lpparam);
-        hookVolumeControllerCallbacks(lpparam);
-        hookSeekProgressChanges(lpparam);
+        hookToggleSliderViewLifecycle(classLoader);
+        hookVolumeControllerCallbacks(classLoader);
+        hookSeekProgressChanges(classLoader);
         log("Volume slider percentage hooks installed");
     }
 
-    private void hookVolumeControllerCallbacks(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookMethod(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                "updateMusicSlider",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        refreshVolumeFromToggleSlider(param.thisObject);
-                    }
-                }
-        );
+    private void hookVolumeControllerCallbacks(ClassLoader classLoader) {
+        try {
+            Method updateMusicSliderMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("updateMusicSlider");
+            this.xposed.hook(updateMusicSliderMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                refreshVolumeFromToggleSlider(chain.getThisObject());
+                return result;
+            });
+        } catch (Throwable ignored) {}
 
-        XposedHelpers.findAndHookMethod(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                "registerVolumeObserver",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        refreshVolumeFromToggleSlider(param.thisObject);
-                    }
-                }
-        );
+        try {
+            Method registerVolumeObserverMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("registerVolumeObserver");
+            this.xposed.hook(registerVolumeObserverMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                refreshVolumeFromToggleSlider(chain.getThisObject());
+                return result;
+            });
+        } catch (Throwable ignored) {}
     }
 
-    private void hookToggleSliderViewLifecycle(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookConstructor(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                Context.class,
-                android.util.AttributeSet.class,
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        attachSliderLabel(param.thisObject);
-                    }
-                }
-        );
+    private void hookToggleSliderViewLifecycle(ClassLoader classLoader) {
+        try {
+            Constructor<?> ctor = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredConstructor(Context.class, android.util.AttributeSet.class, int.class);
+            this.xposed.hook(ctor).intercept(chain -> {
+                chain.proceed();
+                attachSliderLabel(chain.getThisObject());
+                return null;
+            });
+        } catch (Throwable ignored) {}
 
-        XposedHelpers.findAndHookMethod(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                "updateVolumeSlider",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        attachSliderLabel(param.thisObject);
-                        refreshVolumeLabel(param.thisObject);
-                    }
-                }
-        );
+        try {
+            Method updateVolumeSliderMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("updateVolumeSlider");
+            this.xposed.hook(updateVolumeSliderMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                attachSliderLabel(chain.getThisObject());
+                refreshVolumeLabel(chain.getThisObject());
+                return result;
+            });
+        } catch (Throwable ignored) {}
 
-        XposedHelpers.findAndHookMethod(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                "setVolumeProgress",
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        refreshVolumeLabel(param.thisObject);
-                    }
-                }
-        );
+        try {
+            Method setVolumeProgressMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("setVolumeProgress", int.class);
+            this.xposed.hook(setVolumeProgressMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                refreshVolumeLabel(chain.getThisObject());
+                return result;
+            });
+        } catch (Throwable ignored) {}
 
-        XposedHelpers.findAndHookMethod(
-                TOGGLE_SLIDER_VIEW_CLASS,
-                lpparam.classLoader,
-                "refreshSeekBar",
-                ProgressBar.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        Object sliderView = param.thisObject;
-                        ProgressBar progressBar = (ProgressBar) param.args[0];
-                        if (isVolumeSlider(sliderView, progressBar)) {
-                            refreshVolumeLabel(sliderView);
-                        }
-                    }
+        try {
+            Method refreshSeekBarMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("refreshSeekBar", ProgressBar.class);
+            this.xposed.hook(refreshSeekBarMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                Object sliderView = chain.getThisObject();
+                ProgressBar progressBar = (ProgressBar) chain.getArg(0);
+                if (isVolumeSlider(sliderView, progressBar)) {
+                    refreshVolumeLabel(sliderView);
                 }
-        );
+                return result;
+            });
+        } catch (Throwable ignored) {}
     }
 
-    private void hookSeekProgressChanges(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookMethod(
-                "com.android.systemui.settings.ToggleSliderView$2",
-                lpparam.classLoader,
-                "onProgressChanged",
-                SeekBar.class,
-                int.class,
-                boolean.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        SeekBar seekBar = (SeekBar) param.args[0];
-                        Object sliderView = findToggleSliderView(seekBar);
-                        if (sliderView == null || !isVolumeSlider(sliderView, seekBar)) {
-                            return;
-                        }
-                        if (Boolean.TRUE.equals(param.args[2])) {
-                            refreshVolumeLabel(sliderView, (Integer) param.args[1]);
-                        }
-                    }
+    private void hookSeekProgressChanges(ClassLoader classLoader) {
+        try {
+            Method onProgressChangedMethod = classLoader
+                    .loadClass("com.android.systemui.settings.ToggleSliderView$2")
+                    .getDeclaredMethod("onProgressChanged", SeekBar.class, int.class, boolean.class);
+            this.xposed.hook(onProgressChangedMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                SeekBar seekBar = (SeekBar) chain.getArg(0);
+                Object sliderView = findToggleSliderView(seekBar);
+                if (sliderView == null || !isVolumeSlider(sliderView, seekBar)) {
+                    return result;
                 }
-        );
+                if (Boolean.TRUE.equals(chain.getArg(2))) {
+                    refreshVolumeLabel(sliderView, (Integer) chain.getArg(1));
+                }
+                return result;
+            });
+        } catch (Throwable ignored) {}
     }
 
     private void attachSliderLabel(Object sliderView) {
@@ -284,7 +268,8 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
 
     private Integer getVolumeRawProgress(Object sliderView, Integer rawProgress) {
         try {
-            SeekBar volumeSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mMediaVolumeSlider");
+            SeekBar volumeSlider = (SeekBar) sliderView.getClass()
+                    .getDeclaredField("mMediaVolumeSlider").get(sliderView);
             if (volumeSlider == null) {
                 return null;
             }
@@ -296,7 +281,8 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
 
     private Integer getVolumeProgress(Object sliderView, Integer rawProgress) {
         try {
-            SeekBar volumeSlider = (SeekBar) XposedHelpers.getObjectField(sliderView, "mMediaVolumeSlider");
+            SeekBar volumeSlider = (SeekBar) sliderView.getClass()
+                    .getDeclaredField("mMediaVolumeSlider").get(sliderView);
             if (volumeSlider == null) {
                 return null;
             }
@@ -355,18 +341,30 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     }
 
     private FrameLayout getFrameLayoutField(Object sliderView) {
-        Object field = XposedHelpers.getObjectField(sliderView, VolumeSliderPercentageHook.VOLUME_ROOT_FIELD);
-        return field instanceof FrameLayout ? (FrameLayout) field : null;
+        try {
+            Object field = sliderView.getClass().getDeclaredField(VOLUME_ROOT_FIELD).get(sliderView);
+            return field instanceof FrameLayout ? (FrameLayout) field : null;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private View getViewField(Object sliderView) {
-        Object field = XposedHelpers.getObjectField(sliderView, VolumeSliderPercentageHook.VOLUME_ICON_FIELD);
-        return field instanceof View ? (View) field : null;
+        try {
+            Object field = sliderView.getClass().getDeclaredField(VOLUME_ICON_FIELD).get(sliderView);
+            return field instanceof View ? (View) field : null;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private boolean isVolumeSlider(Object sliderView, Object view) {
-        Object slider = XposedHelpers.getObjectField(sliderView, "mMediaVolumeSlider");
-        return slider == view;
+        try {
+            Object slider = sliderView.getClass().getDeclaredField("mMediaVolumeSlider").get(sliderView);
+            return slider == view;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private Object findToggleSliderView(View seekBar) {
@@ -390,7 +388,8 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             return;
         }
 
-        View.OnLayoutChangeListener listener = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> schedulePositionUpdate(root, icon, percentView);
+        View.OnLayoutChangeListener listener = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                schedulePositionUpdate(root, icon, percentView);
         layoutListeners.put(root, listener);
         root.addOnLayoutChangeListener(listener);
         schedulePositionUpdate(root, icon, percentView);
@@ -516,7 +515,10 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     }
 
     private void updatePrefs() {
-        PreferenceHelper prefs = PreferenceHelper.getInstance();
-        PERCENTAGE_ENABLED = prefs.getBoolean(PREF_KEY, false);
+        try {
+            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY, false);
+        } catch (Throwable t) {
+            PERCENTAGE_ENABLED = false;
+        }
     }
 }

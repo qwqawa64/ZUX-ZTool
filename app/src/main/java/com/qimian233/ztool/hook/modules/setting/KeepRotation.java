@@ -2,27 +2,32 @@ package com.qimian233.ztool.hook.modules.setting;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 public class KeepRotation extends BaseHookModule {
     public static final String FEATURE_NAME = "keep_rotation";
-    public static final String TARGET_PACKAGE = "android";
+    public static final String TARGET_PACKAGE = "system";
+
+    public KeepRotation() {}
+
     public String getModuleName() { return FEATURE_NAME; }
     public String[] getTargetPackages() { return new String[]{TARGET_PACKAGE};}
 
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         log("Loading module keep_rotation.");
-        if ("android".equals(lpparam.processName)) {
-            log("Hooking DisplayRotation.isRotationCts");
-            try{
-                XposedHelpers.findAndHookMethod("com.zui.server.wm.ZuiDisplayRotation", lpparam.classLoader, "isRotationCts", XC_MethodReplacement.returnConstant(Boolean.TRUE));
-                log("Hooked DisplayRotation.isRotationCts [OK]");
-            } catch (Exception e) {
-                logError("Error hooking DisplayRotation.isRotationCts", e);
-            }
-            //
+        log("Hooking DisplayRotation.isRotationCts");
+        try{
+            Method method = classLoader.loadClass("com.zui.server.wm.ZuiDisplayRotation")
+                    .getDeclaredMethod("isRotationCts");
+            this.xposed.hook(method).intercept(chain -> Boolean.TRUE);
+            log("Hooked DisplayRotation.isRotationCts [OK]");
+        } catch (Exception e) {
+            logError("Error hooking DisplayRotation.isRotationCts", e);
         }
     }
 }

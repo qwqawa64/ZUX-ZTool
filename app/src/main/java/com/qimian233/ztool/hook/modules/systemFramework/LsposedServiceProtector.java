@@ -10,10 +10,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
 
 /**
  * LSPosed Daemon Service 守护模块
@@ -39,6 +37,8 @@ public class LsposedServiceProtector extends BaseHookModule {
     private static boolean serviceBinderHeld = false;
     private static boolean binderDeathHooked = false;
 
+    public LsposedServiceProtector() {}
+
     @Override
     public String getModuleName() {
         return "lsposed_service_protector";
@@ -46,17 +46,16 @@ public class LsposedServiceProtector extends BaseHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[]{"android"};
+        return new String[]{"system"};
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!"android".equals(lpparam.packageName)) {
-            return;
-        }
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
 
         // 第1层：Hook AMS 防止进程被强制杀掉
-        hookAmsKillPrevention(lpparam);
+        hookAmsKillPrevention(classLoader);
 
         // 第2层：保留关键 service binder 强引用防止 GC
         holdServiceBinderReferences();
@@ -69,28 +68,25 @@ public class LsposedServiceProtector extends BaseHookModule {
      * 第1层防御：Hook AMS 中的进程/服务清理方法，
      * 拦截对 LSPosed 相关进程的 kill 操作。
      */
-    private void hookAmsKillPrevention(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookAmsKillPrevention(ClassLoader classLoader) {
         try {
-            Class<?> amsClass = XposedHelpers.findClass(
-                    "com.android.server.am.ActivityManagerService",
-                    lpparam.classLoader
+            Class<?> amsClass = classLoader.loadClass(
+                    "com.android.server.am.ActivityManagerService"
             );
 
             // 1a. Hook killPackageProcessesLocked — 拦截按包名杀进程
             try {
                 hookMethodBySignature(amsClass, "killPackageProcessesLocked",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void beforeHookedMethod(MethodHookParam param) {
-                                // 第1个参数通常是包名 String
-                                if (param.args.length > 0 && param.args[0] instanceof String) {
-                                    String pkg = (String) param.args[0];
-                                    if (pkg != null && pkg.toLowerCase().contains(LSPOSED_PROCESS_KEYWORD)) {
-                                        param.setResult(null);
-                                        log("Intercepted killPackageProcessesLocked for: " + pkg);
-                                    }
+                        chain -> {
+                            // 第1个参数通常是包名 String
+                            if (chain.getArgs().size() > 0 && chain.getArg(0) instanceof String) {
+                                String pkg = (String) chain.getArg(0);
+                                if (pkg != null && pkg.toLowerCase().contains(LSPOSED_PROCESS_KEYWORD)) {
+                                    log("Intercepted killPackageProcessesLocked for: " + pkg);
+                                    return null;
                                 }
                             }
+                            return chain.proceed();
                         });
             } catch (Throwable ignored) {
                 log("killPackageProcessesLocked hook not available on this ROM");
@@ -99,17 +95,15 @@ public class LsposedServiceProtector extends BaseHookModule {
             // 1b. Hook forceStopPackageLocked — 拦截强制停止
             try {
                 hookMethodBySignature(amsClass, "forceStopPackageLocked",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void beforeHookedMethod(MethodHookParam param) {
-                                if (param.args.length > 0 && param.args[0] instanceof String) {
-                                    String pkg = (String) param.args[0];
-                                    if (pkg != null && pkg.toLowerCase().contains(LSPOSED_PROCESS_KEYWORD)) {
-                                        param.setResult(null);
-                                        log("Intercepted forceStopPackageLocked for: " + pkg);
-                                    }
+                        chain -> {
+                            if (chain.getArgs().size() > 0 && chain.getArg(0) instanceof String) {
+                                String pkg = (String) chain.getArg(0);
+                                if (pkg != null && pkg.toLowerCase().contains(LSPOSED_PROCESS_KEYWORD)) {
+                                    log("Intercepted forceStopPackageLocked for: " + pkg);
+                                    return null;
                                 }
                             }
+                            return chain.proceed();
                         });
             } catch (Throwable ignored) {
                 log("forceStopPackageLocked hook not available on this ROM");
@@ -117,26 +111,22 @@ public class LsposedServiceProtector extends BaseHookModule {
 
             // 1c. Hook ActiveServices 中的服务清理
             try {
-                Class<?> activeServicesClass = XposedHelpers.findClass(
-                        "com.android.server.am.ActiveServices",
-                        lpparam.classLoader
+                Class<?> activeServicesClass = classLoader.loadClass(
+                        "com.android.server.am.ActiveServices"
                 );
                 hookMethodBySignature(activeServicesClass, "killServicesLocked",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void beforeHookedMethod(MethodHookParam param) {
-                                // 遍历参数查找包含 lsposed 的 service 引用
-                                for (Object arg : param.args) {
-                                    if (arg != null) {
-                                        String argStr = arg.toString().toLowerCase();
-                                        if (argStr.contains(LSPOSED_PROCESS_KEYWORD)) {
-                                            param.setResult(null);
-                                            log("Intercepted killServicesLocked for LSPosed service");
-                                            return;
-                                        }
+                        chain -> {
+                            // 遍历参数查找包含 lsposed 的 service 引用
+                            for (Object arg : chain.getArgs()) {
+                                if (arg != null) {
+                                    String argStr = arg.toString().toLowerCase();
+                                    if (argStr.contains(LSPOSED_PROCESS_KEYWORD)) {
+                                        log("Intercepted killServicesLocked for LSPosed service");
+                                        return null;
                                     }
                                 }
                             }
+                            return chain.proceed();
                         });
             } catch (Throwable ignored) {
                 log("killServicesLocked hook not available on this ROM");
@@ -196,28 +186,24 @@ public class LsposedServiceProtector extends BaseHookModule {
         if (binderDeathHooked) return;
 
         try {
-            XposedHelpers.findAndHookMethod(
-                    Binder.class,
+            Method unlinkMethod = Binder.class.getDeclaredMethod(
                     "unlinkToDeath",
                     IBinder.DeathRecipient.class,
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            // 只记录，不完全阻止 — 完全阻止可能导致泄漏
-                            // 如果在调用栈中发现 LSPosed 相关类，则拦截
-                            StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-                            for (StackTraceElement element : stack) {
-                                String className = element.getClassName().toLowerCase();
-                                if (className.contains(LSPOSED_PROCESS_KEYWORD)) {
-                                    param.setResult(false); // 返回 false 表示取消失败
-                                    log("Intercepted unlinkToDeath from: " + element.getClassName());
-                                    return;
-                                }
-                            }
-                        }
-                    }
+                    int.class
             );
+            this.xposed.hook(unlinkMethod).intercept(chain -> {
+                // 只记录，不完全阻止 — 完全阻止可能导致泄漏
+                // 如果在调用栈中发现 LSPosed 相关类，则拦截
+                StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stack) {
+                    String className = element.getClassName().toLowerCase();
+                    if (className.contains(LSPOSED_PROCESS_KEYWORD)) {
+                        log("Intercepted unlinkToDeath from: " + element.getClassName());
+                        return false; // 返回 false 表示取消失败
+                    }
+                }
+                return chain.proceed();
+            });
 
             binderDeathHooked = true;
             log("Binder unlinkToDeath hook applied successfully");
@@ -229,12 +215,12 @@ public class LsposedServiceProtector extends BaseHookModule {
     /**
      * 通过方法名签名查找并 Hook（适配不同 Android 版本的方法参数差异）
      */
-    private static void hookMethodBySignature(Class<?> clazz, String methodName,
-                                               XC_MethodHook callback) throws Throwable {
+    private void hookMethodBySignature(Class<?> clazz, String methodName,
+                                       XposedInterface.Hooker callback) throws Throwable {
         boolean hooked = false;
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getName().equals(methodName)) {
-                XposedBridge.hookMethod(method, callback);
+                this.xposed.hook(method).intercept(callback);
                 hooked = true;
                 // 不 break：同名方法可能有多个重载，都需要 hook
             }

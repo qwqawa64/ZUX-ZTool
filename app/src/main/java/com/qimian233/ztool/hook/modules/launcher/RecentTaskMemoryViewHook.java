@@ -14,16 +14,15 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
 
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.lang.reflect.Method;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class RecentTaskMemoryViewHook extends BaseHookModule {
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
@@ -48,11 +47,12 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     private volatile String cachedRamUnavailable;
     private volatile Method systemPropertiesGetWithDefaultMethod;
 
+    public RecentTaskMemoryViewHook() {}
+
     @Override
     public String getModuleName() {
         return "launcher_recent_task_memory_view";
     }
-    // launcher_recent_task_memory_view
 
     @Override
     public String[] getTargetPackages() {
@@ -60,78 +60,54 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookMethod(
-                RECENTS_VIEW_CLASS,
-                lpparam.classLoader,
-                "onAttachedToWindow",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        attachMemoryView((View) param.thisObject);
-                    }
-                }
-        );
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        try {
+            Class<?> recentsViewClass = classLoader.loadClass(RECENTS_VIEW_CLASS);
 
-        XposedHelpers.findAndHookMethod(
-                RECENTS_VIEW_CLASS,
-                lpparam.classLoader,
-                "onDetachedFromWindow",
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        detachMemoryView((View) param.thisObject);
-                    }
-                }
-        );
+            Method onAttachedMethod = recentsViewClass.getDeclaredMethod("onAttachedToWindow");
+            this.xposed.hook(onAttachedMethod).intercept(chain -> {
+                chain.proceed();
+                attachMemoryView((View) chain.getThisObject());
+                return null;
+            });
 
-        XposedHelpers.findAndHookMethod(
-                RECENTS_VIEW_CLASS,
-                lpparam.classLoader,
-                "setOverviewStateEnabled",
-                boolean.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        View recentsView = (View) param.thisObject;
-                        boolean enabled = (boolean) param.args[0];
-                        overviewEnabledStates.put(recentsView, enabled);
-                        updateMemoryViewVisibility(recentsView);
-                    }
-                }
-        );
+            Method onDetachedMethod = recentsViewClass.getDeclaredMethod("onDetachedFromWindow");
+            this.xposed.hook(onDetachedMethod).intercept(chain -> {
+                detachMemoryView((View) chain.getThisObject());
+                return chain.proceed();
+            });
 
-        XposedHelpers.findAndHookMethod(
-                RECENTS_VIEW_CLASS,
-                lpparam.classLoader,
-                "setVisibility",
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        updateMemoryViewVisibility((View) param.thisObject);
-                    }
-                }
-        );
+            Method setOverviewMethod = recentsViewClass.getDeclaredMethod("setOverviewStateEnabled", boolean.class);
+            this.xposed.hook(setOverviewMethod).intercept(chain -> {
+                chain.proceed();
+                View recentsView = (View) chain.getThisObject();
+                boolean enabled = (boolean) chain.getArg(0);
+                overviewEnabledStates.put(recentsView, enabled);
+                updateMemoryViewVisibility(recentsView);
+                return null;
+            });
 
-        XposedHelpers.findAndHookMethod(
-                RECENTS_VIEW_CLASS,
-                lpparam.classLoader,
-                "onLayout",
-                boolean.class,
-                int.class,
-                int.class,
-                int.class,
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        attachMemoryView((View) param.thisObject);
-                    }
-                }
-        );
+            Method setVisibilityMethod = recentsViewClass.getDeclaredMethod("setVisibility", int.class);
+            this.xposed.hook(setVisibilityMethod).intercept(chain -> {
+                chain.proceed();
+                updateMemoryViewVisibility((View) chain.getThisObject());
+                return null;
+            });
 
-        log("Recent task memory view hooks installed");
+            Method onLayoutMethod = recentsViewClass.getDeclaredMethod("onLayout",
+                    boolean.class, int.class, int.class, int.class, int.class);
+            this.xposed.hook(onLayoutMethod).intercept(chain -> {
+                chain.proceed();
+                attachMemoryView((View) chain.getThisObject());
+                return null;
+            });
+
+            log("Recent task memory view hooks installed");
+        } catch (Throwable t) {
+            logError("Failed to install recent task memory view hooks", t);
+        }
     }
 
     private void attachMemoryView(View recentsView) {
@@ -228,9 +204,16 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     }
 
     private ViewGroup getDragLayer(View recentsView) {
-        Object container = XposedHelpers.getObjectField(recentsView, "mContainer");
-        Object dragLayer = XposedHelpers.callMethod(container, "getDragLayer");
-        return dragLayer instanceof ViewGroup ? (ViewGroup) dragLayer : null;
+        try {
+            Field containerField = recentsView.getClass().getDeclaredField("mContainer");
+            containerField.setAccessible(true);
+            Object container = containerField.get(recentsView);
+            Method getDragLayerMethod = container.getClass().getMethod("getDragLayer");
+            Object dragLayer = getDragLayerMethod.invoke(container);
+            return dragLayer instanceof ViewGroup ? (ViewGroup) dragLayer : null;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private TextView findMemoryView(ViewGroup dragLayer) {
@@ -385,7 +368,13 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     }
 
     private String getTotalRamInfo(long availableMem) {
-        if (!PreferenceHelper.getInstance().getBoolean("beautify_ram_info", false)) {
+        boolean beautifyRamInfo;
+        try {
+            beautifyRamInfo = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("beautify_ram_info", false);
+        } catch (Throwable t) {
+            beautifyRamInfo = false;
+        }
+        if (!beautifyRamInfo) {
             return formatBytesToGigSuffix(availableMem);
         }
 

@@ -1,24 +1,27 @@
 package com.qimian233.ztool.hook.modules.setting;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 
+import com.qimian233.ztool.hook.base.BaseHookModule;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
@@ -36,8 +39,8 @@ public class OwnerInfoHook extends BaseHookModule {
     private BroadcastReceiver mScreenReceiver;
     private boolean mIsReceiverRegistered = false;
     private String mCachedContent = "";
-    private static final String PREFS_NAME = "xposed_module_config";
-    private static final String MODULE_PACKAGE = "com.qimian233.ztool";
+
+    public OwnerInfoHook() {}
 
     @Override
     public String getModuleName() {
@@ -53,33 +56,30 @@ public class OwnerInfoHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.settings".equals(packageName)) {
-            hookSettingsPackage(lpparam);
+            hookSettingsPackage(classLoader);
         } else if ("android".equals(packageName)) {
-            hookSystemPackage(lpparam);
+            hookSystemPackage(classLoader);
         }
     }
 
-    private void hookSettingsPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSettingsPackage(ClassLoader classLoader) {
         log("开始Hook Settings包");
 
         // Hook点1: 在Settings的SecuritySettings中注册
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.android.settings.SecuritySettings",
-                    lpparam.classLoader,
-                    "onResume",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            log("SecuritySettings resumed, registering screen receiver");
-                            registerScreenReceiver(param.thisObject, lpparam.classLoader);
-                        }
-                    });
-
+            Method onResumeMethod = classLoader
+                    .loadClass("com.android.settings.SecuritySettings")
+                    .getDeclaredMethod("onResume");
+            this.xposed.hook(onResumeMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                log("SecuritySettings resumed, registering screen receiver");
+                registerScreenReceiver(chain.getThisObject(), classLoader);
+                return result;
+            });
             log("成功Hook SecuritySettings.onResume");
         } catch (Throwable e) {
             logError("Hook SecuritySettings失败", e);
@@ -87,54 +87,47 @@ public class OwnerInfoHook extends BaseHookModule {
 
         // Hook点2: ActivityThread中注册屏幕状态监听器
         try {
-            XposedHelpers.findAndHookMethod(
-                    "android.app.ActivityThread",
-                    lpparam.classLoader,
-                    "performResumeActivity",
-                    "android.app.ActivityThread$ActivityClientRecord",
-                    boolean.class,
-                    String.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            Object activityRecord = param.args[0];
-                            Object activity = XposedHelpers.getObjectField(activityRecord, "activity");
+            Class<?> activityThreadClass = classLoader.loadClass("android.app.ActivityThread");
+            Class<?> activityRecordClass = classLoader.loadClass("android.app.ActivityThread$ActivityClientRecord");
+            Method performResumeMethod = activityThreadClass
+                    .getDeclaredMethod("performResumeActivity", activityRecordClass, boolean.class, String.class);
+            this.xposed.hook(performResumeMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                Object activityRecord = chain.getArg(0);
+                Field activityField = activityRecord.getClass().getDeclaredField("activity");
+                activityField.setAccessible(true);
+                Object activity = activityField.get(activityRecord);
 
-                            if (activity != null) {
-                                registerScreenReceiver(activity, lpparam.classLoader);
-                            }
-                        }
-                    });
-
+                if (activity != null) {
+                    registerScreenReceiver(activity, classLoader);
+                }
+                return result;
+            });
             log("成功Hook ActivityThread.performResumeActivity");
         } catch (Throwable e) {
             logError("Hook ActivityThread.performResumeActivity失败", e);
         }
     }
 
-    private void hookSystemPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemPackage(ClassLoader classLoader) {
         log("开始Hook System包");
 
         // Hook点1: 在系统PowerManagerService中监听屏幕状态
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.android.server.power.PowerManagerService",
-                    lpparam.classLoader,
-                    "setPowerState",
-                    boolean.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            boolean screenOn = (Boolean) param.args[0];
-                            log("电源状态改变，屏幕状态: " + screenOn);
+            Method setPowerStateMethod = classLoader
+                    .loadClass("com.android.server.power.PowerManagerService")
+                    .getDeclaredMethod("setPowerState", boolean.class);
+            this.xposed.hook(setPowerStateMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                boolean screenOn = (Boolean) chain.getArg(0);
+                log("电源状态改变，屏幕状态: " + screenOn);
 
-                            if (screenOn) {
-                                // 屏幕亮起时更新OwnerInfo
-                                updateOwnerInfo(null, lpparam.classLoader);
-                            }
-                        }
-                    });
-
+                if (screenOn) {
+                    // 屏幕亮起时更新OwnerInfo
+                    updateOwnerInfo(null, classLoader);
+                }
+                return result;
+            });
             log("成功Hook PowerManagerService.setPowerState");
         } catch (Throwable e) {
             logError("Hook PowerManagerService.setPowerState失败", e);
@@ -142,25 +135,19 @@ public class OwnerInfoHook extends BaseHookModule {
 
         // Hook点2: 用户活动监听
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.android.server.power.PowerManagerService",
-                    lpparam.classLoader,
-                    "userActivity",
-                    int.class,
-                    long.class,
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            int event = (Integer) param.args[0];
-                            // 用户活动事件，包括屏幕触摸、按键等
-                            if (event == 0 || event == 2 || event == 3) { // POWER_BUTTON, TOUCH, etc.
-                                log("检测到用户活动，更新OwnerInfo");
-                                updateOwnerInfo(null, lpparam.classLoader);
-                            }
-                        }
-                    });
-
+            Method userActivityMethod = classLoader
+                    .loadClass("com.android.server.power.PowerManagerService")
+                    .getDeclaredMethod("userActivity", int.class, long.class, int.class);
+            this.xposed.hook(userActivityMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                int event = (Integer) chain.getArg(0);
+                // 用户活动事件，包括屏幕触摸、按键等
+                if (event == 0 || event == 2 || event == 3) { // POWER_BUTTON, TOUCH, etc.
+                    log("检测到用户活动，更新OwnerInfo");
+                    updateOwnerInfo(null, classLoader);
+                }
+                return result;
+            });
             log("成功Hook PowerManagerService.userActivity");
         } catch (Throwable e) {
             logError("Hook PowerManagerService.userActivity失败", e);
@@ -168,28 +155,23 @@ public class OwnerInfoHook extends BaseHookModule {
 
         // Hook点3: 在ContextImpl中注册广播接收器
         try {
-            XposedHelpers.findAndHookMethod(
-                    "android.app.ContextImpl",
-                    lpparam.classLoader,
-                    "registerReceiver",
-                    BroadcastReceiver.class,
-                    IntentFilter.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            // 检查是否是我们自己的接收器，避免重复注册
-                            if (param.args[0] == mScreenReceiver) {
-                                return;
-                            }
+            Method registerReceiverMethod = classLoader
+                    .loadClass("android.app.ContextImpl")
+                    .getDeclaredMethod("registerReceiver",
+                            BroadcastReceiver.class, IntentFilter.class);
+            this.xposed.hook(registerReceiverMethod).intercept(chain -> {
+                // 检查是否是我们自己的接收器，避免重复注册
+                if (chain.getArg(0) == mScreenReceiver) {
+                    return chain.proceed();
+                }
 
-                            IntentFilter filter = (IntentFilter) param.args[1];
-                            if (filter != null && hasScreenActions(filter)) {
-                                // 这是一个包含屏幕动作的过滤器，我们可以在这里注册自己的接收器
-                                registerScreenReceiver(param.thisObject, lpparam.classLoader);
-                            }
-                        }
-                    });
-
+                IntentFilter filter = (IntentFilter) chain.getArg(1);
+                if (filter != null && hasScreenActions(filter)) {
+                    // 这是一个包含屏幕动作的过滤器，我们可以在这里注册自己的接收器
+                    registerScreenReceiver(chain.getThisObject(), classLoader);
+                }
+                return chain.proceed();
+            });
             log("成功Hook ContextImpl.registerReceiver");
         } catch (Throwable e) {
             logError("Hook ContextImpl.registerReceiver失败", e);
@@ -225,7 +207,8 @@ public class OwnerInfoHook extends BaseHookModule {
                 context = (Context) contextObj;
             } else {
                 // 尝试通过反射获取Context
-                context = (Context) XposedHelpers.callMethod(contextObj, "getContext");
+                Method getContextMethod = contextObj.getClass().getDeclaredMethod("getContext");
+                context = (Context) getContextMethod.invoke(contextObj);
             }
 
             mScreenReceiver = new BroadcastReceiver() {
@@ -264,7 +247,6 @@ public class OwnerInfoHook extends BaseHookModule {
         new Thread(() -> {
             try {
                 API_URL = getString("API_URL");
-                // log("API_URL: " + API_URL);
                 // 处理可能的URL协议保存问题，这里添加补全协议的逻辑
                 if (API_URL != null && !API_URL.isEmpty()) {
                     if (!API_URL.startsWith("http://") && !API_URL.startsWith("https://") &&
@@ -296,7 +278,6 @@ public class OwnerInfoHook extends BaseHookModule {
         BufferedReader reader;
 
         try {
-            // log("URL:" + API_URL);
             URL url = new URL(API_URL);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -341,7 +322,6 @@ public class OwnerInfoHook extends BaseHookModule {
         return null;
     }
 
-
     private String parseContentFromJson(String jsonString) {
         try {
             // 使用正则表达式匹配content字段，处理转义字符
@@ -376,8 +356,6 @@ public class OwnerInfoHook extends BaseHookModule {
         }
     }
 
-
-
     private void setOwnerInfoContent(final String content, final Object context, final ClassLoader classLoader) {
         // 确保在主线程执行设置操作
         try {
@@ -391,9 +369,13 @@ public class OwnerInfoHook extends BaseHookModule {
                         Object lockPatternUtils = getObject(context, classLoader);
 
                         // 先启用OwnerInfo
-                        XposedHelpers.callMethod(lockPatternUtils, "setOwnerInfoEnabled", true, 0);
+                        Method setEnabled = lockPatternUtils.getClass()
+                                .getDeclaredMethod("setOwnerInfoEnabled", boolean.class, int.class);
+                        setEnabled.invoke(lockPatternUtils, true, 0);
                         // 设置OwnerInfo内容
-                        XposedHelpers.callMethod(lockPatternUtils, "setOwnerInfo", content, 0);
+                        Method setOwnerInfo = lockPatternUtils.getClass()
+                                .getDeclaredMethod("setOwnerInfo", String.class, int.class);
+                        setOwnerInfo.invoke(lockPatternUtils, content, 0);
 
                         log("通过LockPatternUtils成功更新OwnerInfo");
                         return;
@@ -403,19 +385,21 @@ public class OwnerInfoHook extends BaseHookModule {
 
                     // 方法2: 通过ILockSettings服务
                     try {
-                        Class<?> serviceManagerClass = XposedHelpers.findClass("android.os.ServiceManager", classLoader);
-                        Object lockSettingsService = XposedHelpers.callStaticMethod(
-                                serviceManagerClass, "getService", "lock_settings");
+                        Class<?> serviceManagerClass = classLoader.loadClass("android.os.ServiceManager");
+                        Method getServiceMethod = serviceManagerClass
+                                .getDeclaredMethod("getService", String.class);
+                        Object lockSettingsService = getServiceMethod.invoke(null, "lock_settings");
 
                         if (lockSettingsService != null) {
-                            Class<?> iLockSettingsClass = XposedHelpers.findClass(
-                                    "com.android.internal.widget.ILockSettings", classLoader);
-
                             // 启用OwnerInfo
-                            XposedHelpers.callMethod(lockSettingsService, "setBoolean",
+                            Method setBooleanMethod = lockSettingsService.getClass()
+                                    .getDeclaredMethod("setBoolean", String.class, boolean.class, int.class);
+                            setBooleanMethod.invoke(lockSettingsService,
                                     "lock_screen_owner_info_enabled", true, 0);
                             // 设置内容
-                            XposedHelpers.callMethod(lockSettingsService, "setString",
+                            Method setStringMethod = lockSettingsService.getClass()
+                                    .getDeclaredMethod("setString", String.class, String.class, int.class);
+                            setStringMethod.invoke(lockSettingsService,
                                     "lock_screen_owner_info", content, 0);
 
                             log("通过ILockSettings成功更新OwnerInfo");
@@ -451,25 +435,28 @@ public class OwnerInfoHook extends BaseHookModule {
 
     @NonNull
     private static Object getObject(Object context, ClassLoader classLoader) {
-        Class<?> lockPatternUtilsClass = XposedHelpers.findClass(
-                "com.android.internal.widget.LockPatternUtils", classLoader);
+        try {
+            Class<?> lockPatternUtilsClass = classLoader.loadClass(
+                    "com.android.internal.widget.LockPatternUtils");
 
-        Object lockPatternUtils;
-        if (context instanceof Context) {
-            // 从Context创建LockPatternUtils实例
-            lockPatternUtils = XposedHelpers.newInstance(lockPatternUtilsClass, context);
-        } else {
-            // 使用默认构造函数
-            lockPatternUtils = XposedHelpers.newInstance(lockPatternUtilsClass);
+            Object lockPatternUtils;
+            if (context instanceof Context) {
+                // 从Context创建LockPatternUtils实例
+                Constructor<?> ctor = lockPatternUtilsClass.getDeclaredConstructor(Context.class);
+                lockPatternUtils = ctor.newInstance(context);
+            } else {
+                // 使用默认构造函数
+                Constructor<?> ctor = lockPatternUtilsClass.getDeclaredConstructor();
+                lockPatternUtils = ctor.newInstance();
+            }
+            return lockPatternUtils;
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create LockPatternUtils", e);
         }
-        return lockPatternUtils;
     }
 
-    public static String getString(String key) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
+    private String getString(String key) {
+        SharedPreferences prefs = this.xposed.getRemotePreferences("xposed_module_config");
         return prefs.getString(key, "");
     }
-
-
 }

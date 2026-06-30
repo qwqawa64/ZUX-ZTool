@@ -2,10 +2,13 @@ package com.qimian233.ztool.hook.modules.systemui;
 
 import android.content.Context;
 import android.provider.Settings;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 访客模式控制Hook模块
@@ -13,6 +16,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  * 当用户切换器被禁用时，阻止自动添加访客用户
  */
 public class GuestModeController extends BaseHookModule {
+
+    public GuestModeController() {}
 
     @Override
     public String getModuleName() {
@@ -27,41 +32,38 @@ public class GuestModeController extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
-            hookGuestUserInteractor(lpparam);
+            hookGuestUserInteractor(classLoader);
         }
     }
 
-    private void hookGuestUserInteractor(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookGuestUserInteractor(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.android.systemui.user.domain.interactor.GuestUserInteractor",
-                    lpparam.classLoader,
-                    "isDeviceAllowedToAddGuest",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            // 获取应用上下文
-                            Context context = (Context) XposedHelpers.getObjectField(param.thisObject, "applicationContext");
+            Method isAllowedMethod = classLoader
+                    .loadClass("com.android.systemui.user.domain.interactor.GuestUserInteractor")
+                    .getDeclaredMethod("isDeviceAllowedToAddGuest");
+            this.xposed.hook(isAllowedMethod).intercept(chain -> {
+                // 获取应用上下文
+                Context context = (Context) chain.getThisObject().getClass()
+                        .getDeclaredField("applicationContext").get(chain.getThisObject());
 
-                            // 检查用户切换器是否启用
-                            int userSwitcherEnabled = Settings.Global.getInt(
-                                    context.getContentResolver(),
-                                    "user_switcher_enabled",
-                                    0
-                            );
+                // 检查用户切换器是否启用
+                int userSwitcherEnabled = Settings.Global.getInt(
+                        context.getContentResolver(),
+                        "user_switcher_enabled",
+                        0
+                );
 
-                            // 如果用户切换器被禁用，则不允许添加访客
-                            if (userSwitcherEnabled == 0) {
-                                param.setResult(false);
-                                log("阻止自动添加访客用户 - 用户切换器已禁用");
-                            }
-                        }
-                    }
-            );
+                // 如果用户切换器被禁用，则不允许添加访客
+                if (userSwitcherEnabled == 0) {
+                    log("阻止自动添加访客用户 - 用户切换器已禁用");
+                    return false;
+                }
+                return chain.proceed();
+            });
 
             log("成功Hook访客用户交互器");
         } catch (Throwable t) {

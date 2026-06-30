@@ -1,0 +1,13 @@
+system
+android
+com.android.systemui
+com.android.settings
+com.android.packageinstaller
+com.zui.launcher
+com.zui.safecenter
+com.zui.game.service
+com.lenovo.ota
+com.zui.wallpapersetting
+com.android.documentsui
+com.motorola.mobiledesktop
+com.lenovo.tbengine

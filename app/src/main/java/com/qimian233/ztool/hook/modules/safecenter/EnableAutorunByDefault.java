@@ -1,12 +1,12 @@
 package com.qimian233.ztool.hook.modules.safecenter;
 
-import java.lang.invoke.MethodHandles;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import com.qimian233.ztool.hook.base.BaseHookModule;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 
 public class EnableAutorunByDefault extends BaseHookModule {
     public static final String FEATURE_NAME = "default_enable_autorun";
@@ -14,33 +14,41 @@ public class EnableAutorunByDefault extends BaseHookModule {
     private static final int ATTR_WHITELIST = 0x20000000;
     private static final int ATTR_RELATIVE_WHITELIST = 0x40000000;
 
+    public EnableAutorunByDefault() {}
+
+    @Override
     public String getModuleName() {
         return FEATURE_NAME;
     }
 
+    @Override
     public String[] getTargetPackages() {
         return new String[] {"com.lenovo.safecenter", "com.zui.safecenter"};
     }
 
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if ("com.zui.safecenter".equals(lpparam.packageName) || "com.lenovo.safecenter".equals(lpparam.packageName)) {
+    @Override
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        if ("com.zui.safecenter".equals(packageName) || "com.lenovo.safecenter".equals(packageName)) {
             log("Start hooking safecenter");
             try {
-                var cls = XposedHelpers.findClass("com.lenovo.performance.autorun.beans.AutoRunDbItem", lpparam.classLoader);
-                var fld = XposedHelpers.findField(cls, "mAttrs");
+                Class<?> cls = classLoader.loadClass("com.lenovo.performance.autorun.beans.AutoRunDbItem");
+                Field fld = cls.getDeclaredField("mAttrs");
                 fld.setAccessible(true);
-                var getter = MethodHandles.lookup().unreflectGetter(fld);
-                var setter = MethodHandles.lookup().unreflectSetter(fld);
-                XposedBridge.hookAllConstructors(cls, new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        var attrs = (int) getter.invoke(param.thisObject);
+
+                for (Constructor<?> ctor : cls.getDeclaredConstructors()) {
+                    this.xposed.hook(ctor).intercept(chain -> {
+                        chain.proceed();
+                        Object obj = chain.getThisObject();
+                        int attrs = fld.getInt(obj);
                         attrs |= ATTR_WHITELIST | ATTR_RELATIVE_WHITELIST;
-                        setter.invoke(param.thisObject, attrs);
-                    }
-                });
+                        fld.setInt(obj, attrs);
+                        return null;
+                    });
+                }
                 log("Hooked safecenter [OK]");
-            }catch (Exception e) {
+            } catch (Exception e) {
                 logError("Failed hooking safecenter", e);
             }
         }

@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.qimian233.ztool.ModuleActivationProbe;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +24,7 @@ public class ModulePreferencesUtils {
     private static final String PREFS_NAME = "xposed_module_config";
     private final Context mContext;
     private final String mModulePackageName;
-    private static final String TAG = "ModulePreferencesUtils";
+    private static final String TAG = "ZToolXposedModulePrefsUtils";
 
     public ModulePreferencesUtils(Context context) {
         this(context, "com.qimian233.ztool");
@@ -35,17 +37,23 @@ public class ModulePreferencesUtils {
 
     /**
      * 获取模块的SharedPreferences实例
-     * @noinspection deprecation
      */
-    @SuppressLint("WorldReadableFiles")
     public SharedPreferences  getModulePreferences() {
         try {
+            if (ModuleActivationProbe.INSTANCE.isModuleActive()
+                    && ModuleActivationProbe.INSTANCE.getCurrentService() != null) {
+                return ModuleActivationProbe.INSTANCE.getCurrentService().getRemotePreferences(PREFS_NAME);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to get remote preferences", e);
+        }
+        try {
             Context moduleContext = mContext.createPackageContext(mModulePackageName, Context.CONTEXT_IGNORE_SECURITY);
-            return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+            return moduleContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         } catch (Exception e) {
             Log.e(TAG, "Failed to get module preferences, using fallback", e);
             // 降级方案：使用当前Context
-            return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE);
+            return mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         }
     }
 
@@ -144,7 +152,6 @@ public class ModulePreferencesUtils {
     @SuppressLint("WorldReadableFiles")
     public Map<String, Object> getAllSettings() {
         try {
-
             SharedPreferences prefs = getModulePreferences();
             Map<String, Object> allEntries = new HashMap<>(prefs.getAll());
             // 读取其他SharedPreferences文件中的设置，例如自定义状态栏和控制中心时间的配置

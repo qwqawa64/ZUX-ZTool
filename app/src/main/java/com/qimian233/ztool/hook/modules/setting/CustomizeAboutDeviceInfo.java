@@ -7,15 +7,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public class CustomizeAboutDeviceInfo extends BaseHookModule {
     private static final String TARGET_PACKAGE = "com.android.settings";
@@ -38,7 +38,7 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
     private static final String MODEL_CLASS = "com.android.settings.deviceinfo.hardwareinfo.DeviceModelPreferenceController";
     private static final String SOFTWARE_CLASS = "com.android.settings.deviceinfo.BuildNumberPreferenceController";
 
-    private final PreferenceHelper preferences = PreferenceHelper.getInstance();
+    public CustomizeAboutDeviceInfo() {}
 
     @Override
     public String getModuleName() {
@@ -51,97 +51,116 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        hookSummaryIfEnabled(lpparam, CPU_CLASS, PREF_KEY_CPU_ENABLED, PREF_KEY_CPU, "CPU");
-        hookSummaryIfEnabled(lpparam, RAM_CLASS, PREF_KEY_RAM_ENABLED, PREF_KEY_RAM, "RAM");
-        hookSummaryIfEnabled(lpparam, ROM_CLASS, PREF_KEY_ROM_ENABLED, PREF_KEY_ROM, "ROM");
-        hookSummaryIfEnabled(lpparam, MODEL_CLASS, PREF_KEY_MODEL_ENABLED, PREF_KEY_MODEL, "model");
-        hookSummaryIfEnabled(lpparam, SOFTWARE_CLASS, PREF_KEY_SOFTWARE_ENABLED, PREF_KEY_SOFTWARE, "software");
-        hookHeaderImageAndText(lpparam);
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        hookSummaryIfEnabled(classLoader, CPU_CLASS, PREF_KEY_CPU_ENABLED, PREF_KEY_CPU, "CPU");
+        hookSummaryIfEnabled(classLoader, RAM_CLASS, PREF_KEY_RAM_ENABLED, PREF_KEY_RAM, "RAM");
+        hookSummaryIfEnabled(classLoader, ROM_CLASS, PREF_KEY_ROM_ENABLED, PREF_KEY_ROM, "ROM");
+        hookSummaryIfEnabled(classLoader, MODEL_CLASS, PREF_KEY_MODEL_ENABLED, PREF_KEY_MODEL, "model");
+        hookSummaryIfEnabled(classLoader, SOFTWARE_CLASS, PREF_KEY_SOFTWARE_ENABLED, PREF_KEY_SOFTWARE, "software");
+        hookHeaderImageAndText(classLoader);
     }
 
     private void hookSummaryIfEnabled(
-            XC_LoadPackage.LoadPackageParam lpparam,
+            ClassLoader classLoader,
             String targetClass,
             String enabledKey,
             String valueKey,
             String fieldName
     ) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    targetClass,
-                    lpparam.classLoader,
-                    "getSummary",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            if (!preferences.getBoolean(enabledKey, false)) {
-                                return;
-                            }
-                            String value = preferences.getString(valueKey, "");
-                            if (value != null && !value.trim().isEmpty()) {
-                                param.setResult(value);
-                                if (DEBUG) {
-                                    log(fieldName + " summary -> " + value);
-                                }
-                            }
-                        }
+            Method m = classLoader.loadClass(targetClass).getDeclaredMethod("getSummary");
+            this.xposed.hook(m).intercept(chain -> {
+                boolean prefEnabled;
+                try {
+                    prefEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(enabledKey, false);
+                } catch (Throwable ignored) {
+                    prefEnabled = false;
+                }
+                if (!prefEnabled) {
+                    return chain.proceed();
+                }
+                String value;
+                try {
+                    value = this.xposed.getRemotePreferences("xposed_module_config").getString(valueKey, "");
+                } catch (Throwable ignored) {
+                    value = "";
+                }
+                if (value != null && !value.trim().isEmpty()) {
+                    if (DEBUG) {
+                        log(fieldName + " summary -> " + value);
                     }
-            );
+                    return value;
+                }
+                return chain.proceed();
+            });
         } catch (Throwable t) {
             logError("Failed to hook " + fieldName + " summary", t);
         }
     }
 
-    private void hookHeaderImageAndText(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookHeaderImageAndText(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    HEADER_VIEW_CLASS,
-                    lpparam.classLoader,
-                    "setImage",
-                    ImageView.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            if (!preferences.getBoolean(PREF_KEY_HEADER_ENABLED, false)) {
-                                return;
-                            }
-                            Bitmap bitmap = decodeHeaderBitmap();
-                            if (bitmap == null) {
-                                log("Header image file missing: " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
-                                return;
-                            }
-                            ((ImageView) param.args[0]).setImageBitmap(bitmap);
-                            log("Header image loaded from " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
-                        }
-                    }
-            );
+            Method setImageMethod = classLoader
+                    .loadClass(HEADER_VIEW_CLASS)
+                    .getDeclaredMethod("setImage", ImageView.class);
+            this.xposed.hook(setImageMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                boolean headerEnabled;
+                try {
+                    headerEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY_HEADER_ENABLED, false);
+                } catch (Throwable ignored) {
+                    headerEnabled = false;
+                }
+                if (!headerEnabled) {
+                    return result;
+                }
+                Bitmap bitmap = decodeHeaderBitmap();
+                if (bitmap == null) {
+                    log("Header image file missing: " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
+                    return result;
+                }
+                ((ImageView) chain.getArg(0)).setImageBitmap(bitmap);
+                log("Header image loaded from " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
+                return result;
+            });
         } catch (Throwable t) {
             logError("Failed to hook header image", t);
         }
 
         try {
-            XposedHelpers.findAndHookMethod(
-                    HEADER_VIEW_CLASS,
-                    lpparam.classLoader,
-                    "updateText",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            if (!preferences.getBoolean(PREF_KEY_MODEL_ENABLED, false)) {
-                                return;
-                            }
-                            String model = preferences.getString(PREF_KEY_MODEL, "");
-                            if (model != null && !model.trim().isEmpty()) {
-                                Object view = XposedHelpers.getObjectField(param.thisObject, "tvPad");
-                                if (view instanceof TextView) {
-                                    ((TextView) view).setText(model);
-                                    log("Header model text -> " + model);
-                                }
-                            }
-                        }
+            Method updateTextMethod = classLoader
+                    .loadClass(HEADER_VIEW_CLASS)
+                    .getDeclaredMethod("updateText");
+            this.xposed.hook(updateTextMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                boolean modelEnabled;
+                try {
+                    modelEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY_MODEL_ENABLED, false);
+                } catch (Throwable ignored) {
+                    modelEnabled = false;
+                }
+                if (!modelEnabled) {
+                    return result;
+                }
+                String model;
+                try {
+                    model = this.xposed.getRemotePreferences("xposed_module_config").getString(PREF_KEY_MODEL, "");
+                } catch (Throwable ignored) {
+                    model = "";
+                }
+                if (model != null && !model.trim().isEmpty()) {
+                    Field tvPadField = chain.getThisObject().getClass().getDeclaredField("tvPad");
+                    tvPadField.setAccessible(true);
+                    Object view = tvPadField.get(chain.getThisObject());
+                    if (view instanceof TextView) {
+                        ((TextView) view).setText(model);
+                        log("Header model text -> " + model);
                     }
-            );
+                }
+                return result;
+            });
         } catch (Throwable t) {
             logError("Failed to hook header text", t);
         }

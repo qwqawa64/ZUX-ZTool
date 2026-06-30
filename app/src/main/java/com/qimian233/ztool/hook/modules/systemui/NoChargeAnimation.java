@@ -1,13 +1,19 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
 import android.os.Message;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 public class NoChargeAnimation extends BaseHookModule {
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
+
+    public NoChargeAnimation() {}
+
     @Override
     public String getModuleName() {
         return "No_ChargeAnimation";
@@ -18,21 +24,26 @@ public class NoChargeAnimation extends BaseHookModule {
         return new String[]{SYSTEMUI_PACKAGE};
     }
 
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if (!isEnabled()) return;
         log("Loading module No_ChargeAnimation.");
-        new NoChargeAnimation().handleLoadSystemUi(lpparam);
+        handleLoadSystemUi(classLoader);
     }
 
-    public void handleLoadSystemUi(XC_LoadPackage.LoadPackageParam lpparam) {
+    public void handleLoadSystemUi(ClassLoader classLoader) {
         try {
             log("Hooking ChargingAnimationController...");
-            var classLoader = lpparam.classLoader;
-            var ChargingAnimationControllerClass = classLoader.loadClass("com.android.keyguard.lockscreen.charge.ChargingAnimationController");
-            var handlerField = XposedHelpers.findField(ChargingAnimationControllerClass, "H");
-            XposedHelpers.findAndHookMethod(handlerField.getType(), "handleMessage", Message.class, XC_MethodReplacement.DO_NOTHING);
+            Class<?> chargingAnimationControllerClass = classLoader.loadClass(
+                    "com.android.keyguard.lockscreen.charge.ChargingAnimationController");
+            java.lang.reflect.Field handlerField = chargingAnimationControllerClass.getDeclaredField("H");
+            handlerField.setAccessible(true);
+            Class<?> handlerType = handlerField.getType();
+            Method handleMessageMethod = handlerType.getDeclaredMethod("handleMessage", Message.class);
+            this.xposed.hook(handleMessageMethod).intercept(chain -> null);
             log("Hooked ChargingAnimationController [OK]");
-        }catch (Exception e){
+        } catch (Exception e) {
             logError("Error hooking ChargingAnimationController", e);
         }
     }

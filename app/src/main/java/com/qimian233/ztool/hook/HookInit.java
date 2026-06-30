@@ -1,68 +1,63 @@
 package com.qimian233.ztool.hook;
 
 import android.os.Build;
-import android.util.Log;
 
 import com.qimian233.ztool.hook.base.HookManager;
 
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModule;
+import io.github.libxposed.api.XposedModuleInterface;
+
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
-import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
 /**
- * Xposed模块主入口
- * 负责初始化和管理所有Hook模块
+ * ZTool libxposed 模块主入口。
+ * <p>
+ * 继承 {@link XposedModule}（同时也是 {@link XposedInterface}），
+ * 通过生命周期回调分发给各个 Hook 子模块。
  */
-public class HookInit implements IXposedHookLoadPackage {
+public class HookInit extends XposedModule {
 
-    private static final String TAG = "ZTool-Hook";
-    private static final String SELF_PACKAGE = "com.qimian233.ztool";
-    private static final String SELF_CHECK_CLASS = "com.qimian233.ztool.ModuleActivationProbe";
-    private static final String SELF_CHECK_METHOD = "isModuleActive";
+    private static final String TAG = "ZToolXposedModuleInit";
+    private static volatile HookInit instance;
 
-    static {
-        // 预初始化Hook管理器
-        HookManager.initialize();
+    public static HookInit getInstance() {
+        return instance;
+    }
+
+    public static XposedInterface getXposedInterface() {
+        HookInit inst = instance;
+        if (inst != null) return inst;
+        return null;
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (lpparam.packageName == null) return;
+    public void onModuleLoaded(XposedModuleInterface.ModuleLoadedParam param) {
+        instance = this;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
                 HiddenApiBypass.addHiddenApiExemptions("");
             } catch (Throwable t) {
-                Log.e(TAG, "HiddenApiBypass 初始化失败", t);
+                log(6, TAG, "HiddenApiBypass 初始化失败", t);
             }
         }
 
-        if (lpparam.packageName.equals(SELF_PACKAGE)) {
-            Log.d(TAG, "检测到自身应用，开始Hook自检测方法");
-            hookSelfStatus(lpparam);
-        }
-
-        HookManager.handleLoadPackage(lpparam);
+        // 将 this 作为 XposedInterface 传给 HookManager
+        HookManager.initialize(this);
+        log(4, TAG, "ZTool Hook 模块已加载, 进程: " + param.getProcessName());
     }
 
-    /**
-     * Hook 自身 App 的状态检测方法
-     */
-    private void hookSelfStatus(XC_LoadPackage.LoadPackageParam lpparam) {
-        try {
-            XposedHelpers.findAndHookMethod(
-                    SELF_CHECK_CLASS,
-                    lpparam.classLoader,
-                    SELF_CHECK_METHOD,
-                    XC_MethodReplacement.returnConstant(true)
-            );
-            Log.i(TAG, "模块自检测Hook成功");
-        } catch (Throwable t) {
-            // 这里使用 XposedBridge.log 也可以，但在 LSPosed 环境下 Log.e 也能看到
-            Log.e(TAG, "模块自检测Hook失败: " + t.getMessage());
-        }
+    @Override
+    public void onPackageLoaded(XposedModuleInterface.PackageLoadedParam param) {
+        String packageName = param.getPackageName();
+        if (packageName == null) return;
+        HookManager.handlePackageLoaded(this, param);
+    }
+
+    @Override
+    public void onSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
+        log(4, TAG, "系统服务器启动中，分发系统作用域Hook");
+        HookManager.handleSystemServerStarting(this, param);
     }
 }

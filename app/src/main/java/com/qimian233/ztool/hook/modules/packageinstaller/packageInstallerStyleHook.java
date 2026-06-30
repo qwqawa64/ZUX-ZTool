@@ -1,10 +1,11 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -20,6 +21,8 @@ import android.widget.TextView;
  */
 public class packageInstallerStyleHook extends BaseHookModule {
 
+    public packageInstallerStyleHook() {}
+
     @Override
     public String getModuleName() {
         return "packageInstallerStyle_hook";
@@ -33,22 +36,22 @@ public class packageInstallerStyleHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.packageinstaller".equals(packageName)) {
-            hookZuiPackageInstaller(lpparam);
-            doNotShowWarnTextHook(lpparam);
+            hookZuiPackageInstaller(classLoader);
+            doNotShowWarnTextHook(classLoader);
         }
     }
 
-    private void hookZuiPackageInstaller(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookZuiPackageInstaller(ClassLoader classLoader) {
         try {
             // 1. Hook Utils类的isCTSandGTS方法，绕过安装限制
-            hookInstallationRestrictions(lpparam);
+            hookInstallationRestrictions(classLoader);
 
             // 2. Hook Activity样式，修改界面显示
-            hookActivityStyles(lpparam);
+            hookActivityStyles(classLoader);
 
             log("ZUI Package Installer Hook 成功加载");
         } catch (Throwable t) {
@@ -56,28 +59,17 @@ public class packageInstallerStyleHook extends BaseHookModule {
         }
     }
 
-    private void hookInstallationRestrictions(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookInstallationRestrictions(ClassLoader classLoader) {
         try {
-            Class<?> utilsClass = XposedHelpers.findClass(
-                    "com.android.packageinstaller.extra.Utils",
-                    lpparam.classLoader
-            );
+            Class<?> utilsClass = classLoader.loadClass(
+                    "com.android.packageinstaller.extra.Utils");
 
             // Hook isCTSandGTS方法的重载版本
-            XposedHelpers.findAndHookMethod(
-                    utilsClass,
-                    "isCTSandGTS",
-                    String.class,
-                    XC_MethodReplacement.returnConstant(Boolean.TRUE)
-            );
+            Method isCTSandGTS1 = utilsClass.getDeclaredMethod("isCTSandGTS", String.class);
+            this.xposed.hook(isCTSandGTS1).intercept(chain -> Boolean.TRUE);
 
-            XposedHelpers.findAndHookMethod(
-                    utilsClass,
-                    "isCTSandGTS",
-                    String.class,
-                    Intent.class,
-                    XC_MethodReplacement.returnConstant(Boolean.TRUE)
-            );
+            Method isCTSandGTS2 = utilsClass.getDeclaredMethod("isCTSandGTS", String.class, Intent.class);
+            this.xposed.hook(isCTSandGTS2).intercept(chain -> Boolean.TRUE);
 
             log("成功Hook安装限制检查方法");
         } catch (Throwable t) {
@@ -85,53 +77,45 @@ public class packageInstallerStyleHook extends BaseHookModule {
         }
     }
 
-    private void hookActivityStyles(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookActivityStyles(ClassLoader classLoader) {
         try {
             // 获取Theme_AlertDialogActivity的资源ID
-            Class<?> styleClass = XposedHelpers.findClass(
-                    "com.android.packageinstaller.R$style",
-                    lpparam.classLoader
-            );
-            final int themeAlertDialogActivity = XposedHelpers.getStaticIntField(
-                    styleClass,
-                    "Theme_AlertDialogActivity"
-            );
+            Class<?> styleClass = classLoader.loadClass(
+                    "com.android.packageinstaller.R$style");
+            Field themeField = styleClass.getDeclaredField("Theme_AlertDialogActivity");
+            themeField.setAccessible(true);
+            final int themeAlertDialogActivity = themeField.getInt(null);
 
             // Hook Activity的onCreate方法，修改主题和窗口属性
-            XposedHelpers.findAndHookMethod(
-                    Activity.class,
-                    "onCreate",
-                    Bundle.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            Activity activity = (Activity) param.thisObject;
+            Method onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
+            this.xposed.hook(onCreate).intercept(chain -> {
+                Activity activity = (Activity) chain.getThisObject();
 
-                            // 检查是否为目标包安装器的Activity
-                            if (activity.getPackageName().equals("com.android.packageinstaller")) {
-                                try {
-                                    // 设置对话框主题
-                                    activity.setTheme(themeAlertDialogActivity);
+                // 检查是否为目标包安装器的Activity
+                if (activity.getPackageName().equals("com.android.packageinstaller")) {
+                    try {
+                        // 设置对话框主题
+                        activity.setTheme(themeAlertDialogActivity);
 
-                                    // 设置透明背景
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                        activity.setTranslucent(true);
-                                    }
-
-                                    // 请求无标题栏
-                                    activity.requestWindowFeature(1); // 1对应Window.FEATURE_NO_TITLE
-
-                                    // 禁用窗口动画
-                                    activity.getWindow().setWindowAnimations(0);
-
-                                    log("成功修改包安装器Activity样式");
-                                } catch (Throwable t) {
-                                    logError("修改Activity样式时出错", t);
-                                }
-                            }
+                        // 设置透明背景
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            activity.setTranslucent(true);
                         }
+
+                        // 请求无标题栏
+                        activity.requestWindowFeature(1); // 1对应Window.FEATURE_NO_TITLE
+
+                        // 禁用窗口动画
+                        activity.getWindow().setWindowAnimations(0);
+
+                        log("成功修改包安装器Activity样式");
+                    } catch (Throwable t) {
+                        logError("修改Activity样式时出错", t);
                     }
-            );
+                }
+
+                return chain.proceed();
+            });
 
             log("成功Hook Activity样式修改");
         } catch (Throwable t) {
@@ -139,25 +123,33 @@ public class packageInstallerStyleHook extends BaseHookModule {
         }
     }
 
-    private void doNotShowWarnTextHook(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedHelpers.findAndHookMethod("com.android.packageinstaller.PackageInstallerActivity",
-                lpparam.classLoader,
-                "startInstallConfirm",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        try {
-                            Class<?> resourcesClass = XposedHelpers.findClass("com.android.packageinstaller.R$id", lpparam.classLoader);
-                            int warnTextViewId = XposedHelpers.getStaticIntField(resourcesClass, "install_confirm_question_warning");
-                            AlertDialog dialog = (AlertDialog) XposedHelpers.getObjectField(param.thisObject, "mDialog");
-                            TextView tv = dialog.findViewById(warnTextViewId);
-                            tv.setVisibility(TextView.GONE);
-                            log("Successfully set install warn visibility to GONE");
-                        } catch (Exception e) {
-                            logError("Exception happened when trying to set warn text to GONE!", e);
-                        }
-                    }
-        });
+    private void doNotShowWarnTextHook(ClassLoader classLoader) {
+        try {
+            Class<?> activityClass = classLoader.loadClass(
+                    "com.android.packageinstaller.PackageInstallerActivity");
+            Method startInstallConfirm = activityClass.getDeclaredMethod("startInstallConfirm");
+            this.xposed.hook(startInstallConfirm).intercept(chain -> {
+                Object result = chain.proceed();
+                try {
+                    Class<?> resourcesClass = classLoader.loadClass("com.android.packageinstaller.R$id");
+                    Field warnTextViewIdField = resourcesClass.getDeclaredField("install_confirm_question_warning");
+                    warnTextViewIdField.setAccessible(true);
+                    int warnTextViewId = warnTextViewIdField.getInt(null);
 
+                    Field mDialogField = chain.getThisObject().getClass().getDeclaredField("mDialog");
+                    mDialogField.setAccessible(true);
+                    AlertDialog dialog = (AlertDialog) mDialogField.get(chain.getThisObject());
+
+                    TextView tv = dialog.findViewById(warnTextViewId);
+                    tv.setVisibility(TextView.GONE);
+                    log("Successfully set install warn visibility to GONE");
+                } catch (Exception e) {
+                    logError("Exception happened when trying to set warn text to GONE!", e);
+                }
+                return result;
+            });
+        } catch (Throwable t) {
+            logError("Failed to hook doNotShowWarnTextHook", t);
+        }
     }
 }

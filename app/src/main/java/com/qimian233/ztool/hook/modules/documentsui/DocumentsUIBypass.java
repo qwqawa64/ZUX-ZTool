@@ -5,15 +5,19 @@ import android.widget.Button;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * Android文件选择器(DocumentsUI) 限制解除模块
  * 功能：允许用户在/Android/data等受限目录进行选择操作
  */
 public class DocumentsUIBypass extends BaseHookModule {
+
+    public DocumentsUIBypass() {}
 
     @Override
     public String getModuleName() {
@@ -28,11 +32,13 @@ public class DocumentsUIBypass extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if ("com.android.documentsui".equals(lpparam.packageName)) {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        if ("com.android.documentsui".equals(packageName)) {
             if (DEBUG) log("开始加载 DocumentsUI 解除限制模块...");
-            hookDocumentInfo(lpparam.classLoader);
-            hookPickFragment(lpparam.classLoader);
+            hookDocumentInfo(classLoader);
+            hookPickFragment(classLoader);
         }
     }
 
@@ -43,34 +49,24 @@ public class DocumentsUIBypass extends BaseHookModule {
         final String documentInfoClass = "com.android.documentsui.base.DocumentInfo";
 
         try {
+            Class<?> docInfoClass = classLoader.loadClass(documentInfoClass);
+
             // Hook isBlockedFromTree 方法
-            XposedHelpers.findAndHookMethod(
-                    documentInfoClass,
-                    classLoader,
-                    "isBlockedFromTree",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            // 强制返回 false，允许选择所有目录
-                            param.setResult(false);
-                        }
-                    }
-            );
+            Method isBlockedFromTreeMethod = docInfoClass.getDeclaredMethod("isBlockedFromTree");
+            this.xposed.hook(isBlockedFromTreeMethod).intercept(chain -> {
+                chain.proceed();
+                // 强制返回 false，允许选择所有目录
+                return false;
+            });
             log("成功 Hook DocumentInfo.isBlockedFromTree");
 
             // 可选：尝试 Hook isBlocked 方法（部分机型或旧版本存在）
             try {
-                XposedHelpers.findAndHookMethod(
-                        documentInfoClass,
-                        classLoader,
-                        "isBlocked",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void afterHookedMethod(MethodHookParam param) {
-                                param.setResult(false);
-                            }
-                        }
-                );
+                Method isBlockedMethod = docInfoClass.getDeclaredMethod("isBlocked");
+                this.xposed.hook(isBlockedMethod).intercept(chain -> {
+                    chain.proceed();
+                    return false;
+                });
                 log("成功 Hook DocumentInfo.isBlocked");
             } catch (Throwable t) {
                 // 方法可能不存在，忽略，不作为主要错误记录
@@ -88,42 +84,63 @@ public class DocumentsUIBypass extends BaseHookModule {
         final String pickFragmentClass = "com.android.documentsui.picker.PickFragment";
 
         try {
+            Class<?> pickFragClass = classLoader.loadClass(pickFragmentClass);
+
             // Hook updateView 方法，在UI更新后强制修改控件状态
-            XposedHelpers.findAndHookMethod(
-                    pickFragmentClass,
-                    classLoader,
-                    "updateView",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            Object fragment = param.thisObject;
+            Method updateViewMethod = pickFragClass.getDeclaredMethod("updateView");
+            this.xposed.hook(updateViewMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                Object fragment = chain.getThisObject();
 
-                            // 1. 获取并启用 mPick 按钮
-                            try {
-                                Object mPick = XposedHelpers.getObjectField(fragment, "mPick");
-                                if (mPick instanceof Button) {
-                                    ((Button) mPick).setEnabled(true);
-                                }
-                            } catch (NoSuchFieldError e) {
-                                // 忽略字段不存在的情况
-                            }
-
-                            // 2. 获取并隐藏 mPickOverlay 覆盖层
-                            try {
-                                Object mPickOverlay = XposedHelpers.getObjectField(fragment, "mPickOverlay");
-                                if (mPickOverlay instanceof View) {
-                                    ((View) mPickOverlay).setVisibility(View.GONE); // View.GONE = 8
-                                }
-                            } catch (NoSuchFieldError e) {
-                                // 忽略字段不存在的情况
-                            }
+                // 1. 获取并启用 mPick 按钮
+                try {
+                    Field mPickField = findField(fragment.getClass(), "mPick");
+                    if (mPickField != null) {
+                        mPickField.setAccessible(true);
+                        Object mPick = mPickField.get(fragment);
+                        if (mPick instanceof Button) {
+                            ((Button) mPick).setEnabled(true);
                         }
                     }
-            );
+                } catch (NoSuchFieldError e) {
+                    // 忽略字段不存在的情况
+                }
+
+                // 2. 获取并隐藏 mPickOverlay 覆盖层
+                try {
+                    Field mPickOverlayField = findField(fragment.getClass(), "mPickOverlay");
+                    if (mPickOverlayField != null) {
+                        mPickOverlayField.setAccessible(true);
+                        Object mPickOverlay = mPickOverlayField.get(fragment);
+                        if (mPickOverlay instanceof View) {
+                            ((View) mPickOverlay).setVisibility(View.GONE); // View.GONE = 8
+                        }
+                    }
+                } catch (NoSuchFieldError e) {
+                    // 忽略字段不存在的情况
+                }
+
+                return result;
+            });
             log("成功 Hook PickFragment.updateView");
 
         } catch (Throwable t) {
             logError("Hook PickFragment 失败", t);
         }
+    }
+
+    /**
+     * 递归查找字段（包括父类）
+     */
+    private static Field findField(Class<?> clazz, String name) {
+        Class<?> current = clazz;
+        while (current != null && current != Object.class) {
+            try {
+                return current.getDeclaredField(name);
+            } catch (NoSuchFieldException e) {
+                current = current.getSuperclass();
+            }
+        }
+        return null;
     }
 }
