@@ -1,8 +1,7 @@
-package com.qimian233.ztool.hook.modules.setting;
+package com.qimian233.ztool.hook.modules.systemFramework;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -16,10 +15,14 @@ public class KeepRotation extends BaseHookModule {
     public String getModuleName() { return FEATURE_NAME; }
     public String[] getTargetPackages() { return new String[]{TARGET_PACKAGE};}
 
+    @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
-        log("Loading module keep_rotation.");
+
+    }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
+        ClassLoader classLoader = param.getClassLoader();
         log("Hooking DisplayRotation.isRotationCts");
         try{
             Method method = classLoader.loadClass("com.zui.server.wm.ZuiDisplayRotation")
