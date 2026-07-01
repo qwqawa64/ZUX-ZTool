@@ -25,7 +25,7 @@ class StatusBarSettingsViewModel(
 
     fun setDisplaySeconds(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(displaySeconds = enabled)
-        repository.saveBooleanSetting(KEY_DISPLAY_SECONDS, enabled)
+        repository.saveDisplaySeconds(enabled)
     }
 
     fun setCustomClock(enabled: Boolean) {
@@ -34,7 +34,7 @@ class StatusBarSettingsViewModel(
             customClock = enabled,
             clockPreview = if (enabled) repository.buildClockPreview(current.clockFormat) else current.clockPreview
         )
-        repository.saveBooleanSetting(KEY_CUSTOM_CLOCK, enabled)
+        repository.saveCustomClock(enabled)
     }
 
     fun setClockFormat(format: String) {
@@ -102,22 +102,22 @@ class StatusBarSettingsViewModel(
 
     fun setNativeNotificationIcon(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(nativeNotificationIcon = enabled)
-        repository.saveBooleanSetting(KEY_NATIVE_NOTIFICATION_ICON, enabled)
+        repository.saveNativeNotificationIcon(enabled)
     }
 
     fun setNetworkSpeedSize(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(networkSpeedSize = enabled)
-        repository.saveBooleanSetting(KEY_NETWORK_SPEED_SIZE, enabled)
+        repository.saveNetworkSpeedSize(enabled)
     }
 
     fun setNetworkSpeedDoubleLayer(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(networkSpeedDoubleLayer = enabled)
-        repository.saveBooleanSetting(KEY_NETWORK_SPEED_DOUBLE_LAYER, enabled)
+        repository.saveNetworkSpeedDoubleLayer(enabled)
     }
 
     fun setBatteryExternal(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(batteryExternal = enabled)
-        repository.saveBooleanSetting(KEY_BATTERY_EXTERNAL, enabled)
+        repository.saveBatteryExternal(enabled)
     }
 
     fun showFormatHelpDialog() {
@@ -134,12 +134,6 @@ class StatusBarSettingsViewModel(
 
     companion object {
         private const val TAG = "StatusBarSettingsViewModel"
-        private const val KEY_DISPLAY_SECONDS = "StatusBarDisplay_Seconds"
-        private const val KEY_CUSTOM_CLOCK = "Custom_StatusBarClock"
-        private const val KEY_NATIVE_NOTIFICATION_ICON = "NativeNotificationIcon"
-        private const val KEY_NETWORK_SPEED_SIZE = "systemui_network_speed_size"
-        private const val KEY_NETWORK_SPEED_DOUBLE_LAYER = "systemui_network_speed_doublelayer"
-        private const val KEY_BATTERY_EXTERNAL = "systemui_battery_percentage"
     }
 }
 

@@ -545,7 +545,7 @@
     <string name="regex_match_result_prefix">Regex match result: </string>
     <string name="original_response_prefix">Original response: </string>
     <string name="watt_option_disabled">Disabled</string>
-    <string name="watt_option_handshake">Protocol power</string>
+    <string name="watt_option_handshake">Negotiated power</string>
     <string name="watt_option_actual">Actual power</string>
     <string name="real_watt_custom_refresh_interval_enabled">After a fixed interval</string>
     <string name="real_watt_custom_refresh_interval_disabled">When power changes</string>

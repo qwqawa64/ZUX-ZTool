@@ -621,7 +621,7 @@
         <item>一定时长后</item>
     </string-array>
     <string name="watt_option_disabled">不启用</string>
-    <string name="watt_option_handshake">协议功率</string>
+    <string name="watt_option_handshake">握手功率</string>
     <string name="watt_option_actual">实际功率</string>
     <string name="real_watt_custom_refresh_interval_enabled">一定时长后</string>
     <string name="real_watt_custom_refresh_interval_disabled">功率变化时</string>
