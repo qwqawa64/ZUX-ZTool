@@ -15,7 +15,6 @@ import com.qimian233.ztool.hook.base.BaseHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Date;
 
@@ -336,10 +335,6 @@ public class CustomControlCenterDate extends BaseHookModule {
         try {
             String format = getCustomDateSetting();
             if (DEBUG) log("初次读取到的配置：" + format);
-            if (format == null || format.isEmpty()) {
-                log("读取到的配置为空，使用默认格式");
-                format = "yyyy年MM月dd日 EEEE"; // 默认格式
-            }
             return format;
         } catch (Exception e) {
             logError("日期格式获取失败", e);
