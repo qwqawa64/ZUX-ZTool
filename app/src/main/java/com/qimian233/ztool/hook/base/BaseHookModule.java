@@ -85,16 +85,15 @@ public abstract class BaseHookModule {
         return false;
     }
 
-    protected static boolean refreshDebugLoggingEnabled() {
+    protected static void refreshDebugLoggingEnabled() {
         long now = System.currentTimeMillis();
-        if (now - lastDebugRefreshTime < DEBUG_REFRESH_INTERVAL_MS) return DEBUG;
+        if (now - lastDebugRefreshTime < DEBUG_REFRESH_INTERVAL_MS) return;
         synchronized (BaseHookModule.class) {
             if (now - lastDebugRefreshTime >= DEBUG_REFRESH_INTERVAL_MS) {
                 DEBUG = isDetailedLoggingEnabledStatic();
                 lastDebugRefreshTime = now;
             }
         }
-        return DEBUG;
     }
 
     // ── system_server callback ─────────────────────────────────
@@ -109,7 +108,7 @@ public abstract class BaseHookModule {
     public void safeHandleLoadPackage(XposedModuleInterface.PackageLoadedParam param) {
         refreshDebugLoggingEnabled();
         String packageName = param.getPackageName();
-        if (packageName == null || !supportsPackage(packageName)) return;
+        if (!supportsPackage(packageName)) return;
         if (!isEnabled()) {
             if (DEBUG) Log.d(TAG, "module disabled: " + getModuleName());
             return;
