@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -10,12 +11,12 @@ import android.widget.ProgressBar;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+@SuppressLint("PrivateApi")
 public class CustomQsRoundCorner extends BaseHookModule {
 
     private static int headUpTileRoundCornerRadius = 32;
@@ -36,15 +37,12 @@ public class CustomQsRoundCorner extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         updateRoundCornerPrefs();
 
         Method changeCornerRadiusMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.QSTileViewImpl")
                 .getDeclaredMethod("changeCornerRadius", float.class);
-        this.xposed.hook(changeCornerRadiusMethod).intercept(chain -> {
-            return chain.proceed(new Object[]{(float) headUpTileRoundCornerRadius});
-        });
+        this.xposed.hook(changeCornerRadiusMethod).intercept(chain -> chain.proceed(new Object[]{(float) headUpTileRoundCornerRadius}));
 
         Method updateRippleRadiusMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl")
