@@ -1,11 +1,11 @@
 package com.qimian233.ztool.hook.modules.documentsui;
 
+import android.annotation.SuppressLint;
 import android.view.View;
 import android.widget.Button;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Field;
@@ -15,6 +15,7 @@ import java.lang.reflect.Method;
  * Android文件选择器(DocumentsUI) 限制解除模块
  * 功能：允许用户在/Android/data等受限目录进行选择操作
  */
+@SuppressLint("PrivateApi")
 public class DocumentsUIBypass extends BaseHookModule {
 
     public DocumentsUIBypass() {}
@@ -94,13 +95,11 @@ public class DocumentsUIBypass extends BaseHookModule {
 
                 // 1. 获取并启用 mPick 按钮
                 try {
-                    Field mPickField = findField(fragment.getClass(), "mPick");
-                    if (mPickField != null) {
-                        mPickField.setAccessible(true);
-                        Object mPick = mPickField.get(fragment);
-                        if (mPick instanceof Button) {
-                            ((Button) mPick).setEnabled(true);
-                        }
+                    Field mPickField = findField(fragment.getClass(), "mPick"); // null-safe
+                    mPickField.setAccessible(true);
+                    Object mPick = mPickField.get(fragment);
+                    if (mPick instanceof Button) {
+                        ((Button) mPick).setEnabled(true);
                     }
                 } catch (NoSuchFieldError e) {
                     // 忽略字段不存在的情况
@@ -108,13 +107,11 @@ public class DocumentsUIBypass extends BaseHookModule {
 
                 // 2. 获取并隐藏 mPickOverlay 覆盖层
                 try {
-                    Field mPickOverlayField = findField(fragment.getClass(), "mPickOverlay");
-                    if (mPickOverlayField != null) {
-                        mPickOverlayField.setAccessible(true);
-                        Object mPickOverlay = mPickOverlayField.get(fragment);
-                        if (mPickOverlay instanceof View) {
-                            ((View) mPickOverlay).setVisibility(View.GONE); // View.GONE = 8
-                        }
+                    Field mPickOverlayField = findField(fragment.getClass(), "mPickOverlay"); // null-safe
+                    mPickOverlayField.setAccessible(true);
+                    Object mPickOverlay = mPickOverlayField.get(fragment);
+                    if (mPickOverlay instanceof View) {
+                        ((View) mPickOverlay).setVisibility(View.GONE); // View.GONE = 8
                     }
                 } catch (NoSuchFieldError e) {
                     // 忽略字段不存在的情况
