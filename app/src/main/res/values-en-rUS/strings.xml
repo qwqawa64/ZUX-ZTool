@@ -521,14 +521,10 @@
     <string name="syatusBatteryExternalSummary">Show remaining battery percentage to the right of the battery icon. Disable the system percentage display first.</string>
     <string name="YiYanTile">Lock screen quote</string>
     <string name="YiYanSwitchTitle">Random lock screen signature</string>
-    <string name="YiYanSummary">Show random text fetched from the network on the lock screen.</string>
+    <string name="YiYanSummary">Show random text fetched from the network on the lock screen. Reboot to take effect.</string>
     <string name="ChargeWattsTitle">Show charging power</string>
     <string name="ChargeWattsEnableTitle">Charging power display type</string>
     <string name="ChargeWattsSummary">Show current negotiated protocol power or actual wattage on the lock screen and AOD while charging. Grant Root permission to "SystemUI" to use actual wattage.\n* It may take up to 1 minute after restarting the scope to take effect.</string>
-    <string name="RealWattsRefreshInterval">Actual charging power refresh timing</string>
-    <string name="RealWattsRefreshIntervalSummary">Controls when actual charging power is refreshed on the lock screen. 0.1 is usually enough.</string>
-    <string name="RealWattsRefreshIntervalInputTip">Current setting: %.1f sec</string>
-    <string name="RealWattsIntervalSavedMessage">Refresh interval saved</string>
     <string name="systemui_root_permission_required_message">To use actual charging power, grant Root permission to "SystemUI" in your Root manager.</string>
     <string name="api_address_label">API address</string>
     <string name="api_address_hint">Enter API address</string>

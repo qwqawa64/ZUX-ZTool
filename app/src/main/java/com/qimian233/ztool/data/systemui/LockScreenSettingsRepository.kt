@@ -26,13 +26,6 @@ class LockScreenSettingsRepository(
             !chargeWattsEnabled && realWattsEnabled -> context.getString(R.string.watt_option_actual)
             else -> context.getString(R.string.watt_option_disabled)
         }
-        val realWattsIntervalOption = if (
-            prefsUtils.loadBooleanSetting(KEY_REAL_WATTS_CUSTOMIZED_INTERVAL, false)
-        ) {
-            context.getString(R.string.real_watt_custom_refresh_interval_enabled)
-        } else {
-            context.getString(R.string.real_watt_custom_refresh_interval_disabled)
-        }
 
         zToolPrefs.saveStringSetting(KEY_CHARGE_WATTS_SELECTED_OPTION, chargeWattsOption)
 
@@ -41,10 +34,6 @@ class LockScreenSettingsRepository(
             apiAddress = yiYanPrefs.loadStringSetting(KEY_API_URL, ""),
             regex = yiYanPrefs.loadStringSetting(KEY_REGULAR, ""),
             chargeWattsOption = chargeWattsOption,
-            realWattsIntervalOption = realWattsIntervalOption,
-            realWattsRefreshInterval = prefsUtils
-                .loadFloatSetting(KEY_REAL_WATTS_REFRESH_INTERVAL, 3.0f)
-                .toString()
         )
     }
 
@@ -79,17 +68,6 @@ class LockScreenSettingsRepository(
 
     fun saveSystemUiPermissionConfirmed() {
         prefsUtils.saveBooleanSetting(KEY_SYSTEMUI_PERMISSION_CONFIRMED, true)
-    }
-
-    fun saveRealWattsIntervalOption(selectedOption: String) {
-        prefsUtils.saveBooleanSetting(
-            KEY_REAL_WATTS_CUSTOMIZED_INTERVAL,
-            selectedOption == context.getString(R.string.real_watt_custom_refresh_interval_enabled)
-        )
-    }
-
-    fun saveRealWattsRefreshInterval(value: Float) {
-        prefsUtils.saveFloatSetting(KEY_REAL_WATTS_REFRESH_INTERVAL, value)
     }
 
     fun testApi(apiUrl: String, regexValue: String): ApiTestResult {
@@ -197,7 +175,5 @@ class LockScreenSettingsRepository(
         private const val KEY_REAL_WATTS = "systemUI_RealWatts"
         private const val KEY_SYSTEMUI_PERMISSION_CONFIRMED = "isSystemUIPermissionConfirmed"
         private const val KEY_CHARGE_WATTS_SELECTED_OPTION = "charge_watts_selected_option"
-        private const val KEY_REAL_WATTS_CUSTOMIZED_INTERVAL = "real_watts_customized_interval"
-        private const val KEY_REAL_WATTS_REFRESH_INTERVAL = "real_watts_refresh_interval"
     }
 }
