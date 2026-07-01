@@ -2,7 +2,8 @@
 
 ## Agent Quick Start
 
-Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
+- Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
+- Java is available in most scenarios as this project needs Gradle. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
 
 ## Project Summary
 
@@ -41,6 +42,7 @@ https://compose-miuix-ui.github.io/miuix/dokka/index.html
   docs_archive/compose_refactor/        Compose migration notes and scoped agent guide
   docs_archive/gradle_upgrade/          Gradle upgrade notes
   docs_archive/material_enhancement/    Material UI notes
+  reference/                    Reference AAR files
   gradle/                       Gradle wrapper and version catalog
   libs/                         Root local dependencies
   Add_New_Hook_zh-CN.md         Frontend guide for adding Hook settings, UTF-8 encoding
@@ -117,11 +119,11 @@ Main route files:
 
 Keep these stable unless the task explicitly targets them:
 
-- `app/src/main/AndroidManifest.xml` Xposed metadata.
-- `app/src/main/assets/xposed_init`, currently pointing to `com.qimian233.ztool.hook.HookInit`.
-- `app/src/main/res/values/array.xml` `xposed_scope`.
 - Existing Activity package/class names used as Manifest launch contracts.
 - Existing SharedPreferences/config keys used by Hook modules.
+- `app/src/main/resources/META-INF/xposed/java_init.list` Hook entry class, currently points to `com.qimian233.ztool.hook.HookInit`.
+- `app/src/main/resources/META-INF/xposed/module.prop` Module properties, such as minimum API version.
+- `app/src/main/resources/META-INF/xposed/scope.list` Module scope.
 
 Hook scope packages include Android framework/system apps and ZUI apps such as `android`, `com.android.systemui`, `com.android.settings`, `com.zui.launcher`, and `com.lenovo.ota`.
 
@@ -142,6 +144,7 @@ hook/modules/
   documentsui/
   gametool/
   launcher/
+  mobiledesktop/
   ota/
   packageinstaller/
   safecenter/
@@ -174,7 +177,7 @@ The durable rules from that guide are:
 To add a new Hook implementation on the backend:
 
 1. Create a Hook class that extends `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`.
-2. Implement `getModuleName()`, `getTargetPackages()`, and `handleLoadPackage(...)`. **When implementing test hook, return "hook_test" in getModuleName() will always enable this test hook without bothering to add frontend switch.**
+2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using the same keys/defaults that the frontend writes.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
 5. Add the required log handling in `app/src/main/java/com/qimian233/ztool/audit/LogParser.java`, including module pattern/display name/category and any module-specific extracted data needed by the Audit UI.
@@ -186,23 +189,19 @@ Use `BaseHookModule.log(...)` / `logError(...)` for module logs when possible. T
 
 ### Scope Management
 
-The `xposed_scope` array in `app/src/main/res/values/array.xml` declares which packages LSPosed should inject the module into. Rules for managing scope:
+The `app/src/main/resources/META-INF/xposed/scope.list` declares which packages LSPosed should inject the module into. Rules for managing scope:
 
-- **When a new Hook targets a package not already in the scope, add it to `xposed_scope`.** The `getTargetPackages()` returned by each module must be a subset of the declared scope.
-- **`android` (system framework) is already in scope** — no change needed for system-framework hooks.
+- **When a new Hook targets a package not already in the scope, add it to `scope.list`.** The `getTargetPackages()` returned by each module must be a subset of the declared scope.
+- **`android` and `system` (system framework) are already in scope** — no change needed for system-framework hooks.
 - **Always verify scope coverage after adding a new Hook module.** If a target package is missing from scope, the Hook will silently never execute.
 - Do NOT remove scope entries unless their corresponding Hook modules are also removed.
 - The scope is a build-time declaration; users must also configure it in LSPosed Manager.
 
 ### Activation Chain
 
-Module activation follows this chain:
-
-1. **`HookInit.handleLoadPackage`** → calls `HookManager.handleLoadPackage(lpparam)` for every loaded package in scope.
-2. **`HookManager`** → iterates all registered `BaseHookModule` instances, calling `safeHandleLoadPackage`.
-3. **`BaseHookModule.safeHandleLoadPackage`** → checks `supportsPackage()` (package name match) then `isEnabled()` (via `ModuleConfig.isModuleEnabled(getModuleName())`). Only when both pass does `handleLoadPackage()` execute.
-4. **`ModuleConfig`** → reads `XSharedPreferences("com.qimian233.ztool", "xposed_module_config")`. Module name is the key; default is `false` (disabled).
-5. **`ModuleActivationProbe`** → `HookInit.hookSelfStatus` replaces `isModuleActive()` with `return true`. The app UI polls this to show "Module Activated" status.
+- LSPosed sends a bind when module starts up.
+- `ModuleActivationProbe` has a onBind receiver that sets `active` field in this class to `true`.
+- Frontend reads this value and shows the activated user interface.
 
 ### Service Protection Hook Guidelines
 
@@ -240,31 +239,13 @@ General UI rules:
 - Do not put shell/root operations, raw threads, preference I/O, or imperative dialogs directly in Composables. Use Repository/ViewModel/state.
 - Preserve detail Activity launch contracts even if the screen body is Compose.
 
-## High-Risk Boundaries
-
-Treat these areas as behavior-sensitive:
-
-- `app/src/main/java/com/qimian233/ztool/hook/**`
-- `app/src/main/java/com/qimian233/ztool/service/**`
-- `app/src/main/java/com/qimian233/ztool/config/**`
-- `app/src/main/java/com/qimian233/ztool/EnhancedShellExecutor.java`
-- `app/src/main/java/com/qimian233/ztool/utils/MagiskModuleManager.java`
-- `app/src/main/java/com/qimian233/ztool/utils/EmbeddingConfigManager.java`
-- `app/src/main/assets/embedding/**`
-- `app/src/main/assets/xposed_init`
-- Xposed metadata and scope declarations in resources/Manifest
-- Existing preference keys and config file formats
-- Root, shell, reboot, package kill, and Magisk install/update behavior
-
-UI tasks should normally wrap these behaviors behind repositories or state holders rather than changing the behavior itself.
-
 ## Resources And Assets
 
 - `res/values/`: strings, colors, themes, arrays.
 - `res/values-night/`: night resources.
 - `res/drawable/`: in-app drawables and icons.
 - `res/mipmap-*`: launcher icons.
-- `res/raw/`: demo video resources.
+- `res/raw/`: demo video resources and user agreement.
 - `res/xml/`: backup, extraction, and locale config.
 - `assets/embedding/`: embedded Magisk module configuration and scripts.
 - `assets/embedding/zuxos_embedding/`: module package contents such as `module.prop`, shell scripts, sepolicy rules, and installer metadata.
@@ -287,10 +268,11 @@ For documentation-only changes, a build is usually unnecessary; verify with `git
 - Start by checking `git status --short`.
 - The working tree may contain user changes. Do not revert unrelated changes.
 - Keep edits scoped to the request.
-- Do not commit build outputs, IDE files, Gradle caches, or unrelated untracked files.
+- Do not commit build outputs, IDE files, Gradle caches, keystore, or unrelated untracked files.
 - Completed user-requested tasks must be committed unless the user explicitly says not to commit.
 - Before committing, review `git diff --check` and the staged diff.
 - Use concise commit messages that describe the actual scoped change.
+- If Git commit times out with GPG signature, ask the user to commit it later and DO NOT commit without signing.
 
 ## Common Commands
 
