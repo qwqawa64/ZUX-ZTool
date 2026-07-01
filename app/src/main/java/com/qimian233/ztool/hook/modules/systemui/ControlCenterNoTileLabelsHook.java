@@ -1,15 +1,16 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
+@SuppressLint("PrivateApi")
 public class ControlCenterNoTileLabelsHook extends BaseHookModule {
 
     public ControlCenterNoTileLabelsHook() {}
@@ -27,18 +28,21 @@ public class ControlCenterNoTileLabelsHook extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         Method createAndAddLabelsMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl")
                 .getDeclaredMethod("createAndAddLabels");
         this.xposed.hook(createAndAddLabelsMethod).intercept(chain -> {
             Object result = chain.proceed();
-            Class<?> cl = chain.getThisObject().getClass();
-            ViewGroup labelContainer = (ViewGroup) cl.getDeclaredField("labelContainer")
-                    .get(chain.getThisObject());
-            if (labelContainer != null) {
-                labelContainer.setVisibility(View.GONE);
-                labelContainer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+            try {
+                Class<?> cl = chain.getThisObject().getClass();
+                ViewGroup labelContainer = (ViewGroup) findField(cl,  "labelContainer")
+                        .get(chain.getThisObject());
+                if (labelContainer != null) {
+                    labelContainer.setVisibility(View.GONE);
+                    labelContainer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+                }
+            } catch (Exception e) {
+                logError("Cannot apply no-label mode to tiles!", e);
             }
             return result;
         });
