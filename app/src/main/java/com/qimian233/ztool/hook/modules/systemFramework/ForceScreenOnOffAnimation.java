@@ -150,7 +150,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
-    private void safeSetBooleanField(Object object, String fieldName, boolean value) {
+    private void safeSetBooleanField(Object object, String fieldName, @SuppressWarnings("SameParameterValue") boolean value) {
         if (object == null) return;
         try {
             Field field = safeFindField(object.getClass(), fieldName);
@@ -197,7 +197,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             safeCallMethod(onAnimator, "cancel");
             safeCallMethod(onAnimator, "setDuration", SCREEN_ON_ANIMATION_DURATION_MS);
             safeCallMethod(onAnimator, "setFloatValues",
-                    new float[] {getFloatByMethod(powerState, "getColorFadeLevel", 0.0f), 1.0f});
+                    (Object) new float[] {getFloatByMethod(powerState, "getColorFadeLevel", 0.0f), 1.0f});
             safeCallMethod(onAnimator, "start");
             log("Started prepared screen-on color fade animation.");
             return true;
@@ -220,7 +220,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
-    private boolean safeGetBooleanField(Object object, String fieldName) {
+    private boolean safeGetBooleanField(Object object, @SuppressWarnings("SameParameterValue") String fieldName) {
         if (object == null) {
             return false;
         }
@@ -236,7 +236,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         }
     }
 
-    private float getFloatByMethod(Object object, String methodName, float defaultValue) {
+    private float getFloatByMethod(Object object, @SuppressWarnings("SameParameterValue") String methodName, float defaultValue) {
         if (object == null) {
             return defaultValue;
         }
