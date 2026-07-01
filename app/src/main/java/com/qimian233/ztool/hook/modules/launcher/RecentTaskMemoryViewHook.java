@@ -15,7 +15,6 @@ import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Field;
@@ -24,6 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+@SuppressLint("PrivateApi")
 public class RecentTaskMemoryViewHook extends BaseHookModule {
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
     private static final String LAUNCHER_PACKAGE = "com.zui.launcher";
@@ -62,20 +62,29 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         try {
             Class<?> recentsViewClass = classLoader.loadClass(RECENTS_VIEW_CLASS);
 
             Method onAttachedMethod = recentsViewClass.getDeclaredMethod("onAttachedToWindow");
             this.xposed.hook(onAttachedMethod).intercept(chain -> {
-                chain.proceed();
-                attachMemoryView((View) chain.getThisObject());
+                try {
+                    chain.proceed();
+                    attachMemoryView((View) chain.getThisObject());
+                    log("onAttachedToWindow hook executed successfully.");
+                } catch (Exception e) {
+                    logError("Failed to hook onAttachedToWindow: ", e);
+                }
                 return null;
             });
 
             Method onDetachedMethod = recentsViewClass.getDeclaredMethod("onDetachedFromWindow");
             this.xposed.hook(onDetachedMethod).intercept(chain -> {
-                detachMemoryView((View) chain.getThisObject());
+                try {
+                    detachMemoryView((View) chain.getThisObject());
+                    log("onDetachedFromWindow hook executed successfully");
+                } catch (Exception e) {
+                    logError("Failed to hook onDetachedFromWindow: ", e);
+                }
                 return chain.proceed();
             });
 
@@ -86,6 +95,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 boolean enabled = (boolean) chain.getArg(0);
                 overviewEnabledStates.put(recentsView, enabled);
                 updateMemoryViewVisibility(recentsView);
+                log("setOverviewStateEnabled hook executed successfully");
                 return null;
             });
 
@@ -93,6 +103,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             this.xposed.hook(setVisibilityMethod).intercept(chain -> {
                 chain.proceed();
                 updateMemoryViewVisibility((View) chain.getThisObject());
+                log("setVisibility hook executed successfully");
                 return null;
             });
 
@@ -101,6 +112,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             this.xposed.hook(onLayoutMethod).intercept(chain -> {
                 chain.proceed();
                 attachMemoryView((View) chain.getThisObject());
+                log("onLayout hook executed successfully");
                 return null;
             });
 
@@ -205,15 +217,47 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
 
     private ViewGroup getDragLayer(View recentsView) {
         try {
-            Field containerField = recentsView.getClass().getDeclaredField("mContainer");
-            containerField.setAccessible(true);
+            Field containerField = findField(recentsView.getClass(), "mContainer");
             Object container = containerField.get(recentsView);
-            Method getDragLayerMethod = container.getClass().getMethod("getDragLayer");
+            if (container == null) {
+                return null;
+            }
+            Method getDragLayerMethod = findMethod(container.getClass(), "getDragLayer");
             Object dragLayer = getDragLayerMethod.invoke(container);
             return dragLayer instanceof ViewGroup ? (ViewGroup) dragLayer : null;
         } catch (Throwable t) {
+            if (DEBUG) {logError("Exception happened in getDragLayer: ", t);}
             return null;
         }
+    }
+
+    private Field findField(Class<?> startClass, String name) throws NoSuchFieldException {
+        Class<?> current = startClass;
+        while (current != null) {
+            try {
+                Field field = current.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(name + " in " + startClass);
+    }
+
+    private Method findMethod(Class<?> startClass, String name, Class<?>... parameterTypes)
+            throws NoSuchMethodException {
+        Class<?> current = startClass;
+        while (current != null) {
+            try {
+                Method method = current.getDeclaredMethod(name, parameterTypes);
+                method.setAccessible(true);
+                return method;
+            } catch (NoSuchMethodException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new NoSuchMethodException(name + " in " + startClass);
     }
 
     private TextView findMemoryView(ViewGroup dragLayer) {
