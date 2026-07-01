@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -8,17 +9,17 @@ import android.util.TypedValue;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Objects;
+import java.util.Locale;
 
 /**
  * 系统UI电池百分比Hook模块
  * 功能：强制显示电池百分比，调整布局位置和字体大小
  */
+@SuppressLint({"PrivateApi", "DiscouragedApi"})
 public class SystemUIBatteryHook extends BaseHookModule {
 
     public SystemUIBatteryHook() {}
@@ -162,6 +163,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
         try {
             // 获取系统默认的电池文字大小
             android.content.Context context = getContext(batteryMeterView);
+            if (context == null) return 13.0f;
             int originalSizeRes = context.getResources().getIdentifier(
                     "status_bar_battery_text_size", "dimen", "com.android.systemui");
 
@@ -215,19 +217,23 @@ public class SystemUIBatteryHook extends BaseHookModule {
             int level = cl.getDeclaredField("mLevel").getInt(batteryMeterView);
 
             // 设置百分比文本
-            percentView.setText(level + "%");
+            percentView.setText(String.format(Locale.US, "%d%%", level));
 
             // 更新内容描述（辅助功能）
+            android.content.Context ctx = getContext(batteryMeterView);
+            if (ctx == null) return;
+
             boolean charging = cl.getDeclaredField("mCharging").getBoolean(batteryMeterView);
-            String description = Objects.requireNonNull(getContext(batteryMeterView)).getString(
+            String description = ctx.getString(
                     charging ?
                             getResourceId(batteryMeterView, "accessibility_battery_level_charging") :
                             getResourceId(batteryMeterView, "accessibility_battery_level"),
                     level
             );
 
-            LinearLayout batteryView = (LinearLayout) batteryMeterView;
-            batteryView.setContentDescription(description);
+            if (batteryMeterView instanceof LinearLayout) {
+                ((LinearLayout) batteryMeterView).setContentDescription(description);
+            }
 
         } catch (Throwable t) {
             logError("更新电池百分比文本失败", t);
@@ -238,6 +244,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
     private int getDimenValue(Object batteryMeterView) {
         try {
             android.content.Context context = getContext(batteryMeterView);
+            if (context == null) return 8;
             int resId = context.getResources().getIdentifier(
                     "qs_battery_padding", "dimen", "com.android.systemui");
             return context.getResources().getDimensionPixelOffset(resId);
@@ -250,6 +257,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
     private int getResourceId(Object batteryMeterView, String resourceName) {
         try {
             android.content.Context context = getContext(batteryMeterView);
+            if (context == null) return 0;
             return context.getResources().getIdentifier(
                     resourceName, "string", "com.android.systemui");
         } catch (Throwable t) {
