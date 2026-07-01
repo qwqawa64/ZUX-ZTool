@@ -1,19 +1,21 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 
 /**
  * SystemUI通知图标限制Hook模块
  * 功能：修改状态栏通知图标的最大显示数量限制
  * 支持Android 12+的SystemUI架构
  */
+@SuppressLint("PrivateApi")
 public class NotificationIconHook extends BaseHookModule {
 
     private int NEW_MAX_ICONS;
@@ -83,8 +85,9 @@ public class NotificationIconHook extends BaseHookModule {
                 // after constructor: chain.proceed() then set field
                 chain.proceed();
                 try {
-                    chain.getThisObject().getClass().getDeclaredField("maxIcons")
-                            .setInt(chain.getThisObject(), NEW_MAX_ICONS);
+                    Field myField = chain.getThisObject().getClass().getDeclaredField("maxIcons");
+                    myField.setAccessible(true);
+                    myField.setInt(chain.getThisObject(), NEW_MAX_ICONS);
                     log("成功修改 ViewModel maxIcons 为 " + NEW_MAX_ICONS);
                 } catch (Exception e) {
                     logError("修改 ViewModel maxIcons 字段失败", e);
