@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.text.SpannableString;
@@ -12,7 +13,6 @@ import android.util.TypedValue;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -22,6 +22,7 @@ import java.util.Date;
  * 自定义状态栏时钟Hook模块
  * 修改SystemUI状态栏时钟显示格式和样式，支持自定义时间格式、字体大小、字间距、颜色和粗体
  */
+@SuppressLint("PrivateApi")
 public class CustomStatusBarClock extends BaseHookModule {
 
     private static final String PREFS_NAME = "xposed_module_config";
@@ -92,7 +93,8 @@ public class CustomStatusBarClock extends BaseHookModule {
                     String customTime = getCustomTimeFormat();
 
                     // 设置内容描述（无障碍功能使用）
-                    clockInstance.getClass().getDeclaredMethod("setContentDescription", CharSequence.class)
+                    // 使用 getMethod 而非 getDeclaredMethod，因为 setContentDescription 继承自 View
+                    clockInstance.getClass().getMethod("setContentDescription", CharSequence.class)
                             .invoke(clockInstance, customTime);
 
                     // 应用直接样式（备用方案）
@@ -240,12 +242,6 @@ public class CustomStatusBarClock extends BaseHookModule {
     private void applyDirectStyles(Object clockInstance) {
         try {
             Class<?> cl = clockInstance.getClass();
-            // 设置文本大小（仅在开关开启时应用）
-            if (isTextSizeEnabled()) {
-                float textSizeSp = getTextSize();
-                cl.getDeclaredMethod("setTextSize", int.class, float.class)
-                        .invoke(clockInstance, TypedValue.COMPLEX_UNIT_SP, textSizeSp);
-            }
 
             // 尝试设置字间距（仅在开关开启时应用）
             if (isLetterSpacingEnabled()) {
