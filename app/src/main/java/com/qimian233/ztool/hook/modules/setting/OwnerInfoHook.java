@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.setting;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,7 +14,6 @@ import androidx.annotation.NonNull;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.io.BufferedReader;
@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
  * 功能：自动从API获取每日一言并设置为锁屏OwnerInfo
  * 触发时机：屏幕亮起、用户解锁、用户活动等
  */
+@SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
 public class OwnerInfoHook extends BaseHookModule {
 
     private String API_URL;
@@ -61,9 +62,13 @@ public class OwnerInfoHook extends BaseHookModule {
         String packageName = param.getPackageName();
         if ("com.android.settings".equals(packageName)) {
             hookSettingsPackage(classLoader);
-        } else if ("android".equals(packageName)) {
-            hookSystemPackage(classLoader);
         }
+    }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
+        ClassLoader classLoader = param.getClassLoader();
+        hookSystemPackage(classLoader);
     }
 
     private void hookSettingsPackage(ClassLoader classLoader) {
@@ -319,7 +324,7 @@ public class OwnerInfoHook extends BaseHookModule {
         } catch (Exception e) {
             logError("获取API数据时出错", e);
         }
-        return null;
+        return "If you see this message, your API is broken, check your settings and Internet connection, then restart com.android.settings";
     }
 
     private String parseContentFromJson(String jsonString) {
