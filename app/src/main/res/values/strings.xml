@@ -264,7 +264,7 @@
     <string name="restart_fail_short">重启失败</string>
     <string name="function_title">功能拓展</string>
     <string name="Game_Audio_title">禁止处理游戏音频</string>
-    <string name="Game_Audio_summary">游戏声音忽大忽小或音量爆炸可以尝试开启，需重启系统</string>
+    <string name="Game_Audio_summary">游戏声音忽大忽小可以尝试开启，需重启系统，建议配合设置中的允许关闭杜比使用</string>
     <string name="Game_Audio_Setting_Title">音频</string>
     <string name="Device_Model_Disguise">机型伪装</string>
     <string name="Device_Model_Disguise_summary">针对游戏助手伪装机型Y700四代启用对应功能，如旁路充电等</string>

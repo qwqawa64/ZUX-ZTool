@@ -233,7 +233,7 @@
     <string name="restart_fail_short">Restart failed</string>
     <string name="function_title">Feature extensions</string>
     <string name="Game_Audio_title">Disable game audio processing</string>
-    <string name="Game_Audio_summary">Try enabling this if game audio volume fluctuates or becomes extremely loud. Requires a system reboot.</string>
+    <string name="Game_Audio_summary">Try enabling this if game audio volume fluctuates. Requires a system reboot. Use this hook with allow turn off dolby in settings feature page.</string>
     <string name="Game_Audio_Setting_Title">Audio</string>
     <string name="Device_Model_Disguise">Device model disguise</string>
     <string name="Device_Model_Disguise_summary">Disguise the device as Y700 4th Gen for Game Assistant features such as bypass charging.</string>
