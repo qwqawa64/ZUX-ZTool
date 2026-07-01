@@ -13,6 +13,7 @@ import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Objects;
 
 /**
  * 系统UI电池百分比Hook模块
@@ -218,7 +219,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
             // 更新内容描述（辅助功能）
             boolean charging = cl.getDeclaredField("mCharging").getBoolean(batteryMeterView);
-            String description = getContext(batteryMeterView).getString(
+            String description = Objects.requireNonNull(getContext(batteryMeterView)).getString(
                     charging ?
                             getResourceId(batteryMeterView, "accessibility_battery_level_charging") :
                             getResourceId(batteryMeterView, "accessibility_battery_level"),
@@ -262,6 +263,10 @@ public class SystemUIBatteryHook extends BaseHookModule {
             return (android.content.Context) batteryMeterView.getClass()
                     .getDeclaredField("mContext").get(batteryMeterView);
         } catch (Throwable t) {
+            // Fallback: BatteryMeterView extends LinearLayout extends View
+            if (batteryMeterView instanceof android.view.View) {
+                return ((android.view.View) batteryMeterView).getContext();
+            }
             return null;
         }
     }
