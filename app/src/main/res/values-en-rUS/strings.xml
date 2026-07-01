@@ -238,9 +238,9 @@
     <string name="Device_Model_Disguise">Device model disguise</string>
     <string name="Device_Model_Disguise_summary">Disguise the device as Y700 4th Gen for Game Assistant features such as bypass charging.</string>
     <string name="FIx_CPU_Frequency">Fix CPU frequency display</string>
-    <string name="FIx_CPU_Frequency_summary">Tested only on PadProGT. Fixes frequency always showing 0 after using Y700 4th Gen Game Assistant.</string>
+    <string name="FIx_CPU_Frequency_summary">Tested only on TB710FU. Fixes frequency always showing 0 after using Y700 4th Gen Game Assistant.</string>
     <string name="Fix_SocTemp">Fix SoC temperature display</string>
-    <string name="Fix_SocTemp_summary">Tested only on PadProGT. Fixes temperature always showing 0 after using Y700 4th Gen Game Assistant.</string>
+    <string name="Fix_SocTemp_summary">Tested only on TB710FU. Fixes temperature always showing 0 after using Y700 4th Gen Game Assistant.</string>
     <string name="firmware_download_link">Download link: </string>
     <string name="firmware_extract_password">Extract password: </string>
     <string name="firmware_platform_and_method">Platform/flashing method: </string>
