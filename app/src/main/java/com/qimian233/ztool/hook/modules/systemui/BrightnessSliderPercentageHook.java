@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -14,7 +15,6 @@ import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+@SuppressLint("PrivateApi")
 public class BrightnessSliderPercentageHook extends BaseHookModule {
     private static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
     private static final String TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView";
@@ -52,7 +53,6 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         updatePrefs();
         hookToggleSliderViewLifecycle(classLoader);
         hookBrightnessControllerCallbacks(classLoader);
@@ -80,7 +80,13 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
                 Object result = chain.proceed();
                 Object sliderController = chain.getThisObject();
                 Class<?> scCls = sliderController.getClass();
-                Object view = scCls.getDeclaredField("mView").get(sliderController);
+                try {
+                    scCls.getDeclaredField("mBrightnessSliderHapticPlugin");
+                } catch (NoSuchFieldException ignored) {
+                    log("Field mBrightnessSliderHapticPlugin not found, shouldn't hook mView of this class!");
+                    return chain.proceed();
+                }
+                Object view = findField(scCls, "mView").get(sliderController);
                 if (view instanceof View) {
                     refreshBrightnessFromView((View) view, (Integer) chain.getArg(0));
                 }
@@ -232,7 +238,13 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             if (control == null) {
                 return;
             }
-            Object view = control.getClass().getDeclaredField("mView").get(control);
+            try {
+                bcCls.getDeclaredField("mBrightnessObserver");
+            } catch (NoSuchFieldException ignored) {
+                log("Field mBrightnessObserver not found, shouldn't hook mView of this class!");
+                return;
+            }
+            Object view = findField(control.getClass(), "mView").get(control);
             if (!(view instanceof View)) {
                 return;
             }
@@ -267,7 +279,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             int max = brightnessSlider != null ? brightnessSlider.getMax() : 65535;
             max = Math.max(1, max);
             int percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)));
-            if (root != null && root.isInLayout()) {
+            if (root.isInLayout()) {
                 schedulePositionUpdate(sliderView);
                 return;
             }
