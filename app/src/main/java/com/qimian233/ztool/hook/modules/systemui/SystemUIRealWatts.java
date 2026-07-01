@@ -1,8 +1,9 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.io.BufferedReader;
@@ -14,6 +15,7 @@ import java.text.DecimalFormat;
  * SystemUI充电瓦数显示Hook模块
  * 在锁屏充电提示中添加实时充电功率显示（使用Root权限读取系统文件获取实时数据）
  */
+@SuppressLint("PrivateApi")
 public class SystemUIRealWatts extends BaseHookModule {
 
     private static final String TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController";
@@ -53,48 +55,48 @@ public class SystemUIRealWatts extends BaseHookModule {
 
     private void hookKeyguardIndicationController(ClassLoader classLoader) {
         try {
-            double timeInterval = getCustomizedInterval();
-
-            if (DEBUG) log("自定义刷新间隔：" + timeInterval * 1000 + "ms");
-
             // Hook computePowerIndication方法来添加充电瓦数显示
             Method computeMethod = classLoader.loadClass(TARGET_CLASS)
                     .getDeclaredMethod("computePowerIndication");
             this.xposed.hook(computeMethod).intercept(chain -> {
-                // 获取原始返回的充电提示文本
-                Object result = chain.proceed();
-                String originalText = (String) result;
-                if (originalText == null) return null;
+                try {
+                    // 获取原始返回的充电提示文本
+                    Object result = chain.proceed();
+                    String originalText = (String) result;
+                    if (originalText == null) return null;
 
-                // 获取KeyguardIndicationController实例
-                Object controller = chain.getThisObject();
-                Class<?> cl = controller.getClass();
+                    // 获取KeyguardIndicationController实例
+                    Object controller = chain.getThisObject();
+                    Class<?> cl = controller.getClass();
 
-                // 获取充电状态
-                boolean isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller);
+                    // 获取充电状态
+                    boolean isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller);
 
-                // 只在充电状态下显示瓦数
-                if (isPluggedIn) {
-                    if (isCustomizedIntervalDefined() && System.currentTimeMillis() - lastUpdate < Math.round(timeInterval * 1000) && DEBUG) {
-                        log("间隔时间太短，稍后再刷新充电功率");
-                        log("下次刷新：" + (Math.round(timeInterval * 1000) - (System.currentTimeMillis() - lastUpdate)) + "ms");
-                        return result;
+                    // 只在充电状态下显示瓦数
+                    if (isPluggedIn) {
+                        if (System.currentTimeMillis() - lastUpdate < 100 && DEBUG) {
+                            log("Debounce triggered. Charging power will not be updated this time.");
+                            return result;
+                        }
+                        // 使用Root权限读取系统文件获取实时充电功率
+                        ChargingData chargingData = readChargingDataWithRoot();
+
+                        if (chargingData != null && chargingData.isCharging && chargingData.power > 0) {
+                            // 使用换行符 \n 追加功率信息
+                            String newText = originalText + "\n" + formatWattage(chargingData.power);
+                            lastUpdate = System.currentTimeMillis();
+                            if (DEBUG) log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
+                            return newText;
+                        } else {
+                            log("未能检测到充电功率");
+                            return originalText + "\n --W";
+                        }
                     }
-                    // 使用Root权限读取系统文件获取实时充电功率
-                    ChargingData chargingData = readChargingDataWithRoot();
-
-                    if (chargingData != null && chargingData.isCharging && chargingData.power > 0) {
-                        // 使用换行符 \n 追加功率信息
-                        String newText = originalText + "\n" + formatWattage(chargingData.power);
-                        lastUpdate = System.currentTimeMillis();
-                        if (DEBUG) log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
-                        return newText;
-                    } else {
-                        log("未能检测到充电功率");
-                        return originalText + "\n 0W";
-                    }
+                    return result;
+                } catch (Throwable t) {
+                    logError("computePowerIndication hook回调异常", t);
+                    return chain.proceed();
                 }
-                return result;
             });
 
             log("成功Hook KeyguardIndicationController");
@@ -221,22 +223,6 @@ public class SystemUIRealWatts extends BaseHookModule {
             return base + " ⚡⚡";  // 两个闪电符号
         } else {
             return base + " ⚡⚡⚡";  // 三个闪电符号
-        }
-    }
-
-    private double getCustomizedInterval() {
-        try {
-            return this.xposed.getRemotePreferences("xposed_module_config").getFloat("real_watts_refresh_interval", (float) 0.0);
-        } catch (Throwable t) {
-            return 0.0;
-        }
-    }
-
-    private boolean isCustomizedIntervalDefined() {
-        try {
-            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean("real_watts_customized_interval", false);
-        } catch (Throwable t) {
-            return false;
         }
     }
 

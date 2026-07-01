@@ -44,32 +44,37 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
             Method computeMethod = classLoader.loadClass(TARGET_CLASS)
                     .getDeclaredMethod("computePowerIndication");
             this.xposed.hook(computeMethod).intercept(chain -> {
-                // 获取原始返回的充电提示文本
-                Object result = chain.proceed();
-                String originalText = (String) result;
-                if (originalText == null) return null;
+                try {
+                    // 获取原始返回的充电提示文本
+                    Object result = chain.proceed();
+                    String originalText = (String) result;
+                    if (originalText == null) return null;
 
-                // 获取KeyguardIndicationController实例
-                Object controller = chain.getThisObject();
-                Class<?> cl = controller.getClass();
+                    // 获取KeyguardIndicationController实例
+                    Object controller = chain.getThisObject();
+                    Class<?> cl = controller.getClass();
 
-                // 获取充电状态相关字段
-                boolean isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller);
-                int chargingWattage = cl.getDeclaredField("mChargingWattage").getInt(controller);
+                    // 获取充电状态相关字段
+                    boolean isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller);
+                    int chargingWattage = cl.getDeclaredField("mChargingWattage").getInt(controller);
 
-                // 只在充电状态下显示瓦数，且瓦数大于0
-                if (isPluggedIn && chargingWattage > 0) {
-                    // 尝试多种单位转换
-                    int watts = calculateActualWatts(chargingWattage);
+                    // 只在充电状态下显示瓦数，且瓦数大于0
+                    if (isPluggedIn && chargingWattage > 0) {
+                        // 尝试多种单位转换
+                        int watts = calculateActualWatts(chargingWattage);
 
-                    if (watts > 0) {
-                        // 使用换行符 \n 追加功率信息
-                        String newText = originalText + "\n" + formatWattage(watts);
-                        log("成功添加充电瓦数显示: " + watts + "W");
-                        return newText;
+                        if (watts > 0) {
+                            // 使用换行符 \n 追加功率信息
+                            String newText = originalText + "\n" + formatWattage(watts);
+                            log("成功添加充电瓦数显示: " + watts + "W");
+                            return newText;
+                        }
                     }
+                    return result;
+                } catch (Throwable t) {
+                    logError("computePowerIndication hook回调异常", t);
+                    return chain.proceed();
                 }
-                return result;
             });
 
             // 额外Hook电池状态更新方法，确保能获取到最新的充电数据
@@ -77,26 +82,31 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                     .getDeclaredMethod("onRefreshBatteryInfo",
                             classLoader.loadClass("com.android.settingslib.fuelgauge.BatteryStatus"));
             this.xposed.hook(refreshMethod).intercept(chain -> {
-                Object result = chain.proceed();
-                // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
-                Object batteryStatus = chain.getArg(0);
-                if (batteryStatus != null) {
-                    try {
-                        // 尝试从BatteryStatus对象获取充电功率
-                        int maxChargingWattage = batteryStatus.getClass()
-                                .getDeclaredField("maxChargingWattage").getInt(batteryStatus);
-                        Object controller = chain.getThisObject();
-                        Class<?> cl = controller.getClass();
+                try {
+                    Object result = chain.proceed();
+                    // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
+                    Object batteryStatus = chain.getArg(0);
+                    if (batteryStatus != null) {
+                        try {
+                            // 尝试从BatteryStatus对象获取充电功率
+                            int maxChargingWattage = batteryStatus.getClass()
+                                    .getDeclaredField("maxChargingWattage").getInt(batteryStatus);
+                            Object controller = chain.getThisObject();
+                            Class<?> cl = controller.getClass();
 
-                        // 记录调试信息
-                        log("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
-                                ", mChargingWattage: " + cl.getDeclaredField("mChargingWattage").getInt(controller));
+                            // 记录调试信息
+                            log("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
+                                    ", mChargingWattage: " + cl.getDeclaredField("mChargingWattage").getInt(controller));
 
-                    } catch (Throwable t) {
-                        logError("读取BatteryStatus失败", t);
+                        } catch (Throwable t) {
+                            logError("读取BatteryStatus失败", t);
+                        }
                     }
+                    return result;
+                } catch (Throwable t) {
+                    logError("onRefreshBatteryInfo hook回调异常", t);
+                    return chain.proceed();
                 }
-                return result;
             });
 
             log("成功Hook KeyguardIndicationController");
