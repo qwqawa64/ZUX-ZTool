@@ -2,6 +2,8 @@ package com.qimian233.ztool.hook;
 
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+
 import com.qimian233.ztool.hook.base.HookManager;
 
 import io.github.libxposed.api.XposedInterface;
@@ -26,13 +28,11 @@ public class HookInit extends XposedModule {
     }
 
     public static XposedInterface getXposedInterface() {
-        HookInit inst = instance;
-        if (inst != null) return inst;
-        return null;
+        return instance;
     }
 
     @Override
-    public void onModuleLoaded(XposedModuleInterface.ModuleLoadedParam param) {
+    public void onModuleLoaded(@NonNull XposedModuleInterface.ModuleLoadedParam param) {
         instance = this;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -49,15 +49,13 @@ public class HookInit extends XposedModule {
     }
 
     @Override
-    public void onPackageLoaded(XposedModuleInterface.PackageLoadedParam param) {
-        String packageName = param.getPackageName();
-        if (packageName == null) return;
-        HookManager.handlePackageLoaded(this, param);
+    public void onPackageLoaded(@NonNull XposedModuleInterface.PackageLoadedParam param) {
+        HookManager.handlePackageLoaded(param);
     }
 
     @Override
-    public void onSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
+    public void onSystemServerStarting(@NonNull XposedModuleInterface.SystemServerStartingParam param) {
         log(4, TAG, "系统服务器启动中，分发系统作用域Hook");
-        HookManager.handleSystemServerStarting(this, param);
+        HookManager.handleSystemServerStarting(param);
     }
 }

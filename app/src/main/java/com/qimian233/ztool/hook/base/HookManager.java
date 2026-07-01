@@ -184,14 +184,14 @@ public class HookManager {
     }
 
     public static void handlePackageLoaded(
-            XposedInterface xposed, XposedModuleInterface.PackageLoadedParam param) {
+            XposedModuleInterface.PackageLoadedParam param) {
         for (BaseHookModule module : hookModules) {
             module.safeHandleLoadPackage(param);
         }
     }
 
     public static void handleSystemServerStarting(
-            XposedInterface xposed, XposedModuleInterface.SystemServerStartingParam param) {
+            XposedModuleInterface.SystemServerStartingParam param) {
         for (BaseHookModule module : hookModules) {
             module.safeHandleSystemServerStarting(param);
         }
