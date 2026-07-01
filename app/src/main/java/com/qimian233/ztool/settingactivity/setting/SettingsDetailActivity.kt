@@ -592,7 +592,6 @@ fun SettingsDetailRoute(
         onImportFont = ::startFontImportProcess,
         onAllowNativePermissionControllerChanged = viewModel::setAllowNativePermissionController,
         onAllowDisableDolbyChanged = viewModel::setAllowDisableDolby,
-        onAlwaysDisplaySuggestionsChanged = viewModel::setAlwaysDisplaySuggestions,
         onAppDetailsChanged = viewModel::setAppDetails,
         aboutDeviceInfoState = uiState.aboutDeviceInfoState,
         onAboutDeviceInfoEnabledChanged = viewModel::setAboutDeviceInfoEnabled,
@@ -681,7 +680,6 @@ private fun SettingsDetailScreen(
     onImportFont: () -> Unit,
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
-    onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit,
     onAppDetailsChanged: (Boolean) -> Unit,
     aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState,
     onAboutDeviceInfoEnabledChanged: (Boolean) -> Unit,
@@ -756,7 +754,6 @@ private fun SettingsDetailScreen(
                         onImportFont = onImportFont,
                         onAllowNativePermissionControllerChanged = onAllowNativePermissionControllerChanged,
                         onAllowDisableDolbyChanged = onAllowDisableDolbyChanged,
-                        onAlwaysDisplaySuggestionsChanged = onAlwaysDisplaySuggestionsChanged,
                         onAppDetailsChanged = onAppDetailsChanged,
                         aboutDeviceInfoState = aboutDeviceInfoState,
                         onAboutDeviceInfoEnabledChanged = onAboutDeviceInfoEnabledChanged,
@@ -795,7 +792,6 @@ private fun settingsDetailSections(
     onImportFont: () -> Unit,
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
-    onAlwaysDisplaySuggestionsChanged: (Boolean) -> Unit,
     onAppDetailsChanged: (Boolean) -> Unit,
     aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState,
     onAboutDeviceInfoEnabledChanged: (Boolean) -> Unit,
@@ -952,12 +948,6 @@ private fun settingsDetailSections(
                         checked = state.appDetail,
                         onCheckedChange = onAppDetailsChanged
                     ),
-                    SettingItem.Switch(
-                        title = stringResource(R.string.AlwaysDisplaySuggestionsTitle),
-                        summary = stringResource(R.string.AlwaysDisplaySuggestionsSummary),
-                        checked = state.alwaysDisplaySuggestions,
-                        onCheckedChange = onAlwaysDisplaySuggestionsChanged
-                    )
                 )
             )
         )

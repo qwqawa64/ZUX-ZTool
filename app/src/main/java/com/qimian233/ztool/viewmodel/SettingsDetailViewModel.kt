@@ -86,11 +86,6 @@ class SettingsDetailViewModel(
         repository.saveAllowDisableDolby(enabled)
     }
 
-    fun setAlwaysDisplaySuggestions(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(alwaysDisplaySuggestions = enabled)
-        repository.saveAlwaysDisplaySuggestions(enabled)
-    }
-
     fun setAppDetails(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(appDetail = enabled)
         repository.saveAppDetails(enabled)
@@ -358,7 +353,6 @@ data class SettingsDetailUiState(
     val splitScreenMandatory: Boolean = false,
     val allowDisableDolby: Boolean = false,
     val allowNativePermissionController: Boolean = false,
-    val alwaysDisplaySuggestions: Boolean = false,
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val showRestartDialog: Boolean = false,
     val appDetail: Boolean = false,

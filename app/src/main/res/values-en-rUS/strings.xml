@@ -457,8 +457,6 @@
     <string name="AllowDisableDolby_summary">Allow disabling Dolby Atmos. This may lower volume.</string>
     <string name="NativePermissionController_enable_title">Native permission controller style</string>
     <string name="NativePermissionController_enable_summary">Enable native-style permission controller. Effective on Android 14 and below.</string>
-    <string name="AlwaysDisplaySuggestionsTitle">Show suggestions on Settings home</string>
-    <string name="AlwaysDisplaySuggestionsSummary">"Pretend the device is brand new and unused"</string>
     <string name="restart_fail_simple">Restart failed</string>
     <string name="sec_title_function">Security</string>
     <string name="OnlyAllow_Title">Always grant app permissions</string>

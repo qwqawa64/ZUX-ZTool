@@ -496,8 +496,6 @@
     <string name="AllowDisableDolby_summary">允许关闭杜比全景声，但是可能导致音量变小</string>
     <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
     <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器，Android14及以下生效</string>
-    <string name="AlwaysDisplaySuggestionsTitle">显示设置首页的建议项目</string>
-    <string name="AlwaysDisplaySuggestionsSummary">“自欺欺人术之假装设备全新未使用”</string>
     <!--应用包安装程序功能页资源值-->
     <string name="Disable_ScanAPK_Title">跳过安全扫描</string>
     <string name="Disable_ScanAPK_Summary">跳过安全扫描，节省时间</string>
