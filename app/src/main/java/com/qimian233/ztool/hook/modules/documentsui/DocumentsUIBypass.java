@@ -128,19 +128,4 @@ public class DocumentsUIBypass extends BaseHookModule {
             logError("Hook PickFragment 失败", t);
         }
     }
-
-    /**
-     * 递归查找字段（包括父类）
-     */
-    private static Field findField(Class<?> clazz, String name) {
-        Class<?> current = clazz;
-        while (current != null && current != Object.class) {
-            try {
-                return current.getDeclaredField(name);
-            } catch (NoSuchFieldException e) {
-                current = current.getSuperclass();
-            }
-        }
-        return null;
-    }
 }

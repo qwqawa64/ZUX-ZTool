@@ -231,35 +231,6 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         }
     }
 
-    private Field findField(Class<?> startClass, String name) throws NoSuchFieldException {
-        Class<?> current = startClass;
-        while (current != null) {
-            try {
-                Field field = current.getDeclaredField(name);
-                field.setAccessible(true);
-                return field;
-            } catch (NoSuchFieldException ignored) {
-                current = current.getSuperclass();
-            }
-        }
-        throw new NoSuchFieldException(name + " in " + startClass);
-    }
-
-    private Method findMethod(Class<?> startClass, String name, Class<?>... parameterTypes)
-            throws NoSuchMethodException {
-        Class<?> current = startClass;
-        while (current != null) {
-            try {
-                Method method = current.getDeclaredMethod(name, parameterTypes);
-                method.setAccessible(true);
-                return method;
-            } catch (NoSuchMethodException ignored) {
-                current = current.getSuperclass();
-            }
-        }
-        throw new NoSuchMethodException(name + " in " + startClass);
-    }
-
     private TextView findMemoryView(ViewGroup dragLayer) {
         View view = dragLayer.findViewWithTag(MEMORY_VIEW_TAG);
         return view instanceof TextView ? (TextView) view : null;

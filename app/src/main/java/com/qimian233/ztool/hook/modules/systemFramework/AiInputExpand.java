@@ -117,18 +117,6 @@ public class AiInputExpand extends BaseHookModule {
         }
     }
 
-    private static Field findField(Class<?> clazz, String name) {
-        Class<?> current = clazz;
-        while (current != null && current != Object.class) {
-            try {
-                return current.getDeclaredField(name);
-            } catch (NoSuchFieldException e) {
-                current = current.getSuperclass();
-            }
-        }
-        return null;
-    }
-
     /**
      * Read comma-separated string array from preferences.
      */

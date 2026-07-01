@@ -5,6 +5,9 @@ import android.util.Log;
 
 import com.qimian233.ztool.hook.HookInit;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -164,5 +167,46 @@ public abstract class BaseHookModule {
         if (this.xposed != null) {
             this.xposed.log(6, TAG, sb.toString());
         }
+    }
+
+    // ── helpers ────────────────────────────────────────────────
+
+    /*
+     * XposedHelpers-style field finder. It looks up fields recursively in current class and its parent classes.
+     *
+     * Always ensure you have filters to avoid unexpected field hits.
+     */
+    public static Field findField(Class<?> startClass, String name) throws NoSuchFieldException {
+        Class<?> current = startClass;
+        while (current != null) {
+            try {
+                Field field = current.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(name + " in " + startClass);
+    }
+
+    /*
+     * XposedHelpers-style method finder. It looks up methods recursively in current class and its parent classes.
+     *
+     * Always ensure you have filters to avoid unexpected method hits.
+     */
+    public static Method findMethod(Class<?> startClass, String name, Class<?>... parameterTypes)
+            throws NoSuchMethodException {
+        Class<?> current = startClass;
+        while (current != null) {
+            try {
+                Method method = current.getDeclaredMethod(name, parameterTypes);
+                method.setAccessible(true);
+                return method;
+            } catch (NoSuchMethodException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new NoSuchMethodException(name + " in " + startClass);
     }
 }
