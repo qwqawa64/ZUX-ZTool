@@ -39,43 +39,50 @@ public class CustomQsRoundCorner extends BaseHookModule {
         ClassLoader classLoader = param.getDefaultClassLoader();
         updateRoundCornerPrefs();
 
+        // Head-up tiles
         Method changeCornerRadiusMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.QSTileViewImpl")
                 .getDeclaredMethod("changeCornerRadius", float.class);
         this.xposed.hook(changeCornerRadiusMethod).intercept(chain -> chain.proceed(new Object[]{(float) headUpTileRoundCornerRadius}));
 
+        // Normal tiles
         Method updateRippleRadiusMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl")
                 .getDeclaredMethod("updateRippleRadius");
         this.xposed.hook(updateRippleRadiusMethod).intercept(chain -> {
             Object result = chain.proceed();
-            Class<?> cl = chain.getThisObject().getClass();
+            try {
+                Class<?> cl = chain.getThisObject().getClass();
 
-            RippleDrawable rippleDrawable =
-                    (RippleDrawable) cl.getDeclaredField("qsTileBackground").get(chain.getThisObject());
+                RippleDrawable rippleDrawable =
+                        (RippleDrawable) findField(cl, "qsTileBackground").get(chain.getThisObject());
 
-            if (rippleDrawable != null) {
-                Drawable mask = rippleDrawable.findDrawableByLayerId(android.R.id.mask);
-                if (mask instanceof GradientDrawable) {
-                    ((GradientDrawable) mask).setCornerRadius((float) normalTileRoundCornerRadius);
-                }
-            }
-
-            LayerDrawable backgroundDrawable =
-                    (LayerDrawable) cl.getDeclaredField("backgroundDrawable").get(chain.getThisObject());
-
-            if (backgroundDrawable != null) {
-                int count = backgroundDrawable.getNumberOfLayers();
-                for (int i = 0; i < count; i++) {
-                    Drawable layer = backgroundDrawable.getDrawable(i);
-                    if (layer instanceof GradientDrawable) {
-                        ((GradientDrawable) layer).setCornerRadius((float) normalTileRoundCornerRadius);
+                if (rippleDrawable != null) {
+                    Drawable mask = rippleDrawable.findDrawableByLayerId(android.R.id.mask);
+                    if (mask instanceof GradientDrawable) {
+                        ((GradientDrawable) mask).setCornerRadius((float) normalTileRoundCornerRadius);
                     }
                 }
+
+                LayerDrawable backgroundDrawable =
+                        (LayerDrawable) findField(cl, "backgroundDrawable").get(chain.getThisObject());
+
+                if (backgroundDrawable != null) {
+                    int count = backgroundDrawable.getNumberOfLayers();
+                    for (int i = 0; i < count; i++) {
+                        Drawable layer = backgroundDrawable.getDrawable(i);
+                        if (layer instanceof GradientDrawable) {
+                            ((GradientDrawable) layer).setCornerRadius((float) normalTileRoundCornerRadius);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logError("Cannot set normal tile round corner radius!", e);
             }
             return result;
         });
 
+        // Sliders
         Class<?> toggleSliderViewClass = classLoader.loadClass("com.android.systemui.settings.ToggleSliderView");
 
         Method refreshSeekBarMethod = toggleSliderViewClass.getDeclaredMethod("refreshSeekBar", ProgressBar.class);
