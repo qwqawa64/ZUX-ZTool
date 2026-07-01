@@ -1,10 +1,10 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
 import android.text.Html;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
@@ -17,6 +17,7 @@ import java.util.WeakHashMap;
  * SystemUI网络速度显示Hook模块
  * 功能：在状态栏显示实时上下行网络速度，支持自定义文本大小和显示格式
  */
+@SuppressLint("PrivateApi")
 public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
@@ -88,10 +89,13 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
             // 调整文本大小
             try {
                 // 获取当前文本大小并增加
-                float currentTextSize = (Float) cl.getDeclaredMethod("getTextSize").invoke(networkSpeedView);
+                Method getTextSizeMethod = findMethod(cl, "getTextSize");
+                Object textSizeResult = getTextSizeMethod.invoke(networkSpeedView);
+                float currentTextSize = textSizeResult != null ? (Float) textSizeResult : 8.0f;
                 float newTextSize = currentTextSize * 1.1f; // 增加10%
 
-                cl.getDeclaredMethod("setTextSize", int.class, float.class).invoke(
+                Method setTextSizeMethod = findMethod(cl, "setTextSize", int.class, float.class);
+                setTextSizeMethod.invoke(
                         networkSpeedView, android.util.TypedValue.COMPLEX_UNIT_PX, newTextSize);
 
                 if (DEBUG) {
@@ -143,11 +147,12 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
         try {
             Class<?> handlerCls = handler.getClass();
             // 移除之前的消息
-            handlerCls.getDeclaredMethod("removeMessages", int.class).invoke(handler, 10);
+            findMethod(handlerCls, "removeMessages", int.class).invoke(handler, 10);
 
             // 检查是否应该显示网速
-            boolean shouldShow = (boolean) networkSpeedView.getClass()
+            Object isIconVisibleResult = networkSpeedView.getClass()
                     .getDeclaredMethod("isIconVisible").invoke(networkSpeedView);
+            boolean shouldShow = Boolean.TRUE.equals(isIconVisibleResult);
 
             if (!shouldShow) {
                 return;
@@ -183,12 +188,14 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     }
 
                     // 发送显示消息
-                    Object message = handlerCls.getDeclaredMethod("obtainMessage").invoke(handler);
-                    Class<?> msgCls = message.getClass();
-                    msgCls.getDeclaredField("what").setInt(message, 1);
-                    msgCls.getDeclaredField("obj").set(message, new long[]{downSpeed, upSpeed});
-                    handlerCls.getDeclaredMethod("sendMessage", android.os.Message.class)
-                            .invoke(handler, message);
+                    Object message = findMethod(handlerCls, "obtainMessage").invoke(handler);
+                    if (message != null) {
+                        Class<?> msgCls = message.getClass();
+                        msgCls.getDeclaredField("what").setInt(message, 1);
+                        msgCls.getDeclaredField("obj").set(message, new long[]{downSpeed, upSpeed});
+                        findMethod(handlerCls, "sendMessage", android.os.Message.class)
+                                .invoke(handler, message);
+                    }
 
                     // 更新数据
                     lastRxBytesMap.put(networkSpeedView, currentRxBytes);
@@ -198,7 +205,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
             }
 
             // 安排下一次更新（3秒后）
-            handlerCls.getDeclaredMethod("sendEmptyMessageDelayed", int.class, long.class)
+            findMethod(handlerCls, "sendEmptyMessageDelayed", int.class, long.class)
                     .invoke(handler, 10, 3000L);
 
         } catch (Throwable t) {
@@ -223,7 +230,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     "<font size='5'><b>▾ " + downText + "</b></font>";
 
             // 使用HTML格式设置文本
-            networkSpeedView.getClass().getDeclaredMethod("setText", CharSequence.class)
+            findMethod(networkSpeedView.getClass(), "setText", CharSequence.class)
                     .invoke(networkSpeedView,
                             android.text.Html.fromHtml(displayText, Html.FROM_HTML_MODE_LEGACY));
 
@@ -270,8 +277,9 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
     private long getTotalRxBytes() {
         try {
-            return (Long) android.net.TrafficStats.class
+            Object result = android.net.TrafficStats.class
                     .getDeclaredMethod("getTotalRxBytes").invoke(null);
+            return result != null ? (Long) result : 0L;
         } catch (Throwable t) {
             logError("Error getting Rx bytes", t);
             return 0;
@@ -280,8 +288,9 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
     private long getTotalTxBytes() {
         try {
-            return (Long) android.net.TrafficStats.class
+            Object result = android.net.TrafficStats.class
                     .getDeclaredMethod("getTotalTxBytes").invoke(null);
+            return result != null ? (Long) result : 0L;
         } catch (Throwable t) {
             logError("Error getting Tx bytes", t);
             return 0;
