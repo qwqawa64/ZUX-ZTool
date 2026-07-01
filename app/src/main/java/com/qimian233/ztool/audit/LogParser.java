@@ -111,6 +111,8 @@ public class LogParser {
                 Pattern.compile("\\[disguise_TB322FC]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_GameAudio",
                 Pattern.compile("\\[disable_GameAudio]\\s*(.*)"));
+        MODULE_PATTERNS.put("disable_GameAudio_app",
+                Pattern.compile("\\[disable_GameAudio_app]\\s*(.*)"));
         MODULE_PATTERNS.put("Fix_SocTemp",
                 Pattern.compile("\\[Fix_SocTemp]\\s*(.*)"));
 
@@ -229,6 +231,7 @@ public class LogParser {
         MODULE_NAMES.put("Fix_CpuClock", "CPU频率修复");
         MODULE_NAMES.put("disguise_TB322FC", "设备型号伪装");
         MODULE_NAMES.put("disable_GameAudio", "禁用游戏音频");
+        MODULE_NAMES.put("disable_GameAudio_app", "禁用游戏音频（App层）");
         MODULE_NAMES.put("Fix_SocTemp", "SOC温度修复");
 
         // OTA相关
@@ -634,7 +637,7 @@ public class LogParser {
 
         // 游戏工具相关
         categories.put("游戏工具", Arrays.asList(
-                "Fix_CpuClock", "disguise_TB322FC", "disable_GameAudio", "Fix_SocTemp"
+                "Fix_CpuClock", "disguise_TB322FC", "disable_GameAudio", "disable_GameAudio_app", "Fix_SocTemp"
         ));
 
         // 包安装器相关

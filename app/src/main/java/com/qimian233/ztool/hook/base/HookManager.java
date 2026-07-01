@@ -6,6 +6,7 @@ import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook;
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
+import com.qimian233.ztool.hook.modules.gametool.DisableGameAudioApp;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
@@ -146,6 +147,7 @@ public class HookManager {
         // ── GameTool (target: com.zui.game.service) ──
         registerHookModule(new AutoMistakeTouchHook());
         registerHookModule(new DisableGameAudio());
+        registerHookModule(new DisableGameAudioApp());
         registerHookModule(new DeviceModelDisguiseHook());
         registerHookModule(new CpuFrequencyFix());
         registerHookModule(new SocTemperatureFix());

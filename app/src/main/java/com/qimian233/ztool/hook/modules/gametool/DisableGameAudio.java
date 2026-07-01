@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -13,6 +12,7 @@ import java.lang.reflect.Method;
  * 禁用游戏音频优化Hook模块
  * 拦截系统游戏音频属性设置，防止游戏模式干扰音频体验
  */
+@SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
 public class DisableGameAudio extends BaseHookModule {
 
     private static final String TARGET_PROPERTY = "sys.audio.game_name";
@@ -33,17 +33,17 @@ public class DisableGameAudio extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
-        if ("android".equals(packageName)) {
-            hookSystemProperties(classLoader);
-            hookPhoneWindowManager(classLoader);
-            hookAudioManager(classLoader);
-        } else {
-            // 针对特定游戏的Hook
-            hookGameApp(classLoader, packageName);
-        }
+        // App-layer hooks moved to DisableGameAudioApp
     }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
+        ClassLoader classLoader = param.getClassLoader();
+        hookSystemProperties(classLoader);
+        hookPhoneWindowManager(classLoader);
+        hookAudioManager(classLoader);
+    }
+
 
     /**
      * 方法1：直接 Hook SystemProperties.set 方法
@@ -99,7 +99,7 @@ public class DisableGameAudio extends BaseHookModule {
                 try {
                     targetClass = classLoader.loadClass("com.android.server.policy.PhoneWindowManager$2");
                 } catch (ClassNotFoundException e) {
-                    targetClass = null;
+                    log("Unable to find PhoneWindowManager internal class");
                 }
                 if (targetClass == null) {
                     log("Failed to find target class for PhoneWindowManager");
@@ -116,10 +116,7 @@ public class DisableGameAudio extends BaseHookModule {
                 String pkgName = (String) chain.getArg(0);
                 if (DEBUG) log("ZuiGameAppStateListener.onGameAppStart for: " + pkgName);
 
-                if (shouldBlockGameAudio()) {
-                    if (DEBUG) log("Blocking game audio for: " + pkgName);
-                    // 不阻止方法执行，但会在 SystemProperties.set 层拦截
-                }
+                // 不阻止方法执行，但会在 SystemProperties.set 层拦截
                 return chain.proceed();
             });
 
@@ -166,52 +163,4 @@ public class DisableGameAudio extends BaseHookModule {
         }
     }
 
-    /**
-     * 针对特定游戏的Hook
-     */
-    private void hookGameApp(ClassLoader classLoader, String packageName) {
-        try {
-            log("Hooking game app: " + packageName);
-
-            // 在游戏启动时主动清除游戏音频属性
-            Class<?> activityClass = classLoader.loadClass("android.app.Activity");
-            Method onCreateMethod = activityClass.getDeclaredMethod("onCreate", android.os.Bundle.class);
-            this.xposed.hook(onCreateMethod).intercept(chain -> {
-                chain.proceed();
-                // 清除游戏音频属性
-                clearGameAudioProperties();
-                if (DEBUG) log("Cleared game audio properties in " + packageName);
-                return null;
-            });
-
-        } catch (Throwable t) {
-            logError("Failed to hook game app", t);
-        }
-    }
-
-    /**
-     * 判断是否应该阻止游戏音频设置
-     */
-    private boolean shouldBlockGameAudio() {
-        // 阻止所有游戏的音频优化设置
-        // 可以根据需要修改为特定包名过滤
-        return true;
-    }
-
-    /**
-     * 主动清除游戏音频属性
-     */
-    private void clearGameAudioProperties() {
-        try {
-            // 使用反射调用 SystemProperties.set 来清除属性
-            @SuppressLint("PrivateApi") Class<?> systemPropertiesClass = Class.forName("android.os.SystemProperties");
-            Method setMethod = systemPropertiesClass.getMethod("set", String.class, String.class);
-            setMethod.invoke(null, TARGET_PROPERTY, "");
-
-            log("Manually cleared " + TARGET_PROPERTY);
-
-        } catch (Exception e) {
-            logError("Failed to clear properties", e);
-        }
-    }
 }
