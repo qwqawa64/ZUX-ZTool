@@ -4,7 +4,8 @@
 
 - Generate your commit message as `.gitmessage` indicates.
 - Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
-- Java is available in most scenarios as this project needs Gradle. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
+- Java is available **only on Windows** in most scenarios. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
+- If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `cmd /c ".\gradlew.bat assembleDebug"`
 
 ## Project Summary
 
