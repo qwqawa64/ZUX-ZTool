@@ -2,9 +2,9 @@ package com.qimian233.ztool.hook.modules.systemFramework;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import android.content.SharedPreferences;
+import android.annotation.SuppressLint;
 import android.text.TextUtils;
-import io.github.libxposed.api.XposedInterface;
+
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Field;
@@ -15,6 +15,8 @@ import java.lang.reflect.Method;
  * 功能：扩展AI触发符号，强制开启LGSI AI功能特性
  * 作用域：全局（动态检测类是否存在）
  */
+
+@SuppressLint("PrivateApi")
 public class AiInputExpand extends BaseHookModule {
 
     public AiInputExpand() {}
@@ -41,7 +43,6 @@ public class AiInputExpand extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
 
         // 核心逻辑分为两部分，分别放在try-catch块中，互不影响
 
@@ -73,7 +74,7 @@ public class AiInputExpand extends BaseHookModule {
         }
 
         // 定义新的触发符号数组，使用新的符号
-        String[] newSignArray = getPrefStringArray("AI_INPUT_EXPAND_SIGNS");
+        String[] newSignArray = getPrefStringArray();
 
         // 修改静态常量数组 AI_COMMAND_SIGN_ARRAYS
         setStaticObjectField(targetClass, "AI_COMMAND_SIGN_ARRAYS", newSignArray);
@@ -108,11 +109,9 @@ public class AiInputExpand extends BaseHookModule {
 
     private static void setStaticObjectField(Class<?> clazz, String fieldName, Object value) {
         try {
-            Field field = findField(clazz, fieldName);
-            if (field != null) {
-                field.setAccessible(true);
-                field.set(null, value);
-            }
+            Field field = findField(clazz, fieldName); // null-safe, a check is not required
+            field.setAccessible(true);
+            field.set(null, value);
         } catch (Throwable ignored) {
         }
     }
@@ -120,10 +119,10 @@ public class AiInputExpand extends BaseHookModule {
     /**
      * Read comma-separated string array from preferences.
      */
-    private String[] getPrefStringArray(String key) {
+    private String[] getPrefStringArray() {
         String value;
         try {
-            value = this.xposed.getRemotePreferences("xposed_module_config").getString(key, "");
+            value = this.xposed.getRemotePreferences("xposed_module_config").getString("AI_INPUT_EXPAND_SIGNS", "");
         } catch (Throwable t) {
             value = "";
         }
