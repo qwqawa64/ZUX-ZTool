@@ -149,8 +149,6 @@ public class LogParser {
                 Pattern.compile("\\[Split_Screen_mandatory]\\s*(.*)"));
         MODULE_PATTERNS.put("remove_blacklist",
                 Pattern.compile("\\[remove_blacklist]\\s*(.*)"));
-        MODULE_PATTERNS.put("AlwaysDisplaySuggestion",
-                Pattern.compile("\\[AlwaysDisplaySuggestion]\\s*(.*)"));
         MODULE_PATTERNS.put("app_details",
                 Pattern.compile("\\[app_details]\\s*(.*)"));
         MODULE_PATTERNS.put("about_device_info",
@@ -253,7 +251,6 @@ public class LogParser {
         MODULE_NAMES.put("PermissionControllerHook", "权限控制器");
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
-        MODULE_NAMES.put("AlwaysDisplaySuggestion", "始终显示建议");
         MODULE_NAMES.put("app_details", "应用详细信息");
         MODULE_NAMES.put("about_device_info", "关于设备信息");
         MODULE_NAMES.put("ztool_settings_entry", "ZTool 设置入口");
@@ -655,8 +652,8 @@ public class LogParser {
         // 设置相关
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
-                "Split_Screen_mandatory", "remove_blacklist", "AlwaysDisplaySuggestion",
-                "app_details", "about_device_info", "ztool_settings_entry"
+                "Split_Screen_mandatory", "remove_blacklist", "app_details",
+                "about_device_info", "ztool_settings_entry"
         ));
 
         // 启动器相关

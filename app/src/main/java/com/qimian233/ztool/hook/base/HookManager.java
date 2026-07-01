@@ -26,7 +26,6 @@ import com.qimian233.ztool.hook.modules.packageinstaller.packageInstallerStyleHo
 import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
 import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook;
-import com.qimian233.ztool.hook.modules.setting.AlwaysDisplaySuggestion;
 import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
 import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo;
 import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
@@ -122,7 +121,6 @@ public class HookManager {
         registerHookModule(new PermissionControllerHook());
         registerHookModule(new OwnerInfoHook());
         registerHookModule(new SplitScreenMandatory());
-        registerHookModule(new AlwaysDisplaySuggestion());
         registerHookModule(new AppInfoHeaderDetailsHook());
         registerHookModule(new CustomizeAboutDeviceInfo());
         registerHookModule(new ZToolSettingsEntryHook());
