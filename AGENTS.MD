@@ -2,6 +2,7 @@
 
 ## Agent Quick Start
 
+- Generate your commit message as `.gitmessage` indicates.
 - Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
 - Java is available in most scenarios as this project needs Gradle. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
 
