@@ -1,10 +1,10 @@
 package com.qimian233.ztool.hook.modules.setting;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Field;
@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
  * 允许显示杜比音效Hook模块
  * 功能：绕过耳机检测，使杜比音效在非耳机状态下可用
  */
+@SuppressLint("PrivateApi")
 public class AllowDisplayDolbyHook extends BaseHookModule {
 
     public AllowDisplayDolbyHook() {}
@@ -28,7 +29,6 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
         return new String[]{
                 "com.android.settings",
                 "com.android.systemui",
-                "com.zui.game.service"
         };
     }
 
@@ -42,9 +42,6 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                 break;
             case "com.android.systemui":
                 hookSystemUIPackage(classLoader);
-                break;
-            case "com.zui.game.service":
-                hookGameServicePackage(classLoader);
                 break;
         }
     }
@@ -94,8 +91,8 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                 });
                 log("Successfully hooked Android 14 DolbyAtmosFragment methods");
             }
-            // Android 15 (SDK 35)
-            else if (android.os.Build.VERSION.SDK_INT == 35) {
+            // Android 15+ (SDK 35+)
+            else if (android.os.Build.VERSION.SDK_INT >= 35) {
                 // Hook 工具类中的耳机连接检测
                 Method isHeadsetMethod = classLoader
                         .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosUtils")
@@ -111,8 +108,8 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                     try {
                         Object arg0 = chain.getArg(0);
                         if (arg0 != null) {
-                            Method setSummary = arg0.getClass()
-                                    .getDeclaredMethod("setSummary", CharSequence.class);
+                            Method setSummary = findMethod(arg0.getClass(),
+                                    "setSummary", CharSequence.class);
                             setSummary.invoke(arg0, (Object) null);
                             log("Successfully cleared preference summary in updateState");
                         }
@@ -163,15 +160,5 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
     /**
      * Hook 游戏服务中的杜比音效处理
      */
-    private void hookGameServicePackage(ClassLoader classLoader) {
-        try {
-            Method m = classLoader
-                    .loadClass("com.zui.game.service.util.DolbyUtils")
-                    .getDeclaredMethod("handleDolbyGameSound", Context.class, Integer.TYPE);
-            this.xposed.hook(m).intercept(chain -> null);
-            log("Successfully hooked DolbyUtils.handleDolbyGameSound - disabled game sound processing");
-        } catch (Throwable t) {
-            logError("Failed to hook GameService package", t);
-        }
-    }
+
 }

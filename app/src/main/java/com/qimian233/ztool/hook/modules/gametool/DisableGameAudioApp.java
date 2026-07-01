@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
@@ -27,7 +28,7 @@ public class DisableGameAudioApp extends BaseHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "android"  // 系统进程
+                "com.zui.game.service"  // 系统进程
         };
     }
 
@@ -36,6 +37,7 @@ public class DisableGameAudioApp extends BaseHookModule {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
         hookGameApp(classLoader, packageName);
+        hookGameServicePackage(classLoader);
     }
 
     /**
@@ -75,6 +77,19 @@ public class DisableGameAudioApp extends BaseHookModule {
 
         } catch (Exception e) {
             logError("Failed to clear properties", e);
+        }
+    }
+
+    private void hookGameServicePackage(ClassLoader classLoader) {
+        try {
+            log("Start processing DolbyUtils.");
+            Method m = classLoader
+                    .loadClass("com.zui.game.service.util.DolbyUtils")
+                    .getDeclaredMethod("handleDolbyGameSound", Context.class, Integer.TYPE);
+            this.xposed.hook(m).intercept(chain -> null);
+            log("Successfully hooked DolbyUtils.handleDolbyGameSound - disabled game sound processing");
+        } catch (Throwable t) {
+            logError("Failed to hook GameService package", t);
         }
     }
 }
