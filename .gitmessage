@@ -9,7 +9,7 @@
 #             | 适配新应用版本，修复 Hook 失效（兼容性更新）
 #   module    - Module's own UI, switches, preferences, or internal features
 #             | 模块自身的界面、开关、偏好设置或内部功能
-#   repo      - Repository / ViewModel / View (frontend data layer) changes
+#   frontend  - Repository / ViewModel / View (frontend data layer) changes
 #             | Repository / ViewModel / View（前端数据层）变更
 #   base      - Base classes, framework-level modifications, or core abstractions
 #             | 基类、框架级修改或核心抽象层改动
@@ -53,8 +53,8 @@
 #   module: add dark mode auto-switch toggle
 #   module: 增加深色模式自动切换开关
 #
-#   repo: refactor hook status LiveData to StateFlow
-#   repo: 重构 Hook 状态 LiveData 为 StateFlow
+#   frontend: refactor hook status LiveData to StateFlow
+#   frontend: 重构 Hook 状态 LiveData 为 StateFlow
 #
 #   base: improve exception handling in IXposedHookLoadPackage
 #   base: 优化 IXposedHookLoadPackage 的异常捕获
