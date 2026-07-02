@@ -175,4 +175,5 @@ dependencies {
     implementation(libs.lunar)
     implementation(libs.hiddenapibypass)
     implementation(libs.gson)
+    implementation(libs.dexkit)
 }
