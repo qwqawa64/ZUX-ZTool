@@ -872,4 +872,6 @@
     <string name="lsposed_service_protector_title">LSPosed service protection</string>
     <string name="lsposed_service_protector_enable_title">Enable LSPosed service protection</string>
     <string name="lsposed_service_protector_enable_summary">Try this if you encounter unexpected activation fault of this module.</string>
+    <string name="auto_accept_file_transfer">Accept file transfer request automatically</string>
+    <string name="auto_accept_file_transfer_summary">You may receive some file by accident after enabling this feature</string>
 </resources>

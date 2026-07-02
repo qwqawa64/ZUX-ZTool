@@ -927,4 +927,6 @@
     <string name="disable_dock_bar_summary">并无法换取更充裕的桌面网格空间，和 Dock 栏扩容冲突</string>
     <string name="disable_dock_warning_title">重要警告</string>
     <string name="disable_dock_warning_message">必须把所有固定在 Dock 栏的应用全部挪出来再重启作用域。如果不这么做，这些应用会被“吞掉”，假如本模块恰好位列其中的话......</string>
+    <string name="auto_accept_file_transfer">自动接受互传请求</string>
+    <string name="auto_accept_file_transfer_summary">可能会导致您意外收到某些文件</string>
 </resources>

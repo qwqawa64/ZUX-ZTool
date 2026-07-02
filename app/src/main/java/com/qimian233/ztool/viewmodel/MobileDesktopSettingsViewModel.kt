@@ -31,6 +31,11 @@ class MobileDesktopSettingsViewModel(
         repository.saveSkipExposeWarn(enabled)
     }
 
+    fun setAutoAcceptFileTransfer(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(autoAcceptFileTransfer = enabled)
+        repository.saveAutoAcceptFileTransfer(enabled)
+    }
+
     fun showRestartConfirmDialog() {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = true)
     }
@@ -57,4 +62,5 @@ class MobileDesktopSettingsViewModel(
 data class MobileDesktopSettingsUiState(
     val showRestartConfirmDialog: Boolean = false,
     val skipExposeWarn: Boolean = false,
+    val autoAcceptFileTransfer: Boolean = false,
 )

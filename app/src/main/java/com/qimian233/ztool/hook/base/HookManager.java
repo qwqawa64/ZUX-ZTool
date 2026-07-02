@@ -14,6 +14,7 @@ import com.qimian233.ztool.hook.modules.launcher.DisableDockBar;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
+import com.qimian233.ztool.hook.modules.mobiledesktop.AutoAcceptFileTransferHook;
 import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
 import com.qimian233.ztool.hook.modules.ota.LenovoOTAHook;
@@ -165,6 +166,7 @@ public class HookManager {
         registerHookModule(new EnableAutorunByDefault());
 
         // ── MobileDesktop (target: com.motorola.mobiledesktop) ──
+        registerHookModule(new AutoAcceptFileTransferHook());
         registerHookModule(new BypassShareWarningHook());
 
         // 注入 XposedInterface
