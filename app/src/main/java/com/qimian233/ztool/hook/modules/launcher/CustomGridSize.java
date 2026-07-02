@@ -1,16 +1,17 @@
 package com.qimian233.ztool.hook.modules.launcher;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
+@SuppressLint("PrivateApi")
 public class CustomGridSize extends BaseHookModule {
     private static int CUSTOM_COLUMNS = 8;
     private static int CUSTOM_ROWS = 6;
@@ -28,7 +29,6 @@ public class CustomGridSize extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         if (DEBUG) log("Load CustomGridSize!");
         // We directly hook the constructor of GridOption class
         // But before hook, let us load custom grid size from shared prefs first
@@ -47,10 +47,38 @@ public class CustomGridSize extends BaseHookModule {
             // Find arg class to construct correct method signature
             Class<?> contextClass = Context.class;
             Class<?> attributeSetClass = classLoader.loadClass("android.util.AttributeSet");
-            Class<?> displayInfoClass = classLoader.loadClass("com.android.launcher3.util.DisplayController$Info");
-
-            Constructor<?> ctor = gridOptionClass.getDeclaredConstructor(
-                    contextClass, attributeSetClass, displayInfoClass);
+            Class<?> displayInfoClass = null;
+            try {
+                displayInfoClass = classLoader.loadClass("com.android.launcher3.util.DisplayController$Info");
+            } catch (ClassNotFoundException ignored) {
+                log("Unable to find DisplayInfo class");
+            }
+            Constructor<?> ctor;
+            if (displayInfoClass != null) {
+                try {
+                    ctor = gridOptionClass.getDeclaredConstructor(
+                            contextClass, attributeSetClass, displayInfoClass);
+                } catch (Exception e) {
+                    logError("Exception happened when trying to find GridOption class with constructor signature Context, AttributeSet, DisplayController$Info: ", e);
+                    try {
+                        ctor = gridOptionClass.getDeclaredConstructor(
+                                contextClass, attributeSetClass);
+                    } catch (Exception ignored) {
+                        log("Failed to get constructor with alternate way, exiting.");
+                        return;
+                    }
+                }
+            } else {
+                log("Cannot find DisplayController$Info, use alternate constructor signature.");
+                try {
+                    ctor = gridOptionClass.getDeclaredConstructor(
+                            contextClass, attributeSetClass);
+                }
+                catch (Exception e) {
+                    logError("Failed to find constructor, exiting.", e);
+                    return;
+                }
+            }
             this.xposed.hook(ctor).intercept(chain -> {
                 chain.proceed();
                 try {
