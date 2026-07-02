@@ -1,13 +1,29 @@
 package com.qimian233.ztool.hook.modules.launcher;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
-import java.lang.reflect.Method;
+import org.luckypray.dexkit.DexKitBridge;
+import org.luckypray.dexkit.query.FindMethod;
+import org.luckypray.dexkit.query.matchers.MethodMatcher;
+import org.luckypray.dexkit.result.MethodData;
 
+import java.lang.reflect.Method;
+import java.util.List;
+
+/**
+ * 清理全局搜索 — 移除热词视图和搜索推荐。
+ * <p>
+ * 使用 DEXKit 通过方法签名动态查找混淆后的方法名（K0/T0/E0 等），
+ * 不再依赖硬编码名称。
+ * </p>
+ */
 public class CleanGlobalSearch extends BaseHookModule {
+
+    private static final String TARGET_CLASS = "com.zui.launcher.GlobalSearchView";
 
     private boolean NO_SEARCH_BOX_RECOMMEND = false;
     private boolean NO_HOT_WORD_VIEW = false;
@@ -27,50 +43,110 @@ public class CleanGlobalSearch extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         getPreferenceSettings();
-        String[] methodNames = {"K0", "T0"};
-        // Remove hot word view, key name: remove_hot_word_view
+
+        DexKitBridge bridge = DexKitHelper.INSTANCE.getBridgeForClass(
+                classLoader, TARGET_CLASS);
+
+        // ── 移除热词视图 ──────────────────────────────────────
         if (this.NO_HOT_WORD_VIEW) {
-            for (String methodName : methodNames) {
-                try {
-                    Class<?> globalSearchViewClass = classLoader.loadClass("com.zui.launcher.GlobalSearchView");
-                    Method method = globalSearchViewClass.getDeclaredMethod(methodName);
-                    this.xposed.hook(method).intercept(chain -> null);
-                    log("Successfully hooked hotword inflation method with method name " + methodName + "!");
-                    break;
-                } catch (NoSuchMethodError | Exception e) {
-                    log("Unable to find global search hotword inflation method! Try alternate method name!");
-                }
-            }
             try {
-                Class<?> globalSearchViewClass = classLoader.loadClass("com.zui.launcher.GlobalSearchView");
-                Class<?> listClass = classLoader.loadClass("java.util.List");
-                Method e0Method = globalSearchViewClass.getDeclaredMethod("E0", listClass);
-                this.xposed.hook(e0Method).intercept(chain -> null);
-            } catch (NoSuchMethodError | Exception ignored) {
-                log("Unable to find com.zui.launcher.GlobalSearchView#E0.");
+                Class<?> globalSearchViewClass = classLoader.loadClass(TARGET_CLASS);
+
+                // 通过 DEXKit 查找无参 void 方法（混淆后的 K0/T0）
+                List<String> hotwordMethodNames = new java.util.ArrayList<>();
+                if (bridge != null) {
+                    try {
+                        List<MethodData> methods = bridge.findMethod(FindMethod.create()
+                                .searchPackages("com.zui.launcher")
+                                .matcher(MethodMatcher.create()
+                                        .paramTypes()  // 无参数
+                                        .returnType("void")
+                                        .declaredClass(TARGET_CLASS)
+                                )
+                        );
+                        for (MethodData md : methods) {
+                            hotwordMethodNames.add(md.getName());
+                        }
+                    } catch (Throwable ignored) {}
+                }
+                // 回退：保留原有的硬编码名称列表
+                if (hotwordMethodNames.isEmpty()) {
+                    hotwordMethodNames.add("K0");
+                    hotwordMethodNames.add("T0");
+                }
+
+                boolean hooked = false;
+                for (String methodName : hotwordMethodNames) {
+                    try {
+                        Method method = globalSearchViewClass.getDeclaredMethod(methodName);
+                        this.xposed.hook(method).intercept(chain -> null);
+                        log("Hooked hotword inflation method: " + methodName);
+                        hooked = true;
+                        break;
+                    } catch (NoSuchMethodError | Exception e) {
+                        log("Method " + methodName + " not found, trying next...");
+                    }
+                }
+                if (!hooked) {
+                    log("Unable to find any hotword inflation method");
+                }
+
+                // 查找 E0(List) — 单参数 List，void 返回
+                String e0Name = "E0";
+                if (bridge != null) {
+                    try {
+                        List<MethodData> e0Methods = bridge.findMethod(FindMethod.create()
+                                .searchPackages("com.zui.launcher")
+                                .matcher(MethodMatcher.create()
+                                        .paramTypes("java.util.List")
+                                        .returnType("void")
+                                        .declaredClass(TARGET_CLASS)
+                                )
+                        );
+                        if (!e0Methods.isEmpty()) {
+                            e0Name = e0Methods.get(0).getName();
+                        }
+                    } catch (Throwable ignored) {}
+                }
+
+                try {
+                    Class<?> listClass = classLoader.loadClass("java.util.List");
+                    Method e0Method = globalSearchViewClass.getDeclaredMethod(e0Name, listClass);
+                    this.xposed.hook(e0Method).intercept(chain -> null);
+                    log("Hooked hotword data method: " + e0Name);
+                } catch (NoSuchMethodError | Exception ignored) {
+                    log("Unable to find GlobalSearchView hotword data method");
+                }
+            } catch (Throwable t) {
+                logError("Failed to install hotword removal hooks", t);
             }
         }
+
+        // ── 移除搜索框推荐 ──────────────────────────────────────
         if (this.NO_SEARCH_BOX_RECOMMEND) {
             try {
-                Class<?> globalSearchViewClass = classLoader.loadClass("com.zui.launcher.GlobalSearchView");
+                Class<?> globalSearchViewClass = classLoader.loadClass(TARGET_CLASS);
+                // setHotWordHint 不是混淆的，直接使用
                 Method setHotWordHintMethod = globalSearchViewClass.getDeclaredMethod("setHotWordHint");
                 this.xposed.hook(setHotWordHintMethod).intercept(chain -> null);
+                log("Hooked setHotWordHint");
             } catch (NoSuchMethodError | Exception ignored) {
-                log("Unable to find com.zui.launcher.GlobalSearchView#setHotWordHint.");
+                log("Unable to find GlobalSearchView#setHotWordHint.");
             }
         }
     }
 
     private void getPreferenceSettings() {
         try {
-            this.NO_HOT_WORD_VIEW = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("remove_hot_word_view", false);
+            this.NO_HOT_WORD_VIEW = this.xposed.getRemotePreferences("xposed_module_config")
+                    .getBoolean("remove_hot_word_view", false);
         } catch (Throwable t) {
             this.NO_HOT_WORD_VIEW = false;
         }
         try {
-            this.NO_SEARCH_BOX_RECOMMEND = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("remove_search_recommend", false);
+            this.NO_SEARCH_BOX_RECOMMEND = this.xposed.getRemotePreferences("xposed_module_config")
+                    .getBoolean("remove_search_recommend", false);
         } catch (Throwable t) {
             this.NO_SEARCH_BOX_RECOMMEND = false;
         }

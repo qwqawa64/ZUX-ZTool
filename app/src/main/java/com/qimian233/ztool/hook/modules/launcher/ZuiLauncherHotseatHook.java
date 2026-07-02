@@ -1,19 +1,26 @@
 package com.qimian233.ztool.hook.modules.launcher;
 
-import android.content.Context;
+import android.annotation.SuppressLint;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.DexKitHelper;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
+
+import org.luckypray.dexkit.DexKitBridge;
+import org.luckypray.dexkit.query.FindMethod;
+import org.luckypray.dexkit.query.matchers.MethodMatcher;
+import org.luckypray.dexkit.result.MethodData;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * ZUI Launcher Hotseat扩展Hook模块
  * 解除ZUI Launcher的Hotseat最大数量限制，支持添加更多应用到底部快捷栏
  */
+@SuppressLint("PrivateApi")
 public class ZuiLauncherHotseatHook extends BaseHookModule {
 
     private static final String LAUNCHER_PACKAGE = "com.zui.launcher";
@@ -73,9 +80,6 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
 
             // Hook 7: 数据库操作Hook
             hookDatabaseOperations(classLoader);
-
-            // Hook 8: LauncherAppState Hook
-            hookLauncherAppState(classLoader);
 
             // Hook 9: CellLayout相关方法
             hookCellLayoutMethods(classLoader);
@@ -282,8 +286,9 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                 return chain.proceed();
             });
 
-            // Hook b方法（维度检查）
-            Method bMethod = loaderCursorClass.getDeclaredMethod("b", itemInfoClass);
+            // Hook b方法（维度检查）— 通过 DEXKit 按签名动态查找
+            String bMethodName = findBMethodName(classLoader, itemInfoClass);
+            Method bMethod = loaderCursorClass.getDeclaredMethod(bMethodName, itemInfoClass);
             this.xposed.hook(bMethod).intercept(chain -> {
                 Object result = chain.proceed();
                 Object itemInfo = chain.getArg(0);
@@ -350,38 +355,6 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
     }
 
     /**
-     * Hook 8: LauncherAppState Hook
-     */
-    private void hookLauncherAppState(ClassLoader classLoader) {
-        try {
-            Class<?> launcherAppStateClass = classLoader.loadClass("com.android.launcher3.LauncherAppState");
-            Method getInstanceMethod = launcherAppStateClass.getDeclaredMethod("getInstance", Context.class);
-            this.xposed.hook(getInstanceMethod).intercept(chain -> {
-                Object launcherAppState = chain.proceed();
-                if (launcherAppState != null) {
-                    try {
-                        // 修改InvariantDeviceProfile的numDatabaseHotseatIcons
-                        Field invField = launcherAppStateClass.getDeclaredField("mInvariantDeviceProfile");
-                        invField.setAccessible(true);
-                        Object invDeviceProfile = invField.get(launcherAppState);
-                        Field numField = invDeviceProfile.getClass().getDeclaredField("numDatabaseHotseatIcons");
-                        numField.setAccessible(true);
-                        numField.set(invDeviceProfile, 20);
-                        log("修改InvariantDeviceProfile的numDatabaseHotseatIcons为20");
-                    } catch (NoSuchFieldError ignored) {
-                        log("修改InvariantDeviceProfile失败, 无法找到对应字段");
-                    } catch (Exception e) {
-                        logError("Unhandle exception happened when attempting to modify mInvariantDeviceProfile: ", e);
-                    }
-                }
-                return launcherAppState;
-            });
-        } catch (Throwable t) {
-            logError("Hook LauncherAppState失败", t);
-        }
-    }
-
-    /**
      * Hook 9: 修改CellLayout相关方法
      */
     private void hookCellLayoutMethods(ClassLoader classLoader) {
@@ -401,11 +374,36 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     log("强制找到Cell位置");
                     return true;
                 }
-                return result;
+                return true;
             });
 
         } catch (Throwable t) {
             logError("Hook CellLayout失败", t);
         }
+    }
+
+    /**
+     * 通过 DEXKit 在 LoaderCursor 中查找签名 (ItemInfo)→boolean 的混淆方法。
+     */
+    private String findBMethodName(ClassLoader classLoader, Class<?> itemInfoClass) {
+        DexKitBridge bridge = DexKitHelper.INSTANCE.getBridgeForClass(
+                classLoader, "com.android.launcher3.model.LoaderCursor");
+        if (bridge != null) {
+            try {
+                List<MethodData> methods = bridge.findMethod(FindMethod.create()
+                        .searchPackages("com.android.launcher3")
+                        .matcher(MethodMatcher.create()
+                                .paramTypes(itemInfoClass.getName())
+                                .returnType("boolean")
+                                .declaredClass("com.android.launcher3.model.LoaderCursor")
+                        )
+                );
+                for (MethodData md : methods) {
+                    if (DEBUG) log("DEXKit found dimension-check method: " + md.getName());
+                    return md.getName();
+                }
+            } catch (Throwable ignored) {}
+        }
+        return "b"; // 回退硬编码
     }
 }

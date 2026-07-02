@@ -4,11 +4,18 @@ import android.annotation.SuppressLint;
 import android.text.Html;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
+import org.luckypray.dexkit.DexKitBridge;
+import org.luckypray.dexkit.query.FindClass;
+import org.luckypray.dexkit.query.matchers.ClassMatcher;
+import org.luckypray.dexkit.result.ClassData;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -113,8 +120,8 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
     private void hookNetworkSpeedHandler(ClassLoader classLoader) {
         try {
-            // 找到 Handler 类
-            Class<?> handlerClass = classLoader.loadClass(NETWORK_SPEED_VIEW_CLASS + "$3");
+            // 通过 DEXKit 查找 NetworkSpeedView 的内部 Handler 类（替代硬编码 $3）
+            Class<?> handlerClass = findHandlerInnerClass(classLoader);
 
             Method handleMessageMethod = handlerClass.getDeclaredMethod("handleMessage", android.os.Message.class);
             this.xposed.hook(handleMessageMethod).intercept(chain -> {
@@ -295,5 +302,45 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
             logError("Error getting Tx bytes", t);
             return 0;
         }
+    }
+
+    /**
+     * 通过反射查找 NetworkSpeedView 的内部 Handler 子类。
+     * 遍历可能的内部类索引，替代硬编码的 $3。
+     */
+    private Class<?> findHandlerInnerClass(ClassLoader classLoader) {
+        // 先尝试 DEXKit 查找 Handler 子类
+        DexKitBridge bridge = DexKitHelper.INSTANCE.getBridgeForClass(
+                classLoader, NETWORK_SPEED_VIEW_CLASS);
+        if (bridge != null) {
+            try {
+                java.util.List<ClassData> matches = bridge.findClass(FindClass.create()
+                        .searchPackages(SYSTEMUI_PACKAGE)
+                        .matcher(ClassMatcher.create()
+                                .superClass("android.os.Handler")
+                        )
+                );
+                for (ClassData cd : matches) {
+                    String name = cd.getName();
+                    if (name.startsWith(NETWORK_SPEED_VIEW_CLASS + "$")) {
+                        if (DEBUG) log("DEXKit found Handler inner class: " + name);
+                        return classLoader.loadClass(name);
+                    }
+                }
+            } catch (Throwable ignored) {}
+        }
+        // 回退：遍历常见内部类索引
+        for (int i = 1; i <= 10; i++) {
+            try {
+                Class<?> cls = classLoader.loadClass(NETWORK_SPEED_VIEW_CLASS + "$" + i);
+                // 验证是 Handler 子类（有 handleMessage 方法）
+                try {
+                    cls.getDeclaredMethod("handleMessage", android.os.Message.class);
+                    if (DEBUG) log("Found Handler inner class at index " + i);
+                    return cls;
+                } catch (NoSuchMethodException ignored) {}
+            } catch (ClassNotFoundException ignored) {}
+        }
+        throw new RuntimeException("Cannot find NetworkSpeedView Handler inner class");
     }
 }

@@ -4,13 +4,20 @@ import android.content.Context;
 import android.os.Build;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
+import org.luckypray.dexkit.DexKitBridge;
+import org.luckypray.dexkit.query.FindMethod;
+import org.luckypray.dexkit.query.matchers.MethodMatcher;
+import org.luckypray.dexkit.result.MethodData;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ZUI Launcher后台管理优化Hook模块
@@ -152,9 +159,10 @@ public class DisableForceStop extends BaseHookModule {
                 return chain.proceed();
             });
 
-            // Hook c方法 - 强制杀死进程的辅助方法
+            // Hook c方法 - 强制杀死进程的辅助方法（DEXKit 动态查找）
+            String cMethodName = findCMethodName(classLoader);
             Method cMethod = overviewUtilitiesClass.getDeclaredMethod(
-                    "c", Context.class, String.class, int.class);
+                    cMethodName, Context.class, String.class, int.class);
             this.xposed.hook(cMethod).intercept(chain -> {
                 String pkgName = (String) chain.getArg(1);
                 int uid = (int) chain.getArg(2);
@@ -214,12 +222,7 @@ public class DisableForceStop extends BaseHookModule {
             });
 
             // Hook AsyncTask子类的doInBackground方法 - 异步清理逻辑
-            Class<?> asyncTaskClass;
-            try {
-                asyncTaskClass = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities$a");
-            } catch (ClassNotFoundException e) {
-                asyncTaskClass = null;
-            }
+            Class<?> asyncTaskClass = findInnerClass(classLoader, "com.zui.launcher.util.OverviewUtilities");
 
             if (asyncTaskClass != null) {
                 Method doInBackgroundMethod = asyncTaskClass.getDeclaredMethod("doInBackground", Void[].class);
@@ -453,6 +456,66 @@ public class DisableForceStop extends BaseHookModule {
             // 所有方法都失败，返回null
         }
 
+        return null;
+    }
+
+    /**
+     * 通过 DEXKit 查找 OverviewUtilities 中签名 (Context, String, int)→void 的混淆方法名。
+     * 跳过已知的非混淆方法 removeAppProcess (Context, int, String, int)。
+     */
+    private String findCMethodName(ClassLoader classLoader) {
+        DexKitBridge bridge = DexKitHelper.INSTANCE.getBridgeForClass(
+                classLoader, "com.zui.launcher.util.OverviewUtilities");
+        if (bridge != null) {
+            try {
+                List<MethodData> methods = bridge.findMethod(FindMethod.create()
+                        .searchPackages("com.zui.launcher")
+                        .matcher(MethodMatcher.create()
+                                .paramTypes("android.content.Context",
+                                        "java.lang.String", "int")
+                                .returnType("void")
+                                .declaredClass("com.zui.launcher.util.OverviewUtilities")
+                        )
+                );
+                for (MethodData md : methods) {
+                    if (!"removeAppProcess".equals(md.getName())) {
+                        if (DEBUG) log("DEXKit found force-stop method: " + md.getName());
+                        return md.getName();
+                    }
+                }
+            } catch (Throwable ignored) {}
+        }
+        return "c"; // 回退硬编码
+    }
+
+    /**
+     * 通过反射查找内部类（处理混淆后的内部类名）。
+     * 遍历可能的内部类名（$1-$5, $a-$e）直到找到有 doInBackground 方法的类。
+     */
+    private Class<?> findInnerClass(ClassLoader classLoader, String outerClassName) {
+        // 先尝试常见混淆模式: $a, $b, $c, $d, $e
+        for (char suffix = 'a'; suffix <= 'e'; suffix++) {
+            try {
+                Class<?> cls = classLoader.loadClass(outerClassName + "$" + suffix);
+                // 验证：该内部类应有 doInBackground 方法
+                try {
+                    cls.getDeclaredMethod("doInBackground", Void[].class);
+                    if (DEBUG) log("Found inner class: " + cls.getName());
+                    return cls;
+                } catch (NoSuchMethodException ignored) {}
+            } catch (ClassNotFoundException ignored) {}
+        }
+        // 再尝试数字后缀: $1, $2, $3, $4, $5
+        for (int i = 1; i <= 5; i++) {
+            try {
+                Class<?> cls = classLoader.loadClass(outerClassName + "$" + i);
+                try {
+                    cls.getDeclaredMethod("doInBackground", Void[].class);
+                    if (DEBUG) log("Found inner class: " + cls.getName());
+                    return cls;
+                } catch (NoSuchMethodException ignored) {}
+            } catch (ClassNotFoundException ignored) {}
+        }
         return null;
     }
 
