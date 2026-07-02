@@ -5,7 +5,7 @@
 - Generate your commit message as `.gitmessage` indicates.
 - Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
 - Java is available **only on Windows** in most scenarios. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
-- If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `cmd /c ".\gradlew.bat assembleDebug"`
+- If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `cmd.exe /c ".\gradlew.bat assembleDebug"`
 
 ## Project Summary
 
@@ -26,9 +26,9 @@ Use English for new agent-facing documentation where practical. Existing user-fa
 - `compileSdk` / `targetSdk`: `37`
 - `minSdk`: `27`
 - Java/Kotlin JVM target: `11`
-- Xposed API: `de.robv.android.xposed:api:82` as `compileOnly`
+- Xposed API: libxposed API 102
 - Hidden API bypass: `org.lsposed.hiddenapibypass:hiddenapibypass:4.3`
-- Main verification command: `.\gradlew.bat assembleDebug`
+- Main verification command: `.\gradlew.bat assembleDebug` (Pure Windows) or `cmd.exe /c ".\gradlew.bat assembleDebug"` (WSL2)
 
 For any Miuix API or component behavior, consult the official Dokka site instead of decompiling or reading locally downloaded dependencies:
 
