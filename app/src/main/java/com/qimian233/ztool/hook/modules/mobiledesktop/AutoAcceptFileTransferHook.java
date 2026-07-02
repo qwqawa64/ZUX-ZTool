@@ -44,13 +44,12 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
             Class<?> activityClass = classLoader.loadClass(TARGET_CLASS);
 
             // 1. 在 Activity 中按类型查找 ViewModel 字段：检查类型是否继承 ViewModel
-            String vmFieldName = findFieldBySuperType(activityClass,
-                    "androidx.lifecycle.ViewModel",
-                    "c" /* 回退名称 */);
+            String vmFieldName = findFieldBySuperType(activityClass
+                    /* 回退名称 */);
 
             // 2. 从找到的字段获取 ViewModel 类，再在其中查找 boolean 和 LiveData 字段
-            Class<?> vmClass = null;
-            Field vmField = null;
+            Class<?> vmClass;
+            Field vmField;
             try {
                 vmField = activityClass.getDeclaredField(vmFieldName);
                 vmField.setAccessible(true);
@@ -63,14 +62,11 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
             }
 
             // 3. 在 ViewModel 中按类型查找 boolean 和 LiveData 字段
-            String acceptedFieldName = "d";
-            String liveDataFieldName = "b";
-            if (vmClass != null) {
-                acceptedFieldName = findFieldByType(classLoader, vmClass,
-                        "boolean",
-                        "d" /* 回退 */);
-                liveDataFieldName = findLiveDataField(vmClass, "b" /* 回退 */);
-            }
+            String acceptedFieldName;
+            String liveDataFieldName;
+            acceptedFieldName = findFieldByType(vmClass
+                    /* 回退 */);
+            liveDataFieldName = findLiveDataField(vmClass  /* 回退 */);
 
             final String finalVmFieldName = vmFieldName;
             final String finalAcceptedFieldName = acceptedFieldName;
@@ -126,46 +122,28 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
 
     /**
      * 遍历类的所有字段，按类型查找目标字段。
-     * @param wantedType 期望类型，为 null 时匹配第一个非 java/android 包且非基本类型的字段
-     * @param fallback 找不到时返回的默认名称
      */
-    private static String findFieldByType(ClassLoader classLoader, Class<?> clazz,
-                                          String wantedType, String fallback) {
+    private static String findFieldByType(Class<?> clazz) {
         for (Field f : clazz.getDeclaredFields()) {
             String typeName = f.getType().getName();
-            if (wantedType != null) {
-                if (wantedType.equals(typeName)
-                        || f.getType().getName().endsWith("." + wantedType)) {
-                    return f.getName();
-                }
-            } else {
-                // 匹配非系统、非基本类型
-                if (!typeName.startsWith("java.")
-                        && !typeName.startsWith("android.")
-                        && !typeName.startsWith("androidx.")
-                        && !typeName.startsWith("dalvik.")
-                        && !isPrimitiveType(typeName)) {
-                    return f.getName();
-                }
+            if ("boolean".equals(typeName)
+                    || f.getType().getName().endsWith("." + "boolean")) {
+                return f.getName();
             }
         }
-        return fallback;
+        return "d";
     }
 
     /**
      * 在类中查找其类型继承链包含指定超类的字段。
-     * @param superClassName 期望的超类全限定名
-     * @param fallback 找不到时返回的默认名称
      */
-    private static String findFieldBySuperType(Class<?> clazz,
-                                               String superClassName,
-                                               String fallback) {
+    private static String findFieldBySuperType(Class<?> clazz) {
         for (Field f : clazz.getDeclaredFields()) {
-            if (isSubclassOf(f.getType(), superClassName)) {
+            if (isSubclassOf(f.getType(), "androidx.lifecycle.ViewModel")) {
                 return f.getName();
             }
         }
-        return fallback;
+        return "c";
     }
 
     /**
@@ -173,7 +151,7 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
      * 通过检查字段类型的继承链是否包含 androidx.lifecycle.LiveData，
      * 而非依靠方法签名启发式匹配，避免匹配到同名签名的其他类。
      */
-    private static String findLiveDataField(Class<?> clazz, String fallback) {
+    private static String findLiveDataField(Class<?> clazz) {
         for (Field f : clazz.getDeclaredFields()) {
             if (isSubclassOf(f.getType(), "androidx.lifecycle.LiveData")) {
                 return f.getName();
@@ -186,7 +164,7 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
                 return f.getName();
             }
         }
-        return fallback;
+        return "b";
     }
 
     /**
@@ -206,14 +184,6 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
             cls = cls.getSuperclass();
         }
         return false;
-    }
-
-    private static boolean isPrimitiveType(String typeName) {
-        return "boolean".equals(typeName) || "byte".equals(typeName)
-                || "char".equals(typeName) || "short".equals(typeName)
-                || "int".equals(typeName) || "long".equals(typeName)
-                || "float".equals(typeName) || "double".equals(typeName)
-                || "void".equals(typeName);
     }
 
     /**

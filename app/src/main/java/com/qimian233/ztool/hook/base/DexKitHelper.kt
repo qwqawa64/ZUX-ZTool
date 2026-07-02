@@ -1,15 +1,8 @@
 package com.qimian233.ztool.hook.base
 
+import com.qimian233.ztool.hook.base.DexKitHelper.closeBridge
+import com.qimian233.ztool.hook.base.DexKitHelper.getBridge
 import org.luckypray.dexkit.DexKitBridge
-import org.luckypray.dexkit.query.FindClass
-import org.luckypray.dexkit.query.FindMethod
-import org.luckypray.dexkit.query.FindField
-import org.luckypray.dexkit.query.matchers.ClassMatcher
-import org.luckypray.dexkit.query.matchers.MethodMatcher
-import org.luckypray.dexkit.query.matchers.FieldMatcher
-import org.luckypray.dexkit.result.ClassData
-import org.luckypray.dexkit.result.MethodData
-import org.luckypray.dexkit.result.FieldData
 
 /**
  * DEXKit 辅助单例，为所有 Hook 模块提供统一的 DexKitBridge 管理。
@@ -45,7 +38,7 @@ object DexKitHelper {
         return try {
             val cls = classLoader.loadClass(targetClassName)
             cls.protectionDomain?.codeSource?.location?.path
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -80,6 +73,7 @@ object DexKitHelper {
     /**
      * 关闭所有缓存的桥梁实例。
      */
+    @Suppress("unused")
     fun closeAll() {
         bridgeCache.values.forEach { it.close() }
         bridgeCache.clear()
@@ -92,7 +86,7 @@ object DexKitHelper {
         return try {
             DexKitBridge::class.java
             true
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             false
         }
     }

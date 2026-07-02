@@ -6,7 +6,6 @@ import android.os.Build;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import org.luckypray.dexkit.DexKitBridge;
@@ -101,7 +100,7 @@ public class DisableForceStop extends BaseHookModule {
         } catch (Throwable t) {
             value = "";
         }
-        if (value == null || value.isEmpty()) return new String[0];
+        if (value.isEmpty()) return new String[0];
         return value.split(",");
     }
 
@@ -186,7 +185,6 @@ public class DisableForceStop extends BaseHookModule {
                     "removeAllRunningAppProcesses", Context.class, ArrayList.class, boolean.class);
             this.xposed.hook(removeAllMethod).intercept(chain -> {
                 ArrayList<?> tasks = (ArrayList<?>) chain.getArg(1);
-                boolean force = (boolean) chain.getArg(2);
 
                 if (tasks != null) {
                     int totalTasks = tasks.size();
@@ -222,7 +220,7 @@ public class DisableForceStop extends BaseHookModule {
             });
 
             // Hook AsyncTask子类的doInBackground方法 - 异步清理逻辑
-            Class<?> asyncTaskClass = findInnerClass(classLoader, "com.zui.launcher.util.OverviewUtilities");
+            Class<?> asyncTaskClass = findInnerClass(classLoader);
 
             if (asyncTaskClass != null) {
                 Method doInBackgroundMethod = asyncTaskClass.getDeclaredMethod("doInBackground", Void[].class);
@@ -278,7 +276,7 @@ public class DisableForceStop extends BaseHookModule {
         try {
             // Android 16上基础Launcher可能的Hook点
             // 这里可以根据需要添加对com.android.launcher3的特定Hook
-
+            log("Android 16 logic not implemented yet!");
         } catch (Throwable t) {
             logError("Android 16+: failed to hook basic Launcher", t);
         }
@@ -492,11 +490,11 @@ public class DisableForceStop extends BaseHookModule {
      * 通过反射查找内部类（处理混淆后的内部类名）。
      * 遍历可能的内部类名（$1-$5, $a-$e）直到找到有 doInBackground 方法的类。
      */
-    private Class<?> findInnerClass(ClassLoader classLoader, String outerClassName) {
+    private Class<?> findInnerClass(ClassLoader classLoader) {
         // 先尝试常见混淆模式: $a, $b, $c, $d, $e
         for (char suffix = 'a'; suffix <= 'e'; suffix++) {
             try {
-                Class<?> cls = classLoader.loadClass(outerClassName + "$" + suffix);
+                Class<?> cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities" + "$" + suffix);
                 // 验证：该内部类应有 doInBackground 方法
                 try {
                     cls.getDeclaredMethod("doInBackground", Void[].class);
@@ -508,7 +506,7 @@ public class DisableForceStop extends BaseHookModule {
         // 再尝试数字后缀: $1, $2, $3, $4, $5
         for (int i = 1; i <= 5; i++) {
             try {
-                Class<?> cls = classLoader.loadClass(outerClassName + "$" + i);
+                Class<?> cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities" + "$" + i);
                 try {
                     cls.getDeclaredMethod("doInBackground", Void[].class);
                     if (DEBUG) log("Found inner class: " + cls.getName());

@@ -3,7 +3,6 @@ package com.qimian233.ztool.hook.modules.launcher;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import org.luckypray.dexkit.DexKitBridge;

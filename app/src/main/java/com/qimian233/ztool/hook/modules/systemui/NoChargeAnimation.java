@@ -5,7 +5,6 @@ import android.os.Message;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import org.luckypray.dexkit.DexKitBridge;
@@ -76,9 +75,7 @@ public class NoChargeAnimation extends BaseHookModule {
                         List<FieldData> fields = classData.getFields();
                         for (FieldData fd : fields) {
                             String ft = fd.getTypeName();
-                            if (ft != null && (ft.equals("android.os.Handler")
-                                    || ft.endsWith(".Handler")
-                                    || ft.contains("$"))) {
+                            if (ft.equals("android.os.Handler") || ft.endsWith(".Handler") || ft.contains("$")) {
                                 handlerFieldName = fd.getName();
                                 break;
                             }
@@ -87,9 +84,7 @@ public class NoChargeAnimation extends BaseHookModule {
                         if ("H".equals(handlerFieldName)) {
                             for (FieldData fd : fields) {
                                 String ft = fd.getTypeName();
-                                if (ft != null && !ft.startsWith("java.")
-                                        && !ft.startsWith("android.")
-                                        && !isPrimitiveType(ft)) {
+                                if (!ft.startsWith("java.") && !ft.startsWith("android.") && !isPrimitiveType(ft)) {
                                     handlerFieldName = fd.getName();
                                     break;
                                 }
