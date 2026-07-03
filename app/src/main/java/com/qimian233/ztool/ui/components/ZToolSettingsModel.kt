@@ -44,6 +44,7 @@ import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.Slider as MiuixSlider
+import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 data class SettingSection(
     val title: String? = null,
@@ -576,6 +577,8 @@ fun ZToolTextInputRow(
     enabled: Boolean = true,
     icon: ImageVector? = null
 ) {
+    val isMiuix = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -596,19 +599,33 @@ fun ZToolTextInputRow(
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text(label) },
-            placeholder = placeholder?.let { placeholderText ->
-                { Text(placeholderText) }
-            },
-            singleLine = singleLine,
-            enabled = enabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
-        )
+        if (isMiuix) {
+            MiuixTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = label,
+                useLabelAsPlaceholder = placeholder != null,
+                singleLine = singleLine,
+                enabled = enabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
+            )
+        } else {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text(label) },
+                placeholder = placeholder?.let { placeholderText ->
+                    { Text(placeholderText) }
+                },
+                singleLine = singleLine,
+                enabled = enabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
+            )
+        }
     }
 }
 
