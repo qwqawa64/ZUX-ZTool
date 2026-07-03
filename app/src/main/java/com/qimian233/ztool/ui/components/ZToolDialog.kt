@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -17,13 +17,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
-import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import top.yukonga.miuix.kmp.basic.Surface as MiuixSurface
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-
 import com.qimian233.ztool.ui.theme.LocalIsPlatformDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.basic.Surface as MiuixSurface
 
 @Composable
 fun ZToolDialog(
@@ -63,11 +60,11 @@ fun ZToolDialog(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     if (dismissButton != null) {
-                        Box(Modifier.weight(1f)) {
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
                             dismissButton()
                         }
                     }
-                    Box(Modifier.weight(1f)) {
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
                         confirmButton()
                     }
                 }
