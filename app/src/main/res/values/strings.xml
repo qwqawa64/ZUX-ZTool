@@ -939,4 +939,5 @@
     <string name="app_search_page_selected_string">已选择 %d 个应用</string>
     <string name="launcher_grid_current_option">设定为：%1$d 行，%2$d 列</string>
     <string name="log_settings_title">日志设置</string>
+    <string name="export_logs_summary">如果模块或者 Hook 遇到了问题，请导出日志并发送给开发者</string>
 </resources>

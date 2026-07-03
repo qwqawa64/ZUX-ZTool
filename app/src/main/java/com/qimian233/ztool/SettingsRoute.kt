@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -481,19 +483,40 @@ private fun settingsSections(
                     key = "backup_config",
                     title = stringResource(R.string.backupConfigToFile),
                     onClick = onBackup,
-                    icon = Icons.Rounded.Backup
+                    icon = Icons.Rounded.Backup,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 ),
                 SettingItem.Action(
                     key = "restore_config",
                     title = stringResource(R.string.restoreConfigFromFile),
                     onClick = onRestore,
-                    icon = Icons.Rounded.RestorePage
+                    icon = Icons.Rounded.RestorePage,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 ),
                 SettingItem.Action(
                     key = "restore_default",
                     title = stringResource(R.string.restoreDefaultConfig),
                     onClick = onRestoreDefault,
-                    icon = Icons.Rounded.SettingsBackupRestore
+                    icon = Icons.Rounded.SettingsBackupRestore,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
             )
         ),
@@ -547,15 +570,30 @@ private fun settingsSections(
                 SettingItem.Action(
                     key = "export_logs",
                     title = stringResource(R.string.export_logs),
+                    summary = stringResource(R.string.export_logs_summary),
                     onClick = onExportLogs,
-                    icon = Icons.Rounded.Save
+                    icon = Icons.Rounded.Save,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 ),
                 SettingItem.Action(
                     key = "delete_all_logs",
                     title = stringResource(R.string.delete_all_logs),
                     summary = stringResource(R.string.delete_all_logs_summary),
                     onClick = onDeleteAllLogs,
-                    icon = Icons.Rounded.DeleteForever
+                    icon = Icons.Rounded.DeleteForever,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
             )
         ),
@@ -565,13 +603,27 @@ private fun settingsSections(
                     key = "open_theme_settings",
                     title = stringResource(R.string.app_ui_theme_settings),
                     onClick = onOpenThemeSettings,
-                    icon = Icons.Rounded.Palette
+                    icon = Icons.Rounded.Palette,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 ),
                 SettingItem.Action(
                     key = "open_language_settings",
                     title = stringResource(R.string.app_language_settings),
                     onClick = onOpenLanguageSettings,
-                    icon = Icons.Rounded.Language
+                    icon = Icons.Rounded.Language,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
             )
         ),
@@ -581,7 +633,14 @@ private fun settingsSections(
                     key = "show_about",
                     title = stringResource(R.string.showAboutPage),
                     onClick = onAbout,
-                    icon = Icons.Rounded.Info
+                    icon = Icons.Rounded.Info,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
             )
         )
