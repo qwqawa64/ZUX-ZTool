@@ -16,11 +16,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -32,10 +34,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +70,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.HomeViewModel
 import com.qimian233.ztool.viewmodel.RebootTarget
@@ -123,13 +124,6 @@ fun HomeMainRoute(
     HomeScreen(
         state = uiState,
         onRestartTargetSelected = viewModel::showRebootConfirmation,
-        onUnsupportedSoftReboot = {
-            Toast.makeText(
-                context,
-                R.string.soft_reboot_not_supported,
-                Toast.LENGTH_LONG
-            ).show()
-        },
         onToggleUpdateExpanded = viewModel::toggleUpdateExpanded,
         onIgnoreUpdate = {
             viewModel.ignoreUpdate(it)
@@ -209,7 +203,6 @@ private class HomeViewModelFactory(
 private fun HomeScreen(
     state: HomeUiState,
     onRestartTargetSelected: (RebootTarget) -> Unit,
-    onUnsupportedSoftReboot: () -> Unit,
     onToggleUpdateExpanded: () -> Unit,
     onIgnoreUpdate: (Int) -> Unit,
     onOpenUpdate: (String) -> Unit
@@ -234,23 +227,26 @@ private fun HomeScreen(
                     }
                     DropdownMenu(
                         expanded = showRebootMenu,
-                        onDismissRequest = { showRebootMenu = false }
+                        onDismissRequest = { showRebootMenu = false },
+                        modifier = Modifier
+                            .heightIn(max = 360.dp)
+                            .widthIn(max = 160.dp),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        RebootTarget.entries.forEach { target ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(target.displayNameRes)) },
-                                onClick = {
-                                    showRebootMenu = false
-                                    if (target == RebootTarget.Userspace &&
-                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                                    ) {
-                                        onUnsupportedSoftReboot()
-                                        return@DropdownMenuItem
+                        RebootTarget.entries
+                            .filter { target ->
+                                target != RebootTarget.Userspace ||
+                                    Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                            }
+                            .forEach { target ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(target.displayNameRes)) },
+                                    onClick = {
+                                        showRebootMenu = false
+                                        onRestartTargetSelected(target)
                                     }
-                                    onRestartTargetSelected(target)
-                                }
-                            )
-                        }
+                                )
+                            }
                     }
                 }
             }
@@ -660,14 +656,17 @@ private fun RebootConfirmDialog(
         title = { Text(stringResource(R.string.reboot_confirm_title)) },
         text = { Text(stringResource(target.messageRes)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.confirm))
-            }
+            ZToolTextButton(
+                onClick = onConfirm,
+                text = stringResource(R.string.confirm)
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.cancel),
+                isPrimary = false
+            )
         }
     )
 }
