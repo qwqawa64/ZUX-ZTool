@@ -28,7 +28,8 @@ fun ZToolDialog(
     confirmButton: @Composable () -> Unit,
     title: @Composable (() -> Unit)? = null,
     text: @Composable (() -> Unit)? = null,
-    dismissButton: @Composable (() -> Unit)? = null
+    dismissButton: @Composable (() -> Unit)? = null,
+    buttonArrangement: Int = 0, // 0 for horizontal mode, others for vertical mode
 ) {
     val isPlatformDialog = LocalIsPlatformDialog.current
 
@@ -53,19 +54,37 @@ fun ZToolDialog(
                         }
                     }
                 }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    if (dismissButton != null) {
+                if (buttonArrangement == 0) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        if (dismissButton != null) {
+                            Box(Modifier.weight(1f).fillMaxWidth()) {
+                                dismissButton()
+                            }
+                        }
                         Box(Modifier.weight(1f).fillMaxWidth()) {
-                            dismissButton()
+                            confirmButton()
                         }
                     }
-                    Box(Modifier.weight(1f).fillMaxWidth()) {
-                        confirmButton()
+                } else {
+                    Column (
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(Modifier.fillMaxWidth()) {
+                            confirmButton()
+                        }
+                        if (dismissButton != null) {
+                            Box(Modifier.fillMaxWidth()) {
+                                dismissButton()
+                            }
+                        }
                     }
                 }
             }
