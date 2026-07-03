@@ -2,7 +2,10 @@
 
 ## Agent Quick Start
 
-Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
+- Generate your commit message as `.gitmessage` indicates.
+- Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
+- Java is available **only on Windows** in most scenarios. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
+- If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `cmd.exe /c ".\gradlew.bat assembleDebug"`
 
 ## Project Summary
 
@@ -23,9 +26,9 @@ Use English for new agent-facing documentation where practical. Existing user-fa
 - `compileSdk` / `targetSdk`: `37`
 - `minSdk`: `27`
 - Java/Kotlin JVM target: `11`
-- Xposed API: `de.robv.android.xposed:api:82` as `compileOnly`
+- Xposed API: libxposed API 102
 - Hidden API bypass: `org.lsposed.hiddenapibypass:hiddenapibypass:4.3`
-- Main verification command: `.\gradlew.bat assembleDebug`
+- Main verification command: `.\gradlew.bat assembleDebug` (Pure Windows) or `cmd.exe /c ".\gradlew.bat assembleDebug"` (WSL2)
 
 For any Miuix API or component behavior, consult the official Dokka site instead of decompiling or reading locally downloaded dependencies:
 
@@ -41,6 +44,7 @@ https://compose-miuix-ui.github.io/miuix/dokka/index.html
   docs_archive/compose_refactor/        Compose migration notes and scoped agent guide
   docs_archive/gradle_upgrade/          Gradle upgrade notes
   docs_archive/material_enhancement/    Material UI notes
+  reference/                    Reference AAR files
   gradle/                       Gradle wrapper and version catalog
   libs/                         Root local dependencies
   Add_New_Hook_zh-CN.md         Frontend guide for adding Hook settings, UTF-8 encoding
@@ -117,11 +121,11 @@ Main route files:
 
 Keep these stable unless the task explicitly targets them:
 
-- `app/src/main/AndroidManifest.xml` Xposed metadata.
-- `app/src/main/assets/xposed_init`, currently pointing to `com.qimian233.ztool.hook.HookInit`.
-- `app/src/main/res/values/array.xml` `xposed_scope`.
 - Existing Activity package/class names used as Manifest launch contracts.
 - Existing SharedPreferences/config keys used by Hook modules.
+- `app/src/main/resources/META-INF/xposed/java_init.list` Hook entry class, currently points to `com.qimian233.ztool.hook.HookInit`.
+- `app/src/main/resources/META-INF/xposed/module.prop` Module properties, such as minimum API version.
+- `app/src/main/resources/META-INF/xposed/scope.list` Module scope.
 
 Hook scope packages include Android framework/system apps and ZUI apps such as `android`, `com.android.systemui`, `com.android.settings`, `com.zui.launcher`, and `com.lenovo.ota`.
 
@@ -142,6 +146,7 @@ hook/modules/
   documentsui/
   gametool/
   launcher/
+  mobiledesktop/
   ota/
   packageinstaller/
   safecenter/
@@ -174,13 +179,49 @@ The durable rules from that guide are:
 To add a new Hook implementation on the backend:
 
 1. Create a Hook class that extends `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`.
-2. Implement `getModuleName()`, `getTargetPackages()`, and `handleLoadPackage(...)`. **When implementing test hook, return "hook_test" in getModuleName() will always enable this test hook without bothering to add frontend switch.**
+2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using the same keys/defaults that the frontend writes.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
 5. Add the required log handling in `app/src/main/java/com/qimian233/ztool/audit/LogParser.java`, including module pattern/display name/category and any module-specific extracted data needed by the Audit UI.
 6. If the Hook needs a user-facing toggle, add the frontend state according to `Add_New_Hook_zh-CN.md`.
 
 Use `BaseHookModule.log(...)` / `logError(...)` for module logs when possible. The log module name should match the parser pattern in `LogParser.java`.
+
+## Service, Scope, And Activation Rules
+
+### Scope Management
+
+The `app/src/main/resources/META-INF/xposed/scope.list` declares which packages LSPosed should inject the module into. Rules for managing scope:
+
+- **When a new Hook targets a package not already in the scope, add it to `scope.list`.** The `getTargetPackages()` returned by each module must be a subset of the declared scope.
+- **`android` and `system` (system framework) are already in scope** — no change needed for system-framework hooks.
+- **Always verify scope coverage after adding a new Hook module.** If a target package is missing from scope, the Hook will silently never execute.
+- Do NOT remove scope entries unless their corresponding Hook modules are also removed.
+- The scope is a build-time declaration; users must also configure it in LSPosed Manager.
+
+### Activation Chain
+
+- LSPosed sends a bind when module starts up.
+- `ModuleActivationProbe` has a onBind receiver that sets `active` field in this class to `true`.
+- Frontend reads this value and shows the activated user interface.
+
+### Service Protection Hook Guidelines
+
+When creating hooks that protect or interact with Android system services (e.g. keeping daemon processes alive, preventing service GC):
+
+- **Target `android`** (system framework) for hooks that intercept AMS, process management, or Binder behavior.
+- **Use `hookMethodBySignature`** when hooking AMS or ActiveServices methods — Android version differences change method parameter counts across releases. Iterate declared methods by name to cover all overloads.
+- **Wrap every hook attempt in its own try-catch** — missing methods on a particular ROM/version should not prevent other hooks from applying.
+- **For binder anti-GC**: hold `ServiceManager.getService(...)` references in a static `List<IBinder>` to prevent weak-reference-only GC.
+- **For death recipient protection**: hook `Binder.unlinkToDeath` and inspect the call stack for LSPosed-related classes before deciding to intercept.
+- **Log each defense layer** independently so the Audit UI can show which protections are active.
+- Such hooks typically require a system reboot to take effect after enabling.
+
+### Service Declaration In Manifest
+
+- The only current service is `LogCollectorService` (foreground, `specialUse`, not exported). Declared in `AndroidManifest.xml:40-44`.
+- New services must be declared with appropriate `foregroundServiceType` for the target SDK.
+- Services that interact with Hook modules should stay in `com.qimian233.ztool.service`.
 
 ## UI And Compose Guidance
 
@@ -200,31 +241,13 @@ General UI rules:
 - Do not put shell/root operations, raw threads, preference I/O, or imperative dialogs directly in Composables. Use Repository/ViewModel/state.
 - Preserve detail Activity launch contracts even if the screen body is Compose.
 
-## High-Risk Boundaries
-
-Treat these areas as behavior-sensitive:
-
-- `app/src/main/java/com/qimian233/ztool/hook/**`
-- `app/src/main/java/com/qimian233/ztool/service/**`
-- `app/src/main/java/com/qimian233/ztool/config/**`
-- `app/src/main/java/com/qimian233/ztool/EnhancedShellExecutor.java`
-- `app/src/main/java/com/qimian233/ztool/utils/MagiskModuleManager.java`
-- `app/src/main/java/com/qimian233/ztool/utils/EmbeddingConfigManager.java`
-- `app/src/main/assets/embedding/**`
-- `app/src/main/assets/xposed_init`
-- Xposed metadata and scope declarations in resources/Manifest
-- Existing preference keys and config file formats
-- Root, shell, reboot, package kill, and Magisk install/update behavior
-
-UI tasks should normally wrap these behaviors behind repositories or state holders rather than changing the behavior itself.
-
 ## Resources And Assets
 
 - `res/values/`: strings, colors, themes, arrays.
 - `res/values-night/`: night resources.
 - `res/drawable/`: in-app drawables and icons.
 - `res/mipmap-*`: launcher icons.
-- `res/raw/`: demo video resources.
+- `res/raw/`: demo video resources and user agreement.
 - `res/xml/`: backup, extraction, and locale config.
 - `assets/embedding/`: embedded Magisk module configuration and scripts.
 - `assets/embedding/zuxos_embedding/`: module package contents such as `module.prop`, shell scripts, sepolicy rules, and installer metadata.
@@ -247,10 +270,11 @@ For documentation-only changes, a build is usually unnecessary; verify with `git
 - Start by checking `git status --short`.
 - The working tree may contain user changes. Do not revert unrelated changes.
 - Keep edits scoped to the request.
-- Do not commit build outputs, IDE files, Gradle caches, or unrelated untracked files.
+- Do not commit build outputs, IDE files, Gradle caches, keystore, or unrelated untracked files.
 - Completed user-requested tasks must be committed unless the user explicitly says not to commit.
 - Before committing, review `git diff --check` and the staged diff.
 - Use concise commit messages that describe the actual scoped change.
+- If Git commit times out with GPG signature, ask the user to commit it later and DO NOT commit without signing.
 
 ## Common Commands
 

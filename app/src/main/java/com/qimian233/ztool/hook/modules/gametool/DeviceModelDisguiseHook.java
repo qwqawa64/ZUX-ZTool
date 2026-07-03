@@ -1,15 +1,19 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 游戏服务设备型号伪装Hook模块
  * 将设备型号伪装为TB322FC，用于绕过游戏服务的设备检测
  */
 public class DeviceModelDisguiseHook extends BaseHookModule {
+
+    public DeviceModelDisguiseHook() {}
 
     @Override
     public String getModuleName() {
@@ -24,27 +28,22 @@ public class DeviceModelDisguiseHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.zui.game.service".equals(packageName)) {
-            hookDeviceUtils(lpparam);
+            hookDeviceUtils(classLoader);
         }
     }
 
-    private void hookDeviceUtils(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookDeviceUtils(ClassLoader classLoader) {
         try {
             // 查找DeviceUtils类
-            Class<?> deviceUtilsClass = XposedHelpers.findClass("com.zui.util.DeviceUtils", lpparam.classLoader);
+            Class<?> deviceUtilsClass = classLoader.loadClass("com.zui.util.DeviceUtils");
 
             // Hook getBuildModel方法，强制返回目标型号
-            XposedHelpers.findAndHookMethod(deviceUtilsClass, "getBuildModel", new XC_MethodReplacement() {
-                @Override
-                protected Object replaceHookedMethod(MethodHookParam param) {
-                    // 强制返回目标型号TB322FC
-                    return "TB322FC";
-                }
-            });
+            Method getBuildModelMethod = deviceUtilsClass.getDeclaredMethod("getBuildModel");
+            this.xposed.hook(getBuildModelMethod).intercept(chain -> "TB322FC");
 
             log("Successfully hooked DeviceUtils.getBuildModel for com.zui.game.service");
 

@@ -93,6 +93,7 @@
     <string name="magisk_su_format">Magisk (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>
     <string name="apatch_format">APatch (%s)</string>
+    <string name="super_connect_scope_title">Readyfor</string>
     <string name="unknown_root_available">Unknown solution</string>
     <string name="unknown_framework">Unknown framework</string>
     <string name="config_upgraded_tip_title">Note: Config upgraded</string>
@@ -114,6 +115,7 @@
     <string name="system_ui_app_description">Customizable UI.</string>
     <string name="launcher_app_name">Launcher</string>
     <string name="launcher_app_description">Bigger dock and customized launcher grid.</string>
+    <string name="mobile_desktop_app_description">Skip exposure warns, prevent nearby share auto shutdown</string>
     <string name="system_framework_app_name">System Framework</string>
     <string name="system_framework_app_description">Change AI input symbols and other useful features.</string>
     <string name="safe_center_app_name">Safe Center</string>
@@ -231,14 +233,14 @@
     <string name="restart_fail_short">Restart failed</string>
     <string name="function_title">Feature extensions</string>
     <string name="Game_Audio_title">Disable game audio processing</string>
-    <string name="Game_Audio_summary">Try enabling this if game audio volume fluctuates or becomes extremely loud. Requires a system reboot.</string>
+    <string name="Game_Audio_summary">Try enabling this if game audio volume fluctuates. Requires a system reboot. Use this hook with allow turn off dolby in settings feature page.</string>
     <string name="Game_Audio_Setting_Title">Audio</string>
     <string name="Device_Model_Disguise">Device model disguise</string>
     <string name="Device_Model_Disguise_summary">Disguise the device as Y700 4th Gen for Game Assistant features such as bypass charging.</string>
     <string name="FIx_CPU_Frequency">Fix CPU frequency display</string>
-    <string name="FIx_CPU_Frequency_summary">Tested only on PadProGT. Fixes frequency always showing 0 after using Y700 4th Gen Game Assistant.</string>
+    <string name="FIx_CPU_Frequency_summary">Tested only on TB710FU. Fixes frequency always showing 0 after using Y700 4th Gen Game Assistant.</string>
     <string name="Fix_SocTemp">Fix SoC temperature display</string>
-    <string name="Fix_SocTemp_summary">Tested only on PadProGT. Fixes temperature always showing 0 after using Y700 4th Gen Game Assistant.</string>
+    <string name="Fix_SocTemp_summary">Tested only on TB710FU. Fixes temperature always showing 0 after using Y700 4th Gen Game Assistant.</string>
     <string name="firmware_download_link">Download link: </string>
     <string name="firmware_extract_password">Extract password: </string>
     <string name="firmware_platform_and_method">Platform/flashing method: </string>
@@ -455,8 +457,6 @@
     <string name="AllowDisableDolby_summary">Allow disabling Dolby Atmos. This may lower volume.</string>
     <string name="NativePermissionController_enable_title">Native permission controller style</string>
     <string name="NativePermissionController_enable_summary">Enable native-style permission controller. Effective on Android 14 and below.</string>
-    <string name="AlwaysDisplaySuggestionsTitle">Show suggestions on Settings home</string>
-    <string name="AlwaysDisplaySuggestionsSummary">"Pretend the device is brand new and unused"</string>
     <string name="restart_fail_simple">Restart failed</string>
     <string name="sec_title_function">Security</string>
     <string name="OnlyAllow_Title">Always grant app permissions</string>
@@ -519,14 +519,10 @@
     <string name="syatusBatteryExternalSummary">Show remaining battery percentage to the right of the battery icon. Disable the system percentage display first.</string>
     <string name="YiYanTile">Lock screen quote</string>
     <string name="YiYanSwitchTitle">Random lock screen signature</string>
-    <string name="YiYanSummary">Show random text fetched from the network on the lock screen.</string>
+    <string name="YiYanSummary">Show random text fetched from the network on the lock screen. Reboot to take effect.</string>
     <string name="ChargeWattsTitle">Show charging power</string>
     <string name="ChargeWattsEnableTitle">Charging power display type</string>
     <string name="ChargeWattsSummary">Show current negotiated protocol power or actual wattage on the lock screen and AOD while charging. Grant Root permission to "SystemUI" to use actual wattage.\n* It may take up to 1 minute after restarting the scope to take effect.</string>
-    <string name="RealWattsRefreshInterval">Actual charging power refresh timing</string>
-    <string name="RealWattsRefreshIntervalSummary">Controls when actual charging power is refreshed on the lock screen. 0.1 is usually enough.</string>
-    <string name="RealWattsRefreshIntervalInputTip">Current setting: %.1f sec</string>
-    <string name="RealWattsIntervalSavedMessage">Refresh interval saved</string>
     <string name="systemui_root_permission_required_message">To use actual charging power, grant Root permission to "SystemUI" in your Root manager.</string>
     <string name="api_address_label">API address</string>
     <string name="api_address_hint">Enter API address</string>
@@ -547,7 +543,7 @@
     <string name="regex_match_result_prefix">Regex match result: </string>
     <string name="original_response_prefix">Original response: </string>
     <string name="watt_option_disabled">Disabled</string>
-    <string name="watt_option_handshake">Protocol power</string>
+    <string name="watt_option_handshake">Negotiated power</string>
     <string name="watt_option_actual">Actual power</string>
     <string name="real_watt_custom_refresh_interval_enabled">After a fixed interval</string>
     <string name="real_watt_custom_refresh_interval_disabled">When power changes</string>
@@ -863,4 +859,19 @@
     <string name="about_wasd_destroy_summary">Hooks and User Interface</string>
     <string name="about_uuuddddl">Hooks</string>
     <string name="about_unfuckzui_summary">Fearure references and inspirations</string>
+    <string name="ram_formatter">%1$s Used | %2$s</string>
+    <string name="beautify_ram_info">Beautify total RAM info</string>
+    <string name="beautify_ram_info_summary">Replace total RAM value with guessed total physical RAM + RAM expansion value</string>
+    <string name="mobile_desktop_app_name">Readyfor</string>
+    <string name="skip_nearby_exposure_warn">Skip exposure warnings when enabling nearby share</string>
+    <string name="skip_nearby_exposure_warn_summary">Allow switching state of Lenovo Share tile with a click</string>
+    <string name="disable_dock_bar_title">Disable dock bar</string>
+    <string name="disable_dock_bar_summary">Conflicts with dock bar expansion and will not provide extra desktop grid space</string>
+    <string name="disable_dock_warning_title">Important Warn</string>
+    <string name="disable_dock_warning_message">Move all apps in dock bar hotseat to desktop. Otherwise they will be "swallowed" by the disappeared dock bar. If the module is among them…</string>
+    <string name="lsposed_service_protector_title">LSPosed service protection</string>
+    <string name="lsposed_service_protector_enable_title">Enable LSPosed service protection</string>
+    <string name="lsposed_service_protector_enable_summary">Try this if you encounter unexpected activation fault of this module.</string>
+    <string name="auto_accept_file_transfer">Accept file transfer request automatically</string>
+    <string name="auto_accept_file_transfer_summary">You may receive some file by accident after enabling this feature</string>
 </resources>

@@ -1,15 +1,19 @@
 package com.qimian233.ztool.hook.modules.setting;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 系统设置Hook模块
  * 修改系统设置应用的行为
  */
 public class yishijiecompletion extends BaseHookModule {
+
+    public yishijiecompletion() {}
 
     @Override
     public String getModuleName() {
@@ -22,24 +26,22 @@ public class yishijiecompletion extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.settings".equals(packageName)) {
-            hookSettingsAppManager(lpparam);
+            hookSettingsAppManager(classLoader);
         } else if ("com.lenovo.settings".equals(packageName)) {
             hookLenovoSettings();
         }
     }
 
-    private void hookSettingsAppManager(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSettingsAppManager(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.lenovo.settings.onevision.horizontal.SettingsEmbeddingAppManager",
-                    lpparam.classLoader,
-                    "getZuiLandScapeShouldBeHideAppList",
-                    XC_MethodReplacement.returnConstant(new String[0])
-            );
+            Method m = classLoader
+                    .loadClass("com.lenovo.settings.onevision.horizontal.SettingsEmbeddingAppManager")
+                    .getDeclaredMethod("getZuiLandScapeShouldBeHideAppList");
+            this.xposed.hook(m).intercept(chain -> new String[0]);
             log("Successfully hooked SettingsEmbeddingAppManager");
         } catch (Throwable t) {
             logError("Failed to hook SettingsEmbeddingAppManager", t);
@@ -49,7 +51,6 @@ public class yishijiecompletion extends BaseHookModule {
     private void hookLenovoSettings() {
         try {
             // 这里可以添加更多Lenovo设置的Hook
-            // 例如：XposedHelpers.findAndHookMethod(...)
             log("Lenovo settings hook placeholder");
         } catch (Throwable t) {
             logError("Failed to hook Lenovo settings", t);

@@ -1,16 +1,22 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * 禁用应用安装后删除APK提示模块
- * 拦截系统包安装器(Com.android.packageinstaller)，修改默认的"安装完成后删除安装包"行为
+ * 拦截系统包安装器(com.android.packageinstaller)，修改默认的"安装完成后删除安装包"行为
  * 实现首次安装后默认不勾选删除安装包选项，避免误删安装文件
  */
 public class PackageInstallerNoDeleteModule extends BaseHookModule {
+
+    public PackageInstallerNoDeleteModule() {}
 
     @Override
     public String getModuleName() {
@@ -25,68 +31,106 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if ("com.android.packageinstaller".equals(lpparam.packageName)) {
-            hookPackageInstaller(lpparam);
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        if ("com.android.packageinstaller".equals(packageName)) {
+            hookPackageInstaller(classLoader);
         }
     }
 
     /**
      * Hook系统包安装器的核心逻辑
-     * 拦截InstallSuccessExtra类的initView方法，修改默认的删除安装包行为
+     * 拦截InstallSuccessExtra类的initView方法，修改默认的删除安装包行为。
+     * 新版 PackageInstaller 将 CheckBox 改为 initView() 中的局部变量，
+     * 且 OnCheckedChangeListener 会直接覆写 mDeleteApk，因此需要：
+     * 1. 强制 mDeleteApk = false
+     * 2. 通过 findViewById 定位 CheckBox 并替换其 listener，防止用户手动勾选后覆盖布尔值
+     * 3. 兜底：Hook clearCachedApkIfNeededAndFinish 再次确保 mDeleteApk = false
      */
-    private void hookPackageInstaller(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookPackageInstaller(ClassLoader classLoader) {
         try {
             log("Starting hook for package installer");
 
-            // Hook InstallSuccessExtra.initView()方法
-            XposedHelpers.findAndHookMethod(
-                    "com.android.packageinstaller.InstallSuccessExtra",
-                    lpparam.classLoader,
-                    "initView",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            if (!isEnabled()) {
-                                return; // 根据配置动态判断是否启用
-                            }
+            @SuppressLint("PrivateApi") Class<?> installSuccessExtraClass = classLoader.loadClass(
+                    "com.android.packageinstaller.InstallSuccessExtra");
 
-                            try {
-                                log("Inside initView method for package installer");
+            // --- Hook 1: initView() — 首次设置 + UI 修复 ---
+            Method initView = installSuccessExtraClass.getDeclaredMethod("initView");
+            Field mDeleteApkField = installSuccessExtraClass.getDeclaredField("mDeleteApk");
+            mDeleteApkField.setAccessible(true);
 
-                                // 获取当前InstallSuccessExtra实例
-                                Object instance = param.thisObject;
+            this.xposed.hook(initView).intercept(chain -> {
+                Object result = chain.proceed();
 
-                                // 检查是否是配置变更（如屏幕旋转）
-                                boolean isConfigChange = XposedHelpers.getBooleanField(instance, "isConfigChanage");
+                if (!isEnabled()) {
+                    return result;
+                }
 
-                                // 如果是首次创建Activity（非配置变更）
-                                if (!isConfigChange) {
-                                    log("Modifying default behavior: do not delete APK after install");
+                try {
+                    Object instance = chain.getThisObject();
+                    log("Inside initView method for package installer");
 
-                                    // 修改mDeleteApk为false，表示默认不删除安装包
-                                    XposedHelpers.setBooleanField(instance, "mDeleteApk", false);
+                    // 强制 mDeleteApk = false（无论是否配置变更）
+                    mDeleteApkField.setBoolean(instance, false);
 
-                                    // 更新UI复选框状态
+                    // 通过 findViewById 定位 CheckBox（新版是局部变量，不能通过字段反射）
+                    try {
+                        android.app.Activity activity = (android.app.Activity) instance;
+                        @SuppressLint("DiscouragedApi") int checkBoxId = activity.getResources().getIdentifier(
+                                "del_check_box", "id", "com.android.packageinstaller");
+                        if (checkBoxId != 0) {
+                            android.view.View view = activity.findViewById(checkBoxId);
+                            if (view instanceof android.widget.CheckBox) {
+                                android.widget.CheckBox checkBox = (android.widget.CheckBox) view;
+                                // 更新 UI 为未勾选状态
+                                checkBox.setChecked(false);
+                                // 替换监听器：防止用户手动勾选后覆盖 mDeleteApk
+                                checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                                     try {
-                                        Object checkBox = XposedHelpers.getObjectField(instance, "del_check_box");
-                                        if (checkBox instanceof android.widget.CheckBox) {
-                                            ((android.widget.CheckBox) checkBox).setChecked(false);
-                                            log("Successfully updated UI checkbox state");
-                                        }
-                                    } catch (Throwable uiError) {
-                                        logError("Failed to update checkbox UI", uiError);
-                                        // UI更新失败不影响核心功能，继续执行
+                                        mDeleteApkField.setBoolean(instance, false);
+                                    } catch (Throwable ignored) {}
+                                    // 永远显示未勾选
+                                    if (isChecked) {
+                                        buttonView.setChecked(false);
                                     }
-                                }
-                            } catch (Throwable t) {
-                                logError("Error in afterHookedMethod for initView", t);
+                                });
+                                log("Successfully updated UI checkbox and replaced listener");
                             }
+                        } else {
+                            log("CheckBox resource ID 'del_check_box' not found, may be new version");
                         }
+                    } catch (Throwable uiError) {
+                        logError("Failed to update checkbox UI", uiError);
                     }
-            );
+                } catch (Throwable t) {
+                    logError("Error in afterHookedMethod for initView", t);
+                }
+
+                return result;
+            });
 
             log("Successfully hooked InstallSuccessExtra.initView()");
+
+            // --- Hook 2: clearCachedApkIfNeededAndFinish() — 兜底防护 ---
+            // 该方法在删除线程执行完毕后被调用，或在 onStop 中被调用。
+            // 再次确保 mDeleteApk = false，作为多层防护。
+            try {
+                Method clearMethod = installSuccessExtraClass.getDeclaredMethod(
+                        "clearCachedApkIfNeededAndFinish");
+                this.xposed.hook(clearMethod).intercept(chain -> {
+                    if (isEnabled()) {
+                        try {
+                            mDeleteApkField.setBoolean(chain.getThisObject(), false);
+                        } catch (Throwable ignored) {}
+                    }
+                    return chain.proceed();
+                });
+                log("Successfully hooked InstallSuccessExtra.clearCachedApkIfNeededAndFinish()");
+            } catch (Throwable t) {
+                logError("Failed to hook clearCachedApkIfNeededAndFinish", t);
+            }
+
         } catch (Throwable t) {
             logError("Failed to initialize package installer hook", t);
         }

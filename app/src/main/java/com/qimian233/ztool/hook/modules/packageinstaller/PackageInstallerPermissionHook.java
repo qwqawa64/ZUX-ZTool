@@ -1,11 +1,12 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 /**
@@ -13,6 +14,8 @@ import java.util.ArrayList;
  * 强制将权限管理选项设置为"始终允许"，简化用户操作
  */
 public class PackageInstallerPermissionHook extends BaseHookModule {
+
+    public PackageInstallerPermissionHook() {}
 
     @Override
     public String getModuleName() {
@@ -25,24 +28,24 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.packageinstaller".equals(packageName)) {
-            hookPackageInstaller(lpparam);
+            hookPackageInstaller(classLoader);
         }
     }
 
-    private void hookPackageInstaller(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookPackageInstaller(ClassLoader classLoader) {
         try {
             // 方法1：钩住 startCustomInstallConfirm 方法
-            hookStartCustomInstallConfirm(lpparam);
+            hookStartCustomInstallConfirm(classLoader);
 
             // 方法2：钩住 PermissionsAdapter 的构造函数
-            hookPermissionsAdapterConstructor(lpparam);
+            hookPermissionsAdapterConstructor(classLoader);
 
             // 方法3：钩住 PermissionsAdapter 的 getCount 方法
-            hookPermissionsAdapterGetCount(lpparam);
+            hookPermissionsAdapterGetCount(classLoader);
 
             // 方法4：钩住 ListView 的 setAdapter 方法
             hookListViewSetAdapter();
@@ -53,108 +56,113 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
         }
     }
 
-    private void hookStartCustomInstallConfirm(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookStartCustomInstallConfirm(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.android.packageinstaller.PackageInstallerActivityExtra",
-                    lpparam.classLoader,
-                    "startCustomInstallConfirm",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            if (!isEnabled()) return;
+            Class<?> activityExtraClass = classLoader.loadClass(
+                    "com.android.packageinstaller.PackageInstallerActivityExtra");
+            Method startCustomInstallConfirm = activityExtraClass.getDeclaredMethod("startCustomInstallConfirm");
+            this.xposed.hook(startCustomInstallConfirm).intercept(chain -> {
+                Object result = chain.proceed();
+                if (!isEnabled()) return result;
 
-                            Object activityExtra = param.thisObject;
-                            Object mAdapter = XposedHelpers.getObjectField(activityExtra, "mAdapter");
-                            if (mAdapter == null) return;
+                Object activityExtra = chain.getThisObject();
+                Field mAdapterField = activityExtra.getClass().getDeclaredField("mAdapter");
+                mAdapterField.setAccessible(true);
+                Object mAdapter = mAdapterField.get(activityExtra);
+                if (mAdapter == null) return result;
 
-                            try {
-                                Field[] fields = mAdapter.getClass().getDeclaredFields();
-                                ArrayList<Object> dataList = null;
+                try {
+                    Field[] fields = mAdapter.getClass().getDeclaredFields();
+                    ArrayList<Object> dataList = null;
 
-                                for (Field field : fields) {
-                                    field.setAccessible(true);
-                                    if (ArrayList.class.isAssignableFrom(field.getType())) {
-                                        Object fieldValue = field.get(mAdapter);
-                                        if (fieldValue instanceof ArrayList) {
-                                            @SuppressWarnings("unchecked")
-                                            ArrayList<Object> list = (ArrayList<Object>) fieldValue;
-                                            dataList = list;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (dataList == null || dataList.isEmpty()) return;
-
-                                Object trustItem = findTrustItem(dataList);
-                                if (trustItem == null) return;
-
-                                dataList.clear();
-                                dataList.add(trustItem);
-                                XposedHelpers.setIntField(mAdapter, "selectId", 2);
-
-                                setPermissionManageType(activityExtra, lpparam.classLoader);
-                                XposedHelpers.callMethod(mAdapter, "notifyDataSetChanged");
-                                XposedHelpers.setIntField(activityExtra, "mSelectId", 2);
-
-                            } catch (Exception e) {
-                                useAlternativeApproach(activityExtra, mAdapter, lpparam.classLoader);
+                    for (Field field : fields) {
+                        field.setAccessible(true);
+                        if (ArrayList.class.isAssignableFrom(field.getType())) {
+                            Object fieldValue = field.get(mAdapter);
+                            if (fieldValue instanceof ArrayList) {
+                                @SuppressWarnings("unchecked")
+                                ArrayList<Object> list = (ArrayList<Object>) fieldValue;
+                                dataList = list;
+                                break;
                             }
                         }
                     }
-            );
+
+                    if (dataList == null || dataList.isEmpty()) return result;
+
+                    Object trustItem = findTrustItem(dataList);
+                    if (trustItem == null) return result;
+
+                    dataList.clear();
+                    dataList.add(trustItem);
+
+                    Field selectIdField = mAdapter.getClass().getDeclaredField("selectId");
+                    selectIdField.setAccessible(true);
+                    selectIdField.setInt(mAdapter, 2);
+
+                    setPermissionManageType(activityExtra, classLoader);
+
+                    Method notifyMethod = mAdapter.getClass().getDeclaredMethod("notifyDataSetChanged");
+                    notifyMethod.invoke(mAdapter);
+
+                    Field mSelectIdField = activityExtra.getClass().getDeclaredField("mSelectId");
+                    mSelectIdField.setAccessible(true);
+                    mSelectIdField.setInt(activityExtra, 2);
+
+                } catch (Exception e) {
+                    useAlternativeApproach(activityExtra, mAdapter, classLoader);
+                }
+
+                return result;
+            });
         } catch (Throwable t) {
             logError("Failed to hook startCustomInstallConfirm", t);
         }
     }
 
-    private void hookPermissionsAdapterConstructor(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookPermissionsAdapterConstructor(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookConstructor(
-                    "com.android.packageinstaller.extra.PermissionsAdapter",
-                    lpparam.classLoader,
+            Class<?> permissionsAdapterClass = classLoader.loadClass(
+                    "com.android.packageinstaller.extra.PermissionsAdapter");
+            Constructor<?> ctor = permissionsAdapterClass.getDeclaredConstructor(
                     android.view.LayoutInflater.class,
                     ArrayList.class,
-                    android.os.Handler.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            if (!isEnabled()) return;
+                    android.os.Handler.class);
+            this.xposed.hook(ctor).intercept(chain -> {
+                chain.proceed();
+                if (!isEnabled()) return null;
 
-                            @SuppressWarnings("unchecked")
-                            ArrayList<Object> originalList = (ArrayList<Object>) param.args[1];
-                            if (originalList == null || originalList.isEmpty()) return;
+                @SuppressWarnings("unchecked")
+                ArrayList<Object> originalList = (ArrayList<Object>) chain.getArg(1);
+                if (originalList == null || originalList.isEmpty()) return null;
 
-                            Object trustItem = findTrustItem(originalList);
-                            if (trustItem != null) {
-                                originalList.clear();
-                                originalList.add(trustItem);
-                            }
+                Object trustItem = findTrustItem(originalList);
+                if (trustItem != null) {
+                    originalList.clear();
+                    originalList.add(trustItem);
+                }
 
-                            XposedHelpers.setIntField(param.thisObject, "selectId", 2);
-                        }
-                    }
-            );
+                Field selectIdField = chain.getThisObject().getClass().getDeclaredField("selectId");
+                selectIdField.setAccessible(true);
+                selectIdField.setInt(chain.getThisObject(), 2);
+
+                return null;
+            });
         } catch (Throwable t) {
             logError("Failed to hook PermissionsAdapter constructor", t);
         }
     }
 
-    private void hookPermissionsAdapterGetCount(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookPermissionsAdapterGetCount(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "com.android.packageinstaller.extra.PermissionsAdapter",
-                    lpparam.classLoader,
-                    "getCount",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            if (!isEnabled()) return;
-                            param.setResult(1);
-                        }
-                    }
-            );
+            Class<?> permissionsAdapterClass = classLoader.loadClass(
+                    "com.android.packageinstaller.extra.PermissionsAdapter");
+            Method getCount = permissionsAdapterClass.getDeclaredMethod("getCount");
+            this.xposed.hook(getCount).intercept(chain -> {
+                if (!isEnabled()) return chain.proceed();
+                chain.proceed();
+                return 1;
+            });
         } catch (Throwable t) {
             logError("Failed to hook PermissionsAdapter getCount", t);
         }
@@ -162,22 +170,20 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
 
     private void hookListViewSetAdapter() {
         try {
-            XposedHelpers.findAndHookMethod(
-                    android.widget.ListView.class,
-                    "setAdapter",
-                    android.widget.ListAdapter.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            if (!isEnabled()) return;
+            Method setAdapter = android.widget.ListView.class.getDeclaredMethod(
+                    "setAdapter", android.widget.ListAdapter.class);
+            this.xposed.hook(setAdapter).intercept(chain -> {
+                if (!isEnabled()) return chain.proceed();
 
-                            Object adapter = param.args[0];
-                            if (adapter != null && adapter.getClass().getName().contains("PermissionsAdapter")) {
-                                XposedHelpers.setIntField(adapter, "selectId", 2);
-                            }
-                        }
-                    }
-            );
+                Object adapter = chain.getArg(0);
+                if (adapter != null && adapter.getClass().getName().contains("PermissionsAdapter")) {
+                    Field selectIdField = adapter.getClass().getDeclaredField("selectId");
+                    selectIdField.setAccessible(true);
+                    selectIdField.setInt(adapter, 2);
+                }
+
+                return chain.proceed();
+            });
         } catch (Throwable t) {
             logError("Failed to hook ListView setAdapter", t);
         }
@@ -201,16 +207,40 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
 
     private void setPermissionManageType(Object activityExtra, ClassLoader classLoader) {
         try {
-            Object appPermsInfoData = XposedHelpers.callStaticMethod(
-                    XposedHelpers.findClass("com.android.packageinstaller.extra.AppPermsInfoData", classLoader),
-                    "getInstance",
-                    XposedHelpers.getObjectField(activityExtra, "mPkgInfo"),
+            Class<?> appPermsInfoDataClass = classLoader.loadClass(
+                    "com.android.packageinstaller.extra.AppPermsInfoData");
+
+            Field mPkgInfoField = activityExtra.getClass().getDeclaredField("mPkgInfo");
+            mPkgInfoField.setAccessible(true);
+
+            Field mIntentInfoField = activityExtra.getClass().getDeclaredField("mIntentInfo");
+            mIntentInfoField.setAccessible(true);
+
+            // Find getInstance method with 3 params
+            Method getInstanceMethod = null;
+            for (Method m : appPermsInfoDataClass.getDeclaredMethods()) {
+                if (m.getName().equals("getInstance") && m.getParameterTypes().length == 3) {
+                    getInstanceMethod = m;
+                    break;
+                }
+            }
+            if (getInstanceMethod == null) return;
+            getInstanceMethod.setAccessible(true);
+
+            Object appPermsInfoData = getInstanceMethod.invoke(null,
+                    mPkgInfoField.get(activityExtra),
                     activityExtra,
-                    XposedHelpers.getObjectField(activityExtra, "mIntentInfo")
-            );
+                    mIntentInfoField.get(activityExtra));
 
             if (appPermsInfoData != null) {
-                XposedHelpers.callMethod(appPermsInfoData, "setPermsManageType", 2);
+                // Find setPermsManageType method with 1 param
+                for (Method m : appPermsInfoData.getClass().getDeclaredMethods()) {
+                    if (m.getName().equals("setPermsManageType") && m.getParameterTypes().length == 1) {
+                        m.setAccessible(true);
+                        m.invoke(appPermsInfoData, 2);
+                        break;
+                    }
+                }
             }
         } catch (Throwable t) {
             // 忽略错误
@@ -219,8 +249,14 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
 
     private void useAlternativeApproach(Object activityExtra, Object mAdapter, ClassLoader classLoader) {
         try {
-            XposedHelpers.setIntField(mAdapter, "selectId", 2);
-            XposedHelpers.setIntField(activityExtra, "mSelectId", 2);
+            Field selectIdField = mAdapter.getClass().getDeclaredField("selectId");
+            selectIdField.setAccessible(true);
+            selectIdField.setInt(mAdapter, 2);
+
+            Field mSelectIdField = activityExtra.getClass().getDeclaredField("mSelectId");
+            mSelectIdField.setAccessible(true);
+            mSelectIdField.setInt(activityExtra, 2);
+
             setPermissionManageType(activityExtra, classLoader);
         } catch (Throwable t) {
             // 忽略所有错误

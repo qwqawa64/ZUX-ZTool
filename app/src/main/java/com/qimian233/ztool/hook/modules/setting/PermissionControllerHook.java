@@ -8,15 +8,16 @@ import android.view.Window;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import java.lang.invoke.MethodHandles;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 
 public class PermissionControllerHook extends BaseHookModule {
+
+    public PermissionControllerHook() {}
 
     @Override
     public String getModuleName() {
@@ -28,108 +29,160 @@ public class PermissionControllerHook extends BaseHookModule {
         return new String[]{"com.android.permissioncontroller", "com.android.settings", "com.zui.safecenter"};
     }
 
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    @Override
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if (!isEnabled()) return;
         log("Loading module PermissionControllerHook.");
         try {
-            if ("com.android.permissioncontroller".equals(lpparam.packageName)) {
+            if ("com.android.permissioncontroller".equals(packageName)) {
                 log("com.android.permissioncontroller detected. Hooking...");
-                handleLoadPermissionController(lpparam);
-            } else if ("com.android.settings".equals(lpparam.packageName)) {
+                handleLoadPermissionController(classLoader);
+            } else if ("com.android.settings".equals(packageName)) {
                 log("com.android.settings detected. Hooking...");
-                new SettingsHook().handleLoadSettings(lpparam);
-            } else if ("com.zui.safecenter".equals(lpparam.packageName)) {
+                new SettingsHook().handleLoadSettings(classLoader, this.xposed);
+            } else if ("com.zui.safecenter".equals(packageName)) {
                 log("com.zui.safecenter detected. Hooking...");
-                handleLoadSafeCenter(lpparam);
+                handleLoadSafeCenter(classLoader);
             }
             log("Hook is successful.");
-        }catch (Exception e) {
+        } catch (Exception e) {
             logError("Error hooking", e);
         }
     }
 
-    private static void handleLoadSafeCenter(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        var cls = XposedHelpers.findClass("com.lenovo.xuipermissionmanager.XuiPermissionManager", lpparam.classLoader);
-        var superclass = cls.getSuperclass();
-        var onCreate = XposedHelpers.findMethodExact(cls, "onCreate", Bundle.class);
-        var super_onCreate = XposedHelpers.findMethodExact(superclass, "onCreate", Bundle.class);
-        final var super_onCreate_invokespecial = MethodHandles.lookup().unreflectSpecial(super_onCreate, cls);
-        XposedBridge.hookMethod(onCreate, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                // redirect to AOSP permission manager
-                super_onCreate_invokespecial.invoke(param.thisObject, param.args[0]);
-                var activity = (Activity)param.thisObject;
-                activity.startActivity(new Intent("android.intent.action.MANAGE_PERMISSIONS"));
-                activity.finish();
-                param.setResult(null);
-            }
+    private void handleLoadSafeCenter(ClassLoader classLoader) throws Throwable {
+        Class<?> cls = classLoader.loadClass("com.lenovo.xuipermissionmanager.XuiPermissionManager");
+        Class<?> superclass = cls.getSuperclass();
+        Method onCreate = cls.getDeclaredMethod("onCreate", Bundle.class);
+        Method super_onCreate = superclass.getDeclaredMethod("onCreate", Bundle.class);
+        final MethodHandle super_onCreate_invokespecial = MethodHandles.lookup().unreflectSpecial(super_onCreate, cls);
+        this.xposed.hook(onCreate).intercept(chain -> {
+            // redirect to AOSP permission manager
+            super_onCreate_invokespecial.invoke(chain.getThisObject(), chain.getArg(0));
+            Activity activity = (Activity) chain.getThisObject();
+            activity.startActivity(new Intent("android.intent.action.MANAGE_PERMISSIONS"));
+            activity.finish();
+            return null;
         });
-        XposedHelpers.findAndHookMethod(cls, "onDestroy", XC_MethodReplacement.DO_NOTHING);
+
+        Method onDestroy = cls.getDeclaredMethod("onDestroy");
+        this.xposed.hook(onDestroy).intercept(chain -> null);
     }
 
     static class SettingsHook {
         private final ThreadLocal<Boolean> isRowVersionTls = new ThreadLocal<>();
 
-        private class IsRowVersionHook extends XC_MethodHook {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-                var value = isRowVersionTls.get();
-                if (value != null) {
-                    param.setResult(value);
+        public void handleLoadSettings(ClassLoader classLoader, XposedInterface xposed) {
+            try {
+                // Hook LenovoUtils.isRowVersion with ThreadLocal check
+                Method isRowVersionMethod = classLoader
+                        .loadClass("com.lenovo.common.utils.LenovoUtils")
+                        .getDeclaredMethod("isRowVersion");
+                xposed.hook(isRowVersionMethod).intercept(chain -> {
+                    Boolean value = isRowVersionTls.get();
+                    if (value != null) {
+                        return value;
+                    }
+                    return chain.proceed();
+                });
+            } catch (Throwable ignored) {}
+
+            // Helper: wraps a method with isRowVersionTls set/remove
+            try {
+                Method startMethod = classLoader
+                        .loadClass("com.android.settings.applications.appinfo.AppPermissionPreferenceController")
+                        .getDeclaredMethod("startManagePermissionsActivity");
+                xposed.hook(startMethod).intercept(chain -> {
+                    isRowVersionTls.set(true);
+                    try {
+                        return chain.proceed();
+                    } finally {
+                        isRowVersionTls.remove();
+                    }
+                });
+            } catch (Throwable ignored) {}
+
+            try {
+                Class<?> prefClass = classLoader.loadClass("androidx.preference.Preference");
+                Method clickMethod = classLoader
+                        .loadClass("com.lenovo.settings.privacy.PrivacyManagerPreferenceController")
+                        .getDeclaredMethod("handlePreferenceTreeClick", prefClass);
+                xposed.hook(clickMethod).intercept(chain -> {
+                    isRowVersionTls.set(true);
+                    try {
+                        return chain.proceed();
+                    } finally {
+                        isRowVersionTls.remove();
+                    }
+                });
+            } catch (Throwable ignored) {}
+
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= 36) {
+                    Method permClickMethod = classLoader
+                            .loadClass("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController")
+                            .getDeclaredMethod("handlePermissionClick");
+                    xposed.hook(permClickMethod).intercept(chain -> {
+                        isRowVersionTls.set(true);
+                        try {
+                            return chain.proceed();
+                        } finally {
+                            isRowVersionTls.remove();
+                        }
+                    });
+                } else {
+                    Class<?> viewClass = classLoader.loadClass("android.view.View");
+                    Method lambdaMethod = classLoader
+                            .loadClass("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController")
+                            .getDeclaredMethod("lambda$initAppEntryList$0$com-lenovo-settings-applications-LenovoAppHeaderPreferenceController", viewClass);
+                    xposed.hook(lambdaMethod).intercept(chain -> {
+                        isRowVersionTls.set(true);
+                        try {
+                            return chain.proceed();
+                        } finally {
+                            isRowVersionTls.remove();
+                        }
+                    });
                 }
-            }
-        }
-
-        private class IsRowVersionTlsHook extends XC_MethodHook {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-                isRowVersionTls.set(true);
-            }
-
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-                isRowVersionTls.remove();
-            }
-        }
-
-        public void handleLoadSettings(XC_LoadPackage.LoadPackageParam lpparam) {
-            XposedHelpers.findAndHookMethod("com.lenovo.common.utils.LenovoUtils", lpparam.classLoader, "isRowVersion", new IsRowVersionHook());
-
-            // make settings invoke AOSP permission manager
-            XposedHelpers.findAndHookMethod("com.android.settings.applications.appinfo.AppPermissionPreferenceController", lpparam.classLoader, "startManagePermissionsActivity", new IsRowVersionTlsHook());
-            XposedHelpers.findAndHookMethod("com.lenovo.settings.privacy.PrivacyManagerPreferenceController", lpparam.classLoader, "handlePreferenceTreeClick", "androidx.preference.Preference", new IsRowVersionTlsHook());
-            if (android.os.Build.VERSION.SDK_INT >= 36){
-                XposedHelpers.findAndHookMethod("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController", lpparam.classLoader, "handlePermissionClick", new IsRowVersionTlsHook());
-            } else {
-                XposedHelpers.findAndHookMethod("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController", lpparam.classLoader, "lambda$initAppEntryList$0$com-lenovo-settings-applications-LenovoAppHeaderPreferenceController", "android.view.View", new IsRowVersionTlsHook());
-            }
+            } catch (Throwable ignored) {}
         }
     }
 
-    public static void handleLoadPermissionController(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> zuiUtilsCls = XposedHelpers.findClassIfExists("com.android.permissioncontroller.extra.ZuiUtils", lpparam.classLoader);
-        if (zuiUtilsCls == null) {
-            zuiUtilsCls = XposedHelpers.findClassIfExists("com.android.permissioncontroller.permission.utils.ZuiUtils", lpparam.classLoader);
+    private void handleLoadPermissionController(ClassLoader classLoader) {
+        Class<?> zuiUtilsCls = null;
+        try {
+            zuiUtilsCls = classLoader.loadClass("com.android.permissioncontroller.extra.ZuiUtils");
+        } catch (ClassNotFoundException e1) {
+            try {
+                zuiUtilsCls = classLoader.loadClass("com.android.permissioncontroller.permission.utils.ZuiUtils");
+            } catch (ClassNotFoundException ignored) {}
         }
         if (zuiUtilsCls != null) {
-            XposedHelpers.findAndHookMethod(zuiUtilsCls, "isCTSandGTS", String.class, XC_MethodReplacement.returnConstant(Boolean.TRUE));
-        }
-        else {
-            XposedBridge.log("ZuiUtils not found");
+            try {
+                Method m = zuiUtilsCls.getDeclaredMethod("isCTSandGTS", String.class);
+                this.xposed.hook(m).intercept(chain -> Boolean.TRUE);
+            } catch (Throwable ignored) {}
+        } else {
+            this.xposed.log(android.util.Log.INFO, TAG, "[PermissionControllerHook] ZuiUtils not found");
         }
 
         if (Build.VERSION.SDK_INT <= 34) {
-            XposedHelpers.findAndHookMethod("com.android.permissioncontroller.permission.ui.GrantPermissionsActivity", lpparam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    var activity = (Activity) param.thisObject;
+            try {
+                Method onCreateMethod = classLoader
+                        .loadClass("com.android.permissioncontroller.permission.ui.GrantPermissionsActivity")
+                        .getDeclaredMethod("onCreate", Bundle.class);
+                this.xposed.hook(onCreateMethod).intercept(chain -> {
+                    Activity activity = (Activity) chain.getThisObject();
                     activity.setTheme(android.R.style.Theme_DeviceDefault_Light_Dialog_Alert);
                     activity.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                    var rootView = activity.getWindow().getDecorView();
+                    android.view.View rootView = activity.getWindow().getDecorView();
                     rootView.setFilterTouchesWhenObscured(true);
                     rootView.setPadding(0, 0, 0, 0);
-                }
-            });
+                    return chain.proceed();
+                });
+            } catch (Throwable ignored) {}
         }
     }
 }

@@ -50,19 +50,6 @@ class LockScreenSettingsViewModel(
         _uiState.value = _uiState.value.copy(showRootPermissionDialog = false)
     }
 
-    fun setRealWattsIntervalOption(selectedOption: String) {
-        _uiState.value = _uiState.value.copy(realWattsIntervalOption = selectedOption)
-        repository.saveRealWattsIntervalOption(selectedOption)
-    }
-
-    fun setRealWattsRefreshInterval(value: String) {
-        val filteredValue = value.filter { it.isDigit() || it == '.' }
-        _uiState.value = _uiState.value.copy(realWattsRefreshInterval = filteredValue)
-        filteredValue.toFloatOrNull()?.let {
-            repository.saveRealWattsRefreshInterval(it)
-        } ?: Log.d(TAG, "Empty number string, will not save it as a valid refresh interval.")
-    }
-
     fun testApiConnection(onMissingApiAddress: () -> Unit) {
         val current = _uiState.value
         val apiUrl = current.apiAddress.trim()
@@ -112,8 +99,6 @@ data class LockScreenSettingsUiState(
     val apiAddress: String = "",
     val regex: String = "",
     val chargeWattsOption: String = "",
-    val realWattsIntervalOption: String = "",
-    val realWattsRefreshInterval: String = "",
     val isTestingApi: Boolean = false,
     val showRootPermissionDialog: Boolean = false,
     val apiTestResult: ApiTestResult? = null

@@ -87,6 +87,38 @@ class LauncherSettingsViewModel(
         repository.saveShowRamInfo(value)
     }
 
+    fun setBeautifyRamInfo(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(beautifyRamInfo = enabled)
+        repository.saveBeautifyRamInfo(enabled)
+    }
+
+    fun setDisableDockBar(enabled: Boolean) {
+        val showWarning = repository.saveDisableDockBar(enabled)
+        val current = _uiState.value
+        _uiState.value = if (enabled) {
+            current.copy(
+                disableDockBar = true,
+                moreBigDock = false,
+                showDisableDockWarningDialog = showWarning
+            )
+        } else {
+            current.copy(
+                disableDockBar = false,
+                moreBigDock = current.moreBigDock,
+                showDisableDockWarningDialog = false
+            )
+        }
+    }
+
+    fun dismissDisableDockWarningDialog() {
+        _uiState.value = _uiState.value.copy(showDisableDockWarningDialog = false)
+    }
+
+    fun confirmDisableDockWarning() {
+        repository.saveDisableDockWarningConfirmed()
+        _uiState.value = _uiState.value.copy(showDisableDockWarningDialog = false)
+    }
+
     fun showRestartConfirmDialog() {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = true)
     }
@@ -128,6 +160,9 @@ data class LauncherSettingsUiState(
     val removeSearchRecommend: Boolean = false,
     val showRestartConfirmDialog: Boolean = false,
     val showRamInfo : Boolean = false,
+    val beautifyRamInfo : Boolean = false,
+    val disableDockBar: Boolean = false,
+    val showDisableDockWarningDialog: Boolean = false
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size

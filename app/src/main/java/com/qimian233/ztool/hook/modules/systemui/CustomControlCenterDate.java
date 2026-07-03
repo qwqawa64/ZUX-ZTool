@@ -1,5 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -10,11 +12,10 @@ import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 import java.util.Date;
 
 /**
@@ -22,13 +23,15 @@ import java.util.Date;
  * 基于VariableDateView和VariableDateViewController的精确Hook
  * 支持自定义日期格式（包括农历、节气等）、字体样式、颜色等完整配置
  */
+@SuppressLint("PrivateApi")
 public class CustomControlCenterDate extends BaseHookModule {
 
     private static final String PREFS_NAME = "xposed_module_config";
-    private static final String MODULE_PACKAGE = "com.qimian233.ztool";
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     private static final String VARIABLE_DATE_VIEW_CLASS = "com.android.systemui.statusbar.policy.VariableDateView";
     private static final String VARIABLE_DATE_CONTROLLER_CLASS = "com.android.systemui.statusbar.policy.VariableDateViewController";
+
+    public CustomControlCenterDate() {}
 
     @Override
     public String getModuleName() {
@@ -41,20 +44,21 @@ public class CustomControlCenterDate extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
         if (!isEnabled()) {
             return;
         }
 
         try {
             // 方法1: Hook VariableDateView的setText方法（最精确）
-            hookVariableDateViewSetText(lpparam);
+            hookVariableDateViewSetText(classLoader);
 
             // 方法2: Hook VariableDateViewController的updateClock方法
-            hookVariableDateViewController(lpparam);
+            hookVariableDateViewController(classLoader);
 
             // 方法3: Hook TextView的onAttachedToWindow方法（确保初始样式正确）
-            hookTextViewAttach(lpparam);
+            hookTextViewAttach();
 
             log("控制中心日期Hook模块初始化成功");
 
@@ -67,37 +71,28 @@ public class CustomControlCenterDate extends BaseHookModule {
      * 方法1: 直接Hook VariableDateView的setText方法
      * 这是最精确的方法，每次文本更新时都会应用样式和自定义格式
      */
-    private void hookVariableDateViewSetText(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookVariableDateViewSetText(ClassLoader classLoader) {
         try {
-            Class<?> variableDateViewClass = XposedHelpers.findClass(
-                    VARIABLE_DATE_VIEW_CLASS,
-                    lpparam.classLoader
-            );
+            Class<?> variableDateViewClass = classLoader.loadClass(VARIABLE_DATE_VIEW_CLASS);
 
-            XposedHelpers.findAndHookMethod(
-                    variableDateViewClass,
-                    "setText",
-                    CharSequence.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            try {
-                                if (!isEnabled()) return;
+            Method setTextMethod = findMethod(variableDateViewClass, "setText", CharSequence.class);
+            this.xposed.hook(setTextMethod).intercept(chain -> {
+                try {
+                    if (!isEnabled()) return chain.proceed();
+                    if (!isTargetVariableDateView(chain.getThisObject())) return chain.proceed();
 
-                                CharSequence originalText = (CharSequence) param.args[0];
-                                if (originalText != null) {
-                                    // 使用自定义格式化器生成新的日期文本
-                                    String customDate = getCustomFormattedDate();
-                                    CharSequence styledText = applyAllStyles(customDate);
-                                    param.args[0] = styledText;
-                                    log("VariableDateView文本替换成功: " + customDate);
-                                }
-                            } catch (Exception e) {
-                                logError("VariableDateView文本替换失败", e);
-                            }
-                        }
+                    CharSequence originalText = (CharSequence) chain.getArg(0);
+                    if (originalText != null) {
+                        // 使用自定义格式化器生成新的日期文本
+                        CharSequence styledText = createStyledCustomDateText();
+                        log("VariableDateView文本替换成功: " + styledText);
+                        return chain.proceed(new Object[]{styledText});
                     }
-            );
+                } catch (Exception e) {
+                    logError("VariableDateView文本替换失败", e);
+                }
+                return chain.proceed();
+            });
 
             log("VariableDateView.setText Hook成功");
 
@@ -110,37 +105,25 @@ public class CustomControlCenterDate extends BaseHookModule {
      * 方法2: Hook VariableDateViewController的updateClock方法
      * 在日期更新时应用样式和自定义格式
      */
-    private void hookVariableDateViewController(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookVariableDateViewController(ClassLoader classLoader) {
         try {
-            Class<?> controllerClass = XposedHelpers.findClass(
-                    VARIABLE_DATE_CONTROLLER_CLASS,
-                    lpparam.classLoader
-            );
+            Class<?> controllerClass = classLoader.loadClass(VARIABLE_DATE_CONTROLLER_CLASS);
 
             // Hook access$updateClock静态方法
-            XposedHelpers.findAndHookMethod(
-                    controllerClass,
-                    "access$updateClock",
-                    controllerClass,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                Object controller = param.args[0];
-                                Object dateView = XposedHelpers.getObjectField(controller, "mView");
-                                if (dateView != null) {
-                                    // 直接设置自定义格式化的日期文本
-                                    String customDate = getCustomFormattedDate();
-                                    CharSequence styledText = applyAllStyles(customDate);
-                                    XposedHelpers.callMethod(dateView, "setText", styledText);
-                                    log("VariableDateViewController日期更新成功: " + customDate);
-                                }
-                            } catch (Exception e) {
-                                logError("VariableDateViewController日期更新失败", e);
-                            }
-                        }
+            Method accessMethod = controllerClass.getDeclaredMethod("access$updateClock", controllerClass);
+            this.xposed.hook(accessMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                try {
+                    Object dateView = getValidatedVariableDateView(chain.getArg(0));
+                    if (dateView != null && applyCustomDateToValidatedView(dateView)) {
+                        // 直接设置自定义格式化的日期文本
+                        log("VariableDateViewController日期更新成功");
                     }
-            );
+                } catch (Exception e) {
+                    logError("VariableDateViewController日期更新失败", e);
+                }
+                return result;
+            });
 
             log("VariableDateViewController Hook成功");
 
@@ -153,36 +136,93 @@ public class CustomControlCenterDate extends BaseHookModule {
      * 方法3: Hook TextView的onAttachedToWindow方法
      * 在视图附加到窗口时应用样式（确保初始样式正确）
      */
-    private void hookTextViewAttach(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookTextViewAttach() {
         try {
-            XposedHelpers.findAndHookMethod(
-                    "android.widget.TextView",
-                    lpparam.classLoader,
-                    "onAttachedToWindow",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                Object textView = param.thisObject;
-                                String className = textView.getClass().getName();
+            Method attachMethod = android.widget.TextView.class.getDeclaredMethod("onAttachedToWindow");
+            this.xposed.hook(attachMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                try {
+                    Object textView = chain.getThisObject();
+                    String className = textView.getClass().getName();
 
-                                // 只处理VariableDateView实例
-                                if (VARIABLE_DATE_VIEW_CLASS.equals(className)) {
-                                    String customDate = getCustomFormattedDate();
-                                    CharSequence styledText = applyAllStyles(customDate);
-                                    XposedHelpers.callMethod(textView, "setText", styledText);
-                                    log("VariableDateView初始样式应用成功");
-                                }
-                            } catch (Exception e) {
-                                logError("TextView初始样式应用失败", e);
-                            }
-                        }
+                    // 只处理控制中心 VariableDateView 实例
+                    if (VARIABLE_DATE_VIEW_CLASS.equals(className)
+                            && applyCustomDateToValidatedView(textView)) {
+                        log("VariableDateView初始样式应用成功");
                     }
-            );
+                } catch (Exception e) {
+                    logError("TextView初始样式应用失败", e);
+                }
+                return result;
+            });
 
         } catch (Throwable t) {
             log("TextView.onAttachedToWindow Hook失败");
         }
+    }
+
+    private Object getValidatedVariableDateView(Object controller) throws ReflectiveOperationException {
+        if (controller == null
+                || !VARIABLE_DATE_CONTROLLER_CLASS.equals(controller.getClass().getName())) {
+            return null;
+        }
+
+        Object dateView = findField(controller.getClass(), "mView").get(controller);
+        return isTargetVariableDateView(dateView) ? dateView : null;
+    }
+
+    private boolean applyCustomDateToValidatedView(Object dateView) throws ReflectiveOperationException {
+        if (!isTargetVariableDateView(dateView)) {
+            return false;
+        }
+
+        Method setTextMethod = findMethod(dateView.getClass(), "setText", CharSequence.class);
+        setTextMethod.invoke(dateView, createStyledCustomDateText());
+        return true;
+    }
+
+    private boolean isTargetVariableDateView(Object view) {
+        if (view == null || !VARIABLE_DATE_VIEW_CLASS.equals(view.getClass().getName())) {
+            return false;
+        }
+
+        try {
+            findField(view.getClass(), "longerPattern");
+            findField(view.getClass(), "shorterPattern");
+            return isControlCenterDateResource(view);
+        } catch (Throwable t) {
+            if (DEBUG) logError("VariableDateView fingerprint mismatch", t);
+            return false;
+        }
+    }
+
+    private boolean isControlCenterDateResource(Object view) {
+        if (!(view instanceof android.view.View)) {
+            return false;
+        }
+
+        android.view.View androidView = (android.view.View) view;
+        int id = androidView.getId();
+        if (id == android.view.View.NO_ID) {
+            if (DEBUG) log("VariableDateView rejected because it has no resource id");
+            return false;
+        }
+
+        try {
+            String entryName = androidView.getResources().getResourceEntryName(id);
+            boolean matched = "date".equals(entryName);
+            if (DEBUG && !matched) {
+                log("VariableDateView resource rejected: " + entryName);
+            }
+            return matched;
+        } catch (Throwable t) {
+            if (DEBUG) logError("Failed to read VariableDateView resource name", t);
+            return false;
+        }
+    }
+
+    private CharSequence createStyledCustomDateText() {
+        return applyAllStyles(getCustomFormattedDate());
     }
 
     /**
@@ -295,10 +335,6 @@ public class CustomControlCenterDate extends BaseHookModule {
         try {
             String format = getCustomDateSetting();
             if (DEBUG) log("初次读取到的配置：" + format);
-            if (format == null || format.isEmpty()) {
-                log("读取到的配置为空，使用默认格式");
-                format = "yyyy年MM月dd日 EEEE"; // 默认格式
-            }
             return format;
         } catch (Exception e) {
             logError("日期格式获取失败", e);
@@ -307,12 +343,17 @@ public class CustomControlCenterDate extends BaseHookModule {
     }
 
     /**
+     * 获取SharedPreferences
+     */
+    private SharedPreferences getPrefs() {
+        return this.xposed.getRemotePreferences(PREFS_NAME);
+    }
+
+    /**
      * 从SharedPreferences获取配置值的方法
      */
     private String getCustomDateSetting() {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
-        return prefs.getString("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE");
+        return getPrefs().getString("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE");
     }
 
     /**
@@ -375,26 +416,20 @@ public class CustomControlCenterDate extends BaseHookModule {
      * 辅助方法：读取整型配置
      */
     private int getCustomDateInt() {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
-        return prefs.getInt("Custom_ControlCenterDateTextColor", -1);
+        return getPrefs().getInt("Custom_ControlCenterDateTextColor", -1);
     }
 
     /**
      * 辅助方法：读取浮点型配置
      */
     private float getCustomDateFloat(String key, float defaultValue) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
-        return prefs.getFloat(key, defaultValue);
+        return getPrefs().getFloat(key, defaultValue);
     }
 
     /**
      * 辅助方法：读取布尔型配置
      */
     private boolean getCustomDateBoolean(String key) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
-        return prefs.getBoolean(key, false);
+        return getPrefs().getBoolean(key, false);
     }
 }

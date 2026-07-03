@@ -1,20 +1,21 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
+import android.annotation.SuppressLint;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import com.qimian233.ztool.hook.base.BaseHookModule;
+
+import io.github.libxposed.api.XposedModuleInterface;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 
 /**
  * SystemUI充电瓦数显示Hook模块
  * 在锁屏充电提示中添加实时充电功率显示（使用Root权限读取系统文件获取实时数据）
  */
+@SuppressLint("PrivateApi")
 public class SystemUIRealWatts extends BaseHookModule {
 
     private static final String TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController";
@@ -29,6 +30,8 @@ public class SystemUIRealWatts extends BaseHookModule {
 
     private static long lastUpdate = 0;
 
+    public SystemUIRealWatts() {}
+
     @Override
     public String getModuleName() {
         return "systemUI_RealWatts";
@@ -42,62 +45,59 @@ public class SystemUIRealWatts extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
-            hookKeyguardIndicationController(lpparam);
+            hookKeyguardIndicationController(classLoader);
         }
     }
 
-    private void hookKeyguardIndicationController(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookKeyguardIndicationController(ClassLoader classLoader) {
         try {
-
-            double timeInterval = getCustomizedInterval();
-
-            if (DEBUG) log("自定义刷新间隔：" + timeInterval * 1000 + "ms");
-
-            ClassLoader classLoader = lpparam.classLoader;
-
             // Hook computePowerIndication方法来添加充电瓦数显示
-            XposedHelpers.findAndHookMethod(TARGET_CLASS, classLoader,
-                    "computePowerIndication", new XC_MethodHook() {
+            Method computeMethod = classLoader.loadClass(TARGET_CLASS)
+                    .getDeclaredMethod("computePowerIndication");
+            this.xposed.hook(computeMethod).intercept(chain -> {
+                try {
+                    // 获取原始返回的充电提示文本
+                    Object result = chain.proceed();
+                    String originalText = (String) result;
+                    if (originalText == null) return null;
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            // 获取原始返回的充电提示文本
-                            String originalText = (String) param.getResult();
-                            if (originalText == null) return;
+                    // 获取KeyguardIndicationController实例
+                    Object controller = chain.getThisObject();
+                    Class<?> cl = controller.getClass();
 
-                            // 获取KeyguardIndicationController实例
-                            Object controller = param.thisObject;
+                    // 获取充电状态
+                    boolean isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller);
 
-                            // 获取充电状态
-                            boolean isPluggedIn = XposedHelpers.getBooleanField(controller, "mPowerPluggedIn");
-
-                            // 只在充电状态下显示瓦数
-                            if (isPluggedIn) {
-                                if (isCustomizedIntervalDefined() && System.currentTimeMillis() - lastUpdate < Math.round(timeInterval * 1000) && DEBUG) {
-                                    log("间隔时间太短，稍后再刷新充电功率");
-                                    log("下次刷新：" + (Math.round(timeInterval * 1000) - (System.currentTimeMillis() - lastUpdate)) + "ms");
-                                    return;
-                                }
-                                // 使用Root权限读取系统文件获取实时充电功率
-                                ChargingData chargingData = readChargingDataWithRoot();
-
-                                if (chargingData != null && chargingData.isCharging && chargingData.power > 0) {
-                                    // 使用换行符 \n 追加功率信息
-                                    String newText = originalText + "\n" + formatWattage(chargingData.power);
-                                    param.setResult(newText);
-                                    lastUpdate = System.currentTimeMillis();
-                                    if (DEBUG) log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
-                                } else {
-                                    log("未能检测到充电功率");
-                                    param.setResult(originalText + "\n 0W");
-                                }
-                            }
+                    // 只在充电状态下显示瓦数
+                    if (isPluggedIn) {
+                        if (System.currentTimeMillis() - lastUpdate < 100 && DEBUG) {
+                            log("Debounce triggered. Charging power will not be updated this time.");
+                            return result;
                         }
-                    });
+                        // 使用Root权限读取系统文件获取实时充电功率
+                        ChargingData chargingData = readChargingDataWithRoot();
+
+                        if (chargingData != null && chargingData.isCharging && chargingData.power > 0) {
+                            // 使用换行符 \n 追加功率信息
+                            String newText = originalText + "\n" + formatWattage(chargingData.power);
+                            lastUpdate = System.currentTimeMillis();
+                            if (DEBUG) log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
+                            return newText;
+                        } else {
+                            log("未能检测到充电功率");
+                            return originalText + "\n --W";
+                        }
+                    }
+                    return result;
+                } catch (Throwable t) {
+                    logError("computePowerIndication hook回调异常", t);
+                    return chain.proceed();
+                }
+            });
 
             log("成功Hook KeyguardIndicationController");
 
@@ -224,14 +224,6 @@ public class SystemUIRealWatts extends BaseHookModule {
         } else {
             return base + " ⚡⚡⚡";  // 三个闪电符号
         }
-    }
-
-    private double getCustomizedInterval() {
-        return PreferenceHelper.getInstance().getFloat("real_watts_refresh_interval", (float) 0.0);
-    }
-
-    private boolean isCustomizedIntervalDefined() {
-        return PreferenceHelper.getInstance().getBoolean("real_watts_customized_interval", false);
     }
 
     /**

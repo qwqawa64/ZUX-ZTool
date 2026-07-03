@@ -1,6 +1,6 @@
 {
-  "newVersionName": "Beta/251227",
-  "newVersionCode": 295,
-  "whatNew": "新增检查更新功能\n新增获取9008/MTK深刷包功能\n新增允许自动开启防误触\n新增允许原生后台管理APP白名单\n新增强制允许截屏\n新增AI全局输入唤醒符号自定义\n适配新的原生通知图标Hook点[Android16]\n重构部分UI界面\n适配强制分屏的支持[Android16]\n适配强制固定小窗的支持[Android16]\n适配强制自由小窗的支持[Android16]\n新增OTA请求参数",
-  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/ZUX-ZToolDemo251127(8)"
+  "newVersionName": "Beta/260624",
+  "newVersionCode": 791,
+  "whatNew": "音量/亮度条百分比显示\n在设置内显示快捷跳转入口\n根据实际安装的应用展示功能入口\n检测非 ZUXOS/ZUI 设备\n新的 First Run 界面\n(测试) 允许不受信任的触摸\n(测试) 禁止人脸识别超时\n自定义关于设备面板中的一些信息\n去除原生安装器的“此应用未经《联想终端质量检测和安全审查标准》审核，建议使用官方“应用中心”安装经过检测的应用。”警告\n控制中心磁贴无字模式\n控制中心透明度自定义\n控制中心磁贴颜色自定义\n控制中心磁贴圆角半径自定义\n关闭新版本系统可用的小红点提示\n最近任务显示内存信息\n净化全局搜索\n增强阻止安全中心扫描功能，现在可以阻止其它类型的一些安全扫描，例如安全中心内手动触发的扫描功能，并阻止病毒警报弹窗\n添加亮灭屏过渡动画功能\n支持在应用信息字段显示更多内容，例如 Target SDK ，并支持长按复制到剪贴板\nCompose 重构，更规范的 Material 3 (Expressive) 主题，并支持 miuix 作为替代主题\n修复 Android 16 禁止处理游戏音频问题\n修复一视界拓展模块只能在 ZTool 内安装和卸载的问题\n修复从 ZTool 安装的一视界拓展模块可能无法正确生效的问题",
+  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/20260624-ZTool_Beta"
 }

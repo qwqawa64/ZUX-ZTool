@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.setting;
 
+import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -14,15 +15,16 @@ import android.widget.Toast;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
+@SuppressLint({"PrivateApi", "DiscouragedApi"})
 public class AppInfoHeaderDetailsHook extends BaseHookModule {
     private static final String TARGET_PACKAGE = "com.android.settings";
     private static final String CONTROLLER_CLASS =
@@ -34,10 +36,11 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
     private final String[] DISPLAY_STRINGS_CN = {"包名", "首次安装", "最后更新", "安装自", "已复制到剪贴板", "未知"};
     private final String[] DISPLAY_STRINGS_ALTERNATIVE = {"Package Name", "First Installed", "Last Updated", "Source", "Copied to clipboard", "Unknown"};
 
+    public AppInfoHeaderDetailsHook() {}
+
     private String getDisplayString(int stringIndex) {
         if (stringIndex <= 3) return this.SYSTEM_LANGUAGE.equals("zh") ? this.DISPLAY_STRINGS_CN[stringIndex] + ": " : this.DISPLAY_STRINGS_ALTERNATIVE[stringIndex] + ": ";
         return this.SYSTEM_LANGUAGE.equals("zh") ? this.DISPLAY_STRINGS_CN[stringIndex] : this.DISPLAY_STRINGS_ALTERNATIVE[stringIndex];
-
     }
 
     @Override
@@ -51,60 +54,66 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        if (!TARGET_PACKAGE.equals(lpparam.packageName)) {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
+        if (!TARGET_PACKAGE.equals(packageName)) {
             return;
         }
 
-        Class<?> appEntryClass = XposedHelpers.findClassIfExists(APP_ENTRY_CLASS, lpparam.classLoader);
+        Class<?> appEntryClass = null;
+        try {
+            appEntryClass = classLoader.loadClass(APP_ENTRY_CLASS);
+        } catch (ClassNotFoundException ignored) {}
         if (appEntryClass == null) {
             log("AppEntry class not found, skip app info header hook.");
             return;
         }
-        XposedHelpers.findAndHookMethod(
-                CONTROLLER_CLASS,
-                lpparam.classLoader,
-                "setAppLabelAndIcon",
-                PackageInfo.class,
-                appEntryClass,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        try {
-                            PackageInfo pkgInfo = (PackageInfo) param.args[0];
-                            if (pkgInfo == null || pkgInfo.applicationInfo == null) {
-                                return;
-                            }
 
-                            Context context = (Context) XposedHelpers.getObjectField(
-                                    param.thisObject, "mContext");
-                            Object headerPreference = XposedHelpers.getObjectField(
-                                    param.thisObject, "mHeader");
-                            TextView summaryView = findSummaryView(context, headerPreference);
-                            if (summaryView == null) {
-                                log("entity_header_summary not found.");
-                                return;
-                            }
+        Method m = classLoader
+                .loadClass(CONTROLLER_CLASS)
+                .getDeclaredMethod("setAppLabelAndIcon", PackageInfo.class, appEntryClass);
+        this.xposed.hook(m).intercept(chain -> {
+            Object result = chain.proceed();
+            try {
+                PackageInfo pkgInfo = (PackageInfo) chain.getArg(0);
+                if (pkgInfo == null || pkgInfo.applicationInfo == null) {
+                    return result;
+                }
 
-                            String appInfo = buildAppInfo(summaryView.getContext(), pkgInfo);
-                            if (TextUtils.isEmpty(appInfo)) {
-                                return;
-                            }
+                Field mContextField = findField(chain.getThisObject().getClass(), "mContext");
+                mContextField.setAccessible(true);
+                Context context = (Context) mContextField.get(chain.getThisObject());
 
-                            CharSequence originalSummary = summaryView.getText();
-                            String displayText = mergeSummary(originalSummary, appInfo);
-                            summaryView.setSingleLine(false);
-                            summaryView.setMaxLines(Integer.MAX_VALUE);
-                            summaryView.setText(displayText);
-                            summaryView.setOnLongClickListener(v -> {
-                                copyToClipboard(v.getContext(), displayText);
-                                return true;
-                            });
-                        } catch (Throwable t) {
-                            logError("Failed to update app info header summary", t);
-                        }
-                    }
+                Field mHeaderField = findField(chain.getThisObject().getClass(), "mHeader");
+                mHeaderField.setAccessible(true);
+                Object headerPreference = mHeaderField.get(chain.getThisObject());
+
+                TextView summaryView = findSummaryView(context, headerPreference);
+                if (summaryView == null) {
+                    log("entity_header_summary not found.");
+                    return result;
+                }
+
+                String appInfo = buildAppInfo(summaryView.getContext(), pkgInfo);
+                if (TextUtils.isEmpty(appInfo)) {
+                    return result;
+                }
+
+                CharSequence originalSummary = summaryView.getText();
+                String displayText = mergeSummary(originalSummary, appInfo);
+                summaryView.setSingleLine(false);
+                summaryView.setMaxLines(Integer.MAX_VALUE);
+                summaryView.setText(displayText);
+                summaryView.setOnLongClickListener(v -> {
+                    copyToClipboard(v.getContext(), displayText);
+                    return true;
                 });
+            } catch (Throwable t) {
+                logError("Failed to update app info header summary", t);
+            }
+            return result;
+        });
         log("Hooked AppHeaderViewPreferenceController#setAppLabelAndIcon.");
     }
 
@@ -119,11 +128,13 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
             return null;
         }
 
-        View headerView = (View) XposedHelpers.callMethod(
-                headerPreference, "findViewById", summaryId);
-        if (headerView instanceof TextView) {
-            return (TextView) headerView;
-        }
+        try {
+            Method findViewById = headerPreference.getClass().getDeclaredMethod("findViewById", int.class);
+            View headerView = (View) findViewById.invoke(headerPreference, summaryId);
+            if (headerView instanceof TextView) {
+                return (TextView) headerView;
+            }
+        } catch (Throwable ignored) {}
         return null;
     }
 
@@ -164,11 +175,16 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
     private String getInstallSource(Context context, String packageName) {
         try {
             PackageManager pm = context.getPackageManager();
-            InstallSourceInfo sourceInfo = pm.getInstallSourceInfo(packageName);
-            String source = firstNonEmpty(
-                    sourceInfo.getInstallingPackageName(),
-                    sourceInfo.getInitiatingPackageName(),
-                    sourceInfo.getOriginatingPackageName());
+            String source;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                InstallSourceInfo sourceInfo = pm.getInstallSourceInfo(packageName);
+                source = firstNonEmpty(
+                        sourceInfo.getInstallingPackageName(),
+                        sourceInfo.getInitiatingPackageName(),
+                        sourceInfo.getOriginatingPackageName());
+            } else {
+                source = pm.getInstallerPackageName(packageName);
+            }
             if (TextUtils.isEmpty(source)) {
                 this.SYSTEM_LANGUAGE = Locale.getDefault().getLanguage();
                 return this.getDisplayString(5);

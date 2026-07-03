@@ -33,6 +33,7 @@ class GameToolSettingsRepository(
 
     fun saveDisableGameAudio(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISABLE_GAME_AUDIO, enabled)
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_GAME_AUDIO_APP, enabled)
     }
 
     fun saveDisguiseDevice(enabled: Boolean) {
@@ -106,6 +107,7 @@ class GameToolSettingsRepository(
 
     companion object {
         private const val KEY_DISABLE_GAME_AUDIO = "disable_GameAudio"
+        private const val KEY_DISABLE_GAME_AUDIO_APP = "disable_GameAudio_app"
         private const val KEY_DISGUISE_DEVICE = "disguise_TB322FC"
         private const val KEY_FIX_CPU_FREQUENCY = "Fix_CpuClock"
         private const val KEY_FIX_SOC_TEMPERATURE = "Fix_SocTemp"

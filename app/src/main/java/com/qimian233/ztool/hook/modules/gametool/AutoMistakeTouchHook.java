@@ -4,11 +4,11 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 自动开启游戏防误触功能Hook模块
@@ -23,8 +23,12 @@ public class AutoMistakeTouchHook extends BaseHookModule {
     private static final String KEY_MISTAKE_TOUCH_WHITELIST_ENABLED = "MistakeTouchWhiteList";
     private static final String KEY_MISTAKE_TOUCH_WHITELIST_GAMES = "MistakeTouchWhiteListGame";
 
-    // 配置工具类实例
-    private final PreferenceHelper mPrefHelper = PreferenceHelper.getInstance();
+    // 配置工具类实例 - use getPref* methods from base class
+
+    // 持久化拦截标志：当通过本Hook自动开启防误触时，阻止写入Settings.Global
+    private volatile boolean mBlockPersistence = false;
+
+    public AutoMistakeTouchHook() {}
 
     @Override
     public String getModuleName() {
@@ -37,24 +41,27 @@ public class AutoMistakeTouchHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if (TARGET_PACKAGE.equals(packageName)) {
-            hookGameService(lpparam);
+            hookGameService(classLoader);
         }
     }
 
-    private void hookGameService(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookGameService(ClassLoader classLoader) {
         try {
             // Hook GameHelperViewController 的初始化
-            hookGameHelperViewController(lpparam);
+            hookGameHelperViewController(classLoader);
 
             // Hook ItemBlockMistakeTouch 的状态同步
-            hookItemBlockMistakeTouch(lpparam);
+            hookItemBlockMistakeTouch(classLoader);
 
             // Hook LiveData 的状态同步
-            hookLiveDataPostValue(lpparam);
+            hookLiveDataPostValue(classLoader);
+
+            // Hook setPreventMisoperation 持久化拦截
+            hookPreventMisoperationPersistence(classLoader);
 
             log("AutoMistakeTouch Hook initialized successfully");
 
@@ -63,29 +70,28 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         }
     }
 
-    private void hookGameHelperViewController(final XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookGameHelperViewController(final ClassLoader classLoader) {
         try {
             String className = "com.zui.game.service.ui.GameHelperViewController";
+            Class<?> controllerClass = classLoader.loadClass(className);
 
             // Hook setPkgName 方法（游戏启动时调用）
-            XposedHelpers.findAndHookMethod(className, lpparam.classLoader,
-                    "setPkgName",
-                    String.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            String pkgName = (String) param.args[0];
-                            if (pkgName != null && !pkgName.isEmpty()) {
-                                // 检查是否为白名单游戏
-                                if (isTargetGame(pkgName)) {
-                                    if (DEBUG) log("Target game detected: " + pkgName);
+            Method setPkgNameMethod = controllerClass.getDeclaredMethod("setPkgName", String.class);
+            this.xposed.hook(setPkgNameMethod).intercept(chain -> {
+                chain.proceed();
+                String pkgName = (String) chain.getArg(0);
+                if (pkgName != null && !pkgName.isEmpty()) {
+                    // 检查是否为白名单游戏
+                    if (isTargetGame(pkgName)) {
+                        if (DEBUG) log("Target game detected: " + pkgName);
 
-                                    // 延迟设置，确保游戏助手完全初始化
-                                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> enableMistakeTouchWithSync(param.thisObject), 1000);
-                                }
-                            }
-                        }
-                    });
+                        // 延迟设置，确保游戏助手完全初始化
+                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                                () -> enableMistakeTouchWithSync(chain.getThisObject()), 1000);
+                    }
+                }
+                return null;
+            });
 
             log("Successfully hooked GameHelperViewController");
 
@@ -94,21 +100,18 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         }
     }
 
-    private void hookItemBlockMistakeTouch(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookItemBlockMistakeTouch(ClassLoader classLoader) {
         try {
             String itemClassName = "com.zui.game.service.sys.item.ItemBlockMistakeTouch";
+            Class<?> itemClass = classLoader.loadClass(itemClassName);
 
             // Hook change2Status 方法，确保状态正确同步
-            XposedHelpers.findAndHookMethod(itemClassName, lpparam.classLoader,
-                    "change2Status",
-                    int.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            int targetStatus = (int) param.args[0];
-                            if (DEBUG) log("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
-                        }
-                    });
+            Method change2StatusMethod = itemClass.getDeclaredMethod("change2Status", int.class);
+            this.xposed.hook(change2StatusMethod).intercept(chain -> {
+                int targetStatus = (int) chain.getArg(0);
+                if (DEBUG) log("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
+                return chain.proceed();
+            });
 
             log("Successfully hooked ItemBlockMistakeTouch");
 
@@ -117,27 +120,24 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         }
     }
 
-    private void hookLiveDataPostValue(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookLiveDataPostValue(ClassLoader classLoader) {
         try {
             // Hook LiveData的postValue方法，确保状态同步
-            XposedHelpers.findAndHookMethod("androidx.lifecycle.MutableLiveData", lpparam.classLoader,
-                    "postValue",
-                    Object.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            Object value = param.args[0];
-                            if (value instanceof Integer) {
-                                int status = (Integer) value;
-                                // 检查这个LiveData是否是防误触的LiveData
-                                String stackTrace = android.util.Log.getStackTraceString(new Throwable());
-                                if (stackTrace.contains("ItemBlockMistakeTouch") ||
-                                        stackTrace.contains("change2Status")) {
-                                    if (DEBUG) log("LiveData postValue for mistake touch: " + status);
-                                }
-                            }
-                        }
-                    });
+            Class<?> liveDataClass = classLoader.loadClass("androidx.lifecycle.MutableLiveData");
+            Method postValueMethod = liveDataClass.getDeclaredMethod("postValue", Object.class);
+            this.xposed.hook(postValueMethod).intercept(chain -> {
+                Object value = chain.getArg(0);
+                if (value instanceof Integer) {
+                    int status = (Integer) value;
+                    // 检查这个LiveData是否是防误触的LiveData
+                    String stackTrace = android.util.Log.getStackTraceString(new Throwable());
+                    if (stackTrace.contains("ItemBlockMistakeTouch") ||
+                            stackTrace.contains("change2Status")) {
+                        if (DEBUG) log("LiveData postValue for mistake touch: " + status);
+                    }
+                }
+                return chain.proceed();
+            });
 
             log("Successfully hooked LiveData");
 
@@ -146,12 +146,37 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         }
     }
 
+    private void hookPreventMisoperationPersistence(ClassLoader classLoader) {
+        try {
+            // Hook SettingsValueUtilKt.setPreventMisoperation 静态方法
+            // 当通过本Hook自动开启防误触时(mBlockPersistence=true)，阻止写入Settings.Global
+            // 这样防误触行为仅在内存态生效，关闭Hook后自动恢复原始设置
+            Class<?> settingsUtilClass = classLoader.loadClass(SETTINGS_UTIL_CLASS);
+            Method setPreventMethod = settingsUtilClass.getDeclaredMethod(
+                    "setPreventMisoperation", Context.class, int.class);
+            this.xposed.hook(setPreventMethod).intercept(chain -> {
+                if (mBlockPersistence) {
+                    if (DEBUG) log("Blocked setPreventMisoperation persistence");
+                    return null;
+                }
+                return chain.proceed();
+            });
+
+            log("Successfully hooked setPreventMisoperation for anti-persistence");
+
+        } catch (Throwable e) {
+            logError("Hook setPreventMisoperation failed", e);
+        }
+    }
+
     private void enableMistakeTouchWithSync(Object gameHelper) {
         try {
             // 获取Context
-            Object context = XposedHelpers.callMethod(gameHelper, "getContext");
+            Method getContextMethod = gameHelper.getClass().getMethod("getContext");
+            Object context = getContextMethod.invoke(gameHelper);
             if (context == null) {
-                context = XposedHelpers.callMethod(gameHelper, "getNotNullContext");
+                Method getNotNullContextMethod = gameHelper.getClass().getMethod("getNotNullContext");
+                context = getNotNullContextMethod.invoke(gameHelper);
             }
 
             if (context instanceof Context) {
@@ -176,16 +201,31 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
     private void setMistakeTouchThroughGameHelper(Object gameHelper) {
         try {
+            // 开启持久化拦截，阻止 changeMistouchStatus 异步 observer
+            // 将防误触状态写入 Settings.Global
+            mBlockPersistence = true;
+
             // 调用游戏助手内部的changeMistouchStatus方法
-            XposedHelpers.callMethod(gameHelper, "changeMistouchStatus", true);
+            Method changeMistouchStatusMethod = gameHelper.getClass().getMethod("changeMistouchStatus", boolean.class);
+            changeMistouchStatusMethod.invoke(gameHelper, true);
 
             // 同时确保ItemBlockMistakeTouch的状态同步
-            Object mItemBlockMistakeTouch = XposedHelpers.getObjectField(gameHelper, "mItemBlockMistakeTouch");
+            // 注意：mItemBlockMistakeTouch 是 Kotlin Lazy 委托，必须通过 getter 获取
+            Method getMItemMethod = gameHelper.getClass().getMethod("getMItemBlockMistakeTouch");
+            Object mItemBlockMistakeTouch = getMItemMethod.invoke(gameHelper);
             if (mItemBlockMistakeTouch != null) {
-                XposedHelpers.callMethod(mItemBlockMistakeTouch, "change2Status", 0);
+                Method change2StatusMethod = mItemBlockMistakeTouch.getClass().getMethod("change2Status", int.class);
+                change2StatusMethod.invoke(mItemBlockMistakeTouch, 0);
             }
 
+            // 延迟清除拦截标志，确保所有异步 observer 回调执行完毕
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                mBlockPersistence = false;
+                if (DEBUG) log("Persistence block cleared");
+            }, 3000);
+
         } catch (Throwable e) {
+            mBlockPersistence = false;
             logError("Set through game helper failed", e);
         }
     }
@@ -194,7 +234,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
         try {
             // 使用反射调用SettingsValueUtilKt.getPreventMisoperation
             Class<?> settingsUtilClass = Class.forName(SETTINGS_UTIL_CLASS);
-            java.lang.reflect.Method method = settingsUtilClass.getMethod("getPreventMisoperation", Context.class);
+            Method method = settingsUtilClass.getMethod("getPreventMisoperation", Context.class);
             Object result = method.invoke(null, context);
             if (result != null) {
                 return (Integer) result;
@@ -212,14 +252,25 @@ public class AutoMistakeTouchHook extends BaseHookModule {
      * 检查防误触白名单功能是否启用
      */
     private boolean isMistakeTouchWhiteListEnabled() {
-        return mPrefHelper.getBoolean(KEY_MISTAKE_TOUCH_WHITELIST_ENABLED, false);
+        try {
+            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean(KEY_MISTAKE_TOUCH_WHITELIST_ENABLED, false);
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     /**
      * 获取防误触白名单中的所有游戏包名
      */
     private String[] getMistakeTouchWhiteListGames() {
-        return mPrefHelper.getStringArray(KEY_MISTAKE_TOUCH_WHITELIST_GAMES);
+        String value;
+        try {
+            value = this.xposed.getRemotePreferences("xposed_module_config").getString(KEY_MISTAKE_TOUCH_WHITELIST_GAMES, "");
+        } catch (Throwable t) {
+            value = "";
+        }
+        if (TextUtils.isEmpty(value)) return new String[0];
+        return value.split(",");
     }
 
     /**

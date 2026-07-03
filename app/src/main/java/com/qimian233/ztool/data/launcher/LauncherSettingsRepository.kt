@@ -32,7 +32,9 @@ class LauncherSettingsRepository(
             cleanGlobalSearch = prefsUtils.loadBooleanSetting(KEY_CLEAN_GLOBAL_SEARCH, false),
             removeSearchRecommend = prefsUtils.loadBooleanSetting(KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX, false),
             removeHotWordView = prefsUtils.loadBooleanSetting(KEY_REMOVE_HOT_WORD_VIEW, false),
-            showRamInfo = prefsUtils.loadBooleanSetting(KEY_SHOW_RAM_INFO, false)
+            showRamInfo = prefsUtils.loadBooleanSetting(KEY_SHOW_RAM_INFO, false),
+            beautifyRamInfo = prefsUtils.loadBooleanSetting(KEY_BEAUTIFY_RAM_INFO, false),
+            disableDockBar = prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_BAR, false),
         )
     }
 
@@ -89,6 +91,32 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_SHOW_RAM_INFO, enabled)
     }
 
+    fun saveBeautifyRamInfo(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_BEAUTIFY_RAM_INFO, enabled)
+    }
+
+    fun saveDisableDockBar(enabled: Boolean): Boolean {
+        val previousMoreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false)
+        prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, previousMoreBigDock)
+        if (enabled) {
+            prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false)
+        } else {
+            prefsUtils.saveBooleanSetting(
+                KEY_ZUI_LAUNCHER_HOTSEAT,
+                prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, false)
+            )
+            prefsUtils.getModulePreferences().edit()
+                .remove(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP)
+                .commit()
+        }
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_DOCK_BAR, enabled)
+        return enabled && !prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_WARNING_CONFIRMED, false)
+    }
+
+    fun saveDisableDockWarningConfirmed() {
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_DOCK_WARNING_CONFIRMED, true)
+    }
+
     fun loadUserInstalledPackageNames(): List<String> {
         val packageManager = context.packageManager
         return packageManager.getInstalledPackages(0)
@@ -133,6 +161,7 @@ class LauncherSettingsRepository(
         private const val KEY_FORCE_STOP_WHITE_LIST_ENABLE = "ForceStopWhiteListEnable"
         private const val KEY_FORCE_STOP_WHITE_LIST = "ForceStopWhiteList"
         private const val KEY_ZUI_LAUNCHER_HOTSEAT = "zui_launcher_hotseat"
+        private const val KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP = "zui_launcher_hotseat_backup"
         private const val KEY_CUSTOM_GRID_SIZE = "CustomGridSize"
         private const val KEY_CUSTOM_LAUNCHER_ROW = "CustomLauncherRow"
         private const val KEY_CUSTOM_LAUNCHER_COLUMN = "CustomLauncherColumn"
@@ -140,6 +169,9 @@ class LauncherSettingsRepository(
         private const val KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX = "remove_search_recommend"
         private const val KEY_REMOVE_HOT_WORD_VIEW = "remove_hot_word_view"
         private const val KEY_SHOW_RAM_INFO = "launcher_recent_task_memory_view"
+        private const val KEY_BEAUTIFY_RAM_INFO = "beautify_ram_info"
+        private const val KEY_DISABLE_DOCK_BAR = "disable_dock_bar"
+        private const val KEY_DISABLE_DOCK_WARNING_CONFIRMED = "disable_dock_warning_confirmed"
     }
 }
 

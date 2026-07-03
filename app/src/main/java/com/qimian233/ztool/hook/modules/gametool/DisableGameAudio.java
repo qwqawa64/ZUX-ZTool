@@ -3,17 +3,21 @@ package com.qimian233.ztool.hook.modules.gametool;
 import android.annotation.SuppressLint;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 禁用游戏音频优化Hook模块
  * 拦截系统游戏音频属性设置，防止游戏模式干扰音频体验
  */
+@SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
 public class DisableGameAudio extends BaseHookModule {
 
     private static final String TARGET_PROPERTY = "sys.audio.game_name";
+
+    public DisableGameAudio() {}
 
     @Override
     public String getModuleName() {
@@ -28,55 +32,49 @@ public class DisableGameAudio extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
-        if ("android".equals(packageName)) {
-            hookSystemProperties(lpparam);
-            hookPhoneWindowManager(lpparam);
-            hookAudioManager(lpparam);
-        } else {
-            // 针对特定游戏的Hook
-            hookGameApp(lpparam);
-        }
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        // App-layer hooks moved to DisableGameAudioApp
     }
+
+    @Override
+    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
+        ClassLoader classLoader = param.getClassLoader();
+        hookSystemProperties(classLoader);
+        hookPhoneWindowManager(classLoader);
+        hookAudioManager(classLoader);
+    }
+
 
     /**
      * 方法1：直接 Hook SystemProperties.set 方法
      * 拦截所有对 sys.audio.game_name 的设置
      */
-    private void hookSystemProperties(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemProperties(ClassLoader classLoader) {
         try {
             log("Attempting to hook SystemProperties.set");
 
-            XposedHelpers.findAndHookMethod(
-                    "android.os.SystemProperties",
-                    lpparam.classLoader,
-                    "set",
-                    String.class,
-                    String.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            String key = (String) param.args[0];
-                            String value = (String) param.args[1];
+            Class<?> sysPropsClass = classLoader.loadClass("android.os.SystemProperties");
+            Method setMethod = sysPropsClass.getDeclaredMethod("set", String.class, String.class);
+            this.xposed.hook(setMethod).intercept(chain -> {
+                String key = (String) chain.getArg(0);
+                String value = (String) chain.getArg(1);
 
-                            if (TARGET_PROPERTY.equals(key)) {
-                                if (DEBUG) log("Blocked SystemProperties.set for " + key + " = " + value);
+                if (TARGET_PROPERTY.equals(key)) {
+                    if (DEBUG) log("Blocked SystemProperties.set for " + key + " = " + value);
 
-                                // 打印调用栈以调试
-                                StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-                                StringBuilder stackTraceStr = new StringBuilder();
-                                for (int i = 0; i < Math.min(stackTrace.length, 10); i++) {
-                                    stackTraceStr.append(stackTrace[i].toString()).append("\n");
-                                }
-                                if (DEBUG) log("Call stack:\n" + stackTraceStr);
+                    // 打印调用栈以调试
+                    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+                    StringBuilder stackTraceStr = new StringBuilder();
+                    for (int i = 0; i < Math.min(stackTrace.length, 10); i++) {
+                        stackTraceStr.append(stackTrace[i].toString()).append("\n");
+                    }
+                    if (DEBUG) log("Call stack:\n" + stackTraceStr);
 
-                                // 阻止设置该属性
-                                param.setResult(null);
-                            }
-                        }
-                    });
+                    // 阻止设置该属性
+                    return null;
+                }
+                return chain.proceed();
+            });
 
             log("Successfully hooked SystemProperties.set");
 
@@ -89,11 +87,20 @@ public class DisableGameAudio extends BaseHookModule {
      * 方法2：Hook PhoneWindowManager 中的 ZuiGameAppStateListener
      * 拦截游戏模式相关的设置
      */
-    private void hookPhoneWindowManager(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookPhoneWindowManager(ClassLoader classLoader) {
         try {
-            Class<?> targetClass = XposedHelpers.findClassIfExists("com.android.server.policy.PhoneWindowManager$ZuiGameAppStateListener", lpparam.classLoader);
+            Class<?> targetClass;
+            try {
+                targetClass = classLoader.loadClass("com.android.server.policy.PhoneWindowManager$ZuiGameAppStateListener");
+            } catch (ClassNotFoundException e) {
+                targetClass = null;
+            }
             if (targetClass == null) {
-                targetClass = XposedHelpers.findClassIfExists("com.android.server.policy.PhoneWindowManager$2", lpparam.classLoader);
+                try {
+                    targetClass = classLoader.loadClass("com.android.server.policy.PhoneWindowManager$2");
+                } catch (ClassNotFoundException e) {
+                    log("Unable to find PhoneWindowManager internal class");
+                }
                 if (targetClass == null) {
                     log("Failed to find target class for PhoneWindowManager");
                     return;
@@ -104,41 +111,24 @@ public class DisableGameAudio extends BaseHookModule {
                 log("Found target class for PhoneWindowManager");
             }
             // Hook ZuiGameAppStateListener 的 onGameAppStart 方法
-            XposedHelpers.findAndHookMethod(
-                    targetClass,
-                    "onGameAppStart",
-                    String.class,
-                    String.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            String packageName = (String) param.args[0];
-                            if (DEBUG) log("ZuiGameAppStateListener.onGameAppStart for: " + packageName);
+            Method onGameAppStartMethod = targetClass.getDeclaredMethod("onGameAppStart", String.class, String.class);
+            this.xposed.hook(onGameAppStartMethod).intercept(chain -> {
+                String pkgName = (String) chain.getArg(0);
+                if (DEBUG) log("ZuiGameAppStateListener.onGameAppStart for: " + pkgName);
 
-                            if (shouldBlockGameAudio()) {
-                                if (DEBUG) log("Blocking game audio for: " + packageName);
-                                // 不阻止方法执行，但会在 SystemProperties.set 层拦截
-                            }
-                        }
-                    });
+                // 不阻止方法执行，但会在 SystemProperties.set 层拦截
+                return chain.proceed();
+            });
 
             // Hook ZuiGameAppStateListener 的 onGameAppExit 方法
-            XposedHelpers.findAndHookMethod(
-                    targetClass,
-                    "onGameAppExit",
-                    String.class,
-                    String.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            String packageName = (String) param.args[0];
-                            if (DEBUG) log("ZuiGameAppStateListener.onGameAppExit for: " + packageName);
-                        }
-                    });
+            Method onGameAppExitMethod = targetClass.getDeclaredMethod("onGameAppExit", String.class, String.class);
+            this.xposed.hook(onGameAppExitMethod).intercept(chain -> {
+                String pkgName = (String) chain.getArg(0);
+                if (DEBUG) log("ZuiGameAppStateListener.onGameAppExit for: " + pkgName);
+                return chain.proceed();
+            });
 
             log("Successfully hooked PhoneWindowManager");
-        } catch (XposedHelpers.ClassNotFoundError e) {
-            log("Failed to hook PhoneWindowManager, unable to find target class!");
         } catch (Exception e) {
             logError("Failed to hook PhoneWindowManager due to unknown reason: ", e);
         }
@@ -148,28 +138,23 @@ public class DisableGameAudio extends BaseHookModule {
      * 方法3：Hook AudioManager.setParameters 方法
      * 拦截 game_voip=true 的设置
      */
-    private void hookAudioManager(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookAudioManager(ClassLoader classLoader) {
         try {
             log("Attempting to hook AudioManager.setParameters");
 
-            XposedHelpers.findAndHookMethod(
-                    "android.media.AudioManager",
-                    lpparam.classLoader,
-                    "setParameters",
-                    String.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            String keyValuePairs = (String) param.args[0];
+            Class<?> audioManagerClass = classLoader.loadClass("android.media.AudioManager");
+            Method setParametersMethod = audioManagerClass.getDeclaredMethod("setParameters", String.class);
+            this.xposed.hook(setParametersMethod).intercept(chain -> {
+                String keyValuePairs = (String) chain.getArg(0);
 
-                            if (keyValuePairs != null && keyValuePairs.contains("game_voip=true")) {
-                                if (DEBUG) log("Blocked AudioManager.setParameters: " + keyValuePairs);
+                if (keyValuePairs != null && keyValuePairs.contains("game_voip=true")) {
+                    if (DEBUG) log("Blocked AudioManager.setParameters: " + keyValuePairs);
 
-                                // 阻止设置游戏VOIP参数
-                                param.setResult(null);
-                            }
-                        }
-                    });
+                    // 阻止设置游戏VOIP参数
+                    return null;
+                }
+                return chain.proceed();
+            });
 
             log("Successfully hooked AudioManager.setParameters");
 
@@ -178,56 +163,4 @@ public class DisableGameAudio extends BaseHookModule {
         }
     }
 
-    /**
-     * 针对特定游戏的Hook
-     */
-    private void hookGameApp(XC_LoadPackage.LoadPackageParam lpparam) {
-        try {
-            log("Hooking game app: " + lpparam.packageName);
-
-            // 在游戏启动时主动清除游戏音频属性
-            XposedHelpers.findAndHookMethod(
-                    "android.app.Activity",
-                    lpparam.classLoader,
-                    "onCreate",
-                    android.os.Bundle.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            // 清除游戏音频属性
-                            clearGameAudioProperties();
-                            if (DEBUG) log("Cleared game audio properties in " + lpparam.packageName);
-                        }
-                    });
-
-        } catch (Throwable t) {
-            logError("Failed to hook game app", t);
-        }
-    }
-
-    /**
-     * 判断是否应该阻止游戏音频设置
-     */
-    private boolean shouldBlockGameAudio() {
-        // 阻止所有游戏的音频优化设置
-        // 可以根据需要修改为特定包名过滤
-        return true;
-    }
-
-    /**
-     * 主动清除游戏音频属性
-     */
-    private void clearGameAudioProperties() {
-        try {
-            // 使用反射调用 SystemProperties.set 来清除属性
-            @SuppressLint("PrivateApi") Class<?> systemPropertiesClass = Class.forName("android.os.SystemProperties");
-            java.lang.reflect.Method setMethod = systemPropertiesClass.getMethod("set", String.class, String.class);
-            setMethod.invoke(null, TARGET_PROPERTY, "");
-
-            log("Manually cleared " + TARGET_PROPERTY);
-
-        } catch (Exception e) {
-            logError("Failed to clear properties", e);
-        }
-    }
 }

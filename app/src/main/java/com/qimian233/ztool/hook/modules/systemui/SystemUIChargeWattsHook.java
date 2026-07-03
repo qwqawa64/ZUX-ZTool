@@ -1,17 +1,23 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * SystemUI充电瓦数显示Hook模块
  * 在锁屏充电提示中添加实时充电功率显示
  */
+@SuppressLint("PrivateApi")
 public class SystemUIChargeWattsHook extends BaseHookModule {
 
     private static final String TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController";
+
+    public SystemUIChargeWattsHook() {}
 
     @Override
     public String getModuleName() {
@@ -26,76 +32,84 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
-            hookKeyguardIndicationController(lpparam);
+            hookKeyguardIndicationController(classLoader);
         }
     }
 
-    private void hookKeyguardIndicationController(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookKeyguardIndicationController(ClassLoader classLoader) {
         try {
-            ClassLoader classLoader = lpparam.classLoader;
-
             // Hook computePowerIndication方法来添加充电瓦数显示
-            XposedHelpers.findAndHookMethod(TARGET_CLASS, classLoader,
-                    "computePowerIndication", new XC_MethodHook() {
+            Method computeMethod = classLoader.loadClass(TARGET_CLASS)
+                    .getDeclaredMethod("computePowerIndication");
+            this.xposed.hook(computeMethod).intercept(chain -> {
+                try {
+                    // 获取原始返回的充电提示文本
+                    Object result = chain.proceed();
+                    String originalText = (String) result;
+                    if (originalText == null) return null;
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            // 获取原始返回的充电提示文本
-                            String originalText = (String) param.getResult();
-                            if (originalText == null) return;
+                    // 获取KeyguardIndicationController实例
+                    Object controller = chain.getThisObject();
+                    Class<?> cl = controller.getClass();
 
-                            // 获取KeyguardIndicationController实例
-                            Object controller = param.thisObject;
+                    // 获取充电状态相关字段
+                    boolean isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller);
+                    int chargingWattage = cl.getDeclaredField("mChargingWattage").getInt(controller);
 
-                            // 获取充电状态相关字段
-                            boolean isPluggedIn = XposedHelpers.getBooleanField(controller, "mPowerPluggedIn");
-                            int chargingWattage = XposedHelpers.getIntField(controller, "mChargingWattage");
+                    // 只在充电状态下显示瓦数，且瓦数大于0
+                    if (isPluggedIn && chargingWattage > 0) {
+                        // 尝试多种单位转换
+                        int watts = calculateActualWatts(chargingWattage);
 
-                            // 只在充电状态下显示瓦数，且瓦数大于0
-                            if (isPluggedIn && chargingWattage > 0) {
-                                // 尝试多种单位转换
-                                int watts = calculateActualWatts(chargingWattage);
-
-                                if (watts > 0) {
-                                    // 使用换行符 \n 追加功率信息
-                                    String newText = originalText + "\n" + formatWattage(watts);
-                                    param.setResult(newText);
-                                    log("成功添加充电瓦数显示: " + watts + "W");
-                                }
-                            }
+                        if (watts > 0) {
+                            // 使用换行符 \n 追加功率信息
+                            String newText = originalText + "\n" + formatWattage(watts);
+                            log("成功添加充电瓦数显示: " + watts + "W");
+                            return newText;
                         }
-                    });
+                    }
+                    return result;
+                } catch (Throwable t) {
+                    logError("computePowerIndication hook回调异常", t);
+                    return chain.proceed();
+                }
+            });
 
             // 额外Hook电池状态更新方法，确保能获取到最新的充电数据
-            XposedHelpers.findAndHookMethod(TARGET_CLASS, classLoader,
-                    "onRefreshBatteryInfo",
-                    "com.android.settingslib.fuelgauge.BatteryStatus",
-                    new XC_MethodHook() {
+            Method refreshMethod = classLoader.loadClass(TARGET_CLASS)
+                    .getDeclaredMethod("onRefreshBatteryInfo",
+                            classLoader.loadClass("com.android.settingslib.fuelgauge.BatteryStatus"));
+            this.xposed.hook(refreshMethod).intercept(chain -> {
+                try {
+                    Object result = chain.proceed();
+                    // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
+                    Object batteryStatus = chain.getArg(0);
+                    if (batteryStatus != null) {
+                        try {
+                            // 尝试从BatteryStatus对象获取充电功率
+                            int maxChargingWattage = batteryStatus.getClass()
+                                    .getDeclaredField("maxChargingWattage").getInt(batteryStatus);
+                            Object controller = chain.getThisObject();
+                            Class<?> cl = controller.getClass();
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
-                            Object batteryStatus = param.args[0];
-                            if (batteryStatus != null) {
-                                try {
-                                    // 尝试从BatteryStatus对象获取充电功率
-                                    int maxChargingWattage = XposedHelpers.getIntField(batteryStatus, "maxChargingWattage");
-                                    Object controller = param.thisObject;
+                            // 记录调试信息
+                            log("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
+                                    ", mChargingWattage: " + cl.getDeclaredField("mChargingWattage").getInt(controller));
 
-                                    // 记录调试信息
-                                    log("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
-                                            ", mChargingWattage: " + XposedHelpers.getIntField(controller, "mChargingWattage"));
-
-                                } catch (Throwable t) {
-                                    logError("读取BatteryStatus失败", t);
-                                }
-                            }
+                        } catch (Throwable t) {
+                            logError("读取BatteryStatus失败", t);
                         }
-                    });
+                    }
+                    return result;
+                } catch (Throwable t) {
+                    logError("onRefreshBatteryInfo hook回调异常", t);
+                    return chain.proceed();
+                }
+            });
 
             log("成功Hook KeyguardIndicationController");
 

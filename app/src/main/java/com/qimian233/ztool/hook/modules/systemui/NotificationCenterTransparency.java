@@ -4,16 +4,18 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import com.qimian233.ztool.hook.base.PreferenceHelper;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 public class NotificationCenterTransparency extends BaseHookModule {
     private static final String KEY_BLUR_PERCENT = "notification_center_blur_percent";
     private static final int DEFAULT_BLUR_PERCENT = 0;
-    private static volatile int blurPercent = DEFAULT_BLUR_PERCENT;
+    private volatile int blurPercent = DEFAULT_BLUR_PERCENT;
+
+    public NotificationCenterTransparency() {}
 
     @Override
     public String getModuleName() {
@@ -26,28 +28,28 @@ public class NotificationCenterTransparency extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         updatePrefs();
-        hookShadeRootViewFactory(lpparam.classLoader);
-        hookNotificationShadeBlur(lpparam.classLoader);
-        hookQuickSettingsBackdropBlur(lpparam.classLoader);
+        hookShadeRootViewFactory(classLoader);
+        hookNotificationShadeBlur(classLoader);
+        hookQuickSettingsBackdropBlur(classLoader);
     }
 
     private void hookShadeRootViewFactory(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                "com.android.systemui.shade.ShadeViewProviderModule_Companion_ProvidesWindowRootViewFactory",
-                classLoader,
-                "providesWindowRootView",
-                "android.view.LayoutInflater", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        Object viewObject = param.getResult();
-                        if (viewObject instanceof View && isBlurCleared()) {
-                            clearBlurFromViewTree((View) viewObject);
-                        }
-                    }
-                });
+            Method providesMethod = classLoader
+                    .loadClass("com.android.systemui.shade.ShadeViewProviderModule_Companion_ProvidesWindowRootViewFactory")
+                    .getDeclaredMethod("providesWindowRootView",
+                            classLoader.loadClass("android.view.LayoutInflater"));
+            this.xposed.hook(providesMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                if (result instanceof View && isBlurCleared()) {
+                    clearBlurFromViewTree((View) result);
+                }
+                return result;
+            });
         } catch (Throwable t) {
             logError("Failed to hook shade root view factory", t);
         }
@@ -55,77 +57,61 @@ public class NotificationCenterTransparency extends BaseHookModule {
 
     private void hookNotificationShadeBlur(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                "com.android.systemui.statusbar.NotificationShadeDepthController",
-                classLoader,
-                "setNotificationPanelBlurBehind",
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        if (isBlurCleared()) {
-                            param.setResult(null);
-                        }
-                    }
-                });
+            Method setBlurMethod = classLoader
+                    .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
+                    .getDeclaredMethod("setNotificationPanelBlurBehind");
+            this.xposed.hook(setBlurMethod).intercept(chain -> {
+                if (isBlurCleared()) {
+                    return null;
+                }
+                return chain.proceed();
+            });
         } catch (Throwable t) {
             if (DEBUG) logError("Failed to hook setNotificationPanelBlurBehind()", t);
         }
 
         try {
-            XposedHelpers.findAndHookMethod(
-                "com.android.systemui.statusbar.NotificationShadeDepthController",
-                classLoader,
-                "setNotificationPanelBlurBehind",
-                int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        param.args[0] = scaleBlur((int) param.args[0]);
-                    }
-                });
+            Method setBlurIntMethod = classLoader
+                    .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
+                    .getDeclaredMethod("setNotificationPanelBlurBehind", int.class);
+            this.xposed.hook(setBlurIntMethod).intercept(chain -> {
+                return chain.proceed(new Object[]{scaleBlur((int) chain.getArg(0))});
+            });
         } catch (Throwable t) {
             if (DEBUG) logError("Failed to hook setNotificationPanelBlurBehind(int)", t);
         }
 
         try {
-            XposedHelpers.findAndHookMethod(
-                "com.android.systemui.statusbar.NotificationShadeDepthController",
-                classLoader,
-                "computeBlurAndZoomOut",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        Object result = param.getResult();
-                        if (result != null) {
-                            Object blur = XposedHelpers.callMethod(result, "component1");
-                            Object zoomOut = XposedHelpers.callMethod(result, "component2");
-                            param.setResult(XposedHelpers.newInstance(
-                                XposedHelpers.findClass("kotlin.Pair", classLoader),
-                                scaleBlur(blur),
-                                zoomOut));
-                        }
-                    }
-                });
+            Method computeMethod = classLoader
+                    .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
+                    .getDeclaredMethod("computeBlurAndZoomOut");
+            this.xposed.hook(computeMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                if (result != null) {
+                    Class<?> pairClass = classLoader.loadClass("kotlin.Pair");
+                    Object blur = pairClass.getDeclaredMethod("component1").invoke(result);
+                    Object zoomOut = pairClass.getDeclaredMethod("component2").invoke(result);
+                    return pairClass.getDeclaredConstructor(Object.class, Object.class)
+                            .newInstance(scaleBlur(blur), zoomOut);
+                }
+                return result;
+            });
         } catch (Throwable t) {
             logError("Failed to hook NotificationShadeDepthController.computeBlurAndZoomOut", t);
         }
 
         try {
-            XposedHelpers.findAndHookMethod(
-                "com.android.systemui.statusbar.NotificationShadeDepthController",
-                classLoader,
-                "animateBlur",
-                float.class,
-                boolean.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        param.args[0] = scaleBlur((float) param.args[0]);
-                        if (isBlurCleared()) {
-                            param.args[1] = false;
-                        }
-                    }
-                });
+            Method animateBlurMethod = classLoader
+                    .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
+                    .getDeclaredMethod("animateBlur", float.class, boolean.class);
+            this.xposed.hook(animateBlurMethod).intercept(chain -> {
+                float newBlur = scaleBlur((float) chain.getArg(0));
+                boolean newAnimate = (boolean) chain.getArg(1);
+                if (isBlurCleared()) {
+                    newAnimate = false;
+                }
+                return chain.proceed(new Object[]{newBlur, newAnimate});
+            });
         } catch (Throwable t) {
             logError("Failed to hook NotificationShadeDepthController.animateBlur", t);
         }
@@ -133,18 +119,16 @@ public class NotificationCenterTransparency extends BaseHookModule {
 
     private void hookQuickSettingsBackdropBlur(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(
-                "com.android.systemui.shade.QuickSettingsControllerImpl",
-                classLoader,
-                "updateExpansion",
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        if (isBlurCleared()) {
-                            clearBackdropRenderEffect(param.thisObject);
-                        }
-                    }
-                });
+            Method updateExpansionMethod = classLoader
+                    .loadClass("com.android.systemui.shade.QuickSettingsControllerImpl")
+                    .getDeclaredMethod("updateExpansion");
+            this.xposed.hook(updateExpansionMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                if (isBlurCleared()) {
+                    clearBackdropRenderEffect(chain.getThisObject());
+                }
+                return result;
+            });
         } catch (Throwable t) {
             logError("Failed to hook QuickSettingsControllerImpl.updateExpansion", t);
         }
@@ -152,8 +136,9 @@ public class NotificationCenterTransparency extends BaseHookModule {
 
     private void clearBackdropRenderEffect(Object quickSettingsController) {
         try {
-            Object zuiCore = XposedHelpers.getObjectField(quickSettingsController, "mZuiCoreImpl");
-            Object backdrop = XposedHelpers.getObjectField(zuiCore, "backDropView");
+            Class<?> cl = quickSettingsController.getClass();
+            Object zuiCore = cl.getDeclaredField("mZuiCoreImpl").get(quickSettingsController);
+            Object backdrop = zuiCore.getClass().getDeclaredField("backDropView").get(zuiCore);
             if (backdrop instanceof View) {
                 ((View) backdrop).setRenderEffect(null);
             }
@@ -173,9 +158,12 @@ public class NotificationCenterTransparency extends BaseHookModule {
         }
     }
 
-    private static void updatePrefs() {
-        PreferenceHelper prefs = PreferenceHelper.getInstance();
-        blurPercent = prefs.getInt(KEY_BLUR_PERCENT, DEFAULT_BLUR_PERCENT);
+    private void updatePrefs() {
+        try {
+            blurPercent = this.xposed.getRemotePreferences("xposed_module_config").getInt(KEY_BLUR_PERCENT, DEFAULT_BLUR_PERCENT);
+        } catch (Throwable t) {
+            blurPercent = DEFAULT_BLUR_PERCENT;
+        }
         if (blurPercent < 0) {
             blurPercent = 0;
         } else if (blurPercent > 100) {
@@ -183,22 +171,22 @@ public class NotificationCenterTransparency extends BaseHookModule {
         }
     }
 
-    private static boolean isBlurCleared() {
+    private boolean isBlurCleared() {
         updatePrefs();
         return blurPercent <= 0;
     }
 
-    private static int scaleBlur(int blur) {
+    private int scaleBlur(int blur) {
         updatePrefs();
         return Math.round(blur * (blurPercent / 100.0f));
     }
 
-    private static float scaleBlur(float blur) {
+    private float scaleBlur(float blur) {
         updatePrefs();
         return blur * (blurPercent / 100.0f);
     }
 
-    private static Object scaleBlur(Object blur) {
+    private Object scaleBlur(Object blur) {
         if (blur instanceof Integer) {
             return scaleBlur((int) blur);
         }

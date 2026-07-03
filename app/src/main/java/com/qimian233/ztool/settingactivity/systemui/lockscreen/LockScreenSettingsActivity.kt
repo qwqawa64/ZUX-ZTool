@@ -11,17 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -41,14 +36,13 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.components.ZToolTextButton
-import com.qimian233.ztool.ui.components.ZToolButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.ApiTestResult
 import com.qimian233.ztool.viewmodel.LockScreenSettingsUiState
 import com.qimian233.ztool.viewmodel.LockScreenSettingsViewModel
@@ -83,14 +77,12 @@ fun LockScreenSettingsRoute(
         onYiYanChanged = viewModel::setYiYanEnabled,
         onApiAddressChanged = viewModel::setApiAddress,
         onRegexChanged = viewModel::setRegex,
+        onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
         onTestApi = {
             viewModel.testApiConnection {
                 Toast.makeText(context, R.string.please_input_api_address, Toast.LENGTH_SHORT).show()
             }
         },
-        onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
-        onRealWattsIntervalOptionChanged = viewModel::setRealWattsIntervalOption,
-        onRealWattsRefreshIntervalChanged = viewModel::setRealWattsRefreshInterval
     )
 
     if (uiState.showRootPermissionDialog) {
@@ -137,8 +129,6 @@ private fun LockScreenSettingsScreen(
     onRegexChanged: (String) -> Unit,
     onTestApi: () -> Unit,
     onChargeWattsOptionChanged: (String) -> Unit,
-    onRealWattsIntervalOptionChanged: (String) -> Unit,
-    onRealWattsRefreshIntervalChanged: (String) -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -176,8 +166,6 @@ private fun LockScreenSettingsScreen(
                         onRegexChanged = onRegexChanged,
                         onTestApi = onTestApi,
                         onChargeWattsOptionChanged = onChargeWattsOptionChanged,
-                        onRealWattsIntervalOptionChanged = onRealWattsIntervalOptionChanged,
-                        onRealWattsRefreshIntervalChanged = onRealWattsRefreshIntervalChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -194,8 +182,6 @@ private fun lockScreenSettingsSections(
     onRegexChanged: (String) -> Unit,
     onTestApi: () -> Unit,
     onChargeWattsOptionChanged: (String) -> Unit,
-    onRealWattsIntervalOptionChanged: (String) -> Unit,
-    onRealWattsRefreshIntervalChanged: (String) -> Unit
 ): List<SettingSection> {
     val yiYanItems = buildList {
         add(
@@ -237,8 +223,6 @@ private fun lockScreenSettingsSections(
                         ChargeWattsSettingsContent(
                             state = state,
                             onChargeWattsOptionChanged = onChargeWattsOptionChanged,
-                            onRealWattsIntervalOptionChanged = onRealWattsIntervalOptionChanged,
-                            onRealWattsRefreshIntervalChanged = onRealWattsRefreshIntervalChanged
                         )
                     }
                 )
@@ -251,8 +235,6 @@ private fun lockScreenSettingsSections(
 private fun ChargeWattsSettingsContent(
     state: LockScreenSettingsUiState,
     onChargeWattsOptionChanged: (String) -> Unit,
-    onRealWattsIntervalOptionChanged: (String) -> Unit,
-    onRealWattsRefreshIntervalChanged: (String) -> Unit
 ) {
     ZToolPopupMenuSettingRow(
         title = stringResource(R.string.ChargeWattsEnableTitle),
@@ -262,37 +244,6 @@ private fun ChargeWattsSettingsContent(
         optionLabel = { it },
         onOptionSelected = onChargeWattsOptionChanged
     )
-
-    if (state.chargeWattsOption == stringResource(R.string.watt_option_actual)) {
-        ZToolPopupMenuSettingRow(
-            title = stringResource(R.string.RealWattsRefreshInterval),
-            summary = stringResource(R.string.RealWattsRefreshIntervalSummary),
-            options = stringArrayResource(R.array.real_watt_interval).toList(),
-            value = state.realWattsIntervalOption,
-            optionLabel = { it },
-            onOptionSelected = onRealWattsIntervalOptionChanged
-        )
-
-        if (state.realWattsIntervalOption == stringResource(R.string.real_watt_custom_refresh_interval_enabled)) {
-            OutlinedTextField(
-                value = state.realWattsRefreshInterval,
-                onValueChange = onRealWattsRefreshIntervalChanged,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                label = {
-                    Text(
-                        stringResource(
-                            R.string.RealWattsRefreshIntervalInputTip,
-                            state.realWattsRefreshInterval.toFloatOrNull() ?: 3.0f
-                        )
-                    )
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-            )
-        }
-    }
 }
 
 @Composable

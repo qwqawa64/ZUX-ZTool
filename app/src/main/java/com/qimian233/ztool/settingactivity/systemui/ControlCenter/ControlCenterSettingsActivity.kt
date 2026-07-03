@@ -142,7 +142,6 @@ fun ControlCenterSettingsRoute(
         onNotificationCenterBlurEnabledChanged = viewModel::setNotificationCenterBlurEnabled,
         onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent,
         onBrightnessSliderPercentageChanged = viewModel::setBrightnessSliderPercentageEnabled,
-        onSliderShowPercentageMainChanged = viewModel::setSliderPercentageDisplayEnabled,
         onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled
     )
 
@@ -218,7 +217,6 @@ private fun ControlCenterSettingsScreen(
     onFinishControlCenterClockTextColorEditing: () -> Unit,
     onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
-    onSliderShowPercentageMainChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -280,7 +278,6 @@ private fun ControlCenterSettingsScreen(
                         onFinishControlCenterClockTextColorEditing = onFinishControlCenterClockTextColorEditing,
                         onControlCenterClockColorChange = onControlCenterClockColorChange,
                         onBrightnessSliderPercentageChanged = onBrightnessSliderPercentageChanged,
-                        onSliderShowPercentageMainChanged = onSliderShowPercentageMainChanged,
                         onVolumeSliderPercentageChanged = onVolumeSliderPercentageChanged,
                     ),
                     bottomPadding = 96.dp
@@ -321,9 +318,8 @@ private fun controlCenterSettingsSections(
     onCustomQsColorSwitchChanged: (Boolean) -> Unit,
     onNotificationCenterBlurEnabledChanged: (Boolean) -> Unit,
     onNotificationCenterBlurPercentChanged: (Int) -> Unit,
-    onSliderShowPercentageMainChanged: (Boolean) -> Unit,
-    onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
+    onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -379,27 +375,18 @@ private fun controlCenterSettingsSections(
                 )
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.show_slider_percentage),
-                        checked = state.sliderPercentageDisplayEnabledMain,
-                        onCheckedChange = onSliderShowPercentageMainChanged
+                        title = stringResource(R.string.show_brightness_slider_percentage),
+                        checked = state.brightnessSliderPercentageEnabled,
+                        onCheckedChange = onBrightnessSliderPercentageChanged
                     )
                 )
-                if (state.sliderPercentageDisplayEnabledMain) {
-                    add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.show_brightness_slider_percentage),
-                            checked = state.brightnessSliderPercentageEnabled,
-                            onCheckedChange = onBrightnessSliderPercentageChanged
-                        )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.show_volume_slider_percentage),
+                        checked = state.volumeSliderPercentageEnabled,
+                        onCheckedChange = onVolumeSliderPercentageChanged
                     )
-                    add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.show_volume_slider_percentage),
-                            checked = state.volumeSliderPercentageEnabled,
-                            onCheckedChange = onVolumeSliderPercentageChanged
-                        )
-                    )
-                }
+                )
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.custom_qs_color_general_switch),

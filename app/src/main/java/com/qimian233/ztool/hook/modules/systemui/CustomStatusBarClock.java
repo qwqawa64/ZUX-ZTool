@@ -1,5 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui;
 
+import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -8,26 +10,26 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
-import android.util.Log;
-import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
+import com.qimian233.ztool.hook.base.BaseHookModule;
+
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 import java.util.Date;
 
 /**
  * 自定义状态栏时钟Hook模块
  * 修改SystemUI状态栏时钟显示格式和样式，支持自定义时间格式、字体大小、字间距、颜色和粗体
  */
+@SuppressLint("PrivateApi")
 public class CustomStatusBarClock extends BaseHookModule {
 
     private static final String PREFS_NAME = "xposed_module_config";
-    private static final String MODULE_PACKAGE = "com.qimian233.ztool";
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     private static final String CLOCK_CLASS = "com.android.systemui.statusbar.policy.Clock";
+
+    public CustomStatusBarClock() {}
 
     @Override
     public String getModuleName() {
@@ -40,94 +42,88 @@ public class CustomStatusBarClock extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if (SYSTEMUI_PACKAGE.equals(packageName)) {
-            hookSystemUIClock(lpparam);
+            hookSystemUIClock(classLoader);
         }
     }
 
-    private void hookSystemUIClock(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookSystemUIClock(ClassLoader classLoader) {
         try {
             // Hook Clock 类的 getSmallTime 方法
-            XposedHelpers.findAndHookMethod(CLOCK_CLASS, lpparam.classLoader,
-                    "getSmallTime", new XC_MethodHook() {
+            Method getSmallTimeMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("getSmallTime");
+            this.xposed.hook(getSmallTimeMethod).intercept(chain -> {
+                try {
+                    // 检查模块是否启用
+                    if (!isEnabled()) {
+                        return chain.proceed();
+                    }
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                // 检查模块是否启用
-                                if (!isEnabled()) {
-                                    return;
-                                }
+                    // 获取自定义格式的时间
+                    String customTime = getCustomTimeFormat();
 
-                                // 获取自定义格式的时间
-                                String customTime = getCustomTimeFormat();
+                    // 应用所有样式到文本
+                    CharSequence styledText = applyAllStyles(customTime);
 
-                                // 应用所有样式到文本
-                                CharSequence styledText = applyAllStyles(customTime);
+                    // 返回新的值
+                    log("Successfully customized status bar clock: " + customTime);
+                    return styledText;
 
-                                // 设置新的返回值
-                                param.setResult(styledText);
-
-                                log("Successfully customized status bar clock: " + customTime);
-
-                            } catch (Exception e) {
-                                logError("Failed to customize getSmallTime", e);
-                            }
-                        }
-                    });
+                } catch (Exception e) {
+                    logError("Failed to customize getSmallTime", e);
+                    return chain.proceed();
+                }
+            });
 
             // Hook updateClock 方法，确保内容描述和样式正确应用
-            XposedHelpers.findAndHookMethod(CLOCK_CLASS, lpparam.classLoader,
-                    "updateClock", new XC_MethodHook() {
+            Method updateClockMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("updateClock");
+            this.xposed.hook(updateClockMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                try {
+                    // 检查模块是否启用
+                    if (!isEnabled()) {
+                        return result;
+                    }
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                // 检查模块是否启用
-                                if (!isEnabled()) {
-                                    return;
-                                }
+                    Object clockInstance = chain.getThisObject();
 
-                                Object clockInstance = param.thisObject;
+                    // 获取自定义时间
+                    String customTime = getCustomTimeFormat();
 
-                                // 获取自定义时间
-                                String customTime = getCustomTimeFormat();
+                    // 设置内容描述（无障碍功能使用）
+                    // 使用 getMethod 而非 getDeclaredMethod，因为 setContentDescription 继承自 View
+                    clockInstance.getClass().getMethod("setContentDescription", CharSequence.class)
+                            .invoke(clockInstance, customTime);
 
-                                // 设置内容描述（无障碍功能使用）
-                                XposedHelpers.callMethod(clockInstance, "setContentDescription", customTime);
+                    // 应用直接样式（备用方案）
+                    applyDirectStyles(clockInstance);
 
-                                // 应用直接样式（备用方案）
-                                applyDirectStyles(clockInstance);
+                    log("Updated clock content description: " + customTime);
 
-                                log("Updated clock content description: " + customTime);
-
-                            } catch (Exception e) {
-                                logError("Failed to update clock content description", e);
-                            }
-                        }
-                    });
+                } catch (Exception e) {
+                    logError("Failed to update clock content description", e);
+                }
+                return result;
+            });
 
             // 额外 Hook：在视图初始化时应用样式
-            XposedHelpers.findAndHookMethod(CLOCK_CLASS, lpparam.classLoader,
-                    "onFinishInflate", new XC_MethodHook() {
+            Method onFinishInflateMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("onFinishInflate");
+            this.xposed.hook(onFinishInflateMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                try {
+                    if (!isEnabled()) {
+                        return result;
+                    }
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                if (!isEnabled()) {
-                                    return;
-                                }
-
-                                Object clockInstance = param.thisObject;
-                                applyDirectStyles(clockInstance);
-                            } catch (Exception e) {
-                                logError("Failed to apply styles in onFinishInflate", e);
-                            }
-                        }
-                    });
+                    Object clockInstance = chain.getThisObject();
+                    applyDirectStyles(clockInstance);
+                } catch (Exception e) {
+                    logError("Failed to apply styles in onFinishInflate", e);
+                }
+                return result;
+            });
 
             log("Successfully hooked SystemUI Clock methods");
 
@@ -245,18 +241,14 @@ public class CustomStatusBarClock extends BaseHookModule {
      */
     private void applyDirectStyles(Object clockInstance) {
         try {
-            // 设置文本大小（仅在开关开启时应用）
-            if (isTextSizeEnabled()) {
-                float textSizeSp = getTextSize();
-                XposedHelpers.callMethod(clockInstance, "setTextSize",
-                        TypedValue.COMPLEX_UNIT_SP, textSizeSp);
-            }
+            Class<?> cl = clockInstance.getClass();
 
             // 尝试设置字间距（仅在开关开启时应用）
             if (isLetterSpacingEnabled()) {
                 float letterSpacing = getLetterSpacing();
                 try {
-                    XposedHelpers.callMethod(clockInstance, "setLetterSpacing", letterSpacing);
+                    cl.getDeclaredMethod("setLetterSpacing", float.class)
+                            .invoke(clockInstance, letterSpacing);
                 } catch (NoSuchMethodError e) {
                     // 如果 setLetterSpacing 不存在，使用备选方案
                     applyAlternativeLetterSpacing(clockInstance);
@@ -266,15 +258,16 @@ public class CustomStatusBarClock extends BaseHookModule {
             // 设置文本颜色（仅在开关开启时应用）
             if (isTextColorEnabled()) {
                 int textColor = getTextColor();
-                XposedHelpers.callMethod(clockInstance, "setTextColor", textColor);
+                cl.getDeclaredMethod("setTextColor", int.class).invoke(clockInstance, textColor);
             }
 
             // 设置字体样式（仅在开关开启时应用）
             if (isTextBoldEnabled()) {
                 boolean isBold = isTextBold();
                 if (isBold) {
-                    XposedHelpers.callMethod(clockInstance, "setTypeface",
-                            Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+                    cl.getDeclaredMethod("setTypeface", Typeface.class)
+                            .invoke(clockInstance,
+                                    Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
                 }
             }
 
@@ -288,16 +281,17 @@ public class CustomStatusBarClock extends BaseHookModule {
      */
     private void applyAlternativeLetterSpacing(Object clockInstance) {
         try {
+            Class<?> cl = clockInstance.getClass();
             float letterSpacing = getLetterSpacing();
             // 方法1：通过设置文本缩放来模拟字间距
             float scaleX = 1.0f + letterSpacing * 0.1f;
-            XposedHelpers.callMethod(clockInstance, "setScaleX", scaleX);
+            cl.getDeclaredMethod("setScaleX", float.class).invoke(clockInstance, scaleX);
 
             // 方法2：通过设置左右边距来增加间距
             int paddingLeft = (int) (letterSpacing * 10);
             int paddingRight = (int) (letterSpacing * 10);
-            XposedHelpers.callMethod(clockInstance, "setPadding",
-                    paddingLeft, 0, paddingRight, 0);
+            cl.getDeclaredMethod("setPadding", int.class, int.class, int.class, int.class)
+                    .invoke(clockInstance, paddingLeft, 0, paddingRight, 0);
 
         } catch (Exception e) {
             logError("Failed to apply alternative letter spacing", e);
@@ -307,16 +301,13 @@ public class CustomStatusBarClock extends BaseHookModule {
     /**
      * 从SharedPreferences获取配置值的方法
      */
-    public static String getCustomClock(String key) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
-        if (prefs != null) {
-            return prefs.getString(key, "HH:mm");
-        } else {
-            XposedBridge.log("CustomStatusBarClock: Preferences is null, returning default HH:mm");
-            Log.w("CustomStatusBarClock", "Preferences is null, returning default HH:mm");
-            return "HH:mm";
-        }
+    private SharedPreferences getPrefs() {
+        return this.xposed.getRemotePreferences(PREFS_NAME);
+    }
+
+    public String getCustomClock(String key) {
+        SharedPreferences prefs = getPrefs();
+        return prefs.getString(key, "HH:mm");
     }
 
     /**
@@ -379,8 +370,7 @@ public class CustomStatusBarClock extends BaseHookModule {
      * 辅助方法：读取整型配置
      */
     private int getCustomClockInt() {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
+        SharedPreferences prefs = getPrefs();
         return prefs.getInt("Custom_StatusBarClockTextColor", -1);
     }
 
@@ -388,8 +378,7 @@ public class CustomStatusBarClock extends BaseHookModule {
      * 辅助方法：读取浮点型配置
      */
     private float getCustomClockFloat(String key, float defaultValue) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
+        SharedPreferences prefs = getPrefs();
         return prefs.getFloat(key, defaultValue);
     }
 
@@ -397,8 +386,7 @@ public class CustomStatusBarClock extends BaseHookModule {
      * 辅助方法：读取布尔型配置
      */
     private boolean getCustomClockBoolean(String key) {
-        XSharedPreferences prefs = new XSharedPreferences(MODULE_PACKAGE, PREFS_NAME);
-        prefs.reload();
+        SharedPreferences prefs = getPrefs();
         return prefs.getBoolean(key, false);
     }
 }

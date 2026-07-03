@@ -34,21 +34,19 @@ out/
 .gradle/
 build/
 
-# Local configuration file
-local.properties
-
 # Log files
 *.log
 
 # Android Studio
 .idea/
-*.iml
 
 # Keystore files
 *.jks
 *.keystore
 
 # 其他
-.DS_Store
 /gradle/gradle-daemon-jvm.properties
 /app/release/*
+/reasonix.toml
+/reasonix.bat
+/.codex-aar-api102/*

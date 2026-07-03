@@ -101,6 +101,8 @@
     <string name="magisk_su_format">Magisk (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>
     <string name="apatch_format">APatch (%s)</string>
+    <string name="mobile_desktop_app_name">超级互联</string>
+    <string name="super_connect_scope_title">超级互联</string>
     <string name="unknown_root_available">未知 Root 实现</string>
     <string name="lsposed_standard_format" translatable="false">LSPosed %s (Standard)</string>
     <string name="lsposed_zygisk" translatable="false">LSPosed (Zygisk)</string>
@@ -127,6 +129,7 @@
     <string name="system_ui_app_description">状态栏、锁屏、控制中心及充电动画等系统界面的自定义设置</string>
     <string name="launcher_app_name">桌面</string>
     <string name="launcher_app_description">Dock栏，后台管理策略</string>
+    <string name="mobile_desktop_app_description">跳过警告、禁止自动关闭互传等</string>
     <string name="system_framework_app_name">系统框架</string>
     <string name="system_framework_app_description">配置屏幕方向、安全策略及AI全局输入设置</string>
     <string name="safe_center_app_name">安全中心</string>
@@ -261,14 +264,14 @@
     <string name="restart_fail_short">重启失败</string>
     <string name="function_title">功能拓展</string>
     <string name="Game_Audio_title">禁止处理游戏音频</string>
-    <string name="Game_Audio_summary">游戏声音忽大忽小或音量爆炸可以尝试开启，需重启系统</string>
+    <string name="Game_Audio_summary">游戏声音忽大忽小可以尝试开启，需重启系统，建议配合设置中的允许关闭杜比使用</string>
     <string name="Game_Audio_Setting_Title">音频</string>
     <string name="Device_Model_Disguise">机型伪装</string>
     <string name="Device_Model_Disguise_summary">针对游戏助手伪装机型Y700四代启用对应功能，如旁路充电等</string>
     <string name="FIx_CPU_Frequency">修复CPU频率显示</string>
-    <string name="FIx_CPU_Frequency_summary">仅在PadProGT上通过测试，解决使用Y700四代游戏助手后频率展示始终为0的问题</string>
-    <string name="Fix_SocTemp">修复SOC温度显示</string>
-    <string name="Fix_SocTemp_summary">仅在PadProGT上通过测试，解决使用Y700四代游戏助手后温度展示始终为0度的问题</string>
+    <string name="FIx_CPU_Frequency_summary">仅在 TB710FU 上通过测试，解决使用Y700四代游戏助手后频率展示始终为0的问题</string>
+    <string name="Fix_SocTemp">修复 SoC 温度显示</string>
+    <string name="Fix_SocTemp_summary">仅在 TB710FU 上通过测试，解决使用Y700四代游戏助手后温度展示始终为0度的问题</string>
     <!--系统更新功能页资源值-->
     <string name="firmware_download_link">下载链接：</string>
     <string name="firmware_extract_password">解压密码：</string>
@@ -493,8 +496,6 @@
     <string name="AllowDisableDolby_summary">允许关闭杜比全景声，但是可能导致音量变小</string>
     <string name="NativePermissionController_enable_title">原生权限控制器样式</string>
     <string name="NativePermissionController_enable_summary">启用原生风格的权限控制器，Android14及以下生效</string>
-    <string name="AlwaysDisplaySuggestionsTitle">显示设置首页的建议项目</string>
-    <string name="AlwaysDisplaySuggestionsSummary">“自欺欺人术之假装设备全新未使用”</string>
     <!--应用包安装程序功能页资源值-->
     <string name="Disable_ScanAPK_Title">跳过安全扫描</string>
     <string name="Disable_ScanAPK_Summary">跳过安全扫描，节省时间</string>
@@ -584,14 +585,10 @@
     <!--系统界面 锁屏页资源值-->
     <string name="YiYanTile">锁屏一言</string>
     <string name="YiYanSwitchTitle">随机锁屏签名</string>
-    <string name="YiYanSummary">在锁屏页面显示从网络获取的随机文本</string>
+    <string name="YiYanSummary">在锁屏页面显示从网络获取的随机文本，设置后请重启系统</string>
     <string name="ChargeWattsTitle">显示充电功率</string>
     <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限\n* 重启作用域后需要最多1分钟方可生效</string>
-    <string name="RealWattsRefreshInterval">真实充电功率刷新时机</string>
-    <string name="RealWattsRefreshIntervalSummary">控制锁屏显示真实充电功率时刷新此信息的时机，设置成0.1其实就差不多了</string>
-    <string name="RealWattsRefreshIntervalInputTip">当前设置为：%.1f 秒</string>
-    <string name="RealWattsIntervalSavedMessage">刷新间隔已保存</string>
     <string name="systemui_root_permission_required_message">要使用实际充电功率功能，请在Root管理器中为“系统界面”授予Root权限！</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
@@ -622,7 +619,7 @@
         <item>一定时长后</item>
     </string-array>
     <string name="watt_option_disabled">不启用</string>
-    <string name="watt_option_handshake">协议功率</string>
+    <string name="watt_option_handshake">握手功率</string>
     <string name="watt_option_actual">实际功率</string>
     <string name="real_watt_custom_refresh_interval_enabled">一定时长后</string>
     <string name="real_watt_custom_refresh_interval_disabled">功率变化时</string>
@@ -908,6 +905,9 @@
     <string name="no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
     <string name="no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
     <string name="allow_untrusted_touch">允许不受信任的触摸</string>
+    <string name="lsposed_service_protector_title">LSPosed 服务守护</string>
+    <string name="lsposed_service_protector_enable_title">启用 LSPosed 服务守护</string>
+    <string name="lsposed_service_protector_enable_summary">如果遇到模块意外提示未激活的情况可以尝试开启</string>
     <string name="splash_logo_description" translatable="false">ZTool Logo</string>
     <string name="splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
     <string name="splash_welcome_text">欢迎使用 ZTool</string>
@@ -917,4 +917,16 @@
     <string name="show_slider_percentage">显示滑动条百分比</string>
     <string name="show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="show_volume_slider_percentage">显示音量滑动条百分比</string>
+    <string name="ram_unavailable" translatable="false">-- | --</string>
+    <string name="ram_formatter">%1$s 已用 | %2$s</string>
+    <string name="beautify_ram_info">美化总内存信息</string>
+    <string name="beautify_ram_info_summary">显示猜测的物理内存总量并显示内存扩展值（如果有）</string>
+    <string name="skip_nearby_exposure_warn">跳过互传开启警告</string>
+    <string name="skip_nearby_exposure_warn_summary">跳过反人类的警告弹窗，让联想互传磁贴恢复点按开启</string>
+    <string name="disable_dock_bar_title">关闭 Dock 栏</string>
+    <string name="disable_dock_bar_summary">并无法换取更充裕的桌面网格空间，和 Dock 栏扩容冲突</string>
+    <string name="disable_dock_warning_title">重要警告</string>
+    <string name="disable_dock_warning_message">必须把所有固定在 Dock 栏的应用全部挪出来再重启作用域。如果不这么做，这些应用会被“吞掉”，假如本模块恰好位列其中的话......</string>
+    <string name="auto_accept_file_transfer">自动接受互传请求</string>
+    <string name="auto_accept_file_transfer_summary">可能会导致您意外收到某些文件</string>
 </resources>

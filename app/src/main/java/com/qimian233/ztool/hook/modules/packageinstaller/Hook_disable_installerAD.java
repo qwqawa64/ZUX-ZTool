@@ -1,15 +1,18 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 禁用PackageInstaller应用安装完成后的推荐广告Hook模块
  * 功能：阻止安装成功页面初始化推荐应用数据，消除广告干扰
  */
 public class Hook_disable_installerAD extends BaseHookModule {
+
+    public Hook_disable_installerAD() {}
 
     @Override
     public String getModuleName() {
@@ -25,33 +28,28 @@ public class Hook_disable_installerAD extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.packageinstaller".equals(packageName)) {
-            hookAndroidPackageInstaller(lpparam);
+            hookAndroidPackageInstaller(classLoader);
         } else if ("com.google.android.packageinstaller".equals(packageName)) {
-            hookGooglePackageInstaller(lpparam);
+            hookGooglePackageInstaller(classLoader);
         }
     }
 
-    private void hookAndroidPackageInstaller(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookAndroidPackageInstaller(ClassLoader classLoader) {
         try {
-            Class<?> installSuccessClass = XposedHelpers.findClass(
-                    "com.android.packageinstaller.InstallSuccessExtra",
-                    lpparam.classLoader
-            );
+            Class<?> installSuccessClass = classLoader.loadClass(
+                    "com.android.packageinstaller.InstallSuccessExtra");
 
             // Hook initRecommendAppsData方法，阻止广告数据初始化
-            XposedHelpers.findAndHookMethod(installSuccessClass, "initRecommendAppsData",
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            // 直接返回，不执行任何广告初始化逻辑
-                            param.setResult(null);
-                            log("已阻止PackageInstaller广告数据初始化");
-                        }
-                    });
+            Method initRecommendAppsData = installSuccessClass.getDeclaredMethod("initRecommendAppsData");
+            this.xposed.hook(initRecommendAppsData).intercept(chain -> {
+                // 直接返回，不执行任何广告初始化逻辑
+                log("已阻止PackageInstaller广告数据初始化");
+                return null;
+            });
 
             log("成功Hook PackageInstaller广告屏蔽模块");
 
@@ -60,27 +58,27 @@ public class Hook_disable_installerAD extends BaseHookModule {
         }
     }
 
-    private void hookGooglePackageInstaller(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookGooglePackageInstaller(ClassLoader classLoader) {
         try {
             // Google版本的PackageInstaller可能有不同的类结构
             // 这里可以添加对Google版本的特殊处理
             log("检测到Google PackageInstaller，使用标准Hook方法");
 
             // 尝试Hook相同的类和方法
-            Class<?> installSuccessClass = XposedHelpers.findClassIfExists(
-                    "com.android.packageinstaller.InstallSuccessExtra",
-                    lpparam.classLoader
-            );
+            Class<?> installSuccessClass = null;
+            try {
+                installSuccessClass = classLoader.loadClass(
+                        "com.android.packageinstaller.InstallSuccessExtra");
+            } catch (ClassNotFoundException e) {
+                // class not found, installSuccessClass remains null
+            }
 
             if (installSuccessClass != null) {
-                XposedHelpers.findAndHookMethod(installSuccessClass, "initRecommendAppsData",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void beforeHookedMethod(MethodHookParam param) {
-                                param.setResult(null);
-                                log("已阻止Google PackageInstaller广告数据初始化");
-                            }
-                        });
+                Method initRecommendAppsData = installSuccessClass.getDeclaredMethod("initRecommendAppsData");
+                this.xposed.hook(initRecommendAppsData).intercept(chain -> {
+                    log("已阻止Google PackageInstaller广告数据初始化");
+                    return null;
+                });
                 log("成功Hook Google PackageInstaller广告屏蔽");
             } else {
                 log("Google PackageInstaller未找到目标类，可能需要适配");

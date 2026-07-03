@@ -4,16 +4,21 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
 import android.widget.TextView;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedModuleInterface;
+
+import java.lang.reflect.Method;
 
 /**
  * 系统UI网速显示样式Hook模块
  * 修改系统状态栏中的网速显示，使数字部分更大、单位部分更小
  */
 public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
+
+    public SystemUINetworkSpeedSIzeHook() {}
 
     @Override
     public String getModuleName() {
@@ -26,9 +31,9 @@ public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
     }
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        String packageName = lpparam.packageName;
-
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        ClassLoader classLoader = param.getDefaultClassLoader();
+        String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
             hookSystemUI();
         }
@@ -39,24 +44,22 @@ public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
             log("开始Hook系统UI网速显示");
 
             // 使用beforeHookedMethod避免递归调用
-            XposedHelpers.findAndHookMethod(TextView.class, "setText",
-                    CharSequence.class, new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            try {
-                                CharSequence text = (CharSequence) param.args[0];
+            Method setTextMethod = TextView.class.getDeclaredMethod("setText", CharSequence.class);
+            this.xposed.hook(setTextMethod).intercept(chain -> {
+                try {
+                    CharSequence text = (CharSequence) chain.getArg(0);
 
-                                // 检查是否是网络速度显示文本
-                                if (isNetworkSpeedText(text)) {
-                                    CharSequence styledText = createStyledSpeedText(text.toString());
-                                    param.args[0] = styledText; // 直接修改参数
-                                    log("成功修改网速显示样式");
-                                }
-                            } catch (Throwable t) {
-                                // 忽略处理过程中的异常
-                            }
-                        }
-                    });
+                    // 检查是否是网络速度显示文本
+                    if (isNetworkSpeedText(text)) {
+                        CharSequence styledText = createStyledSpeedText(text.toString());
+                        log("成功修改网速显示样式");
+                        return chain.proceed(new Object[]{styledText});
+                    }
+                } catch (Throwable t) {
+                    // 忽略处理过程中的异常
+                }
+                return chain.proceed();
+            });
 
             log("系统UI网速显示Hook成功");
         } catch (Throwable e) {

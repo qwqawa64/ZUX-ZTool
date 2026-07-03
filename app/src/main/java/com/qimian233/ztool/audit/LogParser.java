@@ -97,8 +97,10 @@ public class LogParser {
                 Pattern.compile("\\[systemui_battery_percentage]\\s*(.*)"));
         MODULE_PATTERNS.put("qs_round_corner",
                 Pattern.compile("\\[qs_round_corner]\\s*(.*)"));
-        MODULE_PATTERNS.put("control_center_slider_percentage",
-                Pattern.compile("\\[control_center_slider_percentage]\\s*(.*)"));
+        MODULE_PATTERNS.put("brightness_slider_percentage",
+                Pattern.compile("\\[brightness_slider_percentage]\\s*(.*)"));
+        MODULE_PATTERNS.put("volume_slider_percentage",
+                Pattern.compile("\\[volume_slider_percentage]\\s*(.*)"));
         MODULE_PATTERNS.put("qs_color",
                 Pattern.compile("\\[qs_color]\\s*(.*)"));
 
@@ -109,6 +111,8 @@ public class LogParser {
                 Pattern.compile("\\[disguise_TB322FC]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_GameAudio",
                 Pattern.compile("\\[disable_GameAudio]\\s*(.*)"));
+        MODULE_PATTERNS.put("disable_GameAudio_app",
+                Pattern.compile("\\[disable_GameAudio_app]\\s*(.*)"));
         MODULE_PATTERNS.put("Fix_SocTemp",
                 Pattern.compile("\\[Fix_SocTemp]\\s*(.*)"));
 
@@ -145,8 +149,6 @@ public class LogParser {
                 Pattern.compile("\\[Split_Screen_mandatory]\\s*(.*)"));
         MODULE_PATTERNS.put("remove_blacklist",
                 Pattern.compile("\\[remove_blacklist]\\s*(.*)"));
-        MODULE_PATTERNS.put("AlwaysDisplaySuggestion",
-                Pattern.compile("\\[AlwaysDisplaySuggestion]\\s*(.*)"));
         MODULE_PATTERNS.put("app_details",
                 Pattern.compile("\\[app_details]\\s*(.*)"));
         MODULE_PATTERNS.put("about_device_info",
@@ -159,6 +161,8 @@ public class LogParser {
                 Pattern.compile("\\[allow_get_packages]\\s*(.*)"));
         MODULE_PATTERNS.put("keep_rotation",
                 Pattern.compile("\\[keep_rotation]\\s*(.*)"));
+        MODULE_PATTERNS.put("lsposed_service_protector",
+                Pattern.compile("\\[lsposed_service_protector]\\s*(.*)"));
         MODULE_PATTERNS.put("NoMorePasswordPer24H",
                 Pattern.compile("\\[NoMorePasswordPer24H]\\s*(.*)"));
         MODULE_PATTERNS.put("disable_flag_secure",
@@ -183,12 +187,18 @@ public class LogParser {
         // 桌面相关
         MODULE_PATTERNS.put("disable_force_stop",
                 Pattern.compile("\\[disable_force_stop]\\s*(.*)"));
+        MODULE_PATTERNS.put("bypass_share_warning",
+                Pattern.compile("\\[bypass_share_warning]\\s*(.*)"));
+        MODULE_PATTERNS.put("auto_accept_file_transfer",
+                Pattern.compile("\\[auto_accept_file_transfer]\\s*(.*)"));
         MODULE_PATTERNS.put("zui_launcher_hotseat",
                 Pattern.compile("\\[zui_launcher_hotseat]\\s*(.*)"));
         MODULE_PATTERNS.put("CustomGridSize",
                 Pattern.compile("\\[CustomGridSize]\\s*(.*)"));
         MODULE_PATTERNS.put("clean_global_search",
                 Pattern.compile("\\[clean_global_search]\\s*(.*)"));
+        MODULE_PATTERNS.put("disable_dock_bar",
+                Pattern.compile("\\[disable_dock_bar]\\s*(.*)"));
         MODULE_PATTERNS.put("launcher_recent_task_memory_view",
                 Pattern.compile("\\[launcher_recent_task_memory_view]\\s*(.*)"));
 
@@ -213,13 +223,15 @@ public class LogParser {
         MODULE_NAMES.put("systemui_battery_percentage", "电池外百分比");
         MODULE_NAMES.put("ForceLenovoAOD", "强制开启联想AOD");
         MODULE_NAMES.put("qs_round_corner", "控制中心磁贴自定义圆角");
-        MODULE_NAMES.put("control_center_slider_percentage", "控制中心滑条百分比显示");
+        MODULE_NAMES.put("brightness_slider_percentage", "控制中心亮度滑条百分比显示");
+        MODULE_NAMES.put("volume_slider_percentage", "控制中心音量滑条百分比显示");
         MODULE_NAMES.put("qs_color", "控制中心磁贴自定义颜色");
 
         // 游戏工具相关
         MODULE_NAMES.put("Fix_CpuClock", "CPU频率修复");
         MODULE_NAMES.put("disguise_TB322FC", "设备型号伪装");
         MODULE_NAMES.put("disable_GameAudio", "禁用游戏音频");
+        MODULE_NAMES.put("disable_GameAudio_app", "禁用游戏音频（App层）");
         MODULE_NAMES.put("Fix_SocTemp", "SOC温度修复");
 
         // OTA相关
@@ -241,7 +253,6 @@ public class LogParser {
         MODULE_NAMES.put("PermissionControllerHook", "权限控制器");
         MODULE_NAMES.put("Split_Screen_mandatory", "强制分屏");
         MODULE_NAMES.put("remove_blacklist", "移除黑名单");
-        MODULE_NAMES.put("AlwaysDisplaySuggestion", "始终显示建议");
         MODULE_NAMES.put("app_details", "应用详细信息");
         MODULE_NAMES.put("about_device_info", "关于设备信息");
         MODULE_NAMES.put("ztool_settings_entry", "ZTool 设置入口");
@@ -251,14 +262,18 @@ public class LogParser {
 
         // 启动器相关
         MODULE_NAMES.put("disable_force_stop", "禁止划卡杀后台");
+        MODULE_NAMES.put("bypass_share_warning", "超级互联磁贴跳过警告");
+        MODULE_NAMES.put("auto_accept_file_transfer", "超级互联自动接受互传");
         MODULE_NAMES.put("zui_launcher_hotseat", "Dock扩容");
         MODULE_NAMES.put("CustomGridSize", "自定义桌面网格大小");
         MODULE_NAMES.put("clean_global_search", "净化全局搜索");
+        MODULE_NAMES.put("disable_dock_bar", "关闭桌面Dock栏");
         MODULE_NAMES.put("launcher_recent_task_memory_view", "显示内存信息");
 
         // 系统框架相关
         MODULE_NAMES.put("allow_get_packages", "停用系统应用列表管理");
         MODULE_NAMES.put("keep_rotation", "保持屏幕方向");
+        MODULE_NAMES.put("lsposed_service_protector", "LSPosed 服务守护");
         MODULE_NAMES.put("NoMorePasswordPer24H", "无需每24H验证一次锁屏密码");
         MODULE_NAMES.put("disable_flag_secure", "强制允许截屏");
         MODULE_NAMES.put("ai_input_expand", "自定义AI全局输入触发符");
@@ -617,12 +632,12 @@ public class LogParser {
                 "control_center_no_tile_labels",
                 "NativeNotificationIcon", "No_ChargeAnimation", "systemui_network_speed_size",
                 "systemui_network_speed_doublelayer", "systemui_battery_percentage", "ForceLenovoAOD",
-                "qs_round_corner", "control_center_slider_percentage", "qs_color"
+                "qs_round_corner", "brightness_slider_percentage", "volume_slider_percentage", "qs_color"
         ));
 
         // 游戏工具相关
         categories.put("游戏工具", Arrays.asList(
-                "Fix_CpuClock", "disguise_TB322FC", "disable_GameAudio", "Fix_SocTemp"
+                "Fix_CpuClock", "disguise_TB322FC", "disable_GameAudio", "disable_GameAudio_app", "Fix_SocTemp"
         ));
 
         // 包安装器相关
@@ -640,14 +655,19 @@ public class LogParser {
         // 设置相关
         categories.put("系统设置", Arrays.asList(
                 "allow_display_dolby", "auto_owner_info", "PermissionControllerHook",
-                "Split_Screen_mandatory", "remove_blacklist", "AlwaysDisplaySuggestion",
-                "app_details", "about_device_info", "ztool_settings_entry"
+                "Split_Screen_mandatory", "remove_blacklist", "app_details",
+                "about_device_info", "ztool_settings_entry"
         ));
 
         // 启动器相关
         categories.put("系统桌面", Arrays.asList(
                 "disable_force_stop", "zui_launcher_hotseat", "CustomGridSize",
-                "clean_global_search", "launcher_recent_task_memory_view"
+                "clean_global_search", "disable_dock_bar", "launcher_recent_task_memory_view"
+        ));
+
+        // 超级互联相关
+        categories.put("超级互联", Arrays.asList(
+                "bypass_share_warning", "auto_accept_file_transfer"
         ));
 
         // 文件选择器相关
@@ -657,7 +677,7 @@ public class LogParser {
 
         // 系统框架相关
         categories.put("系统框架", Arrays.asList(
-                "allow_get_packages", "keep_rotation", "NoMorePasswordPer24H", "disable_flag_secure", "ai_input_expand",
+                "allow_get_packages", "keep_rotation", "lsposed_service_protector", "NoMorePasswordPer24H", "disable_flag_secure", "ai_input_expand",
                 "force_screen_on_off_animation", "allow_untrusted_touch"
         ));
 
