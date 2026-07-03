@@ -2,11 +2,9 @@ package com.qimian233.ztool
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,19 +30,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
+import com.qimian233.ztool.ui.components.ZListItem
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun SettingsAboutRoute(
@@ -275,51 +271,21 @@ private fun AboutActionRow(
     modifier: Modifier = Modifier,
     showTrailingArrow: Boolean = true
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(80.dp)
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
-                    BasicComponentDefaults.titleColor().color
-                else
-                    MaterialTheme.colorScheme.onSurface,
-                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (summary != null) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
-                        BasicComponentDefaults.summaryColor().color
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.body2.fontSize else TextUnit.Unspecified,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+    ZListItem(
+        title = title,
+        summary = summary,
+        onClick = onClick,
+        modifier = modifier,
+        trailingContent = if (showTrailingArrow) {
+            {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-        if (showTrailingArrow) {
-            Spacer(modifier = Modifier.width(16.dp))
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
+        } else null
+    )
 }
 
 internal fun openExternalLink(

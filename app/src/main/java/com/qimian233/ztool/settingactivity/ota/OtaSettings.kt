@@ -39,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -55,14 +54,10 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.FrontendStyle
-import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
 import com.qimian233.ztool.viewmodel.OtaSettingsViewModel
-import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun OtaSettingsRoute(
@@ -336,8 +331,7 @@ private fun OtaInfoContent(
             Text(
                 text = stringResource(R.string.OtaInfoFetch_summary),
                 style = MaterialTheme.typography.titleMedium,
-                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) BasicComponentDefaults.titleColor().color else MaterialTheme.colorScheme.onSurface,
-                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .weight(1f)
                     .widthIn(max = 720.dp)
@@ -435,8 +429,7 @@ private fun FirmwareContent(
             Text(
                 text = stringResource(R.string.PCFlashFirmwareFetch_summary),
                 style = MaterialTheme.typography.titleMedium,
-                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) BasicComponentDefaults.titleColor().color else MaterialTheme.colorScheme.onSurface,
-                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(12.dp))
             Row(
@@ -531,8 +524,7 @@ private fun OtaCustomParamsContent(
             Text(
                 text = stringResource(R.string.Ota_Custom_Params_Desc),
                 style = MaterialTheme.typography.titleMedium,
-                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) BasicComponentDefaults.titleColor().color else MaterialTheme.colorScheme.onSurface,
-                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         Spacer(modifier = Modifier.height(12.dp))

@@ -43,6 +43,7 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import top.yukonga.miuix.kmp.basic.Slider as MiuixSlider
 
 data class SettingSection(
     val title: String? = null,
@@ -54,6 +55,16 @@ sealed interface SettingItem {
     val enabled: Boolean
 
     data class Switch(
+        val title: String,
+        val checked: Boolean,
+        val onCheckedChange: (Boolean) -> Unit,
+        val summary: String? = null,
+        val icon: ImageVector? = null,
+        override val enabled: Boolean = true,
+        override val key: String? = null
+    ) : SettingItem
+
+    data class Checkbox(
         val title: String,
         val checked: Boolean,
         val onCheckedChange: (Boolean) -> Unit,
@@ -342,6 +353,18 @@ fun ZToolSettingItem(
             )
         }
 
+        is SettingItem.Checkbox -> {
+            ZToolCheckboxRow(
+                title = item.title,
+                summary = item.summary,
+                checked = item.checked,
+                onCheckedChange = item.onCheckedChange,
+                enabled = item.enabled,
+                icon = item.icon,
+                modifier = modifier
+            )
+        }
+
         is SettingItem.Entry -> {
             ZListItem(
                 title = item.title,
@@ -483,15 +506,27 @@ fun ZToolSliderRow(
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.padding(top = 8.dp),
-            enabled = enabled,
-            valueRange = valueRange,
-            steps = steps,
-            onValueChangeFinished = onValueChangeFinished
-        )
+        if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+            MiuixSlider(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.padding(top = 8.dp),
+                enabled = enabled,
+                valueRange = valueRange,
+                steps = steps,
+                onValueChangeFinished = onValueChangeFinished
+            )
+        } else {
+            Slider(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.padding(top = 8.dp),
+                enabled = enabled,
+                valueRange = valueRange,
+                steps = steps,
+                onValueChangeFinished = onValueChangeFinished
+            )
+        }
     }
 }
 

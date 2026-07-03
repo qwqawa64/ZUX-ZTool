@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,14 +43,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
 import top.yukonga.miuix.kmp.icon.basic.ArrowUpDown
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.ListPopupColumn as MiuixListPopupColumn
 import top.yukonga.miuix.kmp.basic.PopupPositionProvider as MiuixPopupPositionProvider
@@ -90,7 +89,6 @@ fun ZListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(enabled = enabled) { onClick() }
@@ -248,17 +246,101 @@ fun ZToolSwitchRow(
 }
 
 @Composable
-fun ZToolSettingsDivider(modifier: Modifier = Modifier) {
+fun ZToolCheckboxRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    enabled: Boolean = true,
+    icon: ImageVector? = null
+) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-//        MiuixHorizontalDivider(
-//            modifier = modifier.padding(start = 24.dp, end = 24.dp)
-//        )
+        MiuixBasicComponent(
+            modifier = modifier.padding(vertical = 8.dp, horizontal = 24.dp),
+            title = title,
+            summary = summary,
+            startAction = icon?.let { ic ->
+                { ZToolSettingLeadingIcon(icon = ic, enabled = enabled) }
+            },
+            endActions = {
+                top.yukonga.miuix.kmp.basic.Checkbox(
+                    state = if (checked) ToggleableState.On else ToggleableState.Off,
+                    onClick = { onCheckedChange(!checked) },
+                    enabled = enabled
+                )
+            },
+            insideMargin = PaddingValues(vertical = 16.dp),
+            onClick = { onCheckedChange(!checked) },
+            enabled = enabled
+        )
+        return
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .widthIn(max = 720.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled
+        )
+    }
+}
+
+@Composable
+fun ZToolSettingsDivider(
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    addDefaultPadding: Boolean = true
+) {
+    val effectiveModifier = if (addDefaultPadding) {
+        modifier.padding(start = 24.dp, end = 24.dp)
+    } else {
+        modifier
+    }
+
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        val miuixModifier = if (color == Color.Unspecified) effectiveModifier else effectiveModifier
+        top.yukonga.miuix.kmp.basic.HorizontalDivider(
+            modifier = miuixModifier,
+            color = if (color != Color.Unspecified) color else Color.Unspecified
+        )
         return
     }
 
     HorizontalDivider(
-        modifier = modifier.padding(start = 24.dp, end = 24.dp),
-        color = MaterialTheme.colorScheme.outlineVariant
+        modifier = effectiveModifier,
+        color = if (color == Color.Unspecified) MaterialTheme.colorScheme.outlineVariant else color
     )
 }
 

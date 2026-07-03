@@ -28,7 +28,6 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
@@ -65,6 +64,7 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.HomeUiState
@@ -488,9 +488,10 @@ private fun ModuleStatusCard(state: HomeUiState) {
                     modifier = Modifier.size(32.dp)
                 )
             }
-            HorizontalDivider(
+            ZToolSettingsDivider(
                 modifier = Modifier.padding(vertical = 16.dp),
-                color = contentColor.copy(alpha = 0.2f)
+                color = contentColor.copy(alpha = 0.2f),
+                addDefaultPadding = false
             )
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
