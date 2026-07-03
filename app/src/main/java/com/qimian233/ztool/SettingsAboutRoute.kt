@@ -97,7 +97,7 @@ fun SettingsAboutRoute(
                 Spacer(modifier = Modifier.height(24.dp))
                 AboutHeaderCard(versionName, commitCount, commitHash)
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_developers_title), 2) { itemModifier ->
+                AboutSectionCard(stringResource(R.string.about_developers_title), 3) { itemModifier ->
                     AboutActionRow(
                         title = "Qimian233",
                         summary = stringResource(R.string.about_qimian233_summary),
