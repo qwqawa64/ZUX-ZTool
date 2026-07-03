@@ -243,7 +243,7 @@
     <string name="button_wasddestroy_coolapk" translatable="false">WASD_Destroy</string>
 
     <!--通用重启作用域资源-->
-    <string name="restart_xp_title">重启作用域</string>
+    <string name="restart_xp_title">确认重启作用域?</string>
     <string name="restart_xp_message_header">"是否重启此页的作用域？这将强行停止 "</string>
     <string name="restart_xp_message"> 的进程。</string>
     <string name="restart_yes">重启作用域</string>

@@ -214,7 +214,7 @@
     <string name="unknown_activity_null">Unknown (Activity is null)</string>
     <string name="button_project_homepage">Our GitHub</string>
     <string name="button_credits">UnfuckZUI</string>
-    <string name="restart_xp_title">Restart Scope</string>
+    <string name="restart_xp_title">Restart Scope?</string>
     <string name="restart_xp_message_header">"Restart the scope for this page? This will force stop "</string>
     <string name="restart_xp_message"> process.</string>
     <string name="restart_yes">Restart scope</string>
