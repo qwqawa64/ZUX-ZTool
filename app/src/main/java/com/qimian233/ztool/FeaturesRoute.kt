@@ -300,6 +300,7 @@ private fun FeatureCard(
             .fillMaxWidth()
             .height(FeatureCardHeight)
             .clickable(onClick = onClick),
+        containerColor = LocalZToolColorScheme.current.surfaceContainerHigh
     ) {
         Row(
             modifier = Modifier
