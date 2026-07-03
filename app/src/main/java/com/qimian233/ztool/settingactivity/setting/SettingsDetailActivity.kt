@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,13 +30,10 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -62,13 +60,16 @@ import com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.settingactivity.safecenter.RestartConfirmDialog
 import com.qimian233.ztool.settingactivity.setting.floatingwindow.FloatingWindow
+import com.qimian233.ztool.ui.components.DIALOG_BUTTON_VERTICAL_ARRANGEMENT
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolCheckbox
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import com.qimian233.ztool.utils.AppChooserDialog
@@ -155,7 +156,8 @@ fun SettingsDetailRoute(
         message: String
     ) {
         if (activity == null) return
-        showPlatformComposeDialog(activity) { dialog ->
+        val dialogWidth = (context.resources.displayMetrics.widthPixels * 0.9).toInt()
+        showPlatformComposeDialog(activity, width = dialogWidth) { dialog ->
             SimpleSettingsDetailDialogContent(
                 title = dialogTitle,
                 message = message,
@@ -173,7 +175,8 @@ fun SettingsDetailRoute(
         onConfirm: () -> Unit
     ) {
         if (activity == null) return
-        showPlatformComposeDialog(activity) { dialog ->
+        val dialogWidth = (context.resources.displayMetrics.widthPixels * 0.9).toInt()
+        showPlatformComposeDialog(activity, width = dialogWidth) { dialog ->
             SimpleSettingsDetailDialogContent(
                 title = dialogTitle,
                 message = message,
@@ -189,8 +192,9 @@ fun SettingsDetailRoute(
     }
 
     fun showComposeDialog(content: @Composable () -> Unit): Dialog? {
+        val dialogWidth = (context.resources.displayMetrics.widthPixels * 0.9).toInt()
         return activity?.let {
-            showPlatformComposeDialog(it) {
+            showPlatformComposeDialog(it, width = dialogWidth) {
                 content()
             }
         }
@@ -635,15 +639,15 @@ private fun SimpleSettingsDetailDialogContent(
         title = { Text(text = title) },
         text = { Text(text = message) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(confirmText)
-            }
+            ZToolTextButton(onClick = onConfirm, text = confirmText)
         },
         dismissButton = if (dismissText != null && onDismiss != null) {
             {
-                TextButton(onClick = onDismiss) {
-                    Text(dismissText)
-                }
+                ZToolTextButton(
+                    onClick = onDismiss,
+                    text = dismissText,
+                    isPrimary = false
+                )
             }
         } else null
     )
@@ -1098,6 +1102,7 @@ private fun ConfigSelectionDialogContent(
     val selectedIndexes = remember { mutableStateListOf<Int>() }
 
     ZToolDialog(
+        buttonArrangement = DIALOG_BUTTON_VERTICAL_ARRANGEMENT,
         onDismissRequest = onCancel,
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -1148,24 +1153,33 @@ private fun ConfigSelectionDialogContent(
                     val selectedConfigs = selectedIndexes.map { configs[it] }
                     if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
                 },
-                text = stringResource(R.string.flashAddedConfig)
+                text = stringResource(R.string.flashAddedConfig),
+                modifier = Modifier.fillMaxWidth()
             )
         },
         dismissButton = {
-            Row {
+            Column (verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 ZToolTextButton(
                     onClick = {
                         val selectedConfigs = selectedIndexes.map { configs[it] }
                         if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
                     },
                     text = stringResource(R.string.delete),
-                    isPrimary = false
+                    isPrimary = false,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 if (flashedConfigs.isNotEmpty()) {
-                    ZToolTextButton(onClick = onRestore, text = stringResource(R.string.restoreModule))
+                    ZToolTextButton(
+                        onClick = onRestore,
+                        text = stringResource(R.string.restoreModule),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-                Spacer(modifier = Modifier.weight(1f))
-                ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
+                ZToolTextButton(
+                    onClick = onCancel,
+                    text = stringResource(R.string.cancel),
+                    isPrimary = false,
+                    modifier = Modifier.fillMaxWidth())
             }
         }
     )
@@ -1185,7 +1199,7 @@ private fun ConfigSelectionRow(
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(
+        ZToolCheckbox(
             checked = flashed || selected,
             onCheckedChange = { onClick() },
             enabled = !flashed
@@ -1233,22 +1247,17 @@ private fun FontInputDialogContent(
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                ZToolTextInputRow(
+                    label = stringResource(R.string.fontName),
                     value = fontName,
                     onValueChange = { fontName = it },
-                    label = { Text(stringResource(R.string.fontName)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    singleLine = true
                 )
-                OutlinedTextField(
+                ZToolTextInputRow(
+                    label = stringResource(R.string.fontDescription),
                     value = fontDescription,
                     onValueChange = { fontDescription = it },
-                    label = { Text(stringResource(R.string.fontDescription)) },
-                    minLines = 3,
-                    maxLines = 5,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp)
+                    singleLine = false
                 )
             }
         },
