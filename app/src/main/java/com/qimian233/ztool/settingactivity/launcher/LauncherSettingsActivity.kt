@@ -21,7 +21,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +45,7 @@ import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
+import com.qimian233.ztool.ui.components.ZToolSlider
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.utils.AppChooserDialog
@@ -498,7 +498,7 @@ private fun GridSliderRow(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.width(64.dp)
         )
-        Slider(
+        ZToolSlider(
             value = value.toFloat(),
             onValueChange = { onValueChanged(it.toInt()) },
             valueRange = 3f..10f,

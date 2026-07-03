@@ -531,6 +531,39 @@ fun ZToolSliderRow(
 }
 
 @Composable
+fun ZToolSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null
+) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixSlider(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier,
+            enabled = enabled,
+            valueRange = valueRange,
+            steps = steps,
+            onValueChangeFinished = onValueChangeFinished
+        )
+    } else {
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier,
+            enabled = enabled,
+            valueRange = valueRange,
+            steps = steps,
+            onValueChangeFinished = onValueChangeFinished
+        )
+    }
+}
+
+@Composable
 fun ZToolTextInputRow(
     label: String,
     value: String,

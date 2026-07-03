@@ -20,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +47,7 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
+import com.qimian233.ztool.ui.components.ZToolSlider
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
@@ -320,7 +320,7 @@ private fun ScreenOnOffAnimationDuration(
             Row (
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
             ) {
-                Slider(
+                ZToolSlider(
                     value = state.forceOnOffAnimationDuration.toFloat(),
                     onValueChange = {
                         onForceOnOffAnimationDurationChanged(
