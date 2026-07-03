@@ -1,5 +1,11 @@
 package com.qimian233.ztool.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -19,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Checkbox
@@ -27,11 +34,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,10 +51,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.icon.basic.ArrowUpDown
@@ -378,7 +391,6 @@ fun <T> ZToolPopupMenuField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: ImageVector? = null,
-    dialogTitle: String? = null,
     externalExpanded: Boolean? = null,
     onExternalExpandedChange: ((Boolean) -> Unit)? = null
 ) {
@@ -406,9 +418,8 @@ fun <T> ZToolPopupMenuField(
             modifier = modifier,
             enabled = enabled,
             icon = icon,
-            dialogTitle = dialogTitle,
-            externalShowDialog = externalExpanded,
-            onExternalShowDialogChange = onExternalExpandedChange
+            externalExpanded = externalExpanded,
+            onExternalExpandedChange = onExternalExpandedChange
         )
     }
 }
@@ -496,10 +507,147 @@ fun <T> ZToolPopupMenuSettingRow(
             optionLabel = optionLabel,
             onOptionSelected = onOptionSelected,
             enabled = enabled,
-            dialogTitle = title,
             modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth),
             externalExpanded = expanded,
             onExternalExpandedChange = { expanded = it }
+        )
+    }
+}
+
+@Composable
+fun <T> ZToolPopupDialogField(
+    value: String,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: ImageVector? = null,
+    dialogTitle: String? = null,
+    externalShowDialog: Boolean? = null,
+    onExternalShowDialogChange: ((Boolean) -> Unit)? = null
+) {
+    val internalShowDialog = remember { mutableStateOf(false) }
+    val showDialog = externalShowDialog ?: internalShowDialog.value
+    val setShowDialog: (Boolean) -> Unit = onExternalShowDialogChange ?: { internalShowDialog.value = it }
+    fun selectedIndex(): Int = options.indexOfFirst { optionLabel(it) == value }.coerceAtLeast(0)
+    var pendingIndex by remember(value, options) {
+        mutableIntStateOf(selectedIndex())
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled && options.isNotEmpty()) {
+                pendingIndex = selectedIndex()
+                setShowDialog(true)
+            }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+        }
+        Text(
+            text = value,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            enabled = enabled && options.isNotEmpty(),
+            onClick = {
+                pendingIndex = selectedIndex()
+                setShowDialog(true)
+            },
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                contentDescription = null,
+                tint = if (enabled && options.isNotEmpty()) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                }
+            )
+        }
+    }
+
+    if (showDialog) {
+        ZToolDialog(
+            onDismissRequest = { setShowDialog(false) },
+            title = dialogTitle?.let { titleText ->
+                { Text(titleText) }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    options.forEachIndexed { index, option ->
+                        val selected = index == pendingIndex
+                        val style = LocalZToolThemeSpec.current.style
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    color = if (selected && style == FrontendStyle.Material3Expressive) {
+                                        MaterialTheme.colorScheme.secondaryContainer
+                                    } else {
+                                        Color.Transparent
+                                    }
+                                )
+                                .clickable { pendingIndex = index }
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (style == FrontendStyle.Miuix) {
+                                ZToolCheckbox(
+                                    checked = selected,
+                                    onCheckedChange = { pendingIndex = index }
+                                )
+                            } else {
+                                RadioButton(
+                                    selected = selected,
+                                    onClick = { pendingIndex = index }
+                                )
+                            }
+                            Text(
+                                text = optionLabel(option),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        options.getOrNull(pendingIndex)?.let(onOptionSelected)
+                        setShowDialog(false)
+                    }
+                ) {
+                    Text(androidx.compose.ui.res.stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { setShowDialog(false) }) {
+                    Text(androidx.compose.ui.res.stringResource(android.R.string.cancel))
+                }
+            }
         )
     }
 }
@@ -534,6 +682,7 @@ private fun <T> ZToolMiuixPopupMenuField(
                 ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))
             }
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = value,
                 maxLines = 1,
@@ -543,8 +692,7 @@ private fun <T> ZToolMiuixPopupMenuField(
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                modifier = Modifier.weight(1f)
+                }
             )
             IconButton(
                 enabled = enabled && options.isNotEmpty(),
@@ -614,130 +762,140 @@ private fun <T> ZToolMaterialPopupMenuField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: ImageVector? = null,
-    dialogTitle: String? = null,
-    externalShowDialog: Boolean? = null,
-    onExternalShowDialogChange: ((Boolean) -> Unit)? = null
+    externalExpanded: Boolean? = null,
+    onExternalExpandedChange: ((Boolean) -> Unit)? = null
 ) {
-    val internalShowDialog = remember { mutableStateOf(false) }
-    val showDialog = externalShowDialog ?: internalShowDialog.value
-    val setShowDialog: (Boolean) -> Unit = onExternalShowDialogChange ?: { internalShowDialog.value = it }
-    fun selectedIndex(): Int = options.indexOfFirst { optionLabel(it) == value }.coerceAtLeast(0)
-    var pendingIndex by remember(value, options) {
-        mutableIntStateOf(selectedIndex())
+    val internalExpanded = remember { mutableStateOf(false) }
+    val expanded = externalExpanded ?: internalExpanded.value
+    val setExpanded: (Boolean) -> Unit = onExternalExpandedChange ?: { internalExpanded.value = it }
+
+    val transitionState = remember { MutableTransitionState(false) }
+    LaunchedEffect(expanded) {
+        transitionState.targetState = expanded
     }
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled && options.isNotEmpty()) {
-                pendingIndex = selectedIndex()
-                setShowDialog(true)
-            }
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (icon != null) {
-            ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
-            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-        }
-        Text(
-            text = value,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (enabled) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(
-            enabled = enabled && options.isNotEmpty(),
-            onClick = {
-                pendingIndex = selectedIndex()
-                setShowDialog(true)
-            },
-            modifier = Modifier.size(40.dp)
+    var anchorHeight by remember { mutableIntStateOf(0) }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onSizeChanged { anchorHeight = it.height }
+                .clickable(enabled = enabled && options.isNotEmpty()) {
+                    setExpanded(true)
+                }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                contentDescription = null,
-                tint = if (enabled && options.isNotEmpty()) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+            if (icon != null) {
+                ZToolSettingLeadingIcon(icon = icon, enabled = enabled)
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = value,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.primary
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    MaterialTheme.colorScheme.onSurfaceVariant
                 }
             )
+            IconButton(
+                enabled = enabled && options.isNotEmpty(),
+                onClick = { setExpanded(true) },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    tint = if (enabled && options.isNotEmpty()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    }
+                )
+            }
         }
-    }
 
-    if (showDialog) {
-        ZToolDialog(
-            onDismissRequest = {
-                @Suppress("AssignedValueIsNeverRead")
-                setShowDialog(false)
-            },
-            title = dialogTitle?.let { titleText ->
-                { Text(titleText) }
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 360.dp)
-                        .verticalScroll(rememberScrollState())
+        if (transitionState.currentState || transitionState.targetState) {
+            Popup(
+                onDismissRequest = { setExpanded(false) },
+                offset = IntOffset(0, anchorHeight),
+                properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
+            ) {
+                AnimatedVisibility(
+                    visibleState = transitionState,
+                    enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+                    exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
                 ) {
-                    options.forEachIndexed { index, option ->
-                        val selected = index == pendingIndex
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    color = if (selected) {
-                                        MaterialTheme.colorScheme.secondaryContainer
-                                    } else {
-                                        Color.Transparent
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 3.dp,
+                    shadowElevation = 3.dp,
+                    modifier = Modifier
+                        .heightIn(max = 360.dp)
+                        .widthIn(max = 160.dp)
+                ) {
+                    Column {
+                        options.forEachIndexed { index, option ->
+                            val label = optionLabel(option)
+                            val selected = label == value
+                            val isFirst = index == 0
+                            val isLast = index == options.lastIndex
+                            val itemShape = when {
+                                isFirst && isLast -> RoundedCornerShape(12.dp)
+                                isFirst -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+                                isLast -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+                                else -> RoundedCornerShape(0.dp)
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .then(
+                                        if (selected) {
+                                            Modifier.background(
+                                                color = MaterialTheme.colorScheme.primaryContainer,
+                                                shape = itemShape
+                                            )
+                                        } else {
+                                            Modifier
+                                        }
+                                    )
+                                    .clickable {
+                                        onOptionSelected(option)
+                                        setExpanded(false)
                                     }
+                                    .padding(horizontal = 12.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = if (selected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 )
-                                .clickable { pendingIndex = index }
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = selected,
-                                onClick = { pendingIndex = index }
-                            )
-                            Text(
-                                text = optionLabel(option),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
+                                if (selected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        options.getOrNull(pendingIndex)?.let(onOptionSelected)
-                        @Suppress("AssignedValueIsNeverRead")
-                        setShowDialog(false)
-                    }
-                ) {
-                    Text(androidx.compose.ui.res.stringResource(android.R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    @Suppress("AssignedValueIsNeverRead")
-                    setShowDialog(false)
-                }) {
-                    Text(androidx.compose.ui.res.stringResource(android.R.string.cancel))
                 }
             }
-        )
+        }
     }
 }
