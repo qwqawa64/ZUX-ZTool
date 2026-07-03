@@ -389,21 +389,22 @@ private fun OtaInfoContent(
                         )
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row {
-                Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = { onCopyChangelog(result.changelogCopyText) }) {
-                    Text(stringResource(R.string.copy_changelog))
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(
+            Spacer(modifier = Modifier.height(16.dp))
+            Column {
+                ZToolTextButton(
+                    onClick = { onCopyChangelog(result.changelogCopyText) },
+                    text = stringResource(R.string.copy_changelog),
+                    isPrimary = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ZToolTextButton(
                     onClick = { onCopyDownloadLink(result.downloadUrl) },
-                    enabled = result.isNewVersionAvailable
-                ) {
-                    Icon(Icons.Rounded.ContentCopy, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.copy_download_link))
-                }
+                    enabled = result.isNewVersionAvailable,
+                    text = stringResource(R.string.copy_download_link),
+                    isPrimary = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
