@@ -1,15 +1,17 @@
 package com.qimian233.ztool
 
+import android.app.Dialog
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.ViewGroup
-import android.app.Dialog
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,10 +35,13 @@ class LoadingDialog(private val context: Context) {
             this.message = message
             if (!showing) {
                 ensureDialog().show()
-                ensureDialog().window?.setLayout(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
+                ensureDialog().window?.apply {
+                    setLayout(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                    setGravity(Gravity.CENTER)
+                }
                 showing = true
             }
         }
@@ -57,6 +62,7 @@ class LoadingDialog(private val context: Context) {
         }
     }
 
+    @Suppress("unused")
     fun updateMessage(message: String) {
         runOnMain {
             if (showing) {
@@ -65,6 +71,7 @@ class LoadingDialog(private val context: Context) {
         }
     }
 
+    @Suppress("unused")
     fun isShowing(): Boolean = showing
 
     private fun ensureDialog(): Dialog {
@@ -73,12 +80,12 @@ class LoadingDialog(private val context: Context) {
 
         return createPlatformComposeDialog(context, cancelable = false) {
             Surface(color = MaterialTheme.colorScheme.surface) {
-                Column(
+                Row(
                     modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ZToolCircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
+                    ZToolCircularProgressIndicator(modifier = Modifier.size(40.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                     Text(
                         text = message,
                         style = MaterialTheme.typography.bodyLarge,
