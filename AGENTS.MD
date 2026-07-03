@@ -6,6 +6,9 @@
 - Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
 - Java is available **only on Windows** in most scenarios. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
 - If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `cmd.exe /c ".\gradlew.bat assembleDebug"`
+- To conduct compilation test on WSL2, the command is `bash cd ./ && cmd.exe /c ".\gradlew.bat assembleDebug"`
+- To commit your work, use `git.exe commit <commit_messages>`
+- If any of these Windows-specific commands failed, stop the work and ask the user to confirm what went wrong.
 
 ## Project Summary
 
