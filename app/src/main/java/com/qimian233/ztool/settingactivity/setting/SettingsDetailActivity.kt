@@ -1266,11 +1266,17 @@ private fun FontInputDialogContent(
                 onClick = {
                     onConfirm(fontName.trim(), fontDescription.trim())
                 },
-                text = stringResource(R.string.confirm_button)
+                text = stringResource(R.string.confirm_button),
+                modifier = Modifier.fillMaxWidth()
             )
         },
         dismissButton = {
-            ZToolTextButton(onClick = onCancel, text = stringResource(R.string.cancel), isPrimary = false)
+            ZToolTextButton(
+                onClick = onCancel,
+                text = stringResource(R.string.cancel),
+                isPrimary = false,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     )
 }
