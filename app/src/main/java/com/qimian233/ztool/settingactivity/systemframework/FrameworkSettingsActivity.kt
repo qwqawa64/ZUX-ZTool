@@ -17,7 +17,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +42,7 @@ import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
+import com.qimian233.ztool.ui.components.ZToolOutlinedTextField
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
@@ -358,22 +358,16 @@ private fun AiInputSettingsContent(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        OutlinedTextField(
+        ZToolOutlinedTextField(
             value = state.aiInputSigns,
             onValueChange = onAiInputSignsChanged,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 8.dp),
-            label = { Text(stringResource(R.string.custom_detector_hint)) },
+            label = stringResource(R.string.custom_detector_hint),
             isError = state.aiInputSignsError != null,
-            supportingText = {
-                if (state.aiInputSignsError != null) {
-                    Text(state.aiInputSignsError)
-                }
-            },
+            supportingText = state.aiInputSignsError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            minLines = 1,
-            maxLines = 3
         )
     }
 }
