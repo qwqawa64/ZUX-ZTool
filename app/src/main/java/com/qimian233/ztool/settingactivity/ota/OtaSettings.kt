@@ -17,15 +17,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -484,18 +481,20 @@ private fun FirmwareContent(
                         append(stringResource(R.string.firmware_last_update_time)).append(result.lastUpdateTime)
                     }
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row {
-                    Spacer(modifier = Modifier.weight(1f))
-                    TextButton(onClick = { onCopyPassword(result.password) }) {
-                        Text(stringResource(R.string.copy_password))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = { onCopyDownloadLink(result.downloadUrl) }) {
-                        Icon(Icons.Rounded.ContentCopy, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.copy_download_link))
-                    }
+                Spacer(modifier = Modifier.height(16.dp))
+                Column {
+                    ZToolTextButton(
+                        onClick = { onCopyPassword(result.password) },
+                        text = stringResource(R.string.copy_password),
+                        isPrimary = false,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ZToolTextButton(
+                        onClick = { onCopyDownloadLink(result.downloadUrl) },
+                        text = stringResource(R.string.copy_download_link),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
