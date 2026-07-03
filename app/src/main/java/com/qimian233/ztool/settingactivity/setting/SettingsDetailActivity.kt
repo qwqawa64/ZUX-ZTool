@@ -637,15 +637,14 @@ private fun SimpleSettingsDetailDialogContent(
         title = { Text(text = title) },
         text = { Text(text = message) },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = confirmText, modifier = Modifier.fillMaxWidth())
+            ZToolTextButton(onClick = onConfirm, text = confirmText)
         },
         dismissButton = if (dismissText != null && onDismiss != null) {
             {
                 ZToolTextButton(
                     onClick = onDismiss,
                     text = dismissText,
-                    isPrimary = false,
-                    modifier = Modifier.fillMaxWidth()
+                    isPrimary = false
                 )
             }
         } else null
@@ -1152,8 +1151,7 @@ private fun ConfigSelectionDialogContent(
                     val selectedConfigs = selectedIndexes.map { configs[it] }
                     if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
                 },
-                text = stringResource(R.string.flashAddedConfig),
-                modifier = Modifier.fillMaxWidth()
+                text = stringResource(R.string.flashAddedConfig)
             )
         },
         dismissButton = {
@@ -1164,8 +1162,7 @@ private fun ConfigSelectionDialogContent(
                         if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
                     },
                     text = stringResource(R.string.delete),
-                    isPrimary = false,
-                    modifier = Modifier.fillMaxWidth()
+                    isPrimary = false
                 )
                 if (flashedConfigs.isNotEmpty()) {
                     ZToolTextButton(
@@ -1266,16 +1263,14 @@ private fun FontInputDialogContent(
                 onClick = {
                     onConfirm(fontName.trim(), fontDescription.trim())
                 },
-                text = stringResource(R.string.confirm_button),
-                modifier = Modifier.fillMaxWidth()
+                text = stringResource(R.string.confirm_button)
             )
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onCancel,
                 text = stringResource(R.string.cancel),
-                isPrimary = false,
-                modifier = Modifier.fillMaxWidth()
+                isPrimary = false
             )
         }
     )
