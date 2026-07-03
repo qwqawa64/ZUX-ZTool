@@ -247,7 +247,7 @@ private fun AppChooserContent(
             ZToolTextButton(
                 onClick = { onConfirm(selectedPackages.toSet()) },
                 text = stringResource(R.string.confirm),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
             )
         },
         dismissButton = {
@@ -255,7 +255,7 @@ private fun AppChooserContent(
                 onClick = onCancel,
                 text = stringResource(R.string.restart_no),
                 isPrimary = false,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
             )
         },
         title = if (!title.isNullOrBlank()) {
