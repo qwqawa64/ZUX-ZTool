@@ -219,7 +219,7 @@ fun ZToolSettingsSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize()
-                    .padding(vertical = 12.dp)
+                    .padding(vertical = 4.dp)
             ) {
                 section.items.forEachIndexed { index, item ->
                     if (index > 0) {
