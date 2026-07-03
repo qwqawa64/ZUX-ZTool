@@ -93,39 +93,54 @@ object LogUtils {
 
     /**
      * 从 /data/adb/lspd/log 同步 LSPosed 日志到应用私有目录
-     * 需要 Root 权限，失败时 Toast 提示用户
+     * 需要 Root 权限，全部通过 shell 完成（避免无 root 的 File.exists 误判）
      */
     fun syncLsposedLogs(context: Context) {
-        val lsposedSrc = File("/data/adb/lspd/log")
-        if (!lsposedSrc.exists()) {
-            Log.d(TAG, "LSPosed 日志目录不存在，跳过同步")
-            return
-        }
-
         val destDir = lsposedLogDir(context)
         if (!destDir.exists() && !destDir.mkdirs()) {
             Log.w(TAG, "无法创建 LSPosed 日志目标目录")
             return
         }
 
+        val destPath = destDir.absolutePath
         val shell = EnhancedShellExecutor.getInstance()
+
+        // 用 root shell 检查源目录是否存在，存在则拷贝
         val result = shell.executeRootCommand(
-            "cp -rf /data/adb/lspd/log/* ${destDir.absolutePath}" +
-            " && chmod -R 644 ${destDir.absolutePath}/*"
+            "if [ -d /data/adb/lspd/log ]; then" +
+            " cp -rf /data/adb/lspd/log/* $destPath" +
+            " && chmod -R 644 $destPath/*" +
+            " && echo 'SYNC_OK';" +
+            " else echo 'SRC_MISSING'; fi"
         )
 
-        if (result.isSuccess) {
-            Log.i(TAG, "LSPosed 日志同步成功")
-        } else {
+        if (!result.isSuccess) {
             Log.w(TAG, "LSPosed 日志同步失败: ${result.error}")
-            val handler = android.os.Handler(android.os.Looper.getMainLooper())
-            handler.post {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.lsposed_log_sync_failed),
-                    Toast.LENGTH_SHORT
-                ).show()
+            showSyncFailedToast(context)
+            return
+        }
+
+        when {
+            result.output.contains("SYNC_OK") -> {
+                Log.i(TAG, "LSPosed 日志同步成功")
             }
+            result.output.contains("SRC_MISSING") -> {
+                Log.d(TAG, "LSPosed 日志目录不存在，跳过同步")
+            }
+            else -> {
+                Log.w(TAG, "LSPosed 日志同步结果未知: ${result.output}")
+            }
+        }
+    }
+
+    private fun showSyncFailedToast(context: Context) {
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        handler.post {
+            Toast.makeText(
+                context,
+                context.getString(R.string.lsposed_log_sync_failed),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 }
