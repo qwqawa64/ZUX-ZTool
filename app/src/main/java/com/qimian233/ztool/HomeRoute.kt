@@ -7,9 +7,9 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,6 +28,8 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
@@ -212,7 +214,7 @@ private fun HomeScreen(
     onIgnoreUpdate: (Int) -> Unit,
     onOpenUpdate: (String) -> Unit
 ) {
-    var showRebootTargets by remember { mutableStateOf(false) }
+    var showRebootMenu by remember { mutableStateOf(false) }
 
     ZToolScaffold (
         topBar = {
@@ -223,11 +225,33 @@ private fun HomeScreen(
         },
         floatingActionButton = {
             if (state.isRootAvailable) {
-                ZToolFloatingActionButton(onClick = { showRebootTargets = true }) {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = null
-                    )
+                Box {
+                    ZToolFloatingActionButton(onClick = { showRebootMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = null
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showRebootMenu,
+                        onDismissRequest = { showRebootMenu = false }
+                    ) {
+                        RebootTarget.entries.forEach { target ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(target.displayNameRes)) },
+                                onClick = {
+                                    showRebootMenu = false
+                                    if (target == RebootTarget.Userspace &&
+                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                                    ) {
+                                        onUnsupportedSoftReboot()
+                                        return@DropdownMenuItem
+                                    }
+                                    onRestartTargetSelected(target)
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -297,24 +321,6 @@ private fun HomeScreen(
                 )
             }
         }
-    }
-
-    if (showRebootTargets) {
-        RebootTargetDialog(
-            onDismiss = {
-                @Suppress("AssignedValueIsNeverRead")
-                showRebootTargets = false
-            },
-            onTargetSelected = { target ->
-                if (target == RebootTarget.Userspace &&
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                ) {
-                    onUnsupportedSoftReboot()
-                    return@RebootTargetDialog
-                }
-                onRestartTargetSelected(target)
-            }
-        )
     }
 }
 
@@ -639,48 +645,6 @@ private fun ConfigUpgradeDialog(
         },
         dismissButton = {
             ZToolTextButton(onClick = onLater, text = stringResource(R.string.do_not_restart_system_button), isPrimary = false)
-        }
-    )
-}
-
-@Composable
-private fun RebootTargetDialog(
-    onDismiss: () -> Unit,
-    onTargetSelected: (RebootTarget) -> Unit
-) {
-    val options = remember {
-        listOf(
-            RebootTarget.Userspace to R.string.soft_reboot,
-            RebootTarget.System to R.string.reboot,
-            RebootTarget.Bootloader to R.string.bootloader,
-            RebootTarget.Recovery to R.string.recovery,
-            RebootTarget.Edl to R.string.edl
-        )
-    }
-
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.reboot_menu_description)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                options.forEach { (target, titleRes) ->
-                    TextButton(
-                        onClick = { onTargetSelected(target) },
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
-                        Text(
-                            text = stringResource(titleRes),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
         }
     )
 }

@@ -228,11 +228,12 @@ data class UpdateInfo(
 
 enum class RebootTarget(
     val command: String,
-    val messageRes: Int
+    val messageRes: Int,
+    val displayNameRes: Int
 ) {
-    Userspace("reboot userspace", R.string.soft_reboot_confirm_message),
-    System("reboot", R.string.reboot_confirm_message),
-    Bootloader("reboot bootloader", R.string.bootloader_confirm_message),
-    Recovery("reboot recovery", R.string.recovery_confirm_message),
-    Edl("reboot edl", R.string.edl_confirm_message)
+    Userspace("reboot userspace", R.string.soft_reboot_confirm_message, R.string.soft_reboot),
+    System("reboot", R.string.reboot_confirm_message, R.string.reboot),
+    Bootloader("reboot bootloader", R.string.bootloader_confirm_message, R.string.bootloader),
+    Recovery("reboot recovery", R.string.recovery_confirm_message, R.string.recovery),
+    Edl("reboot edl", R.string.edl_confirm_message, R.string.edl)
 }
