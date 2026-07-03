@@ -33,7 +33,7 @@ public class LogCollectorService extends Service {
     private static final String LOG_DIR = "Log";
     private static final String APP_LOG_SUBDIR = "app";
     private static final String FILE_PREFIX = "app_log_";
-    private static final String FILE_SUFFIX = ".txt";
+    private static final String FILE_SUFFIX = ".log";
 
     private Process logcatProcess;
     private BufferedWriter currentWriter;

@@ -182,6 +182,11 @@
     <string name="export_logs_success">Logs exported</string>
     <string name="export_logs_failed">Failed to export logs</string>
     <string name="export_logs">Export Logs</string>
+    <string name="delete_all_logs">Delete All Logs</string>
+    <string name="delete_all_logs_summary">Clear all collected app logs and LSPosed logs</string>
+    <string name="delete_logs_success">All logs deleted</string>
+    <string name="delete_logs_failed">Failed to delete logs</string>
+    <string name="delete_logs_confirmation">Are you sure you want to delete all logs? This cannot be undone.</string>
     <string name="lsposed_log_sync_failed">Failed to sync LSPosed logs. Please check root permission.</string>
     <string name="zip_logs_failed">A problem occurred while compressing logs. Logs cannot be exported.</string>
     <string name="default_title">XXX - Detailed Settings</string>

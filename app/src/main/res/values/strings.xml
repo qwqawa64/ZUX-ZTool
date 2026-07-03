@@ -195,6 +195,11 @@
     <string name="export_logs_success">日志导出成功</string>
     <string name="export_logs_failed">日志导出失败</string>
     <string name="export_logs">导出日志</string>
+    <string name="delete_all_logs">删除所有日志</string>
+    <string name="delete_all_logs_summary">清除全部已采集的应用日志和 LSPosed 日志</string>
+    <string name="delete_logs_success">日志已全部删除</string>
+    <string name="delete_logs_failed">删除日志失败</string>
+    <string name="delete_logs_confirmation">确定要删除所有日志吗？此操作不可撤销。</string>
     <string name="lsposed_log_sync_failed">无法同步 LSPosed 日志，请检查 Root 权限</string>
     <string name="zip_logs_failed">压缩日志时出现问题，无法导出日志</string>
 

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.FormatColorFill
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
@@ -82,6 +83,7 @@ fun SettingsMainRoute(
     val viewModel = rememberSettingsViewModel(activity)
     val uiState by viewModel.uiState.collectAsState()
     var showRestoreConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteLogsConfirmDialog by rememberSaveable { mutableStateOf(false) }
     val defaultConfigRestoredStr = stringResource(R.string.default_config_restored)
     
     val backupSuccessStr = stringResource(R.string.config_backup_success)
@@ -149,6 +151,8 @@ fun SettingsMainRoute(
 
     val logServiceStartedStr = stringResource(R.string.log_service_started)
     val logServiceStoppedStr = stringResource(R.string.log_service_stopped)
+    val deleteLogsSuccessStr = stringResource(R.string.delete_logs_success)
+    val deleteLogsFailedStr = stringResource(R.string.delete_logs_failed)
 
     SettingsRoute(
         state = uiState,
@@ -174,21 +178,37 @@ fun SettingsMainRoute(
             showRestoreConfirmDialog = false
             onOpenAbout()
         },
-        onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) }
+        onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
+        onDeleteAllLogs = { showDeleteLogsConfirmDialog = true }
     )
 
     SettingsDialogs(
         showRestoreConfirmDialog = showRestoreConfirmDialog,
-        onConfirm = {
+        showDeleteLogsConfirmDialog = showDeleteLogsConfirmDialog,
+        onRestoreConfirm = {
             viewModel.restoreDefaultConfig()
             @Suppress("AssignedValueIsNeverRead")
             showRestoreConfirmDialog = false
             showSettingsToast(context, defaultConfigRestoredStr)
         },
-        onDismiss = {
+        onRestoreDismiss = {
             @Suppress("AssignedValueIsNeverRead")
             showRestoreConfirmDialog = false
         },
+        onDeleteLogsConfirm = {
+            showDeleteLogsConfirmDialog = false
+            viewModel.deleteAllLogs { success ->
+                activity.runOnUiThread {
+                    showSettingsToast(
+                        context,
+                        if (success) deleteLogsSuccessStr else deleteLogsFailedStr
+                    )
+                }
+            }
+        },
+        onDeleteLogsDismiss = {
+            showDeleteLogsConfirmDialog = false
+        }
     )
 }
 
@@ -243,16 +263,24 @@ fun SettingsThemeMainRoute(
 @Composable
 private fun SettingsDialogs(
     showRestoreConfirmDialog: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    showDeleteLogsConfirmDialog: Boolean,
+    onRestoreConfirm: () -> Unit,
+    onRestoreDismiss: () -> Unit,
+    onDeleteLogsConfirm: () -> Unit,
+    onDeleteLogsDismiss: () -> Unit
 ) {
     if (showRestoreConfirmDialog) {
         RestoreDefaultDialog(
-            onConfirm = onConfirm,
-            onDismiss = onDismiss
+            onConfirm = onRestoreConfirm,
+            onDismiss = onRestoreDismiss
         )
     }
-
+    if (showDeleteLogsConfirmDialog) {
+        DeleteLogsConfirmDialog(
+            onConfirm = onDeleteLogsConfirm,
+            onDismiss = onDeleteLogsDismiss
+        )
+    }
 }
 
 @Composable
@@ -313,7 +341,8 @@ private fun SettingsRoute(
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
-    onExportLogs: () -> Unit
+    onExportLogs: () -> Unit,
+    onDeleteAllLogs: () -> Unit
 ) {
     ZToolScaffold (
         topBar = {
@@ -348,7 +377,8 @@ private fun SettingsRoute(
                         onDetailedLoggingChanged = onDetailedLoggingChanged,
                         onHomepageYiyanChanged = onHomepageYiyanChanged,
                         onAbout = onAbout,
-                        onExportLogs = onExportLogs
+                        onExportLogs = onExportLogs,
+                        onDeleteAllLogs = onDeleteAllLogs
                     ),
                     bottomPadding = 32.dp
                 )
@@ -434,7 +464,8 @@ private fun settingsSections(
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
-    onExportLogs: () -> Unit
+    onExportLogs: () -> Unit,
+    onDeleteAllLogs: () -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -508,6 +539,13 @@ private fun settingsSections(
                     title = stringResource(R.string.export_logs),
                     onClick = onExportLogs,
                     icon = Icons.Rounded.Save
+                ),
+                SettingItem.Action(
+                    key = "delete_all_logs",
+                    title = stringResource(R.string.delete_all_logs),
+                    summary = stringResource(R.string.delete_all_logs_summary),
+                    onClick = onDeleteAllLogs,
+                    icon = Icons.Rounded.DeleteForever
                 ),
                 SettingItem.Switch(
                     key = "enable_homepage_yiyan",
@@ -773,6 +811,28 @@ private fun RestoreDefaultDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.final_confirmation_title)) },
         text = { Text(stringResource(R.string.restore_default_confirmation)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.restart_no))
+            }
+        }
+    )
+}
+
+@Composable
+private fun DeleteLogsConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.delete_all_logs)) },
+        text = { Text(stringResource(R.string.delete_logs_confirmation)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(stringResource(R.string.confirm))

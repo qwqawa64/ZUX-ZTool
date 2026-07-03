@@ -181,6 +181,18 @@ class SettingsViewModel(
         }
     }
 
+    fun deleteAllLogs(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.deleteAllLogs()
+                withContext(Dispatchers.Main) { onResult(true) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to delete all logs", e)
+                withContext(Dispatchers.Main) { onResult(false) }
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "SettingsViewModel"
     }
