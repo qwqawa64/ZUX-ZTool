@@ -637,14 +637,15 @@ private fun SimpleSettingsDetailDialogContent(
         title = { Text(text = title) },
         text = { Text(text = message) },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = confirmText)
+            ZToolTextButton(onClick = onConfirm, text = confirmText, modifier = Modifier.fillMaxWidth())
         },
         dismissButton = if (dismissText != null && onDismiss != null) {
             {
                 ZToolTextButton(
                     onClick = onDismiss,
                     text = dismissText,
-                    isPrimary = false
+                    isPrimary = false,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         } else null
@@ -1170,7 +1171,8 @@ private fun ConfigSelectionDialogContent(
                     ZToolTextButton(
                         onClick = onRestore,
                         text = stringResource(R.string.restoreModule),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        isPrimary = false
                     )
                 }
                 ZToolTextButton(
