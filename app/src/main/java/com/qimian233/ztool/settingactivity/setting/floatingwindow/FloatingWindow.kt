@@ -135,6 +135,43 @@ class FloatingWindow private constructor(private val context: Context) {
             y = 100
         }
 
+        var initialTouchX = 0f
+        var initialTouchY = 0f
+        var initialWindowX = 0
+        var initialWindowY = 0
+        var isDragging = false
+
+        floatingView?.setOnTouchListener { _, event ->
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    initialWindowX = params.x
+                    initialWindowY = params.y
+                    isDragging = false
+                    true
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    val deltaX = (event.rawX - initialTouchX).toInt()
+                    val deltaY = (event.rawY - initialTouchY).toInt()
+                    if (!isDragging && (kotlin.math.abs(deltaX) > 10 || kotlin.math.abs(deltaY) > 10)) {
+                        isDragging = true
+                    }
+                    if (isDragging) {
+                        params.x = initialWindowX + deltaX
+                        params.y = initialWindowY + deltaY
+                        windowManager.updateViewLayout(floatingView, params)
+                    }
+                    true
+                }
+                android.view.MotionEvent.ACTION_UP -> {
+                    isDragging = false
+                    true
+                }
+                else -> false
+            }
+        }
+
         windowManager.addView(floatingView, params)
         startUpdating()
     }
