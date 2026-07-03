@@ -1246,13 +1246,15 @@ private fun FontInputDialogContent(
                     label = stringResource(R.string.fontName),
                     value = fontName,
                     onValueChange = { fontName = it },
-                    singleLine = true
+                    singleLine = true,
+                    horizontalPadding = 0.dp
                 )
                 ZToolTextInputRow(
                     label = stringResource(R.string.fontDescription),
                     value = fontDescription,
                     onValueChange = { fontDescription = it },
-                    singleLine = false
+                    singleLine = false,
+                    horizontalPadding = 0.dp
                 )
             }
         },
