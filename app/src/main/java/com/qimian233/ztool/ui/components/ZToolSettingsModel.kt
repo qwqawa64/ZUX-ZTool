@@ -476,10 +476,10 @@ private fun <T> ZToolPopupMenuSettingItem(
 
 @Composable
 fun ZToolSliderRow(
-    title: String,
     value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    title: String? = null,
     summary: String? = null,
     valueText: String? = null,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
@@ -495,12 +495,14 @@ fun ZToolSliderRow(
             .fillMaxWidth()
             .padding(horizontal = horizontalPadding, vertical = verticalPadding)
     ) {
-        SettingsTitleBlock(
-            title = title,
-            summary = summary,
-            enabled = enabled,
-            icon = icon
-        )
+        if (title != null) {
+            SettingsTitleBlock(
+                title = title,
+                summary = summary,
+                enabled = enabled,
+                icon = icon
+            )
+        }
         if (valueText != null) {
             Text(
                 text = valueText,
