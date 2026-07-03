@@ -21,20 +21,21 @@ class SettingsRepository(
     private val context: Context
 ) {
     private val themePreferences = ThemePreferencesRepository(context)
+    private val prefsUtils = ModulePreferencesUtils(context)
 
     fun loadState(): SettingsUiState {
-        val prefs = ModulePreferencesUtils(context)
         val themeSettings = themePreferences.loadSettings()
         return SettingsUiState(
             isLogServiceEnabled = LogServiceManager.isServiceEnabled(context),
-            isDetailedLoggingEnabled = prefs.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
-            isEntryDisplayedInSettings = prefs.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
-            isHomepageYiyanEnabled = prefs.loadBooleanSetting(KEY_HOMEPAGE_YIYAN, true),
+            isDetailedLoggingEnabled = prefsUtils.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
+            isEntryDisplayedInSettings = prefsUtils.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
+            isHomepageYiyanEnabled = prefsUtils.loadBooleanSetting(KEY_HOMEPAGE_YIYAN, true),
             versionName = getVersionName(),
             commitCount = BuildConfig.GIT_COMMIT_COUNT,
             commitHash = BuildConfig.GIT_COMMIT_HASH,
             themeSettings = themeSettings,
-            manualSeedColorText = formatSeedColor(themeSettings.manualSeedColor)
+            manualSeedColorText = formatSeedColor(themeSettings.manualSeedColor),
+            lsposedServiceProtector = prefsUtils.loadBooleanSetting(KEY_LSPOSED_SERVICE_PROTECTOR, false),
         )
     }
 
@@ -55,7 +56,7 @@ class SettingsRepository(
     }
 
     fun restoreDefaultConfig() {
-        ModulePreferencesUtils(context).clearAllSettings()
+        prefsUtils.clearAllSettings()
     }
 
     fun setLogServiceEnabled(isEnabled: Boolean) {
@@ -67,16 +68,21 @@ class SettingsRepository(
     }
 
     fun setDetailedLoggingEnabled(isEnabled: Boolean) {
-        ModulePreferencesUtils(context).saveBooleanSetting(KEY_DETAILED_LOGGING, isEnabled)
+        prefsUtils.saveBooleanSetting(KEY_DETAILED_LOGGING, isEnabled)
     }
 
     fun setEntryInSettingsEnabled(isEnabled: Boolean) {
-        ModulePreferencesUtils(context).saveBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, isEnabled)
+        prefsUtils.saveBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, isEnabled)
     }
 
     fun setHomepageYiyanEnabled(isEnabled: Boolean) {
-        ModulePreferencesUtils(context).saveBooleanSetting(KEY_HOMEPAGE_YIYAN, isEnabled)
+        prefsUtils.saveBooleanSetting(KEY_HOMEPAGE_YIYAN, isEnabled)
     }
+
+    fun saveLsposedServiceProtector(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LSPOSED_SERVICE_PROTECTOR, enabled)
+    }
+
 
     fun setFrontendStyle(style: FrontendStyle) {
         themePreferences.saveFrontendStyle(style)
@@ -113,7 +119,6 @@ class SettingsRepository(
     fun setManualSeedColor(color: Long) {
         themePreferences.saveManualSeedColor(color)
     }
-
     fun backupFileName(): String = FileManager.generateBackupFileName()
 
     fun formatSeedColor(color: Long): String {
@@ -152,6 +157,7 @@ class SettingsRepository(
         private const val KEY_DETAILED_LOGGING = "isDetailedLogging"
         private const val KEY_HOMEPAGE_YIYAN = "enable_homepage_yiyan"
         private const val KEY_DISPLAY_ENTRY_IN_SETTINGS = "ztool_settings_entry"
+        private const val KEY_LSPOSED_SERVICE_PROTECTOR = "lsposed_service_protector"
     }
 
     private fun getVersionName(): String {

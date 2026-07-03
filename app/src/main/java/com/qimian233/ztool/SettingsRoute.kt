@@ -179,7 +179,8 @@ fun SettingsMainRoute(
             onOpenAbout()
         },
         onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
-        onDeleteAllLogs = { showDeleteLogsConfirmDialog = true }
+        onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
+        onLsposedServiceProtector = viewModel::setLsposedServiceProtector
     )
 
     SettingsDialogs(
@@ -196,6 +197,7 @@ fun SettingsMainRoute(
             showRestoreConfirmDialog = false
         },
         onDeleteLogsConfirm = {
+            @Suppress("AssignedValueIsNeverRead")
             showDeleteLogsConfirmDialog = false
             viewModel.deleteAllLogs { success ->
                 activity.runOnUiThread {
@@ -207,6 +209,7 @@ fun SettingsMainRoute(
             }
         },
         onDeleteLogsDismiss = {
+            @Suppress("AssignedValueIsNeverRead")
             showDeleteLogsConfirmDialog = false
         }
     )
@@ -340,6 +343,7 @@ private fun SettingsRoute(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
+    onLsposedServiceProtector: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit
@@ -378,7 +382,8 @@ private fun SettingsRoute(
                         onHomepageYiyanChanged = onHomepageYiyanChanged,
                         onAbout = onAbout,
                         onExportLogs = onExportLogs,
-                        onDeleteAllLogs = onDeleteAllLogs
+                        onDeleteAllLogs = onDeleteAllLogs,
+                        onLsposedServiceProtector = onLsposedServiceProtector,
                     ),
                     bottomPadding = 32.dp
                 )
@@ -463,6 +468,7 @@ private fun settingsSections(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
+    onLsposedServiceProtector: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit
@@ -517,6 +523,12 @@ private fun settingsSections(
                     checked = state.isEntryDisplayedInSettings,
                     onCheckedChange = onEntryDisplayChanged,
                     icon = Icons.AutoMirrored.Rounded.OpenInNew
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.lsposed_service_protector_enable_title),
+                    summary = stringResource(R.string.lsposed_service_protector_enable_summary),
+                    checked = state.lsposedServiceProtector,
+                    onCheckedChange = onLsposedServiceProtector
                 ),
                 SettingItem.Switch(
                     key = "enable_log_service",

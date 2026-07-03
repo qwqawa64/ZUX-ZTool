@@ -23,10 +23,8 @@ class FrameworkSettingsRepository(
             ),
             noPasswordPer24H = prefsUtils.loadBooleanSetting(NO_PASSWORD_PER_24H, false),
             allowUntrustedTouch = prefsUtils.loadBooleanSetting(ALLOW_UNTRUSTED_TOUCH, false),
-            lsposedServiceProtector = prefsUtils.loadBooleanSetting(KEY_LSPOSED_SERVICE_PROTECTOR, false),
             aiInputSigns = aiInputSigns,
             aiInputSignsError = validateAiInputSigns(aiInputSigns),
-
         )
     }
 
@@ -67,10 +65,6 @@ class FrameworkSettingsRepository(
 
     fun saveAllowUntrustedTouch(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(ALLOW_UNTRUSTED_TOUCH, enabled)
-    }
-
-    fun saveLsposedServiceProtector(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_LSPOSED_SERVICE_PROTECTOR, enabled)
     }
 
     fun normalizeScreenOnOffAnimationDuration(value: Int): Int {
@@ -115,7 +109,6 @@ class FrameworkSettingsRepository(
         private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
         private const val NO_PASSWORD_PER_24H = "NoMorePasswordPer24H"
         private const val ALLOW_UNTRUSTED_TOUCH = "allow_untrusted_touch"
-        private const val KEY_LSPOSED_SERVICE_PROTECTOR = "lsposed_service_protector"
     }
 }
 

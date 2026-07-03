@@ -79,6 +79,11 @@ class SettingsViewModel(
         repository.setHomepageYiyanEnabled(isEnabled)
     }
 
+    fun setLsposedServiceProtector(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(lsposedServiceProtector = enabled)
+        repository.saveLsposedServiceProtector(enabled)
+    }
+
     fun setFrontendStyle(style: FrontendStyle) {
         repository.setFrontendStyle(style)
         _uiState.value = _uiState.value.copy(
@@ -209,5 +214,6 @@ data class SettingsUiState(
     val commitHash: String = "",
     val themeSettings: ZToolThemeSettings = ZToolThemeSettings(),
     val manualSeedColorText: String = "#%08X".format(ZToolThemeSettings.DEFAULT_MANUAL_SEED_COLOR),
-    val manualSeedColorError: Boolean = false
+    val manualSeedColorError: Boolean = false,
+    val lsposedServiceProtector: Boolean = false,
 )

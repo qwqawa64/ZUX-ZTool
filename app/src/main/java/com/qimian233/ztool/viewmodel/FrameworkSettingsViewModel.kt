@@ -87,11 +87,6 @@ class FrameworkSettingsViewModel(
         repository.saveAllowUntrustedTouch(enabled)
     }
 
-    fun setLsposedServiceProtector(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(lsposedServiceProtector = enabled)
-        repository.saveLsposedServiceProtector(enabled)
-    }
-
     fun showAiInputInfoDialog() {
         _uiState.value = _uiState.value.copy(showAiInputInfoDialog = true)
     }
@@ -138,5 +133,4 @@ data class FrameworkSettingsUiState(
     val forceOnOffAnimationDuration: Int = 400,
     val noPasswordPer24H: Boolean = false,
     val allowUntrustedTouch: Boolean = false,
-    val lsposedServiceProtector: Boolean = false,
 )
