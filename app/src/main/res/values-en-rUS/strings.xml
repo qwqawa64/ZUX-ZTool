@@ -529,7 +529,7 @@
     <string name="YiYanSummary">Show random text fetched from the network on the lock screen. Reboot to take effect.</string>
     <string name="ChargeWattsTitle">Show charging power</string>
     <string name="ChargeWattsEnableTitle">Charging power display type</string>
-    <string name="ChargeWattsSummary">Show current negotiated protocol power or actual wattage on the lock screen and AOD while charging. Grant Root permission to "SystemUI" to use actual wattage.\n* It may take up to 1 minute after restarting the scope to take effect.</string>
+    <string name="ChargeWattsSummary">Show current negotiated protocol power or actual wattage on the lock screen and AOD while charging. Grant Root permission to "SystemUI" to use actual wattage.</string>
     <string name="systemui_root_permission_required_message">To use actual charging power, grant Root permission to "SystemUI" in your Root manager.</string>
     <string name="api_address_label">API address</string>
     <string name="api_address_hint">Enter API address</string>
