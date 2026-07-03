@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +47,7 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
@@ -291,11 +290,21 @@ private fun launcherSettingsSections(
             add(
                 SettingItem.Custom(
                     content = {
-                        GridSliderRows(
-                            row = state.customGridRow,
-                            column = state.customGridColumn,
-                            onRowChanged = onCustomGridRowChanged,
-                            onColumnChanged = onCustomGridColumnChanged
+                        GridSliderRow(
+                            label = stringResource(R.string.inputRowNumberHere),
+                            value = state.customGridRow,
+                            onValueChanged = onCustomGridRowChanged
+                        )
+                    }
+                )
+            )
+            add(
+                SettingItem.Custom(
+                    content = {
+                        GridSliderRow(
+                            label = stringResource(R.string.inputColumnNumberHere),
+                            value = state.customGridColumn,
+                            onValueChanged = onCustomGridColumnChanged
                         )
                     }
                 )
@@ -441,38 +450,6 @@ private fun WhitelistRow(
             imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
             contentDescription = null,
             tint = LocalZToolColorScheme.current.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun GridSliderRows(
-    row: Int,
-    column: Int,
-    onRowChanged: (Int) -> Unit,
-    onColumnChanged: (Int) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
-    ) {
-        GridSliderRow(
-            label = stringResource(R.string.inputRowNumberHere),
-            value = row,
-            onValueChanged = onRowChanged
-        )
-        GridSliderRow(
-            label = stringResource(R.string.inputColumnNumberHere),
-            value = column,
-            onValueChanged = onColumnChanged
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.launcher_grid_current_option, row, column),
-            style = MaterialTheme.typography.bodyMedium,
-            color = LocalZToolColorScheme.current.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 8.dp)
         )
     }
 }
