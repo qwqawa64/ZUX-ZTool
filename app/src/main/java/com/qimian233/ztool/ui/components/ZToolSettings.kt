@@ -692,11 +692,7 @@ private fun <T> ZToolMiuixPopupMenuField(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.labelLarge,
-                color = if (enabled) {
-                    LocalZToolColorScheme.current.primary
-                } else {
-                    LocalZToolColorScheme.current.onSurfaceVariant
-                }
+                color = LocalZToolColorScheme.current.onSurfaceVariant
             )
             IconButton(
                 enabled = enabled && options.isNotEmpty(),
