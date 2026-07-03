@@ -22,6 +22,9 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.basic.Surface as MiuixSurface
 
+val DIALOG_BUTTON_HORIZONTAL_ARRANGEMENT = 0
+val DIALOG_BUTTON_VERTICAL_ARRANGEMENT = 1
+
 @Composable
 fun ZToolDialog(
     onDismissRequest: () -> Unit,
@@ -29,7 +32,7 @@ fun ZToolDialog(
     title: @Composable (() -> Unit)? = null,
     text: @Composable (() -> Unit)? = null,
     dismissButton: @Composable (() -> Unit)? = null,
-    buttonArrangement: Int = 0, // 0 for horizontal mode, others for vertical mode
+    buttonArrangement: Int = DIALOG_BUTTON_HORIZONTAL_ARRANGEMENT
 ) {
     val isPlatformDialog = LocalIsPlatformDialog.current
 
@@ -54,7 +57,7 @@ fun ZToolDialog(
                         }
                     }
                 }
-                if (buttonArrangement == 0) {
+                if (buttonArrangement == DIALOG_BUTTON_HORIZONTAL_ARRANGEMENT) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
