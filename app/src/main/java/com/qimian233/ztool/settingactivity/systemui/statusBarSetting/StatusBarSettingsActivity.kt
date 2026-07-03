@@ -20,8 +20,6 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,8 +48,10 @@ import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
+import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
 import com.qimian233.ztool.viewmodel.StatusBarSettingsViewModel
@@ -401,14 +401,15 @@ private fun CustomClockConfig(
             .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
+            ZToolTextInputRow(
                 value = clockFormat,
                 onValueChange = onClockFormatChanged,
                 modifier = Modifier.weight(1f),
-                label = { Text(stringResource(R.string.clock_format_hint)) },
-                singleLine = true
+                label = stringResource(R.string.clock_format_hint),
+                singleLine = true,
+                horizontalPadding = 0.dp
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             ZToolButton(onClick = onSaveClockFormat) {
                 Text(stringResource(R.string.save))
             }
@@ -486,13 +487,15 @@ private fun SliderSettingRow(
         onCheckedChange = onEnabledChanged,
         padding = 0.dp
     )
-    Slider(
+    ZToolSliderRow(
         value = value,
         onValueChange = onValueChanged,
         enabled = enabled,
         valueRange = valueRange,
         steps = steps,
-        modifier = Modifier.padding(horizontal = 0.dp)
+        modifier = Modifier.padding(horizontal = 0.dp),
+        horizontalPadding = 0.dp,
+        verticalPadding = 0.dp
     )
 }
 
