@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.qimian233.ztool.ModuleActivationProbe;
+import com.qimian233.ztool.XposedServiceBridge;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,8 +42,8 @@ public class ModulePreferencesUtils {
     public SharedPreferences  getModulePreferences() {
         try {
             if (ModuleActivationProbe.INSTANCE.isModuleActive()
-                    && ModuleActivationProbe.INSTANCE.getCurrentService() != null) {
-                return ModuleActivationProbe.INSTANCE.getCurrentService().getRemotePreferences(PREFS_NAME);
+                    && XposedServiceBridge.INSTANCE.getCurrentService() != null) {
+                return XposedServiceBridge.INSTANCE.getCurrentService().getRemotePreferences(PREFS_NAME);
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to get remote preferences", e);
