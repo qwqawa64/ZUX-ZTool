@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -156,7 +157,7 @@ fun SettingsDetailRoute(
         message: String
     ) {
         if (activity == null) return
-        showPlatformComposeDialog(activity) { dialog ->
+        showPlatformComposeDialog(activity, width = ViewGroup.LayoutParams.WRAP_CONTENT) { dialog ->
             SimpleSettingsDetailDialogContent(
                 title = dialogTitle,
                 message = message,
@@ -174,7 +175,7 @@ fun SettingsDetailRoute(
         onConfirm: () -> Unit
     ) {
         if (activity == null) return
-        showPlatformComposeDialog(activity) { dialog ->
+        showPlatformComposeDialog(activity, width = ViewGroup.LayoutParams.WRAP_CONTENT) { dialog ->
             SimpleSettingsDetailDialogContent(
                 title = dialogTitle,
                 message = message,
@@ -191,7 +192,7 @@ fun SettingsDetailRoute(
 
     fun showComposeDialog(content: @Composable () -> Unit): Dialog? {
         return activity?.let {
-            showPlatformComposeDialog(it) {
+            showPlatformComposeDialog(it, width = ViewGroup.LayoutParams.WRAP_CONTENT) {
                 content()
             }
         }
