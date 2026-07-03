@@ -486,17 +486,19 @@ private fun SliderSettingRow(
         onCheckedChange = onEnabledChanged,
         padding = 0.dp
     )
-    ZToolSliderRow(
-        value = value,
-        valueText = valueLabel,
-        onValueChange = onValueChanged,
-        enabled = enabled,
-        valueRange = valueRange,
-        steps = steps,
-        modifier = Modifier.padding(horizontal = 0.dp),
-        horizontalPadding = 0.dp,
-        verticalPadding = 0.dp
-    )
+    if (enabled) {
+        ZToolSliderRow(
+            value = value,
+            valueText = valueLabel,
+            onValueChange = onValueChanged,
+            enabled = enabled,
+            valueRange = valueRange,
+            steps = steps,
+            modifier = Modifier.padding(horizontal = 0.dp),
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        )
+    }
 }
 
 @Composable
