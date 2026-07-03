@@ -473,8 +473,9 @@ private fun GridSliderRows(
             value = column,
             onValueChanged = onColumnChanged
         )
+        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "${row}${stringResource(R.string.multiply)}$column",
+            text = stringResource(R.string.launcher_grid_current_option, row, column),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 8.dp)
