@@ -9,7 +9,6 @@ import android.os.IBinder;
 import android.os.Handler;
 import android.os.Looper;
 
-import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 
 import com.qimian233.ztool.R;
