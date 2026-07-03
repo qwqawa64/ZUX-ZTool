@@ -10,6 +10,8 @@ import android.view.WindowManager
 import android.widget.Toast
 import android.widget.VideoView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -86,6 +89,18 @@ class FloatingWindow private constructor(private val context: Context) {
     }
 
     private fun initFloatingView() {
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = 0
+            y = 100
+        }
+
         floatingView = ComposeView(context).apply {
             setViewTreeLifecycleOwner(lifecycleOwner)
             setViewTreeViewModelStoreOwner(viewModelStoreOwner)
@@ -117,58 +132,14 @@ class FloatingWindow private constructor(private val context: Context) {
                         onShouldPausePrimaryActivityChanged = {
                             viewModel.setShouldPausePrimaryActivity(it)
                             syncUiState()
+                        },
+                        onDrag = { dx, dy ->
+                            params.x += dx.toInt()
+                            params.y += dy.toInt()
+                            windowManager.updateViewLayout(floatingView, params)
                         }
                     )
                 }
-            }
-        }
-
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 0
-            y = 100
-        }
-
-        var initialTouchX = 0f
-        var initialTouchY = 0f
-        var initialWindowX = 0
-        var initialWindowY = 0
-        var isDragging = false
-
-        floatingView?.setOnTouchListener { _, event ->
-            when (event.action) {
-                android.view.MotionEvent.ACTION_DOWN -> {
-                    initialTouchX = event.rawX
-                    initialTouchY = event.rawY
-                    initialWindowX = params.x
-                    initialWindowY = params.y
-                    isDragging = false
-                    true
-                }
-                android.view.MotionEvent.ACTION_MOVE -> {
-                    val deltaX = (event.rawX - initialTouchX).toInt()
-                    val deltaY = (event.rawY - initialTouchY).toInt()
-                    if (!isDragging && (kotlin.math.abs(deltaX) > 10 || kotlin.math.abs(deltaY) > 10)) {
-                        isDragging = true
-                    }
-                    if (isDragging) {
-                        params.x = initialWindowX + deltaX
-                        params.y = initialWindowY + deltaY
-                        windowManager.updateViewLayout(floatingView, params)
-                    }
-                    true
-                }
-                android.view.MotionEvent.ACTION_UP -> {
-                    isDragging = false
-                    true
-                }
-                else -> false
             }
         }
 
@@ -255,6 +226,32 @@ class FloatingWindow private constructor(private val context: Context) {
 }
 
 @Composable
+private fun DragHandle(onDrag: (Float, Float) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    onDrag(dragAmount.x, dragAmount.y)
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .width(32.dp)
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
+        )
+    }
+}
+
+@Composable
 private fun FloatingWindowContent(
     state: FloatingWindowUiState,
     onNext: () -> Unit,
@@ -263,7 +260,8 @@ private fun FloatingWindowContent(
     onSkipLetterboxDisplayInfoChanged: (Boolean) -> Unit,
     onSkipMultiWindowModeChanged: (Boolean) -> Unit,
     onShowSurfaceViewBackgroundChanged: (Boolean) -> Unit,
-    onShouldPausePrimaryActivityChanged: (Boolean) -> Unit
+    onShouldPausePrimaryActivityChanged: (Boolean) -> Unit,
+    onDrag: (Float, Float) -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -279,6 +277,8 @@ private fun FloatingWindowContent(
                     .verticalScroll(rememberScrollState())
                     .padding(12.dp)
             ) {
+                DragHandle(onDrag = onDrag)
+
                 Text(
                     text = if (state.shouldBlockProgress && state.selectedApp != null) {
                         stringResource(R.string.return_to_app, state.selectedApp)
