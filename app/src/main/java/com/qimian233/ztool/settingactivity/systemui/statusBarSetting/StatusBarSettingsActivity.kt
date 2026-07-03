@@ -329,7 +329,7 @@ private fun statusBarSettingsSections(
                             title = stringResource(R.string.notification_icon_limit_title),
                             summary = stringResource(R.string.notification_icon_limit_summary),
                             options = stringArrayResource(R.array.notify_num_size_options).toList(),
-                            value = state.notificationIconLimitOption,
+                            value = stringResource(R.string.notification_icon_number_to_show, state.notificationIconLimitOption),
                             optionLabel = { it },
                             onOptionSelected = onNotificationIconLimitChanged
                         )

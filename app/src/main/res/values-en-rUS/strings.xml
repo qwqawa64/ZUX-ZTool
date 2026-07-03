@@ -883,4 +883,5 @@
     <string name="app_search_page_selected_string">%d APP(s) selected</string>
     <string name="log_settings_title">Log Settings</string>
     <string name="export_logs_summary">Export logs and send them to the developer if module APP or hooks encounter a problem</string>
+    <string name="notification_icon_number_to_show">Show %s</string>
 </resources>
