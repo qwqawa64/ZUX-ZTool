@@ -498,22 +498,6 @@ private fun settingsSections(
             )
         ),
         SettingSection(
-            items = listOf(
-                SettingItem.Action(
-                    key = "open_theme_settings",
-                    title = stringResource(R.string.app_ui_theme_settings),
-                    onClick = onOpenThemeSettings,
-                    icon = Icons.Rounded.Palette
-                ),
-                SettingItem.Action(
-                    key = "open_language_settings",
-                    title = stringResource(R.string.app_language_settings),
-                    onClick = onOpenLanguageSettings,
-                    icon = Icons.Rounded.Language
-                )
-            )
-        ),
-        SettingSection(
             title = stringResource(R.string.moreSettings),
             items = listOf(
                 SettingItem.Switch(
@@ -530,6 +514,19 @@ private fun settingsSections(
                     checked = state.lsposedServiceProtector,
                     onCheckedChange = onLsposedServiceProtector
                 ),
+                SettingItem.Switch(
+                    key = "enable_homepage_yiyan",
+                    title = stringResource(R.string.enableHomePageYiyan),
+                    summary = stringResource(R.string.enableHomePageYiyanSummary),
+                    checked = state.isHomepageYiyanEnabled,
+                    onCheckedChange = onHomepageYiyanChanged,
+                    icon = Icons.Rounded.AutoAwesome
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.log_settings_title),
+            items = listOf(
                 SettingItem.Switch(
                     key = "enable_log_service",
                     title = stringResource(R.string.enableLogService),
@@ -558,14 +555,22 @@ private fun settingsSections(
                     summary = stringResource(R.string.delete_all_logs_summary),
                     onClick = onDeleteAllLogs,
                     icon = Icons.Rounded.DeleteForever
+                )
+            )
+        ),
+        SettingSection(
+            items = listOf(
+                SettingItem.Action(
+                    key = "open_theme_settings",
+                    title = stringResource(R.string.app_ui_theme_settings),
+                    onClick = onOpenThemeSettings,
+                    icon = Icons.Rounded.Palette
                 ),
-                SettingItem.Switch(
-                    key = "enable_homepage_yiyan",
-                    title = stringResource(R.string.enableHomePageYiyan),
-                    summary = stringResource(R.string.enableHomePageYiyanSummary),
-                    checked = state.isHomepageYiyanEnabled,
-                    onCheckedChange = onHomepageYiyanChanged,
-                    icon = Icons.Rounded.AutoAwesome
+                SettingItem.Action(
+                    key = "open_language_settings",
+                    title = stringResource(R.string.app_language_settings),
+                    onClick = onOpenLanguageSettings,
+                    icon = Icons.Rounded.Language
                 )
             )
         ),
