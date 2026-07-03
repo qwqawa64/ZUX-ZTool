@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -25,7 +24,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -438,24 +435,20 @@ private fun FirmwareContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                ZToolTextInputRow(
                     value = sn,
                     onValueChange = onSnChanged,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                         .widthIn(720.dp),
-                    label = {
-                        Text(
-                            if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
+                    label = if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
                                 stringResource(R.string.SN_current_machine_hint, currentSn)
                             } else {
                                 stringResource(R.string.SN_default_hint)
-                            }
-                        )
-                    },
+                            },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
+                    horizontalPadding = 0.dp
                 )
                 Spacer(modifier = Modifier.width(32.dp))
                 ZToolButton(
