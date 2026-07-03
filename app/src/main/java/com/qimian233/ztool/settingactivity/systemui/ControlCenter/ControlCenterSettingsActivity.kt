@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +53,7 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsUiState
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsViewModel
@@ -633,11 +633,12 @@ private fun CustomDateConfig(
             .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
+            ZToolTextInputRow(
                 value = dateFormat,
                 onValueChange = onDateFormatChanged,
                 modifier = Modifier.weight(1f),
-                label = { Text(stringResource(R.string.ControllerDateFormat)) },
+                label = stringResource(R.string.ControllerDateFormat),
+                horizontalPadding = 0.dp,
                 singleLine = true
             )
             Spacer(modifier = Modifier.width(12.dp))
