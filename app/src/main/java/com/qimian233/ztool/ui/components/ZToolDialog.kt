@@ -115,7 +115,7 @@ fun ZToolDialog(
 
         if (isPlatformDialog) {
             MiuixSurface(
-                color = LocalZToolColorScheme.current.surface,
+                color = LocalZToolColorScheme.current.surfaceContainerHigh,
                 shape = RoundedCornerShape(24.dp)
             ) {
                 miuixContent()
@@ -124,7 +124,7 @@ fun ZToolDialog(
             OverlayDialog(
                 show = true,
                 onDismissRequest = onDismissRequest,
-                backgroundColor = LocalZToolColorScheme.current.surface,
+                backgroundColor = LocalZToolColorScheme.current.surfaceContainerHigh,
             ) {
                 miuixContent()
             }
