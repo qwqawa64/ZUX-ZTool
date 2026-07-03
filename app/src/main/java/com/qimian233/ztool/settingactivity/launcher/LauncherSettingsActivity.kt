@@ -467,7 +467,7 @@ private fun GridSliderRows(
             value = row,
             onValueChanged = onRowChanged
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         GridSliderRow(
             label = stringResource(R.string.inputColumnNumberHere),
             value = column,
