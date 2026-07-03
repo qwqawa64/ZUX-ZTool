@@ -273,10 +273,10 @@ private fun AppChooserContent(
                 )
 
                 Text(
-                    text = selectedPackages.size.toString(),
+                    text = stringResource(R.string.app_search_page_selected_string, selectedPackages.size),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 24.dp)
                 )
 
                 LazyColumn(

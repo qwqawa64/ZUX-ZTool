@@ -929,4 +929,5 @@
     <string name="disable_dock_warning_message">必须把所有固定在 Dock 栏的应用全部挪出来再重启作用域。如果不这么做，这些应用会被“吞掉”，假如本模块恰好位列其中的话......</string>
     <string name="auto_accept_file_transfer">自动接受互传请求</string>
     <string name="auto_accept_file_transfer_summary">可能会导致您意外收到某些文件</string>
+    <string name="app_search_page_selected_string">已选择 %d 个应用</string>
 </resources>
