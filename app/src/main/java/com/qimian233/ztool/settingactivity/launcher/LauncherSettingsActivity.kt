@@ -460,20 +460,14 @@ private fun GridSliderRow(
     value: Int,
     onValueChanged: (Int) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ZToolSliderRow(
-            title = label,
-            value = value.toFloat(),
-            valueText = value.toString(),
-            onValueChange = { onValueChanged(it.toInt()) },
-            valueRange = 3f..10f,
-            steps = 6,
-            modifier = Modifier.weight(1f)
-        )
-    }
+    ZToolSliderRow(
+        title = label,
+        value = value.toFloat(),
+        valueText = value.toString(),
+        onValueChange = { onValueChanged(it.toInt()) },
+        valueRange = 3f..10f,
+        steps = 6,
+    )
 }
 
 @Composable
