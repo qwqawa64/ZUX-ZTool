@@ -35,7 +35,6 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -62,6 +61,7 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
@@ -830,14 +830,17 @@ private fun RestoreDefaultDialog(
         title = { Text(stringResource(R.string.final_confirmation_title)) },
         text = { Text(stringResource(R.string.restore_default_confirmation)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.confirm))
-            }
+            ZToolTextButton(
+                onClick = onConfirm,
+                text = stringResource(R.string.confirm)
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.restart_no),
+                isPrimary = false
+            )
         }
     )
 }
@@ -852,14 +855,16 @@ private fun DeleteLogsConfirmDialog(
         title = { Text(stringResource(R.string.delete_all_logs)) },
         text = { Text(stringResource(R.string.delete_logs_confirmation)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.confirm))
-            }
+            ZToolTextButton(
+                onClick = onConfirm,
+                text = stringResource(R.string.confirm))
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.restart_no),
+                isPrimary = false
+            )
         }
     )
 }
