@@ -261,6 +261,20 @@ private fun otaSettingsSections(
             )
         ),
         SettingSection(
+            title = stringResource(R.string.Ota_Custom_Params_Title),
+            items = listOf(
+                SettingItem.Custom(
+                    content = {
+                        OtaCustomParamsContent(
+                            state = state,
+                            onCustomVersionChanged = onCustomVersionChanged,
+                            onCustomDeviceIdChanged = onCustomDeviceIdChanged
+                        )
+                    }
+                )
+            )
+        ),
+        SettingSection(
             title = stringResource(R.string.OtaInfoFetch_title),
             items = listOf(
                 SettingItem.Custom(
@@ -295,20 +309,6 @@ private fun otaSettingsSections(
                 )
             )
         ),
-        SettingSection(
-            title = stringResource(R.string.Ota_Custom_Params_Title),
-            items = listOf(
-                SettingItem.Custom(
-                    content = {
-                        OtaCustomParamsContent(
-                            state = state,
-                            onCustomVersionChanged = onCustomVersionChanged,
-                            onCustomDeviceIdChanged = onCustomDeviceIdChanged
-                        )
-                    }
-                )
-            )
-        )
     )
 }
 
