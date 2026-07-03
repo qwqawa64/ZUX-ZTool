@@ -3,11 +3,9 @@ package com.qimian233.ztool.settingactivity.systemframework
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -44,14 +42,14 @@ import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
-import com.qimian233.ztool.ui.components.ZToolSlider
+import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
 import kotlinx.coroutines.delay
@@ -310,38 +308,18 @@ private fun ScreenOnOffAnimationDuration(
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
 ) {
     if (state.forceOnOffAnimation) {
-        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-            Text(
-                text = stringResource(R.string.screen_on_off_animation_duration),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-            )
-            Row (
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
-            ) {
-                ZToolSlider(
-                    value = state.forceOnOffAnimationDuration.toFloat(),
-                    onValueChange = {
-                        onForceOnOffAnimationDurationChanged(
-                            snapToAnimationDuration(it)
-                        )
-                    },
-                    steps = ANIMATION_DURATION_STEPS,
-                    valueRange = 0f..1000f,
-                    modifier = Modifier.weight(1f)
+        ZToolSliderRow(
+            title = stringResource(R.string.screen_on_off_animation_duration),
+            value = state.forceOnOffAnimationDuration.toFloat(),
+            valueText = state.forceOnOffAnimationDuration.toString() + "ms",
+            onValueChange = {
+                onForceOnOffAnimationDurationChanged(
+                    snapToAnimationDuration(it)
                 )
-                Text(
-                    text = state.forceOnOffAnimationDuration.toString() + "ms",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .width(100.dp)
-                        .padding(start = 24.dp, top = 8.dp)
-                )
-            }
-        }
-
+            },
+            steps = ANIMATION_DURATION_STEPS,
+            valueRange = 0f..1000f
+        )
     }
 }
 
