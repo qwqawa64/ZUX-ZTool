@@ -163,7 +163,7 @@ fun ControlCenterSettingsRoute(
             confirmButton = {
                 ZToolTextButton(
                     onClick = viewModel::dismissSaveSuccessDialog,
-                    text = stringResource(R.string.restart_yes)
+                    text = stringResource(R.string.confirm)
                 )
             }
         )
@@ -767,6 +767,6 @@ private fun FormatHelpDialog(
         onDismiss = onDismiss,
         onCopyExample = onCopyExample,
         copyButtonText = stringResource(R.string.copy_example_button),
-        confirmButtonText = stringResource(R.string.restart_yes)
+        confirmButtonText = stringResource(R.string.confirm)
     )
 }

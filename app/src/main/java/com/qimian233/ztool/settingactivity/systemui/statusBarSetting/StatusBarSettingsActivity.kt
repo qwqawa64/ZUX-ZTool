@@ -136,7 +136,7 @@ fun StatusBarSettingsRoute(
             title = { Text(stringResource(R.string.save_success_title)) },
             text = { Text(stringResource(R.string.clock_format_saved_message)) },
             confirmButton = {
-                ZToolTextButton(onClick = viewModel::dismissSaveSuccessDialog, text = stringResource(R.string.restart_yes))
+                ZToolTextButton(onClick = viewModel::dismissSaveSuccessDialog, text = stringResource(R.string.confirm))
             }
         )
     }
@@ -537,7 +537,7 @@ private fun FormatHelpDialog(
         onDismiss = onDismiss,
         onCopyExample = onCopyExample,
         copyButtonText = stringResource(R.string.copy_example_button),
-        confirmButtonText = stringResource(R.string.restart_yes)
+        confirmButtonText = stringResource(R.string.confirm)
     )
 }
 
