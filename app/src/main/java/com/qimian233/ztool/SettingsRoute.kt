@@ -512,7 +512,8 @@ private fun settingsSections(
                     title = stringResource(R.string.lsposed_service_protector_enable_title),
                     summary = stringResource(R.string.lsposed_service_protector_enable_summary),
                     checked = state.lsposedServiceProtector,
-                    onCheckedChange = onLsposedServiceProtector
+                    onCheckedChange = onLsposedServiceProtector,
+                    icon = com.qimian233.ztool.icons.verified_user
                 ),
                 SettingItem.Switch(
                     key = "enable_homepage_yiyan",
