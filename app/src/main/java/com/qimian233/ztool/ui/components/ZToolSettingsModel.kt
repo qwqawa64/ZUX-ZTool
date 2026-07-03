@@ -486,12 +486,14 @@ fun ZToolSliderRow(
     steps: Int = 0,
     onValueChangeFinished: (() -> Unit)? = null,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    horizontalPadding: Dp = 24.dp,
+    verticalPadding: Dp = 16.dp
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(horizontal = horizontalPadding, vertical = verticalPadding)
     ) {
         SettingsTitleBlock(
             title = title,
