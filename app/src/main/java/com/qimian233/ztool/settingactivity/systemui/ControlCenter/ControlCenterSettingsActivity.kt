@@ -51,6 +51,7 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
+import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -516,70 +517,31 @@ private fun QsRoundCornerRadius(
 ) {
     if (state.qsRoundCorner) {
         Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)) {
-            Text(
-                text = stringResource(R.string.head_up_corner_radius),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            .fillMaxWidth()) {
+            ZToolSliderRow(
+                title = stringResource(R.string.head_up_corner_radius),
+                value = state.qsHeadUpRoundCornerRadius.toFloat(),
+                onValueChange = {
+                    onQsHeadUpRoundCornerRadiusChanged(
+                        snapToAccurateRadius(it)
+                    )
+                },
+                steps = QS_ROUND_CORNER_STEPS,
+                valueRange = 0.0f..96.0f,
+                valueText = state.qsHeadUpRoundCornerRadius.toString() + "dp",
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
-            ) {
-                Slider(
-                    value = state.qsHeadUpRoundCornerRadius.toFloat(),
-                    onValueChange = {
-                        onQsHeadUpRoundCornerRadiusChanged(
-                            snapToAccurateRadius(it)
-                        )
-                    },
-                    steps = QS_ROUND_CORNER_STEPS,
-                    valueRange = 0.0f..96.0f,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = state.qsHeadUpRoundCornerRadius.toString() + "dp",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .width(100.dp)
-                        .padding(start = 24.dp, top = 8.dp)
-                )
-            }
-            Text(
-                text = stringResource(R.string.normal_tile_corner_radius),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            ZToolSliderRow(
+                title = stringResource(R.string.normal_tile_corner_radius),
+                value = state.qsTileRoundCornerRadius.toFloat(),
+                onValueChange = {
+                    onQsTileRoundCornerRadiusChanged(
+                        snapToAccurateRadius(it)
+                    )
+                },
+                steps = QS_ROUND_CORNER_STEPS,
+                valueRange = 0.0f..96.0f,
+                valueText = state.qsTileRoundCornerRadius.toString() + "dp"
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
-            ) {
-                Slider(
-                    value = state.qsTileRoundCornerRadius.toFloat(),
-                    onValueChange = {
-                        onQsTileRoundCornerRadiusChanged(
-                            snapToAccurateRadius(it)
-                        )
-                    },
-                    steps = QS_ROUND_CORNER_STEPS,
-                    valueRange = 0.0f..96.0f,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = state.qsTileRoundCornerRadius.toString() + "dp",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .width(100.dp)
-                        .padding(start = 24.dp, top = 8.dp)
-                )
-            }
         }
     }
 }
