@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +41,7 @@ import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.ApiTestResult
 import com.qimian233.ztool.viewmodel.LockScreenSettingsUiState
@@ -261,12 +261,13 @@ private fun YiYanConfigFields(
             .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
+            ZToolTextInputRow(
                 value = apiAddress,
                 onValueChange = onApiAddressChanged,
                 modifier = Modifier.weight(1f),
-                label = { Text(stringResource(R.string.api_address_hint)) },
-                singleLine = true
+                label = stringResource(R.string.api_address_hint),
+                singleLine = true,
+                horizontalPadding = 0.dp
             )
             Spacer(modifier = Modifier.width(12.dp))
             ZToolButton(
@@ -282,14 +283,15 @@ private fun YiYanConfigFields(
                 )
             }
         }
-        OutlinedTextField(
+        ZToolTextInputRow(
             value = regex,
             onValueChange = onRegexChanged,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
-            label = { Text(stringResource(R.string.regex_label)) },
-            singleLine = true
+            label = stringResource(R.string.regex_label),
+            singleLine = true,
+            horizontalPadding = 0.dp
         )
     }
 }
