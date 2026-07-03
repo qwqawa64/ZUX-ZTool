@@ -18,11 +18,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,6 +52,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.FloatingWindowRepository
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.components.ZToolButton
+import com.qimian233.ztool.ui.components.ZToolCheckbox
 import com.qimian233.ztool.viewmodel.FloatingWindowEffect
 import com.qimian233.ztool.viewmodel.FloatingWindowUiState
 import com.qimian233.ztool.viewmodel.FloatingWindowViewModel
@@ -228,11 +228,11 @@ private fun FloatingWindowContent(
     onShowSurfaceViewBackgroundChanged: (Boolean) -> Unit,
     onShouldPausePrimaryActivityChanged: (Boolean) -> Unit
 ) {
-    ZToolTheme {
-        Surface(
-            modifier = Modifier
-                .width(280.dp)
-                .clip(RoundedCornerShape(12.dp)),
+    Surface(
+        modifier = Modifier
+            .width(280.dp)
+            .wrapContentHeight()
+            .clip(RoundedCornerShape(12.dp)),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
             tonalElevation = 6.dp,
             shadowElevation = 4.dp
@@ -349,7 +349,6 @@ private fun FloatingWindowContent(
             }
         }
     }
-}
 
 @Composable
 private fun titleText(step: FloatingWizardStep): String {
@@ -396,7 +395,7 @@ private fun FloatingOptionRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Checkbox(
+        ZToolCheckbox(
             checked = checked,
             onCheckedChange = onCheckedChange
         )
