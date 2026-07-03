@@ -731,7 +731,6 @@
     <string name="customLauncherLayoutTitle">自定义桌面布局</string>
     <string name="customGridTitle">自定义桌面网格行列数</string>
     <string name="customGridSummary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
-    <string name="customGridInputZoneTitle">在下方输入希望使用的行列数</string>
     <string name="inputRowNumberHere">行数</string>
     <string name="inputColumnNumberHere">列数</string>
     <!--系统框架功能页的资源值-->

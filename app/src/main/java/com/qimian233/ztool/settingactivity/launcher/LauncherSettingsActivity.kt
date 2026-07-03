@@ -290,12 +290,6 @@ private fun launcherSettingsSections(
             add(
                 SettingItem.Custom(
                     content = {
-                        Text(
-                            text = stringResource(R.string.customGridInputZoneTitle),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-                        )
                         GridSliderRows(
                             row = state.customGridRow,
                             column = state.customGridColumn,

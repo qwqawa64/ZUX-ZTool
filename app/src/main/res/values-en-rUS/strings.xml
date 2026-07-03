@@ -635,7 +635,6 @@
     <string name="customLauncherLayoutTitle">Custom launcher layout</string>
     <string name="customGridTitle">Custom launcher grid rows and columns</string>
     <string name="customGridSummary">Adjust the spacious icon layout. May cause some widgets to display incorrectly.</string>
-    <string name="customGridInputZoneTitle">Enter the row and column counts below</string>
     <string name="inputRowNumberHere">Rows</string>
     <string name="inputColumnNumberHere">Columns</string>
     <string name="Custom_attention">Attention!</string>
