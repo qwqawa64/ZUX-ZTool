@@ -20,11 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -39,8 +36,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.qimian233.ztool.R
+import com.qimian233.ztool.ui.components.ZToolCheckbox
 import com.qimian233.ztool.ui.components.ZToolCircularProgressIndicator
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import java.util.concurrent.Executors
 
@@ -244,14 +244,17 @@ private fun AppChooserContent(
     ZToolDialog(
         onDismissRequest = onCancel,
         confirmButton = {
-            TextButton(onClick = { onConfirm(selectedPackages.toSet()) }) {
-                Text(stringResource(R.string.confirm))
-            }
+            ZToolTextButton(
+                onClick = { onConfirm(selectedPackages.toSet()) },
+                text = stringResource(R.string.confirm)
+            )
         },
         dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.restart_no))
-            }
+            ZToolTextButton(
+                onClick = onCancel,
+                text = stringResource(R.string.restart_no),
+                isPrimary = false
+            )
         },
         title = if (!title.isNullOrBlank()) {
             { Text(text = title, fontWeight = FontWeight.SemiBold) }
@@ -260,12 +263,11 @@ private fun AppChooserContent(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                OutlinedTextField(
+                ZToolTextInputRow(
+                    label = stringResource(R.string.SearchHint),
                     value = query,
                     onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.SearchHint)) }
+                    singleLine = true
                 )
 
                 Text(
@@ -315,7 +317,7 @@ private fun AppChooserRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onSelectedChange(!selected) }
-            .padding(vertical = 10.dp),
+            .padding(horizontal = 24.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AndroidView(
@@ -347,7 +349,7 @@ private fun AppChooserRow(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Checkbox(
+        ZToolCheckbox(
             checked = selected,
             onCheckedChange = onSelectedChange
         )

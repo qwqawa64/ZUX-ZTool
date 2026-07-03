@@ -319,6 +319,30 @@ fun ZToolCheckboxRow(
 }
 
 @Composable
+fun ZToolCheckbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        top.yukonga.miuix.kmp.basic.Checkbox(
+            state = if (checked) ToggleableState.On else ToggleableState.Off,
+            onClick = { onCheckedChange(!checked) },
+            modifier = modifier,
+            enabled = enabled
+        )
+    } else {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = modifier,
+            enabled = enabled
+        )
+    }
+}
+
+@Composable
 fun ZToolSettingsDivider(
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
