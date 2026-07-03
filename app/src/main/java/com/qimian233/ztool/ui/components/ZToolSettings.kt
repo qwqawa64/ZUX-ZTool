@@ -82,7 +82,7 @@ fun ZListItem(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = 24.dp),
+            modifier = modifier.padding(horizontal = 24.dp).heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = leadingContent?.let {
@@ -174,7 +174,7 @@ fun ZToolSwitchRow(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = padding),
+            modifier = modifier.padding(horizontal = padding).heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -273,7 +273,7 @@ fun ZToolCheckboxRow(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = 24.dp),
+            modifier = modifier.padding(horizontal = 24.dp).heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -445,7 +445,7 @@ fun <T> ZToolPopupMenuSettingRow(
 
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = 24.dp),
+            modifier = modifier.padding(horizontal = 24.dp).heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
