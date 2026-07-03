@@ -724,6 +724,7 @@ private fun SliderSettingRow(
         enabled = enabled,
         valueRange = valueRange,
         steps = steps,
+        horizontalPadding = 0.dp,
         modifier = Modifier.padding(horizontal = 0.dp)
     )
 }
