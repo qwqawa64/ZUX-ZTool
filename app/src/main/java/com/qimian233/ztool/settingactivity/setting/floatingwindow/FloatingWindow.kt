@@ -93,7 +93,7 @@ class FloatingWindow private constructor(private val context: Context) {
             setParentCompositionContext(recomposer)
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {
-                ZToolTheme {
+                ZToolTheme(isPlatformDialog = true) {
                     FloatingWindowContent(
                         state = uiState.value,
                         onNext = ::handleNextStep,
