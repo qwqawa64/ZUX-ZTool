@@ -294,7 +294,7 @@ private fun launcherSettingsSections(
                             text = stringResource(R.string.customGridInputZoneTitle),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                         )
                         GridSliderRows(
                             row = state.customGridRow,
@@ -460,7 +460,7 @@ private fun GridSliderRows(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 8.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         GridSliderRow(
             label = stringResource(R.string.inputRowNumberHere),
