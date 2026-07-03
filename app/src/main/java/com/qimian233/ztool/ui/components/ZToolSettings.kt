@@ -82,7 +82,7 @@ fun ZListItem(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(vertical = 8.dp, horizontal = 24.dp),
+            modifier = modifier.padding(horizontal = 24.dp),
             title = title,
             summary = summary,
             startAction = leadingContent?.let {
@@ -103,7 +103,7 @@ fun ZListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 64.dp)
+            .heightIn(min = 80.dp)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(enabled = enabled) { onClick() }
@@ -174,7 +174,7 @@ fun ZToolSwitchRow(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(vertical = 8.dp, horizontal = padding),
+            modifier = modifier.padding(horizontal = padding),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -197,6 +197,7 @@ fun ZToolSwitchRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = 80.dp)
             .clickable(enabled = enabled) { onCheckedChange(!checked) }
             .padding(horizontal = padding, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -272,7 +273,7 @@ fun ZToolCheckboxRow(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(vertical = 8.dp, horizontal = 24.dp),
+            modifier = modifier.padding(horizontal = 24.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -295,6 +296,7 @@ fun ZToolCheckboxRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = 80.dp)
             .clickable(enabled = enabled) { onCheckedChange(!checked) }
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -443,7 +445,7 @@ fun <T> ZToolPopupMenuSettingRow(
 
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(vertical = 8.dp, horizontal = 24.dp),
+            modifier = modifier.padding(horizontal = 24.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -475,6 +477,7 @@ fun <T> ZToolPopupMenuSettingRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = 80.dp)
             .clickable(enabled = enabled && options.isNotEmpty()) {
                 expanded = true
             }
