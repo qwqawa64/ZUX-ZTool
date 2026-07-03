@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -243,7 +244,7 @@ private fun systemUiSettingsSections(
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
                     }
                 )
@@ -324,7 +325,7 @@ private fun systemUiNavigationItem(
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = LocalZToolColorScheme.current.primary
             )
         },
         trailingContent = {
@@ -333,7 +334,7 @@ private fun systemUiNavigationItem(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = LocalZToolColorScheme.current.primary
                 )
             }
         }

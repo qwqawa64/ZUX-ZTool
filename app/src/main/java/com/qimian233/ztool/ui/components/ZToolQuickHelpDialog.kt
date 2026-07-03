@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,7 +48,7 @@ fun ZToolQuickHelpDialog(
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = LocalZToolColorScheme.current.onSurface
                 )
 
                 if (items.isNotEmpty()) {
@@ -87,7 +88,7 @@ fun ZToolQuickHelpDialog(
                     Text(
                         text = note,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = LocalZToolColorScheme.current.onSurfaceVariant
                     )
                 }
             }
@@ -121,13 +122,13 @@ private fun QuickHelpRow(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = LocalZToolColorScheme.current.onSurface,
             modifier = Modifier.width(192.dp)
         )
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
     }

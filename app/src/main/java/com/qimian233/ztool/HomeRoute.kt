@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -288,7 +289,7 @@ private fun HomeScreen(
                         }
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp),
@@ -321,7 +322,7 @@ private fun HomeScreen(
 private fun NonZuxOsCard() {
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.errorContainer
+        containerColor = LocalZToolColorScheme.current.errorContainer
     ) {
         Row(
             modifier = Modifier
@@ -332,14 +333,14 @@ private fun NonZuxOsCard() {
             Icon(
                 imageVector = Icons.Rounded.Warning,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer
+                tint = LocalZToolColorScheme.current.onErrorContainer
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = stringResource(R.string.non_zuxos_warn),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = LocalZToolColorScheme.current.onErrorContainer
             )
         }
     }
@@ -349,7 +350,7 @@ private fun NonZuxOsCard() {
 private fun RequirementCard() {
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.errorContainer
+        containerColor = LocalZToolColorScheme.current.errorContainer
     ) {
         Row(
             modifier = Modifier
@@ -360,14 +361,14 @@ private fun RequirementCard() {
             Icon(
                 imageVector = Icons.Rounded.Info,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer
+                tint = LocalZToolColorScheme.current.onErrorContainer
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = stringResource(R.string.workModeRequirementDetail),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = LocalZToolColorScheme.current.onErrorContainer
             )
         }
     }
@@ -384,34 +385,34 @@ private fun UpdateCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onToggleExpanded),
-        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        containerColor = LocalZToolColorScheme.current.tertiaryContainer
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Rounded.SystemUpdate,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    tint = LocalZToolColorScheme.current.onTertiaryContainer
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(R.string.update_available_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    color = LocalZToolColorScheme.current.onTertiaryContainer,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = stringResource(R.string.buildCode, update.versionName, update.versionCode),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    color = LocalZToolColorScheme.current.onTertiaryContainer
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = update.changelog,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = LocalZToolColorScheme.current.onTertiaryContainer,
                 maxLines = if (update.expanded) Int.MAX_VALUE else 4,
                 overflow = TextOverflow.Ellipsis
             )
@@ -437,21 +438,21 @@ private fun ModuleStatusCard(state: HomeUiState) {
     val isDefaultColor = !themeSpec.dynamicColorEnabled && !themeSpec.manualColorEnabled
     val isGreen = isMiuix && state.isModuleActive && isDefaultColor
     
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
     val containerColor = if (isGreen) {
         if (isDark) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFFA5D6A7)
     } else {
-        MaterialTheme.colorScheme.primaryContainer
+        LocalZToolColorScheme.current.primaryContainer
     }
     val contentColor = if (isGreen) {
         if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
     } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
+        LocalZToolColorScheme.current.onPrimaryContainer
     }
     val iconColor = if (isGreen) {
         if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
     } else {
-        MaterialTheme.colorScheme.primary
+        LocalZToolColorScheme.current.primary
     }
     
     ZToolCard(
@@ -545,11 +546,11 @@ private fun InfoBlock(
 private fun SystemInfoCard(state: HomeUiState) {
     val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
     val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
     val containerColor = if (isMiuix) {
-        if (isDark) MaterialTheme.colorScheme.surfaceContainer else Color.White
+        if (isDark) LocalZToolColorScheme.current.surfaceContainer else Color.White
     } else {
-        MaterialTheme.colorScheme.surfaceContainerHigh
+        LocalZToolColorScheme.current.surfaceContainerHigh
     }
 
     ZToolCard(
@@ -561,7 +562,7 @@ private fun SystemInfoCard(state: HomeUiState) {
                 text = stringResource(R.string.deviceInfo),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = LocalZToolColorScheme.current.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
             FlowRow(
@@ -603,14 +604,14 @@ private fun DeviceInfoItem(
 ) {
     val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
     val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
     val valueColor = if (isMiuix && isDark) Color.White else Color.Unspecified
     
     Column(modifier = Modifier.widthIn(min = 220.dp, max = 420.dp)) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = LocalZToolColorScheme.current.onSurfaceVariant
         )
         Text(
             text = value.ifBlank { stringResource(R.string.placeHolderUnknown) },

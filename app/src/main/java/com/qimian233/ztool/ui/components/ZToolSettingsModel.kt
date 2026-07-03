@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -212,7 +213,7 @@ fun ZToolSettingsSection(
             Text(
                 text = section.title,
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
             )
         }
@@ -253,7 +254,7 @@ private fun MaterialExpressiveSettingsSection(
                 Text(
                     text = section.title,
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = LocalZToolColorScheme.current.onSurface,
                     modifier = Modifier.padding(titlePadding)
                 )
             }
@@ -275,7 +276,7 @@ fun ColumnScope.ExpressiveSectionItems(
     }
 
     var index = 0
-    val itemColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val itemColor = LocalZToolColorScheme.current.surfaceContainerHigh
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -303,7 +304,7 @@ fun ExpressiveSectionItems(
     itemSpacing: Dp = 4.dp,
     shapeForIndex: ((index: Int, count: Int) -> Shape)? = null
 ) {
-    val itemColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val itemColor = LocalZToolColorScheme.current.surfaceContainerHigh
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(itemSpacing)
@@ -534,7 +535,7 @@ fun ZToolSliderRow(
                 Text(
                     text = valueText,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     maxLines = 1,
                     modifier = Modifier.widthIn(min = 48.dp)
                 )
@@ -653,7 +654,7 @@ fun ZToolTextInputRow(
             Text(
                 text = summary,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
@@ -715,7 +716,7 @@ fun ZToolArgbColorTextFieldRow(
             modifier = Modifier
                 .size(previewSize)
                 .background(previewColor, RoundedCornerShape(8.dp))
-                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant), shape = RoundedCornerShape(8.dp))
+                .border(BorderStroke(1.dp, LocalZToolColorScheme.current.onSurfaceVariant), shape = RoundedCornerShape(8.dp))
         )
         Spacer(modifier = Modifier.width(16.dp))
         ZToolOutlinedTextField(
@@ -784,13 +785,13 @@ private fun SettingsTitleBlock(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (enabled) LocalZToolColorScheme.current.onSurface else LocalZToolColorScheme.current.onSurfaceVariant
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }

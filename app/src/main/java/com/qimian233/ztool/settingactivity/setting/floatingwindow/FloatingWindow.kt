@@ -25,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -245,7 +246,7 @@ private fun DragHandle(onDrag: (Float, Float) -> Unit) {
                 .height(4.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    LocalZToolColorScheme.current.onSurfaceVariant.copy(alpha = 0.4f)
                 )
         )
     }
@@ -268,7 +269,7 @@ private fun FloatingWindowContent(
             .width(280.dp)
             .wrapContentHeight()
             .clip(RoundedCornerShape(12.dp)),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            color = LocalZToolColorScheme.current.surface.copy(alpha = 0.92f),
             tonalElevation = 6.dp,
             shadowElevation = 4.dp
         ) {
@@ -287,21 +288,21 @@ private fun FloatingWindowContent(
                     },
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = LocalZToolColorScheme.current.primary
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = state.foregroundAppLabel,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = LocalZToolColorScheme.current.primary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = state.foregroundInfo,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = LocalZToolColorScheme.current.primary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -311,7 +312,7 @@ private fun FloatingWindowContent(
                     text = titleText(state.currentStep),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = LocalZToolColorScheme.current.primary
                 )
 
                 if (state.currentStep == FloatingWizardStep.SetMainPage ||
@@ -338,7 +339,7 @@ private fun FloatingWindowContent(
                     Text(
                         text = state.addedActivitiesText,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = LocalZToolColorScheme.current.primary,
                         maxLines = 5,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = 4.dp)
@@ -440,7 +441,7 @@ private fun FloatingOptionRow(
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = LocalZToolColorScheme.current.onSurface
         )
     }
 }

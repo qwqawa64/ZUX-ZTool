@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -575,7 +576,7 @@ private fun CustomDateSettingsContent(
             Icon(
                 imageVector = Icons.Rounded.Info,
                 contentDescription = stringResource(R.string.tooltip_content_description),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = LocalZToolColorScheme.current.onSurfaceVariant
             )
         }
         CustomDateConfig(
@@ -648,7 +649,7 @@ private fun CustomDateConfig(
         Text(
             text = datePreview,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
         )
 

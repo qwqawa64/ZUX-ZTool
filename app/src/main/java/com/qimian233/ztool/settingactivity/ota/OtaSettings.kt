@@ -22,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -326,7 +327,7 @@ private fun OtaInfoContent(
             Text(
                 text = stringResource(R.string.OtaInfoFetch_summary),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = LocalZToolColorScheme.current.onSurface,
                 modifier = Modifier
                     .weight(1f)
                     .widthIn(max = 720.dp)
@@ -362,12 +363,12 @@ private fun OtaInfoContent(
                 text = stringResource(R.string.updateLog),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = LocalZToolColorScheme.current.onSurfaceVariant
             )
             Text(
                 text = result.changelog,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
             if (result.isNewVersionAvailable) {
@@ -425,7 +426,7 @@ private fun FirmwareContent(
             Text(
                 text = stringResource(R.string.PCFlashFirmwareFetch_summary),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = LocalZToolColorScheme.current.onSurface
             )
             Spacer(modifier = Modifier.height(12.dp))
             Row(
@@ -518,7 +519,7 @@ private fun OtaCustomParamsContent(
             Text(
                 text = stringResource(R.string.Ota_Custom_Params_Desc),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = LocalZToolColorScheme.current.onSurface
             )
         }
         ZToolTextInputRow(
@@ -554,12 +555,12 @@ private fun ResultText(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = LocalZToolColorScheme.current.onSurfaceVariant
         )
         Text(
             text = body,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
         )
     }

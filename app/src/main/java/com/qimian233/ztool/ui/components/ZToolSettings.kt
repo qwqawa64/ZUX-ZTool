@@ -33,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -125,13 +126,13 @@ fun ZListItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (enabled) LocalZToolColorScheme.current.onSurface else LocalZToolColorScheme.current.onSurfaceVariant
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -152,9 +153,9 @@ fun ZToolSettingLeadingIcon(
         imageVector = icon,
         contentDescription = null,
         tint = if (enabled) {
-            MaterialTheme.colorScheme.onSurfaceVariant
+            LocalZToolColorScheme.current.onSurfaceVariant
         } else {
-            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+            LocalZToolColorScheme.current.onSurfaceVariant.copy(alpha = 0.38f)
         },
         modifier = Modifier.size(24.dp)
     )
@@ -212,14 +213,14 @@ fun ZToolSwitchRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (enabled) LocalZToolColorScheme.current.onSurface
+                        else LocalZToolColorScheme.current.onSurfaceVariant
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -230,13 +231,13 @@ fun ZToolSwitchRow(
             onCheckedChange = onCheckedChange,
             enabled = enabled,
             colors = SwitchDefaults.colors(
-                disabledCheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
-                disabledCheckedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                disabledCheckedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f),
-                disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.12f),
-                disabledUncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
-                disabledUncheckedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                disabledCheckedThumbColor = LocalZToolColorScheme.current.primary.copy(alpha = 0.38f),
+                disabledCheckedTrackColor = LocalZToolColorScheme.current.primary.copy(alpha = 0.12f),
+                disabledCheckedIconColor = LocalZToolColorScheme.current.onPrimary.copy(alpha = 0.38f),
+                disabledUncheckedThumbColor = LocalZToolColorScheme.current.onSurface.copy(alpha = 0.38f),
+                disabledUncheckedTrackColor = LocalZToolColorScheme.current.surfaceContainerHighest.copy(alpha = 0.12f),
+                disabledUncheckedBorderColor = LocalZToolColorScheme.current.outline.copy(alpha = 0.12f),
+                disabledUncheckedIconColor = LocalZToolColorScheme.current.onSurface.copy(alpha = 0.38f)
             ),
             thumbContent = if (checked) {
                 {
@@ -310,14 +311,14 @@ fun ZToolCheckboxRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (enabled) LocalZToolColorScheme.current.onSurface
+                        else LocalZToolColorScheme.current.onSurfaceVariant
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -378,7 +379,7 @@ fun ZToolSettingsDivider(
 
     HorizontalDivider(
         modifier = effectiveModifier,
-        color = if (color == Color.Unspecified) MaterialTheme.colorScheme.outlineVariant else color
+        color = if (color == Color.Unspecified) LocalZToolColorScheme.current.outlineVariant else color
     )
 }
 
@@ -488,14 +489,14 @@ fun <T> ZToolPopupMenuSettingRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (enabled) LocalZToolColorScheme.current.onSurface
+                        else LocalZToolColorScheme.current.onSurfaceVariant
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -555,9 +556,9 @@ fun <T> ZToolPopupDialogField(
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.labelLarge,
             color = if (enabled) {
-                MaterialTheme.colorScheme.primary
+                LocalZToolColorScheme.current.primary
             } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                LocalZToolColorScheme.current.onSurfaceVariant
             },
             modifier = Modifier.weight(1f)
         )
@@ -573,9 +574,9 @@ fun <T> ZToolPopupDialogField(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                 contentDescription = null,
                 tint = if (enabled && options.isNotEmpty()) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    LocalZToolColorScheme.current.onSurfaceVariant
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    LocalZToolColorScheme.current.onSurfaceVariant.copy(alpha = 0.38f)
                 }
             )
         }
@@ -603,7 +604,7 @@ fun <T> ZToolPopupDialogField(
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(
                                     color = if (selected && style == FrontendStyle.Material3Expressive) {
-                                        MaterialTheme.colorScheme.secondaryContainer
+                                        LocalZToolColorScheme.current.secondaryContainer
                                     } else {
                                         Color.Transparent
                                     }
@@ -626,7 +627,7 @@ fun <T> ZToolPopupDialogField(
                             Text(
                                 text = optionLabel(option),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = LocalZToolColorScheme.current.onSurface,
                                 modifier = Modifier.padding(start = 8.dp)
                             )
                         }
@@ -689,9 +690,9 @@ private fun <T> ZToolMiuixPopupMenuField(
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (enabled) {
-                    MaterialTheme.colorScheme.primary
+                    LocalZToolColorScheme.current.primary
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    LocalZToolColorScheme.current.onSurfaceVariant
                 }
             )
             IconButton(
@@ -703,9 +704,9 @@ private fun <T> ZToolMiuixPopupMenuField(
                     imageVector = MiuixIcons.ArrowUpDown,
                     contentDescription = null,
                     tint = if (enabled && options.isNotEmpty()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        LocalZToolColorScheme.current.onSurfaceVariant
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        LocalZToolColorScheme.current.onSurfaceVariant.copy(alpha = 0.38f)
                     }
                 )
             }
@@ -735,14 +736,14 @@ private fun <T> ZToolMiuixPopupMenuField(
                         Text(
                             text = label,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = LocalZToolColorScheme.current.onSurface,
                             modifier = Modifier.weight(1f)
                         )
                         if (selected) {
                             Icon(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = LocalZToolColorScheme.current.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -798,9 +799,9 @@ private fun <T> ZToolMaterialPopupMenuField(
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (enabled) {
-                    MaterialTheme.colorScheme.primary
+                    LocalZToolColorScheme.current.primary
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    LocalZToolColorScheme.current.onSurfaceVariant
                 }
             )
             IconButton(
@@ -812,9 +813,9 @@ private fun <T> ZToolMaterialPopupMenuField(
                     imageVector = Icons.Filled.ArrowDropDown,
                     contentDescription = null,
                     tint = if (enabled && options.isNotEmpty()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        LocalZToolColorScheme.current.onSurfaceVariant
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        LocalZToolColorScheme.current.onSurfaceVariant.copy(alpha = 0.38f)
                     }
                 )
             }
@@ -833,7 +834,7 @@ private fun <T> ZToolMaterialPopupMenuField(
                 ) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    color = LocalZToolColorScheme.current.surfaceContainerHigh,
                     tonalElevation = 3.dp,
                     shadowElevation = 3.dp,
                     modifier = Modifier
@@ -858,7 +859,7 @@ private fun <T> ZToolMaterialPopupMenuField(
                                     .then(
                                         if (selected) {
                                             Modifier.background(
-                                                color = MaterialTheme.colorScheme.primaryContainer,
+                                                color = LocalZToolColorScheme.current.primaryContainer,
                                                 shape = itemShape
                                             )
                                         } else {
@@ -876,9 +877,9 @@ private fun <T> ZToolMaterialPopupMenuField(
                                     text = label,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = if (selected) {
-                                        MaterialTheme.colorScheme.primary
+                                        LocalZToolColorScheme.current.primary
                                     } else {
-                                        MaterialTheme.colorScheme.onSurface
+                                        LocalZToolColorScheme.current.onSurface
                                     },
                                     modifier = Modifier.weight(1f)
                                 )
@@ -886,7 +887,7 @@ private fun <T> ZToolMaterialPopupMenuField(
                                     Icon(
                                         imageVector = Icons.Filled.Check,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = LocalZToolColorScheme.current.primary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }

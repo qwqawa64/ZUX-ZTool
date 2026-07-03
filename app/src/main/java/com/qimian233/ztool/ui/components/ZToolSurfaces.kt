@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +24,7 @@ import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 @Composable
 fun ZToolCircularProgressIndicator(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
+    color: Color = LocalZToolColorScheme.current.primary,
     strokeWidth: androidx.compose.ui.unit.Dp = 4.dp
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
@@ -58,7 +59,7 @@ fun ZToolPageSurface(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(LocalZToolColorScheme.current.background),
         contentAlignment = contentAlignment,
         content = content
     )
@@ -73,7 +74,7 @@ fun ZToolCard(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         val actualColor = when (containerColor) {
-            Color.Unspecified -> top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.surfaceContainer
+            Color.Unspecified -> LocalZToolColorScheme.current.surfaceContainer
             else -> containerColor
         }
         top.yukonga.miuix.kmp.basic.Surface(

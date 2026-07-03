@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -137,7 +138,7 @@ fun FirstrunAgreementRoute(
     }
 
     ZToolPageSurface(modifier = Modifier.fillMaxSize()) {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Surface(modifier = Modifier.fillMaxSize(), color = LocalZToolColorScheme.current.background) {
             AnimatedContent(
                 targetState = currentPageState.value,
                 label = "firstrun_pages",
@@ -244,7 +245,7 @@ private fun SplashPage(
             Text(
                 text = stringResource(R.string.splash_slogan),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 fontFamily = FontFamily.Monospace
             )
         }
@@ -292,7 +293,7 @@ private fun AgreementPage(
 
             ZToolCard(
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                containerColor = LocalZToolColorScheme.current.surfaceContainerHigh
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -306,7 +307,7 @@ private fun AgreementPage(
                             .fillMaxWidth()
                             .height(400.dp)
                             .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                color = LocalZToolColorScheme.current.surfaceContainerHighest,
                                 shape = RoundedCornerShape(16.dp)
                             )
                             .verticalScroll(readScrollState)
@@ -315,7 +316,7 @@ private fun AgreementPage(
                         ZToolMarkdownText(
                             markdown = markdownText,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = LocalZToolColorScheme.current.onSurfaceVariant,
                             fontSize = 18.sp
                         )
                     }
@@ -373,7 +374,7 @@ private fun PermissionPage(
 
             ZToolCard(
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                containerColor = LocalZToolColorScheme.current.surfaceContainerHigh
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -422,16 +423,16 @@ private fun StatusBanner(
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = if (ready) {
-            MaterialTheme.colorScheme.secondaryContainer
+            LocalZToolColorScheme.current.secondaryContainer
         } else {
-            MaterialTheme.colorScheme.tertiaryContainer
+            LocalZToolColorScheme.current.tertiaryContainer
         }
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(16.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = if (ready) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
+            color = if (ready) LocalZToolColorScheme.current.onSecondaryContainer else LocalZToolColorScheme.current.onTertiaryContainer
         )
     }
 }
@@ -443,20 +444,20 @@ private fun HeaderCard(
 ) {
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.primaryContainer
+        containerColor = LocalZToolColorScheme.current.primaryContainer
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = LocalZToolColorScheme.current.onPrimaryContainer
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = LocalZToolColorScheme.current.onPrimaryContainer
             )
         }
     }
@@ -523,14 +524,14 @@ private fun FirstrunActionCard(
     onClick: () -> Unit
 ) {
     val containerColor = if (checked) {
-        MaterialTheme.colorScheme.secondaryContainer
+        LocalZToolColorScheme.current.secondaryContainer
     } else {
-        MaterialTheme.colorScheme.surfaceContainerHigh
+        LocalZToolColorScheme.current.surfaceContainerHigh
     }
     val contentColor = if (checked) {
-        MaterialTheme.colorScheme.onSecondaryContainer
+        LocalZToolColorScheme.current.onSecondaryContainer
     } else {
-        MaterialTheme.colorScheme.onSurface
+        LocalZToolColorScheme.current.onSurface
     }
     ZToolCard(
         modifier = Modifier
@@ -552,7 +553,7 @@ private fun FirstrunActionCard(
                     modifier = Modifier.weight(1f)
                 )
                 if (checked) {
-                    Icon(imageVector = Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(imageVector = Icons.Rounded.Check, contentDescription = null, tint = LocalZToolColorScheme.current.primary)
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))

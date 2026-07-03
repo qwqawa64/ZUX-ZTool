@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -209,7 +210,7 @@ private fun LoadingContent(message: String) {
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = LocalZToolColorScheme.current.onSurface
                 )
             }
         }
@@ -275,7 +276,7 @@ private fun AppChooserContent(
                 Text(
                     text = stringResource(R.string.app_search_page_selected_string, selectedPackages.size),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 24.dp)
                 )
 
@@ -339,14 +340,14 @@ private fun AppChooserRow(
             Text(
                 text = app.appName,
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = LocalZToolColorScheme.current.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = app.packageName,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

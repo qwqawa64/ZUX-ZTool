@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -313,12 +314,12 @@ private fun WhitelistRow(
             Text(
                 text = stringResource(R.string.whitelist_config_title),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = LocalZToolColorScheme.current.onSurface
             )
             Text(
                 text = stringResource(R.string.whitelist_count, whitelistCount),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
@@ -326,7 +327,7 @@ private fun WhitelistRow(
         Icon(
             imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = LocalZToolColorScheme.current.onSurfaceVariant
         )
     }
 }

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -185,7 +186,7 @@ private fun SearchCard(
                 Text(
                     text = tipsText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = LocalZToolColorScheme.current.onSurfaceVariant
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -263,7 +264,7 @@ private fun PackageResultRow(
         Text(
             text = packageInfo.mainPage,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalZToolColorScheme.current.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -282,7 +283,7 @@ private fun EmptyResultCard() {
             Text(
                 text = stringResource(R.string.unable_to_find_application),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = LocalZToolColorScheme.current.onSurfaceVariant
             )
         }
     }

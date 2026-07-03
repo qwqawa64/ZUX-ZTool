@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -432,14 +433,14 @@ private fun WhitelistRow(
         Text(
             text = stringResource(R.string.protected_apps_summary, whitelistCount),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Icon(
             imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = LocalZToolColorScheme.current.onSurfaceVariant
         )
     }
 }
@@ -470,7 +471,7 @@ private fun GridSliderRows(
         Text(
             text = stringResource(R.string.launcher_grid_current_option, row, column),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 8.dp)
         )
     }

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -266,7 +267,7 @@ private fun FeaturesRoute(
 private fun FeatureWarningCard(message: String) {
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.errorContainer
+        containerColor = LocalZToolColorScheme.current.errorContainer
     ) {
         Row(
             modifier = Modifier
@@ -277,13 +278,13 @@ private fun FeatureWarningCard(message: String) {
             Icon(
                 imageVector = Icons.Rounded.Warning,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer
+                tint = LocalZToolColorScheme.current.onErrorContainer
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = LocalZToolColorScheme.current.onErrorContainer
             )
         }
     }
@@ -316,7 +317,7 @@ private fun FeatureCard(
                 Text(
                     text = stringResource(item.nameRes),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = LocalZToolColorScheme.current.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -324,7 +325,7 @@ private fun FeatureCard(
                 Text(
                     text = stringResource(item.descriptionRes),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -333,7 +334,7 @@ private fun FeatureCard(
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = LocalZToolColorScheme.current.onSurfaceVariant
             )
         }
     }

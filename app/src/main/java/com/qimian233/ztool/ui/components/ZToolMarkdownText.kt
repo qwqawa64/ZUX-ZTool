@@ -2,6 +2,7 @@ package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -41,7 +42,7 @@ fun ZToolMarkdownText(
     markdown: String,
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
-    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    color: Color = LocalZToolColorScheme.current.onSurfaceVariant,
     fontSize: TextUnit = TextUnit.Unspecified
 ) {
     val resolvedBaseFontSize = if (fontSize == TextUnit.Unspecified) style.fontSize else fontSize

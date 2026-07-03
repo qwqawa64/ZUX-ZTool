@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -138,7 +139,7 @@ class CountdownDialog private constructor(
         dialog?.let { return it }
 
         return createPlatformComposeDialog(context, cancelable = cancelable) {
-            Surface(color = MaterialTheme.colorScheme.surface) {
+            Surface(color = LocalZToolColorScheme.current.surface) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -147,13 +148,13 @@ class CountdownDialog private constructor(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = LocalZToolColorScheme.current.onSurface
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = LocalZToolColorScheme.current.onSurfaceVariant,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(weight = 1f, fill = false)

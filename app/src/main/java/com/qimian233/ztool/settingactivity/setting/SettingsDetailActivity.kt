@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -835,7 +836,7 @@ private fun settingsDetailSections(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = LocalZToolColorScheme.current.onSurfaceVariant
                             )
                         }
                     ),
@@ -863,7 +864,7 @@ private fun settingsDetailSections(
                                 Text(
                                     text = stringResource(R.string.zui_force_config_summary),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                                 )
                             }
@@ -920,7 +921,7 @@ private fun settingsDetailSections(
                             Icon(
                                 imageVector = Icons.Rounded.Add,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = LocalZToolColorScheme.current.onSurfaceVariant
                             )
                         }
                     )
@@ -1079,7 +1080,7 @@ private fun settingsDetailActionItem(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = LocalZToolColorScheme.current.onSurfaceVariant
                 )
             }
         }
@@ -1112,7 +1113,7 @@ private fun ConfigSelectionDialogContent(
                     Text(
                         text = stringResource(R.string.flashed_configs_count, flashedConfigs.size),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = LocalZToolColorScheme.current.primary,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
@@ -1204,9 +1205,9 @@ private fun ConfigSelectionRow(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             color = if (flashed) {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                LocalZToolColorScheme.current.onSurfaceVariant
             } else {
-                MaterialTheme.colorScheme.onSurface
+                LocalZToolColorScheme.current.onSurface
             },
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -1235,7 +1236,7 @@ private fun FontInputDialogContent(
                 Text(
                     text = stringResource(R.string.doNotUseDuplicatedFontName),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }

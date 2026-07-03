@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -172,17 +173,17 @@ private fun AboutHeaderCard(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = LocalZToolColorScheme.current.onSurface
             )
             Text(
                 text = "$versionName - $commitCount - $commitHash",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = LocalZToolColorScheme.current.onSurfaceVariant
             )
             Text(
                 text = stringResource(R.string.splash_slogan),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = LocalZToolColorScheme.current.onSurfaceVariant
             )
         }
     }
@@ -199,7 +200,7 @@ private fun AboutSectionContainer(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
             )
         }
@@ -214,7 +215,7 @@ private fun AboutSectionContainer(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = LocalZToolColorScheme.current.onSurface,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
                 }
@@ -236,7 +237,7 @@ private fun AboutSectionCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
             )
         }
@@ -251,7 +252,7 @@ private fun AboutSectionCard(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = LocalZToolColorScheme.current.onSurface,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
                 }
@@ -281,7 +282,7 @@ private fun AboutActionRow(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = LocalZToolColorScheme.current.onSurfaceVariant
                 )
             }
         } else null

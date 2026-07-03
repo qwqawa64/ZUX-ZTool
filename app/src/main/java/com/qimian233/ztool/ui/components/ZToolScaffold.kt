@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
@@ -73,7 +74,7 @@ fun ZToolScaffold(
                 modifier = scaffoldModifier,
                 topBar = topBar,
                 floatingActionButton = floatingActionButton,
-                containerColor = MaterialTheme.colorScheme.background,
+                containerColor = LocalZToolColorScheme.current.background,
                 content = content
             )
         }
@@ -122,8 +123,8 @@ fun ZToolTopAppBar(
         navigationIcon = navigationIcon,
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = LocalZToolColorScheme.current.surface,
+            scrolledContainerColor = LocalZToolColorScheme.current.surfaceContainer
         ),
         modifier = modifier
     )
@@ -136,8 +137,8 @@ fun ZToolNavigationRail(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         NavigationRail(
-            containerColor = top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = LocalZToolColorScheme.current.background,
+            contentColor = LocalZToolColorScheme.current.onSurface,
             modifier = modifier
         ) {
             Column(
@@ -150,8 +151,8 @@ fun ZToolNavigationRail(
     }
 
     NavigationRail(
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        containerColor = LocalZToolColorScheme.current.surface,
+        contentColor = LocalZToolColorScheme.current.onSurface,
         modifier = modifier
     ) {
         Column(
@@ -198,11 +199,11 @@ fun ZToolNavigationRailItem(
         label = { Text(label) },
         enabled = enabled,
         colors = NavigationRailItemDefaults.colors(
-            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+            selectedIconColor = LocalZToolColorScheme.current.onSecondaryContainer,
+            selectedTextColor = LocalZToolColorScheme.current.onSurface,
+            indicatorColor = LocalZToolColorScheme.current.secondaryContainer,
+            unselectedIconColor = LocalZToolColorScheme.current.onSurfaceVariant,
+            unselectedTextColor = LocalZToolColorScheme.current.onSurfaceVariant
         ),
         modifier = modifier
             .width(80.dp)

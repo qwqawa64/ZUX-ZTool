@@ -1,9 +1,8 @@
 package com.qimian233.ztool.ui.theme
 
-import android.os.Build
 import android.content.res.Configuration
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -21,12 +20,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
-import top.yukonga.miuix.kmp.theme.Colors
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
+import top.yukonga.miuix.kmp.theme.Colors
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeColorSpec
 import top.yukonga.miuix.kmp.theme.ThemeController
@@ -247,12 +245,16 @@ fun ZToolTheme(
 
                 MiuixTheme(
                     controller = controller,
-                    content = { 
-                        if (isPlatformDialog) {
-                            movableContent()
-                        } else {
-                            top.yukonga.miuix.kmp.basic.Scaffold { _ ->
+                    content = {
+                        CompositionLocalProvider(
+                            LocalZToolColorScheme provides MiuixTheme.colorScheme.toMaterialColorScheme(effectiveDarkTheme)
+                        ) {
+                            if (isPlatformDialog) {
                                 movableContent()
+                            } else {
+                                top.yukonga.miuix.kmp.basic.Scaffold { _ ->
+                                    movableContent()
+                                }
                             }
                         }
                     }
@@ -260,7 +262,13 @@ fun ZToolTheme(
             } else {
                 MiuixTheme(
                     colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
-                    content = { movableContent() }
+                    content = {
+                        CompositionLocalProvider(
+                            LocalZToolColorScheme provides colorScheme
+                        ) {
+                            movableContent()
+                        }
+                    }
                 )
             }
         }
@@ -805,10 +813,6 @@ private fun ColorScheme.withAmoledBlackSurfaces(): ColorScheme {
         surfaceContainerHigh = highSurface,
         surfaceContainerHighest = highSurface
     )
-}
-
-private fun contentColorFor(color: Color): Color {
-    return if (color.luminance() > 0.5f) Color.Black else Color.White
 }
 
 private fun colorFromArgbLong(value: Long): Color {

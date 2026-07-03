@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -46,14 +47,14 @@ fun ZToolDialog(
             ) {
                 if (title != null) {
                     ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
-                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                        CompositionLocalProvider(LocalContentColor provides LocalZToolColorScheme.current.onSurface) {
                             title()
                         }
                     }
                 }
                 if (text != null) {
                     ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
-                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                        CompositionLocalProvider(LocalContentColor provides LocalZToolColorScheme.current.onSurfaceVariant) {
                             Column(modifier = Modifier.padding(top = if (title == null) 0.dp else 16.dp)) {
                                 text()
                             }
@@ -114,7 +115,7 @@ fun ZToolDialog(
 
         if (isPlatformDialog) {
             MiuixSurface(
-                color = MaterialTheme.colorScheme.surface,
+                color = LocalZToolColorScheme.current.surface,
                 shape = RoundedCornerShape(24.dp)
             ) {
                 miuixContent()
@@ -123,7 +124,7 @@ fun ZToolDialog(
             OverlayDialog(
                 show = true,
                 onDismissRequest = onDismissRequest,
-                backgroundColor = MaterialTheme.colorScheme.surface,
+                backgroundColor = LocalZToolColorScheme.current.surface,
             ) {
                 miuixContent()
             }
@@ -137,9 +138,9 @@ fun ZToolDialog(
         title = title,
         text = text,
         dismissButton = dismissButton,
-        containerColor = MaterialTheme.colorScheme.surface,
-        titleContentColor = MaterialTheme.colorScheme.onSurface,
-        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        containerColor = LocalZToolColorScheme.current.surface,
+        titleContentColor = LocalZToolColorScheme.current.onSurface,
+        textContentColor = LocalZToolColorScheme.current.onSurfaceVariant
     )
 }
 
@@ -150,15 +151,15 @@ fun ZToolDialogSurface(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixSurface(
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            color = LocalZToolColorScheme.current.surface,
+            contentColor = LocalZToolColorScheme.current.onSurface,
             content = content
         )
         return
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        color = LocalZToolColorScheme.current.surface,
         content = content
     )
 }

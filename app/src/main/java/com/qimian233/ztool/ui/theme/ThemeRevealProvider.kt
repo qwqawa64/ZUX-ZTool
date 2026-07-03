@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.LocalView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.hypot
 
 val LocalThemeRevealController = staticCompositionLocalOf<ThemeRevealController> {
@@ -138,7 +137,7 @@ fun ThemeRevealProvider(content: @Composable () -> Unit) {
             snapshot?.let { image ->
                 // ====== 核心改动点：有色环境阴影 ======
                 // 1. 获取刚刚切换后的新主题的强调色
-                val primaryColor = MiuixTheme.colorScheme.primary
+                val primaryColor = LocalZToolColorScheme.current.primary
 
                 // 2. 将纯黑与强调色混合。
                 val shadowTint = lerp(Color.Black, primaryColor, 0.50f)
