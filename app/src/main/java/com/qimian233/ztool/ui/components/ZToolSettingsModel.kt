@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -503,34 +504,41 @@ fun ZToolSliderRow(
                 icon = icon
             )
         }
-        if (valueText != null) {
-            Text(
-                text = valueText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-        if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-            MiuixSlider(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.padding(top = 8.dp),
-                enabled = enabled,
-                valueRange = valueRange,
-                steps = steps,
-                onValueChangeFinished = onValueChangeFinished
-            )
-        } else {
-            Slider(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.padding(top = 8.dp),
-                enabled = enabled,
-                valueRange = valueRange,
-                steps = steps,
-                onValueChangeFinished = onValueChangeFinished
-            )
+        Row (
+            modifier = Modifier.padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+                MiuixSlider(
+                    value = value,
+                    onValueChange = onValueChange,
+                    enabled = enabled,
+                    valueRange = valueRange,
+                    steps = steps,
+                    onValueChangeFinished = onValueChangeFinished,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Slider(
+                    value = value,
+                    onValueChange = onValueChange,
+                    enabled = enabled,
+                    valueRange = valueRange,
+                    steps = steps,
+                    onValueChangeFinished = onValueChangeFinished,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            if (valueText != null) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = valueText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    modifier = Modifier.widthIn(min = 48.dp)
+                )
+            }
         }
     }
 }
