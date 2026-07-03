@@ -18,6 +18,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import androidx.core.content.edit
+import com.qimian233.ztool.XposedServiceBridge
 
 class HomeRepository(
     private val context: Context,
@@ -246,21 +247,14 @@ class HomeRepository(
 
     private fun detectFrameworkVersionAndMode(): String {
         try {
-            val propResult = shellExecutor.executeRootCommand("getprop ro.lsposed.version", 3)
-            if (propResult.isSuccess && !propResult.output.isNullOrBlank()) {
-                return context.getString(R.string.lsposed_standard_format, "v${propResult.output.trim()}")
-            }
+            val apiVersion: Int = XposedServiceBridge.getApiVersion()
+            val frameworkName: String? = XposedServiceBridge.getFrameworkName()
+            val frameworkVersion: String? = XposedServiceBridge.getFrameworkVersion()
+            val frameworkVersionCode: Long = XposedServiceBridge.getFrameworkVersionCode()
+            Log.i(TAG, "Successfully fetched API information: API version: ${apiVersion}, framework name: ${frameworkName}, framework version: ${frameworkVersion}, framework version code: $frameworkVersionCode")
+            return context.getString(R.string.lsposed_standard_format, frameworkName, frameworkVersion, frameworkVersionCode, apiVersion)
         } catch (e: Exception) {
             Log.w(TAG, "Failed to detect framework property: ${e.message}")
-        }
-
-        try {
-            val lsResult = shellExecutor.executeRootCommand("ls -la /data/adb/modules/ | grep -i lsposed", 3)
-            if (lsResult.isSuccess && !lsResult.output.isNullOrBlank()) {
-                return context.getString(R.string.lsposed_zygisk)
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to detect framework directory: ${e.message}")
         }
 
         return context.getString(R.string.unknown_framework)

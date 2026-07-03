@@ -31,11 +31,6 @@ object ModuleActivationProbe {
     /** 线程安全的激活标记 */
     private val active = AtomicBoolean(false)
 
-    /** 最近一次收到的 XposedService 实例，可供动态作用域等功能使用 */
-    @Volatile
-    var currentService: XposedService? = null
-        private set
-
     private val handler = Handler(Looper.getMainLooper())
     private val deactivationRunnable = Runnable {
         active.set(false)
@@ -46,12 +41,12 @@ object ModuleActivationProbe {
             override fun onServiceBind(service: XposedService) {
                 handler.removeCallbacks(deactivationRunnable)
                 active.set(true)
-                currentService = service
+                XposedServiceBridge.currentService = service
             }
 
             override fun onServiceDied(service: XposedService) {
-                if (currentService === service) {
-                    currentService = null
+                if (XposedServiceBridge.currentService === service) {
+                    XposedServiceBridge.currentService = null
                     // 不立即标记为未激活；延迟后若仍未收到新 binder 才降级
                     handler.removeCallbacks(deactivationRunnable)
                     handler.postDelayed(deactivationRunnable, DEACTIVATION_DELAY_MS)
