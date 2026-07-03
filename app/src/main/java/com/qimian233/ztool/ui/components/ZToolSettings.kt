@@ -354,7 +354,9 @@ fun <T> ZToolPopupMenuField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: ImageVector? = null,
-    dialogTitle: String? = null
+    dialogTitle: String? = null,
+    externalExpanded: Boolean? = null,
+    onExternalExpandedChange: ((Boolean) -> Unit)? = null
 ) {
     ZToolSettingsNavigationEventProvider {
         if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
@@ -365,7 +367,9 @@ fun <T> ZToolPopupMenuField(
                 onOptionSelected = onOptionSelected,
                 modifier = modifier,
                 enabled = enabled,
-                icon = icon
+                icon = icon,
+                externalExpanded = externalExpanded,
+                onExternalExpandedChange = onExternalExpandedChange
             )
             return@ZToolSettingsNavigationEventProvider
         }
@@ -378,7 +382,9 @@ fun <T> ZToolPopupMenuField(
             modifier = modifier,
             enabled = enabled,
             icon = icon,
-            dialogTitle = dialogTitle
+            dialogTitle = dialogTitle,
+            externalShowDialog = externalExpanded,
+            onExternalShowDialogChange = onExternalExpandedChange
         )
     }
 }
@@ -397,6 +403,8 @@ fun <T> ZToolPopupMenuSettingRow(
     fieldMinWidth: Dp = 132.dp,
     fieldMaxWidth: Dp = 180.dp
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
             modifier = modifier.padding(vertical = 8.dp, horizontal = 24.dp),
@@ -412,10 +420,17 @@ fun <T> ZToolPopupMenuSettingRow(
                     optionLabel = optionLabel,
                     onOptionSelected = onOptionSelected,
                     enabled = enabled,
-                    modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth)
+                    modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth),
+                    externalExpanded = expanded,
+                    onExternalExpandedChange = { expanded = it }
                 )
             },
             insideMargin = PaddingValues(vertical = 16.dp),
+            onClick = {
+                if (enabled && options.isNotEmpty()) {
+                    expanded = true
+                }
+            },
             enabled = enabled
         )
         return
@@ -424,6 +439,9 @@ fun <T> ZToolPopupMenuSettingRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(enabled = enabled && options.isNotEmpty()) {
+                expanded = true
+            }
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -455,7 +473,9 @@ fun <T> ZToolPopupMenuSettingRow(
             onOptionSelected = onOptionSelected,
             enabled = enabled,
             dialogTitle = title,
-            modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth)
+            modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth),
+            externalExpanded = expanded,
+            onExternalExpandedChange = { expanded = it }
         )
     }
 }
@@ -468,16 +488,20 @@ private fun <T> ZToolMiuixPopupMenuField(
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    externalExpanded: Boolean? = null,
+    onExternalExpandedChange: ((Boolean) -> Unit)? = null
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    val internalExpanded = remember { mutableStateOf(false) }
+    val expanded = externalExpanded ?: internalExpanded.value
+    val setExpanded: (Boolean) -> Unit = onExternalExpandedChange ?: { internalExpanded.value = it }
 
     Box(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(enabled = enabled && options.isNotEmpty()) {
-                    expanded = true
+                    setExpanded(true)
                 }
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -500,7 +524,7 @@ private fun <T> ZToolMiuixPopupMenuField(
             )
             IconButton(
                 enabled = enabled && options.isNotEmpty(),
-                onClick = { expanded = true },
+                onClick = { setExpanded(true) },
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
@@ -517,7 +541,7 @@ private fun <T> ZToolMiuixPopupMenuField(
 
         MiuixWindowListPopup(
             show = expanded,
-            onDismissRequest = { expanded = false },
+            onDismissRequest = { setExpanded(false) },
             alignment = MiuixPopupPositionProvider.Align.End,
             maxHeight = 360.dp,
             minWidth = 0.dp
@@ -531,7 +555,7 @@ private fun <T> ZToolMiuixPopupMenuField(
                             .fillMaxWidth()
                             .clickable {
                                 onOptionSelected(option)
-                                expanded = false
+                                setExpanded(false)
                             }
                             .padding(horizontal = 20.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -566,9 +590,13 @@ private fun <T> ZToolMaterialPopupMenuField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: ImageVector? = null,
-    dialogTitle: String? = null
+    dialogTitle: String? = null,
+    externalShowDialog: Boolean? = null,
+    onExternalShowDialogChange: ((Boolean) -> Unit)? = null
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    val internalShowDialog = remember { mutableStateOf(false) }
+    val showDialog = externalShowDialog ?: internalShowDialog.value
+    val setShowDialog: (Boolean) -> Unit = onExternalShowDialogChange ?: { internalShowDialog.value = it }
     fun selectedIndex(): Int = options.indexOfFirst { optionLabel(it) == value }.coerceAtLeast(0)
     var pendingIndex by remember(value, options) {
         mutableIntStateOf(selectedIndex())
@@ -579,7 +607,7 @@ private fun <T> ZToolMaterialPopupMenuField(
             .fillMaxWidth()
             .clickable(enabled = enabled && options.isNotEmpty()) {
                 pendingIndex = selectedIndex()
-                showDialog = true
+                setShowDialog(true)
             }
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -604,7 +632,7 @@ private fun <T> ZToolMaterialPopupMenuField(
             enabled = enabled && options.isNotEmpty(),
             onClick = {
                 pendingIndex = selectedIndex()
-                showDialog = true
+                setShowDialog(true)
             },
             modifier = Modifier.size(40.dp)
         ) {
@@ -624,7 +652,7 @@ private fun <T> ZToolMaterialPopupMenuField(
         ZToolDialog(
             onDismissRequest = {
                 @Suppress("AssignedValueIsNeverRead")
-                showDialog = false
+                setShowDialog(false)
             },
             title = dialogTitle?.let { titleText ->
                 { Text(titleText) }
@@ -672,7 +700,7 @@ private fun <T> ZToolMaterialPopupMenuField(
                     onClick = {
                         options.getOrNull(pendingIndex)?.let(onOptionSelected)
                         @Suppress("AssignedValueIsNeverRead")
-                        showDialog = false
+                        setShowDialog(false)
                     }
                 ) {
                     Text(androidx.compose.ui.res.stringResource(android.R.string.ok))
@@ -681,7 +709,7 @@ private fun <T> ZToolMaterialPopupMenuField(
             dismissButton = {
                 TextButton(onClick = {
                     @Suppress("AssignedValueIsNeverRead")
-                    showDialog = false
+                    setShowDialog(false)
                 }) {
                     Text(androidx.compose.ui.res.stringResource(android.R.string.cancel))
                 }
