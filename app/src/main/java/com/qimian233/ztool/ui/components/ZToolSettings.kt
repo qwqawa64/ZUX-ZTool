@@ -845,17 +845,9 @@ private fun <T> ZToolMaterialPopupMenuField(
                         .widthIn(max = 160.dp)
                 ) {
                     Column {
-                        options.forEachIndexed { index, option ->
+                        options.forEach { option ->
                             val label = optionLabel(option)
                             val selected = label == value
-                            val isFirst = index == 0
-                            val isLast = index == options.lastIndex
-                            val itemShape = when {
-                                isFirst && isLast -> RoundedCornerShape(12.dp)
-                                isFirst -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                                isLast -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                                else -> RoundedCornerShape(0.dp)
-                            }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -863,7 +855,7 @@ private fun <T> ZToolMaterialPopupMenuField(
                                         if (selected) {
                                             Modifier.background(
                                                 color = LocalZToolColorScheme.current.primaryContainer,
-                                                shape = itemShape
+                                                shape = RoundedCornerShape(12.dp)
                                             )
                                         } else {
                                             Modifier
@@ -876,6 +868,15 @@ private fun <T> ZToolMaterialPopupMenuField(
                                     .padding(horizontal = 12.dp, vertical = 14.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                if (selected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = LocalZToolColorScheme.current.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
                                 Text(
                                     text = label,
                                     style = MaterialTheme.typography.bodyLarge,
@@ -884,16 +885,8 @@ private fun <T> ZToolMaterialPopupMenuField(
                                     } else {
                                         LocalZToolColorScheme.current.onSurface
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f).padding(start = if (selected) 0.dp else 24.dp)
                                 )
-                                if (selected) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null,
-                                        tint = LocalZToolColorScheme.current.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
                             }
                         }
                     }
