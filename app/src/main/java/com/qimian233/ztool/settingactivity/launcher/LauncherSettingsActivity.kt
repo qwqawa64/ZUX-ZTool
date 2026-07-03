@@ -45,7 +45,7 @@ import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
-import com.qimian233.ztool.ui.components.ZToolSlider
+import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.utils.AppChooserDialog
@@ -461,7 +461,6 @@ private fun GridSliderRows(
             value = row,
             onValueChanged = onRowChanged
         )
-        Spacer(modifier = Modifier.height(32.dp))
         GridSliderRow(
             label = stringResource(R.string.inputColumnNumberHere),
             value = column,
@@ -487,26 +486,14 @@ private fun GridSliderRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(64.dp)
-        )
-        ZToolSlider(
+        ZToolSliderRow(
+            title = label,
             value = value.toFloat(),
+            valueText = value.toString(),
             onValueChange = { onValueChanged(it.toInt()) },
             valueRange = 3f..10f,
             steps = 6,
             modifier = Modifier.weight(1f)
-        )
-        Text(
-            text = value.toString(),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .width(40.dp)
-                .padding(start = 12.dp)
         )
     }
 }
