@@ -1,6 +1,7 @@
 package com.qimian233.ztool.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Alignment
@@ -59,12 +60,16 @@ fun ZToolDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     if (dismissButton != null) {
-                        dismissButton()
+                        Box(Modifier.weight(1f)) {
+                            dismissButton()
+                        }
                     }
-                    confirmButton()
+                    Box(Modifier.weight(1f)) {
+                        confirmButton()
+                    }
                 }
             }
         }
