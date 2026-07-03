@@ -292,7 +292,7 @@ private fun FloatingWindowContent(
 
                 if (state.currentStep == FloatingWizardStep.AddActivities) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
+                    ZToolButton(
                         onClick = onAddActivity,
                         enabled = !state.shouldBlockProgress
                     ) {
