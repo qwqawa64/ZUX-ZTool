@@ -482,13 +482,13 @@ private fun SliderSettingRow(
 ) {
     ZToolSwitchRow(
         title = title,
-        summary = valueLabel,
         checked = enabled,
         onCheckedChange = onEnabledChanged,
         padding = 0.dp
     )
     ZToolSliderRow(
         value = value,
+        valueText = valueLabel,
         onValueChange = onValueChanged,
         enabled = enabled,
         valueRange = valueRange,
