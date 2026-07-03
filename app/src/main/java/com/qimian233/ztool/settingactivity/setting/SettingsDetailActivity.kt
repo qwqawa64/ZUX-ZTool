@@ -156,8 +156,7 @@ fun SettingsDetailRoute(
         message: String
     ) {
         if (activity == null) return
-        val dialogWidth = (context.resources.displayMetrics.widthPixels * 0.9).toInt()
-        showPlatformComposeDialog(activity, width = dialogWidth) { dialog ->
+        showPlatformComposeDialog(activity) { dialog ->
             SimpleSettingsDetailDialogContent(
                 title = dialogTitle,
                 message = message,
@@ -175,8 +174,7 @@ fun SettingsDetailRoute(
         onConfirm: () -> Unit
     ) {
         if (activity == null) return
-        val dialogWidth = (context.resources.displayMetrics.widthPixels * 0.9).toInt()
-        showPlatformComposeDialog(activity, width = dialogWidth) { dialog ->
+        showPlatformComposeDialog(activity) { dialog ->
             SimpleSettingsDetailDialogContent(
                 title = dialogTitle,
                 message = message,
@@ -192,9 +190,8 @@ fun SettingsDetailRoute(
     }
 
     fun showComposeDialog(content: @Composable () -> Unit): Dialog? {
-        val dialogWidth = (context.resources.displayMetrics.widthPixels * 0.9).toInt()
         return activity?.let {
-            showPlatformComposeDialog(it, width = dialogWidth) {
+            showPlatformComposeDialog(it) {
                 content()
             }
         }
