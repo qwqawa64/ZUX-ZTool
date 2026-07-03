@@ -90,7 +90,7 @@ fun ZListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp)
+            .padding(vertical = 8.dp)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(enabled = enabled) { onClick() }
@@ -159,6 +159,28 @@ fun ZToolSwitchRow(
     icon: ImageVector? = null,
     padding: Dp = 24.dp
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixBasicComponent(
+            modifier = modifier.padding(vertical = 8.dp, horizontal = padding),
+            title = title,
+            summary = summary,
+            startAction = icon?.let { ic ->
+                { ZToolSettingLeadingIcon(icon = ic, enabled = enabled) }
+            },
+            endActions = {
+                MiuixSwitch(
+                    checked = checked,
+                    onCheckedChange = onCheckedChange,
+                    enabled = enabled
+                )
+            },
+            insideMargin = PaddingValues(vertical = 16.dp),
+            onClick = { onCheckedChange(!checked) },
+            enabled = enabled
+        )
+        return
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -178,71 +200,50 @@ fun ZToolSwitchRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
-                            (if (enabled) BasicComponentDefaults.titleColor().color else BasicComponentDefaults.titleColor().disabledColor)
-                        else
-                            (if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant),
-                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
-                                (if (enabled) BasicComponentDefaults.summaryColor().color else BasicComponentDefaults.summaryColor().disabledColor)
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) 0.dp else 4.dp),
-                    fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.body2.fontSize else TextUnit.Unspecified
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
-        Spacer(modifier = Modifier.padding(horizontal = 12.dp))
-        if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-            MiuixSwitch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                enabled = enabled,
-                colors = top.yukonga.miuix.kmp.basic.SwitchDefaults.switchColors(
-                    disabledCheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
-                    disabledCheckedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                    disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.12f),
-                )
-            )
-        } else {
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                enabled = enabled,
-                colors = SwitchDefaults.colors(
-                    disabledCheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
-                    disabledCheckedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                    disabledCheckedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f),
-                    disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.12f),
-                    disabledUncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
-                    disabledUncheckedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                ),
-                thumbContent = if (checked) {
-                    {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                        )
-                    }
-                } else {
-                    {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                        )
-                    }
+        Spacer(modifier = Modifier.width(12.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(
+                disabledCheckedThumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
+                disabledCheckedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                disabledCheckedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f),
+                disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.12f),
+                disabledUncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                disabledUncheckedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            ),
+            thumbContent = if (checked) {
+                {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                    )
                 }
-            )
-        }
+            } else {
+                {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                    )
+                }
+            }
+        )
     }
 }
 
@@ -313,6 +314,30 @@ fun <T> ZToolPopupMenuSettingRow(
     fieldMinWidth: Dp = 132.dp,
     fieldMaxWidth: Dp = 180.dp
 ) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixBasicComponent(
+            modifier = modifier.padding(vertical = 8.dp, horizontal = 24.dp),
+            title = title,
+            summary = summary,
+            startAction = icon?.let { ic ->
+                { ZToolSettingLeadingIcon(icon = ic, enabled = enabled) }
+            },
+            endActions = {
+                ZToolPopupMenuField(
+                    value = value,
+                    options = options,
+                    optionLabel = optionLabel,
+                    onOptionSelected = onOptionSelected,
+                    enabled = enabled,
+                    modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth)
+                )
+            },
+            insideMargin = PaddingValues(vertical = 16.dp),
+            enabled = enabled
+        )
+        return
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -327,22 +352,15 @@ fun <T> ZToolPopupMenuSettingRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
-                    (if (enabled) BasicComponentDefaults.titleColor().color else BasicComponentDefaults.titleColor().disabledColor)
-                else
-                    (if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant),
-                fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.headline1.fontSize else TextUnit.Unspecified
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (summary != null) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix)
-                        (if (enabled) BasicComponentDefaults.summaryColor().color else BasicComponentDefaults.summaryColor().disabledColor)
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) 0.dp else 4.dp),
-                    fontSize = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) MiuixTheme.textStyles.body2.fontSize else TextUnit.Unspecified
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
