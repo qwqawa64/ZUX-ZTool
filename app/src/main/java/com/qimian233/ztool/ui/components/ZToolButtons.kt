@@ -26,11 +26,14 @@ fun ZToolButton(
     isPrimary: Boolean = true,
     content: @Composable RowScope.() -> Unit
 ) {
+    val dialogModifier = LocalDialogButtonModifier.current
+    val effectiveModifier = dialogModifier.then(modifier)
+
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         val colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
         MiuixButton(
             onClick = onClick,
-            modifier = modifier,
+            modifier = effectiveModifier,
             enabled = enabled,
             colors = colors
         ) {
@@ -46,14 +49,14 @@ fun ZToolButton(
     if (isPrimary) {
         Button(
             onClick = onClick,
-            modifier = modifier,
+            modifier = effectiveModifier,
             enabled = enabled,
             content = content
         )
     } else {
         FilledTonalButton(
             onClick = onClick,
-            modifier = modifier,
+            modifier = effectiveModifier,
             enabled = enabled,
             content = content
         )
@@ -68,11 +71,14 @@ fun ZToolTextButton(
     enabled: Boolean = true,
     isPrimary: Boolean = true
 ) {
+    val dialogModifier = LocalDialogButtonModifier.current
+    val effectiveModifier = dialogModifier.then(modifier)
+
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         val colors = if (isPrimary) MiuixButtonDefaults.buttonColorsPrimary() else MiuixButtonDefaults.buttonColors()
         MiuixButton(
             onClick = onClick,
-            modifier = modifier,
+            modifier = effectiveModifier,
             enabled = enabled,
             colors = colors
         ) {
@@ -86,7 +92,7 @@ fun ZToolTextButton(
 
     TextButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = effectiveModifier,
         enabled = enabled,
     ) {
         Text(text = text)

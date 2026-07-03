@@ -14,6 +14,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
@@ -24,6 +25,8 @@ import top.yukonga.miuix.kmp.basic.Surface as MiuixSurface
 
 val DIALOG_BUTTON_HORIZONTAL_ARRANGEMENT = 0
 val DIALOG_BUTTON_VERTICAL_ARRANGEMENT = 1
+
+val LocalDialogButtonModifier = staticCompositionLocalOf<Modifier> { Modifier }
 
 @Composable
 fun ZToolDialog(
@@ -65,12 +68,20 @@ fun ZToolDialog(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         if (dismissButton != null) {
-                            Box(Modifier.weight(1f).fillMaxWidth()) {
-                                dismissButton()
+                            Box(Modifier.weight(1f)) {
+                                CompositionLocalProvider(
+                                    LocalDialogButtonModifier provides Modifier.fillMaxWidth()
+                                ) {
+                                    dismissButton()
+                                }
                             }
                         }
-                        Box(Modifier.weight(1f).fillMaxWidth()) {
-                            confirmButton()
+                        Box(Modifier.weight(1f)) {
+                            CompositionLocalProvider(
+                                LocalDialogButtonModifier provides Modifier.fillMaxWidth()
+                            ) {
+                                confirmButton()
+                            }
                         }
                     }
                 } else {
@@ -81,11 +92,19 @@ fun ZToolDialog(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Box(Modifier.fillMaxWidth()) {
-                            confirmButton()
+                            CompositionLocalProvider(
+                                LocalDialogButtonModifier provides Modifier.fillMaxWidth()
+                            ) {
+                                confirmButton()
+                            }
                         }
                         if (dismissButton != null) {
                             Box(Modifier.fillMaxWidth()) {
-                                dismissButton()
+                                CompositionLocalProvider(
+                                    LocalDialogButtonModifier provides Modifier.fillMaxWidth()
+                                ) {
+                                    dismissButton()
+                                }
                             }
                         }
                     }
