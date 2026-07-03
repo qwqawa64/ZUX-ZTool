@@ -569,6 +569,52 @@ fun ZToolSlider(
 }
 
 @Composable
+fun ZToolOutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "",
+    placeholder: String? = null,
+    singleLine: Boolean = true,
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    isError: Boolean = false,
+    supportingText: String? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default
+) {
+    if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        MiuixTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier,
+            label = label,
+            useLabelAsPlaceholder = placeholder != null,
+            singleLine = singleLine,
+            enabled = enabled,
+            readOnly = readOnly,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions
+        )
+    } else {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier,
+            label = { Text(label) },
+            placeholder = placeholder?.let { { Text(it) } },
+            singleLine = singleLine,
+            enabled = enabled,
+            readOnly = readOnly,
+            isError = isError,
+            supportingText = supportingText?.let { { Text(it) } },
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions
+        )
+    }
+}
+
+@Composable
 fun ZToolTextInputRow(
     label: String,
     value: String,
@@ -583,8 +629,6 @@ fun ZToolTextInputRow(
     horizontalPadding: Dp = 24.dp,
     verticalPadding: Dp = 16.dp
 ) {
-    val isMiuix = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -605,33 +649,17 @@ fun ZToolTextInputRow(
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
-        if (isMiuix) {
-            MiuixTextField(
-                value = value,
-                onValueChange = onValueChange,
-                label = label,
-                useLabelAsPlaceholder = placeholder != null,
-                singleLine = singleLine,
-                enabled = enabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
-            )
-        } else {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                label = { Text(label) },
-                placeholder = placeholder?.let { placeholderText ->
-                    { Text(placeholderText) }
-                },
-                singleLine = singleLine,
-                enabled = enabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
-            )
-        }
+        ZToolOutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = label,
+            placeholder = placeholder,
+            singleLine = singleLine,
+            enabled = enabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = if (title != null || summary != null) 12.dp else 0.dp)
+        )
     }
 }
 
@@ -682,7 +710,7 @@ fun ZToolArgbColorTextFieldRow(
                 .border(BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant), shape = RoundedCornerShape(8.dp))
         )
         Spacer(modifier = Modifier.width(16.dp))
-        OutlinedTextField(
+        ZToolOutlinedTextField(
             value = value,
             onValueChange = { onValueChange(it.sanitizeArgbColorText()) },
             modifier = Modifier
@@ -692,21 +720,10 @@ fun ZToolArgbColorTextFieldRow(
                         finishEditing()
                     }
                 },
-            label = { Text(label) },
-            placeholder = defaultText?.let { text ->
-                { Text(text.sanitizeArgbColorText()) }
-            },
-            supportingText = when {
-                hasError && errorText != null -> {
-                    { Text(errorText) }
-                }
-                summary != null -> {
-                    { Text(summary) }
-                }
-                else -> null
-            },
+            label = label,
+            placeholder = defaultText?.sanitizeArgbColorText(),
             isError = hasError,
-            singleLine = true,
+            supportingText = if (hasError) errorText else summary,
             enabled = enabled,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
