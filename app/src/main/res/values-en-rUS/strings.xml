@@ -875,4 +875,5 @@
     <string name="auto_accept_file_transfer">Accept file transfer request automatically</string>
     <string name="auto_accept_file_transfer_summary">You may receive some file by accident after enabling this feature</string>
     <string name="app_search_page_selected_string">%d APP(s) selected</string>
+    <string name="launcher_grid_current_option">Current option: %1$d lines, %2$d columns</string>
 </resources>

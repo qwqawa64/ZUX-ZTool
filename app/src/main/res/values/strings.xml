@@ -930,4 +930,5 @@
     <string name="auto_accept_file_transfer">自动接受互传请求</string>
     <string name="auto_accept_file_transfer_summary">可能会导致您意外收到某些文件</string>
     <string name="app_search_page_selected_string">已选择 %d 个应用</string>
+    <string name="launcher_grid_current_option">设定为：%1$d 行，%2$d 列</string>
 </resources>
