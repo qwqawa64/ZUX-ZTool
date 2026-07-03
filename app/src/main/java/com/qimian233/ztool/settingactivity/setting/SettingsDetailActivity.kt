@@ -1168,15 +1168,13 @@ private fun ConfigSelectionDialogContent(
                     ZToolTextButton(
                         onClick = onRestore,
                         text = stringResource(R.string.restoreModule),
-                        modifier = Modifier.fillMaxWidth(),
                         isPrimary = false
                     )
                 }
                 ZToolTextButton(
                     onClick = onCancel,
                     text = stringResource(R.string.cancel),
-                    isPrimary = false,
-                    modifier = Modifier.fillMaxWidth())
+                    isPrimary = false)
             }
         }
     )
