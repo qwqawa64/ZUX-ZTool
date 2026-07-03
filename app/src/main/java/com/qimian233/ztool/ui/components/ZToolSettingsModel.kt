@@ -575,14 +575,16 @@ fun ZToolTextInputRow(
     placeholder: String? = null,
     singleLine: Boolean = true,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    horizontalPadding: Dp = 24.dp,
+    verticalPadding: Dp = 16.dp
 ) {
     val isMiuix = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(horizontal = horizontalPadding, vertical = verticalPadding)
     ) {
         if (title != null) {
             SettingsTitleBlock(
