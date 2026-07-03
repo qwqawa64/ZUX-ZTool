@@ -185,7 +185,7 @@ object AppChooserDialog {
         return showPlatformComposeDialog(
             context = context,
             cancelable = cancelable,
-            width = ViewGroup.LayoutParams.MATCH_PARENT,
+            width = ViewGroup.LayoutParams.WRAP_CONTENT,
             height = ViewGroup.LayoutParams.WRAP_CONTENT,
             content = content
         )
