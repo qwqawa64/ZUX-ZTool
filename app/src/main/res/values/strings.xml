@@ -194,6 +194,8 @@
     <string name="more_lines_suffix"> 更多行</string>
     <string name="export_logs_success">日志导出成功</string>
     <string name="export_logs_failed">日志导出失败</string>
+    <string name="export_logs">导出日志</string>
+    <string name="lsposed_log_sync_failed">无法同步 LSPosed 日志，请检查 Root 权限</string>
     <string name="zip_logs_failed">压缩日志时出现问题，无法导出日志</string>
 
     <!--设置页资源值-->

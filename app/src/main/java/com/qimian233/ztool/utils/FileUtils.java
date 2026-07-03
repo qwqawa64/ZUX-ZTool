@@ -49,6 +49,54 @@ public class FileUtils {
         }
     }
 
+    /**
+     * 将目录打包为zip，保留子目录结构
+     * @param sourceDir 要打包的源目录
+     * @param outputZip 输出的zip文件
+     * @return 是否成功
+     */
+    public static boolean createZipFromDirectory(File sourceDir, File outputZip) {
+        if (sourceDir == null || !sourceDir.exists() || !sourceDir.isDirectory() || outputZip == null) return false;
+
+        try (FileOutputStream fos = new FileOutputStream(outputZip);
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+
+            byte[] buffer = new byte[1024];
+            String basePath = sourceDir.getAbsolutePath();
+
+            addFilesToZip(sourceDir, basePath, zos, buffer);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static void addFilesToZip(File dir, String basePath, ZipOutputStream zos, byte[] buffer) throws IOException {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                addFilesToZip(file, basePath, zos, buffer);
+            } else {
+                String relativePath = file.getAbsolutePath().substring(basePath.length() + 1);
+                // Normalize path separators for zip entries
+                relativePath = relativePath.replace(File.separatorChar, '/');
+
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    ZipEntry zipEntry = new ZipEntry(relativePath);
+                    zos.putNextEntry(zipEntry);
+
+                    int length;
+                    while ((length = fis.read(buffer)) > 0) {
+                        zos.write(buffer, 0, length);
+                    }
+                    zos.closeEntry();
+                }
+            }
+        }
+    }
+
     // 递归删除目录
     public static void deleteRecursive(File fileOrDirectory) {
         if (fileOrDirectory == null || !fileOrDirectory.exists()) return;

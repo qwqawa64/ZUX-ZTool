@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Tune
@@ -85,7 +86,9 @@ fun SettingsMainRoute(
     
     val backupSuccessStr = stringResource(R.string.config_backup_success)
     val restoreSuccessStr = stringResource(R.string.config_restore_success)
-    
+    val exportLogsSuccessStr = stringResource(R.string.export_logs_success)
+    val exportLogsFailedStr = stringResource(R.string.export_logs_failed)
+
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -108,6 +111,25 @@ fun SettingsMainRoute(
                     if (result) {
                         showSettingsToast(context, restoreSuccessStr)
                     }
+                }
+            }
+        }
+    }
+    val exportLogLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportLogsToUri(uri) { success, error ->
+                activity.runOnUiThread {
+                    Toast.makeText(
+                        context,
+                        when {
+                            success -> exportLogsSuccessStr
+                            error != null -> exportLogsFailedStr + error
+                            else -> exportLogsFailedStr
+                        },
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -151,7 +173,8 @@ fun SettingsMainRoute(
         onAbout = {
             showRestoreConfirmDialog = false
             onOpenAbout()
-        }
+        },
+        onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) }
     )
 
     SettingsDialogs(
@@ -289,7 +312,8 @@ private fun SettingsRoute(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
-    onAbout: () -> Unit
+    onAbout: () -> Unit,
+    onExportLogs: () -> Unit
 ) {
     ZToolScaffold (
         topBar = {
@@ -323,7 +347,8 @@ private fun SettingsRoute(
                         onEntryDisplayChanged = onEntryDisplayChanged,
                         onDetailedLoggingChanged = onDetailedLoggingChanged,
                         onHomepageYiyanChanged = onHomepageYiyanChanged,
-                        onAbout = onAbout
+                        onAbout = onAbout,
+                        onExportLogs = onExportLogs
                     ),
                     bottomPadding = 32.dp
                 )
@@ -408,7 +433,8 @@ private fun settingsSections(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
-    onAbout: () -> Unit
+    onAbout: () -> Unit,
+    onExportLogs: () -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -476,6 +502,12 @@ private fun settingsSections(
                     checked = state.isDetailedLoggingEnabled,
                     onCheckedChange = onDetailedLoggingChanged,
                     icon = Icons.AutoMirrored.Rounded.Article
+                ),
+                SettingItem.Action(
+                    key = "export_logs",
+                    title = stringResource(R.string.export_logs),
+                    onClick = onExportLogs,
+                    icon = Icons.Rounded.Save
                 ),
                 SettingItem.Switch(
                     key = "enable_homepage_yiyan",

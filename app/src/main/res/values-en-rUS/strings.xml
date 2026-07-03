@@ -181,6 +181,8 @@
     <string name="more_lines_suffix"> more lines</string>
     <string name="export_logs_success">Logs exported</string>
     <string name="export_logs_failed">Failed to export logs</string>
+    <string name="export_logs">Export Logs</string>
+    <string name="lsposed_log_sync_failed">Failed to sync LSPosed logs. Please check root permission.</string>
     <string name="zip_logs_failed">A problem occurred while compressing logs. Logs cannot be exported.</string>
     <string name="default_title">XXX - Detailed Settings</string>
     <string name="settingsFragment_title">Settings</string>

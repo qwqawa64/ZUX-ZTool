@@ -163,6 +163,24 @@ class SettingsViewModel(
         )
     }
 
+    fun exportFileName(): String = repository.exportFileName()
+
+    fun exportLogsToUri(uri: Uri, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = repository.exportLogsToUri(uri)
+                withContext(Dispatchers.Main) {
+                    onResult(result, null)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to export logs", e)
+                withContext(Dispatchers.Main) {
+                    onResult(false, e.message)
+                }
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "SettingsViewModel"
     }

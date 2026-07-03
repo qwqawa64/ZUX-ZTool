@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 使用Root权限的日志采集服务（完全修复前台服务超时问题）
+ * 应用自身日志采集服务（无需Root权限，通过 PID 过滤 logcat）
  */
 public class LogCollectorService extends Service {
     private static final String TAG = "LogCollectorService";
@@ -28,15 +28,11 @@ public class LogCollectorService extends Service {
     private static final String CHANNEL_ID = "log_collector_channel";
     private static final String CHANNEL_NAME = "日志采集服务";
 
-    // 配置参数
-    private static final String[] LOG_TAGS = {
-            "ZToolXposedModule",           // BaseHookModule的默认标签
-            "ZTool"                  // 应用自身日志
-    };
-    private static final long MAX_FILE_SIZE = 1024 * 1024; // 1MB分片大小
+    private static final long MAX_FILE_SIZE = 1024 * 1024; // 1MB
     private static final int MAX_FILES = 20;
     private static final String LOG_DIR = "Log";
-    private static final String FILE_PREFIX = "hook_log_";
+    private static final String APP_LOG_SUBDIR = "app";
+    private static final String FILE_PREFIX = "app_log_";
     private static final String FILE_SUFFIX = ".txt";
 
     private Process logcatProcess;
@@ -44,7 +40,6 @@ public class LogCollectorService extends Service {
     private File currentFile;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private Thread logcatThread;
-    private boolean useRootMode = true;
     private boolean isRestartMode = false;
     private boolean isForeground = false;
     private Handler mainHandler;
@@ -58,10 +53,7 @@ public class LogCollectorService extends Service {
         mainHandler = new Handler(Looper.getMainLooper());
         notificationManager = getSystemService(NotificationManager.class);
 
-        // 第一步：立即创建通知渠道
         createNotificationChannel();
-
-        // 第二步：立即启动前台服务（必须在5秒内完成）
         startForegroundImmediately();
 
         android.util.Log.d(TAG, "服务 onCreate() 完成");
@@ -79,7 +71,6 @@ public class LogCollectorService extends Service {
             android.util.Log.d(TAG, "服务重启模式启动");
         }
 
-        // 确保前台服务已经启动
         if (!isForeground) {
             android.util.Log.w(TAG, "前台服务未启动，立即启动");
             startForegroundImmediately();
@@ -87,8 +78,6 @@ public class LogCollectorService extends Service {
 
         if (!isRunning.get()) {
             isRunning.set(true);
-
-            // 延迟启动日志收集，确保前台服务已完全建立
             mainHandler.postDelayed(() -> {
                 android.util.Log.d(TAG, "开始启动日志收集");
                 startLogCollection();
@@ -106,7 +95,7 @@ public class LogCollectorService extends Service {
     public void onDestroy() {
         android.util.Log.d(TAG, "服务 onDestroy() 开始");
         stopLogCollection();
-        android.util.Log.d(TAG, "Root权限日志采集服务已停止");
+        android.util.Log.d(TAG, "日志采集服务已停止");
         super.onDestroy();
     }
 
@@ -121,9 +110,6 @@ public class LogCollectorService extends Service {
         return null;
     }
 
-    /**
-     * 立即启动前台服务（避免超时的核心方法）
-     */
     private void startForegroundImmediately() {
         android.util.Log.d(TAG, "开始启动前台服务");
 
@@ -135,7 +121,6 @@ public class LogCollectorService extends Service {
                 android.util.Log.d(TAG, "前台服务启动成功");
             } else {
                 android.util.Log.e(TAG, "创建通知失败，无法启动前台服务");
-                // 即使通知创建失败，也尝试启动一个基本的通知
                 startFallbackForeground();
             }
         } catch (SecurityException e) {
@@ -147,9 +132,6 @@ public class LogCollectorService extends Service {
         }
     }
 
-    /**
-     * 创建简单的通知（避免复杂操作导致超时）
-     */
     private Notification createSimpleNotification() {
         try {
             NotificationCompat.Builder builder;
@@ -167,12 +149,8 @@ public class LogCollectorService extends Service {
         }
     }
 
-    /**
-     * 备用前台服务启动方法
-     */
     private void startFallbackForeground() {
         try {
-            // 使用最基本的通知设置
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID);
             Notification notification = builder
                     .setContentTitle("日志服务")
@@ -188,9 +166,6 @@ public class LogCollectorService extends Service {
         }
     }
 
-    /**
-     * 创建通知渠道
-     */
     public void createNotificationChannel() {
         try {
             NotificationChannel channel = new NotificationChannel(
@@ -198,7 +173,7 @@ public class LogCollectorService extends Service {
                     CHANNEL_NAME,
                     NotificationManager.IMPORTANCE_LOW
             );
-            channel.setDescription("用于收集Hook模块的运行日志");
+            channel.setDescription("用于采集应用自身运行日志");
             channel.setShowBadge(false);
             channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
 
@@ -213,9 +188,6 @@ public class LogCollectorService extends Service {
         }
     }
 
-    /**
-     * 更新通知内容
-     */
     private void updateNotification(String contentText) {
         if (isForeground) {
             mainHandler.post(() -> {
@@ -242,11 +214,7 @@ public class LogCollectorService extends Service {
         }
     }
 
-    /**
-     * 获取通知图标
-     */
     private int getNotificationIcon() {
-        // 使用应用图标或默认系统图标
         try {
             int icon = R.mipmap.ic_launcher;
             if (icon == 0) {
@@ -258,9 +226,6 @@ public class LogCollectorService extends Service {
         }
     }
 
-    /**
-     * 启动日志收集
-     */
     private void startLogCollection() {
         android.util.Log.d(TAG, "准备启动日志收集");
 
@@ -274,28 +239,22 @@ public class LogCollectorService extends Service {
             }
         }
 
-        // 更新通知状态
         updateNotification("正在初始化日志收集...");
 
         logcatThread = new Thread(new LogCollectorRunnable());
-        logcatThread.setName("RootLogCollector-Thread");
+        logcatThread.setName("AppLogCollector-Thread");
         logcatThread.setPriority(Thread.MIN_PRIORITY);
         logcatThread.start();
 
         android.util.Log.d(TAG, "日志收集线程已启动");
     }
 
-    /**
-     * 停止日志收集
-     */
     private void stopLogCollection() {
         android.util.Log.d(TAG, "开始停止日志收集");
         isRunning.set(false);
 
-        // 更新通知状态
         updateNotification("正在停止服务...");
 
-        // 先中断线程
         if (logcatThread != null && logcatThread.isAlive()) {
             logcatThread.interrupt();
             try {
@@ -305,7 +264,6 @@ public class LogCollectorService extends Service {
             }
         }
 
-        // 然后停止进程
         if (logcatProcess != null) {
             try {
                 logcatProcess.destroy();
@@ -317,7 +275,6 @@ public class LogCollectorService extends Service {
 
         closeCurrentWriter();
 
-        // 停止前台服务
         if (isForeground) {
             try {
                 stopForeground(true);
@@ -331,112 +288,32 @@ public class LogCollectorService extends Service {
         android.util.Log.d(TAG, "日志收集已完全停止");
     }
 
-    // 其余方法保持不变（buildLogcatCommand, checkRootPermission, 文件操作等）
-    // 为了简洁，这里省略重复代码，实际使用时需要保留
-
     private List<String> buildLogcatCommand() {
         List<String> command = new ArrayList<>();
-
-        if (useRootMode) {
-            command.add("su");
-            command.add("-c");
-
-            StringBuilder logcatCmd = getStringBuilder();
-
-            command.add(logcatCmd.toString());
-            android.util.Log.d(TAG, "Root模式命令: " + command);
-        } else {
-            command.add("logcat");
-            command.add("-v");
-            command.add("time");
-            command.add("-b");
-            command.add("main");
-            command.add("-b");
-            command.add("system");
-
-            for (String tag : LOG_TAGS) {
-                command.add(tag + ":I");
-            }
-
-            command.add("*:S");
-            android.util.Log.d(TAG, "非Root模式命令: " + command);
-        }
-
+        command.add("logcat");
+        command.add("-v");
+        command.add("time");
+        command.add("--pid=" + android.os.Process.myPid());
+        command.add("*:V");
+        android.util.Log.d(TAG, "Logcat命令: " + command);
         return command;
     }
 
-    @NonNull
-    private static StringBuilder getStringBuilder() {
-        StringBuilder logcatCmd = new StringBuilder();
-        logcatCmd.append("logcat");
-        logcatCmd.append(" -v");
-        logcatCmd.append(" time");
-        logcatCmd.append(" -b");
-        logcatCmd.append(" main");
-        logcatCmd.append(" -b");
-        logcatCmd.append(" system");
-        logcatCmd.append(" -b");
-        logcatCmd.append(" events");
-
-        for (String tag : LOG_TAGS) {
-            logcatCmd.append(" ").append(tag).append(":I");
-        }
-
-        logcatCmd.append(" *:S");
-        return logcatCmd;
-    }
-
-    private boolean checkRootPermission() {
-        try {
-            Process process = Runtime.getRuntime().exec("su -c id");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = reader.readLine();
-            process.waitFor();
-
-            if (line != null && line.contains("uid=0")) {
-                android.util.Log.d(TAG, "Root权限检查通过");
-                return true;
-            } else {
-                android.util.Log.w(TAG, "Root权限检查失败");
-                return false;
-            }
-        } catch (Exception e) {
-            android.util.Log.e(TAG, "Root权限检查异常", e);
-            return false;
-        }
-    }
-
-    /**
-     * 日志收集主循环
-     */
     private class LogCollectorRunnable implements Runnable {
         @Override
         public void run() {
-            android.util.Log.d(TAG, "Root日志收集线程启动");
-
-            // 更新通知状态
-            mainHandler.post(() -> updateNotification("正在检查Root权限..."));
-
-            // 检查Root权限
-            if (useRootMode && !checkRootPermission()) {
-                android.util.Log.w(TAG, "无法获取Root权限，切换到非Root模式");
-                useRootMode = false;
-                mainHandler.post(() -> updateNotification("使用普通模式收集日志..."));
-            } else {
-                mainHandler.post(() -> updateNotification(
-                        useRootMode ? "使用Root模式收集日志..." : "使用普通模式收集日志..."));
-            }
+            android.util.Log.d(TAG, "日志收集线程启动");
+            mainHandler.post(() -> updateNotification("正在采集应用日志..."));
 
             try {
-                // 创建日志目录
                 File logDir = new File(getFilesDir(), LOG_DIR);
-                if (!logDir.exists() && !logDir.mkdirs()) {
-                    android.util.Log.e(TAG, "无法创建日志目录: " + logDir.getAbsolutePath());
+                File appLogDir = new File(logDir, APP_LOG_SUBDIR);
+                if (!appLogDir.exists() && !appLogDir.mkdirs()) {
+                    android.util.Log.e(TAG, "无法创建日志目录: " + appLogDir.getAbsolutePath());
                     mainHandler.post(() -> updateNotification("创建日志目录失败"));
                     return;
                 }
 
-                // 构建并启动logcat进程
                 List<String> command = buildLogcatCommand();
                 android.util.Log.d(TAG, "执行logcat命令: " + command);
 
@@ -449,35 +326,29 @@ public class LogCollectorService extends Service {
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(logcatProcess.getInputStream()));
 
-                // 初始化第一个日志文件
-                currentFile = createNewLogFile(logDir);
+                currentFile = createNewLogFile(appLogDir);
                 currentWriter = new BufferedWriter(new FileWriter(currentFile, true));
 
                 android.util.Log.d(TAG, "开始写入日志文件: " + currentFile.getAbsolutePath());
-
-                mainHandler.post(() -> updateNotification("正在收集日志..."));
+                mainHandler.post(() -> updateNotification("正在采集日志..."));
 
                 String line;
                 int lineCount = 0;
                 long lastStatusLogTime = System.currentTimeMillis();
                 long lastNotificationUpdate = System.currentTimeMillis();
                 long lastFileCheckTime = System.currentTimeMillis();
-                final long FILE_CHECK_INTERVAL = 5000; // 每5秒检查一次文件是否存在
+                final long FILE_CHECK_INTERVAL = 5000;
 
                 while (isRunning.get() && !Thread.currentThread().isInterrupted()) {
                     try {
-                        // 定期检查当前日志文件是否存在，如果被删除则重新创建
                         long currentTime = System.currentTimeMillis();
                         if (currentTime - lastFileCheckTime > FILE_CHECK_INTERVAL) {
                             if (currentFile != null && !currentFile.exists()) {
                                 android.util.Log.w(TAG, "当前日志文件已被删除，重新创建新文件");
                                 mainHandler.post(() -> updateNotification("检测到文件被删除，重新创建..."));
 
-                                // 关闭当前写入器
                                 closeCurrentWriter();
-
-                                // 创建新文件
-                                currentFile = createNewLogFile(logDir);
+                                currentFile = createNewLogFile(appLogDir);
                                 currentWriter = new BufferedWriter(new FileWriter(currentFile, true));
 
                                 android.util.Log.d(TAG, "已创建新日志文件: " + currentFile.getAbsolutePath());
@@ -486,17 +357,14 @@ public class LogCollectorService extends Service {
                             lastFileCheckTime = currentTime;
                         }
 
-                        // 使用 readLine() 的阻塞特性，避免忙等待
-                        // 设置读取超时，以便定期检查文件状态和运行状态
                         line = reader.readLine();
                         if (line != null) {
                             String enhancedLine = enhanceLogLine(line);
 
-                            // 写入前再次检查文件状态
                             if (currentWriter == null || (currentFile != null && !currentFile.exists())) {
                                 android.util.Log.w(TAG, "日志文件状态异常，重新初始化");
                                 closeCurrentWriter();
-                                currentFile = createNewLogFile(logDir);
+                                currentFile = createNewLogFile(appLogDir);
                                 currentWriter = new BufferedWriter(new FileWriter(currentFile, true));
                             }
 
@@ -505,7 +373,6 @@ public class LogCollectorService extends Service {
                                 currentWriter.newLine();
                                 currentWriter.flush();
                             } catch (IOException e) {
-                                // 如果写入失败，可能是文件被删除，重新创建文件
                                 if (e.getMessage() != null &&
                                         (e.getMessage().contains("ENOENT") ||
                                                 e.getMessage().contains("No such file") ||
@@ -513,37 +380,36 @@ public class LogCollectorService extends Service {
 
                                     android.util.Log.w(TAG, "写入日志失败，文件可能被删除，重新创建: " + e.getMessage());
                                     closeCurrentWriter();
-                                    currentFile = createNewLogFile(logDir);
+                                    currentFile = createNewLogFile(appLogDir);
                                     currentWriter = new BufferedWriter(new FileWriter(currentFile, true));
 
-                                    // 重试写入
                                     currentWriter.write(enhancedLine);
                                     currentWriter.newLine();
                                     currentWriter.flush();
                                 } else {
-                                    throw e; // 重新抛出其他IO异常
+                                    throw e;
                                 }
                             }
 
                             lineCount++;
 
                             if (lineCount % 100 == 0 || (currentTime - lastStatusLogTime) > 30000) {
-                                android.util.Log.d(TAG, "已收集 " + lineCount + " 行日志");
+                                android.util.Log.d(TAG, "已采集 " + lineCount + " 行日志");
                                 lastStatusLogTime = currentTime;
                             }
 
                             if (currentTime - lastNotificationUpdate > 30000) {
                                 int finalLineCount = lineCount;
                                 mainHandler.post(() ->
-                                        updateNotification("已收集 " + finalLineCount + " 行日志"));
+                                        updateNotification("已采集 " + finalLineCount + " 行日志"));
                                 lastNotificationUpdate = currentTime;
                             }
 
                             if (currentFile.length() >= MAX_FILE_SIZE) {
                                 android.util.Log.d(TAG, "日志文件达到大小限制，开始轮转");
                                 mainHandler.post(() -> updateNotification("正在轮转日志文件..."));
-                                rotateLogFile(logDir);
-                                mainHandler.post(() -> updateNotification("正在收集日志..."));
+                                rotateLogFile(appLogDir);
+                                mainHandler.post(() -> updateNotification("正在采集日志..."));
                             }
                         } else {
                             android.util.Log.d(TAG, "Logcat 流已结束");
@@ -557,30 +423,13 @@ public class LogCollectorService extends Service {
                     }
                 }
 
-                android.util.Log.d(TAG, "日志收集完成，共收集 " + lineCount + " 行日志");
-                mainHandler.post(() -> updateNotification("日志收集已完成"));
+                android.util.Log.d(TAG, "日志采集完成，共采集 " + lineCount + " 行日志");
+                mainHandler.post(() -> updateNotification("日志采集已完成"));
             } catch (IOException e) {
-                android.util.Log.e(TAG, "启动日志收集失败", e);
-                mainHandler.post(() -> updateNotification("日志收集启动失败"));
-
-                if (useRootMode) {
-                    android.util.Log.w(TAG, "Root模式失败，尝试非Root模式");
-                    useRootMode = false;
-                    mainHandler.post(() -> updateNotification("切换到普通模式..."));
-
-                    if (isRunning.get()) {
-                        try {
-                            Thread.sleep(2000);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                        }
-                        if (isRunning.get()) {
-                            run();
-                        }
-                    }
-                }
+                android.util.Log.e(TAG, "启动日志采集失败", e);
+                mainHandler.post(() -> updateNotification("日志采集启动失败"));
             } finally {
-                android.util.Log.d(TAG, "Root日志收集线程结束");
+                android.util.Log.d(TAG, "日志采集线程结束");
                 closeCurrentWriter();
                 if (logcatProcess != null) {
                     logcatProcess.destroy();
@@ -591,17 +440,14 @@ public class LogCollectorService extends Service {
         private String enhanceLogLine(String originalLine) {
             String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
                     .format(new Date());
-            String mode = useRootMode ? "ROOT" : "NORMAL";
-            return String.format("[%s] [%s] %s", timestamp, mode, originalLine);
+            return String.format("[%s] %s", timestamp, originalLine);
         }
     }
-
 
     private File createNewLogFile(File logDir) {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
                 .format(new Date());
-        String mode = useRootMode ? "root" : "normal";
-        String fileName = FILE_PREFIX + mode + "_" + timestamp + FILE_SUFFIX;
+        String fileName = FILE_PREFIX + timestamp + FILE_SUFFIX;
         File newFile = new File(logDir, fileName);
         android.util.Log.d(TAG, "创建新日志文件: " + newFile.getAbsolutePath());
         return newFile;

@@ -39,6 +39,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.qimian233.ztool.data.home.AgreementRepository
+import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
@@ -132,6 +133,11 @@ class MainActivity : ComponentActivity(),
         }
 
         LogServiceManager.restartServiceIfNeeded(this)
+
+        // 启动时清理超量日志 + 同步 LSPosed 日志
+        val settingsRepo = SettingsRepository(applicationContext)
+        settingsRepo.cleanupAppLogsIfNeeded()
+        settingsRepo.syncLsposedLogs()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -256,11 +262,10 @@ private enum class MainRoute(
 ) {
     Home(R.string.gotoHomePage, R.drawable.ic_home),
     Features(R.string.gotoFeaturePage, R.drawable.ic_features),
-    Audit(R.string.gotoLogPage, R.drawable.ic_audit),
     Settings(R.string.gotoSettingsPage, R.drawable.ic_settings);
 
     companion object {
-        val entriesInOrder = listOf(Home, Features, Audit, Settings)
+        val entriesInOrder = listOf(Home, Features, Settings)
 
         fun fromName(name: String): MainRoute? {
             return entriesInOrder.firstOrNull { it.name == name }
@@ -512,15 +517,6 @@ private fun MainRouteNavHost(
                     }
                 }
             )
-        }
-        composable(
-            route = MainRoute.Audit.name,
-            enterTransition = mainRouteEnter,
-            exitTransition = mainRouteExit,
-            popEnterTransition = mainRoutePopEnter,
-            popExitTransition = mainRoutePopExit
-        ) {
-            AuditMainRoute()
         }
         composable(
             route = MainRoute.Settings.name,
@@ -919,8 +915,7 @@ private fun mainRouteIndex(route: String?): Int {
     return when {
         route == MainRoute.Home.name -> 0
         route == MainRoute.Features.name || route.startsWith("feature/") -> 1
-        route == MainRoute.Audit.name -> 2
-        route == MainRoute.Settings.name || route.startsWith("Settings") -> 3
+        route == MainRoute.Settings.name || route.startsWith("Settings") -> 2
         else -> -1
     }
 }
@@ -942,10 +937,9 @@ private fun navigationRouteIndex(route: String?): Int {
         FeatureDestination.MobileDesktop.route -> 2
         FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2
-        MainRoute.Audit.name -> 4
-        MainRoute.Settings.name -> 5
-        HiddenRoute.SETTINGS_THEME -> 6
-        HiddenRoute.SETTINGS_ABOUT -> 6
+        MainRoute.Settings.name -> 3
+        HiddenRoute.SETTINGS_THEME -> 4
+        HiddenRoute.SETTINGS_ABOUT -> 4
         else -> 0
     }
 }
