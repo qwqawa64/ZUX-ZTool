@@ -53,6 +53,7 @@ import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
@@ -527,35 +528,25 @@ private fun OtaCustomParamsContent(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = stringResource(R.string.current_version_fmt, state.currentVersion),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        OutlinedTextField(
+        ZToolTextInputRow(
             value = state.customVersion,
             onValueChange = onCustomVersionChanged,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 4.dp),
-            label = { Text(stringResource(R.string.Ota_Custom_Version_Hint)) },
-            singleLine = true
+            label = stringResource(R.string.current_version_fmt, state.currentVersion),
+            singleLine = true,
+            horizontalPadding = 0.dp
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = stringResource(R.string.current_sn_fmt, state.currentSn),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        OutlinedTextField(
+        ZToolTextInputRow(
             value = state.customDeviceId,
             onValueChange = onCustomDeviceIdChanged,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 4.dp),
-            label = { Text(stringResource(R.string.Ota_Custom_DeviceID_Hint)) },
-            singleLine = true
+            label = stringResource(R.string.current_sn_fmt, state.currentSn),
+            singleLine = true,
+            horizontalPadding = 0.dp
         )
     }
 }
