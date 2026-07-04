@@ -35,8 +35,6 @@ import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -67,6 +65,8 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
@@ -807,16 +807,18 @@ private fun themeSettingsSections(
                         icon = Icons.Rounded.Swipe
                     )
                 )
-                add(
-                    SettingItem.Switch(
-                        key = "amoled_black",
-                        title = stringResource(R.string.amoled_black_title),
-                        summary = stringResource(R.string.amoled_black_summary),
-                        checked = settings.amoledBlackEnabled,
-                        onCheckedChange = onAmoledBlackChanged,
-                        icon = Icons.Rounded.Contrast
+                if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
+                    add(
+                        SettingItem.Switch(
+                            key = "amoled_black",
+                            title = stringResource(R.string.amoled_black_title),
+                            summary = stringResource(R.string.amoled_black_summary),
+                            checked = settings.amoledBlackEnabled,
+                            onCheckedChange = onAmoledBlackChanged,
+                            icon = Icons.Rounded.Contrast
+                        )
                     )
-                )
+                }
                 add(
                     SettingItem.Switch(
                         key = "dynamic_color",
