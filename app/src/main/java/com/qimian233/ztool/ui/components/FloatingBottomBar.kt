@@ -60,6 +60,7 @@ import com.qimian233.ztool.ui.components.liquid.rememberCombinedBackdrop
 import com.qimian233.ztool.ui.components.liquid.vibrancy
 import com.qimian233.ztool.ui.components.miuix.animation.DampedDragAnimation
 import com.qimian233.ztool.ui.components.miuix.animation.InteractiveHighlight
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -73,7 +74,6 @@ import top.yukonga.miuix.kmp.blur.highlight.LightSource
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.blur.sensor.rememberDeviceTilt
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -186,9 +186,16 @@ fun FloatingBottomBar(
 ) {
     val isInDark = isSystemInDarkTheme()
     val pillShape = remember { CircleShape }
-    val accentColor = MiuixTheme.colorScheme.primary
-    val surfaceContainer = MiuixTheme.colorScheme.surfaceContainer
-    val containerColor = if (isBlurEnabled) surfaceContainer.copy(0.12f) else surfaceContainer.copy(0.85f)
+    val accentColor = LocalZToolColorScheme.current.primary
+    val containerColor = if (isBlurEnabled)
+        LocalZToolColorScheme.current.surface.copy(alpha = 0.06f)
+    else
+        LocalZToolColorScheme.current.surface.copy(alpha = 0.75f)
+
+    val tabsContainerColor = if (isBlurEnabled)
+        LocalZToolColorScheme.current.surface.copy(alpha = 0.04f)
+    else
+        LocalZToolColorScheme.current.surface.copy(alpha = 0.75f)
 
     val tabsBackdrop = rememberLayerBackdrop()
     val density = LocalDensity.current
@@ -310,7 +317,7 @@ fun FloatingBottomBar(
                 .dropShadow(
                     shape = pillShape,
                     shadow = Shadow(
-                        radius = 10.dp,
+                        radius = 2.dp,
                         color = Color.Black,
                         alpha = if (isInDark) 0.2f else 0.1f,
                     ),
@@ -376,7 +383,7 @@ fun FloatingBottomBar(
                                     refractionAmount = 24.dp.toPx(),
                                 )
                             },
-                            onDrawSurface = { drawRect(containerColor) },
+                            onDrawSurface = { drawRect(tabsContainerColor) },
                         )
                         .then(interactiveHighlight.modifier)
                         .height(elementHeight)
@@ -423,10 +430,10 @@ fun FloatingBottomBar(
                             onDrawSurface = {
                                 val progress = dampedDragAnimation.pressProgress
                                 drawRect(
-                                    color = if (!isInDark) Color.Black.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.1f),
+                                    color = if (!isInDark) Color.Black.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.06f),
                                     alpha = 1f - progress,
                                 )
-                                drawRect(Color.Black.copy(alpha = 0.03f * progress))
+                                drawRect(Color.Black.copy(alpha = 0.02f * progress))
                             },
                         )
                         .innerShadow(shape = pillShape) {

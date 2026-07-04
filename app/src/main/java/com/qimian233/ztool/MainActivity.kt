@@ -75,6 +75,7 @@ import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalEnableFloatingBottomBar
 import com.qimian233.ztool.ui.theme.LocalEnableFloatingBottomBarBlur
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
@@ -85,7 +86,6 @@ import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
@@ -356,7 +356,7 @@ private fun MainTabletShell(
 
     val bottomBarBackdrop: LayerBackdrop? =
         if (ztoolThemeSpec.style == FrontendStyle.Miuix && enableFloatingBottomBar) {
-            val surfaceColor = MiuixTheme.colorScheme.surface
+            val surfaceColor = LocalZToolColorScheme.current.surface
             rememberLayerBackdrop {
                 drawRect(surfaceColor)
                 drawContent()
@@ -395,51 +395,98 @@ private fun MainTabletShell(
         }
     } else {
         // === Bottom bar layout (portrait) ===
-        val bottomBar: @Composable () -> Unit = {
-            if (environmentReady) {
-                MainNavigationBar(
-                    selectedRouteState = selectedRouteState,
-                    onDestinationSelectedState = onDestinationSelectedState,
-                    bottomBarBackdrop = bottomBarBackdrop
-                )
-            }
-        }
+        val useFloating = (ztoolThemeSpec.style == FrontendStyle.Miuix
+                && enableFloatingBottomBar)
 
-        val contentModifier = Modifier.fillMaxSize()
-        val layeredContentModifier = if (bottomBarBackdrop != null) {
-            contentModifier.layerBackdrop(bottomBarBackdrop)
+        if (useFloating) {
+            // Floating mode: overlay the pill on top of content — no Scaffold bottomBar slot
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when (ztoolThemeSpec.style) {
+                    FrontendStyle.Miuix -> {
+                        top.yukonga.miuix.kmp.basic.Scaffold { innerPadding ->
+                            MainRouteNavHost(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding)
+                                    .let { if (bottomBarBackdrop != null) it.layerBackdrop(bottomBarBackdrop) else it },
+                                navController = navController,
+                                predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                                onEnvironmentStateChanged = onEnvironmentStateChanged
+                            )
+                        }
+                    }
+                    FrontendStyle.Material3Expressive -> {
+                        Scaffold { innerPadding ->
+                            MainRouteNavHost(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                navController = navController,
+                                predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                                onEnvironmentStateChanged = onEnvironmentStateChanged
+                            )
+                        }
+                    }
+                }
+
+                if (environmentReady) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                    ) {
+                        MainNavigationBar(
+                            selectedRouteState = selectedRouteState,
+                            onDestinationSelectedState = onDestinationSelectedState,
+                            bottomBarBackdrop = bottomBarBackdrop
+                        )
+                    }
+                }
+            }
         } else {
-            contentModifier
-        }
-
-        when (ztoolThemeSpec.style) {
-            FrontendStyle.Miuix -> {
-                top.yukonga.miuix.kmp.basic.Scaffold(
-                    bottomBar = bottomBar,
-                ) { innerPadding ->
-                    MainRouteNavHost(
-                        modifier = layeredContentModifier.padding(innerPadding),
-                        navController = navController,
-                        predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
-                        onEnvironmentStateChanged = onEnvironmentStateChanged
+            // Standard mode: Scaffold with built-in bottomBar slot
+            val bottomBar: @Composable () -> Unit = {
+                if (environmentReady) {
+                    MainNavigationBar(
+                        selectedRouteState = selectedRouteState,
+                        onDestinationSelectedState = onDestinationSelectedState,
+                        bottomBarBackdrop = null
                     )
                 }
             }
 
-            FrontendStyle.Material3Expressive -> {
-                Scaffold(
-                    bottomBar = bottomBar,
-                ) { innerPadding ->
-                    MainRouteNavHost(
-                        modifier = contentModifier.padding(innerPadding),
-                        navController = navController,
-                        predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
-                        onEnvironmentStateChanged = onEnvironmentStateChanged
-                    )
+            val contentModifier = Modifier.fillMaxSize()
+
+            when (ztoolThemeSpec.style) {
+                FrontendStyle.Miuix -> {
+                    top.yukonga.miuix.kmp.basic.Scaffold(
+                        bottomBar = bottomBar,
+                    ) { innerPadding ->
+                        MainRouteNavHost(
+                            modifier = contentModifier.padding(innerPadding),
+                            navController = navController,
+                            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                            onEnvironmentStateChanged = onEnvironmentStateChanged
+                        )
+                    }
+                }
+                FrontendStyle.Material3Expressive -> {
+                    Scaffold(
+                        bottomBar = bottomBar,
+                    ) { innerPadding ->
+                        MainRouteNavHost(
+                            modifier = contentModifier.padding(innerPadding),
+                            navController = navController,
+                            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                            onEnvironmentStateChanged = onEnvironmentStateChanged
+                        )
+                    }
                 }
             }
         }
-    }
+}
 }
 
 @Composable
@@ -513,13 +560,13 @@ private fun MainNavigationBar(
                         MiuixIcon(
                             imageVector = ImageVector.vectorResource(destination.iconRes),
                             contentDescription = stringResource(destination.labelRes),
-                            tint = MiuixTheme.colorScheme.onSurface,
+                            tint = LocalZToolColorScheme.current.onSurface,
                             modifier = Modifier.size(22.dp)
                         )
                         MiuixText(
                             text = stringResource(destination.labelRes),
                             fontSize = 13.sp,
-                            color = MiuixTheme.colorScheme.onSurface,
+                            color = LocalZToolColorScheme.current.onSurface,
                             maxLines = 1,
                             softWrap = false
                         )
