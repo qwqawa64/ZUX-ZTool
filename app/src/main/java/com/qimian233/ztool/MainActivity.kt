@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -28,7 +29,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -48,8 +48,8 @@ import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
-import com.qimian233.ztool.settingactivity.mobiledesktop.MobileDesktopSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
+import com.qimian233.ztool.settingactivity.mobiledesktop.MobileDesktopSettingsRoute
 import com.qimian233.ztool.settingactivity.ota.OtaSettingsRoute
 import com.qimian233.ztool.settingactivity.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsRoute
@@ -77,13 +77,13 @@ import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 class MainActivity : ComponentActivity(),
     EnvironmentStateListener,
@@ -481,7 +481,7 @@ private fun MainNavigationBar(
 
     if (useFloating) {
         FloatingBottomBar(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
             selectedIndex = { MainRoute.entriesInOrder.indexOf(selectedRouteState.value) },
             onSelected = { index ->
                 MainRoute.entriesInOrder.getOrNull(index)?.let { onDestinationSelectedState.value(it) }
@@ -512,10 +512,7 @@ private fun MainNavigationBar(
         return
     }
 
-    ZToolNavigationBar(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
+    ZToolNavigationBar {
         MainRoute.entriesInOrder.forEach { destination ->
             MainNavigationBarItem(
                 destination = destination,
