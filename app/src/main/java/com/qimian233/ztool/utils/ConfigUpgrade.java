@@ -14,6 +14,7 @@ import java.util.Map;
 public class ConfigUpgrade {
     ModulePreferencesUtils mPreferencesUtils;
     String TAG = "ConfigUpgrade";
+    private String mCachedXSharedPrefsDir = null;
 
     // 执行器方法组
 
@@ -109,6 +110,9 @@ public class ConfigUpgrade {
     }
 
     private String getXSharedPreferenceDirectory() {
+        if (mCachedXSharedPrefsDir != null) {
+            return mCachedXSharedPrefsDir;
+        }
         EnhancedShellExecutor executor = EnhancedShellExecutor.getInstance();
         EnhancedShellExecutor.ShellResult result = executor.executeRootCommand(
         "find /data/misc -type d -name 'com.qimian233.ztool' 2>/dev/null | grep -E '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/prefs/com.qimian233.ztool$'", 5);
@@ -116,7 +120,8 @@ public class ConfigUpgrade {
             Log.i(TAG,"Unable to find New XSharedPreferences directory, command failed!");
             return null;
         }
-        return result.output;
+        mCachedXSharedPrefsDir = result.output;
+        return mCachedXSharedPrefsDir;
     }
 
     // 两个配置升级检测点对应的综合检测门禁

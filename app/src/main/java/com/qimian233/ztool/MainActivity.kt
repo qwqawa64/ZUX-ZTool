@@ -42,6 +42,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,6 +52,7 @@ import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
+import com.qimian233.ztool.utils.ConfigUpgrade
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.settingactivity.mobiledesktop.MobileDesktopSettingsRoute
@@ -81,7 +83,9 @@ import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -106,6 +110,10 @@ class MainActivity : ComponentActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            ConfigUpgrade.configUpgrader(this@MainActivity)
+        }
 
         if (savedInstanceState != null) {
             currentRoute = savedInstanceState.getString(KEY_CURRENT_ROUTE)
