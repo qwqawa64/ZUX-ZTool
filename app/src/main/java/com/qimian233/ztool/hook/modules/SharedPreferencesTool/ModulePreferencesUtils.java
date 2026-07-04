@@ -8,6 +8,7 @@ import android.util.Log;
 import com.qimian233.ztool.ModuleActivationProbe;
 import com.qimian233.ztool.XposedServiceBridge;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -163,6 +164,44 @@ public class ModulePreferencesUtils {
             Log.e(TAG, "读取所有设置失败", e);
             return Collections.emptyMap();
         }
+    }
+
+    /**
+     * 从本地 SharedPreferences 加载所有设置，绕过 RemotePreferences
+     * 用于旧 XSharedPreferences 配置迁移场景
+     * @return 包含所有键值对的Map对象
+     */
+    public Map<String, Object> getAllSettingsFromLocal() {
+        try {
+            SharedPreferences prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            Map<String, Object> allEntries = new HashMap<>(prefs.getAll());
+            Log.d(TAG, "Successfully read local settings, entries: " + allEntries.size());
+            return allEntries;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to read local settings", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * 删除本地 SharedPreferences 文件
+     * 用于配置迁移完成后清理
+     * @return 是否删除成功
+     */
+    @SuppressLint("ApplySharedPref")
+    public boolean deleteLocalModulePreferences() {
+        SharedPreferences prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean cleared = prefs.edit().clear().commit();
+        if (cleared) {
+            File prefsFile = new File(mContext.getFilesDir().getParentFile(),
+                "shared_prefs/" + PREFS_NAME + ".xml");
+            if (prefsFile.exists()) {
+                boolean deleted = prefsFile.delete();
+                Log.d(TAG, "Deleted local prefs file: " + deleted);
+            }
+        }
+        Log.d(TAG, "Cleared local module preferences, success: " + cleared);
+        return cleared;
     }
 
     // 处理getAllSettings的返回值，转换为JSON格式
