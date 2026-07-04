@@ -259,14 +259,16 @@ Do not edit embedded module assets unless the task is specifically about Magisk/
 
 ## Verification
 
-Run `.\gradlew.bat assembleDebug` after code changes that touch:
+Follow the steps below:
 
-- Compose UI, themes, shared components, or navigation.
-- ViewModels/Repositories used by UI.
-- Hook classes, Hook registration, or Hook preference wiring.
-- Manifest, resources, Gradle files, or embedded assets.
+1. If the code changes, run `.\gradlew.bat assembleDebug` after code changes that touch:
+    - Compose UI, themes, shared components, or navigation.
+    - ViewModels/Repositories used by UI.
+    - Hook classes, Hook registration, or Hook preference wiring.
+    - Manifest, resources, Gradle files, or embedded assets.
 
-For documentation-only changes, a build is usually unnecessary; verify with `git diff --check` at minimum.
+    For documentation-only changes, a build is usually unnecessary; verify with `git diff --check` at minimum.
+2. Commit your changes.
 
 ## Git And Workflow Rules
 
@@ -277,7 +279,7 @@ For documentation-only changes, a build is usually unnecessary; verify with `git
 - Completed user-requested tasks must be committed unless the user explicitly says not to commit.
 - Before committing, review `git diff --check` and the staged diff.
 - Use concise commit messages that describe the actual scoped change.
-- If Git commit times out with GPG signature, ask the user to commit it later and DO NOT commit without signing.
+- If Git commit times out with GPG signature, retry it for once. If the commit still fails, commit without GPG signing.
 
 ## Common Commands
 
@@ -285,4 +287,20 @@ For documentation-only changes, a build is usually unnecessary; verify with `git
 git status --short
 .\gradlew.bat assembleDebug
 git diff --check
+git commit ...
 ```
+
+## Typical Work Flow
+
+1. User assigns a task
+2. Analyze user's demand. If you receive an ambiguous demand with too little information, provide a question list for the user to submit missing information.
+3. Make a plan for the task. If the plan consists of more than 10 steps or more than 10 files are estimated to be added, modified and removed, write the plan into a Markdown file under the root directory with AGENT-oriented format
+4. Conduct the plan:
+    - Work with files
+    - Do necessary verifications noted in the Verification chapter
+    - *Commit changes*
+    - Mark the corresponding todo item in your list or the Markdown file written in step 3 as completed
+5. Continue until at least one of the following condition is/are satisfied. Notify the user with the current situation after encountering these situations:
+    - The work is done, no todo item left unchecked.
+    - Some step requires additional information and these information cannot be fetched via Internet, build cache and user input.
+    - Unable to access critical tools: gradlew.bat, git, javap, javac for 3 times. 
