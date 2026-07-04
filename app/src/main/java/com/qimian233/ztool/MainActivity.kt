@@ -15,10 +15,13 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -29,6 +32,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -181,8 +185,13 @@ class MainActivity : ComponentActivity(),
     }
 
     private fun resolveAgreementDisplayMode(): AgreementDisplayMode? {
-        val acceptedVersion = agreementRepository.getAcceptedAgreementVersion() ?: return AgreementDisplayMode.FirstRun
-        return if (compareAgreementVersions(acceptedVersion, agreementRepository.getCurrentAgreementVersion()) < 0) {
+        val acceptedVersion = agreementRepository.getAcceptedAgreementVersion()
+            ?: return AgreementDisplayMode.FirstRun
+        return if (compareAgreementVersions(
+                acceptedVersion,
+                agreementRepository.getCurrentAgreementVersion()
+            ) < 0
+        ) {
             AgreementDisplayMode.UpdateOnly
         } else {
             null
@@ -248,8 +257,9 @@ class MainActivity : ComponentActivity(),
     private fun resolveDarkTheme(settings: ZToolThemeSettings): Boolean {
         return when (settings.themeMode) {
             ThemeMode.FollowSystem -> (
-                resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-                ) == Configuration.UI_MODE_NIGHT_YES
+                    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+                    ) == Configuration.UI_MODE_NIGHT_YES
+
             ThemeMode.Light -> false
             ThemeMode.Dark -> true
         }
@@ -339,14 +349,13 @@ private fun MainTabletShell(
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val ztoolThemeSpec = LocalZToolThemeSpec.current
     val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
-    val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
     // When Miuix FloatingBottomBar is enabled, force BottomBar even in landscape
     // since the floating pill design works well in both orientations.
     val useNavigationRail = isLandscape
-        && !(ztoolThemeSpec.style == FrontendStyle.Miuix && enableFloatingBottomBar)
+            && !(ztoolThemeSpec.style == FrontendStyle.Miuix && enableFloatingBottomBar)
 
     val bottomBarBackdrop: LayerBackdrop? =
-        if (ztoolThemeSpec.style == FrontendStyle.Miuix && enableFloatingBottomBar && enableFloatingBottomBarBlur) {
+        if (ztoolThemeSpec.style == FrontendStyle.Miuix && enableFloatingBottomBar) {
             val surfaceColor = MiuixTheme.colorScheme.surface
             rememberLayerBackdrop {
                 drawRect(surfaceColor)
@@ -416,6 +425,7 @@ private fun MainTabletShell(
                     )
                 }
             }
+
             FrontendStyle.Material3Expressive -> {
                 Scaffold(
                     bottomBar = bottomBar,
@@ -476,43 +486,55 @@ private fun MainNavigationBar(
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
     val ztoolThemeSpec = LocalZToolThemeSpec.current
     val useFloating = ztoolThemeSpec.style == FrontendStyle.Miuix
-        && enableFloatingBottomBar
-        && bottomBarBackdrop != null
+            && enableFloatingBottomBar
+            && bottomBarBackdrop != null
 
     if (useFloating) {
-        FloatingBottomBar(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            selectedIndex = { MainRoute.entriesInOrder.indexOf(selectedRouteState.value) },
-            onSelected = { index ->
-                MainRoute.entriesInOrder.getOrNull(index)?.let { onDestinationSelectedState.value(it) }
-            },
-            backdrop = bottomBarBackdrop,
-            tabsCount = MainRoute.entriesInOrder.size,
-            isBlurEnabled = enableFloatingBottomBarBlur
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            MainRoute.entriesInOrder.forEach { destination ->
-                FloatingBottomBarItem(
-                    onClick = { onDestinationSelectedState.value(destination) }
-                ) {
-                    MiuixIcon(
-                        imageVector = ImageVector.vectorResource(destination.iconRes),
-                        contentDescription = stringResource(destination.labelRes),
-                        tint = MiuixTheme.colorScheme.onSurface
-                    )
-                    MiuixText(
-                        text = stringResource(destination.labelRes),
-                        fontSize = 11.sp,
-                        color = MiuixTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        softWrap = false
-                    )
+            FloatingBottomBar(
+                modifier = Modifier.padding(bottom = 24.dp),
+                selectedIndex = { MainRoute.entriesInOrder.indexOf(selectedRouteState.value) },
+                onSelected = { index ->
+                    MainRoute.entriesInOrder.getOrNull(index)
+                        ?.let { onDestinationSelectedState.value(it) }
+                },
+                backdrop = bottomBarBackdrop,
+                tabsCount = MainRoute.entriesInOrder.size,
+                isBlurEnabled = enableFloatingBottomBarBlur,
+            ) {
+                MainRoute.entriesInOrder.forEach { destination ->
+                    FloatingBottomBarItem(
+                        onClick = { onDestinationSelectedState.value(destination) },
+                        modifier = Modifier.defaultMinSize(minWidth = 96.dp)
+                    ) {
+                        MiuixIcon(
+                            imageVector = ImageVector.vectorResource(destination.iconRes),
+                            contentDescription = stringResource(destination.labelRes),
+                            tint = MiuixTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        MiuixText(
+                            text = stringResource(destination.labelRes),
+                            fontSize = 13.sp,
+                            color = MiuixTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
                 }
             }
         }
         return
     }
 
-    ZToolNavigationBar {
+    ZToolNavigationBar(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+    ) {
         MainRoute.entriesInOrder.forEach { destination ->
             MainNavigationBarItem(
                 destination = destination,
@@ -568,38 +590,41 @@ private fun MainRouteNavHost(
             animationSpec = tween(SettingsNavigationAnimationMillis)
         )
     }
-    val mainRoutePopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
-        slideIntoContainer(
-            towards = routeSlideDirection(
-                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
-                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
-                nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
-                nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
-            ),
-            animationSpec = tween(SettingsNavigationAnimationMillis)
-        )
-    }
-    val mainRoutePopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
-        slideOutOfContainer(
-            towards = routeSlideDirection(
-                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
-                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
-                nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
-                nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
-            ),
-            animationSpec = tween(SettingsNavigationAnimationMillis)
-        )
-    }
-    val horizontalEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
-        slideIntoContainer(
-            if (isForwardNavigation()) {
-                AnimatedContentTransitionScope.SlideDirection.Left
-            } else {
-                AnimatedContentTransitionScope.SlideDirection.Right
-            },
-            animationSpec = tween(SettingsNavigationAnimationMillis)
-        )
-    }
+    val mainRoutePopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? =
+        {
+            slideIntoContainer(
+                towards = routeSlideDirection(
+                    mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
+                    mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                    nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
+                    nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
+                ),
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        }
+    val mainRoutePopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? =
+        {
+            slideOutOfContainer(
+                towards = routeSlideDirection(
+                    mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
+                    mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                    nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
+                    nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
+                ),
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        }
+    val horizontalEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? =
+        {
+            slideIntoContainer(
+                if (isForwardNavigation()) {
+                    AnimatedContentTransitionScope.SlideDirection.Left
+                } else {
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                },
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        }
     val horizontalExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
         slideOutOfContainer(
             if (isForwardNavigation()) {
@@ -610,28 +635,30 @@ private fun MainRouteNavHost(
             animationSpec = tween(SettingsNavigationAnimationMillis)
         )
     }
-    val horizontalPopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
-        slideIntoContainer(
-            if (isForwardNavigation()) {
-                AnimatedContentTransitionScope.SlideDirection.Left
-            } else {
-                AnimatedContentTransitionScope.SlideDirection.Right
-            },
-            animationSpec = tween(SettingsNavigationAnimationMillis)
-        )
-    }
-    val horizontalPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
-        slideOutOfContainer(
-            if (isForwardNavigation()) {
-                AnimatedContentTransitionScope.SlideDirection.Left
-            } else {
-                AnimatedContentTransitionScope.SlideDirection.Right
-            },
-            animationSpec = tween(SettingsNavigationAnimationMillis)
-        )
-    }
+    val horizontalPopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? =
+        {
+            slideIntoContainer(
+                if (isForwardNavigation()) {
+                    AnimatedContentTransitionScope.SlideDirection.Left
+                } else {
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                },
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        }
+    val horizontalPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? =
+        {
+            slideOutOfContainer(
+                if (isForwardNavigation()) {
+                    AnimatedContentTransitionScope.SlideDirection.Left
+                } else {
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                },
+                animationSpec = tween(SettingsNavigationAnimationMillis)
+            )
+        }
     val predictiveHorizontalPopEnter:
-        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> EnterTransition = {
+            AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> EnterTransition = {
         slideIntoContainer(
             if (isForwardNavigation()) {
                 AnimatedContentTransitionScope.SlideDirection.Left
@@ -642,7 +669,7 @@ private fun MainRouteNavHost(
         )
     }
     val predictiveHorizontalPopExit:
-        AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> ExitTransition = {
+            AnimatedContentTransitionScope<NavBackStackEntry>.(Int) -> ExitTransition = {
         slideOutOfContainer(
             if (isForwardNavigation()) {
                 AnimatedContentTransitionScope.SlideDirection.Left
@@ -737,10 +764,20 @@ private fun MainRouteNavHost(
                     openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI")
                 },
                 onOpenQimian233 = {
-                    openExternalLink(context, "http://www.coolapk.com/u/10099756", true, "com.coolapk.market")
+                    openExternalLink(
+                        context,
+                        "http://www.coolapk.com/u/10099756",
+                        true,
+                        "com.coolapk.market"
+                    )
                 },
                 onOpenWasdDestroy = {
-                    openExternalLink(context, "http://www.coolapk.com/u/18634835", true, "com.coolapk.market")
+                    openExternalLink(
+                        context,
+                        "http://www.coolapk.com/u/18634835",
+                        true,
+                        "com.coolapk.market"
+                    )
                 },
                 onOpenZuxOsPlus = {
                     openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos")
@@ -872,7 +909,7 @@ private fun MainRouteNavHost(
         ) {
             StatusBarSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
-                    stringResource(R.string.status_bar_settings_title_suffix),
+                        stringResource(R.string.status_bar_settings_title_suffix),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {
@@ -891,7 +928,7 @@ private fun MainRouteNavHost(
         ) {
             LockScreenSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
-                    stringResource(R.string.lock_screen_settings_title_suffix),
+                        stringResource(R.string.lock_screen_settings_title_suffix),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {
@@ -910,7 +947,7 @@ private fun MainRouteNavHost(
         ) {
             ControlCenterSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
-                    stringResource(R.string.control_center_settings_title_suffix),
+                        stringResource(R.string.control_center_settings_title_suffix),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {
@@ -1041,7 +1078,7 @@ private fun MainRouteNavHost(
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardNavigation(): Boolean {
     return navigationRouteIndex(targetState.destination.route) >
-        navigationRouteIndex(initialState.destination.route)
+            navigationRouteIndex(initialState.destination.route)
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeSlideDirection(
@@ -1061,7 +1098,7 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeSlideDirectio
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardMainRouteNavigation(): Boolean {
     return mainRouteIndex(targetState.destination.route) >
-        mainRouteIndex(initialState.destination.route)
+            mainRouteIndex(initialState.destination.route)
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isNavigateBetweenMainRoutes(): Boolean {

@@ -168,7 +168,7 @@ fun RowScope.FloatingBottomBarItem(
                 scaleX = scale
                 scaleY = scale
             },
-        verticalArrangement = Arrangement.spacedBy(1.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
         content = content
     )
@@ -188,7 +188,7 @@ fun FloatingBottomBar(
     val pillShape = remember { CircleShape }
     val accentColor = MiuixTheme.colorScheme.primary
     val surfaceContainer = MiuixTheme.colorScheme.surfaceContainer
-    val containerColor = if (isBlurEnabled) surfaceContainer.copy(0.4f) else surfaceContainer
+    val containerColor = if (isBlurEnabled) surfaceContainer.copy(0.12f) else surfaceContainer.copy(0.85f)
 
     val tabsBackdrop = rememberLayerBackdrop()
     val density = LocalDensity.current
@@ -292,6 +292,9 @@ fun FloatingBottomBar(
 
     val combinedBackdrop = rememberCombinedBackdrop(backdrop, tabsBackdrop)
 
+    val rowHeight = 80.dp
+    val elementHeight = rowHeight - 8.dp
+
     Box(
         modifier = modifier.width(IntrinsicSize.Min),
         contentAlignment = Alignment.CenterStart
@@ -300,7 +303,7 @@ fun FloatingBottomBar(
             Modifier
                 .onGloballyPositioned { coords ->
                     totalWidthPx = coords.size.width.toFloat()
-                    val contentWidthPx = totalWidthPx - with(density) { 8.dp.toPx() }
+                    val contentWidthPx = totalWidthPx - with(density) { 32.dp.toPx() }
                     tabWidthPx = (contentWidthPx / tabsCount).coerceAtLeast(0f)
                 }
                 .graphicsLayer { translationX = panelOffset }
@@ -344,8 +347,8 @@ fun FloatingBottomBar(
                     }
                 )
                 .then(if (isBlurEnabled) interactiveHighlight.modifier else Modifier)
-                .height(64.dp)
-                .padding(4.dp),
+                .height(rowHeight)
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             content = content
         )
@@ -376,8 +379,8 @@ fun FloatingBottomBar(
                             onDrawSurface = { drawRect(containerColor) },
                         )
                         .then(interactiveHighlight.modifier)
-                        .height(56.dp)
-                        .padding(horizontal = 4.dp)
+                        .height(elementHeight)
+                        .padding(16.dp)
                         .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
                     verticalAlignment = Alignment.CenterVertically,
                     content = content
@@ -390,7 +393,7 @@ fun FloatingBottomBar(
             if (isBlurEnabled) {
                 Box(
                     Modifier
-                        .padding(horizontal = 4.dp)
+                        .padding(16.dp)
                         .graphicsLayer {
                             val progressOffset = dampedDragAnimation.value * tabWidthPx
                             translationX = if (isLtr) progressOffset + panelOffset else -progressOffset + panelOffset
@@ -433,13 +436,13 @@ fun FloatingBottomBar(
                                 alpha = dampedDragAnimation.pressProgress,
                             )
                         }
-                        .height(56.dp)
+                        .height(elementHeight)
                         .width(tabWidthDp)
                 )
             } else {
                 Box(
                     Modifier
-                        .padding(horizontal = 4.dp)
+                        .padding(16.dp)
                         .graphicsLayer {
                             val progressOffset = dampedDragAnimation.value * tabWidthPx
                             translationX = if (isLtr) progressOffset + panelOffset else -progressOffset + panelOffset
@@ -447,7 +450,7 @@ fun FloatingBottomBar(
                         .then(dampedDragAnimation.modifier)
                         .clip(pillShape)
                         .background(accentColor.copy(alpha = 0.15f), pillShape)
-                        .height(56.dp)
+                        .height(elementHeight)
                         .width(tabWidthDp)
                 )
             }

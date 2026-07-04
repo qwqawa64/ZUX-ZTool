@@ -277,6 +277,7 @@ fun ZToolNavigationBarItem(
             else MiuixTheme.colorScheme.onSurfaceVariantSummary
         Box(
             modifier = modifier
+                .padding(vertical = 8.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -288,7 +289,7 @@ fun ZToolNavigationBarItem(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)
+                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
             ) {
                 top.yukonga.miuix.kmp.basic.Icon(
                     imageVector = icon,
