@@ -406,7 +406,7 @@ private fun MainTabletShell(
                 when (ztoolThemeSpec.style) {
                     FrontendStyle.Miuix -> {
                         top.yukonga.miuix.kmp.basic.Scaffold { innerPadding ->
-                            MainRouteNavHost(
+                            MainRouteNavHost(useHorizontalAnimation = true,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(innerPadding)
@@ -419,7 +419,7 @@ private fun MainTabletShell(
                     }
                     FrontendStyle.Material3Expressive -> {
                         Scaffold { innerPadding ->
-                            MainRouteNavHost(
+                            MainRouteNavHost(useHorizontalAnimation = true,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(innerPadding),
@@ -464,7 +464,7 @@ private fun MainTabletShell(
                     top.yukonga.miuix.kmp.basic.Scaffold(
                         bottomBar = bottomBar,
                     ) { innerPadding ->
-                        MainRouteNavHost(
+                        MainRouteNavHost(useHorizontalAnimation = true,
                             modifier = contentModifier.padding(innerPadding),
                             navController = navController,
                             predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
@@ -476,7 +476,7 @@ private fun MainTabletShell(
                     Scaffold(
                         bottomBar = bottomBar,
                     ) { innerPadding ->
-                        MainRouteNavHost(
+                        MainRouteNavHost(useHorizontalAnimation = true,
                             modifier = contentModifier.padding(innerPadding),
                             navController = navController,
                             predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
@@ -612,14 +612,23 @@ private fun MainRouteNavHost(
     modifier: Modifier = Modifier,
     navController: androidx.navigation.NavHostController,
     predictiveBackGestureEnabled: Boolean,
-    onEnvironmentStateChanged: (Boolean) -> Unit
+    onEnvironmentStateChanged: (Boolean) -> Unit,
+    useHorizontalAnimation: Boolean = false
 ) {
     val context = LocalContext.current
+    val mainForward = if (useHorizontalAnimation)
+        AnimatedContentTransitionScope.SlideDirection.Left
+    else
+        AnimatedContentTransitionScope.SlideDirection.Up
+    val mainBackward = if (useHorizontalAnimation)
+        AnimatedContentTransitionScope.SlideDirection.Right
+    else
+        AnimatedContentTransitionScope.SlideDirection.Down
     val mainRouteEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? = {
         slideIntoContainer(
             towards = routeSlideDirection(
-                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
-                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                mainForwardDirection = mainForward,
+                mainBackwardDirection = mainBackward,
                 nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
                 nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
             ),
@@ -629,8 +638,8 @@ private fun MainRouteNavHost(
     val mainRouteExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
         slideOutOfContainer(
             towards = routeSlideDirection(
-                mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
-                mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                mainForwardDirection = mainForward,
+                mainBackwardDirection = mainBackward,
                 nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
                 nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
             ),
@@ -641,8 +650,8 @@ private fun MainRouteNavHost(
         {
             slideIntoContainer(
                 towards = routeSlideDirection(
-                    mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
-                    mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                    mainForwardDirection = mainForward,
+                    mainBackwardDirection = mainBackward,
                     nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
                     nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
                 ),
@@ -653,8 +662,8 @@ private fun MainRouteNavHost(
         {
             slideOutOfContainer(
                 towards = routeSlideDirection(
-                    mainForwardDirection = AnimatedContentTransitionScope.SlideDirection.Up,
-                    mainBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Down,
+                    mainForwardDirection = mainForward,
+                    mainBackwardDirection = mainBackward,
                     nestedForwardDirection = AnimatedContentTransitionScope.SlideDirection.Left,
                     nestedBackwardDirection = AnimatedContentTransitionScope.SlideDirection.Right
                 ),
