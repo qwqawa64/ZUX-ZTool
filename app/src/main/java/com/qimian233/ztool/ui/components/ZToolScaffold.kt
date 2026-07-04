@@ -1,5 +1,6 @@
 package com.qimian233.ztool.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -314,8 +316,11 @@ fun ZToolNavigationBarItem(
         else LocalZToolColorScheme.current.onSurfaceVariant
     val textColor = if (selected) LocalZToolColorScheme.current.onSurface
         else LocalZToolColorScheme.current.onSurfaceVariant
+    val indicatorColor = LocalZToolColorScheme.current.secondaryContainer
+    val indicatorShape = RoundedCornerShape(16.dp)
     Box(
         modifier = modifier
+            .then(if (selected) Modifier.background(indicatorColor, indicatorShape) else Modifier)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
