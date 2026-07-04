@@ -315,6 +315,8 @@ private fun HomeScreen(
                         .padding(horizontal = 8.dp),
                     textAlign = TextAlign.Center
                 )
+
+                Spacer(modifier = Modifier.padding(48.dp))
             }
         }
     }
