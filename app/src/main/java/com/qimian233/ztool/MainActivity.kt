@@ -14,8 +14,10 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -26,12 +28,15 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
@@ -55,15 +60,30 @@ import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterS
 import com.qimian233.ztool.settingactivity.systemui.SystemUiSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsRoute
+import com.qimian233.ztool.ui.components.FloatingBottomBar
+import com.qimian233.ztool.ui.components.FloatingBottomBarItem
+import com.qimian233.ztool.ui.components.ZToolNavigationBar
+import com.qimian233.ztool.ui.components.ZToolNavigationBarItem
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.firstrun.AgreementDisplayMode
 import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalEnableFloatingBottomBar
+import com.qimian233.ztool.ui.theme.LocalEnableFloatingBottomBarBlur
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.blur.LayerBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 class MainActivity : ComponentActivity(),
     EnvironmentStateListener,
@@ -315,30 +335,98 @@ private fun MainTabletShell(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        val contentModifier = if (environmentReady) {
-            Modifier.padding(start = MainNavigationRailWidth)
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val ztoolThemeSpec = LocalZToolThemeSpec.current
+    val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
+    val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
+    // When Miuix FloatingBottomBar is enabled, force BottomBar even in landscape
+    // since the floating pill design works well in both orientations.
+    val useNavigationRail = isLandscape
+        && !(ztoolThemeSpec.style == FrontendStyle.Miuix && enableFloatingBottomBar)
+
+    val bottomBarBackdrop: LayerBackdrop? =
+        if (ztoolThemeSpec.style == FrontendStyle.Miuix && enableFloatingBottomBar && enableFloatingBottomBarBlur) {
+            val surfaceColor = MiuixTheme.colorScheme.surface
+            rememberLayerBackdrop {
+                drawRect(surfaceColor)
+                drawContent()
+            }
         } else {
-            Modifier
+            null
         }
 
-        MainRouteNavHost(
-            modifier = contentModifier
-                .fillMaxSize(),
-            navController = navController,
-            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
-            onEnvironmentStateChanged = onEnvironmentStateChanged
-        )
+    if (useNavigationRail) {
+        // === Rail layout (landscape) ===
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val contentModifier = if (environmentReady) {
+                Modifier.padding(start = MainNavigationRailWidth)
+            } else {
+                Modifier
+            }
 
-        if (environmentReady) {
-            key(MainNavigationRailKey) {
-                MainNavigationRail(
+            MainRouteNavHost(
+                modifier = contentModifier
+                    .fillMaxSize(),
+                navController = navController,
+                predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                onEnvironmentStateChanged = onEnvironmentStateChanged
+            )
+
+            if (environmentReady) {
+                key(MainNavigationRailKey) {
+                    MainNavigationRail(
+                        selectedRouteState = selectedRouteState,
+                        onDestinationSelectedState = onDestinationSelectedState
+                    )
+                }
+            }
+        }
+    } else {
+        // === Bottom bar layout (portrait) ===
+        val bottomBar: @Composable () -> Unit = {
+            if (environmentReady) {
+                MainNavigationBar(
                     selectedRouteState = selectedRouteState,
-                    onDestinationSelectedState = onDestinationSelectedState
+                    onDestinationSelectedState = onDestinationSelectedState,
+                    bottomBarBackdrop = bottomBarBackdrop
                 )
+            }
+        }
+
+        val contentModifier = Modifier.fillMaxSize()
+        val layeredContentModifier = if (bottomBarBackdrop != null) {
+            contentModifier.layerBackdrop(bottomBarBackdrop)
+        } else {
+            contentModifier
+        }
+
+        when (ztoolThemeSpec.style) {
+            FrontendStyle.Miuix -> {
+                top.yukonga.miuix.kmp.basic.Scaffold(
+                    bottomBar = bottomBar,
+                ) { innerPadding ->
+                    MainRouteNavHost(
+                        modifier = layeredContentModifier.padding(innerPadding),
+                        navController = navController,
+                        predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                        onEnvironmentStateChanged = onEnvironmentStateChanged
+                    )
+                }
+            }
+            FrontendStyle.Material3Expressive -> {
+                Scaffold(
+                    bottomBar = bottomBar,
+                ) { innerPadding ->
+                    MainRouteNavHost(
+                        modifier = contentModifier.padding(innerPadding),
+                        navController = navController,
+                        predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                        onEnvironmentStateChanged = onEnvironmentStateChanged
+                    )
+                }
             }
         }
     }
@@ -375,6 +463,81 @@ private fun MainNavigationRailItem(
         onClick = { onDestinationSelectedState.value(destination) },
         icon = ImageVector.vectorResource(destination.iconRes),
         label = stringResource(destination.labelRes)
+    )
+}
+
+@Composable
+private fun MainNavigationBar(
+    selectedRouteState: State<MainRoute>,
+    onDestinationSelectedState: State<(MainRoute) -> Unit>,
+    bottomBarBackdrop: Backdrop? = null
+) {
+    val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
+    val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
+    val ztoolThemeSpec = LocalZToolThemeSpec.current
+    val useFloating = ztoolThemeSpec.style == FrontendStyle.Miuix
+        && enableFloatingBottomBar
+        && bottomBarBackdrop != null
+
+    if (useFloating) {
+        FloatingBottomBar(
+            modifier = Modifier.fillMaxWidth(),
+            selectedIndex = { MainRoute.entriesInOrder.indexOf(selectedRouteState.value) },
+            onSelected = { index ->
+                MainRoute.entriesInOrder.getOrNull(index)?.let { onDestinationSelectedState.value(it) }
+            },
+            backdrop = bottomBarBackdrop,
+            tabsCount = MainRoute.entriesInOrder.size,
+            isBlurEnabled = enableFloatingBottomBarBlur
+        ) {
+            MainRoute.entriesInOrder.forEach { destination ->
+                FloatingBottomBarItem(
+                    onClick = { onDestinationSelectedState.value(destination) }
+                ) {
+                    MiuixIcon(
+                        imageVector = ImageVector.vectorResource(destination.iconRes),
+                        contentDescription = stringResource(destination.labelRes),
+                        tint = MiuixTheme.colorScheme.onSurface
+                    )
+                    MiuixText(
+                        text = stringResource(destination.labelRes),
+                        fontSize = 11.sp,
+                        color = MiuixTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    ZToolNavigationBar(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        MainRoute.entriesInOrder.forEach { destination ->
+            MainNavigationBarItem(
+                destination = destination,
+                selectedRouteState = selectedRouteState,
+                onDestinationSelectedState = onDestinationSelectedState
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.MainNavigationBarItem(
+    destination: MainRoute,
+    selectedRouteState: State<MainRoute>,
+    onDestinationSelectedState: State<(MainRoute) -> Unit>
+) {
+    ZToolNavigationBarItem(
+        selected = selectedRouteState.value == destination,
+        onClick = { onDestinationSelectedState.value(destination) },
+        icon = ImageVector.vectorResource(destination.iconRes),
+        label = stringResource(destination.labelRes),
+        modifier = Modifier.weight(1f)
     )
 }
 

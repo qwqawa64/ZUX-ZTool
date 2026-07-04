@@ -46,6 +46,12 @@ val LocalZToolThemeSpec = staticCompositionLocalOf {
 
 val LocalIsPlatformDialog = staticCompositionLocalOf { false }
 
+/** Whether the Miuix floating bottom bar (Liquid Glass) is enabled. Only meaningful in Miuix mode. */
+val LocalEnableFloatingBottomBar = staticCompositionLocalOf { false }
+
+/** Whether blur effects are enabled on the floating bottom bar. Requires Android 13+. Only meaningful when [LocalEnableFloatingBottomBar] is true. */
+val LocalEnableFloatingBottomBarBlur = staticCompositionLocalOf { false }
+
 private val Md3eLightColors = lightColorScheme(
     primary = Color(0xFF1D5FA8),
     onPrimary = Color.White,
@@ -277,6 +283,8 @@ fun ZToolTheme(
     CompositionLocalProvider(
         LocalZToolThemeSpec provides themeSpec,
         LocalIsPlatformDialog provides isPlatformDialog,
+        LocalEnableFloatingBottomBar provides effectiveSettings.enableFloatingBottomBar,
+        LocalEnableFloatingBottomBarBlur provides effectiveSettings.enableFloatingBottomBarBlur,
         content = themedContent
     )
 }

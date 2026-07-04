@@ -133,6 +133,20 @@ class SettingsViewModel(
         )
     }
 
+    fun setEnableFloatingBottomBar(enabled: Boolean) {
+        repository.setEnableFloatingBottomBar(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(enableFloatingBottomBar = enabled)
+        )
+    }
+
+    fun setEnableFloatingBottomBarBlur(enabled: Boolean) {
+        repository.setEnableFloatingBottomBarBlur(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(enableFloatingBottomBarBlur = enabled)
+        )
+    }
+
     fun setManualColorEnabled(enabled: Boolean) {
         repository.setManualColorEnabled(enabled)
         _uiState.value = _uiState.value.copy(

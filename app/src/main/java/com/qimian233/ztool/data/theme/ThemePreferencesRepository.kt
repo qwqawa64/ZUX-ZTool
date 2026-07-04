@@ -34,7 +34,9 @@ class ThemePreferencesRepository(
             manualSeedColor = prefs.getLong(
                 KEY_MANUAL_SEED_COLOR,
                 ZToolThemeSettings.DEFAULT_MANUAL_SEED_COLOR
-            )
+            ),
+            enableFloatingBottomBar = prefs.getBoolean(KEY_ENABLE_FLOATING_BOTTOM_BAR, false),
+            enableFloatingBottomBarBlur = prefs.getBoolean(KEY_ENABLE_FLOATING_BOTTOM_BAR_BLUR, false)
         )
     }
 
@@ -50,6 +52,8 @@ class ThemePreferencesRepository(
                 .putBoolean(KEY_PREDICTIVE_BACK_GESTURE_ENABLED, settings.predictiveBackGestureEnabled)
                 .putBoolean(KEY_MANUAL_COLOR_ENABLED, settings.manualColorEnabled)
                 .putLong(KEY_MANUAL_SEED_COLOR, settings.manualSeedColor)
+                .putBoolean(KEY_ENABLE_FLOATING_BOTTOM_BAR, settings.enableFloatingBottomBar)
+                .putBoolean(KEY_ENABLE_FLOATING_BOTTOM_BAR_BLUR, settings.enableFloatingBottomBarBlur)
         }
     }
 
@@ -87,6 +91,14 @@ class ThemePreferencesRepository(
 
     fun saveManualSeedColor(color: Long) {
         prefs.edit { putLong(KEY_MANUAL_SEED_COLOR, color) }
+    }
+
+    fun saveEnableFloatingBottomBar(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_ENABLE_FLOATING_BOTTOM_BAR, enabled) }
+    }
+
+    fun saveEnableFloatingBottomBarBlur(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_ENABLE_FLOATING_BOTTOM_BAR_BLUR, enabled) }
     }
 
     fun observeSettings(onChanged: (ZToolThemeSettings) -> Unit): () -> Unit {
@@ -133,6 +145,8 @@ class ThemePreferencesRepository(
         private const val KEY_PREDICTIVE_BACK_GESTURE_ENABLED = "predictive_back_gesture_enabled"
         private const val KEY_MANUAL_COLOR_ENABLED = "manual_color_enabled"
         private const val KEY_MANUAL_SEED_COLOR = "manual_seed_color"
+        private const val KEY_ENABLE_FLOATING_BOTTOM_BAR = "enable_floating_bottom_bar"
+        private const val KEY_ENABLE_FLOATING_BOTTOM_BAR_BLUR = "enable_floating_bottom_bar_blur"
         private val THEME_KEYS = setOf(
             KEY_FRONTEND_STYLE,
             KEY_THEME_MODE,
@@ -143,7 +157,9 @@ class ThemePreferencesRepository(
             KEY_AMOLED_BLACK_ENABLED,
             KEY_PREDICTIVE_BACK_GESTURE_ENABLED,
             KEY_MANUAL_COLOR_ENABLED,
-            KEY_MANUAL_SEED_COLOR
+            KEY_MANUAL_SEED_COLOR,
+            KEY_ENABLE_FLOATING_BOTTOM_BAR,
+            KEY_ENABLE_FLOATING_BOTTOM_BAR_BLUR
         )
     }
 }

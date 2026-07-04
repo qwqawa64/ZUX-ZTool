@@ -24,6 +24,8 @@
         android:maxSdkVersion="32"
         tools:ignore="ScopedStorage" />
 
+    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur" />
+
     <application
         android:enableOnBackInvokedCallback="true"
         android:allowBackup="true"

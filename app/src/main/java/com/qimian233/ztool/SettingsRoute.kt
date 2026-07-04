@@ -256,6 +256,8 @@ fun SettingsThemeMainRoute(
         onDynamicColorChanged = viewModel::setDynamicColorEnabled,
         onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
         onPredictiveBackGestureChanged = viewModel::setPredictiveBackGestureEnabled,
+        onEnableFloatingBottomBarChanged = viewModel::setEnableFloatingBottomBar,
+        onEnableFloatingBottomBarBlurChanged = viewModel::setEnableFloatingBottomBarBlur,
         onManualColorChanged = viewModel::setManualColorEnabled,
         onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
         onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
@@ -406,6 +408,8 @@ private fun ThemeSettingsRoute(
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
     onPredictiveBackGestureChanged: (Boolean) -> Unit,
+    onEnableFloatingBottomBarChanged: (Boolean) -> Unit,
+    onEnableFloatingBottomBarBlurChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
     onManualSeedColorTextChanged: (String) -> Unit,
     onManualSeedColorEditingFinished: () -> Unit,
@@ -448,6 +452,8 @@ private fun ThemeSettingsRoute(
                         onDynamicColorChanged = onDynamicColorChanged,
                         onAmoledBlackChanged = onAmoledBlackChanged,
                         onPredictiveBackGestureChanged = onPredictiveBackGestureChanged,
+                        onEnableFloatingBottomBarChanged = onEnableFloatingBottomBarChanged,
+                        onEnableFloatingBottomBarBlurChanged = onEnableFloatingBottomBarBlurChanged,
                         onManualColorChanged = onManualColorChanged,
                         onManualSeedColorTextChanged = onManualSeedColorTextChanged,
                         onManualSeedColorEditingFinished = onManualSeedColorEditingFinished
@@ -660,6 +666,8 @@ private fun themeSettingsSections(
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
     onPredictiveBackGestureChanged: (Boolean) -> Unit,
+    onEnableFloatingBottomBarChanged: (Boolean) -> Unit,
+    onEnableFloatingBottomBarBlurChanged: (Boolean) -> Unit,
     onManualColorChanged: (Boolean) -> Unit,
     onManualSeedColorTextChanged: (String) -> Unit,
     onManualSeedColorEditingFinished: () -> Unit
@@ -846,6 +854,31 @@ private fun themeSettingsSections(
                             }
                         )
                     )
+                }
+                // Miuix-only: Floating bottom bar switches
+                if (settings.frontendStyle == FrontendStyle.Miuix) {
+                    add(
+                        SettingItem.Switch(
+                            key = "enable_floating_bottom_bar",
+                            title = stringResource(R.string.enable_floating_bottom_bar_title),
+                            summary = stringResource(R.string.enable_floating_bottom_bar_summary),
+                            checked = settings.enableFloatingBottomBar,
+                            onCheckedChange = onEnableFloatingBottomBarChanged,
+                            icon = Icons.Rounded.AutoAwesome
+                        )
+                    )
+                    if (settings.enableFloatingBottomBar) {
+                        add(
+                            SettingItem.Switch(
+                                key = "enable_floating_bottom_bar_blur",
+                                title = stringResource(R.string.enable_floating_bottom_bar_blur_title),
+                                summary = stringResource(R.string.enable_floating_bottom_bar_blur_summary),
+                                checked = settings.enableFloatingBottomBarBlur,
+                                onCheckedChange = onEnableFloatingBottomBarBlurChanged,
+                                icon = Icons.Rounded.AutoAwesome
+                            )
+                        )
+                    }
                 }
             }
         )

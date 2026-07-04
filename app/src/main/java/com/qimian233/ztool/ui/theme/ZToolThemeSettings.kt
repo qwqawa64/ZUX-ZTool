@@ -26,7 +26,9 @@ data class ZToolThemeSettings(
     val amoledBlackEnabled: Boolean = false,
     val predictiveBackGestureEnabled: Boolean = true,
     val manualColorEnabled: Boolean = false,
-    val manualSeedColor: Long = DEFAULT_MANUAL_SEED_COLOR
+    val manualSeedColor: Long = DEFAULT_MANUAL_SEED_COLOR,
+    val enableFloatingBottomBar: Boolean = false,
+    val enableFloatingBottomBarBlur: Boolean = false
 ) {
     companion object {
         const val DEFAULT_MANUAL_SEED_COLOR: Long = 0xFF1D5FA8

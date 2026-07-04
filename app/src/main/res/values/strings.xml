@@ -845,6 +845,10 @@
     <string name="amoled_black_summary">在暗色模式使用纯黑主题</string>
     <string name="predictive_back_gesture_title">预测性返回手势</string>
     <string name="predictive_back_gesture_summary">启用预测性返回手势动画</string>
+    <string name="enable_floating_bottom_bar_title">启用悬浮底栏</string>
+    <string name="enable_floating_bottom_bar_summary">使用 iOS Liquid Glass 风格的悬浮胶囊底栏（仅 Miuix 模式）</string>
+    <string name="enable_floating_bottom_bar_blur_title">悬浮底栏模糊效果</string>
+    <string name="enable_floating_bottom_bar_blur_summary">为悬浮底栏启用玻璃模糊和高光特效（需 Android 13+）</string>
     <string name="back_to_top">回顶部</string>
     <string name="app_details_completion">补全应用信息</string>
     <string name="app_details_completion_summary">为设置的应用页面补全应用包名、SDK信息、安装和更新信息以及安装来源</string>

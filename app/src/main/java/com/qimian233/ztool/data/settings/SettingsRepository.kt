@@ -112,6 +112,14 @@ class SettingsRepository(
         themePreferences.savePredictiveBackGestureEnabled(enabled)
     }
 
+    fun setEnableFloatingBottomBar(enabled: Boolean) {
+        themePreferences.saveEnableFloatingBottomBar(enabled)
+    }
+
+    fun setEnableFloatingBottomBarBlur(enabled: Boolean) {
+        themePreferences.saveEnableFloatingBottomBarBlur(enabled)
+    }
+
     fun setManualColorEnabled(enabled: Boolean) {
         themePreferences.saveManualColorEnabled(enabled)
     }
