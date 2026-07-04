@@ -145,7 +145,7 @@ fun ZToolNavigationRail(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         NavigationRail(
-            containerColor = LocalZToolColorScheme.current.background,
+            containerColor = LocalZToolColorScheme.current.surface,
             contentColor = LocalZToolColorScheme.current.onSurface,
             modifier = modifier
         ) {
@@ -242,7 +242,7 @@ fun ZToolNavigationBar(
         // [FP-2] Insert FloatingBottomBar switch here
         top.yukonga.miuix.kmp.basic.NavigationBar(
             modifier = modifier,
-            color = MiuixTheme.colorScheme.surface,
+            color = LocalZToolColorScheme.current.surface,
         ) {
             content()
         }
