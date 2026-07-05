@@ -1,6 +1,5 @@
 package com.qimian233.ztool.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -15,12 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
@@ -261,7 +261,7 @@ fun ZToolNavigationBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ZToolNavigationBarItem(
+fun RowScope.ZToolNavigationBarItem(
     selected: Boolean,
     onClick: () -> Unit,
     icon: ImageVector,
@@ -270,9 +270,10 @@ fun ZToolNavigationBarItem(
     enabled: Boolean = true
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        // Miuix NavigationBarItem is not exported in 0.9.2 Android artifact.
-        // Use a manual implementation that renders Icon + Text inside a clickable column.
-        // Future: replace with top.yukonga.miuix.kmp.basic.NavigationBarItem when available.
+        // Miuix NavigationBarItem is available since 0.9.3.
+        // TODO: upgrade miuix to ≥ 0.9.3 and replace with:
+        //   top.yukonga.miuix.kmp.basic.NavigationBarItem(selected, onClick, icon, label, …)
+        // Blocked by: Aliyun Maven mirror sync lag for top.yukonga.miuix.kmp artifacts.
         val iconTint = if (selected) MiuixTheme.colorScheme.onSecondaryContainer
             else MiuixTheme.colorScheme.onSurfaceVariantSummary
         val textColor = if (selected) MiuixTheme.colorScheme.onSurface
@@ -311,40 +312,24 @@ fun ZToolNavigationBarItem(
         return
     }
 
-    // Material3: NavigationBarItem was removed in Material3 1.4.0 — use manual item.
-    val iconColor = if (selected) LocalZToolColorScheme.current.onSecondaryContainer
-        else LocalZToolColorScheme.current.onSurfaceVariant
-    val textColor = if (selected) LocalZToolColorScheme.current.onSurface
-        else LocalZToolColorScheme.current.onSurfaceVariant
-    val indicatorColor = LocalZToolColorScheme.current.secondaryContainer
-    val indicatorShape = RoundedCornerShape(16.dp)
-    Box(
-        modifier = modifier
-            .then(if (selected) Modifier.background(indicatorColor, indicatorShape) else Modifier)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-                enabled = enabled,
-                role = Role.Tab
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)
-        ) {
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
             Icon(
                 imageVector = icon,
-                contentDescription = label,
-                modifier = Modifier.size(28.dp),
-                tint = iconColor
+                contentDescription = label
             )
-            Text(
-                text = label,
-                color = textColor,
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
-    }
+        },
+        label = { Text(label) },
+        modifier = modifier,
+        enabled = enabled,
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = LocalZToolColorScheme.current.onSecondaryContainer,
+            selectedTextColor = LocalZToolColorScheme.current.onSurface,
+            indicatorColor = LocalZToolColorScheme.current.secondaryContainer,
+            unselectedIconColor = LocalZToolColorScheme.current.onSurfaceVariant,
+            unselectedTextColor = LocalZToolColorScheme.current.onSurfaceVariant
+        )
+    )
 }

@@ -23,14 +23,6 @@ dependencyResolutionManagement {
     repositories {
         exclusiveContent {
             forRepository {
-                maven { url = uri("https://maven.aliyun.com/repository/central") }
-            }
-            filter {
-                includeGroup("top.yukonga.miuix.kmp")
-            }
-        }
-        exclusiveContent {
-            forRepository {
                 google()
             }
             filter {
