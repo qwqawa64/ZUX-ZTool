@@ -146,7 +146,9 @@ public class ConfigUpgrade {
 
     private boolean isRemotePrefsUpgradeRequired(Context context) {
         ModulePreferencesUtils prefs = new ModulePreferencesUtils(context);
-        return isConfigEmpty(prefs) && getXSharedPreferenceDirectory() != null;
+        boolean isUpgradeNeeded = isConfigEmpty(prefs) && getXSharedPreferenceDirectory() != null;
+        if (isUpgradeNeeded) Log.w(TAG, "Please upgrade to RemotePreferences!"); else Log.i(TAG, "No need to upgrade from XSharedPreferences.");
+        return isUpgradeNeeded;
     }
 
     // 供外部调用的升级配置方法
