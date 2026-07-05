@@ -71,6 +71,9 @@ import com.qimian233.ztool.ui.components.ZToolNavigationBar
 import com.qimian233.ztool.ui.components.ZToolNavigationBarItem
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
 import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
+import com.qimian233.ztool.ui.components.ZToolNavigationRailState
+import com.qimian233.ztool.ui.components.collapseNavigationRailOnPointerDown
+import com.qimian233.ztool.ui.components.rememberZToolNavigationRailState
 import com.qimian233.ztool.ui.firstrun.AgreementDisplayMode
 import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
 import com.qimian233.ztool.ui.theme.FrontendStyle
@@ -375,6 +378,7 @@ private fun MainTabletShell(
 
     if (useNavigationRail) {
         // === Rail layout (landscape) ===
+        val navigationRailState = rememberZToolNavigationRailState()
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -386,7 +390,8 @@ private fun MainTabletShell(
 
             MainRouteNavHost(
                 modifier = contentModifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .collapseNavigationRailOnPointerDown(navigationRailState),
                 navController = navController,
                 predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
                 onEnvironmentStateChanged = onEnvironmentStateChanged
@@ -396,7 +401,8 @@ private fun MainTabletShell(
                 key(MainNavigationRailKey) {
                     MainNavigationRail(
                         selectedRouteState = selectedRouteState,
-                        onDestinationSelectedState = onDestinationSelectedState
+                        onDestinationSelectedState = onDestinationSelectedState,
+                        navigationRailState = navigationRailState
                     )
                 }
             }
@@ -506,11 +512,13 @@ private fun MainTabletShell(
 @Composable
 private fun MainNavigationRail(
     selectedRouteState: State<MainRoute>,
-    onDestinationSelectedState: State<(MainRoute) -> Unit>
+    onDestinationSelectedState: State<(MainRoute) -> Unit>,
+    navigationRailState: ZToolNavigationRailState
 ) {
     ZToolNavigationRail(
         modifier = Modifier
-            .fillMaxHeight()
+            .fillMaxHeight(),
+        state = navigationRailState
     ) {
         MainRoute.entriesInOrder.forEach { destination ->
             MainNavigationRailItem(
