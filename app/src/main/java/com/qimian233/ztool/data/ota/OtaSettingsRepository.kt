@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.ota
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.R
@@ -61,10 +62,8 @@ class OtaSettingsRepository(
     }
 
     fun loadCurrentDeviceInfo(): CurrentDeviceInfo {
-        val versionResult = shellExecutor.executeCommand("getprop ro.build.display.id")
-        val version = if (versionResult.isSuccess && versionResult.output.isNotEmpty()) {
-            versionResult.output.trim()
-        } else {
+        val versionResult = Build.DISPLAY
+        val version = versionResult.ifEmpty {
             context.getString(R.string.unknown)
         }
 
