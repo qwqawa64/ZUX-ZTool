@@ -1,7 +1,5 @@
 package com.qimian233.ztool.ui.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,18 +33,16 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
 import top.yukonga.miuix.kmp.basic.NavigationRailItem as MiuixNavigationRailItem
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehaviorType
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val LocalMiuixTopAppBarScrollBehavior = staticCompositionLocalOf<MiuixScrollBehaviorType?> { null }
 
@@ -270,45 +266,14 @@ fun RowScope.ZToolNavigationBarItem(
     enabled: Boolean = true
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        // Miuix NavigationBarItem is available since 0.9.3.
-        // TODO: upgrade miuix to ≥ 0.9.3 and replace with:
-        //   top.yukonga.miuix.kmp.basic.NavigationBarItem(selected, onClick, icon, label, …)
-        // Blocked by: Aliyun Maven mirror sync lag for top.yukonga.miuix.kmp artifacts.
-        val iconTint = if (selected) MiuixTheme.colorScheme.onSecondaryContainer
-            else MiuixTheme.colorScheme.onSurfaceVariantSummary
-        val textColor = if (selected) MiuixTheme.colorScheme.onSurface
-            else MiuixTheme.colorScheme.onSurfaceVariantSummary
-        Box(
-            modifier = modifier
-                .padding(vertical = 8.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClick,
-                    enabled = enabled,
-                    role = Role.Tab
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
-            ) {
-                top.yukonga.miuix.kmp.basic.Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    modifier = Modifier.size(24.dp),
-                    tint = iconTint
-                )
-                top.yukonga.miuix.kmp.basic.Text(
-                    text = label,
-                    color = textColor,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Visible
-                )
-            }
-        }
+        MiuixNavigationBarItem(
+            selected = selected,
+            onClick = onClick,
+            icon = icon,
+            label = label,
+            modifier = modifier,
+            enabled = enabled
+        )
         return
     }
 
