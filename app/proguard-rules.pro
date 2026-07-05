@@ -31,8 +31,19 @@
 -keepattributes Signature
 -keepattributes Exceptions
 -keepattributes InnerClasses
-# 6. 保护自 Hook 方法 com.qimian233.ztool.ModuleActivationProbe.isModuleActive 不被混淆
--keepclasseswithmembernames class com.qimian233.ztool.ModuleActivationProbe { isModuleActive(); }
+# 6. libxposed service is a cross-process binder ABI. Keep the provider,
+# AIDL stubs/proxies, service wrapper, helper, listener names, and parcelables
+# stable so LSPosed can deliver and the app can consume the activation binder.
+-keep class io.github.libxposed.service.** { *; }
+-keep class io.github.libxposed.service.interfaces.** { *; }
+
+# 7. Keep the app-side activation bridge intact. Release R8 can otherwise merge
+# the listener into helper call sites and strip bridge methods that are only used
+# by the libxposed callback path.
+-keep class com.qimian233.ztool.ModuleActivationProbe { *; }
+-keep class com.qimian233.ztool.ModuleActivationProbe$* { *; }
+-keep class com.qimian233.ztool.XposedServiceBridge { *; }
+-keepclassmembers class * implements io.github.libxposed.service.XposedServiceHelper$OnServiceListener { *; }
 
 # Gson TypeToken rules to preserve generic signatures
 -keep class com.google.gson.reflect.TypeToken { *; }
