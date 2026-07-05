@@ -8,11 +8,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,8 +27,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -217,18 +216,6 @@ fun ZToolNavigationRailItem(
     )
 }
 
-// ===== NavigationBar (Bottom Bar) =====
-//
-// Future insertion points for Miuix visual effects:
-//   [FP-1] Wrap MiuixNavigationBar with BlurredBar(blurBackdrop) for background blur.
-//          Requires `miuix-blur` dependency + a CompositionLocal for `blurBackdrop`.
-//   [FP-2] Replace the entire Miuix branch with FloatingBottomBar when
-//          `LocalEnableFloatingBottomBar.current` is true.
-//          Requires porting FloatingBottomBar.kt + DampedDragAnimation from reference.
-//   [FP-3] Enable Liquid Glass (vibrancy + lens + BloomStroke) inside
-//          FloatingBottomBar by passing `isBlurEnabled = true` + `backdrop`.
-//          Requires `miuix-blur` + `drawBackdrop` + `rememberLayerBackdrop`.
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ZToolNavigationBar(
@@ -236,10 +223,8 @@ fun ZToolNavigationBar(
     content: @Composable RowScope.() -> Unit
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-        // [FP-1] Insert BlurredBar wrapper here
-        // [FP-2] Insert FloatingBottomBar switch here
         top.yukonga.miuix.kmp.basic.NavigationBar(
-            modifier = modifier,
+            modifier = modifier.height(64.dp),
             color = LocalZToolColorScheme.current.surface,
         ) {
             content()
@@ -248,7 +233,7 @@ fun ZToolNavigationBar(
     }
 
     NavigationBar(
-        modifier = modifier,
+        modifier = modifier.height(64.dp),
         containerColor = LocalZToolColorScheme.current.surface,
         contentColor = LocalZToolColorScheme.current.onSurface,
         content = content
@@ -271,7 +256,9 @@ fun RowScope.ZToolNavigationBarItem(
             onClick = onClick,
             icon = icon,
             label = label,
-            modifier = modifier,
+            modifier = modifier
+                .width(80.dp)
+                .height(72.dp),
             enabled = enabled
         )
         return
@@ -283,11 +270,14 @@ fun RowScope.ZToolNavigationBarItem(
         icon = {
             Icon(
                 imageVector = icon,
-                contentDescription = label
+                contentDescription = label,
+                modifier = Modifier.size(28.dp)
             )
         },
         label = { Text(label) },
-        modifier = modifier,
+        modifier = modifier
+            .width(80.dp)
+            .height(72.dp),
         enabled = enabled,
         colors = NavigationBarItemDefaults.colors(
             selectedIconColor = LocalZToolColorScheme.current.onSecondaryContainer,
