@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -413,7 +414,9 @@ private fun MainTabletShell(
             ) {
                 when (ztoolThemeSpec.style) {
                     FrontendStyle.Miuix -> {
-                        top.yukonga.miuix.kmp.basic.Scaffold { innerPadding ->
+                        top.yukonga.miuix.kmp.basic.Scaffold(
+                            contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
+                        ) { innerPadding ->
                             MainRouteNavHost(useHorizontalAnimation = true,
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -426,7 +429,9 @@ private fun MainTabletShell(
                         }
                     }
                     FrontendStyle.Material3Expressive -> {
-                        Scaffold { innerPadding ->
+                        Scaffold(
+                            contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
+                        ) { innerPadding ->
                             MainRouteNavHost(useHorizontalAnimation = true,
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -471,6 +476,7 @@ private fun MainTabletShell(
                 FrontendStyle.Miuix -> {
                     top.yukonga.miuix.kmp.basic.Scaffold(
                         bottomBar = bottomBar,
+                        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
                     ) { innerPadding ->
                         MainRouteNavHost(useHorizontalAnimation = true,
                             modifier = contentModifier.padding(innerPadding),
@@ -483,6 +489,7 @@ private fun MainTabletShell(
                 FrontendStyle.Material3Expressive -> {
                     Scaffold(
                         bottomBar = bottomBar,
+                        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
                     ) { innerPadding ->
                         MainRouteNavHost(useHorizontalAnimation = true,
                             modifier = contentModifier.padding(innerPadding),
