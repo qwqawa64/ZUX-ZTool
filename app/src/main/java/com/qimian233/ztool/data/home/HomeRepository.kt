@@ -126,29 +126,39 @@ class HomeRepository(
 
     fun checkAppUpdate(): UpdateInfo? {
         val currentVersionCode = getCurrentVersionCode()
-        val connection = URL(UPDATE_URL).openConnection() as HttpURLConnection
-        connection.requestMethod = "GET"
-        connection.connectTimeout = 5000
-        connection.readTimeout = 5000
+        for (url in UPDATE_URL) {
+            Log.i(TAG, "Fetching update information via url: $url")
+            try {
+                val connection = URL(url).openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 5000
+                connection.readTimeout = 5000
 
-        if (connection.responseCode != 200) return null
+                if (connection.responseCode == 200) {
 
-        val json = getJsonObject(connection)
-        val newVersionCode = json.getInt("newVersionCode")
-        val ignoredVersion = context
-            .getSharedPreferences(PREF_NAME_UPDATE, Context.MODE_PRIVATE)
-            .getInt(KEY_IGNORE_VERSION, 0)
+                    val json = getJsonObject(connection)
+                    val newVersionCode = json.getInt("newVersionCode")
+                    val ignoredVersion = context
+                        .getSharedPreferences(PREF_NAME_UPDATE, Context.MODE_PRIVATE)
+                        .getInt(KEY_IGNORE_VERSION, 0)
 
-        if (newVersionCode <= currentVersionCode || newVersionCode == ignoredVersion) {
-            return null
+                    if (newVersionCode <= currentVersionCode || newVersionCode == ignoredVersion) {
+                        Log.w(TAG, "Current version is the latest, no need to update.")
+                        return null
+                    }
+
+                    return UpdateInfo(
+                        versionName = json.getString("newVersionName"),
+                        versionCode = newVersionCode,
+                        changelog = json.getString("whatNew"),
+                        downloadUrl = json.getString("url")
+                    )
+                }
+            } catch (th : Exception) {
+                Log.e(TAG, "Failed to fetch update info: ${th.message}")
+            }
         }
-
-        return UpdateInfo(
-            versionName = json.getString("newVersionName"),
-            versionCode = newVersionCode,
-            changelog = json.getString("whatNew"),
-            downloadUrl = json.getString("url")
-        )
+        return null
     }
 
     fun ignoreUpdate(versionCode: Int) {
@@ -305,8 +315,10 @@ class HomeRepository(
 
     companion object {
         private const val TAG = "HomeRepository"
-        private const val UPDATE_URL =
-            "https://raw.githubusercontent.com/qwqawa64/ZUX-ZTool/refs/heads/master/UpdateCheck.json"
+        private val UPDATE_URL = listOf(
+            "https://raw.githubusercontent.com/qwqawa64/ZUX-ZTool/refs/heads/master/UpdateCheck.json",
+            "https://gh.absinthe.life/github.com/qwqawa64/ZUX-ZTool/blob/master/UpdateCheck.json"
+        )
         private const val HOMEPAGE_HINT_URL = "https://api.xygeng.cn/one"
         private const val PREF_NAME_UPDATE = "update_prefs"
         private const val KEY_IGNORE_VERSION = "ignore_version_code"
