@@ -3,6 +3,7 @@ package com.qimian233.ztool.data.home
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.system.Os
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.ModuleActivationProbe
@@ -261,8 +262,7 @@ class HomeRepository(
     }
 
     private fun getKernelVersion(): String {
-        val result = shellExecutor.executeRootCommand("uname -r", 3)
-        return if (result.isSuccess && !result.output.isNullOrBlank()) result.output.trim() else ""
+        return Os.uname().release
     }
 
     private fun getCurrentBootSlot(): String {
