@@ -199,6 +199,7 @@ fun FloatingBottomBar(
 
     val tabsBackdrop = rememberLayerBackdrop()
     val density = LocalDensity.current
+    val itemSpacingPx = with(density) { 32.dp.toPx() }
     val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
     val animationScope = rememberCoroutineScope()
 
@@ -239,7 +240,7 @@ fun FloatingBottomBar(
                 if (tabWidthPx == 0f) return@DampedDragAnimation false
 
                 val currentValue = anim.value
-                val indicatorX = currentValue * tabWidthPx
+                val indicatorX = currentValue * (tabWidthPx + itemSpacingPx)
                 val padding = with(density) { 4.dp.toPx() }
                 val globalTouchX = if (isLtr) {
                     padding + indicatorX + offset.x
@@ -260,7 +261,7 @@ fun FloatingBottomBar(
             onDrag = { _, dragAmount ->
                 if (tabWidthPx > 0) {
                     updateValue(
-                        (targetValue + dragAmount.x / tabWidthPx * if (isLtr) 1f else -1f)
+                        (targetValue + dragAmount.x / (tabWidthPx + itemSpacingPx) * if (isLtr) 1f else -1f)
                             .fastCoerceIn(0f, (tabsCount - 1).toFloat())
                     )
                     animationScope.launch {
@@ -286,8 +287,8 @@ fun FloatingBottomBar(
             animationScope = animationScope,
             position = { size, _ ->
                 Offset(
-                    if (isLtr) (dampedDragAnimation.value + 0.5f) * tabWidthPx + panelOffset
-                    else size.width - (dampedDragAnimation.value + 0.5f) * tabWidthPx + panelOffset,
+                    if (isLtr) (dampedDragAnimation.value + 0.5f) * (tabWidthPx + itemSpacingPx) + panelOffset
+                    else size.width - (dampedDragAnimation.value + 0.5f) * (tabWidthPx + itemSpacingPx) + panelOffset,
                     size.height / 2f
                 )
             }
@@ -310,8 +311,10 @@ fun FloatingBottomBar(
             Modifier
                 .onGloballyPositioned { coords ->
                     totalWidthPx = coords.size.width.toFloat()
-                    val contentWidthPx = totalWidthPx - with(density) { 32.dp.toPx() }
-                    tabWidthPx = (contentWidthPx / tabsCount).coerceAtLeast(0f)
+                    val outerPx = with(density) { 32.dp.toPx() }
+                    val contentWidthPx = totalWidthPx - outerPx
+                    val gapsPx = (tabsCount - 1).coerceAtLeast(0) * itemSpacingPx
+                    tabWidthPx = ((contentWidthPx - gapsPx) / tabsCount).coerceAtLeast(0f)
                 }
                 .graphicsLayer { translationX = panelOffset }
                 .dropShadow(
@@ -356,6 +359,7 @@ fun FloatingBottomBar(
                 .then(if (isBlurEnabled) interactiveHighlight.modifier else Modifier)
                 .height(rowHeight)
                 .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
             verticalAlignment = Alignment.CenterVertically,
             content = content
         )
@@ -389,6 +393,7 @@ fun FloatingBottomBar(
                         .height(elementHeight)
                         .padding(16.dp)
                         .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     content = content
                 )
@@ -396,35 +401,15 @@ fun FloatingBottomBar(
         }
 
         if (tabWidthPx > 0f) {
-            val tabWidthDp = with(density) { tabWidthPx.toDp() }
             val paddingPx = with(density) { 16.dp.toPx() }
-            val indicatorWidthPx by remember(density, tabsCount, tabWidthPx) {
-                derivedStateOf {
-                    val isAtStart = dampedDragAnimation.value < 0.5f
-                    val isAtEnd = dampedDragAnimation.value > (tabsCount - 1).toFloat() - 0.5f
-                    tabWidthPx + (if (isAtStart) paddingPx else 0f) + (if (isAtEnd) paddingPx else 0f)
-                }
-            }
-            val indicatorLeftPx by remember(density, tabsCount, tabWidthPx, totalWidthPx, isLtr) {
-                derivedStateOf {
-                    val isAtStart = dampedDragAnimation.value < 0.5f
-                    val isAtEnd = dampedDragAnimation.value > (tabsCount - 1).toFloat() - 0.5f
-                    if (isLtr) {
-                        val baseLeft = paddingPx + dampedDragAnimation.value * tabWidthPx
-                        if (isAtStart) 0f else baseLeft
-                    } else {
-                        val baseRight = totalWidthPx - paddingPx - dampedDragAnimation.value * tabWidthPx
-                        baseRight - tabWidthPx - (if (isAtEnd) paddingPx else 0f)
-                    }
-                }
-            }
-            val indicatorWidthDp = with(density) { indicatorWidthPx.toDp() }
+            val fullIndicatorWidthPx = tabWidthPx + 2f * paddingPx
+            val fullIndicatorWidthDp = with(density) { fullIndicatorWidthPx.toDp() }
             if (isBlurEnabled) {
                 Box(
                     Modifier
                         .graphicsLayer {
-                            translationX = if (isLtr) indicatorLeftPx + panelOffset
-                                else indicatorLeftPx + indicatorWidthPx - totalWidthPx + panelOffset
+                            val rawLeft = dampedDragAnimation.value * (tabWidthPx + itemSpacingPx)
+                            translationX = maxOf(0f, rawLeft) + panelOffset
                         }
                         .then(interactiveHighlight.gestureModifier)
                         .then(dampedDragAnimation.modifier)
@@ -465,20 +450,20 @@ fun FloatingBottomBar(
                             )
                         }
                         .height(elementHeight)
-                        .width(indicatorWidthDp)
+                        .width(fullIndicatorWidthDp)
                 )
             } else {
                 Box(
                     Modifier
                         .graphicsLayer {
-                            translationX = if (isLtr) indicatorLeftPx + panelOffset
-                                else indicatorLeftPx + indicatorWidthPx - totalWidthPx + panelOffset
+                            val rawLeft = dampedDragAnimation.value * (tabWidthPx + itemSpacingPx)
+                            translationX = maxOf(0f, rawLeft) + panelOffset
                         }
                         .then(dampedDragAnimation.modifier)
                         .clip(pillShape)
                         .background(accentColor.copy(alpha = 0.15f), pillShape)
                         .height(elementHeight)
-                        .width(indicatorWidthDp)
+                        .width(fullIndicatorWidthDp)
                 )
             }
         }
