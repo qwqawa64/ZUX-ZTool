@@ -511,7 +511,7 @@ private fun MainNavigationRail(
 ) {
     ZToolNavigationRail(
         modifier = Modifier
-            .width(MainNavigationRailWidth)
+            /*.width(MainNavigationRailWidth)*/
             .fillMaxHeight()
     ) {
         MainRoute.entriesInOrder.forEach { destination ->

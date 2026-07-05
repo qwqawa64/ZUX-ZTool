@@ -38,8 +38,9 @@ import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.basic.NavigationRail as MiuixNavigationRail
+import top.yukonga.miuix.kmp.basic.rememberNavigationRailState
 import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
+import top.yukonga.miuix.kmp.basic.NavigationRail as MiuixNavigationRail
 import top.yukonga.miuix.kmp.basic.NavigationRailItem as MiuixNavigationRailItem
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehaviorType
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
@@ -139,19 +140,15 @@ fun ZToolTopAppBar(
 @Composable
 fun ZToolNavigationRail(
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
+        val railState = rememberNavigationRailState()
         MiuixNavigationRail(
-            color = LocalZToolColorScheme.current.surface,
-            // contentColor = LocalZToolColorScheme.current.onSurface,
-            modifier = modifier
+            /*modifier = modifier,*/
+            state = railState
         ) {
-            Column(
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.Center,
-                content = content
-            )
+            content()
         }
         return
     }
@@ -184,10 +181,10 @@ fun ZToolNavigationRailItem(
             onClick = onClick,
             icon = icon,
             label = label,
-            modifier = modifier
-                .width(80.dp)
-                .height(72.dp),
-            //enabled = enabled
+//            modifier = modifier
+//                .Width(80.dp)
+//                .height(72.dp),
+//            enabled = enabled
         )
         return
     }
