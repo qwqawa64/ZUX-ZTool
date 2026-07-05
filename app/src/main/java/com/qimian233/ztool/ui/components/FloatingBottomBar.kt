@@ -397,13 +397,34 @@ fun FloatingBottomBar(
 
         if (tabWidthPx > 0f) {
             val tabWidthDp = with(density) { tabWidthPx.toDp() }
+            val paddingPx = with(density) { 16.dp.toPx() }
+            val indicatorWidthPx by remember(density, tabsCount, tabWidthPx) {
+                derivedStateOf {
+                    val isAtStart = dampedDragAnimation.value < 0.5f
+                    val isAtEnd = dampedDragAnimation.value > (tabsCount - 1).toFloat() - 0.5f
+                    tabWidthPx + (if (isAtStart) paddingPx else 0f) + (if (isAtEnd) paddingPx else 0f)
+                }
+            }
+            val indicatorLeftPx by remember(density, tabsCount, tabWidthPx, totalWidthPx, isLtr) {
+                derivedStateOf {
+                    val isAtStart = dampedDragAnimation.value < 0.5f
+                    val isAtEnd = dampedDragAnimation.value > (tabsCount - 1).toFloat() - 0.5f
+                    if (isLtr) {
+                        val baseLeft = paddingPx + dampedDragAnimation.value * tabWidthPx
+                        if (isAtStart) 0f else baseLeft
+                    } else {
+                        val baseRight = totalWidthPx - paddingPx - dampedDragAnimation.value * tabWidthPx
+                        baseRight - tabWidthPx - (if (isAtEnd) paddingPx else 0f)
+                    }
+                }
+            }
+            val indicatorWidthDp = with(density) { indicatorWidthPx.toDp() }
             if (isBlurEnabled) {
                 Box(
                     Modifier
-                        .padding(16.dp)
                         .graphicsLayer {
-                            val progressOffset = dampedDragAnimation.value * tabWidthPx
-                            translationX = if (isLtr) progressOffset + panelOffset else -progressOffset + panelOffset
+                            translationX = if (isLtr) indicatorLeftPx + panelOffset
+                                else indicatorLeftPx + indicatorWidthPx - totalWidthPx + panelOffset
                         }
                         .then(interactiveHighlight.gestureModifier)
                         .then(dampedDragAnimation.modifier)
@@ -444,21 +465,20 @@ fun FloatingBottomBar(
                             )
                         }
                         .height(elementHeight)
-                        .width(tabWidthDp)
+                        .width(indicatorWidthDp)
                 )
             } else {
                 Box(
                     Modifier
-                        .padding(16.dp)
                         .graphicsLayer {
-                            val progressOffset = dampedDragAnimation.value * tabWidthPx
-                            translationX = if (isLtr) progressOffset + panelOffset else -progressOffset + panelOffset
+                            translationX = if (isLtr) indicatorLeftPx + panelOffset
+                                else indicatorLeftPx + indicatorWidthPx - totalWidthPx + panelOffset
                         }
                         .then(dampedDragAnimation.modifier)
                         .clip(pillShape)
                         .background(accentColor.copy(alpha = 0.15f), pillShape)
                         .height(elementHeight)
-                        .width(tabWidthDp)
+                        .width(indicatorWidthDp)
                 )
             }
         }
