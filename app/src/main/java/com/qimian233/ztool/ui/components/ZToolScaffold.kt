@@ -145,7 +145,6 @@ fun ZToolNavigationRail(
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         val railState = rememberNavigationRailState()
         MiuixNavigationRail(
-            /*modifier = modifier,*/
             state = railState
         ) {
             content()
@@ -181,10 +180,6 @@ fun ZToolNavigationRailItem(
             onClick = onClick,
             icon = icon,
             label = label,
-//            modifier = modifier
-//                .Width(80.dp)
-//                .height(72.dp),
-//            enabled = enabled
         )
         return
     }

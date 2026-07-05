@@ -15,6 +15,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,8 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,7 +52,6 @@ import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
-import com.qimian233.ztool.utils.ConfigUpgrade
 import com.qimian233.ztool.settingactivity.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.settingactivity.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.settingactivity.mobiledesktop.MobileDesktopSettingsRoute
@@ -83,6 +81,7 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
+import com.qimian233.ztool.utils.ConfigUpgrade
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -511,7 +510,6 @@ private fun MainNavigationRail(
 ) {
     ZToolNavigationRail(
         modifier = Modifier
-            /*.width(MainNavigationRailWidth)*/
             .fillMaxHeight()
     ) {
         MainRoute.entriesInOrder.forEach { destination ->
