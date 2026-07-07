@@ -89,6 +89,8 @@
     <string name="root_not_available">Root unavailable</string>
     <string name="module_active">Module Activated</string>
     <string name="module_inactive">Module not activated</string>
+    <string name="no_root_permission">No Root permission</string>
+    <string name="no_root_and_module_inactive">No Root permission, Module not activated</string>
     <string name="module_version_unknown">Module version: unknown</string>
     <string name="magisk_su_format">Magisk (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>

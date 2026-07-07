@@ -408,22 +408,40 @@ private fun UpdateCard(
 private fun ModuleStatusCard(state: HomeUiState) {
     val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
     val isDefaultColor = !themeSpec.dynamicColorEnabled && !themeSpec.manualColorEnabled
+    val bothActive = state.isModuleActive && state.isRootAvailable
+    val anyActive = state.isModuleActive || state.isRootAvailable
 
     val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
     val containerColor = when {
-        state.isModuleActive && isDefaultColor -> if (isDark) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFFA5D6A7)
-        !state.isModuleActive -> if (isDark) Color(0xFFB71C1C).copy(alpha = 0.4f) else Color(0xFFEF9A9A)
+        bothActive && isDefaultColor -> if (isDark) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFFA5D6A7)
+        !bothActive && anyActive -> if (isDark) Color(0xFFE65100).copy(alpha = 0.35f) else Color(0xFFFFE082)
+        !anyActive -> if (isDark) Color(0xFFB71C1C).copy(alpha = 0.4f) else Color(0xFFEF9A9A)
         else -> LocalZToolColorScheme.current.primaryContainer
     }
     val contentColor = when {
-        state.isModuleActive && isDefaultColor -> if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
-        !state.isModuleActive -> if (isDark) Color(0xFFEF9A9A) else Color(0xFFB71C1C)
+        bothActive && isDefaultColor -> if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
+        !bothActive && anyActive -> if (isDark) Color(0xFFFFE082) else Color(0xFFE65100)
+        !anyActive -> if (isDark) Color(0xFFEF9A9A) else Color(0xFFB71C1C)
         else -> LocalZToolColorScheme.current.onPrimaryContainer
     }
     val iconColor = when {
-        state.isModuleActive && isDefaultColor -> if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
-        !state.isModuleActive -> if (isDark) Color(0xFFEF5350) else Color(0xFFE53935)
+        bothActive && isDefaultColor -> if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
+        !bothActive && anyActive -> if (isDark) Color(0xFFFFB300) else Color(0xFFFF8F00)
+        !anyActive -> if (isDark) Color(0xFFEF5350) else Color(0xFFE53935)
         else -> LocalZToolColorScheme.current.primary
+    }
+
+    val statusText = when {
+        bothActive -> stringResource(R.string.module_active)
+        state.isModuleActive && !state.isRootAvailable -> stringResource(R.string.no_root_permission)
+        !state.isModuleActive && state.isRootAvailable -> stringResource(R.string.module_inactive)
+        else -> stringResource(R.string.no_root_and_module_inactive)
+    }
+
+    val icon = when {
+        bothActive -> Icons.Rounded.CheckCircle
+        anyActive -> Icons.Rounded.Warning
+        else -> Icons.Rounded.Cancel
     }
     
     ZToolCard(
@@ -443,18 +461,14 @@ private fun ModuleStatusCard(state: HomeUiState) {
                         color = contentColor.copy(alpha = 0.8f)
                     )
                     Text(
-                        text = if (state.isModuleActive) {
-                            stringResource(R.string.module_active)
-                        } else {
-                            stringResource(R.string.module_inactive)
-                        },
+                        text = statusText,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = contentColor
                     )
                 }
                 Icon(
-                    imageVector = if (state.isModuleActive) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = iconColor,
                     modifier = Modifier.size(32.dp)
