@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,13 +25,19 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +49,7 @@ import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import io.github.libxposed.service.XposedService
 
 enum class FeatureDestination(
     val route: String
@@ -64,23 +72,67 @@ fun FeaturesMainRoute(
     val context = LocalContext.current
     val allItems = rememberFeatureItems(context)
     val installedPackages = rememberInstalledPackages(context)
-    val (visibleItems, warningMessageRes) = remember(allItems, installedPackages) {
-        val visible = allItems.filter { item ->
+    val scopeSet = remember { XposedServiceBridge.getScope().toSet() }
+
+    var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
+
+    val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
+        val scopedItems = allItems.map { item ->
+            item.copy(inScope = item.alwaysVisible || item.packageName in scopeSet)
+        }
+        val visible = scopedItems.filter { item ->
             item.alwaysVisible || item.packageName in installedPackages
         }
         if (installedPackages.isEmpty()) {
-            allItems to R.string.features_app_list_permission_warning
+            scopedItems to R.string.features_app_list_permission_warning
         } else if (visible.isEmpty()) {
-            allItems to R.string.features_all_filtered_warning
+            scopedItems to R.string.features_all_filtered_warning
         } else {
             visible to null
         }
     }
+
+    // 作用域申请对话框
+    scopeRequestItem?.let { item ->
+        AlertDialog(
+            onDismissRequest = { scopeRequestItem = null },
+            title = { Text(stringResource(item.nameRes)) },
+            text = { Text("该应用不在 LSPosed 作用域中，是否申请加入？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    XposedServiceBridge.requestScope(
+                        listOf(item.packageName),
+                        object : XposedService.OnScopeEventListener {
+                            override fun onScopeRequestApproved(packages: List<String>) {
+                                Toast.makeText(context, "作用域申请已提交", Toast.LENGTH_SHORT).show()
+                            }
+                            override fun onScopeRequestFailed(reason: String) {
+                                Toast.makeText(context, "作用域申请失败: $reason", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                    scopeRequestItem = null
+                }) {
+                    Text("申请")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { scopeRequestItem = null }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     FeaturesRoute(
         items = visibleItems,
         warningMessageRes = warningMessageRes,
         onFeatureClick = { item ->
-            onFeatureDestinationSelected(item.destination)
+            if (item.inScope) {
+                onFeatureDestinationSelected(item.destination)
+            } else {
+                scopeRequestItem = item
+            }
         }
     )
 }
@@ -91,7 +143,8 @@ private data class FeatureItem(
     val packageName: String,
     val icon: Drawable?,
     val destination: FeatureDestination,
-    val alwaysVisible: Boolean = false
+    val alwaysVisible: Boolean = false,
+    val inScope: Boolean = true
 )
 
 private val FeatureCardHeight: Dp = 112.dp
@@ -323,13 +376,23 @@ private fun FeatureCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(item.descriptionRes),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LocalZToolColorScheme.current.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (item.inScope) {
+                    Text(
+                        text = stringResource(item.descriptionRes),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LocalZToolColorScheme.current.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else {
+                    Text(
+                        text = "不在作用域中",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Red,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Icon(
