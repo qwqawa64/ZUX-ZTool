@@ -59,11 +59,6 @@ class SettingsViewModel(
         _uiState.value = repository.loadState().copy(showRestoreConfirmDialog = false)
     }
 
-    fun setLogServiceEnabled(isEnabled: Boolean) {
-        _uiState.value = _uiState.value.copy(isLogServiceEnabled = isEnabled)
-        repository.setLogServiceEnabled(isEnabled)
-    }
-
     fun setDetailedLoggingEnabled(isEnabled: Boolean) {
         _uiState.value = _uiState.value.copy(isDetailedLoggingEnabled = isEnabled)
         repository.setDetailedLoggingEnabled(isEnabled)
@@ -218,7 +213,6 @@ class SettingsViewModel(
 }
 
 data class SettingsUiState(
-    val isLogServiceEnabled: Boolean = false,
     val isDetailedLoggingEnabled: Boolean = false,
     val isEntryDisplayedInSettings: Boolean = false,
     val isHomepageYiyanEnabled: Boolean = true,

@@ -193,8 +193,6 @@
     <string name="settingsFragment_title">Settings</string>
     <string name="SettingsTitle">Setting title</string>
     <string name="SettingsDescription">Setting description</string>
-    <string name="enableLogService">Log service</string>
-    <string name="enableLogServiceDescription">Log hook info in the background and save them to the app storage.</string>
     <string name="enableDetailedLogging">Detailed logging</string>
     <string name="enableDetailedLoggingDescription">Enable this when reporting issues. Restart the scope after changing this switch.</string>
     <string name="backupAndRestore">Backup and restore</string>
@@ -215,8 +213,6 @@
     <string name="restore_default_confirmation">Are you sure you want to restore the default configuration? This will reset all settings to their initial state.</string>
     <string name="default_config_restored">Default configuration restored</string>
     <string name="config_restore_success">Configuration restored from file</string>
-    <string name="log_service_started">Log service started</string>
-    <string name="log_service_stopped">Log service stopped</string>
     <string name="log_service_require_manual_restart">Failed to restart the log service automatically. Please start it manually.</string>
     <string name="unknown_activity_null">Unknown (Activity is null)</string>
     <string name="button_project_homepage">Our GitHub</string>
@@ -781,6 +777,7 @@
         <item>Deep orange</item>
         <item>Brown</item>
     </string-array>
+    <string name="enable_floating_bottom_bar_blur_summary">Enable blurring and other advanced visual effects</string>
     <string name="back_to_top">Back to top</string>
     <string name="app_details_completion">Detailed APP information</string>
     <string name="app_details_completion_summary">Add packagename, SDK info, installation, update and install source info to APP detail page</string>
@@ -884,4 +881,7 @@
     <string name="log_settings_title">Log Settings</string>
     <string name="export_logs_summary">Export logs and send them to the developer if module APP or hooks encounter a problem</string>
     <string name="notification_icon_number_to_show">Show %s</string>
+    <string name="enable_floating_bottom_bar_summary">iOS-style floting bottom bar</string>
+    <string name="enable_floating_bottom_bar_blur_title">Liquid Glass Bottom Bar</string>
+    <string name="enable_floating_bottom_bar_title">Floating Bottom Bar</string>
 </resources>

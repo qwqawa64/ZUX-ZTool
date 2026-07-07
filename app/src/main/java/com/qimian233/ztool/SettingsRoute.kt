@@ -152,8 +152,6 @@ fun SettingsMainRoute(
         }
     }
 
-    val logServiceStartedStr = stringResource(R.string.log_service_started)
-    val logServiceStoppedStr = stringResource(R.string.log_service_stopped)
     val deleteLogsSuccessStr = stringResource(R.string.delete_logs_success)
     val deleteLogsFailedStr = stringResource(R.string.delete_logs_failed)
 
@@ -167,13 +165,6 @@ fun SettingsMainRoute(
             onOpenThemeSettings()
         },
         onOpenLanguageSettings = { openAppLanguageSettings(context) },
-        onLogServiceChanged = {
-            viewModel.setLogServiceEnabled(it)
-            showSettingsToast(
-                context,
-                if (it) logServiceStartedStr else logServiceStoppedStr
-            )
-        },
         onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
         onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
         onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
@@ -191,16 +182,13 @@ fun SettingsMainRoute(
         showDeleteLogsConfirmDialog = showDeleteLogsConfirmDialog,
         onRestoreConfirm = {
             viewModel.restoreDefaultConfig()
-            @Suppress("AssignedValueIsNeverRead")
             showRestoreConfirmDialog = false
             showSettingsToast(context, defaultConfigRestoredStr)
         },
         onRestoreDismiss = {
-            @Suppress("AssignedValueIsNeverRead")
             showRestoreConfirmDialog = false
         },
         onDeleteLogsConfirm = {
-            @Suppress("AssignedValueIsNeverRead")
             showDeleteLogsConfirmDialog = false
             viewModel.deleteAllLogs { success ->
                 activity.runOnUiThread {
@@ -212,7 +200,6 @@ fun SettingsMainRoute(
             }
         },
         onDeleteLogsDismiss = {
-            @Suppress("AssignedValueIsNeverRead")
             showDeleteLogsConfirmDialog = false
         }
     )
@@ -344,7 +331,6 @@ private fun SettingsRoute(
     onRestoreDefault: () -> Unit,
     onOpenThemeSettings: () -> Unit,
     onOpenLanguageSettings: () -> Unit,
-    onLogServiceChanged: (Boolean) -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
@@ -381,7 +367,6 @@ private fun SettingsRoute(
                         onRestoreDefault = onRestoreDefault,
                         onOpenThemeSettings = onOpenThemeSettings,
                         onOpenLanguageSettings = onOpenLanguageSettings,
-                        onLogServiceChanged = onLogServiceChanged,
                         onEntryDisplayChanged = onEntryDisplayChanged,
                         onDetailedLoggingChanged = onDetailedLoggingChanged,
                         onHomepageYiyanChanged = onHomepageYiyanChanged,
@@ -473,7 +458,6 @@ private fun settingsSections(
     onRestoreDefault: () -> Unit,
     onOpenThemeSettings: () -> Unit,
     onOpenLanguageSettings: () -> Unit,
-    onLogServiceChanged: (Boolean) -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
@@ -558,14 +542,6 @@ private fun settingsSections(
         SettingSection(
             title = stringResource(R.string.log_settings_title),
             items = listOf(
-                SettingItem.Switch(
-                    key = "enable_log_service",
-                    title = stringResource(R.string.enableLogService),
-                    summary = stringResource(R.string.enableLogServiceDescription),
-                    checked = state.isLogServiceEnabled,
-                    onCheckedChange = onLogServiceChanged,
-                    icon = Icons.AutoMirrored.Rounded.Article
-                ),
                 SettingItem.Switch(
                     key = "enable_detailed_logging",
                     title = stringResource(R.string.enableDetailedLogging),

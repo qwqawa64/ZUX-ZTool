@@ -189,12 +189,6 @@ class MainActivity : ComponentActivity(),
         LogServiceManager.clearCallbacks()
     }
 
-    override fun onServiceStarted() {
-        runOnUiThread {
-            Toast.makeText(this, getString(R.string.log_service_started), Toast.LENGTH_SHORT).show()
-        }
-    }
-
     private fun resolveAgreementDisplayMode(): AgreementDisplayMode? {
         val acceptedVersion = agreementRepository.getAcceptedAgreementVersion()
             ?: return AgreementDisplayMode.FirstRun
@@ -209,10 +203,10 @@ class MainActivity : ComponentActivity(),
         }
     }
 
+    override fun onServiceStarted() {
+    }
+
     override fun onServiceStopped() {
-        runOnUiThread {
-            Toast.makeText(this, getString(R.string.log_service_stopped), Toast.LENGTH_SHORT).show()
-        }
     }
 
     override fun onServiceRestartFailed() {

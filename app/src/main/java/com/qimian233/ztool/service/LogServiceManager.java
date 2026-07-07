@@ -47,7 +47,6 @@ public class LogServiceManager {
 
             appContext.startForegroundService(intent);
 
-            setServiceEnabled(appContext, true);
             resetRestartAttempts(appContext);
 
             android.util.Log.d("LogServiceManager", "日志服务启动成功");
@@ -76,7 +75,6 @@ public class LogServiceManager {
         try {
             Intent intent = new Intent(appContext, LogCollectorService.class);
             appContext.stopService(intent);
-            setServiceEnabled(appContext, false);
             resetRestartAttempts(appContext);
 
             android.util.Log.d("LogServiceManager", "日志服务停止成功");
@@ -95,28 +93,26 @@ public class LogServiceManager {
      */
     public static void restartServiceIfNeeded(Context context) {
         Context appContext = context.getApplicationContext();
-        if (isServiceEnabled(appContext)) {
-            int attempts = getRestartAttempts(appContext);
+        int attempts = getRestartAttempts(appContext);
 
-            if (attempts < MAX_RESTART_ATTEMPTS) {
-                android.util.Log.d("LogServiceManager",
-                        "检测到服务之前是启用的，延迟重启 (尝试次数: " + attempts + ")");
+        if (attempts < MAX_RESTART_ATTEMPTS) {
+            android.util.Log.d("LogServiceManager",
+                    "自动重启日志服务 (尝试次数: " + attempts + ")");
 
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    boolean success = startLogService(appContext, true);
-                    if (!success) {
-                        android.util.Log.w("LogServiceManager", "服务重启失败");
-                    }
-                }, 3000);
-
-            } else {
-                android.util.Log.w("LogServiceManager",
-                        "已达到最大重启尝试次数，停止自动重启");
-                setServiceEnabled(appContext, false);
-
-                if (statusListener != null) {
-                    new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceRestartFailed());
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                boolean success = startLogService(appContext, true);
+                if (!success) {
+                    android.util.Log.w("LogServiceManager", "服务重启失败");
                 }
+            }, 3000);
+
+        } else {
+            android.util.Log.w("LogServiceManager",
+                    "已达到最大重启尝试次数，停止自动重启");
+            resetRestartAttempts(appContext);
+
+            if (statusListener != null) {
+                new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceRestartFailed());
             }
         }
     }
@@ -129,7 +125,7 @@ public class LogServiceManager {
         if (attempts >= MAX_RESTART_ATTEMPTS) {
             android.util.Log.e("LogServiceManager",
                     "达到最大重启尝试次数，服务将不会自动重启");
-            setServiceEnabled(context, false);
+            resetRestartAttempts(context);
 
             if (statusListener != null) {
                 new Handler(Looper.getMainLooper()).post(() -> statusListener.onServiceRestartFailed());

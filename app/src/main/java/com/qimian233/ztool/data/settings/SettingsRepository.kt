@@ -8,7 +8,6 @@ import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
-import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette
@@ -26,7 +25,6 @@ class SettingsRepository(
     fun loadState(): SettingsUiState {
         val themeSettings = themePreferences.loadSettings()
         return SettingsUiState(
-            isLogServiceEnabled = LogServiceManager.isServiceEnabled(context),
             isDetailedLoggingEnabled = prefsUtils.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
             isEntryDisplayedInSettings = prefsUtils.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
             isHomepageYiyanEnabled = prefsUtils.loadBooleanSetting(KEY_HOMEPAGE_YIYAN, true),
@@ -57,14 +55,6 @@ class SettingsRepository(
 
     fun restoreDefaultConfig() {
         prefsUtils.clearAllSettings()
-    }
-
-    fun setLogServiceEnabled(isEnabled: Boolean) {
-        if (isEnabled) {
-            LogServiceManager.startLogService(context)
-        } else {
-            LogServiceManager.stopLogService(context)
-        }
     }
 
     fun setDetailedLoggingEnabled(isEnabled: Boolean) {
