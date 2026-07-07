@@ -26,7 +26,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -42,6 +41,7 @@ import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 
 enum class FeatureDestination(
     val route: String
@@ -300,7 +300,7 @@ private fun FeatureCard(
             .fillMaxWidth()
             .height(FeatureCardHeight)
             .clickable(onClick = onClick),
-        containerColor = LocalZToolColorScheme.current.surfaceContainerHigh
+        containerColor = LocalZToolColorScheme.current.surfaceContainer
     ) {
         Row(
             modifier = Modifier
