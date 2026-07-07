@@ -80,7 +80,10 @@ fun FeaturesMainRoute(
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
         val scopedItems = allItems.map { item ->
-            item.copy(inScope = item.alwaysVisible || item.packageName in scopeSet)
+            item.copy(inScope = when {
+                item.packageName == "android" -> "android" in scopeSet && "system" in scopeSet
+                else -> item.alwaysVisible || item.packageName in scopeSet
+            })
         }
         val visible = scopedItems.filter { item ->
             item.alwaysVisible || item.packageName in installedPackages
@@ -104,7 +107,7 @@ fun FeaturesMainRoute(
                 ZToolTextButton(
                     onClick = {
                         XposedServiceBridge.requestScope(
-                            listOf(item.packageName),
+                            if (item.packageName == "android") listOf("android", "system") else listOf(item.packageName),
                             object : XposedService.OnScopeEventListener {
 
                                 override fun onScopeRequestApproved(packages: List<String>) {
