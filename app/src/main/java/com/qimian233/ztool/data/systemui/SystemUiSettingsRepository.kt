@@ -2,7 +2,9 @@ package com.qimian233.ztool.data.systemui
 
 import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 
 class SystemUiSettingsRepository(
@@ -68,12 +70,21 @@ class SystemUiSettingsRepository(
         }
     }
 
-    fun forceStop(packageName: String): ShellActionResult {
-        return shellExecutor.executeRootCommand("killall $packageName", 5).toShellActionResult()
-    }
-
-    fun forceStopWallpaperSettings(): ShellActionResult {
-        return shellExecutor.executeRootCommand("killall com.zui.wallpapersetting", 5).toShellActionResult()
+    fun forceStopScope(): ShellActionResult {
+        val packages = ScopeUtils.getScopePackages(FeatureDestination.SystemUi)
+        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+            is ScopeUtils.RestartResult.Success -> ShellActionResult(success = true, error = "", exitCode = 0)
+            is ScopeUtils.RestartResult.PartialSuccess -> ShellActionResult(
+                success = false,
+                error = "Partial failure: ${result.failed.joinToString()}",
+                exitCode = -1
+            )
+            is ScopeUtils.RestartResult.Failure -> ShellActionResult(
+                success = false,
+                error = result.message,
+                exitCode = -1
+            )
+        }
     }
 
     private fun EnhancedShellExecutor.ShellResult.toShellActionResult(): ShellActionResult {

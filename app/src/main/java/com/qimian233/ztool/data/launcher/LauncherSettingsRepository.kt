@@ -2,7 +2,9 @@ package com.qimian233.ztool.data.launcher
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
 
@@ -130,17 +132,14 @@ class LauncherSettingsRepository(
             .map { it.packageName }
     }
 
-    fun forceStopPackage(packageName: String): LauncherRestartResult {
-        if (packageName.isEmpty()) {
-            return LauncherRestartResult.EmptyPackageName
-        }
-
-        return try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            process.waitFor()
-            LauncherRestartResult.Success
-        } catch (e: Exception) {
-            LauncherRestartResult.Failure(e.message.orEmpty())
+    fun forceStopPackage(): LauncherRestartResult {
+        val packages = ScopeUtils.getScopePackages(FeatureDestination.Launcher)
+        return when (val result = ScopeUtils.restartScope(packages)) {
+            is ScopeUtils.RestartResult.Success -> LauncherRestartResult.Success
+            is ScopeUtils.RestartResult.PartialSuccess -> LauncherRestartResult.Failure(
+                "Partial failure: ${result.failed.joinToString()}"
+            )
+            is ScopeUtils.RestartResult.Failure -> LauncherRestartResult.Failure(result.message)
         }
     }
 
@@ -177,6 +176,5 @@ class LauncherSettingsRepository(
 
 sealed interface LauncherRestartResult {
     data object Success : LauncherRestartResult
-    data object EmptyPackageName : LauncherRestartResult
     data class Failure(val error: String) : LauncherRestartResult
 }

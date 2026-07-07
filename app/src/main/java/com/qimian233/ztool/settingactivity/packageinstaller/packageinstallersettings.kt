@@ -82,7 +82,6 @@ fun PackageInstallerSettingsRoute(
             packageName = packageName,
             onConfirm = {
                 viewModel.forceStopPackage(
-                    packageName = packageName,
                     onFailure = {
                         Toast.makeText(context, R.string.restart_fail_simple, Toast.LENGTH_SHORT).show()
                     }

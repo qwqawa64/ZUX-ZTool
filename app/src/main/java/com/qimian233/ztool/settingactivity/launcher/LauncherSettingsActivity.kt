@@ -119,10 +119,8 @@ fun LauncherSettingsRoute(
             packageName = packageName,
             onConfirm = {
                 viewModel.forceStopPackage(
-                    packageName = packageName,
                     onResult = { result ->
                         when (result) {
-                            LauncherRestartResult.EmptyPackageName -> Unit
                             is LauncherRestartResult.Failure -> {
                                 Toast.makeText(context, R.string.force_stop_fail, Toast.LENGTH_SHORT).show()
                             }

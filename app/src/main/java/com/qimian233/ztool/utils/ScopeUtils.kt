@@ -39,7 +39,7 @@ object ScopeUtils {
             FeatureDestination.Framework -> listOf("android", "system")
             FeatureDestination.GameTool -> listOf("com.zui.game.service")
             FeatureDestination.PackageInstaller -> listOf("com.android.packageinstaller")
-            FeatureDestination.SystemUi -> listOf("com.android.systemui")
+            FeatureDestination.SystemUi -> listOf("com.android.systemui", "com.zui.wallpapersetting")
             FeatureDestination.Launcher -> listOf("com.zui.launcher")
             FeatureDestination.MobileDesktop -> listOf("com.motorola.mobiledesktop")
         }

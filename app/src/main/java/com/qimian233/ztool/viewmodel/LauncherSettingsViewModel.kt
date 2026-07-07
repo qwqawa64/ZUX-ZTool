@@ -127,10 +127,10 @@ class LauncherSettingsViewModel(
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
     }
 
-    fun forceStopPackage(packageName: String, onResult: (LauncherRestartResult) -> Unit) {
+    fun forceStopPackage(onResult: (LauncherRestartResult) -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.forceStopPackage(packageName)
+            val result = repository.forceStopPackage()
             withContext(Dispatchers.Main) {
                 onResult(result)
             }

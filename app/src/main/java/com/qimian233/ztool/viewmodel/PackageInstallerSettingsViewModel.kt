@@ -63,10 +63,10 @@ class PackageInstallerSettingsViewModel(
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
     }
 
-    fun forceStopPackage(packageName: String, onFailure: () -> Unit) {
+    fun forceStopPackage(onFailure: () -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.forceStopPackage(packageName)
+            val result = repository.forceStopPackage()
             if (!result.success) {
                 withContext(Dispatchers.Main) {
                     onFailure()

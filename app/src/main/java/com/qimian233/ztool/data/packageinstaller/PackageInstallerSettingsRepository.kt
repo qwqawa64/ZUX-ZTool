@@ -1,7 +1,9 @@
 package com.qimian233.ztool.data.packageinstaller
 
 import android.content.Context
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsUiState
 
 class PackageInstallerSettingsRepository(
@@ -44,17 +46,18 @@ class PackageInstallerSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_DISABLE_DELETE_PACKAGE, enabled)
     }
 
-    fun forceStopPackage(packageName: String): RestartPackageResult {
-        if (packageName.isEmpty()) {
-            return RestartPackageResult(success = true, error = "")
-        }
-
-        return try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            process.waitFor()
-            RestartPackageResult(success = true, error = "")
-        } catch (e: Exception) {
-            RestartPackageResult(success = false, error = e.message.orEmpty())
+    fun forceStopPackage(): RestartPackageResult {
+        val packages = ScopeUtils.getScopePackages(FeatureDestination.PackageInstaller)
+        return when (val result = ScopeUtils.restartScope(packages)) {
+            is ScopeUtils.RestartResult.Success -> RestartPackageResult(success = true, error = "")
+            is ScopeUtils.RestartResult.PartialSuccess -> RestartPackageResult(
+                success = false,
+                error = "Partial failure: ${result.failed.joinToString()}"
+            )
+            is ScopeUtils.RestartResult.Failure -> RestartPackageResult(
+                success = false,
+                error = result.message
+            )
         }
     }
 

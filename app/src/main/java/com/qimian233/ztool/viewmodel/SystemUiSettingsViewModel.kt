@@ -134,8 +134,8 @@ class SystemUiSettingsViewModel(
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
     }
 
-    fun forceStopScope(packageName: String, onResult: (Boolean, String) -> Unit) {
-        if (packageName.isEmpty() || _uiState.value.isRestartProcessing) return
+    fun forceStopScope(onResult: (Boolean, String) -> Unit) {
+        if (_uiState.value.isRestartProcessing) return
 
         _uiState.value = _uiState.value.copy(
             showRestartDialog = false,
@@ -144,13 +144,13 @@ class SystemUiSettingsViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = repository.forceStop(packageName)
+                val result = repository.forceStopScope()
                 withContext(Dispatchers.Main) {
                     onResult(result.success, result.error)
                 }
-                Log.d(TAG, "Force stop app result: success=${result.success}")
+                Log.d(TAG, "Force stop result: success=${result.success}")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to force stop app: ${e.message}")
+                Log.e(TAG, "Failed to force stop: ${e.message}")
                 withContext(Dispatchers.Main) {
                     onResult(false, e.message.orEmpty())
                 }
@@ -158,15 +158,6 @@ class SystemUiSettingsViewModel(
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.copy(isRestartProcessing = false)
                 }
-            }
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val result = repository.forceStopWallpaperSettings()
-                Log.d(TAG, "Force stop wallpaper settings result: success=${result.success}")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to force stop wallpaper settings: ${e.message}")
             }
         }
     }

@@ -2,7 +2,9 @@ package com.qimian233.ztool.data.gametool
 
 import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.GameToolSettingsUiState
 import com.qimian233.ztool.viewmodel.MistakeTouchMode
 
@@ -84,17 +86,14 @@ class GameToolSettingsRepository(
             .filter { it.isNotEmpty() }
     }
 
-    fun forceStopPackage(packageName: String): GameToolRestartResult {
-        if (packageName.isEmpty()) {
-            return GameToolRestartResult.Success
-        }
-
-        return try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            process.waitFor()
-            GameToolRestartResult.Success
-        } catch (e: Exception) {
-            GameToolRestartResult.Failure(e.message.orEmpty())
+    fun forceStopPackage(): GameToolRestartResult {
+        val packages = ScopeUtils.getScopePackages(FeatureDestination.GameTool)
+        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+            is ScopeUtils.RestartResult.Success -> GameToolRestartResult.Success
+            is ScopeUtils.RestartResult.PartialSuccess -> GameToolRestartResult.Failure(
+                "Partial failure: ${result.failed.joinToString()}"
+            )
+            is ScopeUtils.RestartResult.Failure -> GameToolRestartResult.Failure(result.message)
         }
     }
 

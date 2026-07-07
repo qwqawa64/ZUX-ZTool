@@ -105,7 +105,7 @@ fun SystemUiSettingsRoute(
         RestartScopeDialog(
             packageName = packageName,
             onConfirm = {
-                viewModel.forceStopScope(packageName) { success, error ->
+                viewModel.forceStopScope { success, error ->
                     if (success) {
                         Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
                     } else {
