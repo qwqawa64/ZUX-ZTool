@@ -25,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
@@ -274,11 +275,6 @@ private fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                if (!state.environmentReady) {
-                    RequirementCard()
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
                 AnimatedVisibility(visible = state.environmentReady && state.updateInfo != null) {
                     state.updateInfo?.let { update ->
                         Column {
@@ -293,8 +289,9 @@ private fun HomeScreen(
                     }
                 }
 
+                ModuleStatusCard(state)
+
                 if (state.environmentReady) {
-                    ModuleStatusCard(state)
                     Spacer(modifier = Modifier.height(16.dp))
                     SystemInfoCard(state)
                     Spacer(modifier = Modifier.height(24.dp))
@@ -342,34 +339,6 @@ private fun NonZuxOsCard() {
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = stringResource(R.string.non_zuxos_warn),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = LocalZToolColorScheme.current.onErrorContainer
-            )
-        }
-    }
-}
-
-@Composable
-private fun RequirementCard() {
-    ZToolCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = LocalZToolColorScheme.current.errorContainer
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Info,
-                contentDescription = null,
-                tint = LocalZToolColorScheme.current.onErrorContainer
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = stringResource(R.string.workModeRequirementDetail),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = LocalZToolColorScheme.current.onErrorContainer
@@ -438,25 +407,23 @@ private fun UpdateCard(
 @Composable
 private fun ModuleStatusCard(state: HomeUiState) {
     val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
-    val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
     val isDefaultColor = !themeSpec.dynamicColorEnabled && !themeSpec.manualColorEnabled
-    val isGreen = isMiuix && state.isModuleActive && isDefaultColor
-    
+
     val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
-    val containerColor = if (isGreen) {
-        if (isDark) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFFA5D6A7)
-    } else {
-        LocalZToolColorScheme.current.primaryContainer
+    val containerColor = when {
+        state.isModuleActive && isDefaultColor -> if (isDark) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFFA5D6A7)
+        !state.isModuleActive -> if (isDark) Color(0xFFB71C1C).copy(alpha = 0.4f) else Color(0xFFEF9A9A)
+        else -> LocalZToolColorScheme.current.primaryContainer
     }
-    val contentColor = if (isGreen) {
-        if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
-    } else {
-        LocalZToolColorScheme.current.onPrimaryContainer
+    val contentColor = when {
+        state.isModuleActive && isDefaultColor -> if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
+        !state.isModuleActive -> if (isDark) Color(0xFFEF9A9A) else Color(0xFFB71C1C)
+        else -> LocalZToolColorScheme.current.onPrimaryContainer
     }
-    val iconColor = if (isGreen) {
-        if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
-    } else {
-        LocalZToolColorScheme.current.primary
+    val iconColor = when {
+        state.isModuleActive && isDefaultColor -> if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
+        !state.isModuleActive -> if (isDark) Color(0xFFEF5350) else Color(0xFFE53935)
+        else -> LocalZToolColorScheme.current.primary
     }
     
     ZToolCard(
@@ -487,7 +454,7 @@ private fun ModuleStatusCard(state: HomeUiState) {
                     )
                 }
                 Icon(
-                    imageVector = Icons.Rounded.CheckCircle,
+                    imageVector = if (state.isModuleActive) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
                     contentDescription = null,
                     tint = iconColor,
                     modifier = Modifier.size(32.dp)
