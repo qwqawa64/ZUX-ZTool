@@ -132,7 +132,6 @@ fun OtaSettingsRoute(
             packageName = packageName,
             onConfirm = {
                 viewModel.restartScope(
-                    packageName = packageName,
                     onFailure = {
                         Toast.makeText(context, R.string.restart_failed, Toast.LENGTH_SHORT).show()
                     }

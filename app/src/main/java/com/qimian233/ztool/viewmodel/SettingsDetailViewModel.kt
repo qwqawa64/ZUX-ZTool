@@ -187,10 +187,10 @@ class SettingsDetailViewModel(
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
     }
 
-    fun restartScope(packageName: String) {
+    fun restartScope() {
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
         viewModelScope.launch(Dispatchers.IO) {
-            repository.forceStopScope(packageName)
+            repository.forceStopScope()
         }
     }
 

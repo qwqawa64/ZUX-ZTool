@@ -79,14 +79,11 @@ fun MobileDesktopSettingsRoute(
         RestartConfirmDialog(
             packageName = packageName,
             onConfirm = {
-                viewModel.restartScope(
-                    packageName = packageName
-                ) { result ->
+                viewModel.restartScope { result ->
                     when (result) {
                         MobileDesktopRestartResult.Success -> {
                             Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
                         }
-                        MobileDesktopRestartResult.EmptyPackageName -> Unit
                         is MobileDesktopRestartResult.Failure -> {
                             Toast.makeText(
                                 context,

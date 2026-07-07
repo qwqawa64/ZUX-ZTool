@@ -54,7 +54,6 @@ class SafeCenterSettingsViewModel(
     }
 
     fun restartPackages(
-        packageName: String,
         onResult: (SafeCenterRestartResult) -> Unit
     ) {
         if (_uiState.value.isRestartProcessing) {
@@ -68,7 +67,7 @@ class SafeCenterSettingsViewModel(
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.restartPackages(packageName)
+            val result = repository.restartPackages()
             withContext(Dispatchers.Main) {
                 onResult(result)
                 _uiState.value = _uiState.value.copy(isRestartProcessing = false)

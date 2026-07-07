@@ -44,10 +44,10 @@ class MobileDesktopSettingsViewModel(
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
     }
 
-    fun restartScope(packageName: String, onResult: (MobileDesktopRestartResult) -> Unit) {
+    fun restartScope(onResult: (MobileDesktopRestartResult) -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = false)
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.restartScope(packageName)
+            val result = repository.restartScope()
             withContext(Dispatchers.Main) {
                 onResult(result)
             }

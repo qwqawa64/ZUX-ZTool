@@ -134,10 +134,10 @@ class OtaSettingsViewModel(
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
     }
 
-    fun restartScope(packageName: String, onFailure: () -> Unit) {
+    fun restartScope(onFailure: () -> Unit) {
         _uiState.value = _uiState.value.copy(showRestartDialog = false)
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.restartScope(packageName)
+            val result = repository.restartScope()
             if (result is OtaRestartResult.Failure) {
                 withContext(Dispatchers.Main) {
                     onFailure()

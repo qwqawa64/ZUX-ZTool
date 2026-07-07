@@ -4,9 +4,11 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.R
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
 import com.qimian233.ztool.utils.GetPCFlashFirmware
+import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
@@ -104,19 +106,14 @@ class OtaSettingsRepository(
 
     fun getMachineSn(): String? = getMachineSnByProps()
 
-    fun restartScope(packageName: String): OtaRestartResult {
-        if (packageName.isEmpty()) return OtaRestartResult.Success
-
-        return try {
-            val process = Runtime.getRuntime().exec("su -c killall $packageName")
-            val process2 = Runtime.getRuntime().exec("su -c killall com.lenovo.tbengine")
-            val process3 = Runtime.getRuntime().exec("su -c killall com.android.settings")
-            process.waitFor()
-            process2.waitFor()
-            process3.waitFor()
-            OtaRestartResult.Success
-        } catch (e: Exception) {
-            OtaRestartResult.Failure(e.message.orEmpty())
+    fun restartScope(): OtaRestartResult {
+        val packages = ScopeUtils.getScopePackages(FeatureDestination.Ota)
+        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+            is ScopeUtils.RestartResult.Success -> OtaRestartResult.Success
+            is ScopeUtils.RestartResult.PartialSuccess -> OtaRestartResult.Failure(
+                "Partial failure: ${result.failed.joinToString()}"
+            )
+            is ScopeUtils.RestartResult.Failure -> OtaRestartResult.Failure(result.message)
         }
     }
 

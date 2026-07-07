@@ -6,11 +6,13 @@ import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
 import com.qimian233.ztool.EnhancedShellExecutor
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager
 import com.qimian233.ztool.utils.MagiskModuleManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
+import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import java.io.File
 import androidx.core.content.edit
@@ -65,11 +67,9 @@ class SettingsDetailRepository(
         prefsUtils.saveBooleanSetting(KEY_APP_DETAILS, enabled)
     }
 
-    fun forceStopScope(packageName: String) {
-        if (packageName.isEmpty()) return
-        shellExecutor.executeRootCommand("am force-stop $packageName")
-        shellExecutor.executeRootCommand("am force-stop com.android.permissioncontroller")
-        shellExecutor.executeRootCommand("am force-stop com.zui.safecenter")
+    fun forceStopScope() {
+        val packages = ScopeUtils.getScopePackages(FeatureDestination.SettingsDetail)
+        ScopeUtils.restartScope(packages, shellExecutor)
     }
 
     fun isModuleEnabled(): Boolean = magiskManager.isModuleEnabled

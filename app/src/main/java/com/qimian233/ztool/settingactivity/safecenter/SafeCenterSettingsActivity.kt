@@ -81,16 +81,8 @@ fun SafeCenterSettingsRoute(
             packageName = packageName,
             onConfirm = {
                 viewModel.restartPackages(
-                    packageName = packageName,
                     onResult = { result ->
                         when (result) {
-                            SafeCenterRestartResult.EmptyPackageName -> {
-                                Toast.makeText(
-                                    context,
-                                    R.string.empty_package_name_message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
                             is SafeCenterRestartResult.Failure -> {
                                 Toast.makeText(
                                     context,

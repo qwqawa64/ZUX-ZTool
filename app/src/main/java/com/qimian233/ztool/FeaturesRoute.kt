@@ -50,6 +50,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import com.qimian233.ztool.utils.ScopeUtils
 import io.github.libxposed.service.XposedService
 
 enum class FeatureDestination(
@@ -80,10 +81,7 @@ fun FeaturesMainRoute(
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
         val scopedItems = allItems.map { item ->
-            item.copy(inScope = when {
-                item.packageName == "android" -> "android" in scopeSet && "system" in scopeSet
-                else -> item.alwaysVisible || item.packageName in scopeSet
-            })
+            item.copy(inScope = item.scopePackages.all { it in scopeSet })
         }
         val visible = scopedItems.filter { item ->
             item.alwaysVisible || item.packageName in installedPackages
@@ -107,7 +105,7 @@ fun FeaturesMainRoute(
                 ZToolTextButton(
                     onClick = {
                         XposedServiceBridge.requestScope(
-                            if (item.packageName == "android") listOf("android", "system") else listOf(item.packageName),
+                            item.scopePackages,
                             object : XposedService.OnScopeEventListener {
 
                                 override fun onScopeRequestApproved(packages: List<String>) {
@@ -160,7 +158,8 @@ private data class FeatureItem(
     val icon: Drawable?,
     val destination: FeatureDestination,
     val alwaysVisible: Boolean = false,
-    val inScope: Boolean = true
+    val inScope: Boolean = true,
+    val scopePackages: List<String> = listOf(packageName)
 )
 
 private val FeatureCardHeight: Dp = 112.dp
@@ -174,49 +173,56 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 nameRes = R.string.settings_app_name,
                 descriptionRes = R.string.settings_app_description,
                 packageName = "com.android.settings",
-                destination = FeatureDestination.SettingsDetail
+                destination = FeatureDestination.SettingsDetail,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SettingsDetail)
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.game_tool_app_name,
                 descriptionRes = R.string.game_tool_app_description,
                 packageName = "com.zui.game.service",
-                destination = FeatureDestination.GameTool
+                destination = FeatureDestination.GameTool,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.GameTool)
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.system_update_app_name,
                 descriptionRes = R.string.system_update_app_description,
                 packageName = "com.lenovo.ota",
-                destination = FeatureDestination.Ota
+                destination = FeatureDestination.Ota,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.Ota)
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.package_installer_app_name,
                 descriptionRes = R.string.package_installer_app_description,
                 packageName = "com.android.packageinstaller",
-                destination = FeatureDestination.PackageInstaller
+                destination = FeatureDestination.PackageInstaller,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.PackageInstaller)
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.system_ui_app_name,
                 descriptionRes = R.string.system_ui_app_description,
                 packageName = "com.android.systemui",
-                destination = FeatureDestination.SystemUi
+                destination = FeatureDestination.SystemUi,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SystemUi)
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.launcher_app_name,
                 descriptionRes = R.string.launcher_app_description,
                 packageName = "com.zui.launcher",
-                destination = FeatureDestination.Launcher
+                destination = FeatureDestination.Launcher,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.Launcher)
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.mobile_desktop_app_name,
                 descriptionRes = R.string.mobile_desktop_app_description,
                 packageName = "com.motorola.mobiledesktop",
-                destination = FeatureDestination.MobileDesktop
+                destination = FeatureDestination.MobileDesktop,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.MobileDesktop)
             ),
             featureItem(
                 context = context,
@@ -224,14 +230,16 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 descriptionRes = R.string.system_framework_app_description,
                 packageName = "android",
                 destination = FeatureDestination.Framework,
-                alwaysVisible = true
+                alwaysVisible = true,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.Framework)
             ),
             featureItem(
                 context = context,
                 nameRes = R.string.safe_center_app_name,
                 descriptionRes = R.string.safe_center_app_description,
                 packageName = "com.zui.safecenter",
-                destination = FeatureDestination.SafeCenter
+                destination = FeatureDestination.SafeCenter,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SafeCenter)
             )
         )
     }
@@ -243,7 +251,8 @@ private fun featureItem(
     descriptionRes: Int,
     packageName: String,
     destination: FeatureDestination,
-    alwaysVisible: Boolean = false
+    alwaysVisible: Boolean = false,
+    scopePackages: List<String> = listOf(packageName)
 ): FeatureItem {
     return FeatureItem(
         nameRes = nameRes,
@@ -251,7 +260,8 @@ private fun featureItem(
         packageName = packageName,
         icon = getApplicationIcon(context, packageName),
         destination = destination,
-        alwaysVisible = alwaysVisible
+        alwaysVisible = alwaysVisible,
+        scopePackages = scopePackages
     )
 }
 

@@ -617,7 +617,7 @@ fun SettingsDetailRoute(
         RestartConfirmDialog(
             packageName = packageName,
             onConfirm = {
-                viewModel.restartScope(packageName)
+                viewModel.restartScope()
             },
             onDismiss = viewModel::dismissRestartDialog
         )
