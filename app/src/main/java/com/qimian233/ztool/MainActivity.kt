@@ -311,6 +311,7 @@ private enum class MainRoute(
 private object HiddenRoute {
     const val SETTINGS_THEME = "SettingsTheme"
     const val SETTINGS_ABOUT = "SettingsAbout"
+    const val SETTINGS_ADVANCED = "SettingsAdvanced"
     const val SYSTEM_UI_STATUS_BAR = "feature/system-ui/status-bar"
     const val SYSTEM_UI_LOCK_SCREEN = "feature/system-ui/lock-screen"
     const val SYSTEM_UI_CONTROL_CENTER = "feature/system-ui/control-center"
@@ -793,6 +794,11 @@ private fun MainRouteNavHost(
                     navController.navigate(SettingsAboutRouteName) {
                         launchSingleTop = true
                     }
+                },
+                onOpenAdvanced = {
+                    navController.navigate(HiddenRoute.SETTINGS_ADVANCED) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -855,6 +861,23 @@ private fun MainRouteNavHost(
                 },
                 onOpenUdl = {
                     openExternalLink(context, "https://github.com/uuuddddl")
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SETTINGS_ADVANCED,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SettingsAdvancedRoute(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Settings.name) {
+                            launchSingleTop = true
+                        }
+                    }
                 }
             )
         }
@@ -1208,6 +1231,7 @@ private fun navigationRouteIndex(route: String?): Int {
         MainRoute.Settings.name -> 3
         HiddenRoute.SETTINGS_THEME -> 4
         HiddenRoute.SETTINGS_ABOUT -> 4
+        HiddenRoute.SETTINGS_ADVANCED -> 4
         else -> 0
     }
 }

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DeleteForever
@@ -78,7 +79,8 @@ import com.qimian233.ztool.viewmodel.SettingsViewModel
 @Composable
 fun SettingsMainRoute(
     onOpenThemeSettings: () -> Unit,
-    onOpenAbout: () -> Unit
+    onOpenAbout: () -> Unit,
+    onOpenAdvanced: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as MainActivity
@@ -174,7 +176,8 @@ fun SettingsMainRoute(
         },
         onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
         onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
-        onLsposedServiceProtector = viewModel::setLsposedServiceProtector
+        onLsposedServiceProtector = viewModel::setLsposedServiceProtector,
+        onOpenAdvanced = onOpenAdvanced
     )
 
     SettingsDialogs(
@@ -337,7 +340,8 @@ private fun SettingsRoute(
     onLsposedServiceProtector: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
-    onDeleteAllLogs: () -> Unit
+    onDeleteAllLogs: () -> Unit,
+    onOpenAdvanced: () -> Unit
 ) {
     ZToolScaffold (
         topBar = {
@@ -374,6 +378,7 @@ private fun SettingsRoute(
                         onExportLogs = onExportLogs,
                         onDeleteAllLogs = onDeleteAllLogs,
                         onLsposedServiceProtector = onLsposedServiceProtector,
+                        onOpenAdvanced = onOpenAdvanced,
                     ),
                     bottomPadding = 32.dp
                 )
@@ -464,7 +469,8 @@ private fun settingsSections(
     onLsposedServiceProtector: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
-    onDeleteAllLogs: () -> Unit
+    onDeleteAllLogs: () -> Unit,
+    onOpenAdvanced: () -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -600,6 +606,19 @@ private fun settingsSections(
                     title = stringResource(R.string.app_language_settings),
                     onClick = onOpenLanguageSettings,
                     icon = Icons.Rounded.Language,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = LocalZToolColorScheme.current.onSurfaceVariant
+                        )
+                    }
+                ),
+                SettingItem.Action(
+                    key = "open_advanced_settings",
+                    title = stringResource(R.string.advanced_title),
+                    onClick = onOpenAdvanced,
+                    icon = Icons.Rounded.Build,
                     trailingContent = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
