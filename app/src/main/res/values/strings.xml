@@ -938,5 +938,5 @@
     <string name="notification_icon_number_to_show">显示 %s 个</string>
     <string name="scope_request_dialog_message">将向框架提交添加作用域的申请，点击确认后请在框架发送的通知中点击“允许”。</string>
     <string name="scope_request_fail_message">添加到作用域失败：%s</string>
-    <string name="not_in_scope_tip">不在作用域中，点击申请作用域</string>
+    <string name="not_in_scope_tip">有组件不在作用域中，点击解决</string>
 </resources>

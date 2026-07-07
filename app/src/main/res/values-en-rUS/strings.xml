@@ -884,5 +884,5 @@
     <string name="enable_floating_bottom_bar_title">Floating Bottom Bar</string>
     <string name="scope_request_dialog_message">The application will send a request to the framework. Please click \"allow\" in the notification sent from your framework.</string>
     <string name="scope_request_fail_message">Failed to add APP to scope: %s</string>
-    <string name="not_in_scope_tip">Not in scope. Click to solve it.</string>
+    <string name="not_in_scope_tip">Some component not in the scope. Click to fix.</string>
 </resources>
