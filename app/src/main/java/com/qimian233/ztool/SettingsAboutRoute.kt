@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,10 +19,13 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -31,17 +33,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
 import com.qimian233.ztool.ui.components.ZListItem
 import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import com.qimian233.ztool.viewmodel.UpdateInfo
 
 @Composable
 fun SettingsAboutRoute(
@@ -51,9 +56,15 @@ fun SettingsAboutRoute(
     onOpenZuxOsPlus: () -> Unit,
     onOpenQimian233: () -> Unit,
     onOpenWasdDestroy: () -> Unit,
+    onCheckUpdate: () -> Unit,
+    isCheckingUpdate: Boolean,
+    updateCheckCompleted: Boolean,
+    updateInfo: UpdateInfo?,
+    onOpenUpdate: (String) -> Unit,
     onOpenUdl: () -> Unit
 ) {
     val context = LocalContext.current
+    var showUpdateDialog by remember { mutableStateOf(false) }
     val unknownString = stringResource(R.string.unknown)
     val versionName = remember(context) {
         runCatching {
@@ -63,6 +74,28 @@ fun SettingsAboutRoute(
     }
     val commitCount = BuildConfig.GIT_COMMIT_COUNT
     val commitHash = BuildConfig.GIT_COMMIT_HASH
+    val updateSummary = when {
+        isCheckingUpdate -> stringResource(R.string.loading)
+        updateInfo != null -> stringResource(
+            R.string.update_available_version_format,
+            updateInfo.versionName,
+            updateInfo.versionCode
+        )
+        updateCheckCompleted -> stringResource(R.string.about_app_update_latest_summary)
+        else -> stringResource(R.string.about_app_update_placeholder_summary)
+    }
+    val updateRowClick = {
+        if (updateInfo != null) {
+            showUpdateDialog = true
+        } else {
+            onCheckUpdate()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        onCheckUpdate()
+    }
+
     ZToolScaffold(
         topBar = {
             ZToolTopAppBar(
@@ -145,8 +178,31 @@ fun SettingsAboutRoute(
                         showTrailingArrow = false
                     )
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+                AboutSectionCard(stringResource(R.string.about_app_update_section_title), 1) { itemModifier ->
+                    AboutActionRow(
+                        title = stringResource(R.string.about_app_update_title),
+                        summary = updateSummary,
+                        onClick = updateRowClick,
+                        modifier = itemModifier(),
+                        showTrailingArrow = true
+                    )
+                }
                 Spacer(modifier = Modifier.height(32.dp))
             }
+        }
+    }
+
+    if (showUpdateDialog) {
+        updateInfo?.let { update ->
+            AboutUpdateDialog(
+                update = update,
+                onDismiss = { showUpdateDialog = false },
+                onOpenUpdate = {
+                    showUpdateDialog = false
+                    onOpenUpdate(update.downloadUrl)
+                }
+            )
         }
     }
 }
@@ -286,6 +342,32 @@ private fun AboutActionRow(
                 )
             }
         } else null
+    )
+}
+
+@Composable
+private fun AboutUpdateDialog(
+    update: UpdateInfo,
+    onDismiss: () -> Unit,
+    onOpenUpdate: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.update_available_title))
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.update_available_version_format, update.versionName, update.versionCode))
+                Text(update.changelog)
+            }
+        },
+        confirmButton = {
+            ZToolTextButton(onClick = onOpenUpdate, text = stringResource(R.string.update_button_update))
+        },
+        dismissButton = {
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.cancel), isPrimary = false)
+        }
     )
 }
 

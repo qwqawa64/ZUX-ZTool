@@ -852,6 +852,7 @@
     <string name="show_volume_slider_percentage">Show volume slider percentage</string>
     <string name="about_developers_title">Developers</string>
     <string name="about_acknowledgements_title">Credits</string>
+    <string name="about_app_update_latest_summary">You are using the latest version</string>
     <string name="about_view_source_title">Review source code on our GitHub</string>
     <string name="about_license_title">License Information</string>
     <string name="about_license_summary">This project is released under Apache License 2.0</string>
@@ -885,4 +886,7 @@
     <string name="scope_request_dialog_message">The application will send a request to the framework. Please click \"allow\" in the notification sent from your framework.</string>
     <string name="scope_request_fail_message">Failed to add APP to scope: %s</string>
     <string name="not_in_scope_tip">Some component not in the scope. Click to fix.</string>
+    <string name="about_app_update_section_title">APP Update</string>
+    <string name="about_app_update_title">Check APP Update</string>
+    <string name="about_app_update_placeholder_summary">Click to check ZTool\'s update</string>
 </resources>

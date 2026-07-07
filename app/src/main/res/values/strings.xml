@@ -223,6 +223,10 @@
     <string name="about_developers_title">开发者</string>
     <string name="about_acknowledgements_title">致谢</string>
     <string name="about_open_source_title">开源信息</string>
+    <string name="about_app_update_section_title">应用更新</string>
+    <string name="about_app_update_title">检查应用更新</string>
+    <string name="about_app_update_placeholder_summary">点击检查 ZTool 应用更新</string>
+    <string name="about_app_update_latest_summary">当前已是最新版本</string>
     <string name="about_view_source_title">在 GitHub 查看源码</string>
     <string name="about_license_title">许可证信息</string>
     <string name="about_license_summary">本项目遵守 Apache 2.0 协议发布</string>

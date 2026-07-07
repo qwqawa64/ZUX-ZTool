@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
@@ -49,6 +51,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.qimian233.ztool.data.home.AgreementRepository
+import com.qimian233.ztool.data.home.HomeRepository
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.service.LogServiceManager
@@ -85,6 +88,7 @@ import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.utils.ConfigUpgrade
+import com.qimian233.ztool.viewmodel.HomeViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -826,6 +830,19 @@ private fun MainRouteNavHost(
             popEnterTransition = horizontalPopEnter,
             popExitTransition = horizontalPopExit
         ) {
+            val activity = context as MainActivity
+            val homeViewModel = androidx.compose.runtime.remember {
+                val repository = HomeRepository(
+                    context = context.applicationContext,
+                    moduleActiveChecker = ModuleActivationProbe::isModuleActive
+                )
+                ViewModelProvider(
+                    activity,
+                    HomeViewModelFactory(repository)
+                )[HomeViewModel::class.java]
+            }
+            val homeState by homeViewModel.uiState.collectAsState()
+
             SettingsAboutRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -861,6 +878,13 @@ private fun MainRouteNavHost(
                 },
                 onOpenUdl = {
                     openExternalLink(context, "https://github.com/uuuddddl")
+                },
+                onCheckUpdate = homeViewModel::checkAppUpdate,
+                isCheckingUpdate = homeState.isCheckingAppUpdate,
+                updateCheckCompleted = homeState.updateCheckCompleted,
+                updateInfo = homeState.updateInfo,
+                onOpenUpdate = { url ->
+                    openExternalLink(context, url)
                 }
             )
         }

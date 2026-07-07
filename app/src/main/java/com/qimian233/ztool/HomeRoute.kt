@@ -186,7 +186,7 @@ private fun executeReboot(
     }
 }
 
-private class HomeViewModelFactory(
+internal class HomeViewModelFactory(
     private val repository: HomeRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")

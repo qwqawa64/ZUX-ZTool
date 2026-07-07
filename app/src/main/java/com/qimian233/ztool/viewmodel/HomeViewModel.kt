@@ -21,6 +21,7 @@ class HomeViewModel(
 
     private val isCheckingEnvironment = AtomicBoolean(false)
     private val isUpdatingSystemInfo = AtomicBoolean(false)
+    private val isCheckingAppUpdate = AtomicBoolean(false)
     private var started = false
 
     fun start() {
@@ -177,15 +178,29 @@ class HomeViewModel(
         }.start()
     }
 
-    private fun checkAppUpdate() {
+    fun checkAppUpdate() {
+        if (isCheckingAppUpdate.getAndSet(true)) {
+            Log.d(TAG, "App update check already running, skipping")
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(isCheckingAppUpdate = true)
         Thread {
             try {
                 val updateInfo = repository.checkAppUpdate()
-                if (updateInfo != null) {
-                    _uiState.value = _uiState.value.copy(updateInfo = updateInfo)
-                }
+                _uiState.value = _uiState.value.copy(
+                    isCheckingAppUpdate = false,
+                    updateCheckCompleted = true,
+                    updateInfo = updateInfo
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "App update check failed", e)
+                _uiState.value = _uiState.value.copy(
+                    isCheckingAppUpdate = false,
+                    updateCheckCompleted = true
+                )
+            } finally {
+                isCheckingAppUpdate.set(false)
             }
         }.start()
     }
@@ -210,6 +225,8 @@ data class HomeUiState(
     val kernelVersion: String = "",
     val currentSlot: String = "",
     val romRegion: String = "",
+    val isCheckingAppUpdate: Boolean = false,
+    val updateCheckCompleted: Boolean = false,
     val updateInfo: UpdateInfo? = null,
     val configUpgradeDialogVisible: Boolean = false,
     val rebootConfirmation: RebootTarget? = null
