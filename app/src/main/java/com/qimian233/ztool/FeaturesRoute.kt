@@ -72,7 +72,7 @@ fun FeaturesMainRoute(
     val context = LocalContext.current
     val allItems = rememberFeatureItems(context)
     val installedPackages = rememberInstalledPackages(context)
-    val scopeSet = remember { XposedServiceBridge.getScope().toSet() }
+    var scopeSet by remember { mutableStateOf(XposedServiceBridge.getScope().toSet()) }
 
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
 
@@ -104,6 +104,7 @@ fun FeaturesMainRoute(
                         listOf(item.packageName),
                         object : XposedService.OnScopeEventListener {
                             override fun onScopeRequestApproved(packages: List<String>) {
+                                scopeSet = scopeSet + packages
                                 Toast.makeText(context, "作用域申请已提交", Toast.LENGTH_SHORT).show()
                             }
                             override fun onScopeRequestFailed(reason: String) {
