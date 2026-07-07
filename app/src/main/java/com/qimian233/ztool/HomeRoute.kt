@@ -415,8 +415,8 @@ private fun ModuleStatusCard(state: HomeUiState) {
 
     val statusText = when {
         bothActive -> stringResource(R.string.module_active)
-        state.isModuleActive && !state.isRootAvailable -> stringResource(R.string.no_root_permission)
-        !state.isModuleActive && state.isRootAvailable -> stringResource(R.string.module_inactive)
+        state.isModuleActive -> stringResource(R.string.no_root_permission)
+        state.isRootAvailable -> stringResource(R.string.module_inactive)
         else -> stringResource(R.string.no_root_and_module_inactive)
     }
 
