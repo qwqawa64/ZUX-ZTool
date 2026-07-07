@@ -885,5 +885,5 @@
     <string name="scope_request_submitted_toast">Scope application submitted, please click \"allow\" in the notification sent from the framework</string>
     <string name="scope_request_dialog_message">This application is not included in the scope list of your framework. Shall we request an scope change?</string>
     <string name="scope_request_fail_message">Failed to add APP to scope: %s</string>
-    <string name="not_in_scope_tip">Not in scope. Click to request adding this APP to the scope</string>
+    <string name="not_in_scope_tip">Not in scope. Click to solve it.</string>
 </resources>
