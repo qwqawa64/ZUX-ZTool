@@ -3,6 +3,8 @@ package com.qimian233.ztool
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.os.Handler
+import android.os.Looper
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -108,16 +110,20 @@ fun FeaturesMainRoute(
                             object : XposedService.OnScopeEventListener {
                                 override fun onScopeRequestApproved(packages: List<String>) {
                                     scopeSet = scopeSet + packages
-                                    Toast.makeText(context, confirmScopeToast, Toast.LENGTH_SHORT)
-                                        .show()
+                                    Handler(Looper.getMainLooper()).post {
+                                        Toast.makeText(context, confirmScopeToast, Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
                                 }
 
                                 override fun onScopeRequestFailed(reason: String) {
-                                    Toast.makeText(
-                                        context,
-                                        String.format(scopeRequestFailReason, reason),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    Handler(Looper.getMainLooper()).post {
+                                        Toast.makeText(
+                                            context,
+                                            String.format(scopeRequestFailReason, reason),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
                                 }
                             }
                         )
