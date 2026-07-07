@@ -41,6 +41,7 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import com.qimian233.ztool.data.advanced.HotReloadDetail
 import com.qimian233.ztool.viewmodel.AdvancedSettingsUiState
 import com.qimian233.ztool.viewmodel.AdvancedSettingsViewModel
 
@@ -138,6 +139,7 @@ private fun advancedSettingsSections(
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
+    val sections = mutableListOf<SettingSection>()
 
     return listOf(
         SettingSection(
@@ -168,7 +170,8 @@ private fun advancedSettingsSections(
                     } else null
                 )
             )
-        ),
+        )
+    ) + buildHotReloadDetailSection(state) + listOf(
         SettingSection(
             title = stringResource(R.string.advanced_info_title),
             items = listOf(
@@ -181,6 +184,48 @@ private fun advancedSettingsSections(
                     icon = Icons.Rounded.Build
                 )
             )
+        )
+    )
+}
+
+@Composable
+private fun buildHotReloadDetailSection(
+    state: AdvancedSettingsUiState
+): List<SettingSection> {
+    if (state.hotReloadInProgress || state.hotReloadDetails.isEmpty()) return emptyList()
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.advanced_hot_reload_detail_title),
+            items = state.hotReloadDetails.map { detail ->
+                val statusColor = when (detail.status) {
+                    "SUCCEEDED" -> LocalZToolColorScheme.current.primary
+                    "FAILED" -> LocalZToolColorScheme.current.error
+                    "UNSUPPORTED" -> LocalZToolColorScheme.current.error
+                    "PROCESS_DIED" -> LocalZToolColorScheme.current.error
+                    else -> LocalZToolColorScheme.current.onSurfaceVariant
+                }
+                SettingItem.Action(
+                    key = "detail_${detail.processName}",
+                    title = detail.processName,
+                    summary = "[${detail.status}] ${detail.message}",
+                    onClick = {},
+                    enabled = false,
+                    icon = null,
+                    leadingContent = {
+                        Text(
+                            text = when (detail.status) {
+                                "SUCCEEDED" -> "✓"
+                                "FAILED" -> "✗"
+                                "UNSUPPORTED" -> "⊘"
+                                "PROCESS_DIED" -> "☠"
+                                else -> "?"
+                            },
+                            color = statusColor,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                )
+            }
         )
     )
 }

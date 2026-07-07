@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.advanced.AdvancedSettingsRepository
+import com.qimian233.ztool.data.advanced.HotReloadDetail
 import io.github.libxposed.service.HookedTarget
 import io.github.libxposed.service.HotReloadResult
 import kotlinx.coroutines.Dispatchers
@@ -44,21 +45,27 @@ class AdvancedSettingsViewModel(
         _uiState.value = _uiState.value.copy(
             showHotReloadDialog = false,
             hotReloadInProgress = true,
-            hotReloadResults = emptyList()
+            hotReloadDetails = emptyList()
         )
 
         repository.performHotReloadAll(
             onProgress = { target, result ->
-                Log.d(TAG, "热重载进度: ${target.processName} -> ${result.status()}")
+                Log.d(TAG, "热重载: ${target.processName} -> ${result.status()} ${result.message() ?: ""}")
             },
-            onComplete = { succeeded, failed, unsupported, died ->
+            onComplete = { succeeded, failed, unsupported, died, details ->
                 Log.d(TAG, "热重载完成: 成功=$succeeded, 失败=$failed, 不支持=$unsupported, 进程已死=$died")
+                for (d in details) {
+                    if (d.status != "SUCCEEDED") {
+                        Log.w(TAG, "  [${d.status}] ${d.processName}: ${d.message}")
+                    }
+                }
                 _uiState.value = _uiState.value.copy(
                     hotReloadInProgress = false,
                     hotReloadResultSucceeded = succeeded,
                     hotReloadResultFailed = failed,
                     hotReloadResultUnsupported = unsupported,
-                    hotReloadResultDied = died
+                    hotReloadResultDied = died,
+                    hotReloadDetails = details
                 )
             }
         )
@@ -75,7 +82,7 @@ data class AdvancedSettingsUiState(
     val runningTargets: List<HookedTarget> = emptyList(),
     val hotReloadInProgress: Boolean = false,
     val showHotReloadDialog: Boolean = false,
-    val hotReloadResults: List<HotReloadResult> = emptyList(),
+    val hotReloadDetails: List<HotReloadDetail> = emptyList(),
     val hotReloadResultSucceeded: Int = 0,
     val hotReloadResultFailed: Int = 0,
     val hotReloadResultUnsupported: Int = 0,

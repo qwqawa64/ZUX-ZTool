@@ -38,40 +38,55 @@ class AdvancedSettingsRepository {
      */
     fun performHotReloadAll(
         onProgress: (target: HookedTarget, result: HotReloadResult) -> Unit,
-        onComplete: (succeededCount: Int, failedCount: Int, unsupportedCount: Int, diedCount: Int) -> Unit
+        onComplete: (succeededCount: Int, failedCount: Int, unsupportedCount: Int, diedCount: Int, details: List<HotReloadDetail>) -> Unit
     ) {
         val targets = getRunningTargets()
         if (targets.isEmpty()) {
-            onComplete(0, 0, 0, 0)
+            onComplete(0, 0, 0, 0, emptyList())
             return
         }
 
         val eligible = targets.filter { it.state != HookedTarget.State.RELOADING }
         if (eligible.isEmpty()) {
-            onComplete(0, 0, 0, 0)
+            onComplete(0, 0, 0, 0, emptyList())
             return
         }
 
         val total = eligible.size
         val completed = AtomicInteger(0)
-        var succeeded = AtomicInteger(0)
-        var failed = AtomicInteger(0)
-        var unsupported = AtomicInteger(0)
-        var died = AtomicInteger(0)
+        val succeeded = AtomicInteger(0)
+        val failed = AtomicInteger(0)
+        val unsupported = AtomicInteger(0)
+        val died = AtomicInteger(0)
+        val details = java.util.Collections.synchronizedList(mutableListOf<HotReloadDetail>())
 
         for (target in eligible) {
             val callback = object : XposedService.HotReloadCallback {
                 override fun onHotReloadResult(target: HookedTarget, result: HotReloadResult) {
                     val status = result.status()
-                    val message = result.message()
-                    Log.d(TAG, "热重载 ${target.processName}: $status $message")
+                    val message = result.message() ?: ""
+                    val processName = target.processName
+                    val detail = HotReloadDetail(processName, status.name, message)
+                    details.add(detail)
 
                     when (status) {
-                        HotReloadResult.Status.SUCCEEDED -> succeeded.incrementAndGet()
-                        HotReloadResult.Status.FAILED -> failed.incrementAndGet()
-                        HotReloadResult.Status.UNSUPPORTED -> unsupported.incrementAndGet()
-                        HotReloadResult.Status.PROCESS_DIED -> died.incrementAndGet()
-                        HotReloadResult.Status.IN_PROGRESS -> { /* 不计数，等后续回调 */ return }
+                        HotReloadResult.Status.SUCCEEDED -> {
+                            Log.d(TAG, "热重载成功: $processName")
+                            succeeded.incrementAndGet()
+                        }
+                        HotReloadResult.Status.FAILED -> {
+                            Log.w(TAG, "热重载失败: $processName — $message")
+                            failed.incrementAndGet()
+                        }
+                        HotReloadResult.Status.UNSUPPORTED -> {
+                            Log.w(TAG, "热重载不支持: $processName — $message")
+                            unsupported.incrementAndGet()
+                        }
+                        HotReloadResult.Status.PROCESS_DIED -> {
+                            Log.w(TAG, "目标进程已退出: $processName — $message")
+                            died.incrementAndGet()
+                        }
+                        HotReloadResult.Status.IN_PROGRESS -> { return }
                     }
 
                     mainHandler.post {
@@ -82,7 +97,8 @@ class AdvancedSettingsRepository {
                                     succeeded.get(),
                                     failed.get(),
                                     unsupported.get(),
-                                    died.get()
+                                    died.get(),
+                                    details.toList()
                                 )
                             }
                         }
@@ -93,13 +109,15 @@ class AdvancedSettingsRepository {
             try {
                 XposedServiceBridge.hotReloadModule(target, Bundle(), callback)
             } catch (e: Exception) {
-                Log.e(TAG, "发起热重载失败: ${target.processName}", e)
+                Log.e(TAG, "发起热重载异常: ${target.processName}", e)
                 failed.incrementAndGet()
+                val detail = HotReloadDetail(target.processName, "FAILED", e.message ?: "unknown")
+                details.add(detail)
                 mainHandler.post {
                     onProgress(target, HotReloadResult(HotReloadResult.Status.FAILED, e.message))
                     if (completed.incrementAndGet() >= total) {
                         mainHandler.post {
-                            onComplete(succeeded.get(), failed.get(), unsupported.get(), died.get())
+                            onComplete(succeeded.get(), failed.get(), unsupported.get(), died.get(), details.toList())
                         }
                     }
                 }
@@ -111,3 +129,12 @@ class AdvancedSettingsRepository {
         private const val TAG = "AdvancedRepo"
     }
 }
+
+/**
+ * 单次热重载操作的结果详情，供 UI 展示。
+ */
+data class HotReloadDetail(
+    val processName: String,
+    val status: String,
+    val message: String
+)
