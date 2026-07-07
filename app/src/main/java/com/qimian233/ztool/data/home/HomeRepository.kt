@@ -40,12 +40,8 @@ class HomeRepository(
         return EnvironmentStatus(
             moduleActive = moduleActive,
             rootAvailable = rootAvailable,
-            hintText = buildHintText(moduleActive, rootAvailable)
+            hintText = ""
         )
-    }
-
-    fun missingRootEnvironmentHint(): String {
-        return context.getString(R.string.missing_environment) + context.getString(R.string.root_not_available)
     }
 
     fun updateModuleStatus(): ModuleStatus {
@@ -187,22 +183,6 @@ class HomeRepository(
 
     fun clearShellCache() {
         shellExecutor.clearCache()
-    }
-
-    private fun buildHintText(moduleActive: Boolean, rootAvailable: Boolean): String {
-        if (moduleActive && rootAvailable) return context.getString(R.string.environment_ready)
-
-        return buildString {
-            append(context.getString(R.string.missing_environment))
-            if (!moduleActive && !rootAvailable) {
-                append(context.getString(R.string.module_not_active))
-                append(", ")
-                append(context.getString(R.string.root_not_available))
-            } else {
-                if (!moduleActive) append(context.getString(R.string.module_not_active))
-                if (!rootAvailable) append(context.getString(R.string.root_not_available))
-            }
-        }
     }
 
     private fun getCurrentVersionCode(): Int {

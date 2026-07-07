@@ -27,7 +27,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Warning
@@ -52,7 +51,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -297,22 +295,6 @@ private fun HomeScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                Text(
-                    text = state.hintText.ifBlank {
-                        if (state.isCheckingEnvironment) {
-                            stringResource(R.string.loading)
-                        } else {
-                            stringResource(R.string.workConditionTip)
-                        }
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalZToolColorScheme.current.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    textAlign = TextAlign.Center
-                )
-
                 Spacer(modifier = Modifier.padding(48.dp))
             }
         }
@@ -474,31 +456,33 @@ private fun ModuleStatusCard(state: HomeUiState) {
                     modifier = Modifier.size(32.dp)
                 )
             }
-            ZToolSettingsDivider(
-                modifier = Modifier.padding(vertical = 16.dp),
-                color = contentColor.copy(alpha = 0.2f),
-                addDefaultPadding = false
-            )
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                InfoBlock(
-                    label = stringResource(R.string.version),
-                    value = state.moduleVersion.ifBlank { stringResource(R.string.loading) },
-                    colorOnContainer = contentColor
+            if (state.isModuleActive && state.isRootAvailable) {
+                ZToolSettingsDivider(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    color = contentColor.copy(alpha = 0.2f),
+                    addDefaultPadding = false
                 )
-                InfoBlock(
-                    label = stringResource(R.string.root),
-                    value = state.rootSource.ifBlank { stringResource(R.string.loading) },
-                    colorOnContainer = contentColor
-                )
-                InfoBlock(
-                    label = stringResource(R.string.framework),
-                    value = state.frameworkVersion.ifBlank { stringResource(R.string.loading) },
-                    colorOnContainer = contentColor
-                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    InfoBlock(
+                        label = stringResource(R.string.version),
+                        value = state.moduleVersion.ifBlank { stringResource(R.string.loading) },
+                        colorOnContainer = contentColor
+                    )
+                    InfoBlock(
+                        label = stringResource(R.string.root),
+                        value = state.rootSource.ifBlank { stringResource(R.string.loading) },
+                        colorOnContainer = contentColor
+                    )
+                    InfoBlock(
+                        label = stringResource(R.string.framework),
+                        value = state.frameworkVersion.ifBlank { stringResource(R.string.loading) },
+                        colorOnContainer = contentColor
+                    )
+                }
             }
         }
     }

@@ -63,7 +63,7 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     isCheckingEnvironment = false,
                     isRootAvailable = false,
-                    hintText = repository.missingRootEnvironmentHint()
+                    hintText = ""
                 )
             } finally {
                 isCheckingEnvironment.set(false)
