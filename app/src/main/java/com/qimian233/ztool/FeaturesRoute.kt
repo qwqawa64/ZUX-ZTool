@@ -25,11 +25,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,8 +43,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import io.github.libxposed.service.XposedService
@@ -74,6 +74,9 @@ fun FeaturesMainRoute(
     val installedPackages = rememberInstalledPackages(context)
     var scopeSet by remember { mutableStateOf(XposedServiceBridge.getScope().toSet()) }
 
+    val confirmScopeToast = stringResource(R.string.scope_request_submitted_toast)
+    val scopeRequestFailReason = stringResource(R.string.scope_request_fail_message)
+
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
@@ -94,33 +97,42 @@ fun FeaturesMainRoute(
 
     // 作用域申请对话框
     scopeRequestItem?.let { item ->
-        AlertDialog(
+        ZToolDialog(
             onDismissRequest = { scopeRequestItem = null },
             title = { Text(stringResource(item.nameRes)) },
-            text = { Text("该应用不在 LSPosed 作用域中，是否申请加入？") },
+            text = { Text(stringResource(R.string.scope_request_dialog_message)) },
             confirmButton = {
-                TextButton(onClick = {
-                    XposedServiceBridge.requestScope(
-                        listOf(item.packageName),
-                        object : XposedService.OnScopeEventListener {
-                            override fun onScopeRequestApproved(packages: List<String>) {
-                                scopeSet = scopeSet + packages
-                                Toast.makeText(context, "作用域申请已提交", Toast.LENGTH_SHORT).show()
+                ZToolTextButton(
+                    onClick = {
+                        XposedServiceBridge.requestScope(
+                            listOf(item.packageName),
+                            object : XposedService.OnScopeEventListener {
+                                override fun onScopeRequestApproved(packages: List<String>) {
+                                    scopeSet = scopeSet + packages
+                                    Toast.makeText(context, confirmScopeToast, Toast.LENGTH_SHORT)
+                                        .show()
+                                }
+
+                                override fun onScopeRequestFailed(reason: String) {
+                                    Toast.makeText(
+                                        context,
+                                        String.format(scopeRequestFailReason, reason),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
-                            override fun onScopeRequestFailed(reason: String) {
-                                Toast.makeText(context, "作用域申请失败: $reason", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    )
-                    scopeRequestItem = null
-                }) {
-                    Text("申请")
-                }
+                        )
+                        scopeRequestItem = null
+                    },
+                    text = stringResource(R.string.confirm)
+                )
             },
             dismissButton = {
-                TextButton(onClick = { scopeRequestItem = null }) {
-                    Text("取消")
-                }
+                ZToolTextButton(
+                    onClick = { scopeRequestItem = null },
+                    text = stringResource(R.string.cancel),
+                    isPrimary = false
+                )
             }
         )
     }
@@ -387,7 +399,7 @@ private fun FeatureCard(
                     )
                 } else {
                     Text(
-                        text = "不在作用域中",
+                        text = stringResource(R.string.not_in_scope_tip),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Red,
                         maxLines = 1,
