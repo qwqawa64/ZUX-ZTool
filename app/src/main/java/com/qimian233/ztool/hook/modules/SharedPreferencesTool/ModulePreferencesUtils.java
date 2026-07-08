@@ -135,7 +135,21 @@ public class ModulePreferencesUtils {
 
     public float loadFloatSetting(String featureName, float defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.getFloat(featureName, defaultValue);
+        try {
+            return prefs.getFloat(featureName, defaultValue);
+        } catch (ClassCastException e) {
+            Object storedValue = prefs.getAll().get(featureName);
+            Float repairedValue = coerceFloatValue(storedValue);
+            if (repairedValue != null) {
+                Log.w(TAG, "Repairing illegal float setting type for " + featureName
+                        + ": " + storedValue.getClass().getSimpleName());
+                saveFloatSetting(featureName, repairedValue);
+                return repairedValue;
+            }
+            Log.e(TAG, "Illegal float setting value for " + featureName
+                    + ", using default: " + defaultValue, e);
+            return defaultValue;
+        }
     }
 
     /**
@@ -307,7 +321,15 @@ public class ModulePreferencesUtils {
                 Log.d(TAG, "Processing key: "
                         + cleanKey + ", value: " + value + ", type: " +
                         (value != null ? value.getClass().getSimpleName() : "null"));
-                if (value instanceof String) {
+                if (isFloatSettingKey(cleanKey)) {
+                    Float floatValue = coerceFloatValue(value);
+                    if (floatValue != null) {
+                        Log.d(TAG, "Saving float key: " + cleanKey);
+                        saveFloatSetting(cleanKey, floatValue);
+                    } else {
+                        Log.w(TAG, "Invalid float key value, skip: " + cleanKey + " = " + value);
+                    }
+                } else if (value instanceof String) {
                     Log.d(TAG, "Saving string key: " + cleanKey);
                     saveStringSetting(cleanKey, (String) value);
                 } else if (value instanceof Integer){
@@ -336,6 +358,28 @@ public class ModulePreferencesUtils {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static Float coerceFloatValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Float.parseFloat((String) value);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isFloatSettingKey(String key) {
+        return "systemui_network_speed_refresh_interval".equals(key)
+                || "Custom_StatusBarClockTextSize".equals(key)
+                || "Custom_StatusBarClockLetterSpacing".equals(key)
+                || "Custom_ControlCenterDateTextSize".equals(key)
+                || "Custom_ControlCenterDateLetterSpacing".equals(key);
     }
 
     public static void restoreConfig(Context context, String jsonToRestore){
