@@ -70,10 +70,14 @@ object ScopeUtils {
 
         val failed = mutableListOf<String>()
         for (pkg in packages) {
-            val result = shellExecutor.executeRootCommand("am force-stop $pkg", timeoutSeconds)
-            if (result.isSuccess) {
-                Log.d(TAG, "Force stop $pkg: success")
-                continue
+            if (pkg != "com.android.systemui") {
+                val result = shellExecutor.executeRootCommand("am force-stop $pkg", timeoutSeconds)
+                if (result.isSuccess) {
+                    Log.d(TAG, "Force stop $pkg: success")
+                    continue
+                }
+            } else {
+                Log.i(TAG, "Target APP is SystemUI, skip am force-stop")
             }
             // 回退到 killall
             Log.w(TAG, "am force-stop $pkg failed, trying killall")
