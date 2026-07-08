@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.launcher
 
 import android.annotation.SuppressLint
+import android.view.View
 import android.view.ViewGroup
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -9,6 +10,9 @@ import java.lang.reflect.Method
 
 @SuppressLint("PrivateApi")
 class LauncherNoLabelMode : BaseHookModule() {
+
+    private var bubbleTextViewClass : Class<*>? = null
+
     override fun getModuleName(): String {
         return "launcher_no_label_mode"
     }
@@ -20,6 +24,7 @@ class LauncherNoLabelMode : BaseHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installNormalAppNoLabelHook(param)
         installFolderNoLabelHook(param)
+        installBluePointRemovalHook(param)
     }
 
     fun installNormalAppNoLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
@@ -27,6 +32,7 @@ class LauncherNoLabelMode : BaseHookModule() {
             val loader: ClassLoader = param.defaultClassLoader
             val bubbleTextViewClass: Class<*> =
                 loader.loadClass("com.android.launcher3.BubbleTextView")
+            this.bubbleTextViewClass = bubbleTextViewClass
             val workspaceItemInfoClass: Class<*> =
                 loader.loadClass("com.android.launcher3.model.data.WorkspaceItemInfo")
 
@@ -61,10 +67,12 @@ class LauncherNoLabelMode : BaseHookModule() {
         try {
             val loader: ClassLoader = param.defaultClassLoader
             val folderIconClass: Class<*> = loader.loadClass("com.android.launcher3.folder.FolderIcon")
-            val bubbleTextViewClass: Class<*> = loader.loadClass("com.android.launcher3.BubbleTextView")
-
-            // folderBubbleTextView 是 FolderIcon 里持有 BubbleTextView 的字段
-            val folderBubbleField: Field = findField(folderIconClass, "folderBubbleTextView")
+            val bubbleTextViewClass: Class<*>? = this.bubbleTextViewClass
+            if (bubbleTextViewClass == null) {
+                log("BubbleTextViewClass is null!")
+                return
+            }
+            val folderBubbleField: Field = findField(folderIconClass, "e")
             val setTextMethod: Method = findMethod(bubbleTextViewClass, "setText",
                 CharSequence::class.java)
             val setContentDescriptionMethod: Method = findMethod(bubbleTextViewClass,
@@ -95,6 +103,30 @@ class LauncherNoLabelMode : BaseHookModule() {
             log("Folder no-label hook installed successfully!")
         } catch (e: Throwable) {
             logError("Exception caught in folder no label mode hook: ", e)
+        }
+    }
+
+    /**
+     * Hook BluePoint.isPackageNew(View) → always return false.
+     *
+     * In no-label mode the app label text is cleared, but the blue update dot
+     * (drawn in DoubleShadowBubbleTextView.onDraw via BluePoint.isPackageNew)
+     * would still appear next to the empty label.  Suppress it at the source.
+     */
+    fun installBluePointRemovalHook(param: XposedModuleInterface.PackageLoadedParam) {
+        try {
+            val loader: ClassLoader = param.defaultClassLoader
+            val bluePointClass: Class<*> = loader.loadClass("com.zui.launcher.BluePoint")
+
+            val isPackageNewMethod: Method = findMethod(bluePointClass, "isPackageNew",
+                View::class.java)
+            xposed.hook(isPackageNewMethod).intercept {
+                // Always tell Launcher "this is not a newly-updated package"
+                return@intercept false
+            }
+            log("BluePoint removal hook installed successfully!")
+        } catch (e: Throwable) {
+            logError("Exception caught in blue point removal hook: ", e)
         }
     }
 }
