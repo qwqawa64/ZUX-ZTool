@@ -61,6 +61,7 @@ import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIBatteryHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeedSIzeHook;
+import com.qimian233.ztool.hook.modules.systemui.NetworkSpeedRefreshTestHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeeddoublelayerHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIRealWatts;
 import com.qimian233.ztool.hook.modules.systemui.VolumeSliderPercentageHook;
@@ -109,6 +110,7 @@ public class HookManager {
         registerHookModule(new NativeNotificationIcon());
         registerHookModule(new SystemUINetworkSpeedSIzeHook());
         registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
+        registerHookModule(new NetworkSpeedRefreshTestHook());
         registerHookModule(new SystemUIBatteryHook());
         registerHookModule(new ForceImmersiveMode());
         registerHookModule(new ForceLenovoAOD());
