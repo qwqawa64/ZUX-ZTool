@@ -916,7 +916,7 @@
     <string name="lsposed_service_protector_enable_title">启用 LSPosed 服务守护</string>
     <string name="lsposed_service_protector_enable_summary">如果遇到模块意外提示未激活的情况可以尝试开启</string>
     <string name="auto_check_update_title">自动检查更新</string>
-    <string name="auto_check_update_summary">启动 APP 时自动检查更新，关闭后仅可在关于页面手动检查</string>
+    <string name="auto_check_update_summary">启动 APP 时自动检查更新</string>
     <string name="splash_logo_description" translatable="false">ZTool Logo</string>
     <string name="splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
     <string name="splash_welcome_text">欢迎使用 ZTool</string>
@@ -961,4 +961,6 @@
     <string name="advanced_hot_reload_detail_title">热重载详情</string>
     <string name="advanced_info_title">系统信息</string>
     <string name="advanced_api_version">Xposed API 版本</string>
+    <string name="launcher_no_label_mode_title">桌面无字模式</string>
+    <string name="launcher_no_label_mode_summary">不显示文件夹和应用图标的文字，并关闭蓝点提示</string>
 </resources>

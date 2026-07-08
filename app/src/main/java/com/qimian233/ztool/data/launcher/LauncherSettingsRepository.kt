@@ -37,6 +37,7 @@ class LauncherSettingsRepository(
             showRamInfo = prefsUtils.loadBooleanSetting(KEY_SHOW_RAM_INFO, false),
             beautifyRamInfo = prefsUtils.loadBooleanSetting(KEY_BEAUTIFY_RAM_INFO, false),
             disableDockBar = prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_BAR, false),
+            noLabelMode = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, false)
         )
     }
 
@@ -95,6 +96,10 @@ class LauncherSettingsRepository(
 
     fun saveBeautifyRamInfo(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_BEAUTIFY_RAM_INFO, enabled)
+    }
+
+    fun saveLauncherNoLabelMode(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, enabled)
     }
 
     fun saveDisableDockBar(enabled: Boolean): Boolean {
@@ -171,6 +176,7 @@ class LauncherSettingsRepository(
         private const val KEY_BEAUTIFY_RAM_INFO = "beautify_ram_info"
         private const val KEY_DISABLE_DOCK_BAR = "disable_dock_bar"
         private const val KEY_DISABLE_DOCK_WARNING_CONFIRMED = "disable_dock_warning_confirmed"
+        private const val KEY_LAUNCHER_NO_LABEL_MODE = "launcher_no_label_mode"
     }
 }
 

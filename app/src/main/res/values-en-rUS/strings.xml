@@ -889,4 +889,8 @@
     <string name="about_app_update_section_title">APP Update</string>
     <string name="about_app_update_title">Check APP Update</string>
     <string name="about_app_update_placeholder_summary">Click to check ZTool\'s update</string>
+    <string name="auto_check_update_title">Check Updates Automatically</string>
+    <string name="auto_check_update_summary">Checks update when APP starts up</string>
+    <string name="launcher_no_label_mode_title">Launcher No-label Mode</string>
+    <string name="launcher_no_label_mode_summary">Remove label of APP and folder, also removes blue-dot indicator</string>
 </resources>

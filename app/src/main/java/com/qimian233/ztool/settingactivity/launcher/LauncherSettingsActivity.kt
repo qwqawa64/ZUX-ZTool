@@ -111,7 +111,8 @@ fun LauncherSettingsRoute(
         onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView,
         onShowRamInfoChanged = viewModel::setShowRamInfo,
         onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
-        onDisableDockBarChanged = viewModel::setDisableDockBar
+        onDisableDockBarChanged = viewModel::setDisableDockBar,
+        onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -176,6 +177,7 @@ private fun LauncherSettingsScreen(
     onShowRamInfoChanged: (Boolean) -> Unit,
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
+    onLauncherNoLabelModeChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -225,7 +227,8 @@ private fun LauncherSettingsScreen(
                         onRemoveHotWordViewChanged = onRemoveHotWordViewChanged,
                         onShowRamInfoChanged = onShowRamInfoChanged,
                         onBeautifyRamInfoChanged = onBeautifyRamInfoChanged,
-                        onDisableDockBarChanged = onDisableDockBarChanged
+                        onDisableDockBarChanged = onDisableDockBarChanged,
+                        onLauncherNoLabelModeChanged = onLauncherNoLabelModeChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -249,6 +252,7 @@ private fun launcherSettingsSections(
     onShowRamInfoChanged: (Boolean) -> Unit,
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
+    onLauncherNoLabelModeChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -276,6 +280,14 @@ private fun launcherSettingsSections(
     }
 
     val launcherLayoutItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_no_label_mode_title),
+                summary = stringResource(R.string.launcher_no_label_mode_summary),
+                checked = state.noLabelMode,
+                onCheckedChange = onLauncherNoLabelModeChanged
+            )
+        )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.customGridTitle),

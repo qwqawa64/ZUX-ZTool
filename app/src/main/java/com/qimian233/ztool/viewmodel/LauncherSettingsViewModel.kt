@@ -92,6 +92,11 @@ class LauncherSettingsViewModel(
         repository.saveBeautifyRamInfo(enabled)
     }
 
+    fun setLauncherNoLabelMode(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(noLabelMode = enabled)
+        repository.saveLauncherNoLabelMode(enabled)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
@@ -162,7 +167,8 @@ data class LauncherSettingsUiState(
     val showRamInfo : Boolean = false,
     val beautifyRamInfo : Boolean = false,
     val disableDockBar: Boolean = false,
-    val showDisableDockWarningDialog: Boolean = false
+    val showDisableDockWarningDialog: Boolean = false,
+    val noLabelMode: Boolean = false
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
