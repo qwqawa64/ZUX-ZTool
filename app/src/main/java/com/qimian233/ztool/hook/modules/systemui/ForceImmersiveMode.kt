@@ -23,8 +23,7 @@ class ForceImmersiveMode : BaseHookModule() {
         private const val WINDOW_STATE_HIDDEN = 2
     }
 
-//    override fun getModuleName(): String = "force_immersive_mode"
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = "force_immersive_mode"
 
     override fun getTargetPackages(): Array<String> = arrayOf(SYSTEMUI_PACKAGE)
 
