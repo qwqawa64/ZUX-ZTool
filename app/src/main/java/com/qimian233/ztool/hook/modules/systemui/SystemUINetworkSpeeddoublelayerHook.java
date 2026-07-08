@@ -121,7 +121,6 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
         try {
             // 通过 DEXKit 查找 NetworkSpeedView 的内部 Handler 类（替代硬编码 $3）
             Class<?> handlerClass = findHandlerInnerClass(classLoader);
-
             Method handleMessageMethod = handlerClass.getDeclaredMethod("handleMessage", android.os.Message.class);
             this.xposed.hook(handleMessageMethod).intercept(chain -> {
                 Object handler = chain.getThisObject();
@@ -210,9 +209,10 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                 }
             }
 
-            // 安排下一次更新（3秒后）
+            Long refreshInterval = (long) (xposed.getRemotePreferences(PREFS_NAME).getFloat("systemui_network_speed_refresh_interval", 3.0f) * 1000.0);
+            // 安排下一次更新
             findMethod(handlerCls, "sendEmptyMessageDelayed", int.class, long.class)
-                    .invoke(handler, 10, 3000L);
+                    .invoke(handler, 10, refreshInterval);
 
         } catch (Throwable t) {
             logError("Error in speed update", t);

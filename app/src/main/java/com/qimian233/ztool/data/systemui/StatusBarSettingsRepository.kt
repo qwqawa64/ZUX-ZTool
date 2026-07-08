@@ -163,7 +163,7 @@ class StatusBarSettingsRepository(
         private const val KEY_NATIVE_NOTIFICATION_ICON = "NativeNotificationIcon"
         private const val KEY_NETWORK_SPEED_SIZE = "systemui_network_speed_size"
         private const val KEY_NETWORK_SPEED_DOUBLE_LAYER = "systemui_network_speed_doublelayer"
-        private const val KEY_NETWORK_SPEED_REFRESH_ENABLED = "systemui_network_speed_refresh_enabled"
+        private const val KEY_NETWORK_SPEED_REFRESH_ENABLED = "custom_network_speed_refresh_interval"
         private const val KEY_NETWORK_SPEED_REFRESH_INTERVAL = "systemui_network_speed_refresh_interval"
         private const val DEFAULT_REFRESH_INTERVAL = 3.0f
         private const val KEY_BATTERY_EXTERNAL = "systemui_battery_percentage"

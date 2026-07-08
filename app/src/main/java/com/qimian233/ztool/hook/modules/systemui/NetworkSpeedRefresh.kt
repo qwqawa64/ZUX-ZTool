@@ -14,29 +14,30 @@ import java.lang.reflect.Method
  * getModuleName() 返回 "test_hook"，始终启用，无需前端开关。
  */
 @SuppressLint("PrivateApi")
-class NetworkSpeedRefreshTestHook : BaseHookModule() {
+class NetworkSpeedRefresh : BaseHookModule() {
 
     companion object {
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
         private const val NETWORK_SPEED_VIEW_CLASS = "com.android.systemui.zui.NetworkSpeedView"
     }
 
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = "custom_network_speed_refresh_interval"
 
     override fun getTargetPackages(): Array<String> = arrayOf(SYSTEMUI_PACKAGE)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != SYSTEMUI_PACKAGE) return
-
-        log("[SpeedRefreshTest] Module loaded, hooking Handler.sendEmptyMessageDelayed...")
-
+        if (xposed.getRemotePreferences(PREFS_NAME).getBoolean("systemui_network_speed_doublelayer", false)) {
+            log("Will not load refresh interval hook when double layer network speed is enabled. This function is implemented in that hook!")
+            return
+        }
         hookSendEmptyMessageDelayed(param.defaultClassLoader)
     }
 
     private fun hookSendEmptyMessageDelayed(classLoader: ClassLoader) {
         try {
             val handlerClass = classLoader.loadClass("android.os.Handler")
-
+            val refreshInterval: Long = (xposed.getRemotePreferences(PREFS_NAME).getFloat("systemui_network_speed_refresh_interval", 3.0f) * 1000.0).toLong()
             // Hook sendEmptyMessageDelayed(int, long)
             val method: Method = findMethod(
                 handlerClass,
@@ -52,15 +53,14 @@ class NetworkSpeedRefreshTestHook : BaseHookModule() {
 
                 // 判断是否为 NetworkSpeedView 的内部 Handler
                 val handlerClassName = handler.javaClass.name
-                if (handlerClassName.startsWith(NETWORK_SPEED_VIEW_CLASS + "$")) {
+                if (handlerClassName.startsWith("$NETWORK_SPEED_VIEW_CLASS$")) {
                     log(
                         "[SpeedRefreshTest] sendEmptyMessageDelayed called: " +
                             "handler=$handlerClassName, what=$what, delayMillis=$delayMillis ms"
                     )
 
                     // 可选：将间隔改为 1 秒验证效果（取消注释下一行）
-                    // chain.proceed(arrayOf<Any>(what, 1000L))
-                    // return
+                    return@intercept chain.proceed(arrayOf<Any>(what, refreshInterval))
                 }
 
                 chain.proceed()

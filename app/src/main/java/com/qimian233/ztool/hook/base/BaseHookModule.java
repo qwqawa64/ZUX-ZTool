@@ -21,7 +21,7 @@ import io.github.libxposed.api.XposedModuleInterface;
 public abstract class BaseHookModule {
 
     protected static final String TAG = "ZToolXposedModule";
-    private static final String PREFS_NAME = "xposed_module_config";
+    protected static final String PREFS_NAME = "xposed_module_config";
     private static final long DEBUG_REFRESH_INTERVAL_MS = 1000L;
 
     public static volatile boolean DEBUG = false;
