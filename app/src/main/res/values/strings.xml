@@ -960,7 +960,7 @@
     <string name="advanced_hot_reload_result">成功 %1$d，失败 %2$d，不支持 %3$d，进程退出 %4$d</string>
     <string name="advanced_hot_reload_detail_title">热重载详情</string>
     <string name="advanced_info_title">系统信息</string>
-    <string name="advanced_api_version">Xposed API 版本</string>
+    <string name="advanced_api_version">libxposed API 版本</string>
     <string name="launcher_no_label_mode_title">桌面无字模式</string>
     <string name="launcher_no_label_mode_summary">不显示文件夹和应用图标的文字，并关闭蓝点提示</string>
 </resources>
