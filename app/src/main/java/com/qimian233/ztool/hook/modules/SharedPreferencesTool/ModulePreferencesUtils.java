@@ -67,9 +67,23 @@ public class ModulePreferencesUtils {
      */
     public boolean loadBooleanSetting(String featureName, boolean defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        boolean value = prefs.getBoolean(featureName, defaultValue);
-        Log.d(TAG, "Loading " + featureName + ": " + value);
-        return value;
+        try {
+            boolean value = prefs.getBoolean(featureName, defaultValue);
+            Log.d(TAG, "Loading " + featureName + ": " + value);
+            return value;
+        } catch (ClassCastException e) {
+            Object storedValue = prefs.getAll().get(featureName);
+            Boolean repairedValue = coerceBooleanValue(storedValue);
+            if (repairedValue != null) {
+                Log.w(TAG, "Repairing illegal boolean setting type for " + featureName
+                        + ": " + storedValue.getClass().getSimpleName());
+                saveBooleanSetting(featureName, repairedValue);
+                return repairedValue;
+            }
+            Log.e(TAG, "Illegal boolean setting value for " + featureName
+                    + ", using default: " + defaultValue, e);
+            return defaultValue;
+        }
     }
 
     /**
@@ -95,7 +109,21 @@ public class ModulePreferencesUtils {
      */
     public String loadStringSetting(String featureName, String defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.getString(featureName, defaultValue);
+        try {
+            return prefs.getString(featureName, defaultValue);
+        } catch (ClassCastException e) {
+            Object storedValue = prefs.getAll().get(featureName);
+            String repairedValue = coerceStringValue(storedValue);
+            if (repairedValue != null) {
+                Log.w(TAG, "Repairing illegal string setting type for " + featureName
+                        + ": " + storedValue.getClass().getSimpleName());
+                saveStringSetting(featureName, repairedValue);
+                return repairedValue;
+            }
+            Log.e(TAG, "Illegal string setting value for " + featureName
+                    + ", using default", e);
+            return defaultValue;
+        }
     }
 
     /**
@@ -122,7 +150,21 @@ public class ModulePreferencesUtils {
 
     public int loadIntegerSetting(String featureName, int defaultValue) {
         SharedPreferences prefs = getModulePreferences();
-        return prefs.getInt(featureName, defaultValue);
+        try {
+            return prefs.getInt(featureName, defaultValue);
+        } catch (ClassCastException e) {
+            Object storedValue = prefs.getAll().get(featureName);
+            Integer repairedValue = coerceIntegerValue(storedValue);
+            if (repairedValue != null) {
+                Log.w(TAG, "Repairing illegal integer setting type for " + featureName
+                        + ": " + storedValue.getClass().getSimpleName());
+                saveIntegerSetting(featureName, repairedValue);
+                return repairedValue;
+            }
+            Log.e(TAG, "Illegal integer setting value for " + featureName
+                    + ", using default: " + defaultValue, e);
+            return defaultValue;
+        }
     }
 
     @SuppressLint("ApplySharedPref")
@@ -257,7 +299,6 @@ public class ModulePreferencesUtils {
             Type type = new TypeToken<HashMap<String, Object>>(){}.getType();
             HashMap<String, Object> map = gson.fromJson(jsonString, type);
 
-            // 处理Gson将数字自动转换的问题，确保Boolean值正确，并增强对Int、String和Float类型的支持
             return processMapValues(map);
 
         } catch (Exception e) {
@@ -276,31 +317,21 @@ public class ModulePreferencesUtils {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object value = entry.getValue();
 
-            // 处理Boolean值（Gson可能会将boolean解析为Double）
             if (value instanceof Double) {
                 double doubleValue = (Double) value;
-                // 检查是否为布尔值的数字表示（0.0或1.0）
-                if (doubleValue == 0.0 || doubleValue == 1.0) {
-                    processedMap.put(entry.getKey(), doubleValue == 1.0);
-                } else if (doubleValue % 1 == 0) {
-                    // 处理整型值（如42.0）
+                if (doubleValue % 1 == 0) {
                     processedMap.put(entry.getKey(), (int) doubleValue);
                 } else {
-                    // 处理浮点型值（如3.14）
                     processedMap.put(entry.getKey(), doubleValue);
                 }
             } else if (value instanceof Number) {
-                // 处理其他Number类型（如Integer、Long、Float等）
                 Number numberValue = (Number) value;
-                // 如果值是整数，则转为Integer类型
                 if (numberValue.doubleValue() % 1 == 0) {
                     processedMap.put(entry.getKey(), numberValue.intValue());
                 } else {
-                    // 否则转为Float类型（如果需要更高精度则使用Double）
                     processedMap.put(entry.getKey(), numberValue.floatValue());
                 }
             } else {
-                // 其他类型（包括String）直接处理
                 processedMap.put(entry.getKey(), value);
             }
         }
@@ -329,16 +360,28 @@ public class ModulePreferencesUtils {
                     } else {
                         Log.w(TAG, "Invalid float key value, skip: " + cleanKey + " = " + value);
                     }
+                } else if (isIntegerSettingKey(cleanKey)) {
+                    Integer intValue = coerceIntegerValue(value);
+                    if (intValue != null) {
+                        Log.d(TAG, "Saving integer key: " + cleanKey);
+                        saveIntegerSetting(cleanKey, intValue);
+                    } else {
+                        Log.w(TAG, "Invalid integer key value, skip: " + cleanKey + " = " + value);
+                    }
+                } else if (isBooleanSettingKey(cleanKey)) {
+                    Boolean booleanValue = coerceBooleanValue(value);
+                    if (booleanValue != null) {
+                        Log.d(TAG, "Saving boolean key: " + cleanKey);
+                        saveBooleanSetting(cleanKey, booleanValue);
+                    } else {
+                        Log.w(TAG, "Invalid boolean key value, skip: " + cleanKey + " = " + value);
+                    }
                 } else if (value instanceof String) {
                     Log.d(TAG, "Saving string key: " + cleanKey);
                     saveStringSetting(cleanKey, (String) value);
                 } else if (value instanceof Integer){
                     Log.d(TAG, "Saving integer key: " + cleanKey);
-                    if ((Integer) value == 0 || (Integer) value == 1) {
-                        saveBooleanSetting(cleanKey, (Integer) value == 1);
-                    } else {
-                        saveIntegerSetting(cleanKey, (Integer) value);
-                    }
+                    saveIntegerSetting(cleanKey, (Integer) value);
                 }else if (value instanceof Boolean) {
                     Log.d(TAG, "Saving boolean key: " + cleanKey);
                     saveBooleanSetting(cleanKey, (Boolean) value);
@@ -364,6 +407,9 @@ public class ModulePreferencesUtils {
         if (value instanceof Number) {
             return ((Number) value).floatValue();
         }
+        if (value instanceof Boolean) {
+            return (Boolean) value ? 1.0f : 0.0f;
+        }
         if (value instanceof String) {
             try {
                 return Float.parseFloat((String) value);
@@ -374,12 +420,179 @@ public class ModulePreferencesUtils {
         return null;
     }
 
+    private static Integer coerceIntegerValue(Object value) {
+        if (value instanceof Number) {
+            double doubleValue = ((Number) value).doubleValue();
+            if (doubleValue % 1 == 0) {
+                return ((Number) value).intValue();
+            }
+            return null;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value ? 1 : 0;
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException ignored) {
+                try {
+                    float floatValue = Float.parseFloat((String) value);
+                    if (floatValue % 1 == 0) {
+                        return (int) floatValue;
+                    }
+                } catch (NumberFormatException ignoredAgain) {
+                    // Fall through to the shared null return.
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Boolean coerceBooleanValue(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof Number) {
+            double doubleValue = ((Number) value).doubleValue();
+            if (doubleValue == 0.0d || doubleValue == 1.0d) {
+                return doubleValue == 1.0d;
+            }
+        }
+        if (value instanceof String) {
+            String stringValue = ((String) value).trim();
+            if ("true".equalsIgnoreCase(stringValue) || "1".equals(stringValue)) {
+                return true;
+            }
+            if ("false".equalsIgnoreCase(stringValue) || "0".equals(stringValue)) {
+                return false;
+            }
+        }
+        return null;
+    }
+
+    private static String coerceStringValue(Object value) {
+        return value != null ? value.toString() : null;
+    }
+
     private static boolean isFloatSettingKey(String key) {
         return "systemui_network_speed_refresh_interval".equals(key)
                 || "Custom_StatusBarClockTextSize".equals(key)
                 || "Custom_StatusBarClockLetterSpacing".equals(key)
                 || "Custom_ControlCenterDateTextSize".equals(key)
                 || "Custom_ControlCenterDateLetterSpacing".equals(key);
+    }
+
+    private static boolean isIntegerSettingKey(String key) {
+        return "custom_launcher_row".equals(key)
+                || "custom_launcher_column".equals(key)
+                || "Custom_StatusBarClockTextColor".equals(key)
+                || "notify_num_size".equals(key)
+                || "Custom_ControlCenterDateTextColor".equals(key)
+                || "tile_round_corner_radius".equals(key)
+                || "head_up_round_corner_radius".equals(key)
+                || "custom_qs_active_color_val".equals(key)
+                || "custom_label_active_color_val".equals(key)
+                || "custom_second_label_active_color_val".equals(key)
+                || "notification_center_blur_percent".equals(key)
+                || "screen_on_off_animation_duration".equals(key);
+    }
+
+    private static boolean isBooleanSettingKey(String key) {
+        return "disable_game_audio".equals(key)
+                || "disable_game_audio_app".equals(key)
+                || "disguise_device".equals(key)
+                || "fix_cpu_frequency".equals(key)
+                || "fix_soc_temperature".equals(key)
+                || "auto_mistake_touch".equals(key)
+                || "mistake_touch_white_list".equals(key)
+                || "disable_force_stop".equals(key)
+                || "force_stop_white_list_enable".equals(key)
+                || "zui_launcher_hotseat".equals(key)
+                || "custom_grid_size".equals(key)
+                || "clean_global_search".equals(key)
+                || "remove_hot_word_in_search_box".equals(key)
+                || "remove_hot_word_view".equals(key)
+                || "show_ram_info".equals(key)
+                || "beautify_ram_info".equals(key)
+                || "disable_dock_bar".equals(key)
+                || "launcher_no_label_mode".equals(key)
+                || "zui_launcher_hotseat_backup".equals(key)
+                || "disable_dock_warning_confirmed".equals(key)
+                || "disable_ota_check".equals(key)
+                || "hide_ota_update_hint".equals(key)
+                || "custom_ota_parameters".equals(key)
+                || "auto_check_update".equals(key)
+                || "enable_homepage_yiyan".equals(key)
+                || "skip_expose_warn".equals(key)
+                || "auto_accept_file_transfer".equals(key)
+                || "force_native_aod".equals(key)
+                || "force_lenovo_aod".equals(key)
+                || "no_charge_animation".equals(key)
+                || "charge_animation_fix".equals(key)
+                || "guest_mode_controller".equals(key)
+                || "StatusBarDisplay_Seconds".equals(key)
+                || "Custom_StatusBarClock".equals(key)
+                || "NativeNotificationIcon".equals(key)
+                || "systemui_network_speed_size".equals(key)
+                || "systemui_network_speed_doublelayer".equals(key)
+                || "systemui_network_speed_refresh_enabled".equals(key)
+                || "systemui_battery_percentage".equals(key)
+                || "Custom_StatusBarClockTextSizeEnabled".equals(key)
+                || "Custom_StatusBarClockLetterSpacingEnabled".equals(key)
+                || "Custom_StatusBarClockTextColorEnabled".equals(key)
+                || "Custom_StatusBarClockTextBold".equals(key)
+                || "notification_icon_limit".equals(key)
+                || "auto_owner_info".equals(key)
+                || "YiYan".equals(key)
+                || "systemui_charge_watts".equals(key)
+                || "systemUI_RealWatts".equals(key)
+                || "isSystemUIPermissionConfirmed".equals(key)
+                || "Custom_ControlCenterDate".equals(key)
+                || "Custom_ControlCenterDateTextSizeEnabled".equals(key)
+                || "Custom_ControlCenterDateLetterSpacingEnabled".equals(key)
+                || "Custom_ControlCenterDateTextColorEnabled".equals(key)
+                || "Custom_ControlCenterDateTextBold".equals(key)
+                || "qs_round_corner".equals(key)
+                || "custom_qs_color".equals(key)
+                || "custom_label_color".equals(key)
+                || "custom_second_label_color".equals(key)
+                || "control_center_no_tile_labels".equals(key)
+                || "qs_color".equals(key)
+                || "notification_center_blur".equals(key)
+                || "volume_slider_percentage".equals(key)
+                || "brightness_slider_percentage".equals(key)
+                || "default_enable_autorun".equals(key)
+                || "disable_all_virus_scans".equals(key)
+                || "documentsui_bypass".equals(key)
+                || "disable_scan_apk".equals(key)
+                || "always_allow_permission".equals(key)
+                || "skip_warn_page".equals(key)
+                || "disable_installer_ad".equals(key)
+                || "package_installer_style_hook".equals(key)
+                || "disable_delete_package".equals(key)
+                || "detailed_logging".equals(key)
+                || "display_entry_in_settings".equals(key)
+                || "lsposed_service_protector".equals(key)
+                || "remove_blacklist".equals(key)
+                || "split_screen_mandatory".equals(key)
+                || "permission_controller_hook".equals(key)
+                || "allow_display_dolby".equals(key)
+                || "app_details".equals(key)
+                || "allow_get_packages".equals(key)
+                || "keep_rotation".equals(key)
+                || "disable_flag_secure".equals(key)
+                || "ai_input_expand".equals(key)
+                || "force_on_off_animation".equals(key)
+                || "no_password_per_24h".equals(key)
+                || "allow_untrusted_touch".equals(key)
+                || "isConfigUpgraded".equals(key)
+                || "about_device_info".equals(key)
+                || "about_device_info_model_enabled".equals(key)
+                || "about_device_info_cpu_enabled".equals(key)
+                || "about_device_info_ram_enabled".equals(key)
+                || "about_device_info_rom_enabled".equals(key)
+                || "about_device_info_software_enabled".equals(key)
+                || "about_device_info_header_enabled".equals(key);
     }
 
     public static void restoreConfig(Context context, String jsonToRestore){
