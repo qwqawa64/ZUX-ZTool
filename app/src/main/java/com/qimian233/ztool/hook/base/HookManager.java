@@ -50,6 +50,7 @@ import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsColor;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsRoundCorner;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
+import com.qimian233.ztool.hook.modules.systemui.ForceImmersiveMode;
 import com.qimian233.ztool.hook.modules.systemui.ForceLenovoAOD;
 import com.qimian233.ztool.hook.modules.systemui.GuestModeController;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
@@ -109,6 +110,7 @@ public class HookManager {
         registerHookModule(new SystemUINetworkSpeedSIzeHook());
         registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
         registerHookModule(new SystemUIBatteryHook());
+        registerHookModule(new ForceImmersiveMode());
         registerHookModule(new ForceLenovoAOD());
         registerHookModule(new CustomQsRoundCorner());
         registerHookModule(new BrightnessSliderPercentageHook());
