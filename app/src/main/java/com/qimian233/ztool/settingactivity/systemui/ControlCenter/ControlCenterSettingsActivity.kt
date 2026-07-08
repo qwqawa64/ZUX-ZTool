@@ -91,7 +91,7 @@ fun ControlCenterSettingsRoute(
         )[ControlCenterSettingsViewModel::class.java]
     }
 
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(Unit) {
         viewModel.loadSettings()
     }
 

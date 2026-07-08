@@ -115,6 +115,16 @@ class StatusBarSettingsViewModel(
         repository.saveNetworkSpeedDoubleLayer(enabled)
     }
 
+    fun setNetworkSpeedRefreshEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(networkSpeedRefreshEnabled = enabled)
+        repository.saveNetworkSpeedRefreshEnabled(enabled)
+    }
+
+    fun setNetworkSpeedRefreshInterval(value: Float) {
+        _uiState.value = _uiState.value.copy(networkSpeedRefreshInterval = value)
+        repository.saveNetworkSpeedRefreshInterval(value)
+    }
+
     fun setBatteryExternal(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(batteryExternal = enabled)
         repository.saveBatteryExternal(enabled)
@@ -162,6 +172,8 @@ data class StatusBarSettingsUiState(
     val nativeNotificationIcon: Boolean = false,
     val networkSpeedSize: Boolean = false,
     val networkSpeedDoubleLayer: Boolean = false,
+    val networkSpeedRefreshEnabled: Boolean = false,
+    val networkSpeedRefreshInterval: Float = 3.0f,
     val batteryExternal: Boolean = false,
     val showFormatHelpDialog: Boolean = false,
     val showSaveSuccessDialog: Boolean = false

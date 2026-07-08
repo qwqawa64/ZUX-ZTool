@@ -582,6 +582,9 @@
     <string name="statusBarNetworkSizeSummary">让数字尽可能大，让单位尽可能小，和双层网速同时启用会有奇怪的效果</string>
     <string name="statusBarNetworkSizeDoubleLayer">双层网速</string>
     <string name="statusBarNetworkSizeDoubleLayerSummary">能够显示上行和下行的流量</string>
+    <string name="statusBarNetworkRefreshTitle">自定义网速刷新间隔</string>
+    <string name="statusBarNetworkRefreshSummary">开启后可以调整状态栏网速的刷新频率，默认 3 秒刷新一次</string>
+    <string name="statusBarNetworkRefreshIntervalTitle">刷新间隔</string>
     <!--系统界面 状态栏电池显示资源值-->
     <string name="statusBarBatteryTitle">电池</string>
     <string name="syatusBatteryExternalTitle">强制电池外百分比</string>

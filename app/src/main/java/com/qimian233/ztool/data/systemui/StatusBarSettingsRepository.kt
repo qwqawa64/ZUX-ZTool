@@ -21,6 +21,8 @@ class StatusBarSettingsRepository(
             nativeNotificationIcon = prefsUtils.loadBooleanSetting(KEY_NATIVE_NOTIFICATION_ICON, false),
             networkSpeedSize = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_SIZE, false),
             networkSpeedDoubleLayer = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_DOUBLE_LAYER, false),
+            networkSpeedRefreshEnabled = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_REFRESH_ENABLED, false),
+            networkSpeedRefreshInterval = prefsUtils.loadFloatSetting(KEY_NETWORK_SPEED_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL),
             batteryExternal = prefsUtils.loadBooleanSetting(KEY_BATTERY_EXTERNAL, false),
             clockFormat = loadedClockFormat,
             clockPreview = buildClockPreview(loadedClockFormat),
@@ -103,6 +105,14 @@ class StatusBarSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_NETWORK_SPEED_DOUBLE_LAYER, enabled)
     }
 
+    fun saveNetworkSpeedRefreshEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_NETWORK_SPEED_REFRESH_ENABLED, enabled)
+    }
+
+    fun saveNetworkSpeedRefreshInterval(value: Float) {
+        prefsUtils.saveFloatSetting(KEY_NETWORK_SPEED_REFRESH_INTERVAL, value)
+    }
+
     fun saveBatteryExternal(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_BATTERY_EXTERNAL, enabled)
     }
@@ -153,6 +163,9 @@ class StatusBarSettingsRepository(
         private const val KEY_NATIVE_NOTIFICATION_ICON = "NativeNotificationIcon"
         private const val KEY_NETWORK_SPEED_SIZE = "systemui_network_speed_size"
         private const val KEY_NETWORK_SPEED_DOUBLE_LAYER = "systemui_network_speed_doublelayer"
+        private const val KEY_NETWORK_SPEED_REFRESH_ENABLED = "systemui_network_speed_refresh_enabled"
+        private const val KEY_NETWORK_SPEED_REFRESH_INTERVAL = "systemui_network_speed_refresh_interval"
+        private const val DEFAULT_REFRESH_INTERVAL = 3.0f
         private const val KEY_BATTERY_EXTERNAL = "systemui_battery_percentage"
     }
 }

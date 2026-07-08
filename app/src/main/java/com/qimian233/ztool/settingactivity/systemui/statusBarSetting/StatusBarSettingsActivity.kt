@@ -74,7 +74,7 @@ fun StatusBarSettingsRoute(
         )[StatusBarSettingsViewModel::class.java]
     }
 
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(Unit) {
         viewModel.loadSettings()
     }
 
@@ -118,6 +118,8 @@ fun StatusBarSettingsRoute(
         onNativeNotificationIconChanged = viewModel::setNativeNotificationIcon,
         onNetworkSpeedSizeChanged = viewModel::setNetworkSpeedSize,
         onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
+        onNetworkSpeedRefreshEnabledChanged = viewModel::setNetworkSpeedRefreshEnabled,
+        onNetworkSpeedRefreshIntervalChanged = viewModel::setNetworkSpeedRefreshInterval,
         onBatteryExternalChanged = viewModel::setBatteryExternal
     )
 
@@ -177,6 +179,8 @@ private fun StatusBarSettingsScreen(
     onNativeNotificationIconChanged: (Boolean) -> Unit,
     onNetworkSpeedSizeChanged: (Boolean) -> Unit,
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
+    onNetworkSpeedRefreshEnabledChanged: (Boolean) -> Unit,
+    onNetworkSpeedRefreshIntervalChanged: (Float) -> Unit,
     onBatteryExternalChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
@@ -227,6 +231,8 @@ private fun StatusBarSettingsScreen(
                         onNativeNotificationIconChanged = onNativeNotificationIconChanged,
                         onNetworkSpeedSizeChanged = onNetworkSpeedSizeChanged,
                         onNetworkSpeedDoubleLayerChanged = onNetworkSpeedDoubleLayerChanged,
+                        onNetworkSpeedRefreshEnabledChanged = onNetworkSpeedRefreshEnabledChanged,
+                        onNetworkSpeedRefreshIntervalChanged = onNetworkSpeedRefreshIntervalChanged,
                         onBatteryExternalChanged = onBatteryExternalChanged
                     ),
                     bottomPadding = 96.dp
@@ -256,6 +262,8 @@ private fun statusBarSettingsSections(
     onNativeNotificationIconChanged: (Boolean) -> Unit,
     onNetworkSpeedSizeChanged: (Boolean) -> Unit,
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
+    onNetworkSpeedRefreshEnabledChanged: (Boolean) -> Unit,
+    onNetworkSpeedRefreshIntervalChanged: (Float) -> Unit,
     onBatteryExternalChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     val clockItems = buildList {
@@ -345,20 +353,50 @@ private fun statusBarSettingsSections(
         ),
         SettingSection(
             title = stringResource(R.string.statusBarNetworkTitle),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.statusBarNetworkSizeTitle),
-                    summary = stringResource(R.string.statusBarNetworkSizeSummary),
-                    checked = state.networkSpeedSize,
-                    onCheckedChange = onNetworkSpeedSizeChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.statusBarNetworkSizeDoubleLayer),
-                    summary = stringResource(R.string.statusBarNetworkSizeDoubleLayerSummary),
-                    checked = state.networkSpeedDoubleLayer,
-                    onCheckedChange = onNetworkSpeedDoubleLayerChanged
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.statusBarNetworkSizeTitle),
+                        summary = stringResource(R.string.statusBarNetworkSizeSummary),
+                        checked = state.networkSpeedSize,
+                        onCheckedChange = onNetworkSpeedSizeChanged
+                    )
                 )
-            )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.statusBarNetworkSizeDoubleLayer),
+                        summary = stringResource(R.string.statusBarNetworkSizeDoubleLayerSummary),
+                        checked = state.networkSpeedDoubleLayer,
+                        onCheckedChange = onNetworkSpeedDoubleLayerChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.statusBarNetworkRefreshTitle),
+                        summary = stringResource(R.string.statusBarNetworkRefreshSummary),
+                        checked = state.networkSpeedRefreshEnabled,
+                        onCheckedChange = onNetworkSpeedRefreshEnabledChanged
+                    )
+                )
+                if (state.networkSpeedRefreshEnabled) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ZToolSliderRow(
+                                    title = stringResource(R.string.statusBarNetworkRefreshIntervalTitle),
+                                    value = state.networkSpeedRefreshInterval,
+                                    onValueChange = onNetworkSpeedRefreshIntervalChanged,
+                                    valueRange = 0f..10f,
+                                    steps = 19,
+                                    valueText = String.format("%.1f s", state.networkSpeedRefreshInterval),
+                                    horizontalPadding = 0.dp,
+                                    modifier = Modifier.padding(horizontal = 0.dp)
+                                )
+                            }
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.statusBarBatteryTitle),
