@@ -389,7 +389,7 @@ private fun statusBarSettingsSections(
                                     valueRange = 0f..10f,
                                     steps = 19,
                                     valueText = String.format("%.1f s", state.networkSpeedRefreshInterval),
-                                    horizontalPadding = 0.dp,
+                                    horizontalPadding = 24.dp,
                                     modifier = Modifier.padding(horizontal = 0.dp)
                                 )
                             }
