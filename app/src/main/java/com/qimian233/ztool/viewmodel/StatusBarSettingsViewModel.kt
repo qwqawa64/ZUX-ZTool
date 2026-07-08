@@ -12,15 +12,20 @@ import kotlinx.coroutines.flow.asStateFlow
 class StatusBarSettingsViewModel(
     private val repository: StatusBarSettingsRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(StatusBarSettingsUiState())
+    private val _uiState = MutableStateFlow(loadInitialState())
     val uiState: StateFlow<StatusBarSettingsUiState> = _uiState.asStateFlow()
 
     fun loadSettings() {
+        _uiState.value = loadInitialState()
+    }
+
+    private fun loadInitialState(): StatusBarSettingsUiState {
         try {
-            _uiState.value = repository.loadState().withTextColorText()
+            return repository.loadState().withTextColorText()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load status bar settings", e)
         }
+        return StatusBarSettingsUiState()
     }
 
     fun setDisplaySeconds(enabled: Boolean) {

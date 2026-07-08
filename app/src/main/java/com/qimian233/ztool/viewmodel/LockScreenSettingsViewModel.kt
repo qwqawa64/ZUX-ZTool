@@ -10,15 +10,20 @@ import kotlinx.coroutines.flow.asStateFlow
 class LockScreenSettingsViewModel(
     private val repository: LockScreenSettingsRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(LockScreenSettingsUiState())
+    private val _uiState = MutableStateFlow(loadInitialState())
     val uiState: StateFlow<LockScreenSettingsUiState> = _uiState.asStateFlow()
 
     fun loadSettings() {
+        _uiState.value = loadInitialState()
+    }
+
+    private fun loadInitialState(): LockScreenSettingsUiState {
         try {
-            _uiState.value = repository.loadState()
+            return repository.loadState()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load lock screen settings", e)
         }
+        return LockScreenSettingsUiState()
     }
 
     fun setYiYanEnabled(enabled: Boolean) {
