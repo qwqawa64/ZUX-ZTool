@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui
 
+import android.annotation.SuppressLint
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -7,39 +8,88 @@ import java.lang.reflect.Method
 /**
  * 强制沉浸式模式 Hook。
  *
- * 通过拦截 SystemUI 的 CommandQueue.setWindowState 方法，
- * 当应用试图显示状态栏/导航栏时，强制将其设为沉浸式（隐藏）状态。
- * 用户仍可通过从顶部/底部滑动手势临时唤出系统栏。
+ * 通过拦截 SystemUI CommandQueue 中控制系统栏可见性的方法，
+ * 强制所有应用使用沉浸式模式（状态栏/导航栏隐藏，可滑动唤出）。
+ *
+ * 现代 Android (13+) 主要通过 onSystemBarAttributesChanged 的
+ * requestedVisibleTypes 参数控制栏的可见性。setWindowState 作为旧路径兜底。
  */
+@SuppressLint("PrivateApi")
 class ForceImmersiveMode : BaseHookModule() {
 
     companion object {
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
-
-        // 系统栏窗口状态常量
-        // state=0: 显示, state=1: 过渡态, state=2: 沉浸式隐藏（可滑动唤出）
         private const val WINDOW_STATE_SHOWING = 0
         private const val WINDOW_STATE_HIDDEN = 2
     }
 
-    override fun getModuleName(): String = "force_immersive_mode"
+//    override fun getModuleName(): String = "force_immersive_mode"
+    override fun getModuleName(): String = "test_hook"
 
     override fun getTargetPackages(): Array<String> = arrayOf(SYSTEMUI_PACKAGE)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != SYSTEMUI_PACKAGE) return
         log("Loading module ForceImmersiveMode.")
-        hookSetWindowState(param.defaultClassLoader)
+
+        val commandQueueClass = param.defaultClassLoader
+            .loadClass("com.android.systemui.statusbar.CommandQueue")
+
+        hookSystemBarAttributes(commandQueueClass)
+        hookSetWindowState(commandQueueClass)
     }
 
-    private fun hookSetWindowState(classLoader: ClassLoader) {
+    /**
+     * 主 Hook：拦截 onSystemBarAttributesChanged，
+     * 将 requestedVisibleTypes 强制设为 0，使状态栏和导航栏均隐藏。
+     *
+     * 方法签名（8 个参数）：
+     *   onSystemBarAttributesChanged(
+     *     int displayId,             // args[0]
+     *     int appearance,            // args[1]
+     *     AppearanceRegion[] regions,// args[2]
+     *     boolean imeManaged,        // args[3]
+     *     int behavior,              // args[4]
+     *     int requestedVisibleTypes, // args[5] ← 核心：0=隐藏所有栏
+     *     String packageName,        // args[6]
+     *     LetterboxDetails[] details // args[7]
+     *   )
+     */
+    private fun hookSystemBarAttributes(commandQueueClass: Class<*>) {
         try {
-            val commandQueueClass = classLoader.loadClass(
-                "com.android.systemui.statusbar.CommandQueue"
-            )
+            // onSystemBarAttributesChanged 使用了内部 Android 类型参数
+            // (AppearanceRegion[], LetterboxDetails[])，无法直接引用。
+            // 通过名称 + 参数个数定位目标方法。
+            val targetMethod: Method = commandQueueClass.declaredMethods
+                .first { it.name == "onSystemBarAttributesChanged" && it.parameterTypes.size == 8 }
 
-            // setWindowState(int displayId, int type, int state)
-            val setWindowStateMethod: Method = findMethod(
+            xposed.hook(targetMethod).intercept { chain ->
+                val args = chain.args.toMutableList()
+                // args[5] = requestedVisibleTypes; 设为 0 隐藏状态栏+导航栏
+                val current = args[5] as Int
+                if (current != 0) {
+                    args[5] = 0
+                    if (DEBUG) {
+                        log("ForceImmersiveMode: onSystemBarAttributesChanged " +
+                            "requestedVisibleTypes=$current -> 0 (hide all bars)")
+                    }
+                }
+                chain.proceed(args.toTypedArray())
+            }
+
+            log("ForceImmersiveMode: onSystemBarAttributesChanged hooked successfully.")
+        } catch (e: Throwable) {
+            logError("Failed to hook onSystemBarAttributesChanged", e)
+        }
+    }
+
+    /**
+     * 兜底 Hook：拦截旧版 setWindowState(int, int, int)，
+     * 将 state=0（显示）改写为 state=2（沉浸式隐藏）。
+     */
+    private fun hookSetWindowState(commandQueueClass: Class<*>) {
+        try {
+            val method: Method = findMethod(
                 commandQueueClass,
                 "setWindowState",
                 Int::class.javaPrimitiveType,
@@ -47,7 +97,7 @@ class ForceImmersiveMode : BaseHookModule() {
                 Int::class.javaPrimitiveType
             )
 
-            xposed.hook(setWindowStateMethod).intercept { chain ->
+            xposed.hook(method).intercept { chain ->
                 val args = chain.args
                 val displayId = args[0] as Int
                 val type = args[1] as Int
@@ -55,11 +105,9 @@ class ForceImmersiveMode : BaseHookModule() {
 
                 if (state == WINDOW_STATE_SHOWING) {
                     if (DEBUG) {
-                        log(
-                            "ForceImmersiveMode: intercepting setWindowState(" +
-                                "displayId=$displayId, type=$type, state=$state" +
-                                ") -> forcing state=$WINDOW_STATE_HIDDEN"
-                        )
+                        log("ForceImmersiveMode: setWindowState(" +
+                            "displayId=$displayId, type=$type, state=$state" +
+                            ") -> forcing state=$WINDOW_STATE_HIDDEN")
                     }
                     chain.proceed(arrayOf(displayId, type, WINDOW_STATE_HIDDEN))
                 } else {
@@ -67,9 +115,9 @@ class ForceImmersiveMode : BaseHookModule() {
                 }
             }
 
-            log("ForceImmersiveMode: CommandQueue.setWindowState hooked successfully.")
-        } catch (e: Exception) {
-            logError("Failed to hook CommandQueue.setWindowState", e)
+            log("ForceImmersiveMode: setWindowState hooked successfully.")
+        } catch (e: Throwable) {
+            logError("Failed to hook setWindowState", e)
         }
     }
 }
