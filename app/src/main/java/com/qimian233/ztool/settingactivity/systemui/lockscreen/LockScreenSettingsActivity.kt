@@ -64,7 +64,7 @@ fun LockScreenSettingsRoute(
         )[LockScreenSettingsViewModel::class.java]
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.loadSettings()
     }
 

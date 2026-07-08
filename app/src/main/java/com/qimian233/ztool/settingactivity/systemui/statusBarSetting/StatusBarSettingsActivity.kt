@@ -74,7 +74,7 @@ fun StatusBarSettingsRoute(
         )[StatusBarSettingsViewModel::class.java]
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.loadSettings()
     }
 
