@@ -15,16 +15,21 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.BlurOn
 import androidx.compose.material.icons.rounded.Build
+import androidx.compose.material.icons.rounded.CallToAction
+import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DeleteForever
+import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.FormatColorFill
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
@@ -32,8 +37,9 @@ import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
+import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Swipe
-import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -545,7 +551,7 @@ private fun settingsSections(
                     summary = stringResource(R.string.enableHomePageYiyanSummary),
                     checked = state.isHomepageYiyanEnabled,
                     onCheckedChange = onHomepageYiyanChanged,
-                    icon = Icons.Rounded.AutoAwesome
+                    icon = Icons.AutoMirrored.Filled.Notes
                 ),
                 SettingItem.Switch(
                     key = "auto_check_update",
@@ -553,7 +559,7 @@ private fun settingsSections(
                     summary = stringResource(R.string.auto_check_update_summary),
                     checked = state.isAutoCheckUpdateEnabled,
                     onCheckedChange = onAutoCheckUpdateChanged,
-                    icon = Icons.Rounded.Build
+                    icon = Icons.Rounded.Update
                 )
             )
         ),
@@ -768,7 +774,7 @@ private fun themeSettingsSections(
                         options = frontendStyleOptions,
                         optionLabel = { it.label },
                         onOptionSelected = { onFrontendStyleChanged(it.value) },
-                        icon = Icons.Rounded.Palette
+                        icon = Icons.Rounded.Dashboard
                     )
                 )
                 add(
@@ -790,7 +796,7 @@ private fun themeSettingsSections(
                         options = colorSpecOptions,
                         optionLabel = { it.label },
                         onOptionSelected = { onMaterialColorSpecChanged(it.value) },
-                        icon = Icons.Rounded.Tune
+                        icon = Icons.Rounded.DesignServices
                     )
                 )
                 add(
@@ -801,7 +807,7 @@ private fun themeSettingsSections(
                         options = paletteOptions,
                         optionLabel = { it.label },
                         onOptionSelected = { onMaterialPaletteChanged(it.value) },
-                        icon = Icons.Rounded.Tune
+                        icon = Icons.Rounded.Style
                     )
                 )
                 add(
@@ -834,7 +840,7 @@ private fun themeSettingsSections(
                         checked = settings.dynamicColorEnabled,
                         onCheckedChange = onDynamicColorChanged,
                         enabled = !settings.manualColorEnabled,
-                        icon = Icons.Rounded.AutoAwesome
+                        icon = Icons.Rounded.Colorize
                     )
                 )
                 add(
@@ -873,7 +879,7 @@ private fun themeSettingsSections(
                             summary = stringResource(R.string.enable_floating_bottom_bar_summary),
                             checked = settings.enableFloatingBottomBar,
                             onCheckedChange = onEnableFloatingBottomBarChanged,
-                            icon = Icons.Rounded.AutoAwesome
+                            icon = Icons.Rounded.CallToAction
                         )
                     )
                     if (settings.enableFloatingBottomBar) {
@@ -884,7 +890,7 @@ private fun themeSettingsSections(
                                 summary = stringResource(R.string.enable_floating_bottom_bar_blur_summary),
                                 checked = settings.enableFloatingBottomBarBlur,
                                 onCheckedChange = onEnableFloatingBottomBarBlurChanged,
-                                icon = Icons.Rounded.AutoAwesome
+                                icon = Icons.Rounded.BlurOn
                             )
                         )
                     }
