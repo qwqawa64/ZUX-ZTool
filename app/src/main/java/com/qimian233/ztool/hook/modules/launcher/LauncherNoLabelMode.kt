@@ -1,7 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher
 
 import android.annotation.SuppressLint
-import android.graphics.drawable.Drawable
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -22,6 +21,8 @@ class LauncherNoLabelMode : BaseHookModule() {
             val loader: ClassLoader = param.defaultClassLoader
             val bubbleTextViewClass: Class<*> =
                 loader.loadClass("com.android.launcher3.BubbleTextView")
+            val workspaceItemInfoClass: Class<*> =
+                loader.loadClass("com.android.launcher3.model.data.WorkspaceItemInfo")
 
             // Resolve helper methods once outside the callback so failures are loud
             val setTextMethod: Method = findMethod(bubbleTextViewClass, "setText",
@@ -29,11 +30,13 @@ class LauncherNoLabelMode : BaseHookModule() {
             val setContentDescriptionMethod: Method = findMethod(bubbleTextViewClass,
                 "setContentDescription", CharSequence::class.java)
 
+            // Hook applyFromWorkspaceItem — the real entry point in ZUI's inflate chain:
+            //   ItemInflater.inflateItem → d() → BubbleTextView.applyFromWorkspaceItem
             val targetMethod: Method = findMethod(
-                bubbleTextViewClass, "applyIconAndLabel", Drawable::class.java,
-                CharSequence::class.java
+                bubbleTextViewClass, "applyFromWorkspaceItem",
+                workspaceItemInfoClass
             )
-            log("Ready to install hook!")
+            log("Ready to install hook on applyFromWorkspaceItem!")
             xposed.hook(targetMethod).intercept { chain ->
                 log("Intercept chain triggered!")
                 try {
@@ -44,7 +47,7 @@ class LauncherNoLabelMode : BaseHookModule() {
                     setContentDescriptionMethod.invoke(chain.thisObject, "")
                     return@intercept result
                 } catch (e: Throwable) {
-                    logError("Failed inside applyIconAndLabel hook: ", e)
+                    logError("Failed inside applyFromWorkspaceItem hook: ", e)
                     return@intercept chain.proceed()
                 }
             }
