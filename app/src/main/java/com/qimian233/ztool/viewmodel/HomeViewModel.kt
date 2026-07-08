@@ -28,7 +28,9 @@ class HomeViewModel(
         if (started) return
         started = true
         checkEnvironment()
-        checkAppUpdate()
+        if (repository.isAutoCheckUpdateEnabled()) {
+            checkAppUpdate()
+        }
     }
 
     fun refreshSystemInfoIfNeeded() {

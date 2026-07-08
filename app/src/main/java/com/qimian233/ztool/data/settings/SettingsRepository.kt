@@ -34,6 +34,7 @@ class SettingsRepository(
             themeSettings = themeSettings,
             manualSeedColorText = formatSeedColor(themeSettings.manualSeedColor),
             lsposedServiceProtector = prefsUtils.loadBooleanSetting(KEY_LSPOSED_SERVICE_PROTECTOR, false),
+            isAutoCheckUpdateEnabled = prefsUtils.loadBooleanSetting(KEY_AUTO_CHECK_UPDATE, true),
         )
     }
 
@@ -71,6 +72,10 @@ class SettingsRepository(
 
     fun saveLsposedServiceProtector(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_LSPOSED_SERVICE_PROTECTOR, enabled)
+    }
+
+    fun setAutoCheckUpdateEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_AUTO_CHECK_UPDATE, enabled)
     }
 
 
@@ -156,6 +161,7 @@ class SettingsRepository(
         private const val KEY_HOMEPAGE_YIYAN = "enable_homepage_yiyan"
         private const val KEY_DISPLAY_ENTRY_IN_SETTINGS = "ztool_settings_entry"
         private const val KEY_LSPOSED_SERVICE_PROTECTOR = "lsposed_service_protector"
+        private const val KEY_AUTO_CHECK_UPDATE = "auto_check_update"
     }
 
     private fun getVersionName(): String {

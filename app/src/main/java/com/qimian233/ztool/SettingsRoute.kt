@@ -177,7 +177,8 @@ fun SettingsMainRoute(
         onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
         onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
         onLsposedServiceProtector = viewModel::setLsposedServiceProtector,
-        onOpenAdvanced = onOpenAdvanced
+        onOpenAdvanced = onOpenAdvanced,
+        onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled
     )
 
     SettingsDialogs(
@@ -341,7 +342,8 @@ private fun SettingsRoute(
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
-    onOpenAdvanced: () -> Unit
+    onOpenAdvanced: () -> Unit,
+    onAutoCheckUpdateChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold (
         topBar = {
@@ -379,6 +381,7 @@ private fun SettingsRoute(
                         onDeleteAllLogs = onDeleteAllLogs,
                         onLsposedServiceProtector = onLsposedServiceProtector,
                         onOpenAdvanced = onOpenAdvanced,
+                        onAutoCheckUpdateChanged = onAutoCheckUpdateChanged,
                     ),
                     bottomPadding = 32.dp
                 )
@@ -470,7 +473,8 @@ private fun settingsSections(
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
-    onOpenAdvanced: () -> Unit
+    onOpenAdvanced: () -> Unit,
+    onAutoCheckUpdateChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -542,6 +546,14 @@ private fun settingsSections(
                     checked = state.isHomepageYiyanEnabled,
                     onCheckedChange = onHomepageYiyanChanged,
                     icon = Icons.Rounded.AutoAwesome
+                ),
+                SettingItem.Switch(
+                    key = "auto_check_update",
+                    title = stringResource(R.string.auto_check_update_title),
+                    summary = stringResource(R.string.auto_check_update_summary),
+                    checked = state.isAutoCheckUpdateEnabled,
+                    onCheckedChange = onAutoCheckUpdateChanged,
+                    icon = Icons.Rounded.Build
                 )
             )
         ),

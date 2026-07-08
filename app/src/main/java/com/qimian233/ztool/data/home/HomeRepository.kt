@@ -96,6 +96,11 @@ class HomeRepository(
 
     fun environmentReadyHint(): String = context.getString(R.string.environment_ready)
 
+    fun isAutoCheckUpdateEnabled(): Boolean {
+        return ModulePreferencesUtils(context)
+            .loadBooleanSetting("auto_check_update", true)
+    }
+
     fun loadHomepageHint(): String? {
         val enableYiyan = ModulePreferencesUtils(context)
             .loadBooleanSetting("enable_homepage_yiyan", true)

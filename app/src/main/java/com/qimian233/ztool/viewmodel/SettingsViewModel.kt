@@ -79,6 +79,11 @@ class SettingsViewModel(
         repository.saveLsposedServiceProtector(enabled)
     }
 
+    fun setAutoCheckUpdateEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isAutoCheckUpdateEnabled = enabled)
+        repository.setAutoCheckUpdateEnabled(enabled)
+    }
+
     fun setFrontendStyle(style: FrontendStyle) {
         repository.setFrontendStyle(style)
         _uiState.value = _uiState.value.copy(
@@ -224,4 +229,5 @@ data class SettingsUiState(
     val manualSeedColorText: String = "#%08X".format(ZToolThemeSettings.DEFAULT_MANUAL_SEED_COLOR),
     val manualSeedColorError: Boolean = false,
     val lsposedServiceProtector: Boolean = false,
+    val isAutoCheckUpdateEnabled: Boolean = true,
 )
