@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.modules.launcher.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
 import com.qimian233.ztool.hook.modules.launcher.DisableDockBar;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
+import com.qimian233.ztool.hook.modules.launcher.LauncherNoLabelMode;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
 import com.qimian233.ztool.hook.modules.mobiledesktop.AutoAcceptFileTransferHook;
@@ -142,6 +143,7 @@ public class HookManager {
         registerHookModule(new CleanGlobalSearch());
         registerHookModule(new DisableDockBar());
         registerHookModule(new RecentTaskMemoryViewHook());
+        registerHookModule(new LauncherNoLabelMode());
 
         // ── GameTool (target: com.zui.game.service) ──
         registerHookModule(new AutoMistakeTouchHook());

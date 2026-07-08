@@ -8,8 +8,7 @@ import java.lang.reflect.Method
 @SuppressLint("PrivateApi")
 class LauncherNoLabelMode : BaseHookModule() {
     override fun getModuleName(): String {
-        // return "launcher_no_label_mode"
-        return "test_hook"
+        return "launcher_no_label_mode"
     }
 
     override fun getTargetPackages(): Array<out String?> {
@@ -24,25 +23,19 @@ class LauncherNoLabelMode : BaseHookModule() {
             val workspaceItemInfoClass: Class<*> =
                 loader.loadClass("com.android.launcher3.model.data.WorkspaceItemInfo")
 
-            // Resolve helper methods once outside the callback so failures are loud
             val setTextMethod: Method = findMethod(bubbleTextViewClass, "setText",
                 CharSequence::class.java)
             val setContentDescriptionMethod: Method = findMethod(bubbleTextViewClass,
                 "setContentDescription", CharSequence::class.java)
 
-            // Hook applyFromWorkspaceItem — the real entry point in ZUI's inflate chain:
-            //   ItemInflater.inflateItem → d() → BubbleTextView.applyFromWorkspaceItem
             val targetMethod: Method = findMethod(
                 bubbleTextViewClass, "applyFromWorkspaceItem",
                 workspaceItemInfoClass
             )
             log("Ready to install hook on applyFromWorkspaceItem!")
             xposed.hook(targetMethod).intercept { chain ->
-                log("Intercept chain triggered!")
                 try {
-                    // Let original method apply icon + label first ...
                     val result = chain.proceed()
-                    // ... then clear the text label
                     setTextMethod.invoke(chain.thisObject, "")
                     setContentDescriptionMethod.invoke(chain.thisObject, "")
                     return@intercept result
