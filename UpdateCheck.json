@@ -1,6 +1,6 @@
 {
-  "newVersionName": "Beta/260624",
-  "newVersionCode": 791,
-  "whatNew": "音量/亮度条百分比显示\n在设置内显示快捷跳转入口\n根据实际安装的应用展示功能入口\n检测非 ZUXOS/ZUI 设备\n新的 First Run 界面\n(测试) 允许不受信任的触摸\n(测试) 禁止人脸识别超时\n自定义关于设备面板中的一些信息\n去除原生安装器的“此应用未经《联想终端质量检测和安全审查标准》审核，建议使用官方“应用中心”安装经过检测的应用。”警告\n控制中心磁贴无字模式\n控制中心透明度自定义\n控制中心磁贴颜色自定义\n控制中心磁贴圆角半径自定义\n关闭新版本系统可用的小红点提示\n最近任务显示内存信息\n净化全局搜索\n增强阻止安全中心扫描功能，现在可以阻止其它类型的一些安全扫描，例如安全中心内手动触发的扫描功能，并阻止病毒警报弹窗\n添加亮灭屏过渡动画功能\n支持在应用信息字段显示更多内容，例如 Target SDK ，并支持长按复制到剪贴板\nCompose 重构，更规范的 Material 3 (Expressive) 主题，并支持 miuix 作为替代主题\n修复 Android 16 禁止处理游戏音频问题\n修复一视界拓展模块只能在 ZTool 内安装和卸载的问题\n修复从 ZTool 安装的一视界拓展模块可能无法正确生效的问题",
-  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/20260624-ZTool_Beta"
+  "newVersionName": "Beta/260710",
+  "newVersionCode": 1106,
+  "whatNew": "关闭夜间安装确认弹窗\n禁止系统更新自动安装\n禁止互传自动关闭\n网速刷新时间自定义\n桌面无字模式\n添加热重载入口（大概率并不好用，后续再看）\n支持动态申请作用域\n备用更新查询 url\nUI 细节改进，MIUIx 分支初步可用\n支持 DEXKit 对抗混淆\n升级到 libxposed API 102 (min 101, target 102)\n自动接受互传请求\n关闭桌面 Dock 栏\n关闭互传启动时的警告\n调整亮度和音量百分比显示的颜色\n支持最近任务内存使用情况显示猜测的整数内存值和内存扩展值\n调整最近任务内存状况显示的样式和位置",
+  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/20260710-ZTool_Beta"
 }
