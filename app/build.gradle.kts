@@ -119,7 +119,7 @@ val releaseApkName = provider {
 }
 val releaseBaselineProfileName = releaseApkName.map { it.removeSuffix(".apk") + ".dm" }
 
-val cleanReleaseDistribution by tasks.registering(Delete::class) {
+val cleanReleaseDistribution = tasks.register<Delete>("cleanReleaseDistribution") {
     mustRunAfter("assembleRelease")
     delete(releaseDistributionDir)
 }
