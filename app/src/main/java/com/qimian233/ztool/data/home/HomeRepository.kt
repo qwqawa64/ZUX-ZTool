@@ -130,8 +130,11 @@ class HomeRepository(
         for (url in UPDATE_URL) {
             Log.i(TAG, "Fetching update information via url: $url")
             try {
-                val connection = URL(url).openConnection() as HttpURLConnection
+                val cacheBustUrl = if (url.contains("?")) "$url&_t=${System.currentTimeMillis()}" else "$url?_t=${System.currentTimeMillis()}"
+                val connection = URL(cacheBustUrl).openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
+                connection.useCaches = false
+                connection.setRequestProperty("Cache-Control", "no-cache, no-store")
                 connection.connectTimeout = 5000
                 connection.readTimeout = 5000
 
