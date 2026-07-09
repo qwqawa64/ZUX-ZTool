@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.ModuleActivationProbe
-import com.qimian233.ztool.XposedServiceBridge
 
 class FirstrunAgreementRepository(
     context: Context,
@@ -29,7 +28,7 @@ class FirstrunAgreementRepository(
 
     fun hasRootAccess(): Boolean = shellExecutor.checkRootAccess().isSuccess
 
-    fun isModuleActive(): Boolean = moduleActiveChecker() || XposedServiceBridge.getApiVersion() > 0
+    fun isModuleActive(): Boolean = moduleActiveChecker()
 
     fun canListInstalledApplications(): Boolean {
         return try {

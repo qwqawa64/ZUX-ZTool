@@ -1,21 +1,41 @@
 package com.qimian233.ztool
 
 import android.app.Application
+import android.content.Context
+import io.github.libxposed.service.XposedService
+import io.github.libxposed.service.XposedServiceHelper
 
 /**
  * 自定义 Application 类。
  * <p>
- * 在 onCreate 中尽早触发 [ModuleActivationProbe] 初始化，
- * 确保 XposedServiceHelper 的 listener 在 LSPosed 投递 binder 之前或紧随其后注册，
- * 减少 binder 缓存后因 linkToDeath 失败导致 onServiceBind 不被调用的竞态窗口。
+ * 借鉴 HyperCeiler 的模式：Application 自身实现 [XposedServiceHelper.OnServiceListener]，
+ * 在 [attachBaseContext] 中注册监听器（早于 onCreate），
+ * 最大程度缩短 binder 到达与 listener 注册之间的窗口。
  * </p>
  */
-class ZToolApplication : Application() {
+class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
 
-    override fun onCreate() {
-        super.onCreate()
-        // 强制触发 ModuleActivationProbe 的 init 块，
-        // 尽早向 XposedServiceHelper 注册 OnServiceListener
-        ModuleActivationProbe.ensureInitialized()
+    companion object {
+        /** 模块是否已激活，由 onServiceBind/onServiceDied 维护 */
+        @Volatile
+        var isModuleActivated: Boolean = false
+            private set
+    }
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        // 在最早的时机注册监听器，比 onCreate() 更早，
+        // 减少 binder 被缓存后再排空时 linkToDeath 失败的竞态
+        XposedServiceHelper.registerListener(this)
+    }
+
+    override fun onServiceBind(service: XposedService) {
+        isModuleActivated = true
+        XposedServiceBridge.currentService = service
+    }
+
+    override fun onServiceDied(service: XposedService) {
+        isModuleActivated = false
+        XposedServiceBridge.currentService = null
     }
 }
