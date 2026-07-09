@@ -1,17 +1,21 @@
 package com.qimian233.ztool.hook.modules.ota
 
-import android.app.Activity
+import android.app.Dialog
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * Block OTA install warning dialog to prevent accidental reboot and root loss.
+ * Block the NightConfrimDialog that appears after dismissing the OTA install
+ * warning dialog, preventing night auto-installation from being silently enabled.
  *
- * Hooks OtaDialogActivity.showInstallWarningDialog(boolean) and replaces it with
- * a simple finish() call, preventing the InstallConfirmDialog from ever appearing.
- * The positive button of that dialog triggers either rebootNow (AB update) or
- * startRebootRecoveryAndInstallPackage (non-AB), both of which cause the device
- * to reboot and lose root access.
+ * The OTA dialog chain:
+ * 1. InstallConfirmDialog — positive = reboot (preserved), negative = shows NightConfrimDialog
+ * 2. NightConfrimDialog  — positive = enables night auto-install (silent reboot later),
+ *                          negative = dismiss + finish
+ *
+ * By hooking NightConfrimDialog.show() to immediately dismiss, we prevent the
+ * night auto-installation from being set up while still allowing intentional reboots
+ * through the InstallConfirmDialog positive button.
  */
 class BlockOtaInstallDialog : BaseHookModule() {
 
@@ -22,22 +26,18 @@ class BlockOtaInstallDialog : BaseHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val cl: ClassLoader = param.defaultClassLoader
         try {
-            val dialogActivityClass: Class<*> = cl.loadClass(
-                "com.lenovo.row.ota.core.d.ui.OtaDialogActivity"
+            val nightDialogClass: Class<*> = cl.loadClass(
+                "com.lenovo.row.ota.core.d.ui.NightConfrimDialog"
             )
-            val showDialogMethod = findMethod(
-                dialogActivityClass,
-                "showInstallWarningDialog",
-                Boolean::class.javaPrimitiveType!!
-            )
-            xposed.hook(showDialogMethod).intercept { chain ->
-                log("Blocked OTA install warning dialog to prevent accidental reboot")
-                val activity = chain.getThisObject() as Activity
-                activity.finish()
-                // Do not proceed with the original method — dialog must not appear
+            val showMethod = findMethod(nightDialogClass, "show")
+            xposed.hook(showMethod).intercept { chain ->
+                log("Blocked NightConfrimDialog to prevent night auto-install setup")
+                val dialog = chain.thisObject as Dialog
+                dialog.dismiss()
+                // Do not proceed — dialog must not stay visible
             }
         } catch (e: Exception) {
-            logError("Failed to hook showInstallWarningDialog", e)
+            logError("Failed to hook NightConfrimDialog.show", e)
         }
     }
 }
