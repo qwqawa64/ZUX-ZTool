@@ -268,24 +268,16 @@ private fun MaterialExpressiveSettingsSection(
 fun ColumnScope.ExpressiveSectionItems(
     count: Int,
     shapeForIndex: ((index: Int, count: Int) -> Shape)? = null,
-    content: @Composable ColumnScope.(() -> Modifier) -> Unit
+    content: @Composable ColumnScope.((Int) -> Modifier) -> Unit
 ) {
-    if (LocalZToolThemeSpec.current.style != FrontendStyle.Material3Expressive) {
-        content { Modifier }
-        return
-    }
-
-    var index = 0
     val itemColor = LocalZToolColorScheme.current.surfaceContainerHigh
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        content {
-            val itemIndex = index
-            val shape = shapeForIndex?.invoke(itemIndex, count)
-                ?: expressiveSettingsItemShape(index = itemIndex, count = count)
-            index += 1
+        content { index ->
+            val shape = shapeForIndex?.invoke(index, count)
+                ?: expressiveSettingsItemShape(index = index, count = count)
             Modifier
                 .fillMaxWidth()
                 .clip(shape)

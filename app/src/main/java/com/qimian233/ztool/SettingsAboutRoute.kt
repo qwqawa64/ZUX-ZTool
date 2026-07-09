@@ -121,64 +121,64 @@ fun SettingsAboutRoute(
                 Spacer(modifier = Modifier.height(24.dp))
                 AboutHeaderCard(versionName, commitCount, commitHash)
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_developers_title), 3) { itemModifier ->
+                AboutSectionCard(stringResource(R.string.about_developers_title), 3) { getModifier ->
                     AboutActionRow(
                         title = "Qimian233",
                         summary = stringResource(R.string.about_qimian233_summary),
                         onClick = onOpenQimian233,
-                        modifier = itemModifier()
+                        modifier = getModifier(0)
                     )
                     AboutActionRow(
                         title = "WASDDestroy",
                         summary = stringResource(R.string.about_wasd_destroy_summary),
                         onClick = onOpenWasdDestroy,
-                        modifier = itemModifier()
+                        modifier = getModifier(1)
                     )
                     AboutActionRow(
                         title = "uuuddddl",
                         summary = stringResource(R.string.about_uuuddddl),
                         onClick = onOpenUdl,
-                        modifier = itemModifier()
+                        modifier = getModifier(2)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_acknowledgements_title), 2) { itemModifier ->
+                AboutSectionCard(stringResource(R.string.about_acknowledgements_title), 2) { getModifier ->
                     AboutActionRow(
                         title = "UnfuckZUI",
                         summary = stringResource(R.string.about_unfuckzui_summary),
                         onClick = onOpenUnfuckZUI,
-                        modifier = itemModifier()
+                        modifier = getModifier(0)
                     )
                     AboutActionRow(
                         title = "ZUXOS+",
                         summary = stringResource(R.string.about_zuxos_plus_summary),
                         onClick = onOpenZuxOsPlus,
-                        modifier = itemModifier(),
+                        modifier = getModifier(1),
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_open_source_title), 2) { itemModifier ->
+                AboutSectionCard(stringResource(R.string.about_open_source_title), 2) { getModifier ->
                     AboutActionRow(
                         title = stringResource(R.string.about_view_source_title),
                         summary = null,
                         onClick = onOpenGithub,
-                        modifier = itemModifier()
+                        modifier = getModifier(0)
                     )
                     AboutActionRow(
                         title = stringResource(R.string.about_license_title),
                         summary = stringResource(R.string.about_license_summary),
                         onClick = {},
-                        modifier = itemModifier(),
+                        modifier = getModifier(1),
                         showTrailingArrow = false
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_app_update_section_title), 1) { itemModifier ->
+                AboutSectionCard(stringResource(R.string.about_app_update_section_title), 1) { getModifier ->
                     AboutActionRow(
                         title = stringResource(R.string.about_app_update_title),
                         summary = updateSummary,
                         onClick = updateRowClick,
-                        modifier = itemModifier(),
+                        modifier = getModifier(0),
                         showTrailingArrow = true
                     )
                 }
@@ -267,7 +267,7 @@ private fun AboutSectionContainer(
 private fun AboutSectionCard(
     title: String,
     @Suppress("SameParameterValue") itemCount: Int,
-    content: @Composable ColumnScope.(itemModifier: () -> Modifier) -> Unit
+    content: @Composable ColumnScope.(getModifier: (Int) -> Modifier) -> Unit
 ) {
     val isExpressive = LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -294,9 +294,7 @@ private fun AboutSectionCard(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
                 }
-                ExpressiveSectionItems(count = itemCount) { itemModifier ->
-                    content(itemModifier)
-                }
+                ExpressiveSectionItems(count = itemCount, content = content)
             }
         }
     }
