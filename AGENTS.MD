@@ -182,7 +182,7 @@ The durable rules from that guide are:
 
 To add a new Hook implementation on the backend:
 
-1. Create a Hook class that extends `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`.
+1. Create a Hook class that extends `BaseHookModule`. Prefer **Kotlin** (`.kt`) for new hooks; Java is acceptable only when it fundamentally conflicts with existing infrastructure.
 2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using the same keys/defaults that the frontend writes.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
