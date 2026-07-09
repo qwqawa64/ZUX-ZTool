@@ -145,6 +145,7 @@ class HomeRepository(
 
                     if (newVersionCode <= currentVersionCode || newVersionCode == ignoredVersion) {
                         Log.w(TAG, "Current version is the latest, no need to update.")
+                        Log.w(TAG, "New version code: $newVersionCode, current version code: $currentVersionCode, ignored version: $ignoredVersion")
                         return null
                     }
 
