@@ -299,7 +299,7 @@ class HomeRepository(
     }
 
     private fun isModuleActive(): Boolean {
-        return moduleActiveChecker()
+        return moduleActiveChecker() || XposedServiceBridge.getApiVersion() > 0
     }
 
     companion object {

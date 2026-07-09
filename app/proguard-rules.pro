@@ -43,6 +43,7 @@
 -keep class com.qimian233.ztool.ModuleActivationProbe { *; }
 -keep class com.qimian233.ztool.ModuleActivationProbe$* { *; }
 -keep class com.qimian233.ztool.XposedServiceBridge { *; }
+-keep class com.qimian233.ztool.ZToolApplication { *; }
 -keepclassmembers class * implements io.github.libxposed.service.XposedServiceHelper$OnServiceListener { *; }
 
 # Gson TypeToken rules to preserve generic signatures
