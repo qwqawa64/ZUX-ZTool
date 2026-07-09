@@ -253,7 +253,7 @@
     <string name="firmware_fetch_failed">Failed to fetch firmware info</string>
     <string name="Ota_Setting_Title">System Update</string>
     <string name="OtaDisable_title">Enable local installation</string>
-    <string name="OtaDisable_summary">After enabling, find the Local installation option from System Update > More.</string>
+    <string name="OtaDisable_summary">After enabling, find the Local installation option from System Update -> More. Quickly click version code for 10 times has the same effect.</string>
     <string name="OtaInfoFetch_summary">Fetch changelogs and download links for the current or new version.</string>
     <string name="OtaInfoFetch_title">Fetch OTA info</string>
     <string name="ota_info_fetch_failed">Failed to read OTA info: </string>

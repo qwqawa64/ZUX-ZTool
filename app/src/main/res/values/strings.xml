@@ -288,7 +288,7 @@
     <string name="firmware_fetch_failed">固件信息获取失败</string>
     <string name="Ota_Setting_Title">系统更新</string>
     <string name="OtaDisable_title">启用本地安装</string>
-    <string name="OtaDisable_summary">开启后在系统更新-右上角更多中找到本地安装选项</string>
+    <string name="OtaDisable_summary">开启后在系统更新-右上角更多中找到本地安装选项，快速点击 10 次版本号可达到一样的效果</string>
     <string name="OtaInfoFetch_summary">获取当前版本/新版本的更新日志和下载链接</string>
     <string name="OtaInfoFetch_title">OTA信息拉取</string>
     <string name="ota_info_fetch_failed">读取OTA信息失败: </string>
