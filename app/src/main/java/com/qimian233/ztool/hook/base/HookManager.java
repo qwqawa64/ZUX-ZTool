@@ -1,6 +1,5 @@
 package com.qimian233.ztool.hook.base;
 
-import com.qimian233.ztool.hook.modules.HookTestModule;
 import com.qimian233.ztool.hook.modules.documentsui.DocumentsUIBypass;
 import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook;
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
@@ -54,7 +53,6 @@ import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.ForceImmersiveMode;
 import com.qimian233.ztool.hook.modules.systemui.ForceLenovoAOD;
 import com.qimian233.ztool.hook.modules.systemui.GuestModeController;
-import com.qimian233.ztool.hook.modules.systemui.KeyguardIndicationDiagnosticHook;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationCenterTransparency;
@@ -90,7 +88,6 @@ public class HookManager {
         if (initialized) return;
 
         // ── 系统框架 (target: system — 由 onSystemServerStarting 调度) ──
-        registerHookModule(new HookTestModule());
         registerHookModule(new DisableFlagSecure());
         registerHookModule(new NoMorePasswordPer24H());
         registerHookModule(new AllowGetPackages());
@@ -122,7 +119,6 @@ public class HookManager {
         registerHookModule(new CustomQsColor());
         registerHookModule(new NotificationCenterTransparency());
         registerHookModule(new GuestModeController());
-        registerHookModule(new KeyguardIndicationDiagnosticHook());
 
         // ── Settings (target: com.android.settings) ──
         registerHookModule(new yishijiecompletion());
