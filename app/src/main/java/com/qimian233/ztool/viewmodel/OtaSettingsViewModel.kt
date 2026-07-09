@@ -52,6 +52,11 @@ class OtaSettingsViewModel(
         repository.saveDisableOtaCheck(enabled)
     }
 
+    fun setDisableAutoOtaInstall(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(noAutoOtaInstall = enabled)
+        repository.saveNoAutoNightInstall(enabled)
+    }
+
     fun setFirmwareSnInput(value: String) {
         _uiState.value = _uiState.value.copy(firmwareSnInput = value)
     }
@@ -185,4 +190,5 @@ data class OtaSettingsUiState(
     val errorDialogMessage: String? = null,
     val showRestartDialog: Boolean = false,
     val hideOtaUpdateHint: Boolean = false,
+    val noAutoOtaInstall: Boolean = false,
 )

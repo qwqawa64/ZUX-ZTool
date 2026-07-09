@@ -96,6 +96,7 @@ fun OtaSettingsRoute(
         onBack = onBack,
         onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
         onHideOtaUpdateHintChanged = viewModel::setHideOtaUpdate,
+        onDisableOtaAutoInstallChanged = viewModel::setDisableAutoOtaInstall,
         onFetchOtaInfo = {
             viewModel.fetchOtaInfo(otaInfoFetchFailed)
         },
@@ -161,6 +162,7 @@ private fun OtaSettingsScreen(
     onBack: () -> Unit,
     onDisableOtaCheckChanged: (Boolean) -> Unit,
     onHideOtaUpdateHintChanged: (Boolean) -> Unit,
+    onDisableOtaAutoInstallChanged: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -215,7 +217,8 @@ private fun OtaSettingsScreen(
                         onCustomDeviceIdChanged = onCustomDeviceIdChanged,
                         onCopyDownloadLink = onCopyDownloadLink,
                         onCopyChangelog = onCopyChangelog,
-                        onCopyPassword = onCopyPassword
+                        onCopyPassword = onCopyPassword,
+                        onDisableOtaAutoInstallChanged = onDisableOtaAutoInstallChanged
                     ),
                     bottomPadding = 88.dp
                 )
@@ -229,6 +232,7 @@ private fun otaSettingsSections(
     state: OtaSettingsUiState,
     onDisableOtaCheckChanged: (Boolean) -> Unit,
     onHideOtaUpdateHintChanged: (Boolean) -> Unit,
+    onDisableOtaAutoInstallChanged: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -252,6 +256,11 @@ private fun otaSettingsSections(
                     title = stringResource(R.string.hide_ota_update_hint),
                     checked = state.hideOtaUpdateHint,
                     onCheckedChange = onHideOtaUpdateHintChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_ota_auto_install_title),
+                    checked = state.noAutoOtaInstall,
+                    onCheckedChange = onDisableOtaAutoInstallChanged
                 )
             )
         ),

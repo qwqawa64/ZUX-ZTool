@@ -19,6 +19,7 @@ import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook;
 import com.qimian233.ztool.hook.modules.mobiledesktop.DisableNearbyShareAutoOffHook;
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck;
 import com.qimian233.ztool.hook.modules.ota.LenovoOTAHook;
+import com.qimian233.ztool.hook.modules.ota.NoAutoOtaInstall;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
@@ -159,6 +160,7 @@ public class HookManager {
         // ── OTA (target: com.lenovo.ota) ──
         registerHookModule(new DisableOtaCheck());
         registerHookModule(new LenovoOTAHook());
+        registerHookModule(new NoAutoOtaInstall());
 
         // ── Wallpaper (target: com.zui.wallpapersetting) ──
         registerHookModule(new ChargeAnimationFixModule());

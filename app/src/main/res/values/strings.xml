@@ -967,4 +967,5 @@
     <string name="launcher_no_label_mode_title">桌面无字模式</string>
     <string name="launcher_no_label_mode_summary">不显示文件夹和应用图标的文字，并关闭蓝点提示</string>
     <string name="disable_nearby_share_auto_shutdown_title">禁止互传自动关闭</string>
+    <string name="disable_ota_auto_install_title">禁止 OTA 夜间自动安装</string>
 </resources>
