@@ -41,6 +41,7 @@ class OtaSettingsRepository(
             disableOtaCheck = prefsUtils.loadBooleanSetting(KEY_DISABLE_OTA_CHECK, false),
             hideOtaUpdateHint = prefsUtils.loadBooleanSetting(KEY_HIDE_OTA_UPDATE_HINT, false),
             noAutoOtaInstall = prefsUtils.loadBooleanSetting(KEY_DISABLE_NIGHT_AUTO_INSTALL, false),
+            blockOtaInstallDialog = prefsUtils.loadBooleanSetting(KEY_BLOCK_OTA_INSTALL_DIALOG, false),
             customVersion = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_VERSION, ""),
             customDeviceId = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_DEVICE_ID, ""),
             currentVersion = context.getString(R.string.loading_ellipsis),
@@ -66,6 +67,10 @@ class OtaSettingsRepository(
 
     fun saveNoAutoNightInstall(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISABLE_NIGHT_AUTO_INSTALL, enabled)
+    }
+
+    fun saveBlockOtaInstallDialog(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_BLOCK_OTA_INSTALL_DIALOG, enabled)
     }
 
     fun loadCurrentDeviceInfo(): CurrentDeviceInfo {
@@ -271,6 +276,7 @@ class OtaSettingsRepository(
         private const val KEY_CUSTOM_OTA_TARGET_DEVICE_ID = "Custom_ota_target_deviceID"
         private const val KEY_HIDE_OTA_UPDATE_HINT = "hide_ota_update_hint"
         private const val KEY_DISABLE_NIGHT_AUTO_INSTALL = "no_auto_ota_install"
+        private const val KEY_BLOCK_OTA_INSTALL_DIALOG = "block_ota_install_dialog"
     }
 }
 

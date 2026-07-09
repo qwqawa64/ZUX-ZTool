@@ -968,4 +968,6 @@
     <string name="launcher_no_label_mode_summary">不显示文件夹和应用图标的文字，并关闭蓝点提示</string>
     <string name="disable_nearby_share_auto_shutdown_title">禁止互传自动关闭</string>
     <string name="disable_ota_auto_install_title">禁止 OTA 自动安装</string>
+    <string name="block_ota_install_dialog_title">拦截 OTA 安装弹窗</string>
+    <string name="block_ota_install_dialog_summary">阻止 OTA 安装确认弹窗出现，防止误触重启导致丢失 Root 权限</string>
 </resources>

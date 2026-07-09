@@ -97,6 +97,7 @@ fun OtaSettingsRoute(
         onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
         onHideOtaUpdateHintChanged = viewModel::setHideOtaUpdate,
         onDisableOtaAutoInstallChanged = viewModel::setDisableAutoOtaInstall,
+        onBlockOtaInstallDialogChanged = viewModel::setBlockOtaInstallDialog,
         onFetchOtaInfo = {
             viewModel.fetchOtaInfo(otaInfoFetchFailed)
         },
@@ -163,6 +164,7 @@ private fun OtaSettingsScreen(
     onDisableOtaCheckChanged: (Boolean) -> Unit,
     onHideOtaUpdateHintChanged: (Boolean) -> Unit,
     onDisableOtaAutoInstallChanged: (Boolean) -> Unit,
+    onBlockOtaInstallDialogChanged: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -218,7 +220,8 @@ private fun OtaSettingsScreen(
                         onCopyDownloadLink = onCopyDownloadLink,
                         onCopyChangelog = onCopyChangelog,
                         onCopyPassword = onCopyPassword,
-                        onDisableOtaAutoInstallChanged = onDisableOtaAutoInstallChanged
+                        onDisableOtaAutoInstallChanged = onDisableOtaAutoInstallChanged,
+                        onBlockOtaInstallDialogChanged = onBlockOtaInstallDialogChanged
                     ),
                     bottomPadding = 88.dp
                 )
@@ -233,6 +236,7 @@ private fun otaSettingsSections(
     onDisableOtaCheckChanged: (Boolean) -> Unit,
     onHideOtaUpdateHintChanged: (Boolean) -> Unit,
     onDisableOtaAutoInstallChanged: (Boolean) -> Unit,
+    onBlockOtaInstallDialogChanged: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -261,6 +265,12 @@ private fun otaSettingsSections(
                     title = stringResource(R.string.disable_ota_auto_install_title),
                     checked = state.noAutoOtaInstall,
                     onCheckedChange = onDisableOtaAutoInstallChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.block_ota_install_dialog_title),
+                    summary = stringResource(R.string.block_ota_install_dialog_summary),
+                    checked = state.blockOtaInstallDialog,
+                    onCheckedChange = onBlockOtaInstallDialogChanged
                 )
             )
         ),
