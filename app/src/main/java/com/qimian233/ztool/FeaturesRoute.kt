@@ -76,13 +76,14 @@ fun FeaturesMainRoute(
     val installedPackages = rememberInstalledPackages(context)
     var scopeSet by remember { mutableStateOf(XposedServiceBridge.getScope().toSet()) }
     val scopeRequestFailReason = stringResource(R.string.scope_request_fail_message)
-
+    // "system" is the LSPosed system-server scope entry — not a real installed package
+    val systemScopePackages = setOf("system")
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
         val scopedItems = allItems.map { item ->
             item.copy(inScope = item.scopePackages
-                .filter { it in installedPackages }
+                .filter { it in installedPackages || it in systemScopePackages }
                 .all { it in scopeSet })
         }
         val visible = scopedItems.filter { item ->
@@ -107,7 +108,7 @@ fun FeaturesMainRoute(
                 ZToolTextButton(
                     onClick = {
                         XposedServiceBridge.requestScope(
-                            item.scopePackages.filter { it in installedPackages },
+                            item.scopePackages.filter { it in installedPackages || it in systemScopePackages },
                             object : XposedService.OnScopeEventListener {
 
                                 override fun onScopeRequestApproved(packages: List<String>) {
