@@ -74,6 +74,8 @@ import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.OvCommonConfigManager
@@ -1156,26 +1158,52 @@ private fun ConfigSelectionDialogContent(
             )
         },
         dismissButton = {
-            Column (verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                ZToolTextButton(
-                    onClick = {
-                        val selectedConfigs = selectedIndexes.map { configs[it] }
-                        if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
-                    },
-                    text = stringResource(R.string.delete),
-                    isPrimary = false
-                )
-                if (flashedConfigs.isNotEmpty()) {
+            if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     ZToolTextButton(
-                        onClick = onRestore,
-                        text = stringResource(R.string.restoreModule),
+                        onClick = onCancel,
+                        text = stringResource(R.string.cancel),
+                        isPrimary = false
+                    )
+                    ZToolTextButton(
+                        onClick = {
+                            val selectedConfigs = selectedIndexes.map { configs[it] }
+                            if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
+                        },
+                        text = stringResource(R.string.delete),
+                        isPrimary = false
+                    )
+                    if (flashedConfigs.isNotEmpty()) {
+                        ZToolTextButton(
+                            onClick = onRestore,
+                            text = stringResource(R.string.restoreModule),
+                            isPrimary = false
+                        )
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    ZToolTextButton(
+                        onClick = {
+                            val selectedConfigs = selectedIndexes.map { configs[it] }
+                            if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
+                        },
+                        text = stringResource(R.string.delete),
+                        isPrimary = false
+                    )
+                    if (flashedConfigs.isNotEmpty()) {
+                        ZToolTextButton(
+                            onClick = onRestore,
+                            text = stringResource(R.string.restoreModule),
+                            isPrimary = false
+                        )
+                    }
+                    ZToolTextButton(
+                        onClick = onCancel,
+                        text = stringResource(R.string.cancel),
                         isPrimary = false
                     )
                 }
-                ZToolTextButton(
-                    onClick = onCancel,
-                    text = stringResource(R.string.cancel),
-                    isPrimary = false)
             }
         }
     )
