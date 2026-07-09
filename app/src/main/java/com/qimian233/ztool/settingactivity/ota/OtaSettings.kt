@@ -50,6 +50,8 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
@@ -402,21 +404,39 @@ private fun OtaInfoContent(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Column {
-                ZToolTextButton(
-                    onClick = { onCopyChangelog(result.changelogCopyText) },
-                    text = stringResource(R.string.copy_changelog),
-                    isPrimary = false,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                ZToolTextButton(
-                    onClick = { onCopyDownloadLink(result.downloadUrl) },
-                    enabled = result.isNewVersionAvailable,
-                    text = stringResource(R.string.copy_download_link),
-                    isPrimary = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
+                Row {
+                    Spacer(modifier = Modifier.weight(1f))
+                    ZToolTextButton(
+                        onClick = { onCopyChangelog(result.changelogCopyText) },
+                        text = stringResource(R.string.copy_changelog),
+                        isPrimary = false,
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    ZToolTextButton(
+                        onClick = { onCopyDownloadLink(result.downloadUrl) },
+                        enabled = result.isNewVersionAvailable,
+                        text = stringResource(R.string.copy_download_link),
+                        isPrimary = true,
+                    )
+                }
+            } else {
+                Column {
+                    ZToolTextButton(
+                        onClick = { onCopyChangelog(result.changelogCopyText) },
+                        text = stringResource(R.string.copy_changelog),
+                        isPrimary = false,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ZToolTextButton(
+                        onClick = { onCopyDownloadLink(result.downloadUrl) },
+                        enabled = result.isNewVersionAvailable,
+                        text = stringResource(R.string.copy_download_link),
+                        isPrimary = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
@@ -500,19 +520,35 @@ private fun FirmwareContent(
                     }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Column {
-                    ZToolTextButton(
-                        onClick = { onCopyPassword(result.password) },
-                        text = stringResource(R.string.copy_password),
-                        isPrimary = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ZToolTextButton(
-                        onClick = { onCopyDownloadLink(result.downloadUrl) },
-                        text = stringResource(R.string.copy_download_link),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
+                    Row {
+                        Spacer(modifier = Modifier.weight(1f))
+                        ZToolTextButton(
+                            onClick = { onCopyPassword(result.password) },
+                            text = stringResource(R.string.copy_password),
+                            isPrimary = false,
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        ZToolTextButton(
+                            onClick = { onCopyDownloadLink(result.downloadUrl) },
+                            text = stringResource(R.string.copy_download_link),
+                        )
+                    }
+                } else {
+                    Column {
+                        ZToolTextButton(
+                            onClick = { onCopyPassword(result.password) },
+                            text = stringResource(R.string.copy_password),
+                            isPrimary = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ZToolTextButton(
+                            onClick = { onCopyDownloadLink(result.downloadUrl) },
+                            text = stringResource(R.string.copy_download_link),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
