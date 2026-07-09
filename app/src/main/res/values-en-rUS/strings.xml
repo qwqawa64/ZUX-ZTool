@@ -912,4 +912,5 @@
     <string name="advanced_hot_reload_summary">Will request hot reload for %d running processes</string>
     <string name="disable_nearby_share_auto_shutdown_title">Prevent nearby share auto shutdown</string>
     <string name="disable_ota_auto_install_title">Prevent auto OTA installation</string>
+    <string name="block_ota_install_dialog_title">Block idle-time OTA installation dialog</string>
 </resources>

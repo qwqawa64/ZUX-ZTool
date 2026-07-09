@@ -268,7 +268,6 @@ private fun otaSettingsSections(
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.block_ota_install_dialog_title),
-                    summary = stringResource(R.string.block_ota_install_dialog_summary),
                     checked = state.blockOtaInstallDialog,
                     onCheckedChange = onBlockOtaInstallDialogChanged
                 )
