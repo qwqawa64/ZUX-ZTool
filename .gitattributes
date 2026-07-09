@@ -1,0 +1,38 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Shell scripts must use LF
+*.sh text eol=lf
+gradlew text eol=lf
+
+# Windows batch scripts must use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Source code — LF
+*.java text eol=lf
+*.kt text eol=lf
+*.xml text eol=lf
+*.kts text eol=lf
+*.properties text eol=lf
+*.toml text eol=lf
+*.gradle text eol=lf
+*.pro text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.svg text eol=lf
+*.list text eol=lf
+*.prop text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jks binary
+*.jar binary
+*.aar binary
+*.apk binary
+*.dex binary
+*.mp4 binary
