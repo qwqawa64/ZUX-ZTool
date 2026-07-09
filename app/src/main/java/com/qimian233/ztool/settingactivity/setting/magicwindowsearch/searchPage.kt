@@ -180,7 +180,8 @@ private fun SearchCard(
                 Text(
                     text = stringResource(R.string.FindRules),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = LocalZToolColorScheme.current.onSurface // 临时修复，不要扩散这里的模式
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
