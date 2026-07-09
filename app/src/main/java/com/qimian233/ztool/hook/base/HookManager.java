@@ -53,6 +53,7 @@ import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.ForceImmersiveMode;
 import com.qimian233.ztool.hook.modules.systemui.ForceLenovoAOD;
 import com.qimian233.ztool.hook.modules.systemui.GuestModeController;
+import com.qimian233.ztool.hook.modules.systemui.KeyguardIndicationDiagnosticHook;
 import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationCenterTransparency;
@@ -120,6 +121,7 @@ public class HookManager {
         registerHookModule(new CustomQsColor());
         registerHookModule(new NotificationCenterTransparency());
         registerHookModule(new GuestModeController());
+        registerHookModule(new KeyguardIndicationDiagnosticHook());
 
         // ── Settings (target: com.android.settings) ──
         registerHookModule(new yishijiecompletion());
