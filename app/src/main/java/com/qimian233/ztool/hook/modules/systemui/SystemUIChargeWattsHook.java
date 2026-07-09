@@ -59,6 +59,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                     // 获取充电状态相关字段
                     boolean isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller);
                     int chargingWattage = cl.getDeclaredField("mChargingWattage").getInt(controller);
+                    int chargingSpeed = cl.getDeclaredField("mChargingSpeed").getInt(controller);
 
                     // 只在充电状态下显示瓦数，且瓦数大于0
                     if (isPluggedIn && chargingWattage > 0) {
@@ -67,8 +68,8 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
 
                         if (watts > 0) {
                             // 使用换行符 \n 追加功率信息
-                            String newText = originalText + "\n" + formatWattage(watts);
-                            log("成功添加充电瓦数显示: " + watts + "W");
+                            String newText = originalText + "\n" + formatWattage(watts, chargingSpeed);
+                            log("成功添加充电瓦数显示: " + watts + "W, speed=" + chargingSpeed);
                             return newText;
                         }
                     }
@@ -150,24 +151,25 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
 
     /**
      * 格式化充电瓦数显示：显示"[功率]W [闪电符号]"
+     * 根据 mChargingSpeed 字段判断充电速度等级并附加闪电符号
+     * @param watts 充电功率（瓦）
+     * @param chargingSpeed 充电速度等级：1=慢速, 2=快速, 3=极速
      */
-    private String formatWattage(int watts) {
+    private String formatWattage(int watts, int chargingSpeed) {
         if (watts <= 0) return "";
 
         // 基础字符串："[功率]W"
         String base = watts + "W";
 
-        // 根据功率范围附加闪电符号
-        if (watts < 10) {
-            return base;  // 无闪电符号
-        } else if (watts < 18) {
-            return base;  // 无闪电符号
-        } else if (watts < 30) {
-            return base + "⚡";  // 一个闪电符号
-        } else if (watts < 65) {
-            return base + "⚡⚡";  // 两个闪电符号
-        } else {
-            return base + "⚡⚡⚡";  // 三个闪电符号
+        // 根据充电速度等级附加闪电符号
+        switch (chargingSpeed) {
+            case 3:
+                return base + "⚡⚡";  // 极速充电
+            case 2:
+                return base + "⚡";    // 快速充电
+            case 1:
+            default:
+                return base;              // 慢速充电，无闪电符号
         }
     }
 
