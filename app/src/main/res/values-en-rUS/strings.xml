@@ -515,6 +515,9 @@
     <string name="statusBarNetworkSizeSummary">Make the numbers as large as possible and the unit as small as possible. May look odd when used with two-line network speed.</string>
     <string name="statusBarNetworkSizeDoubleLayer">Two-line network speed</string>
     <string name="statusBarNetworkSizeDoubleLayerSummary">Show upload and download traffic.</string>
+    <string name="statusBarNetworkRefreshTitle">Customized network speed refresh interval</string>
+    <string name="statusBarNetworkRefreshSummary">The default interval is 3s</string>
+    <string name="statusBarNetworkRefreshIntervalTitle">Refresh interval</string>
     <string name="statusBarBatteryTitle">Battery</string>
     <string name="syatusBatteryExternalTitle">Force battery percentage outside icon</string>
     <string name="syatusBatteryExternalSummary">Show remaining battery percentage to the right of the battery icon. Disable the system percentage display first.</string>
@@ -895,14 +898,14 @@
     <string name="advanced_api_version">libxposed API version</string>
     <string name="launcher_no_label_mode_title">Launcher No-label Mode</string>
     <string name="launcher_no_label_mode_summary">Remove label of APP and folder, also removes blue-dot indicator</string>
-    <string name="advanced_hot_reload_starting">Requesting hot reload...</string>
+    <string name="advanced_hot_reload_starting">Requesting hot reload…</string>
     <string name="advanced_hot_reload_confirm_title">Trigger a Hot Reload?</string>
     <string name="advanced_hot_reload_confirm_message">Send hot reload request to %d running APP? \\n\\n Hot reload allows (un)installing hooks without restarting target APPs. This operation cannot be undone.</string>
     <string name="advanced_hot_reload_result">Success %1$d, failed %2$d, not supported %3$d, progress exit %4$d</string>
     <string name="advanced_hot_reload_detail_title">Hot Reload Details</string>
     <string name="advanced_hot_reload_unsupported">Hot reload requires libxposed API 102 or above</string>
     <string name="advanced_hot_reload_no_targets">No scoped process is running. Please install hook first.</string>
-    <string name="advanced_hot_reload_in_progress">Hot reload in progress...</string>
+    <string name="advanced_hot_reload_in_progress">Hot reload in progress…</string>
     <string name="advanced_title">Advanced Options</string>
     <string name="advanced_module_hot_reload">Module hot reload</string>
     <string name="advanced_hot_reload_title">Hot reload all modules</string>
