@@ -592,6 +592,7 @@ public class ModulePreferencesUtils {
                 || "about_device_info_ram_enabled".equals(key)
                 || "about_device_info_rom_enabled".equals(key)
                 || "about_device_info_software_enabled".equals(key)
+                || "disable_nearby_share_countdown".equals(key)
                 || "about_device_info_header_enabled".equals(key);
     }
 

@@ -27,7 +27,8 @@ class MobileDesktopSettingsRepository(
     fun loadState(): MobileDesktopSettingsUiState {
         return MobileDesktopSettingsUiState(
             skipExposeWarn = prefs.loadBooleanSetting(KEY_SKIP_EXPOSE_WARN, false),
-            autoAcceptFileTransfer = prefs.loadBooleanSetting(KEY_AUTO_ACCEPT_FILE_TRANSFER, false)
+            autoAcceptFileTransfer = prefs.loadBooleanSetting(KEY_AUTO_ACCEPT_FILE_TRANSFER, false),
+            disableNearbyShareAutoShutdown = prefs.loadBooleanSetting(KEY_DISABLE_NEARBY_SHARE_AUTO_SHUTDOWN, false)
         )
     }
 
@@ -39,10 +40,15 @@ class MobileDesktopSettingsRepository(
         prefs.saveBooleanSetting(KEY_AUTO_ACCEPT_FILE_TRANSFER, enabled)
     }
 
+    fun saveDisableNearbyShareAutoShutdown(enabled: Boolean) {
+        prefs.saveBooleanSetting(KEY_DISABLE_NEARBY_SHARE_AUTO_SHUTDOWN, enabled)
+    }
+
     companion object {
         private const val TAG = "MobileDesktopSettings"
         private const val KEY_SKIP_EXPOSE_WARN = "bypass_share_warning"
         private const val KEY_AUTO_ACCEPT_FILE_TRANSFER = "auto_accept_file_transfer"
+        private const val KEY_DISABLE_NEARBY_SHARE_AUTO_SHUTDOWN = "disable_nearby_share_countdown"
     }
 }
 

@@ -29,7 +29,7 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
         private const val FALLBACK_METHOD = "q"
     }
 
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = "disable_nearby_share_countdown"
 
     override fun getTargetPackages(): Array<String> = arrayOf(TARGET_PACKAGE)
 

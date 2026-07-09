@@ -36,6 +36,11 @@ class MobileDesktopSettingsViewModel(
         repository.saveAutoAcceptFileTransfer(enabled)
     }
 
+    fun setDisableNearbyShareAutoShutdown(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableNearbyShareAutoShutdown = enabled)
+        repository.saveDisableNearbyShareAutoShutdown(enabled)
+    }
+
     fun showRestartConfirmDialog() {
         _uiState.value = _uiState.value.copy(showRestartConfirmDialog = true)
     }
@@ -63,4 +68,5 @@ data class MobileDesktopSettingsUiState(
     val showRestartConfirmDialog: Boolean = false,
     val skipExposeWarn: Boolean = false,
     val autoAcceptFileTransfer: Boolean = false,
+    val disableNearbyShareAutoShutdown: Boolean = false,
 )

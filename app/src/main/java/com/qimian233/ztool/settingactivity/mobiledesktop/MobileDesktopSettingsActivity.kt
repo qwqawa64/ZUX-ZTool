@@ -71,7 +71,8 @@ fun MobileDesktopSettingsRoute(
         onBack = onBack,
         onRestart = viewModel::showRestartConfirmDialog,
         onSkipExposeChanged = viewModel::setSkipExposeWarn,
-        onAutoAcceptFileTransferChanged = viewModel::setAutoAcceptFileTransfer
+        onAutoAcceptFileTransferChanged = viewModel::setAutoAcceptFileTransfer,
+        onDisableNearbyShareAutoShutdownChanged = viewModel::setDisableNearbyShareAutoShutdown
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -117,6 +118,7 @@ private fun MobileDesktopSettingsScreen(
     state: MobileDesktopSettingsUiState,
     onSkipExposeChanged: (Boolean) -> Unit,
     onAutoAcceptFileTransferChanged: (Boolean) -> Unit,
+    onDisableNearbyShareAutoShutdownChanged: (Boolean) -> Unit,
     onBack: () -> Unit,
     onRestart: () -> Unit
 ) {
@@ -171,6 +173,11 @@ private fun MobileDesktopSettingsScreen(
                                     onCheckedChange = onAutoAcceptFileTransferChanged,
                                     title = stringResource(R.string.auto_accept_file_transfer),
                                     summary = stringResource(R.string.auto_accept_file_transfer_summary)
+                                ),
+                                SettingItem.Switch(
+                                    checked = state.disableNearbyShareAutoShutdown,
+                                    onCheckedChange = onDisableNearbyShareAutoShutdownChanged,
+                                    title = stringResource(R.string.disable_nearby_share_auto_shutdown_title)
                                 )
                             )
                         )
