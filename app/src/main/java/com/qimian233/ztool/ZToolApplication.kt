@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.Context
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * 自定义 Application 类。
@@ -12,11 +15,20 @@ import io.github.libxposed.service.XposedServiceHelper
  * 在 [attachBaseContext] 中注册监听器（早于 onCreate），
  * 最大程度缩短 binder 到达与 listener 注册之间的窗口。
  * </p>
+ * <p>
+ * 同时暴露 [isModuleActivatedFlow]（[StateFlow]），
+ * 让 UI 层可以<b>热更新</b>模块激活状态，无需轮询。
+ * </p>
  */
 class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
 
     companion object {
-        /** 模块是否已激活，由 onServiceBind/onServiceDied 维护 */
+        private val _isModuleActivated = MutableStateFlow(false)
+
+        /** 模块激活状态的热更新流，UI 层可 collect 以实时响应状态变化 */
+        val isModuleActivatedFlow: StateFlow<Boolean> = _isModuleActivated.asStateFlow()
+
+        /** 模块是否已激活，由 onServiceBind/onServiceDied 维护（即时查询） */
         @Volatile
         var isModuleActivated: Boolean = false
             private set
@@ -31,11 +43,13 @@ class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
 
     override fun onServiceBind(service: XposedService) {
         isModuleActivated = true
+        _isModuleActivated.value = true
         XposedServiceBridge.currentService = service
     }
 
     override fun onServiceDied(service: XposedService) {
         isModuleActivated = false
+        _isModuleActivated.value = false
         XposedServiceBridge.currentService = null
     }
 }

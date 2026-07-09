@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.R
+import com.qimian233.ztool.ZToolApplication
 import com.qimian233.ztool.data.home.HomeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,19 @@ class HomeViewModel(
     private val isUpdatingSystemInfo = AtomicBoolean(false)
     private val isCheckingAppUpdate = AtomicBoolean(false)
     private var started = false
+
+    init {
+        // 热更新：监听模块激活状态变化，实时刷新 UI
+        viewModelScope.launch {
+            ZToolApplication.isModuleActivatedFlow.collect { activated ->
+                if (!started) return@collect  // start() 尚未调用，由其自行检查
+                val current = _uiState.value.isModuleActive
+                if (activated != current) {
+                    checkEnvironment()
+                }
+            }
+        }
+    }
 
     fun start() {
         if (started) return
