@@ -81,36 +81,55 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
             });
 
             // 额外Hook电池状态更新方法，确保能获取到最新的充电数据
-            Method refreshMethod = classLoader.loadClass(TARGET_CLASS)
-                    .getDeclaredMethod("onRefreshBatteryInfo",
-                            classLoader.loadClass("com.android.settingslib.fuelgauge.BatteryStatus"));
-            this.xposed.hook(refreshMethod).intercept(chain -> {
-                try {
-                    Object result = chain.proceed();
-                    // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
-                    Object batteryStatus = chain.getArg(0);
-                    if (batteryStatus != null) {
-                        try {
-                            // 尝试从BatteryStatus对象获取充电功率
-                            int maxChargingWattage = batteryStatus.getClass()
-                                    .getDeclaredField("maxChargingWattage").getInt(batteryStatus);
-                            Object controller = chain.getThisObject();
-                            Class<?> cl = controller.getClass();
+            // onRefreshBatteryInfo 在新版 SystemUI 中位于内部类 BaseKeyguardCallback 中
+            Method refreshMethod = null;
+            try {
+                Class<?> callbackClass = classLoader.loadClass(
+                        "com.android.systemui.statusbar.KeyguardIndicationController$BaseKeyguardCallback");
+                Class<?> batteryStatusClass = classLoader.loadClass(
+                        "com.android.settingslib.fuelgauge.BatteryStatus");
+                refreshMethod = callbackClass.getDeclaredMethod("onRefreshBatteryInfo", batteryStatusClass);
+            } catch (NoSuchMethodException | ClassNotFoundException e) {
+                log("Unable to find BaseKeyguardCallback.onRefreshBatteryInfo: " + e.getMessage());
+            }
+            if (refreshMethod != null) {
+                Method finalRefreshMethod = refreshMethod;
+                this.xposed.hook(finalRefreshMethod).intercept(chain -> {
+                    try {
+                        Object result = chain.proceed();
+                        // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
+                        Object batteryStatus = chain.getArg(0);
+                        if (batteryStatus != null) {
+                            try {
+                                // 尝试从BatteryStatus对象获取充电功率
+                                int maxChargingWattage = batteryStatus.getClass()
+                                        .getDeclaredField("maxChargingWattage").getInt(batteryStatus);
+                                // BaseKeyguardCallback 是 KeyguardIndicationController 的非静态内部类
+                                // 通过 this$0 获取外部类实例
+                                Object callback = chain.getThisObject();
+                                java.lang.reflect.Field outerField = callback.getClass()
+                                        .getDeclaredField("this$0");
+                                outerField.setAccessible(true);
+                                Object controller = outerField.get(callback);
+                                Class<?> cl = controller.getClass();
 
-                            // 记录调试信息
-                            log("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
-                                    ", mChargingWattage: " + cl.getDeclaredField("mChargingWattage").getInt(controller));
+                                // 记录调试信息
+                                log("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
+                                        ", mChargingWattage: " + cl.getDeclaredField("mChargingWattage").getInt(controller));
 
-                        } catch (Throwable t) {
-                            logError("读取BatteryStatus失败", t);
+                            } catch (Throwable t) {
+                                logError("读取BatteryStatus失败", t);
+                            }
                         }
+                        return result;
+                    } catch (Throwable t) {
+                        logError("onRefreshBatteryInfo hook回调异常", t);
+                        return chain.proceed();
                     }
-                    return result;
-                } catch (Throwable t) {
-                    logError("onRefreshBatteryInfo hook回调异常", t);
-                    return chain.proceed();
-                }
-            });
+                });
+            } else {
+                log("Cannot find onRefreshBatteryInfo, skipping this hook");
+            }
 
             log("成功Hook KeyguardIndicationController");
 
