@@ -3,11 +3,6 @@ package com.qimian233.ztool.hook.modules.mobiledesktop
 import com.qimian233.ztool.hook.base.BaseHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface
-import org.luckypray.dexkit.query.FindClass
-import org.luckypray.dexkit.query.FindMethod
-import org.luckypray.dexkit.query.matchers.ClassMatcher
-import org.luckypray.dexkit.query.matchers.MethodMatcher
-import org.luckypray.dexkit.query.matchers.MethodsMatcher
 import java.lang.reflect.Modifier
 
 /**
@@ -49,28 +44,23 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
 
         if (bridge != null) {
             try {
-                val classData = bridge.findClass(
-                    FindClass.create()
-                        .searchPackages(SEARCH_PACKAGE)
-                        .matcher(
-                            ClassMatcher.create()
-                                .methods(
-                                    MethodsMatcher.create()
-                                        // startCountDown: () → void
-                                        .add(
-                                            MethodMatcher.create()
-                                                .paramTypes()
-                                                .returnType("void")
-                                        )
-                                        // 单例工厂: static (Context) → ra.c
-                                        .add(
-                                            MethodMatcher.create()
-                                                .modifiers(Modifier.STATIC or Modifier.PUBLIC)
-                                                .paramTypes("android.content.Context")
-                                        )
-                                )
-                        )
-                ).singleOrNull()
+                val classData = bridge.findClass {
+                    searchPackages(SEARCH_PACKAGE)
+                    matcher {
+                        methods {
+                            // startCountDown: () → void
+                            add {
+                                paramTypes()
+                                returnType = "void"
+                            }
+                            // 单例工厂: static (Context) → ra.c
+                            add {
+                                modifiers = Modifier.STATIC or Modifier.PUBLIC
+                                paramTypes("android.content.Context")
+                            }
+                        }
+                    }
+                }.singleOrNull()
 
                 if (classData != null) {
                     targetClassName = classData.name
