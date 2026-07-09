@@ -50,3 +50,4 @@ build/
 /reasonix.toml
 /reasonix.bat
 /.codex-aar-api102/*
+/reference/*
