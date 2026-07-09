@@ -22,10 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -38,10 +35,8 @@ import androidx.core.net.toUri
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
 import com.qimian233.ztool.ui.components.ZListItem
 import com.qimian233.ztool.ui.components.ZToolCard
-import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
@@ -64,7 +59,6 @@ fun SettingsAboutRoute(
     onOpenUdl: () -> Unit
 ) {
     val context = LocalContext.current
-    var showUpdateDialog by remember { mutableStateOf(false) }
     val unknownString = stringResource(R.string.unknown)
     val versionName = remember(context) {
         runCatching {
@@ -86,7 +80,7 @@ fun SettingsAboutRoute(
     }
     val updateRowClick = {
         if (updateInfo != null) {
-            showUpdateDialog = true
+            onOpenUpdate("https://github.com/qwqawa64/ZUX-ZTool/releases")
         } else {
             onCheckUpdate()
         }
@@ -193,18 +187,6 @@ fun SettingsAboutRoute(
         }
     }
 
-    if (showUpdateDialog) {
-        updateInfo?.let { update ->
-            AboutUpdateDialog(
-                update = update,
-                onDismiss = { showUpdateDialog = false },
-                onOpenUpdate = {
-                    showUpdateDialog = false
-                    onOpenUpdate(update.downloadUrl)
-                }
-            )
-        }
-    }
 }
 
 internal const val SettingsAboutRouteName = "SettingsAbout"
@@ -345,31 +327,6 @@ private fun AboutActionRow(
     )
 }
 
-@Composable
-private fun AboutUpdateDialog(
-    update: UpdateInfo,
-    onDismiss: () -> Unit,
-    onOpenUpdate: () -> Unit
-) {
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(stringResource(R.string.update_available_title))
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.update_available_version_format, update.versionName, update.versionCode))
-                Text(update.changelog)
-            }
-        },
-        confirmButton = {
-            ZToolTextButton(onClick = onOpenUpdate, text = stringResource(R.string.update_button_update))
-        },
-        dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.cancel), isPrimary = false)
-        }
-    )
-}
 
 internal fun openExternalLink(
     context: android.content.Context,
