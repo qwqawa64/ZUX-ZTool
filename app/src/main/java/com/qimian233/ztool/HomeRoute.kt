@@ -130,7 +130,8 @@ fun HomeMainRoute(
         },
         onOpenUpdate = { url ->
             openUpdateUrl(context, url)
-        }
+        },
+        onRefreshEnvironment = viewModel::checkEnvironment
     )
 
     if (uiState.configUpgradeDialogVisible) {
@@ -204,7 +205,8 @@ private fun HomeScreen(
     onRestartTargetSelected: (RebootTarget) -> Unit,
     onToggleUpdateExpanded: () -> Unit,
     onIgnoreUpdate: (Int) -> Unit,
-    onOpenUpdate: (String) -> Unit
+    onOpenUpdate: (String) -> Unit,
+    onRefreshEnvironment: () -> Unit
 ) {
     var showRebootMenu by remember { mutableStateOf(false) }
 
@@ -287,7 +289,7 @@ private fun HomeScreen(
                     }
                 }
 
-                ModuleStatusCard(state)
+                ModuleStatusCard(state, onRefreshEnvironment)
 
                 if (state.environmentReady) {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -387,7 +389,10 @@ private fun UpdateCard(
 }
 
 @Composable
-private fun ModuleStatusCard(state: HomeUiState) {
+private fun ModuleStatusCard(
+    state: HomeUiState,
+    onRefreshEnvironment: () -> Unit
+) {
     val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
     val isDefaultColor = !themeSpec.dynamicColorEnabled && !themeSpec.manualColorEnabled
     val bothActive = state.isModuleActive && state.isRootAvailable
@@ -427,7 +432,12 @@ private fun ModuleStatusCard(state: HomeUiState) {
     }
     
     ZToolCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (!bothActive) Modifier.clickable { onRefreshEnvironment() }
+                else Modifier
+            ),
         containerColor = containerColor,
         defaultElevation = 1.dp
     ) {
@@ -448,6 +458,23 @@ private fun ModuleStatusCard(state: HomeUiState) {
                         fontWeight = FontWeight.Bold,
                         color = contentColor
                     )
+                    if (!bothActive) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = null,
+                                tint = contentColor.copy(alpha = 0.6f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.environment_tap_to_refresh),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = contentColor.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
                 }
                 Icon(
                     imageVector = icon,

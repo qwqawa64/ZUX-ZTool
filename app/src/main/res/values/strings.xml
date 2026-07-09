@@ -95,6 +95,7 @@
     <string name="module_inactive">模块未激活</string>
     <string name="no_root_permission">缺少 Root 权限</string>
     <string name="no_root_and_module_inactive">缺少 Root 权限，模块未激活</string>
+    <string name="environment_tap_to_refresh">点按卡片刷新状态</string>
     <string name="module_version_unknown">模块版本: 未知</string>
     <string name="magisk_su_format">Magisk (%s)</string>
     <string name="kernelsu_format">KernelSU (%s)</string>
