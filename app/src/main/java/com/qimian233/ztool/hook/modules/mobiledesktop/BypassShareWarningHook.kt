@@ -20,11 +20,6 @@ class BypassShareWarningHook : BaseHookModule() {
         private const val DIALOG_CLASS =
             "com.motorola.readyfor.common.dialog.ActionNoticeCommonDialogActivity"
         private const val MANAGER_PKG = "com.motorola.mobiledesktop.manager"
-        // 已知存在于主 APK 中的管理类，用作 DexKit 桥梁的锚点。
-        // TARGET_CLASS (com.motorola.readyfor.*) 在 LSPosed 环境下
-        // protectionDomain 可能为 null，导致 getBridgeForClass 失败。
-        // c0 位于 com.motorola.mobiledesktop 包名下，protectionDomain 稳定有效。
-        private const val ANCHOR_CLASS = "com.motorola.mobiledesktop.manager.c0"
         private const val PREFS_NAME = "moto_ble_preference"
         private const val PREF_KEY = "file_union_transfer_switch"
     }
@@ -36,8 +31,8 @@ class BypassShareWarningHook : BaseHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── DEXKit：预解析管理器类和方法 ─────────────────────────────
-        val bridge = DexKitHelper.getBridgeForClass(classLoader, ANCHOR_CLASS)
+        // ── DEXKit：通过 ApplicationInfo.sourceDir 获取桥（绕过 protectionDomain） ──
+        val bridge = DexKitHelper.getBridgeForApp(param.applicationInfo)
 
         var managerClassName: String? = null
         var managerFactoryMethodName: String? = null   // static factory: (Context) → manager
@@ -112,7 +107,8 @@ class BypassShareWarningHook : BaseHookModule() {
 
                 setNearbyShareEnabled(
                     tile, context, classLoader,
-                    finalManagerClass, finalFactoryMethod, finalSetMethod
+                    finalManagerClass, finalFactoryMethod, finalSetMethod,
+                    bridge
                 )
                 log("Bypassed warning and enabled nearby share directly.")
                 null
@@ -205,7 +201,8 @@ class BypassShareWarningHook : BaseHookModule() {
         classLoader: ClassLoader,
         managerClass: String,
         factoryMethod: String,
-        setMethod: String
+        setMethod: String,
+        bridge: org.luckypray.dexkit.DexKitBridge?
     ) {
         try {
             val mc = classLoader.loadClass(managerClass)
@@ -223,7 +220,6 @@ class BypassShareWarningHook : BaseHookModule() {
 
             // 同样动态查找 b() 方法
             var bMethodName = "b"
-            val bridge = DexKitHelper.getBridgeForClass(classLoader, ANCHOR_CLASS)
             if (bridge != null) {
                 try {
                     val md = bridge.findMethod {

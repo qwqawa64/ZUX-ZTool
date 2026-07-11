@@ -20,8 +20,6 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
 
     companion object {
         private const val TARGET_PACKAGE = "com.motorola.mobiledesktop"
-        // 已知的混淆后引用类——用于获取 APK 路径
-        private const val ANCHOR_CLASS = "com.motorola.mobiledesktop.manager.c0"
         // DEXKit 搜索的混淆包名
         private const val SEARCH_PACKAGE = "ra"
         // 回退：硬编码的类名和方法名
@@ -36,8 +34,8 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── DEXKit：动态匹配混淆后的类和方法 ────────────────────────
-        val bridge = DexKitHelper.getBridgeForClass(classLoader, ANCHOR_CLASS)
+        // ── DEXKit：通过 ApplicationInfo.sourceDir 获取桥 ─────────────
+        val bridge = DexKitHelper.getBridgeForApp(param.applicationInfo)
 
         var targetClassName: String? = null
         var targetMethodName: String? = null

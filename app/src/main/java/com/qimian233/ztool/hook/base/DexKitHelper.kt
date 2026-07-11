@@ -56,10 +56,24 @@ object DexKitHelper {
 
     /**
      * 从 ClassLoader + 类名直接获取桥梁（便捷方法）。
+     *
+     * 注意：此方法依赖 protectionDomain.codeSource.location.path，
+     * 在 LSPosed 环境下可能为 null。建议使用 [getBridgeForApp]。
      */
     fun getBridgeForClass(classLoader: ClassLoader, targetClassName: String): DexKitBridge? {
         val apkPath = getApkPath(classLoader, targetClassName)
             ?: return null
+        return getBridge(apkPath)
+    }
+
+    /**
+     * 通过 ApplicationInfo.sourceDir 直接获取桥梁（推荐方式）。
+     * 不依赖 ClassLoader.protectionDomain，在 LSPosed 环境下稳定有效。
+     *
+     * 使用方式：DexKitHelper.getBridgeForApp(param.applicationInfo)
+     */
+    fun getBridgeForApp(appInfo: android.content.pm.ApplicationInfo): DexKitBridge? {
+        val apkPath = appInfo.sourceDir ?: return null
         return getBridge(apkPath)
     }
 
