@@ -971,5 +971,5 @@
     <string name="disable_ota_auto_install_title">禁止 OTA 自动安装</string>
     <string name="block_ota_install_dialog_title">拦截 OTA 夜间安装弹窗</string>
     <string name="disable_ota_notification_and_red_dot_title">隐藏版本更新通知和角标</string>
-    <string name="disable_ota_notification_and_red_dot_summary">隐藏红点需要清除一次设置 APP 的数据</string>
+    <string name="disable_ota_notification_and_red_dot_summary">如果没有效果就再打开一次更新页面</string>
 </resources>
