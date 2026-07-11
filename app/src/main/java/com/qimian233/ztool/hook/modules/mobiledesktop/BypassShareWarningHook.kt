@@ -6,6 +6,7 @@ import com.qimian233.ztool.hook.base.BaseHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Modifier
+import androidx.core.content.edit
 
 /**
  * 绕过超级互联分享警告弹窗的 Hook。
@@ -171,7 +172,7 @@ class BypassShareWarningHook : BaseHookModule() {
                         .getDeclaredMethod("B", Boolean::class.javaPrimitiveType)
                         .invoke(qInstance, true)
                     log("dialog hook: enabled via MotoDiscoveryManager")
-                } catch (e1: ReflectiveOperationException) {
+                } catch (_: ReflectiveOperationException) {
                     // 回退旧版 manager
                     val managerClass = classLoader.loadClass(finalManagerClass)
                     val lMethod =
@@ -208,7 +209,7 @@ class BypassShareWarningHook : BaseHookModule() {
     private fun isNearbyShareEnabled(context: Context): Boolean {
         val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return try {
-            prefs.getBoolean(PREF_KEY1, false) && prefs.getBoolean(PREF_KEY2, false)
+            prefs.getBoolean(PREF_KEY1, false) || prefs.getBoolean(PREF_KEY2, false)
         } catch (t: Throwable) {
             logError("Failed to read nearby share state", t)
             false
@@ -242,7 +243,7 @@ class BypassShareWarningHook : BaseHookModule() {
                     zMethod.invoke(manager, true)
                     log("enabled via legacy manager: $managerClass.$factoryMethod/$setMethod")
                 }
-            } catch (e: ReflectiveOperationException) {
+            } catch (_: ReflectiveOperationException) {
                 // ── 策略 2：新版 MotoDiscoveryManager ───────────────
                 log("legacy manager not found, trying MotoDiscoveryManager")
                 val qClass = classLoader.loadClass("com.motorola.motoaccount.sdk.gf.q")
@@ -258,7 +259,7 @@ class BypassShareWarningHook : BaseHookModule() {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit().putBoolean(PREF_KEY1, true).apply()
             context.getSharedPreferences("sp_file_ble", Context.MODE_PRIVATE)
-                .edit().putBoolean("nearby_send_files", true).apply()
+                .edit { putBoolean("nearby_send_files", true) }
 
             // ── 动态查找 b() 方法并刷新磁贴 ──────────────────────────
             var bMethodName = "b"
