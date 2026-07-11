@@ -20,6 +20,11 @@ class BypassShareWarningHook : BaseHookModule() {
         private const val DIALOG_CLASS =
             "com.motorola.readyfor.common.dialog.ActionNoticeCommonDialogActivity"
         private const val MANAGER_PKG = "com.motorola.mobiledesktop.manager"
+        // 已知存在于主 APK 中的管理类，用作 DexKit 桥梁的锚点。
+        // TARGET_CLASS (com.motorola.readyfor.*) 在 LSPosed 环境下
+        // protectionDomain 可能为 null，导致 getBridgeForClass 失败。
+        // c0 位于 com.motorola.mobiledesktop 包名下，protectionDomain 稳定有效。
+        private const val ANCHOR_CLASS = "com.motorola.mobiledesktop.manager.c0"
         private const val PREFS_NAME = "moto_ble_preference"
         private const val PREF_KEY = "file_union_transfer_switch"
     }
@@ -32,7 +37,7 @@ class BypassShareWarningHook : BaseHookModule() {
         val classLoader = param.defaultClassLoader
 
         // ── DEXKit：预解析管理器类和方法 ─────────────────────────────
-        val bridge = DexKitHelper.getBridgeForClass(classLoader, TARGET_CLASS)
+        val bridge = DexKitHelper.getBridgeForClass(classLoader, ANCHOR_CLASS)
 
         var managerClassName: String? = null
         var managerFactoryMethodName: String? = null   // static factory: (Context) → manager
@@ -96,10 +101,7 @@ class BypassShareWarningHook : BaseHookModule() {
             val onClickMethod = baseFileUnionTileClass.getDeclaredMethod("onClick")
             xposed.hook(onClickMethod).intercept { chain ->
                 val tile = chain.thisObject
-                val context = getContext(tile)
-                if (context == null) {
-                    return@intercept chain.proceed()
-                }
+                val context = getContext(tile) ?: return@intercept chain.proceed()
 
                 val enabled = isNearbyShareEnabled(context)
                 log("IsNearbyShareEnabled: $enabled")
@@ -143,10 +145,14 @@ class BypassShareWarningHook : BaseHookModule() {
                             }
                         }
                     }.singleOrNull()
+                    log("md: $md")
                     if (md != null) pMethodName = md.name
-                } catch (_: Throwable) {}
+                } catch (th: Throwable) {
+                    logError("Unable to find method with DexKit: ", th)
+                }
             }
             val finalPMethodName = pMethodName
+            log("target method name of \"createAndStartExposureWarnDialog\": $finalPMethodName")
 
             val pMethod = actionNoticeClass.getDeclaredMethod(finalPMethodName)
             xposed.hook(pMethod).intercept { chain ->
@@ -217,7 +223,7 @@ class BypassShareWarningHook : BaseHookModule() {
 
             // 同样动态查找 b() 方法
             var bMethodName = "b"
-            val bridge = DexKitHelper.getBridgeForClass(classLoader, TARGET_CLASS)
+            val bridge = DexKitHelper.getBridgeForClass(classLoader, ANCHOR_CLASS)
             if (bridge != null) {
                 try {
                     val md = bridge.findMethod {
@@ -231,7 +237,7 @@ class BypassShareWarningHook : BaseHookModule() {
                     if (md != null) bMethodName = md.name
                 } catch (_: Throwable) {}
             }
-            val bMethod = BaseHookModule.findMethod(tile!!.javaClass, bMethodName)
+            val bMethod = findMethod(tile!!.javaClass, bMethodName)
             bMethod.isAccessible = true
             bMethod.invoke(tile)
 
