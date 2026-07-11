@@ -2,6 +2,11 @@
 > 警告：本待办清单中的项目不是“已规划，肯定会做出来”的功能，功能是否事实上被最终实现请参考软件源码和分发的二进制。
 
 ## Current Todos
+- [ ] 关联应用启动不弹窗
+- [ ] 设置 app 角标通知更新
+- [ ] Stop using su to fetch power supply information in system UI
+
+## Done Until 20260710 Beta
 - [x] 调整内存显示的位置、字号和颜色
 - [x] 调整百分比显示的颜色
 - [x] 互传启动时不许警告 ~~让联想互传磁贴支持点按开启互传~~
