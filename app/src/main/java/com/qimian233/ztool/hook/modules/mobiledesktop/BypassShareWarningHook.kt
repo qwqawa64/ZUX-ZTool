@@ -124,7 +124,7 @@ class BypassShareWarningHook : BaseHookModule() {
             // ── Hook 2: 通用弹窗场景 ─────────────────────────────────
             val actionNoticeClass = classLoader.loadClass(DIALOG_CLASS)
 
-            // 通过 DEXKit 动态查找 p() 方法 — 无参 void 方法
+            // 通过 DEXKit 动态查找 p() 方法 — 无参 void + 引用 file_share_expose_title 字段
             var pMethodName = "p" // 默认回退
             if (bridge != null) {
                 try {
@@ -134,6 +134,13 @@ class BypassShareWarningHook : BaseHookModule() {
                             paramTypes()
                             returnType = "void"
                             declaredClass = DIALOG_CLASS
+                            // 收窄：方法体中引用了 R.string.file_share_expose_title 字段，
+                            // R 类不会被混淆，因此字段名跨版本稳定。
+                            usingFields {
+                                add {
+                                    name = "file_share_expose_title"
+                                }
+                            }
                         }
                     }.singleOrNull()
                     if (md != null) pMethodName = md.name
