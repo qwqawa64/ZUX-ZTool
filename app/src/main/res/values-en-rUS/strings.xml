@@ -800,7 +800,7 @@
     <string name="recent_task">Recent Tasks</string>
     <string name="show_ram_info">Show RAM usage</string>
     <string name="show_ram_info_summary">This is not physical RAM amount.</string>
-    <string name="hide_ota_update_hint">Hide the red \"update available\" indicator</string>
+    <string name="hide_ota_update_hint">Hide the red \"update available\" indicator in settings</string>
     <string name="control_center_tiles">Control Center Tiles</string>
     <string name="custom_control_center_tile_radius">Customized control center tile radius</string>
     <string name="custom_control_center_tile_radius_summary">Max 96 dp, min 0 dp, slight display incorrectness may happen,</string>
