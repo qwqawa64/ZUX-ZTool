@@ -17,7 +17,6 @@ class HideOtaUpdateHint : BaseHookModule() {
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         handlePreferenceRead()
-        handleNotificationCreate(param)
     }
 
     fun handlePreferenceRead() {
@@ -50,20 +49,6 @@ class HideOtaUpdateHint : BaseHookModule() {
             log("Hooked Settings OTA new-version flag reads")
         } catch (t: Throwable) {
             logError("Failed to hook Settings OTA new-version flag reads", t)
-        }
-    }
-
-    fun handleNotificationCreate(param: PackageLoadedParam) {
-        try {
-            log("Hooking OTA notification create method")
-            val cl: ClassLoader = param.defaultClassLoader
-            val targetClass: Class<*> = cl.loadClass("com.lenovo.row.ota.core.d.notification.NotificationCenter")
-            val targetMethod: Method = findMethod(targetClass, "showNewVersionNotification")
-            xposed.hook(targetMethod).intercept { _ ->
-                return@intercept null
-            }
-        } catch (th: Throwable) {
-            logError("Failed to hook OTA update notification creation method!", th)
         }
     }
 
