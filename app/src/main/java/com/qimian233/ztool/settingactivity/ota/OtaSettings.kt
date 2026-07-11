@@ -100,6 +100,7 @@ fun OtaSettingsRoute(
         onHideOtaUpdateHintChanged = viewModel::setHideOtaUpdate,
         onDisableOtaAutoInstallChanged = viewModel::setDisableAutoOtaInstall,
         onBlockOtaInstallDialogChanged = viewModel::setBlockOtaInstallDialog,
+        onDisableOtaNotificationAndRedDot = viewModel::setDisableOtaNotificationAndRedDot,
         onFetchOtaInfo = {
             viewModel.fetchOtaInfo(otaInfoFetchFailed)
         },
@@ -167,6 +168,7 @@ private fun OtaSettingsScreen(
     onHideOtaUpdateHintChanged: (Boolean) -> Unit,
     onDisableOtaAutoInstallChanged: (Boolean) -> Unit,
     onBlockOtaInstallDialogChanged: (Boolean) -> Unit,
+    onDisableOtaNotificationAndRedDot: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -223,7 +225,8 @@ private fun OtaSettingsScreen(
                         onCopyChangelog = onCopyChangelog,
                         onCopyPassword = onCopyPassword,
                         onDisableOtaAutoInstallChanged = onDisableOtaAutoInstallChanged,
-                        onBlockOtaInstallDialogChanged = onBlockOtaInstallDialogChanged
+                        onBlockOtaInstallDialogChanged = onBlockOtaInstallDialogChanged,
+                        onDisableOtaNotificationAndRedDot = onDisableOtaNotificationAndRedDot
                     ),
                     bottomPadding = 88.dp
                 )
@@ -239,6 +242,7 @@ private fun otaSettingsSections(
     onHideOtaUpdateHintChanged: (Boolean) -> Unit,
     onDisableOtaAutoInstallChanged: (Boolean) -> Unit,
     onBlockOtaInstallDialogChanged: (Boolean) -> Unit,
+    onDisableOtaNotificationAndRedDot: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
@@ -259,11 +263,6 @@ private fun otaSettingsSections(
                     onCheckedChange = onDisableOtaCheckChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.hide_ota_update_hint),
-                    checked = state.hideOtaUpdateHint,
-                    onCheckedChange = onHideOtaUpdateHintChanged
-                ),
-                SettingItem.Switch(
                     title = stringResource(R.string.disable_ota_auto_install_title),
                     checked = state.noAutoOtaInstall,
                     onCheckedChange = onDisableOtaAutoInstallChanged
@@ -272,6 +271,17 @@ private fun otaSettingsSections(
                     title = stringResource(R.string.block_ota_install_dialog_title),
                     checked = state.blockOtaInstallDialog,
                     onCheckedChange = onBlockOtaInstallDialogChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.hide_ota_update_hint),
+                    checked = state.hideOtaUpdateHint,
+                    onCheckedChange = onHideOtaUpdateHintChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_ota_notification_and_red_dot_title),
+                    summary = stringResource(R.string.disable_ota_notification_and_red_dot_summary),
+                    checked = state.disableOtaNotificationAndRedDot,
+                    onCheckedChange = onDisableOtaNotificationAndRedDot
                 )
             )
         ),

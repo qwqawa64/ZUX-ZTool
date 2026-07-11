@@ -81,6 +81,11 @@ class OtaSettingsViewModel(
         repository.saveHideOtaUpdateHint(enabled)
     }
 
+    fun setDisableOtaNotificationAndRedDot(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableOtaNotificationAndRedDot = enabled)
+        repository.saveBlockOtaNotificationAndRedDot(enabled)
+    }
+
     fun fetchOtaInfo(errorPrefix: String) {
         _uiState.value = _uiState.value.copy(isFetchingOtaInfo = true)
         viewModelScope.launch(Dispatchers.IO) {
@@ -196,5 +201,6 @@ data class OtaSettingsUiState(
     val showRestartDialog: Boolean = false,
     val hideOtaUpdateHint: Boolean = false,
     val noAutoOtaInstall: Boolean = false,
+    val disableOtaNotificationAndRedDot: Boolean = false,
     val blockOtaInstallDialog: Boolean = false,
 )
