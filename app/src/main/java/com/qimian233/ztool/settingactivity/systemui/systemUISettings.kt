@@ -19,8 +19,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,11 +39,12 @@ import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
 
@@ -357,15 +356,27 @@ private fun systemUiSettingsSections(
                     add(
                         SettingItem.Action(
                             title = stringResource(R.string.custom_charge_animation_portrait_action_title),
-                            summary = stringResource(R.string.custom_charge_animation_portrait_action_summary),
-                            onClick = onSelectPortraitVideo
+                            onClick = onSelectPortraitVideo,
+                            trailingContent = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                    contentDescription = null,
+                                    tint = LocalZToolColorScheme.current.onSurfaceVariant
+                                )
+                            }
                         )
                     )
                     add(
                         SettingItem.Action(
                             title = stringResource(R.string.custom_charge_animation_land_action_title),
-                            summary = stringResource(R.string.custom_charge_animation_land_action_summary),
-                            onClick = onSelectLandVideo
+                            onClick = onSelectLandVideo,
+                            trailingContent = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                    contentDescription = null,
+                                    tint = LocalZToolColorScheme.current.onSurfaceVariant
+                                )
+                            }
                         )
                     )
                 }
