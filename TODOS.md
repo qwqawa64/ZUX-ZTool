@@ -3,7 +3,8 @@
 
 ## Current Todos
 - [ ] 关联应用启动不弹窗
-- [ ] 设置 app 角标通知更新
+- [x] 设置 app 角标通知更新
+- [x] 充电动画自定义
 - [ ] Stop using su to fetch power supply information in system UI
 
 ## Done Until 20260710 Beta
