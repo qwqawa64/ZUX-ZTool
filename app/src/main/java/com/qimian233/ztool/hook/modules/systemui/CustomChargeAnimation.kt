@@ -31,8 +31,7 @@ class CustomChargeAnimation : BaseHookModule() {
         private const val VIDEO_LAND = "charging_animation_land.mp4"
     }
 
-    // override fun getModuleName(): String = "custom_charge_animation"
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = "custom_charge_animation"
 
     override fun getTargetPackages(): Array<String> = arrayOf(SYSTEMUI_PACKAGE)
 

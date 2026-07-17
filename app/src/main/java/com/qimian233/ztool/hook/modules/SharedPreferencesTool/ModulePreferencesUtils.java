@@ -594,7 +594,8 @@ public class ModulePreferencesUtils {
                 || "about_device_info_software_enabled".equals(key)
                 || "disable_nearby_share_countdown".equals(key)
                 || "about_device_info_header_enabled".equals(key)
-                || "hide_ota_notifications".equals(key);
+                || "hide_ota_notifications".equals(key)
+                || "custom_charge_animation".equals(key);
     }
 
     public static void restoreConfig(Context context, String jsonToRestore){

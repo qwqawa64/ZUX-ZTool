@@ -1,6 +1,8 @@
 package com.qimian233.ztool.settingactivity.systemui
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -74,6 +76,39 @@ fun SystemUiSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
+    val customChargeVideoSavedText = stringResource(R.string.custom_charge_animation_video_saved)
+    val customChargeVideoSaveFailedText = stringResource(R.string.custom_charge_animation_video_save_failed)
+
+    val portraitVideoLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val saved = viewModel.saveCustomChargeVideo(
+                context, uri, "charging_animation_portrait.mp4"
+            )
+            Toast.makeText(
+                context,
+                if (saved) customChargeVideoSavedText else customChargeVideoSaveFailedText,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    val landVideoLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val saved = viewModel.saveCustomChargeVideo(
+                context, uri, "charging_animation_land.mp4"
+            )
+            Toast.makeText(
+                context,
+                if (saved) customChargeVideoSavedText else customChargeVideoSaveFailedText,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     SystemUiSettingsScreen(
         title = title,
         state = uiState,
@@ -96,8 +131,11 @@ fun SystemUiSettingsRoute(
         onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
         onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
         onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
+        onCustomChargeAnimationChanged = viewModel::setCustomChargeAnimation,
         onGuestModeChanged = viewModel::setGuestModeController,
-        onRestartScope = viewModel::showRestartDialog
+        onRestartScope = viewModel::showRestartDialog,
+        onSelectPortraitVideo = { portraitVideoLauncher.launch(arrayOf("video/*")) },
+        onSelectLandVideo = { landVideoLauncher.launch(arrayOf("video/*")) }
     )
 
     if (uiState.showRestartDialog) {
@@ -147,8 +185,11 @@ private fun SystemUiSettingsScreen(
     onOpenLenovoAodSettings: () -> Unit,
     onNoChargeAnimationChanged: (Boolean) -> Unit,
     onChargeAnimationFixChanged: (Boolean) -> Unit,
+    onCustomChargeAnimationChanged: (Boolean) -> Unit,
     onGuestModeChanged: (Boolean) -> Unit,
-    onRestartScope: () -> Unit
+    onRestartScope: () -> Unit,
+    onSelectPortraitVideo: () -> Unit,
+    onSelectLandVideo: () -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -194,7 +235,10 @@ private fun SystemUiSettingsScreen(
                         onOpenLenovoAodSettings = onOpenLenovoAodSettings,
                         onNoChargeAnimationChanged = onNoChargeAnimationChanged,
                         onChargeAnimationFixChanged = onChargeAnimationFixChanged,
-                        onGuestModeChanged = onGuestModeChanged
+                        onCustomChargeAnimationChanged = onCustomChargeAnimationChanged,
+                        onGuestModeChanged = onGuestModeChanged,
+                        onSelectPortraitVideo = onSelectPortraitVideo,
+                        onSelectLandVideo = onSelectLandVideo
                     )
                 )
             }
@@ -213,7 +257,10 @@ private fun systemUiSettingsSections(
     onOpenLenovoAodSettings: () -> Unit,
     onNoChargeAnimationChanged: (Boolean) -> Unit,
     onChargeAnimationFixChanged: (Boolean) -> Unit,
-    onGuestModeChanged: (Boolean) -> Unit
+    onCustomChargeAnimationChanged: (Boolean) -> Unit,
+    onGuestModeChanged: (Boolean) -> Unit,
+    onSelectPortraitVideo: () -> Unit,
+    onSelectLandVideo: () -> Unit
 ): List<SettingSection> {
     val aodItems = buildList {
         add(
@@ -281,20 +328,48 @@ private fun systemUiSettingsSections(
         ),
         SettingSection(
             title = stringResource(R.string.noChargingAnimation_title),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.noChargingAnimation_enable_title),
-                    summary = stringResource(R.string.noChargingAnimation_enable_summary),
-                    checked = state.noChargeAnimation,
-                    onCheckedChange = onNoChargeAnimationChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.Charge_Animation_Fix),
-                    summary = stringResource(R.string.Charge_Animation_Fix_Summary),
-                    checked = state.chargeAnimationFix,
-                    onCheckedChange = onChargeAnimationFixChanged
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.noChargingAnimation_enable_title),
+                        summary = stringResource(R.string.noChargingAnimation_enable_summary),
+                        checked = state.noChargeAnimation,
+                        onCheckedChange = onNoChargeAnimationChanged
+                    )
                 )
-            )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.Charge_Animation_Fix),
+                        summary = stringResource(R.string.Charge_Animation_Fix_Summary),
+                        checked = state.chargeAnimationFix,
+                        onCheckedChange = onChargeAnimationFixChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.custom_charge_animation_title),
+                        summary = stringResource(R.string.custom_charge_animation_summary),
+                        checked = state.customChargeAnimation,
+                        onCheckedChange = onCustomChargeAnimationChanged
+                    )
+                )
+                if (state.customChargeAnimation) {
+                    add(
+                        SettingItem.Action(
+                            title = stringResource(R.string.custom_charge_animation_portrait_action_title),
+                            summary = stringResource(R.string.custom_charge_animation_portrait_action_summary),
+                            onClick = onSelectPortraitVideo
+                        )
+                    )
+                    add(
+                        SettingItem.Action(
+                            title = stringResource(R.string.custom_charge_animation_land_action_title),
+                            summary = stringResource(R.string.custom_charge_animation_land_action_summary),
+                            onClick = onSelectLandVideo
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.systemUIMisc),

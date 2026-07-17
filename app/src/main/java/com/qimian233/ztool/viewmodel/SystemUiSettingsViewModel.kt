@@ -119,6 +119,15 @@ class SystemUiSettingsViewModel(
         repository.saveChargeAnimationFix(enabled)
     }
 
+    fun setCustomChargeAnimation(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(customChargeAnimation = enabled)
+        repository.saveCustomChargeAnimation(enabled)
+    }
+
+    fun saveCustomChargeVideo(context: android.content.Context, uri: android.net.Uri, fileName: String): Boolean {
+        return repository.saveChargeAnimationVideo(context, uri, fileName)
+    }
+
     fun setGuestModeController(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(guestModeController = enabled)
         repository.saveGuestModeController(enabled)
@@ -172,6 +181,7 @@ data class SystemUiSettingsUiState(
     val lenovoAod: Boolean = false,
     val noChargeAnimation: Boolean = false,
     val chargeAnimationFix: Boolean = false,
+    val customChargeAnimation: Boolean = false,
     val guestModeController: Boolean = false,
     val isAodSwitchProcessing: Boolean = false,
     val isRestartProcessing: Boolean = false,

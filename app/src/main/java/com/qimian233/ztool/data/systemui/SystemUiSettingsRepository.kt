@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.systemui
 
 import android.content.Context
+import android.net.Uri
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
@@ -19,6 +20,7 @@ class SystemUiSettingsRepository(
             lenovoAod = prefsUtils.loadBooleanSetting(KEY_FORCE_LENOVO_AOD, false),
             noChargeAnimation = prefsUtils.loadBooleanSetting(KEY_NO_CHARGE_ANIMATION, false),
             chargeAnimationFix = prefsUtils.loadBooleanSetting(KEY_CHARGE_ANIMATION_FIX, false),
+            customChargeAnimation = prefsUtils.loadBooleanSetting(KEY_CUSTOM_CHARGE_ANIMATION, false),
             guestModeController = prefsUtils.loadBooleanSetting(KEY_GUEST_MODE_CONTROLLER, false)
         )
     }
@@ -43,8 +45,34 @@ class SystemUiSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_CHARGE_ANIMATION_FIX, enabled)
     }
 
+    fun saveCustomChargeAnimation(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOM_CHARGE_ANIMATION, enabled)
+    }
+
     fun saveGuestModeController(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_GUEST_MODE_CONTROLLER, enabled)
+    }
+
+    /**
+     * 将用户选择的视频文件通过 root shell 直接写入 ZTool 目录，
+     * 全程不使用应用私有目录作为中转。
+     */
+    fun saveChargeAnimationVideo(context: Context, uri: Uri, fileName: String): Boolean {
+        try {
+            val targetPath = "$CUSTOM_VIDEO_DIR/$fileName"
+            // 确保目标目录存在
+            shellExecutor.executeRootCommand("mkdir -p $CUSTOM_VIDEO_DIR", 5)
+
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: return false
+
+            val process = Runtime.getRuntime()
+                .exec(arrayOf("su", "-c", "cat > $targetPath && chmod 644 $targetPath"))
+            process.outputStream.use { it.write(bytes) }
+            return process.waitFor() == 0
+        } catch (e: Exception) {
+            return false
+        }
     }
 
     fun openLenovoAodSettings(): ShellActionResult {
@@ -100,7 +128,9 @@ class SystemUiSettingsRepository(
         private const val KEY_FORCE_LENOVO_AOD = "ForceLenovoAOD"
         private const val KEY_NO_CHARGE_ANIMATION = "No_ChargeAnimation"
         private const val KEY_CHARGE_ANIMATION_FIX = "charge_animation_fix"
+        private const val KEY_CUSTOM_CHARGE_ANIMATION = "custom_charge_animation"
         private const val KEY_GUEST_MODE_CONTROLLER = "guest_mode_controller"
+        private const val CUSTOM_VIDEO_DIR = "/sdcard/Download/ZTool"
     }
 }
 

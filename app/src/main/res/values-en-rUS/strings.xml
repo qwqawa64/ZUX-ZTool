@@ -490,6 +490,14 @@
     <string name="noChargingAnimation_enable_summary">Disable the charging animation display.</string>
     <string name="Charge_Animation_Fix">Complete charging animation list</string>
     <string name="Charge_Animation_Fix_Summary">Fix the charging animation list to make more charging animations available.</string>
+    <string name="custom_charge_animation_title">Custom charging animation</string>
+    <string name="custom_charge_animation_summary">Replace built-in charging animation with custom video files. Videos are saved to /sdcard/Download/ZTool/. Restart SystemUI to take effect.</string>
+    <string name="custom_charge_animation_portrait_action_title">Select portrait video</string>
+    <string name="custom_charge_animation_portrait_action_summary">Saved as charging_animation_portrait.mp4, played when charging in portrait orientation</string>
+    <string name="custom_charge_animation_land_action_title">Select landscape video</string>
+    <string name="custom_charge_animation_land_action_summary">Saved as charging_animation_land.mp4, played when charging in landscape orientation</string>
+    <string name="custom_charge_animation_video_saved">Video saved</string>
+    <string name="custom_charge_animation_video_save_failed">Failed to save video</string>
     <string name="noChargingAnimation_title">Charging animation</string>
     <string name="systemUIMisc">Misc</string>
     <string name="disable_guest_user_enable_title">Prevent automatic guest user creation</string>

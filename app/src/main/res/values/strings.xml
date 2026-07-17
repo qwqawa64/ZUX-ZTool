@@ -537,6 +537,14 @@
     <string name="noChargingAnimation_enable_summary">停用充电动画显示功能</string>
     <string name="Charge_Animation_Fix">补全充电动画列表</string>
     <string name="Charge_Animation_Fix_Summary">修复充电动画列表，这可以使用更多充电动画</string>
+    <string name="custom_charge_animation_title">自定义充电动画</string>
+    <string name="custom_charge_animation_summary">使用自定义视频替换内置充电动画。视频文件将保存至 /sdcard/Download/ZTool/ 目录，重启 SystemUI 后生效。</string>
+    <string name="custom_charge_animation_portrait_action_title">选择竖屏视频</string>
+    <string name="custom_charge_animation_portrait_action_summary">保存为 charging_animation_portrait.mp4，竖屏充电时播放</string>
+    <string name="custom_charge_animation_land_action_title">选择横屏视频</string>
+    <string name="custom_charge_animation_land_action_summary">保存为 charging_animation_land.mp4，横屏充电时播放</string>
+    <string name="custom_charge_animation_video_saved">视频已保存</string>
+    <string name="custom_charge_animation_video_save_failed">视频保存失败</string>
     <string name="noChargingAnimation_title">充电动画</string>
     <string name="systemUIMisc">杂项</string>
     <string name="disable_guest_user_enable_title">禁止访客用户自动创建</string>
