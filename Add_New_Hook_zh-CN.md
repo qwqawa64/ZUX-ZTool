@@ -34,6 +34,8 @@ prefsUtils.loadFloatSetting(KEY, defaultValue)
 prefsUtils.saveFloatSetting(KEY, value)
 ```
 
+在声明键时，要根据键的数据类型在对应的 getter:  `is...SettingKey()` 方法中添加键名。
+
 推荐在对应 Repository 的 `companion object` 中集中声明键：
 
 ```kotlin
