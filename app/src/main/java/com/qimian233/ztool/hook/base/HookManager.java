@@ -50,6 +50,7 @@ import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.BrightnessSliderPercentageHook;
 import com.qimian233.ztool.hook.modules.systemui.ControlCenterNoTileLabelsHook;
 import com.qimian233.ztool.hook.modules.systemui.CustomControlCenterDate;
+import com.qimian233.ztool.hook.modules.systemui.CustomChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsColor;
 import com.qimian233.ztool.hook.modules.systemui.CustomQsRoundCorner;
 import com.qimian233.ztool.hook.modules.systemui.CustomStatusBarClock;
@@ -122,6 +123,7 @@ public class HookManager {
         registerHookModule(new CustomQsColor());
         registerHookModule(new NotificationCenterTransparency());
         registerHookModule(new GuestModeController());
+        registerHookModule(new CustomChargeAnimation());
 
         // ── Settings (target: com.android.settings) ──
         registerHookModule(new yishijiecompletion());
