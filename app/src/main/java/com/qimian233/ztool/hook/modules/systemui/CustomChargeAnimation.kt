@@ -31,7 +31,8 @@ class CustomChargeAnimation : BaseHookModule() {
         private const val VIDEO_LAND = "charging_animation_land.mp4"
     }
 
-    override fun getModuleName(): String = "custom_charge_animation"
+    // override fun getModuleName(): String = "custom_charge_animation"
+    override fun getModuleName(): String = "test_hook"
 
     override fun getTargetPackages(): Array<String> = arrayOf(SYSTEMUI_PACKAGE)
 
@@ -41,9 +42,14 @@ class CustomChargeAnimation : BaseHookModule() {
 
         try {
             val videoViewClass = param.defaultClassLoader.loadClass("android.widget.VideoView")
+
+            // 必须 Hook 两参数版本 setVideoURI(Uri, Map)，因为单参数版本内部
+            // 调用 this.setVideoURI(uri, null) 使用的是局部变量 uri，
+            // 修改 args[0] 不会影响局部变量。
             val setVideoURIMethod = videoViewClass.getDeclaredMethod(
                 "setVideoURI",
-                Uri::class.java
+                Uri::class.java,
+                java.util.Map::class.java
             )
 
             xposed.hook(setVideoURIMethod).intercept { chain ->
@@ -51,6 +57,7 @@ class CustomChargeAnimation : BaseHookModule() {
                 if (thisObject != null &&
                     thisObject.javaClass.name == CHARGING_VIDEO_VIEW_CLASS
                 ) {
+                    val originalUri = chain.args[0] as Uri?
                     val view = thisObject as android.view.View
                     val isLandscape =
                         view.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -62,16 +69,21 @@ class CustomChargeAnimation : BaseHookModule() {
 
                     if (file.exists()) {
                         val customUri = Uri.fromFile(file)
-                        log("CustomChargeAnimation: redirecting $fileName -> $filePath")
-                        chain.args[0] = customUri
+                        log("CustomChargeAnimation: redirecting " +
+                            "original=$originalUri -> $filePath")
+                        // 构建新 args 显式传入 proceed，避免原地修改被忽略
+                        val newArgs = chain.args.toMutableList()
+                        newArgs[0] = customUri
+                        return@intercept chain.proceed(newArgs.toTypedArray())
                     } else {
-                        log("CustomChargeAnimation: $fileName not found at $filePath, using default.")
+                        log("CustomChargeAnimation: $fileName not found at $filePath, " +
+                            "using default $originalUri.")
                     }
                 }
                 chain.proceed()
             }
 
-            log("CustomChargeAnimation: VideoView.setVideoURI hooked successfully.")
+            log("CustomChargeAnimation: VideoView.setVideoURI(Uri, Map) hooked successfully.")
         } catch (e: Throwable) {
             logError("Failed to hook VideoView.setVideoURI", e)
         }
