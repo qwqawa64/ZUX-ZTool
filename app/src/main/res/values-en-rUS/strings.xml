@@ -904,7 +904,7 @@
     <string name="advanced_info_title">System Info</string>
     <string name="advanced_api_version">libxposed API version</string>
     <string name="launcher_no_label_mode_title">Launcher No-label Mode</string>
-    <string name="launcher_no_label_mode_summary">Remove label of APP and folder, also removes blue-dot indicator</string>
+    <string name="launcher_no_label_mode_summary">Remove label of APP and folder, also removes blue-dot indicator. Move the icon into and then out of the folder if it does not work.</string>
     <string name="advanced_hot_reload_starting">Requesting hot reload…</string>
     <string name="advanced_hot_reload_confirm_title">Trigger a Hot Reload?</string>
     <string name="advanced_hot_reload_confirm_message">Send hot reload request to %d running APP? \\n\\n Hot reload allows (un)installing hooks without restarting target APPs. This operation cannot be undone.</string>
