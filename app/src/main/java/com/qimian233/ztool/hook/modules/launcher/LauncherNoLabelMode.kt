@@ -25,6 +25,7 @@ class LauncherNoLabelMode : BaseHookModule() {
         installNormalAppNoLabelHook(param)
         installFolderNoLabelHook(param)
         installItemInflaterNoLabelHook(param)
+        installFolderPagedViewNoLabelHook(param)
         installBluePointRemovalHook(param)
     }
 
@@ -148,6 +149,56 @@ class LauncherNoLabelMode : BaseHookModule() {
             log("ItemInflater no-label hook installed successfully!")
         } catch (e: Throwable) {
             logError("Exception caught in ItemInflater no label mode hook: ", e)
+        }
+    }
+
+    /**
+     * Hook FolderPagedView.createNewView — the inflation path for item icons inside
+     * opened folders.  createNewView only creates the View; text is set later by
+     * d1.apply (called from bindItems).  We clear immediately (in case some text is
+     * already present) and post a one-frame re-check to catch labels set during the
+     * synchronous bind phase.
+     *
+     * The returned view class varies (e.g. Tratp, ActiveIconView) — we use
+     * clearTextInHierarchy to traverse children regardless of type.
+     */
+    fun installFolderPagedViewNoLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
+        try {
+            val loader: ClassLoader = param.defaultClassLoader
+            val folderPagedViewClass: Class<*> =
+                loader.loadClass("com.android.launcher3.folder.FolderPagedView")
+            val textViewClass: Class<*> = loader.loadClass("android.widget.TextView")
+            val setTextMethod: Method = findMethod(textViewClass, "setText",
+                CharSequence::class.java)
+            val setContentDescriptionMethod: Method = findMethod(View::class.java,
+                "setContentDescription", CharSequence::class.java)
+
+            for (method in folderPagedViewClass.declaredMethods) {
+                if (method.name == "createNewView" && method.returnType == View::class.java) {
+                    method.isAccessible = true
+                    xposed.hook(method).intercept { chain ->
+                        val result = chain.proceed()
+                        try {
+                            if (result is View) {
+                                // clear synchronously for text set in constructor
+                                clearTextInHierarchy(result, textViewClass, setTextMethod,
+                                    setContentDescriptionMethod)
+                                // post-clear for text set in d1.apply / bindItems
+                                (result as View).post {
+                                    clearTextInHierarchy(result, textViewClass, setTextMethod,
+                                        setContentDescriptionMethod)
+                                }
+                            }
+                        } catch (t: Throwable) {
+                            logError("Failed to clear folder-item label!", t)
+                        }
+                        return@intercept result
+                    }
+                }
+            }
+            log("FolderPagedView no-label hook installed successfully!")
+        } catch (e: Throwable) {
+            logError("Exception caught in folder-paged-view no label mode hook: ", e)
         }
     }
 
