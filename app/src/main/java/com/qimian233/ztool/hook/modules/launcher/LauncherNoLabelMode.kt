@@ -24,6 +24,7 @@ class LauncherNoLabelMode : BaseHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installNormalAppNoLabelHook(param)
         installFolderNoLabelHook(param)
+        installItemInflaterNoLabelHook(param)
         installBluePointRemovalHook(param)
     }
 
@@ -103,6 +104,70 @@ class LauncherNoLabelMode : BaseHookModule() {
             log("Folder no-label hook installed successfully!")
         } catch (e: Throwable) {
             logError("Exception caught in folder no label mode hook: ", e)
+        }
+    }
+
+    /**
+     * Hook com.android.launcher3.util.ItemInflater.d — the inflation path used by
+     * ActiveIconView icons (both on desktop and inside folders).  These icons do
+     * NOT go through BubbleTextView.applyFromWorkspaceItem, so the main hook misses
+     * them.  We iterate every method named "d" (the name is obfuscated) and clear
+     * any View result's subtree of text labels.
+     */
+    fun installItemInflaterNoLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
+        try {
+            val loader: ClassLoader = param.defaultClassLoader
+            val itemInflaterClass: Class<*> =
+                loader.loadClass("com.android.launcher3.util.ItemInflater")
+            val textViewClass: Class<*> = loader.loadClass("android.widget.TextView")
+            val setTextMethod: Method = findMethod(textViewClass, "setText",
+                CharSequence::class.java)
+            val setContentDescriptionMethod: Method = findMethod(View::class.java,
+                "setContentDescription", CharSequence::class.java)
+
+            for (method in itemInflaterClass.declaredMethods) {
+                if (method.name != "d") continue
+                method.isAccessible = true
+                xposed.hook(method).intercept { chain ->
+                    val result = chain.proceed()
+                    try {
+                        if (result is View) {
+                            clearTextInHierarchy(result, textViewClass, setTextMethod,
+                                setContentDescriptionMethod)
+                            (result as View).post {
+                                clearTextInHierarchy(result, textViewClass, setTextMethod,
+                                    setContentDescriptionMethod)
+                            }
+                        }
+                    } catch (t: Throwable) {
+                        logError("Failed to clear label in ItemInflater.d hook!", t)
+                    }
+                    return@intercept result
+                }
+            }
+            log("ItemInflater no-label hook installed successfully!")
+        } catch (e: Throwable) {
+            logError("Exception caught in ItemInflater no label mode hook: ", e)
+        }
+    }
+
+    /** Walk [root] and its descendants; blank text + contentDescription on every TextView. */
+    private fun clearTextInHierarchy(
+        root: View,
+        textViewClass: Class<*>,
+        setTextMethod: Method,
+        setContentDescriptionMethod: Method
+    ) {
+        if (textViewClass.isInstance(root)) {
+            setTextMethod.invoke(root, "")
+        }
+        setContentDescriptionMethod.invoke(root, "")
+        if (root is ViewGroup) {
+            for (i in 0 until root.childCount) {
+                val child = root.getChildAt(i) ?: continue
+                clearTextInHierarchy(child, textViewClass, setTextMethod,
+                    setContentDescriptionMethod)
+            }
         }
     }
 
