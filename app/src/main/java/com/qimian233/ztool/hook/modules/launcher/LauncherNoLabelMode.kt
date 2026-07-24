@@ -23,9 +23,8 @@ class LauncherNoLabelMode : BaseHookModule() {
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installNormalAppNoLabelHook(param)
+        installActiveIconViewVisibilityHook(param)
         installFolderNoLabelHook(param)
-        installItemInflaterNoLabelHook(param)
-        installFolderPagedViewNoLabelHook(param)
         installBluePointRemovalHook(param)
     }
 
@@ -62,6 +61,62 @@ class LauncherNoLabelMode : BaseHookModule() {
             log("Hook installed successfully!")
         } catch (e: Throwable) {
             logError("Exception caught in launcher no label mode hook: ", e)
+        }
+    }
+
+    /**
+     * Hook ActiveIconView.setTextVisibility, setTextAlpha and setIgnoreSetAlphaVisible
+     * to prevent folder animations from re-enabling label visibility after clearing.
+     *
+     * FolderAnimationManager.z() calls setIgnoreSetAlphaVisible(true) then
+     * setTextAlpha(...), which skips the normal text-visibility path and only
+     * changes color.  When the animation later calls setTextVisibility(true)
+     * (e.g. from the animator end callback g.onAnimationEnd → applyFromWorkspaceItem),
+     * the label can become visible again even if the text content was cleared.
+     *
+     * This hook forces text to stay invisible regardless of what the animation does.
+     */
+    fun installActiveIconViewVisibilityHook(param: XposedModuleInterface.PackageLoadedParam) {
+        try {
+            val loader: ClassLoader = param.defaultClassLoader
+            val activeIconViewClass: Class<*> =
+                loader.loadClass("com.zui.launcher.ActiveIconView")
+
+            // Force setTextVisibility to always hide
+            val setTextVisibilityMethod: Method = findMethod(
+                activeIconViewClass, "setTextVisibility",
+                Boolean::class.javaPrimitiveType
+            )
+            xposed.hook(setTextVisibilityMethod).intercept { chain ->
+                // Ignore the argument — always pass false to hide text
+                val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
+                chain.proceed(args)
+            }
+
+            // Force setTextAlpha to always keep alpha at 0 (hidden)
+            val setTextAlphaMethod: Method = findMethod(
+                activeIconViewClass, "setTextAlpha",
+                Float::class.javaPrimitiveType
+            )
+            xposed.hook(setTextAlphaMethod).intercept { chain ->
+                val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
+                chain.proceed(args)
+            }
+
+            // Prevent setIgnoreSetAlphaVisible from being set to true,
+            // so setTextAlpha always flows through to setTextVisibility
+            val setIgnoreMethod: Method = findMethod(
+                activeIconViewClass, "setIgnoreSetAlphaVisible",
+                Boolean::class.javaPrimitiveType
+            )
+            xposed.hook(setIgnoreMethod).intercept { chain ->
+                val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
+                chain.proceed(args)
+            }
+
+            log("ActiveIconView visibility-block hook installed successfully!")
+        } catch (e: Throwable) {
+            logError("Exception caught in ActiveIconView visibility hook: ", e)
         }
     }
 
@@ -105,120 +160,6 @@ class LauncherNoLabelMode : BaseHookModule() {
             log("Folder no-label hook installed successfully!")
         } catch (e: Throwable) {
             logError("Exception caught in folder no label mode hook: ", e)
-        }
-    }
-
-    /**
-     * Hook com.android.launcher3.util.ItemInflater.d — the inflation path used by
-     * ActiveIconView icons (both on desktop and inside folders).  These icons do
-     * NOT go through BubbleTextView.applyFromWorkspaceItem, so the main hook misses
-     * them.  We iterate every method named "d" (the name is obfuscated) and clear
-     * any View result's subtree of text labels.
-     */
-    fun installItemInflaterNoLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
-        try {
-            val loader: ClassLoader = param.defaultClassLoader
-            val itemInflaterClass: Class<*> =
-                loader.loadClass("com.android.launcher3.util.ItemInflater")
-            val textViewClass: Class<*> = loader.loadClass("android.widget.TextView")
-            val setTextMethod: Method = findMethod(textViewClass, "setText",
-                CharSequence::class.java)
-            val setContentDescriptionMethod: Method = findMethod(View::class.java,
-                "setContentDescription", CharSequence::class.java)
-
-            for (method in itemInflaterClass.declaredMethods) {
-                if (method.name != "d") continue
-                method.isAccessible = true
-                xposed.hook(method).intercept { chain ->
-                    val result = chain.proceed()
-                    try {
-                        if (result is View) {
-                            clearTextInHierarchy(result, textViewClass, setTextMethod,
-                                setContentDescriptionMethod)
-                            (result as View).post {
-                                clearTextInHierarchy(result, textViewClass, setTextMethod,
-                                    setContentDescriptionMethod)
-                            }
-                        }
-                    } catch (t: Throwable) {
-                        logError("Failed to clear label in ItemInflater.d hook!", t)
-                    }
-                    return@intercept result
-                }
-            }
-            log("ItemInflater no-label hook installed successfully!")
-        } catch (e: Throwable) {
-            logError("Exception caught in ItemInflater no label mode hook: ", e)
-        }
-    }
-
-    /**
-     * Hook FolderPagedView.createNewView — the inflation path for item icons inside
-     * opened folders.  createNewView only creates the View; text is set later by
-     * d1.apply (called from bindItems).  We clear immediately (in case some text is
-     * already present) and post a one-frame re-check to catch labels set during the
-     * synchronous bind phase.
-     *
-     * The returned view class varies (e.g. Tratp, ActiveIconView) — we use
-     * clearTextInHierarchy to traverse children regardless of type.
-     */
-    fun installFolderPagedViewNoLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
-        try {
-            val loader: ClassLoader = param.defaultClassLoader
-            val folderPagedViewClass: Class<*> =
-                loader.loadClass("com.android.launcher3.folder.FolderPagedView")
-            val textViewClass: Class<*> = loader.loadClass("android.widget.TextView")
-            val setTextMethod: Method = findMethod(textViewClass, "setText",
-                CharSequence::class.java)
-            val setContentDescriptionMethod: Method = findMethod(View::class.java,
-                "setContentDescription", CharSequence::class.java)
-
-            for (method in folderPagedViewClass.declaredMethods) {
-                if (method.name == "createNewView" && method.returnType == View::class.java) {
-                    method.isAccessible = true
-                    xposed.hook(method).intercept { chain ->
-                        val result = chain.proceed()
-                        try {
-                            if (result is View) {
-                                // clear synchronously for text set in constructor
-                                clearTextInHierarchy(result, textViewClass, setTextMethod,
-                                    setContentDescriptionMethod)
-                                // post-clear for text set in d1.apply / bindItems
-                                (result as View).post {
-                                    clearTextInHierarchy(result, textViewClass, setTextMethod,
-                                        setContentDescriptionMethod)
-                                }
-                            }
-                        } catch (t: Throwable) {
-                            logError("Failed to clear folder-item label!", t)
-                        }
-                        return@intercept result
-                    }
-                }
-            }
-            log("FolderPagedView no-label hook installed successfully!")
-        } catch (e: Throwable) {
-            logError("Exception caught in folder-paged-view no label mode hook: ", e)
-        }
-    }
-
-    /** Walk [root] and its descendants; blank text + contentDescription on every TextView. */
-    private fun clearTextInHierarchy(
-        root: View,
-        textViewClass: Class<*>,
-        setTextMethod: Method,
-        setContentDescriptionMethod: Method
-    ) {
-        if (textViewClass.isInstance(root)) {
-            setTextMethod.invoke(root, "")
-        }
-        setContentDescriptionMethod.invoke(root, "")
-        if (root is ViewGroup) {
-            for (i in 0 until root.childCount) {
-                val child = root.getChildAt(i) ?: continue
-                clearTextInHierarchy(child, textViewClass, setTextMethod,
-                    setContentDescriptionMethod)
-            }
         }
     }
 
