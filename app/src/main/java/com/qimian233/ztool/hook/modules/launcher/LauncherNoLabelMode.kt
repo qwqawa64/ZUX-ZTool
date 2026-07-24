@@ -2,16 +2,25 @@ package com.qimian233.ztool.hook.modules.launcher
 
 import android.annotation.SuppressLint
 import android.view.View
-import android.view.ViewGroup
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
-import java.lang.reflect.Field
 import java.lang.reflect.Method
 
+/**
+ * No-label mode for ZUI Launcher.
+ *
+ * Instead of clearing text content (which breaks TalkBack accessibility),
+ * we hook setTextVisibility / setTextAlpha / setIgnoreSetAlphaVisible so that
+ * labels are **visually hidden** while the text content stays intact for
+ * screen readers.
+ *
+ * Covered paths:
+ * - BubbleTextView: desktop & folder icons for non-ZUI apps, folder names
+ * - ActiveIconView: desktop & folder icons for ZUI system apps
+ *   (Calendar, SafeCenter, Lenovo Switch, etc.)
+ */
 @SuppressLint("PrivateApi")
 class LauncherNoLabelMode : BaseHookModule() {
-
-    private var bubbleTextViewClass : Class<*>? = null
 
     override fun getModuleName(): String {
         return "launcher_no_label_mode"
@@ -22,59 +31,65 @@ class LauncherNoLabelMode : BaseHookModule() {
     }
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
-        installNormalAppNoLabelHook(param)
+        installBubbleTextViewVisibilityHook(param)
         installActiveIconViewVisibilityHook(param)
-        installFolderNoLabelHook(param)
         installBluePointRemovalHook(param)
     }
 
-    fun installNormalAppNoLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
+    /**
+     * Hook BubbleTextView.setTextVisibility and setTextAlpha so that labels
+     * on BubbleTextView icons (non-ZUI apps, folder names) are always hidden.
+     *
+     * BubbleTextView is the base icon class used for apps that do NOT use
+     * ActiveIconView (i.e. most third-party apps).  It is also used for the
+     * folder name label on FolderIcon (field "e").
+     */
+    fun installBubbleTextViewVisibilityHook(param: XposedModuleInterface.PackageLoadedParam) {
         try {
             val loader: ClassLoader = param.defaultClassLoader
             val bubbleTextViewClass: Class<*> =
                 loader.loadClass("com.android.launcher3.BubbleTextView")
-            this.bubbleTextViewClass = bubbleTextViewClass
-            val workspaceItemInfoClass: Class<*> =
-                loader.loadClass("com.android.launcher3.model.data.WorkspaceItemInfo")
 
-            val setTextMethod: Method = findMethod(bubbleTextViewClass, "setText",
-                CharSequence::class.java)
-            val setContentDescriptionMethod: Method = findMethod(bubbleTextViewClass,
-                "setContentDescription", CharSequence::class.java)
-
-            val targetMethod: Method = findMethod(
-                bubbleTextViewClass, "applyFromWorkspaceItem",
-                workspaceItemInfoClass
+            // Force setTextVisibility to always hide
+            val setTextVisibilityMethod: Method = findMethod(
+                bubbleTextViewClass, "setTextVisibility",
+                Boolean::class.javaPrimitiveType
             )
-            log("Ready to install hook on applyFromWorkspaceItem!")
-            xposed.hook(targetMethod).intercept { chain ->
-                try {
-                    val result = chain.proceed()
-                    setTextMethod.invoke(chain.thisObject, "")
-                    setContentDescriptionMethod.invoke(chain.thisObject, "")
-                    return@intercept result
-                } catch (e: Throwable) {
-                    logError("Failed inside applyFromWorkspaceItem hook: ", e)
-                    return@intercept chain.proceed()
-                }
+            xposed.hook(setTextVisibilityMethod).intercept { chain ->
+                val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
+                chain.proceed(args)
             }
-            log("Hook installed successfully!")
+
+            // Force setTextAlpha to always stay at 0 (hidden).
+            // FolderAnimationManager.z() calls setTextAlpha directly during
+            // folder open/close animations, bypassing setTextVisibility.
+            val setTextAlphaMethod: Method = findMethod(
+                bubbleTextViewClass, "setTextAlpha",
+                Float::class.javaPrimitiveType
+            )
+            xposed.hook(setTextAlphaMethod).intercept { chain ->
+                val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
+                chain.proceed(args)
+            }
+
+            log("BubbleTextView visibility-block hook installed successfully!")
         } catch (e: Throwable) {
-            logError("Exception caught in launcher no label mode hook: ", e)
+            logError("Exception caught in BubbleTextView visibility hook: ", e)
         }
     }
 
     /**
-     * Hook ActiveIconView.setTextVisibility, setTextAlpha and setIgnoreSetAlphaVisible
-     * to prevent folder animations from re-enabling label visibility after clearing.
+     * Hook ActiveIconView.setTextVisibility, setTextAlpha and
+     * setIgnoreSetAlphaVisible so that labels on ActiveIconView icons
+     * (ZUI system apps) are always hidden.
      *
-     * FolderAnimationManager.z() calls setIgnoreSetAlphaVisible(true) then
-     * setTextAlpha(...), which skips the normal text-visibility path and only
-     * changes color.  When the animation later calls setTextVisibility(true)
-     * (e.g. from the animator end callback g.onAnimationEnd → applyFromWorkspaceItem),
-     * the label can become visible again even if the text content was cleared.
+     * ActiveIconView is used for apps where isZuiActiveIcon() returns true,
+     * e.g. Calendar (com.lenovo.calendar), SafeCenter, Lenovo Switch, etc.
      *
-     * This hook forces text to stay invisible regardless of what the animation does.
+     * setIgnoreSetAlphaVisible must be forced to false, otherwise
+     * FolderAnimationManager.z() can set it to true, which makes
+     * setTextAlpha skip the normal visibility path — and the label
+     * reappears during folder open/close animations.
      */
     fun installActiveIconViewVisibilityHook(param: XposedModuleInterface.PackageLoadedParam) {
         try {
@@ -88,12 +103,11 @@ class LauncherNoLabelMode : BaseHookModule() {
                 Boolean::class.javaPrimitiveType
             )
             xposed.hook(setTextVisibilityMethod).intercept { chain ->
-                // Ignore the argument — always pass false to hide text
                 val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
                 chain.proceed(args)
             }
 
-            // Force setTextAlpha to always keep alpha at 0 (hidden)
+            // Force setTextAlpha to always stay at 0 (hidden)
             val setTextAlphaMethod: Method = findMethod(
                 activeIconViewClass, "setTextAlpha",
                 Float::class.javaPrimitiveType
@@ -120,55 +134,12 @@ class LauncherNoLabelMode : BaseHookModule() {
         }
     }
 
-    fun installFolderNoLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
-        try {
-            val loader: ClassLoader = param.defaultClassLoader
-            val folderIconClass: Class<*> = loader.loadClass("com.android.launcher3.folder.FolderIcon")
-            val bubbleTextViewClass: Class<*>? = this.bubbleTextViewClass
-            if (bubbleTextViewClass == null) {
-                log("BubbleTextViewClass is null!")
-                return
-            }
-            val folderBubbleField: Field = findField(folderIconClass, "e")
-            val setTextMethod: Method = findMethod(bubbleTextViewClass, "setText",
-                CharSequence::class.java)
-            val setContentDescriptionMethod: Method = findMethod(bubbleTextViewClass,
-                "setContentDescription", CharSequence::class.java)
-
-            val folderInfoClass: Class<*> = loader.loadClass("com.android.launcher3.model.data.FolderInfo")
-            val activityContextClass: Class<*> = loader.loadClass("com.android.launcher3.views.ActivityContext")
-
-            // inflateIcon is static → chain.thisObject is null; use chain.result instead
-            val inflateMethod: Method = findMethod(folderIconClass, "inflateIcon",
-                Int::class.javaPrimitiveType, activityContextClass, ViewGroup::class.java, folderInfoClass)
-            xposed.hook(inflateMethod).intercept { chain ->
-                val result = chain.proceed()
-                try {
-                    // inflateIcon is static; result is the returned FolderIcon
-                    if (result != null) {
-                        val bubbleTextView = folderBubbleField.get(result)
-                        if (bubbleTextView != null) {
-                            setTextMethod.invoke(bubbleTextView, "")
-                            setContentDescriptionMethod.invoke(bubbleTextView, "")
-                        }
-                    }
-                } catch (t: Throwable) {
-                    logError("Failed to clear folder label!", t)
-                }
-                return@intercept result
-            }
-            log("Folder no-label hook installed successfully!")
-        } catch (e: Throwable) {
-            logError("Exception caught in folder no label mode hook: ", e)
-        }
-    }
-
     /**
      * Hook BluePoint.isPackageNew(View) → always return false.
      *
-     * In no-label mode the app label text is cleared, but the blue update dot
+     * In no-label mode the app label text is hidden, but the blue update dot
      * (drawn in DoubleShadowBubbleTextView.onDraw via BluePoint.isPackageNew)
-     * would still appear next to the empty label.  Suppress it at the source.
+     * would still appear next to the hidden label.  Suppress it at the source.
      */
     fun installBluePointRemovalHook(param: XposedModuleInterface.PackageLoadedParam) {
         try {
