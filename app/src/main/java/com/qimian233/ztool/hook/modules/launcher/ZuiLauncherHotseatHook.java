@@ -208,8 +208,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                         itemInfoClass, boolean.class);
                 this.xposed.hook(addToWorkspaceMethod).intercept(chain -> {
                     Object itemInfo = chain.getArg(0);
-                    Field containerField = itemInfo.getClass().getDeclaredField("container");
-                    containerField.setAccessible(true);
+                    Field containerField = findField(itemInfo.getClass(), "container");
                     int container = containerField.getInt(itemInfo);
 
                     if (container == -101) {
@@ -271,11 +270,9 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     itemInfoClass, boolean.class);
             this.xposed.hook(checkItemPlacementMethod).intercept(chain -> {
                 Object itemInfo = chain.getArg(0);
-                Field containerField = itemInfo.getClass().getDeclaredField("container");
-                containerField.setAccessible(true);
+                Field containerField = findField(itemInfo.getClass(), "container");
                 int container = containerField.getInt(itemInfo);
-                Field screenIdField = itemInfo.getClass().getDeclaredField("screenId");
-                screenIdField.setAccessible(true);
+                Field screenIdField = findField(itemInfo.getClass(), "screenId");
                 int screenId = screenIdField.getInt(itemInfo);
 
                 // 如果是Hotseat且位置在扩展范围内，直接返回true
@@ -292,8 +289,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             this.xposed.hook(bMethod).intercept(chain -> {
                 Object result = chain.proceed();
                 Object itemInfo = chain.getArg(0);
-                Field containerField = itemInfo.getClass().getDeclaredField("container");
-                containerField.setAccessible(true);
+                Field containerField = findField(itemInfo.getClass(), "container");
                 int container = containerField.getInt(itemInfo);
 
                 // 如果是Hotseat，强制返回false（不删除）
@@ -309,11 +305,9 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     itemInfoClass, bgDataModelClass);
             this.xposed.hook(checkAndAddItemMethod).intercept(chain -> {
                 Object itemInfo = chain.getArg(0);
-                Field containerField = itemInfo.getClass().getDeclaredField("container");
-                containerField.setAccessible(true);
+                Field containerField = findField(itemInfo.getClass(), "container");
                 int container = containerField.getInt(itemInfo);
-                Field screenIdField = itemInfo.getClass().getDeclaredField("screenId");
-                screenIdField.setAccessible(true);
+                Field screenIdField = findField(itemInfo.getClass(), "screenId");
                 int screenId = screenIdField.getInt(itemInfo);
 
                 if (container == -101) {
