@@ -1,7 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher
 
 import android.annotation.SuppressLint
-import android.view.View
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -33,7 +32,6 @@ class LauncherNoLabelMode : BaseHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installBubbleTextViewVisibilityHook(param)
         installActiveIconViewVisibilityHook(param)
-        installBluePointRemovalHook(param)
     }
 
     /**
@@ -134,27 +132,5 @@ class LauncherNoLabelMode : BaseHookModule() {
         }
     }
 
-    /**
-     * Hook BluePoint.isPackageNew(View) → always return false.
-     *
-     * In no-label mode the app label text is hidden, but the blue update dot
-     * (drawn in DoubleShadowBubbleTextView.onDraw via BluePoint.isPackageNew)
-     * would still appear next to the hidden label.  Suppress it at the source.
-     */
-    fun installBluePointRemovalHook(param: XposedModuleInterface.PackageLoadedParam) {
-        try {
-            val loader: ClassLoader = param.defaultClassLoader
-            val bluePointClass: Class<*> = loader.loadClass("com.zui.launcher.BluePoint")
-
-            val isPackageNewMethod: Method = findMethod(bluePointClass, "isPackageNew",
-                View::class.java)
-            xposed.hook(isPackageNewMethod).intercept {
-                // Always tell Launcher "this is not a newly-updated package"
-                return@intercept false
-            }
-            log("BluePoint removal hook installed successfully!")
-        } catch (e: Throwable) {
-            logError("Exception caught in blue point removal hook: ", e)
-        }
-    }
 }
+
