@@ -112,7 +112,8 @@ fun LauncherSettingsRoute(
         onShowRamInfoChanged = viewModel::setShowRamInfo,
         onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
         onDisableDockBarChanged = viewModel::setDisableDockBar,
-        onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode
+        onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode,
+        onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -177,7 +178,8 @@ private fun LauncherSettingsScreen(
     onShowRamInfoChanged: (Boolean) -> Unit,
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
-    onLauncherNoLabelModeChanged: (Boolean) -> Unit
+    onLauncherNoLabelModeChanged: (Boolean) -> Unit,
+    onLauncherHideBluePointChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -228,7 +230,8 @@ private fun LauncherSettingsScreen(
                         onShowRamInfoChanged = onShowRamInfoChanged,
                         onBeautifyRamInfoChanged = onBeautifyRamInfoChanged,
                         onDisableDockBarChanged = onDisableDockBarChanged,
-                        onLauncherNoLabelModeChanged = onLauncherNoLabelModeChanged
+                        onLauncherNoLabelModeChanged = onLauncherNoLabelModeChanged,
+                        onLauncherHideBluePointChanged = onLauncherHideBluePointChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -252,7 +255,8 @@ private fun launcherSettingsSections(
     onShowRamInfoChanged: (Boolean) -> Unit,
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
-    onLauncherNoLabelModeChanged: (Boolean) -> Unit
+    onLauncherNoLabelModeChanged: (Boolean) -> Unit,
+    onLauncherHideBluePointChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -286,6 +290,13 @@ private fun launcherSettingsSections(
                 summary = stringResource(R.string.launcher_no_label_mode_summary),
                 checked = state.noLabelMode,
                 onCheckedChange = onLauncherNoLabelModeChanged
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_hide_blue_point_title),
+                checked = state.hideBluePoint,
+                onCheckedChange = onLauncherHideBluePointChanged
             )
         )
         add(

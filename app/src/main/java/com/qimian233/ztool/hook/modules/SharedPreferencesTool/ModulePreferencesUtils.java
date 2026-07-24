@@ -42,7 +42,7 @@ public class ModulePreferencesUtils {
      */
     public SharedPreferences  getModulePreferences() {
         try {
-            if (ModuleActivationProbe.INSTANCE.isModuleActive()
+            if (ModuleActivationProbe.isModuleActive()
                     && XposedServiceBridge.INSTANCE.getCurrentService() != null) {
                 return XposedServiceBridge.INSTANCE.getCurrentService().getRemotePreferences(PREFS_NAME);
             }
@@ -242,10 +242,9 @@ public class ModulePreferencesUtils {
     /**
      * 删除本地 SharedPreferences 文件
      * 用于配置迁移完成后清理
-     * @return 是否删除成功
      */
     @SuppressLint("ApplySharedPref")
-    public boolean deleteLocalModulePreferences() {
+    public void deleteLocalModulePreferences() {
         SharedPreferences prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         boolean cleared = prefs.edit().clear().commit();
         if (cleared) {
@@ -257,7 +256,6 @@ public class ModulePreferencesUtils {
             }
         }
         Log.d(TAG, "Cleared local module preferences, success: " + cleared);
-        return cleared;
     }
 
     // 处理getAllSettings的返回值，转换为JSON格式
@@ -398,7 +396,6 @@ public class ModulePreferencesUtils {
             } catch (Exception e) {
                 Log.e(TAG, "Failed to save key: " + entry.getKey()
                         + ", value: " + entry.getValue() + ", error: " + e.getMessage());
-                e.printStackTrace();
             }
         }
     }
@@ -516,6 +513,7 @@ public class ModulePreferencesUtils {
                 || "beautify_ram_info".equals(key)
                 || "disable_dock_bar".equals(key)
                 || "launcher_no_label_mode".equals(key)
+                || "launcher_hide_blue_point".equals(key)
                 || "zui_launcher_hotseat_backup".equals(key)
                 || "disable_dock_warning_confirmed".equals(key)
                 || "disable_ota_check".equals(key)

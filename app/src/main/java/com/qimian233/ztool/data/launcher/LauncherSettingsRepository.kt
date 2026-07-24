@@ -7,6 +7,7 @@ import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesU
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
+import androidx.core.content.edit
 
 class LauncherSettingsRepository(
     private val context: Context
@@ -37,7 +38,8 @@ class LauncherSettingsRepository(
             showRamInfo = prefsUtils.loadBooleanSetting(KEY_SHOW_RAM_INFO, false),
             beautifyRamInfo = prefsUtils.loadBooleanSetting(KEY_BEAUTIFY_RAM_INFO, false),
             disableDockBar = prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_BAR, false),
-            noLabelMode = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, false)
+            noLabelMode = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, false),
+            hideBluePoint = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, false)
         )
     }
 
@@ -102,6 +104,10 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, enabled)
     }
 
+    fun saveLauncherHideBluePoint(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, enabled)
+    }
+
     fun saveDisableDockBar(enabled: Boolean): Boolean {
         val previousMoreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false)
         prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, previousMoreBigDock)
@@ -112,9 +118,9 @@ class LauncherSettingsRepository(
                 KEY_ZUI_LAUNCHER_HOTSEAT,
                 prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, false)
             )
-            prefsUtils.getModulePreferences().edit()
-                .remove(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP)
-                .commit()
+            prefsUtils.getModulePreferences().edit(commit = true) {
+                remove(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP)
+            }
         }
         prefsUtils.saveBooleanSetting(KEY_DISABLE_DOCK_BAR, enabled)
         return enabled && !prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_WARNING_CONFIRMED, false)
@@ -177,6 +183,7 @@ class LauncherSettingsRepository(
         private const val KEY_DISABLE_DOCK_BAR = "disable_dock_bar"
         private const val KEY_DISABLE_DOCK_WARNING_CONFIRMED = "disable_dock_warning_confirmed"
         private const val KEY_LAUNCHER_NO_LABEL_MODE = "launcher_no_label_mode"
+        private const val KEY_LAUNCHER_HIDE_BLUE_POINT = "launcher_hide_blue_point"
     }
 }
 

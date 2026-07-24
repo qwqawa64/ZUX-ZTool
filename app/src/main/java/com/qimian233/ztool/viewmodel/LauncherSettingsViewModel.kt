@@ -97,6 +97,11 @@ class LauncherSettingsViewModel(
         repository.saveLauncherNoLabelMode(enabled)
     }
 
+    fun setLauncherHideBluePoint(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(hideBluePoint = enabled)
+        repository.saveLauncherHideBluePoint(enabled)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
@@ -168,7 +173,8 @@ data class LauncherSettingsUiState(
     val beautifyRamInfo : Boolean = false,
     val disableDockBar: Boolean = false,
     val showDisableDockWarningDialog: Boolean = false,
-    val noLabelMode: Boolean = false
+    val noLabelMode: Boolean = false,
+    val hideBluePoint: Boolean = false
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
