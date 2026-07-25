@@ -35,6 +35,20 @@ class LauncherNoLabelMode : BaseHookModule() {
     }
 
     /**
+     * Check whether the current call stack includes
+     * PopupContainerWithArrow.initializeSystemShortcut.
+     *
+     * When BubbleTextView is used by the system-shortcut popup, the no-label
+     * logic must be skipped so the popup menu labels display correctly.
+     */
+    private fun isFromPopupSystemShortcut(): Boolean {
+        return Thread.currentThread().stackTrace.any { frame ->
+            frame.className == "com.android.launcher3.popup.PopupContainerWithArrow" &&
+                frame.methodName == "initializeSystemShortcut"
+        }
+    }
+
+    /**
      * Hook BubbleTextView.setTextVisibility and setTextAlpha so that labels
      * on BubbleTextView icons (non-ZUI apps, folder names) are always hidden.
      *
@@ -54,8 +68,12 @@ class LauncherNoLabelMode : BaseHookModule() {
                 Boolean::class.javaPrimitiveType
             )
             xposed.hook(setTextVisibilityMethod).intercept { chain ->
-                val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
-                chain.proceed(args)
+                if (isFromPopupSystemShortcut()) {
+                    chain.proceed(chain.args.toTypedArray())
+                } else {
+                    val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
+                    chain.proceed(args)
+                }
             }
 
             // Force setTextAlpha to always stay at 0 (hidden).
@@ -66,8 +84,12 @@ class LauncherNoLabelMode : BaseHookModule() {
                 Float::class.javaPrimitiveType
             )
             xposed.hook(setTextAlphaMethod).intercept { chain ->
-                val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
-                chain.proceed(args)
+                if (isFromPopupSystemShortcut()) {
+                    chain.proceed(chain.args.toTypedArray())
+                } else {
+                    val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
+                    chain.proceed(args)
+                }
             }
 
             log("BubbleTextView visibility-block hook installed successfully!")
