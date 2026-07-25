@@ -19,10 +19,14 @@ class DismissCloudFolderConfirmation: BaseHookModule() {
             val targetMethod: Method = findMethod(targetClass, "showCloudFolderAuthorizationDialog",
                 launcherClass, Runnable::class.java, Runnable::class.java)
             xposed.hook(targetMethod).intercept { chain ->
-                val dialog = chain.proceed(chain.args.toTypedArray()) as? android.app.Dialog
-                dialog?.dismiss()
-                log("Cloud folder authorization dialog auto-dismissed")
-                dialog
+                try {
+                    val dialog = chain.proceed(chain.args.toTypedArray()) as? android.app.Dialog
+                    dialog?.dismiss()
+                    log("Cloud folder authorization dialog auto-dismissed")
+                    dialog
+                } catch (th: Throwable) {
+                    logError("Failed to intercept cloud folder authorization dialog!", th)
+                }
             }
         } catch (e: Throwable) {
             logError("Exception caught in DismissCloudFolderConfirmation hook: ", e)
