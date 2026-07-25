@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.modules.launcher.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.CustomGridSize;
 import com.qimian233.ztool.hook.modules.launcher.DisableDockBar;
 import com.qimian233.ztool.hook.modules.launcher.DisableForceStop;
+import com.qimian233.ztool.hook.modules.launcher.DismissCloudFolderConfirmation;
 import com.qimian233.ztool.hook.modules.launcher.LauncherNoLabelMode;
 import com.qimian233.ztool.hook.modules.launcher.RecentTaskMemoryViewHook;
 import com.qimian233.ztool.hook.modules.launcher.ZuiLauncherHotseatHook;
@@ -154,6 +155,7 @@ public class HookManager {
         registerHookModule(new RecentTaskMemoryViewHook());
         registerHookModule(new LauncherNoLabelMode());
         registerHookModule(new BluePointRemovalHook());
+        registerHookModule(new DismissCloudFolderConfirmation());
 
         // ── GameTool (target: com.zui.game.service) ──
         registerHookModule(new AutoMistakeTouchHook());
