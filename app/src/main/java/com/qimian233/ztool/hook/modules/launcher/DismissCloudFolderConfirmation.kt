@@ -6,7 +6,7 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
 class DismissCloudFolderConfirmation: BaseHookModule() {
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = "dismiss_cloud_folder_confirmation"
 
     override fun getTargetPackages(): Array<out String> = arrayOf("com.zui.launcher")
 
