@@ -97,6 +97,11 @@ class LauncherSettingsViewModel(
         repository.saveLauncherNoLabelMode(enabled)
     }
 
+    fun setCloudFolderAutoDismiss(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(cloudFolderDismiss = enabled)
+        repository.saveCloudFolderAutoDismiss(enabled)
+    }
+
     fun setLauncherHideBluePoint(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(hideBluePoint = enabled)
         repository.saveLauncherHideBluePoint(enabled)
