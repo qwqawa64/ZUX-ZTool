@@ -39,7 +39,8 @@ class LauncherSettingsRepository(
             beautifyRamInfo = prefsUtils.loadBooleanSetting(KEY_BEAUTIFY_RAM_INFO, false),
             disableDockBar = prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_BAR, false),
             noLabelMode = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, false),
-            hideBluePoint = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, false)
+            hideBluePoint = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, false),
+            cloudFolderDismiss = prefsUtils.loadBooleanSetting(KEY_CLOUD_FOLDER_DISMISS, false)
         )
     }
 
@@ -106,6 +107,10 @@ class LauncherSettingsRepository(
 
     fun saveLauncherHideBluePoint(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, enabled)
+    }
+
+    fun saveCloudFolderAutoDismiss(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CLOUD_FOLDER_DISMISS, enabled)
     }
 
     fun saveDisableDockBar(enabled: Boolean): Boolean {
@@ -184,6 +189,7 @@ class LauncherSettingsRepository(
         private const val KEY_DISABLE_DOCK_WARNING_CONFIRMED = "disable_dock_warning_confirmed"
         private const val KEY_LAUNCHER_NO_LABEL_MODE = "launcher_no_label_mode"
         private const val KEY_LAUNCHER_HIDE_BLUE_POINT = "launcher_hide_blue_point"
+        private const val KEY_CLOUD_FOLDER_DISMISS = "dismiss_cloud_folder_confirmation"
     }
 }
 
