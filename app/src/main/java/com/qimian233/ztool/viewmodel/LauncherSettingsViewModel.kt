@@ -174,7 +174,8 @@ data class LauncherSettingsUiState(
     val disableDockBar: Boolean = false,
     val showDisableDockWarningDialog: Boolean = false,
     val noLabelMode: Boolean = false,
-    val hideBluePoint: Boolean = false
+    val hideBluePoint: Boolean = false,
+    val cloudFolderDismiss: Boolean = false,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
