@@ -305,7 +305,7 @@ private fun launcherSettingsSections(
         )
         add(
             SettingItem.Switch(
-                title = stringResource(),
+                title = stringResource(R.string.cloud_folder_auto_dismiss_title),
                 checked = state.cloudFolderDismiss,
                 onCheckedChange = onCloudFolderDismissChanged
             )
