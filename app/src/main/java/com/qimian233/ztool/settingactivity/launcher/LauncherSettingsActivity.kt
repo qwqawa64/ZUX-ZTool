@@ -113,7 +113,8 @@ fun LauncherSettingsRoute(
         onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
         onDisableDockBarChanged = viewModel::setDisableDockBar,
         onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode,
-        onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint
+        onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
+        onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -179,7 +180,8 @@ private fun LauncherSettingsScreen(
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
-    onLauncherHideBluePointChanged: (Boolean) -> Unit
+    onLauncherHideBluePointChanged: (Boolean) -> Unit,
+    onCloudFolderDismissChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -231,7 +233,8 @@ private fun LauncherSettingsScreen(
                         onBeautifyRamInfoChanged = onBeautifyRamInfoChanged,
                         onDisableDockBarChanged = onDisableDockBarChanged,
                         onLauncherNoLabelModeChanged = onLauncherNoLabelModeChanged,
-                        onLauncherHideBluePointChanged = onLauncherHideBluePointChanged
+                        onLauncherHideBluePointChanged = onLauncherHideBluePointChanged,
+                        onCloudFolderDismissChanged = onCloudFolderDismissChanged
                     ),
                     bottomPadding = 96.dp
                 )
@@ -256,7 +259,8 @@ private fun launcherSettingsSections(
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
-    onLauncherHideBluePointChanged: (Boolean) -> Unit
+    onLauncherHideBluePointChanged: (Boolean) -> Unit,
+    onCloudFolderDismissChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -297,6 +301,13 @@ private fun launcherSettingsSections(
                 title = stringResource(R.string.launcher_hide_blue_point_title),
                 checked = state.hideBluePoint,
                 onCheckedChange = onLauncherHideBluePointChanged
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(),
+                checked = state.cloudFolderDismiss,
+                onCheckedChange = onCloudFolderDismissChanged
             )
         )
         add(
