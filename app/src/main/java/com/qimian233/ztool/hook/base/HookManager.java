@@ -36,6 +36,7 @@ import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook;
 import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
 import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo;
 import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
+import com.qimian233.ztool.hook.modules.systemFramework.AllowRelativeAppLaunch;
 import com.qimian233.ztool.hook.modules.systemFramework.KeepRotation;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
@@ -102,6 +103,7 @@ public class HookManager {
         registerHookModule(new AiInputExpand());
         registerHookModule(new LsposedServiceProtector());
         registerHookModule(new KeepRotation());
+        registerHookModule(new AllowRelativeAppLaunch());
 
         // ── SystemUI (target: com.android.systemui) ──
         registerHookModule(new StatusBarClockSecondsHook());
