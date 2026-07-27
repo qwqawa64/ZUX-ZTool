@@ -48,7 +48,6 @@ import com.qimian233.ztool.hook.modules.systemFramework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemFramework.AllowUntrustedTouch;
 import com.qimian233.ztool.hook.modules.systemFramework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemFramework.ForceScreenOnOffAnimation;
-import com.qimian233.ztool.hook.modules.systemFramework.LsposedServiceProtector;
 import com.qimian233.ztool.hook.modules.systemFramework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.BrightnessSliderPercentageHook;
 import com.qimian233.ztool.hook.modules.systemui.ControlCenterNoTileLabelsHook;
@@ -101,7 +100,6 @@ public class HookManager {
         registerHookModule(new AllowUntrustedTouch());
         registerHookModule(new ForceScreenOnOffAnimation());
         registerHookModule(new AiInputExpand());
-        registerHookModule(new LsposedServiceProtector());
         registerHookModule(new KeepRotation());
         registerHookModule(new AllowRelativeAppLaunch());
 
