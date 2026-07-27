@@ -117,10 +117,65 @@ Phase 3 的改善主要在于长期运行的内存效率（避免多次热重载
 
 ---
 
+## 已知限制 — LSPosed Native 库热重载限制
+
+### 现象
+
+以下 3 个进程的热重载永久返回 `UNSUPPORTED`：
+- `com.android.systemui`
+- `com.zui.launcher`
+- `com.motorola.mobiledesktop`
+
+错误消息：*"Hot reload with native libraries is supported only for stale targets."*
+
+### 根因
+
+```
+ZTool APK 打包了 libdexkit.so (来自 org.luckypray:dexkit:2.0.6)
+  → LSPosed 检测到 APK 的 lib/ 目录中有 .so 文件
+    → 标记该模块"含 native 库"
+      → 热重载策略收紧：仅对 stale（运行旧版代码的）进程可用
+        → 这 3 个进程重启后变为 fresh（已运行最新代码）→ 永远 UNSUPPORTED
+```
+
+LSPosed 在 **APK 文件层面** 判断 native 库存在与否，与运行时是否调用 `System.loadLibrary` 无关。
+Native 代码一旦加载无法安全卸载（Android 的 `dlclose` 对大多数 .so 不生效），
+因此 LSPosed 限制含 native 库的模块只能对 stale 进程热重载。
+
+### 影响
+
+这 3 个进程在冷启动时会自动加载最新模块代码，**不需要热重载即可获得最新 Hook**。
+热重载对它们本就不必要——它们已经是 `UP_TO_DATE` 状态。
+
+### 使用 DEXKit 的 Hook 模块
+
+| 目录 | 文件 | DEXKit 用途 |
+|------|------|------------|
+| systemui/ | `NoChargeAnimation.java` | 混淆方法签名搜索 |
+| systemui/ | `SystemUINetworkSpeeddoublelayerHook.java` | 混淆方法签名搜索 |
+| launcher/ | `CleanGlobalSearch.java` | 混淆方法签名搜索 |
+| launcher/ | `DisableForceStop.java` | 混淆方法签名搜索 |
+| launcher/ | `ZuiLauncherHotseatHook.java` | 混淆方法签名搜索 |
+| mobiledesktop/ | `BypassShareWarningHook.kt` | 混淆方法签名搜索 |
+| mobiledesktop/ | `DisableNearbyShareAutoOffHook.kt` | 混淆方法签名搜索 |
+
+### 可能的解决路径（均不采纳）
+
+| 方案 | 代价 |
+|------|------|
+| 去掉 dexkit 依赖，重写 7 个 Hook 为纯反射 | 大 — 这些 Hook 强依赖 DEXKit 的签名搜索定位混淆方法 |
+| 将 dexkit 分离为独立模块 | LSPosed 不支持跨模块 native 代码加载 |
+
+### 决策
+
+**接受 LSPosed 的限制。** 3 个 UNSUPPORTED 是正确的、无害的。冷启动已确保最新 Hook 生效。
+
+---
+
 ## 验证方案
 
 1. `.\gradlew.bat assembleDebug` 编译通过 ✅
 2. 安装到设备，触发"高级选项 → 热重载全部模块" ✅
-   - 7 个 SUCCEEDED，3 个 UNSUPPORTED（已是最新版，无需热重载）
+   - 7 个 SUCCEEDED，3 个 UNSUPPORTED（含 native 库的进程，冷启动已加载最新代码）
 3. 观察 Logcat 确认 `onHotReloading` / `onHotReloaded` 被调用 ✅
 4. 验证各 Hook 功能在热重载后仍正常工作 ✅
