@@ -133,4 +133,5 @@ data class FrameworkSettingsUiState(
     val forceOnOffAnimationDuration: Int = 400,
     val noPasswordPer24H: Boolean = false,
     val allowUntrustedTouch: Boolean = false,
+    val allowRelativeAppLaunch: Boolean = false,
 )
