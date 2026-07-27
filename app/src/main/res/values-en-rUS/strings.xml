@@ -924,4 +924,5 @@
     <string name="disable_ota_notification_and_red_dot_title">Hide OTA available notification and its badge</string>
     <string name="disable_ota_notification_and_red_dot_summary">Open OTA page again to remove red dot</string>
     <string name="cloud_folder_auto_dismiss_title">Auto reject user agreement of app recommendation folder</string>
+    <string name="allow_relative_app_launch_title">Always allow relative app launching</string>
 </resources>
