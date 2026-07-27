@@ -87,6 +87,11 @@ class FrameworkSettingsViewModel(
         repository.saveAllowUntrustedTouch(enabled)
     }
 
+    fun setAllowRelativeAppLaunch(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(allowRelativeAppLaunch = enabled)
+        repository.saveAllowRelativeAppLaunch(enabled)
+    }
+
     fun showAiInputInfoDialog() {
         _uiState.value = _uiState.value.copy(showAiInputInfoDialog = true)
     }
