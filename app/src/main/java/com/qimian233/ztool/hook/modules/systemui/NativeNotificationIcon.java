@@ -57,7 +57,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             Method isCTSGTSTestMethod = classLoader
                     .loadClass("com.android.systemui.util.XSystemUtil")
                     .getDeclaredMethod("isCTSGTSTest");
-            this.xposed.hook(isCTSGTSTestMethod).intercept(chain -> {
+            hookWithId(isCTSGTSTestMethod, "is_ctsgts_test", chain -> {
                 var mode = isCtsMode.get();
                 if (mode != null) {
                     return mode;
@@ -76,7 +76,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             Method updateMethod = classLoader
                     .loadClass("com.android.systemui.statusbar.NotificationShelf")
                     .getDeclaredMethod("updateResources$5");
-            this.xposed.hook(updateMethod).intercept(chain -> {
+            hookWithId(updateMethod, "update", chain -> {
                 isCtsMode.set(true);
                 Object result = chain.proceed();
                 isCtsMode.remove();
@@ -94,7 +94,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             Class<?> qsUtilClass = classLoader.loadClass("com.android.systemui.util.QSUtil");
             Method replaceMethod = findMethodByName(qsUtilClass, "replaceTheSmallIcon");
             if (replaceMethod != null) {
-                this.xposed.hook(replaceMethod).intercept(chain -> null);
+                hookWithId(replaceMethod, "replace_1", chain -> null);
                 log("[NativeNotificationIcon] Successfully hooked com.android.systemui.util.QSUtil [3-1/6]");
                 return;
             }
@@ -102,7 +102,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             Class<?> listenerClass = classLoader.loadClass("com.android.systemui.statusbar.NotificationListener");
             replaceMethod = findMethodByName(listenerClass, "replaceTheSmallIcon");
             if (replaceMethod != null) {
-                this.xposed.hook(replaceMethod).intercept(chain -> null);
+                hookWithId(replaceMethod, "replace_2", chain -> null);
                 log("[NativeNotificationIcon] Successfully hooked NotificationListener.replaceTheSmallIcon [3-1/6]");
                 return;
             }
@@ -119,7 +119,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             Class<?> listenerClass = classLoader.loadClass("com.android.systemui.statusbar.NotificationListener");
             Method replaceMethod = findMethodByName(listenerClass, "replaceTheSmallIcon");
             if (replaceMethod != null) {
-                this.xposed.hook(replaceMethod).intercept(chain -> null);
+                hookWithId(replaceMethod, "replace_3", chain -> null);
                 log("[NativeNotificationIcon] Fallback: hooked NotificationListener.replaceTheSmallIcon [3-2/6]");
             } else {
                 log("replaceTheSmallIcon not found in NotificationListener, skipping hook.");
@@ -142,7 +142,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             log("New path classes found. Hooking...");
 
             Method onContentUpdatedMethod = newWrapperClass.getDeclaredMethod("onContentUpdated", newRowClass);
-            this.xposed.hook(onContentUpdatedMethod).intercept(chain -> {
+            hookWithId(onContentUpdatedMethod, "on_content_updated_1", chain -> {
                 Object result = chain.proceed();
                 var iconview = (ImageView) newGetIcon.invoke(chain.getThisObject());
                 if (iconview == null) return result;
@@ -188,7 +188,7 @@ public class NativeNotificationIcon extends BaseHookModule {
 
             Method onContentUpdatedMethod = notificationHeaderViewWrapper_class.getDeclaredMethod(
                     "onContentUpdated", expandableNotificationRow_class);
-            this.xposed.hook(onContentUpdatedMethod).intercept(chain -> {
+            hookWithId(onContentUpdatedMethod, "on_content_updated_2", chain -> {
                 Object result = chain.proceed();
                 var iconview = (ImageView) getIcon.invoke(chain.getThisObject());
                 final int KEY_SIZE_UNFUCKED = 1145141919;
@@ -225,7 +225,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             // Old version (pre-inline): has shouldShowIconBackground
             Method shouldShowMethod = findMethodByName(headerViewClass, "shouldShowIconBackground");
             if (shouldShowMethod != null) {
-                this.xposed.hook(shouldShowMethod).intercept(chain -> true);
+                hookWithId(shouldShowMethod, "should_show", chain -> true);
                 log("Successfully hooked shouldShowIconBackground (old version) [5/6]");
                 return;
             }
@@ -238,7 +238,7 @@ public class NativeNotificationIcon extends BaseHookModule {
                 isChildField.setAccessible(true);
                 Field showLargeField = headerViewClass.getDeclaredField("mShowLargeIconView");
                 showLargeField.setAccessible(true);
-                this.xposed.hook(updateBgMethod).intercept(chain -> {
+                hookWithId(updateBgMethod, "update_bg", chain -> {
                     Object thiz = chain.getThisObject();
                     boolean origChild = isChildField.getBoolean(thiz);
                     boolean origLarge = showLargeField.getBoolean(thiz);
@@ -267,13 +267,13 @@ public class NativeNotificationIcon extends BaseHookModule {
             Method isCtsMethod = classLoader
                     .loadClass("android.app.Notification$Builder")
                     .getDeclaredMethod("isCtsGtsTest");
-            this.xposed.hook(isCtsMethod).intercept(chain -> true);
+            hookWithId(isCtsMethod, "is_cts", chain -> true);
             log("Successfully hooked android.app.Notification$Builder [6/6]");
         } catch (Exception ignored) {
             try {
                 log("Unable to hook method isCtsGtsTest! Try alternate way.");
                 Method methodToReplace = classLoader.loadClass("com.android.systemui.util.XSystemUtil").getDeclaredMethod("isCTSGTSTest");
-                this.xposed.hook(methodToReplace).intercept(chain -> true);
+                hookWithId(methodToReplace, "method_to_replace", chain -> true);
                 log("Successfully hooked android.app.Notification$Builder with alternate way.[6/6]");
             } catch (Exception e) {
                 logError("Unable to hook isCTSGTSTest!", e);

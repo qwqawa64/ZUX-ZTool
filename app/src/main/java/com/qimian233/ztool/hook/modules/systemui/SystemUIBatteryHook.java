@@ -54,7 +54,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
                     android.content.Context.class,
                     android.util.AttributeSet.class,
                     int.class);
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor", chain -> {
                 chain.proceed();
                 modifyBatteryLayout(chain.getThisObject());
                 return null;
@@ -62,7 +62,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
             // Hook updateShowPercent 方法
             Method updateShowPercentMethod = batteryMeterViewClass.getDeclaredMethod("updateShowPercent");
-            this.xposed.hook(updateShowPercentMethod).intercept(chain -> {
+            hookWithId(updateShowPercentMethod, "update_show_percent", chain -> {
                 Object result = chain.proceed();
                 forceShowPercentage(chain.getThisObject());
                 return result;
@@ -70,7 +70,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
             // Hook updatePercentText 方法
             Method updatePercentTextMethod = batteryMeterViewClass.getDeclaredMethod("updatePercentText");
-            this.xposed.hook(updatePercentTextMethod).intercept(chain -> {
+            hookWithId(updatePercentTextMethod, "update_percent_text", chain -> {
                 Object result = chain.proceed();
                 updatePercentageText(chain.getThisObject());
                 return result;
@@ -78,7 +78,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
 
             // Hook scaleBatteryMeterViews 方法，调整字体大小
             Method scaleMethod = batteryMeterViewClass.getDeclaredMethod("scaleBatteryMeterViews");
-            this.xposed.hook(scaleMethod).intercept(chain -> {
+            hookWithId(scaleMethod, "scale", chain -> {
                 Object result = chain.proceed();
                 adjustTextSize(chain.getThisObject());
                 return result;

@@ -51,7 +51,7 @@ class CustomChargeAnimation : BaseHookModule() {
                 Map::class.java
             )
 
-            xposed.hook(setVideoURIMethod).intercept { chain ->
+            hookWithId(setVideoURIMethod, "set_video_uri") {  chain ->
                 val thisObject = chain.thisObject
                 if (thisObject != null &&
                     thisObject.javaClass.name == CHARGING_VIDEO_VIEW_CLASS
@@ -73,13 +73,15 @@ class CustomChargeAnimation : BaseHookModule() {
                         // 构建新 args 显式传入 proceed，避免原地修改被忽略
                         val newArgs = chain.args.toMutableList()
                         newArgs[0] = customUri
-                        return@intercept chain.proceed(newArgs.toTypedArray())
+                        chain.proceed(newArgs.toTypedArray())
                     } else {
                         log("CustomChargeAnimation: $fileName not found at $filePath, " +
                             "using default $originalUri.")
+                        chain.proceed()
                     }
+                } else {
+                    chain.proceed()
                 }
-                chain.proceed()
             }
 
             log("CustomChargeAnimation: VideoView.setVideoURI(Uri, Map) hooked successfully.")

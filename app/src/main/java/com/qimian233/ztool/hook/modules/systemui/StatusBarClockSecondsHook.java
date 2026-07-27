@@ -42,7 +42,7 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
         try {
             // Hook 1: 在 Clock 对象创建时强制启用秒显示
             Method onAttachedMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("onAttachedToWindow");
-            this.xposed.hook(onAttachedMethod).intercept(chain -> {
+            hookWithId(onAttachedMethod, "on_attached", chain -> {
                 Object result = chain.proceed();
                 forceEnableClockSeconds(chain.getThisObject());
                 return result;
@@ -57,7 +57,7 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
             // Hook 2: 防止系统设置覆盖我们的修改
             Method onTuningMethod = classLoader.loadClass(CLOCK_CLASS)
                     .getDeclaredMethod("onTuningChanged", String.class, String.class);
-            this.xposed.hook(onTuningMethod).intercept(chain -> {
+            hookWithId(onTuningMethod, "on_tuning", chain -> {
                 String key = (String) chain.getArg(0);
                 if ("clock_seconds".equals(key)) {
                     // 强制覆盖设置为开启
@@ -80,7 +80,7 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
         try {
             // Hook 3: 直接修改 updateShowSeconds 方法
             Method updateMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("updateShowSeconds");
-            this.xposed.hook(updateMethod).intercept(chain -> {
+            hookWithId(updateMethod, "update", chain -> {
                 // 强制启用秒显示
                 chain.getThisObject().getClass().getDeclaredField("mShowSeconds")
                         .setBoolean(chain.getThisObject(), true);

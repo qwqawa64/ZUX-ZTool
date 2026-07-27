@@ -45,7 +45,7 @@ public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
 
             // 使用beforeHookedMethod避免递归调用
             Method setTextMethod = TextView.class.getDeclaredMethod("setText", CharSequence.class);
-            this.xposed.hook(setTextMethod).intercept(chain -> {
+            hookWithId(setTextMethod, "set_text", chain -> {
                 try {
                     CharSequence text = (CharSequence) chain.getArg(0);
 

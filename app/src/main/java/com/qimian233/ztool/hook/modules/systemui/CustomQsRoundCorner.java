@@ -43,13 +43,13 @@ public class CustomQsRoundCorner extends BaseHookModule {
         Method changeCornerRadiusMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.QSTileViewImpl")
                 .getDeclaredMethod("changeCornerRadius", float.class);
-        this.xposed.hook(changeCornerRadiusMethod).intercept(chain -> chain.proceed(new Object[]{(float) headUpTileRoundCornerRadius}));
+        hookWithId(changeCornerRadiusMethod, "change_corner_radius", chain -> chain.proceed(new Object[]{(float) headUpTileRoundCornerRadius}));
 
         // Normal tiles
         Method updateRippleRadiusMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl")
                 .getDeclaredMethod("updateRippleRadius");
-        this.xposed.hook(updateRippleRadiusMethod).intercept(chain -> {
+        hookWithId(updateRippleRadiusMethod, "update_ripple_radius", chain -> {
             Object result = chain.proceed();
             try {
                 Class<?> cl = chain.getThisObject().getClass();
@@ -86,7 +86,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
         Class<?> toggleSliderViewClass = classLoader.loadClass("com.android.systemui.settings.ToggleSliderView");
 
         Method refreshSeekBarMethod = toggleSliderViewClass.getDeclaredMethod("refreshSeekBar", ProgressBar.class);
-        this.xposed.hook(refreshSeekBarMethod).intercept(chain -> {
+        hookWithId(refreshSeekBarMethod, "refresh_seek_bar", chain -> {
             log("refreshSeekBar afterHookedMethod called!");
             Object result = chain.proceed();
             applySeekBarRoundCorner((ProgressBar) chain.getArg(0), "refreshSeekBar");
@@ -94,7 +94,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
         });
 
         Method updateBrightnessSliderMethod = toggleSliderViewClass.getDeclaredMethod("updateBrightnessSlider");
-        this.xposed.hook(updateBrightnessSliderMethod).intercept(chain -> {
+        hookWithId(updateBrightnessSliderMethod, "update_brightness_slider", chain -> {
             Object result = chain.proceed();
             log("updateBrightnessSlider afterHookedMethod called!");
             Class<?> cl = chain.getThisObject().getClass();
@@ -108,7 +108,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
         });
 
         Method updateVolumeSliderMethod = toggleSliderViewClass.getDeclaredMethod("updateVolumeSlider");
-        this.xposed.hook(updateVolumeSliderMethod).intercept(chain -> {
+        hookWithId(updateVolumeSliderMethod, "update_volume_slider", chain -> {
             Object result = chain.proceed();
             log("updateVolumeSlider afterHookedMethod called!");
             Class<?> cl = chain.getThisObject().getClass();
@@ -125,7 +125,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
                 android.content.Context.class,
                 android.util.AttributeSet.class,
                 int.class);
-        this.xposed.hook(toggleCtor).intercept(chain -> {
+        hookWithId(toggleCtor, "toggle", chain -> {
             chain.proceed();
             Class<?> cl = chain.getThisObject().getClass();
             ProgressBar brightnessSlider = (ProgressBar) cl.getDeclaredField("mBrightnessSlider")

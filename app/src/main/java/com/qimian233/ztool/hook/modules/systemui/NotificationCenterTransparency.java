@@ -43,7 +43,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                     .loadClass("com.android.systemui.shade.ShadeViewProviderModule_Companion_ProvidesWindowRootViewFactory")
                     .getDeclaredMethod("providesWindowRootView",
                             classLoader.loadClass("android.view.LayoutInflater"));
-            this.xposed.hook(providesMethod).intercept(chain -> {
+            hookWithId(providesMethod, "provides", chain -> {
                 Object result = chain.proceed();
                 if (result instanceof View && isBlurCleared()) {
                     clearBlurFromViewTree((View) result);
@@ -60,7 +60,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
             Method setBlurMethod = classLoader
                     .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
                     .getDeclaredMethod("setNotificationPanelBlurBehind");
-            this.xposed.hook(setBlurMethod).intercept(chain -> {
+            hookWithId(setBlurMethod, "set_blur", chain -> {
                 if (isBlurCleared()) {
                     return null;
                 }
@@ -74,7 +74,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
             Method setBlurIntMethod = classLoader
                     .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
                     .getDeclaredMethod("setNotificationPanelBlurBehind", int.class);
-            this.xposed.hook(setBlurIntMethod).intercept(chain -> {
+            hookWithId(setBlurIntMethod, "set_blur_int", chain -> {
                 return chain.proceed(new Object[]{scaleBlur((int) chain.getArg(0))});
             });
         } catch (Throwable t) {
@@ -85,7 +85,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
             Method computeMethod = classLoader
                     .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
                     .getDeclaredMethod("computeBlurAndZoomOut");
-            this.xposed.hook(computeMethod).intercept(chain -> {
+            hookWithId(computeMethod, "compute", chain -> {
                 Object result = chain.proceed();
                 if (result != null) {
                     Class<?> pairClass = classLoader.loadClass("kotlin.Pair");
@@ -104,7 +104,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
             Method animateBlurMethod = classLoader
                     .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
                     .getDeclaredMethod("animateBlur", float.class, boolean.class);
-            this.xposed.hook(animateBlurMethod).intercept(chain -> {
+            hookWithId(animateBlurMethod, "animate_blur", chain -> {
                 float newBlur = scaleBlur((float) chain.getArg(0));
                 boolean newAnimate = (boolean) chain.getArg(1);
                 if (isBlurCleared()) {
@@ -122,7 +122,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
             Method updateExpansionMethod = classLoader
                     .loadClass("com.android.systemui.shade.QuickSettingsControllerImpl")
                     .getDeclaredMethod("updateExpansion");
-            this.xposed.hook(updateExpansionMethod).intercept(chain -> {
+            hookWithId(updateExpansionMethod, "update_expansion", chain -> {
                 Object result = chain.proceed();
                 if (isBlurCleared()) {
                     clearBackdropRenderEffect(chain.getThisObject());

@@ -39,7 +39,7 @@ public class CustomQsColor extends BaseHookModule {
             Method getBackgroundMethod = classLoader
                     .loadClass("com.android.systemui.qs.tileimpl.QSTileViewImpl")
                     .getDeclaredMethod("getBackgroundColorForState", int.class, boolean.class, boolean.class);
-            this.xposed.hook(getBackgroundMethod).intercept(chain -> {
+            hookWithId(getBackgroundMethod, "get_background", chain -> {
                 updatePrefs();
                 int state = (int) chain.getArg(0);
                 boolean disabledByPolicy = (boolean) chain.getArg(2);
@@ -52,7 +52,7 @@ public class CustomQsColor extends BaseHookModule {
             Method getLabelMethod = classLoader
                     .loadClass("com.android.systemui.qs.tileimpl.QSTileViewImpl")
                     .getDeclaredMethod("getLabelColorForState", int.class, boolean.class);
-            this.xposed.hook(getLabelMethod).intercept(chain -> {
+            hookWithId(getLabelMethod, "get_label", chain -> {
                 updatePrefs();
                 int state = (int) chain.getArg(0);
                 boolean disabledByPolicy = (boolean) chain.getArg(1);
@@ -65,7 +65,7 @@ public class CustomQsColor extends BaseHookModule {
             Method getSecondaryMethod = classLoader
                     .loadClass("com.android.systemui.qs.tileimpl.QSTileViewImpl")
                     .getDeclaredMethod("getSecondaryLabelColorForState", int.class, boolean.class);
-            this.xposed.hook(getSecondaryMethod).intercept(chain -> {
+            hookWithId(getSecondaryMethod, "get_secondary", chain -> {
                 updatePrefs();
                 int state = (int) chain.getArg(0);
                 boolean disabledByPolicy = (boolean) chain.getArg(1);

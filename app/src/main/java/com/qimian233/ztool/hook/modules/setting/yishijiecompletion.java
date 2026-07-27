@@ -41,7 +41,7 @@ public class yishijiecompletion extends BaseHookModule {
             Method m = classLoader
                     .loadClass("com.lenovo.settings.onevision.horizontal.SettingsEmbeddingAppManager")
                     .getDeclaredMethod("getZuiLandScapeShouldBeHideAppList");
-            this.xposed.hook(m).intercept(chain -> new String[0]);
+            hookWithId(m, "hook_44", chain -> new String[0]);
             log("Successfully hooked SettingsEmbeddingAppManager");
         } catch (Throwable t) {
             logError("Failed to hook SettingsEmbeddingAppManager", t);

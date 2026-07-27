@@ -48,7 +48,7 @@ public class ForceLenovoAOD extends BaseHookModule {
                     .getDeclaredConstructor(
                             classLoader.loadClass("com.android.systemui.doze.DozeTriggers"),
                             Context.class);
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor", chain -> {
                 chain.proceed();
                 // 在构造函数执行后，立即设置AOD启动标志
                 chain.getThisObject().getClass().getDeclaredField("mIsGoingToStartAOD")
@@ -66,7 +66,7 @@ public class ForceLenovoAOD extends BaseHookModule {
             // Hook SystemProperties检查
             Method getIntMethod = Class.forName("android.os.SystemProperties")
                     .getDeclaredMethod("getInt", String.class, int.class);
-            this.xposed.hook(getIntMethod).intercept(chain -> {
+            hookWithId(getIntMethod, "get_int", chain -> {
                 String key = (String) chain.getArg(0);
                 if ("ro.config.aod.support".equals(key)) {
                     log("Bypassed ro.config.aod.support check");
@@ -79,7 +79,7 @@ public class ForceLenovoAOD extends BaseHookModule {
             Method getIntForUserMethod = android.provider.Settings.System.class
                     .getDeclaredMethod("getIntForUser",
                             ContentResolver.class, String.class, int.class, int.class);
-            this.xposed.hook(getIntForUserMethod).intercept(chain -> {
+            hookWithId(getIntForUserMethod, "get_int_for_user", chain -> {
                 String setting = (String) chain.getArg(1);
                 if ("always_on_display".equals(setting)) {
                     log("Bypassed always_on_display setting check");

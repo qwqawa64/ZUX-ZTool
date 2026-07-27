@@ -47,7 +47,7 @@ public class SplitScreenMandatory extends BaseHookModule {
             Method m = classLoader
                     .loadClass("com.android.server.wm.OneModeService")
                     .getDeclaredMethod("initLocalBlackList");
-            this.xposed.hook(m).intercept(chain -> {
+            hookWithId(m, "hook_50", chain -> {
                 // 检查模块是否启用
                 if (!isEnabled()) {
                     return chain.proceed();

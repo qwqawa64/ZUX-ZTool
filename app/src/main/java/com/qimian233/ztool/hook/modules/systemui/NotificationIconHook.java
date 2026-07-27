@@ -81,7 +81,7 @@ public class NotificationIconHook extends BaseHookModule {
                     classLoader.loadClass("com.android.systemui.shade.domain.interactor.ShadeInteractor")
             );
 
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor_1", chain -> {
                 // after constructor: chain.proceed() then set field
                 chain.proceed();
                 try {
@@ -113,7 +113,7 @@ public class NotificationIconHook extends BaseHookModule {
                     classLoader.loadClass("com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData$LimitType")
             );
 
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor_2", chain -> {
                 try {
                     // 获取图标列表
                     Object iconList = chain.getArg(0);

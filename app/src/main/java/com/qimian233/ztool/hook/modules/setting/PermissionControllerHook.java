@@ -58,7 +58,7 @@ public class PermissionControllerHook extends BaseHookModule {
         Method onCreate = cls.getDeclaredMethod("onCreate", Bundle.class);
         Method super_onCreate = superclass.getDeclaredMethod("onCreate", Bundle.class);
         final MethodHandle super_onCreate_invokespecial = MethodHandles.lookup().unreflectSpecial(super_onCreate, cls);
-        this.xposed.hook(onCreate).intercept(chain -> {
+        hookWithId(onCreate, "on_create_1", chain -> {
             // redirect to AOSP permission manager
             super_onCreate_invokespecial.invoke(chain.getThisObject(), chain.getArg(0));
             Activity activity = (Activity) chain.getThisObject();
@@ -68,7 +68,7 @@ public class PermissionControllerHook extends BaseHookModule {
         });
 
         Method onDestroy = cls.getDeclaredMethod("onDestroy");
-        this.xposed.hook(onDestroy).intercept(chain -> null);
+        hookWithId(onDestroy, "on_destroy", chain -> null);
     }
 
     static class SettingsHook {
@@ -80,7 +80,7 @@ public class PermissionControllerHook extends BaseHookModule {
                 Method isRowVersionMethod = classLoader
                         .loadClass("com.lenovo.common.utils.LenovoUtils")
                         .getDeclaredMethod("isRowVersion");
-                xposed.hook(isRowVersionMethod).intercept(chain -> {
+                xposed.hook(isRowVersionMethod).setId("is_row_version").intercept(chain -> {
                     Boolean value = isRowVersionTls.get();
                     if (value != null) {
                         return value;
@@ -94,7 +94,7 @@ public class PermissionControllerHook extends BaseHookModule {
                 Method startMethod = classLoader
                         .loadClass("com.android.settings.applications.appinfo.AppPermissionPreferenceController")
                         .getDeclaredMethod("startManagePermissionsActivity");
-                xposed.hook(startMethod).intercept(chain -> {
+                xposed.hook(startMethod).setId("start").intercept(chain -> {
                     isRowVersionTls.set(true);
                     try {
                         return chain.proceed();
@@ -109,7 +109,7 @@ public class PermissionControllerHook extends BaseHookModule {
                 Method clickMethod = classLoader
                         .loadClass("com.lenovo.settings.privacy.PrivacyManagerPreferenceController")
                         .getDeclaredMethod("handlePreferenceTreeClick", prefClass);
-                xposed.hook(clickMethod).intercept(chain -> {
+                xposed.hook(clickMethod).setId("click").intercept(chain -> {
                     isRowVersionTls.set(true);
                     try {
                         return chain.proceed();
@@ -124,7 +124,7 @@ public class PermissionControllerHook extends BaseHookModule {
                     Method permClickMethod = classLoader
                             .loadClass("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController")
                             .getDeclaredMethod("handlePermissionClick");
-                    xposed.hook(permClickMethod).intercept(chain -> {
+                    xposed.hook(permClickMethod).setId("perm_click").intercept(chain -> {
                         isRowVersionTls.set(true);
                         try {
                             return chain.proceed();
@@ -137,7 +137,7 @@ public class PermissionControllerHook extends BaseHookModule {
                     Method lambdaMethod = classLoader
                             .loadClass("com.lenovo.settings.applications.LenovoAppHeaderPreferenceController")
                             .getDeclaredMethod("lambda$initAppEntryList$0$com-lenovo-settings-applications-LenovoAppHeaderPreferenceController", viewClass);
-                    xposed.hook(lambdaMethod).intercept(chain -> {
+                    xposed.hook(lambdaMethod).setId("lambda").intercept(chain -> {
                         isRowVersionTls.set(true);
                         try {
                             return chain.proceed();
@@ -162,7 +162,7 @@ public class PermissionControllerHook extends BaseHookModule {
         if (zuiUtilsCls != null) {
             try {
                 Method m = zuiUtilsCls.getDeclaredMethod("isCTSandGTS", String.class);
-                this.xposed.hook(m).intercept(chain -> Boolean.TRUE);
+                hookWithId(m, "hook_165", chain -> Boolean.TRUE);
             } catch (Throwable ignored) {}
         } else {
             this.xposed.log(android.util.Log.INFO, TAG, "[PermissionControllerHook] ZuiUtils not found");
@@ -173,7 +173,7 @@ public class PermissionControllerHook extends BaseHookModule {
                 Method onCreateMethod = classLoader
                         .loadClass("com.android.permissioncontroller.permission.ui.GrantPermissionsActivity")
                         .getDeclaredMethod("onCreate", Bundle.class);
-                this.xposed.hook(onCreateMethod).intercept(chain -> {
+                hookWithId(onCreateMethod, "on_create_2", chain -> {
                     Activity activity = (Activity) chain.getThisObject();
                     activity.setTheme(android.R.style.Theme_DeviceDefault_Light_Dialog_Alert);
                     activity.requestWindowFeature(Window.FEATURE_NO_TITLE);

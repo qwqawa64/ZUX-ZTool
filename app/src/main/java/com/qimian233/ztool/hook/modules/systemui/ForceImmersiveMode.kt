@@ -62,7 +62,7 @@ class ForceImmersiveMode : BaseHookModule() {
             val targetMethod: Method = commandQueueClass.declaredMethods
                 .first { it.name == "onSystemBarAttributesChanged" && it.parameterTypes.size == 8 }
 
-            xposed.hook(targetMethod).intercept { chain ->
+            hookWithId(targetMethod, "target") {  chain ->
                 val args = chain.args.toMutableList()
                 // args[5] = requestedVisibleTypes; 设为 0 隐藏状态栏+导航栏
                 val current = args[5] as Int
@@ -96,7 +96,7 @@ class ForceImmersiveMode : BaseHookModule() {
                 Int::class.javaPrimitiveType
             )
 
-            xposed.hook(method).intercept { chain ->
+            hookWithId(method, "method") {  chain ->
                 val args = chain.args
                 val displayId = args[0] as Int
                 val type = args[1] as Int

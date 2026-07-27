@@ -28,22 +28,18 @@ class HideOtaUpdateHint : BaseHookModule() {
                 String::class.java,
                 Int::class.javaPrimitiveType
             )
-            this.xposed.hook(getInt3).intercept { chain ->
-                if (OTA_NEW_VERSION_FOUND == chain.getArg(1)) {
-                    return@intercept 0
-                }
-                chain.proceed()
+            hookWithId(getInt3, "get_int3") { chain ->
+                if (OTA_NEW_VERSION_FOUND == chain.getArg(1)) 0
+                else chain.proceed()
             }
 
             // getInt(ContentResolver, String)
             val getInt2 = Secure::class.java.getDeclaredMethod(
                 "getInt", ContentResolver::class.java, String::class.java
             )
-            this.xposed.hook(getInt2).intercept { chain ->
-                if (OTA_NEW_VERSION_FOUND == chain.getArg(1)) {
-                    return@intercept 0
-                }
-                chain.proceed()
+            hookWithId(getInt2, "get_int2") { chain ->
+                if (OTA_NEW_VERSION_FOUND == chain.getArg(1)) 0
+                else chain.proceed()
             }
 
             log("Hooked Settings OTA new-version flag reads")

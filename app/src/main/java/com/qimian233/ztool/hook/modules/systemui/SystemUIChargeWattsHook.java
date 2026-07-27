@@ -45,7 +45,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
             // Hook computePowerIndication方法来添加充电瓦数显示
             Method computeMethod = classLoader.loadClass(TARGET_CLASS)
                     .getDeclaredMethod("computePowerIndication");
-            this.xposed.hook(computeMethod).intercept(chain -> {
+            hookWithId(computeMethod, "compute", chain -> {
                 try {
                     // 获取原始返回的充电提示文本
                     Object result = chain.proceed();
@@ -94,7 +94,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
             }
             if (refreshMethod != null) {
                 Method finalRefreshMethod = refreshMethod;
-                this.xposed.hook(finalRefreshMethod).intercept(chain -> {
+                hookWithId(finalRefreshMethod, "final_refresh", chain -> {
                     try {
                         Object result = chain.proceed();
                         // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据

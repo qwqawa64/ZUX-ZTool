@@ -46,7 +46,7 @@ class NetworkSpeedRefresh : BaseHookModule() {
                 Long::class.javaPrimitiveType
             )
 
-            xposed.hook(method).intercept { chain ->
+            hookWithId(method, "method") { chain ->
                 val handler = chain.thisObject
                 val what = chain.args[0] as Int
                 val delayMillis = chain.args[1] as Long
@@ -60,10 +60,10 @@ class NetworkSpeedRefresh : BaseHookModule() {
                     )
 
                     // 可选：将间隔改为 1 秒验证效果（取消注释下一行）
-                    return@intercept chain.proceed(arrayOf<Any>(what, refreshInterval))
+                    chain.proceed(arrayOf<Any>(what, refreshInterval))
+                } else {
+                    chain.proceed()
                 }
-
-                chain.proceed()
             }
 
             log("[SpeedRefreshTest] Handler.sendEmptyMessageDelayed hooked successfully.")

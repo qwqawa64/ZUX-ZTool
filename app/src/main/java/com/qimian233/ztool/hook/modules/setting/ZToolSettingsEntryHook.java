@@ -41,7 +41,7 @@ public class ZToolSettingsEntryHook extends BaseHookModule {
             Method m = classLoader
                     .loadClass(TARGET_CLASS)
                     .getDeclaredMethod("onCreatePreferences", android.os.Bundle.class, String.class);
-            this.xposed.hook(m).intercept(chain -> {
+            hookWithId(m, "hook_44", chain -> {
                 Object result = chain.proceed();
                 try {
                     Method getPrefScreen = findMethod(chain.getThisObject().getClass(), "getPreferenceScreen");

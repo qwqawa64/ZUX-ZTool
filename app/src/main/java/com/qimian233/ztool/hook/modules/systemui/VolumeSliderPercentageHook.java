@@ -64,7 +64,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             Method updateMusicSliderMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredMethod("updateMusicSlider");
-            this.xposed.hook(updateMusicSliderMethod).intercept(chain -> {
+            hookWithId(updateMusicSliderMethod, "update_music_slider", chain -> {
                 Object result = chain.proceed();
                 refreshVolumeFromToggleSlider(chain.getThisObject());
                 return result;
@@ -74,7 +74,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             Method registerVolumeObserverMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredMethod("registerVolumeObserver");
-            this.xposed.hook(registerVolumeObserverMethod).intercept(chain -> {
+            hookWithId(registerVolumeObserverMethod, "register_volume_observer", chain -> {
                 Object result = chain.proceed();
                 refreshVolumeFromToggleSlider(chain.getThisObject());
                 return result;
@@ -86,7 +86,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             Constructor<?> ctor = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredConstructor(Context.class, android.util.AttributeSet.class, int.class);
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor", chain -> {
                 chain.proceed();
                 attachSliderLabel(chain.getThisObject());
                 return null;
@@ -96,7 +96,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             Method updateVolumeSliderMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredMethod("updateVolumeSlider");
-            this.xposed.hook(updateVolumeSliderMethod).intercept(chain -> {
+            hookWithId(updateVolumeSliderMethod, "update_volume_slider", chain -> {
                 Object result = chain.proceed();
                 attachSliderLabel(chain.getThisObject());
                 refreshVolumeLabel(chain.getThisObject());
@@ -107,7 +107,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             Method setVolumeProgressMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredMethod("setVolumeProgress", int.class);
-            this.xposed.hook(setVolumeProgressMethod).intercept(chain -> {
+            hookWithId(setVolumeProgressMethod, "set_volume_progress", chain -> {
                 Object result = chain.proceed();
                 refreshVolumeLabel(chain.getThisObject());
                 return result;
@@ -117,7 +117,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             Method refreshSeekBarMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredMethod("refreshSeekBar", ProgressBar.class);
-            this.xposed.hook(refreshSeekBarMethod).intercept(chain -> {
+            hookWithId(refreshSeekBarMethod, "refresh_seek_bar", chain -> {
                 Object result = chain.proceed();
                 Object sliderView = chain.getThisObject();
                 ProgressBar progressBar = (ProgressBar) chain.getArg(0);
@@ -134,7 +134,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             Method onProgressChangedMethod = classLoader
                     .loadClass("com.android.systemui.settings.ToggleSliderView$2")
                     .getDeclaredMethod("onProgressChanged", SeekBar.class, int.class, boolean.class);
-            this.xposed.hook(onProgressChangedMethod).intercept(chain -> {
+            hookWithId(onProgressChangedMethod, "on_progress_changed", chain -> {
                 Object result = chain.proceed();
                 SeekBar seekBar = (SeekBar) chain.getArg(0);
                 Object sliderView = findToggleSliderView(seekBar);

@@ -31,7 +31,7 @@ public class ControlCenterNoTileLabelsHook extends BaseHookModule {
         Method createAndAddLabelsMethod = classLoader
                 .loadClass("com.android.systemui.qs.tileimpl.CustomQSTileViewImpl")
                 .getDeclaredMethod("createAndAddLabels");
-        this.xposed.hook(createAndAddLabelsMethod).intercept(chain -> {
+        hookWithId(createAndAddLabelsMethod, "create_and_add_labels", chain -> {
             Object result = chain.proceed();
             try {
                 Class<?> cl = chain.getThisObject().getClass();

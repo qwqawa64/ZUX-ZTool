@@ -64,7 +64,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     .getDeclaredConstructor(android.content.Context.class,
                             android.util.AttributeSet.class,
                             int.class);
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor", chain -> {
                 chain.proceed();
                 initNetworkSpeedView(chain.getThisObject());
                 return null;
@@ -122,7 +122,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
             // 通过 DEXKit 查找 NetworkSpeedView 的内部 Handler 类（替代硬编码 $3）
             Class<?> handlerClass = findHandlerInnerClass(classLoader);
             Method handleMessageMethod = handlerClass.getDeclaredMethod("handleMessage", android.os.Message.class);
-            this.xposed.hook(handleMessageMethod).intercept(chain -> {
+            hookWithId(handleMessageMethod, "handle_message", chain -> {
                 Object handler = chain.getThisObject();
                 Class<?> handlerCls = handler.getClass();
                 java.lang.reflect.Field this0Field = handlerCls.getDeclaredField("this$0");

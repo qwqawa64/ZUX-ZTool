@@ -45,7 +45,7 @@ public class GuestModeController extends BaseHookModule {
             Method isAllowedMethod = classLoader
                     .loadClass("com.android.systemui.user.domain.interactor.GuestUserInteractor")
                     .getDeclaredMethod("isDeviceAllowedToAddGuest");
-            this.xposed.hook(isAllowedMethod).intercept(chain -> {
+            hookWithId(isAllowedMethod, "is_allowed", chain -> {
                 // 获取应用上下文
                 Context context = (Context) chain.getThisObject().getClass()
                         .getDeclaredField("applicationContext").get(chain.getThisObject());

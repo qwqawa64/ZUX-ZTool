@@ -58,7 +58,7 @@ public class SystemUIRealWatts extends BaseHookModule {
             // Hook computePowerIndication方法来添加充电瓦数显示
             Method computeMethod = classLoader.loadClass(TARGET_CLASS)
                     .getDeclaredMethod("computePowerIndication");
-            this.xposed.hook(computeMethod).intercept(chain -> {
+            hookWithId(computeMethod, "compute", chain -> {
                 try {
                     // 获取原始返回的充电提示文本
                     Object result = chain.proceed();

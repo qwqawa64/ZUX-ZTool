@@ -73,7 +73,7 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
         Method m = classLoader
                 .loadClass(CONTROLLER_CLASS)
                 .getDeclaredMethod("setAppLabelAndIcon", PackageInfo.class, appEntryClass);
-        this.xposed.hook(m).intercept(chain -> {
+        hookWithId(m, "hook_76", chain -> {
             Object result = chain.proceed();
             try {
                 PackageInfo pkgInfo = (PackageInfo) chain.getArg(0);

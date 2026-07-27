@@ -76,7 +76,7 @@ public class CustomControlCenterDate extends BaseHookModule {
             Class<?> variableDateViewClass = classLoader.loadClass(VARIABLE_DATE_VIEW_CLASS);
 
             Method setTextMethod = findMethod(variableDateViewClass, "setText", CharSequence.class);
-            this.xposed.hook(setTextMethod).intercept(chain -> {
+            hookWithId(setTextMethod, "set_text", chain -> {
                 try {
                     if (!isEnabled()) return chain.proceed();
                     if (!isTargetVariableDateView(chain.getThisObject())) return chain.proceed();
@@ -111,7 +111,7 @@ public class CustomControlCenterDate extends BaseHookModule {
 
             // Hook access$updateClock静态方法
             Method accessMethod = controllerClass.getDeclaredMethod("access$updateClock", controllerClass);
-            this.xposed.hook(accessMethod).intercept(chain -> {
+            hookWithId(accessMethod, "access", chain -> {
                 Object result = chain.proceed();
                 try {
                     Object dateView = getValidatedVariableDateView(chain.getArg(0));
@@ -139,7 +139,7 @@ public class CustomControlCenterDate extends BaseHookModule {
     private void hookTextViewAttach() {
         try {
             Method attachMethod = android.widget.TextView.class.getDeclaredMethod("onAttachedToWindow");
-            this.xposed.hook(attachMethod).intercept(chain -> {
+            hookWithId(attachMethod, "attach", chain -> {
                 Object result = chain.proceed();
                 try {
                     Object textView = chain.getThisObject();

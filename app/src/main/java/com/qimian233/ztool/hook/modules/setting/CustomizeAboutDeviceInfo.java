@@ -71,7 +71,7 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
     ) {
         try {
             Method m = classLoader.loadClass(targetClass).getDeclaredMethod("getSummary");
-            this.xposed.hook(m).intercept(chain -> {
+            hookWithId(m, "hook_74", chain -> {
                 boolean prefEnabled;
                 try {
                     prefEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(enabledKey, false);
@@ -105,7 +105,7 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
             Method setImageMethod = classLoader
                     .loadClass(HEADER_VIEW_CLASS)
                     .getDeclaredMethod("setImage", ImageView.class);
-            this.xposed.hook(setImageMethod).intercept(chain -> {
+            hookWithId(setImageMethod, "set_image", chain -> {
                 Object result = chain.proceed();
                 boolean headerEnabled;
                 try {
@@ -133,7 +133,7 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
             Method updateTextMethod = classLoader
                     .loadClass(HEADER_VIEW_CLASS)
                     .getDeclaredMethod("updateText");
-            this.xposed.hook(updateTextMethod).intercept(chain -> {
+            hookWithId(updateTextMethod, "update_text", chain -> {
                 Object result = chain.proceed();
                 boolean modelEnabled;
                 try {

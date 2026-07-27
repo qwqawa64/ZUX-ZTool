@@ -79,7 +79,7 @@ public class OwnerInfoHook extends BaseHookModule {
             Method onResumeMethod = classLoader
                     .loadClass("com.android.settings.SecuritySettings")
                     .getDeclaredMethod("onResume");
-            this.xposed.hook(onResumeMethod).intercept(chain -> {
+            hookWithId(onResumeMethod, "on_resume", chain -> {
                 Object result = chain.proceed();
                 log("SecuritySettings resumed, registering screen receiver");
                 registerScreenReceiver(chain.getThisObject(), classLoader);
@@ -96,7 +96,7 @@ public class OwnerInfoHook extends BaseHookModule {
             Class<?> activityRecordClass = classLoader.loadClass("android.app.ActivityThread$ActivityClientRecord");
             Method performResumeMethod = activityThreadClass
                     .getDeclaredMethod("performResumeActivity", activityRecordClass, boolean.class, String.class);
-            this.xposed.hook(performResumeMethod).intercept(chain -> {
+            hookWithId(performResumeMethod, "perform_resume", chain -> {
                 Object result = chain.proceed();
                 Object activityRecord = chain.getArg(0);
                 Field activityField = activityRecord.getClass().getDeclaredField("activity");
@@ -122,7 +122,7 @@ public class OwnerInfoHook extends BaseHookModule {
             Method setPowerStateMethod = classLoader
                     .loadClass("com.android.server.power.PowerManagerService")
                     .getDeclaredMethod("setPowerState", boolean.class);
-            this.xposed.hook(setPowerStateMethod).intercept(chain -> {
+            hookWithId(setPowerStateMethod, "set_power_state", chain -> {
                 Object result = chain.proceed();
                 boolean screenOn = (Boolean) chain.getArg(0);
                 log("电源状态改变，屏幕状态: " + screenOn);
@@ -143,7 +143,7 @@ public class OwnerInfoHook extends BaseHookModule {
             Method userActivityMethod = classLoader
                     .loadClass("com.android.server.power.PowerManagerService")
                     .getDeclaredMethod("userActivity", int.class, long.class, int.class);
-            this.xposed.hook(userActivityMethod).intercept(chain -> {
+            hookWithId(userActivityMethod, "user_activity", chain -> {
                 Object result = chain.proceed();
                 int event = (Integer) chain.getArg(0);
                 // 用户活动事件，包括屏幕触摸、按键等
@@ -164,7 +164,7 @@ public class OwnerInfoHook extends BaseHookModule {
                     .loadClass("android.app.ContextImpl")
                     .getDeclaredMethod("registerReceiver",
                             BroadcastReceiver.class, IntentFilter.class);
-            this.xposed.hook(registerReceiverMethod).intercept(chain -> {
+            hookWithId(registerReceiverMethod, "register_receiver", chain -> {
                 // 检查是否是我们自己的接收器，避免重复注册
                 if (chain.getArg(0) == mScreenReceiver) {
                     return chain.proceed();

@@ -101,7 +101,7 @@ public class NoChargeAnimation extends BaseHookModule {
             handlerField.setAccessible(true);
             Class<?> handlerType = handlerField.getType();
             Method handleMessageMethod = handlerType.getDeclaredMethod("handleMessage", Message.class);
-            this.xposed.hook(handleMessageMethod).intercept(chain -> null);
+            hookWithId(handleMessageMethod, "handle_message", chain -> null);
             log("Hooked ChargingAnimationController [OK]");
         } catch (Exception e) {
             logError("Error hooking ChargingAnimationController", e);

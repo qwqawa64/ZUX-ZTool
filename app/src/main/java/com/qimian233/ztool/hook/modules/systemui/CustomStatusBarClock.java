@@ -54,7 +54,7 @@ public class CustomStatusBarClock extends BaseHookModule {
         try {
             // Hook Clock 类的 getSmallTime 方法
             Method getSmallTimeMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("getSmallTime");
-            this.xposed.hook(getSmallTimeMethod).intercept(chain -> {
+            hookWithId(getSmallTimeMethod, "get_small_time", chain -> {
                 try {
                     // 检查模块是否启用
                     if (!isEnabled()) {
@@ -79,7 +79,7 @@ public class CustomStatusBarClock extends BaseHookModule {
 
             // Hook updateClock 方法，确保内容描述和样式正确应用
             Method updateClockMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("updateClock");
-            this.xposed.hook(updateClockMethod).intercept(chain -> {
+            hookWithId(updateClockMethod, "update_clock", chain -> {
                 Object result = chain.proceed();
                 try {
                     // 检查模块是否启用
@@ -110,7 +110,7 @@ public class CustomStatusBarClock extends BaseHookModule {
 
             // 额外 Hook：在视图初始化时应用样式
             Method onFinishInflateMethod = classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("onFinishInflate");
-            this.xposed.hook(onFinishInflateMethod).intercept(chain -> {
+            hookWithId(onFinishInflateMethod, "on_finish_inflate", chain -> {
                 Object result = chain.proceed();
                 try {
                     if (!isEnabled()) {

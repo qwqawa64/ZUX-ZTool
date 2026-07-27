@@ -65,7 +65,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             Method onChangedMethod = classLoader
                     .loadClass("com.android.systemui.settings.brightness.BrightnessController")
                     .getDeclaredMethod("onChanged", int.class, boolean.class, boolean.class);
-            this.xposed.hook(onChangedMethod).intercept(chain -> {
+            hookWithId(onChangedMethod, "on_changed", chain -> {
                 Object result = chain.proceed();
                 refreshBrightnessFromController(chain.getThisObject(), (Integer) chain.getArg(0));
                 return result;
@@ -76,7 +76,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             Method setValueMethod = classLoader
                     .loadClass("com.android.systemui.settings.brightness.BrightnessSliderController")
                     .getDeclaredMethod("setValue", int.class);
-            this.xposed.hook(setValueMethod).intercept(chain -> {
+            hookWithId(setValueMethod, "set_value", chain -> {
                 Object result = chain.proceed();
                 Object sliderController = chain.getThisObject();
                 Class<?> scCls = sliderController.getClass();
@@ -99,7 +99,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         try {
             Constructor<?> ctor = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredConstructor(Context.class, android.util.AttributeSet.class, int.class);
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor", chain -> {
                 chain.proceed();
                 attachSliderLabel(chain.getThisObject());
                 return null;
@@ -109,7 +109,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         try {
             Method updateBrightnessMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredMethod("updateBrightnessSlider");
-            this.xposed.hook(updateBrightnessMethod).intercept(chain -> {
+            hookWithId(updateBrightnessMethod, "update_brightness", chain -> {
                 Object result = chain.proceed();
                 attachSliderLabel(chain.getThisObject());
                 refreshBrightnessLabel(chain.getThisObject());
@@ -120,7 +120,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         try {
             Method refreshSeekBarMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                     .getDeclaredMethod("refreshSeekBar", ProgressBar.class);
-            this.xposed.hook(refreshSeekBarMethod).intercept(chain -> {
+            hookWithId(refreshSeekBarMethod, "refresh_seek_bar", chain -> {
                 Object result = chain.proceed();
                 Object sliderView = chain.getThisObject();
                 ProgressBar progressBar = (ProgressBar) chain.getArg(0);
@@ -135,7 +135,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
     private void hookSeekProgressChanges() {
         try {
             Method setProgressMethod = SeekBar.class.getDeclaredMethod("setProgress", int.class);
-            this.xposed.hook(setProgressMethod).intercept(chain -> {
+            hookWithId(setProgressMethod, "set_progress", chain -> {
                 Object result = chain.proceed();
                 SeekBar seekBar = (SeekBar) chain.getThisObject();
                 Object sliderView = findToggleSliderView(seekBar);

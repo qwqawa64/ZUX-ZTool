@@ -56,7 +56,7 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                 Method m = classLoader
                         .loadClass("com.android.settings.dolby.DolbyAtmosPreferenceFragment")
                         .getDeclaredMethod("getheadsetStatus");
-                this.xposed.hook(m).intercept(chain -> 1);
+                hookWithId(m, "hook_59", chain -> 1);
                 log("Successfully hooked Android 13 DolbyAtmosPreferenceFragment.getheadsetStatus");
             }
             // Android 14 (SDK 34)
@@ -65,13 +65,13 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                 Method isHeadsetMethod = classLoader
                         .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosFragment")
                         .getDeclaredMethod("isHeadsetConnected");
-                this.xposed.hook(isHeadsetMethod).intercept(chain -> Boolean.TRUE);
+                hookWithId(isHeadsetMethod, "is_headset_1", chain -> Boolean.TRUE);
 
                 // Hook 初始化视图，清除摘要显示
                 Method initViewMethod = classLoader
                         .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosFragment")
                         .getDeclaredMethod("initView");
-                this.xposed.hook(initViewMethod).intercept(chain -> {
+                hookWithId(initViewMethod, "init_view", chain -> {
                     Object result = chain.proceed();
                     try {
                         Field field = chain.getThisObject().getClass()
@@ -97,14 +97,14 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                 Method isHeadsetMethod = classLoader
                         .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosUtils")
                         .getDeclaredMethod("isHeadsetConnected", Context.class);
-                this.xposed.hook(isHeadsetMethod).intercept(chain -> Boolean.TRUE);
+                hookWithId(isHeadsetMethod, "is_headset_2", chain -> Boolean.TRUE);
 
                 // Hook 控制器更新状态，清除摘要
                 Class<?> prefClass = classLoader.loadClass("androidx.preference.Preference");
                 Method updateStateMethod = classLoader
                         .loadClass("com.lenovo.settings.sound.dolby.DolbySwitchPreferenceController")
                         .getDeclaredMethod("updateState", prefClass);
-                this.xposed.hook(updateStateMethod).intercept(chain -> {
+                hookWithId(updateStateMethod, "update_state", chain -> {
                     try {
                         Object arg0 = chain.getArg(0);
                         if (arg0 != null) {
@@ -135,13 +135,13 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                 Method m = classLoader
                         .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosTile")
                         .getDeclaredMethod("isHeadSetConnect");
-                this.xposed.hook(m).intercept(chain -> Boolean.TRUE);
+                hookWithId(m, "hook_138", chain -> Boolean.TRUE);
                 log("Successfully hooked QDolbyAtmosTile.isHeadSetConnect (SDK <= 34)");
             } else {
                 Method m = classLoader
                         .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosTile")
                         .getDeclaredMethod("isHeadSetConnect$2");
-                this.xposed.hook(m).intercept(chain -> Boolean.TRUE);
+                hookWithId(m, "hook_144", chain -> Boolean.TRUE);
                 log("Successfully hooked QDolbyAtmosTile.isHeadSetConnect$2 (SDK > 34)");
             }
 
@@ -149,7 +149,7 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
             Method detailMethod = classLoader
                     .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosDetailView")
                     .getDeclaredMethod("isHeadSetConnect");
-            this.xposed.hook(detailMethod).intercept(chain -> Boolean.TRUE);
+            hookWithId(detailMethod, "detail", chain -> Boolean.TRUE);
             log("Successfully hooked QDolbyAtmosDetailView.isHeadSetConnect");
 
         } catch (Throwable t) {
