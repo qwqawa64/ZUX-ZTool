@@ -23,6 +23,7 @@ class FrameworkSettingsRepository(
             ),
             noPasswordPer24H = prefsUtils.loadBooleanSetting(NO_PASSWORD_PER_24H, false),
             allowUntrustedTouch = prefsUtils.loadBooleanSetting(ALLOW_UNTRUSTED_TOUCH, false),
+            allowRelativeAppLaunch = prefsUtils.loadBooleanSetting(ALLOW_RELATIVE_APP_LAUNCH, false),
             aiInputSigns = aiInputSigns,
             aiInputSignsError = validateAiInputSigns(aiInputSigns),
         )
@@ -67,6 +68,10 @@ class FrameworkSettingsRepository(
         prefsUtils.saveBooleanSetting(ALLOW_UNTRUSTED_TOUCH, enabled)
     }
 
+    fun saveAllowRelativeAppLaunch(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(ALLOW_RELATIVE_APP_LAUNCH, enabled)
+    }
+
     fun normalizeScreenOnOffAnimationDuration(value: Int): Int {
         val clampedValue = value.coerceIn(
             SCREEN_ON_OFF_ANIMATION_MIN_MS,
@@ -109,6 +114,7 @@ class FrameworkSettingsRepository(
         private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
         private const val NO_PASSWORD_PER_24H = "NoMorePasswordPer24H"
         private const val ALLOW_UNTRUSTED_TOUCH = "allow_untrusted_touch"
+        private const val ALLOW_RELATIVE_APP_LAUNCH = "allow_relative_app_launch"
     }
 }
 
