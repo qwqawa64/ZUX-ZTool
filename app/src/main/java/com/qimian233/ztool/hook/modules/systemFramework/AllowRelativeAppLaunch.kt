@@ -18,8 +18,8 @@ class AllowRelativeAppLaunch: BaseHookModule() {
         val targetClass: Class<*> = classLoader.loadClass($$"com.android.server.ZuiSecurityService$ZuiSecurityServiceBinder")
         val targetMethod: Method = findMethod(targetClass, "getRelativeAppStatus",
             String::class.java, String::class.java)
-        xposed.hook(targetMethod).intercept { _ ->
-            return@intercept 1
+        hookWithId(targetMethod, "relative_app_status") { _ ->
+            1
         }
     }
 }

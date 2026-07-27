@@ -98,7 +98,7 @@ public class AiInputExpand extends BaseHookModule {
         // 强制 enabled 方法返回 true
         try {
             Method method = featureClass.getDeclaredMethod("enabled", int.class);
-            this.xposed.hook(method).intercept(chain -> true);
+            hookWithId(method, "lgsi_features_enabled", chain -> true);
             log("Successfully forced LgsiFeatures check to TRUE");
         } catch (NoSuchMethodException e) {
             // 方法不存在，忽略

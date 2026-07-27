@@ -33,6 +33,6 @@ public class AllowUntrustedTouch extends BaseHookModule {
         ClassLoader classLoader = param.getClassLoader();
         Method method = classLoader.loadClass("com.android.server.wm.WindowState")
                 .getDeclaredMethod("getTouchOcclusionMode");
-        this.xposed.hook(method).intercept(chain -> 2);
+        hookWithId(method, "touch_occlusion_mode", chain -> 2);
     }
 }

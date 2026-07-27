@@ -33,14 +33,14 @@ public class NoMorePasswordPer24H extends BaseHookModule {
 
         Method rescheduleMethod = lockSettingsClass.getDeclaredMethod(
                 "rescheduleStrongAuthTimeoutAlarm", long.class, int.class);
-        this.xposed.hook(rescheduleMethod).intercept(chain -> null);
+        hookWithId(rescheduleMethod, "reschedule_strong_auth", chain -> null);
 
         Method handleIdleMethod = lockSettingsClass.getDeclaredMethod(
                 "handleScheduleNonStrongBiometricIdleTimeout", int.class);
-        this.xposed.hook(handleIdleMethod).intercept(chain -> null);
+        hookWithId(handleIdleMethod, "handle_idle_timeout", chain -> null);
 
         Method handleTimeoutMethod = lockSettingsClass.getDeclaredMethod(
                 "handleScheduleNonStrongBiometricTimeout", int.class);
-        this.xposed.hook(handleTimeoutMethod).intercept(chain -> null);
+        hookWithId(handleTimeoutMethod, "handle_timeout", chain -> null);
     }
 }

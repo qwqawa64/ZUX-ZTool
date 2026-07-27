@@ -45,7 +45,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             log("Executing hook for DisplayPowerController screen on/off animation...");
             Method isColorFadeEnabledMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER_INJECTOR)
                     .getDeclaredMethod("isColorFadeEnabled");
-            this.xposed.hook(isColorFadeEnabledMethod).intercept(chain -> true);
+            hookWithId(isColorFadeEnabledMethod, "color_fade_enabled", chain -> true);
             hookDisplayPowerControllerConstructor(classLoader);
             hookDisplayPowerControllerInitialize(classLoader);
             hookDisplayPowerControllerScreenOnAnimation(classLoader);
@@ -75,7 +75,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                             classLoader.loadClass(
                                     "com.android.server.display.feature.DisplayManagerFlags")
                     );
-            this.xposed.hook(constructor).intercept(chain -> {
+            hookWithId(constructor, "display_power_controller_init", chain -> {
                 Object result = chain.proceed();
                 Object thisObject = chain.getThisObject();
                 safeSetBooleanField(thisObject, "mColorFadeEnabled", true);
@@ -92,7 +92,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
         try {
             Method initializeMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER)
                     .getDeclaredMethod("initialize", int.class);
-            this.xposed.hook(initializeMethod).intercept(chain -> {
+            hookWithId(initializeMethod, "display_power_init", chain -> {
                 Object result = chain.proceed();
                 configureColorFadeAnimators(chain.getThisObject());
                 return result;
@@ -167,7 +167,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             Method animateMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER)
                     .getDeclaredMethod("animateScreenStateChange",
                             int.class, int.class, boolean.class, boolean.class, boolean.class);
-            this.xposed.hook(animateMethod).intercept(chain -> {
+            hookWithId(animateMethod, "animate_screen_state", chain -> {
                 if (tryStartPreparedScreenOnAnimation(chain.getThisObject(),
                         (Integer) chain.getArg(0))) {
                     return null;

@@ -6,9 +6,12 @@ import android.util.Log;
 import com.qimian233.ztool.hook.HookInit;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 
 import io.github.libxposed.api.XposedInterface;
+import io.github.libxposed.api.XposedInterface.HookHandle;
+import io.github.libxposed.api.XposedInterface.Hooker;
 import io.github.libxposed.api.XposedModuleInterface;
 
 /**
@@ -169,6 +172,24 @@ public abstract class BaseHookModule {
     }
 
     // ── helpers ────────────────────────────────────────────────
+
+    /**
+     * Hook with a stable id for hot-reload atomic replacement.
+     * Equivalent to {@code xposed.hook(target).setId(id).intercept(hooker)}.
+     * <p>
+     * During hot reload, a new hook registered with the same id on the same executable
+     * will atomically replace the old hook in the framework, eliminating the hook vacuum
+     * window.
+     * </p>
+     *
+     * @param target the method or constructor to hook
+     * @param id     a stable, module-unique identifier for the hook
+     * @param hooker the interception callback
+     * @return the hook handle
+     */
+    protected HookHandle hookWithId(Executable target, String id, Hooker hooker) {
+        return this.xposed.hook(target).setId(id).intercept(hooker);
+    }
 
     /*
      * XposedHelpers-style field finder. It looks up fields recursively in current class and its parent classes.

@@ -27,7 +27,7 @@ public class KeepRotation extends BaseHookModule {
         try{
             Method method = classLoader.loadClass("com.zui.server.wm.ZuiDisplayRotation")
                     .getDeclaredMethod("isRotationCts");
-            this.xposed.hook(method).intercept(chain -> Boolean.TRUE);
+            hookWithId(method, "is_rotation_cts", chain -> Boolean.TRUE);
             log("Hooked DisplayRotation.isRotationCts [OK]");
         } catch (Exception e) {
             logError("Error hooking DisplayRotation.isRotationCts", e);

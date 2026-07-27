@@ -35,7 +35,7 @@ public class AllowGetPackages extends BaseHookModule {
             log("Start hooking android.app.AppOpsManager, SystemFramework");
             Method opToDefaultMode = classLoader.loadClass("android.app.AppOpsManager")
                     .getDeclaredMethod("opToDefaultMode", int.class);
-            this.xposed.hook(opToDefaultMode).intercept(chain -> {
+            hookWithId(opToDefaultMode, "op_to_default_mode", chain -> {
                 int op = (int) chain.getArg(0);
                 if (op == OP_GET_INSTALLED_APP) {
                     return 0;
@@ -50,7 +50,7 @@ public class AllowGetPackages extends BaseHookModule {
             log("Start hooking com.android.server.appop.AppOpsService, SystemFramework");
             Method checkOperation = classLoader.loadClass("com.android.server.appop.AppOpsService")
                     .getDeclaredMethod("checkOperationRawZui", int.class, int.class, String.class);
-            this.xposed.hook(checkOperation).intercept(chain -> {
+            hookWithId(checkOperation, "check_operation_raw_zui", chain -> {
                 int op = (int) chain.getArg(0);
                 if (op == OP_GET_INSTALLED_APP) {
                     return 0;

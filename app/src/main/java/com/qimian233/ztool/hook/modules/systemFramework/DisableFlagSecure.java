@@ -47,7 +47,7 @@ public class DisableFlagSecure extends BaseHookModule {
 
             // Hook isSecureLocked方法，始终返回false
             Method method = windowStateClass.getDeclaredMethod("isSecureLocked");
-            this.xposed.hook(method).intercept(chain -> false);
+            hookWithId(method, "is_secure_locked", chain -> false);
 
             log("成功Hook WindowState.isSecureLocked()");
 

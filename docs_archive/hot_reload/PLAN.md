@@ -56,14 +56,49 @@ ZTool 当前完全未实现热重载生命周期回调，导致热重载被拒�
 
 ---
 
-## Phase 2 — 原子替换：消除 Hook 真空窗口
+## Phase 2 — 原子替换：消除 Hook 真空窗口 ✅ 已完成
 
-> 待 Phase 1 完成后规划细节。
+### 状态：已完成（P0 模块）
 
-核心思路：
-- `BaseHookModule` 新增 HookHandle 追踪 Map
-- 包装 `hook().setId(...)` 自动记录
-- `HookManager` 热重载时用 `replaceHook()` 原子替换
+### 原理
+
+libxposed API 内置：同一 module、同一 executable 上，使用相同 `setId()` 的新 Hook
+会**自动原子替换**旧 Hook，无需手动调用 `replaceHook()`。
+
+```
+旧模块                                    新模块
+  hook(m).setId("foo").intercept(old)        hook(m).setId("foo").intercept(new)
+                                           ↑ 框架识别 ID 匹配 → 原子替换，无真空窗口
+```
+
+### 改动文件
+
+| # | 文件 | 变更 |
+|---|------|------|
+| 1 | `BaseHookModule.java` | 新增 `hookWithId(Executable, String id, Hooker)` 方法 |
+| 2-9 | P0 systemFramework 模块 ×8 | 将 `xposed.hook(X).intercept(Y)` 改为 `hookWithId(X, id, Y)` |
+
+### ID 命名约定
+
+模块内唯一，描述性小写+下划线，如 `"op_to_default_mode"`, `"is_secure_locked"`。
+
+### P0 模块清单（全部已加 ID）
+
+| 模块 | Hook 数 | ID 列表 |
+|------|:---:|------|
+| `AiInputExpand` | 1 | `lgsi_features_enabled` |
+| `AllowGetPackages` | 2 | `op_to_default_mode`, `check_operation_raw_zui` |
+| `AllowRelativeAppLaunch` | 1 | `relative_app_status` |
+| `AllowUntrustedTouch` | 1 | `touch_occlusion_mode` |
+| `DisableFlagSecure` | 1 | `is_secure_locked` |
+| `ForceScreenOnOffAnimation` | 4 | `color_fade_enabled`, `display_power_controller_init`, `display_power_init`, `animate_screen_state` |
+| `KeepRotation` | 1 | `is_rotation_cts` |
+| `NoMorePasswordPer24H` | 3 | `reschedule_strong_auth`, `handle_idle_timeout`, `handle_timeout` |
+
+### 待后续完成
+
+- P1 模块（SystemUI、Settings 等）渐进补 ID
+- 当前 `onHotReloaded` 流程中 `replayAllHooks()` 后 `unhook` 残余旧 handle 的逻辑无需改动
 
 ---
 
