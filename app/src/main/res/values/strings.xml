@@ -922,9 +922,6 @@
     <string name="no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
     <string name="no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
     <string name="allow_untrusted_touch">允许不受信任的触摸</string>
-    <string name="lsposed_service_protector_title">LSPosed 服务守护</string>
-    <string name="lsposed_service_protector_enable_title">启用 LSPosed 服务守护</string>
-    <string name="lsposed_service_protector_enable_summary">如果遇到模块意外提示未激活的情况可以尝试开启</string>
     <string name="auto_check_update_title">自动检查更新</string>
     <string name="auto_check_update_summary">启动 APP 时自动检查更新</string>
     <string name="splash_logo_description" translatable="false">ZTool Logo</string>

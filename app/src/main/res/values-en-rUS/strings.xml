@@ -881,9 +881,6 @@
     <string name="disable_dock_bar_summary">Conflicts with dock bar expansion and will not provide extra desktop grid space</string>
     <string name="disable_dock_warning_title">Important Warn</string>
     <string name="disable_dock_warning_message">Move all apps in dock bar hotseat to desktop. Otherwise they will be "swallowed" by the disappeared dock bar. If the module is among them…</string>
-    <string name="lsposed_service_protector_title">LSPosed service protection</string>
-    <string name="lsposed_service_protector_enable_title">Enable LSPosed service protection</string>
-    <string name="lsposed_service_protector_enable_summary">Try this if you encounter unexpected activation fault of this module.</string>
     <string name="auto_accept_file_transfer">Accept file transfer request automatically</string>
     <string name="auto_accept_file_transfer_summary">You may receive some file by accident after enabling this feature</string>
     <string name="app_search_page_selected_string">%d APP(s) selected</string>
