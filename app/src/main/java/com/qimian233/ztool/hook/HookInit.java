@@ -58,4 +58,23 @@ public class HookInit extends XposedModule {
         log(4, TAG, "系统服务器启动中，分发系统作用域Hook");
         HookManager.handleSystemServerStarting(param);
     }
+
+    // ── 热重载支持 ─────────────────────────────────────────────
+
+    @Override
+    public boolean onHotReloading(@NonNull XposedModuleInterface.HotReloadingParam param) {
+        log(4, TAG, "热重载请求，同意重载");
+        return true;
+    }
+
+    @Override
+    public void onHotReloaded(@NonNull XposedModuleInterface.HotReloadedParam param) {
+        instance = this;
+        log(4, TAG, "热重载完成，重新注册模块并回放 Hook 安装");
+        HookManager.reinitializeForHotReload(this);
+        HookManager.replayAllHooks();
+        param.getOldHookHandles().forEach(XposedInterface.HookHandle::unhook);
+        log(4, TAG, "热重载清理完成，已卸载旧 Hook: "
+                + param.getOldHookHandles().size() + " 个");
+    }
 }

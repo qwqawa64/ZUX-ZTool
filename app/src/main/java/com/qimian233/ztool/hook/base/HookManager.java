@@ -90,9 +90,21 @@ public class HookManager {
     private static final List<BaseHookModule> hookModules = new ArrayList<>();
     private static boolean initialized = false;
 
+    // 热重载：缓存首次加载时的生命周期参数，用于热重载后回放
+    private static final List<XposedModuleInterface.PackageLoadedParam> savedPackageParams =
+            new ArrayList<>();
+    private static XposedModuleInterface.SystemServerStartingParam savedSystemServerParam = null;
+
     public static void initialize(XposedInterface xposed) {
         if (initialized) return;
+        registerAllModules(xposed);
+    }
 
+    /**
+     * 注册全部 Hook 模块并注入 XposedInterface。
+     * 由 {@link #initialize} 和 {@link #reinitializeForHotReload} 共用。
+     */
+    private static void registerAllModules(XposedInterface xposed) {
         // ── 系统框架 (target: system — 由 onSystemServerStarting 调度) ──
         registerHookModule(new DisableFlagSecure());
         registerHookModule(new NoMorePasswordPer24H());
@@ -203,6 +215,7 @@ public class HookManager {
 
     public static void handlePackageLoaded(
             XposedModuleInterface.PackageLoadedParam param) {
+        savedPackageParams.add(param);
         for (BaseHookModule module : hookModules) {
             module.safeHandleLoadPackage(param);
         }
@@ -210,8 +223,46 @@ public class HookManager {
 
     public static void handleSystemServerStarting(
             XposedModuleInterface.SystemServerStartingParam param) {
+        savedSystemServerParam = param;
         for (BaseHookModule module : hookModules) {
             module.safeHandleSystemServerStarting(param);
+        }
+    }
+
+    // ── 热重载支持 ─────────────────────────────────────────────
+
+    /**
+     * 热重载后重新初始化：清空旧模块列表，用新的 XposedInterface 重新注册全部模块。
+     * <p>
+     * 不清理 {@link #savedPackageParams} / {@link #savedSystemServerParam}，
+     * 因为回放需要它们。
+     * </p>
+     */
+    public static void reinitializeForHotReload(XposedInterface xposed) {
+        hookModules.clear();
+        registerAllModules(xposed);
+    }
+
+    /**
+     * 热重载后回放已保存的生命周期参数，让新模块重新安装 Hook。
+     * <p>
+     * 每个模块调用由 try-catch 包裹，单个模块失败不影响其他模块。
+     * </p>
+     */
+    public static void replayAllHooks() {
+        for (BaseHookModule module : hookModules) {
+            if (savedSystemServerParam != null) {
+                try {
+                    module.safeHandleSystemServerStarting(savedSystemServerParam);
+                } catch (Throwable ignored) {
+                }
+            }
+            for (XposedModuleInterface.PackageLoadedParam param : savedPackageParams) {
+                try {
+                    module.safeHandleLoadPackage(param);
+                } catch (Throwable ignored) {
+                }
+            }
         }
     }
 }
