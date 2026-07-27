@@ -54,6 +54,7 @@ import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun FrameworkSettingsRoute(
@@ -93,6 +94,7 @@ fun FrameworkSettingsRoute(
         onShowAiInputInfo = viewModel::showAiInputInfoDialog,
         onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
         onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
+        onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch
     )
 
     if (uiState.showAiInputInfoDialog) {
@@ -143,6 +145,7 @@ private fun FrameworkSettingsScreen(
     onAllowUntrustedTouch: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
+    onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit,
 ) {
@@ -193,6 +196,7 @@ private fun FrameworkSettingsScreen(
                         onShowAiInputInfo = onShowAiInputInfo,
                         onNoPasswordPer24H = onNoPasswordPer24H,
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
+                        onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -212,6 +216,7 @@ private fun frameworkSettingsSections(
     onAllowUntrustedTouch: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
+    onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
 ): List<SettingSection> {
@@ -235,6 +240,12 @@ private fun frameworkSettingsSections(
                     summary = stringResource(R.string.disable_zui_applist_enable_summary),
                     checked = state.allowGetPackages,
                     onCheckedChange = onAllowGetPackagesChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(),
+                    summary = stringResource(),
+                    checked = state.allowRelativeAppLaunch,
+                    onCheckedChange = onAllowRelativeAppLaunchChanged
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.disable_flag_secure_title),
@@ -405,7 +416,7 @@ private fun RestartSystemDialog(
 
     LaunchedEffect(Unit) {
         while (countdown > 0) {
-            delay(1000)
+            delay(1000.milliseconds)
             countdown -= 1
         }
     }
