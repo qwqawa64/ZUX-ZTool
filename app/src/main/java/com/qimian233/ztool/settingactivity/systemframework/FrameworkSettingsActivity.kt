@@ -242,8 +242,7 @@ private fun frameworkSettingsSections(
                     onCheckedChange = onAllowGetPackagesChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(),
-                    summary = stringResource(),
+                    title = stringResource(R.string.allow_relative_app_launch_title),
                     checked = state.allowRelativeAppLaunch,
                     onCheckedChange = onAllowRelativeAppLaunchChanged
                 ),
