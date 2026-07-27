@@ -48,7 +48,7 @@ class CustomChargeAnimation : BaseHookModule() {
             val setVideoURIMethod = videoViewClass.getDeclaredMethod(
                 "setVideoURI",
                 Uri::class.java,
-                java.util.Map::class.java
+                Map::class.java
             )
 
             xposed.hook(setVideoURIMethod).intercept { chain ->
