@@ -54,7 +54,7 @@ public class DocumentsUIBypass extends BaseHookModule {
 
             // Hook isBlockedFromTree 方法
             Method isBlockedFromTreeMethod = docInfoClass.getDeclaredMethod("isBlockedFromTree");
-            this.xposed.hook(isBlockedFromTreeMethod).intercept(chain -> {
+            hookWithId(isBlockedFromTreeMethod, "is_blocked_from_tree", chain -> {
                 chain.proceed();
                 // 强制返回 false，允许选择所有目录
                 return false;
@@ -64,7 +64,7 @@ public class DocumentsUIBypass extends BaseHookModule {
             // 可选：尝试 Hook isBlocked 方法（部分机型或旧版本存在）
             try {
                 Method isBlockedMethod = docInfoClass.getDeclaredMethod("isBlocked");
-                this.xposed.hook(isBlockedMethod).intercept(chain -> {
+                hookWithId(isBlockedMethod, "is_blocked", chain -> {
                     chain.proceed();
                     return false;
                 });
@@ -89,7 +89,7 @@ public class DocumentsUIBypass extends BaseHookModule {
 
             // Hook updateView 方法，在UI更新后强制修改控件状态
             Method updateViewMethod = pickFragClass.getDeclaredMethod("updateView");
-            this.xposed.hook(updateViewMethod).intercept(chain -> {
+            hookWithId(updateViewMethod, "update_view", chain -> {
                 Object result = chain.proceed();
                 Object fragment = chain.getThisObject();
 

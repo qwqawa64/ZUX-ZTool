@@ -50,7 +50,7 @@ public class DisableGameAudioApp extends BaseHookModule {
             // 在游戏启动时主动清除游戏音频属性
             Class<?> activityClass = classLoader.loadClass("android.app.Activity");
             Method onCreateMethod = activityClass.getDeclaredMethod("onCreate", android.os.Bundle.class);
-            this.xposed.hook(onCreateMethod).intercept(chain -> {
+            hookWithId(onCreateMethod, "on_create", chain -> {
                 chain.proceed();
                 // 清除游戏音频属性
                 clearGameAudioProperties();
@@ -86,7 +86,7 @@ public class DisableGameAudioApp extends BaseHookModule {
             Method m = classLoader
                     .loadClass("com.zui.game.service.util.DolbyUtils")
                     .getDeclaredMethod("handleDolbyGameSound", Context.class, Integer.TYPE);
-            this.xposed.hook(m).intercept(chain -> null);
+            hookWithId(m, "hook_89", chain -> null);
             log("Successfully hooked DolbyUtils.handleDolbyGameSound - disabled game sound processing");
         } catch (Throwable t) {
             logError("Failed to hook GameService package", t);

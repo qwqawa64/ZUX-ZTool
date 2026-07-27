@@ -25,8 +25,8 @@ class BluePointRemovalHook : BaseHookModule() {
             val isPackageNewMethod: Method = findMethod(
                 bluePointClass, "isPackageNew", View::class.java
             )
-            xposed.hook(isPackageNewMethod).intercept {
-                return@intercept false
+            hookWithId(isPackageNewMethod, "is_package_new") { 
+                false
             }
             log("BluePoint removal hook installed successfully!")
         } catch (e: Throwable) {

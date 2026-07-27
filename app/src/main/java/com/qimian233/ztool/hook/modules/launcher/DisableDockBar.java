@@ -51,7 +51,7 @@ public class DisableDockBar extends BaseHookModule {
         try {
             Class<?> zuiHotseatClass = classLoader.loadClass("com.zui.launcher.uiextend.ZuiHotseat");
             Method setVisibilityMethod = zuiHotseatClass.getDeclaredMethod("setVisibility", int.class);
-            this.xposed.hook(setVisibilityMethod).intercept(chain -> {
+            hookWithId(setVisibilityMethod, "set_visibility", chain -> {
                 int visibility = (int) chain.getArg(0);
                 if (visibility == View.VISIBLE) {
                     // Block setting visibility to VISIBLE, effectively hiding the dock

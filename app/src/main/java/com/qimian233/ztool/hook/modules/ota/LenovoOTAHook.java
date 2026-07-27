@@ -59,7 +59,7 @@ public class LenovoOTAHook extends BaseHookModule {
                     String.class       // str2 (URL)
             );
 
-            this.xposed.hook(targetMethod).intercept(chain -> {
+            hookWithId(targetMethod, "target", chain -> {
                 Properties properties = (Properties) chain.getArg(1);
                 String url = (String) chain.getArg(2);
 

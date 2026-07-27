@@ -62,7 +62,7 @@ public class DisableOtaCheck extends BaseHookModule {
             Method onCreateOptionsMenu = mainActivityClass.getDeclaredMethod("onCreateOptionsMenu", Menu.class);
             Class<?> rClass = classLoader.loadClass("com.lenovo.ota.R$id");
 
-            this.xposed.hook(onCreateOptionsMenu).intercept(chain -> {
+            hookWithId(onCreateOptionsMenu, "on_create_options_menu", chain -> {
                 Object result = chain.proceed();
                 try {
                     Menu menu = (Menu) chain.getArg(0);
@@ -95,7 +95,7 @@ public class DisableOtaCheck extends BaseHookModule {
             Method onPrepareOptionsMenu = mainActivityClass.getDeclaredMethod("onPrepareOptionsMenu", Menu.class);
             Class<?> rClass = classLoader.loadClass("com.lenovo.ota.R$id");
 
-            this.xposed.hook(onPrepareOptionsMenu).intercept(chain -> {
+            hookWithId(onPrepareOptionsMenu, "on_prepare_options_menu", chain -> {
                 Object result = chain.proceed();
                 try {
                     Menu menu = (Menu) chain.getArg(0);
@@ -136,7 +136,7 @@ public class DisableOtaCheck extends BaseHookModule {
             Field mCountField = mainActivityClass.getDeclaredField("mCount");
             mCountField.setAccessible(true);
 
-            this.xposed.hook(clickCountCallBack).intercept(chain -> {
+            hookWithId(clickCountCallBack, "click_count_call_back", chain -> {
                 // 在调用前直接设置计数器为6
                 mCountField.setInt(chain.getThisObject(), 6);
                 log("在 clickCountCallBack 前强制设置计数器为6");

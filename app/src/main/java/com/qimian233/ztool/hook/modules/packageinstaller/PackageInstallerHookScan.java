@@ -57,7 +57,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
             Class<?> activityExtraClass = classLoader.loadClass(
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method startScanApps = activityExtraClass.getDeclaredMethod("startScanApps");
-            this.xposed.hook(startScanApps).intercept(chain -> {
+            hookWithId(startScanApps, "start_scan_apps", chain -> {
                 log("拦截startScanApps，跳过扫描流程");
 
                 // 立即发送扫描完成的消息
@@ -84,7 +84,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
             Class<?> activityExtraClass = classLoader.loadClass(
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method showResultIfFinish = activityExtraClass.getDeclaredMethod("showResultIfFinish");
-            this.xposed.hook(showResultIfFinish).intercept(chain -> {
+            hookWithId(showResultIfFinish, "show_result_if_finish", chain -> {
                 log("拦截showResultIfFinish");
 
                 Object activity = chain.getThisObject();
@@ -116,7 +116,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
             Class<?> activityExtraClass = classLoader.loadClass(
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method bindSafeService = activityExtraClass.getDeclaredMethod("bindSafeService");
-            this.xposed.hook(bindSafeService).intercept(chain -> {
+            hookWithId(bindSafeService, "bind_safe_service", chain -> {
                 log("拦截bindSafeService，跳过服务绑定");
 
                 Object activity = chain.getThisObject();

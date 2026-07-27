@@ -61,7 +61,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
             Class<?> activityExtraClass = classLoader.loadClass(
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method startCustomInstallConfirm = activityExtraClass.getDeclaredMethod("startCustomInstallConfirm");
-            this.xposed.hook(startCustomInstallConfirm).intercept(chain -> {
+            hookWithId(startCustomInstallConfirm, "start_custom_install_confirm", chain -> {
                 Object result = chain.proceed();
                 if (!isEnabled()) return result;
 
@@ -128,7 +128,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                     android.view.LayoutInflater.class,
                     ArrayList.class,
                     android.os.Handler.class);
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor", chain -> {
                 chain.proceed();
                 if (!isEnabled()) return null;
 
@@ -158,7 +158,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
             Class<?> permissionsAdapterClass = classLoader.loadClass(
                     "com.android.packageinstaller.extra.PermissionsAdapter");
             Method getCount = permissionsAdapterClass.getDeclaredMethod("getCount");
-            this.xposed.hook(getCount).intercept(chain -> {
+            hookWithId(getCount, "get_count", chain -> {
                 if (!isEnabled()) return chain.proceed();
                 chain.proceed();
                 return 1;
@@ -172,7 +172,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
         try {
             Method setAdapter = android.widget.ListView.class.getDeclaredMethod(
                     "setAdapter", android.widget.ListAdapter.class);
-            this.xposed.hook(setAdapter).intercept(chain -> {
+            hookWithId(setAdapter, "set_adapter", chain -> {
                 if (!isEnabled()) return chain.proceed();
 
                 Object adapter = chain.getArg(0);

@@ -57,7 +57,7 @@ public class SocTemperatureFix extends BaseHookModule {
 
             // Hook getTemp 方法
             Method getTempMethod = hwDataInterfaceClass.getDeclaredMethod("getTemp");
-            this.xposed.hook(getTempMethod).intercept(chain -> {
+            hookWithId(getTempMethod, "get_temp", chain -> {
                 log("Block call to getTemp()");
                 int originalResult = (int) chain.proceed();
                 int newTemperature = readTemperatureFromFile();
@@ -73,7 +73,7 @@ public class SocTemperatureFix extends BaseHookModule {
 
             // Hook getThermalTemp 方法
             Method getThermalTempMethod = hwDataInterfaceClass.getDeclaredMethod("getThermalTemp", int.class);
-            this.xposed.hook(getThermalTempMethod).intercept(chain -> {
+            hookWithId(getThermalTempMethod, "get_thermal_temp", chain -> {
                 int type = (int) chain.getArg(0);
                 if (DEBUG) log("Blocked getThermalTemp(), type: " + type);
                 int originalResult = (int) chain.proceed();
@@ -105,7 +105,7 @@ public class SocTemperatureFix extends BaseHookModule {
 
             if (thermalManagerClass != null) {
                 Method getCurrentTempMethod = thermalManagerClass.getDeclaredMethod("getCurrentTemperature");
-                this.xposed.hook(getCurrentTempMethod).intercept(chain -> {
+                hookWithId(getCurrentTempMethod, "get_current_temp", chain -> {
                     int originalResult = (int) chain.proceed();
                     int newTemperature = readTemperatureFromFile();
 
@@ -143,7 +143,7 @@ public class SocTemperatureFix extends BaseHookModule {
             for (String methodName : temperatureMethods) {
                 try {
                     Method method = sysPropsClass.getDeclaredMethod(methodName);
-                    this.xposed.hook(method).intercept(chain -> {
+                    hookWithId(method, "method", chain -> {
                         int newTemperature = readTemperatureFromFile();
                         if (newTemperature > 0) {
                             if (DEBUG) log("Generic temperature detection method "

@@ -79,7 +79,7 @@ public class CleanGlobalSearch extends BaseHookModule {
                 for (String methodName : hotwordMethodNames) {
                     try {
                         Method method = globalSearchViewClass.getDeclaredMethod(methodName);
-                        this.xposed.hook(method).intercept(chain -> null);
+                        hookWithId(method, "method", chain -> null);
                         log("Hooked hotword inflation method: " + methodName);
                         hooked = true;
                         break;
@@ -112,7 +112,7 @@ public class CleanGlobalSearch extends BaseHookModule {
                 try {
                     Class<?> listClass = classLoader.loadClass("java.util.List");
                     Method e0Method = globalSearchViewClass.getDeclaredMethod(e0Name, listClass);
-                    this.xposed.hook(e0Method).intercept(chain -> null);
+                    hookWithId(e0Method, "hook_115", chain -> null);
                     log("Hooked hotword data method: " + e0Name);
                 } catch (NoSuchMethodError | Exception ignored) {
                     log("Unable to find GlobalSearchView hotword data method");
@@ -128,7 +128,7 @@ public class CleanGlobalSearch extends BaseHookModule {
                 Class<?> globalSearchViewClass = classLoader.loadClass(TARGET_CLASS);
                 // setHotWordHint 不是混淆的，直接使用
                 Method setHotWordHintMethod = globalSearchViewClass.getDeclaredMethod("setHotWordHint");
-                this.xposed.hook(setHotWordHintMethod).intercept(chain -> null);
+                hookWithId(setHotWordHintMethod, "set_hot_word_hint", chain -> null);
                 log("Hooked setHotWordHint");
             } catch (NoSuchMethodError | Exception ignored) {
                 log("Unable to find GlobalSearchView#setHotWordHint.");

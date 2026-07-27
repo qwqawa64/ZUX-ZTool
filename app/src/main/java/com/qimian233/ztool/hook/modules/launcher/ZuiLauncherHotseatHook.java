@@ -97,7 +97,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
         try {
             Class<?> hotseatClass = classLoader.loadClass("com.android.launcher3.Hotseat");
             Method getMaxCountMethod = hotseatClass.getDeclaredMethod("getMaxCount");
-            this.xposed.hook(getMaxCountMethod).intercept(chain -> {
+            hookWithId(getMaxCountMethod, "get_max_count", chain -> {
                 chain.proceed();
                 // 将最大数量从5改为20
                 log("修改Hotseat最大数量为20");
@@ -117,7 +117,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
 
             // Hook Launcher的showOutOfSpaceMessage方法，阻止显示空间不足提示
             Method showOutOfSpaceMethod = launcherClass.getDeclaredMethod("showOutOfSpaceMessage", boolean.class);
-            this.xposed.hook(showOutOfSpaceMethod).intercept(chain -> {
+            hookWithId(showOutOfSpaceMethod, "show_out_of_space", chain -> {
                 // 阻止显示空间不足提示
                 log("阻止显示空间不足提示");
                 return null;
@@ -128,7 +128,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             Class<?> workspaceClass = classLoader.loadClass("com.android.launcher3.Workspace");
             Method checkOccupiedMethod = launcherClass.getDeclaredMethod("checkOccupiedShortcut",
                     android.view.View.class, workspaceItemInfoClass, workspaceClass, boolean.class);
-            this.xposed.hook(checkOccupiedMethod).intercept(chain -> {
+            hookWithId(checkOccupiedMethod, "check_occupied", chain -> {
                 chain.proceed();
                 log("强制通过空间检查");
                 return true;
@@ -148,14 +148,14 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
 
             // Hook DeviceProfile的getHotseatColumnSpan
             Method getHotseatColumnSpanMethod = deviceProfileClass.getDeclaredMethod("getHotseatColumnSpan");
-            this.xposed.hook(getHotseatColumnSpanMethod).intercept(chain -> {
+            hookWithId(getHotseatColumnSpanMethod, "get_hotseat_column_span", chain -> {
                 chain.proceed();
                 return 20;
             });
 
             // Hook recalculateHotseatWidthAndBorderSpace方法
             Method recalculateMethod = deviceProfileClass.getDeclaredMethod("recalculateHotseatWidthAndBorderSpace");
-            this.xposed.hook(recalculateMethod).intercept(chain -> {
+            hookWithId(recalculateMethod, "recalculate", chain -> {
                 chain.proceed();
                 Object deviceProfile = chain.getThisObject();
                 // 强制设置numShownHotseatIcons为20
@@ -183,7 +183,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook completeAddShortcut方法，绕过添加限制
             Method completeAddMethod = launcherClass.getDeclaredMethod("completeAddShortcut",
                     android.content.Intent.class, int.class, int.class, int.class, int.class, pendingRequestArgsClass);
-            this.xposed.hook(completeAddMethod).intercept(chain -> {
+            hookWithId(completeAddMethod, "complete_add", chain -> {
                 log("准备添加快捷方式到Hotseat");
                 return chain.proceed();
             });
@@ -191,7 +191,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook addPendingItem方法
             Method addPendingItemMethod = launcherClass.getDeclaredMethod("addPendingItem",
                     pendingAddItemInfoClass, int.class, int.class, int[].class, int.class, int.class);
-            this.xposed.hook(addPendingItemMethod).intercept(chain -> {
+            hookWithId(addPendingItemMethod, "add_pending_item", chain -> {
                 // 确保添加项目时不会受到限制
                 int container = (int) chain.getArg(1);
 
@@ -206,7 +206,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                 Class<?> itemInfoClass = classLoader.loadClass("com.android.launcher3.model.data.ItemInfo");
                 Method addToWorkspaceMethod = launcherClass.getDeclaredMethod("addToWorkspace",
                         itemInfoClass, boolean.class);
-                this.xposed.hook(addToWorkspaceMethod).intercept(chain -> {
+                hookWithId(addToWorkspaceMethod, "add_to_workspace", chain -> {
                     Object itemInfo = chain.getArg(0);
                     Field containerField = findField(itemInfo.getClass(), "container");
                     int container = containerField.getInt(itemInfo);
@@ -234,7 +234,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
 
             // Hook InvariantDeviceProfile的getNumDatabaseHotseatIcons
             Method getNumMethod = invProfileClass.getDeclaredMethod("getNumDatabaseHotseatIcons");
-            this.xposed.hook(getNumMethod).intercept(chain -> {
+            hookWithId(getNumMethod, "get_num", chain -> {
                 chain.proceed();
                 // 将数据库Hotseat数量从5改为20
                 log("修改数据库Hotseat数量为20");
@@ -268,7 +268,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook checkItemPlacement方法，绕过Hotseat位置检查
             Method checkItemPlacementMethod = loaderCursorClass.getDeclaredMethod("checkItemPlacement",
                     itemInfoClass, boolean.class);
-            this.xposed.hook(checkItemPlacementMethod).intercept(chain -> {
+            hookWithId(checkItemPlacementMethod, "check_item_placement", chain -> {
                 Object itemInfo = chain.getArg(0);
                 Field containerField = findField(itemInfo.getClass(), "container");
                 int container = containerField.getInt(itemInfo);
@@ -286,7 +286,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook b方法（维度检查）— 通过 DEXKit 按签名动态查找
             String bMethodName = findBMethodName(classLoader, itemInfoClass);
             Method bMethod = loaderCursorClass.getDeclaredMethod(bMethodName, itemInfoClass);
-            this.xposed.hook(bMethod).intercept(chain -> {
+            hookWithId(bMethod, "hook_289", chain -> {
                 Object result = chain.proceed();
                 Object itemInfo = chain.getArg(0);
                 Field containerField = findField(itemInfo.getClass(), "container");
@@ -303,7 +303,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook checkAndAddItem方法
             Method checkAndAddItemMethod = loaderCursorClass.getDeclaredMethod("checkAndAddItem",
                     itemInfoClass, bgDataModelClass);
-            this.xposed.hook(checkAndAddItemMethod).intercept(chain -> {
+            hookWithId(checkAndAddItemMethod, "check_and_add_item", chain -> {
                 Object itemInfo = chain.getArg(0);
                 Field containerField = findField(itemInfo.getClass(), "container");
                 int container = containerField.getInt(itemInfo);
@@ -332,7 +332,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook LauncherModel的addOrMoveItemInDatabase方法
             Method addOrMoveMethod = launcherModelClass.getDeclaredMethod("addOrMoveItemInDatabase",
                     itemInfoClass, int.class, int.class, int.class, int.class);
-            this.xposed.hook(addOrMoveMethod).intercept(chain -> {
+            hookWithId(addOrMoveMethod, "add_or_move", chain -> {
                 int container = (int) chain.getArg(1);
                 int screen = (int) chain.getArg(2);
 
@@ -358,7 +358,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook CellLayout的findCellForSpan方法，使其总是能找到位置
             Method findCellMethod = cellLayoutClass.getDeclaredMethod("findCellForSpan",
                     int[].class, int.class, int.class);
-            this.xposed.hook(findCellMethod).intercept(chain -> {
+            hookWithId(findCellMethod, "find_cell", chain -> {
                 boolean result = (boolean) chain.proceed();
                 if (!result) {
                     // 如果原本找不到位置，强制返回true并设置坐标

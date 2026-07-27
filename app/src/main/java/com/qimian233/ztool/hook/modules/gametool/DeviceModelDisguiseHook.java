@@ -43,7 +43,7 @@ public class DeviceModelDisguiseHook extends BaseHookModule {
 
             // Hook getBuildModel方法，强制返回目标型号
             Method getBuildModelMethod = deviceUtilsClass.getDeclaredMethod("getBuildModel");
-            this.xposed.hook(getBuildModelMethod).intercept(chain -> "TB322FC");
+            hookWithId(getBuildModelMethod, "get_build_model", chain -> "TB322FC");
 
             log("Successfully hooked DeviceUtils.getBuildModel for com.zui.game.service");
 

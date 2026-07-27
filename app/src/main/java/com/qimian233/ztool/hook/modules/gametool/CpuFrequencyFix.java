@@ -41,15 +41,15 @@ public class CpuFrequencyFix extends BaseHookModule {
 
             // Hook HWDataInterface 的 getCpuCurFreq() 方法（无参数）
             Method getCpuCurFreqMethod = hwDataClass.getDeclaredMethod("getCpuCurFreq");
-            this.xposed.hook(getCpuCurFreqMethod).intercept(chain -> getLastCpuCoreCurrentFreq());
+            hookWithId(getCpuCurFreqMethod, "get_cpu_cur_freq", chain -> getLastCpuCoreCurrentFreq());
 
             // Hook HWDataInterface 的 getCpuCurFreq(int coreIndex) 方法
             Method getCpuCurFreqIndexMethod = hwDataClass.getDeclaredMethod("getCpuCurFreq", int.class);
-            this.xposed.hook(getCpuCurFreqIndexMethod).intercept(chain -> getLastCpuCoreCurrentFreq());
+            hookWithId(getCpuCurFreqIndexMethod, "get_cpu_cur_freq_index", chain -> getLastCpuCoreCurrentFreq());
 
             // Hook HWDataInterface 的 getCpuMaxFreq() 方法
             Method getCpuMaxFreqMethod = hwDataClass.getDeclaredMethod("getCpuMaxFreq");
-            this.xposed.hook(getCpuMaxFreqMethod).intercept(chain -> getLastCpuCoreMaxFreq());
+            hookWithId(getCpuMaxFreqMethod, "get_cpu_max_freq", chain -> getLastCpuCoreMaxFreq());
 
             log("CpuFrequencyFix: Successfully hooked CPU frequency methods");
 

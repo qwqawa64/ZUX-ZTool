@@ -61,15 +61,15 @@ public class ChargeAnimationFixModule extends BaseHookModule {
             // 原逻辑：(!Utilities.isLegiony() || Utilities.isOversea) ? "chargeStyle_row" : "chargeStyle"
             // 通过强制isLegiony返回true，确保使用"chargeStyle"数组
             Method isLegionyMethod = utilsClass.getDeclaredMethod("isLegiony");
-            this.xposed.hook(isLegionyMethod).intercept(chain -> true);
+            hookWithId(isLegionyMethod, "is_legiony", chain -> true);
 
             // 修改Utilities.isOversea()返回false
             Method isOverseaMethod = utilsClass.getDeclaredMethod("isOversea");
-            this.xposed.hook(isOverseaMethod).intercept(chain -> false);
+            hookWithId(isOverseaMethod, "is_oversea", chain -> false);
 
             // 修复平板设备的充电动画显示问题
             Method isPadMethod = utilsClass.getDeclaredMethod("isPad");
-            this.xposed.hook(isPadMethod).intercept(chain -> false);
+            hookWithId(isPadMethod, "is_pad", chain -> false);
 
             log("Successfully enabled all charge animations");
             log("Now showing: default, particle, turbo, triangle, girl");

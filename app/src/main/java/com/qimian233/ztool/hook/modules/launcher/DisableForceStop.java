@@ -140,7 +140,7 @@ public class DisableForceStop extends BaseHookModule {
             // Hook removeAppProcess方法 - 主要的进程杀死入口
             Method removeAppProcessMethod = overviewUtilitiesClass.getDeclaredMethod(
                     "removeAppProcess", Context.class, int.class, String.class, int.class);
-            this.xposed.hook(removeAppProcessMethod).intercept(chain -> {
+            hookWithId(removeAppProcessMethod, "remove_app_process_1", chain -> {
                 String pkgName = (String) chain.getArg(2); // 注意：参数索引修正
                 int uid = (int) chain.getArg(3);
 
@@ -162,7 +162,7 @@ public class DisableForceStop extends BaseHookModule {
             String cMethodName = findCMethodName(classLoader);
             Method cMethod = overviewUtilitiesClass.getDeclaredMethod(
                     cMethodName, Context.class, String.class, int.class);
-            this.xposed.hook(cMethod).intercept(chain -> {
+            hookWithId(cMethod, "hook_165", chain -> {
                 String pkgName = (String) chain.getArg(1);
                 int uid = (int) chain.getArg(2);
 
@@ -183,7 +183,7 @@ public class DisableForceStop extends BaseHookModule {
             // Hook removeAllRunningAppProcesses方法 - 批量清理入口
             Method removeAllMethod = overviewUtilitiesClass.getDeclaredMethod(
                     "removeAllRunningAppProcesses", Context.class, ArrayList.class, boolean.class);
-            this.xposed.hook(removeAllMethod).intercept(chain -> {
+            hookWithId(removeAllMethod, "remove_all_1", chain -> {
                 ArrayList<?> tasks = (ArrayList<?>) chain.getArg(1);
 
                 if (tasks != null) {
@@ -224,7 +224,7 @@ public class DisableForceStop extends BaseHookModule {
 
             if (asyncTaskClass != null) {
                 Method doInBackgroundMethod = asyncTaskClass.getDeclaredMethod("doInBackground", Void[].class);
-                this.xposed.hook(doInBackgroundMethod).intercept(chain -> {
+                hookWithId(doInBackgroundMethod, "do_in_background", chain -> {
                     try {
                         // 尝试获取任务列表
                         Object thisObject = chain.getThisObject();
@@ -302,7 +302,7 @@ public class DisableForceStop extends BaseHookModule {
 
                 Method removeAllMethod = amwclass.getDeclaredMethod(
                         "removeAllRunningAppProcesses", Context.class, ArrayList.class);
-                this.xposed.hook(removeAllMethod).intercept(chain -> {
+                hookWithId(removeAllMethod, "remove_all_2", chain -> {
                     ArrayList<?> tasks = (ArrayList<?>) chain.getArg(1);
 
                     if (tasks != null) {
@@ -329,7 +329,7 @@ public class DisableForceStop extends BaseHookModule {
 
                 Method removeAppProcessMethod = amwclass.getDeclaredMethod(
                         "removeAppProcess", Context.class, int.class, String.class, int.class);
-                this.xposed.hook(removeAppProcessMethod).intercept(chain -> {
+                hookWithId(removeAppProcessMethod, "remove_app_process_2", chain -> {
                     String pkgName = (String) chain.getArg(2);
 
                     if (isProtectedPackage(pkgName)) {

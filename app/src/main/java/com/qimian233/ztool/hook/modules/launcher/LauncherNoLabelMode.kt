@@ -67,7 +67,7 @@ class LauncherNoLabelMode : BaseHookModule() {
                 bubbleTextViewClass, "setTextVisibility",
                 Boolean::class.javaPrimitiveType
             )
-            xposed.hook(setTextVisibilityMethod).intercept { chain ->
+            hookWithId(setTextVisibilityMethod, "set_text_visibility_1") {  chain ->
                 if (isFromPopupSystemShortcut()) {
                     chain.proceed(chain.args.toTypedArray())
                 } else {
@@ -83,7 +83,7 @@ class LauncherNoLabelMode : BaseHookModule() {
                 bubbleTextViewClass, "setTextAlpha",
                 Float::class.javaPrimitiveType
             )
-            xposed.hook(setTextAlphaMethod).intercept { chain ->
+            hookWithId(setTextAlphaMethod, "set_text_alpha_1") {  chain ->
                 if (isFromPopupSystemShortcut()) {
                     chain.proceed(chain.args.toTypedArray())
                 } else {
@@ -122,7 +122,7 @@ class LauncherNoLabelMode : BaseHookModule() {
                 activeIconViewClass, "setTextVisibility",
                 Boolean::class.javaPrimitiveType
             )
-            xposed.hook(setTextVisibilityMethod).intercept { chain ->
+            hookWithId(setTextVisibilityMethod, "set_text_visibility_2") {  chain ->
                 val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
                 chain.proceed(args)
             }
@@ -132,7 +132,7 @@ class LauncherNoLabelMode : BaseHookModule() {
                 activeIconViewClass, "setTextAlpha",
                 Float::class.javaPrimitiveType
             )
-            xposed.hook(setTextAlphaMethod).intercept { chain ->
+            hookWithId(setTextAlphaMethod, "set_text_alpha_2") {  chain ->
                 val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
                 chain.proceed(args)
             }
@@ -143,7 +143,7 @@ class LauncherNoLabelMode : BaseHookModule() {
                 activeIconViewClass, "setIgnoreSetAlphaVisible",
                 Boolean::class.javaPrimitiveType
             )
-            xposed.hook(setIgnoreMethod).intercept { chain ->
+            hookWithId(setIgnoreMethod, "set_ignore") {  chain ->
                 val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
                 chain.proceed(args)
             }

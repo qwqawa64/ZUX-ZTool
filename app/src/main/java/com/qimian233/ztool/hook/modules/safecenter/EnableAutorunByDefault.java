@@ -38,7 +38,7 @@ public class EnableAutorunByDefault extends BaseHookModule {
                 fld.setAccessible(true);
 
                 for (Constructor<?> ctor : cls.getDeclaredConstructors()) {
-                    this.xposed.hook(ctor).intercept(chain -> {
+                    hookWithId(ctor, "ctor", chain -> {
                         chain.proceed();
                         Object obj = chain.getThisObject();
                         int attrs = fld.getInt(obj);

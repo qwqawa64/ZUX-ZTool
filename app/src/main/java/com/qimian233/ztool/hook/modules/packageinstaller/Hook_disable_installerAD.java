@@ -45,7 +45,7 @@ public class Hook_disable_installerAD extends BaseHookModule {
 
             // Hook initRecommendAppsData方法，阻止广告数据初始化
             Method initRecommendAppsData = installSuccessClass.getDeclaredMethod("initRecommendAppsData");
-            this.xposed.hook(initRecommendAppsData).intercept(chain -> {
+            hookWithId(initRecommendAppsData, "init_recommend_apps_data_1", chain -> {
                 // 直接返回，不执行任何广告初始化逻辑
                 log("已阻止PackageInstaller广告数据初始化");
                 return null;
@@ -75,7 +75,7 @@ public class Hook_disable_installerAD extends BaseHookModule {
 
             if (installSuccessClass != null) {
                 Method initRecommendAppsData = installSuccessClass.getDeclaredMethod("initRecommendAppsData");
-                this.xposed.hook(initRecommendAppsData).intercept(chain -> {
+                hookWithId(initRecommendAppsData, "init_recommend_apps_data_2", chain -> {
                     log("已阻止Google PackageInstaller广告数据初始化");
                     return null;
                 });

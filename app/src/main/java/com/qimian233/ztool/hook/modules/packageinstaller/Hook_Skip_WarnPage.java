@@ -39,7 +39,7 @@ public class Hook_Skip_WarnPage extends BaseHookModule {
             Class<?> activityExtraClass = classLoader.loadClass(
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method onResume = activityExtraClass.getDeclaredMethod("onResume");
-            this.xposed.hook(onResume).intercept(chain -> {
+            hookWithId(onResume, "on_resume", chain -> {
                 Object result = chain.proceed();
 
                 final Object activity = chain.getThisObject();

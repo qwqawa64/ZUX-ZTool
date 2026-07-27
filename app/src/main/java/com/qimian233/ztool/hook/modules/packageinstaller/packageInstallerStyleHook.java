@@ -66,10 +66,10 @@ public class packageInstallerStyleHook extends BaseHookModule {
 
             // Hook isCTSandGTS方法的重载版本
             Method isCTSandGTS1 = utilsClass.getDeclaredMethod("isCTSandGTS", String.class);
-            this.xposed.hook(isCTSandGTS1).intercept(chain -> Boolean.TRUE);
+            hookWithId(isCTSandGTS1, "is_ct_sand_gts1", chain -> Boolean.TRUE);
 
             Method isCTSandGTS2 = utilsClass.getDeclaredMethod("isCTSandGTS", String.class, Intent.class);
-            this.xposed.hook(isCTSandGTS2).intercept(chain -> Boolean.TRUE);
+            hookWithId(isCTSandGTS2, "is_ct_sand_gts2", chain -> Boolean.TRUE);
 
             log("成功Hook安装限制检查方法");
         } catch (Throwable t) {
@@ -88,7 +88,7 @@ public class packageInstallerStyleHook extends BaseHookModule {
 
             // Hook Activity的onCreate方法，修改主题和窗口属性
             Method onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
-            this.xposed.hook(onCreate).intercept(chain -> {
+            hookWithId(onCreate, "on_create", chain -> {
                 Activity activity = (Activity) chain.getThisObject();
 
                 // 检查是否为目标包安装器的Activity
@@ -128,7 +128,7 @@ public class packageInstallerStyleHook extends BaseHookModule {
             Class<?> activityClass = classLoader.loadClass(
                     "com.android.packageinstaller.PackageInstallerActivity");
             Method startInstallConfirm = activityClass.getDeclaredMethod("startInstallConfirm");
-            this.xposed.hook(startInstallConfirm).intercept(chain -> {
+            hookWithId(startInstallConfirm, "start_install_confirm", chain -> {
                 Object result = chain.proceed();
                 try {
                     Class<?> resourcesClass = classLoader.loadClass("com.android.packageinstaller.R$id");

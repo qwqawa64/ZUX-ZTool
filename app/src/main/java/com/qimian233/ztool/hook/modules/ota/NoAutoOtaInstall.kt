@@ -14,18 +14,18 @@ class NoAutoOtaInstall : BaseHookModule() {
         val otaPolicyClass: Class<*> = cl.loadClass("com.lenovo.row.ota.core.c.policy.OtaPolicy")
         try {
             val autoInstallGetterMethod: Method = findMethod(otaPolicyClass, "getmSettingNormalAutoInstall")
-            xposed.hook(autoInstallGetterMethod).intercept { _ ->
+            hookWithId(autoInstallGetterMethod, "auto_install_getter") {  _ ->
                 log("Intercepted auto install getter and force it to return false.")
-                return@intercept false
+                false
             }
         } catch (e: NoSuchMethodException) {
             logError("Unable to find method: ", e)
         }
         try {
             val autoDownloadGetterMethod: Method = findMethod(otaPolicyClass, "getmSettingNormalAutoDownload")
-            xposed.hook(autoDownloadGetterMethod).intercept { _ ->
+            hookWithId(autoDownloadGetterMethod, "auto_download_getter") {  _ ->
                 log("Intercepted auto download getter and force it to return false.")
-                return@intercept false
+                false
             }
         } catch (e: NoSuchMethodException) {
             logError("Unable to find method: ", e)
@@ -33,9 +33,9 @@ class NoAutoOtaInstall : BaseHookModule() {
         try {
             val autoInstallSetterMethod: Method = findMethod(otaPolicyClass, "setmSettingNormalAutoInstall",
                 Boolean::class.java)
-            xposed.hook(autoInstallSetterMethod).intercept { chain ->
+            hookWithId(autoInstallSetterMethod, "auto_install_setter") {  chain ->
                 log("Intercepted auto install setter and modify its argument to always false")
-                return@intercept chain.proceed(arrayOf(false))
+                chain.proceed(arrayOf(false))
             }
         } catch (e: NoSuchMethodException) {
             logError("Unable to find method: ", e)
@@ -43,9 +43,9 @@ class NoAutoOtaInstall : BaseHookModule() {
         try {
             val autoDownloadSetterMethod: Method = findMethod(otaPolicyClass, "setmSettingNormalAutoDownload",
                 Boolean::class.java)
-            xposed.hook(autoDownloadSetterMethod).intercept { chain ->
+            hookWithId(autoDownloadSetterMethod, "auto_download_setter") {  chain ->
                 log("Intercepted auto download setter and modify its argument to always false")
-                return@intercept chain.proceed(arrayOf(false))
+                chain.proceed(arrayOf(false))
             }
         } catch (e: NoSuchMethodException) {
             logError("Unable to find method: ", e)

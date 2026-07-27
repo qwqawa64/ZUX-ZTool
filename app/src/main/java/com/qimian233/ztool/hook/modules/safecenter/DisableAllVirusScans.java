@@ -45,7 +45,7 @@ public class DisableAllVirusScans extends BaseHookModule {
             log("Hooking safecenter to block manager initialization.");
             Class<?> managerCreatorFClass = classLoader.loadClass("tmsdk.fg.creator.ManagerCreatorF");
             Method getManagerMethod = managerCreatorFClass.getDeclaredMethod("getManager", Class.class);
-            this.xposed.hook(getManagerMethod).intercept(chain -> null);
+            hookWithId(getManagerMethod, "get_manager", chain -> null);
             log("Successfully hooked safecenter!");
         } catch (Exception e) {
             logError("Failed to hook scan manager! ", e);
@@ -58,14 +58,14 @@ public class DisableAllVirusScans extends BaseHookModule {
             Class<?> antiVirusDBManagerClass = classLoader.loadClass(
                     "com.lenovo.safecenter.antivirus.db.AntiVirusDBManager");
             Method getVirusAppsCountMethod = antiVirusDBManagerClass.getDeclaredMethod("getVirusAppsCount");
-            this.xposed.hook(getVirusAppsCountMethod).intercept(chain -> 0);
+            hookWithId(getVirusAppsCountMethod, "get_virus_apps_count", chain -> 0);
             log("getVirusAppsCount is set to 0.");
 
             log("Blocking AntiVirusDBHelper initialization.");
             Class<?> antiVirusDBHelperClass = classLoader.loadClass(
                     "com.lenovo.safecenter.antivirus.db.AntiVirusDBHelper");
             Constructor<?> ctor = antiVirusDBHelperClass.getDeclaredConstructor(Context.class);
-            this.xposed.hook(ctor).intercept(chain -> null);
+            hookWithId(ctor, "ctor", chain -> null);
         } catch (Exception e) {
             logError("Failed to hook DB manager! ", e);
         }
@@ -77,7 +77,7 @@ public class DisableAllVirusScans extends BaseHookModule {
                     "com.lenovo.safecenter.antivirus.views.NotiSMSActivity");
             Method onCreateMethod = notiSMSActivityClass.getDeclaredMethod("onCreate",
                     android.os.Bundle.class);
-            this.xposed.hook(onCreateMethod).intercept(chain -> null);
+            hookWithId(onCreateMethod, "on_create", chain -> null);
             log("Virus popup blocked successfully.");
         } catch (Exception e) {
             logError("Failed to disable virus popup! ", e);
@@ -91,7 +91,7 @@ public class DisableAllVirusScans extends BaseHookModule {
             Class<?> resultEntityClass = classLoader.loadClass("com.lesafe.utils.mode.ResultEntity");
             Method dealVirusMethod = installJudgeServiceClass.getDeclaredMethod("dealVirus",
                     resultEntityClass, boolean.class);
-            this.xposed.hook(dealVirusMethod).intercept(chain -> {
+            hookWithId(dealVirusMethod, "deal_virus", chain -> {
                 log("Blocked installed-virus handler from switching SafeCenter icon");
                 return null;
             });
@@ -107,7 +107,7 @@ public class DisableAllVirusScans extends BaseHookModule {
             Class<?> healthScannerClass = classLoader.loadClass(
                     "com.lenovo.safecenter.services.HealthScanner");
             Method setNumIconMethod = healthScannerClass.getDeclaredMethod("setNumIcon", int.class);
-            this.xposed.hook(setNumIconMethod).intercept(chain -> {
+            hookWithId(setNumIconMethod, "set_num_icon", chain -> {
                 int originalCount = (int) chain.getArg(0);
                 if (originalCount != 0) {
                     log("Forced HealthScanner icon warning count " + originalCount + " to 0");
@@ -129,7 +129,7 @@ public class DisableAllVirusScans extends BaseHookModule {
         try {
             Method putIntMethod = android.provider.Settings.System.class.getDeclaredMethod(
                     "putInt", ContentResolver.class, String.class, int.class);
-            this.xposed.hook(putIntMethod).intercept(chain -> {
+            hookWithId(putIntMethod, "put_int", chain -> {
                 String key = (String) chain.getArg(1);
                 if (isSafeCenterIconSetting(key)) {
                     int value = (int) chain.getArg(2);
@@ -150,7 +150,7 @@ public class DisableAllVirusScans extends BaseHookModule {
         try {
             Method getIntMethod = android.provider.Settings.System.class.getDeclaredMethod(
                     "getInt", ContentResolver.class, String.class, int.class);
-            this.xposed.hook(getIntMethod).intercept(chain -> {
+            hookWithId(getIntMethod, "get_int", chain -> {
                 String key = (String) chain.getArg(1);
                 if (isSafeCenterIconSetting(key)) {
                     return 0;
@@ -169,7 +169,7 @@ public class DisableAllVirusScans extends BaseHookModule {
                     "com.lenovo.safecenter.MainTab.ActiveView");
             Method getBitmapDrawableMethod = activeViewClass.getDeclaredMethod(
                     "getBitmapDrawable", Context.class, int.class);
-            this.xposed.hook(getBitmapDrawableMethod).intercept(chain -> {
+            hookWithId(getBitmapDrawableMethod, "get_bitmap_drawable", chain -> {
                 return chain.proceed(new Object[]{chain.getArg(0), 0});
             });
             log("ActiveView dynamic icon rendering forced to normal.");
@@ -188,7 +188,7 @@ public class DisableAllVirusScans extends BaseHookModule {
                     "com.lenovo.safecenter.antivirus.autoscan.AutoOverallScan");
             Method localOverallScanVirusMethod = autoOverallScanClass.getDeclaredMethod(
                     "LocalOverallScanVirus", Context.class);
-            this.xposed.hook(localOverallScanVirusMethod).intercept(chain -> {
+            hookWithId(localOverallScanVirusMethod, "local_overall_scan_virus", chain -> {
                 // 直接返回null，阻止自动扫描执行
                 log("Auto virus scan blocked at entry point");
                 return null;

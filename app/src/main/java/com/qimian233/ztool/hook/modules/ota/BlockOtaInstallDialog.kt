@@ -30,7 +30,7 @@ class BlockOtaInstallDialog : BaseHookModule() {
                 "com.lenovo.row.ota.core.d.ui.NightConfrimDialog"
             )
             val showMethod = findMethod(nightDialogClass, "show")
-            xposed.hook(showMethod).intercept { chain ->
+            hookWithId(showMethod, "show") {  chain ->
                 log("Blocked NightConfrimDialog to prevent night auto-install setup")
                 val dialog = chain.thisObject as Dialog
                 dialog.dismiss()

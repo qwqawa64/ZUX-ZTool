@@ -79,7 +79,7 @@ public class CustomGridSize extends BaseHookModule {
                     return;
                 }
             }
-            this.xposed.hook(ctor).intercept(chain -> {
+            hookWithId(ctor, "ctor", chain -> {
                 chain.proceed();
                 try {
                     Object thisObject = chain.getThisObject();

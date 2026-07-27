@@ -66,7 +66,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             Class<?> recentsViewClass = classLoader.loadClass(RECENTS_VIEW_CLASS);
 
             Method onAttachedMethod = recentsViewClass.getDeclaredMethod("onAttachedToWindow");
-            this.xposed.hook(onAttachedMethod).intercept(chain -> {
+            hookWithId(onAttachedMethod, "on_attached", chain -> {
                 try {
                     chain.proceed();
                     attachMemoryView((View) chain.getThisObject());
@@ -78,7 +78,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             });
 
             Method onDetachedMethod = recentsViewClass.getDeclaredMethod("onDetachedFromWindow");
-            this.xposed.hook(onDetachedMethod).intercept(chain -> {
+            hookWithId(onDetachedMethod, "on_detached", chain -> {
                 try {
                     detachMemoryView((View) chain.getThisObject());
                     log("onDetachedFromWindow hook executed successfully");
@@ -89,7 +89,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             });
 
             Method setOverviewMethod = recentsViewClass.getDeclaredMethod("setOverviewStateEnabled", boolean.class);
-            this.xposed.hook(setOverviewMethod).intercept(chain -> {
+            hookWithId(setOverviewMethod, "set_overview", chain -> {
                 chain.proceed();
                 View recentsView = (View) chain.getThisObject();
                 boolean enabled = (boolean) chain.getArg(0);
@@ -100,7 +100,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             });
 
             Method setVisibilityMethod = recentsViewClass.getDeclaredMethod("setVisibility", int.class);
-            this.xposed.hook(setVisibilityMethod).intercept(chain -> {
+            hookWithId(setVisibilityMethod, "set_visibility", chain -> {
                 chain.proceed();
                 updateMemoryViewVisibility((View) chain.getThisObject());
                 log("setVisibility hook executed successfully");
@@ -109,7 +109,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
 
             Method onLayoutMethod = recentsViewClass.getDeclaredMethod("onLayout",
                     boolean.class, int.class, int.class, int.class, int.class);
-            this.xposed.hook(onLayoutMethod).intercept(chain -> {
+            hookWithId(onLayoutMethod, "on_layout", chain -> {
                 chain.proceed();
                 attachMemoryView((View) chain.getThisObject());
                 log("onLayout hook executed successfully");

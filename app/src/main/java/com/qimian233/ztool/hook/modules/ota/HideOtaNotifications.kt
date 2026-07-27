@@ -22,8 +22,8 @@ class HideOtaNotifications: BaseHookModule() {
             val cl: ClassLoader = param.defaultClassLoader
             val targetClass: Class<*> = cl.loadClass("com.lenovo.row.ota.core.d.notification.NotificationCenter")
             val targetMethod: Method = findMethod(targetClass, "showNewVersionNotification")
-            xposed.hook(targetMethod).intercept { _ ->
-                return@intercept null
+            hookWithId(targetMethod, "target_1") {  _ ->
+                null
             }
         } catch (th: Throwable) {
             logError("Failed to hook OTA update notification creation method!", th)
@@ -37,7 +37,7 @@ class HideOtaNotifications: BaseHookModule() {
                 cl.loadClass("com.lenovo.row.ota.core.a.workflow.WorkFlowManager")
             val targetMethod: Method =
                 findMethod(targetClass, "reddot", Context::class.java, Int::class.javaPrimitiveType)
-            xposed.hook(targetMethod).intercept { chain ->
+            hookWithId(targetMethod, "target_2") {  chain ->
                 try {
                     val argList = chain.args.toMutableList()
                     if (argList[1] != 0) {
@@ -67,7 +67,7 @@ class HideOtaNotifications: BaseHookModule() {
                 String::class.java,
                 Any::class.java
             )
-            xposed.hook(targetMethod).intercept { chain ->
+            hookWithId(targetMethod, "target_3") {  chain ->
                 val argList = chain.args.toMutableList()
                 val key = argList[1] as? String
                 if (key == "lenovo_ota_new_version_found") {

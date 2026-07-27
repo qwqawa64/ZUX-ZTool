@@ -77,7 +77,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
             // Hook setPkgName 方法（游戏启动时调用）
             Method setPkgNameMethod = controllerClass.getDeclaredMethod("setPkgName", String.class);
-            this.xposed.hook(setPkgNameMethod).intercept(chain -> {
+            hookWithId(setPkgNameMethod, "set_pkg_name", chain -> {
                 chain.proceed();
                 String pkgName = (String) chain.getArg(0);
                 if (pkgName != null && !pkgName.isEmpty()) {
@@ -107,7 +107,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
 
             // Hook change2Status 方法，确保状态正确同步
             Method change2StatusMethod = itemClass.getDeclaredMethod("change2Status", int.class);
-            this.xposed.hook(change2StatusMethod).intercept(chain -> {
+            hookWithId(change2StatusMethod, "change2_status", chain -> {
                 int targetStatus = (int) chain.getArg(0);
                 if (DEBUG) log("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
                 return chain.proceed();
@@ -125,7 +125,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             // Hook LiveData的postValue方法，确保状态同步
             Class<?> liveDataClass = classLoader.loadClass("androidx.lifecycle.MutableLiveData");
             Method postValueMethod = liveDataClass.getDeclaredMethod("postValue", Object.class);
-            this.xposed.hook(postValueMethod).intercept(chain -> {
+            hookWithId(postValueMethod, "post_value", chain -> {
                 Object value = chain.getArg(0);
                 if (value instanceof Integer) {
                     int status = (Integer) value;
@@ -154,7 +154,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             Class<?> settingsUtilClass = classLoader.loadClass(SETTINGS_UTIL_CLASS);
             Method setPreventMethod = settingsUtilClass.getDeclaredMethod(
                     "setPreventMisoperation", Context.class, int.class);
-            this.xposed.hook(setPreventMethod).intercept(chain -> {
+            hookWithId(setPreventMethod, "set_prevent", chain -> {
                 if (mBlockPersistence) {
                     if (DEBUG) log("Blocked setPreventMisoperation persistence");
                     return null;

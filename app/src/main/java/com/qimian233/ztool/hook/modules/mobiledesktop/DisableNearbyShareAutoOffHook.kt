@@ -99,7 +99,7 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
                 return
             }
 
-            xposed.hook(targetMethod).intercept {
+            hookWithId(targetMethod, "target") { 
                 log("startCountDown() intercepted — auto-off timer prevented.")
                 null
             }

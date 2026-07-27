@@ -18,7 +18,7 @@ class DismissCloudFolderConfirmation: BaseHookModule() {
             val launcherClass: Class<*> = classLoader.loadClass("com.android.launcher3.Launcher")
             val targetMethod: Method = findMethod(targetClass, "showCloudFolderAuthorizationDialog",
                 launcherClass, Runnable::class.java, Runnable::class.java)
-            xposed.hook(targetMethod).intercept { chain ->
+            hookWithId(targetMethod, "target") {  chain ->
                 try {
                     val dialog = chain.proceed(chain.args.toTypedArray()) as? android.app.Dialog
                     dialog?.dismiss()

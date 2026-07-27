@@ -55,7 +55,7 @@ public class DisableGameAudio extends BaseHookModule {
 
             Class<?> sysPropsClass = classLoader.loadClass("android.os.SystemProperties");
             Method setMethod = sysPropsClass.getDeclaredMethod("set", String.class, String.class);
-            this.xposed.hook(setMethod).intercept(chain -> {
+            hookWithId(setMethod, "set", chain -> {
                 String key = (String) chain.getArg(0);
                 String value = (String) chain.getArg(1);
 
@@ -112,7 +112,7 @@ public class DisableGameAudio extends BaseHookModule {
             }
             // Hook ZuiGameAppStateListener 的 onGameAppStart 方法
             Method onGameAppStartMethod = targetClass.getDeclaredMethod("onGameAppStart", String.class, String.class);
-            this.xposed.hook(onGameAppStartMethod).intercept(chain -> {
+            hookWithId(onGameAppStartMethod, "on_game_app_start", chain -> {
                 String pkgName = (String) chain.getArg(0);
                 if (DEBUG) log("ZuiGameAppStateListener.onGameAppStart for: " + pkgName);
 
@@ -122,7 +122,7 @@ public class DisableGameAudio extends BaseHookModule {
 
             // Hook ZuiGameAppStateListener 的 onGameAppExit 方法
             Method onGameAppExitMethod = targetClass.getDeclaredMethod("onGameAppExit", String.class, String.class);
-            this.xposed.hook(onGameAppExitMethod).intercept(chain -> {
+            hookWithId(onGameAppExitMethod, "on_game_app_exit", chain -> {
                 String pkgName = (String) chain.getArg(0);
                 if (DEBUG) log("ZuiGameAppStateListener.onGameAppExit for: " + pkgName);
                 return chain.proceed();
@@ -144,7 +144,7 @@ public class DisableGameAudio extends BaseHookModule {
 
             Class<?> audioManagerClass = classLoader.loadClass("android.media.AudioManager");
             Method setParametersMethod = audioManagerClass.getDeclaredMethod("setParameters", String.class);
-            this.xposed.hook(setParametersMethod).intercept(chain -> {
+            hookWithId(setParametersMethod, "set_parameters", chain -> {
                 String keyValuePairs = (String) chain.getArg(0);
 
                 if (keyValuePairs != null && keyValuePairs.contains("game_voip=true")) {

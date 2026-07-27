@@ -97,24 +97,27 @@ class BypassShareWarningHook : BaseHookModule() {
             // ── Hook 1: 磁贴点击 ───────────────────────────────────
             val baseFileUnionTileClass = classLoader.loadClass(TARGET_CLASS)
             val onClickMethod = baseFileUnionTileClass.getDeclaredMethod("onClick")
-            xposed.hook(onClickMethod).intercept { chain ->
+            hookWithId(onClickMethod, "on_click") { chain ->
                 val tile = chain.thisObject
-                val context = getContext(tile) ?: return@intercept chain.proceed()
-
-                val enabled = isNearbyShareEnabled(context)
-                log("IsNearbyShareEnabled: $enabled")
-                if (enabled) {
-                    log("Nearby share already enabled, keep original disable flow.")
-                    return@intercept chain.proceed()
+                val context = getContext(tile)
+                if (context == null) {
+                    chain.proceed()
+                } else {
+                    val enabled = isNearbyShareEnabled(context)
+                    log("IsNearbyShareEnabled: $enabled")
+                    if (enabled) {
+                        log("Nearby share already enabled, keep original disable flow.")
+                        chain.proceed()
+                    } else {
+                        setNearbyShareEnabled(
+                            tile, context, classLoader,
+                            finalManagerClass, finalFactoryMethod, finalSetMethod,
+                            bridge
+                        )
+                        log("Bypassed warning and enabled nearby share directly.")
+                        null
+                    }
                 }
-
-                setNearbyShareEnabled(
-                    tile, context, classLoader,
-                    finalManagerClass, finalFactoryMethod, finalSetMethod,
-                    bridge
-                )
-                log("Bypassed warning and enabled nearby share directly.")
-                null
             }
             log("Installed hook for BaseFileUnionTile.onClick")
         } catch (t: Throwable) {
@@ -159,7 +162,7 @@ class BypassShareWarningHook : BaseHookModule() {
             log("target method name of \"createAndStartExposureWarnDialog\": $finalPMethodName")
 
             val pMethod = actionNoticeClass.getDeclaredMethod(finalPMethodName)
-            xposed.hook(pMethod).intercept { chain ->
+            hookWithId(pMethod, "hook_162") {  chain ->
                 val myObject = chain.thisObject
                 val context = getContext(myObject)
 
@@ -180,13 +183,14 @@ class BypassShareWarningHook : BaseHookModule() {
                     val manager = lMethod.invoke(null, context)
                     if (manager == null) {
                         log("Unable to get manager!")
-                        return@intercept null
+                        null
+                    } else {
+                        val zMethod = manager.javaClass.getDeclaredMethod(
+                            finalSetMethod, Boolean::class.javaPrimitiveType
+                        )
+                        zMethod.isAccessible = true
+                        zMethod.invoke(manager, true)
                     }
-                    val zMethod = manager.javaClass.getDeclaredMethod(
-                        finalSetMethod, Boolean::class.javaPrimitiveType
-                    )
-                    zMethod.isAccessible = true
-                    zMethod.invoke(manager, true)
                 }
                 null
             }

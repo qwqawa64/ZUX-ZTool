@@ -60,7 +60,7 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
             Field mDeleteApkField = installSuccessExtraClass.getDeclaredField("mDeleteApk");
             mDeleteApkField.setAccessible(true);
 
-            this.xposed.hook(initView).intercept(chain -> {
+            hookWithId(initView, "init_view", chain -> {
                 Object result = chain.proceed();
 
                 if (!isEnabled()) {
@@ -118,7 +118,7 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
             try {
                 Method clearMethod = installSuccessExtraClass.getDeclaredMethod(
                         "clearCachedApkIfNeededAndFinish");
-                this.xposed.hook(clearMethod).intercept(chain -> {
+                hookWithId(clearMethod, "clear", chain -> {
                     if (isEnabled()) {
                         try {
                             mDeleteApkField.setBoolean(chain.getThisObject(), false);
