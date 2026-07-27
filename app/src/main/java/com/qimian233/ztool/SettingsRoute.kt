@@ -182,7 +182,6 @@ fun SettingsMainRoute(
         },
         onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
         onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
-        onLsposedServiceProtector = viewModel::setLsposedServiceProtector,
         onOpenAdvanced = onOpenAdvanced,
         onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled
     )
@@ -344,7 +343,6 @@ private fun SettingsRoute(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
-    onLsposedServiceProtector: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
@@ -385,7 +383,6 @@ private fun SettingsRoute(
                         onAbout = onAbout,
                         onExportLogs = onExportLogs,
                         onDeleteAllLogs = onDeleteAllLogs,
-                        onLsposedServiceProtector = onLsposedServiceProtector,
                         onOpenAdvanced = onOpenAdvanced,
                         onAutoCheckUpdateChanged = onAutoCheckUpdateChanged,
                     ),
@@ -475,7 +472,6 @@ private fun settingsSections(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onHomepageYiyanChanged: (Boolean) -> Unit,
-    onLsposedServiceProtector: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
@@ -537,13 +533,6 @@ private fun settingsSections(
                     checked = state.isEntryDisplayedInSettings,
                     onCheckedChange = onEntryDisplayChanged,
                     icon = Icons.AutoMirrored.Rounded.OpenInNew
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.lsposed_service_protector_enable_title),
-                    summary = stringResource(R.string.lsposed_service_protector_enable_summary),
-                    checked = state.lsposedServiceProtector,
-                    onCheckedChange = onLsposedServiceProtector,
-                    icon = com.qimian233.ztool.icons.verified_user
                 ),
                 SettingItem.Switch(
                     key = "enable_homepage_yiyan",
