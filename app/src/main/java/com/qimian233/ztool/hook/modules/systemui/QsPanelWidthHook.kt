@@ -131,6 +131,19 @@ class QsPanelWidthHook : BaseHookModule() {
                     }
                 }
 
+                // 递归关闭所有子孙 ViewGroup 的裁剪，确保拉伸后的 SeekBar
+                // 触控区域覆盖完整宽度（clipChildren 同时裁剪绘制和触控）
+                fun disableClip(view: View) {
+                    if (view is ViewGroup) {
+                        view.clipChildren = false
+                        view.clipToPadding = false
+                        for (i in 0 until view.childCount) {
+                            disableClip(view.getChildAt(i))
+                        }
+                    }
+                }
+                disableClip(container)
+
                 // 将容器居中于屏幕：先抵消祖先链偏移贴靠左侧，再加居中偏移
                 // 用 parent.screenLocation + container.left 而非 container.screenLocation，
                 // 因为后者会受 translationX 自身影响形成反馈振荡
