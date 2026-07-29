@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
+import android.content.res.TypedArray
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -46,6 +47,31 @@ class QsPanelWidthHook : BaseHookModule() {
         val tileColumns = prefs.getInt("qs_tile_columns", DEFAULT_TILE_COLUMNS)
             .coerceIn(0, 10)
         val targetWidthRatio = widthPercent / 100f
+
+        // 强制所有 ToggleSliderView 使用水平样式（mFromType=2），避免竖直 Slider
+        // 在面板宽度改变后出现拉伸、高度塌缩等布局异常
+        val toggleSliderClassName = "com.android.systemui.settings.ToggleSliderView"
+        val getIntegerMethod = TypedArray::class.java.getDeclaredMethod(
+            "getInteger",
+            Int::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!
+        )
+        hookWithId(getIntegerMethod, "force_horizontal_slider") { chain ->
+            val index = chain.args[0] as Int
+            val original = chain.proceed() as Int
+            var result = original
+            if (index == 0) {
+                val caller = Throwable().stackTrace
+                    .firstOrNull { it.className == toggleSliderClassName && it.methodName == "<init>" }
+                if (caller != null) {
+                    // mFromType=2: 水平双 Slider（亮度 + 音量）
+                    result = 2
+                }
+            }
+            result
+        }
+
+        log("QsPanelWidthHook: hooked TypedArray.getInteger for horizontal slider")
 
         val qsContainerClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QSContainerImpl")
@@ -152,8 +178,6 @@ class QsPanelWidthHook : BaseHookModule() {
                     for (i in 0 until frame.childCount) {
                         val child = frame.getChildAt(i)
                         if (child is AbsSeekBar && child.visibility != View.GONE) {
-                            // 跳过旋转过的纵向 Slider（mFromType==3，rotation=90°）
-                            if (child.rotation != 0f) continue
                             val lp = child.layoutParams as? FrameLayout.LayoutParams
                             val left = contentLeft + (lp?.leftMargin ?: 0)
                             val right = contentRight - (lp?.rightMargin ?: 0)
