@@ -73,6 +73,24 @@ class QsPanelWidthHook : BaseHookModule() {
 
         log("QsPanelWidthHook: hooked TypedArray.getInteger for horizontal slider")
 
+        // 补丁：构造函数中有屏幕尺寸判断会覆盖 mFromType：
+        //   小屏设备 (<720dp short side) 会把 mFromType=2 改回 3（竖直）
+        // 在 onMeasure 第一次执行时做最终修正，确保始终为水平样式
+        val sliderViewClass = param.defaultClassLoader
+            .loadClass("com.android.systemui.settings.ToggleSliderView")
+        val fromTypeField = findField(sliderViewClass, "mFromType")
+        hookWithId(findMethod(sliderViewClass, "onMeasure",
+            Int::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!
+        ), "fix_mfromtype_horizontal") { chain ->
+            val view = chain.thisObject as View
+            if (fromTypeField.getInt(view) == 3) {
+                fromTypeField.setInt(view, 2)
+            }
+            chain.proceed()
+        }
+
+        log("QsPanelWidthHook: hooked ToggleSliderView.onMeasure for mFromType fix")
+
         val qsContainerClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QSContainerImpl")
 
