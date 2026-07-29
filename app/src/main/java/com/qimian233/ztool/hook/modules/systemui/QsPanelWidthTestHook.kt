@@ -103,6 +103,8 @@ class QsPanelWidthTestHook : BaseHookModule() {
         // Hook FrameLayout.onLayout：检测包含 SeekBar 子控件的 FrameLayout，
         // 将 SeekBar 拉伸至 FrameLayout 宽度，修复 SeekBarNps 等不跟随拉伸的问题
         // 排除 volume_row_slider_frame（音量调节弹窗中的独立滑块）
+        // 资源 ID 延迟缓存，热路径仅做 int 比较，避免每次 getResourceEntryName 的 JNI 开销
+        var cachedVolumeRowSliderFrameId = -1
         val frameLayoutClass = FrameLayout::class.java
         val onLayoutMethod = findMethod(
             frameLayoutClass,
@@ -116,11 +118,13 @@ class QsPanelWidthTestHook : BaseHookModule() {
         hookWithId(onLayoutMethod, "stretch_seekbar_in_frame") { chain ->
             chain.proceed()
             val frame = chain.thisObject as FrameLayout
-            // 跳过音量条布局（volume_row_slider_frame），其余包含 SeekBar 的 FrameLayout 均拉伸
-            val entryName = try {
-                frame.resources.getResourceEntryName(frame.id)
-            } catch (_: Exception) { null }
-            if (entryName != "volume_row_slider_frame") {
+            // 延迟解析并缓存 volume_row_slider_frame 的资源 ID
+            if (cachedVolumeRowSliderFrameId == -1) {
+                cachedVolumeRowSliderFrameId = frame.resources
+                    .getIdentifier("volume_row_slider_frame", "id", "com.android.systemui")
+            }
+            // 跳过音量条布局，其余包含 SeekBar 的 FrameLayout 均拉伸
+            if (frame.id != cachedVolumeRowSliderFrameId) {
                 var stretchCount = 0
                 for (i in 0 until frame.childCount) {
                     val child = frame.getChildAt(i)
