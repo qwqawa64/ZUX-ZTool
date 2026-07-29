@@ -188,5 +188,27 @@ class QsPanelWidthTestHook : BaseHookModule() {
         }
 
         log("QsPanelWidthTestHook: hooked PagedTileLayout.onMeasure for tile columns")
+
+        // Hook QQSSideLabelTileLayout.onMeasure：收起状态（QQS）的磁贴列数
+        // 必须在 TileLayout.onMeasure 之前触发，因为 QQSSideLabelTileLayout.onMeasure
+        // 在 super.onMeasure() 之前就调用了 updateMaxRows()
+        val qqsTileLayoutClass = param.defaultClassLoader
+            .loadClass("com.android.systemui.qs.QuickQSPanel\$QQSSideLabelTileLayout")
+        val qqsMeasureMethod = findMethod(
+            qqsTileLayoutClass,
+            "onMeasure",
+            Int::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!
+        )
+        hookWithId(qqsMeasureMethod, "tile_columns_qqs") { chain ->
+            val tileLayout = chain.thisObject as View
+            val orientation = tileLayout.context.resources.configuration.orientation
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                columnsField.setInt(tileLayout, TARGET_TILE_COLUMNS)
+            }
+            chain.proceed()
+        }
+
+        log("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
     }
 }
