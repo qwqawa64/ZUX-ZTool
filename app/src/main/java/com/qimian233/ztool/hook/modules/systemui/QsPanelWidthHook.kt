@@ -203,19 +203,30 @@ class QsPanelWidthHook : BaseHookModule() {
         // 必须在 TileLayout.onMeasure 之前触发，因为 QQSSideLabelTileLayout.onMeasure
         // 在 super.onMeasure() 之前就调用了 updateMaxRows()
         val qqsTileLayoutClass = param.defaultClassLoader
-            .loadClass($$"com.android.systemui.qs.QuickQSPanel$QQSSideLabelTileLayout")
+            .loadClass("com.android.systemui.qs.QuickQSPanel\$QQSSideLabelTileLayout")
         val qqsMeasureMethod = findMethod(
             qqsTileLayoutClass,
             "onMeasure",
             Int::class.javaPrimitiveType!!,
             Int::class.javaPrimitiveType!!
         )
+        val maxAllowedRowsField = findField(tileLayoutClass, "mMaxAllowedRows")
+        val quickQSPanelClass = param.defaultClassLoader
+            .loadClass("com.android.systemui.qs.QuickQSPanel")
+        val maxTilesField = findField(quickQSPanelClass, "mMaxTiles")
+
         hookWithId(qqsMeasureMethod, "tile_columns_qqs") { chain ->
             if (tileColumns != 0) {
                 val tileLayout = chain.thisObject as View
                 val orientation = tileLayout.context.resources.configuration.orientation
                 if (orientation == Configuration.ORIENTATION_PORTRAIT) {
                     columnsField.setInt(tileLayout, tileColumns)
+                    // 同步更新 QQS 总数上限：mMaxTiles = mMaxAllowedRows * mColumns
+                    val parent = tileLayout.parent
+                    if (parent != null && quickQSPanelClass.isInstance(parent)) {
+                        val rows = maxAllowedRowsField.getInt(tileLayout)
+                        maxTilesField.setInt(parent, tileColumns * rows)
+                    }
                 }
             }
             chain.proceed()
