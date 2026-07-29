@@ -27,6 +27,8 @@ class QsPanelWidthTestHook : BaseHookModule() {
     companion object {
         /** 目标宽度占屏幕宽度的比例 (0.0~1.0) */
         private const val TARGET_WIDTH_PERCENT = 0.8f
+        /** 每行 QS 磁贴目标列数 */
+        private const val TARGET_TILE_COLUMNS = 5
     }
 
     override fun getModuleName(): String = "test_hook"
@@ -150,5 +152,39 @@ class QsPanelWidthTestHook : BaseHookModule() {
         }
 
         log("QsPanelWidthTestHook: hooked FrameLayout.onLayout for SeekBar stretch")
+
+        // Hook PagedTileLayout.onMeasure：增加每行磁贴列数以匹配面板宽度
+        val pagedTileLayoutClass = param.defaultClassLoader
+            .loadClass("com.android.systemui.qs.PagedTileLayout")
+        val tileLayoutClass = param.defaultClassLoader
+            .loadClass("com.android.systemui.qs.TileLayout")
+        val columnsField = findField(tileLayoutClass, "mColumns")
+        val pagesField = findField(pagedTileLayoutClass, "mPages")
+        val distributeField = findField(pagedTileLayoutClass, "mDistributeTiles")
+        val pagedMeasureMethod = findMethod(
+            pagedTileLayoutClass,
+            "onMeasure",
+            Int::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!
+        )
+        hookWithId(pagedMeasureMethod, "tile_columns_adjust") { chain ->
+            val pagedLayout = chain.thisObject as View
+            // 仅在竖屏下修改列数
+            val orientation = pagedLayout.context.resources.configuration.orientation
+            val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
+            if (isPortrait) {
+                val pages = pagesField.get(pagedLayout) as ArrayList<*>
+                if (pages.isNotEmpty()) {
+                    for (page in pages) {
+                        columnsField.setInt(page, TARGET_TILE_COLUMNS)
+                    }
+                }
+                // 强制触发磁贴重分布
+                distributeField.setBoolean(pagedLayout, true)
+            }
+            chain.proceed()
+        }
+
+        log("QsPanelWidthTestHook: hooked PagedTileLayout.onMeasure for tile columns")
     }
 }
