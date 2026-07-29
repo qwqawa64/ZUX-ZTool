@@ -28,7 +28,7 @@ class QsPanelWidthTestHook : BaseHookModule() {
         /** 目标宽度占屏幕宽度的比例 (0.0~1.0) */
         private const val TARGET_WIDTH_PERCENT = 0.8f
         /** 每行 QS 磁贴目标列数 */
-        private const val TARGET_TILE_COLUMNS = 5
+        private const val TARGET_TILE_COLUMNS = 7
     }
 
     override fun getModuleName(): String = "test_hook"
@@ -79,9 +79,11 @@ class QsPanelWidthTestHook : BaseHookModule() {
                 }
 
                 // 将容器居中于屏幕：先抵消祖先链偏移贴靠左侧，再加居中偏移
-                val screenLocation = IntArray(2)
-                container.getLocationOnScreen(screenLocation)
-                val totalLeftOffset = screenLocation[0]
+                // 用 parent.screenLocation + container.left 而非 container.screenLocation，
+                // 因为后者会受 translationX 自身影响形成反馈振荡
+                val parentLocation = IntArray(2)
+                (container.parent as View).getLocationOnScreen(parentLocation)
+                val totalLeftOffset = parentLocation[0] + container.left
                 val centerOffset = (screenWidth - targetWidth) / 2
                 val overflow = container.measuredWidth - screenWidth
                 container.translationX = -(
