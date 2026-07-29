@@ -135,8 +135,10 @@ class QsPanelWidthHook : BaseHookModule() {
                 cachedVolumeRowSliderFrameId = frame.resources
                     .getIdentifier("volume_row_slider_frame", "id", "com.android.systemui")
             }
-            // 跳过音量条布局，其余包含 SeekBar 的 FrameLayout 均拉伸
-            if (frame.id != cachedVolumeRowSliderFrameId) {
+            // 仅在竖屏下执行拉伸，且跳过音量弹窗和旋转 90° 的纵向 Slider
+            val orientation = frame.context.resources.configuration.orientation
+            val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
+            if (isPortrait && frame.id != cachedVolumeRowSliderFrameId) {
                 var stretchCount = 0
                 for (i in 0 until frame.childCount) {
                     val child = frame.getChildAt(i)
@@ -150,6 +152,8 @@ class QsPanelWidthHook : BaseHookModule() {
                     for (i in 0 until frame.childCount) {
                         val child = frame.getChildAt(i)
                         if (child is AbsSeekBar && child.visibility != View.GONE) {
+                            // 跳过旋转过的纵向 Slider（mFromType==3，rotation=90°）
+                            if (child.rotation != 0f) continue
                             val lp = child.layoutParams as? FrameLayout.LayoutParams
                             val left = contentLeft + (lp?.leftMargin ?: 0)
                             val right = contentRight - (lp?.rightMargin ?: 0)
