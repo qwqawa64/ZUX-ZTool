@@ -186,10 +186,9 @@ To add a new Hook implementation on the backend:
 2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using the same keys/defaults that the frontend writes.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
-5. Add the required log handling in `app/src/main/java/com/qimian233/ztool/audit/LogParser.java`, including module pattern/display name/category and any module-specific extracted data needed by the Audit UI.
-6. If the Hook needs a user-facing toggle, add the frontend state according to `Add_New_Hook_zh-CN.md`.
+5. If the Hook needs a user-facing toggle, add the frontend state according to `Add_New_Hook_zh-CN.md`.
 
-Use `BaseHookModule.log(...)` / `logError(...)` for module logs when possible. The log module name should match the parser pattern in `LogParser.java`.
+Use `BaseHookModule.log(...)` / `logError(...)` for module logs when possible.
 
 ## Service, Scope, And Activation Rules
 
