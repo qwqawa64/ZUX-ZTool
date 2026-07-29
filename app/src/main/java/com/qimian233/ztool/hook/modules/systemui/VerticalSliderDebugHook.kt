@@ -7,10 +7,12 @@ import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 测试 Hook — 强制所有 ToggleSliderView 使用竖直样式（mFromType=3）。
+ * 测试 Hook — 强制所有 ToggleSliderView 的 SeekBar 旋转 90° 模拟竖直 Slider。
  *
- * 在 onAttachedToWindow 时设置 mFromType=3 并旋转 SeekBar，
- * 方便在没有竖直 Slider 的设备上调试相关布局问题。
+ * 不改 mFromType（布局 XML 在构造时已按原始值加载，改后 onMeasure
+ * 走竖直分支会导致视图结构不匹配、Slider 塌缩）。仅施加 rotation +
+ * layoutDirection 变换，与 QsPanelWidthHook 的 rotation != 0f 门禁配合，
+ * 让 SeekBar 拉伸正确跳过，方便在没有竖直 Slider 的设备上调试。
  *
  * getModuleName() 返回 "hook_test"，始终启用，无需前端开关。
  */
@@ -31,29 +33,19 @@ class VerticalSliderDebugHook : BaseHookModule() {
 
         val sliderViewClass = param.defaultClassLoader
             .loadClass("com.android.systemui.settings.ToggleSliderView")
-        val fromTypeField = findField(sliderViewClass, "mFromType")
         val brightnessSliderField = findField(sliderViewClass, "mBrightnessSlider")
         val mediaVolumeSliderField = findField(sliderViewClass, "mMediaVolumeSlider")
 
-        // 在 onAttachedToWindow 设置竖直样式
-        val onAttachMethod = findMethod(
-            sliderViewClass,
-            "onAttachedToWindow"
-        )
-        hookWithId(onAttachMethod, "force_vertical_slider") { chain ->
+        hookWithId(findMethod(sliderViewClass, "onAttachedToWindow"),
+            "force_vertical_slider_debug") { chain ->
             chain.proceed()
             val view = chain.thisObject as View
-            // 设置 mFromType = 3（竖直样式）
-            fromTypeField.setInt(view, 3)
-
-            // 旋转亮度 Slider
+            // 只旋转 SeekBar，不改 mFromType（保留原始布局和 onMeasure 逻辑）
             val brightnessSlider = brightnessSliderField.get(view) as? SeekBar
             if (brightnessSlider != null) {
                 brightnessSlider.layoutDirection = View.LAYOUT_DIRECTION_LTR
                 brightnessSlider.rotation = 90f
             }
-
-            // 旋转音量 Slider
             val mediaVolumeSlider = mediaVolumeSliderField.get(view) as? SeekBar
             if (mediaVolumeSlider != null) {
                 mediaVolumeSlider.layoutDirection = View.LAYOUT_DIRECTION_LTR

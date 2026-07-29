@@ -98,11 +98,11 @@ class QsPanelWidthHook : BaseHookModule() {
                     totalLeftOffset + (if (overflow > 0) overflow else 0) - centerOffset
                 ).toFloat()
 
-                if (DEBUG) {
+                /*if (DEBUG) {
                     log("QsPanelWidthTestHook: width $originalWidth -> $targetWidth " +
                         "screenLeft=$totalLeftOffset centerOffset=$centerOffset " +
                         "overflow=$overflow (screen=$screenWidth)")
-                }
+                }*/
             } else {
                 // 横屏：直接透传原始逻辑，重置竖屏修改
                 container.translationX = 0f
