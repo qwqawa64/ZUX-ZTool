@@ -64,7 +64,7 @@ class QsPanelWidthHook : BaseHookModule() {
             val orientation = container.context.resources.configuration.orientation
             val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
 
-            if (isPortrait) {
+            if (isPortrait && widthPercent != 0) {
                 // 竖屏：替换 widthMeasureSpec + 修正 gravity / off-screen
                 val screenWidth = container.context.resources.displayMetrics.widthPixels
                 val originalWidth = View.MeasureSpec.getSize(chain.args[0] as Int)
@@ -203,7 +203,7 @@ class QsPanelWidthHook : BaseHookModule() {
         // 必须在 TileLayout.onMeasure 之前触发，因为 QQSSideLabelTileLayout.onMeasure
         // 在 super.onMeasure() 之前就调用了 updateMaxRows()
         val qqsTileLayoutClass = param.defaultClassLoader
-            .loadClass("com.android.systemui.qs.QuickQSPanel\$QQSSideLabelTileLayout")
+            .loadClass($$"com.android.systemui.qs.QuickQSPanel$QQSSideLabelTileLayout")
         val qqsMeasureMethod = findMethod(
             qqsTileLayoutClass,
             "onMeasure",
