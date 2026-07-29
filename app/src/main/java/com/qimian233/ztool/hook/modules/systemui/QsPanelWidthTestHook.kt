@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsSeekBar
 import android.widget.FrameLayout
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -98,5 +99,46 @@ class QsPanelWidthTestHook : BaseHookModule() {
         }
 
         log("QsPanelWidthTestHook: hooked QSContainerImpl.onMeasure")
+
+        // Hook FrameLayout.onLayout：检测包含 SeekBar 子控件的 FrameLayout，
+        // 将 SeekBar 拉伸至 FrameLayout 宽度，修复 SeekBarNps 等不跟随拉伸的问题
+        val frameLayoutClass = FrameLayout::class.java
+        val onLayoutMethod = findMethod(
+            frameLayoutClass,
+            "onLayout",
+            Boolean::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!
+        )
+        hookWithId(onLayoutMethod, "stretch_seekbar_in_frame") { chain ->
+            chain.proceed()
+            val frame = chain.thisObject as FrameLayout
+            // 快速检查 Skip：是否有可见 SeekBar 子控件
+            var stretchCount = 0
+            for (i in 0 until frame.childCount) {
+                val child = frame.getChildAt(i)
+                if (child is AbsSeekBar && child.visibility != View.GONE) {
+                    stretchCount++
+                }
+            }
+            if (stretchCount > 0) {
+                val contentLeft = frame.paddingLeft
+                val contentRight = frame.width - frame.paddingRight
+                for (i in 0 until frame.childCount) {
+                    val child = frame.getChildAt(i)
+                    if (child is AbsSeekBar && child.visibility != View.GONE) {
+                        val lp = child.layoutParams as? FrameLayout.LayoutParams
+                        val left = contentLeft + (lp?.leftMargin ?: 0)
+                        val right = contentRight - (lp?.rightMargin ?: 0)
+                        child.layout(left, child.top, right, child.bottom)
+                    }
+                }
+            }
+            null
+        }
+
+        log("QsPanelWidthTestHook: hooked FrameLayout.onLayout for SeekBar stretch")
     }
 }
