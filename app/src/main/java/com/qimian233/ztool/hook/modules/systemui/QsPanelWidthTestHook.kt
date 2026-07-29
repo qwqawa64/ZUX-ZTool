@@ -102,6 +102,7 @@ class QsPanelWidthTestHook : BaseHookModule() {
 
         // Hook FrameLayout.onLayout：检测包含 SeekBar 子控件的 FrameLayout，
         // 将 SeekBar 拉伸至 FrameLayout 宽度，修复 SeekBarNps 等不跟随拉伸的问题
+        // 排除 volume_row_slider_frame（音量调节弹窗中的独立滑块）
         val frameLayoutClass = FrameLayout::class.java
         val onLayoutMethod = findMethod(
             frameLayoutClass,
@@ -115,24 +116,29 @@ class QsPanelWidthTestHook : BaseHookModule() {
         hookWithId(onLayoutMethod, "stretch_seekbar_in_frame") { chain ->
             chain.proceed()
             val frame = chain.thisObject as FrameLayout
-            // 快速检查 Skip：是否有可见 SeekBar 子控件
-            var stretchCount = 0
-            for (i in 0 until frame.childCount) {
-                val child = frame.getChildAt(i)
-                if (child is AbsSeekBar && child.visibility != View.GONE) {
-                    stretchCount++
-                }
-            }
-            if (stretchCount > 0) {
-                val contentLeft = frame.paddingLeft
-                val contentRight = frame.width - frame.paddingRight
+            // 跳过音量条布局（volume_row_slider_frame），其余包含 SeekBar 的 FrameLayout 均拉伸
+            val entryName = try {
+                frame.resources.getResourceEntryName(frame.id)
+            } catch (_: Exception) { null }
+            if (entryName != "volume_row_slider_frame") {
+                var stretchCount = 0
                 for (i in 0 until frame.childCount) {
                     val child = frame.getChildAt(i)
                     if (child is AbsSeekBar && child.visibility != View.GONE) {
-                        val lp = child.layoutParams as? FrameLayout.LayoutParams
-                        val left = contentLeft + (lp?.leftMargin ?: 0)
-                        val right = contentRight - (lp?.rightMargin ?: 0)
-                        child.layout(left, child.top, right, child.bottom)
+                        stretchCount++
+                    }
+                }
+                if (stretchCount > 0) {
+                    val contentLeft = frame.paddingLeft
+                    val contentRight = frame.width - frame.paddingRight
+                    for (i in 0 until frame.childCount) {
+                        val child = frame.getChildAt(i)
+                        if (child is AbsSeekBar && child.visibility != View.GONE) {
+                            val lp = child.layoutParams as? FrameLayout.LayoutParams
+                            val left = contentLeft + (lp?.leftMargin ?: 0)
+                            val right = contentRight - (lp?.rightMargin ?: 0)
+                            child.layout(left, child.top, right, child.bottom)
+                        }
                     }
                 }
             }
