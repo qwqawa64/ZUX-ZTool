@@ -1,18 +1,16 @@
 package com.qimian233.ztool.hook.modules.systemui
 
 import android.annotation.SuppressLint
-import android.view.View
-import android.widget.SeekBar
+import android.content.res.TypedArray
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 测试 Hook — 强制所有 ToggleSliderView 的 SeekBar 旋转 90° 模拟竖直 Slider。
+ * 测试 Hook — 强制所有 ToggleSliderView 以竖直 Slider 模式（mFromType=3）构造。
  *
- * 不改 mFromType（布局 XML 在构造时已按原始值加载，改后 onMeasure
- * 走竖直分支会导致视图结构不匹配、Slider 塌缩）。仅施加 rotation +
- * layoutDirection 变换，与 QsPanelWidthHook 的 rotation != 0f 门禁配合，
- * 让 SeekBar 拉伸正确跳过，方便在没有竖直 Slider 的设备上调试。
+ * 在 TypedArray.getInteger 层面拦截 ToggleSliderView 构造器对 styleable 属性
+ * 的读取，将控制 mFromType 的属性值改写为 3。构造器后续会自然使用竖直布局资源
+ * (R.layout.status_bar_toggle_slider_detail) 并执行旋转、layoutDirection 等全套设置。
  *
  * getModuleName() 返回 "hook_test"，始终启用，无需前端开关。
  */
@@ -21,6 +19,12 @@ class VerticalSliderDebugHook : BaseHookModule() {
 
     companion object {
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
+        private const val TOGGLE_SLIDER_CLASS =
+            "com.android.systemui.settings.ToggleSliderView"
+        /** ZuiToggleSliderView styleable 中控制 mFromType 的属性索引 (0) */
+        private const val SLIDER_TYPE_ATTR_INDEX = 0
+        /** 目标 mFromType 值：3 = 竖直双 Slider（亮度+音量） */
+        private const val TARGET_SLIDER_TYPE = 3
     }
 
     override fun getModuleName(): String = "hook_test"
@@ -31,28 +35,29 @@ class VerticalSliderDebugHook : BaseHookModule() {
         if (param.packageName != SYSTEMUI_PACKAGE) return
         log("VerticalSliderDebugHook: loading")
 
-        val sliderViewClass = param.defaultClassLoader
-            .loadClass("com.android.systemui.settings.ToggleSliderView")
-        val brightnessSliderField = findField(sliderViewClass, "mBrightnessSlider")
-        val mediaVolumeSliderField = findField(sliderViewClass, "mMediaVolumeSlider")
-
-        hookWithId(findMethod(sliderViewClass, "onAttachedToWindow"),
-            "force_vertical_slider_debug") { chain ->
-            chain.proceed()
-            val view = chain.thisObject as View
-            // 只旋转 SeekBar，不改 mFromType（保留原始布局和 onMeasure 逻辑）
-            val brightnessSlider = brightnessSliderField.get(view) as? SeekBar
-            if (brightnessSlider != null) {
-                brightnessSlider.layoutDirection = View.LAYOUT_DIRECTION_LTR
-                brightnessSlider.rotation = 90f
+        // Hook TypedArray.getInteger(int, int)
+        val getIntegerMethod = TypedArray::class.java.getDeclaredMethod(
+            "getInteger",
+            Int::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!
+        )
+        hookWithId(getIntegerMethod, "force_vertical_slider_type") { chain ->
+            val index = chain.args[0] as Int
+            val originalResult = chain.proceed() as Int
+            // 仅在 ToggleSliderView 构造器读取 styleable[0] 时改写返回值
+            var result = originalResult
+            if (index == SLIDER_TYPE_ATTR_INDEX) {
+                val caller = Throwable().stackTrace
+                    .firstOrNull { it.className == TOGGLE_SLIDER_CLASS && it.methodName == "<init>" }
+                if (caller != null) {
+                    result = TARGET_SLIDER_TYPE
+                    if (DEBUG) log("VerticalSliderDebugHook: forcing mFromType=$TARGET_SLIDER_TYPE " +
+                        "(original=$originalResult)")
+                }
             }
-            val mediaVolumeSlider = mediaVolumeSliderField.get(view) as? SeekBar
-            if (mediaVolumeSlider != null) {
-                mediaVolumeSlider.layoutDirection = View.LAYOUT_DIRECTION_LTR
-                mediaVolumeSlider.rotation = 90f
-            }
+            result
         }
 
-        log("VerticalSliderDebugHook: hooked ToggleSliderView.onAttachedToWindow")
+        log("VerticalSliderDebugHook: hooked TypedArray.getInteger for ToggleSliderView.<init>")
     }
 }
