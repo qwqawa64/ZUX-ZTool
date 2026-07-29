@@ -75,16 +75,22 @@ class QsPanelWidthTestHook : BaseHookModule() {
                     }
                 }
 
-                // 防止容器超出屏幕右侧
+                // 将容器贴靠屏幕左侧：抵消外部父容器施加的左侧偏移
+                // container.left 是父容器分配给此控件的左侧位置（含 parent padding + child margin）
+                val parentLeftOffset = container.left
                 val overflow = container.measuredWidth - screenWidth
-                container.translationX = if (overflow > 0) -overflow.toFloat() else 0f
+                container.translationX = -(
+                    parentLeftOffset + (if (overflow > 0) overflow else 0)
+                ).toFloat()
 
                 if (DEBUG) {
                     log("QsPanelWidthTestHook: width $originalWidth -> $targetWidth " +
-                        "overflow=$overflow (screen=$screenWidth, ratio=$TARGET_WIDTH_PERCENT)")
+                        "leftOffset=$parentLeftOffset overflow=$overflow " +
+                        "(screen=$screenWidth, ratio=$TARGET_WIDTH_PERCENT)")
                 }
             } else {
-                // 横屏：直接透传原始逻辑
+                // 横屏：直接透传原始逻辑，重置竖屏修改
+                container.translationX = 0f
                 chain.proceed()
             }
         }
