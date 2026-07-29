@@ -22,22 +22,30 @@ import io.github.libxposed.api.XposedModuleInterface
  * getModuleName() 返回 "test_hook"，始终启用，无需前端开关。
  */
 @SuppressLint("PrivateApi")
-class QsPanelWidthTestHook : BaseHookModule() {
+class QsPanelWidthHook : BaseHookModule() {
 
     companion object {
-        /** 目标宽度占屏幕宽度的比例 (0.0~1.0) */
-        private const val TARGET_WIDTH_PERCENT = 0.8f
-        /** 每行 QS 磁贴目标列数 */
-        private const val TARGET_TILE_COLUMNS = 7
+        /** 默认面板宽度百分比 (0-100) */
+        private const val DEFAULT_WIDTH_PERCENT = 80
+        /** 默认磁贴列数 */
+        private const val DEFAULT_TILE_COLUMNS = 7
     }
 
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = "expand_qs_panel_portrait"
 
     override fun getTargetPackages(): Array<String> = arrayOf("com.android.systemui")
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != "com.android.systemui") return
         log("QsPanelWidthTestHook: loading")
+
+        // 从 SharedPreferences 读取配置
+        val prefs = xposed.getRemotePreferences("xposed_module_config")
+        val widthPercent = prefs.getInt("qs_panel_width_percent", DEFAULT_WIDTH_PERCENT)
+            .coerceIn(0, 100)
+        val tileColumns = prefs.getInt("qs_tile_columns", DEFAULT_TILE_COLUMNS)
+            .coerceIn(0, 10)
+        val targetWidthRatio = widthPercent / 100f
 
         val qsContainerClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QSContainerImpl")
@@ -60,7 +68,7 @@ class QsPanelWidthTestHook : BaseHookModule() {
                 // 竖屏：替换 widthMeasureSpec + 修正 gravity / off-screen
                 val screenWidth = container.context.resources.displayMetrics.widthPixels
                 val originalWidth = View.MeasureSpec.getSize(chain.args[0] as Int)
-                val targetWidth = (screenWidth * TARGET_WIDTH_PERCENT).toInt()
+                val targetWidth = (screenWidth * targetWidthRatio).toInt()
 
                 val newArgs = chain.args.toMutableList()
                 newArgs[0] = View.MeasureSpec.makeMeasureSpec(
@@ -170,19 +178,21 @@ class QsPanelWidthTestHook : BaseHookModule() {
             Int::class.javaPrimitiveType!!
         )
         hookWithId(pagedMeasureMethod, "tile_columns_adjust") { chain ->
-            val pagedLayout = chain.thisObject as View
-            // 仅在竖屏下修改列数
-            val orientation = pagedLayout.context.resources.configuration.orientation
-            val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
-            if (isPortrait) {
-                val pages = pagesField.get(pagedLayout) as ArrayList<*>
-                if (pages.isNotEmpty()) {
-                    for (page in pages) {
-                        columnsField.setInt(page, TARGET_TILE_COLUMNS)
+            if (tileColumns != 0) {
+                val pagedLayout = chain.thisObject as View
+                // 仅在竖屏下修改列数
+                val orientation = pagedLayout.context.resources.configuration.orientation
+                val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
+                if (isPortrait) {
+                    val pages = pagesField.get(pagedLayout) as ArrayList<*>
+                    if (pages.isNotEmpty()) {
+                        for (page in pages) {
+                            columnsField.setInt(page, tileColumns)
+                        }
                     }
+                    // 强制触发磁贴重分布
+                    distributeField.setBoolean(pagedLayout, true)
                 }
-                // 强制触发磁贴重分布
-                distributeField.setBoolean(pagedLayout, true)
             }
             chain.proceed()
         }
@@ -201,10 +211,12 @@ class QsPanelWidthTestHook : BaseHookModule() {
             Int::class.javaPrimitiveType!!
         )
         hookWithId(qqsMeasureMethod, "tile_columns_qqs") { chain ->
-            val tileLayout = chain.thisObject as View
-            val orientation = tileLayout.context.resources.configuration.orientation
-            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                columnsField.setInt(tileLayout, TARGET_TILE_COLUMNS)
+            if (tileColumns != 0) {
+                val tileLayout = chain.thisObject as View
+                val orientation = tileLayout.context.resources.configuration.orientation
+                if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    columnsField.setInt(tileLayout, tileColumns)
+                }
             }
             chain.proceed()
         }

@@ -182,6 +182,29 @@ class ControlCenterSettingsViewModel(
         repository.saveVolumeSliderPercentageEnabled(enabled)
     }
 
+    fun setExpandQsPanelPortrait(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(expandQsPanelPortrait = enabled)
+        repository.saveExpandQsPanelPortrait(enabled)
+    }
+
+    fun setQsPanelWidthPercent(value: Int) {
+        val coerced = value.coerceIn(
+            ControlCenterSettingsRepository.QS_PANEL_WIDTH_MIN,
+            ControlCenterSettingsRepository.QS_PANEL_WIDTH_MAX
+        )
+        _uiState.value = _uiState.value.copy(qsPanelWidthPercent = coerced)
+        repository.saveQsPanelWidthPercent(coerced)
+    }
+
+    fun setQsTileColumns(value: Int) {
+        val coerced = value.coerceIn(
+            ControlCenterSettingsRepository.QS_TILE_COLUMNS_MIN,
+            ControlCenterSettingsRepository.QS_TILE_COLUMNS_MAX
+        )
+        _uiState.value = _uiState.value.copy(qsTileColumns = coerced)
+        repository.saveQsTileColumns(coerced)
+    }
+
     fun setNotificationCenterBlurPercent(value: Int) {
         val coercedValue = value.coerceIn(
             ControlCenterSettingsRepository.NOTIFICATION_CENTER_BLUR_MIN_PERCENT,
@@ -300,5 +323,8 @@ data class ControlCenterSettingsUiState(
     val notificationCenterBlurEnabled: Boolean = false,
     val notificationCenterBlurPercent: Int = ControlCenterSettingsRepository.DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT,
     val volumeSliderPercentageEnabled: Boolean = false,
-    val brightnessSliderPercentageEnabled: Boolean = false
+    val brightnessSliderPercentageEnabled: Boolean = false,
+    val expandQsPanelPortrait: Boolean = false,
+    val qsPanelWidthPercent: Int = ControlCenterSettingsRepository.DEFAULT_QS_PANEL_WIDTH_PERCENT,
+    val qsTileColumns: Int = ControlCenterSettingsRepository.DEFAULT_QS_TILE_COLUMNS
 )

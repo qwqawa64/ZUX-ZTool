@@ -50,7 +50,10 @@ class ControlCenterSettingsRepository(
                 DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT
             ).coerceIn(NOTIFICATION_CENTER_BLUR_MIN_PERCENT, NOTIFICATION_CENTER_BLUR_MAX_PERCENT),
             brightnessSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, false),
-            volumeSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, false)
+            volumeSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, false),
+            expandQsPanelPortrait = prefsUtils.loadBooleanSetting(KEY_EXPAND_QS_PANEL_PORTRAIT, false),
+            qsPanelWidthPercent = prefsUtils.loadIntegerSetting(KEY_QS_PANEL_WIDTH_PERCENT, DEFAULT_QS_PANEL_WIDTH_PERCENT),
+            qsTileColumns = prefsUtils.loadIntegerSetting(KEY_QS_TILE_COLUMNS, DEFAULT_QS_TILE_COLUMNS)
         )
     }
 
@@ -173,6 +176,24 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, enabled)
     }
 
+    fun saveExpandQsPanelPortrait(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_EXPAND_QS_PANEL_PORTRAIT, enabled)
+    }
+
+    fun saveQsPanelWidthPercent(value: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_QS_PANEL_WIDTH_PERCENT,
+            value.coerceIn(QS_PANEL_WIDTH_MIN, QS_PANEL_WIDTH_MAX)
+        )
+    }
+
+    fun saveQsTileColumns(value: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_QS_TILE_COLUMNS,
+            value.coerceIn(QS_TILE_COLUMNS_MIN, QS_TILE_COLUMNS_MAX)
+        )
+    }
+
     companion object {
         private const val TAG = "ControlCenterSettingsRepository"
         const val NOTIFICATION_CENTER_BLUR_MIN_PERCENT = 0
@@ -206,5 +227,14 @@ class ControlCenterSettingsRepository(
         private const val KEY_NOTIFICATION_CENTER_BLUR_PERCENT = "notification_center_blur_percent"
         private const val KEY_VOLUME_SLIDER_PERCENTAGE = "volume_slider_percentage"
         private const val KEY_BRIGHTNESS_SLIDER_PERCENTAGE = "brightness_slider_percentage"
+        private const val KEY_EXPAND_QS_PANEL_PORTRAIT = "expand_qs_panel_portrait"
+        private const val KEY_QS_PANEL_WIDTH_PERCENT = "qs_panel_width_percent"
+        private const val KEY_QS_TILE_COLUMNS = "qs_tile_columns"
+        const val QS_PANEL_WIDTH_MIN = 0
+        const val QS_PANEL_WIDTH_MAX = 100
+        const val DEFAULT_QS_PANEL_WIDTH_PERCENT = 80
+        const val QS_TILE_COLUMNS_MIN = 0
+        const val QS_TILE_COLUMNS_MAX = 10
+        const val DEFAULT_QS_TILE_COLUMNS = 7
     }
 }

@@ -491,7 +491,9 @@ public class ModulePreferencesUtils {
                 || "custom_label_active_color_val".equals(key)
                 || "custom_second_label_active_color_val".equals(key)
                 || "notification_center_blur_percent".equals(key)
-                || "screen_on_off_animation_duration".equals(key);
+                || "screen_on_off_animation_duration".equals(key)
+                || "qs_panel_width_percent".equals(key)
+                || "qs_tile_columns".equals(key);
     }
 
     private static boolean isBooleanSettingKey(String key) {
@@ -594,7 +596,8 @@ public class ModulePreferencesUtils {
                 || "about_device_info_header_enabled".equals(key)
                 || "hide_ota_notifications".equals(key)
                 || "custom_charge_animation".equals(key)
-                || "dismiss_cloud_folder_confirmation".equals(key);
+                || "dismiss_cloud_folder_confirmation".equals(key)
+                || "expand_qs_panel_portrait".equals(key);
     }
 
     public static void restoreConfig(Context context, String jsonToRestore){

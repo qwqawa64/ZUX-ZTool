@@ -65,7 +65,7 @@ import com.qimian233.ztool.hook.modules.systemui.NotificationCenterTransparency;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIBatteryHook;
-import com.qimian233.ztool.hook.modules.systemui.QsPanelWidthTestHook;
+import com.qimian233.ztool.hook.modules.systemui.QsPanelWidthHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIChargeWattsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUINetworkSpeedSIzeHook;
 import com.qimian233.ztool.hook.modules.systemui.NetworkSpeedRefresh;
@@ -138,7 +138,7 @@ public class HookManager {
         registerHookModule(new CustomQsColor());
         registerHookModule(new NotificationCenterTransparency());
         registerHookModule(new GuestModeController());
-        registerHookModule(new QsPanelWidthTestHook());
+        registerHookModule(new QsPanelWidthHook());
         registerHookModule(new CustomChargeAnimation());
 
         // ── Settings (target: com.android.settings) ──

@@ -143,7 +143,10 @@ fun ControlCenterSettingsRoute(
         onNotificationCenterBlurEnabledChanged = viewModel::setNotificationCenterBlurEnabled,
         onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent,
         onBrightnessSliderPercentageChanged = viewModel::setBrightnessSliderPercentageEnabled,
-        onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled
+        onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled,
+        onExpandQsPanelPortraitChanged = viewModel::setExpandQsPanelPortrait,
+        onQsPanelWidthPercentChanged = viewModel::setQsPanelWidthPercent,
+        onQsTileColumnsChanged = viewModel::setQsTileColumns
     )
 
     if (uiState.showFormatHelpDialog) {
@@ -218,6 +221,9 @@ private fun ControlCenterSettingsScreen(
     onFinishControlCenterClockTextColorEditing: () -> Unit,
     onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
+    onExpandQsPanelPortraitChanged: (Boolean) -> Unit,
+    onQsPanelWidthPercentChanged: (Int) -> Unit,
+    onQsTileColumnsChanged: (Int) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -280,6 +286,9 @@ private fun ControlCenterSettingsScreen(
                         onControlCenterClockColorChange = onControlCenterClockColorChange,
                         onBrightnessSliderPercentageChanged = onBrightnessSliderPercentageChanged,
                         onVolumeSliderPercentageChanged = onVolumeSliderPercentageChanged,
+                        onExpandQsPanelPortraitChanged = onExpandQsPanelPortraitChanged,
+                        onQsPanelWidthPercentChanged = onQsPanelWidthPercentChanged,
+                        onQsTileColumnsChanged = onQsTileColumnsChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -321,6 +330,9 @@ private fun controlCenterSettingsSections(
     onNotificationCenterBlurPercentChanged: (Int) -> Unit,
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
     onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
+    onExpandQsPanelPortraitChanged: (Boolean) -> Unit,
+    onQsPanelWidthPercentChanged: (Int) -> Unit,
+    onQsTileColumnsChanged: (Int) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -505,8 +517,48 @@ private fun controlCenterSettingsSections(
                     }
                 )
             )
+        ),
+        SettingSection(
+                title = stringResource(R.string.expand_qs_panel_portrait_title),
+                items = buildList {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.expand_qs_panel_portrait_title),
+                            summary = stringResource(R.string.expand_qs_panel_portrait_summary),
+                            checked = state.expandQsPanelPortrait,
+                            onCheckedChange = onExpandQsPanelPortraitChanged
+                        )
+                    )
+                    if (state.expandQsPanelPortrait) {
+                        add(
+                            SettingItem.Slider(
+                                title = stringResource(R.string.qs_panel_width_percent_title),
+                                summary = stringResource(R.string.qs_panel_width_percent_summary),
+                                value = state.qsPanelWidthPercent.toFloat(),
+                                valueText = stringResource(
+                                    R.string.percent_unit,
+                                    state.qsPanelWidthPercent
+                                ),
+                                valueRange = 0f..100f,
+                                steps = 19,
+                                onValueChange = { onQsPanelWidthPercentChanged(snapToAccuratePercent(it)) }
+                            )
+                        )
+                        add(
+                            SettingItem.Slider(
+                                title = stringResource(R.string.qs_tile_columns_title),
+                                summary = stringResource(R.string.qs_tile_columns_summary),
+                                value = state.qsTileColumns.toFloat(),
+                                valueText = state.qsTileColumns.toString(),
+                                valueRange = 0f..10f,
+                                steps = 9,
+                                onValueChange = { onQsTileColumnsChanged(it.toInt()) }
+                            )
+                        )
+                    }
+                }
+            )
         )
-    )
 }
 
 @Composable
