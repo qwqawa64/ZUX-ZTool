@@ -7,6 +7,7 @@ import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudioApp;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
+import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableRecentAppsDisplay;
 import com.qimian233.ztool.hook.modules.launcher.grid.BluePointRemovalHook;
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch;
 import com.qimian233.ztool.hook.modules.launcher.grid.CustomGridSize;
@@ -172,6 +173,7 @@ public class HookManager {
         registerHookModule(new LauncherNoLabelMode());
         registerHookModule(new BluePointRemovalHook());
         registerHookModule(new DismissCloudFolderConfirmation());
+        registerHookModule(new DisableRecentAppsDisplay());
 
         // ── GameTool (target: com.zui.game.service) ──
         registerHookModule(new AutoMistakeTouchHook());

@@ -1,10 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.res.Configuration
-import android.util.AttributeSet
-import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -13,8 +10,6 @@ import android.widget.AbsSeekBar
 import android.widget.FrameLayout
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
-import java.lang.ref.WeakReference
-import androidx.core.view.isVisible
 
 /**
  * 测试 Hook — 修改 QS 面板宽度并保证子控件正确扩展和对齐。
@@ -35,9 +30,9 @@ class QsPanelWidthHook : BaseHookModule() {
         private const val DEFAULT_WIDTH_PERCENT = 80
         /** 默认磁贴列数 */
         private const val DEFAULT_TILE_COLUMNS = 7
-        /** 缓存最近创建的 ToggleSliderView，用于 scrim 触摸拦截时查找 indicator */
+        /** 缓存 QSContainerImpl 实例，供 TouchHandler 触摸拦截时判断面板区域 */
         @Volatile
-        private var cachedSliderViewRef: WeakReference<View>? = null
+        private var cachedContainer: View? = null
     }
 
     override fun getModuleName(): String = "expand_qs_panel_portrait"
@@ -68,6 +63,8 @@ class QsPanelWidthHook : BaseHookModule() {
 
         hookWithId(onMeasureMethod, "qs_panel_width_measure") { chain ->
             val container = chain.thisObject as ViewGroup
+            // 缓存实例供 TouchHandler 触摸拦截使用
+            cachedContainer = container
 
             // 仅在竖屏 (Portrait) 下修改宽度逻辑
             val orientation = container.context.resources.configuration.orientation
@@ -251,83 +248,43 @@ class QsPanelWidthHook : BaseHookModule() {
 
         log("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
 
-        // ── Bug fix: 缓存的 ToggleSliderView 实例 ──
-        // Hook ToggleSliderView 构造器，缓存实例供 scrim 触摸拦截使用
-        try {
-            val toggleSliderClass = param.defaultClassLoader
-                .loadClass("com.android.systemui.settings.ToggleSliderView")
-            val ctor = toggleSliderClass.getDeclaredConstructor(
-                Context::class.java,
-                AttributeSet::class.java,
-                Int::class.javaPrimitiveType!!
-            )
-            hookWithId(ctor, "cache_slider_view") { chain ->
-                chain.proceed()
-                val view = chain.thisObject as View
-                cachedSliderViewRef = WeakReference(view)
-                Log.d("ZTool_SrimDiag", "ToggleSliderView cached: ${view.javaClass.simpleName}@${Integer.toHexString(view.hashCode())}")
-                null
-            }
-            log("ToggleSliderView hooked, a slider view reference will be fetched via weak reference")
-        } catch (t: Throwable) {
-            log("Failed to hook ToggleSliderView ctor: ${t.message}")
-        }
-
-        // ── Bug fix: Scrim/Shade 触摸拦截 → 转发到 brightness indicator ──
-        // QsPanelWidthHook 缩窄 QS 面板并居中后，NotificationPanelView 的 TouchHandler
-        // 将 indicator 区域的触控判定为"点击空白区域"→ 触发 shade dismiss。
-        // ScrimView 不接收触控 (canReceivePointerEvents=false)，真正的入口是
-        // NotificationPanelViewController.TouchHandler.onTouchEvent。
-        // 这里 Hook TouchHandler.onTouchEvent，在触控落在 indicator 区域时，
-        // 调用 openBrightnessDetail() 并返回 true 消费事件。
+        // ── Bug fix: 恢复 QS 面板拓宽区域的触控 ──
+        // QsPanelWidthHook 缩窄 QSContainerImpl 并用 translationX 居中后，
+        // NotificationPanelView 的 TouchHandler 将容器原布局边界外的区域判为"空白区域"，
+        // 拦截触控并触发 shade dismiss，导致 QS/QQS/Slider/Tiles 等所有拓宽后超出
+        // 原边界的控件都无法正常触控。
+        //
+        // 这里 Hook TouchHandler.onInterceptTouchEvent，检测触控是否落在
+        // QSContainerImpl 的实际屏幕范围内（含 translationX 偏移），若是则返回 false
+        // 让触控穿透到子控件正常处理。
         try {
             val touchHandlerClass = param.defaultClassLoader
-                .loadClass($$"com.android.systemui.shade.NotificationPanelViewController$TouchHandler")
-            val onTouchEventMethod = touchHandlerClass.getDeclaredMethod(
-                "onTouchEvent",
+                .loadClass("com.android.systemui.shade.NotificationPanelViewController\$TouchHandler")
+            val onInterceptMethod = touchHandlerClass.getDeclaredMethod(
+                "onInterceptTouchEvent",
                 MotionEvent::class.java
             )
-            onTouchEventMethod.isAccessible = true
-            hookWithId(onTouchEventMethod, "touch_handler_indicator_redirect") { chain ->
-                val event = chain.args[0] as MotionEvent
-                if (event.action == MotionEvent.ACTION_UP) {
-                    val sliderView = cachedSliderViewRef?.get()
-                    if (sliderView != null && sliderView.isAttachedToWindow) {
-                        try {
-                            val indicatorField = sliderView.javaClass
-                                .getDeclaredField("mBrightnessDetailIndicator")
-                                .apply { isAccessible = true }
-                            val indicator = indicatorField.get(sliderView) as? View
-                            if (indicator != null && indicator.isVisible) {
-                                val loc = IntArray(2)
-                                indicator.getLocationOnScreen(loc)
-                                val tx = event.rawX.toInt()
-                                val ty = event.rawY.toInt()
-                                val iw = indicator.width
-                                val ih = indicator.height
-                                if (tx >= loc[0] && tx <= loc[0] + iw &&
-                                    ty >= loc[1] && ty <= loc[1] + ih
-                                ) {
-                                    val openMethod = sliderView.javaClass
-                                        .getDeclaredMethod("openBrightnessDetail")
-                                        .apply { isAccessible = true }
-                                    openMethod.invoke(sliderView)
-                                    Log.d("ZTool_SrimDiag",
-                                        "TouchHandler | HIT indicator @($tx,$ty) → openBrightnessDetail()")
-                                    return@hookWithId true
-                                }
-                            }
-                        } catch (t: Throwable) {
-                            Log.d("ZTool_SrimDiag", "TouchHandler | error: ${t.message}")
-                        }
+            onInterceptMethod.isAccessible = true
+            hookWithId(onInterceptMethod, "qs_touch_passthrough") { chain ->
+                val container = cachedContainer
+                if (container != null && container.isAttachedToWindow) {
+                    val event = chain.args[0] as MotionEvent
+                    val loc = IntArray(2)
+                    container.getLocationOnScreen(loc)
+                    val cx = event.rawX
+                    val cy = event.rawY
+                    if (cx >= loc[0] && cx <= loc[0] + container.width &&
+                        cy >= loc[1] && cy <= loc[1] + container.height
+                    ) {
+                        // 触控在 QS 面板实际区域 → 不拦截，让子控件正常处理
+                        return@hookWithId false
                     }
                 }
                 chain.proceed()
             }
-            // 保留 ScrimView hook 的注册以防某场景下有用，但降级为仅日志
-            log("TouchHandler.onTouchEvent indicator redirector installed")
+            log("TouchHandler.onInterceptTouchEvent passthrough installed")
         } catch (t: Throwable) {
-            log("Failed to hook TouchHandler.onTouchEvent: ${t.message}")
+            log("Failed to hook TouchHandler.onInterceptTouchEvent: ${t.message}")
         }
     }
 }
