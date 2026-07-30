@@ -411,6 +411,42 @@ private fun controlCenterSettingsSections(
                 )
                 add(
                     SettingItem.Switch(
+                        title = stringResource(R.string.customize_slider_style_title),
+                        summary = stringResource(R.string.customize_slider_style_summary),
+                        checked = state.customizeSliderStyle,
+                        onCheckedChange = onCustomizeSliderStyleChanged,
+                        enabled = !state.sliderStyleForcedByQsPanel
+                    )
+                )
+                if (state.sliderStyleForcedByQsPanel) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                Text(
+                                    text = stringResource(R.string.slider_style_forced_by_qs_panel),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LocalZToolColorScheme.current.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                                )
+                            }
+                        )
+                    )
+                }
+                if (state.customizeSliderStyle) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                SliderStyleDirectionRow(
+                                    isVertical = state.sliderStyleIsVertical,
+                                    enabled = !state.sliderStyleForcedByQsPanel,
+                                    onDirectionChanged = onSliderStyleValueChanged
+                                )
+                            }
+                        )
+                    )
+                }
+                add(
+                    SettingItem.Switch(
                         title = stringResource(R.string.custom_qs_color_general_switch),
                         checked = state.customQsColorGeneralSwitch,
                         onCheckedChange = onCustomQsColorSwitchChanged
@@ -526,47 +562,6 @@ private fun controlCenterSettingsSections(
                     }
                 )
             )
-        ),
-        SettingSection(
-            title = stringResource(R.string.customize_slider_style_title),
-            items = buildList {
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.customize_slider_style_title),
-                        summary = stringResource(R.string.customize_slider_style_summary),
-                        checked = state.customizeSliderStyle,
-                        onCheckedChange = onCustomizeSliderStyleChanged,
-                        enabled = !state.sliderStyleForcedByQsPanel
-                    )
-                )
-                if (state.sliderStyleForcedByQsPanel) {
-                    add(
-                        SettingItem.Custom(
-                            content = {
-                                Text(
-                                    text = stringResource(R.string.slider_style_forced_by_qs_panel),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalZToolColorScheme.current.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
-                                )
-                            }
-                        )
-                    )
-                }
-                if (state.customizeSliderStyle) {
-                    add(
-                        SettingItem.Custom(
-                            content = {
-                                SliderStyleDirectionRow(
-                                    isVertical = state.sliderStyleIsVertical,
-                                    enabled = !state.sliderStyleForcedByQsPanel,
-                                    onDirectionChanged = onSliderStyleValueChanged
-                                )
-                            }
-                        )
-                    )
-                }
-            }
         ),
         SettingSection(
                 title = stringResource(R.string.expand_qs_panel_portrait_title),
