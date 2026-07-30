@@ -24,6 +24,9 @@ class SliderStyleHook: BaseHookModule() {
 
     override fun getTargetPackages(): Array<out String> = arrayOf("com.android.systemui")
 
+    private fun isFromBrightnessController(): Boolean =
+        Throwable().stackTrace.any { it.className.contains("BrightnessDetailDialogController") }
+
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam?) {
 
         val prefs = xposed.getRemotePreferences("xposed_module_config")
@@ -37,6 +40,7 @@ class SliderStyleHook: BaseHookModule() {
             Int::class.javaPrimitiveType!!
         )
         hookWithId(getIntegerMethod, "force_horizontal_slider") { chain ->
+            if (isFromBrightnessController()) return@hookWithId chain.proceed()
             val index = chain.args[0] as Int
             val original = chain.proceed() as Int
             var result = original
@@ -55,6 +59,7 @@ class SliderStyleHook: BaseHookModule() {
         val windowMetricsClass = Class.forName("android.view.WindowMetrics")
         val getBoundsMethod = windowMetricsClass.getDeclaredMethod("getBounds")
         hookWithId(getBoundsMethod, "force_large_screen_bounds") { chain ->
+            if (isFromBrightnessController()) return@hookWithId chain.proceed()
             val original = chain.proceed() as android.graphics.Rect
             val caller = Throwable().stackTrace
                 .firstOrNull { it.className == toggleSliderClassName && it.methodName == "<init>" }
