@@ -29,7 +29,7 @@ import com.qimian233.ztool.hook.modules.packageinstaller.DisableInstallerAdverti
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
-import com.qimian233.ztool.hook.modules.packageinstaller.packageInstallerStyleHook;
+import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerStyleHook;
 import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans;
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault;
 import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook;
@@ -159,7 +159,7 @@ public class HookManager {
         registerHookModule(new PackageInstallerPermissionHook());
         registerHookModule(new SkipInstallWarnPage());
         registerHookModule(new DisableInstallerAdvertisement());
-        registerHookModule(new packageInstallerStyleHook());
+        registerHookModule(new PackageInstallerStyleHook());
         registerHookModule(new PackageInstallerNoDeleteModule());
 
         // ── Launcher (target: com.zui.launcher) ──
