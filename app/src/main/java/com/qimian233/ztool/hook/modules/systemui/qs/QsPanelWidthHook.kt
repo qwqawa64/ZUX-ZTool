@@ -1,7 +1,10 @@
-package com.qimian233.ztool.hook.modules.systemui
+package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.res.Configuration
+import android.util.AttributeSet
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -254,15 +257,15 @@ class QsPanelWidthHook : BaseHookModule() {
             val toggleSliderClass = param.defaultClassLoader
                 .loadClass("com.android.systemui.settings.ToggleSliderView")
             val ctor = toggleSliderClass.getDeclaredConstructor(
-                android.content.Context::class.java,
-                android.util.AttributeSet::class.java,
+                Context::class.java,
+                AttributeSet::class.java,
                 Int::class.javaPrimitiveType!!
             )
             hookWithId(ctor, "cache_slider_view") { chain ->
                 chain.proceed()
                 val view = chain.thisObject as View
                 cachedSliderViewRef = WeakReference(view)
-                android.util.Log.d("ZTool_SrimDiag", "ToggleSliderView cached: ${view.javaClass.simpleName}@${Integer.toHexString(view.hashCode())}")
+                Log.d("ZTool_SrimDiag", "ToggleSliderView cached: ${view.javaClass.simpleName}@${Integer.toHexString(view.hashCode())}")
                 null
             }
             log("ToggleSliderView hooked, a slider view reference will be fetched via weak reference")
@@ -279,7 +282,7 @@ class QsPanelWidthHook : BaseHookModule() {
         // 调用 openBrightnessDetail() 并返回 true 消费事件。
         try {
             val touchHandlerClass = param.defaultClassLoader
-                .loadClass("com.android.systemui.shade.NotificationPanelViewController\$TouchHandler")
+                .loadClass($$"com.android.systemui.shade.NotificationPanelViewController$TouchHandler")
             val onTouchEventMethod = touchHandlerClass.getDeclaredMethod(
                 "onTouchEvent",
                 MotionEvent::class.java
@@ -295,7 +298,7 @@ class QsPanelWidthHook : BaseHookModule() {
                                 .getDeclaredField("mBrightnessDetailIndicator")
                                 .apply { isAccessible = true }
                             val indicator = indicatorField.get(sliderView) as? View
-                            if (indicator != null && indicator.visibility == View.VISIBLE) {
+                            if (indicator != null && indicator.isVisible) {
                                 val loc = IntArray(2)
                                 indicator.getLocationOnScreen(loc)
                                 val tx = event.rawX.toInt()
@@ -309,13 +312,13 @@ class QsPanelWidthHook : BaseHookModule() {
                                         .getDeclaredMethod("openBrightnessDetail")
                                         .apply { isAccessible = true }
                                     openMethod.invoke(sliderView)
-                                    android.util.Log.d("ZTool_SrimDiag",
+                                    Log.d("ZTool_SrimDiag",
                                         "TouchHandler | HIT indicator @($tx,$ty) → openBrightnessDetail()")
                                     return@hookWithId true
                                 }
                             }
                         } catch (t: Throwable) {
-                            android.util.Log.d("ZTool_SrimDiag", "TouchHandler | error: ${t.message}")
+                            Log.d("ZTool_SrimDiag", "TouchHandler | error: ${t.message}")
                         }
                     }
                 }

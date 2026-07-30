@@ -1,15 +1,16 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.misc;
 
+import android.annotation.SuppressLint;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
+@SuppressLint("PrivateApi")
 public class NotificationCenterTransparency extends BaseHookModule {
     private static final String KEY_BLUR_PERCENT = "notification_center_blur_percent";
     private static final int DEFAULT_BLUR_PERCENT = 0;
@@ -30,7 +31,6 @@ public class NotificationCenterTransparency extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         updatePrefs();
         hookShadeRootViewFactory(classLoader);
         hookNotificationShadeBlur(classLoader);
@@ -74,9 +74,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
             Method setBlurIntMethod = classLoader
                     .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
                     .getDeclaredMethod("setNotificationPanelBlurBehind", int.class);
-            hookWithId(setBlurIntMethod, "set_blur_int", chain -> {
-                return chain.proceed(new Object[]{scaleBlur((int) chain.getArg(0))});
-            });
+            hookWithId(setBlurIntMethod, "set_blur_int", chain -> chain.proceed(new Object[]{scaleBlur((int) chain.getArg(0))}));
         } catch (Throwable t) {
             if (DEBUG) logError("Failed to hook setNotificationPanelBlurBehind(int)", t);
         }
@@ -94,7 +92,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                     return pairClass.getDeclaredConstructor(Object.class, Object.class)
                             .newInstance(scaleBlur(blur), zoomOut);
                 }
-                return result;
+                return null;
             });
         } catch (Throwable t) {
             logError("Failed to hook NotificationShadeDepthController.computeBlurAndZoomOut", t);

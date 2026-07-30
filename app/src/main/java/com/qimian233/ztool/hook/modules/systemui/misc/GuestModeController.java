@@ -1,11 +1,11 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.misc;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.provider.Settings;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -42,7 +42,7 @@ public class GuestModeController extends BaseHookModule {
 
     private void hookGuestUserInteractor(ClassLoader classLoader) {
         try {
-            Method isAllowedMethod = classLoader
+            @SuppressLint("PrivateApi") Method isAllowedMethod = classLoader
                     .loadClass("com.android.systemui.user.domain.interactor.GuestUserInteractor")
                     .getDeclaredMethod("isDeviceAllowedToAddGuest");
             hookWithId(isAllowedMethod, "is_allowed", chain -> {

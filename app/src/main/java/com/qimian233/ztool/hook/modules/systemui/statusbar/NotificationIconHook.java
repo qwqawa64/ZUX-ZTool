@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.statusbar;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;

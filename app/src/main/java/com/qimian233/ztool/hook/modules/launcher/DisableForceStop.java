@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 
@@ -285,6 +286,7 @@ public class DisableForceStop extends BaseHookModule {
     /**
      * Android 15及以下版本的通用Hook策略（带白名单机制）
      */
+    @SuppressLint("PrivateApi")
     private void hookLegacyLauncher(ClassLoader classLoader) {
         try {
             log("Start hooking legacy Launcher with whitelist enabled.");

@@ -1,8 +1,9 @@
-package com.qimian233.ztool.hook.modules.systemui
+package com.qimian233.ztool.hook.modules.systemui.misc
 
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Environment
+import android.view.View
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.io.File
@@ -57,7 +58,7 @@ class CustomChargeAnimation : BaseHookModule() {
                     thisObject.javaClass.name == CHARGING_VIDEO_VIEW_CLASS
                 ) {
                     val originalUri = chain.args[0] as Uri?
-                    val view = thisObject as android.view.View
+                    val view = thisObject as View
                     val isLandscape =
                         view.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
                     val fileName = if (isLandscape) VIDEO_LAND else VIDEO_PORTRAIT

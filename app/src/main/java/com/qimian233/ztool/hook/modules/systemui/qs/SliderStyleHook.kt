@@ -1,6 +1,7 @@
-package com.qimian233.ztool.hook.modules.systemui
+package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.content.res.TypedArray
+import android.graphics.Rect
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
@@ -60,7 +61,7 @@ class SliderStyleHook: BaseHookModule() {
         val getBoundsMethod = windowMetricsClass.getDeclaredMethod("getBounds")
         hookWithId(getBoundsMethod, "force_large_screen_bounds") { chain ->
             if (isFromBrightnessController()) return@hookWithId chain.proceed()
-            val original = chain.proceed() as android.graphics.Rect
+            val original = chain.proceed() as Rect
             val caller = Throwable().stackTrace
                 .firstOrNull { it.className == toggleSliderClassName && it.methodName == "<init>" }
             if (caller != null) {

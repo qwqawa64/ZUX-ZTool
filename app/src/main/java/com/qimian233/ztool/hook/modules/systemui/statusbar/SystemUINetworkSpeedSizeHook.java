@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.statusbar;
 
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -7,7 +7,6 @@ import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -16,9 +15,9 @@ import java.lang.reflect.Method;
  * 系统UI网速显示样式Hook模块
  * 修改系统状态栏中的网速显示，使数字部分更大、单位部分更小
  */
-public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
+public class SystemUINetworkSpeedSizeHook extends BaseHookModule {
 
-    public SystemUINetworkSpeedSIzeHook() {}
+    public SystemUINetworkSpeedSizeHook() {}
 
     @Override
     public String getModuleName() {
@@ -32,7 +31,6 @@ public class SystemUINetworkSpeedSIzeHook extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
         if ("com.android.systemui".equals(packageName)) {
             hookSystemUI();

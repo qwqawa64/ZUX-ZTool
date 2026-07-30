@@ -1,16 +1,17 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.keyguard;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+@SuppressLint("PrivateApi")
 public class ForceLenovoAOD extends BaseHookModule {
 
     private static final String TAG = "ForceLenovoAOD";
@@ -38,7 +39,7 @@ public class ForceLenovoAOD extends BaseHookModule {
         // 直接设置mIsGoingToStartAOD字段
         hookZuiDozeTriggers(classLoader);
         // 额外确保AOD相关检查通过
-        hookAODChecks(classLoader);
+        hookAODChecks();
     }
 
     private void hookZuiDozeTriggers(ClassLoader classLoader) {
@@ -61,7 +62,7 @@ public class ForceLenovoAOD extends BaseHookModule {
         }
     }
 
-    private void hookAODChecks(ClassLoader classLoader) {
+    private void hookAODChecks() {
         try {
             // Hook SystemProperties检查
             Method getIntMethod = Class.forName("android.os.SystemProperties")

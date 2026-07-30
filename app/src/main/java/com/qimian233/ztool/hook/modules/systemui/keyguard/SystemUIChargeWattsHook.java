@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.keyguard;
 
 import android.annotation.SuppressLint;
 
@@ -93,8 +93,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                 log("Unable to find BaseKeyguardCallback.onRefreshBatteryInfo: " + e.getMessage());
             }
             if (refreshMethod != null) {
-                Method finalRefreshMethod = refreshMethod;
-                hookWithId(finalRefreshMethod, "final_refresh", chain -> {
+                hookWithId(refreshMethod, "final_refresh", chain -> {
                     try {
                         Object result = chain.proceed();
                         // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据

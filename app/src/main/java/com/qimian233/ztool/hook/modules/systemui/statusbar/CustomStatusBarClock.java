@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.statusbar;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
@@ -12,6 +12,7 @@ import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter;
 
 import io.github.libxposed.api.XposedModuleInterface;
 

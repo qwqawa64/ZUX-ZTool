@@ -1,5 +1,6 @@
-package com.qimian233.ztool.hook.modules.systemui;
+package com.qimian233.ztool.hook.modules.systemui.qs;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -14,7 +15,6 @@ import android.widget.TextView;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Constructor;
@@ -23,21 +23,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-public class VolumeSliderPercentageHook extends BaseHookModule {
+@SuppressLint("PrivateApi")
+public class BrightnessSliderPercentageHook extends BaseHookModule {
     private static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
     private static final String TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView";
     private static final String SLIDER_PERCENT_TAG = "ztool_control_center_slider_percent";
-    private static final String VOLUME_ROOT_FIELD = "mVolumeSliderRoot";
-    private static final String VOLUME_ICON_FIELD = "mMediaVolumeIconMark";
-    private static final String PREF_KEY = "volume_slider_percentage";
+    private static final String BRIGHTNESS_ROOT_FIELD = "mBrightnessSliderRoot";
+    private static final String BRIGHTNESS_ICON_FIELD = "mBrightnessIconMark";
     private static final int LABEL_GAP_DP = 2;
+    private static final String PREF_KEY = "brightness_slider_percentage";
 
     private static boolean PERCENTAGE_ENABLED = false;
 
     private final Map<View, View.OnLayoutChangeListener> layoutListeners = new WeakHashMap<>();
     private final Map<FrameLayout, Boolean> pendingPositionUpdates = new WeakHashMap<>();
 
-    public VolumeSliderPercentageHook() {}
+    public BrightnessSliderPercentageHook() {}
 
     @Override
     public String getModuleName() {
@@ -52,31 +53,43 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
         updatePrefs();
         hookToggleSliderViewLifecycle(classLoader);
-        hookVolumeControllerCallbacks(classLoader);
-        hookSeekProgressChanges(classLoader);
-        log("Volume slider percentage hooks installed");
+        hookBrightnessControllerCallbacks(classLoader);
+        hookSeekProgressChanges();
+        log("Brightness slider percentage hooks installed");
     }
 
-    private void hookVolumeControllerCallbacks(ClassLoader classLoader) {
+    private void hookBrightnessControllerCallbacks(ClassLoader classLoader) {
         try {
-            Method updateMusicSliderMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
-                    .getDeclaredMethod("updateMusicSlider");
-            hookWithId(updateMusicSliderMethod, "update_music_slider", chain -> {
+            Method onChangedMethod = classLoader
+                    .loadClass("com.android.systemui.settings.brightness.BrightnessController")
+                    .getDeclaredMethod("onChanged", int.class, boolean.class, boolean.class);
+            hookWithId(onChangedMethod, "on_changed", chain -> {
                 Object result = chain.proceed();
-                refreshVolumeFromToggleSlider(chain.getThisObject());
+                refreshBrightnessFromController(chain.getThisObject(), (Integer) chain.getArg(0));
                 return result;
             });
         } catch (Throwable ignored) {}
 
         try {
-            Method registerVolumeObserverMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
-                    .getDeclaredMethod("registerVolumeObserver");
-            hookWithId(registerVolumeObserverMethod, "register_volume_observer", chain -> {
+            Method setValueMethod = classLoader
+                    .loadClass("com.android.systemui.settings.brightness.BrightnessSliderController")
+                    .getDeclaredMethod("setValue", int.class);
+            hookWithId(setValueMethod, "set_value", chain -> {
                 Object result = chain.proceed();
-                refreshVolumeFromToggleSlider(chain.getThisObject());
+                Object sliderController = chain.getThisObject();
+                Class<?> scCls = sliderController.getClass();
+                try {
+                    scCls.getDeclaredField("mBrightnessSliderHapticPlugin");
+                } catch (NoSuchFieldException ignored) {
+                    log("Field mBrightnessSliderHapticPlugin not found, shouldn't hook mView of this class!");
+                    return chain.proceed();
+                }
+                Object view = findField(scCls, "mView").get(sliderController);
+                if (view instanceof View) {
+                    refreshBrightnessFromView((View) view, (Integer) chain.getArg(0));
+                }
                 return result;
             });
         } catch (Throwable ignored) {}
@@ -94,22 +107,12 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         } catch (Throwable ignored) {}
 
         try {
-            Method updateVolumeSliderMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
-                    .getDeclaredMethod("updateVolumeSlider");
-            hookWithId(updateVolumeSliderMethod, "update_volume_slider", chain -> {
+            Method updateBrightnessMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                    .getDeclaredMethod("updateBrightnessSlider");
+            hookWithId(updateBrightnessMethod, "update_brightness", chain -> {
                 Object result = chain.proceed();
                 attachSliderLabel(chain.getThisObject());
-                refreshVolumeLabel(chain.getThisObject());
-                return result;
-            });
-        } catch (Throwable ignored) {}
-
-        try {
-            Method setVolumeProgressMethod = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
-                    .getDeclaredMethod("setVolumeProgress", int.class);
-            hookWithId(setVolumeProgressMethod, "set_volume_progress", chain -> {
-                Object result = chain.proceed();
-                refreshVolumeLabel(chain.getThisObject());
+                refreshBrightnessLabel(chain.getThisObject());
                 return result;
             });
         } catch (Throwable ignored) {}
@@ -121,28 +124,26 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
                 Object result = chain.proceed();
                 Object sliderView = chain.getThisObject();
                 ProgressBar progressBar = (ProgressBar) chain.getArg(0);
-                if (isVolumeSlider(sliderView, progressBar)) {
-                    refreshVolumeLabel(sliderView);
+                if (isBrightnessSlider(sliderView, progressBar)) {
+                    refreshBrightnessLabel(sliderView);
                 }
                 return result;
             });
         } catch (Throwable ignored) {}
     }
 
-    private void hookSeekProgressChanges(ClassLoader classLoader) {
+    private void hookSeekProgressChanges() {
         try {
-            Method onProgressChangedMethod = classLoader
-                    .loadClass("com.android.systemui.settings.ToggleSliderView$2")
-                    .getDeclaredMethod("onProgressChanged", SeekBar.class, int.class, boolean.class);
-            hookWithId(onProgressChangedMethod, "on_progress_changed", chain -> {
+            Method setProgressMethod = SeekBar.class.getDeclaredMethod("setProgress", int.class);
+            hookWithId(setProgressMethod, "set_progress", chain -> {
                 Object result = chain.proceed();
-                SeekBar seekBar = (SeekBar) chain.getArg(0);
+                SeekBar seekBar = (SeekBar) chain.getThisObject();
                 Object sliderView = findToggleSliderView(seekBar);
-                if (sliderView == null || !isVolumeSlider(sliderView, seekBar)) {
+                if (sliderView == null) {
                     return result;
                 }
-                if (Boolean.TRUE.equals(chain.getArg(2))) {
-                    refreshVolumeLabel(sliderView, (Integer) chain.getArg(1));
+                if (isBrightnessSlider(sliderView, seekBar)) {
+                    refreshBrightnessLabel(sliderView);
                 }
                 return result;
             });
@@ -153,7 +154,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             attachLabelToRoot(sliderView);
         } catch (Throwable t) {
-            logError("Failed to attach volume slider label", t);
+            logError("Failed to attach brightness slider label", t);
         }
     }
 
@@ -176,20 +177,13 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         }
 
         ensureLayoutTracking(root, icon, percentView);
-        Integer rawProgress = getVolumeRawProgress(sliderView, null);
-        if (rawProgress != null) {
-            updateVolumePercentColor(percentView, rawProgress);
-        }
-        refreshVolumeLabel(sliderView, percentView, null);
+        updateBrightnessPercentColor(sliderView, percentView);
+        refreshBrightnessLabel(sliderView, percentView);
     }
 
-    private void refreshVolumeLabel(Object sliderView) {
-        refreshVolumeLabel(sliderView, null);
-    }
-
-    private void refreshVolumeLabel(Object sliderView, Integer rawProgress) {
+    private void refreshBrightnessLabel(Object sliderView) {
         if (!PERCENTAGE_ENABLED) {
-            detachVolumeLabel(sliderView);
+            detachBrightnessLabel(sliderView);
             return;
         }
         FrameLayout root = getFrameLayoutField(sliderView);
@@ -198,11 +192,11 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         }
         TextView percentView = findPercentView(root);
         if (percentView != null) {
-            refreshVolumeLabel(sliderView, percentView, rawProgress);
+            refreshBrightnessLabel(sliderView, percentView);
         }
     }
 
-    private void refreshVolumeLabel(Object sliderView, TextView percentView, Integer rawProgress) {
+    private void refreshBrightnessLabel(Object sliderView, TextView percentView) {
         if (!PERCENTAGE_ENABLED) {
             removePercentView(getFrameLayoutField(sliderView));
             return;
@@ -213,97 +207,122 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
                 schedulePositionUpdate(sliderView);
                 return;
             }
-            Integer rawProgress2 = getVolumeRawProgress(sliderView, rawProgress);
-            Integer volumeProgress = getVolumeProgress(sliderView, rawProgress);
-            if (rawProgress2 == null || volumeProgress == null) {
+            Class<?> cl = sliderView.getClass();
+            SeekBar brightnessSlider = (SeekBar) cl.getDeclaredField("mBrightnessSlider").get(sliderView);
+            if (brightnessSlider == null) {
                 setPercentTextIfChanged(percentView, "--%");
                 return;
             }
-            updateVolumePercentColor(percentView, rawProgress2);
-            setPercentTextIfChanged(percentView, formatPercent(volumeProgress));
+            setPercentTextIfChanged(percentView, formatPercent(
+                    brightnessSlider.getProgress(),
+                    brightnessSlider.getMin(),
+                    brightnessSlider.getMax()
+            ));
+            updateBrightnessPercentColor(sliderView, percentView);
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             setPercentTextIfChanged(percentView, "--%");
             if (DEBUG) {
-                logError("Failed to refresh volume percent", t);
+                logError("Failed to refresh brightness percent", t);
             }
         }
     }
 
-    private void refreshVolumeFromToggleSlider(Object sliderView) {
-        refreshVolumeFromToggleSlider(sliderView, null);
-    }
-
-    private void refreshVolumeFromToggleSlider(Object sliderView, Integer rawProgress) {
-        if (!PERCENTAGE_ENABLED || sliderView == null) {
+    private void refreshBrightnessFromController(Object brightnessController, int progress) {
+        if (!PERCENTAGE_ENABLED || brightnessController == null) {
             return;
         }
         try {
-            Integer rawProgress2 = getVolumeRawProgress(sliderView, rawProgress);
-            Integer volumeProgress = getVolumeProgress(sliderView, rawProgress);
-            if (rawProgress2 == null || volumeProgress == null) {
+            Class<?> bcCls = brightnessController.getClass();
+            Object control = bcCls.getDeclaredField("mControl").get(brightnessController);
+            if (control == null) {
                 return;
             }
-            FrameLayout root = getFrameLayoutField(sliderView);
-            if (root == null) {
+            try {
+                bcCls.getDeclaredField("mBrightnessObserver");
+            } catch (NoSuchFieldException ignored) {
+                log("Field mBrightnessObserver not found, shouldn't hook mView of this class!");
                 return;
             }
-            TextView percentView = findPercentView(root);
-            if (percentView == null) {
+            Object view = findField(control.getClass(), "mView").get(control);
+            if (!(view instanceof View)) {
                 return;
             }
-            updateVolumePercentColor(percentView, rawProgress2);
-            if (root != null && root.isInLayout()) {
+            refreshBrightnessFromView((View) view, progress);
+        } catch (Throwable t) {
+            if (DEBUG) {
+                logError("Failed to refresh brightness from controller", t);
+            }
+        }
+    }
+
+    private void refreshBrightnessFromView(View view, int progress) {
+        if (view == null) {
+            return;
+        }
+        Object sliderView = findToggleSliderView(view);
+        if (sliderView == null) {
+            return;
+        }
+        FrameLayout root = getFrameLayoutField(sliderView);
+        if (root == null) {
+            return;
+        }
+        TextView percentView = findPercentView(root);
+        if (percentView == null) {
+            return;
+        }
+
+        try {
+            Class<?> cl = sliderView.getClass();
+            SeekBar brightnessSlider = (SeekBar) cl.getDeclaredField("mBrightnessSlider").get(sliderView);
+            int max = brightnessSlider != null ? brightnessSlider.getMax() : 65535;
+            max = Math.max(1, max);
+            int percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)));
+            if (root.isInLayout()) {
                 schedulePositionUpdate(sliderView);
                 return;
             }
-            setPercentTextIfChanged(percentView, formatPercent(volumeProgress));
+            setPercentTextIfChanged(percentView, String.format(Locale.US, "%d%%", percent));
+            updateBrightnessPercentColor(sliderView, percentView);
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             if (DEBUG) {
-                logError("Failed to refresh volume from toggle slider", t);
+                logError("Failed to refresh brightness from view", t);
             }
         }
     }
 
-    private Integer getVolumeRawProgress(Object sliderView, Integer rawProgress) {
+    private void updateBrightnessPercentColor(Object sliderView, TextView percentView) {
+        percentView.setTextColor(resolveBrightnessPercentColor(sliderView));
+    }
+
+    private int resolveBrightnessPercentColor(Object sliderView) {
+        SeekBar brightnessSlider;
         try {
-            SeekBar volumeSlider = (SeekBar) sliderView.getClass()
-                    .getDeclaredField("mMediaVolumeSlider").get(sliderView);
-            if (volumeSlider == null) {
-                return null;
-            }
-            return rawProgress != null ? rawProgress : volumeSlider.getProgress();
+            brightnessSlider = sliderView instanceof SeekBar
+                    ? (SeekBar) sliderView
+                    : (SeekBar) sliderView.getClass().getDeclaredField("mBrightnessSlider").get(sliderView);
         } catch (Throwable t) {
-            return null;
+            return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
         }
+        if (brightnessSlider == null) {
+            return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
+        }
+        float progress = ((brightnessSlider.getProgress() - brightnessSlider.getMin()) * 1.0f)
+                / Math.max(1, brightnessSlider.getMax() - brightnessSlider.getMin());
+        if (progress < 0.2f) {
+            return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
+        }
+        int gray = (int) ((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f);
+        gray = Math.max(gray, 0x80);
+        int alpha = Math.min(((int) Math.floor(progress * 85.0f)) + 170, 255);
+        return Color.argb(alpha, gray, gray, gray);
     }
 
-    private Integer getVolumeProgress(Object sliderView, Integer rawProgress) {
-        try {
-            SeekBar volumeSlider = (SeekBar) sliderView.getClass()
-                    .getDeclaredField("mMediaVolumeSlider").get(sliderView);
-            if (volumeSlider == null) {
-                return null;
-            }
-            int progress = rawProgress != null ? rawProgress : volumeSlider.getProgress();
-            int min = volumeSlider.getMin();
-            int max = volumeSlider.getMax();
-            int range = Math.max(1, max - min);
-            int percent = Math.round(((progress - min) * 100f) / range);
-            percent = Math.max(0, Math.min(100, percent));
-            return percent;
-        } catch (Throwable t) {
-            if (DEBUG) {
-                logError("Failed to resolve volume progress", t);
-            }
-            return null;
-        }
-    }
-
-    private String formatPercent(int progress) {
-        int range = Math.max(1, 100);
-        int value = Math.round(((progress) * 100f) / range);
+    private String formatPercent(int progress, int min, int max) {
+        int range = Math.max(1, max - min);
+        int value = Math.round(((progress - min) * 100f) / range);
         value = Math.max(0, Math.min(100, value));
         return String.format(Locale.US, "%d%%", value);
     }
@@ -342,7 +361,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
 
     private FrameLayout getFrameLayoutField(Object sliderView) {
         try {
-            Object field = sliderView.getClass().getDeclaredField(VOLUME_ROOT_FIELD).get(sliderView);
+            Object field = sliderView.getClass().getDeclaredField(BRIGHTNESS_ROOT_FIELD).get(sliderView);
             return field instanceof FrameLayout ? (FrameLayout) field : null;
         } catch (Throwable t) {
             return null;
@@ -351,16 +370,16 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
 
     private View getViewField(Object sliderView) {
         try {
-            Object field = sliderView.getClass().getDeclaredField(VOLUME_ICON_FIELD).get(sliderView);
+            Object field = sliderView.getClass().getDeclaredField(BRIGHTNESS_ICON_FIELD).get(sliderView);
             return field instanceof View ? (View) field : null;
         } catch (Throwable t) {
             return null;
         }
     }
 
-    private boolean isVolumeSlider(Object sliderView, Object view) {
+    private boolean isBrightnessSlider(Object sliderView, Object view) {
         try {
-            Object slider = sliderView.getClass().getDeclaredField("mMediaVolumeSlider").get(sliderView);
+            Object slider = sliderView.getClass().getDeclaredField("mBrightnessSlider").get(sliderView);
             return slider == view;
         } catch (Throwable t) {
             return false;
@@ -395,7 +414,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         schedulePositionUpdate(root, icon, percentView);
     }
 
-    private void detachVolumeLabel(Object sliderView) {
+    private void detachBrightnessLabel(Object sliderView) {
         removePercentView(getFrameLayoutField(sliderView));
     }
 
@@ -497,21 +516,6 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
 
     private int dp(Context context, int value) {
         return Math.round(value * context.getResources().getDisplayMetrics().density);
-    }
-
-    private void updateVolumePercentColor(TextView percentView, int seekBarProgress) {
-        percentView.setTextColor(resolveVolumePercentColor(seekBarProgress));
-    }
-
-    private int resolveVolumePercentColor(int seekBarProgress) {
-        float progress = (seekBarProgress * 1.0f) / 15000.0f;
-        if (progress < 0.2f) {
-            return Color.argb(0xff, 0xd8, 0xd8, 0xd8);
-        }
-        int gray = (int) ((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f);
-        gray = Math.max(gray, 0x80);
-        int alpha = Math.min(((int) Math.floor(progress * 85.0f)) + 170, 255);
-        return Color.argb(alpha, gray, gray, gray);
     }
 
     private void updatePrefs() {
