@@ -42,7 +42,7 @@ import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook;
-import com.qimian233.ztool.hook.modules.setting.yishijiecompletion;
+import com.qimian233.ztool.hook.modules.setting.OneVisionCompletion;
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand;
 import com.qimian233.ztool.hook.modules.systemframework.AllowGetPackages;
 import com.qimian233.ztool.hook.modules.systemframework.AllowUntrustedTouch;
@@ -144,7 +144,7 @@ public class HookManager {
         registerHookModule(new CustomChargeAnimation());
 
         // ── Settings (target: com.android.settings) ──
-        registerHookModule(new yishijiecompletion());
+        registerHookModule(new OneVisionCompletion());
         registerHookModule(new AllowDisplayDolbyHook());
         registerHookModule(new PermissionControllerHook());
         registerHookModule(new OwnerInfoHook());

@@ -2,7 +2,6 @@ package com.qimian233.ztool.hook.modules.setting;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -11,9 +10,9 @@ import java.lang.reflect.Method;
  * 系统设置Hook模块
  * 修改系统设置应用的行为
  */
-public class yishijiecompletion extends BaseHookModule {
+public class OneVisionCompletion extends BaseHookModule {
 
-    public yishijiecompletion() {}
+    public OneVisionCompletion() {}
 
     @Override
     public String getModuleName() {
