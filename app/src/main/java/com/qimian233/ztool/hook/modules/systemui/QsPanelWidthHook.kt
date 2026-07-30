@@ -21,7 +21,7 @@ import io.github.libxposed.api.XposedModuleInterface
  *
  * getModuleName() 返回 "test_hook"，始终启用，无需前端开关。
  */
-@SuppressLint("PrivateApi")
+@SuppressLint("PrivateApi", "DiscouragedApi")
 class QsPanelWidthHook : BaseHookModule() {
 
     companion object {
