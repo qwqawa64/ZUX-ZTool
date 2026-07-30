@@ -63,6 +63,7 @@ import com.qimian233.ztool.hook.modules.systemui.NativeNotificationIcon;
 import com.qimian233.ztool.hook.modules.systemui.NoChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.NotificationCenterTransparency;
 import com.qimian233.ztool.hook.modules.systemui.NotificationIconHook;
+import com.qimian233.ztool.hook.modules.systemui.SliderStyleHook;
 import com.qimian233.ztool.hook.modules.systemui.StatusBarClockSecondsHook;
 import com.qimian233.ztool.hook.modules.systemui.SystemUIBatteryHook;
 import com.qimian233.ztool.hook.modules.systemui.QsPanelWidthHook;
@@ -139,6 +140,7 @@ public class HookManager {
         registerHookModule(new NotificationCenterTransparency());
         registerHookModule(new GuestModeController());
         registerHookModule(new QsPanelWidthHook());
+        registerHookModule(new SliderStyleHook());
         registerHookModule(new CustomChargeAnimation());
 
         // ── Settings (target: com.android.settings) ──

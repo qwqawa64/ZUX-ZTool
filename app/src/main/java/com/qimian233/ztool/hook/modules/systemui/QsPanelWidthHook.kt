@@ -2,7 +2,6 @@ package com.qimian233.ztool.hook.modules.systemui
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
-import android.content.res.TypedArray
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -48,50 +47,6 @@ class QsPanelWidthHook : BaseHookModule() {
             .coerceIn(0, 10)
         val targetWidthRatio = widthPercent / 100f
 
-        // 强制所有 ToggleSliderView 使用水平样式（mFromType=2），避免竖直 Slider
-        // 在面板宽度改变后出现拉伸、高度塌缩等布局异常
-        val toggleSliderClassName = "com.android.systemui.settings.ToggleSliderView"
-        val getIntegerMethod = TypedArray::class.java.getDeclaredMethod(
-            "getInteger",
-            Int::class.javaPrimitiveType!!,
-            Int::class.javaPrimitiveType!!
-        )
-        hookWithId(getIntegerMethod, "force_horizontal_slider") { chain ->
-            val index = chain.args[0] as Int
-            val original = chain.proceed() as Int
-            var result = original
-            if (index == 0) {
-                val caller = Throwable().stackTrace
-                    .firstOrNull { it.className == toggleSliderClassName && it.methodName == "<init>" }
-                if (caller != null) {
-                    // mFromType=2: 水平双 Slider（亮度 + 音量）
-                    result = 2
-                }
-            }
-            result
-        }
-
-        log("QsPanelWidthHook: hooked TypedArray.getInteger for horizontal slider")
-
-        // 补丁：构造函数中屏幕尺寸判断会覆盖 mFromType：
-        //   shortSideDp < 720 → mFromType=2 被改回 3（竖直）
-        // Hook WindowMetrics.getBounds() 返回"大屏"Rect，使 z=true，
-        // 跳过 else-if 分支，mFromType 保持 TypedArray Hook 设置的 2
-        val windowMetricsClass = Class.forName("android.view.WindowMetrics")
-        val getBoundsMethod = windowMetricsClass.getDeclaredMethod("getBounds")
-        hookWithId(getBoundsMethod, "force_large_screen_bounds") { chain ->
-            val original = chain.proceed() as android.graphics.Rect
-            val caller = Throwable().stackTrace
-                .firstOrNull { it.className == toggleSliderClassName && it.methodName == "<init>" }
-            if (caller != null) {
-                // 返回一个"大屏"Rect（短边 ≥ 720dp），使构造器中 z=true
-                original.set(0, 0, 10000, 10000)
-            }
-            original
-        }
-
-        log("QsPanelWidthHook: hooked WindowMetrics.getBounds for large-screen bypass")
-
         val qsContainerClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QSContainerImpl")
 
@@ -112,7 +67,6 @@ class QsPanelWidthHook : BaseHookModule() {
             if (isPortrait && widthPercent != 0) {
                 // 竖屏：替换 widthMeasureSpec + 修正 gravity / off-screen
                 val screenWidth = container.context.resources.displayMetrics.widthPixels
-                val originalWidth = View.MeasureSpec.getSize(chain.args[0] as Int)
                 val targetWidth = (screenWidth * targetWidthRatio).toInt()
 
                 val newArgs = chain.args.toMutableList()
@@ -155,12 +109,6 @@ class QsPanelWidthHook : BaseHookModule() {
                 container.translationX = -(
                     totalLeftOffset + (if (overflow > 0) overflow else 0) - centerOffset
                 ).toFloat()
-
-                /*if (DEBUG) {
-                    log("QsPanelWidthTestHook: width $originalWidth -> $targetWidth " +
-                        "screenLeft=$totalLeftOffset centerOffset=$centerOffset " +
-                        "overflow=$overflow (screen=$screenWidth)")
-                }*/
             } else {
                 // 横屏：直接透传原始逻辑，重置竖屏修改
                 container.translationX = 0f
@@ -263,7 +211,7 @@ class QsPanelWidthHook : BaseHookModule() {
         // 必须在 TileLayout.onMeasure 之前触发，因为 QQSSideLabelTileLayout.onMeasure
         // 在 super.onMeasure() 之前就调用了 updateMaxRows()
         val qqsTileLayoutClass = param.defaultClassLoader
-            .loadClass("com.android.systemui.qs.QuickQSPanel\$QQSSideLabelTileLayout")
+            .loadClass($$"com.android.systemui.qs.QuickQSPanel$QQSSideLabelTileLayout")
         val qqsMeasureMethod = findMethod(
             qqsTileLayoutClass,
             "onMeasure",
