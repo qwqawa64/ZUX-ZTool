@@ -270,72 +270,61 @@ class QsPanelWidthHook : BaseHookModule() {
             log("Failed to hook ToggleSliderView ctor: ${t.message}")
         }
 
-        // ── Bug fix: Scrim 触摸拦截 → 转发到 brightness indicator ──
-        // QsPanelWidthHook 缩窄 QS 面板后，indicator 区域的触摸被 scrim_in_front 消费，
-        // 导致 ToggleSeekBar.onTouchEvent 永不触发。这里 Hook ScrimView.dispatchTouchEvent，
-        // 检测触摸是否落在 indicator 区域内，若是则调用 openBrightnessDetail() 并消费事件。
+        // ── Bug fix: Scrim/Shade 触摸拦截 → 转发到 brightness indicator ──
+        // QsPanelWidthHook 缩窄 QS 面板并居中后，NotificationPanelView 的 TouchHandler
+        // 将 indicator 区域的触控判定为"点击空白区域"→ 触发 shade dismiss。
+        // ScrimView 不接收触控 (canReceivePointerEvents=false)，真正的入口是
+        // NotificationPanelViewController.TouchHandler.onTouchEvent。
+        // 这里 Hook TouchHandler.onTouchEvent，在触控落在 indicator 区域时，
+        // 调用 openBrightnessDetail() 并返回 true 消费事件。
         try {
-            val scrimViewClass = param.defaultClassLoader
-                .loadClass("com.android.systemui.scrim.ScrimView")
-            val dispatchMethod = findMethod(
-                scrimViewClass,
-                "dispatchTouchEvent",
+            val touchHandlerClass = param.defaultClassLoader
+                .loadClass("com.android.systemui.shade.NotificationPanelViewController\$TouchHandler")
+            val onTouchEventMethod = touchHandlerClass.getDeclaredMethod(
+                "onTouchEvent",
                 MotionEvent::class.java
             )
-            hookWithId(dispatchMethod, "scrim_indicator_redirect") { chain ->
+            onTouchEventMethod.isAccessible = true
+            hookWithId(onTouchEventMethod, "touch_handler_indicator_redirect") { chain ->
                 val event = chain.args[0] as MotionEvent
-                if (event.action == MotionEvent.ACTION_DOWN) {
-                    // 每次手指出触到 scrim 时打一条日志，确认 hook 生效
-                    android.util.Log.d("ZTool_SrimDiag",
-                        "Scrim ACTION_DOWN | touch=(${event.rawX.toInt()},${event.rawY.toInt()}) | scrim=${chain.thisObject.javaClass.simpleName}@${Integer.toHexString(chain.thisObject.hashCode())}")
-                }
                 if (event.action == MotionEvent.ACTION_UP) {
                     val sliderView = cachedSliderViewRef?.get()
-                    if (sliderView == null) {
-                        android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | cachedSliderView is null (GC'd or never set)")
-                    } else if (!sliderView.isAttachedToWindow) {
-                        android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | sliderView not attached")
-                    } else {
+                    if (sliderView != null && sliderView.isAttachedToWindow) {
                         try {
                             val indicatorField = sliderView.javaClass
                                 .getDeclaredField("mBrightnessDetailIndicator")
                                 .apply { isAccessible = true }
                             val indicator = indicatorField.get(sliderView) as? View
-                            if (indicator == null) {
-                                android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | indicator is null")
-                            } else if (indicator.visibility != View.VISIBLE) {
-                                android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | indicator not visible, vis=${indicator.visibility}")
-                            } else {
+                            if (indicator != null && indicator.visibility == View.VISIBLE) {
                                 val loc = IntArray(2)
                                 indicator.getLocationOnScreen(loc)
                                 val tx = event.rawX.toInt()
                                 val ty = event.rawY.toInt()
                                 val iw = indicator.width
                                 val ih = indicator.height
-                                val hit = tx >= loc[0] && tx <= loc[0] + iw &&
-                                        ty >= loc[1] && ty <= loc[1] + ih
-                                android.util.Log.d("ZTool_SrimDiag",
-                                    "Scrim ACTION_UP | touch=($tx,$ty) indicator=(${loc[0]},${loc[1]})-(${loc[0]+iw},${loc[1]+ih}) w=$iw h=$ih | HIT=$hit")
-                                if (hit) {
+                                if (tx >= loc[0] && tx <= loc[0] + iw &&
+                                    ty >= loc[1] && ty <= loc[1] + ih
+                                ) {
                                     val openMethod = sliderView.javaClass
                                         .getDeclaredMethod("openBrightnessDetail")
                                         .apply { isAccessible = true }
                                     openMethod.invoke(sliderView)
-                                    android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | openBrightnessDetail() called, consuming event")
-                                    // 消费事件，阻止 scrim 触发 shade dismiss
+                                    android.util.Log.d("ZTool_SrimDiag",
+                                        "TouchHandler | HIT indicator @($tx,$ty) → openBrightnessDetail()")
                                     return@hookWithId true
                                 }
                             }
                         } catch (t: Throwable) {
-                            android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | exception: ${t.message}")
+                            android.util.Log.d("ZTool_SrimDiag", "TouchHandler | error: ${t.message}")
                         }
                     }
                 }
                 chain.proceed()
             }
-            log("Scrim touch event redirector hook installed")
+            // 保留 ScrimView hook 的注册以防某场景下有用，但降级为仅日志
+            log("TouchHandler.onTouchEvent indicator redirector installed")
         } catch (t: Throwable) {
-            log("Failed to hook ScrimView.dispatchTouchEvent: ${t.message}")
+            log("Failed to hook TouchHandler.onTouchEvent: ${t.message}")
         }
     }
 }
