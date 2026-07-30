@@ -11,6 +11,7 @@ import android.widget.FrameLayout
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.ref.WeakReference
+import androidx.core.view.isVisible
 
 /**
  * 测试 Hook — 修改 QS 面板宽度并保证子控件正确扩展和对齐。
@@ -259,9 +260,12 @@ class QsPanelWidthHook : BaseHookModule() {
             )
             hookWithId(ctor, "cache_slider_view") { chain ->
                 chain.proceed()
-                cachedSliderViewRef = WeakReference(chain.thisObject as View)
+                val view = chain.thisObject as View
+                cachedSliderViewRef = WeakReference(view)
+                android.util.Log.d("ZTool_SrimDiag", "ToggleSliderView cached: ${view.javaClass.simpleName}@${Integer.toHexString(view.hashCode())}")
                 null
             }
+            log("ToggleSliderView hooked, a slider view reference will be fetched via weak reference")
         } catch (t: Throwable) {
             log("Failed to hook ToggleSliderView ctor: ${t.message}")
         }
@@ -280,35 +284,56 @@ class QsPanelWidthHook : BaseHookModule() {
             )
             hookWithId(dispatchMethod, "scrim_indicator_redirect") { chain ->
                 val event = chain.args[0] as MotionEvent
+                if (event.action == MotionEvent.ACTION_DOWN) {
+                    // 每次手指出触到 scrim 时打一条日志，确认 hook 生效
+                    android.util.Log.d("ZTool_SrimDiag",
+                        "Scrim ACTION_DOWN | touch=(${event.rawX.toInt()},${event.rawY.toInt()}) | scrim=${chain.thisObject.javaClass.simpleName}@${Integer.toHexString(chain.thisObject.hashCode())}")
+                }
                 if (event.action == MotionEvent.ACTION_UP) {
                     val sliderView = cachedSliderViewRef?.get()
-                    if (sliderView != null && sliderView.isAttachedToWindow) {
+                    if (sliderView == null) {
+                        android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | cachedSliderView is null (GC'd or never set)")
+                    } else if (!sliderView.isAttachedToWindow) {
+                        android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | sliderView not attached")
+                    } else {
                         try {
                             val indicatorField = sliderView.javaClass
                                 .getDeclaredField("mBrightnessDetailIndicator")
                                 .apply { isAccessible = true }
                             val indicator = indicatorField.get(sliderView) as? View
-                            if (indicator != null && indicator.visibility == View.VISIBLE) {
+                            if (indicator == null) {
+                                android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | indicator is null")
+                            } else if (indicator.visibility != View.VISIBLE) {
+                                android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | indicator not visible, vis=${indicator.visibility}")
+                            } else {
                                 val loc = IntArray(2)
                                 indicator.getLocationOnScreen(loc)
                                 val tx = event.rawX.toInt()
                                 val ty = event.rawY.toInt()
-                                if (tx >= loc[0] && tx <= loc[0] + indicator.width &&
-                                    ty >= loc[1] && ty <= loc[1] + indicator.height
-                                ) {
+                                val iw = indicator.width
+                                val ih = indicator.height
+                                val hit = tx >= loc[0] && tx <= loc[0] + iw &&
+                                        ty >= loc[1] && ty <= loc[1] + ih
+                                android.util.Log.d("ZTool_SrimDiag",
+                                    "Scrim ACTION_UP | touch=($tx,$ty) indicator=(${loc[0]},${loc[1]})-(${loc[0]+iw},${loc[1]+ih}) w=$iw h=$ih | HIT=$hit")
+                                if (hit) {
                                     val openMethod = sliderView.javaClass
                                         .getDeclaredMethod("openBrightnessDetail")
                                         .apply { isAccessible = true }
                                     openMethod.invoke(sliderView)
+                                    android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | openBrightnessDetail() called, consuming event")
                                     // 消费事件，阻止 scrim 触发 shade dismiss
                                     return@hookWithId true
                                 }
                             }
-                        } catch (_: Throwable) { /* indicator not found; pass through */ }
+                        } catch (t: Throwable) {
+                            android.util.Log.d("ZTool_SrimDiag", "Scrim ACTION_UP | exception: ${t.message}")
+                        }
                     }
                 }
                 chain.proceed()
             }
+            log("Scrim touch event redirector hook installed")
         } catch (t: Throwable) {
             log("Failed to hook ScrimView.dispatchTouchEvent: ${t.message}")
         }
