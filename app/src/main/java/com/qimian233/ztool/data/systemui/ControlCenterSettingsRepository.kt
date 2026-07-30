@@ -53,7 +53,11 @@ class ControlCenterSettingsRepository(
             volumeSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, false),
             expandQsPanelPortrait = prefsUtils.loadBooleanSetting(KEY_EXPAND_QS_PANEL_PORTRAIT, false),
             qsPanelWidthPercent = prefsUtils.loadIntegerSetting(KEY_QS_PANEL_WIDTH_PERCENT, DEFAULT_QS_PANEL_WIDTH_PERCENT),
-            qsTileColumns = prefsUtils.loadIntegerSetting(KEY_QS_TILE_COLUMNS, DEFAULT_QS_TILE_COLUMNS)
+            qsTileColumns = prefsUtils.loadIntegerSetting(KEY_QS_TILE_COLUMNS, DEFAULT_QS_TILE_COLUMNS),
+            customizeSliderStyle = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, false),
+            sliderStyleIsVertical = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_VALUE, false),
+            sliderStyleForcedByQsPanel = prefsUtils.loadBooleanSetting(KEY_EXPAND_QS_PANEL_PORTRAIT, false)
+                    && prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, false)
         )
     }
 
@@ -177,7 +181,31 @@ class ControlCenterSettingsRepository(
     }
 
     fun saveExpandQsPanelPortrait(enabled: Boolean) {
+        if (enabled) {
+            // 备份当前的 slider style 偏好
+            val currentStyle = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, false)
+            val currentValue = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_VALUE, false)
+            prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS, currentStyle)
+            prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE, currentValue)
+            // 强制启用 SliderStyleHook 并设为水平
+            prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, true)
+            prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_VALUE, false)
+        } else {
+            // 还原之前的 slider style 偏好
+            val previousStyle = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS, false)
+            val previousValue = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE, false)
+            prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, previousStyle)
+            prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_VALUE, previousValue)
+        }
         prefsUtils.saveBooleanSetting(KEY_EXPAND_QS_PANEL_PORTRAIT, enabled)
+    }
+
+    fun saveCustomizeSliderStyle(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, enabled)
+    }
+
+    fun saveSliderStyleValue(isVertical: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_VALUE, isVertical)
     }
 
     fun saveQsPanelWidthPercent(value: Int) {
@@ -230,6 +258,10 @@ class ControlCenterSettingsRepository(
         private const val KEY_EXPAND_QS_PANEL_PORTRAIT = "expand_qs_panel_portrait"
         private const val KEY_QS_PANEL_WIDTH_PERCENT = "qs_panel_width_percent"
         private const val KEY_QS_TILE_COLUMNS = "qs_tile_columns"
+        private const val KEY_CUSTOMIZE_SLIDER_STYLE = "customize_slider_style"
+        private const val KEY_CUSTOMIZE_SLIDER_STYLE_VALUE = "customize_slider_style_value"
+        private const val KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS = "customize_slider_style_previous"
+        private const val KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE = "customize_slider_style_previous_value"
         const val QS_PANEL_WIDTH_MIN = 0
         const val QS_PANEL_WIDTH_MAX = 100
         const val DEFAULT_QS_PANEL_WIDTH_PERCENT = 80

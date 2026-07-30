@@ -928,4 +928,10 @@
     <string name="expand_qs_panel_portrait_summary">Expands portrait control center panel</string>
     <string name="qs_panel_width_percent_title">Control center width</string>
     <string name="qs_panel_width_percent_summary">Width ratio of control center, 0 for system default)</string>
+    <string name="customize_slider_style_title">Customize Slider Style</string>
+    <string name="customize_slider_style_summary">Customize brightness and volume slider orientation</string>
+    <string name="slider_style_direction_title">Slider Orientation</string>
+    <string name="slider_style_horizontal">Horizontal</string>
+    <string name="slider_style_vertical">Vertical</string>
+    <string name="slider_style_forced_by_qs_panel">Forced to horizontal by \"Expand Portrait Control Center\"</string>
 </resources>

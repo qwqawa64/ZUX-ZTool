@@ -183,8 +183,23 @@ class ControlCenterSettingsViewModel(
     }
 
     fun setExpandQsPanelPortrait(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(expandQsPanelPortrait = enabled)
         repository.saveExpandQsPanelPortrait(enabled)
+        // 需重新加载状态以反映 sliderStyleForcedByQsPanel 等联动字段
+        _uiState.value = loadInitialState()
+    }
+
+    fun setCustomizeSliderStyle(enabled: Boolean) {
+        val current = _uiState.value
+        if (current.sliderStyleForcedByQsPanel) return
+        _uiState.value = current.copy(customizeSliderStyle = enabled)
+        repository.saveCustomizeSliderStyle(enabled)
+    }
+
+    fun setSliderStyleValue(isVertical: Boolean) {
+        val current = _uiState.value
+        if (current.sliderStyleForcedByQsPanel) return
+        _uiState.value = current.copy(sliderStyleIsVertical = isVertical)
+        repository.saveSliderStyleValue(isVertical)
     }
 
     fun setQsPanelWidthPercent(value: Int) {
@@ -326,5 +341,13 @@ data class ControlCenterSettingsUiState(
     val brightnessSliderPercentageEnabled: Boolean = false,
     val expandQsPanelPortrait: Boolean = false,
     val qsPanelWidthPercent: Int = ControlCenterSettingsRepository.DEFAULT_QS_PANEL_WIDTH_PERCENT,
-    val qsTileColumns: Int = ControlCenterSettingsRepository.DEFAULT_QS_TILE_COLUMNS
+    val qsTileColumns: Int = ControlCenterSettingsRepository.DEFAULT_QS_TILE_COLUMNS,
+    val customizeSliderStyle: Boolean = false,
+    val sliderStyleIsVertical: Boolean = false,
+    val sliderStyleForcedByQsPanel: Boolean = false
 )
+
+enum class SliderStyleDirection {
+    Horizontal,
+    Vertical
+}

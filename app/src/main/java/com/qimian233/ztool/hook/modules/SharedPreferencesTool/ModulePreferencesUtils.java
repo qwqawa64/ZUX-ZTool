@@ -597,7 +597,8 @@ public class ModulePreferencesUtils {
                 || "hide_ota_notifications".equals(key)
                 || "custom_charge_animation".equals(key)
                 || "dismiss_cloud_folder_confirmation".equals(key)
-                || "expand_qs_panel_portrait".equals(key);
+                || "expand_qs_panel_portrait".equals(key)
+                || "customize_slider_style".equals(key);
     }
 
     public static void restoreConfig(Context context, String jsonToRestore){

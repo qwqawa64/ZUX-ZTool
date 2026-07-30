@@ -901,6 +901,12 @@
     <string name="qs_panel_width_percent_summary">控制中心面板占屏幕宽度的百分比（0 表示系统默认）</string>
     <string name="qs_tile_columns_title">磁贴列数</string>
     <string name="qs_tile_columns_summary">控制中心每行显示的磁贴个数（0 表示系统默认）</string>
+    <string name="customize_slider_style_title">修改控制中心滑动条样式</string>
+    <string name="customize_slider_style_summary">自定义亮度和音量滑动条的显示方向</string>
+    <string name="slider_style_direction_title">滑动条方向</string>
+    <string name="slider_style_horizontal">水平</string>
+    <string name="slider_style_vertical">竖直</string>
+    <string name="slider_style_forced_by_qs_panel">已由"拓宽竖屏控制中心"功能强制启用为水平模式</string>
     <string name="head_up_corner_radius">大磁贴圆角半径</string>
     <string name="normal_tile_corner_radius">小磁贴圆角半径</string>
     <string name="custom_qs_color_title">背景色修改</string>

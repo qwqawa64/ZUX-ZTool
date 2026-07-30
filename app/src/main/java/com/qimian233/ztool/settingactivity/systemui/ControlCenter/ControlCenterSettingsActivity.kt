@@ -48,6 +48,7 @@ import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
+import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSliderRow
@@ -146,7 +147,9 @@ fun ControlCenterSettingsRoute(
         onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled,
         onExpandQsPanelPortraitChanged = viewModel::setExpandQsPanelPortrait,
         onQsPanelWidthPercentChanged = viewModel::setQsPanelWidthPercent,
-        onQsTileColumnsChanged = viewModel::setQsTileColumns
+        onQsTileColumnsChanged = viewModel::setQsTileColumns,
+        onCustomizeSliderStyleChanged = viewModel::setCustomizeSliderStyle,
+        onSliderStyleValueChanged = viewModel::setSliderStyleValue
     )
 
     if (uiState.showFormatHelpDialog) {
@@ -224,6 +227,8 @@ private fun ControlCenterSettingsScreen(
     onExpandQsPanelPortraitChanged: (Boolean) -> Unit,
     onQsPanelWidthPercentChanged: (Int) -> Unit,
     onQsTileColumnsChanged: (Int) -> Unit,
+    onCustomizeSliderStyleChanged: (Boolean) -> Unit,
+    onSliderStyleValueChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -289,6 +294,8 @@ private fun ControlCenterSettingsScreen(
                         onExpandQsPanelPortraitChanged = onExpandQsPanelPortraitChanged,
                         onQsPanelWidthPercentChanged = onQsPanelWidthPercentChanged,
                         onQsTileColumnsChanged = onQsTileColumnsChanged,
+                        onCustomizeSliderStyleChanged = onCustomizeSliderStyleChanged,
+                        onSliderStyleValueChanged = onSliderStyleValueChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -333,6 +340,8 @@ private fun controlCenterSettingsSections(
     onExpandQsPanelPortraitChanged: (Boolean) -> Unit,
     onQsPanelWidthPercentChanged: (Int) -> Unit,
     onQsTileColumnsChanged: (Int) -> Unit,
+    onCustomizeSliderStyleChanged: (Boolean) -> Unit,
+    onSliderStyleValueChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -519,6 +528,47 @@ private fun controlCenterSettingsSections(
             )
         ),
         SettingSection(
+            title = stringResource(R.string.customize_slider_style_title),
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.customize_slider_style_title),
+                        summary = stringResource(R.string.customize_slider_style_summary),
+                        checked = state.customizeSliderStyle,
+                        onCheckedChange = onCustomizeSliderStyleChanged,
+                        enabled = !state.sliderStyleForcedByQsPanel
+                    )
+                )
+                if (state.sliderStyleForcedByQsPanel) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                Text(
+                                    text = stringResource(R.string.slider_style_forced_by_qs_panel),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LocalZToolColorScheme.current.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                                )
+                            }
+                        )
+                    )
+                }
+                if (state.customizeSliderStyle) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                SliderStyleDirectionRow(
+                                    isVertical = state.sliderStyleIsVertical,
+                                    enabled = !state.sliderStyleForcedByQsPanel,
+                                    onDirectionChanged = onSliderStyleValueChanged
+                                )
+                            }
+                        )
+                    )
+                }
+            }
+        ),
+        SettingSection(
                 title = stringResource(R.string.expand_qs_panel_portrait_title),
                 items = buildList {
                     add(
@@ -559,6 +609,28 @@ private fun controlCenterSettingsSections(
                 }
             )
         )
+}
+
+@Composable
+private fun SliderStyleDirectionRow(
+    isVertical: Boolean,
+    enabled: Boolean,
+    onDirectionChanged: (Boolean) -> Unit
+) {
+    val options = listOf(
+        false to stringResource(R.string.slider_style_horizontal),
+        true to stringResource(R.string.slider_style_vertical)
+    )
+    val selectedLabel = options.first { it.first == isVertical }.second
+
+    ZToolPopupMenuSettingRow(
+        title = stringResource(R.string.slider_style_direction_title),
+        value = selectedLabel,
+        options = options,
+        optionLabel = { it.second },
+        onOptionSelected = { (vertical, _) -> onDirectionChanged(vertical) },
+        enabled = enabled
+    )
 }
 
 @Composable
