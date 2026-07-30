@@ -163,7 +163,7 @@ class QsPanelWidthHook : BaseHookModule() {
                     val contentRight = frame.width - frame.paddingRight
                     for (i in 0 until frame.childCount) {
                         val child = frame.getChildAt(i)
-                        if (child is AbsSeekBar && child.visibility != View.GONE) {
+                        if (child is AbsSeekBar && child.visibility != View.GONE && child.rotation == 0f) {
                             val lp = child.layoutParams as? FrameLayout.LayoutParams
                             val left = contentLeft + (lp?.leftMargin ?: 0)
                             val right = contentRight - (lp?.rightMargin ?: 0)
