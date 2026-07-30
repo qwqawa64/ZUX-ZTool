@@ -3,12 +3,14 @@ package com.qimian233.ztool.hook.modules.systemui
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsSeekBar
 import android.widget.FrameLayout
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
+import java.lang.ref.WeakReference
 
 /**
  * 测试 Hook — 修改 QS 面板宽度并保证子控件正确扩展和对齐。
@@ -29,6 +31,9 @@ class QsPanelWidthHook : BaseHookModule() {
         private const val DEFAULT_WIDTH_PERCENT = 80
         /** 默认磁贴列数 */
         private const val DEFAULT_TILE_COLUMNS = 7
+        /** 缓存最近创建的 ToggleSliderView，用于 scrim 触摸拦截时查找 indicator */
+        @Volatile
+        private var cachedSliderViewRef: WeakReference<View>? = null
     }
 
     override fun getModuleName(): String = "expand_qs_panel_portrait"
@@ -241,5 +246,71 @@ class QsPanelWidthHook : BaseHookModule() {
         }
 
         log("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
+
+        // ── Bug fix: 缓存的 ToggleSliderView 实例 ──
+        // Hook ToggleSliderView 构造器，缓存实例供 scrim 触摸拦截使用
+        try {
+            val toggleSliderClass = param.defaultClassLoader
+                .loadClass("com.android.systemui.settings.ToggleSliderView")
+            val ctor = toggleSliderClass.getDeclaredConstructor(
+                android.content.Context::class.java,
+                android.util.AttributeSet::class.java,
+                Int::class.javaPrimitiveType!!
+            )
+            hookWithId(ctor, "cache_slider_view") { chain ->
+                chain.proceed()
+                cachedSliderViewRef = WeakReference(chain.thisObject as View)
+                null
+            }
+        } catch (t: Throwable) {
+            log("Failed to hook ToggleSliderView ctor: ${t.message}")
+        }
+
+        // ── Bug fix: Scrim 触摸拦截 → 转发到 brightness indicator ──
+        // QsPanelWidthHook 缩窄 QS 面板后，indicator 区域的触摸被 scrim_in_front 消费，
+        // 导致 ToggleSeekBar.onTouchEvent 永不触发。这里 Hook ScrimView.dispatchTouchEvent，
+        // 检测触摸是否落在 indicator 区域内，若是则调用 openBrightnessDetail() 并消费事件。
+        try {
+            val scrimViewClass = param.defaultClassLoader
+                .loadClass("com.android.systemui.scrim.ScrimView")
+            val dispatchMethod = findMethod(
+                scrimViewClass,
+                "dispatchTouchEvent",
+                MotionEvent::class.java
+            )
+            hookWithId(dispatchMethod, "scrim_indicator_redirect") { chain ->
+                val event = chain.args[0] as MotionEvent
+                if (event.action == MotionEvent.ACTION_UP) {
+                    val sliderView = cachedSliderViewRef?.get()
+                    if (sliderView != null && sliderView.isAttachedToWindow) {
+                        try {
+                            val indicatorField = sliderView.javaClass
+                                .getDeclaredField("mBrightnessDetailIndicator")
+                                .apply { isAccessible = true }
+                            val indicator = indicatorField.get(sliderView) as? View
+                            if (indicator != null && indicator.visibility == View.VISIBLE) {
+                                val loc = IntArray(2)
+                                indicator.getLocationOnScreen(loc)
+                                val tx = event.rawX.toInt()
+                                val ty = event.rawY.toInt()
+                                if (tx >= loc[0] && tx <= loc[0] + indicator.width &&
+                                    ty >= loc[1] && ty <= loc[1] + indicator.height
+                                ) {
+                                    val openMethod = sliderView.javaClass
+                                        .getDeclaredMethod("openBrightnessDetail")
+                                        .apply { isAccessible = true }
+                                    openMethod.invoke(sliderView)
+                                    // 消费事件，阻止 scrim 触发 shade dismiss
+                                    return@hookWithId true
+                                }
+                            }
+                        } catch (_: Throwable) { /* indicator not found; pass through */ }
+                    }
+                }
+                chain.proceed()
+            }
+        } catch (t: Throwable) {
+            log("Failed to hook ScrimView.dispatchTouchEvent: ${t.message}")
+        }
     }
 }
