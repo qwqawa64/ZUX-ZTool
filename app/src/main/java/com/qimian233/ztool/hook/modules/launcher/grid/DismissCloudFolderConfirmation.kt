@@ -1,6 +1,7 @@
-package com.qimian233.ztool.hook.modules.launcher
+package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import com.qimian233.ztool.hook.base.BaseHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -20,7 +21,7 @@ class DismissCloudFolderConfirmation: BaseHookModule() {
                 launcherClass, Runnable::class.java, Runnable::class.java)
             hookWithId(targetMethod, "target") {  chain ->
                 try {
-                    val dialog = chain.proceed(chain.args.toTypedArray()) as? android.app.Dialog
+                    val dialog = chain.proceed(chain.args.toTypedArray()) as? Dialog
                     dialog?.dismiss()
                     log("Cloud folder authorization dialog auto-dismissed")
                     dialog

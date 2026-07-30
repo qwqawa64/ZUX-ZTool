@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.launcher;
+package com.qimian233.ztool.hook.modules.launcher.misc;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;

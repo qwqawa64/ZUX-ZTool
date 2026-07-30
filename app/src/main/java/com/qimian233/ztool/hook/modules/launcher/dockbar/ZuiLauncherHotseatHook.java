@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.launcher;
+package com.qimian233.ztool.hook.modules.launcher.dockbar;
 
 import android.annotation.SuppressLint;
 

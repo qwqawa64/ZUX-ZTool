@@ -1,10 +1,9 @@
-package com.qimian233.ztool.hook.modules.launcher;
+package com.qimian233.ztool.hook.modules.launcher.dockbar;
 
 import android.view.View;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
