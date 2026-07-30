@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.systemFramework;
+package com.qimian233.ztool.hook.modules.systemframework;
 
 import android.annotation.SuppressLint;
 
