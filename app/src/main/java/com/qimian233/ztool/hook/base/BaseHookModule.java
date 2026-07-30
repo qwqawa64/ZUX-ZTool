@@ -188,7 +188,7 @@ public abstract class BaseHookModule {
      * @return the hook handle
      */
     protected HookHandle hookWithId(Executable target, String id, Hooker hooker) {
-        return this.xposed.hook(target).setId(id).intercept(hooker);
+        return this.xposed.getApiVersion() >= 102 ? this.xposed.hook(target).setId(id).intercept(hooker) : this.xposed.hook(target).intercept(hooker);
     }
 
     /*
