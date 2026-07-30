@@ -269,15 +269,19 @@ class QsPanelWidthHook : BaseHookModule() {
                 val container = cachedContainer
                 if (container != null && container.isAttachedToWindow) {
                     val event = chain.args[0] as MotionEvent
-                    val loc = IntArray(2)
-                    container.getLocationOnScreen(loc)
-                    val cx = event.rawX
-                    val cy = event.rawY
-                    if (cx >= loc[0] && cx <= loc[0] + container.width &&
-                        cy >= loc[1] && cy <= loc[1] + container.height
-                    ) {
-                        // 触控在 QS 面板实际区域 → 不拦截，让子控件正常处理
-                        return@hookWithId false
+                    // 仅在 ACTION_DOWN 时决定是否拦截：若触控落在 QSContainerImpl
+                    // 实际屏幕区域内（含 translationX），返回 false 让整个触控序列
+                    // 穿透到子控件。后续 MOVE/UP 由子控件的 ViewGroup 正常分发。
+                    if (event.action == MotionEvent.ACTION_DOWN) {
+                        val loc = IntArray(2)
+                        container.getLocationOnScreen(loc)
+                        val cx = event.rawX
+                        val cy = event.rawY
+                        if (cx >= loc[0] && cx <= loc[0] + container.width &&
+                            cy >= loc[1] && cy <= loc[1] + container.height
+                        ) {
+                            return@hookWithId false
+                        }
                     }
                 }
                 chain.proceed()
