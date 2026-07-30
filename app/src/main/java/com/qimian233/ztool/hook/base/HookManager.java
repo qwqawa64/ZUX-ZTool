@@ -25,7 +25,7 @@ import com.qimian233.ztool.hook.modules.ota.HideOtaNotifications;
 import com.qimian233.ztool.hook.modules.ota.LenovoOTAHook;
 import com.qimian233.ztool.hook.modules.ota.NoAutoOtaInstall;
 import com.qimian233.ztool.hook.modules.packageinstaller.Hook_Skip_WarnPage;
-import com.qimian233.ztool.hook.modules.packageinstaller.Hook_disable_installerAD;
+import com.qimian233.ztool.hook.modules.packageinstaller.DisableInstallerAdvertisement;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule;
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook;
@@ -158,7 +158,7 @@ public class HookManager {
         registerHookModule(new PackageInstallerHookScan());
         registerHookModule(new PackageInstallerPermissionHook());
         registerHookModule(new Hook_Skip_WarnPage());
-        registerHookModule(new Hook_disable_installerAD());
+        registerHookModule(new DisableInstallerAdvertisement());
         registerHookModule(new packageInstallerStyleHook());
         registerHookModule(new PackageInstallerNoDeleteModule());
 
