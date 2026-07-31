@@ -114,7 +114,8 @@ fun LauncherSettingsRoute(
         onDisableDockBarChanged = viewModel::setDisableDockBar,
         onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode,
         onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
-        onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss
+        onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
+        onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -181,7 +182,8 @@ private fun LauncherSettingsScreen(
     onDisableDockBarChanged: (Boolean) -> Unit,
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
-    onCloudFolderDismissChanged: (Boolean) -> Unit
+    onCloudFolderDismissChanged: (Boolean) -> Unit,
+    onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -234,7 +236,8 @@ private fun LauncherSettingsScreen(
                         onDisableDockBarChanged = onDisableDockBarChanged,
                         onLauncherNoLabelModeChanged = onLauncherNoLabelModeChanged,
                         onLauncherHideBluePointChanged = onLauncherHideBluePointChanged,
-                        onCloudFolderDismissChanged = onCloudFolderDismissChanged
+                        onCloudFolderDismissChanged = onCloudFolderDismissChanged,
+                        onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -261,6 +264,7 @@ private fun launcherSettingsSections(
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
     onCloudFolderDismissChanged: (Boolean) -> Unit,
+    onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -393,6 +397,13 @@ private fun launcherSettingsSections(
     }
 
     val dockBarLayoutItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(),
+                checked = state.disableRecentAppDisplay,
+                onCheckedChange = onDisableRecentAppDisplayChanged
+            )
+        )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.disable_dock_bar_title),
