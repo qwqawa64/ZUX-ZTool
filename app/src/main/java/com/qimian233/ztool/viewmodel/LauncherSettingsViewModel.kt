@@ -181,6 +181,7 @@ data class LauncherSettingsUiState(
     val noLabelMode: Boolean = false,
     val hideBluePoint: Boolean = false,
     val cloudFolderDismiss: Boolean = false,
+    val disableRecentAppDisplay: Boolean = false,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
