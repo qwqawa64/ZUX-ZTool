@@ -3,7 +3,6 @@ package com.qimian233.ztool.hook.modules.systemui.qs
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.view.Gravity
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsSeekBar
@@ -13,27 +12,20 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 测试 Hook — 修改 QS 面板宽度并保证子控件正确扩展和对齐。
+ * 修改 QS 面板宽度并保证子控件正确扩展和对齐。
  *
- * 核心策略：在 onMeasure 执行前将 widthMeasureSpec 替换为目标宽度，
- * 使整个测量链（childMeasureSpec → QSPanelContainer → QSPanel → TileLayout）
- * 统一使用目标宽度。然后在 after 阶段修正 gravity 和 off-screen 偏移。
+ * 核心策略：不改 QSContainerImpl，而是改它的父容器 qs_frame (FrameLayout)。
+ * 缩窄 qs_frame 的测量宽度并居中后，QSContainerImpl 及所有子控件
+ * 的 layout bounds 自然匹配视觉范围，TouchHandler 无需额外修补。
  *
  * 仅在竖屏 (Portrait) 下生效，横屏时直接透传原始逻辑。
- *
- * getModuleName() 返回 "test_hook"，始终启用，无需前端开关。
  */
 @SuppressLint("PrivateApi", "DiscouragedApi")
 class QsPanelWidthHook : AppHookModule() {
 
     companion object {
-        /** 默认面板宽度百分比 (0-100) */
         private const val DEFAULT_WIDTH_PERCENT = 80
-        /** 默认磁贴列数 */
         private const val DEFAULT_TILE_COLUMNS = 7
-        /** 缓存 QSContainerImpl 实例，供 TouchHandler 触摸拦截时判断面板区域 */
-        @Volatile
-        private var cachedContainer: View? = null
     }
 
     override fun getModuleName(): String = "expand_qs_panel_portrait"
@@ -44,7 +36,6 @@ class QsPanelWidthHook : AppHookModule() {
         if (param.packageName != "com.android.systemui") return
         logger.info("QsPanelWidthTestHook: loading")
 
-        // 从 SharedPreferences 读取配置
         val prefs = xposed.getRemotePreferences("xposed_module_config")
         val widthPercent = prefs.getInt(PreferenceKeys.QS_PANEL_WIDTH_PERCENT.name, DEFAULT_WIDTH_PERCENT)
             .coerceIn(0, 100)
@@ -52,29 +43,33 @@ class QsPanelWidthHook : AppHookModule() {
             .coerceIn(0, 10)
         val targetWidthRatio = widthPercent / 100f
 
-        val qsContainerClass = param.defaultClassLoader
-            .loadClass("com.android.systemui.qs.QSContainerImpl")
-
+        // ── 核心：Hook qs_frame 的 onMeasure ──
+        // 缩窄 qs_frame（QSContainerImpl 的父容器）并居中，
+        // 所有后代控件的 layout bounds 自然匹配视觉，保留原生触控行为。
+        var cachedQsFrameId = -1
         val onMeasureMethod = findMethod(
-            qsContainerClass,
+            FrameLayout::class.java,
             "onMeasure",
             Int::class.javaPrimitiveType!!,
             Int::class.javaPrimitiveType!!
         )
+        hookWithId(onMeasureMethod, "qs_frame_width_measure") { chain ->
+            val frame = chain.thisObject as FrameLayout
+            if (cachedQsFrameId == -1) {
+                cachedQsFrameId = frame.resources
+                    .getIdentifier("qs_frame", "id", "com.android.systemui")
+            }
+            if (frame.id != cachedQsFrameId) {
+                return@hookWithId chain.proceed()
+            }
 
-        hookWithId(onMeasureMethod, "qs_panel_width_measure") { chain ->
-            val container = chain.thisObject as ViewGroup
-            // 缓存实例供 TouchHandler 触摸拦截使用
-            cachedContainer = container
-
-            // 仅在竖屏 (Portrait) 下修改宽度逻辑
-            val orientation = container.context.resources.configuration.orientation
+            val orientation = frame.context.resources.configuration.orientation
             val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
 
             if (isPortrait && widthPercent != 0) {
-                // 竖屏：替换 widthMeasureSpec + 修正 gravity / off-screen
-                val screenWidth = container.context.resources.displayMetrics.widthPixels
+                val screenWidth = frame.context.resources.displayMetrics.widthPixels
                 val targetWidth = (screenWidth * targetWidthRatio).toInt()
+                val centerOffset = (screenWidth - targetWidth) / 2
 
                 val newArgs = chain.args.toMutableList()
                 newArgs[0] = View.MeasureSpec.makeMeasureSpec(
@@ -82,9 +77,8 @@ class QsPanelWidthHook : AppHookModule() {
                 )
                 chain.proceed(newArgs.toTypedArray())
 
-                // 子控件贴靠 START，zero rightMargin
-                for (i in 0 until container.childCount) {
-                    val child = container.getChildAt(i) ?: continue
+                for (i in 0 until frame.childCount) {
+                    val child = frame.getChildAt(i) ?: continue
                     val lp = child.layoutParams
                     if (lp is FrameLayout.LayoutParams) {
                         lp.rightMargin = 0
@@ -92,8 +86,6 @@ class QsPanelWidthHook : AppHookModule() {
                     }
                 }
 
-                // 递归关闭所有子孙 ViewGroup 的裁剪，确保拉伸后的 SeekBar
-                // 触控区域覆盖完整宽度（clipChildren 同时裁剪绘制和触控）
                 fun disableClip(view: View) {
                     if (view is ViewGroup) {
                         view.clipChildren = false
@@ -103,36 +95,25 @@ class QsPanelWidthHook : AppHookModule() {
                         }
                     }
                 }
-                disableClip(container)
+                disableClip(frame)
 
-                // 将容器居中于屏幕：先抵消祖先链偏移贴靠左侧，再加居中偏移
-                // 用 parent.screenLocation + container.left 而非 container.screenLocation，
-                // 因为后者会受 translationX 自身影响形成反馈振荡
                 val parentLocation = IntArray(2)
-                (container.parent as View).getLocationOnScreen(parentLocation)
-                val totalLeftOffset = parentLocation[0] + container.left
-                val centerOffset = (screenWidth - targetWidth) / 2
-                val overflow = container.measuredWidth - screenWidth
-                container.translationX = -(
-                    totalLeftOffset + (if (overflow > 0) overflow else 0) - centerOffset
-                ).toFloat()
+                (frame.parent as View).getLocationOnScreen(parentLocation)
+                val totalLeftOffset = parentLocation[0] + frame.left
+                frame.translationX = (centerOffset - totalLeftOffset).toFloat()
             } else {
-                // 横屏：直接透传原始逻辑，重置竖屏修改
-                container.translationX = 0f
+                frame.translationX = 0f
                 chain.proceed()
             }
+            null
         }
 
-        logger.info("QsPanelWidthTestHook: hooked QSContainerImpl.onMeasure")
+        logger.info("QsPanelWidthTestHook: hooked FrameLayout.onMeasure for qs_frame")
 
-        // Hook FrameLayout.onLayout：检测包含 SeekBar 子控件的 FrameLayout，
-        // 将 SeekBar 拉伸至 FrameLayout 宽度，修复 SeekBarNps 等不跟随拉伸的问题
-        // 排除 volume_row_slider_frame（音量调节弹窗中的独立滑块）
-        // 资源 ID 延迟缓存，热路径仅做 int 比较，避免每次 getResourceEntryName 的 JNI 开销
+        // ── Hook FrameLayout.onLayout：拉伸 SeekBar ──
         var cachedVolumeRowSliderFrameId = -1
-        val frameLayoutClass = FrameLayout::class.java
         val onLayoutMethod = findMethod(
-            frameLayoutClass,
+            FrameLayout::class.java,
             "onLayout",
             Boolean::class.javaPrimitiveType!!,
             Int::class.javaPrimitiveType!!,
@@ -143,12 +124,10 @@ class QsPanelWidthHook : AppHookModule() {
         hookWithId(onLayoutMethod, "stretch_seekbar_in_frame") { chain ->
             chain.proceed()
             val frame = chain.thisObject as FrameLayout
-            // 延迟解析并缓存 volume_row_slider_frame 的资源 ID
             if (cachedVolumeRowSliderFrameId == -1) {
                 cachedVolumeRowSliderFrameId = frame.resources
                     .getIdentifier("volume_row_slider_frame", "id", "com.android.systemui")
             }
-            // 仅在竖屏下执行拉伸，且跳过音量弹窗和旋转 90° 的纵向 Slider
             val orientation = frame.context.resources.configuration.orientation
             val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
             if (isPortrait && frame.id != cachedVolumeRowSliderFrameId) {
@@ -178,7 +157,7 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked FrameLayout.onLayout for SeekBar stretch")
 
-        // Hook PagedTileLayout.onMeasure：增加每行磁贴列数以匹配面板宽度
+        // ── Hook PagedTileLayout.onMeasure：磁贴列数 ──
         val pagedTileLayoutClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.PagedTileLayout")
         val tileLayoutClass = param.defaultClassLoader
@@ -195,17 +174,14 @@ class QsPanelWidthHook : AppHookModule() {
         hookWithId(pagedMeasureMethod, "tile_columns_adjust") { chain ->
             if (tileColumns != 0) {
                 val pagedLayout = chain.thisObject as View
-                // 仅在竖屏下修改列数
                 val orientation = pagedLayout.context.resources.configuration.orientation
-                val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT
-                if (isPortrait) {
+                if (orientation == Configuration.ORIENTATION_PORTRAIT) {
                     val pages = pagesField.get(pagedLayout) as ArrayList<*>
                     if (pages.isNotEmpty()) {
                         for (page in pages) {
                             columnsField.setInt(page, tileColumns)
                         }
                     }
-                    // 强制触发磁贴重分布
                     distributeField.setBoolean(pagedLayout, true)
                 }
             }
@@ -214,11 +190,9 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked PagedTileLayout.onMeasure for tile columns")
 
-        // Hook QQSSideLabelTileLayout.onMeasure：收起状态（QQS）的磁贴列数
-        // 必须在 TileLayout.onMeasure 之前触发，因为 QQSSideLabelTileLayout.onMeasure
-        // 在 super.onMeasure() 之前就调用了 updateMaxRows()
+        // ── Hook QQSSideLabelTileLayout.onMeasure：QQS 磁贴列数 ──
         val qqsTileLayoutClass = param.defaultClassLoader
-            .loadClass($$"com.android.systemui.qs.QuickQSPanel$QQSSideLabelTileLayout")
+            .loadClass("com.android.systemui.qs.QuickQSPanel\$QQSSideLabelTileLayout")
         val qqsMeasureMethod = findMethod(
             qqsTileLayoutClass,
             "onMeasure",
@@ -236,7 +210,6 @@ class QsPanelWidthHook : AppHookModule() {
                 val orientation = tileLayout.context.resources.configuration.orientation
                 if (orientation == Configuration.ORIENTATION_PORTRAIT) {
                     columnsField.setInt(tileLayout, tileColumns)
-                    // 同步更新 QQS 总数上限：mMaxTiles = mMaxAllowedRows * mColumns
                     val parent = tileLayout.parent
                     if (parent != null && quickQSPanelClass.isInstance(parent)) {
                         val rows = maxAllowedRowsField.getInt(tileLayout)
@@ -248,48 +221,5 @@ class QsPanelWidthHook : AppHookModule() {
         }
 
         logger.info("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
-
-        // ── Bug fix: 恢复 QS 面板拓宽区域的触控 ──
-        // QsPanelWidthHook 缩窄 QSContainerImpl 并用 translationX 居中后，
-        // NotificationPanelView 的 TouchHandler 将容器原布局边界外的区域判为"空白区域"，
-        // 拦截触控并触发 shade dismiss，导致 QS/QQS/Slider/Tiles 等所有拓宽后超出
-        // 原边界的控件都无法正常触控。
-        //
-        // 这里 Hook TouchHandler.onInterceptTouchEvent，检测触控是否落在
-        // QSContainerImpl 的实际屏幕范围内（含 translationX 偏移），若是则返回 false
-        // 让触控穿透到子控件正常处理。
-        try {
-            val touchHandlerClass = param.defaultClassLoader
-                .loadClass("com.android.systemui.shade.NotificationPanelViewController\$TouchHandler")
-            val onInterceptMethod = touchHandlerClass.getDeclaredMethod(
-                "onInterceptTouchEvent",
-                MotionEvent::class.java
-            )
-            onInterceptMethod.isAccessible = true
-            hookWithId(onInterceptMethod, "qs_touch_passthrough") { chain ->
-                val container = cachedContainer
-                if (container != null && container.isAttachedToWindow) {
-                    val event = chain.args[0] as MotionEvent
-                    // 仅在 ACTION_DOWN 时决定是否拦截：若触控落在 QSContainerImpl
-                    // 实际屏幕区域内（含 translationX），返回 false 让整个触控序列
-                    // 穿透到子控件。后续 MOVE/UP 由子控件的 ViewGroup 正常分发。
-                    if (event.action == MotionEvent.ACTION_DOWN) {
-                        val loc = IntArray(2)
-                        container.getLocationOnScreen(loc)
-                        val cx = event.rawX
-                        val cy = event.rawY
-                        if (cx >= loc[0] && cx <= loc[0] + container.width &&
-                            cy >= loc[1] && cy <= loc[1] + container.height
-                        ) {
-                            return@hookWithId false
-                        }
-                    }
-                }
-                chain.proceed()
-            }
-            logger.info("TouchHandler.onInterceptTouchEvent passthrough installed")
-        } catch (t: Throwable) {
-            logger.warn("Failed to hook TouchHandler.onInterceptTouchEvent: ${t.message}")
-        }
     }
 }
