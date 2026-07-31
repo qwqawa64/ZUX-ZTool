@@ -74,8 +74,8 @@ public class SystemUIRealWatts extends BaseHookModule {
 
                     // 只在充电状态下显示瓦数
                     if (isPluggedIn) {
-                        if (System.currentTimeMillis() - lastUpdate < 100 && DEBUG) {
-                            log("Debounce triggered. Charging power will not be updated this time.");
+                        if (System.currentTimeMillis() - lastUpdate < 100) {
+                            logger.debug("Debounce triggered. Charging power will not be updated this time.");
                             return result;
                         }
                         // 使用Root权限读取系统文件获取实时充电功率
@@ -85,24 +85,24 @@ public class SystemUIRealWatts extends BaseHookModule {
                             // 使用换行符 \n 追加功率信息
                             String newText = originalText + "\n" + formatWattage(chargingData.power);
                             lastUpdate = System.currentTimeMillis();
-                            if (DEBUG) log("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
+                            logger.debug("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
                             return newText;
                         } else {
-                            log("未能检测到充电功率");
+                            logger.warn("未能检测到充电功率");
                             return originalText + "\n --W";
                         }
                     }
                     return result;
                 } catch (Throwable t) {
-                    logError("computePowerIndication hook回调异常", t);
+                    logger.error("computePowerIndication hook回调异常", t);
                     return chain.proceed();
                 }
             });
 
-            log("成功Hook KeyguardIndicationController");
+            logger.info("成功Hook KeyguardIndicationController");
 
         } catch (Throwable t) {
-            logError("Hook KeyguardIndicationController失败", t);
+            logger.error("Hook KeyguardIndicationController失败", t);
         }
     }
 
@@ -121,7 +121,7 @@ public class SystemUIRealWatts extends BaseHookModule {
             String voltageStr = executeRootCommand("cat " + VOLTAGE_NOW_PATH);
 
             if (currentStr == null || voltageStr == null || currentStr.isEmpty() || voltageStr.isEmpty()) {
-                log("Root读取失败 - 电流: " + currentStr + ", 电压: " + voltageStr);
+                logger.warn("Root读取失败 - 电流: " + currentStr + ", 电压: " + voltageStr);
                 return null;
             }
 
@@ -142,17 +142,15 @@ public class SystemUIRealWatts extends BaseHookModule {
             data.voltage = (float) voltageV;
             data.power = power;  // 保留原始double值，不四舍五入
 
-            if (DEBUG) {
-                log("Root读取实时充电数据 - 状态: " + status +
-                        ", 电流: " + currentA + "A (" + currentMicroA + "μA)" +
-                        ", 电压: " + voltageV + "V (" + voltageMicroV + "μV)" +
-                        ", 功率: " + POWER_FORMAT.format(power) + "W");
-            }
+            logger.debug("Root读取实时充电数据 - 状态: " + status +
+                    ", 电流: " + currentA + "A (" + currentMicroA + "μA)" +
+                    ", 电压: " + voltageV + "V (" + voltageMicroV + "μV)" +
+                    ", 功率: " + POWER_FORMAT.format(power) + "W");
 
             return data;
 
         } catch (Exception e) {
-            logError("Root读取充电数据失败", e);
+            logger.error("Root读取充电数据失败", e);
             return null;
         }
     }
@@ -178,16 +176,16 @@ public class SystemUIRealWatts extends BaseHookModule {
             // 等待命令执行完成
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                log("Root命令执行失败，退出码: " + exitCode + ", 命令: " + command);
+                logger.warn("Root命令执行失败，退出码: " + exitCode + ", 命令: " + command);
                 return null;
             }
 
             String result = output.toString().trim();
-            if (DEBUG) log("Root命令执行成功: " + command + " -> " + result);
+            logger.debug("Root命令执行成功: " + command + " -> " + result);
             return result;
 
         } catch (Exception e) {
-            logError("执行Root命令失败: " + command, e);
+            logger.error("执行Root命令失败: " + command, e);
             return null;
         } finally {
             if (reader != null) {

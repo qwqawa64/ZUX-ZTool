@@ -50,9 +50,9 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
             // 方法4：钩住 ListView 的 setAdapter 方法
             hookListViewSetAdapter();
 
-            log("Successfully hooked PackageInstaller permission controls");
+            logger.info("Successfully hooked PackageInstaller permission controls");
         } catch (Throwable t) {
-            logError("Failed to hook PackageInstaller", t);
+            logger.error("Failed to hook PackageInstaller", t);
         }
     }
 
@@ -116,7 +116,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                 return result;
             });
         } catch (Throwable t) {
-            logError("Failed to hook startCustomInstallConfirm", t);
+            logger.error("Failed to hook startCustomInstallConfirm", t);
         }
     }
 
@@ -149,7 +149,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                 return null;
             });
         } catch (Throwable t) {
-            logError("Failed to hook PermissionsAdapter constructor", t);
+            logger.error("Failed to hook PermissionsAdapter constructor", t);
         }
     }
 
@@ -164,7 +164,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                 return 1;
             });
         } catch (Throwable t) {
-            logError("Failed to hook PermissionsAdapter getCount", t);
+            logger.error("Failed to hook PermissionsAdapter getCount", t);
         }
     }
 
@@ -185,7 +185,7 @@ public class PackageInstallerPermissionHook extends BaseHookModule {
                 return chain.proceed();
             });
         } catch (Throwable t) {
-            logError("Failed to hook ListView setAdapter", t);
+            logger.error("Failed to hook ListView setAdapter", t);
         }
     }
 

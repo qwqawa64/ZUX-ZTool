@@ -57,7 +57,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         hookToggleSliderViewLifecycle(classLoader);
         hookBrightnessControllerCallbacks(classLoader);
         hookSeekProgressChanges();
-        log("Brightness slider percentage hooks installed");
+        logger.info("Brightness slider percentage hooks installed");
     }
 
     private void hookBrightnessControllerCallbacks(ClassLoader classLoader) {
@@ -83,7 +83,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
                 try {
                     scCls.getDeclaredField("mBrightnessSliderHapticPlugin");
                 } catch (NoSuchFieldException ignored) {
-                    log("Field mBrightnessSliderHapticPlugin not found, shouldn't hook mView of this class!");
+                    logger.warn("Field mBrightnessSliderHapticPlugin not found, shouldn't hook mView of this class!");
                     return chain.proceed();
                 }
                 Object view = findField(scCls, "mView").get(sliderController);
@@ -154,7 +154,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
         try {
             attachLabelToRoot(sliderView);
         } catch (Throwable t) {
-            logError("Failed to attach brightness slider label", t);
+            logger.error("Failed to attach brightness slider label", t);
         }
     }
 
@@ -222,9 +222,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             setPercentTextIfChanged(percentView, "--%");
-            if (DEBUG) {
-                logError("Failed to refresh brightness percent", t);
-            }
+            logger.error("Failed to refresh brightness percent", t);
         }
     }
 
@@ -241,7 +239,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             try {
                 bcCls.getDeclaredField("mBrightnessObserver");
             } catch (NoSuchFieldException ignored) {
-                log("Field mBrightnessObserver not found, shouldn't hook mView of this class!");
+                logger.warn("Field mBrightnessObserver not found, shouldn't hook mView of this class!");
                 return;
             }
             Object view = findField(control.getClass(), "mView").get(control);
@@ -250,9 +248,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             }
             refreshBrightnessFromView((View) view, progress);
         } catch (Throwable t) {
-            if (DEBUG) {
-                logError("Failed to refresh brightness from controller", t);
-            }
+            logger.error("Failed to refresh brightness from controller", t);
         }
     }
 
@@ -287,9 +283,7 @@ public class BrightnessSliderPercentageHook extends BaseHookModule {
             updateBrightnessPercentColor(sliderView, percentView);
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
-            if (DEBUG) {
-                logError("Failed to refresh brightness from view", t);
-            }
+            logger.error("Failed to refresh brightness from view", t);
         }
     }
 

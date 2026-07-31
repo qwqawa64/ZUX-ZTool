@@ -50,7 +50,7 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
      */
     private void hookPackageInstaller(ClassLoader classLoader) {
         try {
-            log("Starting hook for package installer");
+            logger.info("Starting hook for package installer");
 
             @SuppressLint("PrivateApi") Class<?> installSuccessExtraClass = classLoader.loadClass(
                     "com.android.packageinstaller.InstallSuccessExtra");
@@ -69,7 +69,7 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
 
                 try {
                     Object instance = chain.getThisObject();
-                    log("Inside initView method for package installer");
+                    logger.debug("Inside initView method for package installer");
 
                     // 强制 mDeleteApk = false（无论是否配置变更）
                     mDeleteApkField.setBoolean(instance, false);
@@ -95,22 +95,22 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
                                         buttonView.setChecked(false);
                                     }
                                 });
-                                log("Successfully updated UI checkbox and replaced listener");
+                                logger.debug("Successfully updated UI checkbox and replaced listener");
                             }
                         } else {
-                            log("CheckBox resource ID 'del_check_box' not found, may be new version");
+                            logger.warn("CheckBox resource ID 'del_check_box' not found, may be new version");
                         }
                     } catch (Throwable uiError) {
-                        logError("Failed to update checkbox UI", uiError);
+                        logger.error("Failed to update checkbox UI", uiError);
                     }
                 } catch (Throwable t) {
-                    logError("Error in afterHookedMethod for initView", t);
+                    logger.error("Error in afterHookedMethod for initView", t);
                 }
 
                 return result;
             });
 
-            log("Successfully hooked InstallSuccessExtra.initView()");
+            logger.info("Successfully hooked InstallSuccessExtra.initView()");
 
             // --- Hook 2: clearCachedApkIfNeededAndFinish() — 兜底防护 ---
             // 该方法在删除线程执行完毕后被调用，或在 onStop 中被调用。
@@ -126,13 +126,13 @@ public class PackageInstallerNoDeleteModule extends BaseHookModule {
                     }
                     return chain.proceed();
                 });
-                log("Successfully hooked InstallSuccessExtra.clearCachedApkIfNeededAndFinish()");
+                logger.info("Successfully hooked InstallSuccessExtra.clearCachedApkIfNeededAndFinish()");
             } catch (Throwable t) {
-                logError("Failed to hook clearCachedApkIfNeededAndFinish", t);
+                logger.error("Failed to hook clearCachedApkIfNeededAndFinish", t);
             }
 
         } catch (Throwable t) {
-            logError("Failed to initialize package installer hook", t);
+            logger.error("Failed to initialize package installer hook", t);
         }
     }
 }

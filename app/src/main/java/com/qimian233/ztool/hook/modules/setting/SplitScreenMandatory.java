@@ -64,17 +64,17 @@ public class SplitScreenMandatory extends BaseHookModule {
                 // 清空mLocalmap，确保分屏黑名单为空
                 if (mLocalmap != null) {
                     mLocalmap.clear();
-                    log("Successfully cleared split screen blacklist");
+                    logger.debug("Successfully cleared split screen blacklist");
                 }
 
                 // 跳过原方法执行，防止从XML文件读取黑名单数据
                 return null;
             });
 
-            log("Successfully hooked OneModeService.initLocalBlackList");
+            logger.info("Successfully hooked OneModeService.initLocalBlackList");
 
         } catch (Throwable t) {
-            logError("Failed to hook OneModeService", t);
+            logger.error("Failed to hook OneModeService", t);
         }
     }
 }

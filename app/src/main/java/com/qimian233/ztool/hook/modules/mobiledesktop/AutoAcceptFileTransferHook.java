@@ -82,7 +82,7 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
                     vmF.setAccessible(true);
                     Object viewModel = vmF.get(activity);
                     if (viewModel == null) {
-                        log("ViewModel is null, skip auto-accept");
+                        logger.warn("ViewModel is null, skip auto-accept");
                         return result;
                     }
 
@@ -99,24 +99,24 @@ public class AutoAcceptFileTransferHook extends BaseHookModule {
                         Method updateMethod = findLiveDataUpdateMethod(liveData.getClass());
                         if (updateMethod != null) {
                             updateMethod.invoke(liveData, Boolean.TRUE);
-                            log("Auto-accepted file transfer" +
+                            logger.debug("Auto-accepted file transfer" +
                                     " [vm=" + finalVmFieldName +
                                     ", accepted=" + finalAcceptedFieldName +
                                     ", ld=" + finalLiveDataFieldName + "]");
                         } else {
-                            log("Cannot find LiveData update method, skip");
+                            logger.warn("Cannot find LiveData update method, skip");
                         }
                     } else {
-                        log("LiveData field is null, skip");
+                        logger.warn("LiveData field is null, skip");
                     }
                 } catch (Throwable t) {
-                    logError("Failed to auto-accept file transfer", t);
+                    logger.error("Failed to auto-accept file transfer", t);
                 }
                 return result;
             });
-            log("Installed hook for auto-accept file transfer");
+            logger.info("Installed hook for auto-accept file transfer");
         } catch (Throwable t) {
-            logError("Failed to install auto-accept file transfer hook", t);
+            logger.error("Failed to install auto-accept file transfer hook", t);
         }
     }
 

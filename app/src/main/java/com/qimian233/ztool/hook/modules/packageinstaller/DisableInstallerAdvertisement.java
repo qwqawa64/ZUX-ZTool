@@ -47,14 +47,14 @@ public class DisableInstallerAdvertisement extends BaseHookModule {
             Method initRecommendAppsData = installSuccessClass.getDeclaredMethod("initRecommendAppsData");
             hookWithId(initRecommendAppsData, "init_recommend_apps_data_1", chain -> {
                 // 直接返回，不执行任何广告初始化逻辑
-                log("已阻止PackageInstaller广告数据初始化");
+                logger.debug("已阻止PackageInstaller广告数据初始化");
                 return null;
             });
 
-            log("成功Hook PackageInstaller广告屏蔽模块");
+            logger.info("成功Hook PackageInstaller广告屏蔽模块");
 
         } catch (Throwable t) {
-            logError("Hook PackageInstaller失败", t);
+            logger.error("Hook PackageInstaller失败", t);
         }
     }
 
@@ -62,7 +62,7 @@ public class DisableInstallerAdvertisement extends BaseHookModule {
         try {
             // Google版本的PackageInstaller可能有不同的类结构
             // 这里可以添加对Google版本的特殊处理
-            log("检测到Google PackageInstaller，使用标准Hook方法");
+            logger.warn("检测到Google PackageInstaller，使用标准Hook方法");
 
             // 尝试Hook相同的类和方法
             Class<?> installSuccessClass = null;
@@ -76,16 +76,16 @@ public class DisableInstallerAdvertisement extends BaseHookModule {
             if (installSuccessClass != null) {
                 Method initRecommendAppsData = installSuccessClass.getDeclaredMethod("initRecommendAppsData");
                 hookWithId(initRecommendAppsData, "init_recommend_apps_data_2", chain -> {
-                    log("已阻止Google PackageInstaller广告数据初始化");
+                    logger.debug("已阻止Google PackageInstaller广告数据初始化");
                     return null;
                 });
-                log("成功Hook Google PackageInstaller广告屏蔽");
+                logger.info("成功Hook Google PackageInstaller广告屏蔽");
             } else {
-                log("Google PackageInstaller未找到目标类，可能需要适配");
+                logger.warn("Google PackageInstaller未找到目标类，可能需要适配");
             }
 
         } catch (Throwable t) {
-            logError("Hook Google PackageInstaller失败", t);
+            logger.error("Hook Google PackageInstaller失败", t);
         }
     }
 }

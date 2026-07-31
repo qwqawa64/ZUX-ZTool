@@ -31,13 +31,13 @@ class BlockOtaInstallDialog : BaseHookModule() {
             )
             val showMethod = findMethod(nightDialogClass, "show")
             hookWithId(showMethod, "show") {  chain ->
-                log("Blocked NightConfrimDialog to prevent night auto-install setup")
+                logger.debug("Blocked NightConfrimDialog to prevent night auto-install setup")
                 val dialog = chain.thisObject as Dialog
                 dialog.dismiss()
                 // Do not proceed — dialog must not stay visible
             }
         } catch (e: Exception) {
-            logError("Failed to hook NightConfrimDialog.show", e)
+            logger.error("Failed to hook NightConfrimDialog.show", e)
         }
     }
 }

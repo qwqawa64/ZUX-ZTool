@@ -55,7 +55,7 @@ class SliderStyleHook: BaseHookModule() {
             result
         }
 
-        log("QsPanelWidthHook: hooked TypedArray.getInteger for horizontal slider")
+        logger.info("QsPanelWidthHook: hooked TypedArray.getInteger for horizontal slider")
 
         val windowMetricsClass = Class.forName("android.view.WindowMetrics")
         val getBoundsMethod = windowMetricsClass.getDeclaredMethod("getBounds")
@@ -70,7 +70,7 @@ class SliderStyleHook: BaseHookModule() {
             original
         }
 
-        log("QsPanelWidthHook: hooked WindowMetrics.getBounds for large-screen bypass")
+        logger.info("QsPanelWidthHook: hooked WindowMetrics.getBounds for large-screen bypass")
     }
 
 }

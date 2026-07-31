@@ -78,7 +78,7 @@ class BypassShareWarningHook : BaseHookModule() {
                 if (managerSetMethodName == null) managerSetMethodName = "z"
 
             } catch (dexKitError: Throwable) {
-                logError("DEXKit method discovery failed, using hardcoded names", dexKitError)
+                logger.error("DEXKit method discovery failed, using hardcoded names", dexKitError)
                 managerClassName = "$MANAGER_PKG.c0"
                 managerFactoryMethodName = "l"
                 managerSetMethodName = "z"
@@ -104,9 +104,9 @@ class BypassShareWarningHook : BaseHookModule() {
                     chain.proceed()
                 } else {
                     val enabled = isNearbyShareEnabled(context)
-                    log("IsNearbyShareEnabled: $enabled")
+                    logger.debug("IsNearbyShareEnabled: $enabled")
                     if (enabled) {
-                        log("Nearby share already enabled, keep original disable flow.")
+                        logger.debug("Nearby share already enabled, keep original disable flow.")
                         chain.proceed()
                     } else {
                         setNearbyShareEnabled(
@@ -114,14 +114,14 @@ class BypassShareWarningHook : BaseHookModule() {
                             finalManagerClass, finalFactoryMethod, finalSetMethod,
                             bridge
                         )
-                        log("Bypassed warning and enabled nearby share directly.")
+                        logger.debug("Bypassed warning and enabled nearby share directly.")
                         null
                     }
                 }
             }
-            log("Installed hook for BaseFileUnionTile.onClick")
+            logger.info("Installed hook for BaseFileUnionTile.onClick")
         } catch (t: Throwable) {
-            logError("Failed to hook BaseFileUnionTile.onClick", t)
+            logger.error("Failed to hook BaseFileUnionTile.onClick", t)
         }
 
         try {
@@ -148,18 +148,18 @@ class BypassShareWarningHook : BaseHookModule() {
                                 }
                             }
                         }.singleOrNull()
-                        log("md: $md")
+                        logger.debug("md: $md")
                         if (md != null) {
                             pMethodName = md.name
                             break
                         }
                     }
                 } catch (th: Throwable) {
-                    logError("Unable to find method with DexKit: ", th)
+                    logger.error("Unable to find method with DexKit: ", th)
                 }
             }
             val finalPMethodName = pMethodName
-            log("target method name of \"createAndStartExposureWarnDialog\": $finalPMethodName")
+            logger.debug("target method name of \"createAndStartExposureWarnDialog\": $finalPMethodName")
 
             val pMethod = actionNoticeClass.getDeclaredMethod(finalPMethodName)
             hookWithId(pMethod, "hook_162") {  chain ->
@@ -174,7 +174,7 @@ class BypassShareWarningHook : BaseHookModule() {
                     qInstance.javaClass
                         .getDeclaredMethod("B", Boolean::class.javaPrimitiveType)
                         .invoke(qInstance, true)
-                    log("dialog hook: enabled via MotoDiscoveryManager")
+                    logger.debug("dialog hook: enabled via MotoDiscoveryManager")
                 } catch (_: ReflectiveOperationException) {
                     // 回退旧版 manager
                     val managerClass = classLoader.loadClass(finalManagerClass)
@@ -182,7 +182,7 @@ class BypassShareWarningHook : BaseHookModule() {
                         managerClass.getDeclaredMethod(finalFactoryMethod, Context::class.java)
                     val manager = lMethod.invoke(null, context)
                     if (manager == null) {
-                        log("Unable to get manager!")
+                        logger.warn("Unable to get manager!")
                         null
                     } else {
                         val zMethod = manager.javaClass.getDeclaredMethod(
@@ -194,9 +194,9 @@ class BypassShareWarningHook : BaseHookModule() {
                 }
                 null
             }
-            log("Installed hook for dialog activity method: $finalPMethodName")
+            logger.info("Installed hook for dialog activity method: $finalPMethodName")
         } catch (e: Exception) {
-            logError("Failed to hook createAndStartExposureWarnIntent: ", e)
+            logger.error("Failed to hook createAndStartExposureWarnIntent: ", e)
         }
     }
 
@@ -215,7 +215,7 @@ class BypassShareWarningHook : BaseHookModule() {
         return try {
             prefs.getBoolean(PREF_KEY1, false) || prefs.getBoolean(PREF_KEY2, false)
         } catch (t: Throwable) {
-            logError("Failed to read nearby share state", t)
+            logger.error("Failed to read nearby share state", t)
             false
         }
     }
@@ -245,18 +245,18 @@ class BypassShareWarningHook : BaseHookModule() {
                     )
                     zMethod.isAccessible = true
                     zMethod.invoke(manager, true)
-                    log("enabled via legacy manager: $managerClass.$factoryMethod/$setMethod")
+                    logger.debug("enabled via legacy manager: $managerClass.$factoryMethod/$setMethod")
                 }
             } catch (_: ReflectiveOperationException) {
                 // ── 策略 2：新版 MotoDiscoveryManager ───────────────
-                log("legacy manager not found, trying MotoDiscoveryManager")
+                logger.warn("legacy manager not found, trying MotoDiscoveryManager")
                 val qClass = classLoader.loadClass("com.motorola.motoaccount.sdk.gf.q")
                 val lMethod = qClass.getDeclaredMethod("l", Context::class.java)
                 val qInstance = lMethod.invoke(null, context)
                 qInstance.javaClass
                     .getDeclaredMethod("B", Boolean::class.javaPrimitiveType)
                     .invoke(qInstance, true)
-                log("enabled via MotoDiscoveryManager.q.l().B(true)")
+                logger.debug("enabled via MotoDiscoveryManager.q.l().B(true)")
             }
 
             // ── 兜底：直接写两个 SharedPreferences ───────────────────
@@ -290,9 +290,9 @@ class BypassShareWarningHook : BaseHookModule() {
             bMethod.isAccessible = true
             bMethod.invoke(tile)
 
-            log("successfully set share to enabled")
+            logger.debug("successfully set share to enabled")
         } catch (e: Throwable) {
-            logError("Failed to set nearby share to enable: ", e)
+            logger.error("Failed to set nearby share to enable: ", e)
         }
     }
 }

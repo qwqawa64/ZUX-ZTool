@@ -39,14 +39,14 @@ public class ChargeAnimationFixModule extends BaseHookModule {
 
         // 检查模块是否已启用
         if (!isEnabled()) {
-            log("Module is disabled, skipping hook");
+            logger.info("Module is disabled, skipping hook");
             return;
         }
 
         try {
             hookChargeAnimationUtils(classLoader);
         } catch (Throwable t) {
-            logError("Failed to hook charge animation utilities", t);
+            logger.error("Failed to hook charge animation utilities", t);
         }
     }
 
@@ -71,10 +71,10 @@ public class ChargeAnimationFixModule extends BaseHookModule {
             Method isPadMethod = utilsClass.getDeclaredMethod("isPad");
             hookWithId(isPadMethod, "is_pad", chain -> false);
 
-            log("Successfully enabled all charge animations");
-            log("Now showing: default, particle, turbo, triangle, girl");
+            logger.info("Successfully enabled all charge animations");
+            logger.debug("Now showing: default, particle, turbo, triangle, girl");
         } catch (Throwable t) {
-            logError("Failed to hook Utilities class", t);
+            logger.error("Failed to hook Utilities class", t);
         }
     }
 }

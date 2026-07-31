@@ -28,7 +28,7 @@ class NetworkSpeedRefresh : BaseHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != SYSTEMUI_PACKAGE) return
         if (xposed.getRemotePreferences(PREFS_NAME).getBoolean("systemui_network_speed_doublelayer", false)) {
-            log("Will not load refresh interval hook when double layer network speed is enabled. This function is implemented in that hook!")
+            logger.info("Will not load refresh interval hook when double layer network speed is enabled. This function is implemented in that hook!")
             return
         }
         hookSendEmptyMessageDelayed(param.defaultClassLoader)
@@ -54,7 +54,7 @@ class NetworkSpeedRefresh : BaseHookModule() {
                 // 判断是否为 NetworkSpeedView 的内部 Handler
                 val handlerClassName = handler.javaClass.name
                 if (handlerClassName.startsWith("$NETWORK_SPEED_VIEW_CLASS$")) {
-                    log(
+                    logger.debug(
                         "[SpeedRefreshTest] sendEmptyMessageDelayed called: " +
                             "handler=$handlerClassName, what=$what, delayMillis=$delayMillis ms"
                     )
@@ -66,9 +66,9 @@ class NetworkSpeedRefresh : BaseHookModule() {
                 }
             }
 
-            log("[SpeedRefreshTest] Handler.sendEmptyMessageDelayed hooked successfully.")
+            logger.info("[SpeedRefreshTest] Handler.sendEmptyMessageDelayed hooked successfully.")
         } catch (e: Throwable) {
-            logError("[SpeedRefreshTest] Failed to hook sendEmptyMessageDelayed", e)
+            logger.error("[SpeedRefreshTest] Failed to hook sendEmptyMessageDelayed", e)
         }
     }
 }

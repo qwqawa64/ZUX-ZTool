@@ -54,11 +54,11 @@ public class ForceLenovoAOD extends BaseHookModule {
                 // 在构造函数执行后，立即设置AOD启动标志
                 chain.getThisObject().getClass().getDeclaredField("mIsGoingToStartAOD")
                         .setBoolean(chain.getThisObject(), true);
-                log("ZuiDozeTriggers constructed, forced mIsGoingToStartAOD = true");
+                logger.debug("ZuiDozeTriggers constructed, forced mIsGoingToStartAOD = true");
                 return null;
             });
         } catch (Throwable t) {
-            logError("Failed to hook ZuiDozeTriggers: ", t);
+            logger.error("Failed to hook ZuiDozeTriggers: ", t);
         }
     }
 
@@ -70,7 +70,7 @@ public class ForceLenovoAOD extends BaseHookModule {
             hookWithId(getIntMethod, "get_int", chain -> {
                 String key = (String) chain.getArg(0);
                 if ("ro.config.aod.support".equals(key)) {
-                    log("Bypassed ro.config.aod.support check");
+                    logger.debug("Bypassed ro.config.aod.support check");
                     return 1; // 强制返回支持AOD
                 }
                 return chain.proceed();
@@ -83,14 +83,14 @@ public class ForceLenovoAOD extends BaseHookModule {
             hookWithId(getIntForUserMethod, "get_int_for_user", chain -> {
                 String setting = (String) chain.getArg(1);
                 if ("always_on_display".equals(setting)) {
-                    log("Bypassed always_on_display setting check");
+                    logger.debug("Bypassed always_on_display setting check");
                     return 1;
                 }
                 return chain.proceed();
             });
 
         } catch (Exception t) {
-            logError("Failed to hook AOD checks: ", t);
+            logger.error("Failed to hook AOD checks: ", t);
         }
     }
 }

@@ -29,7 +29,7 @@ class ForceImmersiveMode : BaseHookModule() {
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != SYSTEMUI_PACKAGE) return
-        log("Loading module ForceImmersiveMode.")
+        logger.info("Loading module ForceImmersiveMode.")
 
         val commandQueueClass = param.defaultClassLoader
             .loadClass("com.android.systemui.statusbar.CommandQueue")
@@ -68,17 +68,15 @@ class ForceImmersiveMode : BaseHookModule() {
                 val current = args[5] as Int
                 if (current != 0) {
                     args[5] = 0
-                    if (DEBUG) {
-                        log("ForceImmersiveMode: onSystemBarAttributesChanged " +
-                            "requestedVisibleTypes=$current -> 0 (hide all bars)")
-                    }
+                    logger.debug("ForceImmersiveMode: onSystemBarAttributesChanged " +
+                        "requestedVisibleTypes=$current -> 0 (hide all bars)")
                 }
                 chain.proceed(args.toTypedArray())
             }
 
-            log("ForceImmersiveMode: onSystemBarAttributesChanged hooked successfully.")
+            logger.info("ForceImmersiveMode: onSystemBarAttributesChanged hooked successfully.")
         } catch (e: Throwable) {
-            logError("Failed to hook onSystemBarAttributesChanged", e)
+            logger.error("Failed to hook onSystemBarAttributesChanged", e)
         }
     }
 
@@ -103,20 +101,18 @@ class ForceImmersiveMode : BaseHookModule() {
                 val state = args[2] as Int
 
                 if (state == WINDOW_STATE_SHOWING) {
-                    if (DEBUG) {
-                        log("ForceImmersiveMode: setWindowState(" +
-                            "displayId=$displayId, type=$type, state=$state" +
-                            ") -> forcing state=$WINDOW_STATE_HIDDEN")
-                    }
+                    logger.debug("ForceImmersiveMode: setWindowState(" +
+                        "displayId=$displayId, type=$type, state=$state" +
+                        ") -> forcing state=$WINDOW_STATE_HIDDEN")
                     chain.proceed(arrayOf(displayId, type, WINDOW_STATE_HIDDEN))
                 } else {
                     chain.proceed()
                 }
             }
 
-            log("ForceImmersiveMode: setWindowState hooked successfully.")
+            logger.info("ForceImmersiveMode: setWindowState hooked successfully.")
         } catch (e: Throwable) {
-            logError("Failed to hook setWindowState", e)
+            logger.error("Failed to hook setWindowState", e)
         }
     }
 }

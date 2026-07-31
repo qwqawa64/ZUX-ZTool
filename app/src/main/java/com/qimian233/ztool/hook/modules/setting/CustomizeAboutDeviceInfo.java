@@ -88,15 +88,13 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
                     value = "";
                 }
                 if (value != null && !value.trim().isEmpty()) {
-                    if (DEBUG) {
-                        log(fieldName + " summary -> " + value);
-                    }
+                    logger.debug(fieldName + " summary -> " + value);
                     return value;
                 }
                 return chain.proceed();
             });
         } catch (Throwable t) {
-            logError("Failed to hook " + fieldName + " summary", t);
+            logger.error("Failed to hook " + fieldName + " summary", t);
         }
     }
 
@@ -118,15 +116,15 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
                 }
                 Bitmap bitmap = decodeHeaderBitmap();
                 if (bitmap == null) {
-                    log("Header image file missing: " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
+                    logger.warn("Header image file missing: " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
                     return result;
                 }
                 ((ImageView) chain.getArg(0)).setImageBitmap(bitmap);
-                log("Header image loaded from " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
+                logger.debug("Header image loaded from " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
                 return result;
             });
         } catch (Throwable t) {
-            logError("Failed to hook header image", t);
+            logger.error("Failed to hook header image", t);
         }
 
         try {
@@ -156,13 +154,13 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
                     Object view = tvPadField.get(chain.getThisObject());
                     if (view instanceof TextView) {
                         ((TextView) view).setText(model);
-                        log("Header model text -> " + model);
+                        logger.debug("Header model text -> " + model);
                     }
                 }
                 return result;
             });
         } catch (Throwable t) {
-            logError("Failed to hook header text", t);
+            logger.error("Failed to hook header text", t);
         }
     }
 
@@ -174,7 +172,7 @@ public class CustomizeAboutDeviceInfo extends BaseHookModule {
         try (FileInputStream inputStream = new FileInputStream(imageFile)) {
             return BitmapFactory.decodeStream(inputStream);
         } catch (IOException e) {
-            logError("Failed to decode header image", e);
+            logger.error("Failed to decode header image", e);
             return null;
         }
     }

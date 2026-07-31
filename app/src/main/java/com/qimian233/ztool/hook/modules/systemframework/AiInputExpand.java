@@ -82,7 +82,7 @@ public class AiInputExpand extends BaseHookModule {
         // 修改默认的 AI_COMMAND_SIGN
         setStaticObjectField(targetClass, "AI_COMMAND_SIGN", "&&");
 
-        log("Successfully expanded AI input signs [&&] for package");
+        logger.info("Successfully expanded AI input signs [&&] for package");
     }
 
     private void hookLgsiFeatures(ClassLoader classLoader) {
@@ -99,7 +99,7 @@ public class AiInputExpand extends BaseHookModule {
         try {
             Method method = featureClass.getDeclaredMethod("enabled", int.class);
             hookWithId(method, "lgsi_features_enabled", chain -> true);
-            log("Successfully forced LgsiFeatures check to TRUE");
+            logger.info("Successfully forced LgsiFeatures check to TRUE");
         } catch (NoSuchMethodException e) {
             // 方法不存在，忽略
         }

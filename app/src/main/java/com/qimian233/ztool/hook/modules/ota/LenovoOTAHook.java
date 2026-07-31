@@ -50,7 +50,7 @@ public class LenovoOTAHook extends BaseHookModule {
                 return;
             }
 
-            log("Found target class in package: " + packageName);
+            logger.debug("Found target class in package: " + packageName);
 
             Method targetMethod = serverApiClass.getDeclaredMethod(
                     TARGET_METHOD,
@@ -77,7 +77,7 @@ public class LenovoOTAHook extends BaseHookModule {
                     // 只有当 targetVer 不为 null 且去除空格后不为空时才修改
                     if (isConfigValid(targetVer)) {
                         properties.put("curfirmwarever", targetVer.trim());
-                        log("Modified curfirmwarever: " + targetVer);
+                        logger.debug("Modified curfirmwarever: " + targetVer);
                         modified = true;
                     }
 
@@ -91,19 +91,19 @@ public class LenovoOTAHook extends BaseHookModule {
                     // 同上
                     if (isConfigValid(targetId)) {
                         properties.put("deviceid", targetId.trim());
-                        log("Modified deviceid: " + targetId);
+                        logger.debug("Modified deviceid: " + targetId);
                         modified = true;
                     }
 
                     if (modified) {
-                        log("OTA Request intercepted in: " + packageName);
+                        logger.debug("OTA Request intercepted in: " + packageName);
                     }
                 }
 
                 return chain.proceed();
             });
         } catch (Throwable t) {
-            logError("Failed to hook OTA parameters", t);
+            logger.error("Failed to hook OTA parameters", t);
         }
     }
 

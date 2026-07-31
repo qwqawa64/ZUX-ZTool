@@ -34,21 +34,21 @@ public class PermissionControllerHook extends BaseHookModule {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
         if (!isEnabled()) return;
-        log("Loading module PermissionControllerHook.");
+        logger.info("Loading module PermissionControllerHook.");
         try {
             if ("com.android.permissioncontroller".equals(packageName)) {
-                log("com.android.permissioncontroller detected. Hooking...");
+                logger.debug("com.android.permissioncontroller detected. Hooking...");
                 handleLoadPermissionController(classLoader);
             } else if ("com.android.settings".equals(packageName)) {
-                log("com.android.settings detected. Hooking...");
+                logger.debug("com.android.settings detected. Hooking...");
                 new SettingsHook().handleLoadSettings(classLoader, this.xposed);
             } else if ("com.zui.safecenter".equals(packageName)) {
-                log("com.zui.safecenter detected. Hooking...");
+                logger.debug("com.zui.safecenter detected. Hooking...");
                 handleLoadSafeCenter(classLoader);
             }
-            log("Hook is successful.");
+            logger.info("Hook is successful.");
         } catch (Exception e) {
-            logError("Error hooking", e);
+            logger.error("Error hooking", e);
         }
     }
 
@@ -165,7 +165,7 @@ public class PermissionControllerHook extends BaseHookModule {
                 hookWithId(m, "hook_165", chain -> Boolean.TRUE);
             } catch (Throwable ignored) {}
         } else {
-            this.xposed.log(android.util.Log.INFO, TAG, "[PermissionControllerHook] ZuiUtils not found");
+            logger.warn("[PermissionControllerHook] ZuiUtils not found");
         }
 
         if (Build.VERSION.SDK_INT <= 34) {

@@ -69,13 +69,13 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                         if (watts > 0) {
                             // 使用换行符 \n 追加功率信息
                             String newText = originalText + "\n" + formatWattage(watts, chargingSpeed);
-                            log("成功添加充电瓦数显示: " + watts + "W, speed=" + chargingSpeed);
+                            logger.debug("成功添加充电瓦数显示: " + watts + "W, speed=" + chargingSpeed);
                             return newText;
                         }
                     }
                     return result;
                 } catch (Throwable t) {
-                    logError("computePowerIndication hook回调异常", t);
+                    logger.error("computePowerIndication hook回调异常", t);
                     return chain.proceed();
                 }
             });
@@ -90,7 +90,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                         "com.android.settingslib.fuelgauge.BatteryStatus");
                 refreshMethod = callbackClass.getDeclaredMethod("onRefreshBatteryInfo", batteryStatusClass);
             } catch (NoSuchMethodException | ClassNotFoundException e) {
-                log("Unable to find BaseKeyguardCallback.onRefreshBatteryInfo: " + e.getMessage());
+                logger.warn("Unable to find BaseKeyguardCallback.onRefreshBatteryInfo: " + e.getMessage());
             }
             if (refreshMethod != null) {
                 hookWithId(refreshMethod, "final_refresh", chain -> {
@@ -113,27 +113,27 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
                                 Class<?> cl = controller.getClass();
 
                                 // 记录调试信息
-                                log("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
+                                logger.debug("BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
                                         ", mChargingWattage: " + cl.getDeclaredField("mChargingWattage").getInt(controller));
 
                             } catch (Throwable t) {
-                                logError("读取BatteryStatus失败", t);
+                                logger.error("读取BatteryStatus失败", t);
                             }
                         }
                         return result;
                     } catch (Throwable t) {
-                        logError("onRefreshBatteryInfo hook回调异常", t);
+                        logger.error("onRefreshBatteryInfo hook回调异常", t);
                         return chain.proceed();
                     }
                 });
             } else {
-                log("Cannot find onRefreshBatteryInfo, skipping this hook");
+                logger.warn("Cannot find onRefreshBatteryInfo, skipping this hook");
             }
 
-            log("成功Hook KeyguardIndicationController");
+            logger.info("成功Hook KeyguardIndicationController");
 
         } catch (Throwable t) {
-            logError("Hook KeyguardIndicationController失败", t);
+            logger.error("Hook KeyguardIndicationController失败", t);
         }
     }
 
@@ -163,7 +163,7 @@ public class SystemUIChargeWattsHook extends BaseHookModule {
         }
 
         // 无法确定单位，返回0表示不显示
-        log("无法识别的瓦数单位: " + rawWattage);
+        logger.warn("无法识别的瓦数单位: " + rawWattage);
         return 0;
     }
 

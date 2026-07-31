@@ -40,7 +40,7 @@ public class DisableFlagSecure extends BaseHookModule {
 
     private void hookAndroidSystem(ClassLoader classLoader) {
         try {
-            log("开始Hook FLAG_SECURE...");
+            logger.info("开始Hook FLAG_SECURE...");
             Class<?> windowStateClass = classLoader.loadClass(
                     "com.android.server.wm.WindowState"
             );
@@ -49,10 +49,10 @@ public class DisableFlagSecure extends BaseHookModule {
             Method method = windowStateClass.getDeclaredMethod("isSecureLocked");
             hookWithId(method, "is_secure_locked", chain -> false);
 
-            log("成功Hook WindowState.isSecureLocked()");
+            logger.info("成功Hook WindowState.isSecureLocked()");
 
         } catch (Throwable t) {
-            logError("Hook FLAG_SECURE失败", t);
+            logger.error("Hook FLAG_SECURE失败", t);
         }
     }
 }

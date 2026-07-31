@@ -37,7 +37,7 @@ public class ZToolSettingsEntryHook extends BaseHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         try {
-            log("Installing hook.");
+            logger.info("Installing hook.");
             Method m = classLoader
                     .loadClass(TARGET_CLASS)
                     .getDeclaredMethod("onCreatePreferences", android.os.Bundle.class, String.class);
@@ -97,15 +97,15 @@ public class ZToolSettingsEntryHook extends BaseHookModule {
                     addPreference.invoke(screen, category);
                     addPreference.invoke(category, entry);
 
-                    log("Injected ZTool entry into TopLevelSettings");
+                    logger.debug("Injected ZTool entry into TopLevelSettings");
                 } catch (Throwable t) {
-                    logError("Failed to inject ZTool settings entry", t);
+                    logger.error("Failed to inject ZTool settings entry", t);
                 }
                 return result;
             });
-            log("Successfully installed hook.");
+            logger.info("Successfully installed hook.");
         } catch (Throwable t) {
-            logError("Failed to hook TopLevelSettings.onCreatePreferences", t);
+            logger.error("Failed to hook TopLevelSettings.onCreatePreferences", t);
         }
     }
 }

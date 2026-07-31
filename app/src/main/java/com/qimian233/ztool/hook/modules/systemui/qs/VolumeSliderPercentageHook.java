@@ -57,7 +57,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         hookToggleSliderViewLifecycle(classLoader);
         hookVolumeControllerCallbacks(classLoader);
         hookSeekProgressChanges(classLoader);
-        log("Volume slider percentage hooks installed");
+        logger.info("Volume slider percentage hooks installed");
     }
 
     private void hookVolumeControllerCallbacks(ClassLoader classLoader) {
@@ -153,7 +153,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
         try {
             attachLabelToRoot(sliderView);
         } catch (Throwable t) {
-            logError("Failed to attach volume slider label", t);
+            logger.error("Failed to attach volume slider label", t);
         }
     }
 
@@ -224,9 +224,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
             setPercentTextIfChanged(percentView, "--%");
-            if (DEBUG) {
-                logError("Failed to refresh volume percent", t);
-            }
+            logger.error("Failed to refresh volume percent", t);
         }
     }
 
@@ -260,9 +258,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             setPercentTextIfChanged(percentView, formatPercent(volumeProgress));
             schedulePositionUpdate(sliderView);
         } catch (Throwable t) {
-            if (DEBUG) {
-                logError("Failed to refresh volume from toggle slider", t);
-            }
+            logger.error("Failed to refresh volume from toggle slider", t);
         }
     }
 
@@ -294,9 +290,7 @@ public class VolumeSliderPercentageHook extends BaseHookModule {
             percent = Math.max(0, Math.min(100, percent));
             return percent;
         } catch (Throwable t) {
-            if (DEBUG) {
-                logError("Failed to resolve volume progress", t);
-            }
+            logger.error("Failed to resolve volume progress", t);
             return null;
         }
     }

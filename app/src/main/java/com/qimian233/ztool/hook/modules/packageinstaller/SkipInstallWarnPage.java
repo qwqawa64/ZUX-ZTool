@@ -50,15 +50,15 @@ public class SkipInstallWarnPage extends BaseHookModule {
                         // 直接调用 handleDirectInstallInFindSameAppCase 方法
                         activity.getClass().getDeclaredMethod("handleDirectInstallInFindSameAppCase")
                                 .invoke(activity);
-                        log("Successfully called handleDirectInstallInFindSameAppCase");
+                        logger.debug("Successfully called handleDirectInstallInFindSameAppCase");
                     } catch (Exception e) {
                         // 如果上面的方法不存在，尝试调用 onDirectInstall 方法
                         try {
                             activity.getClass().getDeclaredMethod("onDirectInstall")
                                     .invoke(activity);
-                            log("Successfully called onDirectInstall");
+                            logger.debug("Successfully called onDirectInstall");
                         } catch (Exception e2) {
-                            logError("Both installation methods failed", e2);
+                            logger.error("Both installation methods failed", e2);
                         }
                     }
                 }, 50); // 立刻执行
@@ -66,9 +66,9 @@ public class SkipInstallWarnPage extends BaseHookModule {
                 return result;
             });
 
-            log("Successfully hooked PackageInstallerActivityExtra.onResume");
+            logger.info("Successfully hooked PackageInstallerActivityExtra.onResume");
         } catch (Throwable t) {
-            logError("Failed to hook PackageInstallerActivityExtra", t);
+            logger.error("Failed to hook PackageInstallerActivityExtra", t);
         }
     }
 }

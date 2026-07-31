@@ -46,13 +46,13 @@ public class NoChargeAnimation extends BaseHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         if (!isEnabled()) return;
-        log("Loading module No_ChargeAnimation.");
+        logger.info("Loading module No_ChargeAnimation.");
         handleLoadSystemUi(classLoader);
     }
 
     public void handleLoadSystemUi(ClassLoader classLoader) {
         try {
-            log("Hooking ChargingAnimationController...");
+            logger.info("Hooking ChargingAnimationController...");
             @SuppressLint("PrivateApi") Class<?> controllerClass = classLoader.loadClass(TARGET_CLASS);
 
             // 通过 DEXKit 按类型查找 Handler 字段
@@ -93,19 +93,19 @@ public class NoChargeAnimation extends BaseHookModule {
                         }
                     }
                 } catch (Throwable dexKitError) {
-                    logError("DEXKit field discovery failed, using hardcoded name", dexKitError);
+                    logger.error("DEXKit field discovery failed, using hardcoded name", dexKitError);
                 }
             }
 
-            log("Using handler field name: " + handlerFieldName);
+            logger.debug("Using handler field name: " + handlerFieldName);
             java.lang.reflect.Field handlerField = controllerClass.getDeclaredField(handlerFieldName);
             handlerField.setAccessible(true);
             Class<?> handlerType = handlerField.getType();
             Method handleMessageMethod = handlerType.getDeclaredMethod("handleMessage", Message.class);
             hookWithId(handleMessageMethod, "handle_message", chain -> null);
-            log("Hooked ChargingAnimationController [OK]");
+            logger.info("Hooked ChargingAnimationController [OK]");
         } catch (Exception e) {
-            logError("Error hooking ChargingAnimationController", e);
+            logger.error("Error hooking ChargingAnimationController", e);
         }
     }
 

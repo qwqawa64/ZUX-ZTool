@@ -26,13 +26,13 @@ public class AllowGetPackages extends BaseHookModule {
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        log("System server package, handleLoadPackage should not be loaded. Check getTargetPackages if you see this log.");
+        logger.warn("System server package, handleLoadPackage should not be loaded. Check getTargetPackages if you see this log.");
     }
 
     public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
         ClassLoader classLoader = param.getClassLoader();
         try {
-            log("Start hooking android.app.AppOpsManager, SystemFramework");
+            logger.info("Start hooking android.app.AppOpsManager, SystemFramework");
             Method opToDefaultMode = classLoader.loadClass("android.app.AppOpsManager")
                     .getDeclaredMethod("opToDefaultMode", int.class);
             hookWithId(opToDefaultMode, "op_to_default_mode", chain -> {
@@ -42,12 +42,12 @@ public class AllowGetPackages extends BaseHookModule {
                 }
                 return chain.proceed();
             });
-            log("Hooked android.app.AppOpsManager [OK]");
+            logger.info("Hooked android.app.AppOpsManager [OK]");
         }catch (Exception e){
-            logError("Failed hooking android.app.AppOpsManager",e);
+            logger.error("Failed hooking android.app.AppOpsManager",e);
         }
         try {
-            log("Start hooking com.android.server.appop.AppOpsService, SystemFramework");
+            logger.info("Start hooking com.android.server.appop.AppOpsService, SystemFramework");
             Method checkOperation = classLoader.loadClass("com.android.server.appop.AppOpsService")
                     .getDeclaredMethod("checkOperationRawZui", int.class, int.class, String.class);
             hookWithId(checkOperation, "check_operation_raw_zui", chain -> {
@@ -57,9 +57,9 @@ public class AllowGetPackages extends BaseHookModule {
                 }
                 return chain.proceed();
             });
-            log("Hooked com.android.server.appop.AppOpsService [OK]");
+            logger.info("Hooked com.android.server.appop.AppOpsService [OK]");
         }catch (Exception e){
-            logError("Failed hooking com.android.server.appop.AppOpsService",e);
+            logger.error("Failed hooking com.android.server.appop.AppOpsService",e);
         }
     }
 }

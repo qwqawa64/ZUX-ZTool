@@ -53,9 +53,9 @@ public class PackageInstallerStyleHook extends BaseHookModule {
             // 2. Hook Activity样式，修改界面显示
             hookActivityStyles(classLoader);
 
-            log("ZUI Package Installer Hook 成功加载");
+            logger.info("ZUI Package Installer Hook 成功加载");
         } catch (Throwable t) {
-            logError("ZUI Package Installer Hook 加载失败", t);
+            logger.error("ZUI Package Installer Hook 加载失败", t);
         }
     }
 
@@ -71,9 +71,9 @@ public class PackageInstallerStyleHook extends BaseHookModule {
             Method isCTSandGTS2 = utilsClass.getDeclaredMethod("isCTSandGTS", String.class, Intent.class);
             hookWithId(isCTSandGTS2, "is_ct_sand_gts2", chain -> Boolean.TRUE);
 
-            log("成功Hook安装限制检查方法");
+            logger.info("成功Hook安装限制检查方法");
         } catch (Throwable t) {
-            logError("Hook安装限制检查方法失败", t);
+            logger.error("Hook安装限制检查方法失败", t);
         }
     }
 
@@ -108,18 +108,18 @@ public class PackageInstallerStyleHook extends BaseHookModule {
                         // 禁用窗口动画
                         activity.getWindow().setWindowAnimations(0);
 
-                        log("成功修改包安装器Activity样式");
+                        logger.debug("成功修改包安装器Activity样式");
                     } catch (Throwable t) {
-                        logError("修改Activity样式时出错", t);
+                        logger.error("修改Activity样式时出错", t);
                     }
                 }
 
                 return chain.proceed();
             });
 
-            log("成功Hook Activity样式修改");
+            logger.info("成功Hook Activity样式修改");
         } catch (Throwable t) {
-            logError("Hook Activity样式修改失败", t);
+            logger.error("Hook Activity样式修改失败", t);
         }
     }
 
@@ -142,14 +142,14 @@ public class PackageInstallerStyleHook extends BaseHookModule {
 
                     TextView tv = dialog.findViewById(warnTextViewId);
                     tv.setVisibility(TextView.GONE);
-                    log("Successfully set install warn visibility to GONE");
+                    logger.debug("Successfully set install warn visibility to GONE");
                 } catch (Exception e) {
-                    logError("Exception happened when trying to set warn text to GONE!", e);
+                    logger.error("Exception happened when trying to set warn text to GONE!", e);
                 }
                 return result;
             });
         } catch (Throwable t) {
-            logError("Failed to hook doNotShowWarnTextHook", t);
+            logger.error("Failed to hook doNotShowWarnTextHook", t);
         }
     }
 }

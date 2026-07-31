@@ -39,7 +39,7 @@ public class SystemUINetworkSpeedSizeHook extends BaseHookModule {
 
     private void hookSystemUI() {
         try {
-            log("开始Hook系统UI网速显示");
+            logger.info("开始Hook系统UI网速显示");
 
             // 使用beforeHookedMethod避免递归调用
             Method setTextMethod = TextView.class.getDeclaredMethod("setText", CharSequence.class);
@@ -50,7 +50,7 @@ public class SystemUINetworkSpeedSizeHook extends BaseHookModule {
                     // 检查是否是网络速度显示文本
                     if (isNetworkSpeedText(text)) {
                         CharSequence styledText = createStyledSpeedText(text.toString());
-                        log("成功修改网速显示样式");
+                        logger.debug("成功修改网速显示样式");
                         return chain.proceed(new Object[]{styledText});
                     }
                 } catch (Throwable t) {
@@ -59,9 +59,9 @@ public class SystemUINetworkSpeedSizeHook extends BaseHookModule {
                 return chain.proceed();
             });
 
-            log("系统UI网速显示Hook成功");
+            logger.info("系统UI网速显示Hook成功");
         } catch (Throwable e) {
-            logError("系统UI网速显示Hook失败", e);
+            logger.error("系统UI网速显示Hook失败", e);
         }
     }
 

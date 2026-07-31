@@ -42,7 +42,7 @@ public class ControlCenterNoTileLabelsHook extends BaseHookModule {
                     labelContainer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
                 }
             } catch (Exception e) {
-                logError("Cannot apply no-label mode to tiles!", e);
+                logger.error("Cannot apply no-label mode to tiles!", e);
             }
             return result;
         });

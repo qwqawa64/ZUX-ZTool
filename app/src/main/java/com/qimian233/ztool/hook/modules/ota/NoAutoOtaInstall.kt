@@ -15,40 +15,40 @@ class NoAutoOtaInstall : BaseHookModule() {
         try {
             val autoInstallGetterMethod: Method = findMethod(otaPolicyClass, "getmSettingNormalAutoInstall")
             hookWithId(autoInstallGetterMethod, "auto_install_getter") {  _ ->
-                log("Intercepted auto install getter and force it to return false.")
+                logger.debug("Intercepted auto install getter and force it to return false.")
                 false
             }
         } catch (e: NoSuchMethodException) {
-            logError("Unable to find method: ", e)
+            logger.error("Unable to find method: ", e)
         }
         try {
             val autoDownloadGetterMethod: Method = findMethod(otaPolicyClass, "getmSettingNormalAutoDownload")
             hookWithId(autoDownloadGetterMethod, "auto_download_getter") {  _ ->
-                log("Intercepted auto download getter and force it to return false.")
+                logger.debug("Intercepted auto download getter and force it to return false.")
                 false
             }
         } catch (e: NoSuchMethodException) {
-            logError("Unable to find method: ", e)
+            logger.error("Unable to find method: ", e)
         }
         try {
             val autoInstallSetterMethod: Method = findMethod(otaPolicyClass, "setmSettingNormalAutoInstall",
                 Boolean::class.java)
             hookWithId(autoInstallSetterMethod, "auto_install_setter") {  chain ->
-                log("Intercepted auto install setter and modify its argument to always false")
+                logger.debug("Intercepted auto install setter and modify its argument to always false")
                 chain.proceed(arrayOf(false))
             }
         } catch (e: NoSuchMethodException) {
-            logError("Unable to find method: ", e)
+            logger.error("Unable to find method: ", e)
         }
         try {
             val autoDownloadSetterMethod: Method = findMethod(otaPolicyClass, "setmSettingNormalAutoDownload",
                 Boolean::class.java)
             hookWithId(autoDownloadSetterMethod, "auto_download_setter") {  chain ->
-                log("Intercepted auto download setter and modify its argument to always false")
+                logger.debug("Intercepted auto download setter and modify its argument to always false")
                 chain.proceed(arrayOf(false))
             }
         } catch (e: NoSuchMethodException) {
-            logError("Unable to find method: ", e)
+            logger.error("Unable to find method: ", e)
         }
     }
 }

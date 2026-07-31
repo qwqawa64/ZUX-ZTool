@@ -39,10 +39,10 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
     public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
         ClassLoader classLoader = param.getClassLoader();
         this.updateAnimationDurationFromPrefs();
-        log("Screen on animation duration (ms): " + SCREEN_ON_ANIMATION_DURATION_MS);
-        log("Screen off animation duration (ms): " + SCREEN_OFF_ANIMATION_DURATION_MS);
+        logger.debug("Screen on animation duration (ms): " + SCREEN_ON_ANIMATION_DURATION_MS);
+        logger.debug("Screen off animation duration (ms): " + SCREEN_OFF_ANIMATION_DURATION_MS);
         try {
-            log("Executing hook for DisplayPowerController screen on/off animation...");
+            logger.info("Executing hook for DisplayPowerController screen on/off animation...");
             Method isColorFadeEnabledMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER_INJECTOR)
                     .getDeclaredMethod("isColorFadeEnabled");
             hookWithId(isColorFadeEnabledMethod, "color_fade_enabled", chain -> true);
@@ -50,7 +50,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             hookDisplayPowerControllerInitialize(classLoader);
             hookDisplayPowerControllerScreenOnAnimation(classLoader);
         } catch (Exception e) {
-            logError("Failed to hook DisplayPowerController: ", e);
+            logger.error("Failed to hook DisplayPowerController: ", e);
         }
     }
 
@@ -80,11 +80,11 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 Object thisObject = chain.getThisObject();
                 safeSetBooleanField(thisObject, "mColorFadeEnabled", true);
                 safeSetBooleanField(thisObject, "mColorFadeFadesConfig", true);
-                log("Forced DisplayPowerController color fade animation enabled.");
+                logger.debug("Forced DisplayPowerController color fade animation enabled.");
                 return result;
             });
         } catch (Exception e) {
-            logError("Failed to hook DisplayPowerController constructor", e);
+            logger.error("Failed to hook DisplayPowerController constructor", e);
         }
     }
 
@@ -98,7 +98,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 return result;
             });
         } catch (Exception e) {
-            logError("Failed to hook DisplayPowerController.initialize", e);
+            logger.error("Failed to hook DisplayPowerController.initialize", e);
         }
     }
 
@@ -114,11 +114,11 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 safeCallMethod(offAnimator, "setDuration",
                         SCREEN_OFF_ANIMATION_DURATION_MS);
             }
-            log("Configured color fade animator durations: on="
+            logger.debug("Configured color fade animator durations: on="
                     + getAnimatorDuration(onAnimator)
                     + ", off=" + getAnimatorDuration(offAnimator));
         } catch (Throwable t) {
-            logError("Failed to configure color fade animator durations: ", t);
+            logger.error("Failed to configure color fade animator durations: ", t);
         }
     }
 
@@ -175,7 +175,7 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
                 return chain.proceed();
             });
         } catch (Exception e) {
-            logError("Failed to hook animateScreenStateChange", e);
+            logger.error("Failed to hook animateScreenStateChange", e);
         }
     }
 
@@ -199,10 +199,10 @@ public class ForceScreenOnOffAnimation extends BaseHookModule {
             safeCallMethod(onAnimator, "setFloatValues",
                     (Object) new float[] {getFloatByMethod(powerState, "getColorFadeLevel", 0.0f), 1.0f});
             safeCallMethod(onAnimator, "start");
-            log("Started prepared screen-on color fade animation.");
+            logger.debug("Started prepared screen-on color fade animation.");
             return true;
         } catch (Throwable t) {
-            logError("Failed to start prepared screen-on color fade animation: ", t);
+            logger.error("Failed to start prepared screen-on color fade animation: ", t);
             return false;
         }
     }

@@ -37,7 +37,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
     }
 
     private void hookPackageInstaller(ClassLoader classLoader) {
-        log("开始Hook PackageInstaller扫描功能...");
+        logger.info("开始Hook PackageInstaller扫描功能...");
 
         // 方法1：直接跳过扫描，立即返回安全结果
         hookScanMethods(classLoader);
@@ -48,7 +48,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
         // 方法3：跳过扫描服务绑定
         hookServiceMethods(classLoader);
 
-        log("PackageInstaller扫描功能Hook完成");
+        logger.info("PackageInstaller扫描功能Hook完成");
     }
 
     private void hookScanMethods(ClassLoader classLoader) {
@@ -58,7 +58,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method startScanApps = activityExtraClass.getDeclaredMethod("startScanApps");
             hookWithId(startScanApps, "start_scan_apps", chain -> {
-                log("拦截startScanApps，跳过扫描流程");
+                logger.debug("拦截startScanApps，跳过扫描流程");
 
                 // 立即发送扫描完成的消息
                 Object activity = chain.getThisObject();
@@ -68,13 +68,13 @@ public class PackageInstallerHookScan extends BaseHookModule {
                 if (handler != null) {
                     handler.getClass().getDeclaredMethod("sendEmptyMessage", int.class)
                             .invoke(handler, 2); // SCAN_APP_OK = 2
-                    log("发送SCAN_APP_OK消息");
+                    logger.debug("发送SCAN_APP_OK消息");
                 }
 
                 return null; // 直接返回，不执行扫描
             });
         } catch (Throwable t) {
-            logError("Hook startScanApps失败", t);
+            logger.error("Hook startScanApps失败", t);
         }
     }
 
@@ -85,7 +85,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method showResultIfFinish = activityExtraClass.getDeclaredMethod("showResultIfFinish");
             hookWithId(showResultIfFinish, "show_result_if_finish", chain -> {
-                log("拦截showResultIfFinish");
+                logger.debug("拦截showResultIfFinish");
 
                 Object activity = chain.getThisObject();
 
@@ -102,11 +102,11 @@ public class PackageInstallerHookScan extends BaseHookModule {
                 isScanBeginField.setAccessible(true);
                 isScanBeginField.setBoolean(activity, true);
 
-                log("强制设置扫描结果为安全状态");
+                logger.debug("强制设置扫描结果为安全状态");
                 return chain.proceed();
             });
         } catch (Throwable t) {
-            logError("Hook showResultIfFinish失败", t);
+            logger.error("Hook showResultIfFinish失败", t);
         }
     }
 
@@ -117,7 +117,7 @@ public class PackageInstallerHookScan extends BaseHookModule {
                     "com.android.packageinstaller.PackageInstallerActivityExtra");
             Method bindSafeService = activityExtraClass.getDeclaredMethod("bindSafeService");
             hookWithId(bindSafeService, "bind_safe_service", chain -> {
-                log("拦截bindSafeService，跳过服务绑定");
+                logger.debug("拦截bindSafeService，跳过服务绑定");
 
                 Object activity = chain.getThisObject();
 
@@ -137,13 +137,13 @@ public class PackageInstallerHookScan extends BaseHookModule {
                 if (handler != null) {
                     handler.getClass().getDeclaredMethod("sendEmptyMessage", int.class)
                             .invoke(handler, 1); // SCAN_APP_BEGIN
-                    log("发送SCAN_APP_BEGIN消息");
+                    logger.debug("发送SCAN_APP_BEGIN消息");
                 }
 
                 return null; // 跳过实际绑定
             });
         } catch (Throwable t) {
-            logError("Hook bindSafeService失败", t);
+            logger.error("Hook bindSafeService失败", t);
         }
     }
 }

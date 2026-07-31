@@ -84,10 +84,10 @@ public class SystemUIBatteryHook extends BaseHookModule {
                 return result;
             });
 
-            log("SystemUI电池百分比Hook模块加载成功");
+            logger.info("SystemUI电池百分比Hook模块加载成功");
 
         } catch (Throwable t) {
-            logError("SystemUI电池百分比Hook模块加载失败", t);
+            logger.error("SystemUI电池百分比Hook模块加载失败", t);
         }
     }
 
@@ -125,10 +125,10 @@ public class SystemUIBatteryHook extends BaseHookModule {
             // 调整字体大小
             adjustTextSize(batteryMeterView);
 
-            log("电池布局修改完成");
+            logger.debug("电池布局修改完成");
 
         } catch (Throwable t) {
-            logError("电池布局修改失败", t);
+            logger.error("电池布局修改失败", t);
         }
     }
 
@@ -152,10 +152,10 @@ public class SystemUIBatteryHook extends BaseHookModule {
             // 可选：设置粗体让文字更清晰
             percentView.setTypeface(percentView.getTypeface(), android.graphics.Typeface.BOLD);
 
-            log("电池百分比字体大小调整为 " + newSize + "sp");
+            logger.debug("电池百分比字体大小调整为 " + newSize + "sp");
 
         } catch (Throwable t) {
-            logError("调整电池百分比字体大小失败", t);
+            logger.error("调整电池百分比字体大小失败", t);
         }
     }
 
@@ -173,7 +173,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
                 return sizeInPixels / context.getResources().getDisplayMetrics().scaledDensity;
             }
         } catch (Throwable t) {
-            log("获取原始电池字体大小失败，使用默认值");
+            logger.warn("获取原始电池字体大小失败，使用默认值");
         }
 
         // 默认值：12sp
@@ -199,7 +199,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
             updatePercentageText(batteryMeterView);
 
         } catch (Throwable t) {
-            logError("强制显示电池百分比失败", t);
+            logger.error("强制显示电池百分比失败", t);
         }
     }
 
@@ -236,7 +236,7 @@ public class SystemUIBatteryHook extends BaseHookModule {
             }
 
         } catch (Throwable t) {
-            logError("更新电池百分比文本失败", t);
+            logger.error("更新电池百分比文本失败", t);
         }
     }
 

@@ -38,7 +38,7 @@ class CustomChargeAnimation : BaseHookModule() {
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != SYSTEMUI_PACKAGE) return
-        log("Loading module CustomChargeAnimation.")
+        logger.info("Loading module CustomChargeAnimation.")
 
         try {
             val videoViewClass = param.defaultClassLoader.loadClass("android.widget.VideoView")
@@ -69,14 +69,14 @@ class CustomChargeAnimation : BaseHookModule() {
 
                     if (file.exists()) {
                         val customUri = Uri.fromFile(file)
-                        log("CustomChargeAnimation: redirecting " +
+                        logger.debug("CustomChargeAnimation: redirecting " +
                             "original=$originalUri -> $filePath")
                         // 构建新 args 显式传入 proceed，避免原地修改被忽略
                         val newArgs = chain.args.toMutableList()
                         newArgs[0] = customUri
                         chain.proceed(newArgs.toTypedArray())
                     } else {
-                        log("CustomChargeAnimation: $fileName not found at $filePath, " +
+                        logger.warn("CustomChargeAnimation: $fileName not found at $filePath, " +
                             "using default $originalUri.")
                         chain.proceed()
                     }
@@ -85,9 +85,9 @@ class CustomChargeAnimation : BaseHookModule() {
                 }
             }
 
-            log("CustomChargeAnimation: VideoView.setVideoURI(Uri, Map) hooked successfully.")
+            logger.info("CustomChargeAnimation: VideoView.setVideoURI(Uri, Map) hooked successfully.")
         } catch (e: Throwable) {
-            logError("Failed to hook VideoView.setVideoURI", e)
+            logger.error("Failed to hook VideoView.setVideoURI", e)
         }
     }
 }

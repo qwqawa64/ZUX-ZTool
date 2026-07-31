@@ -72,7 +72,7 @@ public class OwnerInfoHook extends BaseHookModule {
     }
 
     private void hookSettingsPackage(ClassLoader classLoader) {
-        log("开始Hook Settings包");
+        logger.info("开始Hook Settings包");
 
         // Hook点1: 在Settings的SecuritySettings中注册
         try {
@@ -81,13 +81,13 @@ public class OwnerInfoHook extends BaseHookModule {
                     .getDeclaredMethod("onResume");
             hookWithId(onResumeMethod, "on_resume", chain -> {
                 Object result = chain.proceed();
-                log("SecuritySettings resumed, registering screen receiver");
+                logger.debug("SecuritySettings resumed, registering screen receiver");
                 registerScreenReceiver(chain.getThisObject(), classLoader);
                 return result;
             });
-            log("成功Hook SecuritySettings.onResume");
+            logger.info("成功Hook SecuritySettings.onResume");
         } catch (Throwable e) {
-            logError("Hook SecuritySettings失败", e);
+            logger.error("Hook SecuritySettings失败", e);
         }
 
         // Hook点2: ActivityThread中注册屏幕状态监听器
@@ -108,14 +108,14 @@ public class OwnerInfoHook extends BaseHookModule {
                 }
                 return result;
             });
-            log("成功Hook ActivityThread.performResumeActivity");
+            logger.info("成功Hook ActivityThread.performResumeActivity");
         } catch (Throwable e) {
-            logError("Hook ActivityThread.performResumeActivity失败", e);
+            logger.error("Hook ActivityThread.performResumeActivity失败", e);
         }
     }
 
     private void hookSystemPackage(ClassLoader classLoader) {
-        log("开始Hook System包");
+        logger.info("开始Hook System包");
 
         // Hook点1: 在系统PowerManagerService中监听屏幕状态
         try {
@@ -125,7 +125,7 @@ public class OwnerInfoHook extends BaseHookModule {
             hookWithId(setPowerStateMethod, "set_power_state", chain -> {
                 Object result = chain.proceed();
                 boolean screenOn = (Boolean) chain.getArg(0);
-                log("电源状态改变，屏幕状态: " + screenOn);
+                logger.debug("电源状态改变，屏幕状态: " + screenOn);
 
                 if (screenOn) {
                     // 屏幕亮起时更新OwnerInfo
@@ -133,9 +133,9 @@ public class OwnerInfoHook extends BaseHookModule {
                 }
                 return result;
             });
-            log("成功Hook PowerManagerService.setPowerState");
+            logger.info("成功Hook PowerManagerService.setPowerState");
         } catch (Throwable e) {
-            logError("Hook PowerManagerService.setPowerState失败", e);
+            logger.error("Hook PowerManagerService.setPowerState失败", e);
         }
 
         // Hook点2: 用户活动监听
@@ -148,14 +148,14 @@ public class OwnerInfoHook extends BaseHookModule {
                 int event = (Integer) chain.getArg(0);
                 // 用户活动事件，包括屏幕触摸、按键等
                 if (event == 0 || event == 2 || event == 3) { // POWER_BUTTON, TOUCH, etc.
-                    log("检测到用户活动，更新OwnerInfo");
+                    logger.debug("检测到用户活动，更新OwnerInfo");
                     updateOwnerInfo(null, classLoader);
                 }
                 return result;
             });
-            log("成功Hook PowerManagerService.userActivity");
+            logger.info("成功Hook PowerManagerService.userActivity");
         } catch (Throwable e) {
-            logError("Hook PowerManagerService.userActivity失败", e);
+            logger.error("Hook PowerManagerService.userActivity失败", e);
         }
 
         // Hook点3: 在ContextImpl中注册广播接收器
@@ -177,9 +177,9 @@ public class OwnerInfoHook extends BaseHookModule {
                 }
                 return chain.proceed();
             });
-            log("成功Hook ContextImpl.registerReceiver");
+            logger.info("成功Hook ContextImpl.registerReceiver");
         } catch (Throwable e) {
-            logError("Hook ContextImpl.registerReceiver失败", e);
+            logger.error("Hook ContextImpl.registerReceiver失败", e);
         }
     }
 
@@ -196,7 +196,7 @@ public class OwnerInfoHook extends BaseHookModule {
                 }
             }
         } catch (Throwable e) {
-            logError("检查IntentFilter动作时出错", e);
+            logger.error("检查IntentFilter动作时出错", e);
         }
         return false;
     }
@@ -220,7 +220,7 @@ public class OwnerInfoHook extends BaseHookModule {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     String action = intent.getAction();
-                    log("收到广播: " + action);
+                    logger.debug("收到广播: " + action);
 
                     if (Intent.ACTION_SCREEN_ON.equals(action) ||
                             Intent.ACTION_USER_PRESENT.equals(action)) {
@@ -237,13 +237,13 @@ public class OwnerInfoHook extends BaseHookModule {
             context.registerReceiver(mScreenReceiver, filter);
             mIsReceiverRegistered = true;
 
-            log("成功注册屏幕状态广播接收器");
+            logger.debug("成功注册屏幕状态广播接收器");
 
             // 立即更新一次
             updateOwnerInfo(context, classLoader);
 
         } catch (Throwable e) {
-            logError("注册广播接收器失败", e);
+            logger.error("注册广播接收器失败", e);
         }
     }
 
@@ -259,21 +259,21 @@ public class OwnerInfoHook extends BaseHookModule {
                         API_URL = "https://" + API_URL;
                     }
                 } else {
-                    log("API_URL配置为空，使用默认值");
+                    logger.warn("API_URL配置为空，使用默认值");
                     API_URL = "https://api.example.com"; // 设置一个默认URL
                 }
                 String content = fetchContentFromAPI();
                 if (content != null && !content.equals(mCachedContent)) {
                     mCachedContent = content;
-                    log("从API获取新内容: " + content);
+                    logger.debug("从API获取新内容: " + content);
                     setOwnerInfoContent(content, context, classLoader);
                 } else if (content == null) {
-                    log("从API获取内容失败" + API_URL);
+                    logger.warn("从API获取内容失败" + API_URL);
                 } else {
-                    log("内容未变化，跳过更新");
+                    logger.debug("内容未变化，跳过更新");
                 }
             } catch (Exception e) {
-                logError("updateOwnerInfo线程出错", e);
+                logger.error("updateOwnerInfo线程出错", e);
             }
         }).start();
     }
@@ -291,7 +291,7 @@ public class OwnerInfoHook extends BaseHookModule {
             connection.setRequestProperty("User-Agent", "OwnerInfoHook/1.0");
 
             int responseCode = connection.getResponseCode();
-            log("API响应码: " + responseCode);
+            logger.debug("API响应码: " + responseCode);
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 InputStream inputStream = connection.getInputStream();
@@ -304,7 +304,7 @@ public class OwnerInfoHook extends BaseHookModule {
                 }
 
                 String rawResponse = response.toString();
-                log("API原始响应: " + rawResponse); // 记录原始响应用于调试
+                logger.debug("API原始响应: " + rawResponse); // 记录原始响应用于调试
 
                 return parseContentFromJson(rawResponse);
             } else {
@@ -317,12 +317,12 @@ public class OwnerInfoHook extends BaseHookModule {
                     while ((line = reader.readLine()) != null) {
                         errorResponse.append(line);
                     }
-                    log("API错误响应: " + errorResponse);
+                    logger.debug("API错误响应: " + errorResponse);
                 }
-                log("HTTP错误响应: " + responseCode);
+                logger.debug("HTTP错误响应: " + responseCode);
             }
         } catch (Exception e) {
-            logError("获取API数据时出错", e);
+            logger.error("获取API数据时出错", e);
         }
         return "If you see this message, your API is broken, check your settings and Internet connection, then restart com.android.settings";
     }
@@ -352,11 +352,11 @@ public class OwnerInfoHook extends BaseHookModule {
                         .replace("\\t", "\t");
                 return content;
             } else {
-                log("JSON中未找到content字段");
+                logger.warn("JSON中未找到content字段");
                 return jsonString;
             }
         } catch (Exception e) {
-            logError("解析JSON时出错", e);
+            logger.error("解析JSON时出错", e);
             return jsonString;
         }
     }
@@ -367,7 +367,7 @@ public class OwnerInfoHook extends BaseHookModule {
             Handler mainHandler = new Handler(Looper.getMainLooper());
             mainHandler.post(() -> {
                 try {
-                    log("设置OwnerInfo内容: " + content);
+                    logger.debug("设置OwnerInfo内容: " + content);
 
                     // 方法1: 通过LockPatternUtils
                     try {
@@ -382,10 +382,10 @@ public class OwnerInfoHook extends BaseHookModule {
                                 .getDeclaredMethod("setOwnerInfo", String.class, int.class);
                         setOwnerInfo.invoke(lockPatternUtils, content, 0);
 
-                        log("通过LockPatternUtils成功更新OwnerInfo");
+                        logger.debug("通过LockPatternUtils成功更新OwnerInfo");
                         return;
                     } catch (Throwable e) {
-                        logError("通过LockPatternUtils更新失败", e);
+                        logger.error("通过LockPatternUtils更新失败", e);
                     }
 
                     // 方法2: 通过ILockSettings服务
@@ -407,11 +407,11 @@ public class OwnerInfoHook extends BaseHookModule {
                             setStringMethod.invoke(lockSettingsService,
                                     "lock_screen_owner_info", content, 0);
 
-                            log("通过ILockSettings成功更新OwnerInfo");
+                            logger.debug("通过ILockSettings成功更新OwnerInfo");
                             return;
                         }
                     } catch (Throwable e) {
-                        logError("通过ILockSettings更新失败", e);
+                        logger.error("通过ILockSettings更新失败", e);
                     }
 
                     // 方法3: 直接调用SettingsProvider（备用方法）
@@ -423,18 +423,18 @@ public class OwnerInfoHook extends BaseHookModule {
                             Settings.Secure.putString(
                                     ((Context) context).getContentResolver(),
                                     "lock_screen_owner_info", content);
-                            log("通过SettingsProvider成功更新OwnerInfo");
+                            logger.debug("通过SettingsProvider成功更新OwnerInfo");
                         }
                     } catch (Throwable e) {
-                        logError("通过SettingsProvider更新失败", e);
+                        logger.error("通过SettingsProvider更新失败", e);
                     }
 
                 } catch (Throwable e) {
-                    logError("设置OwnerInfo内容失败", e);
+                    logger.error("设置OwnerInfo内容失败", e);
                 }
             });
         } catch (Throwable e) {
-            logError("提交到主Handler失败", e);
+            logger.error("提交到主Handler失败", e);
         }
     }
 

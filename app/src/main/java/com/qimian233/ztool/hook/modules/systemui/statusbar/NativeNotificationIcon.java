@@ -26,7 +26,7 @@ public class NativeNotificationIcon extends BaseHookModule {
 
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        log("Loading module NativeNotificationIcon.");
+        logger.info("Loading module NativeNotificationIcon.");
         handleLoadSystemUi(classLoader);
     }
 
@@ -53,7 +53,7 @@ public class NativeNotificationIcon extends BaseHookModule {
 
     private void hookXSystemUtil(ClassLoader classLoader) {
         try {
-            log("Hooking com.android.systemui.util.XSystemUtil...");
+            logger.info("Hooking com.android.systemui.util.XSystemUtil...");
             Method isCTSGTSTestMethod = classLoader
                     .loadClass("com.android.systemui.util.XSystemUtil")
                     .getDeclaredMethod("isCTSGTSTest");
@@ -64,15 +64,15 @@ public class NativeNotificationIcon extends BaseHookModule {
                 }
                 return chain.proceed();
             });
-            log("Successfully hooked com.android.systemui.util.XSystemUtil. [1/6]");
+            logger.info("Successfully hooked com.android.systemui.util.XSystemUtil. [1/6]");
         } catch (Exception e) {
-            logError("Failed to hook com.android.systemui.util.XSystemUtil.", e);
+            logger.error("Failed to hook com.android.systemui.util.XSystemUtil.", e);
         }
     }
 
     private void hookNotificationShelf(ClassLoader classLoader) {
         try {
-            log("Hooking com.android.systemui.statusbar.NotificationShelf");
+            logger.info("Hooking com.android.systemui.statusbar.NotificationShelf");
             Method updateMethod = classLoader
                     .loadClass("com.android.systemui.statusbar.NotificationShelf")
                     .getDeclaredMethod("updateResources$5");
@@ -82,20 +82,20 @@ public class NativeNotificationIcon extends BaseHookModule {
                 isCtsMode.remove();
                 return result;
             });
-            log("Successfully hooked com.android.systemui.statusbar.NotificationShelf [2/6]");
+            logger.info("Successfully hooked com.android.systemui.statusbar.NotificationShelf [2/6]");
         } catch (Exception e) {
-            logError("Failed to hook com.android.systemui.statusbar.NotificationShelf", e);
+            logger.error("Failed to hook com.android.systemui.statusbar.NotificationShelf", e);
         }
     }
 
     private void hookQSUtil(ClassLoader classLoader) {
         try {
-            log("Hooking com.android.systemui.util.QSUtil");
+            logger.info("Hooking com.android.systemui.util.QSUtil");
             Class<?> qsUtilClass = classLoader.loadClass("com.android.systemui.util.QSUtil");
             Method replaceMethod = findMethodByName(qsUtilClass, "replaceTheSmallIcon");
             if (replaceMethod != null) {
                 hookWithId(replaceMethod, "replace_1", chain -> null);
-                log("[NativeNotificationIcon] Successfully hooked com.android.systemui.util.QSUtil [3-1/6]");
+                logger.info("[NativeNotificationIcon] Successfully hooked com.android.systemui.util.QSUtil [3-1/6]");
                 return;
             }
             // Fallback: try NotificationListener
@@ -103,14 +103,14 @@ public class NativeNotificationIcon extends BaseHookModule {
             replaceMethod = findMethodByName(listenerClass, "replaceTheSmallIcon");
             if (replaceMethod != null) {
                 hookWithId(replaceMethod, "replace_2", chain -> null);
-                log("[NativeNotificationIcon] Successfully hooked NotificationListener.replaceTheSmallIcon [3-1/6]");
+                logger.info("[NativeNotificationIcon] Successfully hooked NotificationListener.replaceTheSmallIcon [3-1/6]");
                 return;
             }
-            log("replaceTheSmallIcon not found in QSUtil or NotificationListener, skipping hook.");
+            logger.warn("replaceTheSmallIcon not found in QSUtil or NotificationListener, skipping hook.");
         } catch (ClassNotFoundException e) {
-            logError("Unable to find required class for hookQSUtil!", e);
+            logger.error("Unable to find required class for hookQSUtil!", e);
         } catch (Exception e) {
-            logError("Failed to hook replaceTheSmallIcon", e);
+            logger.error("Failed to hook replaceTheSmallIcon (QSUtil path)", e);
         }
     }
 
@@ -120,18 +120,18 @@ public class NativeNotificationIcon extends BaseHookModule {
             Method replaceMethod = findMethodByName(listenerClass, "replaceTheSmallIcon");
             if (replaceMethod != null) {
                 hookWithId(replaceMethod, "replace_3", chain -> null);
-                log("[NativeNotificationIcon] Fallback: hooked NotificationListener.replaceTheSmallIcon [3-2/6]");
+                logger.info("[NativeNotificationIcon] Fallback: hooked NotificationListener.replaceTheSmallIcon [3-2/6]");
             } else {
-                log("replaceTheSmallIcon not found in NotificationListener, skipping hook.");
+                logger.warn("replaceTheSmallIcon not found in NotificationListener, skipping hook.");
             }
         } catch (Exception e) {
-            logError("Failed to hook replaceTheSmallIcon", e);
+            logger.error("Failed to hook replaceTheSmallIcon (NotificationListener path)", e);
         }
     }
 
     private void hookNewPathClasses(ClassLoader classLoader) {
         try {
-            log("Finding new path classes...");
+            logger.info("Finding new path classes...");
             final var newWrapperClass = classLoader.loadClass(
                     "com.android.systemui.notificationlist.notification.wrapper.NotificationHeaderViewWrapper");
             final var newMIconField = newWrapperClass.getDeclaredField("mIcon");
@@ -139,7 +139,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             final MethodHandle newGetIcon = MethodHandles.lookup().unreflectGetter(newMIconField);
             final var newRowClass = classLoader.loadClass(
                     "com.android.systemui.notificationlist.view.NotificationRowView");
-            log("New path classes found. Hooking...");
+            logger.info("New path classes found. Hooking...");
 
             Method onContentUpdatedMethod = newWrapperClass.getDeclaredMethod("onContentUpdated", newRowClass);
             hookWithId(onContentUpdatedMethod, "on_content_updated_1", chain -> {
@@ -168,15 +168,15 @@ public class NativeNotificationIcon extends BaseHookModule {
                 iconview.setTag(KEY_SIZE_UNFUCKED, Boolean.TRUE);
                 return result;
             });
-            log("Successfully hooked new path NotificationHeaderViewWrapper [4-1/6]");
+            logger.info("Successfully hooked new path NotificationHeaderViewWrapper [4-1/6]");
         } catch (Exception e) {
-            logError("Failed to hook new path NotificationHeaderViewWrapper", e);
+            logger.error("Failed to hook new path NotificationHeaderViewWrapper", e);
         }
     }
 
     private void hookOldPathClasses(ClassLoader classLoader) {
         try {
-            log("Finding old path classes...");
+            logger.info("Finding old path classes...");
             final var notificationHeaderViewWrapper_class = classLoader.loadClass(
                     "com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper");
             final var notificationHeaderViewWrapper_mIcon = notificationHeaderViewWrapper_class.getDeclaredField("mIcon");
@@ -184,7 +184,7 @@ public class NativeNotificationIcon extends BaseHookModule {
             final var getIcon = MethodHandles.lookup().unreflectGetter(notificationHeaderViewWrapper_mIcon);
             final var expandableNotificationRow_class = classLoader.loadClass(
                     "com.android.systemui.statusbar.notification.row.ExpandableNotificationRow");
-            log("Old path classes found. Hooking...");
+            logger.info("Old path classes found. Hooking...");
 
             Method onContentUpdatedMethod = notificationHeaderViewWrapper_class.getDeclaredMethod(
                     "onContentUpdated", expandableNotificationRow_class);
@@ -211,22 +211,22 @@ public class NativeNotificationIcon extends BaseHookModule {
                 iconview.setTag(KEY_SIZE_UNFUCKED, Boolean.TRUE);
                 return result;
             });
-            log("Successfully hooked com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper [4-2/6]");
+            logger.info("Successfully hooked NotificationHeaderViewWrapper [4-2/6]");
         } catch (Exception e) {
-            logError("Failed to hook com.android.systemui.statusbar.notification.row.wrapper.NotificationHeaderViewWrapper", e);
+            logger.error("Failed to hook NotificationHeaderViewWrapper", e);
         }
     }
 
     private void hookNotificationHeaderView(ClassLoader classLoader) {
         try {
-            log("Hooking com.android.systemui.notificationlist.view.NotificationHeaderView");
+            logger.info("Hooking NotificationHeaderView");
             Class<?> headerViewClass = classLoader.loadClass(
                     "com.android.systemui.notificationlist.view.NotificationHeaderView");
             // Old version (pre-inline): has shouldShowIconBackground
             Method shouldShowMethod = findMethodByName(headerViewClass, "shouldShowIconBackground");
             if (shouldShowMethod != null) {
                 hookWithId(shouldShowMethod, "should_show", chain -> true);
-                log("Successfully hooked shouldShowIconBackground (old version) [5/6]");
+                logger.info("Successfully hooked shouldShowIconBackground (old version) [5/6]");
                 return;
             }
             // New version: shouldShowIconBackground removed, logic inlined into updateIconBgVisibility.
@@ -251,32 +251,32 @@ public class NativeNotificationIcon extends BaseHookModule {
                         showLargeField.setBoolean(thiz, origLarge);
                     }
                 });
-                log("Successfully hooked updateIconBgVisibility (new version) [5/6]");
+                logger.info("Successfully hooked updateIconBgVisibility (new version) [5/6]");
                 return;
             }
-            log("Neither shouldShowIconBackground nor updateIconBgVisibility found, skipping hook.");
+            logger.warn("Neither shouldShowIconBackground nor updateIconBgVisibility found, skipping hook.");
         } catch (Exception e) {
-            logError("Failed to hook NotificationHeaderView", e);
+            logger.error("Failed to hook NotificationHeaderView", e);
         }
     }
 
     private void hookNotificationBuilder(ClassLoader classLoader) {
         try {
-            log("Hooking android.app.Notification$Builder");
+            logger.info("Hooking android.app.Notification$Builder");
             // always use circle template for android.app.Notification$Builder#get*Resource()
             Method isCtsMethod = classLoader
                     .loadClass("android.app.Notification$Builder")
                     .getDeclaredMethod("isCtsGtsTest");
             hookWithId(isCtsMethod, "is_cts", chain -> true);
-            log("Successfully hooked android.app.Notification$Builder [6/6]");
+            logger.info("Successfully hooked android.app.Notification$Builder [6/6]");
         } catch (Exception ignored) {
             try {
-                log("Unable to hook method isCtsGtsTest! Try alternate way.");
+                logger.warn("Unable to hook method isCtsGtsTest! Try alternate way.");
                 Method methodToReplace = classLoader.loadClass("com.android.systemui.util.XSystemUtil").getDeclaredMethod("isCTSGTSTest");
                 hookWithId(methodToReplace, "method_to_replace", chain -> true);
-                log("Successfully hooked android.app.Notification$Builder with alternate way.[6/6]");
+                logger.info("Successfully hooked android.app.Notification$Builder with alternate way.[6/6]");
             } catch (Exception e) {
-                logError("Unable to hook isCTSGTSTest!", e);
+                logger.error("Unable to hook isCTSGTSTest!", e);
             }
         }
     }

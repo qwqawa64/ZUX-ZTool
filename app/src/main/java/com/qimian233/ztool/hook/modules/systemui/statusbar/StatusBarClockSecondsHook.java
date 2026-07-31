@@ -50,9 +50,9 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
                 return result;
             });
 
-            log("Successfully hooked Clock.onAttachedToWindow");
+            logger.info("Successfully hooked Clock.onAttachedToWindow");
         } catch (Throwable t) {
-            logError("Failed to hook Clock.onAttachedToWindow", t);
+            logger.error("Failed to hook Clock.onAttachedToWindow", t);
         }
 
         try {
@@ -74,9 +74,9 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
                 return chain.proceed();
             });
 
-            log("Successfully hooked Clock.onTuningChanged");
+            logger.info("Successfully hooked Clock.onTuningChanged");
         } catch (Throwable t) {
-            logError("Failed to hook Clock.onTuningChanged", t);
+            logger.error("Failed to hook Clock.onTuningChanged", t);
         }
 
         try {
@@ -89,9 +89,9 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
                 return chain.proceed();
             });
 
-            log("Successfully hooked Clock.updateShowSeconds");
+            logger.info("Successfully hooked Clock.updateShowSeconds");
         } catch (Throwable t) {
-            logError("Failed to hook Clock.updateShowSeconds", t);
+            logger.error("Failed to hook Clock.updateShowSeconds", t);
         }
     }
 
@@ -118,9 +118,9 @@ public class StatusBarClockSecondsHook extends BaseHookModule {
             // 触发秒显示更新
             cl.getDeclaredMethod("updateShowSeconds").invoke(clockInstance);
 
-            log("Force enabled clock seconds display");
+            logger.debug("Force enabled clock seconds display");
         } catch (Throwable t) {
-            logError("Force enable seconds failed", t);
+            logger.error("Force enable seconds failed", t);
         }
     }
 }

@@ -41,7 +41,7 @@ class QsPanelWidthHook : BaseHookModule() {
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != "com.android.systemui") return
-        log("QsPanelWidthTestHook: loading")
+        logger.info("QsPanelWidthTestHook: loading")
 
         // 从 SharedPreferences 读取配置
         val prefs = xposed.getRemotePreferences("xposed_module_config")
@@ -122,7 +122,7 @@ class QsPanelWidthHook : BaseHookModule() {
             }
         }
 
-        log("QsPanelWidthTestHook: hooked QSContainerImpl.onMeasure")
+        logger.info("QsPanelWidthTestHook: hooked QSContainerImpl.onMeasure")
 
         // Hook FrameLayout.onLayout：检测包含 SeekBar 子控件的 FrameLayout，
         // 将 SeekBar 拉伸至 FrameLayout 宽度，修复 SeekBarNps 等不跟随拉伸的问题
@@ -175,7 +175,7 @@ class QsPanelWidthHook : BaseHookModule() {
             null
         }
 
-        log("QsPanelWidthTestHook: hooked FrameLayout.onLayout for SeekBar stretch")
+        logger.info("QsPanelWidthTestHook: hooked FrameLayout.onLayout for SeekBar stretch")
 
         // Hook PagedTileLayout.onMeasure：增加每行磁贴列数以匹配面板宽度
         val pagedTileLayoutClass = param.defaultClassLoader
@@ -211,7 +211,7 @@ class QsPanelWidthHook : BaseHookModule() {
             chain.proceed()
         }
 
-        log("QsPanelWidthTestHook: hooked PagedTileLayout.onMeasure for tile columns")
+        logger.info("QsPanelWidthTestHook: hooked PagedTileLayout.onMeasure for tile columns")
 
         // Hook QQSSideLabelTileLayout.onMeasure：收起状态（QQS）的磁贴列数
         // 必须在 TileLayout.onMeasure 之前触发，因为 QQSSideLabelTileLayout.onMeasure
@@ -246,7 +246,7 @@ class QsPanelWidthHook : BaseHookModule() {
             chain.proceed()
         }
 
-        log("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
+        logger.info("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
 
         // ── Bug fix: 恢复 QS 面板拓宽区域的触控 ──
         // QsPanelWidthHook 缩窄 QSContainerImpl 并用 translationX 居中后，
@@ -286,9 +286,9 @@ class QsPanelWidthHook : BaseHookModule() {
                 }
                 chain.proceed()
             }
-            log("TouchHandler.onInterceptTouchEvent passthrough installed")
+            logger.info("TouchHandler.onInterceptTouchEvent passthrough installed")
         } catch (t: Throwable) {
-            log("Failed to hook TouchHandler.onInterceptTouchEvent: ${t.message}")
+            logger.warn("Failed to hook TouchHandler.onInterceptTouchEvent: ${t.message}")
         }
     }
 }

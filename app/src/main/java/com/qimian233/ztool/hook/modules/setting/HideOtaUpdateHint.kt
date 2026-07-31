@@ -42,9 +42,9 @@ class HideOtaUpdateHint : BaseHookModule() {
                 else chain.proceed()
             }
 
-            log("Hooked Settings OTA new-version flag reads")
+            logger.info("Hooked Settings OTA new-version flag reads")
         } catch (t: Throwable) {
-            logError("Failed to hook Settings OTA new-version flag reads", t)
+            logger.error("Failed to hook Settings OTA new-version flag reads", t)
         }
     }
 

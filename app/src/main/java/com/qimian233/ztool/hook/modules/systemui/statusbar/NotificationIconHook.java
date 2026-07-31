@@ -47,7 +47,7 @@ public class NotificationIconHook extends BaseHookModule {
     }
 
     private void hookSystemUIIconLimit(ClassLoader classLoader) {
-        log("开始 Hook SystemUI 通知图标限制，设置最大图标数: " + NEW_MAX_ICONS);
+        logger.info("开始 Hook SystemUI 通知图标限制，设置最大图标数: " + NEW_MAX_ICONS);
 
         try {
             // Hook 1: 修改资源获取的最大图标数量
@@ -59,9 +59,9 @@ public class NotificationIconHook extends BaseHookModule {
             // Hook 3: 修改 NotificationIconsViewData 构造函数，应用数量限制
             hookViewDataConstructor(classLoader);
 
-            log("SystemUI 通知图标限制Hook设置完成");
+            logger.info("SystemUI 通知图标限制Hook设置完成");
         } catch (Throwable e) {
-            logError("SystemUI Hook过程中发生错误", e);
+            logger.error("SystemUI Hook过程中发生错误", e);
         }
     }
 
@@ -88,16 +88,16 @@ public class NotificationIconHook extends BaseHookModule {
                     Field myField = chain.getThisObject().getClass().getDeclaredField("maxIcons");
                     myField.setAccessible(true);
                     myField.setInt(chain.getThisObject(), NEW_MAX_ICONS);
-                    log("成功修改 ViewModel maxIcons 为 " + NEW_MAX_ICONS);
+                    logger.debug("成功修改 ViewModel maxIcons 为 " + NEW_MAX_ICONS);
                 } catch (Exception e) {
-                    logError("修改 ViewModel maxIcons 字段失败", e);
+                    logger.error("修改 ViewModel maxIcons 字段失败", e);
                 }
                 return null;
             });
 
-            log("ViewModel构造函数Hook设置成功");
+            logger.info("ViewModel构造函数Hook设置成功");
         } catch (Throwable e) {
-            log("找不到 ViewModel 类，可能系统版本不兼容: " + e.getMessage());
+            logger.warn("找不到 ViewModel 类，可能系统版本不兼容: " + e.getMessage());
         }
     }
 
@@ -125,18 +125,18 @@ public class NotificationIconHook extends BaseHookModule {
 
                     // 只有当当前限制不等于我们设置的有效限制时才修改
                     if (currentLimit != effectiveLimit) {
-                        log("修改图标限制 " + currentLimit + " -> " + effectiveLimit + " (图标总数: " + listSize + ")");
+                        logger.debug("修改图标限制 " + currentLimit + " -> " + effectiveLimit + " (图标总数: " + listSize + ")");
                         return chain.proceed(new Object[]{iconList, effectiveLimit, chain.getArg(2)});
                     }
                 } catch (Exception e) {
-                    logError("ViewData Hook过程中发生错误", e);
+                    logger.error("ViewData Hook过程中发生错误", e);
                 }
                 return chain.proceed();
             });
 
-            log("ViewData构造函数Hook设置成功");
+            logger.info("ViewData构造函数Hook设置成功");
         } catch (Throwable e) {
-            log("找不到 ViewData 类，可能系统版本不兼容: " + e.getMessage());
+            logger.warn("找不到 ViewData 类，可能系统版本不兼容: " + e.getMessage());
         }
     }
 

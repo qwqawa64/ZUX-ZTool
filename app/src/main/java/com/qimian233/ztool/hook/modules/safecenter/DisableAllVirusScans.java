@@ -42,32 +42,32 @@ public class DisableAllVirusScans extends BaseHookModule {
 
     private void hookGetManager(ClassLoader classLoader) {
         try {
-            log("Hooking safecenter to block manager initialization.");
+            logger.info("Hooking safecenter to block manager initialization.");
             Class<?> managerCreatorFClass = classLoader.loadClass("tmsdk.fg.creator.ManagerCreatorF");
             Method getManagerMethod = managerCreatorFClass.getDeclaredMethod("getManager", Class.class);
             hookWithId(getManagerMethod, "get_manager", chain -> null);
-            log("Successfully hooked safecenter!");
+            logger.info("Successfully hooked safecenter!");
         } catch (Exception e) {
-            logError("Failed to hook scan manager! ", e);
+            logger.error("Failed to hook scan manager! ", e);
         }
     }
 
     private void hookDbManager(ClassLoader classLoader) {
         try {
-            log("Set getVirusAppsCount return value to int 0");
+            logger.info("Set getVirusAppsCount return value to int 0");
             Class<?> antiVirusDBManagerClass = classLoader.loadClass(
                     "com.lenovo.safecenter.antivirus.db.AntiVirusDBManager");
             Method getVirusAppsCountMethod = antiVirusDBManagerClass.getDeclaredMethod("getVirusAppsCount");
             hookWithId(getVirusAppsCountMethod, "get_virus_apps_count", chain -> 0);
-            log("getVirusAppsCount is set to 0.");
+            logger.info("getVirusAppsCount is set to 0.");
 
-            log("Blocking AntiVirusDBHelper initialization.");
+            logger.info("Blocking AntiVirusDBHelper initialization.");
             Class<?> antiVirusDBHelperClass = classLoader.loadClass(
                     "com.lenovo.safecenter.antivirus.db.AntiVirusDBHelper");
             Constructor<?> ctor = antiVirusDBHelperClass.getDeclaredConstructor(Context.class);
             hookWithId(ctor, "ctor", chain -> null);
         } catch (Exception e) {
-            logError("Failed to hook DB manager! ", e);
+            logger.error("Failed to hook DB manager! ", e);
         }
     }
 
@@ -78,9 +78,9 @@ public class DisableAllVirusScans extends BaseHookModule {
             Method onCreateMethod = notiSMSActivityClass.getDeclaredMethod("onCreate",
                     android.os.Bundle.class);
             hookWithId(onCreateMethod, "on_create", chain -> null);
-            log("Virus popup blocked successfully.");
+            logger.info("Virus popup blocked successfully.");
         } catch (Exception e) {
-            logError("Failed to disable virus popup! ", e);
+            logger.error("Failed to disable virus popup! ", e);
         }
     }
 
@@ -92,12 +92,12 @@ public class DisableAllVirusScans extends BaseHookModule {
             Method dealVirusMethod = installJudgeServiceClass.getDeclaredMethod("dealVirus",
                     resultEntityClass, boolean.class);
             hookWithId(dealVirusMethod, "deal_virus", chain -> {
-                log("Blocked installed-virus handler from switching SafeCenter icon");
+                logger.debug("Blocked installed-virus handler from switching SafeCenter icon");
                 return null;
             });
-            log("InstallJudgeService virus icon handler blocked.");
+            logger.info("InstallJudgeService virus icon handler blocked.");
         } catch (Throwable t) {
-            logError("Failed to hook InstallJudgeService virus icon handler! ", t);
+            logger.error("Failed to hook InstallJudgeService virus icon handler! ", t);
         }
     }
 
@@ -110,13 +110,13 @@ public class DisableAllVirusScans extends BaseHookModule {
             hookWithId(setNumIconMethod, "set_num_icon", chain -> {
                 int originalCount = (int) chain.getArg(0);
                 if (originalCount != 0) {
-                    log("Forced HealthScanner icon warning count " + originalCount + " to 0");
+                    logger.debug("Forced HealthScanner icon warning count " + originalCount + " to 0");
                 }
                 return chain.proceed(new Object[]{0});
             });
-            log("HealthScanner icon count changes blocked.");
+            logger.info("HealthScanner icon count changes blocked.");
         } catch (Throwable t) {
-            logError("Failed to hook HealthScanner icon count! ", t);
+            logger.error("Failed to hook HealthScanner icon count! ", t);
         }
     }
 
@@ -134,15 +134,15 @@ public class DisableAllVirusScans extends BaseHookModule {
                 if (isSafeCenterIconSetting(key)) {
                     int value = (int) chain.getArg(2);
                     if (value != 0) {
-                        log("Blocked SafeCenter dynamic icon setting " + key + "=" + value);
+                        logger.debug("Blocked SafeCenter dynamic icon setting " + key + "=" + value);
                     }
                     return chain.proceed(new Object[]{chain.getArg(0), key, 0});
                 }
                 return chain.proceed();
             });
-            log("SafeCenter dynamic icon Settings.System.putInt writes blocked.");
+            logger.info("SafeCenter dynamic icon Settings.System.putInt writes blocked.");
         } catch (Throwable t) {
-            logError("Failed to hook dynamic icon Settings.System.putInt! ", t);
+            logger.error("Failed to hook dynamic icon Settings.System.putInt! ", t);
         }
     }
 
@@ -157,9 +157,9 @@ public class DisableAllVirusScans extends BaseHookModule {
                 }
                 return chain.proceed();
             });
-            log("SafeCenter dynamic icon Settings.System.getInt reads forced to normal.");
+            logger.info("SafeCenter dynamic icon Settings.System.getInt reads forced to normal.");
         } catch (Throwable t) {
-            logError("Failed to hook dynamic icon Settings.System.getInt! ", t);
+            logger.error("Failed to hook dynamic icon Settings.System.getInt! ", t);
         }
     }
 
@@ -172,9 +172,9 @@ public class DisableAllVirusScans extends BaseHookModule {
             hookWithId(getBitmapDrawableMethod, "get_bitmap_drawable", chain -> {
                 return chain.proceed(new Object[]{chain.getArg(0), 0});
             });
-            log("ActiveView dynamic icon rendering forced to normal.");
+            logger.info("ActiveView dynamic icon rendering forced to normal.");
         } catch (Throwable t) {
-            logError("Failed to hook ActiveView dynamic icon rendering! ", t);
+            logger.error("Failed to hook ActiveView dynamic icon rendering! ", t);
         }
     }
 
@@ -190,12 +190,12 @@ public class DisableAllVirusScans extends BaseHookModule {
                     "LocalOverallScanVirus", Context.class);
             hookWithId(localOverallScanVirusMethod, "local_overall_scan_virus", chain -> {
                 // 直接返回null，阻止自动扫描执行
-                log("Auto virus scan blocked at entry point");
+                logger.debug("Auto virus scan blocked at entry point");
                 return null;
             });
-            log("Successfully hooked SafeCenter auto scan entry");
+            logger.info("Successfully hooked SafeCenter auto scan entry");
         } catch (Throwable t) {
-            logError("Failed to hook SafeCenter auto scan", t);
+            logger.error("Failed to hook SafeCenter auto scan", t);
         }
     }
 

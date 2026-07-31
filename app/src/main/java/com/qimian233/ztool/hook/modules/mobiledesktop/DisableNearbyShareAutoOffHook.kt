@@ -71,7 +71,7 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
                     }
                 }
             } catch (_: Throwable) {
-                log("DEXKit discovery failed, falling back to hardcoded names")
+                logger.warn("DEXKit discovery failed, falling back to hardcoded names")
             }
         }
 
@@ -92,7 +92,7 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
             }
 
             if (targetMethod == null) {
-                logError(
+                logger.error(
                     "Could not find startCountDown method ($finalMethodName) in $finalClassName",
                     null
                 )
@@ -100,14 +100,14 @@ class DisableNearbyShareAutoOffHook : BaseHookModule() {
             }
 
             hookWithId(targetMethod, "target") { 
-                log("startCountDown() intercepted — auto-off timer prevented.")
+                logger.debug("startCountDown() intercepted — auto-off timer prevented.")
                 null
             }
-            log("Installed hook for FileUnionSwitchManager.$finalMethodName()")
+            logger.info("Installed hook for FileUnionSwitchManager.$finalMethodName()")
         } catch (e: ClassNotFoundException) {
-            logError("$finalClassName (FileUnionSwitchManager) not found", e)
+            logger.error("$finalClassName (FileUnionSwitchManager) not found", e)
         } catch (t: Throwable) {
-            logError("Failed to hook FileUnionSwitchManager.startCountDown()", t)
+            logger.error("Failed to hook FileUnionSwitchManager.startCountDown()", t)
         }
     }
 }

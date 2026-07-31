@@ -51,7 +51,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                 return result;
             });
         } catch (Throwable t) {
-            logError("Failed to hook shade root view factory", t);
+            logger.error("Failed to hook shade root view factory", t);
         }
     }
 
@@ -67,7 +67,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                 return chain.proceed();
             });
         } catch (Throwable t) {
-            if (DEBUG) logError("Failed to hook setNotificationPanelBlurBehind()", t);
+            logger.error("Failed to hook setNotificationPanelBlurBehind()", t);
         }
 
         try {
@@ -76,7 +76,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                     .getDeclaredMethod("setNotificationPanelBlurBehind", int.class);
             hookWithId(setBlurIntMethod, "set_blur_int", chain -> chain.proceed(new Object[]{scaleBlur((int) chain.getArg(0))}));
         } catch (Throwable t) {
-            if (DEBUG) logError("Failed to hook setNotificationPanelBlurBehind(int)", t);
+            logger.error("Failed to hook setNotificationPanelBlurBehind(int)", t);
         }
 
         try {
@@ -95,7 +95,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                 return null;
             });
         } catch (Throwable t) {
-            logError("Failed to hook NotificationShadeDepthController.computeBlurAndZoomOut", t);
+            logger.error("Failed to hook NotificationShadeDepthController.computeBlurAndZoomOut", t);
         }
 
         try {
@@ -111,7 +111,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                 return chain.proceed(new Object[]{newBlur, newAnimate});
             });
         } catch (Throwable t) {
-            logError("Failed to hook NotificationShadeDepthController.animateBlur", t);
+            logger.error("Failed to hook NotificationShadeDepthController.animateBlur", t);
         }
     }
 
@@ -128,7 +128,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                 return result;
             });
         } catch (Throwable t) {
-            logError("Failed to hook QuickSettingsControllerImpl.updateExpansion", t);
+            logger.error("Failed to hook QuickSettingsControllerImpl.updateExpansion", t);
         }
     }
 
@@ -141,7 +141,7 @@ public class NotificationCenterTransparency extends BaseHookModule {
                 ((View) backdrop).setRenderEffect(null);
             }
         } catch (Throwable t) {
-            if (DEBUG) logError("Failed to clear QS backdrop render effect", t);
+            logger.error("Failed to clear QS backdrop render effect", t);
         }
     }
 

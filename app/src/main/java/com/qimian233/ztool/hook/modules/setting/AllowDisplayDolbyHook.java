@@ -57,7 +57,7 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                         .loadClass("com.android.settings.dolby.DolbyAtmosPreferenceFragment")
                         .getDeclaredMethod("getheadsetStatus");
                 hookWithId(m, "hook_59", chain -> 1);
-                log("Successfully hooked Android 13 DolbyAtmosPreferenceFragment.getheadsetStatus");
+                logger.info("Successfully hooked Android 13 DolbyAtmosPreferenceFragment.getheadsetStatus");
             }
             // Android 14 (SDK 34)
             else if (android.os.Build.VERSION.SDK_INT == 34) {
@@ -82,14 +82,14 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                             Method setSummary = preference.getClass()
                                     .getDeclaredMethod("setSummary", CharSequence.class);
                             setSummary.invoke(preference, (Object) null);
-                            log("Successfully cleared Dolby switch preference summary");
+                            logger.debug("Successfully cleared Dolby switch preference summary");
                         }
                     } catch (Throwable t) {
-                        logError("Failed to clear Dolby switch preference summary", t);
+                        logger.error("Failed to clear Dolby switch preference summary", t);
                     }
                     return result;
                 });
-                log("Successfully hooked Android 14 DolbyAtmosFragment methods");
+                logger.info("Successfully hooked Android 14 DolbyAtmosFragment methods");
             }
             // Android 15+ (SDK 35+)
             else if (android.os.Build.VERSION.SDK_INT >= 35) {
@@ -111,17 +111,17 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                             Method setSummary = findMethod(arg0.getClass(),
                                     "setSummary", CharSequence.class);
                             setSummary.invoke(arg0, (Object) null);
-                            log("Successfully cleared preference summary in updateState");
+                            logger.debug("Successfully cleared preference summary in updateState");
                         }
                     } catch (Throwable t) {
-                        logError("Failed to clear preference summary in updateState", t);
+                        logger.error("Failed to clear preference summary in updateState", t);
                     }
                     return chain.proceed();
                 });
-                log("Successfully hooked Android 15 DolbyAtmosUtils and DolbySwitchPreferenceController");
+                logger.info("Successfully hooked Android 15 DolbyAtmosUtils and DolbySwitchPreferenceController");
             }
         } catch (Throwable t) {
-            logError("Failed to hook Settings package", t);
+            logger.error("Failed to hook Settings package", t);
         }
     }
 
@@ -136,13 +136,13 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                         .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosTile")
                         .getDeclaredMethod("isHeadSetConnect");
                 hookWithId(m, "hook_138", chain -> Boolean.TRUE);
-                log("Successfully hooked QDolbyAtmosTile.isHeadSetConnect (SDK <= 34)");
+                logger.info("Successfully hooked QDolbyAtmosTile.isHeadSetConnect (SDK <= 34)");
             } else {
                 Method m = classLoader
                         .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosTile")
                         .getDeclaredMethod("isHeadSetConnect$2");
                 hookWithId(m, "hook_144", chain -> Boolean.TRUE);
-                log("Successfully hooked QDolbyAtmosTile.isHeadSetConnect$2 (SDK > 34)");
+                logger.info("Successfully hooked QDolbyAtmosTile.isHeadSetConnect$2 (SDK > 34)");
             }
 
             // Hook 详情视图中的耳机检测
@@ -150,10 +150,10 @@ public class AllowDisplayDolbyHook extends BaseHookModule {
                     .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosDetailView")
                     .getDeclaredMethod("isHeadSetConnect");
             hookWithId(detailMethod, "detail", chain -> Boolean.TRUE);
-            log("Successfully hooked QDolbyAtmosDetailView.isHeadSetConnect");
+            logger.info("Successfully hooked QDolbyAtmosDetailView.isHeadSetConnect");
 
         } catch (Throwable t) {
-            logError("Failed to hook SystemUI package", t);
+            logger.error("Failed to hook SystemUI package", t);
         }
     }
 

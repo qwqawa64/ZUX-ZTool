@@ -40,16 +40,16 @@ public class DisableOtaCheck extends BaseHookModule {
             return;
         }
 
-        log("开始挂钩 com.lenovo.ota - 开启本地安装服务");
+        logger.info("开始挂钩 com.lenovo.ota - 开启本地安装服务");
 
         try {
             hookOnCreateOptionsMenu(classLoader);
             hookOnPrepareOptionsMenu(classLoader);
             hookClickCountCallBack(classLoader);
 
-            log("所有OTA检查禁用钩子设置完成");
+            logger.info("所有OTA检查禁用钩子设置完成");
         } catch (Exception e) {
-            logError("初始化OTA检查禁用模块时出错", e);
+            logger.error("初始化OTA检查禁用模块时出错", e);
         }
     }
 
@@ -74,15 +74,15 @@ public class DisableOtaCheck extends BaseHookModule {
                     MenuItem localInstallItem = menu.findItem(menuLocalInstallId);
                     if (localInstallItem != null) {
                         localInstallItem.setVisible(true);
-                        log("在 onCreateOptionsMenu 中启用本地安装菜单");
+                        logger.debug("在 onCreateOptionsMenu 中启用本地安装菜单");
                     }
                 } catch (Exception e) {
-                    logError("onCreateOptionsMenu 钩子执行错误", e);
+                    logger.error("onCreateOptionsMenu 钩子执行错误", e);
                 }
                 return result;
             });
         } catch (Exception e) {
-            logError("设置 onCreateOptionsMenu 钩子失败", e);
+            logger.error("设置 onCreateOptionsMenu 钩子失败", e);
         }
     }
 
@@ -108,7 +108,7 @@ public class DisableOtaCheck extends BaseHookModule {
                     if (localInstallItem != null) {
                         // 强制设置为可见，绕过原有的 mCount >= 6 检查
                         localInstallItem.setVisible(true);
-                        log("在 onPrepareOptionsMenu 中强制显示本地安装菜单");
+                        logger.debug("在 onPrepareOptionsMenu 中强制显示本地安装菜单");
                     }
 
                     // 同时设置计数器为6，确保其他相关逻辑正常工作
@@ -117,12 +117,12 @@ public class DisableOtaCheck extends BaseHookModule {
                     mCountField.setInt(chain.getThisObject(), 6);
 
                 } catch (Exception e) {
-                    logError("onPrepareOptionsMenu 钩子执行错误", e);
+                    logger.error("onPrepareOptionsMenu 钩子执行错误", e);
                 }
                 return result;
             });
         } catch (Exception e) {
-            logError("设置 onPrepareOptionsMenu 钩子失败", e);
+            logger.error("设置 onPrepareOptionsMenu 钩子失败", e);
         }
     }
 
@@ -139,11 +139,11 @@ public class DisableOtaCheck extends BaseHookModule {
             hookWithId(clickCountCallBack, "click_count_call_back", chain -> {
                 // 在调用前直接设置计数器为6
                 mCountField.setInt(chain.getThisObject(), 6);
-                log("在 clickCountCallBack 前强制设置计数器为6");
+                logger.debug("在 clickCountCallBack 前强制设置计数器为6");
                 return chain.proceed();
             });
         } catch (Exception e) {
-            logError("设置 clickCountCallBack 钩子失败", e);
+            logger.error("设置 clickCountCallBack 钩子失败", e);
         }
     }
 }

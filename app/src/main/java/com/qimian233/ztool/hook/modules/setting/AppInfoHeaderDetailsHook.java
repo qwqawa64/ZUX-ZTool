@@ -66,7 +66,7 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
             appEntryClass = classLoader.loadClass(APP_ENTRY_CLASS);
         } catch (ClassNotFoundException ignored) {}
         if (appEntryClass == null) {
-            log("AppEntry class not found, skip app info header hook.");
+            logger.warn("AppEntry class not found, skip app info header hook.");
             return;
         }
 
@@ -91,7 +91,7 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
 
                 TextView summaryView = findSummaryView(context, headerPreference);
                 if (summaryView == null) {
-                    log("entity_header_summary not found.");
+                    logger.warn("entity_header_summary not found.");
                     return result;
                 }
 
@@ -110,11 +110,11 @@ public class AppInfoHeaderDetailsHook extends BaseHookModule {
                     return true;
                 });
             } catch (Throwable t) {
-                logError("Failed to update app info header summary", t);
+                logger.error("Failed to update app info header summary", t);
             }
             return result;
         });
-        log("Hooked AppHeaderViewPreferenceController#setAppLabelAndIcon.");
+        logger.info("Hooked AppHeaderViewPreferenceController#setAppLabelAndIcon.");
     }
 
     private TextView findSummaryView(Context context, Object headerPreference) {

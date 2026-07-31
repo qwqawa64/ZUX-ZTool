@@ -31,7 +31,7 @@ public class EnableAutorunByDefault extends BaseHookModule {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
         if ("com.zui.safecenter".equals(packageName) || "com.lenovo.safecenter".equals(packageName)) {
-            log("Start hooking safecenter");
+            logger.info("Start hooking safecenter");
             try {
                 Class<?> cls = classLoader.loadClass("com.lenovo.performance.autorun.beans.AutoRunDbItem");
                 Field fld = cls.getDeclaredField("mAttrs");
@@ -47,9 +47,9 @@ public class EnableAutorunByDefault extends BaseHookModule {
                         return null;
                     });
                 }
-                log("Hooked safecenter [OK]");
+                logger.info("Hooked safecenter [OK]");
             } catch (Exception e) {
-                logError("Failed hooking safecenter", e);
+                logger.error("Failed hooking safecenter", e);
             }
         }
     }

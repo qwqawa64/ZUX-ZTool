@@ -41,18 +41,18 @@ public class OneVisionCompletion extends BaseHookModule {
                     .loadClass("com.lenovo.settings.onevision.horizontal.SettingsEmbeddingAppManager")
                     .getDeclaredMethod("getZuiLandScapeShouldBeHideAppList");
             hookWithId(m, "hook_44", chain -> new String[0]);
-            log("Successfully hooked SettingsEmbeddingAppManager");
+            logger.info("Successfully hooked SettingsEmbeddingAppManager");
         } catch (Throwable t) {
-            logError("Failed to hook SettingsEmbeddingAppManager", t);
+            logger.error("Failed to hook SettingsEmbeddingAppManager", t);
         }
     }
 
     private void hookLenovoSettings() {
         try {
             // 这里可以添加更多Lenovo设置的Hook
-            log("Lenovo settings hook placeholder");
+            logger.debug("Lenovo settings hook placeholder");
         } catch (Throwable t) {
-            logError("Failed to hook Lenovo settings", t);
+            logger.error("Failed to hook Lenovo settings", t);
         }
     }
 }

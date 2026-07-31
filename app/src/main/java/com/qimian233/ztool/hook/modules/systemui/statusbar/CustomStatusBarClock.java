@@ -69,11 +69,11 @@ public class CustomStatusBarClock extends BaseHookModule {
                     CharSequence styledText = applyAllStyles(customTime);
 
                     // 返回新的值
-                    log("Successfully customized status bar clock: " + customTime);
+                    logger.debug("Successfully customized status bar clock: " + customTime);
                     return styledText;
 
                 } catch (Exception e) {
-                    logError("Failed to customize getSmallTime", e);
+                    logger.error("Failed to customize getSmallTime", e);
                     return chain.proceed();
                 }
             });
@@ -101,10 +101,10 @@ public class CustomStatusBarClock extends BaseHookModule {
                     // 应用直接样式（备用方案）
                     applyDirectStyles(clockInstance);
 
-                    log("Updated clock content description: " + customTime);
+                    logger.debug("Updated clock content description: " + customTime);
 
                 } catch (Exception e) {
-                    logError("Failed to update clock content description", e);
+                    logger.error("Failed to update clock content description", e);
                 }
                 return result;
             });
@@ -121,15 +121,15 @@ public class CustomStatusBarClock extends BaseHookModule {
                     Object clockInstance = chain.getThisObject();
                     applyDirectStyles(clockInstance);
                 } catch (Exception e) {
-                    logError("Failed to apply styles in onFinishInflate", e);
+                    logger.error("Failed to apply styles in onFinishInflate", e);
                 }
                 return result;
             });
 
-            log("Successfully hooked SystemUI Clock methods");
+            logger.info("Successfully hooked SystemUI Clock methods");
 
         } catch (Throwable t) {
-            logError("Failed to hook SystemUI Clock class", t);
+            logger.error("Failed to hook SystemUI Clock class", t);
         }
     }
 
@@ -142,7 +142,7 @@ public class CustomStatusBarClock extends BaseHookModule {
             String format = getCustomClock("Custom_StatusBarClockFormat");
             return CustomDateFormatter.format(format, new Date());
         } catch (Exception e) {
-            logError("Error in custom time formatting", e);
+            logger.error("Error in custom time formatting", e);
             // 出错时返回默认时间格式
             return CustomDateFormatter.format("HH:mm", new Date());
         }
@@ -189,7 +189,7 @@ public class CustomStatusBarClock extends BaseHookModule {
             styledText.setSpan(new AbsoluteSizeSpan(textSizePx),
                     0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } catch (Exception e) {
-            logError("Failed to apply text size", e);
+            logger.error("Failed to apply text size", e);
         }
     }
 
@@ -205,7 +205,7 @@ public class CustomStatusBarClock extends BaseHookModule {
                         0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } catch (Exception e) {
-            logError("Failed to apply letter spacing", e);
+            logger.error("Failed to apply letter spacing", e);
         }
     }
 
@@ -218,7 +218,7 @@ public class CustomStatusBarClock extends BaseHookModule {
             styledText.setSpan(new ForegroundColorSpan(textColor),
                     0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } catch (Exception e) {
-            logError("Failed to apply text color", e);
+            logger.error("Failed to apply text color", e);
         }
     }
 
@@ -233,7 +233,7 @@ public class CustomStatusBarClock extends BaseHookModule {
                         0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } catch (Exception e) {
-            logError("Failed to apply text style", e);
+            logger.error("Failed to apply text style", e);
         }
     }
 
@@ -273,7 +273,7 @@ public class CustomStatusBarClock extends BaseHookModule {
             }
 
         } catch (Exception e) {
-            logError("Failed to apply direct styles", e);
+            logger.error("Failed to apply direct styles", e);
         }
     }
 
@@ -295,7 +295,7 @@ public class CustomStatusBarClock extends BaseHookModule {
                     .invoke(clockInstance, paddingLeft, 0, paddingRight, 0);
 
         } catch (Exception e) {
-            logError("Failed to apply alternative letter spacing", e);
+            logger.error("Failed to apply alternative letter spacing", e);
         }
     }
 

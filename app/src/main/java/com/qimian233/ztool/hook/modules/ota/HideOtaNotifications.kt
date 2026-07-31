@@ -18,7 +18,7 @@ class HideOtaNotifications: BaseHookModule() {
 
     fun handleNotificationCreate(param: PackageLoadedParam) {
         try {
-            log("Hooking OTA notification create method")
+            logger.info("Hooking OTA notification create method")
             val cl: ClassLoader = param.defaultClassLoader
             val targetClass: Class<*> = cl.loadClass("com.lenovo.row.ota.core.d.notification.NotificationCenter")
             val targetMethod: Method = findMethod(targetClass, "showNewVersionNotification")
@@ -26,7 +26,7 @@ class HideOtaNotifications: BaseHookModule() {
                 null
             }
         } catch (th: Throwable) {
-            logError("Failed to hook OTA update notification creation method!", th)
+            logger.error("Failed to hook OTA update notification creation method!", th)
         }
     }
 
@@ -42,16 +42,16 @@ class HideOtaNotifications: BaseHookModule() {
                     val argList = chain.args.toMutableList()
                     if (argList[1] != 0) {
                         argList[1] = 0
-                        log("Modified red dot count to 0!")
+                        logger.debug("Modified red dot count to 0!")
                     }
                     chain.proceed(argList.toTypedArray())
                 } catch (th: Throwable) {
-                    logError("Failed to set red dot count to 0!", th)
+                    logger.error("Failed to set red dot count to 0!", th)
                     chain.proceed()
                 }
             }
         } catch (th: Throwable) {
-            logError("Failed to block reddot creation process!", th)
+            logger.error("Failed to block reddot creation process!", th)
         }
     }
 
@@ -73,14 +73,14 @@ class HideOtaNotifications: BaseHookModule() {
                 if (key == "lenovo_ota_new_version_found") {
                     val value = argList[2]
                     if (value != null && (value as Int) == 1) {
-                        log("Set putSecureSetting lenovo_ota_new_version_found from 1 to 0")
+                        logger.debug("Set putSecureSetting lenovo_ota_new_version_found from 1 to 0")
                         argList[2] = 0
                     }
                 }
                 chain.proceed(argList.toTypedArray())
             }
         } catch (th: Throwable) {
-            logError("Failed to hook SystemSettings.putSecureSetting!", th)
+            logger.error("Failed to hook SystemSettings.putSecureSetting!", th)
         }
     }
 }

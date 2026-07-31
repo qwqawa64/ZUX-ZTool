@@ -59,15 +59,15 @@ public class GuestModeController extends BaseHookModule {
 
                 // 如果用户切换器被禁用，则不允许添加访客
                 if (userSwitcherEnabled == 0) {
-                    log("阻止自动添加访客用户 - 用户切换器已禁用");
+                    logger.debug("阻止自动添加访客用户 - 用户切换器已禁用");
                     return false;
                 }
                 return chain.proceed();
             });
 
-            log("成功Hook访客用户交互器");
+            logger.info("成功Hook访客用户交互器");
         } catch (Throwable t) {
-            logError("Hook访客用户交互器失败", t);
+            logger.error("Hook访客用户交互器失败", t);
         }
     }
 }

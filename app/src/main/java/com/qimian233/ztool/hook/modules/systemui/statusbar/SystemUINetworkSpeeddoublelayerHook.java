@@ -57,7 +57,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
 
     private void hookSystemUINetworkSpeed(ClassLoader classLoader) {
         try {
-            log("Starting to hook SystemUI NetworkSpeedView");
+            logger.info("Starting to hook SystemUI NetworkSpeedView");
 
             // Hook NetworkSpeedView 构造方法
             Constructor<?> ctor = classLoader.loadClass(NETWORK_SPEED_VIEW_CLASS)
@@ -73,10 +73,10 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
             // Hook Handler 的 handleMessage 方法
             hookNetworkSpeedHandler(classLoader);
 
-            log("Successfully hooked NetworkSpeedView");
+            logger.info("Successfully hooked NetworkSpeedView");
 
         } catch (Throwable t) {
-            logError("Error hooking NetworkSpeedView", t);
+            logger.error("Error hooking NetworkSpeedView", t);
         }
     }
 
@@ -104,16 +104,14 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                 setTextSizeMethod.invoke(
                         networkSpeedView, android.util.TypedValue.COMPLEX_UNIT_PX, newTextSize);
 
-                if (DEBUG) {
-                    log("Adjusted text size from " + currentTextSize + " to " + newTextSize);
-                }
+                logger.debug("Adjusted text size from " + currentTextSize + " to " + newTextSize);
             } catch (Throwable sizeError) {
-                logError("Error adjusting text size", sizeError);
+                logger.error("Error adjusting text size", sizeError);
             }
 
-            log("Initialized NetworkSpeedView instance");
+            logger.debug("Initialized NetworkSpeedView instance");
         } catch (Throwable t) {
-            logError("Error initializing NetworkSpeedView", t);
+            logger.error("Error initializing NetworkSpeedView", t);
         }
     }
 
@@ -144,7 +142,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
             });
 
         } catch (Throwable t) {
-            logError("Error hooking NetworkSpeed handler", t);
+            logger.error("Error hooking NetworkSpeed handler", t);
         }
     }
 
@@ -187,10 +185,8 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     long upSpeed = (currentTxBytes - lastTxBytes) / timeDiff;
 
                     // 记录调试信息
-                    if (DEBUG) {
-                        log(String.format(Locale.US, "Successfully updated speed - downSpeed=%d, upSpeed=%d, timeDiff=%d",
-                                downSpeed, upSpeed, timeDiff));
-                    }
+                    logger.debug(String.format(Locale.US, "Successfully updated speed - downSpeed=%d, upSpeed=%d, timeDiff=%d",
+                            downSpeed, upSpeed, timeDiff));
 
                     // 发送显示消息
                     Object message = findMethod(handlerCls, "obtainMessage").invoke(handler);
@@ -215,7 +211,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     .invoke(handler, 10, refreshInterval);
 
         } catch (Throwable t) {
-            logError("Error in speed update", t);
+            logger.error("Error in speed update", t);
         }
     }
 
@@ -241,7 +237,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                             android.text.Html.fromHtml(displayText, Html.FROM_HTML_MODE_LEGACY));
 
         } catch (Throwable t) {
-            logError("Error in speed display", t);
+            logger.error("Error in speed display", t);
         }
     }
 
@@ -287,7 +283,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     .getDeclaredMethod("getTotalRxBytes").invoke(null);
             return result != null ? (Long) result : 0L;
         } catch (Throwable t) {
-            logError("Error getting Rx bytes", t);
+            logger.error("Error getting Rx bytes", t);
             return 0;
         }
     }
@@ -298,7 +294,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                     .getDeclaredMethod("getTotalTxBytes").invoke(null);
             return result != null ? (Long) result : 0L;
         } catch (Throwable t) {
-            logError("Error getting Tx bytes", t);
+            logger.error("Error getting Tx bytes", t);
             return 0;
         }
     }
@@ -322,7 +318,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                 for (ClassData cd : matches) {
                     String name = cd.getName();
                     if (name.startsWith(NETWORK_SPEED_VIEW_CLASS + "$")) {
-                        if (DEBUG) log("DEXKit found Handler inner class: " + name);
+                        logger.debug("DEXKit found Handler inner class: " + name);
                         return classLoader.loadClass(name);
                     }
                 }
@@ -335,7 +331,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
                 // 验证是 Handler 子类（有 handleMessage 方法）
                 try {
                     cls.getDeclaredMethod("handleMessage", android.os.Message.class);
-                    if (DEBUG) log("Found Handler inner class at index " + i);
+                    logger.debug("Found Handler inner class at index " + i);
                     return cls;
                 } catch (NoSuchMethodException ignored) {}
             } catch (ClassNotFoundException ignored) {}

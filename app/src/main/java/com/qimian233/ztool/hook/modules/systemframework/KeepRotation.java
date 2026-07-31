@@ -23,14 +23,14 @@ public class KeepRotation extends BaseHookModule {
     @Override
     public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
         ClassLoader classLoader = param.getClassLoader();
-        log("Hooking DisplayRotation.isRotationCts");
+        logger.info("Hooking DisplayRotation.isRotationCts");
         try{
             Method method = classLoader.loadClass("com.zui.server.wm.ZuiDisplayRotation")
                     .getDeclaredMethod("isRotationCts");
             hookWithId(method, "is_rotation_cts", chain -> Boolean.TRUE);
-            log("Hooked DisplayRotation.isRotationCts [OK]");
+            logger.info("Hooked DisplayRotation.isRotationCts [OK]");
         } catch (Exception e) {
-            logError("Error hooking DisplayRotation.isRotationCts", e);
+            logger.error("Error hooking DisplayRotation.isRotationCts", e);
         }
     }
 }

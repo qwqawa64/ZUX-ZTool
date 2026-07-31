@@ -75,7 +75,7 @@ public class CustomQsColor extends BaseHookModule {
                 return chain.proceed();
             });
         } catch (Exception e1) {
-            logError("Error!", e1);
+            logger.error("Error!", e1);
         }
     }
 

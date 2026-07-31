@@ -77,7 +77,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
                     }
                 }
             } catch (Exception e) {
-                logError("Cannot set normal tile round corner radius!", e);
+                logger.error("Cannot set normal tile round corner radius!", e);
             }
             return result;
         });
@@ -87,7 +87,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
 
         Method refreshSeekBarMethod = toggleSliderViewClass.getDeclaredMethod("refreshSeekBar", ProgressBar.class);
         hookWithId(refreshSeekBarMethod, "refresh_seek_bar", chain -> {
-            log("refreshSeekBar afterHookedMethod called!");
+            logger.debug("refreshSeekBar afterHookedMethod called!");
             Object result = chain.proceed();
             applySeekBarRoundCorner((ProgressBar) chain.getArg(0), "refreshSeekBar");
             return result;
@@ -96,7 +96,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
         Method updateBrightnessSliderMethod = toggleSliderViewClass.getDeclaredMethod("updateBrightnessSlider");
         hookWithId(updateBrightnessSliderMethod, "update_brightness_slider", chain -> {
             Object result = chain.proceed();
-            log("updateBrightnessSlider afterHookedMethod called!");
+            logger.debug("updateBrightnessSlider afterHookedMethod called!");
             Class<?> cl = chain.getThisObject().getClass();
             ProgressBar brightnessSlider = (ProgressBar) cl.getDeclaredField("mBrightnessSlider")
                     .get(chain.getThisObject());
@@ -110,7 +110,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
         Method updateVolumeSliderMethod = toggleSliderViewClass.getDeclaredMethod("updateVolumeSlider");
         hookWithId(updateVolumeSliderMethod, "update_volume_slider", chain -> {
             Object result = chain.proceed();
-            log("updateVolumeSlider afterHookedMethod called!");
+            logger.debug("updateVolumeSlider afterHookedMethod called!");
             Class<?> cl = chain.getThisObject().getClass();
             ProgressBar mediaSlider = (ProgressBar) cl.getDeclaredField("mMediaVolumeSlider")
                     .get(chain.getThisObject());
@@ -146,13 +146,13 @@ public class CustomQsRoundCorner extends BaseHookModule {
 
     private void applySeekBarRoundCorner(ProgressBar progressBar, String source) {
         if (progressBar == null) {
-            log("applySeekBarRoundCorner skipped from " + source + ": progressBar is null");
+            logger.debug("applySeekBarRoundCorner skipped from " + source + ": progressBar is null");
             return;
         }
 
         Drawable progressDrawable = progressBar.getProgressDrawable();
         if (!(progressDrawable instanceof LayerDrawable)) {
-            log("applySeekBarRoundCorner skipped from " + source + ": progress drawable is " + describeDrawable(progressDrawable));
+            logger.debug("applySeekBarRoundCorner skipped from " + source + ": progress drawable is " + describeDrawable(progressDrawable));
             return;
         }
 
@@ -162,7 +162,7 @@ public class CustomQsRoundCorner extends BaseHookModule {
             if (backgroundDrawable instanceof GradientDrawable) {
                 ((GradientDrawable) backgroundDrawable).setCornerRadius((float) headUpTileRoundCornerRadius);
             } else {
-                log("Background layer is " + describeDrawable(backgroundDrawable) + " from " + source);
+                logger.debug("Background layer is " + describeDrawable(backgroundDrawable) + " from " + source);
             }
 
             Drawable progressLayer = layerDrawable.findDrawableByLayerId(android.R.id.progress);
@@ -178,10 +178,10 @@ public class CustomQsRoundCorner extends BaseHookModule {
                     }
                 }
             } else {
-                log("Progress layer is " + describeDrawable(progressLayer) + " from " + source);
+                logger.debug("Progress layer is " + describeDrawable(progressLayer) + " from " + source);
             }
         } catch (Throwable t) {
-            logError("applySeekBarRoundCorner failed from " + source, t);
+            logger.error("applySeekBarRoundCorner failed from " + source, t);
         }
     }
 
