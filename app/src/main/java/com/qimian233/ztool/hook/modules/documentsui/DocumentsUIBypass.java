@@ -37,7 +37,7 @@ public class DocumentsUIBypass extends BaseHookModule {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
         if ("com.android.documentsui".equals(packageName)) {
-            if (DEBUG) log("开始加载 DocumentsUI 解除限制模块...");
+            logger.debug("开始加载 DocumentsUI 解除限制模块...");
             hookDocumentInfo(classLoader);
             hookPickFragment(classLoader);
         }
@@ -59,7 +59,7 @@ public class DocumentsUIBypass extends BaseHookModule {
                 // 强制返回 false，允许选择所有目录
                 return false;
             });
-            log("成功 Hook DocumentInfo.isBlockedFromTree");
+            logger.info("成功 Hook DocumentInfo.isBlockedFromTree");
 
             // 可选：尝试 Hook isBlocked 方法（部分机型或旧版本存在）
             try {
@@ -68,13 +68,13 @@ public class DocumentsUIBypass extends BaseHookModule {
                     chain.proceed();
                     return false;
                 });
-                log("成功 Hook DocumentInfo.isBlocked");
+                logger.info("成功 Hook DocumentInfo.isBlocked");
             } catch (Throwable t) {
                 // 方法可能不存在，忽略，不作为主要错误记录
             }
 
         } catch (Throwable t) {
-            logError("Hook DocumentInfo 失败", t);
+            logger.error("Hook DocumentInfo 失败", t);
         }
     }
 
@@ -119,10 +119,10 @@ public class DocumentsUIBypass extends BaseHookModule {
 
                 return result;
             });
-            log("成功 Hook PickFragment.updateView");
+            logger.info("成功 Hook PickFragment.updateView");
 
         } catch (Throwable t) {
-            logError("Hook PickFragment 失败", t);
+            logger.error("Hook PickFragment 失败", t);
         }
     }
 }
