@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
 import android.view.View
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
@@ -11,7 +11,7 @@ import java.lang.reflect.Method
  * BluePoint.isPackageNew(View) to always return false.
  */
 @SuppressLint("PrivateApi")
-class BluePointRemovalHook : BaseHookModule() {
+class BluePointRemovalHook : AppHookModule() {
 
     override fun getModuleName(): String = "launcher_hide_blue_point"
 

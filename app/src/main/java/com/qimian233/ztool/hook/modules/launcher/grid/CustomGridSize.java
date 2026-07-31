@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -12,7 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 @SuppressLint("PrivateApi")
-public class CustomGridSize extends BaseHookModule {
+public class CustomGridSize extends AppHookModule {
     private static int CUSTOM_COLUMNS = 8;
     private static int CUSTOM_ROWS = 6;
 

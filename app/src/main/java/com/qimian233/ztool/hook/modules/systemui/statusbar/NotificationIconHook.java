@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.statusbar;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
  * 支持Android 12+的SystemUI架构
  */
 @SuppressLint("PrivateApi")
-public class NotificationIconHook extends BaseHookModule {
+public class NotificationIconHook extends AppHookModule {
 
     private int NEW_MAX_ICONS;
     private static final String PREFS_NAME = "StatusBar_notifyNumSize";

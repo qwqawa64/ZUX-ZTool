@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher.misc;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -20,7 +20,7 @@ import java.util.List;
  * 不再依赖硬编码名称。
  * </p>
  */
-public class CleanGlobalSearch extends BaseHookModule {
+public class CleanGlobalSearch extends AppHookModule {
 
     private static final String TARGET_CLASS = "com.zui.launcher.GlobalSearchView";
 

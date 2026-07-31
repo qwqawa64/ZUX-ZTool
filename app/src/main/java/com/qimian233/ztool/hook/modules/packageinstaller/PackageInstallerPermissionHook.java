@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -13,7 +13,7 @@ import java.util.ArrayList;
  * 包安装器权限管理Hook模块
  * 强制将权限管理选项设置为"始终允许"，简化用户操作
  */
-public class PackageInstallerPermissionHook extends BaseHookModule {
+public class PackageInstallerPermissionHook extends AppHookModule {
 
     public PackageInstallerPermissionHook() {}
 

@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.packageinstaller;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
  * 拦截系统包安装器(com.android.packageinstaller)，修改默认的"安装完成后删除安装包"行为
  * 实现首次安装后默认不勾选删除安装包选项，避免误删安装文件
  */
-public class PackageInstallerNoDeleteModule extends BaseHookModule {
+public class PackageInstallerNoDeleteModule extends AppHookModule {
 
     public PackageInstallerNoDeleteModule() {}
 

@@ -7,7 +7,7 @@ import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.util.TypedValue;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -20,7 +20,7 @@ import java.util.Locale;
  * 功能：强制显示电池百分比，调整布局位置和字体大小
  */
 @SuppressLint({"PrivateApi", "DiscouragedApi"})
-public class SystemUIBatteryHook extends BaseHookModule {
+public class SystemUIBatteryHook extends AppHookModule {
 
     public SystemUIBatteryHook() {}
 

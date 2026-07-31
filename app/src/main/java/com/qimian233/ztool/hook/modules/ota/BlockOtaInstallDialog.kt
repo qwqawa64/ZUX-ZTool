@@ -1,7 +1,7 @@
 package com.qimian233.ztool.hook.modules.ota
 
 import android.app.Dialog
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
@@ -17,7 +17,7 @@ import io.github.libxposed.api.XposedModuleInterface
  * night auto-installation from being set up while still allowing intentional reboots
  * through the InstallConfirmDialog positive button.
  */
-class BlockOtaInstallDialog : BaseHookModule() {
+class BlockOtaInstallDialog : AppHookModule() {
 
     override fun getModuleName(): String = "block_ota_install_dialog"
 

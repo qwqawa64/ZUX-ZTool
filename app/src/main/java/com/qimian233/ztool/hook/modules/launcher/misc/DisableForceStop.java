@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -25,7 +25,7 @@ import java.util.List;
  * 智能适配Android 16+和Android 15-版本
  * 支持白名单机制，只保护指定应用
  */
-public class DisableForceStop extends BaseHookModule {
+public class DisableForceStop extends AppHookModule {
 
     // 白名单应用包名集合
     private String[] WHITE_LIST;

@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -12,7 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 @SuppressLint("PrivateApi")
-public class ForceLenovoAOD extends BaseHookModule {
+public class ForceLenovoAOD extends AppHookModule {
 
     private static final String TAG = "ForceLenovoAOD";
 

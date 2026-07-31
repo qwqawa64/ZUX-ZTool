@@ -1,7 +1,7 @@
 package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
@@ -19,7 +19,7 @@ import java.lang.reflect.Method
  *   (Calendar, SafeCenter, Lenovo Switch, etc.)
  */
 @SuppressLint("PrivateApi")
-class LauncherNoLabelMode : BaseHookModule() {
+class LauncherNoLabelMode : AppHookModule() {
 
     override fun getModuleName(): String {
         return "launcher_no_label_mode"

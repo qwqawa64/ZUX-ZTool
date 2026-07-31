@@ -6,7 +6,7 @@ import android.os.Environment;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class CustomizeAboutDeviceInfo extends BaseHookModule {
+public class CustomizeAboutDeviceInfo extends AppHookModule {
     private static final String TARGET_PACKAGE = "com.android.settings";
     private static final String PREF_KEY_MODEL_ENABLED = "about_device_info_model_enabled";
     private static final String PREF_KEY_CPU_ENABLED = "about_device_info_cpu_enabled";

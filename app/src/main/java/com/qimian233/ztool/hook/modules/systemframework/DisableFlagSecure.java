@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.systemframework;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  * 作用：移除安全窗口标志，允许对"安全内容"进行截图
  */
 @SuppressLint({"PrivateApi"})
-public class DisableFlagSecure extends BaseHookModule {
+public class DisableFlagSecure extends SystemHookModule {
 
     public DisableFlagSecure() {}
 
@@ -25,11 +25,6 @@ public class DisableFlagSecure extends BaseHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{"system"};
-    }
-
-    @Override
-    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-
     }
 
     @Override

@@ -4,14 +4,14 @@ import android.annotation.SuppressLint;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
 @SuppressLint("PrivateApi")
-public class NotificationCenterTransparency extends BaseHookModule {
+public class NotificationCenterTransparency extends AppHookModule {
     private static final String KEY_BLUR_PERCENT = "notification_center_blur_percent";
     private static final int DEFAULT_BLUR_PERCENT = 0;
     private volatile int blurPercent = DEFAULT_BLUR_PERCENT;

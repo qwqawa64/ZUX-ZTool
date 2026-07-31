@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.view.View;
 import android.widget.Button;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
  * 功能：允许用户在/Android/data等受限目录进行选择操作
  */
 @SuppressLint("PrivateApi")
-public class DocumentsUIBypass extends BaseHookModule {
+public class DocumentsUIBypass extends AppHookModule {
 
     public DocumentsUIBypass() {}
 

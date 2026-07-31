@@ -5,7 +5,7 @@ import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
 import android.widget.TextView;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
  * 系统UI网速显示样式Hook模块
  * 修改系统状态栏中的网速显示，使数字部分更大、单位部分更小
  */
-public class SystemUINetworkSpeedSizeHook extends BaseHookModule {
+public class SystemUINetworkSpeedSizeHook extends AppHookModule {
 
     public SystemUINetworkSpeedSizeHook() {}
 

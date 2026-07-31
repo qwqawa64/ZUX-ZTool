@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.misc;
 import android.annotation.SuppressLint;
 import android.os.Message;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -25,7 +25,7 @@ import java.util.List;
  * 确保跨版本兼容。
  * </p>
  */
-public class NoChargeAnimation extends BaseHookModule {
+public class NoChargeAnimation extends AppHookModule {
 
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     private static final String TARGET_CLASS =

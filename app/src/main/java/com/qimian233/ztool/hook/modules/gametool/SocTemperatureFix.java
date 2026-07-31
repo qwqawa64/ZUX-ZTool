@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
  * SOC温度修复Hook模块
  * 功能：拦截游戏服务的温度读取方法，从thermal_zone9文件获取真实温度值
  */
-public class SocTemperatureFix extends BaseHookModule {
+public class SocTemperatureFix extends AppHookModule {
 
     private static final String THERMAL_FILE_PATH = "/sys/class/thermal/thermal_zone9/temp";
 

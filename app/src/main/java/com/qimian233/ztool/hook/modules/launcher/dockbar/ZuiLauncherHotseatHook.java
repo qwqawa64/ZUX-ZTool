@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.launcher.dockbar;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -21,7 +21,7 @@ import java.util.List;
  * 解除ZUI Launcher的Hotseat最大数量限制，支持添加更多应用到底部快捷栏
  */
 @SuppressLint("PrivateApi")
-public class ZuiLauncherHotseatHook extends BaseHookModule {
+public class ZuiLauncherHotseatHook extends AppHookModule {
 
     private static final String LAUNCHER_PACKAGE = "com.zui.launcher";
 

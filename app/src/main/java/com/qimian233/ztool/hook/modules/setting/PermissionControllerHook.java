@@ -6,7 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.Window;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -15,7 +15,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
-public class PermissionControllerHook extends BaseHookModule {
+public class PermissionControllerHook extends AppHookModule {
 
     public PermissionControllerHook() {}
 

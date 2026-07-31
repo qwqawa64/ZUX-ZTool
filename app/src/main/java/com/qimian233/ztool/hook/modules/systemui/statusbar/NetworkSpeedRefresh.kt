@@ -1,7 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.statusbar
 
 import android.annotation.SuppressLint
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
@@ -14,7 +14,7 @@ import java.lang.reflect.Method
  * getModuleName() 返回 "test_hook"，始终启用，无需前端开关。
  */
 @SuppressLint("PrivateApi")
-class NetworkSpeedRefresh : BaseHookModule() {
+class NetworkSpeedRefresh : AppHookModule() {
 
     companion object {
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"

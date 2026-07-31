@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.mobiledesktop
 
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Modifier
@@ -16,7 +16,7 @@ import java.lang.reflect.Modifier
  * 目标方法经过混淆，因此使用 DEXKit 按签名动态匹配，
  * 并回退到硬编码的类名 `ra.c` 和方法名 `q`。
  */
-class DisableNearbyShareAutoOffHook : BaseHookModule() {
+class DisableNearbyShareAutoOffHook : AppHookModule() {
 
     companion object {
         private const val TARGET_PACKAGE = "com.motorola.mobiledesktop"

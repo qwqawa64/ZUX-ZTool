@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 @SuppressLint("PrivateApi")
-public class RecentTaskMemoryViewHook extends BaseHookModule {
+public class RecentTaskMemoryViewHook extends AppHookModule {
     private static final String MODULE_PACKAGE = "com.qimian233.ztool";
     private static final String LAUNCHER_PACKAGE = "com.zui.launcher";
     private static final String RECENTS_VIEW_CLASS = "com.android.quickstep.views.RecentsView";

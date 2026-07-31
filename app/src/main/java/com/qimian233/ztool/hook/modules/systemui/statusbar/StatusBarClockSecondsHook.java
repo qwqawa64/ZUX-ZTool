@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui.statusbar;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  * 强制启用系统状态栏时钟的秒显示功能
  */
 @SuppressLint("PrivateApi")
-public class StatusBarClockSecondsHook extends BaseHookModule {
+public class StatusBarClockSecondsHook extends AppHookModule {
 
     private static final String CLOCK_CLASS = "com.android.systemui.statusbar.policy.Clock";
 

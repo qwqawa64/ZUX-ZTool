@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui.keyguard;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  * 在锁屏充电提示中添加实时充电功率显示
  */
 @SuppressLint("PrivateApi")
-public class SystemUIChargeWattsHook extends BaseHookModule {
+public class SystemUIChargeWattsHook extends AppHookModule {
 
     private static final String TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController";
 

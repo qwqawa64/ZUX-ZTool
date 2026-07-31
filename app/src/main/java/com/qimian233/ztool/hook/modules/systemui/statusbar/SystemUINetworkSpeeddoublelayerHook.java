@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.statusbar;
 import android.annotation.SuppressLint;
 import android.text.Html;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -24,7 +24,7 @@ import java.util.WeakHashMap;
  * 功能：在状态栏显示实时上下行网络速度，支持自定义文本大小和显示格式
  */
 @SuppressLint("PrivateApi")
-public class SystemUINetworkSpeeddoublelayerHook extends BaseHookModule {
+public class SystemUINetworkSpeeddoublelayerHook extends AppHookModule {
 
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
     private static final String NETWORK_SPEED_VIEW_CLASS = "com.android.systemui.zui.NetworkSpeedView";

@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  * 自动开启游戏防误触功能Hook模块
  * 为特定游戏自动开启ZUI游戏助手的防误触功能
  */
-public class AutoMistakeTouchHook extends BaseHookModule {
+public class AutoMistakeTouchHook extends AppHookModule {
 
     private static final String TARGET_PACKAGE = "com.zui.game.service";
     private static final String SETTINGS_UTIL_CLASS = "com.zui.util.SettingsValueUtilKt";

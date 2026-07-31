@@ -4,7 +4,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Environment
 import android.view.View
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.io.File
 
@@ -21,7 +21,7 @@ import java.io.File
  * 方向判断与原始 ChargingStyleDefault.getRawId() 一致：
  *   Configuration.ORIENTATION_LANDSCAPE == 2
  */
-class CustomChargeAnimation : BaseHookModule() {
+class CustomChargeAnimation : AppHookModule() {
 
     companion object {
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"

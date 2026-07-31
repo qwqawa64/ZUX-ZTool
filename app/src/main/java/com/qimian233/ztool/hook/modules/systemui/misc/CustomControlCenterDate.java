@@ -11,7 +11,7 @@ import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -24,7 +24,7 @@ import java.util.Date;
  * 支持自定义日期格式（包括农历、节气等）、字体样式、颜色等完整配置
  */
 @SuppressLint("PrivateApi")
-public class CustomControlCenterDate extends BaseHookModule {
+public class CustomControlCenterDate extends AppHookModule {
 
     private static final String PREFS_NAME = "xposed_module_config";
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";

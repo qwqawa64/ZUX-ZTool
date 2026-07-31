@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.setting;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
  * 功能：绕过耳机检测，使杜比音效在非耳机状态下可用
  */
 @SuppressLint("PrivateApi")
-public class AllowDisplayDolbyHook extends BaseHookModule {
+public class AllowDisplayDolbyHook extends AppHookModule {
 
     public AllowDisplayDolbyHook() {}
 

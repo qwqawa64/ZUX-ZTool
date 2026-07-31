@@ -6,7 +6,7 @@ import android.util.TypedValue;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 
 @SuppressLint("PrivateApi")
-public class NativeNotificationIcon extends BaseHookModule {
+public class NativeNotificationIcon extends AppHookModule {
 
     public NativeNotificationIcon() {}
 

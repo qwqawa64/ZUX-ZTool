@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.safecenter;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -8,7 +8,7 @@ import io.github.libxposed.api.XposedModuleInterface;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
-public class EnableAutorunByDefault extends BaseHookModule {
+public class EnableAutorunByDefault extends AppHookModule {
     public static final String FEATURE_NAME = "default_enable_autorun";
 
     private static final int ATTR_WHITELIST = 0x20000000;

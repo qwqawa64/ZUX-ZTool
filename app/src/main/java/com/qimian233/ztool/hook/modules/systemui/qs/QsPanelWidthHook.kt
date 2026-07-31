@@ -8,7 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsSeekBar
 import android.widget.FrameLayout
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
@@ -23,7 +23,7 @@ import io.github.libxposed.api.XposedModuleInterface
  * getModuleName() 返回 "test_hook"，始终启用，无需前端开关。
  */
 @SuppressLint("PrivateApi", "DiscouragedApi")
-class QsPanelWidthHook : BaseHookModule() {
+class QsPanelWidthHook : AppHookModule() {
 
     companion object {
         /** 默认面板宽度百分比 (0-100) */

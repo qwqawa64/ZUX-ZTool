@@ -2,14 +2,14 @@ package com.qimian233.ztool.hook.modules.systemframework;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
 @SuppressLint({"SoonBlockedPrivateApi", "PrivateApi"})
-public class AllowGetPackages extends BaseHookModule {
+public class AllowGetPackages extends SystemHookModule {
     public static final String FEATURE_NAME = "allow_get_packages";
 
     private static final int OP_GET_INSTALLED_APP = 214;
@@ -22,11 +22,6 @@ public class AllowGetPackages extends BaseHookModule {
 
     public String[] getTargetPackages() {
         return new String[] {"system"};
-    }
-
-    @Override
-    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        logger.warn("System server package, handleLoadPackage should not be loaded. Check getTargetPackages if you see this log.");
     }
 
     public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {

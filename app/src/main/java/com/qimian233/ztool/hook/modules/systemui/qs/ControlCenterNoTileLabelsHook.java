@@ -4,14 +4,14 @@ import android.annotation.SuppressLint;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
 @SuppressLint("PrivateApi")
-public class ControlCenterNoTileLabelsHook extends BaseHookModule {
+public class ControlCenterNoTileLabelsHook extends AppHookModule {
 
     public ControlCenterNoTileLabelsHook() {}
 

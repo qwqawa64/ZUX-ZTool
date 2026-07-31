@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
  * 跳过包安装器警告页面Hook模块
  * 自动点击安装按钮，跳过用户确认步骤
  */
-public class SkipInstallWarnPage extends BaseHookModule {
+public class SkipInstallWarnPage extends AppHookModule {
 
     public SkipInstallWarnPage() {}
 

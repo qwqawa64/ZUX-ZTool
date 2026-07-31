@@ -1,7 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.misc
 
 import android.annotation.SuppressLint
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
@@ -15,7 +15,7 @@ import java.lang.reflect.Method
  * requestedVisibleTypes 参数控制栏的可见性。setWindowState 作为旧路径兜底。
  */
 @SuppressLint("PrivateApi")
-class ForceImmersiveMode : BaseHookModule() {
+class ForceImmersiveMode : AppHookModule() {
 
     companion object {
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"

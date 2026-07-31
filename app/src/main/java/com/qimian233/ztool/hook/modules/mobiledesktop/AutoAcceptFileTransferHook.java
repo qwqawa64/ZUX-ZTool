@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.mobiledesktop;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -18,7 +18,7 @@ import java.lang.reflect.Method;
  * LiveData 字段，不再依赖混淆后的字段名（c/d/b）。
  * </p>
  */
-public class AutoAcceptFileTransferHook extends BaseHookModule {
+public class AutoAcceptFileTransferHook extends AppHookModule {
 
     private static final String TARGET_PACKAGE = "com.motorola.mobiledesktop";
     private static final String TARGET_CLASS =

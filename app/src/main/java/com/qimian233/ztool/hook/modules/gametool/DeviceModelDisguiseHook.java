@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
  * 游戏服务设备型号伪装Hook模块
  * 将设备型号伪装为TB322FC，用于绕过游戏服务的设备检测
  */
-public class DeviceModelDisguiseHook extends BaseHookModule {
+public class DeviceModelDisguiseHook extends AppHookModule {
 
     public DeviceModelDisguiseHook() {}
 

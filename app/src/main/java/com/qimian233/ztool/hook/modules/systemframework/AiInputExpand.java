@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import android.annotation.SuppressLint;
 import android.text.TextUtils;
@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
  */
 
 @SuppressLint("PrivateApi")
-public class AiInputExpand extends BaseHookModule {
+public class AiInputExpand extends AppHookModule {
 
     public AiInputExpand() {}
 

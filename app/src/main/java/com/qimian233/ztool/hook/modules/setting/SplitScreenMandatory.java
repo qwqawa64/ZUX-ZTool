@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.setting;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -13,7 +13,7 @@ import java.util.HashMap;
  * Split Screen强制分屏功能Hook模块
  * 通过Hook OneModeService清空分屏黑名单，实现强制分屏功能
  */
-public class SplitScreenMandatory extends BaseHookModule {
+public class SplitScreenMandatory extends AppHookModule {
 
     public SplitScreenMandatory() {}
 

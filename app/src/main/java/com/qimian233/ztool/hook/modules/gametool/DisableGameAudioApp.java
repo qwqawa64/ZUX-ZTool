@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
  * 在应用进程中拦截游戏音频属性设置，防止游戏模式干扰音频体验
  */
 @SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
-public class DisableGameAudioApp extends BaseHookModule {
+public class DisableGameAudioApp extends AppHookModule {
 
     private static final String TARGET_PROPERTY = "sys.audio.game_name";
 

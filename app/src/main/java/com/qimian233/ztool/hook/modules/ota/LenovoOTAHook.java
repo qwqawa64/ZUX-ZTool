@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.ota;
 
 import java.util.Properties;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
  * 功能：拦截OTA请求，修改 curfirmwarever 和 deviceid
  * 修改原则：仅在配置值有效（非空）时才修改，否则保持原厂逻辑
  */
-public class LenovoOTAHook extends BaseHookModule {
+public class LenovoOTAHook extends AppHookModule {
 
     private static final String TARGET_CLASS = "com.lenovo.tbengine.core.serverapi.ServerApi";
     private static final String TARGET_METHOD = "geServerResponseOrThrowError";

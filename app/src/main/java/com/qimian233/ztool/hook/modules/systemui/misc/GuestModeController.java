@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.provider.Settings;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
  * 修复系统UI中自动创建访客用户的逻辑
  * 当用户切换器被禁用时，阻止自动添加访客用户
  */
-public class GuestModeController extends BaseHookModule {
+public class GuestModeController extends AppHookModule {
 
     public GuestModeController() {}
 

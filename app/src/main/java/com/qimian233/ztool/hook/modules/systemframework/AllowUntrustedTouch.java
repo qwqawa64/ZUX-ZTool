@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import android.annotation.SuppressLint;
 
@@ -9,7 +9,7 @@ import io.github.libxposed.api.XposedModuleInterface;
 import java.lang.reflect.Method;
 
 @SuppressLint("PrivateApi")
-public class AllowUntrustedTouch extends BaseHookModule {
+public class AllowUntrustedTouch extends SystemHookModule {
 
     public AllowUntrustedTouch() {}
 
@@ -21,11 +21,6 @@ public class AllowUntrustedTouch extends BaseHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[] {"system"};
-    }
-
-    @Override
-    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-
     }
 
     @Override

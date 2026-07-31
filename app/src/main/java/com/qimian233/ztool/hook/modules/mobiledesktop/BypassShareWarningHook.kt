@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.mobiledesktop
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Modifier
@@ -14,7 +14,7 @@ import androidx.core.content.edit
  * 使用 DEXKit 通过方法签名（参数类型+返回类型）动态匹配混淆后的方法名，
  * 不再依赖硬编码的单字母名称。
  */
-class BypassShareWarningHook : BaseHookModule() {
+class BypassShareWarningHook : AppHookModule() {
 
     companion object {
         private val TARGET_PACKAGE = arrayOf("com.motorola.mobiledesktop", "com.motorola.readyfor")

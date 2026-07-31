@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.wallpaper;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
  * 修复ZUI系统壁纸设置中的充电动画显示问题，强制显示全部充电动画选项
  * 通过修改Utilities类的关键方法，确保系统使用包含全部充电动画的资源数组
  */
-public class ChargeAnimationFixModule extends BaseHookModule {
+public class ChargeAnimationFixModule extends AppHookModule {
     private static final String UTILS_CLASS = "com.zui.wallpapersetting.util.Utilities";
 
     public ChargeAnimationFixModule() {}

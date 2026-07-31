@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.ota;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -15,7 +15,7 @@ import android.view.MenuItem;
  * 禁用联想OTA检查Hook模块
  * 功能：强制显示本地安装菜单项，绕过计数器检查逻辑
  */
-public class DisableOtaCheck extends BaseHookModule {
+public class DisableOtaCheck extends AppHookModule {
 
     private static final String TARGET_PACKAGE = "com.lenovo.ota";
     private static final String MAIN_ACTIVITY = "com.lenovo.row.ota.core.d.ui.MainActivity";

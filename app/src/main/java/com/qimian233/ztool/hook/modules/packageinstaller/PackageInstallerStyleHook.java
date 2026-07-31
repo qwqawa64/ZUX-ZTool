@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -19,7 +19,7 @@ import android.widget.TextView;
  * 功能：绕过ZUI系统的安装限制，修改包安装器界面样式
  * 目标：com.android.packageinstaller (ZUI系统包安装器)
  */
-public class PackageInstallerStyleHook extends BaseHookModule {
+public class PackageInstallerStyleHook extends AppHookModule {
 
     public PackageInstallerStyleHook() {}
 

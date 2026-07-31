@@ -9,7 +9,7 @@ import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.widget.ProgressBar;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -17,7 +17,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 @SuppressLint("PrivateApi")
-public class CustomQsRoundCorner extends BaseHookModule {
+public class CustomQsRoundCorner extends AppHookModule {
 
     private static int headUpTileRoundCornerRadius = 32;
     private static int normalTileRoundCornerRadius = 96;

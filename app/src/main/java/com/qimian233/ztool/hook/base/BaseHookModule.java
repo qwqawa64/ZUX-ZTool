@@ -50,9 +50,13 @@ public abstract class BaseHookModule {
     public abstract String[] getTargetPackages();
 
     /**
-     * 执行 Hook 操作（<b>abstract</b>，便于 IDE 自动补全）。
+     * 执行 Hook 操作（默认 no-op）。
+     * <p>App 类 Hook 模块应继承 {@link AppHookModule} 以获得 IDE 自动补全；
+     * 系统框架 Hook 模块应继承 {@link SystemHookModule}。</p>
      */
-    public abstract void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable;
+    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
+        // default no-op
+    }
 
     // ── XposedInterface 注入 ───────────────────────────────────
 
@@ -101,6 +105,10 @@ public abstract class BaseHookModule {
 
     // ── system_server callback ─────────────────────────────────
 
+    /**
+     * 系统服务器回调（默认 no-op）。
+     * <p>系统框架 Hook 模块应继承 {@link SystemHookModule} 以获得 IDE 自动补全。</p>
+     */
     public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param)
             throws Throwable {
         // default no-op

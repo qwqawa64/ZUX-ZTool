@@ -2,13 +2,13 @@ package com.qimian233.ztool.hook.modules.launcher.dockbar;
 
 import android.view.View;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
-public class DisableDockBar extends BaseHookModule {
+public class DisableDockBar extends AppHookModule {
 
     private static final String LAUNCHER_PACKAGE = "com.zui.launcher";
 

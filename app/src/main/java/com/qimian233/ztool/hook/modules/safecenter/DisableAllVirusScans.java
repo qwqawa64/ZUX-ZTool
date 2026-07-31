@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.safecenter;
 import android.content.ContentResolver;
 import android.content.Context;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -11,7 +11,7 @@ import io.github.libxposed.api.XposedModuleInterface;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-public class DisableAllVirusScans extends BaseHookModule {
+public class DisableAllVirusScans extends AppHookModule {
     private static final String KEY_DYNAMIC_ICONS = "com.zui.safecenter.dynamic_icons";
     private static final String KEY_SAFE_CENTER_ICON = "safecentericon";
 

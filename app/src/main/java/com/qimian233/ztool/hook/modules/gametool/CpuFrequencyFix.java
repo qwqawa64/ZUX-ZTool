@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -15,7 +15,7 @@ import java.util.Arrays;
  * 功能：Hook com.zui.game.service.util.HWDataInterface 的CPU频率获取方法
  * 使其始终读取最后一个CPU核心的频率数据
  */
-public class CpuFrequencyFix extends BaseHookModule {
+public class CpuFrequencyFix extends AppHookModule {
 
     public CpuFrequencyFix() {}
 

@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
  * 禁用PackageInstaller应用安装完成后的推荐广告Hook模块
  * 功能：阻止安装成功页面初始化推荐应用数据，消除广告干扰
  */
-public class DisableInstallerAdvertisement extends BaseHookModule {
+public class DisableInstallerAdvertisement extends AppHookModule {
 
     public DisableInstallerAdvertisement() {}
 

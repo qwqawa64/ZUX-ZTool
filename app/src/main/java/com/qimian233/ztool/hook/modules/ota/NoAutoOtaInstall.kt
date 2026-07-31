@@ -1,10 +1,10 @@
 package com.qimian233.ztool.hook.modules.ota
 
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
-class NoAutoOtaInstall : BaseHookModule() {
+class NoAutoOtaInstall : AppHookModule() {
     override fun getModuleName(): String = "no_auto_ota_install"
 
     override fun getTargetPackages(): Array<out String> = arrayOf("com.lenovo.ota")

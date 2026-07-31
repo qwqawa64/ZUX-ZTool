@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.content.res.TypedArray
 import android.graphics.Rect
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
@@ -12,7 +12,7 @@ import io.github.libxposed.api.XposedModuleInterface
  * 系统还会检查屏幕短边的 dp 数，如果短边尺寸小于 720dp，说明 systemui 在小屏幕设备上运行，会强制设定 mFromType 为 3，反之设定为 2.
  * 因此总共需要 2 个 hook，第一个在方法执行前改变字段值，第二个拦截构造方法中调用的 android.view.WindowMetrics.getBounds，返回一个显然是大屏幕/小屏幕设备的 Rect 值。
  */
-class SliderStyleHook: BaseHookModule() {
+class SliderStyleHook: AppHookModule() {
 
     companion object {
         private const val VERTICAL_TYPE = 3

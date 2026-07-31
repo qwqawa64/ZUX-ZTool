@@ -1,11 +1,11 @@
 package com.qimian233.ztool.hook.modules.ota
 
 import android.content.Context
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 
-class HideOtaNotifications: BaseHookModule() {
+class HideOtaNotifications: AppHookModule() {
     override fun getModuleName(): String = "hide_ota_notifications"
 
     override fun getTargetPackages(): Array<String> = arrayOf("com.lenovo.ota")

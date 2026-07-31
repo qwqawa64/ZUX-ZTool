@@ -6,7 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.qimian233.ztool.MainActivity;
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -14,7 +14,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 @SuppressLint("PrivateApi")
-public class ZToolSettingsEntryHook extends BaseHookModule {
+public class ZToolSettingsEntryHook extends AppHookModule {
     private static final String TARGET_PACKAGE = "com.android.settings";
     private static final String TARGET_CLASS = "com.android.settings.homepage.TopLevelSettings";
     private static final String ENTRY_KEY = "ztool_settings_entry";

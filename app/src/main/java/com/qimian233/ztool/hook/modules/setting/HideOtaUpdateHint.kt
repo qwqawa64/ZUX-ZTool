@@ -2,14 +2,14 @@ package com.qimian233.ztool.hook.modules.setting
 
 import android.content.ContentResolver
 import android.provider.Settings.Secure
-import com.qimian233.ztool.hook.base.BaseHookModule
+import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 
 /**
  * Hides the red OTA update hint in Settings while keeping the OTA entry usable.
  */
-class HideOtaUpdateHint : BaseHookModule() {
+class HideOtaUpdateHint : AppHookModule() {
     override fun getModuleName(): String = "hide_ota_update_hint"
 
     override fun getTargetPackages(): Array<String> = arrayOf(TARGET_PACKAGE)

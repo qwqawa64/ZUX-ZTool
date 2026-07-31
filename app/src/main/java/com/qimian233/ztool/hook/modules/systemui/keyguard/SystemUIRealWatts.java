@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui.keyguard;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -16,7 +16,7 @@ import java.text.DecimalFormat;
  * 在锁屏充电提示中添加实时充电功率显示（使用Root权限读取系统文件获取实时数据）
  */
 @SuppressLint("PrivateApi")
-public class SystemUIRealWatts extends BaseHookModule {
+public class SystemUIRealWatts extends AppHookModule {
 
     private static final String TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController";
 

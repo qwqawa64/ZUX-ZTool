@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
  * 禁用APK扫描Hook模块
  * 拦截PackageInstaller的扫描流程，直接返回安全结果
  */
-public class PackageInstallerHookScan extends BaseHookModule {
+public class PackageInstallerHookScan extends AppHookModule {
 
     private static final String PACKAGE_INSTALLER = "com.android.packageinstaller";
 

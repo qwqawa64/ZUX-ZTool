@@ -3,14 +3,14 @@ package com.qimian233.ztool.hook.modules.systemui.qs;
 import android.annotation.SuppressLint;
 import android.graphics.Color;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
 
 @SuppressLint("PrivateApi")
-public class CustomQsColor extends BaseHookModule {
+public class CustomQsColor extends AppHookModule {
     private static final int STATE_ACTIVE = 2;
     private static boolean CUSTOM_QS_COLOR = false; // 是否启用磁贴背景色修改
     private static boolean CUSTOM_LABEL_COLOR = false; // 是否启用磁贴主要说明文本在开关被启用时的颜色修改

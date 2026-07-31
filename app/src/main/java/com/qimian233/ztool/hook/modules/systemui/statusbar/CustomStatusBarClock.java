@@ -11,7 +11,7 @@ import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -24,7 +24,7 @@ import java.util.Date;
  * 修改SystemUI状态栏时钟显示格式和样式，支持自定义时间格式、字体大小、字间距、颜色和粗体
  */
 @SuppressLint("PrivateApi")
-public class CustomStatusBarClock extends BaseHookModule {
+public class CustomStatusBarClock extends AppHookModule {
 
     private static final String PREFS_NAME = "xposed_module_config";
     private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
