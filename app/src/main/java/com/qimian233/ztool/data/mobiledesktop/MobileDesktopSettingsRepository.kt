@@ -3,7 +3,7 @@ package com.qimian233.ztool.data.mobiledesktop
 import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.MobileDesktopSettingsUiState
 

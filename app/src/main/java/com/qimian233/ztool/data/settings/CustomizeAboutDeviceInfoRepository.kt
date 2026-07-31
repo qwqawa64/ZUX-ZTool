@@ -5,10 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.hook.modules.SharedPreferencesTool.ModulePreferencesUtils
+import com.qimian233.ztool.utils.ModulePreferencesUtils
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 
 class CustomizeAboutDeviceInfoRepository(
     context: Context,

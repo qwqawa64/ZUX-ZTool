@@ -1,4 +1,4 @@
-package com.qimian233.ztool.hook.modules.SharedPreferencesTool;
+package com.qimian233.ztool.utils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
