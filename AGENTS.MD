@@ -52,6 +52,7 @@ https://compose-miuix-ui.github.io/miuix/dokka/index.html
   gradle/                       Gradle wrapper and version catalog
   libs/                         Root local dependencies
   Add_New_Hook_zh-CN.md         Frontend guide for adding Hook settings, UTF-8 encoding
+  Add_New_Preference_Key_zh-CN.md  Guide for adding preference keys in the centralized system
   AGENTS.MD                     This root agent guide
   README.md
   UpdateCheck.json
@@ -140,8 +141,8 @@ Core files:
 - `app/src/main/java/com/qimian233/ztool/hook/HookInit.java`: Xposed entry point.
 - `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`: base class for Hook modules.
 - `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`: registration and dispatch for Hook modules.
-- `app/src/main/java/com/qimian233/ztool/hook/base/PreferenceHelper.java`: Hook-side preference helper.
-- `app/src/main/java/com/qimian233/ztool/hook/modules/SharedPreferencesTool/ModulePreferencesUtils.java`: app-side module preference utility.
+- `app/src/main/java/com/qimian233/ztool/data/PreferenceKeys.kt`: **single source of truth for all preference keys** — every key in `xposed_module_config` is defined here, organized by data type. See `Add_New_Preference_Key_zh-CN.md`.
+- `app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write utility; uses `PreferenceKeys` list-based matching for backup/restore type inference.
 
 Hook module folders:
 
@@ -169,12 +170,19 @@ When adding a Hook switch or other Hook-facing setting in the app UI, read and f
 Add_New_Hook_zh-CN.md
 ```
 
-The durable rules from that guide are:
+**For preference key management**, all keys are now centrally defined in `PreferenceKeys.kt`. When adding a new key, read:
+
+```text
+Add_New_Preference_Key_zh-CN.md
+```
+
+The durable rules are:
 
 - Do not read or write SharedPreferences directly from Composables.
 - Put persistence in the appropriate `data/**/**Repository.kt`.
 - Expose values through `UiState` and mutate them through the matching `ViewModel`.
-- Hook-related settings should use `ModulePreferencesUtils` and the shared `xposed_module_config` preference file.
+- Hook-related settings must use `ModulePreferencesUtils` and the shared `xposed_module_config` preference file.
+- **Preference keys must be registered in `PreferenceKeys.kt`** before use in Repository or Hook code. Reference them as `PreferenceKeys.CONSTANT_NAME.name` — never write key strings by hand.
 - Preference keys and default values must match the Hook-side reads exactly.
 - Use existing shared setting components such as `SettingItem.Switch`, dropdowns, sliders, and text inputs where applicable.
 
@@ -184,7 +192,7 @@ To add a new Hook implementation on the backend:
 
 1. Create a Hook class that extends `AppHookModule` for non-system-framework-hook, and extend `SystemHookModule` for system-framwork-hook. Prefer **Kotlin** (`.kt`) for new hooks; Java is acceptable only when it fundamentally conflicts with existing infrastructure.
 2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
-3. Read Hook settings using the same keys/defaults that the frontend writes.
+3. Read Hook settings using `PreferenceKeys` constants (see `Add_New_Preference_Key_zh-CN.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
 5. If the Hook needs a user-facing toggle, add the frontend state according to `Add_New_Hook_zh-CN.md`.
 

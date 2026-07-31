@@ -1,5 +1,9 @@
 # 新 Hook 接入前端指南
 
+> **偏好键管理已集中化。** 添加新 Hook 时，所有偏好键（SharedPreferences key）必须先在 `PreferenceKeys.kt` 中注册，然后通过 `PreferenceKeys.CONSTANT_NAME.name` 引用。详见 **[Add_New_Preference_Key_zh-CN.md](./Add_New_Preference_Key_zh-CN.md)**。
+>
+> 本文档中的示例已更新为使用 `PreferenceKeys` 常量。手写键名字符串不再推荐。
+
 本文说明在 ZUX-ZTool 中为新的 Hook 功能接入前端配置项的推荐做法，重点覆盖 SharedPreferences、开关项和其它自定义控件。这里的“前端”主要指应用侧 Compose 设置页、Repository、ViewModel 和 UiState；Hook 侧仍按既有模块入口和 HookManager 规则接入。
 
 ## 基本原则
@@ -34,9 +38,7 @@ prefsUtils.loadFloatSetting(KEY, defaultValue)
 prefsUtils.saveFloatSetting(KEY, value)
 ```
 
-在声明键时，要根据键的数据类型在对应的 getter:  `is...SettingKey()` 方法中添加键名。
-
-推荐在对应 Repository 的 `companion object` 中集中声明键：
+**键名必须通过 `PreferenceKeys` 常量引用**，不再手写字符串字面量。新键需先在 `PreferenceKeys.kt` 中注册（参见 `Add_New_Preference_Key_zh-CN.md`），然后在 Repository 的 `companion object` 中引用：
 
 ```kotlin
 class ExampleSettingsRepository(
@@ -64,17 +66,21 @@ class ExampleSettingsRepository(
         const val LEVEL_MAX = 10
         private const val DEFAULT_LEVEL = 5
 
-        private const val KEY_NEW_HOOK_ENABLED = "new_hook_enabled"
-        private const val KEY_CUSTOM_LEVEL = "new_hook_level"
+        // 使用 PreferenceKeys 常量，不再手写字符串
+        private val KEY_NEW_HOOK_ENABLED = PreferenceKeys.NEW_HOOK_ENABLED.name
+        private val KEY_CUSTOM_LEVEL = PreferenceKeys.NEW_HOOK_LEVEL.name
     }
 }
 ```
 
-Hook 侧读取时使用同一个键和默认值：
+> **注意：** 因为 `PreferenceKeys.CONSTANT.name` 不是编译期常量，`companion object` 中的声明需从 `const val` 改为 `val`。
 
-```java
-boolean enabled = prefs.loadBooleanSetting("new_hook_enabled", false);
-int level = prefs.loadIntegerSetting("new_hook_level", 5);
+Hook 侧（Kotlin）读取时使用同一个常量：
+
+```kotlin
+val prefs = xposed.getRemotePreferences("xposed_module_config")
+val enabled = prefs.getBoolean(PreferenceKeys.NEW_HOOK_ENABLED.name, PreferenceKeys.NEW_HOOK_ENABLED.default)
+val level = prefs.getInt(PreferenceKeys.NEW_HOOK_LEVEL.name, PreferenceKeys.NEW_HOOK_LEVEL.default)
 ```
 
 ## 接入一个开关
@@ -346,7 +352,8 @@ SettingItem.Custom(
 3. 在对应 `UiState` 增加字段。
 4. 在 ViewModel 中增加 `setXxx(...)` 方法。
 5. 在设置页的 `SettingSection` 中加入 `SettingItem.Switch`、`Dropdown`、`Slider`、`TextInput` 或 `Custom`。
-6. 在 `strings.xml` 增加标题和说明。
-7. 如需重启，复用或补充该页面的重启确认流程。
-8. 运行 `.\gradlew.bat assembleDebug` 验证。
+6. 在 `PreferenceKeys.kt` 中注册新的偏好键，并在 Repository 和 Hook 中通过 `PreferenceKeys.CONSTANT_NAME.name` 引用。
+7. 在 `strings.xml` 增加标题和说明。
+8. 如需重启，复用或补充该页面的重启确认流程。
+9. 运行 `.\gradlew.bat assembleDebug` 验证。
 
