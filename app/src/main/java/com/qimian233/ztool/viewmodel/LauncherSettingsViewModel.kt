@@ -107,6 +107,11 @@ class LauncherSettingsViewModel(
         repository.saveLauncherHideBluePoint(enabled)
     }
 
+    fun setDisableRecentAppDisplay(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableRecentAppDisplay = enabled)
+        repository.saveDisableRecentAppDisplay(enabled)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
