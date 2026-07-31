@@ -45,7 +45,7 @@ public class DisableGameAudioApp extends BaseHookModule {
      */
     private void hookGameApp(ClassLoader classLoader, String packageName) {
         try {
-            log("Hooking game app: " + packageName);
+            logger.info("Hooking game app: " + packageName);
 
             // 在游戏启动时主动清除游戏音频属性
             Class<?> activityClass = classLoader.loadClass("android.app.Activity");
@@ -54,12 +54,12 @@ public class DisableGameAudioApp extends BaseHookModule {
                 chain.proceed();
                 // 清除游戏音频属性
                 clearGameAudioProperties();
-                if (DEBUG) log("Cleared game audio properties in " + packageName);
+                logger.debug("Cleared game audio properties in " + packageName);
                 return null;
             });
 
         } catch (Throwable t) {
-            logError("Failed to hook game app", t);
+            logger.error("Failed to hook game app", t);
         }
     }
 
@@ -73,23 +73,23 @@ public class DisableGameAudioApp extends BaseHookModule {
             Method setMethod = systemPropertiesClass.getMethod("set", String.class, String.class);
             setMethod.invoke(null, TARGET_PROPERTY, "");
 
-            log("Manually cleared " + TARGET_PROPERTY);
+            logger.info("Manually cleared " + TARGET_PROPERTY);
 
         } catch (Exception e) {
-            logError("Failed to clear properties", e);
+            logger.error("Failed to clear properties", e);
         }
     }
 
     private void hookGameServicePackage(ClassLoader classLoader) {
         try {
-            log("Start processing DolbyUtils.");
+            logger.info("Start processing DolbyUtils.");
             Method m = classLoader
                     .loadClass("com.zui.game.service.util.DolbyUtils")
                     .getDeclaredMethod("handleDolbyGameSound", Context.class, Integer.TYPE);
             hookWithId(m, "hook_89", chain -> null);
-            log("Successfully hooked DolbyUtils.handleDolbyGameSound - disabled game sound processing");
+            logger.info("Successfully hooked DolbyUtils.handleDolbyGameSound - disabled game sound processing");
         } catch (Throwable t) {
-            logError("Failed to hook GameService package", t);
+            logger.error("Failed to hook GameService package", t);
         }
     }
 }

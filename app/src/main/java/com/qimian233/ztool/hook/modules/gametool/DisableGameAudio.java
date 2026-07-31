@@ -51,7 +51,7 @@ public class DisableGameAudio extends BaseHookModule {
      */
     private void hookSystemProperties(ClassLoader classLoader) {
         try {
-            log("Attempting to hook SystemProperties.set");
+            logger.info("Attempting to hook SystemProperties.set");
 
             Class<?> sysPropsClass = classLoader.loadClass("android.os.SystemProperties");
             Method setMethod = sysPropsClass.getDeclaredMethod("set", String.class, String.class);
@@ -60,7 +60,7 @@ public class DisableGameAudio extends BaseHookModule {
                 String value = (String) chain.getArg(1);
 
                 if (TARGET_PROPERTY.equals(key)) {
-                    if (DEBUG) log("Blocked SystemProperties.set for " + key + " = " + value);
+                    logger.debug("Blocked SystemProperties.set for " + key + " = " + value);
 
                     // 打印调用栈以调试
                     StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
@@ -68,7 +68,7 @@ public class DisableGameAudio extends BaseHookModule {
                     for (int i = 0; i < Math.min(stackTrace.length, 10); i++) {
                         stackTraceStr.append(stackTrace[i].toString()).append("\n");
                     }
-                    if (DEBUG) log("Call stack:\n" + stackTraceStr);
+                    logger.trace("Call stack:\n" + stackTraceStr);
 
                     // 阻止设置该属性
                     return null;
@@ -76,10 +76,10 @@ public class DisableGameAudio extends BaseHookModule {
                 return chain.proceed();
             });
 
-            log("Successfully hooked SystemProperties.set");
+            logger.info("Successfully hooked SystemProperties.set");
 
         } catch (Throwable t) {
-            logError("Failed to hook SystemProperties.set", t);
+            logger.error("Failed to hook SystemProperties.set", t);
         }
     }
 
@@ -99,22 +99,22 @@ public class DisableGameAudio extends BaseHookModule {
                 try {
                     targetClass = classLoader.loadClass("com.android.server.policy.PhoneWindowManager$2");
                 } catch (ClassNotFoundException e) {
-                    log("Unable to find PhoneWindowManager internal class");
+                    logger.error("Unable to find PhoneWindowManager internal class");
                 }
                 if (targetClass == null) {
-                    log("Failed to find target class for PhoneWindowManager");
+                    logger.error("Failed to find target class for PhoneWindowManager");
                     return;
                 } else {
-                    log("Found alternative class for PhoneWindowManager");
+                    logger.info("Found alternative class for PhoneWindowManager");
                 }
             } else {
-                log("Found target class for PhoneWindowManager");
+                logger.info("Found target class for PhoneWindowManager");
             }
             // Hook ZuiGameAppStateListener 的 onGameAppStart 方法
             Method onGameAppStartMethod = targetClass.getDeclaredMethod("onGameAppStart", String.class, String.class);
             hookWithId(onGameAppStartMethod, "on_game_app_start", chain -> {
                 String pkgName = (String) chain.getArg(0);
-                if (DEBUG) log("ZuiGameAppStateListener.onGameAppStart for: " + pkgName);
+                logger.debug("ZuiGameAppStateListener.onGameAppStart for: " + pkgName);
 
                 // 不阻止方法执行，但会在 SystemProperties.set 层拦截
                 return chain.proceed();
@@ -124,13 +124,13 @@ public class DisableGameAudio extends BaseHookModule {
             Method onGameAppExitMethod = targetClass.getDeclaredMethod("onGameAppExit", String.class, String.class);
             hookWithId(onGameAppExitMethod, "on_game_app_exit", chain -> {
                 String pkgName = (String) chain.getArg(0);
-                if (DEBUG) log("ZuiGameAppStateListener.onGameAppExit for: " + pkgName);
+                logger.debug("ZuiGameAppStateListener.onGameAppExit for: " + pkgName);
                 return chain.proceed();
             });
 
-            log("Successfully hooked PhoneWindowManager");
+            logger.info("Successfully hooked PhoneWindowManager");
         } catch (Exception e) {
-            logError("Failed to hook PhoneWindowManager due to unknown reason: ", e);
+            logger.error("Failed to hook PhoneWindowManager due to unknown reason: ", e);
         }
     }
 
@@ -140,7 +140,7 @@ public class DisableGameAudio extends BaseHookModule {
      */
     private void hookAudioManager(ClassLoader classLoader) {
         try {
-            log("Attempting to hook AudioManager.setParameters");
+            logger.info("Attempting to hook AudioManager.setParameters");
 
             Class<?> audioManagerClass = classLoader.loadClass("android.media.AudioManager");
             Method setParametersMethod = audioManagerClass.getDeclaredMethod("setParameters", String.class);
@@ -148,7 +148,7 @@ public class DisableGameAudio extends BaseHookModule {
                 String keyValuePairs = (String) chain.getArg(0);
 
                 if (keyValuePairs != null && keyValuePairs.contains("game_voip=true")) {
-                    if (DEBUG) log("Blocked AudioManager.setParameters: " + keyValuePairs);
+                    logger.debug("Blocked AudioManager.setParameters: " + keyValuePairs);
 
                     // 阻止设置游戏VOIP参数
                     return null;
@@ -156,10 +156,10 @@ public class DisableGameAudio extends BaseHookModule {
                 return chain.proceed();
             });
 
-            log("Successfully hooked AudioManager.setParameters");
+            logger.info("Successfully hooked AudioManager.setParameters");
 
         } catch (Throwable t) {
-            logError("Failed to hook AudioManager.setParameters", t);
+            logger.error("Failed to hook AudioManager.setParameters", t);
         }
     }
 

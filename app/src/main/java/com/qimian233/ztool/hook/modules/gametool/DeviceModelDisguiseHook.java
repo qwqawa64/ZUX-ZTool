@@ -2,7 +2,6 @@ package com.qimian233.ztool.hook.modules.gametool;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -45,10 +44,10 @@ public class DeviceModelDisguiseHook extends BaseHookModule {
             Method getBuildModelMethod = deviceUtilsClass.getDeclaredMethod("getBuildModel");
             hookWithId(getBuildModelMethod, "get_build_model", chain -> "TB322FC");
 
-            log("Successfully hooked DeviceUtils.getBuildModel for com.zui.game.service");
+            logger.info("Successfully hooked DeviceUtils.getBuildModel for com.zui.game.service");
 
         } catch (Exception e) {
-            logError("Failed to hook DeviceUtils.getBuildModel", e);
+            logger.error("Failed to hook DeviceUtils.getBuildModel", e);
         }
     }
 }

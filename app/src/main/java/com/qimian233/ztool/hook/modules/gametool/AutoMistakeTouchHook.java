@@ -5,7 +5,6 @@ import android.text.TextUtils;
 
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Method;
@@ -63,10 +62,10 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             // Hook setPreventMisoperation 持久化拦截
             hookPreventMisoperationPersistence(classLoader);
 
-            log("AutoMistakeTouch Hook initialized successfully");
+            logger.info("AutoMistakeTouch Hook initialized successfully");
 
         } catch (Throwable e) {
-            logError("Hook GameService failed", e);
+            logger.error("Hook GameService failed", e);
         }
     }
 
@@ -83,7 +82,7 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                 if (pkgName != null && !pkgName.isEmpty()) {
                     // 检查是否为白名单游戏
                     if (isTargetGame(pkgName)) {
-                        if (DEBUG) log("Target game detected: " + pkgName);
+                        logger.debug("Target game detected: " + pkgName);
 
                         // 延迟设置，确保游戏助手完全初始化
                         new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
@@ -93,10 +92,10 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                 return null;
             });
 
-            log("Successfully hooked GameHelperViewController");
+            logger.info("Successfully hooked GameHelperViewController");
 
         } catch (Throwable e) {
-            logError("Hook GameHelperViewController failed", e);
+            logger.error("Hook GameHelperViewController failed", e);
         }
     }
 
@@ -109,14 +108,14 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             Method change2StatusMethod = itemClass.getDeclaredMethod("change2Status", int.class);
             hookWithId(change2StatusMethod, "change2_status", chain -> {
                 int targetStatus = (int) chain.getArg(0);
-                if (DEBUG) log("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
+                logger.debug("ItemBlockMistakeTouch.change2Status called with: " + targetStatus);
                 return chain.proceed();
             });
 
-            log("Successfully hooked ItemBlockMistakeTouch");
+            logger.info("Successfully hooked ItemBlockMistakeTouch");
 
         } catch (Throwable e) {
-            logError("Hook ItemBlockMistakeTouch failed", e);
+            logger.error("Hook ItemBlockMistakeTouch failed", e);
         }
     }
 
@@ -133,16 +132,16 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                     String stackTrace = android.util.Log.getStackTraceString(new Throwable());
                     if (stackTrace.contains("ItemBlockMistakeTouch") ||
                             stackTrace.contains("change2Status")) {
-                        if (DEBUG) log("LiveData postValue for mistake touch: " + status);
+                        logger.debug("LiveData postValue for mistake touch: " + status);
                     }
                 }
                 return chain.proceed();
             });
 
-            log("Successfully hooked LiveData");
+            logger.info("Successfully hooked LiveData");
 
         } catch (Throwable e) {
-            logError("Hook LiveData failed", e);
+            logger.error("Hook LiveData failed", e);
         }
     }
 
@@ -156,16 +155,16 @@ public class AutoMistakeTouchHook extends BaseHookModule {
                     "setPreventMisoperation", Context.class, int.class);
             hookWithId(setPreventMethod, "set_prevent", chain -> {
                 if (mBlockPersistence) {
-                    if (DEBUG) log("Blocked setPreventMisoperation persistence");
+                    logger.debug("Blocked setPreventMisoperation persistence");
                     return null;
                 }
                 return chain.proceed();
             });
 
-            log("Successfully hooked setPreventMisoperation for anti-persistence");
+            logger.info("Successfully hooked setPreventMisoperation for anti-persistence");
 
         } catch (Throwable e) {
-            logError("Hook setPreventMisoperation failed", e);
+            logger.error("Hook setPreventMisoperation failed", e);
         }
     }
 
@@ -182,20 +181,20 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             if (context instanceof Context) {
                 // 先获取当前系统设置状态
                 int currentStatus = getCurrentMistakeTouchStatus((Context) context);
-                if (DEBUG) log("Current mistake touch status: " + currentStatus);
+                logger.debug("Current mistake touch status: " + currentStatus);
 
                 if (currentStatus != 1) {
                     // 通过游戏助手内部方法设置，确保状态同步
                     setMistakeTouchThroughGameHelper(gameHelper);
 
-                    if (DEBUG) log("Auto-enabled mistake touch with sync");
+                    logger.debug("Auto-enabled mistake touch with sync");
                 } else {
-                    if (DEBUG) log("Mistake touch already enabled");
+                    logger.debug("Mistake touch already enabled");
                 }
             }
 
         } catch (Throwable e) {
-            logError("Enable mistake touch with sync failed", e);
+            logger.error("Enable mistake touch with sync failed", e);
         }
     }
 
@@ -221,12 +220,12 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             // 延迟清除拦截标志，确保所有异步 observer 回调执行完毕
             new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
                 mBlockPersistence = false;
-                if (DEBUG) log("Persistence block cleared");
+                logger.debug("Persistence block cleared");
             }, 3000);
 
         } catch (Throwable e) {
             mBlockPersistence = false;
-            logError("Set through game helper failed", e);
+            logger.error("Set through game helper failed", e);
         }
     }
 
@@ -239,11 +238,11 @@ public class AutoMistakeTouchHook extends BaseHookModule {
             if (result != null) {
                 return (Integer) result;
             } else {
-                log("getPreventMisoperation returned null");
+                logger.warn("getPreventMisoperation returned null");
                 return -1;
             }
         } catch (Throwable e) {
-            logError("Get current status failed", e);
+            logger.error("Get current status failed", e);
             return -1;
         }
     }

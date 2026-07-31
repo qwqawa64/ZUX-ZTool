@@ -1,8 +1,9 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
+import android.annotation.SuppressLint;
+
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.io.BufferedReader;
@@ -39,7 +40,7 @@ public class SocTemperatureFix extends BaseHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if (DEBUG) log("SocTemperatureFix: 开始处理包 " + packageName);
+        logger.debug("SocTemperatureFix: 开始处理包 " + packageName);
 
         if ("com.zui.game.service".equals(packageName)) {
             hookZuiGameService(classLoader);
@@ -58,15 +59,15 @@ public class SocTemperatureFix extends BaseHookModule {
             // Hook getTemp 方法
             Method getTempMethod = hwDataInterfaceClass.getDeclaredMethod("getTemp");
             hookWithId(getTempMethod, "get_temp", chain -> {
-                log("Block call to getTemp()");
+                logger.info("Block call to getTemp()");
                 int originalResult = (int) chain.proceed();
                 int newTemperature = readTemperatureFromFile();
 
                 if (newTemperature > 0) {
-                    if (DEBUG) log("getTemp - Original temperature: " + originalResult + ", new temperature: " + newTemperature);
+                    logger.trace("getTemp - Original temperature: " + originalResult + ", new temperature: " + newTemperature);
                     return newTemperature;
                 } else {
-                    log("Failed to read temperature file, use original value: " + originalResult);
+                    logger.warn("Failed to read temperature file, use original value: " + originalResult);
                     return originalResult;
                 }
             });
@@ -75,21 +76,21 @@ public class SocTemperatureFix extends BaseHookModule {
             Method getThermalTempMethod = hwDataInterfaceClass.getDeclaredMethod("getThermalTemp", int.class);
             hookWithId(getThermalTempMethod, "get_thermal_temp", chain -> {
                 int type = (int) chain.getArg(0);
-                if (DEBUG) log("Blocked getThermalTemp(), type: " + type);
+                logger.debug("Blocked getThermalTemp(), type: " + type);
                 int originalResult = (int) chain.proceed();
                 int newTemperature = readTemperatureFromFile();
 
                 if (newTemperature > 0) {
-                    if (DEBUG) log("getThermalTemp - Original: " + originalResult + ", new: " + newTemperature);
+                    logger.trace("getThermalTemp - Original: " + originalResult + ", new: " + newTemperature);
                     return newTemperature;
                 }
                 return originalResult;
             });
 
-            log("Hook executed successfully.");
+            logger.info("Hook executed successfully.");
 
         } catch (Throwable t) {
-            logError("Failed to hook ZUI game service!", t);
+            logger.error("Failed to hook ZUI game service!", t);
         }
     }
 
@@ -110,7 +111,7 @@ public class SocTemperatureFix extends BaseHookModule {
                     int newTemperature = readTemperatureFromFile();
 
                     if (newTemperature > 0) {
-                        if (DEBUG) log("Lenovo Game Service - temperature fix: "
+                        logger.trace("Lenovo Game Service - temperature fix: "
                                 + originalResult
                                 + " -> "
                                 + newTemperature);
@@ -118,13 +119,13 @@ public class SocTemperatureFix extends BaseHookModule {
                     }
                     return originalResult;
                 });
-                log("Hook for gaming service executed successfully.");
+                logger.info("Hook for gaming service executed successfully.");
             } else {
-                log("Unable to find class ThermalManager");
+                logger.error("Unable to find class ThermalManager");
             }
 
         } catch (Throwable t) {
-            logError("Hook failed!", t);
+            logger.error("Hook failed!", t);
         }
     }
 
@@ -138,7 +139,7 @@ public class SocTemperatureFix extends BaseHookModule {
                     "getThermalValue"
             };
 
-            Class<?> sysPropsClass = classLoader.loadClass("android.os.SystemProperties");
+            @SuppressLint("PrivateApi") Class<?> sysPropsClass = classLoader.loadClass("android.os.SystemProperties");
 
             for (String methodName : temperatureMethods) {
                 try {
@@ -146,7 +147,7 @@ public class SocTemperatureFix extends BaseHookModule {
                     hookWithId(method, "method", chain -> {
                         int newTemperature = readTemperatureFromFile();
                         if (newTemperature > 0) {
-                            if (DEBUG) log("Generic temperature detection method "
+                            logger.trace("Generic temperature detection method "
                                     + methodName
                                     + " fixed, new temperature: "
                                     + newTemperature);
@@ -159,10 +160,10 @@ public class SocTemperatureFix extends BaseHookModule {
                 }
             }
 
-            if (DEBUG) log("Generic detection method hook executed successfully.");
+            logger.info("Generic detection method hook executed successfully.");
 
         } catch (Throwable t) {
-            logError("Failed to hook generic temperature detection method", t);
+            logger.error("Failed to hook generic temperature detection method", t);
         }
     }
 
@@ -174,13 +175,13 @@ public class SocTemperatureFix extends BaseHookModule {
         File thermalFile = new File(THERMAL_FILE_PATH);
 
         if (!thermalFile.exists()) {
-            if (DEBUG) log("Temperature file does not exist: " + THERMAL_FILE_PATH);
+            logger.warn("Temperature file does not exist: " + THERMAL_FILE_PATH);
             // 尝试其他可能的thermal文件路径
             return tryAlternativeThermalFiles();
         }
 
         if (!thermalFile.canRead()) {
-            log("Failed to read file: permission denied " + THERMAL_FILE_PATH);
+            logger.warn("Failed to read file: permission denied " + THERMAL_FILE_PATH);
             return -1;
         }
 
@@ -189,14 +190,14 @@ public class SocTemperatureFix extends BaseHookModule {
 
             if (line != null && !line.trim().isEmpty()) {
                 int temperature = Integer.parseInt(line.trim());
-                if (DEBUG) log("Read temperature data from file: " + temperature);
+                logger.debug("Read temperature data from file: " + temperature);
                 return temperature;
             }
 
         } catch (IOException e) {
-            logError("IO exception happened when reading temperature file", e);
+            logger.error("IO exception happened when reading temperature file", e);
         } catch (NumberFormatException e) {
-            logError("Invalid temperature file format", e);
+            logger.error("Invalid temperature file format", e);
         }
 
         return -1;
@@ -217,12 +218,12 @@ public class SocTemperatureFix extends BaseHookModule {
         for (String path : alternativePaths) {
             File thermalFile = new File(path);
             if (thermalFile.exists() && thermalFile.canRead()) {
-                if (DEBUG) log("Alternate temperature file found: " + path);
+                logger.debug("Alternate temperature file found: " + path);
                 return readFromSpecificFile(path);
             }
         }
 
-        log("Unable to find a valid temperature file.");
+        logger.warn("Unable to find a valid temperature file.");
         return -1;
     }
 
@@ -235,7 +236,7 @@ public class SocTemperatureFix extends BaseHookModule {
                 return Integer.parseInt(line.trim());
             }
         } catch (Exception e) {
-            logError("Failed to read temperature file: " + filePath, e);
+            logger.error("Failed to read temperature file: " + filePath, e);
         }
         // 忽略关闭异常
         return -1;
