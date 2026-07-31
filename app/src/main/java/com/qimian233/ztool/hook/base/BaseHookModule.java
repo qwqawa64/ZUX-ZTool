@@ -3,11 +3,7 @@ package com.qimian233.ztool.hook.base;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.qimian233.ztool.hook.HookInit;
-
-import java.lang.reflect.Field;
 import java.lang.reflect.Executable;
-import java.lang.reflect.Method;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedInterface.HookHandle;
@@ -19,16 +15,21 @@ import io.github.libxposed.api.XposedModuleInterface;
  * <p>
  * 所有 Hook 模块继承此类。通过 {@link #xposed} 字段访问 libxposed API：
  * {@code hook()}, {@code log()}, {@code getRemotePreferences()} 等。
+ * <p>
+ * 日志关注点已拆分至 {@link ModuleLog}，反射辅助已拆分至 {@link HookReflectionHelper}。
+ * 本类保留向后兼容的委托方法。
  * </p>
  */
 public abstract class BaseHookModule {
 
     protected static final String TAG = "ZToolXposedModule";
     protected static final String PREFS_NAME = "xposed_module_config";
-    private static final long DEBUG_REFRESH_INTERVAL_MS = 1000L;
 
+    /**
+     * 详细日志开关（向后兼容字段，实际状态由 {@link ModuleLog#DEBUG} 管理）。
+     * @see ModuleLog#refreshDebugLoggingEnabled()
+     */
     public static volatile boolean DEBUG = false;
-    private static volatile long lastDebugRefreshTime = 0L;
 
     protected XposedInterface xposed;
 
@@ -77,26 +78,13 @@ public abstract class BaseHookModule {
         }
     }
 
-    protected static boolean isDetailedLoggingEnabledStatic() {
-        try {
-            XposedInterface xi = HookInit.getXposedInterface();
-            if (xi != null) {
-                SharedPreferences prefs = xi.getRemotePreferences(PREFS_NAME);
-                return prefs.getBoolean("isDetailedLogging", false);
-            }
-        } catch (Throwable ignored) {}
-        return false;
-    }
-
+    /**
+     * 刷新详细日志开关。
+     * <p>委托给 {@link ModuleLog#refreshDebugLoggingEnabled()}，并将结果同步到本类 {@link #DEBUG} 字段。</p>
+     */
     protected static void refreshDebugLoggingEnabled() {
-        long now = System.currentTimeMillis();
-        if (now - lastDebugRefreshTime < DEBUG_REFRESH_INTERVAL_MS) return;
-        synchronized (BaseHookModule.class) {
-            if (now - lastDebugRefreshTime >= DEBUG_REFRESH_INTERVAL_MS) {
-                DEBUG = isDetailedLoggingEnabledStatic();
-                lastDebugRefreshTime = now;
-            }
-        }
+        ModuleLog.refreshDebugLoggingEnabled();
+        DEBUG = ModuleLog.DEBUG;
     }
 
     // ── system_server callback ─────────────────────────────────
@@ -143,35 +131,17 @@ public abstract class BaseHookModule {
         }
     }
 
-    // ── logging ────────────────────────────────────────────────
+    // ── logging (delegates to ModuleLog) ───────────────────────
 
     protected void log(String message) {
-        if (this.xposed != null) {
-            this.xposed.log(4, TAG, "[" + getModuleName() + "] " + message);
-        }
+        ModuleLog.log(this.xposed, getModuleName(), message);
     }
 
     protected void logError(String message, Throwable t) {
-        refreshDebugLoggingEnabled();
-        StringBuilder sb = new StringBuilder("[")
-                .append(getModuleName()).append("] ").append(message).append("\n");
-        String fullStackTrace = Log.getStackTraceString(t);
-        String[] lines = fullStackTrace.split("\n");
-        if (DEBUG) {
-            int max = Math.min(lines.length, 10);
-            for (int i = 0; i < max; i++) {
-                if (i > 0) sb.append("\n");
-                sb.append(lines[i]);
-            }
-        } else if (lines.length > 0) {
-            sb.append(lines[0]).append("\n");
-        }
-        if (this.xposed != null) {
-            this.xposed.log(6, TAG, sb.toString());
-        }
+        ModuleLog.logError(this.xposed, getModuleName(), message, t);
     }
 
-    // ── helpers ────────────────────────────────────────────────
+    // ── helpers (delegates to HookReflectionHelper) ─────────────
 
     /**
      * Hook with a stable id for hot-reload atomic replacement.
@@ -188,45 +158,29 @@ public abstract class BaseHookModule {
      * @return the hook handle
      */
     protected HookHandle hookWithId(Executable target, String id, Hooker hooker) {
-        return this.xposed.getApiVersion() >= 102 ? this.xposed.hook(target).setId(id).intercept(hooker) : this.xposed.hook(target).intercept(hooker);
+        return this.xposed.getApiVersion() >= 102
+                ? this.xposed.hook(target).setId(id).intercept(hooker)
+                : this.xposed.hook(target).intercept(hooker);
     }
 
     /*
-     * XposedHelpers-style field finder. It looks up fields recursively in current class and its parent classes.
+     * XposedHelpers-style field finder. Delegates to {@link HookReflectionHelper#findField}.
      *
      * Always ensure you have filters to avoid unexpected field hits.
      */
-    public static Field findField(Class<?> startClass, String name) throws NoSuchFieldException {
-        Class<?> current = startClass;
-        while (current != null) {
-            try {
-                Field field = current.getDeclaredField(name);
-                field.setAccessible(true);
-                return field;
-            } catch (NoSuchFieldException ignored) {
-                current = current.getSuperclass();
-            }
-        }
-        throw new NoSuchFieldException(name + " in " + startClass);
+    public static java.lang.reflect.Field findField(Class<?> startClass, String name)
+            throws NoSuchFieldException {
+        return HookReflectionHelper.findField(startClass, name);
     }
 
     /*
-     * XposedHelpers-style method finder. It looks up methods recursively in current class and its parent classes.
+     * XposedHelpers-style method finder. Delegates to {@link HookReflectionHelper#findMethod}.
      *
      * Always ensure you have filters to avoid unexpected method hits.
      */
-    public static Method findMethod(Class<?> startClass, String name, Class<?>... parameterTypes)
+    public static java.lang.reflect.Method findMethod(Class<?> startClass, String name,
+                                                      Class<?>... parameterTypes)
             throws NoSuchMethodException {
-        Class<?> current = startClass;
-        while (current != null) {
-            try {
-                Method method = current.getDeclaredMethod(name, parameterTypes);
-                method.setAccessible(true);
-                return method;
-            } catch (NoSuchMethodException ignored) {
-                current = current.getSuperclass();
-            }
-        }
-        throw new NoSuchMethodException(name + " in " + startClass);
+        return HookReflectionHelper.findMethod(startClass, name, parameterTypes);
     }
 }
