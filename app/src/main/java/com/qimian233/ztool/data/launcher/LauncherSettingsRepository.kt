@@ -40,7 +40,8 @@ class LauncherSettingsRepository(
             disableDockBar = prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_BAR, false),
             noLabelMode = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, false),
             hideBluePoint = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, false),
-            cloudFolderDismiss = prefsUtils.loadBooleanSetting(KEY_CLOUD_FOLDER_DISMISS, false)
+            cloudFolderDismiss = prefsUtils.loadBooleanSetting(KEY_CLOUD_FOLDER_DISMISS, false),
+            disableRecentAppDisplay = prefsUtils.loadBooleanSetting(KEY_DISABLE_RECENT_APP_DISPLAY, false)
         )
     }
 
@@ -111,6 +112,10 @@ class LauncherSettingsRepository(
 
     fun saveCloudFolderAutoDismiss(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_CLOUD_FOLDER_DISMISS, enabled)
+    }
+
+    fun saveDisableRecentAppDisplay(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_RECENT_APP_DISPLAY,enabled)
     }
 
     fun saveDisableDockBar(enabled: Boolean): Boolean {
@@ -190,6 +195,7 @@ class LauncherSettingsRepository(
         private const val KEY_LAUNCHER_NO_LABEL_MODE = "launcher_no_label_mode"
         private const val KEY_LAUNCHER_HIDE_BLUE_POINT = "launcher_hide_blue_point"
         private const val KEY_CLOUD_FOLDER_DISMISS = "dismiss_cloud_folder_confirmation"
+        private const val KEY_DISABLE_RECENT_APP_DISPLAY = "disable_recent_apps_display"
     }
 }
 
