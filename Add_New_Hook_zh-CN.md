@@ -272,7 +272,7 @@ SettingItem.Custom(
 
 ## 字符串和文案
 
-新增 UI 文案应写入 `app/src/main/res/values/strings.xml`，页面中使用 `stringResource(R.string.xxx)`。不要在 Composable 中硬编码中文或英文文本，除非是调试临时内容。
+新增 UI 文案应写入 `app/src/main/res/values` 中的字符串资源文件，考虑 i18n ，不要只写一个 strings.xml，页面中使用 `stringResource(R.string.xxx)`。不要在 Composable 中硬编码中文或英文文本，除非是调试临时内容。
 
 推荐命名：
 
@@ -303,16 +303,16 @@ SettingItem.Custom(
 
 优先把新 Hook 加到对应作用域的现有详情页：
 
-| Hook 作用域 | 推荐页面/Repository |
-| --- | --- |
-| `com.android.systemui` | `SystemUiSettingsRoute`、状态栏、控制中心或锁屏子页面 |
-| `com.zui.launcher` | `LauncherSettingsRoute` / `LauncherSettingsRepository` |
-| `com.lenovo.safecenter` 或 DocumentsUI 相关 | `SafeCenterSettingsRoute` / `SafeCenterSettingsRepository` |
-| `com.android.settings` | `SettingsDetailRoute` / `SettingsDetailRepository` |
-| `android` 系统框架 | `FrameworkSettingsRoute` / `FrameworkSettingsRepository` |
-| 安装器 | `PackageInstallerSettingsRoute` / `PackageInstallerSettingsRepository` |
-| 游戏助手 | `GameToolSettingsRoute` / `GameToolSettingsRepository` |
-| OTA | `OtaSettingsRoute` / `OtaSettingsRepository` |
+| Hook 作用域                                 | 推荐页面/Repository                                                        |
+|------------------------------------------|------------------------------------------------------------------------|
+| `com.android.systemui`                   | `SystemUiSettingsRoute`、状态栏、控制中心或锁屏子页面                                 |
+| `com.zui.launcher`                       | `LauncherSettingsRoute` / `LauncherSettingsRepository`                 |
+| `com.lenovo.safecenter` 或 DocumentsUI 相关 | `SafeCenterSettingsRoute` / `SafeCenterSettingsRepository`             |
+| `com.android.settings`                   | `SettingsDetailRoute` / `SettingsDetailRepository`                     |
+| `android` 系统框架                           | `FrameworkSettingsRoute` / `FrameworkSettingsRepository`               |
+| 安装器                                      | `PackageInstallerSettingsRoute` / `PackageInstallerSettingsRepository` |
+| 游戏助手                                     | `GameToolSettingsRoute` / `GameToolSettingsRepository`                 |
+| OTA                                      | `OtaSettingsRoute` / `OtaSettingsRepository`                           |
 
 只有当新 Hook 有独立的复杂流程、多个子页面或已有页面无法合理承载时，再考虑新增 Route/Activity。保留 Manifest 中已有 Activity 的启动契约，不要随意改包名或类名。
 
@@ -326,7 +326,6 @@ SettingItem.Custom(
 4. 前端默认值是否和 Hook 侧默认值一致。
 5. 字符串、数值、列表格式是否和 Hook 侧解析方式一致。
 6. 目标应用重启后配置是否能生效。
-7. 日志监听工具 LogParser 中是否添加了必要的筛选逻辑。
 
 ## 常见错误
 
