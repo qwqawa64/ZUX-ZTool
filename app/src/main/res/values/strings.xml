@@ -990,4 +990,5 @@
     <string name="disable_ota_notification_and_red_dot_summary">如果没有效果就再打开一次更新页面</string>
     <string name="cloud_folder_auto_dismiss_title">自动拒绝推荐应用文件夹的用户协议</string>
     <string name="allow_relative_app_launch_title">总是允许关联 APP 启动</string>
+    <string name="disable_recent_app_display">在 Dock 栏隐藏最近使用的 APP</string>
 </resources>

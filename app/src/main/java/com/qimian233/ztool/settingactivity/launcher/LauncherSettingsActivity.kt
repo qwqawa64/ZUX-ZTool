@@ -399,7 +399,7 @@ private fun launcherSettingsSections(
     val dockBarLayoutItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(),
+                title = stringResource(R.string.disable_recent_app_display),
                 checked = state.disableRecentAppDisplay,
                 onCheckedChange = onDisableRecentAppDisplayChanged
             )

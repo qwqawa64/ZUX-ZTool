@@ -934,4 +934,5 @@
     <string name="slider_style_horizontal">Horizontal</string>
     <string name="slider_style_vertical">Vertical</string>
     <string name="slider_style_forced_by_qs_panel">Forced to horizontal by \"Expand Portrait Control Center\"</string>
+    <string name="disable_recent_app_display">Hide recent apps in dock bar</string>
 </resources>
