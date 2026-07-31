@@ -11,6 +11,7 @@ import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.PreferenceKeys
 import java.io.File
+import androidx.core.content.edit
 
 /**
  * SharedPreferences 工具类，封装 Xposed 模块配置的读写操作。
@@ -118,9 +119,9 @@ class ModulePreferencesUtils @JvmOverloads constructor(
 
     @SuppressLint("ApplySharedPref")
     fun saveStringSetting(featureName: String, value: String) {
-        modulePreferences.edit()
-            .putString(featureName, value)
-            .commit()
+        modulePreferences.edit(commit = true) {
+            putString(featureName, value)
+        }
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -129,9 +130,9 @@ class ModulePreferencesUtils @JvmOverloads constructor(
 
     @SuppressLint("ApplySharedPref")
     fun saveIntegerSetting(featureName: String, value: Int) {
-        modulePreferences.edit()
-            .putInt(featureName, value)
-            .commit()
+        modulePreferences.edit(commit = true) {
+            putInt(featureName, value)
+        }
     }
 
     fun loadIntegerSetting(featureName: String, defaultValue: Int): Int {
@@ -164,9 +165,9 @@ class ModulePreferencesUtils @JvmOverloads constructor(
 
     @SuppressLint("ApplySharedPref")
     fun saveFloatSetting(featureName: String, value: Float) {
-        modulePreferences.edit()
-            .putFloat(featureName, value)
-            .commit()
+        modulePreferences.edit(commit = true) {
+            putFloat(featureName, value)
+        }
     }
 
     fun loadFloatSetting(featureName: String, defaultValue: Float): Float {
@@ -199,7 +200,7 @@ class ModulePreferencesUtils @JvmOverloads constructor(
 
     @SuppressLint("WorldReadableFiles", "ApplySharedPref")
     fun clearAllSettings() {
-        modulePreferences.edit().clear().commit()
+        modulePreferences.edit(commit = true) { clear() }
     }
 
     @SuppressLint("WorldReadableFiles")
@@ -256,7 +257,7 @@ class ModulePreferencesUtils @JvmOverloads constructor(
                 .setPrettyPrinting()
                 .create()
             gson.toJson(getAllSettings())
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -283,7 +284,7 @@ class ModulePreferencesUtils @JvmOverloads constructor(
                 val cleanKey = key.replace("module_enabled_", "")
                 Log.d(
                     TAG, "Processing key: $cleanKey, value: $value, type: " +
-                            value?.javaClass?.simpleName
+                            value.javaClass.simpleName
                 )
                 when {
                     PreferenceKeys.isFloatKey(cleanKey) -> {
@@ -333,7 +334,7 @@ class ModulePreferencesUtils @JvmOverloads constructor(
                         Log.d(TAG, "Saving double precision FP key: $cleanKey")
                         saveFloatSetting(cleanKey, value.toFloat())
                     }
-                    value != null -> {
+                    else -> {
                         Log.d(TAG, "Saving unknown type key (as string): $cleanKey")
                         saveStringSetting(cleanKey, value.toString())
                     }
