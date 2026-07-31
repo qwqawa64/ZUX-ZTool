@@ -1,74 +1,142 @@
 name: Android CI
 
 on:
-  workflow_dispatch:
-  push:
-    tags:
-      - "**"
+  schedule:
+    - cron: '0 0 * * *'          # 每天 UTC 0 点（北京时间 8 点）
+  workflow_dispatch:              # 手动触发（总是构建）
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master" ]        # PR 触发 Debug 构建
+
+# 为 workflow run 设置友好的标题
+run-name: ${{ github.event_name == 'schedule' && 'Nightly' || github.event_name == 'workflow_dispatch' && 'Manual' || 'PR' }} build #${{ github.run_number }}
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # 需要完整历史以获取提交信息
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v5
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      # ---- 获取当前 commit 信息 ----
+      - name: Get current commit info
+        id: commit-info
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "subject=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build debug with Gradle
-      run: ./gradlew assembleDebug
+      # ---- 对于 schedule 事件，尝试恢复上次构建的 SHA ----
+      - name: Restore previous build commit SHA (only for schedule)
+        if: github.event_name == 'schedule'
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .last-build-sha
+          key: nightly-commit-sha-master
 
-    - name: Upload debug APK
-      uses: actions/upload-artifact@v7
-      with:
-        name: ZTool-debug-apk
-        path: |
-          app/build/outputs/apk/debug/*.apk
-          app/build/outputs/apk/debug/output-metadata.json
-        if-no-files-found: error
+      # ---- 决定是否要构建 ----
+      - name: Determine if build is needed
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "Event ${{ github.event_name }} → building."
+          elif [[ "${{ github.event_name }}" == "schedule" ]]; then
+            if [[ -f .last-build-sha ]]; then
+              last_sha=$(cat .last-build-sha)
+              current_sha="${{ steps.commit-info.outputs.sha }}"
+              if [[ "$last_sha" == "$current_sha" ]]; then
+                echo "should_build=false" >> $GITHUB_OUTPUT
+                echo "No new commits since last nightly, skipping build."
+              else
+                echo "should_build=true" >> $GITHUB_OUTPUT
+                echo "New commits detected, building."
+              fi
+            else
+              echo "should_build=true" >> $GITHUB_OUTPUT
+              echo "No previous build SHA found, building."
+            fi
+          else
+            # 其他事件（理论上不会发生）均构建
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Prepare release keystore
-      if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/')
-      env:
-        ZTOOL_RELEASE_KEYSTORE_BASE64: ${{ secrets.ZTOOL_RELEASE_KEYSTORE_BASE64 }}
-        ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
-        ZTOOL_RELEASE_KEY_ALIAS: ${{ secrets.ZTOOL_RELEASE_KEY_ALIAS }}
-        ZTOOL_RELEASE_KEY_PASSWORD: ${{ secrets.ZTOOL_RELEASE_KEY_PASSWORD }}
-      run: |
-        test -n "$ZTOOL_RELEASE_KEYSTORE_BASE64"
-        test -n "$ZTOOL_RELEASE_STORE_PASSWORD"
-        test -n "$ZTOOL_RELEASE_KEY_ALIAS"
-        test -n "$ZTOOL_RELEASE_KEY_PASSWORD"
-        printf '%s' "$ZTOOL_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ztool-release.jks"
-        chmod 600 "$RUNNER_TEMP/ztool-release.jks"
+      # ---- 只有在需要时才执行构建 ----
+      # Debug 构建（PR 总是构建，其他事件则根据 should_build）
+      - name: Build debug APK
+        if: github.event_name == 'pull_request' || (github.event_name != 'pull_request' && steps.check.outputs.should_build == 'true')
+        run: ./gradlew assembleDebug
 
-    - name: Build signed release with Gradle
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-      env:
-        ZTOOL_RELEASE_STORE_FILE: ${{ runner.temp }}/ztool-release.jks
-        ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
-        ZTOOL_RELEASE_KEY_ALIAS: ${{ secrets.ZTOOL_RELEASE_KEY_ALIAS }}
-        ZTOOL_RELEASE_KEY_PASSWORD: ${{ secrets.ZTOOL_RELEASE_KEY_PASSWORD }}
-      run: ./gradlew assembleRelease
+      - name: Upload debug APK
+        if: github.event_name == 'pull_request' || (github.event_name != 'pull_request' && steps.check.outputs.should_build == 'true')
+        uses: actions/upload-artifact@v7
+        with:
+          name: ZTool-debug-apk-${{ steps.commit-info.outputs.sha }}
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/debug/output-metadata.json
+          if-no-files-found: error
 
-    - name: Upload signed release APK
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-      uses: actions/upload-artifact@v7
-      with:
-        name: ZTool-release-signed-apk
-        path: |
-          app/build/outputs/apk/release/*.apk
-          app/build/outputs/apk/release/output-metadata.json
-        if-no-files-found: error
+      # ---- Release 构建（仅在 schedule 或 workflow_dispatch 且需要构建时） ----
+      - name: Prepare release keystore
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check.outputs.should_build == 'true'
+        env:
+          ZTOOL_RELEASE_KEYSTORE_BASE64: ${{ secrets.ZTOOL_RELEASE_KEYSTORE_BASE64 }}
+          ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
+          ZTOOL_RELEASE_KEY_ALIAS: ${{ secrets.ZTOOL_RELEASE_KEY_ALIAS }}
+          ZTOOL_RELEASE_KEY_PASSWORD: ${{ secrets.ZTOOL_RELEASE_KEY_PASSWORD }}
+        run: |
+          test -n "$ZTOOL_RELEASE_KEYSTORE_BASE64"
+          test -n "$ZTOOL_RELEASE_STORE_PASSWORD"
+          test -n "$ZTOOL_RELEASE_KEY_ALIAS"
+          test -n "$ZTOOL_RELEASE_KEY_PASSWORD"
+          printf '%s' "$ZTOOL_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ztool-release.jks"
+          chmod 600 "$RUNNER_TEMP/ztool-release.jks"
+
+      - name: Build signed release APK
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check.outputs.should_build == 'true'
+        env:
+          ZTOOL_RELEASE_STORE_FILE: ${{ runner.temp }}/ztool-release.jks
+          ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
+          ZTOOL_RELEASE_KEY_ALIAS: ${{ secrets.ZTOOL_RELEASE_KEY_ALIAS }}
+          ZTOOL_RELEASE_KEY_PASSWORD: ${{ secrets.ZTOOL_RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Upload signed release APK
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check.outputs.should_build == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ZTool-release-signed-apk-${{ steps.commit-info.outputs.sha }}
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/release/output-metadata.json
+          if-no-files-found: error
+
+      # ---- 保存本次 commit SHA 供下次 nightly 使用（仅当构建成功） ----
+      - name: Save current commit SHA for future nightly
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check.outputs.should_build == 'true'
+        run: |
+          echo "${{ steps.commit-info.outputs.sha }}" > .last-build-sha
+
+      - name: Save cache
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check.outputs.should_build == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .last-build-sha
+          key: nightly-commit-sha-master
+
+      # ---- 生成 Job Summary，展示提交信息 ----
+      - name: Generate job summary
+        if: always()
+        run: |
+          echo "## Build Details" >> $GITHUB_STEP_SUMMARY
+          echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit SHA:** \`${{ steps.commit-info.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit Message:** ${{ steps.commit-info.outputs.subject }}" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.check.outputs.should_build }}" == "true" ]]; then
+            echo "**Status:** ✅ Built" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ⏭️ Skipped (no new commits)" >> $GITHUB_STEP_SUMMARY
+          fi
