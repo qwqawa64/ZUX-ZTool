@@ -16,8 +16,10 @@ import io.github.libxposed.api.XposedModuleInterface;
  * 所有 Hook 模块继承此类。通过 {@link #xposed} 字段访问 libxposed API：
  * {@code hook()}, {@code log()}, {@code getRemotePreferences()} 等。
  * <p>
- * 日志关注点已拆分至 {@link ModuleLog}，反射辅助已拆分至 {@link HookReflectionHelper}。
- * 本类保留向后兼容的委托方法。
+ * 日志关注点已拆分至 {@link ModuleLog}（Log4j 风格六级别 API），
+ * 反射辅助已拆分至 {@link HookReflectionHelper}。
+ * 本类保留向后兼容的 {@link #log(String)} / {@link #logError(String, Throwable)}
+ * 委托方法（已 {@code @Deprecated}，新代码请用 {@link #logger}）。
  * </p>
  */
 public abstract class BaseHookModule {
@@ -33,6 +35,15 @@ public abstract class BaseHookModule {
 
     protected XposedInterface xposed;
 
+    /**
+     * Log4j 风格日志器（Kotlin 实现，六级别：trace/debug/info/warn/error/fatal）。
+     * <p>
+     * 在 {@link #setXposedInterface} 中初始化。
+     * 用法示例：{@code logger.info("Hook installed"); logger.debug("detail: " + data);}
+     * </p>
+     */
+    protected ModuleLog logger;
+
     // ── abstract ──────────────────────────────────────────────
 
     public abstract String getModuleName();
@@ -47,6 +58,7 @@ public abstract class BaseHookModule {
 
     public void setXposedInterface(XposedInterface xposed) {
         this.xposed = xposed;
+        this.logger = new ModuleLog(getModuleName(), xposed);
     }
 
     // ── package matching ───────────────────────────────────────
@@ -131,14 +143,26 @@ public abstract class BaseHookModule {
         }
     }
 
-    // ── logging (delegates to ModuleLog) ───────────────────────
+    // ── logging ────────────────────────────────────────────────
 
+    /**
+     * @deprecated 请使用 {@link #logger}{@code .info(message)} 代替。
+     */
+    @Deprecated
     protected void log(String message) {
-        ModuleLog.log(this.xposed, getModuleName(), message);
+        if (logger != null) {
+            logger.info(message);
+        }
     }
 
+    /**
+     * @deprecated 请使用 {@link #logger}{@code .error(message, t)} 代替。
+     */
+    @Deprecated
     protected void logError(String message, Throwable t) {
-        ModuleLog.logError(this.xposed, getModuleName(), message, t);
+        if (logger != null) {
+            logger.error(message, t);
+        }
     }
 
     // ── helpers (delegates to HookReflectionHelper) ─────────────
@@ -163,9 +187,9 @@ public abstract class BaseHookModule {
                 : this.xposed.hook(target).intercept(hooker);
     }
 
-    /*
+    /**
      * XposedHelpers-style field finder. Delegates to {@link HookReflectionHelper#findField}.
-     *
+     * <p>
      * Always ensure you have filters to avoid unexpected field hits.
      */
     public static java.lang.reflect.Field findField(Class<?> startClass, String name)
@@ -173,9 +197,9 @@ public abstract class BaseHookModule {
         return HookReflectionHelper.findField(startClass, name);
     }
 
-    /*
+    /**
      * XposedHelpers-style method finder. Delegates to {@link HookReflectionHelper#findMethod}.
-     *
+     * <p>
      * Always ensure you have filters to avoid unexpected method hits.
      */
     public static java.lang.reflect.Method findMethod(Class<?> startClass, String name,
