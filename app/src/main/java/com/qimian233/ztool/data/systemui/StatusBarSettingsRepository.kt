@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter
 import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
 import java.util.Date
@@ -148,24 +149,24 @@ class StatusBarSettingsRepository(
 
     companion object {
         private const val TAG = "StatusBarSettingsRepository"
-        private const val KEY_NOTIFY_NUM_SIZE = "notify_num_size"
-        private const val KEY_DISPLAY_SECONDS = "StatusBarDisplay_Seconds"
-        private const val KEY_CUSTOM_CLOCK = "Custom_StatusBarClock"
-        private const val KEY_CUSTOM_CLOCK_FORMAT = "Custom_StatusBarClockFormat"
-        private const val KEY_CLOCK_TEXT_SIZE = "Custom_StatusBarClockTextSize"
-        private const val KEY_CLOCK_TEXT_SIZE_ENABLED = "Custom_StatusBarClockTextSizeEnabled"
-        private const val KEY_CLOCK_LETTER_SPACING = "Custom_StatusBarClockLetterSpacing"
-        private const val KEY_CLOCK_LETTER_SPACING_ENABLED = "Custom_StatusBarClockLetterSpacingEnabled"
-        private const val KEY_CLOCK_TEXT_COLOR = "Custom_StatusBarClockTextColor"
-        private const val KEY_CLOCK_TEXT_COLOR_ENABLED = "Custom_StatusBarClockTextColorEnabled"
-        private const val KEY_CLOCK_TEXT_BOLD = "Custom_StatusBarClockTextBold"
-        private const val KEY_NOTIFICATION_ICON_LIMIT = "notification_icon_limit"
-        private const val KEY_NATIVE_NOTIFICATION_ICON = "NativeNotificationIcon"
-        private const val KEY_NETWORK_SPEED_SIZE = "systemui_network_speed_size"
-        private const val KEY_NETWORK_SPEED_DOUBLE_LAYER = "systemui_network_speed_doublelayer"
-        private const val KEY_NETWORK_SPEED_REFRESH_ENABLED = "custom_network_speed_refresh_interval"
-        private const val KEY_NETWORK_SPEED_REFRESH_INTERVAL = "systemui_network_speed_refresh_interval"
+        private val KEY_NOTIFY_NUM_SIZE = PreferenceKeys.NOTIFY_NUM_SIZE.name
+        private val KEY_DISPLAY_SECONDS = PreferenceKeys.STATUSBAR_DISPLAY_SECONDS.name
+        private val KEY_CUSTOM_CLOCK = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK.name
+        private val KEY_CUSTOM_CLOCK_FORMAT = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_FORMAT.name
+        private val KEY_CLOCK_TEXT_SIZE = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE.name
+        private val KEY_CLOCK_TEXT_SIZE_ENABLED = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE_ENABLED.name
+        private val KEY_CLOCK_LETTER_SPACING = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING.name
+        private val KEY_CLOCK_LETTER_SPACING_ENABLED = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING_ENABLED.name
+        private val KEY_CLOCK_TEXT_COLOR = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR.name
+        private val KEY_CLOCK_TEXT_COLOR_ENABLED = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR_ENABLED.name
+        private val KEY_CLOCK_TEXT_BOLD = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD.name
+        private val KEY_NOTIFICATION_ICON_LIMIT = PreferenceKeys.NOTIFICATION_ICON_LIMIT.name
+        private val KEY_NATIVE_NOTIFICATION_ICON = PreferenceKeys.NATIVE_NOTIFICATION_ICON.name
+        private val KEY_NETWORK_SPEED_SIZE = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_SIZE.name
+        private val KEY_NETWORK_SPEED_DOUBLE_LAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
+        private val KEY_NETWORK_SPEED_REFRESH_ENABLED = PreferenceKeys.CUSTOM_NETWORK_SPEED_REFRESH_INTERVAL.name
+        private val KEY_NETWORK_SPEED_REFRESH_INTERVAL = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_REFRESH_INTERVAL.name
+        private val KEY_BATTERY_EXTERNAL = PreferenceKeys.SYSTEMUI_BATTERY_PERCENTAGE.name
         private const val DEFAULT_REFRESH_INTERVAL = 3.0f
-        private const val KEY_BATTERY_EXTERNAL = "systemui_battery_percentage"
     }
 }

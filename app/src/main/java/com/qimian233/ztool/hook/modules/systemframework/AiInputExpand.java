@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import android.annotation.SuppressLint;
@@ -122,7 +123,7 @@ public class AiInputExpand extends AppHookModule {
     private String[] getPrefStringArray() {
         String value;
         try {
-            value = this.xposed.getRemotePreferences("xposed_module_config").getString("AI_INPUT_EXPAND_SIGNS", "");
+            value = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.AI_INPUT_EXPAND_SIGNS.name, "");
         } catch (Throwable t) {
             value = "";
         }

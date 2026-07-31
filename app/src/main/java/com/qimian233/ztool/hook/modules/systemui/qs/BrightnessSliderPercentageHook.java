@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -31,8 +32,6 @@ public class BrightnessSliderPercentageHook extends AppHookModule {
     private static final String BRIGHTNESS_ROOT_FIELD = "mBrightnessSliderRoot";
     private static final String BRIGHTNESS_ICON_FIELD = "mBrightnessIconMark";
     private static final int LABEL_GAP_DP = 2;
-    private static final String PREF_KEY = "brightness_slider_percentage";
-
     private static boolean PERCENTAGE_ENABLED = false;
 
     private final Map<View, View.OnLayoutChangeListener> layoutListeners = new WeakHashMap<>();
@@ -42,7 +41,7 @@ public class BrightnessSliderPercentageHook extends AppHookModule {
 
     @Override
     public String getModuleName() {
-        return PREF_KEY;
+        return PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name;
     }
 
     @Override
@@ -514,7 +513,7 @@ public class BrightnessSliderPercentageHook extends AppHookModule {
 
     private void updatePrefs() {
         try {
-            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY, false);
+            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name, false);
         } catch (Throwable t) {
             PERCENTAGE_ENABLED = false;
         }

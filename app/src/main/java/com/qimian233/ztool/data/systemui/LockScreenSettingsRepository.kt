@@ -3,6 +3,7 @@ package com.qimian233.ztool.data.systemui
 import android.content.Context
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.viewmodel.ApiTestResult
 import com.qimian233.ztool.viewmodel.LockScreenSettingsUiState
 import java.io.BufferedReader
@@ -167,13 +168,13 @@ class LockScreenSettingsRepository(
     }
 
     companion object {
-        private const val KEY_API_URL = "API_URL"
-        private const val KEY_REGULAR = "Regular"
-        private const val KEY_YIYAN = "YiYan"
-        private const val KEY_AUTO_OWNER_INFO = "auto_owner_info"
-        private const val KEY_CHARGE_WATTS = "systemui_charge_watts"
-        private const val KEY_REAL_WATTS = "systemUI_RealWatts"
-        private const val KEY_SYSTEMUI_PERMISSION_CONFIRMED = "isSystemUIPermissionConfirmed"
-        private const val KEY_CHARGE_WATTS_SELECTED_OPTION = "charge_watts_selected_option"
+        private val KEY_API_URL = PreferenceKeys.API_URL.name
+        private val KEY_REGULAR = PreferenceKeys.REGULAR.name
+        private val KEY_YIYAN = PreferenceKeys.YIYAN.name
+        private val KEY_AUTO_OWNER_INFO = PreferenceKeys.AUTO_OWNER_INFO.name
+        private val KEY_CHARGE_WATTS = PreferenceKeys.SYSTEMUI_CHARGE_WATTS.name
+        private val KEY_REAL_WATTS = PreferenceKeys.SYSTEMUI_REAL_WATTS.name
+        private val KEY_SYSTEMUI_PERMISSION_CONFIRMED = PreferenceKeys.IS_SYSTEMUI_PERMISSION_CONFIRMED.name
+        private val KEY_CHARGE_WATTS_SELECTED_OPTION = PreferenceKeys.CHARGE_WATTS_SELECTED_OPTION.name
     }
 }

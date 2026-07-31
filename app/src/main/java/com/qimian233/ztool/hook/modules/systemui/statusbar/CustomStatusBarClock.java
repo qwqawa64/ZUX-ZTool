@@ -11,6 +11,7 @@ import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter;
 
@@ -139,7 +140,7 @@ public class CustomStatusBarClock extends AppHookModule {
      */
     private String getCustomTimeFormat() {
         try {
-            String format = getCustomClock("Custom_StatusBarClockFormat");
+            String format = getCustomClock(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_FORMAT.name);
             return CustomDateFormatter.format(format, new Date());
         } catch (Exception e) {
             logger.error("Error in custom time formatting", e);
@@ -315,14 +316,14 @@ public class CustomStatusBarClock extends AppHookModule {
      * 获取字体大小配置
      */
     private float getTextSize() {
-        return getCustomClockFloat("Custom_StatusBarClockTextSize", 16.0f); // 默认16sp
+        return getCustomClockFloat(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE.name, 16.0f); // 默认16sp
     }
 
     /**
      * 获取字间距配置
      */
     private float getLetterSpacing() {
-        return getCustomClockFloat("Custom_StatusBarClockLetterSpacing", 0.1f); // 默认0.1
+        return getCustomClockFloat(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING.name, 0.1f); // 默认0.1
     }
 
     /**
@@ -336,35 +337,35 @@ public class CustomStatusBarClock extends AppHookModule {
      * 获取粗体配置
      */
     private boolean isTextBold() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextBold"); // 默认非粗体
+        return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD.name); // 默认非粗体
     }
 
     /**
      * 检查字体大小是否启用
      */
     private boolean isTextSizeEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextSizeEnabled");
+        return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE_ENABLED.name);
     }
 
     /**
      * 检查字间距是否启用
      */
     private boolean isLetterSpacingEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockLetterSpacingEnabled");
+        return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING_ENABLED.name);
     }
 
     /**
      * 检查字体颜色是否启用
      */
     private boolean isTextColorEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextColorEnabled");
+        return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR_ENABLED.name);
     }
 
     /**
      * 检查粗体是否启用
      */
     private boolean isTextBoldEnabled() {
-        return getCustomClockBoolean("Custom_StatusBarClockTextBold");
+        return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD.name);
     }
 
     /**
@@ -372,7 +373,7 @@ public class CustomStatusBarClock extends AppHookModule {
      */
     private int getCustomClockInt() {
         SharedPreferences prefs = getPrefs();
-        return prefs.getInt("Custom_StatusBarClockTextColor", -1);
+        return prefs.getInt(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR.name, -1);
     }
 
     /**

@@ -9,6 +9,7 @@ import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.widget.ProgressBar;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -191,12 +192,12 @@ public class CustomQsRoundCorner extends AppHookModule {
 
     private void updateRoundCornerPrefs() {
         try {
-            headUpTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt("head_up_round_corner_radius", 32);
+            headUpTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.HEAD_UP_ROUND_CORNER_RADIUS.name, 32);
         } catch (Throwable t) {
             headUpTileRoundCornerRadius = 32;
         }
         try {
-            normalTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt("tile_round_corner_radius", 96);
+            normalTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.TILE_ROUND_CORNER_RADIUS.name, 96);
         } catch (Throwable t) {
             normalTileRoundCornerRadius = 96;
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.GameToolSettingsUiState
 import com.qimian233.ztool.viewmodel.MistakeTouchMode
@@ -105,14 +106,14 @@ class GameToolSettingsRepository(
     }
 
     companion object {
-        private const val KEY_DISABLE_GAME_AUDIO = "disable_GameAudio"
-        private const val KEY_DISABLE_GAME_AUDIO_APP = "disable_GameAudio_app"
-        private const val KEY_DISGUISE_DEVICE = "disguise_TB322FC"
-        private const val KEY_FIX_CPU_FREQUENCY = "Fix_CpuClock"
-        private const val KEY_FIX_SOC_TEMPERATURE = "Fix_SocTemp"
-        private const val KEY_AUTO_MISTAKE_TOUCH = "auto_mistake_touch"
-        private const val KEY_MISTAKE_TOUCH_WHITE_LIST = "MistakeTouchWhiteList"
-        private const val KEY_MISTAKE_TOUCH_WHITE_LIST_GAME = "MistakeTouchWhiteListGame"
+        private val KEY_DISABLE_GAME_AUDIO = PreferenceKeys.DISABLE_GAME_AUDIO.name
+        private val KEY_DISABLE_GAME_AUDIO_APP = PreferenceKeys.DISABLE_GAME_AUDIO_APP.name
+        private val KEY_DISGUISE_DEVICE = PreferenceKeys.DISGUISE_TB322FC.name
+        private val KEY_FIX_CPU_FREQUENCY = PreferenceKeys.FIX_CPU_CLOCK.name
+        private val KEY_FIX_SOC_TEMPERATURE = PreferenceKeys.FIX_SOC_TEMP.name
+        private val KEY_AUTO_MISTAKE_TOUCH = PreferenceKeys.AUTO_MISTAKE_TOUCH.name
+        private val KEY_MISTAKE_TOUCH_WHITE_LIST = PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST.name
+        private val KEY_MISTAKE_TOUCH_WHITE_LIST_GAME = PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST_GAME.name
     }
 }
 

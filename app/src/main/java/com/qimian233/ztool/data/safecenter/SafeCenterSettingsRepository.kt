@@ -4,6 +4,7 @@ import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.SafeCenterSettingsUiState
 
@@ -46,9 +47,9 @@ class SafeCenterSettingsRepository(
 
     companion object {
         private const val TAG = "SafeCenterSettings"
-        private const val KEY_DEFAULT_ENABLE_AUTORUN = "default_enable_autorun"
-        private const val KEY_DOCUMENTS_UI_BYPASS = "documents_ui_bypass"
-        private const val KEY_DISABLE_ALL_VIRUS_SCANS = "disable_all_virus_scans"
+        private val KEY_DEFAULT_ENABLE_AUTORUN = PreferenceKeys.DEFAULT_ENABLE_AUTORUN.name
+        private val KEY_DOCUMENTS_UI_BYPASS = PreferenceKeys.DOCUMENTS_UI_BYPASS.name
+        private val KEY_DISABLE_ALL_VIRUS_SCANS = PreferenceKeys.DISABLE_ALL_VIRUS_SCANS.name
     }
 }
 

@@ -20,6 +20,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import androidx.core.content.edit
 import com.qimian233.ztool.XposedServiceBridge
+import com.qimian233.ztool.data.PreferenceKeys
 
 class HomeRepository(
     private val context: Context,
@@ -98,12 +99,12 @@ class HomeRepository(
 
     fun isAutoCheckUpdateEnabled(): Boolean {
         return ModulePreferencesUtils(context)
-            .loadBooleanSetting("auto_check_update", true)
+            .loadBooleanSetting(PreferenceKeys.AUTO_CHECK_UPDATE.name, true)
     }
 
     fun loadHomepageHint(): String? {
         val enableYiyan = ModulePreferencesUtils(context)
-            .loadBooleanSetting("enable_homepage_yiyan", true)
+            .loadBooleanSetting(PreferenceKeys.ENABLE_HOMEPAGE_YIYAN.name, true)
         if (!enableYiyan) return null
 
         val connection = URL(HOMEPAGE_HINT_URL).openConnection() as HttpURLConnection

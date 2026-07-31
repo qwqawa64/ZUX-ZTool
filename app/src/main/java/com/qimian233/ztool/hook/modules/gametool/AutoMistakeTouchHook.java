@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -17,10 +18,6 @@ public class AutoMistakeTouchHook extends AppHookModule {
 
     private static final String TARGET_PACKAGE = "com.zui.game.service";
     private static final String SETTINGS_UTIL_CLASS = "com.zui.util.SettingsValueUtilKt";
-
-    // 配置键名常量
-    private static final String KEY_MISTAKE_TOUCH_WHITELIST_ENABLED = "MistakeTouchWhiteList";
-    private static final String KEY_MISTAKE_TOUCH_WHITELIST_GAMES = "MistakeTouchWhiteListGame";
 
     // 配置工具类实例 - use getPref* methods from base class
 
@@ -252,7 +249,7 @@ public class AutoMistakeTouchHook extends AppHookModule {
      */
     private boolean isMistakeTouchWhiteListEnabled() {
         try {
-            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean(KEY_MISTAKE_TOUCH_WHITELIST_ENABLED, false);
+            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST.name, false);
         } catch (Throwable t) {
             return false;
         }
@@ -264,7 +261,7 @@ public class AutoMistakeTouchHook extends AppHookModule {
     private String[] getMistakeTouchWhiteListGames() {
         String value;
         try {
-            value = this.xposed.getRemotePreferences("xposed_module_config").getString(KEY_MISTAKE_TOUCH_WHITELIST_GAMES, "");
+            value = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST_GAME.name, "");
         } catch (Throwable t) {
             value = "";
         }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -105,7 +106,7 @@ public class CustomGridSize extends AppHookModule {
 
     private void getCustomGridSize() {
         SharedPreferences prefs = this.xposed.getRemotePreferences("xposed_module_config");
-        CUSTOM_ROWS = prefs.getInt("CustomLauncherRow", 4);
-        CUSTOM_COLUMNS = prefs.getInt("CustomLauncherColumn", 6);
+        CUSTOM_ROWS = prefs.getInt(PreferenceKeys.CUSTOM_LAUNCHER_ROW.name, 4);
+        CUSTOM_COLUMNS = prefs.getInt(PreferenceKeys.CUSTOM_LAUNCHER_COLUMN.name, 6);
     }
 }

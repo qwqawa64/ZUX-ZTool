@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsSeekBar
 import android.widget.FrameLayout
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
@@ -45,9 +46,9 @@ class QsPanelWidthHook : AppHookModule() {
 
         // 从 SharedPreferences 读取配置
         val prefs = xposed.getRemotePreferences("xposed_module_config")
-        val widthPercent = prefs.getInt("qs_panel_width_percent", DEFAULT_WIDTH_PERCENT)
+        val widthPercent = prefs.getInt(PreferenceKeys.QS_PANEL_WIDTH_PERCENT.name, DEFAULT_WIDTH_PERCENT)
             .coerceIn(0, 100)
-        val tileColumns = prefs.getInt("qs_tile_columns", DEFAULT_TILE_COLUMNS)
+        val tileColumns = prefs.getInt(PreferenceKeys.QS_TILE_COLUMNS.name, DEFAULT_TILE_COLUMNS)
             .coerceIn(0, 10)
         val targetWidthRatio = widthPercent / 100f
 

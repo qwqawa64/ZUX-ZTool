@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -385,7 +386,7 @@ public class RecentTaskMemoryViewHook extends AppHookModule {
     private String getTotalRamInfo(long availableMem) {
         boolean beautifyRamInfo;
         try {
-            beautifyRamInfo = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("beautify_ram_info", false);
+            beautifyRamInfo = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.BEAUTIFY_RAM_INFO.name, false);
         } catch (Throwable t) {
             beautifyRamInfo = false;
         }

@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.qs;
 import android.annotation.SuppressLint;
 import android.graphics.Color;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -81,32 +82,32 @@ public class CustomQsColor extends AppHookModule {
 
     private void updatePrefs() {
         try {
-            CUSTOM_QS_COLOR = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("custom_qs_color", false);
+            CUSTOM_QS_COLOR = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.CUSTOM_QS_COLOR.name, false);
         } catch (Throwable t) {
             CUSTOM_QS_COLOR = false;
         }
         try {
-            CUSTOM_LABEL_COLOR = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("custom_label_color", false);
+            CUSTOM_LABEL_COLOR = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.CUSTOM_LABEL_COLOR.name, false);
         } catch (Throwable t) {
             CUSTOM_LABEL_COLOR = false;
         }
         try {
-            CUSTOM_SECOND_LABEL_COLOR = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("custom_second_label_color", false);
+            CUSTOM_SECOND_LABEL_COLOR = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.CUSTOM_SECOND_LABEL_COLOR.name, false);
         } catch (Throwable t) {
             CUSTOM_SECOND_LABEL_COLOR = false;
         }
         try {
-            CUSTOM_QS_ACTIVE_COLOR_VAL = this.xposed.getRemotePreferences("xposed_module_config").getInt("custom_qs_active_color_val", Color.argb(0xff, 0xff, 0xff, 0xff));
+            CUSTOM_QS_ACTIVE_COLOR_VAL = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.CUSTOM_QS_ACTIVE_COLOR_VAL.name, Color.argb(0xff, 0xff, 0xff, 0xff));
         } catch (Throwable t) {
             CUSTOM_QS_ACTIVE_COLOR_VAL = Color.argb(0xff, 0xff, 0xff, 0xff);
         }
         try {
-            CUSTOM_LABEL_ACTIVE_COLOR_VAL = this.xposed.getRemotePreferences("xposed_module_config").getInt("custom_label_active_color_val", Color.argb(0xff, 0x00, 0x00, 0x00));
+            CUSTOM_LABEL_ACTIVE_COLOR_VAL = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.CUSTOM_LABEL_ACTIVE_COLOR_VAL.name, Color.argb(0xff, 0x00, 0x00, 0x00));
         } catch (Throwable t) {
             CUSTOM_LABEL_ACTIVE_COLOR_VAL = Color.argb(0xff, 0x00, 0x00, 0x00);
         }
         try {
-            CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = this.xposed.getRemotePreferences("xposed_module_config").getInt("custom_second_label_active_color_val", Color.argb(0xff, 0x00, 0x00, 0x00));
+            CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL.name, Color.argb(0xff, 0x00, 0x00, 0x00));
         } catch (Throwable t) {
             CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = Color.argb(0xff, 0x00, 0x00, 0x00);
         }

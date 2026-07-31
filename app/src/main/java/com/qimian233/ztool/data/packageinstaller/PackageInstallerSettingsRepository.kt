@@ -3,6 +3,7 @@ package com.qimian233.ztool.data.packageinstaller
 import android.content.Context
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.PackageInstallerSettingsUiState
 
@@ -62,12 +63,12 @@ class PackageInstallerSettingsRepository(
     }
 
     companion object {
-        private const val KEY_DISABLE_SCAN_APK = "disable_scanAPK"
-        private const val KEY_ALWAYS_ALLOW_PERMISSION = "Always_AllowPermission"
-        private const val KEY_SKIP_WARN_PAGE = "Skip_WarnPage"
-        private const val KEY_DISABLE_INSTALLER_AD = "disable_installerAD"
-        private const val KEY_PACKAGE_INSTALLER_STYLE_HOOK = "packageInstallerStyle_hook"
-        private const val KEY_DISABLE_DELETE_PACKAGE = "package_installer_disable_delete"
+        private val KEY_DISABLE_SCAN_APK = PreferenceKeys.DISABLE_SCAN_APK.name
+        private val KEY_ALWAYS_ALLOW_PERMISSION = PreferenceKeys.ALWAYS_ALLOW_PERMISSION.name
+        private val KEY_SKIP_WARN_PAGE = PreferenceKeys.SKIP_WARN_PAGE.name
+        private val KEY_DISABLE_INSTALLER_AD = PreferenceKeys.DISABLE_INSTALLER_AD.name
+        private val KEY_PACKAGE_INSTALLER_STYLE_HOOK = PreferenceKeys.PACKAGE_INSTALLER_STYLE_HOOK.name
+        private val KEY_DISABLE_DELETE_PACKAGE = PreferenceKeys.PACKAGE_INSTALLER_DISABLE_DELETE.name
     }
 }
 

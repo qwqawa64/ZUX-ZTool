@@ -7,6 +7,7 @@ import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.GetPCFlashFirmware
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.FirmwareResult
@@ -275,14 +276,14 @@ class OtaSettingsRepository(
         private const val OTA_INFO_FILE_PATH =
             "/data_mirror/data_ce/null/0/com.lenovo.tbengine/shared_prefs/lenovo_row_ota_package_info.xml"
 
-        private const val KEY_CUSTOM_OTA_PARAMETERS = "custom_ota_parameters"
-        private const val KEY_DISABLE_OTA_CHECK = "disable_OtaCheck"
-        private const val KEY_CUSTOM_OTA_TARGET_VERSION = "Custom_ota_target_versionName"
-        private const val KEY_CUSTOM_OTA_TARGET_DEVICE_ID = "Custom_ota_target_deviceID"
-        private const val KEY_HIDE_OTA_UPDATE_HINT = "hide_ota_update_hint"
-        private const val KEY_DISABLE_NIGHT_AUTO_INSTALL = "no_auto_ota_install"
-        private const val KEY_BLOCK_OTA_INSTALL_DIALOG = "block_ota_install_dialog"
-        private const val KEY_BLOCK_OTA_NOTIFICATION_AND_RED_DOT = "hide_ota_notifications"
+        private val KEY_CUSTOM_OTA_PARAMETERS = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
+        private val KEY_DISABLE_OTA_CHECK = PreferenceKeys.DISABLE_OTA_CHECK.name
+        private val KEY_CUSTOM_OTA_TARGET_VERSION = PreferenceKeys.CUSTOM_OTA_TARGET_VERSION_NAME.name
+        private val KEY_CUSTOM_OTA_TARGET_DEVICE_ID = PreferenceKeys.CUSTOM_OTA_TARGET_DEVICE_ID.name
+        private val KEY_HIDE_OTA_UPDATE_HINT = PreferenceKeys.HIDE_OTA_UPDATE_HINT.name
+        private val KEY_DISABLE_NIGHT_AUTO_INSTALL = PreferenceKeys.NO_AUTO_OTA_INSTALL.name
+        private val KEY_BLOCK_OTA_INSTALL_DIALOG = PreferenceKeys.BLOCK_OTA_INSTALL_DIALOG.name
+        private val KEY_BLOCK_OTA_NOTIFICATION_AND_RED_DOT = PreferenceKeys.HIDE_OTA_NOTIFICATIONS.name
     }
 }
 

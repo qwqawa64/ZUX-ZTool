@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.content.res.TypedArray
 import android.graphics.Rect
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
@@ -31,8 +32,8 @@ class SliderStyleHook: AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam?) {
 
         val prefs = xposed.getRemotePreferences("xposed_module_config")
-        val fieldValue: Int = if (prefs.getBoolean("customize_slider_style_value", false)) VERTICAL_TYPE else HORIZONTAL_TYPE
-        val rectValue: Int = if (prefs.getBoolean("customize_slider_style_value", false)) SMALL_SCREEN_RECT_VAL else LARGE_SCREEN_RECT_VAL
+        val fieldValue: Int = if (prefs.getBoolean(PreferenceKeys.CUSTOMIZE_SLIDER_STYLE_VALUE.name, false)) VERTICAL_TYPE else HORIZONTAL_TYPE
+        val rectValue: Int = if (prefs.getBoolean(PreferenceKeys.CUSTOMIZE_SLIDER_STYLE_VALUE.name, false)) SMALL_SCREEN_RECT_VAL else LARGE_SCREEN_RECT_VAL
 
         val toggleSliderClassName = "com.android.systemui.settings.ToggleSliderView"
         val getIntegerMethod = TypedArray::class.java.getDeclaredMethod(

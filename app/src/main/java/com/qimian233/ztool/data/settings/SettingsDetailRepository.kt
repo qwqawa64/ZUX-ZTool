@@ -8,6 +8,7 @@ import android.provider.OpenableColumns
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager
 import com.qimian233.ztool.utils.MagiskModuleManager
@@ -218,12 +219,12 @@ class SettingsDetailRepository(
         const val RESULT_SUCCESS = "success"
 
         private const val PREF_MODULE_SETTINGS = "module_settings"
-        private const val KEY_REMOVE_BLACKLIST = "remove_blacklist"
+        private val KEY_REMOVE_BLACKLIST = PreferenceKeys.REMOVE_BLACKLIST.name
         private const val KEY_FLASHED_CONFIGS = "flashed_configs"
-        private const val KEY_SPLIT_SCREEN_MANDATORY = "Split_Screen_mandatory"
-        private const val KEY_ALLOW_DISPLAY_DOLBY = "allow_display_dolby"
-        private const val KEY_PERMISSION_CONTROLLER_HOOK = "PermissionControllerHook"
-        private const val KEY_APP_DETAILS = "app_details"
+        private val KEY_SPLIT_SCREEN_MANDATORY = PreferenceKeys.SPLIT_SCREEN_MANDATORY.name
+        private val KEY_ALLOW_DISPLAY_DOLBY = PreferenceKeys.ALLOW_DISPLAY_DOLBY.name
+        private val KEY_PERMISSION_CONTROLLER_HOOK = PreferenceKeys.PERMISSION_CONTROLLER_HOOK.name
+        private val KEY_APP_DETAILS = PreferenceKeys.APP_DETAILS.name
     }
 }
 

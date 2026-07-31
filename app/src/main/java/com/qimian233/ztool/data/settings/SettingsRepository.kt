@@ -8,6 +8,7 @@ import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette
@@ -152,10 +153,10 @@ class SettingsRepository(
 
     companion object {
         private const val TAG = "SettingsRepository"
-        private const val KEY_DETAILED_LOGGING = "isDetailedLogging"
-        private const val KEY_HOMEPAGE_YIYAN = "enable_homepage_yiyan"
-        private const val KEY_DISPLAY_ENTRY_IN_SETTINGS = "ztool_settings_entry"
-        private const val KEY_AUTO_CHECK_UPDATE = "auto_check_update"
+        private val KEY_DETAILED_LOGGING = PreferenceKeys.IS_DETAILED_LOGGING.name
+        private val KEY_HOMEPAGE_YIYAN = PreferenceKeys.ENABLE_HOMEPAGE_YIYAN.name
+        private val KEY_DISPLAY_ENTRY_IN_SETTINGS = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
+        private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name
     }
 
     private fun getVersionName(): String {

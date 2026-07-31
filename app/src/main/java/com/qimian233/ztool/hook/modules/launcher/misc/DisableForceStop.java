@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
@@ -29,9 +30,6 @@ public class DisableForceStop extends AppHookModule {
 
     // 白名单应用包名集合
     private String[] WHITE_LIST;
-    private static final String KEY_FORCE_STOP_WHITELIST_ENABLE = "ForceStopWhiteListEnable";
-    private static final String KEY_FORCE_STOP_WHITELIST = "ForceStopWhiteList";
-
     public DisableForceStop() {}
 
     @Override
@@ -87,7 +85,7 @@ public class DisableForceStop extends AppHookModule {
     // 检查是否启用白名单保护
     private boolean isWhiteListEnabled() {
         try {
-            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean(KEY_FORCE_STOP_WHITELIST_ENABLE, false);
+            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.FORCE_STOP_WHITE_LIST_ENABLE.name, false);
         } catch (Throwable t) {
             return false;
         }
@@ -97,7 +95,7 @@ public class DisableForceStop extends AppHookModule {
     private String[] getWhiteListPackages() {
         String value;
         try {
-            value = this.xposed.getRemotePreferences("xposed_module_config").getString(KEY_FORCE_STOP_WHITELIST, "");
+            value = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.FORCE_STOP_WHITE_LIST.name, "");
         } catch (Throwable t) {
             value = "";
         }

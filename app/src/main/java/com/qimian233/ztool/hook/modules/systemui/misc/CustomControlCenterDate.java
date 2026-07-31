@@ -11,6 +11,7 @@ import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -353,21 +354,21 @@ public class CustomControlCenterDate extends AppHookModule {
      * 从SharedPreferences获取配置值的方法
      */
     private String getCustomDateSetting() {
-        return getPrefs().getString("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE");
+        return getPrefs().getString(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_FORMAT.name, "yyyy年MM月dd日 EEEE");
     }
 
     /**
      * 获取字体大小配置
      */
     private float getTextSize() {
-        return getCustomDateFloat("Custom_ControlCenterDateTextSize", 16.0f);
+        return getCustomDateFloat(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE.name, 16.0f);
     }
 
     /**
      * 获取字间距配置
      */
     private float getLetterSpacing() {
-        return getCustomDateFloat("Custom_ControlCenterDateLetterSpacing", 0.1f);
+        return getCustomDateFloat(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING.name, 0.1f);
     }
 
     /**
@@ -381,42 +382,42 @@ public class CustomControlCenterDate extends AppHookModule {
      * 获取粗体配置
      */
     private boolean isTextBold() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextBold");
+        return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_BOLD.name);
     }
 
     /**
      * 检查字体大小是否启用
      */
     private boolean isTextSizeEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextSizeEnabled");
+        return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE_ENABLED.name);
     }
 
     /**
      * 检查字间距是否启用
      */
     private boolean isLetterSpacingEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateLetterSpacingEnabled");
+        return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING_ENABLED.name);
     }
 
     /**
      * 检查字体颜色是否启用
      */
     private boolean isTextColorEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextColorEnabled");
+        return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR_ENABLED.name);
     }
 
     /**
      * 检查粗体是否启用
      */
     private boolean isTextBoldEnabled() {
-        return getCustomDateBoolean("Custom_ControlCenterDateTextBold");
+        return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_BOLD.name);
     }
 
     /**
      * 辅助方法：读取整型配置
      */
     private int getCustomDateInt() {
-        return getPrefs().getInt("Custom_ControlCenterDateTextColor", -1);
+        return getPrefs().getInt(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR.name, -1);
     }
 
     /**

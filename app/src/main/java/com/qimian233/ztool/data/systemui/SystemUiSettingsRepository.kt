@@ -5,6 +5,7 @@ import android.net.Uri
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 
@@ -124,12 +125,12 @@ class SystemUiSettingsRepository(
     }
 
     companion object {
-        private const val KEY_FORCE_NATIVE_AOD = "ForceNativeAOD"
-        private const val KEY_FORCE_LENOVO_AOD = "ForceLenovoAOD"
-        private const val KEY_NO_CHARGE_ANIMATION = "No_ChargeAnimation"
-        private const val KEY_CHARGE_ANIMATION_FIX = "charge_animation_fix"
-        private const val KEY_CUSTOM_CHARGE_ANIMATION = "custom_charge_animation"
-        private const val KEY_GUEST_MODE_CONTROLLER = "guest_mode_controller"
+        private val KEY_FORCE_NATIVE_AOD = PreferenceKeys.FORCE_NATIVE_AOD.name
+        private val KEY_FORCE_LENOVO_AOD = PreferenceKeys.FORCE_LENOVO_AOD.name
+        private val KEY_NO_CHARGE_ANIMATION = PreferenceKeys.NO_CHARGE_ANIMATION.name
+        private val KEY_CHARGE_ANIMATION_FIX = PreferenceKeys.CHARGE_ANIMATION_FIX.name
+        private val KEY_CUSTOM_CHARGE_ANIMATION = PreferenceKeys.CUSTOM_CHARGE_ANIMATION.name
+        private val KEY_GUEST_MODE_CONTROLLER = PreferenceKeys.GUEST_MODE_CONTROLLER.name
         private const val CUSTOM_VIDEO_DIR = "/sdcard/Download/ZTool"
     }
 }

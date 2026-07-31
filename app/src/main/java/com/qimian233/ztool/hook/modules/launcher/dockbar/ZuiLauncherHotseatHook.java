@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.launcher.dockbar;
 
 import android.annotation.SuppressLint;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
@@ -48,7 +49,7 @@ public class ZuiLauncherHotseatHook extends AppHookModule {
         // 避让逻辑做到 Hook 层，repository 保持干净
         boolean disableDockBar;
         try {
-            disableDockBar = this.xposed.getRemotePreferences("xposed_module_config").getBoolean("disable_dock_bar", false);
+            disableDockBar = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.DISABLE_DOCK_BAR.name, false);
         } catch (Throwable t) {
             disableDockBar = false;
         }

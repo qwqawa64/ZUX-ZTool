@@ -4,6 +4,7 @@ import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.MobileDesktopSettingsUiState
 
@@ -46,9 +47,9 @@ class MobileDesktopSettingsRepository(
 
     companion object {
         private const val TAG = "MobileDesktopSettings"
-        private const val KEY_SKIP_EXPOSE_WARN = "bypass_share_warning"
-        private const val KEY_AUTO_ACCEPT_FILE_TRANSFER = "auto_accept_file_transfer"
-        private const val KEY_DISABLE_NEARBY_SHARE_AUTO_SHUTDOWN = "disable_nearby_share_countdown"
+        private val KEY_SKIP_EXPOSE_WARN = PreferenceKeys.BYPASS_SHARE_WARNING.name
+        private val KEY_AUTO_ACCEPT_FILE_TRANSFER = PreferenceKeys.AUTO_ACCEPT_FILE_TRANSFER.name
+        private val KEY_DISABLE_NEARBY_SHARE_AUTO_SHUTDOWN = PreferenceKeys.DISABLE_NEARBY_SHARE_COUNTDOWN.name
     }
 }
 

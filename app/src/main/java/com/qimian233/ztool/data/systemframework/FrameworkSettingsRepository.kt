@@ -3,6 +3,7 @@ package com.qimian233.ztool.data.systemframework
 import android.content.Context
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 
 class FrameworkSettingsRepository(
@@ -102,19 +103,19 @@ class FrameworkSettingsRepository(
     }
 
     companion object {
-        private const val KEY_KEEP_ROTATION = "keep_rotation"
-        private const val KEY_ALLOW_GET_PACKAGES = "allow_get_packages"
-        private const val KEY_DISABLE_FLAG_SECURE = "disable_flag_secure"
-        private const val KEY_AI_INPUT_EXPAND = "ai_input_expand"
-        private const val KEY_AI_INPUT_EXPAND_SIGNS = "AI_INPUT_EXPAND_SIGNS"
-        private const val KEY_FORCE_ON_OFF_ANIMATION = "force_screen_on_off_animation"
-        private const val KEY_SCREEN_ON_OFF_ANIMATION_DURATION = "screen_on_off_animation_ms"
+        private val KEY_KEEP_ROTATION = PreferenceKeys.KEEP_ROTATION.name
+        private val KEY_ALLOW_GET_PACKAGES = PreferenceKeys.ALLOW_GET_PACKAGES.name
+        private val KEY_DISABLE_FLAG_SECURE = PreferenceKeys.DISABLE_FLAG_SECURE.name
+        private val KEY_AI_INPUT_EXPAND = PreferenceKeys.AI_INPUT_EXPAND.name
+        private val KEY_AI_INPUT_EXPAND_SIGNS = PreferenceKeys.AI_INPUT_EXPAND_SIGNS.name
+        private val KEY_FORCE_ON_OFF_ANIMATION = PreferenceKeys.FORCE_SCREEN_ON_OFF_ANIMATION.name
+        private val KEY_SCREEN_ON_OFF_ANIMATION_DURATION = PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS.name
         private const val SCREEN_ON_OFF_ANIMATION_MIN_MS = 0
         private const val SCREEN_ON_OFF_ANIMATION_MAX_MS = 1000
         private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
-        private const val NO_PASSWORD_PER_24H = "NoMorePasswordPer24H"
-        private const val ALLOW_UNTRUSTED_TOUCH = "allow_untrusted_touch"
-        private const val ALLOW_RELATIVE_APP_LAUNCH = "allow_relative_app_launch"
+        private val NO_PASSWORD_PER_24H = PreferenceKeys.NO_MORE_PASSWORD_PER_24H.name
+        private val ALLOW_UNTRUSTED_TOUCH = PreferenceKeys.ALLOW_UNTRUSTED_TOUCH.name
+        private val ALLOW_RELATIVE_APP_LAUNCH = PreferenceKeys.ALLOW_RELATIVE_APP_LAUNCH.name
     }
 }
 

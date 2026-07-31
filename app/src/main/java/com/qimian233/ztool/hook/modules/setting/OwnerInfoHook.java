@@ -12,6 +12,7 @@ import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -251,7 +252,7 @@ public class OwnerInfoHook extends BaseHookModule {
         // 启动新线程获取API数据，避免阻塞UI线程
         new Thread(() -> {
             try {
-                API_URL = getString("API_URL");
+                API_URL = getString(PreferenceKeys.API_URL.name);
                 // 处理可能的URL协议保存问题，这里添加补全协议的逻辑
                 if (API_URL != null && !API_URL.isEmpty()) {
                     if (!API_URL.startsWith("http://") && !API_URL.startsWith("https://") &&
@@ -330,7 +331,7 @@ public class OwnerInfoHook extends BaseHookModule {
     private String parseContentFromJson(String jsonString) {
         try {
             // 使用正则表达式匹配content字段，处理转义字符
-            String Regular = getString("Regular");
+            String Regular = getString(PreferenceKeys.REGULAR.name);
             // 增加对表达式为空的保护：如果正则表达式为null或空，则跳过匹配
             if (Regular == null || Regular.isEmpty()) {
                 return jsonString;

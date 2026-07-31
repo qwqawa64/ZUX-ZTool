@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
@@ -128,7 +129,7 @@ class LauncherSettingsRepository(
                 KEY_ZUI_LAUNCHER_HOTSEAT,
                 prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, false)
             )
-            prefsUtils.getModulePreferences().edit(commit = true) {
+            prefsUtils.modulePreferences.edit(commit = true) {
                 remove(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP)
             }
         }
@@ -177,25 +178,25 @@ class LauncherSettingsRepository(
         private const val DEFAULT_ROW = 4
         private const val DEFAULT_COLUMN = 6
 
-        private const val KEY_DISABLE_FORCE_STOP = "disable_force_stop"
-        private const val KEY_FORCE_STOP_WHITE_LIST_ENABLE = "ForceStopWhiteListEnable"
-        private const val KEY_FORCE_STOP_WHITE_LIST = "ForceStopWhiteList"
-        private const val KEY_ZUI_LAUNCHER_HOTSEAT = "zui_launcher_hotseat"
-        private const val KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP = "zui_launcher_hotseat_backup"
-        private const val KEY_CUSTOM_GRID_SIZE = "CustomGridSize"
-        private const val KEY_CUSTOM_LAUNCHER_ROW = "CustomLauncherRow"
-        private const val KEY_CUSTOM_LAUNCHER_COLUMN = "CustomLauncherColumn"
-        private const val KEY_CLEAN_GLOBAL_SEARCH = "clean_global_search"
-        private const val KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX = "remove_search_recommend"
-        private const val KEY_REMOVE_HOT_WORD_VIEW = "remove_hot_word_view"
-        private const val KEY_SHOW_RAM_INFO = "launcher_recent_task_memory_view"
-        private const val KEY_BEAUTIFY_RAM_INFO = "beautify_ram_info"
-        private const val KEY_DISABLE_DOCK_BAR = "disable_dock_bar"
-        private const val KEY_DISABLE_DOCK_WARNING_CONFIRMED = "disable_dock_warning_confirmed"
-        private const val KEY_LAUNCHER_NO_LABEL_MODE = "launcher_no_label_mode"
-        private const val KEY_LAUNCHER_HIDE_BLUE_POINT = "launcher_hide_blue_point"
-        private const val KEY_CLOUD_FOLDER_DISMISS = "dismiss_cloud_folder_confirmation"
-        private const val KEY_DISABLE_RECENT_APP_DISPLAY = "disable_recent_apps_display"
+        private val KEY_DISABLE_FORCE_STOP = PreferenceKeys.DISABLE_FORCE_STOP.name
+        private val KEY_FORCE_STOP_WHITE_LIST_ENABLE = PreferenceKeys.FORCE_STOP_WHITE_LIST_ENABLE.name
+        private val KEY_FORCE_STOP_WHITE_LIST = PreferenceKeys.FORCE_STOP_WHITE_LIST.name
+        private val KEY_ZUI_LAUNCHER_HOTSEAT = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
+        private val KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT_BACKUP.name
+        private val KEY_CUSTOM_GRID_SIZE = PreferenceKeys.CUSTOM_GRID_SIZE.name
+        private val KEY_CUSTOM_LAUNCHER_ROW = PreferenceKeys.CUSTOM_LAUNCHER_ROW.name
+        private val KEY_CUSTOM_LAUNCHER_COLUMN = PreferenceKeys.CUSTOM_LAUNCHER_COLUMN.name
+        private val KEY_CLEAN_GLOBAL_SEARCH = PreferenceKeys.CLEAN_GLOBAL_SEARCH.name
+        private val KEY_REMOVE_HOT_WORD_IN_SEARCH_BOX = PreferenceKeys.REMOVE_SEARCH_RECOMMEND.name
+        private val KEY_REMOVE_HOT_WORD_VIEW = PreferenceKeys.REMOVE_HOT_WORD_VIEW.name
+        private val KEY_SHOW_RAM_INFO = PreferenceKeys.LAUNCHER_RECENT_TASK_MEMORY_VIEW.name
+        private val KEY_BEAUTIFY_RAM_INFO = PreferenceKeys.BEAUTIFY_RAM_INFO.name
+        private val KEY_DISABLE_DOCK_BAR = PreferenceKeys.DISABLE_DOCK_BAR.name
+        private val KEY_DISABLE_DOCK_WARNING_CONFIRMED = PreferenceKeys.DISABLE_DOCK_WARNING_CONFIRMED.name
+        private val KEY_LAUNCHER_NO_LABEL_MODE = PreferenceKeys.LAUNCHER_NO_LABEL_MODE.name
+        private val KEY_LAUNCHER_HIDE_BLUE_POINT = PreferenceKeys.LAUNCHER_HIDE_BLUE_POINT.name
+        private val KEY_CLOUD_FOLDER_DISMISS = PreferenceKeys.DISMISS_CLOUD_FOLDER_CONFIRMATION.name
+        private val KEY_DISABLE_RECENT_APP_DISPLAY = PreferenceKeys.DISABLE_RECENT_APPS_DISPLAY.name
     }
 }
 

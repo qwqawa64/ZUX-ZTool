@@ -6,6 +6,7 @@ import android.os.Environment;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
@@ -19,17 +20,7 @@ import java.lang.reflect.Method;
 
 public class CustomizeAboutDeviceInfo extends AppHookModule {
     private static final String TARGET_PACKAGE = "com.android.settings";
-    private static final String PREF_KEY_MODEL_ENABLED = "about_device_info_model_enabled";
-    private static final String PREF_KEY_CPU_ENABLED = "about_device_info_cpu_enabled";
-    private static final String PREF_KEY_RAM_ENABLED = "about_device_info_ram_enabled";
-    private static final String PREF_KEY_ROM_ENABLED = "about_device_info_rom_enabled";
-    private static final String PREF_KEY_SOFTWARE_ENABLED = "about_device_info_software_enabled";
-    private static final String PREF_KEY_HEADER_ENABLED = "about_device_info_header_enabled";
-    private static final String PREF_KEY_MODEL = "about_device_info_model";
-    private static final String PREF_KEY_CPU = "about_device_info_cpu";
-    private static final String PREF_KEY_RAM = "about_device_info_ram";
-    private static final String PREF_KEY_ROM = "about_device_info_rom";
-    private static final String PREF_KEY_SOFTWARE = "about_device_info_software";
+
     private static final String DEVICE_IMAGE_PATH = "/Download/ZTool/device_info.jpg";
     private static final String HEADER_VIEW_CLASS = "com.lenovo.settings.deviceinfo.aboutphone.PadTopImgPreference";
     private static final String CPU_CLASS = "com.lenovo.settings.deviceinfo.controller.CpuInfoDisplayPreferenceController";
@@ -54,11 +45,11 @@ public class CustomizeAboutDeviceInfo extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        hookSummaryIfEnabled(classLoader, CPU_CLASS, PREF_KEY_CPU_ENABLED, PREF_KEY_CPU, "CPU");
-        hookSummaryIfEnabled(classLoader, RAM_CLASS, PREF_KEY_RAM_ENABLED, PREF_KEY_RAM, "RAM");
-        hookSummaryIfEnabled(classLoader, ROM_CLASS, PREF_KEY_ROM_ENABLED, PREF_KEY_ROM, "ROM");
-        hookSummaryIfEnabled(classLoader, MODEL_CLASS, PREF_KEY_MODEL_ENABLED, PREF_KEY_MODEL, "model");
-        hookSummaryIfEnabled(classLoader, SOFTWARE_CLASS, PREF_KEY_SOFTWARE_ENABLED, PREF_KEY_SOFTWARE, "software");
+        hookSummaryIfEnabled(classLoader, CPU_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_CPU_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_CPU.name, "CPU");
+        hookSummaryIfEnabled(classLoader, RAM_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_RAM_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_RAM.name, "RAM");
+        hookSummaryIfEnabled(classLoader, ROM_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_ROM_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_ROM.name, "ROM");
+        hookSummaryIfEnabled(classLoader, MODEL_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name, "model");
+        hookSummaryIfEnabled(classLoader, SOFTWARE_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE.name, "software");
         hookHeaderImageAndText(classLoader);
     }
 
@@ -107,7 +98,7 @@ public class CustomizeAboutDeviceInfo extends AppHookModule {
                 Object result = chain.proceed();
                 boolean headerEnabled;
                 try {
-                    headerEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY_HEADER_ENABLED, false);
+                    headerEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_HEADER_ENABLED.name, false);
                 } catch (Throwable ignored) {
                     headerEnabled = false;
                 }
@@ -135,7 +126,7 @@ public class CustomizeAboutDeviceInfo extends AppHookModule {
                 Object result = chain.proceed();
                 boolean modelEnabled;
                 try {
-                    modelEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY_MODEL_ENABLED, false);
+                    modelEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name, false);
                 } catch (Throwable ignored) {
                     modelEnabled = false;
                 }
@@ -144,7 +135,7 @@ public class CustomizeAboutDeviceInfo extends AppHookModule {
                 }
                 String model;
                 try {
-                    model = this.xposed.getRemotePreferences("xposed_module_config").getString(PREF_KEY_MODEL, "");
+                    model = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name, "");
                 } catch (Throwable ignored) {
                     model = "";
                 }

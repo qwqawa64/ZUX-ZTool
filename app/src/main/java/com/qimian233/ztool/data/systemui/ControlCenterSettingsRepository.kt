@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.util.Log
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter
 import com.qimian233.ztool.viewmodel.ControlCenterSettingsUiState
 import java.util.Date
@@ -231,37 +232,37 @@ class ControlCenterSettingsRepository(
         val DEFAULT_LABEL_ACTIVE_COLOR: Int = Color.argb(0xff, 0xff, 0xff, 0xff)
         val DEFAULT_SECOND_LABEL_ACTIVE_COLOR: Int = Color.argb(0xbf, 0xff, 0xff, 0xff)
         val DEFAULT_CONTROL_CENTER_DATE_COLOR: Int = Color.argb(0xff, 0xff, 0xff, 0xff)
-        private const val KEY_CUSTOM_DATE = "Custom_ControlCenterDate"
-        private const val KEY_DATE_FORMAT = "Custom_ControlCenterDateFormat"
-        private const val KEY_TEXT_SIZE = "Custom_ControlCenterDateTextSize"
-        private const val KEY_TEXT_SIZE_ENABLED = "Custom_ControlCenterDateTextSizeEnabled"
-        private const val KEY_LETTER_SPACING = "Custom_ControlCenterDateLetterSpacing"
-        private const val KEY_LETTER_SPACING_ENABLED = "Custom_ControlCenterDateLetterSpacingEnabled"
-        private const val KEY_TEXT_COLOR = "Custom_ControlCenterDateTextColor"
-        private const val KEY_TEXT_COLOR_ENABLED = "Custom_ControlCenterDateTextColorEnabled"
-        private const val KEY_TEXT_BOLD = "Custom_ControlCenterDateTextBold"
-        private const val KEY_QS_ROUND_CORNER = "qs_round_corner"
-        private const val KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS = "head_up_round_corner_radius"
-        private const val KEY_TILE_QS_ROUND_CORNER_RADIUS = "tile_round_corner_radius"
-        private const val KEY_CUSTOM_QS_COLOR = "custom_qs_color"
-        private const val KEY_CUSTOM_LABEL_COLOR = "custom_label_color"
-        private const val KEY_CUSTOM_SECOND_LABEL_COLOR = "custom_second_label_color"
-        private const val KEY_NO_TILE_LABELS = "control_center_no_tile_labels"
-        private const val KEY_CUSTOM_QS_ACTIVE_COLOR_VAL = "custom_qs_active_color_val"
-        private const val KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL = "custom_label_active_color_val"
-        private const val KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = "custom_second_label_active_color_val"
-        private const val KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH = "qs_color"
-        private const val KEY_NOTIFICATION_CENTER_BLUR_ENABLED = "notification_center_blur"
-        private const val KEY_NOTIFICATION_CENTER_BLUR_PERCENT = "notification_center_blur_percent"
-        private const val KEY_VOLUME_SLIDER_PERCENTAGE = "volume_slider_percentage"
-        private const val KEY_BRIGHTNESS_SLIDER_PERCENTAGE = "brightness_slider_percentage"
-        private const val KEY_EXPAND_QS_PANEL_PORTRAIT = "expand_qs_panel_portrait"
-        private const val KEY_QS_PANEL_WIDTH_PERCENT = "qs_panel_width_percent"
-        private const val KEY_QS_TILE_COLUMNS = "qs_tile_columns"
-        private const val KEY_CUSTOMIZE_SLIDER_STYLE = "customize_slider_style"
-        private const val KEY_CUSTOMIZE_SLIDER_STYLE_VALUE = "customize_slider_style_value"
-        private const val KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS = "customize_slider_style_previous"
-        private const val KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE = "customize_slider_style_previous_value"
+        private val KEY_CUSTOM_DATE = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE.name
+        private val KEY_DATE_FORMAT = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_FORMAT.name
+        private val KEY_TEXT_SIZE = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE.name
+        private val KEY_TEXT_SIZE_ENABLED = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE_ENABLED.name
+        private val KEY_LETTER_SPACING = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING.name
+        private val KEY_LETTER_SPACING_ENABLED = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING_ENABLED.name
+        private val KEY_TEXT_COLOR = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR.name
+        private val KEY_TEXT_COLOR_ENABLED = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR_ENABLED.name
+        private val KEY_TEXT_BOLD = PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_BOLD.name
+        private val KEY_QS_ROUND_CORNER = PreferenceKeys.QS_ROUND_CORNER.name
+        private val KEY_HEAD_UP_QS_ROUND_CORNER_RADIUS = PreferenceKeys.HEAD_UP_ROUND_CORNER_RADIUS.name
+        private val KEY_TILE_QS_ROUND_CORNER_RADIUS = PreferenceKeys.TILE_ROUND_CORNER_RADIUS.name
+        private val KEY_CUSTOM_QS_COLOR = PreferenceKeys.CUSTOM_QS_COLOR.name
+        private val KEY_CUSTOM_LABEL_COLOR = PreferenceKeys.CUSTOM_LABEL_COLOR.name
+        private val KEY_CUSTOM_SECOND_LABEL_COLOR = PreferenceKeys.CUSTOM_SECOND_LABEL_COLOR.name
+        private val KEY_NO_TILE_LABELS = PreferenceKeys.CONTROL_CENTER_NO_TILE_LABELS.name
+        private val KEY_CUSTOM_QS_ACTIVE_COLOR_VAL = PreferenceKeys.CUSTOM_QS_ACTIVE_COLOR_VAL.name
+        private val KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL = PreferenceKeys.CUSTOM_LABEL_ACTIVE_COLOR_VAL.name
+        private val KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = PreferenceKeys.CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL.name
+        private val KEY_CUSTOM_QS_COLOR_GENERAL_SWITCH = PreferenceKeys.QS_COLOR.name
+        private val KEY_NOTIFICATION_CENTER_BLUR_ENABLED = PreferenceKeys.NOTIFICATION_CENTER_BLUR.name
+        private val KEY_NOTIFICATION_CENTER_BLUR_PERCENT = PreferenceKeys.NOTIFICATION_CENTER_BLUR_PERCENT.name
+        private val KEY_VOLUME_SLIDER_PERCENTAGE = PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name
+        private val KEY_BRIGHTNESS_SLIDER_PERCENTAGE = PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name
+        private val KEY_EXPAND_QS_PANEL_PORTRAIT = PreferenceKeys.EXPAND_QS_PANEL_PORTRAIT.name
+        private val KEY_QS_PANEL_WIDTH_PERCENT = PreferenceKeys.QS_PANEL_WIDTH_PERCENT.name
+        private val KEY_QS_TILE_COLUMNS = PreferenceKeys.QS_TILE_COLUMNS.name
+        private val KEY_CUSTOMIZE_SLIDER_STYLE = PreferenceKeys.CUSTOMIZE_SLIDER_STYLE.name
+        private val KEY_CUSTOMIZE_SLIDER_STYLE_VALUE = PreferenceKeys.CUSTOMIZE_SLIDER_STYLE_VALUE.name
+        private val KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS = PreferenceKeys.CUSTOMIZE_SLIDER_STYLE_PREVIOUS.name
+        private val KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE = PreferenceKeys.CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE.name
         const val QS_PANEL_WIDTH_MIN = 0
         const val QS_PANEL_WIDTH_MAX = 100
         const val DEFAULT_QS_PANEL_WIDTH_PERCENT = 80

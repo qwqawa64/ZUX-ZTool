@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.PreferenceKeys
 import java.io.File
 import java.io.FileOutputStream
 
@@ -71,18 +72,18 @@ class CustomizeAboutDeviceInfoRepository(
 
     companion object {
         private const val TARGET_IMAGE_PATH = "/sdcard/Download/ZTool/device_info.jpg"
-        private const val KEY_ENABLED = "about_device_info"
-        private const val KEY_MODEL_ENABLED = "about_device_info_model_enabled"
-        private const val KEY_CPU_ENABLED = "about_device_info_cpu_enabled"
-        private const val KEY_RAM_ENABLED = "about_device_info_ram_enabled"
-        private const val KEY_ROM_ENABLED = "about_device_info_rom_enabled"
-        private const val KEY_SOFTWARE_ENABLED = "about_device_info_software_enabled"
-        private const val KEY_HEADER_ENABLED = "about_device_info_header_enabled"
-        private const val KEY_MODEL = "about_device_info_model"
-        private const val KEY_CPU = "about_device_info_cpu"
-        private const val KEY_RAM = "about_device_info_ram"
-        private const val KEY_ROM = "about_device_info_rom"
-        private const val KEY_SOFTWARE = "about_device_info_software"
+        private val KEY_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO.name
+        private val KEY_MODEL_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name
+        private val KEY_CPU_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_CPU_ENABLED.name
+        private val KEY_RAM_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_RAM_ENABLED.name
+        private val KEY_ROM_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_ROM_ENABLED.name
+        private val KEY_SOFTWARE_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE_ENABLED.name
+        private val KEY_HEADER_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_HEADER_ENABLED.name
+        private val KEY_MODEL = PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name
+        private val KEY_CPU = PreferenceKeys.ABOUT_DEVICE_INFO_CPU.name
+        private val KEY_RAM = PreferenceKeys.ABOUT_DEVICE_INFO_RAM.name
+        private val KEY_ROM = PreferenceKeys.ABOUT_DEVICE_INFO_ROM.name
+        private val KEY_SOFTWARE = PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE.name
     }
 }
 

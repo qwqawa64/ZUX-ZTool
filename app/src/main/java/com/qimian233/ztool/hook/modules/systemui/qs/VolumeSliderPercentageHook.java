@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -30,7 +31,6 @@ public class VolumeSliderPercentageHook extends AppHookModule {
     private static final String SLIDER_PERCENT_TAG = "ztool_control_center_slider_percent";
     private static final String VOLUME_ROOT_FIELD = "mVolumeSliderRoot";
     private static final String VOLUME_ICON_FIELD = "mMediaVolumeIconMark";
-    private static final String PREF_KEY = "volume_slider_percentage";
     private static final int LABEL_GAP_DP = 2;
 
     private static boolean PERCENTAGE_ENABLED = false;
@@ -42,7 +42,7 @@ public class VolumeSliderPercentageHook extends AppHookModule {
 
     @Override
     public String getModuleName() {
-        return PREF_KEY;
+        return PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name;
     }
 
     @Override
@@ -510,7 +510,7 @@ public class VolumeSliderPercentageHook extends AppHookModule {
 
     private void updatePrefs() {
         try {
-            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PREF_KEY, false);
+            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name, false);
         } catch (Throwable t) {
             PERCENTAGE_ENABLED = false;
         }

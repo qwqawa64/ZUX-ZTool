@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.systemframework;
 
 import android.annotation.SuppressLint;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -205,12 +206,12 @@ public class ForceScreenOnOffAnimation extends SystemHookModule {
 
     private void updateAnimationDurationFromPrefs() {
         try {
-            SCREEN_OFF_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt("screen_on_off_animation_ms", 400);
+            SCREEN_OFF_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS.name, 400);
         } catch (Throwable t) {
             SCREEN_OFF_ANIMATION_DURATION_MS = 400;
         }
         try {
-            SCREEN_ON_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt("screen_on_off_animation_ms", 400);
+            SCREEN_ON_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS.name, 400);
         } catch (Throwable t) {
             SCREEN_ON_ANIMATION_DURATION_MS = 400;
         }

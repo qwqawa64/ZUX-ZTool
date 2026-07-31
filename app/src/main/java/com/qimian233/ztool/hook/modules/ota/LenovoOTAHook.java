@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.ota;
 
 import java.util.Properties;
 
+import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
@@ -70,7 +71,7 @@ public class LenovoOTAHook extends AppHookModule {
                     // 1. 处理 firmware 版本
                     String targetVer;
                     try {
-                        targetVer = this.xposed.getRemotePreferences("xposed_module_config").getString("Custom_ota_target_versionName", "");
+                        targetVer = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.CUSTOM_OTA_TARGET_VERSION_NAME.name, "");
                     } catch (Throwable t) {
                         targetVer = "";
                     }
@@ -84,7 +85,7 @@ public class LenovoOTAHook extends AppHookModule {
                     // 2. 处理 deviceid
                     String targetId;
                     try {
-                        targetId = this.xposed.getRemotePreferences("xposed_module_config").getString("Custom_ota_target_deviceID", "");
+                        targetId = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.CUSTOM_OTA_TARGET_DEVICE_ID.name, "");
                     } catch (Throwable t) {
                         targetId = "";
                     }
