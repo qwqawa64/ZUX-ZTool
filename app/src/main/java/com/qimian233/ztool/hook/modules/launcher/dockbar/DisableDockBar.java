@@ -32,14 +32,14 @@ public class DisableDockBar extends BaseHookModule {
             return;
         }
 
-        log("开始Hook ZUI Launcher Dock栏");
+        logger.info("开始Hook ZUI Launcher Dock栏");
 
         try {
             hookDockVisibility(classLoader);
 
-            log("ZUI Launcher Dock栏隐藏Hook完成");
+            logger.info("ZUI Launcher Dock栏隐藏Hook完成");
         } catch (Throwable t) {
-            logError("ZUI Launcher Dock栏Hook过程中发生错误", t);
+            logger.error("ZUI Launcher Dock栏Hook过程中发生错误", t);
         }
     }
 
@@ -58,9 +58,9 @@ public class DisableDockBar extends BaseHookModule {
                 }
                 return chain.proceed();
             });
-            log("ZuiHotseat.setVisibility Hook完成");
+            logger.info("ZuiHotseat.setVisibility Hook完成");
         } catch (Throwable t) {
-            logError("Hook ZuiHotseat.setVisibility失败", t);
+            logger.error("Hook ZuiHotseat.setVisibility失败", t);
         }
     }
 

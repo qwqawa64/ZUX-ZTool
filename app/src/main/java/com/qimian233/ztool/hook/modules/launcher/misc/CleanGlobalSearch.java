@@ -80,15 +80,15 @@ public class CleanGlobalSearch extends BaseHookModule {
                     try {
                         Method method = globalSearchViewClass.getDeclaredMethod(methodName);
                         hookWithId(method, "method", chain -> null);
-                        log("Hooked hotword inflation method: " + methodName);
+                        logger.debug("Hooked hotword inflation method: " + methodName);
                         hooked = true;
                         break;
                     } catch (NoSuchMethodError | Exception e) {
-                        log("Method " + methodName + " not found, trying next...");
+                        logger.debug("Method " + methodName + " not found, trying next...");
                     }
                 }
                 if (!hooked) {
-                    log("Unable to find any hotword inflation method");
+                    logger.error("Unable to find any hotword inflation method");
                 }
 
                 // 查找 E0(List) — 单参数 List，void 返回
@@ -113,12 +113,12 @@ public class CleanGlobalSearch extends BaseHookModule {
                     Class<?> listClass = classLoader.loadClass("java.util.List");
                     Method e0Method = globalSearchViewClass.getDeclaredMethod(e0Name, listClass);
                     hookWithId(e0Method, "hook_115", chain -> null);
-                    log("Hooked hotword data method: " + e0Name);
+                    logger.info("Hooked hotword data method: " + e0Name);
                 } catch (NoSuchMethodError | Exception ignored) {
-                    log("Unable to find GlobalSearchView hotword data method");
+                    logger.error("Unable to find GlobalSearchView hotword data method");
                 }
             } catch (Throwable t) {
-                logError("Failed to install hotword removal hooks", t);
+                logger.error("Failed to install hotword removal hooks", t);
             }
         }
 
@@ -129,9 +129,9 @@ public class CleanGlobalSearch extends BaseHookModule {
                 // setHotWordHint 不是混淆的，直接使用
                 Method setHotWordHintMethod = globalSearchViewClass.getDeclaredMethod("setHotWordHint");
                 hookWithId(setHotWordHintMethod, "set_hot_word_hint", chain -> null);
-                log("Hooked setHotWordHint");
+                logger.info("Hooked setHotWordHint");
             } catch (NoSuchMethodError | Exception ignored) {
-                log("Unable to find GlobalSearchView#setHotWordHint.");
+                logger.error("Unable to find GlobalSearchView#setHotWordHint.");
             }
         }
     }

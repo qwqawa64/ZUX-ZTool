@@ -23,14 +23,14 @@ class DismissCloudFolderConfirmation: BaseHookModule() {
                 try {
                     val dialog = chain.proceed(chain.args.toTypedArray()) as? Dialog
                     dialog?.dismiss()
-                    log("Cloud folder authorization dialog auto-dismissed")
+                    logger.debug("Cloud folder authorization dialog auto-dismissed")
                     dialog
                 } catch (th: Throwable) {
-                    logError("Failed to intercept cloud folder authorization dialog!", th)
+                    logger.error("Failed to intercept cloud folder authorization dialog!", th)
                 }
             }
         } catch (e: Throwable) {
-            logError("Exception caught in DismissCloudFolderConfirmation hook: ", e)
+            logger.error("Exception caught in DismissCloudFolderConfirmation hook: ", e)
         }
     }
 

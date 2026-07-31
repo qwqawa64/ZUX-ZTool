@@ -28,9 +28,9 @@ class BluePointRemovalHook : BaseHookModule() {
             hookWithId(isPackageNewMethod, "is_package_new") { 
                 false
             }
-            log("BluePoint removal hook installed successfully!")
+            logger.info("BluePoint removal hook installed successfully!")
         } catch (e: Throwable) {
-            logError("Exception caught in blue point removal hook: ", e)
+            logger.error("Exception caught in blue point removal hook: ", e)
         }
     }
 }

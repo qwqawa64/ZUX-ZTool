@@ -53,11 +53,11 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             disableDockBar = false;
         }
         if (disableDockBar) {
-            log("Disable dock bar hook enabled, will not expand dock bar.");
+            logger.warn("Disable dock bar hook enabled, will not expand dock bar.");
             return;
         }
 
-        log("开始Hook ZUI Launcher Hotseat限制");
+        logger.info("开始Hook ZUI Launcher Hotseat限制");
 
         try {
             // Hook 1: 绕过Hotseat最大数量检查
@@ -84,9 +84,9 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             // Hook 9: CellLayout相关方法
             hookCellLayoutMethods(classLoader);
 
-            log("ZUI Launcher Hotseat Hook完成");
+            logger.info("ZUI Launcher Hotseat Hook完成");
         } catch (Throwable t) {
-            logError("ZUI Launcher Hook过程中发生错误", t);
+            logger.error("ZUI Launcher Hook过程中发生错误", t);
         }
     }
 
@@ -100,11 +100,11 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             hookWithId(getMaxCountMethod, "get_max_count", chain -> {
                 chain.proceed();
                 // 将最大数量从5改为20
-                log("修改Hotseat最大数量为20");
+                logger.debug("修改Hotseat最大数量为20");
                 return 20;
             });
         } catch (Throwable t) {
-            logError("Hook getMaxCount失败", t);
+            logger.error("Hook getMaxCount失败", t);
         }
     }
 
@@ -119,7 +119,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             Method showOutOfSpaceMethod = launcherClass.getDeclaredMethod("showOutOfSpaceMessage", boolean.class);
             hookWithId(showOutOfSpaceMethod, "show_out_of_space", chain -> {
                 // 阻止显示空间不足提示
-                log("阻止显示空间不足提示");
+                logger.debug("阻止显示空间不足提示");
                 return null;
             });
 
@@ -130,12 +130,12 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     android.view.View.class, workspaceItemInfoClass, workspaceClass, boolean.class);
             hookWithId(checkOccupiedMethod, "check_occupied", chain -> {
                 chain.proceed();
-                log("强制通过空间检查");
+                logger.debug("强制通过空间检查");
                 return true;
             });
 
         } catch (Throwable t) {
-            logError("Hook空间检查失败", t);
+            logger.error("Hook空间检查失败", t);
         }
     }
 
@@ -162,12 +162,12 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                 Field numShownField = deviceProfileClass.getDeclaredField("numShownHotseatIcons");
                 numShownField.setAccessible(true);
                 numShownField.set(deviceProfile, 20);
-                if (DEBUG) log("修改DeviceProfile的Hotseat配置");
+                logger.debug("修改DeviceProfile的Hotseat配置");
                 return null;
             });
 
         } catch (Throwable t) {
-            logError("Hook DeviceProfile失败", t);
+            logger.error("Hook DeviceProfile失败", t);
         }
     }
 
@@ -184,7 +184,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             Method completeAddMethod = launcherClass.getDeclaredMethod("completeAddShortcut",
                     android.content.Intent.class, int.class, int.class, int.class, int.class, pendingRequestArgsClass);
             hookWithId(completeAddMethod, "complete_add", chain -> {
-                log("准备添加快捷方式到Hotseat");
+                logger.debug("准备添加快捷方式到Hotseat");
                 return chain.proceed();
             });
 
@@ -196,7 +196,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                 int container = (int) chain.getArg(1);
 
                 if (container == -101) { // -101是Hotseat的容器ID
-                    log("正在添加项目到Hotseat，绕过限制");
+                    logger.debug("正在添加项目到Hotseat，绕过限制");
                 }
                 return chain.proceed();
             });
@@ -212,16 +212,16 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     int container = containerField.getInt(itemInfo);
 
                     if (container == -101) {
-                        log("添加项目到Hotseat工作区");
+                        logger.debug("添加项目到Hotseat工作区");
                     }
                     return chain.proceed();
                 });
             } catch (Throwable t) {
-                logError("Hook addToWorkspace失败", t);
+                logger.error("Hook addToWorkspace失败", t);
             }
 
         } catch (Throwable t) {
-            logError("Hook添加方法失败", t);
+            logger.error("Hook添加方法失败", t);
         }
     }
 
@@ -237,7 +237,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
             hookWithId(getNumMethod, "get_num", chain -> {
                 chain.proceed();
                 // 将数据库Hotseat数量从5改为20
-                log("修改数据库Hotseat数量为20");
+                logger.debug("修改数据库Hotseat数量为20");
                 return 20;
             });
 
@@ -246,13 +246,13 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                 Field numField = invProfileClass.getDeclaredField("numDatabaseHotseatIcons");
                 numField.setAccessible(true);
                 numField.set(null, 20);
-                log("直接修改numDatabaseHotseatIcons为20");
+                logger.debug("直接修改numDatabaseHotseatIcons为20");
             } catch (Throwable t) {
-                logError("直接修改numDatabaseHotseatIcons失败", t);
+                logger.error("直接修改numDatabaseHotseatIcons失败", t);
             }
 
         } catch (Throwable t) {
-            logError("Hook数据库Hotseat限制失败", t);
+            logger.error("Hook数据库Hotseat限制失败", t);
         }
     }
 
@@ -277,7 +277,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
 
                 // 如果是Hotseat且位置在扩展范围内，直接返回true
                 if (container == -101 && screenId >= 0 && screenId < 20) {
-                    if (DEBUG) log("强制通过Hotseat位置检查: " + screenId);
+                    logger.debug("强制通过Hotseat位置检查: " + screenId);
                     return true;
                 }
                 return chain.proceed();
@@ -294,7 +294,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
 
                 // 如果是Hotseat，强制返回false（不删除）
                 if (container == -101) {
-                    log("绕过Hotseat维度检查");
+                    logger.debug("绕过Hotseat维度检查");
                     return false;
                 }
                 return result;
@@ -311,13 +311,13 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                 int screenId = screenIdField.getInt(itemInfo);
 
                 if (container == -101) {
-                    log("checkAndAddItem - Hotseat位置: " + screenId);
+                    logger.debug("checkAndAddItem - Hotseat位置: " + screenId);
                 }
                 return chain.proceed();
             });
 
         } catch (Throwable t) {
-            logError("Hook LoaderCursor失败", t);
+            logger.error("Hook LoaderCursor失败", t);
         }
     }
 
@@ -337,14 +337,14 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                 int screen = (int) chain.getArg(2);
 
                 if (container == -101 && screen >= 5) {
-                    if (DEBUG) log("数据库操作 - Hotseat位置: " + screen);
+                    logger.debug("数据库操作 - Hotseat位置: " + screen);
                     // 允许操作继续
                 }
                 return chain.proceed();
             });
 
         } catch (Throwable t) {
-            logError("Hook数据库操作失败", t);
+            logger.error("Hook数据库操作失败", t);
         }
     }
 
@@ -365,14 +365,14 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                     int[] cellXY = (int[]) chain.getArg(0);
                     cellXY[0] = 0;
                     cellXY[1] = 0;
-                    log("强制找到Cell位置");
+                    logger.debug("强制找到Cell位置");
                     return true;
                 }
                 return true;
             });
 
         } catch (Throwable t) {
-            logError("Hook CellLayout失败", t);
+            logger.error("Hook CellLayout失败", t);
         }
     }
 
@@ -393,7 +393,7 @@ public class ZuiLauncherHotseatHook extends BaseHookModule {
                         )
                 );
                 for (MethodData md : methods) {
-                    if (DEBUG) log("DEXKit found dimension-check method: " + md.getName());
+                    logger.info("DEXKit found dimension-check method: " + md.getName());
                     return md.getName();
                 }
             } catch (Throwable ignored) {}

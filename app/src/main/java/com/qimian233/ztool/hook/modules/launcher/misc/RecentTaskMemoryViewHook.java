@@ -70,9 +70,9 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 try {
                     chain.proceed();
                     attachMemoryView((View) chain.getThisObject());
-                    log("onAttachedToWindow hook executed successfully.");
+                    logger.debug("onAttachedToWindow hook executed successfully.");
                 } catch (Exception e) {
-                    logError("Failed to hook onAttachedToWindow: ", e);
+                    logger.error("Failed to hook onAttachedToWindow: ", e);
                 }
                 return null;
             });
@@ -81,9 +81,9 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             hookWithId(onDetachedMethod, "on_detached", chain -> {
                 try {
                     detachMemoryView((View) chain.getThisObject());
-                    log("onDetachedFromWindow hook executed successfully");
+                    logger.info("onDetachedFromWindow hook executed successfully");
                 } catch (Exception e) {
-                    logError("Failed to hook onDetachedFromWindow: ", e);
+                    logger.error("Failed to hook onDetachedFromWindow: ", e);
                 }
                 return chain.proceed();
             });
@@ -95,7 +95,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 boolean enabled = (boolean) chain.getArg(0);
                 overviewEnabledStates.put(recentsView, enabled);
                 updateMemoryViewVisibility(recentsView);
-                log("setOverviewStateEnabled hook executed successfully");
+                logger.info("setOverviewStateEnabled hook executed successfully");
                 return null;
             });
 
@@ -103,7 +103,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             hookWithId(setVisibilityMethod, "set_visibility", chain -> {
                 chain.proceed();
                 updateMemoryViewVisibility((View) chain.getThisObject());
-                log("setVisibility hook executed successfully");
+                logger.info("setVisibility hook executed successfully");
                 return null;
             });
 
@@ -112,13 +112,13 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             hookWithId(onLayoutMethod, "on_layout", chain -> {
                 chain.proceed();
                 attachMemoryView((View) chain.getThisObject());
-                log("onLayout hook executed successfully");
+                logger.info("onLayout hook executed successfully");
                 return null;
             });
 
-            log("Recent task memory view hooks installed");
+            logger.info("Recent task memory view hooks installed");
         } catch (Throwable t) {
-            logError("Failed to install recent task memory view hooks", t);
+            logger.error("Failed to install recent task memory view hooks", t);
         }
     }
 
@@ -133,7 +133,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             if (memoryView == null) {
                 memoryView = createMemoryView(recentsView.getContext());
                 dragLayer.addView(memoryView, createLayoutParams(recentsView.getContext()));
-                if (DEBUG) log("Memory view added to launcher drag layer");
+                logger.debug("Memory view added to launcher drag layer");
             } else {
                 ensureLayoutParams(memoryView, recentsView.getContext());
             }
@@ -141,7 +141,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             refreshMemoryText(memoryView);
             updateMemoryViewVisibility(recentsView, memoryView);
         } catch (Throwable t) {
-            logError("Failed to attach memory view", t);
+            logger.error("Failed to attach memory view", t);
         }
     }
 
@@ -157,11 +157,11 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 stopRefreshing(memoryView);
                 dragLayer.removeView(memoryView);
                 updateRunnables.remove(memoryView);
-                if (DEBUG) log("Memory view removed from launcher drag layer");
+                logger.debug("Memory view removed from launcher drag layer");
             }
             overviewEnabledStates.remove(recentsView);
         } catch (Throwable t) {
-            logError("Failed to detach memory view", t);
+            logger.error("Failed to detach memory view", t);
         }
     }
 
@@ -226,7 +226,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             Object dragLayer = getDragLayerMethod.invoke(container);
             return dragLayer instanceof ViewGroup ? (ViewGroup) dragLayer : null;
         } catch (Throwable t) {
-            if (DEBUG) {logError("Exception happened in getDragLayer: ", t);}
+            logger.error("Exception happened in getDragLayer: ", t);
             return null;
         }
     }
@@ -248,7 +248,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 updateMemoryViewVisibility(recentsView, memoryView);
             }
         } catch (Throwable t) {
-            logError("Failed to update memory view visibility", t);
+            logger.error("Failed to update memory view visibility", t);
         }
     }
 
@@ -309,7 +309,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                     getTotalRamInfo(Math.max(0L, memoryInfo.totalMem))));
         } catch (Throwable t) {
             memoryView.setText(getRamUnavailableText(memoryView.getContext()));
-            if (DEBUG) logError("Failed to update memory text", t);
+            logger.error("Failed to update memory text", t);
         }
     }
 
@@ -364,7 +364,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             }
             return resources.getString(resId);
         } catch (Throwable t) {
-            if (DEBUG) logError("Failed to load module string: " + resourceName, t);
+            logger.error("Failed to load module string: " + resourceName, t);
             return fallback;
         }
     }
@@ -377,7 +377,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
             );
             return moduleContext.getResources();
         } catch (Throwable t) {
-            if (DEBUG) logError("Failed to create module context for resources", t);
+            logger.error("Failed to create module context for resources", t);
             return null;
         }
     }
@@ -396,7 +396,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         String guessedRam = guessRamSize(availableMem);
         String expansionSize = getMemoryExpansionSize();
         if (expansionSize == null || expansionSize.isEmpty() || "0".equals(expansionSize)) {
-            log("RAM expansion disabled, return guessed value");
+            logger.info("RAM expansion disabled, return guessed value");
             return guessedRam;
         }
         return String.format(Locale.getDefault(), "%s + %s", guessedRam, normalizeExpansionSize(expansionSize));
@@ -426,7 +426,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
         try {
             return String.format(Locale.getDefault(), "%.1f GB", Double.parseDouble(value));
         } catch (Throwable t) {
-            if (DEBUG) logError("Failed to normalize expansion size: " + size, t);
+            logger.error("Failed to normalize expansion size: " + size, t);
             return size.endsWith("GB") ? size : value + ".0 GB";
         }
     }
@@ -456,7 +456,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 return result instanceof String ? (String) result : defValue;
             }
         } catch (Throwable t) {
-            if (DEBUG) logError("Failed to read system property: " + key, t);
+            logger.error("Failed to read system property: " + key, t);
         }
         return defValue;
     }
@@ -478,7 +478,7 @@ public class RecentTaskMemoryViewHook extends BaseHookModule {
                 systemPropertiesGetWithDefaultMethod = method;
                 return method;
             } catch (Throwable t) {
-                if (DEBUG) logError("Failed to resolve SystemProperties.get(String, String)", t);
+                logger.error("Failed to resolve SystemProperties.get(String, String)", t);
                 return null;
             }
         }

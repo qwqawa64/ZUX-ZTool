@@ -29,7 +29,7 @@ public class CustomGridSize extends BaseHookModule {
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
-        if (DEBUG) log("Load CustomGridSize!");
+        logger.info("Load CustomGridSize!");
         // We directly hook the constructor of GridOption class
         // But before hook, let us load custom grid size from shared prefs first
         getCustomGridSize();
@@ -39,10 +39,10 @@ public class CustomGridSize extends BaseHookModule {
             try {
                 gridOptionClass = classLoader.loadClass("com.android.launcher3.InvariantDeviceProfile$GridOption");
             } catch (ClassNotFoundException e) {
-                log("GridOption class not found on this ROM");
+                logger.error("GridOption class not found on this ROM");
                 return;
             }
-            if (DEBUG) log("Found GridOption class!");
+            logger.debug("Found GridOption class!");
             // Then formally start our job
             // Find arg class to construct correct method signature
             Class<?> contextClass = Context.class;
@@ -51,7 +51,7 @@ public class CustomGridSize extends BaseHookModule {
             try {
                 displayInfoClass = classLoader.loadClass("com.android.launcher3.util.DisplayController$Info");
             } catch (ClassNotFoundException ignored) {
-                log("Unable to find DisplayInfo class");
+                logger.error("Unable to find DisplayInfo class");
             }
             Constructor<?> ctor;
             if (displayInfoClass != null) {
@@ -59,23 +59,23 @@ public class CustomGridSize extends BaseHookModule {
                     ctor = gridOptionClass.getDeclaredConstructor(
                             contextClass, attributeSetClass, displayInfoClass);
                 } catch (Exception e) {
-                    logError("Exception happened when trying to find GridOption class with constructor signature Context, AttributeSet, DisplayController$Info: ", e);
+                    logger.error("Exception happened when trying to find GridOption class with constructor signature Context, AttributeSet, DisplayController$Info: ", e);
                     try {
                         ctor = gridOptionClass.getDeclaredConstructor(
                                 contextClass, attributeSetClass);
                     } catch (Exception ignored) {
-                        log("Failed to get constructor with alternate way, exiting.");
+                        logger.error("Failed to get constructor with alternate way, exiting.");
                         return;
                     }
                 }
             } else {
-                log("Cannot find DisplayController$Info, use alternate constructor signature.");
+                logger.warn("Cannot find DisplayController$Info, use alternate constructor signature.");
                 try {
                     ctor = gridOptionClass.getDeclaredConstructor(
                             contextClass, attributeSetClass);
                 }
                 catch (Exception e) {
-                    logError("Failed to find constructor, exiting.", e);
+                    logger.error("Failed to find constructor, exiting.", e);
                     return;
                 }
             }
@@ -92,14 +92,14 @@ public class CustomGridSize extends BaseHookModule {
                     numRowsField.setAccessible(true);
                     numRowsField.set(thisObject, CUSTOM_ROWS);
 
-                    if (DEBUG) log("GridOption config modded to " + CUSTOM_COLUMNS + "x" + CUSTOM_ROWS);
+                    logger.debug("GridOption config modded to " + CUSTOM_COLUMNS + "x" + CUSTOM_ROWS);
                 } catch (Exception e) {
-                    logError("No such method! Probably you are using a newer ZUXOS version!", e);
+                    logger.error("No such method! Probably you are using a newer ZUXOS version!", e);
                 }
                 return null;
             });
         } catch (Exception e) {
-            logError("Failed to hook GridOption!", e);
+            logger.error("Failed to hook GridOption!", e);
         }
     }
 

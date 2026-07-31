@@ -92,9 +92,9 @@ class LauncherNoLabelMode : BaseHookModule() {
                 }
             }
 
-            log("BubbleTextView visibility-block hook installed successfully!")
+            logger.info("BubbleTextView visibility-block hook installed successfully!")
         } catch (e: Throwable) {
-            logError("Exception caught in BubbleTextView visibility hook: ", e)
+            logger.error("Exception caught in BubbleTextView visibility hook: ", e)
         }
     }
 
@@ -148,9 +148,9 @@ class LauncherNoLabelMode : BaseHookModule() {
                 chain.proceed(args)
             }
 
-            log("ActiveIconView visibility-block hook installed successfully!")
+            logger.info("ActiveIconView visibility-block hook installed successfully!")
         } catch (e: Throwable) {
-            logError("Exception caught in ActiveIconView visibility hook: ", e)
+            logger.error("Exception caught in ActiveIconView visibility hook: ", e)
         }
     }
 
