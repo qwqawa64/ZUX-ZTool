@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   schedule:
-    - cron: '0 0 * * *'          # 每天 UTC 0 点（北京时间 8 点）
+    - cron: '0 11 * * *'         # 美国东部时间 11 时（UTC -5, 对应 UTC +8 次日 0 点）
   workflow_dispatch:              # 手动触发（总是构建）
   pull_request:
     branches: [ "master" ]        # PR 触发 Debug 构建
@@ -19,6 +19,16 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0   # 需要完整历史以获取提交信息
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       # ---- 获取当前 commit 信息 ----
       - name: Get current commit info
