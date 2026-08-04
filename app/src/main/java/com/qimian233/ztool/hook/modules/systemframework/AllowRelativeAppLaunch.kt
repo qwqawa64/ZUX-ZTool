@@ -59,24 +59,37 @@ class AllowRelativeAppLaunch: SystemHookModule() {
         )
 
         hookWithId(isAllowRelativeStartMethod, "relative_app_force_freeform") { chain ->
-            // 修改 Bundle 中的 windowing mode
-            val bundle = chain.getArg(10) as Bundle?
-            bundle?.putInt(KEY_LAUNCH_WINDOWING_MODE, WINDOWING_MODE_FREEFORM)
+            val callingPackage = chain.getArg(1) as String?
+            val intent = chain.getArg(3) as android.content.Intent?
+            val targetPackage = intent?.getPackage() ?: intent?.component?.packageName
 
-            // 修改 SafeActivityOptions 中的启动窗口模式
-            val safeOpts = chain.getArg(13)
-            if (safeOpts != null) {
-                try {
-                    val originalOptsField = safeOptsClass.getDeclaredField("mOriginalOptions")
-                    originalOptsField.isAccessible = true
-                    val originalOpts = originalOptsField.get(safeOpts)
-                    if (originalOpts != null) {
-                        val setWindowingMode = originalOpts.javaClass.getMethod(
-                            "setLaunchWindowingMode", Int::class.javaPrimitiveType)
-                        setWindowingMode.invoke(originalOpts, WINDOWING_MODE_FREEFORM)
+            // 仅在跨 APP 关联启动时注入 freeform
+            // 排除：同包名自启动、启动器、无法判定目标包名
+            val isRelativeLaunch = callingPackage != null
+                && targetPackage != null
+                && callingPackage != targetPackage
+                && callingPackage != "com.zui.launcher"
+
+            if (isRelativeLaunch) {
+                // 修改 Bundle 中的 windowing mode
+                val bundle = chain.getArg(10) as Bundle?
+                bundle?.putInt(KEY_LAUNCH_WINDOWING_MODE, WINDOWING_MODE_FREEFORM)
+
+                // 修改 SafeActivityOptions 中的启动窗口模式
+                val safeOpts = chain.getArg(13)
+                if (safeOpts != null) {
+                    try {
+                        val originalOptsField = safeOptsClass.getDeclaredField("mOriginalOptions")
+                        originalOptsField.isAccessible = true
+                        val originalOpts = originalOptsField.get(safeOpts)
+                        if (originalOpts != null) {
+                            val setWindowingMode = originalOpts.javaClass.getMethod(
+                                "setLaunchWindowingMode", Int::class.javaPrimitiveType)
+                            setWindowingMode.invoke(originalOpts, WINDOWING_MODE_FREEFORM)
+                        }
+                    } catch (e: Exception) {
+                        logger.warn("Failed to set freeform on SafeActivityOptions: ${e.message}")
                     }
-                } catch (e: Exception) {
-                    logger.warn("Failed to set freeform on SafeActivityOptions: ${e.message}")
                 }
             }
 
