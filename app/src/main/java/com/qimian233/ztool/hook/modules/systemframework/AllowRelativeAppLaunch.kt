@@ -1,9 +1,12 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface
+import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 @SuppressLint("PrivateApi")
@@ -15,6 +18,53 @@ class AllowRelativeAppLaunch: SystemHookModule() {
     companion object {
         private const val WINDOWING_MODE_FREEFORM = 5
         private const val KEY_LAUNCH_WINDOWING_MODE = "android.activity.windowingMode"
+
+        // 默认启动器包名缓存
+        @Volatile private var launcherPkgs: Set<String>? = null
+        @Volatile private var launcherCacheExpire: Long = 0L
+        private const val LAUNCHER_CACHE_TTL = 60_000L // 1 minute
+
+        private val LOCK = Any()
+
+        /**
+         * 通过 ZuiWmAutoRunManager.mContext 查询系统所有注册为启动器的包名，
+         * 结果缓存 60 秒。解析失败时回退到硬编码 ZUI 启动器。
+         */
+        private fun resolveLauncherPackages(autoRunInstance: Any): Set<String> {
+            val now = System.currentTimeMillis()
+            val cached = launcherPkgs
+            if (cached != null && now < launcherCacheExpire) {
+                return cached
+            }
+            synchronized(LOCK) {
+                // double-check
+                val cached2 = launcherPkgs
+                if (cached2 != null && now < launcherCacheExpire) {
+                    return cached2
+                }
+                try {
+                    val ctxField: Field = autoRunInstance.javaClass.getDeclaredField("mContext")
+                    ctxField.isAccessible = true
+                    val ctx = ctxField.get(autoRunInstance) as? android.content.Context
+                    if (ctx != null) {
+                        val pm: PackageManager = ctx.packageManager
+                        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                            addCategory(Intent.CATEGORY_HOME)
+                        }
+                        val pkgs = pm.queryIntentActivities(homeIntent, 0)
+                            .mapNotNull { it.activityInfo?.packageName }
+                            .toSet()
+                        launcherPkgs = pkgs
+                        launcherCacheExpire = System.currentTimeMillis() + LAUNCHER_CACHE_TTL
+                        return pkgs
+                    }
+                } catch (_: Exception) {
+                    // fall through to fallback
+                }
+            }
+            // fallback: 硬编码 ZUI 默认启动器
+            return setOf("com.zui.launcher")
+        }
     }
 
     override fun handleSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
@@ -63,12 +113,15 @@ class AllowRelativeAppLaunch: SystemHookModule() {
             val intent = chain.getArg(3) as android.content.Intent?
             val targetPackage = intent?.getPackage() ?: intent?.component?.packageName
 
+            logger.debug("callingPackage: $callingPackage, targetPackage: $targetPackage")
             // 仅在跨 APP 关联启动时注入 freeform
-            // 排除：同包名自启动、启动器、无法判定目标包名
+            // 排除：同包名自启动、启动器
+            // 打开网页链接时目标包名是 null, 这个时候也应该打开小窗
+            val launchers = resolveLauncherPackages(chain.thisObject)
             val isRelativeLaunch = callingPackage != null
-                && targetPackage != null
+                // && targetPackage != null
                 && callingPackage != targetPackage
-                && callingPackage != "com.zui.launcher"
+                && callingPackage !in launchers
 
             if (isRelativeLaunch) {
                 // 修改 Bundle 中的 windowing mode
