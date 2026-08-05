@@ -4,6 +4,8 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.lang.reflect.Executable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedInterface.HookHandle;
@@ -18,8 +20,6 @@ import io.github.libxposed.api.XposedModuleInterface;
  * <p>
  * 日志关注点已拆分至 {@link ModuleLog}（Log4j 风格六级别 API），
  * 反射辅助已拆分至 {@link HookReflectionHelper}。
- * 本类保留向后兼容的 {@link #log(String)} / {@link #logError(String, Throwable)}
- * 委托方法（已 {@code @Deprecated}，新代码请用 {@link #logger}）。
  * </p>
  */
 public abstract class BaseHookModule {
@@ -44,8 +44,6 @@ public abstract class BaseHookModule {
      */
     protected ModuleLog logger;
 
-    // ── abstract ──────────────────────────────────────────────
-
     public abstract String getModuleName();
     public abstract String[] getTargetPackages();
 
@@ -58,14 +56,10 @@ public abstract class BaseHookModule {
         // default no-op
     }
 
-    // ── XposedInterface 注入 ───────────────────────────────────
-
     public void setXposedInterface(XposedInterface xposed) {
         this.xposed = xposed;
         this.logger = new ModuleLog(getModuleName(), xposed);
     }
-
-    // ── package matching ───────────────────────────────────────
 
     public boolean supportsPackage(String packageName) {
         String[] targets = getTargetPackages();
@@ -77,8 +71,6 @@ public abstract class BaseHookModule {
         }
         return false;
     }
-
-    // ── config ─────────────────────────────────────────────────
 
     public boolean isEnabled() {
         String moduleName = getModuleName();
@@ -103,8 +95,6 @@ public abstract class BaseHookModule {
         DEBUG = ModuleLog.DEBUG;
     }
 
-    // ── system_server callback ─────────────────────────────────
-
     /**
      * 系统服务器回调（默认 no-op）。
      * <p>系统框架 Hook 模块应继承 {@link SystemHookModule} 以获得 IDE 自动补全。</p>
@@ -113,8 +103,6 @@ public abstract class BaseHookModule {
             throws Throwable {
         // default no-op
     }
-
-    // ── safe dispatch wrappers ─────────────────────────────────
 
     public void safeHandleLoadPackage(XposedModuleInterface.PackageLoadedParam param) {
         refreshDebugLoggingEnabled();
@@ -151,30 +139,6 @@ public abstract class BaseHookModule {
         }
     }
 
-    // ── logging ────────────────────────────────────────────────
-
-    /**
-     * @deprecated 请使用 {@link #logger}{@code .info(message)} 代替。
-     */
-    @Deprecated
-    protected void log(String message) {
-        if (logger != null) {
-            logger.info(message);
-        }
-    }
-
-    /**
-     * @deprecated 请使用 {@link #logger}{@code .error(message, t)} 代替。
-     */
-    @Deprecated
-    protected void logError(String message, Throwable t) {
-        if (logger != null) {
-            logger.error(message, t);
-        }
-    }
-
-    // ── helpers (delegates to HookReflectionHelper) ─────────────
-
     /**
      * Hook with a stable id for hot-reload atomic replacement.
      * Equivalent to {@code xposed.hook(target).setId(id).intercept(hooker)}.
@@ -200,7 +164,7 @@ public abstract class BaseHookModule {
      * <p>
      * Always ensure you have filters to avoid unexpected field hits.
      */
-    public static java.lang.reflect.Field findField(Class<?> startClass, String name)
+    public static Field findField(Class<?> startClass, String name)
             throws NoSuchFieldException {
         return HookReflectionHelper.findField(startClass, name);
     }
@@ -210,9 +174,13 @@ public abstract class BaseHookModule {
      * <p>
      * Always ensure you have filters to avoid unexpected method hits.
      */
-    public static java.lang.reflect.Method findMethod(Class<?> startClass, String name,
-                                                      Class<?>... parameterTypes)
+    public static Method findMethod(Class<?> startClass, String name,
+                                    Class<?>... parameterTypes)
             throws NoSuchMethodException {
         return HookReflectionHelper.findMethod(startClass, name, parameterTypes);
+    }
+
+    public SharedPreferences getRemotePreferences() {
+        return this.xposed.getRemotePreferences("xposed_module_config");
     }
 }
