@@ -34,7 +34,8 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: .last-build-sha
-          key: nightly-commit-sha-master
+          key: nightly-commit-sha-master-${{ github.run_id }}
+          restore-keys: nightly-commit-sha-master-
 
       # ---- 获取从上次构建以来的全部提交记录 ----
       - name: Get commit range for summary
@@ -152,7 +153,7 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: .last-build-sha
-          key: nightly-commit-sha-master
+          key: nightly-commit-sha-master-${{ github.run_id }}
 
       # ---- 生成 Job Summary，展示提交信息 ----
       - name: Generate job summary
