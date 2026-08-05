@@ -56,6 +56,7 @@ import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIChargeWattsHoo
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIRealWatts;
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomChargeAnimation;
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomControlCenterDate;
+import com.qimian233.ztool.hook.modules.systemui.misc.DisableBiometricErrorVibration;
 import com.qimian233.ztool.hook.modules.systemui.misc.ForceImmersiveMode;
 import com.qimian233.ztool.hook.modules.systemui.misc.GuestModeController;
 import com.qimian233.ztool.hook.modules.systemui.misc.NoChargeAnimation;
@@ -145,6 +146,7 @@ public class HookManager {
         registerHookModule(new QsPanelWidthHook());
         registerHookModule(new SliderStyleHook());
         registerHookModule(new CustomChargeAnimation());
+        registerHookModule(new DisableBiometricErrorVibration());
 
         // ── Settings (target: com.android.settings) ──
         registerHookModule(new OneVisionCompletion());

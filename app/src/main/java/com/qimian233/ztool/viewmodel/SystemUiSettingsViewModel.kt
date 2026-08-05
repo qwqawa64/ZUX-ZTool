@@ -133,6 +133,11 @@ class SystemUiSettingsViewModel(
         repository.saveGuestModeController(enabled)
     }
 
+    fun setDisableBiometricErrorVibration(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableBiometricErrorVibration = enabled)
+        repository.saveDisableBiometricErrorVibration(enabled)
+    }
+
     fun showRestartDialog() {
         if (!_uiState.value.isRestartProcessing) {
             _uiState.value = _uiState.value.copy(showRestartDialog = true)
@@ -183,6 +188,7 @@ data class SystemUiSettingsUiState(
     val chargeAnimationFix: Boolean = false,
     val customChargeAnimation: Boolean = false,
     val guestModeController: Boolean = false,
+    val disableBiometricErrorVibration: Boolean = false,
     val isAodSwitchProcessing: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false

@@ -132,6 +132,7 @@ fun SystemUiSettingsRoute(
         onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
         onCustomChargeAnimationChanged = viewModel::setCustomChargeAnimation,
         onGuestModeChanged = viewModel::setGuestModeController,
+        onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
         onRestartScope = viewModel::showRestartDialog,
         onSelectPortraitVideo = { portraitVideoLauncher.launch(arrayOf("video/*")) },
         onSelectLandVideo = { landVideoLauncher.launch(arrayOf("video/*")) }
@@ -186,6 +187,7 @@ private fun SystemUiSettingsScreen(
     onChargeAnimationFixChanged: (Boolean) -> Unit,
     onCustomChargeAnimationChanged: (Boolean) -> Unit,
     onGuestModeChanged: (Boolean) -> Unit,
+    onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     onSelectPortraitVideo: () -> Unit,
     onSelectLandVideo: () -> Unit
@@ -236,6 +238,7 @@ private fun SystemUiSettingsScreen(
                         onChargeAnimationFixChanged = onChargeAnimationFixChanged,
                         onCustomChargeAnimationChanged = onCustomChargeAnimationChanged,
                         onGuestModeChanged = onGuestModeChanged,
+                        onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
                         onSelectPortraitVideo = onSelectPortraitVideo,
                         onSelectLandVideo = onSelectLandVideo
                     )
@@ -258,6 +261,7 @@ private fun systemUiSettingsSections(
     onChargeAnimationFixChanged: (Boolean) -> Unit,
     onCustomChargeAnimationChanged: (Boolean) -> Unit,
     onGuestModeChanged: (Boolean) -> Unit,
+    onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onSelectPortraitVideo: () -> Unit,
     onSelectLandVideo: () -> Unit
 ): List<SettingSection> {
@@ -390,6 +394,12 @@ private fun systemUiSettingsSections(
                     summary = stringResource(R.string.disable_guest_user_enable_summary),
                     checked = state.guestModeController,
                     onCheckedChange = onGuestModeChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_biometric_error_vibration_title),
+                    summary = stringResource(R.string.disable_biometric_error_vibration_summary),
+                    checked = state.disableBiometricErrorVibration,
+                    onCheckedChange = onDisableBiometricErrorVibrationChanged
                 )
             )
         )

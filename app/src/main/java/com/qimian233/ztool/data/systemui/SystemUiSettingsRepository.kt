@@ -22,7 +22,8 @@ class SystemUiSettingsRepository(
             noChargeAnimation = prefsUtils.loadBooleanSetting(KEY_NO_CHARGE_ANIMATION, false),
             chargeAnimationFix = prefsUtils.loadBooleanSetting(KEY_CHARGE_ANIMATION_FIX, false),
             customChargeAnimation = prefsUtils.loadBooleanSetting(KEY_CUSTOM_CHARGE_ANIMATION, false),
-            guestModeController = prefsUtils.loadBooleanSetting(KEY_GUEST_MODE_CONTROLLER, false)
+            guestModeController = prefsUtils.loadBooleanSetting(KEY_GUEST_MODE_CONTROLLER, false),
+            disableBiometricErrorVibration = prefsUtils.loadBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, false)
         )
     }
 
@@ -52,6 +53,10 @@ class SystemUiSettingsRepository(
 
     fun saveGuestModeController(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_GUEST_MODE_CONTROLLER, enabled)
+    }
+
+    fun saveDisableBiometricErrorVibration(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, enabled)
     }
 
     /**
@@ -131,6 +136,7 @@ class SystemUiSettingsRepository(
         private val KEY_CHARGE_ANIMATION_FIX = PreferenceKeys.CHARGE_ANIMATION_FIX.name
         private val KEY_CUSTOM_CHARGE_ANIMATION = PreferenceKeys.CUSTOM_CHARGE_ANIMATION.name
         private val KEY_GUEST_MODE_CONTROLLER = PreferenceKeys.GUEST_MODE_CONTROLLER.name
+        private val KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION = PreferenceKeys.DISABLE_BIOMETRIC_ERROR_VIBRATION.name
         private const val CUSTOM_VIDEO_DIR = "/sdcard/Download/ZTool"
     }
 }
