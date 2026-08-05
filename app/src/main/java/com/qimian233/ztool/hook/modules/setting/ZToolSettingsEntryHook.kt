@@ -1,111 +1,112 @@
-package com.qimian233.ztool.hook.modules.setting;
+package com.qimian233.ztool.hook.modules.setting
 
-import android.annotation.SuppressLint;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-
-import com.qimian233.ztool.MainActivity;
-import com.qimian233.ztool.hook.base.AppHookModule;
-
-import io.github.libxposed.api.XposedModuleInterface;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.graphics.drawable.Drawable
+import android.os.Bundle
+import com.qimian233.ztool.MainActivity
+import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.hook.base.AppHookModule
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import java.lang.reflect.Constructor
 
 @SuppressLint("PrivateApi")
-public class ZToolSettingsEntryHook extends AppHookModule {
-    private static final String TARGET_PACKAGE = "com.android.settings";
-    private static final String TARGET_CLASS = "com.android.settings.homepage.TopLevelSettings";
-    private static final String ENTRY_KEY = "ztool_settings_entry";
-    private static final String CATEGORY_KEY = "ztool_settings_category";
-    private static final String APP_PACKAGE = "com.qimian233.ztool";
-    private static final String ENTRY_TITLE = "ZTool";
-    public ZToolSettingsEntryHook() {}
+class ZToolSettingsEntryHook : AppHookModule() {
+    override fun getModuleName(): String = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
 
-    @Override
-    public String getModuleName() {
-        return "ztool_settings_entry";
-    }
+    override fun getTargetPackages(): Array<String> = arrayOf("com.android.settings")
 
-    @Override
-    public String[] getTargetPackages() {
-        return new String[]{TARGET_PACKAGE};
-    }
-
-    @Override
-    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
+    override fun handleLoadPackage(param: PackageLoadedParam) {
+        val classLoader = param.defaultClassLoader
         try {
-            logger.info("Installing hook.");
-            Method m = classLoader
-                    .loadClass(TARGET_CLASS)
-                    .getDeclaredMethod("onCreatePreferences", android.os.Bundle.class, String.class);
-            hookWithId(m, "hook_44", chain -> {
-                Object result = chain.proceed();
+            logger.info("Installing hook.")
+            val m = findMethod(
+                classLoader.loadClass("com.android.settings.homepage.TopLevelSettings"),
+                "onCreatePreferences",
+                Bundle::class.java, String::class.java)
+            hookWithId(m, "hook_44") { chain: XposedInterface.Chain? ->
+                val result = chain!!.proceed()
                 try {
-                    Method getPrefScreen = findMethod(chain.getThisObject().getClass(), "getPreferenceScreen");
-                    Object screen = getPrefScreen.invoke(chain.getThisObject());
-                    if (screen == null) {
-                        return result;
-                    }
+                    val getPrefScreen =
+                        findMethod(chain.thisObject.javaClass, "getPreferenceScreen")
+                    val screen = getPrefScreen.invoke(chain.thisObject) ?: return@hookWithId result
 
-                    Method getContext = findMethod(screen.getClass(), "getContext");
-                    Context context = (Context) getContext.invoke(screen);
-                    if (context == null) {
-                        return result;
-                    }
+                    val getContext = findMethod(screen.javaClass, "getContext")
+                    val context = getContext.invoke(screen) as? Context ?: return@hookWithId result
 
-                    Method findPreference = findMethod(screen.getClass(),
-                            "findPreference", CharSequence.class);
+                    val findPreference = findMethod(
+                        screen.javaClass,
+                        "findPreference", CharSequence::class.java
+                    )
                     if (findPreference.invoke(screen, ENTRY_KEY) != null) {
-                        return result;
+                        return@hookWithId result
                     }
 
-                    Class<?> preferenceCategoryClass = classLoader
-                            .loadClass("androidx.preference.PreferenceCategory");
-                    Class<?> preferenceClass = classLoader
-                            .loadClass("androidx.preference.Preference");
+                    val preferenceCategoryClass = classLoader
+                        .loadClass("androidx.preference.PreferenceCategory")
+                    val preferenceClass = classLoader
+                        .loadClass("androidx.preference.Preference")
 
-                    Constructor<?> categoryCtor = preferenceCategoryClass
-                            .getDeclaredConstructor(Context.class);
-                    Object category = categoryCtor.newInstance(context);
-                    Method setKey = findMethod(preferenceCategoryClass, "setKey", String.class);
-                    setKey.invoke(category, CATEGORY_KEY);
-                    Method setOrder = findMethod(preferenceCategoryClass, "setOrder", int.class);
-                    setOrder.invoke(category, -90);
+                    val categoryCtor: Constructor<*> = preferenceCategoryClass
+                        .getDeclaredConstructor(Context::class.java)
+                    val category: Any = categoryCtor.newInstance(context)
+                    val setKey = findMethod(preferenceCategoryClass, "setKey", String::class.java)
+                    setKey.invoke(category, CATEGORY_KEY)
+                    val setOrder = findMethod(
+                        preferenceCategoryClass,
+                        "setOrder",
+                        Int::class.javaPrimitiveType
+                    )
+                    setOrder.invoke(category, -90)
 
-                    Constructor<?> prefCtor = preferenceClass.getDeclaredConstructor(Context.class);
-                    Object entry = prefCtor.newInstance(context);
-                    setKey.invoke(entry, ENTRY_KEY);
-                    Method setTitle = findMethod(preferenceClass, "setTitle", CharSequence.class);
-                    setTitle.invoke(entry, ENTRY_TITLE);
-                    setOrder.invoke(entry, Integer.MIN_VALUE + 1);
+                    val prefCtor: Constructor<*> =
+                        preferenceClass.getDeclaredConstructor(Context::class.java)
+                    val entry: Any = prefCtor.newInstance(context)
+                    setKey.invoke(entry, ENTRY_KEY)
+                    val setTitle = findMethod(preferenceClass, "setTitle", CharSequence::class.java)
+                    setTitle.invoke(entry, ENTRY_TITLE)
+                    setOrder.invoke(entry, Int.MIN_VALUE + 1)
 
-                    Intent intent = new Intent();
-                    intent.setComponent(new ComponentName(
-                            APP_PACKAGE,
-                            MainActivity.class.getName()
-                    ));
-                    Method setIntent = preferenceClass.getDeclaredMethod("setIntent", Intent.class);
-                    setIntent.invoke(entry, intent);
-                    Method setIcon = preferenceClass.getDeclaredMethod("setIcon", android.graphics.drawable.Drawable.class);
-                    setIcon.invoke(entry, context.getPackageManager().getApplicationIcon(APP_PACKAGE));
+                    val intent = Intent()
+                    intent.component = ComponentName(
+                        APP_PACKAGE,
+                        MainActivity::class.java.name
+                    )
+                    val setIntent =
+                        preferenceClass.getDeclaredMethod("setIntent", Intent::class.java)
+                    setIntent.invoke(entry, intent)
+                    val setIcon = preferenceClass.getDeclaredMethod("setIcon", Drawable::class.java)
+                    setIcon.invoke(
+                        entry,
+                        context.packageManager.getApplicationIcon(APP_PACKAGE)
+                    )
 
-                    Method addPreference = findMethod(screen.getClass(), "addPreference",
-                                    classLoader.loadClass("androidx.preference.Preference"));
-                    addPreference.invoke(screen, category);
-                    addPreference.invoke(category, entry);
+                    val addPreference = findMethod(
+                        screen.javaClass, "addPreference",
+                        classLoader.loadClass("androidx.preference.Preference")
+                    )
+                    addPreference.invoke(screen, category)
+                    addPreference.invoke(category, entry)
 
-                    logger.debug("Injected ZTool entry into TopLevelSettings");
-                } catch (Throwable t) {
-                    logger.error("Failed to inject ZTool settings entry", t);
+                    logger.debug("Injected ZTool entry into TopLevelSettings")
+                } catch (t: Throwable) {
+                    logger.error("Failed to inject ZTool settings entry", t)
                 }
-                return result;
-            });
-            logger.info("Successfully installed hook.");
-        } catch (Throwable t) {
-            logger.error("Failed to hook TopLevelSettings.onCreatePreferences", t);
+                result
+            }
+            logger.info("Successfully installed hook.")
+        } catch (t: Throwable) {
+            logger.error("Failed to hook TopLevelSettings.onCreatePreferences", t)
         }
+    }
+
+    companion object {
+        private const val ENTRY_KEY = "ztool_settings_entry"
+        private const val CATEGORY_KEY = "ztool_settings_category"
+        private const val APP_PACKAGE = "com.qimian233.ztool"
+        private const val ENTRY_TITLE = "ZTool"
     }
 }
