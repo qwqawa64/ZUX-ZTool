@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,6 +79,13 @@ fun LockScreenSettingsRoute(
         onApiAddressChanged = viewModel::setApiAddress,
         onRegexChanged = viewModel::setRegex,
         onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
+        onShowVoltageChanged = viewModel::setShowVoltage,
+        onShowCurrentChanged = viewModel::setShowCurrent,
+        onShowPowerChanged = viewModel::setShowPower,
+        onShowTemperatureChanged = viewModel::setShowTemperature,
+        onShowIndicatorChanged = viewModel::setShowIndicator,
+        onCustomFormatEnabledChanged = viewModel::setCustomFormatEnabled,
+        onCustomFormatChanged = viewModel::setCustomFormat,
         onTestApi = {
             viewModel.testApiConnection {
                 Toast.makeText(context, R.string.please_input_api_address, Toast.LENGTH_SHORT).show()
@@ -129,6 +137,13 @@ private fun LockScreenSettingsScreen(
     onRegexChanged: (String) -> Unit,
     onTestApi: () -> Unit,
     onChargeWattsOptionChanged: (String) -> Unit,
+    onShowVoltageChanged: (Boolean) -> Unit,
+    onShowCurrentChanged: (Boolean) -> Unit,
+    onShowPowerChanged: (Boolean) -> Unit,
+    onShowTemperatureChanged: (Boolean) -> Unit,
+    onShowIndicatorChanged: (Boolean) -> Unit,
+    onCustomFormatEnabledChanged: (Boolean) -> Unit,
+    onCustomFormatChanged: (String) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -166,6 +181,13 @@ private fun LockScreenSettingsScreen(
                         onRegexChanged = onRegexChanged,
                         onTestApi = onTestApi,
                         onChargeWattsOptionChanged = onChargeWattsOptionChanged,
+                        onShowVoltageChanged = onShowVoltageChanged,
+                        onShowCurrentChanged = onShowCurrentChanged,
+                        onShowPowerChanged = onShowPowerChanged,
+                        onShowTemperatureChanged = onShowTemperatureChanged,
+                        onShowIndicatorChanged = onShowIndicatorChanged,
+                        onCustomFormatEnabledChanged = onCustomFormatEnabledChanged,
+                        onCustomFormatChanged = onCustomFormatChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -182,6 +204,13 @@ private fun lockScreenSettingsSections(
     onRegexChanged: (String) -> Unit,
     onTestApi: () -> Unit,
     onChargeWattsOptionChanged: (String) -> Unit,
+    onShowVoltageChanged: (Boolean) -> Unit,
+    onShowCurrentChanged: (Boolean) -> Unit,
+    onShowPowerChanged: (Boolean) -> Unit,
+    onShowTemperatureChanged: (Boolean) -> Unit,
+    onShowIndicatorChanged: (Boolean) -> Unit,
+    onCustomFormatEnabledChanged: (Boolean) -> Unit,
+    onCustomFormatChanged: (String) -> Unit,
 ): List<SettingSection> {
     val yiYanItems = buildList {
         add(
@@ -210,6 +239,85 @@ private fun lockScreenSettingsSections(
         }
     }
 
+    val chargeWattsItems = buildList {
+        add(
+            SettingItem.Custom(
+                content = {
+                    ChargeWattsSettingsContent(
+                        state = state,
+                        onChargeWattsOptionChanged = onChargeWattsOptionChanged,
+                    )
+                }
+            )
+        )
+
+        // 当选择"实际功率"时展开子开关
+        val isActualWatts = state.chargeWattsOption == stringResource(R.string.watt_option_actual)
+        if (isActualWatts) {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.realwatts_show_power),
+                    summary = stringResource(R.string.realwatts_show_power_summary),
+                    checked = state.showPower,
+                    onCheckedChange = onShowPowerChanged
+                )
+            )
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.realwatts_show_voltage),
+                    summary = stringResource(R.string.realwatts_show_voltage_summary),
+                    checked = state.showVoltage,
+                    onCheckedChange = onShowVoltageChanged
+                )
+            )
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.realwatts_show_current),
+                    summary = stringResource(R.string.realwatts_show_current_summary),
+                    checked = state.showCurrent,
+                    onCheckedChange = onShowCurrentChanged
+                )
+            )
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.realwatts_show_temperature),
+                    summary = stringResource(R.string.realwatts_show_temperature_summary),
+                    checked = state.showTemperature,
+                    onCheckedChange = onShowTemperatureChanged
+                )
+            )
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.realwatts_show_indicator),
+                    summary = stringResource(R.string.realwatts_show_indicator_summary),
+                    checked = state.showIndicator,
+                    onCheckedChange = onShowIndicatorChanged
+                )
+            )
+            // 高级自定义格式
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.realwatts_custom_format_enabled),
+                    summary = stringResource(R.string.realwatts_custom_format_enabled_summary),
+                    checked = state.customFormatEnabled,
+                    onCheckedChange = onCustomFormatEnabledChanged
+                )
+            )
+            if (state.customFormatEnabled) {
+                add(
+                    SettingItem.Custom(
+                        content = {
+                            CustomFormatInput(
+                                value = state.customFormat,
+                                onValueChange = onCustomFormatChanged
+                            )
+                        }
+                    )
+                )
+            }
+        }
+    }
+
     return listOf(
         SettingSection(
             title = stringResource(R.string.YiYanTile),
@@ -217,16 +325,7 @@ private fun lockScreenSettingsSections(
         ),
         SettingSection(
             title = stringResource(R.string.ChargeWattsTitle),
-            items = listOf(
-                SettingItem.Custom(
-                    content = {
-                        ChargeWattsSettingsContent(
-                            state = state,
-                            onChargeWattsOptionChanged = onChargeWattsOptionChanged,
-                        )
-                    }
-                )
-            )
+            items = chargeWattsItems
         )
     )
 }
@@ -292,6 +391,33 @@ private fun YiYanConfigFields(
             label = stringResource(R.string.regex_label),
             singleLine = true,
             horizontalPadding = 0.dp
+        )
+    }
+}
+
+@Composable
+private fun CustomFormatInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp)
+    ) {
+        ZToolTextInputRow(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = stringResource(R.string.realwatts_custom_format_label),
+            singleLine = false,
+            horizontalPadding = 0.dp
+        )
+        Text(
+            text = stringResource(R.string.realwatts_custom_format_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
         )
     }
 }

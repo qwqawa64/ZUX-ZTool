@@ -605,6 +605,21 @@
     <string name="ChargeWattsEnableTitle">充电功率显示类型</string>
     <string name="ChargeWattsSummary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限</string>
     <string name="systemui_root_permission_required_message">要使用实际充电功率功能，请在Root管理器中为“系统界面”授予Root权限！</string>
+    <!-- RealWatts 子开关 -->
+    <string name="realwatts_show_power">显示功率</string>
+    <string name="realwatts_show_power_summary">显示实时充电功率 (W)</string>
+    <string name="realwatts_show_voltage">显示电压</string>
+    <string name="realwatts_show_voltage_summary">显示电池电压 (V)</string>
+    <string name="realwatts_show_current">显示电流</string>
+    <string name="realwatts_show_current_summary">显示充电电流 (A)</string>
+    <string name="realwatts_show_temperature">显示温度</string>
+    <string name="realwatts_show_temperature_summary">显示电池温度 (°C)，需系统内核支持</string>
+    <string name="realwatts_show_indicator">显示闪电记号</string>
+    <string name="realwatts_show_indicator_summary">根据功率大小显示 ⚡ 符号</string>
+    <string name="realwatts_custom_format_enabled">高级自定义格式</string>
+    <string name="realwatts_custom_format_enabled_summary">使用占位符自定义显示文本，开启后子开关将失效</string>
+    <string name="realwatts_custom_format_label">自定义格式</string>
+    <string name="realwatts_custom_format_hint">可用占位符：${voltage} ${current} ${power} ${temperature} ${ind}\n示例：Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
     <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
     <!-- 锁屏设置相关字符串 -->

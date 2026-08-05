@@ -78,6 +78,14 @@ object PreferenceKeys {
     @JvmField val CUSTOMIZE_SLIDER_STYLE_PREVIOUS = BoolKey("customize_slider_style_previous", false)
     @JvmField val CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE = BoolKey("customize_slider_style_previous_value", false)
 
+    // SystemUI RealWatts 子功能开关
+    @JvmField val SYSTEMUI_REALWATTS_SHOW_VOLTAGE = BoolKey("systemui_realwatts_show_voltage", false)
+    @JvmField val SYSTEMUI_REALWATTS_SHOW_CURRENT = BoolKey("systemui_realwatts_show_current", false)
+    @JvmField val SYSTEMUI_REALWATTS_SHOW_POWER = BoolKey("systemui_realwatts_show_power", true)
+    @JvmField val SYSTEMUI_REALWATTS_SHOW_TEMPERATURE = BoolKey("systemui_realwatts_show_temperature", false)
+    @JvmField val SYSTEMUI_REALWATTS_SHOW_INDICATOR = BoolKey("systemui_realwatts_show_indicator", true)
+    @JvmField val SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED = BoolKey("systemui_realwatts_custom_format_enabled", false)
+
     // ── Settings ──
     @JvmField val REMOVE_BLACKLIST = BoolKey("remove_blacklist", false)
     @JvmField val ALLOW_DISPLAY_DOLBY = BoolKey("allow_display_dolby", false)
@@ -212,6 +220,7 @@ object PreferenceKeys {
     @JvmField val REGULAR = StringKey("Regular", "")
     @JvmField val CUSTOM_STATUSBAR_CLOCK_FORMAT = StringKey("Custom_StatusBarClockFormat", "")
     @JvmField val CHARGE_WATTS_SELECTED_OPTION = StringKey("charge_watts_selected_option", "")
+    @JvmField val SYSTEMUI_REALWATTS_CUSTOM_FORMAT = StringKey("systemui_realwatts_custom_format", "")
 
     // ═══════════════════════════════════════════════════════════
     // 按类型分组的列表 —— 供 ModulePreferencesUtils 备份/恢复
@@ -267,7 +276,10 @@ object PreferenceKeys {
         AUTO_ACCEPT_FILE_TRANSFER, BYPASS_SHARE_WARNING,
         DISABLE_NEARBY_SHARE_COUNTDOWN,
         IS_DETAILED_LOGGING, ENABLE_HOMEPAGE_YIYAN, AUTO_CHECK_UPDATE,
-        YIYAN, IS_SYSTEMUI_PERMISSION_CONFIRMED, IS_CONFIG_UPGRADED
+        YIYAN, IS_SYSTEMUI_PERMISSION_CONFIRMED, IS_CONFIG_UPGRADED,
+        SYSTEMUI_REALWATTS_SHOW_VOLTAGE, SYSTEMUI_REALWATTS_SHOW_CURRENT,
+        SYSTEMUI_REALWATTS_SHOW_POWER, SYSTEMUI_REALWATTS_SHOW_TEMPERATURE,
+        SYSTEMUI_REALWATTS_SHOW_INDICATOR, SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED
     )
 
     @JvmField
@@ -301,7 +313,8 @@ object PreferenceKeys {
         CUSTOM_CONTROL_CENTER_DATE_FORMAT,
         API_URL, REGULAR,
         CUSTOM_STATUSBAR_CLOCK_FORMAT,
-        CHARGE_WATTS_SELECTED_OPTION
+        CHARGE_WATTS_SELECTED_OPTION,
+        SYSTEMUI_REALWATTS_CUSTOM_FORMAT
     )
 
     // ═══════════════════════════════════════════════════════════

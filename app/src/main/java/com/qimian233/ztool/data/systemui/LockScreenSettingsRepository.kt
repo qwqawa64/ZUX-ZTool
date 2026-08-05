@@ -35,6 +35,13 @@ class LockScreenSettingsRepository(
             apiAddress = yiYanPrefs.loadStringSetting(KEY_API_URL, ""),
             regex = yiYanPrefs.loadStringSetting(KEY_REGULAR, ""),
             chargeWattsOption = chargeWattsOption,
+            showVoltage = prefsUtils.loadBooleanSetting(KEY_RW_SHOW_VOLTAGE, false),
+            showCurrent = prefsUtils.loadBooleanSetting(KEY_RW_SHOW_CURRENT, false),
+            showPower = prefsUtils.loadBooleanSetting(KEY_RW_SHOW_POWER, true),
+            showTemperature = prefsUtils.loadBooleanSetting(KEY_RW_SHOW_TEMPERATURE, false),
+            showIndicator = prefsUtils.loadBooleanSetting(KEY_RW_SHOW_INDICATOR, true),
+            customFormatEnabled = prefsUtils.loadBooleanSetting(KEY_RW_CUSTOM_FORMAT_ENABLED, false),
+            customFormat = prefsUtils.loadStringSetting(KEY_RW_CUSTOM_FORMAT, ""),
         )
     }
 
@@ -70,6 +77,14 @@ class LockScreenSettingsRepository(
     fun saveSystemUiPermissionConfirmed() {
         prefsUtils.saveBooleanSetting(KEY_SYSTEMUI_PERMISSION_CONFIRMED, true)
     }
+
+    fun saveShowVoltage(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_VOLTAGE, enabled)
+    fun saveShowCurrent(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_CURRENT, enabled)
+    fun saveShowPower(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_POWER, enabled)
+    fun saveShowTemperature(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_TEMPERATURE, enabled)
+    fun saveShowIndicator(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_INDICATOR, enabled)
+    fun saveCustomFormatEnabled(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_CUSTOM_FORMAT_ENABLED, enabled)
+    fun saveCustomFormat(value: String) = prefsUtils.saveStringSetting(KEY_RW_CUSTOM_FORMAT, value.trim())
 
     fun testApi(apiUrl: String, regexValue: String): ApiTestResult {
         return try {
@@ -176,5 +191,12 @@ class LockScreenSettingsRepository(
         private val KEY_REAL_WATTS = PreferenceKeys.SYSTEMUI_REAL_WATTS.name
         private val KEY_SYSTEMUI_PERMISSION_CONFIRMED = PreferenceKeys.IS_SYSTEMUI_PERMISSION_CONFIRMED.name
         private val KEY_CHARGE_WATTS_SELECTED_OPTION = PreferenceKeys.CHARGE_WATTS_SELECTED_OPTION.name
+        private val KEY_RW_SHOW_VOLTAGE = PreferenceKeys.SYSTEMUI_REALWATTS_SHOW_VOLTAGE.name
+        private val KEY_RW_SHOW_CURRENT = PreferenceKeys.SYSTEMUI_REALWATTS_SHOW_CURRENT.name
+        private val KEY_RW_SHOW_POWER = PreferenceKeys.SYSTEMUI_REALWATTS_SHOW_POWER.name
+        private val KEY_RW_SHOW_TEMPERATURE = PreferenceKeys.SYSTEMUI_REALWATTS_SHOW_TEMPERATURE.name
+        private val KEY_RW_SHOW_INDICATOR = PreferenceKeys.SYSTEMUI_REALWATTS_SHOW_INDICATOR.name
+        private val KEY_RW_CUSTOM_FORMAT_ENABLED = PreferenceKeys.SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED.name
+        private val KEY_RW_CUSTOM_FORMAT = PreferenceKeys.SYSTEMUI_REALWATTS_CUSTOM_FORMAT.name
     }
 }

@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.keyguard;
 
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 
 import com.qimian233.ztool.hook.base.AppHookModule;
 
@@ -30,6 +31,17 @@ public class SystemUIRealWatts extends AppHookModule {
     private static final String CURRENT_NOW_PATH = "/sys/class/power_supply/battery/current_now";
     private static final String VOLTAGE_NOW_PATH = "/sys/class/power_supply/battery/voltage_now";
     private static final String STATUS_PATH = "/sys/class/power_supply/battery/status";
+    private static final String TEMP_PATH = "/sys/class/power_supply/battery/temp";
+
+    // PreferenceKey 常量（与 PreferenceKeys.kt 中的键名一致）
+    private static final String PREFS_NAME = "xposed_module_config";
+    private static final String KEY_SHOW_VOLTAGE = "systemui_realwatts_show_voltage";
+    private static final String KEY_SHOW_CURRENT = "systemui_realwatts_show_current";
+    private static final String KEY_SHOW_POWER = "systemui_realwatts_show_power";
+    private static final String KEY_SHOW_TEMPERATURE = "systemui_realwatts_show_temperature";
+    private static final String KEY_SHOW_INDICATOR = "systemui_realwatts_show_indicator";
+    private static final String KEY_CUSTOM_FORMAT_ENABLED = "systemui_realwatts_custom_format_enabled";
+    private static final String KEY_CUSTOM_FORMAT = "systemui_realwatts_custom_format";
 
     // 用于格式化功率显示，保留两位小数
     private static final DecimalFormat POWER_FORMAT = new DecimalFormat("0.00");
@@ -91,10 +103,15 @@ public class SystemUIRealWatts extends AppHookModule {
                         ChargingData chargingData = readChargingData();
 
                         if (chargingData != null && chargingData.isCharging && chargingData.power > 0) {
-                            // 使用换行符 \n 追加功率信息
-                            String newText = originalText + "\n" + formatWattage(chargingData.power);
+                            SharedPreferences prefs = this.xposed.getRemotePreferences(PREFS_NAME);
+                            String displayText = buildDisplayText(chargingData, prefs);
+                            if (displayText.isEmpty()) {
+                                logger.warn("未能检测到充电功率");
+                                return originalText + "\n --W";
+                            }
+                            String newText = originalText + "\n" + displayText;
                             lastUpdate = System.currentTimeMillis();
-                            logger.debug("成功添加充电瓦数显示: " + POWER_FORMAT.format(chargingData.power) + "W");
+                            logger.debug("成功添加充电显示: " + displayText);
                             return newText;
                         } else {
                             logger.warn("未能检测到充电功率");
@@ -145,13 +162,14 @@ public class SystemUIRealWatts extends AppHookModule {
             String status = readSysfs(STATUS_PATH);
             String currentStr = readSysfs(CURRENT_NOW_PATH);
             String voltageStr = readSysfs(VOLTAGE_NOW_PATH);
+            String tempStr = readSysfs(TEMP_PATH);
 
             if (currentStr == null || voltageStr == null || currentStr.isEmpty() || voltageStr.isEmpty()) {
                 logger.warn("Java IO 读取 sysfs 无有效数据 - 电流: " + currentStr + ", 电压: " + voltageStr);
                 return null;
             }
 
-            return buildChargingData(status, currentStr, voltageStr, "Java IO");
+            return buildChargingData(status, currentStr, voltageStr, tempStr, "Java IO");
 
         } catch (Exception e) {
             logger.error("Java IO 读取充电数据异常", e);
@@ -167,13 +185,14 @@ public class SystemUIRealWatts extends AppHookModule {
             String status = executeRootCommand("cat " + STATUS_PATH);
             String currentStr = executeRootCommand("cat " + CURRENT_NOW_PATH);
             String voltageStr = executeRootCommand("cat " + VOLTAGE_NOW_PATH);
+            String tempStr = executeRootCommand("cat " + TEMP_PATH);
 
             if (currentStr == null || voltageStr == null || currentStr.isEmpty() || voltageStr.isEmpty()) {
                 logger.warn("su 读取失败 - 电流: " + currentStr + ", 电压: " + voltageStr);
                 return null;
             }
 
-            return buildChargingData(status, currentStr, voltageStr, "su");
+            return buildChargingData(status, currentStr, voltageStr, tempStr, "su");
 
         } catch (Exception e) {
             logger.error("su 读取充电数据异常", e);
@@ -184,7 +203,7 @@ public class SystemUIRealWatts extends AppHookModule {
     /**
      * 将原始 sysfs 字符串解析为 ChargingData。
      */
-    private ChargingData buildChargingData(String status, String currentStr, String voltageStr, String source) {
+    private ChargingData buildChargingData(String status, String currentStr, String voltageStr, String tempStr, String source) {
         boolean isCharging = "Charging".equalsIgnoreCase(status) || "Full".equalsIgnoreCase(status);
 
         long currentMicroA = Long.parseLong(currentStr.trim());
@@ -194,15 +213,27 @@ public class SystemUIRealWatts extends AppHookModule {
         double voltageV = voltageMicroV / 1000000.0;
         double power = Math.abs(currentA * voltageV);
 
+        // 温度：sysfs 单位为 0.1°C，除以 10 得 °C
+        double temperature = -273; // 默认无效值
+        if (tempStr != null && !tempStr.isEmpty()) {
+            try {
+                temperature = Long.parseLong(tempStr.trim()) / 10.0;
+            } catch (NumberFormatException e) {
+                logger.warn("温度值解析失败: " + tempStr);
+            }
+        }
+
         ChargingData data = new ChargingData();
         data.isCharging = isCharging;
         data.current = (int) (currentA * 1000);
         data.voltage = (float) voltageV;
         data.power = power;
+        data.temperature = temperature;
 
         logger.debug(source + " 读取实时充电数据 - 状态: " + status +
                 ", 电流: " + currentA + "A (" + currentMicroA + "μA)" +
                 ", 电压: " + voltageV + "V (" + voltageMicroV + "μV)" +
+                ", 温度: " + (temperature > -200 ? (int)temperature + "°C" : "N/A") +
                 ", 功率: " + POWER_FORMAT.format(power) + "W");
 
         return data;
@@ -286,26 +317,100 @@ public class SystemUIRealWatts extends AppHookModule {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // 显示文本构建
+    // ═══════════════════════════════════════════════════════════
+
     /**
-     * 格式化充电瓦数显示：显示"[功率]W [闪电符号]"，保留两位小数
+     * 根据用户偏好构建显示文本。
+     * <p>
+     * 如果启用了高级自定义格式，使用占位符替换；
+     * 否则按子开关组合默认格式。
      */
-    private String formatWattage(double watts) {
-        if (watts <= 0) return "";
+    private String buildDisplayText(ChargingData data, SharedPreferences prefs) {
+        if (data == null || data.power <= 0) return "";
 
-        // 基础字符串："[功率]W"，保留两位小数
-        String base = POWER_FORMAT.format(watts) + "W";
+        boolean customEnabled = prefs.getBoolean(KEY_CUSTOM_FORMAT_ENABLED, false);
 
-        // 根据功率范围附加闪电符号
-        if (watts < 10) {
-            return base;  // 无闪电符号
-        } else if (watts < 18) {
-            return base;  // 无闪电符号
-        } else if (watts < 30) {
-            return base + " ⚡";  // 一个闪电符号
-        } else if (watts < 65) {
-            return base + " ⚡⚡";  // 两个闪电符号
+        if (customEnabled) {
+            return buildCustomFormat(data, prefs);
         } else {
-            return base + " ⚡⚡⚡";  // 三个闪电符号
+            return buildDefaultFormat(data, prefs);
+        }
+    }
+
+    /**
+     * 默认模式：按子开关拼接各数据项。
+     */
+    private String buildDefaultFormat(ChargingData data, SharedPreferences prefs) {
+        StringBuilder sb = new StringBuilder();
+
+        boolean showPower = prefs.getBoolean(KEY_SHOW_POWER, true);
+        boolean showVoltage = prefs.getBoolean(KEY_SHOW_VOLTAGE, false);
+        boolean showCurrent = prefs.getBoolean(KEY_SHOW_CURRENT, false);
+        boolean showTemp = prefs.getBoolean(KEY_SHOW_TEMPERATURE, false);
+        boolean showIndicator = prefs.getBoolean(KEY_SHOW_INDICATOR, true);
+
+        if (showVoltage) {
+            sb.append(POWER_FORMAT.format(data.voltage)).append("V");
+        }
+        if (showCurrent) {
+            if (sb.length() > 0) sb.append(" / ");
+            sb.append(POWER_FORMAT.format(data.current / 1000.0)).append("A");
+        }
+        if (showPower) {
+            if (sb.length() > 0) sb.append(" / ");
+            sb.append(POWER_FORMAT.format(data.power)).append("W");
+        }
+        if (showTemp && data.temperature > -200) {
+            if (sb.length() > 0) sb.append(" / ");
+            sb.append((int) data.temperature).append("°C");
+        }
+        if (showIndicator) {
+            sb.append(getIndicator(data.power));
+        }
+
+        // 如果什么都没选，默认只显示功率
+        if (sb.length() == 0) {
+            sb.append(POWER_FORMAT.format(data.power)).append("W");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 高级自定义格式：在 Java 侧做纯字符串替换，不经过 shell，完全安全。
+     */
+    private String buildCustomFormat(ChargingData data, SharedPreferences prefs) {
+        String format = prefs.getString(KEY_CUSTOM_FORMAT, "");
+        if (format == null || format.trim().isEmpty()) {
+            // 空格式回退到默认
+            logger.warn("自定义格式为空，回退到默认格式");
+            return buildDefaultFormat(data, prefs);
+        }
+
+        String result = format;
+        // Java 侧字符串替换，零 shell 风险
+        result = result.replace("${voltage}", POWER_FORMAT.format(data.voltage));
+        result = result.replace("${current}", POWER_FORMAT.format(data.current / 1000.0));
+        result = result.replace("${power}", POWER_FORMAT.format(data.power));
+        result = result.replace("${temperature}",
+                data.temperature > -200 ? String.valueOf((int) data.temperature) : "N/A");
+        result = result.replace("${ind}", getIndicator(data.power));
+
+        return result;
+    }
+
+    /**
+     * 根据功率范围返回闪电记号字符串。
+     */
+    private String getIndicator(double watts) {
+        if (watts < 30) {
+            return "";
+        } else if (watts < 65) {
+            return " ⚡";
+        } else {
+            return " ⚡⚡";
         }
     }
 
@@ -314,9 +419,10 @@ public class SystemUIRealWatts extends AppHookModule {
      */
     private static class ChargingData {
         boolean isCharging;
-        int current;    // 毫安
-        float voltage;  // 伏特
-        double power;   // 瓦特（保留小数）
+        int current;       // 毫安
+        float voltage;     // 伏特
+        double power;      // 瓦特
+        double temperature; // 摄氏度，-273 表示无效
     }
 
 }

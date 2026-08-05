@@ -46,6 +46,41 @@ class LockScreenSettingsViewModel(
         )
     }
 
+    fun setShowVoltage(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(showVoltage = enabled)
+        repository.saveShowVoltage(enabled)
+    }
+
+    fun setShowCurrent(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(showCurrent = enabled)
+        repository.saveShowCurrent(enabled)
+    }
+
+    fun setShowPower(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(showPower = enabled)
+        repository.saveShowPower(enabled)
+    }
+
+    fun setShowTemperature(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(showTemperature = enabled)
+        repository.saveShowTemperature(enabled)
+    }
+
+    fun setShowIndicator(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(showIndicator = enabled)
+        repository.saveShowIndicator(enabled)
+    }
+
+    fun setCustomFormatEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(customFormatEnabled = enabled)
+        repository.saveCustomFormatEnabled(enabled)
+    }
+
+    fun setCustomFormat(value: String) {
+        _uiState.value = _uiState.value.copy(customFormat = value)
+        repository.saveCustomFormat(value)
+    }
+
     fun dismissRootPermissionDialog() {
         _uiState.value = _uiState.value.copy(showRootPermissionDialog = false)
     }
@@ -106,5 +141,13 @@ data class LockScreenSettingsUiState(
     val chargeWattsOption: String = "",
     val isTestingApi: Boolean = false,
     val showRootPermissionDialog: Boolean = false,
-    val apiTestResult: ApiTestResult? = null
+    val apiTestResult: ApiTestResult? = null,
+    // RealWatts 子开关
+    val showVoltage: Boolean = false,
+    val showCurrent: Boolean = false,
+    val showPower: Boolean = true,
+    val showTemperature: Boolean = false,
+    val showIndicator: Boolean = true,
+    val customFormatEnabled: Boolean = false,
+    val customFormat: String = ""
 )
