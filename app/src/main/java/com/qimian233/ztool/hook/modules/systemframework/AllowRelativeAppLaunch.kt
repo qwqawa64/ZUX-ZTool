@@ -111,7 +111,9 @@ class AllowRelativeAppLaunch: SystemHookModule() {
         hookWithId(isAllowRelativeStartMethod, "relative_app_force_freeform") { chain ->
             val callingPackage = chain.getArg(1) as String?
             val intent = chain.getArg(3) as android.content.Intent?
-            val targetPackage = intent?.getPackage() ?: intent?.component?.packageName
+            // 优先使用 component.packageName（反映目标 Activity 真实归属包名），
+            // 而非 intent.package（可能被 SDK 设为调用方自身包名）
+            val targetPackage = intent?.component?.packageName ?: intent?.getPackage()
 
             // trace: dump isAllowRelativeStart 完整参数
             logger.trace(
