@@ -123,7 +123,7 @@ public class AiInputExpand extends AppHookModule {
     private String[] getPrefStringArray() {
         String value;
         try {
-            value = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.AI_INPUT_EXPAND_SIGNS.name, "");
+            value = getRemotePreferences().getString(PreferenceKeys.AI_INPUT_EXPAND_SIGNS.name, "");
         } catch (Throwable t) {
             value = "";
         }

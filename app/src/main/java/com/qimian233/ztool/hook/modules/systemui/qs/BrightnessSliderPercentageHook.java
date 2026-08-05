@@ -133,7 +133,7 @@ public class BrightnessSliderPercentageHook extends AppHookModule {
 
     private void hookSeekProgressChanges() {
         try {
-            Method setProgressMethod = SeekBar.class.getDeclaredMethod("setProgress", int.class);
+            @SuppressWarnings("JavaReflectionMemberAccess") Method setProgressMethod = SeekBar.class.getDeclaredMethod("setProgress", int.class);
             hookWithId(setProgressMethod, "set_progress", chain -> {
                 Object result = chain.proceed();
                 SeekBar seekBar = (SeekBar) chain.getThisObject();
@@ -513,7 +513,7 @@ public class BrightnessSliderPercentageHook extends AppHookModule {
 
     private void updatePrefs() {
         try {
-            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name, false);
+            PERCENTAGE_ENABLED = getRemotePreferences().getBoolean(PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name, false);
         } catch (Throwable t) {
             PERCENTAGE_ENABLED = false;
         }

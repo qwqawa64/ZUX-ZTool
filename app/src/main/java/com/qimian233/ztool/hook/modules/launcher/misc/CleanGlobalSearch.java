@@ -139,13 +139,13 @@ public class CleanGlobalSearch extends AppHookModule {
 
     private void getPreferenceSettings() {
         try {
-            this.NO_HOT_WORD_VIEW = this.xposed.getRemotePreferences("xposed_module_config")
+            this.NO_HOT_WORD_VIEW = getRemotePreferences()
                     .getBoolean(PreferenceKeys.REMOVE_HOT_WORD_VIEW.name, false);
         } catch (Throwable t) {
             this.NO_HOT_WORD_VIEW = false;
         }
         try {
-            this.NO_SEARCH_BOX_RECOMMEND = this.xposed.getRemotePreferences("xposed_module_config")
+            this.NO_SEARCH_BOX_RECOMMEND = getRemotePreferences()
                     .getBoolean(PreferenceKeys.REMOVE_SEARCH_RECOMMEND.name, false);
         } catch (Throwable t) {
             this.NO_SEARCH_BOX_RECOMMEND = false;

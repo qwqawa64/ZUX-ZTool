@@ -17,8 +17,7 @@ class CustomizeAboutDeviceInfo : AppHookModule() {
     override fun getModuleName(): String = "about_device_info"
 
     override fun getTargetPackages(): Array<String> = arrayOf(TARGET_PACKAGE)
-
-    @Throws(Throwable::class)
+    
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
         hookSummaryIfEnabled(
@@ -70,7 +69,7 @@ class CustomizeAboutDeviceInfo : AppHookModule() {
             val m = classLoader.loadClass(targetClass).getDeclaredMethod("getSummary")
             hookWithId(m, "hook_74") { chain: XposedInterface.Chain? ->
                 val prefEnabled: Boolean = try {
-                    this.xposed.getRemotePreferences("xposed_module_config")
+                    remotePreferences
                         .getBoolean(enabledKey, false)
                 } catch (_: Throwable) {
                     false
@@ -79,7 +78,7 @@ class CustomizeAboutDeviceInfo : AppHookModule() {
                     return@hookWithId chain!!.proceed()
                 }
                 val value = try {
-                    this.xposed.getRemotePreferences("xposed_module_config")
+                    remotePreferences
                         .getString(valueKey, "")
                 } catch (_: Throwable) {
                     ""
@@ -103,7 +102,7 @@ class CustomizeAboutDeviceInfo : AppHookModule() {
             hookWithId(setImageMethod, "set_image") { chain: XposedInterface.Chain? ->
                 val result = chain!!.proceed()
                 val headerEnabled: Boolean = try {
-                    this.xposed.getRemotePreferences("xposed_module_config")
+                    remotePreferences
                         .getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_HEADER_ENABLED.name, false)
                 } catch (_: Throwable) {
                     false
@@ -137,7 +136,7 @@ class CustomizeAboutDeviceInfo : AppHookModule() {
             hookWithId(updateTextMethod, "update_text") { chain: XposedInterface.Chain? ->
                 val result = chain!!.proceed()
                 val modelEnabled: Boolean = try {
-                    this.xposed.getRemotePreferences("xposed_module_config")
+                    remotePreferences
                         .getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name, false)
                 } catch (_: Throwable) {
                     false
@@ -146,7 +145,7 @@ class CustomizeAboutDeviceInfo : AppHookModule() {
                     return@hookWithId result
                 }
                 val model = try {
-                    this.xposed.getRemotePreferences("xposed_module_config")
+                    remotePreferences
                         .getString(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name, "")
                 } catch (_: Throwable) {
                     ""

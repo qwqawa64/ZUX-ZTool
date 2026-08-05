@@ -183,7 +183,6 @@ class BypassShareWarningHook : AppHookModule() {
                     val manager = lMethod.invoke(null, context)
                     if (manager == null) {
                         logger.warn("Unable to get manager!")
-                        null
                     } else {
                         val zMethod = manager.javaClass.getDeclaredMethod(
                             finalSetMethod, Boolean::class.javaPrimitiveType
@@ -261,7 +260,7 @@ class BypassShareWarningHook : AppHookModule() {
 
             // ── 兜底：直接写两个 SharedPreferences ───────────────────
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .edit().putBoolean(PREF_KEY1, true).apply()
+                .edit { putBoolean(PREF_KEY1, true) }
             context.getSharedPreferences("sp_file_ble", Context.MODE_PRIVATE)
                 .edit { putBoolean("nearby_send_files", true) }
 

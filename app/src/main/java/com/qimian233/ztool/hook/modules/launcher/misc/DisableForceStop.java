@@ -85,7 +85,7 @@ public class DisableForceStop extends AppHookModule {
     // 检查是否启用白名单保护
     private boolean isWhiteListEnabled() {
         try {
-            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.FORCE_STOP_WHITE_LIST_ENABLE.name, false);
+            return getRemotePreferences().getBoolean(PreferenceKeys.FORCE_STOP_WHITE_LIST_ENABLE.name, false);
         } catch (Throwable t) {
             return false;
         }
@@ -95,7 +95,7 @@ public class DisableForceStop extends AppHookModule {
     private String[] getWhiteListPackages() {
         String value;
         try {
-            value = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.FORCE_STOP_WHITE_LIST.name, "");
+            value = getRemotePreferences().getString(PreferenceKeys.FORCE_STOP_WHITE_LIST.name, "");
         } catch (Throwable t) {
             value = "";
         }

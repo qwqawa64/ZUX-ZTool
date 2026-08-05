@@ -90,7 +90,7 @@ public class CustomQsRoundCorner extends AppHookModule {
         hookWithId(refreshSeekBarMethod, "refresh_seek_bar", chain -> {
             logger.debug("refreshSeekBar afterHookedMethod called!");
             Object result = chain.proceed();
-            applySeekBarRoundCorner((ProgressBar) chain.getArg(0), "refreshSeekBar");
+            applySeekBarRoundCorner((ProgressBar) chain.getArg(0));
             return result;
         });
 
@@ -145,15 +145,15 @@ public class CustomQsRoundCorner extends AppHookModule {
         });
     }
 
-    private void applySeekBarRoundCorner(ProgressBar progressBar, String source) {
+    private void applySeekBarRoundCorner(ProgressBar progressBar) {
         if (progressBar == null) {
-            logger.debug("applySeekBarRoundCorner skipped from " + source + ": progressBar is null");
+            logger.debug("applySeekBarRoundCorner skipped from " + "refreshSeekBar" + ": progressBar is null");
             return;
         }
 
         Drawable progressDrawable = progressBar.getProgressDrawable();
         if (!(progressDrawable instanceof LayerDrawable)) {
-            logger.debug("applySeekBarRoundCorner skipped from " + source + ": progress drawable is " + describeDrawable(progressDrawable));
+            logger.debug("applySeekBarRoundCorner skipped from " + "refreshSeekBar" + ": progress drawable is " + describeDrawable(progressDrawable));
             return;
         }
 
@@ -163,7 +163,7 @@ public class CustomQsRoundCorner extends AppHookModule {
             if (backgroundDrawable instanceof GradientDrawable) {
                 ((GradientDrawable) backgroundDrawable).setCornerRadius((float) headUpTileRoundCornerRadius);
             } else {
-                logger.debug("Background layer is " + describeDrawable(backgroundDrawable) + " from " + source);
+                logger.debug("Background layer is " + describeDrawable(backgroundDrawable) + " from " + "refreshSeekBar");
             }
 
             Drawable progressLayer = layerDrawable.findDrawableByLayerId(android.R.id.progress);
@@ -179,10 +179,10 @@ public class CustomQsRoundCorner extends AppHookModule {
                     }
                 }
             } else {
-                logger.debug("Progress layer is " + describeDrawable(progressLayer) + " from " + source);
+                logger.debug("Progress layer is " + describeDrawable(progressLayer) + " from " + "refreshSeekBar");
             }
         } catch (Throwable t) {
-            logger.error("applySeekBarRoundCorner failed from " + source, t);
+            logger.error("applySeekBarRoundCorner failed from " + "refreshSeekBar", t);
         }
     }
 
@@ -192,12 +192,12 @@ public class CustomQsRoundCorner extends AppHookModule {
 
     private void updateRoundCornerPrefs() {
         try {
-            headUpTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.HEAD_UP_ROUND_CORNER_RADIUS.name, 32);
+            headUpTileRoundCornerRadius = getRemotePreferences().getInt(PreferenceKeys.HEAD_UP_ROUND_CORNER_RADIUS.name, 32);
         } catch (Throwable t) {
             headUpTileRoundCornerRadius = 32;
         }
         try {
-            normalTileRoundCornerRadius = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.TILE_ROUND_CORNER_RADIUS.name, 96);
+            normalTileRoundCornerRadius = getRemotePreferences().getInt(PreferenceKeys.TILE_ROUND_CORNER_RADIUS.name, 96);
         } catch (Throwable t) {
             normalTileRoundCornerRadius = 96;
         }

@@ -386,7 +386,7 @@ public class RecentTaskMemoryViewHook extends AppHookModule {
     private String getTotalRamInfo(long availableMem) {
         boolean beautifyRamInfo;
         try {
-            beautifyRamInfo = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.BEAUTIFY_RAM_INFO.name, false);
+            beautifyRamInfo = getRemotePreferences().getBoolean(PreferenceKeys.BEAUTIFY_RAM_INFO.name, false);
         } catch (Throwable t) {
             beautifyRamInfo = false;
         }

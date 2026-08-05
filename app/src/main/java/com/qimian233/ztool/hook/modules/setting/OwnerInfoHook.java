@@ -462,7 +462,7 @@ public class OwnerInfoHook extends BaseHookModule {
     }
 
     private String getString(String key) {
-        SharedPreferences prefs = this.xposed.getRemotePreferences("xposed_module_config");
+        SharedPreferences prefs = getRemotePreferences();
         return prefs.getString(key, "");
     }
 }

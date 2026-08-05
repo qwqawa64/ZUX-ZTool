@@ -49,7 +49,7 @@ public class ZuiLauncherHotseatHook extends AppHookModule {
         // 避让逻辑做到 Hook 层，repository 保持干净
         boolean disableDockBar;
         try {
-            disableDockBar = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.DISABLE_DOCK_BAR.name, false);
+            disableDockBar = getRemotePreferences().getBoolean(PreferenceKeys.DISABLE_DOCK_BAR.name, false);
         } catch (Throwable t) {
             disableDockBar = false;
         }

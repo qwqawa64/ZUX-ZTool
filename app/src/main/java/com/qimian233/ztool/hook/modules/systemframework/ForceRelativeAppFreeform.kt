@@ -12,7 +12,7 @@ import java.lang.reflect.Method
 /**
  * 强制关联启动时以小窗（freeform）模式打开目标 Activity。
  *
- * Hook [com.android.server.wm.ZuiWmAutoRunManager.isAllowRelativeStart]，
+ * Hook com.android.server.wm.ZuiWmAutoRunManager.isAllowRelativeStart，
  * 当判定为跨 APP 关联启动时，注入 WINDOWING_MODE_FREEFORM=5 到
  * Bundle options 和 SafeActivityOptions 中。
  */
@@ -80,7 +80,7 @@ class ForceRelativeAppFreeform: SystemHookModule() {
             iAppThreadClass,                               // IApplicationThread caller
             String::class.java,                            // callingPackage
             String::class.java,                            // callingFeatureId
-            android.content.Intent::class.java,            // intent
+            Intent::class.java,                            // intent
             String::class.java,                            // resolvedType
             binderClass,                                   // resultTo
             String::class.java,                            // resultWho
@@ -95,7 +95,7 @@ class ForceRelativeAppFreeform: SystemHookModule() {
 
         hookWithId(isAllowRelativeStartMethod, "relative_app_force_freeform") { chain ->
             val callingPackage = chain.getArg(1) as String?
-            val intent = chain.getArg(3) as android.content.Intent?
+            val intent = chain.getArg(3) as Intent?
             // 优先使用 component.packageName（目标 Activity 真实归属包名），
             // 而非 intent.package（可能被 SDK 设为调用方自身包名）
             val targetPackage = intent?.component?.packageName ?: intent?.getPackage()

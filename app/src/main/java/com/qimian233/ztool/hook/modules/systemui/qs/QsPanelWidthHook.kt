@@ -196,7 +196,7 @@ class QsPanelWidthHook : AppHookModule() {
 
         // ── Hook QQSSideLabelTileLayout.onMeasure：QQS 磁贴列数 ──
         val qqsTileLayoutClass = param.defaultClassLoader
-            .loadClass("com.android.systemui.qs.QuickQSPanel\$QQSSideLabelTileLayout")
+            .loadClass($$"com.android.systemui.qs.QuickQSPanel$QQSSideLabelTileLayout")
         val qqsMeasureMethod = findMethod(
             qqsTileLayoutClass,
             "onMeasure",

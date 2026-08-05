@@ -249,7 +249,7 @@ public class AutoMistakeTouchHook extends AppHookModule {
      */
     private boolean isMistakeTouchWhiteListEnabled() {
         try {
-            return this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST.name, false);
+            return getRemotePreferences().getBoolean(PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST.name, false);
         } catch (Throwable t) {
             return false;
         }
@@ -261,7 +261,7 @@ public class AutoMistakeTouchHook extends AppHookModule {
     private String[] getMistakeTouchWhiteListGames() {
         String value;
         try {
-            value = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST_GAME.name, "");
+            value = getRemotePreferences().getString(PreferenceKeys.MISTAKE_TOUCH_WHITE_LIST_GAME.name, "");
         } catch (Throwable t) {
             value = "";
         }

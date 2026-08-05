@@ -19,7 +19,7 @@ class CustomGridSize : AppHookModule() {
         logger.info("Load CustomGridSize!")
         // We directly hook the constructor of GridOption class
         // But before hook, let us load custom grid size from shared prefs first
-        val prefs = this.xposed.getRemotePreferences("xposed_module_config")
+        val prefs = remotePreferences
         CUSTOM_ROWS =
             prefs.getInt(PreferenceKeys.CUSTOM_LAUNCHER_ROW.name, 4)
         CUSTOM_COLUMNS =

@@ -158,7 +158,7 @@ public class NotificationCenterTransparency extends AppHookModule {
 
     private void updatePrefs() {
         try {
-            blurPercent = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.NOTIFICATION_CENTER_BLUR_PERCENT.name, DEFAULT_BLUR_PERCENT);
+            blurPercent = getRemotePreferences().getInt(PreferenceKeys.NOTIFICATION_CENTER_BLUR_PERCENT.name, DEFAULT_BLUR_PERCENT);
         } catch (Throwable t) {
             blurPercent = DEFAULT_BLUR_PERCENT;
         }

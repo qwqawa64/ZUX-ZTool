@@ -206,12 +206,12 @@ public class ForceScreenOnOffAnimation extends SystemHookModule {
 
     private void updateAnimationDurationFromPrefs() {
         try {
-            SCREEN_OFF_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS.name, 400);
+            SCREEN_OFF_ANIMATION_DURATION_MS = getRemotePreferences().getInt(PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS.name, 400);
         } catch (Throwable t) {
             SCREEN_OFF_ANIMATION_DURATION_MS = 400;
         }
         try {
-            SCREEN_ON_ANIMATION_DURATION_MS = this.xposed.getRemotePreferences("xposed_module_config").getInt(PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS.name, 400);
+            SCREEN_ON_ANIMATION_DURATION_MS = getRemotePreferences().getInt(PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS.name, 400);
         } catch (Throwable t) {
             SCREEN_ON_ANIMATION_DURATION_MS = 400;
         }

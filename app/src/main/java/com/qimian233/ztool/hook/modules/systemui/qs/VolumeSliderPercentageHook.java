@@ -229,16 +229,12 @@ public class VolumeSliderPercentageHook extends AppHookModule {
     }
 
     private void refreshVolumeFromToggleSlider(Object sliderView) {
-        refreshVolumeFromToggleSlider(sliderView, null);
-    }
-
-    private void refreshVolumeFromToggleSlider(Object sliderView, Integer rawProgress) {
         if (!PERCENTAGE_ENABLED || sliderView == null) {
             return;
         }
         try {
-            Integer rawProgress2 = getVolumeRawProgress(sliderView, rawProgress);
-            Integer volumeProgress = getVolumeProgress(sliderView, rawProgress);
+            Integer rawProgress2 = getVolumeRawProgress(sliderView, null);
+            Integer volumeProgress = getVolumeProgress(sliderView, null);
             if (rawProgress2 == null || volumeProgress == null) {
                 return;
             }
@@ -251,7 +247,7 @@ public class VolumeSliderPercentageHook extends AppHookModule {
                 return;
             }
             updateVolumePercentColor(percentView, rawProgress2);
-            if (root != null && root.isInLayout()) {
+            if (root.isInLayout()) {
                 schedulePositionUpdate(sliderView);
                 return;
             }
@@ -510,7 +506,7 @@ public class VolumeSliderPercentageHook extends AppHookModule {
 
     private void updatePrefs() {
         try {
-            PERCENTAGE_ENABLED = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name, false);
+            PERCENTAGE_ENABLED = getRemotePreferences().getBoolean(PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name, false);
         } catch (Throwable t) {
             PERCENTAGE_ENABLED = false;
         }
