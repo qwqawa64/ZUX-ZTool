@@ -178,11 +178,15 @@ class QsPanelWidthHook : AppHookModule() {
                 if (orientation == Configuration.ORIENTATION_PORTRAIT) {
                     val pages = pagesField.get(pagedLayout) as ArrayList<*>
                     if (pages.isNotEmpty()) {
-                        for (page in pages) {
-                            columnsField.setInt(page, tileColumns)
+                        // 仅在列数真正变化时才触发重新分配，避免每帧 onMeasure 都重建页面
+                        val currentColumns = columnsField.getInt(pages[0])
+                        if (currentColumns != tileColumns) {
+                            for (page in pages) {
+                                columnsField.setInt(page, tileColumns)
+                            }
+                            distributeField.setBoolean(pagedLayout, true)
                         }
                     }
-                    distributeField.setBoolean(pagedLayout, true)
                 }
             }
             chain.proceed()
@@ -209,11 +213,15 @@ class QsPanelWidthHook : AppHookModule() {
                 val tileLayout = chain.thisObject as View
                 val orientation = tileLayout.context.resources.configuration.orientation
                 if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                    columnsField.setInt(tileLayout, tileColumns)
-                    val parent = tileLayout.parent
-                    if (parent != null && quickQSPanelClass.isInstance(parent)) {
-                        val rows = maxAllowedRowsField.getInt(tileLayout)
-                        maxTilesField.setInt(parent, tileColumns * rows)
+                    // 仅在列数真正变化时才写入，避免不必要的字段更新
+                    val currentColumns = columnsField.getInt(tileLayout)
+                    if (currentColumns != tileColumns) {
+                        columnsField.setInt(tileLayout, tileColumns)
+                        val parent = tileLayout.parent
+                        if (parent != null && quickQSPanelClass.isInstance(parent)) {
+                            val rows = maxAllowedRowsField.getInt(tileLayout)
+                            maxTilesField.setInt(parent, tileColumns * rows)
+                        }
                     }
                 }
             }
