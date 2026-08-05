@@ -1,170 +1,203 @@
-package com.qimian233.ztool.hook.modules.setting;
+package com.qimian233.ztool.hook.modules.setting
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Environment;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.Environment
+import android.widget.ImageView
+import android.widget.TextView
+import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.hook.base.AppHookModule
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 
-import com.qimian233.ztool.data.PreferenceKeys;
-import com.qimian233.ztool.hook.base.AppHookModule;
+class CustomizeAboutDeviceInfo : AppHookModule() {
+    override fun getModuleName(): String = "about_device_info"
 
-import io.github.libxposed.api.XposedInterface;
-import io.github.libxposed.api.XposedModuleInterface;
+    override fun getTargetPackages(): Array<String> = arrayOf(TARGET_PACKAGE)
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-public class CustomizeAboutDeviceInfo extends AppHookModule {
-    private static final String TARGET_PACKAGE = "com.android.settings";
-
-    private static final String DEVICE_IMAGE_PATH = "/Download/ZTool/device_info.jpg";
-    private static final String HEADER_VIEW_CLASS = "com.lenovo.settings.deviceinfo.aboutphone.PadTopImgPreference";
-    private static final String CPU_CLASS = "com.lenovo.settings.deviceinfo.controller.CpuInfoDisplayPreferenceController";
-    private static final String RAM_CLASS = "com.lenovo.settings.deviceinfo.controller.RamSizePreferenceController";
-    private static final String ROM_CLASS = "com.lenovo.settings.deviceinfo.controller.RomSizePreferenceController";
-    private static final String MODEL_CLASS = "com.android.settings.deviceinfo.hardwareinfo.DeviceModelPreferenceController";
-    private static final String SOFTWARE_CLASS = "com.android.settings.deviceinfo.BuildNumberPreferenceController";
-
-    public CustomizeAboutDeviceInfo() {}
-
-    @Override
-    public String getModuleName() {
-        return "about_device_info";
+    @Throws(Throwable::class)
+    override fun handleLoadPackage(param: PackageLoadedParam) {
+        val classLoader = param.defaultClassLoader
+        hookSummaryIfEnabled(
+            classLoader,
+            CPU_CLASS,
+            PreferenceKeys.ABOUT_DEVICE_INFO_CPU_ENABLED.name,
+            PreferenceKeys.ABOUT_DEVICE_INFO_CPU.name,
+            "CPU"
+        )
+        hookSummaryIfEnabled(
+            classLoader,
+            RAM_CLASS,
+            PreferenceKeys.ABOUT_DEVICE_INFO_RAM_ENABLED.name,
+            PreferenceKeys.ABOUT_DEVICE_INFO_RAM.name,
+            "RAM"
+        )
+        hookSummaryIfEnabled(
+            classLoader,
+            ROM_CLASS,
+            PreferenceKeys.ABOUT_DEVICE_INFO_ROM_ENABLED.name,
+            PreferenceKeys.ABOUT_DEVICE_INFO_ROM.name,
+            "ROM"
+        )
+        hookSummaryIfEnabled(
+            classLoader,
+            MODEL_CLASS,
+            PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name,
+            PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name,
+            "model"
+        )
+        hookSummaryIfEnabled(
+            classLoader,
+            SOFTWARE_CLASS,
+            PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE_ENABLED.name,
+            PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE.name,
+            "software"
+        )
+        hookHeaderImageAndText(classLoader)
     }
 
-    @Override
-    public String[] getTargetPackages() {
-        return new String[]{TARGET_PACKAGE};
-    }
-
-    @Override
-    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
-        hookSummaryIfEnabled(classLoader, CPU_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_CPU_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_CPU.name, "CPU");
-        hookSummaryIfEnabled(classLoader, RAM_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_RAM_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_RAM.name, "RAM");
-        hookSummaryIfEnabled(classLoader, ROM_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_ROM_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_ROM.name, "ROM");
-        hookSummaryIfEnabled(classLoader, MODEL_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name, "model");
-        hookSummaryIfEnabled(classLoader, SOFTWARE_CLASS, PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE_ENABLED.name, PreferenceKeys.ABOUT_DEVICE_INFO_SOFTWARE.name, "software");
-        hookHeaderImageAndText(classLoader);
-    }
-
-    private void hookSummaryIfEnabled(
-            ClassLoader classLoader,
-            String targetClass,
-            String enabledKey,
-            String valueKey,
-            String fieldName
+    private fun hookSummaryIfEnabled(
+        classLoader: ClassLoader,
+        targetClass: String,
+        enabledKey: String,
+        valueKey: String,
+        fieldName: String
     ) {
         try {
-            Method m = classLoader.loadClass(targetClass).getDeclaredMethod("getSummary");
-            hookWithId(m, "hook_74", chain -> {
-                boolean prefEnabled;
-                try {
-                    prefEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(enabledKey, false);
-                } catch (Throwable ignored) {
-                    prefEnabled = false;
+            val m = classLoader.loadClass(targetClass).getDeclaredMethod("getSummary")
+            hookWithId(m, "hook_74") { chain: XposedInterface.Chain? ->
+                val prefEnabled: Boolean = try {
+                    this.xposed.getRemotePreferences("xposed_module_config")
+                        .getBoolean(enabledKey, false)
+                } catch (_: Throwable) {
+                    false
                 }
                 if (!prefEnabled) {
-                    return chain.proceed();
+                    return@hookWithId chain!!.proceed()
                 }
-                String value;
-                try {
-                    value = this.xposed.getRemotePreferences("xposed_module_config").getString(valueKey, "");
-                } catch (Throwable ignored) {
-                    value = "";
+                val value = try {
+                    this.xposed.getRemotePreferences("xposed_module_config")
+                        .getString(valueKey, "")
+                } catch (_: Throwable) {
+                    ""
                 }
-                if (value != null && !value.trim().isEmpty()) {
-                    logger.debug(fieldName + " summary -> " + value);
-                    return value;
+                if (value != null && !value.trim { it <= ' ' }.isEmpty()) {
+                    logger.debug("$fieldName summary -> $value")
+                    return@hookWithId value
                 }
-                return chain.proceed();
-            });
-        } catch (Throwable t) {
-            logger.error("Failed to hook " + fieldName + " summary", t);
+                chain!!.proceed()
+            }
+        } catch (t: Throwable) {
+            logger.error("Failed to hook $fieldName summary", t)
         }
     }
 
-    private void hookHeaderImageAndText(ClassLoader classLoader) {
+    private fun hookHeaderImageAndText(classLoader: ClassLoader) {
         try {
-            Method setImageMethod = classLoader
-                    .loadClass(HEADER_VIEW_CLASS)
-                    .getDeclaredMethod("setImage", ImageView.class);
-            hookWithId(setImageMethod, "set_image", chain -> {
-                Object result = chain.proceed();
-                boolean headerEnabled;
-                try {
-                    headerEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_HEADER_ENABLED.name, false);
-                } catch (Throwable ignored) {
-                    headerEnabled = false;
+            val setImageMethod = classLoader
+                .loadClass(HEADER_VIEW_CLASS)
+                .getDeclaredMethod("setImage", ImageView::class.java)
+            hookWithId(setImageMethod, "set_image") { chain: XposedInterface.Chain? ->
+                val result = chain!!.proceed()
+                val headerEnabled: Boolean = try {
+                    this.xposed.getRemotePreferences("xposed_module_config")
+                        .getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_HEADER_ENABLED.name, false)
+                } catch (_: Throwable) {
+                    false
                 }
                 if (!headerEnabled) {
-                    return result;
+                    return@hookWithId result
                 }
-                Bitmap bitmap = decodeHeaderBitmap();
+                val bitmap = decodeHeaderBitmap()
                 if (bitmap == null) {
-                    logger.warn("Header image file missing: " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
-                    return result;
+                    logger.warn(
+                        "Header image file missing: " + Environment.getExternalStorageDirectory()
+                            .path + DEVICE_IMAGE_PATH
+                    )
+                    return@hookWithId result
                 }
-                ((ImageView) chain.getArg(0)).setImageBitmap(bitmap);
-                logger.debug("Header image loaded from " + Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
-                return result;
-            });
-        } catch (Throwable t) {
-            logger.error("Failed to hook header image", t);
+                (chain.args[0] as ImageView).setImageBitmap(bitmap)
+                logger.debug(
+                    "Header image loaded from " + Environment.getExternalStorageDirectory()
+                        .path + DEVICE_IMAGE_PATH
+                )
+                result
+            }
+        } catch (t: Throwable) {
+            logger.error("Failed to hook header image", t)
         }
 
         try {
-            Method updateTextMethod = classLoader
-                    .loadClass(HEADER_VIEW_CLASS)
-                    .getDeclaredMethod("updateText");
-            hookWithId(updateTextMethod, "update_text", chain -> {
-                Object result = chain.proceed();
-                boolean modelEnabled;
-                try {
-                    modelEnabled = this.xposed.getRemotePreferences("xposed_module_config").getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name, false);
-                } catch (Throwable ignored) {
-                    modelEnabled = false;
+            val updateTextMethod = classLoader
+                .loadClass(HEADER_VIEW_CLASS)
+                .getDeclaredMethod("updateText")
+            hookWithId(updateTextMethod, "update_text") { chain: XposedInterface.Chain? ->
+                val result = chain!!.proceed()
+                val modelEnabled: Boolean = try {
+                    this.xposed.getRemotePreferences("xposed_module_config")
+                        .getBoolean(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name, false)
+                } catch (_: Throwable) {
+                    false
                 }
                 if (!modelEnabled) {
-                    return result;
+                    return@hookWithId result
                 }
-                String model;
-                try {
-                    model = this.xposed.getRemotePreferences("xposed_module_config").getString(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name, "");
-                } catch (Throwable ignored) {
-                    model = "";
+                val model = try {
+                    this.xposed.getRemotePreferences("xposed_module_config")
+                        .getString(PreferenceKeys.ABOUT_DEVICE_INFO_MODEL.name, "")
+                } catch (_: Throwable) {
+                    ""
                 }
-                if (model != null && !model.trim().isEmpty()) {
-                    Field tvPadField = chain.getThisObject().getClass().getDeclaredField("tvPad");
-                    tvPadField.setAccessible(true);
-                    Object view = tvPadField.get(chain.getThisObject());
-                    if (view instanceof TextView) {
-                        ((TextView) view).setText(model);
-                        logger.debug("Header model text -> " + model);
+                if (model != null && !model.trim { it <= ' ' }.isEmpty()) {
+                    val tvPadField = chain.thisObject.javaClass.getDeclaredField("tvPad")
+                    tvPadField.isAccessible = true
+                    val view = tvPadField.get(chain.thisObject)
+                    if (view is TextView) {
+                        view.text = model
+                        logger.debug("Header model text -> $model")
                     }
                 }
-                return result;
-            });
-        } catch (Throwable t) {
-            logger.error("Failed to hook header text", t);
+                result
+            }
+        } catch (t: Throwable) {
+            logger.error("Failed to hook header text", t)
         }
     }
 
-    private Bitmap decodeHeaderBitmap() {
-        File imageFile = new File(Environment.getExternalStorageDirectory().getPath() + DEVICE_IMAGE_PATH);
-        if (!imageFile.exists() || !imageFile.isFile()) {
-            return null;
+    private fun decodeHeaderBitmap(): Bitmap? {
+        val imageFile =
+            File(Environment.getExternalStorageDirectory().path + DEVICE_IMAGE_PATH)
+        if (!imageFile.exists() || !imageFile.isFile) {
+            return null
         }
-        try (FileInputStream inputStream = new FileInputStream(imageFile)) {
-            return BitmapFactory.decodeStream(inputStream);
-        } catch (IOException e) {
-            logger.error("Failed to decode header image", e);
-            return null;
+        try {
+            FileInputStream(imageFile).use { inputStream ->
+                return BitmapFactory.decodeStream(inputStream)
+            }
+        } catch (e: IOException) {
+            logger.error("Failed to decode header image", e)
+            return null
         }
+    }
+
+    companion object {
+        private const val TARGET_PACKAGE = "com.android.settings"
+
+        private const val DEVICE_IMAGE_PATH = "/Download/ZTool/device_info.jpg"
+        private const val HEADER_VIEW_CLASS =
+            "com.lenovo.settings.deviceinfo.aboutphone.PadTopImgPreference"
+        private const val CPU_CLASS =
+            "com.lenovo.settings.deviceinfo.controller.CpuInfoDisplayPreferenceController"
+        private const val RAM_CLASS =
+            "com.lenovo.settings.deviceinfo.controller.RamSizePreferenceController"
+        private const val ROM_CLASS =
+            "com.lenovo.settings.deviceinfo.controller.RomSizePreferenceController"
+        private const val MODEL_CLASS =
+            "com.android.settings.deviceinfo.hardwareinfo.DeviceModelPreferenceController"
+        private const val SOFTWARE_CLASS =
+            "com.android.settings.deviceinfo.BuildNumberPreferenceController"
     }
 }
