@@ -121,6 +121,7 @@ public class HookManager {
         registerHookModule(new KeepRotation());
         registerHookModule(new AllowRelativeAppLaunch());
         registerHookModule(new ForceRelativeAppFreeform());
+        registerHookModule(new com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory());
 
         // ── SystemUI (target: com.android.systemui) ──
         registerHookModule(new StatusBarClockSecondsHook());
