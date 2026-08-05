@@ -5,18 +5,18 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
+import androidx.core.content.edit
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
-import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager
 import com.qimian233.ztool.utils.MagiskModuleManager
+import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.OvCommonConfigManager
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import java.io.File
-import androidx.core.content.edit
 
 class SettingsDetailRepository(
     val context: Context,
@@ -38,7 +38,8 @@ class SettingsDetailRepository(
             allowDisableDolby = prefsUtils.loadBooleanSetting(KEY_ALLOW_DISPLAY_DOLBY, false),
             allowNativePermissionController = prefsUtils.loadBooleanSetting(KEY_PERMISSION_CONTROLLER_HOOK, false),
             appDetail = prefsUtils.loadBooleanSetting(KEY_APP_DETAILS, false),
-            showZuiForceConfig = Build.VERSION.SDK_INT >= 36
+            showZuiForceConfig = Build.VERSION.SDK_INT >= 36,
+            allowAddingLanguages = prefsUtils.loadBooleanSetting(KEY_ALLOW_ADDING_LANGUAGE, false)
         )
     }
 
@@ -66,6 +67,10 @@ class SettingsDetailRepository(
 
     fun saveAppDetails(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_APP_DETAILS, enabled)
+    }
+
+    fun saveAllowAddingLanguages(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_ALLOW_ADDING_LANGUAGE, enabled)
     }
 
     fun forceStopScope() {
@@ -225,6 +230,7 @@ class SettingsDetailRepository(
         private val KEY_ALLOW_DISPLAY_DOLBY = PreferenceKeys.ALLOW_DISPLAY_DOLBY.name
         private val KEY_PERMISSION_CONTROLLER_HOOK = PreferenceKeys.PERMISSION_CONTROLLER_HOOK.name
         private val KEY_APP_DETAILS = PreferenceKeys.APP_DETAILS.name
+        private val KEY_ALLOW_ADDING_LANGUAGE = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
     }
 }
 
