@@ -175,6 +175,11 @@ class SettingsDetailViewModel(
         )
     }
 
+    fun setAllowAddingLanguage(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(allowAddingLanguages = enabled)
+        repository.saveAllowAddingLanguages(enabled)
+    }
+
     fun saveAboutDeviceInfoHeaderImage(uri: Uri): Boolean {
         return aboutDeviceInfoRepository.saveDeviceHeaderImage(repository.context, uri)
     }
