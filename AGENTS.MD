@@ -265,6 +265,10 @@ General UI rules:
 
 Do not edit embedded module assets unless the task is specifically about Magisk/embedding behavior.
 
+- **When adding new user-facing strings**, always add entries to both `res/values/strings.xml` (default/Chinese) 
+AND non-default language files such as`res/values-en/strings.xml` (English). Use the same `name` attribute in both files.
+- Developer-only or debug strings that should never be translated must use `translatable="false"`.
+
 ## Verification
 
 Follow the steps below:
