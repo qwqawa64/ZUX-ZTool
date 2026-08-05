@@ -21,13 +21,9 @@ import java.lang.reflect.Method
 @SuppressLint("PrivateApi")
 class LauncherNoLabelMode : AppHookModule() {
 
-    override fun getModuleName(): String {
-        return "launcher_no_label_mode"
-    }
+    override fun getModuleName(): String = "launcher_no_label_mode"
 
-    override fun getTargetPackages(): Array<out String?> {
-        return arrayOf("com.zui.launcher")
-    }
+    override fun getTargetPackages(): Array<out String?> = arrayOf("com.zui.launcher")
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installBubbleTextViewVisibilityHook(param)
@@ -35,16 +31,21 @@ class LauncherNoLabelMode : AppHookModule() {
     }
 
     /**
-     * Check whether the current call stack includes
-     * PopupContainerWithArrow.initializeSystemShortcut.
+     * Check whether the current call stack includes one of the ignored paths:
      *
-     * When BubbleTextView is used by the system-shortcut popup, the no-label
-     * logic must be skipped so the popup menu labels display correctly.
+     * - PopupContainerWithArrow.initializeSystemShortcut
+     *   → system-shortcut popup labels must remain visible
+     * - DeepShortcutTextView (com.android.launcher3.shortcuts)
+     *   → Deep Shortcut widget labels must remain visible
+     *
+     * When these callers are on the stack, the no-label logic is skipped
+     * so the relevant labels display correctly.
      */
-    private fun isFromPopupSystemShortcut(): Boolean {
+    private fun isFromIgnoredPath(): Boolean {
         return Thread.currentThread().stackTrace.any { frame ->
             frame.className == "com.android.launcher3.popup.PopupContainerWithArrow" &&
-                frame.methodName == "initializeSystemShortcut"
+                    frame.methodName == "initializeSystemShortcut" ||
+                    frame.className == "com.android.launcher3.shortcuts.DeepShortcutTextView"
         }
     }
 
@@ -68,8 +69,8 @@ class LauncherNoLabelMode : AppHookModule() {
                 Boolean::class.javaPrimitiveType
             )
             hookWithId(setTextVisibilityMethod, "set_text_visibility_1") {  chain ->
-                if (isFromPopupSystemShortcut()) {
-                    chain.proceed(chain.args.toTypedArray())
+                if (isFromIgnoredPath()) {
+                    chain.proceed()
                 } else {
                     val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
                     chain.proceed(args)
@@ -84,8 +85,8 @@ class LauncherNoLabelMode : AppHookModule() {
                 Float::class.javaPrimitiveType
             )
             hookWithId(setTextAlphaMethod, "set_text_alpha_1") {  chain ->
-                if (isFromPopupSystemShortcut()) {
-                    chain.proceed(chain.args.toTypedArray())
+                if (isFromIgnoredPath()) {
+                    chain.proceed()
                 } else {
                     val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
                     chain.proceed(args)
@@ -123,8 +124,12 @@ class LauncherNoLabelMode : AppHookModule() {
                 Boolean::class.javaPrimitiveType
             )
             hookWithId(setTextVisibilityMethod, "set_text_visibility_2") {  chain ->
-                val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
-                chain.proceed(args)
+                if (isFromIgnoredPath()) {
+                    chain.proceed()
+                } else {
+                    val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
+                    chain.proceed(args)
+                }
             }
 
             // Force setTextAlpha to always stay at 0 (hidden)
@@ -133,8 +138,12 @@ class LauncherNoLabelMode : AppHookModule() {
                 Float::class.javaPrimitiveType
             )
             hookWithId(setTextAlphaMethod, "set_text_alpha_2") {  chain ->
-                val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
-                chain.proceed(args)
+                if (isFromIgnoredPath()) {
+                    chain.proceed()
+                } else {
+                    val args = arrayOf<Any?>(java.lang.Float.valueOf(0.0f))
+                    chain.proceed(args)
+                }
             }
 
             // Prevent setIgnoreSetAlphaVisible from being set to true,
@@ -144,8 +153,12 @@ class LauncherNoLabelMode : AppHookModule() {
                 Boolean::class.javaPrimitiveType
             )
             hookWithId(setIgnoreMethod, "set_ignore") {  chain ->
-                val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
-                chain.proceed(args)
+                if (isFromIgnoredPath()) {
+                    chain.proceed()
+                } else {
+                    val args = arrayOf<Any?>(java.lang.Boolean.valueOf(false))
+                    chain.proceed(args)
+                }
             }
 
             logger.info("ActiveIconView visibility-block hook installed successfully!")
