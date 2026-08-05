@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   schedule:
-    - cron: '0 11 * * *'         # 美国东部时间 11 时（UTC -5, 对应 UTC +8 次日 0 点）
+    - cron: '0 16 * * *'         # UTC 16:00 = 北京时间 (UTC+8) 次日 0:00
   workflow_dispatch:              # 手动触发（总是构建）
   pull_request:
     branches: [ "master" ]        # PR 触发 Debug 构建
@@ -35,6 +35,20 @@ jobs:
         with:
           path: .last-build-sha
           key: nightly-commit-sha-master
+
+      # ---- 获取从上次构建以来的全部提交记录 ----
+      - name: Get commit range for summary
+        id: commit-range
+        run: |
+          if [[ -f .last-build-sha ]]; then
+            last_sha=$(cat .last-build-sha)
+            echo "commits<<EOF" >> $GITHUB_OUTPUT
+            git log ${last_sha}..HEAD --pretty=format:"- **\`%h\`** %s (%an)" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "commits=- **\`$(git rev-parse --short HEAD)\`** $(git log -1 --pretty=%s) ($(git log -1 --pretty=%an))" >> $GITHUB_OUTPUT
+          fi
 
       # ---- 决定是否要构建 ----
       - name: Determine if build is needed
@@ -147,7 +161,8 @@ jobs:
           echo "## Build Details" >> $GITHUB_STEP_SUMMARY
           echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit SHA:** \`${{ steps.commit-info.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit Message:** ${{ steps.commit-info.outputs.subject }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Commits" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.commit-range.outputs.commits }}" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ steps.check.outputs.should_build }}" == "true" ]]; then
             echo "**Status:** ✅ Built" >> $GITHUB_STEP_SUMMARY
           else
