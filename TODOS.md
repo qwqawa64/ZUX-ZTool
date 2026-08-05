@@ -5,15 +5,16 @@
 - [ ] 使用 Hook 替代直接跑 Shell 命令的 Native AOD
 - [ ] 动态壁纸
 - [ ] 解除 PRC ROM 的语言限制
-- [x] 任务栏关闭最近 APP 显示
-- [ ] 竖屏模式控制中心拓宽
 - [ ] 修好模块热重载功能
+- [ ] 不使用 su 获取充电信息
+- [x] 关联应用小窗启动
+- [x] 任务栏关闭最近 APP 显示
+- [x] 竖屏模式控制中心拓宽
 - [x] 自动拒绝桌面应用推荐文件夹的用户协议
 - [x] 关联应用启动不弹窗
 - [x] 应用更新角标移除（从无字模式 Hook 独立出来）
 - [x] 设置 app 角标通知更新
 - [x] 充电动画自定义
-- [ ] Stop using su to fetch power supply information in system UI
 
 ## Done Until 20260710 Beta
 - [x] 调整内存显示的位置、字号和颜色
