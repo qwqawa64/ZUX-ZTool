@@ -52,6 +52,7 @@ import com.qimian233.ztool.hook.modules.systemframework.ForceRelativeAppFreeform
 import com.qimian233.ztool.hook.modules.systemframework.KeepRotation;
 import com.qimian233.ztool.hook.modules.systemframework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceLenovoAOD;
+import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceNativeAod;
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIChargeWattsHook;
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIRealWatts;
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomChargeAnimation;
@@ -137,6 +138,7 @@ public class HookManager {
         registerHookModule(new SystemUIBatteryHook());
         registerHookModule(new ForceImmersiveMode());
         registerHookModule(new ForceLenovoAOD());
+        registerHookModule(new ForceNativeAod());
         registerHookModule(new CustomQsRoundCorner());
         registerHookModule(new BrightnessSliderPercentageHook());
         registerHookModule(new VolumeSliderPercentageHook());
