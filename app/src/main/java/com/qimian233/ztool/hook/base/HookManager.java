@@ -37,6 +37,7 @@ import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook;
 import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook;
 import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo;
 import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
+import com.qimian233.ztool.hook.modules.setting.LocaleListEditorHook;
 import com.qimian233.ztool.hook.modules.setting.OneVisionCompletion;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
@@ -160,6 +161,7 @@ public class HookManager {
         registerHookModule(new CustomizeAboutDeviceInfo());
         registerHookModule(new ZToolSettingsEntryHook());
         registerHookModule(new HideOtaUpdateHint());
+        registerHookModule(new LocaleListEditorHook()); // test_hook: 拦截 LenovoUtils 区域判断
 
         // ── PackageInstaller (target: com.android.packageinstaller) ──
         registerHookModule(new PackageInstallerHookScan());
