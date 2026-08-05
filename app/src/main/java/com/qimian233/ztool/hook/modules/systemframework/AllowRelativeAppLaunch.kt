@@ -113,7 +113,25 @@ class AllowRelativeAppLaunch: SystemHookModule() {
             val intent = chain.getArg(3) as android.content.Intent?
             val targetPackage = intent?.getPackage() ?: intent?.component?.packageName
 
-            logger.debug("callingPackage: $callingPackage, targetPackage: $targetPackage")
+            // trace: dump isAllowRelativeStart 完整参数
+            logger.trace(
+                "[isAllowRelativeStart]" +
+                " callingPkg=$callingPackage" +
+                " targetPkg=$targetPackage" +
+                " action=${intent?.action}" +
+                " cmp=${intent?.component?.className}" +
+                " data=${intent?.data}" +
+                " type=${chain.getArg(4)}" +
+                " flags=0x${intent?.flags?.toString(16)}" +
+                " reqCode=${chain.getArg(7)}" +
+                " startFlags=${chain.getArg(8)}" +
+                " userId=${chain.getArg(11)}" +
+                " z=${chain.getArg(12)}" +
+                " options=${chain.getArg(10)}" +
+                " safeOpts=${chain.getArg(13)}" +
+                " launchers=${resolveLauncherPackages(chain.thisObject)}"
+            )
+
             // 仅在跨 APP 关联启动时注入 freeform
             // 排除：同包名自启动、启动器
             // 打开网页链接时目标包名是 null, 这个时候也应该打开小窗
