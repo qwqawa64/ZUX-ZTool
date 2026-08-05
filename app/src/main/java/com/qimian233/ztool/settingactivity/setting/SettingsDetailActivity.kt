@@ -612,7 +612,8 @@ fun SettingsDetailRoute(
         onAboutDeviceInfoRomChanged = viewModel::setAboutDeviceInfoRom,
         onAboutDeviceInfoSoftwareChanged = viewModel::setAboutDeviceInfoSoftware,
         onAboutDeviceInfoHeaderSelected = { aboutDeviceInfoImageLauncher.launch(arrayOf("image/*")) },
-        onRestartScope = viewModel::showRestartDialog
+        onAllowAddingLanguageChanged = viewModel::setAllowAddingLanguage,
+        onRestartScope = viewModel::showRestartDialog,
     )
 
     if (uiState.showRestartDialog) {
@@ -694,6 +695,7 @@ private fun SettingsDetailScreen(
     onAboutDeviceInfoRomEnabledChanged: (Boolean) -> Unit,
     onAboutDeviceInfoSoftwareEnabledChanged: (Boolean) -> Unit,
     onAboutDeviceInfoHeaderEnabledChanged: (Boolean) -> Unit,
+    onAllowAddingLanguageChanged: (Boolean) -> Unit,
     onAboutDeviceInfoModelChanged: (String) -> Unit,
     onAboutDeviceInfoCpuChanged: (String) -> Unit,
     onAboutDeviceInfoRamChanged: (String) -> Unit,
@@ -774,6 +776,7 @@ private fun SettingsDetailScreen(
                         onAboutDeviceInfoRomChanged = onAboutDeviceInfoRomChanged,
                         onAboutDeviceInfoSoftwareChanged = onAboutDeviceInfoSoftwareChanged,
                         onAboutDeviceInfoHeaderSelected = onAboutDeviceInfoHeaderSelected,
+                        onAllowAddingLanguageChanged = onAllowAddingLanguageChanged,
                     )
                 )
             }
@@ -806,6 +809,7 @@ private fun settingsDetailSections(
     onAboutDeviceInfoRomEnabledChanged: (Boolean) -> Unit,
     onAboutDeviceInfoSoftwareEnabledChanged: (Boolean) -> Unit,
     onAboutDeviceInfoHeaderEnabledChanged: (Boolean) -> Unit,
+    onAllowAddingLanguageChanged: (Boolean) -> Unit,
     onAboutDeviceInfoModelChanged: (String) -> Unit,
     onAboutDeviceInfoCpuChanged: (String) -> Unit,
     onAboutDeviceInfoRamChanged: (String) -> Unit,
@@ -933,32 +937,6 @@ private fun settingsDetailSections(
 
         add(
             SettingSection(
-                title = stringResource(R.string.misc),
-                items = listOf(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.NativePermissionController_enable_title),
-                        summary = stringResource(R.string.NativePermissionController_enable_summary),
-                        checked = state.allowNativePermissionController,
-                        onCheckedChange = onAllowNativePermissionControllerChanged
-                    ),
-                    SettingItem.Switch(
-                        title = stringResource(R.string.AllowDisableDolby),
-                        summary = stringResource(R.string.AllowDisableDolby_summary),
-                        checked = state.allowDisableDolby,
-                        onCheckedChange = onAllowDisableDolbyChanged
-                    ),
-                    SettingItem.Switch(
-                        title = stringResource(R.string.app_details_completion),
-                        summary = stringResource(R.string.app_details_completion_summary),
-                        checked = state.appDetail,
-                        onCheckedChange = onAppDetailsChanged
-                    ),
-                )
-            )
-        )
-
-        add(
-            SettingSection(
                 title = stringResource(R.string.about_device_info_title),
                 items = buildList {
                     add(
@@ -1058,6 +1036,37 @@ private fun settingsDetailSections(
                         }
                     }
                 }
+            )
+        )
+
+        add(
+            SettingSection(
+                title = stringResource(R.string.misc),
+                items = listOf(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.NativePermissionController_enable_title),
+                        summary = stringResource(R.string.NativePermissionController_enable_summary),
+                        checked = state.allowNativePermissionController,
+                        onCheckedChange = onAllowNativePermissionControllerChanged
+                    ),
+                    SettingItem.Switch(
+                        title = stringResource(),
+                        checked = state.allowAddingLanguages,
+                        onCheckedChange = onAllowAddingLanguageChanged
+                    ),
+                    SettingItem.Switch(
+                        title = stringResource(R.string.AllowDisableDolby),
+                        summary = stringResource(R.string.AllowDisableDolby_summary),
+                        checked = state.allowDisableDolby,
+                        onCheckedChange = onAllowDisableDolbyChanged
+                    ),
+                    SettingItem.Switch(
+                        title = stringResource(R.string.app_details_completion),
+                        summary = stringResource(R.string.app_details_completion_summary),
+                        checked = state.appDetail,
+                        onCheckedChange = onAppDetailsChanged
+                    ),
+                )
             )
         )
 
