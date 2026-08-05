@@ -207,6 +207,8 @@ class QsPanelWidthHook : AppHookModule() {
         val quickQSPanelClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QuickQSPanel")
         val maxTilesField = findField(quickQSPanelClass, "mMaxTiles")
+        // mTileLayout 定义在 QSPanel（QuickQSPanel 的父类），用于读取当前的 mMaxAllowedRows
+        val qsPanelTileLayoutField = findField(quickQSPanelClass, "mTileLayout")
 
         hookWithId(qqsMeasureMethod, "tile_columns_qqs") { chain ->
             if (tileColumns != 0) {
@@ -229,5 +231,44 @@ class QsPanelWidthHook : AppHookModule() {
         }
 
         logger.info("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
+
+        // ── Hook QuickQSPanelController.onConfigurationChanged：主题切换后恢复 mMaxTiles ──
+        // QuickQSPanelController.onConfigurationChanged() 会从资源读取默认值重置 mMaxTiles
+        // 并立即调用 setTiles() 截断磁贴列表。本 Hook 在原方法执行后重新应用自定义值并刷新。
+        val controllerClass = param.defaultClassLoader
+            .loadClass("com.android.systemui.qs.QuickQSPanelController")
+        val controllerOnConfigMethod = findMethod(controllerClass, "onConfigurationChanged")
+        val controllerSetTilesMethod = findMethod(controllerClass, "setTiles")
+        // mView 定义在 ViewController（QuickQSPanelController 的祖先）
+        val controllerViewField = findField(controllerClass, "mView")
+
+        hookWithId(controllerOnConfigMethod, "qqs_max_tiles_config_fix") { chain ->
+            chain.proceed()
+            if (tileColumns != 0) {
+                val controller = chain.thisObject
+                val panel = controllerViewField.get(controller) as? View ?: return@hookWithId null
+                if (!quickQSPanelClass.isInstance(panel)) return@hookWithId null
+                val orientation = panel.context.resources.configuration.orientation
+                if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    // 从 QuickQSPanel 的 mTileLayout 读取当前 mMaxAllowedRows
+                    val tileLayout = qsPanelTileLayoutField.get(panel) ?: return@hookWithId null
+                    val rows = maxAllowedRowsField.getInt(tileLayout)
+                    if (rows > 0) {
+                        val targetMaxTiles = tileColumns * rows
+                        val currentMaxTiles = maxTilesField.getInt(panel)
+                        if (currentMaxTiles != targetMaxTiles) {
+                            maxTilesField.setInt(panel, targetMaxTiles)
+                            controllerSetTilesMethod.invoke(controller)
+                            logger.info(
+                                "QsPanelWidthTestHook: restored mMaxTiles=$targetMaxTiles after config change"
+                            )
+                        }
+                    }
+                }
+            }
+            null
+        }
+
+        logger.info("QsPanelWidthTestHook: hooked QuickQSPanelController.onConfigurationChanged")
     }
 }
