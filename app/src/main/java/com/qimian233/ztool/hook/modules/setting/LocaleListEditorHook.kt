@@ -1,14 +1,15 @@
 package com.qimian233.ztool.hook.modules.setting
 
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
  * 测试 Hook：拦截 LenovoUtils 区域判断方法，仅在 LocaleListEditor 调用场景生效。
  *
- * 当调用来自 [com.android.settings.localepicker.LocaleListEditor] 时：
- * - [com.lenovo.common.utils.LenovoUtils.isRowVersion] 返回 true
- * - [com.lenovo.common.utils.LenovoUtils.isPrcVersion] 返回 false
+ * 当调用来自 com.android.settings.localepicker.LocaleListEditor 时：
+ * - com.lenovo.common.utils.LenovoUtils.isRowVersion 返回 true
+ * - com.lenovo.common.utils.LenovoUtils.isPrcVersion 返回 false
  *
  * 其他调用场景走原始逻辑，避免对 Settings 其他页面产生副作用。
  * 通过调用栈检查精确命中目标，语言页面使用频率极低，开销可忽略。
@@ -21,13 +22,10 @@ class LocaleListEditorHook : AppHookModule() {
         private const val TARGET_CLASS = "com.android.settings.localepicker.LocaleListEditor"
     }
 
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
 
     override fun getTargetPackages(): Array<String> = arrayOf("com.android.settings")
 
-    /**
-     * 遍历调用栈，判断当前调用是否来自 [LocaleListEditor]。
-     */
     private fun isFromLocaleListEditor(): Boolean =
         Throwable().stackTrace.any { it.className == TARGET_CLASS }
 
