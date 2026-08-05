@@ -20,16 +20,6 @@ jobs:
         with:
           fetch-depth: 0   # 需要完整历史以获取提交信息
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
       # ---- 获取当前 commit 信息 ----
       - name: Get current commit info
         id: commit-info
@@ -72,6 +62,19 @@ jobs:
             # 其他事件（理论上不会发生）均构建
             echo "should_build=true" >> $GITHUB_OUTPUT
           fi
+
+      # ---- 只在需要构建时才 setup JDK 和准备 gradlew ----
+      - name: Set up JDK 17
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        if: steps.check.outputs.should_build == 'true'
+        run: chmod +x gradlew
 
       # ---- 只有在需要时才执行构建 ----
       # Debug 构建（PR 总是构建，其他事件则根据 should_build）
