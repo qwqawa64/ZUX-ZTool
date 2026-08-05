@@ -96,6 +96,7 @@ object PreferenceKeys {
     @JvmField val ABOUT_DEVICE_INFO = BoolKey("about_device_info", false)
     @JvmField val ZTOOL_SETTINGS_ENTRY = BoolKey("ztool_settings_entry", false)
     @JvmField val HIDE_OTA_UPDATE_HINT = BoolKey("hide_ota_update_hint", false)
+    @JvmField val ALLOW_ADD_LANGUAGE = BoolKey("allow_add_language", false)
 
     // Settings 子功能开关
     @JvmField val ABOUT_DEVICE_INFO_MODEL_ENABLED = BoolKey("about_device_info_model_enabled", false)
@@ -251,7 +252,7 @@ object PreferenceKeys {
         CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE,
         REMOVE_BLACKLIST, ALLOW_DISPLAY_DOLBY, PERMISSION_CONTROLLER_HOOK,
         AUTO_OWNER_INFO, SPLIT_SCREEN_MANDATORY, APP_DETAILS,
-        ABOUT_DEVICE_INFO, ZTOOL_SETTINGS_ENTRY, HIDE_OTA_UPDATE_HINT,
+        ABOUT_DEVICE_INFO, ZTOOL_SETTINGS_ENTRY, HIDE_OTA_UPDATE_HINT, ALLOW_ADD_LANGUAGE,
         ABOUT_DEVICE_INFO_MODEL_ENABLED, ABOUT_DEVICE_INFO_CPU_ENABLED,
         ABOUT_DEVICE_INFO_RAM_ENABLED, ABOUT_DEVICE_INFO_ROM_ENABLED,
         ABOUT_DEVICE_INFO_SOFTWARE_ENABLED, ABOUT_DEVICE_INFO_HEADER_ENABLED,
