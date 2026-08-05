@@ -4,38 +4,49 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 测试 Hook：拦截 LenovoUtils 区域判断方法。
+ * 测试 Hook：拦截 LenovoUtils 区域判断方法，仅在 LocaleListEditor 调用场景生效。
  *
- * 强制 [com.lenovo.common.utils.LenovoUtils.isRowVersion] 返回 true，
- * [com.lenovo.common.utils.LenovoUtils.isPrcVersion] 返回 false，
- * 从而影响 LocaleListEditor 等组件的区域行为。
+ * 当调用来自 [com.android.settings.localepicker.LocaleListEditor] 时：
+ * - [com.lenovo.common.utils.LenovoUtils.isRowVersion] 返回 true
+ * - [com.lenovo.common.utils.LenovoUtils.isPrcVersion] 返回 false
+ *
+ * 其他调用场景走原始逻辑，避免对 Settings 其他页面产生副作用。
+ * 通过调用栈检查精确命中目标，语言页面使用频率极低，开销可忽略。
  *
  * 模块名使用 "test_hook" 自动启用，无需前端开关。
  */
 class LocaleListEditorHook : AppHookModule() {
 
+    companion object {
+        private const val TARGET_CLASS = "com.android.settings.localepicker.LocaleListEditor"
+    }
+
     override fun getModuleName(): String = "test_hook"
 
     override fun getTargetPackages(): Array<String> = arrayOf("com.android.settings")
+
+    /**
+     * 遍历调用栈，判断当前调用是否来自 [LocaleListEditor]。
+     */
+    private fun isFromLocaleListEditor(): Boolean =
+        Throwable().stackTrace.any { it.className == TARGET_CLASS }
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val cl = param.defaultClassLoader
         try {
             val lenovoUtils = cl.loadClass("com.lenovo.common.utils.LenovoUtils")
 
-            // Hook isRowVersion() → 强制返回 true
             val isRowMethod = lenovoUtils.getDeclaredMethod("isRowVersion")
-            hookWithId(isRowMethod, "locale_row_version") {
-                true
+            hookWithId(isRowMethod, "locale_row_version") { chain ->
+                if (isFromLocaleListEditor()) true else chain.proceed()
             }
 
-            // Hook isPrcVersion() → 强制返回 false
             val isPrcMethod = lenovoUtils.getDeclaredMethod("isPrcVersion")
-            hookWithId(isPrcMethod, "locale_prc_version") {
-                false
+            hookWithId(isPrcMethod, "locale_prc_version") { chain ->
+                if (isFromLocaleListEditor()) false else chain.proceed()
             }
 
-            logger.info("LocaleListEditorHook: isRowVersion→true, isPrcVersion→false")
+            logger.info("LocaleListEditorHook installed: isRowVersion→true, isPrcVersion→false (LocaleListEditor only)")
         } catch (t: Throwable) {
             logger.error("LocaleListEditorHook failed", t)
         }
