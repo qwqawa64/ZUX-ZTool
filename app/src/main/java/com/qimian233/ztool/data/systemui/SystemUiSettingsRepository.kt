@@ -89,21 +89,6 @@ class SystemUiSettingsRepository(
         return result.toShellActionResult()
     }
 
-    fun setNativeAodEnabled(enabled: Boolean): ShellActionResult {
-        val command = "settings put secure doze_always_on " + if (enabled) "1" else "0"
-        val result = shellExecutor.executeRootCommand(command, 5)
-        return result.toShellActionResult()
-    }
-
-    fun isNativeAodEnabled(): Boolean {
-        return try {
-            val result = shellExecutor.executeRootCommand("settings get secure doze_always_on", 5)
-            result.isSuccess && result.output != null && result.output.trim() == "1"
-        } catch (_: Exception) {
-            false
-        }
-    }
-
     fun forceStopScope(): ShellActionResult {
         val packages = ScopeUtils.getScopePackages(FeatureDestination.SystemUi)
         return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {

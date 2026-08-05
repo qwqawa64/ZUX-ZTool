@@ -115,17 +115,7 @@ fun SystemUiSettingsRoute(
         onOpenStatusBar = onOpenStatusBar,
         onOpenLockScreen = onOpenLockScreen,
         onOpenControlCenter = onOpenControlCenter,
-        onNativeAodChanged = { enabled ->
-            viewModel.setNativeAodEnabled(
-                enabled = enabled,
-                onLenovoAodDisabled = {
-                    Toast.makeText(context, R.string.restart_scope_required, Toast.LENGTH_SHORT).show()
-                },
-                onFailure = { error ->
-                    Toast.makeText(context, "设置失败: $error", Toast.LENGTH_SHORT).show()
-                }
-            )
-        },
+        onNativeAodChanged = viewModel::setNativeAodEnabled,
         onLenovoAodChanged = viewModel::setLenovoAodEnabled,
         onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
         onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
@@ -271,8 +261,7 @@ private fun systemUiSettingsSections(
                 title = stringResource(R.string.aod_native_enable_title),
                 summary = stringResource(R.string.aod_native_enable_summary),
                 checked = state.nativeAod,
-                onCheckedChange = onNativeAodChanged,
-                enabled = !state.isAodSwitchProcessing
+                onCheckedChange = onNativeAodChanged
             )
         )
         add(
@@ -280,8 +269,7 @@ private fun systemUiSettingsSections(
                 title = stringResource(R.string.aod_lenovo_enable_title),
                 summary = stringResource(R.string.aod_lenovo_enable_summary),
                 checked = state.lenovoAod,
-                onCheckedChange = onLenovoAodChanged,
-                enabled = !state.isAodSwitchProcessing
+                onCheckedChange = onLenovoAodChanged
             )
         )
         if (state.lenovoAod) {
