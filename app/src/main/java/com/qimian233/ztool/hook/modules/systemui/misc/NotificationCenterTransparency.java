@@ -136,6 +136,10 @@ public class NotificationCenterTransparency extends AppHookModule {
         try {
             Class<?> cl = quickSettingsController.getClass();
             Object zuiCore = cl.getDeclaredField("mZuiCoreImpl").get(quickSettingsController);
+            if (zuiCore == null) {
+                logger.error("zuiCore is null, cannot proceed clearing backdrop render effect!");
+                return;
+            }
             Object backdrop = zuiCore.getClass().getDeclaredField("backDropView").get(zuiCore);
             if (backdrop instanceof View) {
                 ((View) backdrop).setRenderEffect(null);

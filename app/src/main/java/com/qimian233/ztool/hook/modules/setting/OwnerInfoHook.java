@@ -235,13 +235,15 @@ public class OwnerInfoHook extends BaseHookModule {
             filter.addAction(Intent.ACTION_SCREEN_ON);
             filter.addAction(Intent.ACTION_USER_PRESENT);
 
-            context.registerReceiver(mScreenReceiver, filter);
-            mIsReceiverRegistered = true;
-
-            logger.debug("成功注册屏幕状态广播接收器");
-
-            // 立即更新一次
-            updateOwnerInfo(context, classLoader);
+            if (context != null) {
+                context.registerReceiver(mScreenReceiver, filter);
+                mIsReceiverRegistered = true;
+                logger.debug("Successfully registered screen state broadcast receiver");
+                // 立即更新一次
+                updateOwnerInfo(context, classLoader);
+            } else {
+                logger.error("Failed to register screen state broadcast receiver: context is null!");
+            }
 
         } catch (Throwable e) {
             logger.error("注册广播接收器失败", e);
@@ -296,6 +298,7 @@ public class OwnerInfoHook extends BaseHookModule {
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 InputStream inputStream = connection.getInputStream();
+                //noinspection CharsetObjectCanBeUsed
                 reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
 
                 StringBuilder response = new StringBuilder();
@@ -449,6 +452,7 @@ public class OwnerInfoHook extends BaseHookModule {
             if (context instanceof Context) {
                 // 从Context创建LockPatternUtils实例
                 Constructor<?> ctor = lockPatternUtilsClass.getDeclaredConstructor(Context.class);
+                //noinspection JavaReflectionInvocation
                 lockPatternUtils = ctor.newInstance(context);
             } else {
                 // 使用默认构造函数
