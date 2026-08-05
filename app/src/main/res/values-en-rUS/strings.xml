@@ -500,6 +500,7 @@
     <string name="systemUIMisc">Misc</string>
     <string name="disable_guest_user_enable_title">Prevent automatic guest user creation</string>
     <string name="disable_guest_user_enable_summary">Only allow guest user creation when multi-user is enabled.</string>
+    <string name="disable_biometric_error_vibration_title">Disable haptics of biometric auth failure</string>
     <string name="status_bar_clock_settings_title">Status bar clock settings</string>
     <string name="display_seconds_title">Show seconds</string>
     <string name="display_seconds_summary">Show seconds in the status bar clock.</string>
@@ -934,5 +935,6 @@
     <string name="slider_style_horizontal">Horizontal</string>
     <string name="slider_style_vertical">Vertical</string>
     <string name="slider_style_forced_by_qs_panel">Forced to horizontal by \"Expand Portrait Control Center\"</string>
+    <string name="force_relative_app_freeform_title">Open relative app in freeform</string>
     <string name="disable_recent_app_display">Hide recent apps in dock bar</string>
 </resources>

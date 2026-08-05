@@ -397,7 +397,6 @@ private fun systemUiSettingsSections(
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.disable_biometric_error_vibration_title),
-                    summary = stringResource(R.string.disable_biometric_error_vibration_summary),
                     checked = state.disableBiometricErrorVibration,
                     onCheckedChange = onDisableBiometricErrorVibrationChanged
                 )
