@@ -92,6 +92,11 @@ class FrameworkSettingsViewModel(
         repository.saveAllowRelativeAppLaunch(enabled)
     }
 
+    fun setForceRelativeAppFreeform(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(forceRelativeAppFreeform = enabled)
+        repository.saveForceRelativeAppFreeform(enabled)
+    }
+
     fun showAiInputInfoDialog() {
         _uiState.value = _uiState.value.copy(showAiInputInfoDialog = true)
     }
@@ -139,4 +144,5 @@ data class FrameworkSettingsUiState(
     val noPasswordPer24H: Boolean = false,
     val allowUntrustedTouch: Boolean = false,
     val allowRelativeAppLaunch: Boolean = false,
+    val forceRelativeAppFreeform: Boolean = false,
 )

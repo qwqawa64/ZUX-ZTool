@@ -48,6 +48,7 @@ import com.qimian233.ztool.hook.modules.systemframework.AllowRelativeAppLaunch;
 import com.qimian233.ztool.hook.modules.systemframework.AllowUntrustedTouch;
 import com.qimian233.ztool.hook.modules.systemframework.DisableFlagSecure;
 import com.qimian233.ztool.hook.modules.systemframework.ForceScreenOnOffAnimation;
+import com.qimian233.ztool.hook.modules.systemframework.ForceRelativeAppFreeform;
 import com.qimian233.ztool.hook.modules.systemframework.KeepRotation;
 import com.qimian233.ztool.hook.modules.systemframework.NoMorePasswordPer24H;
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceLenovoAOD;
@@ -117,6 +118,7 @@ public class HookManager {
         registerHookModule(new AiInputExpand());
         registerHookModule(new KeepRotation());
         registerHookModule(new AllowRelativeAppLaunch());
+        registerHookModule(new ForceRelativeAppFreeform());
 
         // ── SystemUI (target: com.android.systemui) ──
         registerHookModule(new StatusBarClockSecondsHook());

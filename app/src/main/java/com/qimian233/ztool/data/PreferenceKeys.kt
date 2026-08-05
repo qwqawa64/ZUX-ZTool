@@ -30,6 +30,7 @@ object PreferenceKeys {
     @JvmField val AI_INPUT_EXPAND = BoolKey("ai_input_expand", false)
     @JvmField val KEEP_ROTATION = BoolKey("keep_rotation", false)
     @JvmField val ALLOW_RELATIVE_APP_LAUNCH = BoolKey("allow_relative_app_launch", false)
+    @JvmField val FORCE_RELATIVE_APP_FREEFORM = BoolKey("force_relative_app_freeform", false)
 
     // ── SystemUI ──
     @JvmField val STATUSBAR_DISPLAY_SECONDS = BoolKey("StatusBarDisplay_Seconds", false)
@@ -220,7 +221,7 @@ object PreferenceKeys {
     val booleanKeys: List<BoolKey> = listOf(
         DISABLE_FLAG_SECURE, NO_MORE_PASSWORD_PER_24H, ALLOW_GET_PACKAGES,
         ALLOW_UNTRUSTED_TOUCH, FORCE_SCREEN_ON_OFF_ANIMATION, AI_INPUT_EXPAND,
-        KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH,
+        KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         STATUSBAR_DISPLAY_SECONDS, CUSTOM_STATUSBAR_CLOCK, SYSTEMUI_CHARGE_WATTS,
         SYSTEMUI_REAL_WATTS, NOTIFICATION_ICON_LIMIT, CUSTOM_CONTROL_CENTER_DATE,
         CONTROL_CENTER_NO_TILE_LABELS, NO_CHARGE_ANIMATION, NATIVE_NOTIFICATION_ICON,

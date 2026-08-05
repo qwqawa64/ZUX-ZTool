@@ -94,7 +94,8 @@ fun FrameworkSettingsRoute(
         onShowAiInputInfo = viewModel::showAiInputInfoDialog,
         onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
         onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
-        onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch
+        onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
+        onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform
     )
 
     if (uiState.showAiInputInfoDialog) {
@@ -146,6 +147,7 @@ private fun FrameworkSettingsScreen(
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
+    onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit,
 ) {
@@ -197,6 +199,7 @@ private fun FrameworkSettingsScreen(
                         onNoPasswordPer24H = onNoPasswordPer24H,
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
+                        onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -217,6 +220,7 @@ private fun frameworkSettingsSections(
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
+    onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
 ): List<SettingSection> {
@@ -245,6 +249,11 @@ private fun frameworkSettingsSections(
                     title = stringResource(R.string.allow_relative_app_launch_title),
                     checked = state.allowRelativeAppLaunch,
                     onCheckedChange = onAllowRelativeAppLaunchChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.force_relative_app_freeform_title),
+                    checked = state.forceRelativeAppFreeform,
+                    onCheckedChange = onForceRelativeAppFreeformChanged
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.disable_flag_secure_title),
