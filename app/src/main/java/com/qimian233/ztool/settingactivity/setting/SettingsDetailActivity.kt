@@ -34,7 +34,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -75,6 +74,7 @@ import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
 import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.utils.EmbeddingConfigManager
@@ -1050,7 +1050,7 @@ private fun settingsDetailSections(
                         onCheckedChange = onAllowNativePermissionControllerChanged
                     ),
                     SettingItem.Switch(
-                        title = stringResource(),
+                        title = stringResource(R.string.allow_adding_language),
                         checked = state.allowAddingLanguages,
                         onCheckedChange = onAllowAddingLanguageChanged
                     ),
