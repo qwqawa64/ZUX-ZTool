@@ -356,5 +356,6 @@ data class SettingsDetailUiState(
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val showRestartDialog: Boolean = false,
     val appDetail: Boolean = false,
+    val allowAddingLanguages: Boolean = false,
     val aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState = com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState(),
 )
