@@ -40,7 +40,6 @@ import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint;
 import com.qimian233.ztool.hook.modules.setting.OneVisionCompletion;
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook;
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook;
-import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory;
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook;
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand;
 import com.qimian233.ztool.hook.modules.systemframework.AllowGetPackages;
@@ -121,7 +120,7 @@ public class HookManager {
         registerHookModule(new KeepRotation());
         registerHookModule(new AllowRelativeAppLaunch());
         registerHookModule(new ForceRelativeAppFreeform());
-        registerHookModule(new com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory());
+        registerHookModule(new com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory()); // 看看 setting 包的注册模块你就知道这一行为什么要这么写了
 
         // ── SystemUI (target: com.android.systemui) ──
         registerHookModule(new StatusBarClockSecondsHook());
@@ -156,7 +155,7 @@ public class HookManager {
         registerHookModule(new AllowDisplayDolbyHook());
         registerHookModule(new PermissionControllerHook());
         registerHookModule(new OwnerInfoHook());
-        registerHookModule(new SplitScreenMandatory());
+        registerHookModule(new com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory()); // 你别笑，为了防止重名冲突必须用全限定名
         registerHookModule(new AppInfoHeaderDetailsHook());
         registerHookModule(new CustomizeAboutDeviceInfo());
         registerHookModule(new ZToolSettingsEntryHook());
