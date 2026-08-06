@@ -1,19 +1,15 @@
-package com.qimian233.ztool.settingactivity.systemui
+package com.qimian233.ztool.settingactivity.systemui.misc
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,7 +28,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
-import com.qimian233.ztool.data.systemui.SystemUiSettingsRepository
+import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -41,31 +37,24 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
-import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
-import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
+import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsUiState
+import com.qimian233.ztool.viewmodel.SystemUiMiscSettingsViewModel
 
 @Composable
-fun SystemUiSettingsRoute(
+fun SystemUiMiscSettingsRoute(
     title: String,
-    packageName: String,
-    onBack: () -> Unit,
-    onOpenStatusBar: () -> Unit,
-    onOpenLockScreen: () -> Unit,
-    onOpenControlCenter: () -> Unit,
-    onOpenAnimationWallpaper: () -> Unit,
-    onOpenMisc: () -> Unit
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
-        ?: error("SystemUiSettingsRoute requires a ViewModelStoreOwner")
+        ?: error("SystemUiMiscSettingsRoute requires a ViewModelStoreOwner")
     val viewModel = remember(owner) {
         ViewModelProvider(
             owner,
-            SystemUiSettingsViewModelFactory(
-                SystemUiSettingsRepository(context.applicationContext)
+            SystemUiMiscSettingsViewModelFactory(
+                SystemUiMiscSettingsRepository(context.applicationContext)
             )
-        )[SystemUiSettingsViewModel::class.java]
+        )[SystemUiMiscSettingsViewModel::class.java]
     }
 
     LaunchedEffect(viewModel) {
@@ -74,32 +63,24 @@ fun SystemUiSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    SystemUiSettingsScreen(
+    SystemUiMiscSettingsScreen(
         title = title,
         state = uiState,
         onBack = onBack,
-        onOpenStatusBar = onOpenStatusBar,
-        onOpenLockScreen = onOpenLockScreen,
-        onOpenControlCenter = onOpenControlCenter,
-        onOpenAnimationWallpaper = onOpenAnimationWallpaper,
-        onOpenMisc = onOpenMisc,
+        onGuestModeChanged = viewModel::setGuestModeController,
+        onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
         onRestartScope = viewModel::showRestartDialog,
     )
 
     if (uiState.showRestartDialog) {
         val restartFailString = stringResource(R.string.restartFail)
         RestartScopeDialog(
-            packageName = packageName,
             onConfirm = {
                 viewModel.forceStopScope { success, error ->
                     if (success) {
                         Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(
-                            context,
-                            restartFailString + error,
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(context, restartFailString + error, Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -108,28 +89,25 @@ fun SystemUiSettingsRoute(
     }
 }
 
-private class SystemUiSettingsViewModelFactory(
-    private val repository: SystemUiSettingsRepository
+private class SystemUiMiscSettingsViewModelFactory(
+    private val repository: SystemUiMiscSettingsRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SystemUiSettingsViewModel::class.java)) {
-            return SystemUiSettingsViewModel(repository) as T
+        if (modelClass.isAssignableFrom(SystemUiMiscSettingsViewModel::class.java)) {
+            return SystemUiMiscSettingsViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
 
 @Composable
-private fun SystemUiSettingsScreen(
+private fun SystemUiMiscSettingsScreen(
     title: String,
-    state: SystemUiSettingsUiState,
+    state: SystemUiMiscSettingsUiState,
     onBack: () -> Unit,
-    onOpenStatusBar: () -> Unit,
-    onOpenLockScreen: () -> Unit,
-    onOpenControlCenter: () -> Unit,
-    onOpenAnimationWallpaper: () -> Unit,
-    onOpenMisc: () -> Unit,
+    onGuestModeChanged: (Boolean) -> Unit,
+    onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
 ) {
     ZToolScaffold(
@@ -138,7 +116,10 @@ private fun SystemUiSettingsScreen(
                 title = title,
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = null
+                        )
                     }
                 }
             )
@@ -163,17 +144,14 @@ private fun SystemUiSettingsScreen(
                     .widthIn(max = 960.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 24.dp)
-                    .padding(bottom = 88.dp)
             ) {
                 ZToolSettingsList(
-                    sections = systemUiSettingsSections(
+                    sections = systemUiMiscSettingsSections(
                         state = state,
-                        onOpenStatusBar = onOpenStatusBar,
-                        onOpenLockScreen = onOpenLockScreen,
-                        onOpenControlCenter = onOpenControlCenter,
-                        onOpenAnimationWallpaper = onOpenAnimationWallpaper,
-                        onOpenMisc = onOpenMisc,
-                    )
+                        onGuestModeChanged = onGuestModeChanged,
+                        onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
+                    ),
+                    bottomPadding = 96.dp
                 )
             }
         }
@@ -181,74 +159,33 @@ private fun SystemUiSettingsScreen(
 }
 
 @Composable
-private fun systemUiSettingsSections(
-    state: SystemUiSettingsUiState,
-    onOpenStatusBar: () -> Unit,
-    onOpenLockScreen: () -> Unit,
-    onOpenControlCenter: () -> Unit,
-    onOpenAnimationWallpaper: () -> Unit,
-    onOpenMisc: () -> Unit,
+private fun systemUiMiscSettingsSections(
+    state: SystemUiMiscSettingsUiState,
+    onGuestModeChanged: (Boolean) -> Unit,
+    onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
-
     return listOf(
         SettingSection(
+            title = stringResource(R.string.systemUIMisc),
             items = listOf(
-                systemUiNavigationItem(
-                    title = stringResource(R.string.statusBarSettingTitle),
-                    summary = stringResource(R.string.statusBarSettingSummary),
-                    onClick = onOpenStatusBar
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_guest_user_enable_title),
+                    summary = stringResource(R.string.disable_guest_user_enable_summary),
+                    checked = state.guestModeController,
+                    onCheckedChange = onGuestModeChanged
                 ),
-                systemUiNavigationItem(
-                    title = stringResource(R.string.LockScreenSettingTitle),
-                    summary = stringResource(R.string.LockScreenSummary),
-                    onClick = onOpenLockScreen
-                ),
-                systemUiNavigationItem(
-                    title = stringResource(R.string.controlCenterTitle),
-                    summary = stringResource(R.string.controlCenterSummary),
-                    onClick = onOpenControlCenter
-                ),
-                systemUiNavigationItem(
-                    title = "动画与壁纸",
-                    summary = "充电动画与桌面动态壁纸设置",
-                    onClick = onOpenAnimationWallpaper
-                ),
-                systemUiNavigationItem(
-                    title = stringResource(R.string.systemUIMisc),
-                    summary = "访客模式、生物识别震动等杂项设置",
-                    onClick = onOpenMisc
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_biometric_error_vibration_title),
+                    checked = state.disableBiometricErrorVibration,
+                    onCheckedChange = onDisableBiometricErrorVibrationChanged
                 )
             )
-        ),
-    )
-}
-
-@Composable
-private fun systemUiNavigationItem(
-    title: String,
-    summary: String,
-    onClick: () -> Unit
-): SettingItem {
-    return SettingItem.Entry(
-        title = title,
-        summary = summary,
-        onClick = onClick,
-        trailingContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                    contentDescription = null,
-                    tint = LocalZToolColorScheme.current.primary
-                )
-            }
-        }
+        )
     )
 }
 
 @Composable
 private fun RestartScopeDialog(
-    packageName: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -258,8 +195,7 @@ private fun RestartScopeDialog(
         text = {
             Text(
                 stringResource(R.string.restart_xp_message_header) +
-                    packageName +
-                    "，com.zui.wallpapersetting" +
+                    "com.android.systemui，com.zui.wallpapersetting" +
                     stringResource(R.string.restart_xp_message)
             )
         },

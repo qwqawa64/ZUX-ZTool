@@ -35,6 +35,33 @@ class LockScreenSettingsViewModel(
         repository.saveYiYanEnabled(enabled)
     }
 
+    fun setNativeAodEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(nativeAod = enabled)
+        repository.saveNativeAod(enabled)
+
+        if (enabled && _uiState.value.lenovoAod) {
+            repository.saveLenovoAod(false)
+            _uiState.value = _uiState.value.copy(lenovoAod = false)
+        }
+    }
+
+    fun setLenovoAodEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(lenovoAod = enabled)
+        repository.saveLenovoAod(enabled)
+
+        if (enabled && _uiState.value.nativeAod) {
+            repository.saveNativeAod(false)
+            _uiState.value = _uiState.value.copy(nativeAod = false)
+        }
+    }
+
+    fun openLenovoAodSettings() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = repository.openLenovoAodSettings()
+            Log.d(TAG, "Lenovo AOD settings result: $result")
+        }
+    }
+
     fun setApiAddress(value: String) {
         _uiState.value = _uiState.value.copy(apiAddress = value)
     }
@@ -162,6 +189,8 @@ data class ApiTestResult(
 )
 
 data class LockScreenSettingsUiState(
+    val nativeAod: Boolean = false,
+    val lenovoAod: Boolean = false,
     val yiYanEnabled: Boolean = false,
     val apiAddress: String = "",
     val regex: String = "",

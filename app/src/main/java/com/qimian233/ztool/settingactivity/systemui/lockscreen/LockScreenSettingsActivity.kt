@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +47,7 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.ApiTestResult
 import com.qimian233.ztool.viewmodel.LockScreenSettingsUiState
 import com.qimian233.ztool.viewmodel.LockScreenSettingsViewModel
@@ -78,6 +80,9 @@ fun LockScreenSettingsRoute(
         state = uiState,
         onBack = onBack,
         onYiYanChanged = viewModel::setYiYanEnabled,
+        onNativeAodChanged = viewModel::setNativeAodEnabled,
+        onLenovoAodChanged = viewModel::setLenovoAodEnabled,
+        onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
         onApiAddressChanged = viewModel::setApiAddress,
         onRegexChanged = viewModel::setRegex,
         onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
@@ -153,6 +158,9 @@ private fun LockScreenSettingsScreen(
     state: LockScreenSettingsUiState,
     onBack: () -> Unit,
     onYiYanChanged: (Boolean) -> Unit,
+    onNativeAodChanged: (Boolean) -> Unit,
+    onLenovoAodChanged: (Boolean) -> Unit,
+    onOpenLenovoAodSettings: () -> Unit,
     onApiAddressChanged: (String) -> Unit,
     onRegexChanged: (String) -> Unit,
     onTestApi: () -> Unit,
@@ -205,6 +213,9 @@ private fun LockScreenSettingsScreen(
                     sections = lockScreenSettingsSections(
                         state = state,
                         onYiYanChanged = onYiYanChanged,
+                        onNativeAodChanged = onNativeAodChanged,
+                        onLenovoAodChanged = onLenovoAodChanged,
+                        onOpenLenovoAodSettings = onOpenLenovoAodSettings,
                         onApiAddressChanged = onApiAddressChanged,
                         onRegexChanged = onRegexChanged,
                         onTestApi = onTestApi,
@@ -228,6 +239,9 @@ private fun LockScreenSettingsScreen(
 private fun lockScreenSettingsSections(
     state: LockScreenSettingsUiState,
     onYiYanChanged: (Boolean) -> Unit,
+    onNativeAodChanged: (Boolean) -> Unit,
+    onLenovoAodChanged: (Boolean) -> Unit,
+    onOpenLenovoAodSettings: () -> Unit,
     onApiAddressChanged: (String) -> Unit,
     onRegexChanged: (String) -> Unit,
     onTestApi: () -> Unit,
@@ -260,6 +274,41 @@ private fun lockScreenSettingsSections(
                             onApiAddressChanged = onApiAddressChanged,
                             onRegexChanged = onRegexChanged,
                             onTestApi = onTestApi
+                        )
+                    }
+                )
+            )
+        }
+    }
+
+    val aodItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.aod_native_enable_title),
+                summary = stringResource(R.string.aod_native_enable_summary),
+                checked = state.nativeAod,
+                onCheckedChange = onNativeAodChanged
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.aod_lenovo_enable_title),
+                summary = stringResource(R.string.aod_lenovo_enable_summary),
+                checked = state.lenovoAod,
+                onCheckedChange = onLenovoAodChanged
+            )
+        )
+        if (state.lenovoAod) {
+            add(
+                SettingItem.Action(
+                    title = stringResource(R.string.aod_lenovo_activity_title),
+                    summary = stringResource(R.string.aod_lenovo_activity_summary),
+                    onClick = onOpenLenovoAodSettings,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
                     }
                 )
@@ -350,6 +399,10 @@ private fun lockScreenSettingsSections(
         SettingSection(
             title = stringResource(R.string.YiYanTile),
             items = yiYanItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.aod_title),
+            items = aodItems
         ),
         SettingSection(
             title = stringResource(R.string.ChargeWattsTitle),

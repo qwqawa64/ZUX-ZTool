@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.systemui
 
 import android.content.Context
+import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.PreferenceKeys
@@ -14,7 +15,8 @@ import java.net.URL
 import java.util.regex.Pattern
 
 class LockScreenSettingsRepository(
-    private val context: Context
+    private val context: Context,
+    private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance()
 ) {
     private val prefsUtils = ModulePreferencesUtils(context)
     private val zToolPrefs = ModulePreferencesUtils(context)
@@ -32,6 +34,8 @@ class LockScreenSettingsRepository(
         zToolPrefs.saveStringSetting(KEY_CHARGE_WATTS_SELECTED_OPTION, chargeWattsOption)
 
         return LockScreenSettingsUiState(
+            nativeAod = prefsUtils.loadBooleanSetting(KEY_FORCE_NATIVE_AOD, false),
+            lenovoAod = prefsUtils.loadBooleanSetting(KEY_FORCE_LENOVO_AOD, false),
             yiYanEnabled = prefsUtils.loadBooleanSetting(KEY_AUTO_OWNER_INFO, false),
             apiAddress = yiYanPrefs.loadStringSetting(KEY_API_URL, ""),
             regex = yiYanPrefs.loadStringSetting(KEY_REGULAR, ""),
@@ -53,6 +57,30 @@ class LockScreenSettingsRepository(
         } else if (yiYanPrefs.loadStringSetting(KEY_API_URL, "").isNotEmpty()) {
             prefsUtils.saveBooleanSetting(KEY_AUTO_OWNER_INFO, true)
         }
+    }
+
+    fun saveNativeAod(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_FORCE_NATIVE_AOD, enabled)
+    }
+
+    fun saveLenovoAod(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_FORCE_LENOVO_AOD, enabled)
+    }
+
+    fun isLenovoAodEnabled(): Boolean {
+        return prefsUtils.loadBooleanSetting(KEY_FORCE_LENOVO_AOD, false)
+    }
+
+    fun openLenovoAodSettings(): ShellActionResult {
+        val result = shellExecutor.executeRootCommand(
+            "am start -n com.android.systemui/com.android.systemui.aod.setting.AoDSettingActivity",
+            5
+        )
+        return ShellActionResult(
+            success = result.isSuccess,
+            error = result.error.orEmpty(),
+            exitCode = result.exitCode
+        )
     }
 
     fun saveChargeWattsOption(selectedOption: String): Boolean {
@@ -205,6 +233,8 @@ class LockScreenSettingsRepository(
         private val KEY_REGULAR = PreferenceKeys.REGULAR.name
         private val KEY_YIYAN = PreferenceKeys.YIYAN.name
         private val KEY_AUTO_OWNER_INFO = PreferenceKeys.AUTO_OWNER_INFO.name
+        private val KEY_FORCE_NATIVE_AOD = PreferenceKeys.FORCE_NATIVE_AOD.name
+        private val KEY_FORCE_LENOVO_AOD = PreferenceKeys.FORCE_LENOVO_AOD.name
         private val KEY_CHARGE_WATTS = PreferenceKeys.SYSTEMUI_CHARGE_WATTS.name
         private val KEY_REAL_WATTS = PreferenceKeys.SYSTEMUI_REAL_WATTS.name
         private val KEY_SYSTEMUI_PERMISSION_CONFIRMED = PreferenceKeys.IS_SYSTEMUI_PERMISSION_CONFIRMED.name

@@ -66,7 +66,9 @@ import com.qimian233.ztool.settingactivity.setting.magicwindowsearch.SearchPageR
 import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.SystemUiSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.animation.AnimationWallpaperSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.misc.SystemUiMiscSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsRoute
 import com.qimian233.ztool.ui.components.FloatingBottomBar
 import com.qimian233.ztool.ui.components.FloatingBottomBarItem
@@ -319,6 +321,8 @@ private object HiddenRoute {
     const val SYSTEM_UI_STATUS_BAR = "feature/system-ui/status-bar"
     const val SYSTEM_UI_LOCK_SCREEN = "feature/system-ui/lock-screen"
     const val SYSTEM_UI_CONTROL_CENTER = "feature/system-ui/control-center"
+    const val SYSTEM_UI_ANIMATION_WALLPAPER = "feature/system-ui/animation-wallpaper"
+    const val SYSTEM_UI_MISC = "feature/system-ui/misc"
     const val SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH = "feature/settings-detail/magic-window-search"
 }
 
@@ -1015,6 +1019,16 @@ private fun MainRouteNavHost(
                     navController.navigate(HiddenRoute.SYSTEM_UI_CONTROL_CENTER) {
                         launchSingleTop = true
                     }
+                },
+                onOpenAnimationWallpaper = {
+                    navController.navigate(HiddenRoute.SYSTEM_UI_ANIMATION_WALLPAPER) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenMisc = {
+                    navController.navigate(HiddenRoute.SYSTEM_UI_MISC) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -1066,6 +1080,44 @@ private fun MainRouteNavHost(
             ControlCenterSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
                         stringResource(R.string.control_center_settings_title_suffix),
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(FeatureDestination.SystemUi.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SYSTEM_UI_ANIMATION_WALLPAPER,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            AnimationWallpaperSettingsRoute(
+                title = stringResource(R.string.system_ui_app_name) +
+                        " — 动画与壁纸",
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(FeatureDestination.SystemUi.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SYSTEM_UI_MISC,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SystemUiMiscSettingsRoute(
+                title = stringResource(R.string.system_ui_app_name) +
+                        " — " + stringResource(R.string.systemUIMisc),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {
@@ -1247,6 +1299,8 @@ private fun navigationRouteIndex(route: String?): Int {
         HiddenRoute.SYSTEM_UI_STATUS_BAR -> 3
         HiddenRoute.SYSTEM_UI_LOCK_SCREEN -> 3
         HiddenRoute.SYSTEM_UI_CONTROL_CENTER -> 3
+        HiddenRoute.SYSTEM_UI_ANIMATION_WALLPAPER -> 3
+        HiddenRoute.SYSTEM_UI_MISC -> 3
         HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH -> 3
         FeatureDestination.Launcher.route -> 2
         FeatureDestination.MobileDesktop.route -> 2

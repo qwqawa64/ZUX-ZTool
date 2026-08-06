@@ -18,73 +18,7 @@ class SystemUiSettingsViewModel(
     val uiState: StateFlow<SystemUiSettingsUiState> = _uiState.asStateFlow()
 
     fun loadSettings() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val state = repository.loadState()
-                withContext(Dispatchers.Main) {
-                    _uiState.value = state
-                }
-                Log.d(TAG, "Settings loaded")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to load settings: ${e.message}")
-            }
-        }
-    }
-
-    fun setNativeAodEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(nativeAod = enabled)
-        repository.saveNativeAod(enabled)
-
-        if (enabled && _uiState.value.lenovoAod) {
-            repository.saveLenovoAod(false)
-            _uiState.value = _uiState.value.copy(lenovoAod = false)
-        }
-    }
-
-    fun setLenovoAodEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(lenovoAod = enabled)
-        repository.saveLenovoAod(enabled)
-
-        if (enabled && _uiState.value.nativeAod) {
-            repository.saveNativeAod(false)
-            _uiState.value = _uiState.value.copy(nativeAod = false)
-        }
-    }
-
-    fun openLenovoAodSettings() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.openLenovoAodSettings()
-            Log.d(TAG, "Lenovo AOD settings result: $result")
-        }
-    }
-
-    fun setNoChargeAnimation(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(noChargeAnimation = enabled)
-        repository.saveNoChargeAnimation(enabled)
-    }
-
-    fun setChargeAnimationFix(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(chargeAnimationFix = enabled)
-        repository.saveChargeAnimationFix(enabled)
-    }
-
-    fun setCustomChargeAnimation(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(customChargeAnimation = enabled)
-        repository.saveCustomChargeAnimation(enabled)
-    }
-
-    fun saveCustomChargeVideo(context: android.content.Context, uri: android.net.Uri, fileName: String): Boolean {
-        return repository.saveChargeAnimationVideo(context, uri, fileName)
-    }
-
-    fun setGuestModeController(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(guestModeController = enabled)
-        repository.saveGuestModeController(enabled)
-    }
-
-    fun setDisableBiometricErrorVibration(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(disableBiometricErrorVibration = enabled)
-        repository.saveDisableBiometricErrorVibration(enabled)
+        // UiState has no persisted fields; kept for consistency
     }
 
     fun showRestartDialog() {
@@ -131,13 +65,6 @@ class SystemUiSettingsViewModel(
 }
 
 data class SystemUiSettingsUiState(
-    val nativeAod: Boolean = false,
-    val lenovoAod: Boolean = false,
-    val noChargeAnimation: Boolean = false,
-    val chargeAnimationFix: Boolean = false,
-    val customChargeAnimation: Boolean = false,
-    val guestModeController: Boolean = false,
-    val disableBiometricErrorVibration: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )
