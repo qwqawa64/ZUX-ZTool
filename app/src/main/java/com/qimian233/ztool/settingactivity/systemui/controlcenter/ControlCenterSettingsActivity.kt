@@ -1,6 +1,6 @@
 @file:Suppress("PackageName")
 
-package com.qimian233.ztool.settingactivity.systemui.ControlCenter
+package com.qimian233.ztool.settingactivity.systemui.controlcenter
 
 import android.content.ClipData
 import android.content.ClipboardManager

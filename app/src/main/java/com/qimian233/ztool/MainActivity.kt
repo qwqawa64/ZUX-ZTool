@@ -64,12 +64,12 @@ import com.qimian233.ztool.settingactivity.safecenter.SafeCenterSettingsRoute
 import com.qimian233.ztool.settingactivity.setting.SettingsDetailRoute
 import com.qimian233.ztool.settingactivity.setting.magicwindowsearch.SearchPageRoute
 import com.qimian233.ztool.settingactivity.systemframework.FrameworkSettingsRoute
-import com.qimian233.ztool.settingactivity.systemui.ControlCenter.ControlCenterSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.controlcenter.ControlCenterSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.SystemUiSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.animation.AnimationWallpaperSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.lockscreen.LockScreenSettingsRoute
 import com.qimian233.ztool.settingactivity.systemui.misc.SystemUiMiscSettingsRoute
-import com.qimian233.ztool.settingactivity.systemui.statusBarSetting.StatusBarSettingsRoute
+import com.qimian233.ztool.settingactivity.systemui.statusbar.StatusBarSettingsRoute
 import com.qimian233.ztool.ui.components.FloatingBottomBar
 import com.qimian233.ztool.ui.components.FloatingBottomBarItem
 import com.qimian233.ztool.ui.components.ZToolNavigationBar

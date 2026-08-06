@@ -1,4 +1,4 @@
-package com.qimian233.ztool.settingactivity.systemui.statusBarSetting
+package com.qimian233.ztool.settingactivity.systemui.statusbar
 
 import android.content.ClipData
 import android.content.ClipboardManager
