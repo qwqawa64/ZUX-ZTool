@@ -77,6 +77,7 @@ import com.qimian233.ztool.hook.modules.systemui.statusbar.StatusBarClockSeconds
 import com.qimian233.ztool.hook.modules.systemui.statusbar.SystemUIBatteryHook;
 import com.qimian233.ztool.hook.modules.systemui.statusbar.SystemUINetworkSpeedSizeHook;
 import com.qimian233.ztool.hook.modules.systemui.statusbar.SystemUINetworkSpeeddoublelayerHook;
+import com.qimian233.ztool.hook.modules.systemui.wallpaper.DesktopLiveWallpaperHook;
 import com.qimian233.ztool.hook.modules.wallpaper.ChargeAnimationFixModule;
 
 import java.util.ArrayList;
@@ -150,6 +151,9 @@ public class HookManager {
         registerHookModule(new SliderStyleHook());
         registerHookModule(new CustomChargeAnimation());
         registerHookModule(new DisableBiometricErrorVibration());
+
+        // ── Desktop Live Wallpaper PoC (test_hook) ──
+        registerHookModule(new DesktopLiveWallpaperHook());
 
         // ── Settings (target: com.android.settings) ──
         registerHookModule(new OneVisionCompletion());
