@@ -42,7 +42,6 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
-import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiSettingsViewModel
 
 @Composable
@@ -76,7 +75,6 @@ fun SystemUiSettingsRoute(
 
     SystemUiSettingsScreen(
         title = title,
-        state = uiState,
         onBack = onBack,
         onOpenStatusBar = onOpenStatusBar,
         onOpenLockScreen = onOpenLockScreen,
@@ -123,7 +121,6 @@ private class SystemUiSettingsViewModelFactory(
 @Composable
 private fun SystemUiSettingsScreen(
     title: String,
-    state: SystemUiSettingsUiState,
     onBack: () -> Unit,
     onOpenStatusBar: () -> Unit,
     onOpenLockScreen: () -> Unit,
@@ -167,7 +164,6 @@ private fun SystemUiSettingsScreen(
             ) {
                 ZToolSettingsList(
                     sections = systemUiSettingsSections(
-                        state = state,
                         onOpenStatusBar = onOpenStatusBar,
                         onOpenLockScreen = onOpenLockScreen,
                         onOpenControlCenter = onOpenControlCenter,
@@ -182,7 +178,6 @@ private fun SystemUiSettingsScreen(
 
 @Composable
 private fun systemUiSettingsSections(
-    state: SystemUiSettingsUiState,
     onOpenStatusBar: () -> Unit,
     onOpenLockScreen: () -> Unit,
     onOpenControlCenter: () -> Unit,
