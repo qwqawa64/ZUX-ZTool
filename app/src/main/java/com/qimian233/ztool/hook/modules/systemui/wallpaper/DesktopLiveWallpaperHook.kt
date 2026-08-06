@@ -1,10 +1,13 @@
 package com.qimian233.ztool.hook.modules.systemui.wallpaper
 
+import android.content.res.Configuration
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.os.Environment
 import android.view.Surface
 import android.view.SurfaceHolder
+import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.io.File
@@ -18,8 +21,12 @@ import java.io.File
  * - 用 MediaCodec 直接解码视频到 Engine 的 Surface（零拷贝）
  * - 视频播放完毕后自动循环
  *
- * 硬编码路径与锁屏动态壁纸共用同一视频文件。
- * getModuleName() 返回 "test_hook"，始终启用。
+ * 视频文件路径：
+ *   /sdcard/Download/ZTool/wallpaper_portrait.mp4  (竖屏)
+ *   /sdcard/Download/ZTool/wallpaper_land.mp4       (横屏)
+ *
+ * getModuleName() 返回 PreferenceKeys.DESKTOP_LIVE_WALLPAPER.name，
+ * 由前端开关控制启用。
  */
 class DesktopLiveWallpaperHook : AppHookModule() {
 
@@ -27,8 +34,9 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         private const val SYSTEMUI_PKG = "com.android.systemui"
         private const val ENGINE_CLASS =
             "com.android.systemui.wallpapers.ImageWallpaper\$CanvasEngine"
-        private const val VIDEO_PATH =
-            "/storage/emulated/0/.keyguard/video/wallpaper_port.mp4"
+        private const val CUSTOM_VIDEO_DIR = "/Download/ZTool"
+        private const val VIDEO_PORTRAIT = "wallpaper_portrait.mp4"
+        private const val VIDEO_LAND = "wallpaper_land.mp4"
         private const val DECODE_TIMEOUT_US = 10_000L
     }
 
@@ -40,7 +48,7 @@ class DesktopLiveWallpaperHook : AppHookModule() {
     private var engineSurface: Surface? = null
     private var reportedShown = false
 
-    override fun getModuleName(): String = "test_hook"
+    override fun getModuleName(): String = PreferenceKeys.DESKTOP_LIVE_WALLPAPER.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(SYSTEMUI_PKG)
 
@@ -99,20 +107,43 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         }
         engineSurface = surface
 
-        val videoFile = File(VIDEO_PATH)
+        val videoPath = resolveVideoPath(engine)
+        val videoFile = File(videoPath)
         if (!videoFile.exists()) {
-            logger.warn("DesktopLiveWallpaper: video not found at $VIDEO_PATH, fallback to static")
+            logger.warn("DesktopLiveWallpaper: video not found at $videoPath, fallback to static")
             return
         }
 
-        startPlayback(engine)
+        startPlayback(engine, videoPath)
+    }
+
+    /**
+     * 根据当前屏幕方向选择竖屏/横屏视频路径。
+     * 优先使用对应方向文件，若不存在则回退到另一个方向。
+     */
+    private fun resolveVideoPath(engine: Any): String {
+        val baseDir = Environment.getExternalStorageDirectory().path + CUSTOM_VIDEO_DIR
+        val isLandscape = try {
+            val displayContext = engine.javaClass.superclass
+                ?.getDeclaredMethod("getDisplayContext")?.apply { isAccessible = true }
+                ?.invoke(engine) as? android.content.Context
+            displayContext?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE
+        } catch (_: Exception) { false }
+
+        val (primary, fallback) = if (isLandscape)
+            VIDEO_LAND to VIDEO_PORTRAIT
+        else
+            VIDEO_PORTRAIT to VIDEO_LAND
+
+        val primaryPath = "$baseDir/$primary"
+        return if (File(primaryPath).exists()) primaryPath else "$baseDir/$fallback"
     }
 
     // ── 播放控制 ──────────────────────────────────────────────
 
-    private fun startPlayback(engine: Any) {
+    private fun startPlayback(engine: Any, videoPath: String) {
         try {
-            val extractor = MediaExtractor().also { it.setDataSource(VIDEO_PATH) }
+            val extractor = MediaExtractor().also { it.setDataSource(videoPath) }
 
             val trackIndex = (0 until extractor.trackCount).firstOrNull { i ->
                 extractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)

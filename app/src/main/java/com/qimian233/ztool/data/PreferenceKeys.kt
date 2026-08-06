@@ -152,6 +152,7 @@ object PreferenceKeys {
 
     // ── Wallpaper ──
     @JvmField val CHARGE_ANIMATION_FIX = BoolKey("charge_animation_fix", false)
+    @JvmField val DESKTOP_LIVE_WALLPAPER = BoolKey("desktop_live_wallpaper", false)
 
     // ── DocumentsUI ──
     @JvmField val DOCUMENTS_UI_BYPASS = BoolKey("documents_ui_bypass", false)
@@ -273,6 +274,7 @@ object PreferenceKeys {
         DISABLE_OTA_CHECK, CUSTOM_OTA_PARAMETERS, NO_AUTO_OTA_INSTALL,
         BLOCK_OTA_INSTALL_DIALOG, HIDE_OTA_NOTIFICATIONS,
         CHARGE_ANIMATION_FIX, DOCUMENTS_UI_BYPASS,
+        DESKTOP_LIVE_WALLPAPER,
         DISABLE_ALL_VIRUS_SCANS, DEFAULT_ENABLE_AUTORUN,
         AUTO_ACCEPT_FILE_TRANSFER, BYPASS_SHARE_WARNING,
         DISABLE_NEARBY_SHARE_COUNTDOWN,
