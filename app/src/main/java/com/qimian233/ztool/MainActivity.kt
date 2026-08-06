@@ -436,20 +436,6 @@ private fun MainTabletShell(
                             )
                         }
                     }
-                    FrontendStyle.Material3Expressive -> {
-                        Scaffold(
-                            contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
-                        ) { innerPadding ->
-                            MainRouteNavHost(useHorizontalAnimation = true,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                navController = navController,
-                                predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
-                                onEnvironmentStateChanged = onEnvironmentStateChanged
-                            )
-                        }
-                    }
                 }
 
                 if (environmentReady) {
