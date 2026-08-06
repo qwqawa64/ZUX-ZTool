@@ -174,6 +174,10 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         val bufInfo = MediaCodec.BufferInfo()
         var inputEos = false
 
+        // 帧间隔控制：按视频时间戳同步播放速度
+        var lastPtsUs = -1L           // 上一帧的 presentationTimeUs（-1 表示无上一帧）
+        var lastRenderNanos = 0L      // 上一帧渲染完成的 System.nanoTime()
+
         try {
             while (running && !Thread.interrupted()) {
                 // 喂数据
@@ -199,7 +203,33 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                     outIdx >= 0 -> {
                         val render = bufInfo.size > 0 &&
                             (bufInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
+
+                        if (render) {
+                            // 按帧时间戳控制播放速率
+                            val ptsUs = bufInfo.presentationTimeUs
+                            if (lastPtsUs >= 0) {
+                                val frameGapUs = ptsUs - lastPtsUs
+                                if (frameGapUs > 0) {
+                                    val nowNanos = System.nanoTime()
+                                    val elapsedNanos = nowNanos - lastRenderNanos
+                                    val targetNanos = frameGapUs * 1000L // μs → ns
+                                    val sleepNanos = targetNanos - elapsedNanos
+                                    if (sleepNanos > 500_000L) { // >0.5ms 才睡，避免忙等
+                                        Thread.sleep(
+                                            sleepNanos / 1_000_000L,
+                                            (sleepNanos % 1_000_000L).toInt()
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         codec.releaseOutputBuffer(outIdx, render)
+
+                        if (render) {
+                            lastPtsUs = bufInfo.presentationTimeUs
+                            lastRenderNanos = System.nanoTime()
+                        }
 
                         if (!reportedShown && render) {
                             reportedShown = true
@@ -211,11 +241,14 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                             extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
                             codec.flush()
                             inputEos = false
+                            lastPtsUs = -1L // 循环后重置，第一帧不等待
                         }
                     }
                     outIdx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> { /* ignore */ }
                 }
             }
+        } catch (e: InterruptedException) {
+            // 正常的停止信号
         } catch (t: Throwable) {
             if (running) logger.error("DesktopLiveWallpaper: decode error", t)
         }
