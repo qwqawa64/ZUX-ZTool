@@ -4,6 +4,7 @@ import android.content.Context
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.ApiTestResult
 import com.qimian233.ztool.viewmodel.LockScreenSettingsUiState
 import java.io.BufferedReader
@@ -85,6 +86,23 @@ class LockScreenSettingsRepository(
     fun saveShowIndicator(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_INDICATOR, enabled)
     fun saveCustomFormatEnabled(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_CUSTOM_FORMAT_ENABLED, enabled)
     fun saveCustomFormat(value: String) = prefsUtils.saveStringSetting(KEY_RW_CUSTOM_FORMAT, value.trim())
+
+    fun forceStopScope(): ShellActionResult {
+        val packages = listOf("com.android.systemui", "com.zui.wallpapersetting")
+        return when (val result = ScopeUtils.restartScope(packages)) {
+            is ScopeUtils.RestartResult.Success -> ShellActionResult(success = true, error = "", exitCode = 0)
+            is ScopeUtils.RestartResult.PartialSuccess -> ShellActionResult(
+                success = false,
+                error = "Partial failure: ${result.failed.joinToString()}",
+                exitCode = -1
+            )
+            is ScopeUtils.RestartResult.Failure -> ShellActionResult(
+                success = false,
+                error = result.message,
+                exitCode = -1
+            )
+        }
+    }
 
     fun testApi(apiUrl: String, regexValue: String): ApiTestResult {
         return try {

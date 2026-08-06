@@ -296,19 +296,16 @@ private fun systemUiSettingsSections(
                 systemUiNavigationItem(
                     title = stringResource(R.string.statusBarSettingTitle),
                     summary = stringResource(R.string.statusBarSettingSummary),
-                    iconRes = R.drawable.ic_status_bar,
                     onClick = onOpenStatusBar
                 ),
                 systemUiNavigationItem(
                     title = stringResource(R.string.LockScreenSettingTitle),
                     summary = stringResource(R.string.LockScreenSummary),
-                    iconRes = R.drawable.ic_lock,
                     onClick = onOpenLockScreen
                 ),
                 systemUiNavigationItem(
                     title = stringResource(R.string.controlCenterTitle),
                     summary = stringResource(R.string.controlCenterSummary),
-                    iconRes = R.drawable.ic_control_center,
                     onClick = onOpenControlCenter
                 )
             )
@@ -397,20 +394,12 @@ private fun systemUiSettingsSections(
 private fun systemUiNavigationItem(
     title: String,
     summary: String,
-    iconRes: Int,
     onClick: () -> Unit
 ): SettingItem {
     return SettingItem.Entry(
         title = title,
         summary = summary,
         onClick = onClick,
-        leadingContent = {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = LocalZToolColorScheme.current.primary
-            )
-        },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Spacer(modifier = Modifier.width(6.dp))

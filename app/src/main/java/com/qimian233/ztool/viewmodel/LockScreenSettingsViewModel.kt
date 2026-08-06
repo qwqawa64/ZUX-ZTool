@@ -2,10 +2,14 @@ package com.qimian233.ztool.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LockScreenSettingsViewModel(
     private val repository: LockScreenSettingsRepository
@@ -123,6 +127,29 @@ class LockScreenSettingsViewModel(
         _uiState.value = _uiState.value.copy(apiTestResult = null)
     }
 
+    fun showRestartDialog() {
+        _uiState.value = _uiState.value.copy(showRestartDialog = true)
+    }
+
+    fun dismissRestartDialog() {
+        _uiState.value = _uiState.value.copy(showRestartDialog = false)
+    }
+
+    fun forceStopScope(onResult: (Boolean, String) -> Unit) {
+        if (_uiState.value.isRestartProcessing) return
+        _uiState.value = _uiState.value.copy(showRestartDialog = false, isRestartProcessing = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = repository.forceStopScope()
+                withContext(Dispatchers.Main) { onResult(result.success, result.error) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { onResult(false, e.message ?: "") }
+            } finally {
+                _uiState.value = _uiState.value.copy(isRestartProcessing = false)
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "LockScreenSettingsViewModel"
     }
@@ -149,5 +176,7 @@ data class LockScreenSettingsUiState(
     val showTemperature: Boolean = false,
     val showIndicator: Boolean = true,
     val customFormatEnabled: Boolean = false,
-    val customFormat: String = ""
+    val customFormat: String = "",
+    val isRestartProcessing: Boolean = false,
+    val showRestartDialog: Boolean = false
 )

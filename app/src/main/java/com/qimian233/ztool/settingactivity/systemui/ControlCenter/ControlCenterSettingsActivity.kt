@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +48,7 @@ import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
@@ -149,7 +151,8 @@ fun ControlCenterSettingsRoute(
         onQsPanelWidthPercentChanged = viewModel::setQsPanelWidthPercent,
         onQsTileColumnsChanged = viewModel::setQsTileColumns,
         onCustomizeSliderStyleChanged = viewModel::setCustomizeSliderStyle,
-        onSliderStyleValueChanged = viewModel::setSliderStyleValue
+        onSliderStyleValueChanged = viewModel::setSliderStyleValue,
+        onRestartScope = viewModel::showRestartDialog,
     )
 
     if (uiState.showFormatHelpDialog) {
@@ -173,6 +176,23 @@ fun ControlCenterSettingsRoute(
                     text = stringResource(R.string.confirm)
                 )
             }
+        )
+    }
+
+    if (uiState.showRestartDialog) {
+        val restartFailString = stringResource(R.string.restartFail)
+        RestartScopeDialog(
+            packageName = "com.android.systemui",
+            onConfirm = {
+                viewModel.forceStopScope { success, error ->
+                    if (success) {
+                        Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, restartFailString + error, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            onDismiss = viewModel::dismissRestartDialog
         )
     }
 }
@@ -229,6 +249,7 @@ private fun ControlCenterSettingsScreen(
     onQsTileColumnsChanged: (Int) -> Unit,
     onCustomizeSliderStyleChanged: (Boolean) -> Unit,
     onSliderStyleValueChanged: (Boolean) -> Unit,
+    onRestartScope: () -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -242,6 +263,13 @@ private fun ControlCenterSettingsScreen(
                         )
                     }
                 }
+            )
+        },
+        floatingActionButton = {
+            ZToolExtendedFloatingActionButton(
+                onClick = onRestartScope,
+                icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
+                text = { Text(stringResource(R.string.restart_yes)) }
             )
         }
     ) { innerPadding ->
@@ -888,5 +916,30 @@ private fun FormatHelpDialog(
         onCopyExample = onCopyExample,
         copyButtonText = stringResource(R.string.copy_example_button),
         confirmButtonText = stringResource(R.string.confirm)
+    )
+}
+
+@Composable
+private fun RestartScopeDialog(
+    packageName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.restart_xp_title)) },
+        text = {
+            Text(
+                stringResource(R.string.restart_xp_message_header) +
+                    packageName +
+                    stringResource(R.string.restart_xp_message)
+            )
+        },
+        confirmButton = {
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+        },
+        dismissButton = {
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+        }
     )
 }

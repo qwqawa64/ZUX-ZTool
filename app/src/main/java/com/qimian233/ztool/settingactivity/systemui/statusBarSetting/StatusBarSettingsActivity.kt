@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +46,7 @@ import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
+import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
@@ -120,8 +122,26 @@ fun StatusBarSettingsRoute(
         onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
         onNetworkSpeedRefreshEnabledChanged = viewModel::setNetworkSpeedRefreshEnabled,
         onNetworkSpeedRefreshIntervalChanged = viewModel::setNetworkSpeedRefreshInterval,
-        onBatteryExternalChanged = viewModel::setBatteryExternal
+        onBatteryExternalChanged = viewModel::setBatteryExternal,
+        onRestartScope = viewModel::showRestartDialog,
     )
+
+    if (uiState.showRestartDialog) {
+        val restartFailString = stringResource(R.string.restartFail)
+        RestartScopeDialog(
+            packageName = "com.android.systemui",
+            onConfirm = {
+                viewModel.forceStopScope { success, error ->
+                    if (success) {
+                        Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, restartFailString + error, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            onDismiss = viewModel::dismissRestartDialog
+        )
+    }
 
     if (uiState.showFormatHelpDialog) {
         FormatHelpDialog(
@@ -181,7 +201,8 @@ private fun StatusBarSettingsScreen(
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshEnabledChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshIntervalChanged: (Float) -> Unit,
-    onBatteryExternalChanged: (Boolean) -> Unit
+    onBatteryExternalChanged: (Boolean) -> Unit,
+    onRestartScope: () -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -195,6 +216,13 @@ private fun StatusBarSettingsScreen(
                         )
                     }
                 }
+            )
+        },
+        floatingActionButton = {
+            ZToolExtendedFloatingActionButton(
+                onClick = onRestartScope,
+                icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
+                text = { Text(stringResource(R.string.restart_yes)) }
             )
         }
     ) { innerPadding ->
@@ -577,6 +605,31 @@ private fun FormatHelpDialog(
         onCopyExample = onCopyExample,
         copyButtonText = stringResource(R.string.copy_example_button),
         confirmButtonText = stringResource(R.string.confirm)
+    )
+}
+
+@Composable
+private fun RestartScopeDialog(
+    packageName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.restart_xp_title)) },
+        text = {
+            Text(
+                stringResource(R.string.restart_xp_message_header) +
+                    packageName +
+                    stringResource(R.string.restart_xp_message)
+            )
+        },
+        confirmButton = {
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+        },
+        dismissButton = {
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+        }
     )
 }
 
