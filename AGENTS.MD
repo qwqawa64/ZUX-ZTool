@@ -3,7 +3,7 @@
 ## Agent Quick Start
 
 - Generate your commit message as `.gitmessage` indicates.
-- Prefer Kotlin unless it fundamentally conflicts with existing infrastructure.
+- New code must be written in Kotlin. Java is only permitted for emergency fixes to existing Java infrastructure (e.g., BaseHookModule.java, HookManager.java).
 - Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
 - JDK is available **only on Windows** in most scenarios. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
 - If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `cmd.exe /c ".\gradlew.bat assembleDebug"`
@@ -190,7 +190,7 @@ The durable rules are:
 
 To add a new Hook implementation on the backend:
 
-1. Create a Hook class that extends `AppHookModule` for non-system-framework-hook, and extend `SystemHookModule` for system-framwork-hook. Prefer **Kotlin** (`.kt`) for new hooks; Java is acceptable only when it fundamentally conflicts with existing infrastructure.
+1. Create a Hook class that extends `AppHookModule` for non-system-framework-hook, and extend `SystemHookModule` for system-framework-hook. All new Hooks must be written in **Kotlin** (`.kt`). Java is only permitted for emergency fixes to existing Java infrastructure.
 2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using `PreferenceKeys` constants (see `Add_New_Preference_Key_zh-CN.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
