@@ -5,35 +5,6 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface
 
-/**
- * 清理全局搜索 — 移除热词视图和搜索推荐。
- *
- * ## 策略
- *
- * **K0（无参 void，HotWordView 初始化方法）：before-hook replace null**
- *
- * 在 `onFinishInflate` → `m21544K0()` 执行前拦截，阻止 `hot_word_view`
- * 布局被 inflate 和 addView 到 `hot_word_container`。
- *
- * 为什么可以安全地用 before-hook？
- * - `m21538E0(List)` 是唯一会调用 `f29571G.setVisibility()` 的方法，
- *   但它已被 replace-null 阻断，不会访问空字段。
- * - `m21534A0(int,int,int)` → `if (f29571G == null) return;`
- * - `removeFromLayer()` → `if (f29571G != null) { ... }`
- * - 所有其他访问 `f29571G` 的代码路径都有空值保护。
- *
- * 这样 HotWordView 从未被创建，`hot_word_container` 保持空状态，
- * 不会有"空容器壳"残留。比 after-hook + setVisibility/removeView
- * 更彻底。
- *
- * **E0（List → void，数据填充与可见性控制）：before-hook replace null**
- *
- * 拦截热词数据填充和 `setVisibility(0)` 调用。
- *
- * **setHotWordHint：before-hook replace null**
- *
- * 拦截搜索框 hint 文字更新。
- */
 class CleanGlobalSearch : AppHookModule() {
 
     companion object {
@@ -63,8 +34,6 @@ class CleanGlobalSearch : AppHookModule() {
         }
     }
 
-    // ── 热词视图移除（before-hook，阻止 inflate） ──────────────
-
     private fun installHotWordRemoval(
         classLoader: ClassLoader,
         bridge: org.luckypray.dexkit.DexKitBridge?
@@ -72,10 +41,8 @@ class CleanGlobalSearch : AppHookModule() {
         try {
             val globalSearchViewClass = classLoader.loadClass(TARGET_CLASS)
 
-            // 1. DEXKit DSL：查找无参 void 初始化方法（混淆后的 K0/T0）
             val methodNames = discoverInitMethods(bridge)
 
-            // 2. Before-hook：阻止方法执行 → 不 inflate → 不 addView
             var hooked = false
             for (methodName in methodNames) {
                 try {
@@ -92,7 +59,6 @@ class CleanGlobalSearch : AppHookModule() {
                 logger.error("Unable to find any hot word inflation method")
             }
 
-            // 3. DEXKit DSL：查找 E0(List) → void，拦截数据填充
             val e0Name = discoverE0Method(bridge)
             try {
                 val e0Method = globalSearchViewClass.getDeclaredMethod(e0Name, List::class.java)
@@ -126,7 +92,7 @@ class CleanGlobalSearch : AppHookModule() {
                 if (methods.isNotEmpty()) {
                     return methods.map { it.name }
                 }
-            } catch (_: Throwable) { /* fall through to fallback */ }
+            } catch (_: Throwable) {}
         }
         logger.warn("unable to locate hot word view initialization method, using fallback!")
         return listOf("K0", "T0")
@@ -150,12 +116,10 @@ class CleanGlobalSearch : AppHookModule() {
                     }
                 }.singleOrNull()
                 if (result != null) return result.name
-            } catch (_: Throwable) { /* fall through to fallback */ }
+            } catch (_: Throwable) {}
         }
         return "E0"
     }
-
-    // ── 搜索框推荐移除 ──────────────────────────────────────────
 
     private fun installSearchRecommendRemoval(classLoader: ClassLoader) {
         try {
@@ -167,8 +131,6 @@ class CleanGlobalSearch : AppHookModule() {
             logger.error("Unable to find GlobalSearchView#setHotWordHint.")
         }
     }
-
-    // ── 偏好读取 ────────────────────────────────────────────────
 
     private fun readPreferences() {
         noHotWordView = try {
