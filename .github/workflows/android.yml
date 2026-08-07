@@ -27,9 +27,9 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           echo "subject=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
 
-      # ---- 对于 schedule 事件，尝试恢复上次构建的 SHA ----
-      - name: Restore previous build commit SHA (only for schedule)
-        if: github.event_name == 'schedule'
+      # ---- 对于 schedule 和 workflow_dispatch 事件，尝试恢复上次构建的 SHA ----
+      - name: Restore previous build commit SHA
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         id: cache-restore
         uses: actions/cache/restore@v5
         with:
