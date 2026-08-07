@@ -163,8 +163,11 @@ class CleanGlobalSearch : AppHookModule() {
     }
 
     /**
-     * 反射隐藏 HotWordView 字段。
-     * 方法已正常执行完毕，字段非 null，只需 setVisibility(GONE)。
+     * 从父布局中移除 HotWordView。
+     *
+     * K0/T0 已将 HotWordView addView 到 hot_word_container，仅 setVisibility(GONE)
+     * 无法真正拦截——View 仍驻留在 View 树中。这里通过 [ViewGroup.removeView]
+     * 将其彻底移除，等效于从未被 add。
      */
     private fun hideHotwordFields(target: Any, fieldNames: List<String>) {
         if (fieldNames.isEmpty()) return
@@ -173,11 +176,12 @@ class CleanGlobalSearch : AppHookModule() {
                 try {
                     val field = findField(target.javaClass, fieldName)
                     field.isAccessible = true
-                    (field.get(target) as? View)?.visibility = View.GONE
+                    val view = field.get(target) as? View ?: continue
+                    (view.parent as? android.view.ViewGroup)?.removeView(view)
                 } catch (_: Throwable) { /* field not found on this version, skip */ }
             }
         } catch (t: Throwable) {
-            logger.error("Failed to hide hotword view", t)
+            logger.error("Failed to remove hotword view from container", t)
         }
     }
 
