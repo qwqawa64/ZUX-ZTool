@@ -1,109 +1,88 @@
-package com.qimian233.ztool.hook.modules.ota;
+package com.qimian233.ztool.hook.modules.ota
 
-import java.util.Properties;
-
-import com.qimian233.ztool.data.PreferenceKeys;
-import com.qimian233.ztool.hook.base.AppHookModule;
-
-import io.github.libxposed.api.XposedModuleInterface;
-
-import java.lang.reflect.Method;
+import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.hook.base.AppHookModule
+import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import java.util.Properties
 
 /**
  * Lenovo OTA 参数修改模块
  * 功能：拦截OTA请求，修改 curfirmwarever 和 deviceid
  * 修改原则：仅在配置值有效（非空）时才修改，否则保持原厂逻辑
  */
-public class LenovoOTAHook extends AppHookModule {
+class LenovoOTAHook : AppHookModule() {
+    override fun getModuleName(): String = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
 
-    private static final String TARGET_CLASS = "com.lenovo.tbengine.core.serverapi.ServerApi";
-    private static final String TARGET_METHOD = "geServerResponseOrThrowError";
+    override fun getTargetPackages(): Array<String> = arrayOf("com.lenovo.tbengine")
 
-    public LenovoOTAHook() {}
-
-    @Override
-    public String getModuleName() {
-        return "custom_ota_parameters";
+    override fun handleLoadPackage(param: PackageLoadedParam) {
+        val classLoader = param.defaultClassLoader
+        hookOTARequest(classLoader)
     }
 
-    @Override
-    public String[] getTargetPackages() {
-        return new String[]{
-                "com.lenovo.ota",
-                "com.lenovo.tbengine" // 覆盖相关可能存在的包名
-        };
-    }
-
-    @Override
-    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        ClassLoader classLoader = param.getDefaultClassLoader();
-        String packageName = param.getPackageName();
-        hookOTARequest(classLoader, packageName);
-    }
-
-    private void hookOTARequest(ClassLoader classLoader, String packageName) {
+    private fun hookOTARequest(classLoader: ClassLoader) {
         try {
-            Class<?> serverApiClass;
+            val serverApiClass: Class<*>
             try {
-                serverApiClass = classLoader.loadClass(TARGET_CLASS);
-            } catch (ClassNotFoundException e) {
-                return;
+                serverApiClass = classLoader.loadClass("com.lenovo.tbengine.core.serverapi.ServerApi")
+            } catch (_: ClassNotFoundException) {
+                return
             }
 
-            logger.debug("Found target class in package: " + packageName);
+            val targetMethod = findMethod(serverApiClass, "geServerResponseOrThrowError",
+                String::class.java,  // str
+                Properties::class.java,  // properties (目标修改对象)
+                String::class.java // str2 (URL)
+            )
 
-            Method targetMethod = serverApiClass.getDeclaredMethod(
-                    TARGET_METHOD,
-                    String.class,      // str
-                    Properties.class,  // properties (目标修改对象)
-                    String.class       // str2 (URL)
-            );
-
-            hookWithId(targetMethod, "target", chain -> {
-                Properties properties = (Properties) chain.getArg(1);
-                String url = (String) chain.getArg(2);
+            hookWithId(targetMethod, "target") { chain ->
+                val properties = chain.args[1] as Properties
+                val url = chain.args[2] as String?
 
                 // 仅拦截包含 "upgrade" 的请求
                 if (url != null && url.contains("upgrade")) {
-                    boolean modified = false;
+                    var modified = false
 
                     // 1. 处理 firmware 版本
-                    String targetVer;
-                    try {
-                        targetVer = getRemotePreferences().getString(PreferenceKeys.CUSTOM_OTA_TARGET_VERSION_NAME.name, "");
-                    } catch (Throwable t) {
-                        targetVer = "";
+                    val targetVer = try {
+                        remotePreferences.getString(
+                            PreferenceKeys.CUSTOM_OTA_TARGET_VERSION_NAME.name,
+                            ""
+                        )
+                    } catch (_: Throwable) {
+                        ""
                     }
                     // 只有当 targetVer 不为 null 且去除空格后不为空时才修改
                     if (isConfigValid(targetVer)) {
-                        properties.put("curfirmwarever", targetVer.trim());
-                        logger.debug("Modified curfirmwarever: " + targetVer);
-                        modified = true;
+                        properties["curfirmwarever"] = targetVer!!.trim { it <= ' ' }
+                        logger.debug("Modified curfirmwarever: $targetVer")
+                        modified = true
                     }
 
                     // 2. 处理 deviceid
-                    String targetId;
-                    try {
-                        targetId = getRemotePreferences().getString(PreferenceKeys.CUSTOM_OTA_TARGET_DEVICE_ID.name, "");
-                    } catch (Throwable t) {
-                        targetId = "";
+                    val targetId = try {
+                        remotePreferences.getString(
+                            PreferenceKeys.CUSTOM_OTA_TARGET_DEVICE_ID.name,
+                            ""
+                        )
+                    } catch (_: Throwable) {
+                        ""
                     }
                     // 同上
                     if (isConfigValid(targetId)) {
-                        properties.put("deviceid", targetId.trim());
-                        logger.debug("Modified deviceid: " + targetId);
-                        modified = true;
+                        properties["deviceid"] = targetId!!.trim { it <= ' ' }
+                        logger.debug("Modified deviceid: $targetId")
+                        modified = true
                     }
 
                     if (modified) {
-                        logger.debug("OTA Request intercepted in: " + packageName);
+                        logger.debug("OTA Request intercepted!")
                     }
                 }
-
-                return chain.proceed();
-            });
-        } catch (Throwable t) {
-            logger.error("Failed to hook OTA parameters", t);
+                chain.proceed()
+            }
+        } catch (t: Throwable) {
+            logger.error("Failed to hook OTA parameters", t)
         }
     }
 
@@ -112,7 +91,7 @@ public class LenovoOTAHook extends AppHookModule {
      * @param value 从配置读取的字符串
      * @return 如果不为null且长度大于0，则返回true
      */
-    private boolean isConfigValid(String value) {
-        return value != null && !value.trim().isEmpty();
+    private fun isConfigValid(value: String?): Boolean {
+        return value != null && !value.trim { it <= ' ' }.isEmpty()
     }
 }
