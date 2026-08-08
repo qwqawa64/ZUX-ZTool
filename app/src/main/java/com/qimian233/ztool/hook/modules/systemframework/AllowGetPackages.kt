@@ -1,61 +1,66 @@
-package com.qimian233.ztool.hook.modules.systemframework;
+package com.qimian233.ztool.hook.modules.systemframework
 
-import android.annotation.SuppressLint;
+import android.annotation.SuppressLint
+import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.hook.base.SystemHookModule
+import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
-import com.qimian233.ztool.data.keys.ScopeKeys;
-import com.qimian233.ztool.hook.base.SystemHookModule;
+@SuppressLint("SoonBlockedPrivateApi", "PrivateApi")
+class AllowGetPackages : SystemHookModule() {
+    override fun getModuleName(): String = PreferenceKeys.ALLOW_GET_PACKAGES.name
 
-import io.github.libxposed.api.XposedModuleInterface;
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_SERVER.packageName)
 
-import java.lang.reflect.Method;
-
-@SuppressLint({"SoonBlockedPrivateApi", "PrivateApi"})
-public class AllowGetPackages extends SystemHookModule {
-    public static final String FEATURE_NAME = "allow_get_packages";
-
-    private static final int OP_GET_INSTALLED_APP = 214;
-
-    public AllowGetPackages() {}
-
-    public String getModuleName() {
-        return FEATURE_NAME;
-    }
-
-    public String[] getTargetPackages() {
-        return new String[] {ScopeKeys.SYSTEM_SERVER.packageName};
-    }
-
-    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
-        ClassLoader classLoader = param.getClassLoader();
+    override fun handleSystemServerStarting(param: SystemServerStartingParam) {
+        val classLoader = param.classLoader
         try {
-            logger.info("Start hooking android.app.AppOpsManager, SystemFramework");
-            Method opToDefaultMode = classLoader.loadClass("android.app.AppOpsManager")
-                    .getDeclaredMethod("opToDefaultMode", int.class);
-            hookWithId(opToDefaultMode, "op_to_default_mode", chain -> {
-                int op = (int) chain.getArg(0);
+            logger.info("Start hooking android.app.AppOpsManager, SystemFramework")
+            val opToDefaultMode = findMethod(
+                classLoader.loadClass("android.app.AppOpsManager"),
+                "opToDefaultMode",
+                Int::class.javaPrimitiveType)
+            hookWithId(
+                opToDefaultMode,
+                "op_to_default_mode"
+            ) { chain ->
+                val op = chain.getArg(0) as Int
                 if (op == OP_GET_INSTALLED_APP) {
-                    return 0;
+                    return@hookWithId 0
                 }
-                return chain.proceed();
-            });
-            logger.info("Hooked android.app.AppOpsManager [OK]");
-        }catch (Exception e){
-            logger.error("Failed hooking android.app.AppOpsManager",e);
+                chain.proceed()
+            }
+            logger.info("Hooked android.app.AppOpsManager")
+        } catch (e: Exception) {
+            logger.error("Failed hooking android.app.AppOpsManager", e)
         }
         try {
-            logger.info("Start hooking com.android.server.appop.AppOpsService, SystemFramework");
-            Method checkOperation = classLoader.loadClass("com.android.server.appop.AppOpsService")
-                    .getDeclaredMethod("checkOperationRawZui", int.class, int.class, String.class);
-            hookWithId(checkOperation, "check_operation_raw_zui", chain -> {
-                int op = (int) chain.getArg(0);
+            logger.info("Start hooking com.android.server.appop.AppOpsService, SystemFramework")
+            val checkOperation = findMethod(
+                classLoader.loadClass("com.android.server.appop.AppOpsService"),
+                    "checkOperationRawZui",
+                    Int::class.javaPrimitiveType,
+                    Int::class.javaPrimitiveType,
+                    String::class.java
+                )
+            hookWithId(
+                checkOperation,
+                "check_operation_raw_zui"
+            ) { chain ->
+                val op = chain.getArg(0) as Int
                 if (op == OP_GET_INSTALLED_APP) {
-                    return 0;
+                    return@hookWithId 0
                 }
-                return chain.proceed();
-            });
-            logger.info("Hooked com.android.server.appop.AppOpsService [OK]");
-        }catch (Exception e){
-            logger.error("Failed hooking com.android.server.appop.AppOpsService",e);
+                chain.proceed()
+            }
+            logger.info("Hooked com.android.server.appop.AppOpsService [OK]")
+        } catch (e: Exception) {
+            logger.error("Failed hooking com.android.server.appop.AppOpsService", e)
         }
+    }
+
+    companion object {
+
+        private const val OP_GET_INSTALLED_APP = 214
     }
 }
