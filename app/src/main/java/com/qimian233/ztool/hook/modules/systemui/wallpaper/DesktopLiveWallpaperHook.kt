@@ -152,14 +152,8 @@ class DesktopLiveWallpaperHook : AppHookModule() {
     private fun onSurfaceReady(engine: Any) {
         stopPlayback()
 
-        val holder = engine.javaClass
-            .getDeclaredField("mSurfaceHolder").apply { isAccessible = true }
-            .get(engine) as? SurfaceHolder ?: run {
-                logger.error("DesktopLiveWallpaper: mSurfaceHolder is null")
-                return
-            }
-        val surface = holder.surface ?: run {
-            logger.error("DesktopLiveWallpaper: Surface is null")
+        val surface = resolveSurface(engine) ?: run {
+            logger.error("DesktopLiveWallpaper: mSurfaceHolder missing or Surface invalid")
             return
         }
         engineSurface = surface
@@ -174,6 +168,21 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         }
 
         startPlayback(engine, videoPath)
+    }
+
+    /**
+     * 从 engine 实时解析当前有效的 Surface（避免缓存失效）。
+     * mSurfaceHolder 缺失或 Surface 无效（isValid == false）时返回 null。
+     */
+    private fun resolveSurface(engine: Any): Surface? {
+        return try {
+            val holder = engine.javaClass
+                .getDeclaredField("mSurfaceHolder").apply { isAccessible = true }
+                .get(engine) as? SurfaceHolder ?: return null
+            holder.surface?.takeIf { it.isValid }
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     /**
@@ -228,7 +237,14 @@ class DesktopLiveWallpaperHook : AppHookModule() {
             extractor.selectTrack(trackIndex)
 
             val codec = MediaCodec.createDecoderByType(mime)
-            codec.configure(format, engineSurface, null, 0)
+            // Surface 可能已失效，configure 前再校验一次，避免 native_configure 抛异常
+            val surface = engineSurface
+            if (surface == null || !surface.isValid) {
+                logger.error("DesktopLiveWallpaper: invalid surface, abort playback")
+                releaseCodec()
+                return
+            }
+            codec.configure(format, surface, null, 0)
             codec.start()
 
             this.extractor = extractor
@@ -379,6 +395,16 @@ class DesktopLiveWallpaperHook : AppHookModule() {
             stopPlayback(clearSurface = false)
             // 清掉 Surface 上残留的视频最后一帧，重新显示静态壁纸
             redrawStaticWallpaper(engine)
+            return
+        }
+
+        // Surface 可能已随方向变化失效（onSurfaceDestroyed 尚未回调），
+        // 重新实时解析；无效则跳过本次切换，等 onSurfaceCreated / 下一次回调再触发
+        engineSurface = resolveSurface(engine)
+        if (engineSurface == null) {
+            logger.warn(
+                "DesktopLiveWallpaper: surface unavailable after rotation, skip switching video"
+            )
             return
         }
 
