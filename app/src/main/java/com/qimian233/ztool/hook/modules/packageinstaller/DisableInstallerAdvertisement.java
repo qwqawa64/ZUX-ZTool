@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -22,8 +23,8 @@ public class DisableInstallerAdvertisement extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.packageinstaller",
-                "com.google.android.packageinstaller"  // 部分设备可能使用Google的包名
+                ScopeKeys.PACKAGE_INSTALLER.packageName,
+                ScopeKeys.GOOGLE_PACKAGE_INSTALLER.packageName  // 部分设备可能使用Google的包名
         };
     }
 
@@ -31,9 +32,9 @@ public class DisableInstallerAdvertisement extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.packageinstaller".equals(packageName)) {
+        if (ScopeKeys.PACKAGE_INSTALLER.packageName.equals(packageName)) {
             hookAndroidPackageInstaller(classLoader);
-        } else if ("com.google.android.packageinstaller".equals(packageName)) {
+        } else if (ScopeKeys.GOOGLE_PACKAGE_INSTALLER.packageName.equals(packageName)) {
             hookGooglePackageInstaller(classLoader);
         }
     }

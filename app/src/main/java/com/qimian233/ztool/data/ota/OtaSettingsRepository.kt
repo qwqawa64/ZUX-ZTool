@@ -123,8 +123,8 @@ class OtaSettingsRepository(
     fun getMachineSn(): String? = getMachineSnByProps()
 
     fun restartScope(): OtaRestartResult {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.Ota)
-        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.Ota)
+        return when (val result = ScopeUtils.restartScope(scopes, shellExecutor)) {
             is ScopeUtils.RestartResult.Success -> OtaRestartResult.Success
             is ScopeUtils.RestartResult.PartialSuccess -> OtaRestartResult.Failure(
                 "Partial failure: ${result.failed.joinToString()}"

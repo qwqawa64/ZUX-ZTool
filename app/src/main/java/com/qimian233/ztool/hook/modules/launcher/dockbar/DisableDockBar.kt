@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.launcher.dockbar
 
 import android.view.View
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -8,7 +9,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 class DisableDockBar : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.DISABLE_DOCK_BAR.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.zui.launcher")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {

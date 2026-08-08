@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
@@ -26,7 +27,7 @@ import java.util.WeakHashMap;
 
 @SuppressLint("PrivateApi")
 public class VolumeSliderPercentageHook extends AppHookModule {
-    private static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
+    private static final String SYSTEM_UI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName;
     private static final String TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView";
     private static final String SLIDER_PERCENT_TAG = "ztool_control_center_slider_percent";
     private static final String VOLUME_ROOT_FIELD = "mVolumeSliderRoot";

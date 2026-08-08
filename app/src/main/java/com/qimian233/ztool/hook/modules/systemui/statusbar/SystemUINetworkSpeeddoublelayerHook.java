@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.statusbar;
 import android.annotation.SuppressLint;
 import android.text.Html;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
@@ -26,7 +27,7 @@ import java.util.WeakHashMap;
 @SuppressLint("PrivateApi")
 public class SystemUINetworkSpeeddoublelayerHook extends AppHookModule {
 
-    private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
+    private static final String SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName;
     private static final String NETWORK_SPEED_VIEW_CLASS = "com.android.systemui.zui.NetworkSpeedView";
 
     // 存储每个实例的上次流量数据

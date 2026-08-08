@@ -35,8 +35,8 @@ class SafeCenterSettingsRepository(
     }
 
     fun restartPackages(): SafeCenterRestartResult {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.SafeCenter)
-        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.SafeCenter)
+        return when (val result = ScopeUtils.restartScope(scopes, shellExecutor)) {
             is ScopeUtils.RestartResult.Success -> SafeCenterRestartResult.Success
             is ScopeUtils.RestartResult.PartialSuccess -> SafeCenterRestartResult.Failure(
                 "Partial failure: ${result.failed.joinToString()}"

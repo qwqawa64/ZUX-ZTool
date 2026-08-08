@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import android.annotation.SuppressLint;
@@ -20,7 +21,7 @@ public class AllowUntrustedTouch extends SystemHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[] {"system"};
+        return new String[] {ScopeKeys.SYSTEM_SERVER.packageName};
     }
 
     @Override

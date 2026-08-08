@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -11,7 +12,7 @@ import java.lang.reflect.Constructor
 class CustomGridSize : AppHookModule() {
     override fun getModuleName(): String = "CustomGridSize"
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.zui.launcher")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {

@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -8,7 +9,7 @@ import java.lang.reflect.Method;
 
 public class KeepRotation extends SystemHookModule {
     public static final String FEATURE_NAME = "keep_rotation";
-    public static final String TARGET_PACKAGE = "system";
+    public static final String TARGET_PACKAGE = ScopeKeys.SYSTEM_SERVER.packageName;
 
     public KeepRotation() {}
 

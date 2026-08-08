@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -22,7 +23,7 @@ public class SkipInstallWarnPage extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.packageinstaller"
+                ScopeKeys.PACKAGE_INSTALLER.packageName
         };
     }
 

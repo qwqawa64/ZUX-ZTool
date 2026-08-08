@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.statusbar
 
 import android.annotation.SuppressLint
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -17,7 +18,7 @@ import java.lang.reflect.Method
 class NetworkSpeedRefresh : AppHookModule() {
 
     companion object {
-        private const val SYSTEMUI_PACKAGE = "com.android.systemui"
+        private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
         private const val NETWORK_SPEED_VIEW_CLASS = "com.android.systemui.zui.NetworkSpeedView"
     }
 

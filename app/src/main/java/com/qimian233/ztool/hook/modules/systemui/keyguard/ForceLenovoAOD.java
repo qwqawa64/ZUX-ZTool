@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -24,7 +25,7 @@ public class ForceLenovoAOD extends AppHookModule {
     }
 
     @Override
-    public String[] getTargetPackages() {return new String[]{"com.android.systemui"};}
+    public String[] getTargetPackages() {return new String[]{ScopeKeys.SYSTEM_UI.packageName};}
 
     private static final String ZUI_DOZE_TRIGGERS_CLASS = "com.android.systemui.doze.ZuiDozeTriggers";
 
@@ -32,7 +33,7 @@ public class ForceLenovoAOD extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if (!"com.android.systemui".equals(packageName)) {
+        if (!ScopeKeys.SYSTEM_UI.packageName.equals(packageName)) {
             return;
         }
 

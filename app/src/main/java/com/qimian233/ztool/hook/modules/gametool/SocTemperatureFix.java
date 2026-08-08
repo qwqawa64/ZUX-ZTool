@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 
 import android.annotation.SuppressLint;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -30,9 +31,9 @@ public class SocTemperatureFix extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.zui.game.service",
-                "com.lenovo.gamingservice",
-                "com.android.gaming"
+                ScopeKeys.GAME_SERVICE.packageName,
+                ScopeKeys.LENOVO_GAME_SERVICE.packageName,
+                ScopeKeys.ANDROID_GAMING.packageName
         };
     }
 
@@ -42,9 +43,9 @@ public class SocTemperatureFix extends AppHookModule {
         String packageName = param.getPackageName();
         logger.debug("SocTemperatureFix: 开始处理包 " + packageName);
 
-        if ("com.zui.game.service".equals(packageName)) {
+        if (ScopeKeys.GAME_SERVICE.packageName.equals(packageName)) {
             hookZuiGameService(classLoader);
-        } else if ("com.lenovo.gamingservice".equals(packageName)) {
+        } else if (ScopeKeys.LENOVO_GAME_SERVICE.packageName.equals(packageName)) {
             hookLenovoGamingService(classLoader);
         } else {
             // 通用游戏服务的Hook

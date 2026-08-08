@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.os.Environment
 import android.widget.ImageView
 import android.widget.TextView
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedInterface
@@ -183,7 +184,7 @@ class CustomizeAboutDeviceInfo : AppHookModule() {
     }
 
     companion object {
-        private const val TARGET_PACKAGE = "com.android.settings"
+        private val TARGET_PACKAGE = ScopeKeys.SETTINGS.packageName
 
         private const val DEVICE_IMAGE_PATH = "/Download/ZTool/device_info.jpg"
         private const val HEADER_VIEW_CLASS =

@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.setting
 
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -24,7 +25,7 @@ class LocaleListEditorHook : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.android.settings")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SETTINGS.packageName)
 
     private fun isFromLocaleListEditor(): Boolean =
         Throwable().stackTrace.any { it.className == TARGET_CLASS }

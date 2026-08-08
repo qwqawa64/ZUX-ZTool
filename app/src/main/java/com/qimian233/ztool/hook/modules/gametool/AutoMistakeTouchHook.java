@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
@@ -16,7 +17,7 @@ import java.lang.reflect.Method;
  */
 public class AutoMistakeTouchHook extends AppHookModule {
 
-    private static final String TARGET_PACKAGE = "com.zui.game.service";
+    private static final String TARGET_PACKAGE = ScopeKeys.GAME_SERVICE.packageName;
     private static final String SETTINGS_UTIL_CLASS = "com.zui.util.SettingsValueUtilKt";
 
     // 配置工具类实例 - use getPref* methods from base class

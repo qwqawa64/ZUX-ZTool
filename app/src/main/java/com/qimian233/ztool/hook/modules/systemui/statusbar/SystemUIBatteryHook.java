@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.util.TypedValue;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -31,14 +32,14 @@ public class SystemUIBatteryHook extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[]{"com.android.systemui"};
+        return new String[]{ScopeKeys.SYSTEM_UI.packageName};
     }
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.systemui".equals(packageName)) {
+        if (ScopeKeys.SYSTEM_UI.packageName.equals(packageName)) {
             hookSystemUIBattery(classLoader);
         }
     }
@@ -165,7 +166,7 @@ public class SystemUIBatteryHook extends AppHookModule {
             android.content.Context context = getContext(batteryMeterView);
             if (context == null) return 13.0f;
             int originalSizeRes = context.getResources().getIdentifier(
-                    "status_bar_battery_text_size", "dimen", "com.android.systemui");
+                    "status_bar_battery_text_size", "dimen", ScopeKeys.SYSTEM_UI.packageName);
 
             if (originalSizeRes != 0) {
                 float sizeInPixels = context.getResources().getDimension(originalSizeRes);
@@ -246,7 +247,7 @@ public class SystemUIBatteryHook extends AppHookModule {
             android.content.Context context = getContext(batteryMeterView);
             if (context == null) return 8;
             int resId = context.getResources().getIdentifier(
-                    "qs_battery_padding", "dimen", "com.android.systemui");
+                    "qs_battery_padding", "dimen", ScopeKeys.SYSTEM_UI.packageName);
             return context.getResources().getDimensionPixelOffset(resId);
         } catch (Throwable t) {
             return 8; // 默认值
@@ -259,7 +260,7 @@ public class SystemUIBatteryHook extends AppHookModule {
             android.content.Context context = getContext(batteryMeterView);
             if (context == null) return 0;
             return context.getResources().getIdentifier(
-                    resourceName, "string", "com.android.systemui");
+                    resourceName, "string", ScopeKeys.SYSTEM_UI.packageName);
         } catch (Throwable t) {
             return 0;
         }

@@ -38,6 +38,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
 import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
@@ -129,7 +130,7 @@ fun StatusBarSettingsRoute(
     if (uiState.showRestartDialog) {
         val restartFailString = stringResource(R.string.restartFail)
         RestartScopeDialog(
-            packageName = "com.android.systemui",
+            packageName = ScopeKeys.SYSTEM_UI.packageName,
             onConfirm = {
                 viewModel.forceStopScope { success, error ->
                     if (success) {

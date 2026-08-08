@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -28,7 +29,7 @@ public class DisableGameAudioApp extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.zui.game.service"  // 系统进程
+                ScopeKeys.GAME_SERVICE.packageName  // 系统进程
         };
     }
 

@@ -6,6 +6,7 @@ import android.util.TypedValue;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -22,7 +23,7 @@ public class NativeNotificationIcon extends AppHookModule {
     public NativeNotificationIcon() {}
 
     public String getModuleName() { return "NativeNotificationIcon"; }
-    public String[] getTargetPackages() { return new String[] { "com.android.systemui" }; }
+    public String[] getTargetPackages() { return new String[] { ScopeKeys.SYSTEM_UI.packageName }; }
 
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();

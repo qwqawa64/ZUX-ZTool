@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.keyguard
 
 import android.annotation.SuppressLint
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -12,7 +13,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 class ForceNativeAod : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.FORCE_NATIVE_AOD.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.android.systemui")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.Window
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -24,9 +25,9 @@ class PermissionControllerHook : AppHookModule() {
     override fun getModuleName(): String = "PermissionControllerHook"
 
     override fun getTargetPackages(): Array<String> = arrayOf(
-            "com.android.permissioncontroller",
-            "com.android.settings",
-            "com.zui.safecenter"
+            ScopeKeys.PERMISSION_CONTROLLER.packageName,
+            ScopeKeys.SETTINGS.packageName,
+            ScopeKeys.ZUI_SAFE_CENTER.packageName
         )
 
     @Throws(Throwable::class)
@@ -37,15 +38,15 @@ class PermissionControllerHook : AppHookModule() {
         logger.info("Loading module PermissionControllerHook.")
         try {
             when (packageName) {
-                "com.android.permissioncontroller" -> {
+                ScopeKeys.PERMISSION_CONTROLLER.packageName -> {
                     logger.debug("com.android.permissioncontroller detected. Hooking...")
                     handleLoadPermissionController(classLoader)
                 }
-                "com.android.settings" -> {
+                ScopeKeys.SETTINGS.packageName -> {
                     logger.debug("com.android.settings detected. Hooking...")
                     handleLoadSettings(classLoader)
                 }
-                "com.zui.safecenter" -> {
+                ScopeKeys.ZUI_SAFE_CENTER.packageName -> {
                     logger.debug("com.zui.safecenter detected. Hooking...")
                     handleLoadSafeCenter(classLoader)
                 }

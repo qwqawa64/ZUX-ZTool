@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Environment
 import android.view.View
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.io.File
@@ -24,7 +25,7 @@ import java.io.File
 class CustomChargeAnimation : AppHookModule() {
 
     companion object {
-        private const val SYSTEMUI_PACKAGE = "com.android.systemui"
+        private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
         private const val CHARGING_VIDEO_VIEW_CLASS =
             "com.android.keyguard.lockscreen.charge.ChargingVideoView"
         private const val CUSTOM_VIDEO_DIR = "/Download/ZTool"

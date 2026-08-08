@@ -155,8 +155,8 @@ class LauncherSettingsRepository(
     }
 
     fun forceStopPackage(): LauncherRestartResult {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.Launcher)
-        return when (val result = ScopeUtils.restartScope(packages)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.Launcher)
+        return when (val result = ScopeUtils.restartScope(scopes)) {
             is ScopeUtils.RestartResult.Success -> LauncherRestartResult.Success
             is ScopeUtils.RestartResult.PartialSuccess -> LauncherRestartResult.Failure(
                 "Partial failure: ${result.failed.joinToString()}"

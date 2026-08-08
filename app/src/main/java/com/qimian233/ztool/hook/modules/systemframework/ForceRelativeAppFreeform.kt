@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Field
@@ -20,7 +21,7 @@ import java.lang.reflect.Method
 class ForceRelativeAppFreeform: SystemHookModule() {
     override fun getModuleName(): String = "force_relative_app_freeform"
 
-    override fun getTargetPackages(): Array<out String> = arrayOf("system")
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.SYSTEM_SERVER.packageName)
 
     companion object {
         private const val WINDOWING_MODE_FREEFORM = 5
@@ -58,7 +59,7 @@ class ForceRelativeAppFreeform: SystemHookModule() {
                     }
                 } catch (_: Exception) { }
             }
-            return setOf("com.zui.launcher")
+            return setOf(ScopeKeys.LAUNCHER.packageName)
         }
     }
 

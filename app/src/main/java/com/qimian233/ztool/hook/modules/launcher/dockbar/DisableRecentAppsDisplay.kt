@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.launcher.dockbar
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -10,7 +11,7 @@ import java.lang.reflect.Method
 class DisableRecentAppsDisplay: AppHookModule() {
     override fun getModuleName(): String = "disable_recent_apps_display"
 
-    override fun getTargetPackages(): Array<out String> = arrayOf("com.zui.launcher")
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader: ClassLoader = param.defaultClassLoader

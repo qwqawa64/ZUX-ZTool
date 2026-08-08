@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.setting
 
 import android.content.ContentResolver
 import android.provider.Settings.Secure
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
@@ -49,7 +50,7 @@ class HideOtaUpdateHint : AppHookModule() {
     }
 
     companion object {
-        private const val TARGET_PACKAGE = "com.android.settings"
+        private val TARGET_PACKAGE = ScopeKeys.SETTINGS.packageName
         private const val OTA_NEW_VERSION_FOUND = "lenovo_ota_new_version_found"
     }
 }

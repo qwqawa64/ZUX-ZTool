@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.safecenter;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
@@ -23,14 +24,14 @@ public class EnableAutorunByDefault extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[] {"com.lenovo.safecenter", "com.zui.safecenter"};
+        return new String[] {ScopeKeys.LENOVO_SAFE_CENTER.packageName, ScopeKeys.ZUI_SAFE_CENTER.packageName};
     }
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.zui.safecenter".equals(packageName) || "com.lenovo.safecenter".equals(packageName)) {
+        if (ScopeKeys.ZUI_SAFE_CENTER.packageName.equals(packageName) || ScopeKeys.LENOVO_SAFE_CENTER.packageName.equals(packageName)) {
             logger.info("Start hooking safecenter");
             try {
                 Class<?> cls = classLoader.loadClass("com.lenovo.performance.autorun.beans.AutoRunDbItem");

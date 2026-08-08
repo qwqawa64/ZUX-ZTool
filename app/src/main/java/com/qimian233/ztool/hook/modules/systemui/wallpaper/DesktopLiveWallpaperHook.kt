@@ -7,6 +7,7 @@ import android.media.MediaFormat
 import android.os.Environment
 import android.view.Surface
 import android.view.SurfaceHolder
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -31,7 +32,7 @@ import java.io.File
 class DesktopLiveWallpaperHook : AppHookModule() {
 
     companion object {
-        private const val SYSTEMUI_PKG = "com.android.systemui"
+        private val SYSTEMUI_PKG = ScopeKeys.SYSTEM_UI.packageName
         private const val ENGINE_CLASS =
             "com.android.systemui.wallpapers.ImageWallpaper\$CanvasEngine"
         private const val CUSTOM_VIDEO_DIR = "/Download/ZTool"

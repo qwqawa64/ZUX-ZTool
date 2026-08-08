@@ -3,12 +3,16 @@ package com.qimian233.ztool.utils
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
+import com.qimian233.ztool.data.HowToRestart
+import com.qimian233.ztool.data.Scope
+import com.qimian233.ztool.data.ScopeKeys
 
 /**
  * 作用域工具类。
  * <p>
- * 集中定义每个功能入口的作用域包列表和统一的作用域重启逻辑，
+ * 集中定义每个功能入口的作用域列表和统一的作用域重启逻辑，
  * 供前端 FeaturesRoute 和各 Repository 共同使用。
+ * 所有作用域包名与推荐重启方式均来自 [ScopeKeys]，禁止在此处硬编码包名。
  * </p>
  */
 object ScopeUtils {
@@ -16,34 +20,53 @@ object ScopeUtils {
     private const val TAG = "ScopeUtils"
 
     /**
-     * 返回某功能入口涉及的所有作用域包名（含主包名）。
+     * 返回某功能入口涉及的所有作用域（包名 + 推荐重启方式）。
      * 所有这些包名都必须在 LSPosed 作用域内，该功能的 Hook 才能完整生效。
      */
-    fun getScopePackages(destination: FeatureDestination): List<String> {
+    fun getScopes(destination: FeatureDestination): List<Scope> {
         return when (destination) {
             FeatureDestination.SettingsDetail -> listOf(
-                "com.android.settings",
-                "com.android.permissioncontroller",
-                "com.zui.safecenter"
+                ScopeKeys.SETTINGS,
+                ScopeKeys.PERMISSION_CONTROLLER,
+                ScopeKeys.ZUI_SAFE_CENTER
             )
             FeatureDestination.Ota -> listOf(
-                "com.lenovo.ota",
-                "com.lenovo.tbengine",
-                "com.android.settings"
+                ScopeKeys.OTA,
+                ScopeKeys.TB_ENGINE,
+                ScopeKeys.SETTINGS
             )
             FeatureDestination.SafeCenter -> listOf(
-                "com.zui.safecenter",
-                "com.lenovo.safecenter",
-                "com.android.documentsui"
+                ScopeKeys.ZUI_SAFE_CENTER,
+                ScopeKeys.LENOVO_SAFE_CENTER,
+                ScopeKeys.DOCUMENTS_UI
             )
-            FeatureDestination.Framework -> listOf("android", "system")
-            FeatureDestination.GameTool -> listOf("com.zui.game.service")
-            FeatureDestination.PackageInstaller -> listOf("com.android.packageinstaller")
-            FeatureDestination.SystemUi -> listOf("com.android.systemui", "com.zui.wallpapersetting")
-            FeatureDestination.Launcher -> listOf("com.zui.launcher")
-            FeatureDestination.MobileDesktop -> listOf("com.motorola.mobiledesktop")
+            FeatureDestination.Framework -> listOf(
+                ScopeKeys.ANDROID_SYSTEM,
+                ScopeKeys.SYSTEM_SERVER
+            )
+            FeatureDestination.GameTool -> listOf(
+                ScopeKeys.GAME_SERVICE,
+                ScopeKeys.LENOVO_GAME_SERVICE,
+                ScopeKeys.ANDROID_GAMING
+            )
+            FeatureDestination.PackageInstaller -> listOf(ScopeKeys.PACKAGE_INSTALLER)
+            FeatureDestination.SystemUi -> listOf(
+                ScopeKeys.SYSTEM_UI,
+                ScopeKeys.WALLPAPER_SETTINGS
+            )
+            FeatureDestination.Launcher -> listOf(ScopeKeys.LAUNCHER)
+            FeatureDestination.MobileDesktop -> listOf(
+                ScopeKeys.MOBILE_DESKTOP,
+                ScopeKeys.READY_FOR
+            )
         }
     }
+
+    /**
+     * 返回某功能入口涉及的所有作用域包名（含主包名）。
+     */
+    fun getScopePackages(destination: FeatureDestination): List<String> =
+        getScopes(destination).map { it.packageName }
 
     /**
      * 统一的作用域重启结果。
@@ -58,42 +81,66 @@ object ScopeUtils {
     }
 
     /**
-     * 重启一组包名的作用域进程。
-     * 先尝试 [am force-stop]，失败时回退到 [killall]。
+     * 重启一组作用域进程，按每个 Scope 注册的 [HowToRestart] 分发策略：
+     * - [HowToRestart.AmStop]：先尝试 [am force-stop]，失败时回退到 [killall]；
+     * - [HowToRestart.KillAll]：直接 [killall]（例如 SystemUI 无法被 force-stop）；
+     * - [HowToRestart.Reboot]：系统框架进程无法按包重启，跳过并提示需要重启系统。
      */
     fun restartScope(
-        packages: List<String>,
+        scopes: List<Scope>,
         shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance(),
         timeoutSeconds: Int = 5
     ): RestartResult {
-        if (packages.isEmpty()) return RestartResult.Success
+        if (scopes.isEmpty()) return RestartResult.Success
 
         val failed = mutableListOf<String>()
-        for (pkg in packages) {
-            if (pkg != "com.android.systemui") {
-                val result = shellExecutor.executeRootCommand("am force-stop $pkg", timeoutSeconds)
-                if (result.isSuccess) {
-                    Log.d(TAG, "Force stop $pkg: success")
-                    continue
+        for (scope in scopes) {
+            when (scope.howToRestart) {
+                HowToRestart.AmStop -> {
+                    val result = shellExecutor.executeRootCommand(
+                        "am force-stop ${scope.packageName}",
+                        timeoutSeconds
+                    )
+                    if (result.isSuccess) {
+                        Log.d(TAG, "Force stop ${scope.packageName}: success")
+                        continue
+                    }
+                    // 回退到 killall
+                    Log.w(TAG, "am force-stop ${scope.packageName} failed, trying killall")
+                    if (!killPackage(scope.packageName, shellExecutor, timeoutSeconds)) {
+                        failed.add(scope.packageName)
+                    }
                 }
-            } else {
-                Log.i(TAG, "Target APP is SystemUI, skip am force-stop")
-            }
-            // 回退到 killall
-            Log.w(TAG, "am force-stop $pkg failed, trying killall")
-            val fallback = shellExecutor.executeRootCommand("killall $pkg", timeoutSeconds)
-            if (fallback.isSuccess) {
-                Log.d(TAG, "killall $pkg: success")
-            } else {
-                Log.e(TAG, "killall $pkg: failed — ${fallback.error}")
-                failed.add(pkg)
+                HowToRestart.KillAll -> {
+                    if (!killPackage(scope.packageName, shellExecutor, timeoutSeconds)) {
+                        failed.add(scope.packageName)
+                    }
+                }
+                HowToRestart.Reboot -> {
+                    // 系统框架进程无法通过 force-stop/killall 重启，需要重启系统
+                    Log.i(TAG, "${scope.packageName} requires system reboot, skipped")
+                }
             }
         }
 
         return when {
             failed.isEmpty() -> RestartResult.Success
-            failed.size == packages.size -> RestartResult.Failure("All packages failed to restart")
+            failed.size == scopes.size -> RestartResult.Failure("All packages failed to restart")
             else -> RestartResult.PartialSuccess(failed)
         }
+    }
+
+    private fun killPackage(
+        pkg: String,
+        shellExecutor: EnhancedShellExecutor,
+        timeoutSeconds: Int
+    ): Boolean {
+        val result = shellExecutor.executeRootCommand("killall $pkg", timeoutSeconds)
+        if (result.isSuccess) {
+            Log.d(TAG, "killall $pkg: success")
+            return true
+        }
+        Log.e(TAG, "killall $pkg: failed — ${result.error}")
+        return false
     }
 }

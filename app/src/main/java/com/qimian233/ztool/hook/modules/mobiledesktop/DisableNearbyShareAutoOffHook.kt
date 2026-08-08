@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.mobiledesktop
 
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface
@@ -19,7 +20,7 @@ import java.lang.reflect.Modifier
 class DisableNearbyShareAutoOffHook : AppHookModule() {
 
     companion object {
-        private const val TARGET_PACKAGE = "com.motorola.mobiledesktop"
+        private val TARGET_PACKAGE = ScopeKeys.MOBILE_DESKTOP.packageName
         // DEXKit 搜索的混淆包名
         private const val SEARCH_PACKAGE = "ra"
         // 回退：硬编码的类名和方法名

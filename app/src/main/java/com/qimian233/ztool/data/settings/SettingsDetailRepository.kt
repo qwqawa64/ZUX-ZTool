@@ -74,8 +74,8 @@ class SettingsDetailRepository(
     }
 
     fun forceStopScope() {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.SettingsDetail)
-        ScopeUtils.restartScope(packages, shellExecutor)
+        val scopes = ScopeUtils.getScopes(FeatureDestination.SettingsDetail)
+        ScopeUtils.restartScope(scopes, shellExecutor)
     }
 
     fun isModuleEnabled(): Boolean = magiskManager.isModuleEnabled

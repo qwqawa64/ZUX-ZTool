@@ -88,8 +88,8 @@ class GameToolSettingsRepository(
     }
 
     fun forceStopPackage(): GameToolRestartResult {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.GameTool)
-        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.GameTool)
+        return when (val result = ScopeUtils.restartScope(scopes, shellExecutor)) {
             is ScopeUtils.RestartResult.Success -> GameToolRestartResult.Success
             is ScopeUtils.RestartResult.PartialSuccess -> GameToolRestartResult.Failure(
                 "Partial failure: ${result.failed.joinToString()}"

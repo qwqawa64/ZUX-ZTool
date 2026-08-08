@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.view.View;
 import android.widget.Button;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -28,7 +29,7 @@ public class DocumentsUIBypass extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.documentsui"
+                ScopeKeys.DOCUMENTS_UI.packageName
         };
     }
 
@@ -36,7 +37,7 @@ public class DocumentsUIBypass extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.documentsui".equals(packageName)) {
+        if (ScopeKeys.DOCUMENTS_UI.packageName.equals(packageName)) {
             logger.debug("开始加载 DocumentsUI 解除限制模块...");
             hookDocumentInfo(classLoader);
             hookPickFragment(classLoader);

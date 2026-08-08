@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.qs;
 import android.annotation.SuppressLint;
 import android.graphics.Color;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
@@ -29,7 +30,7 @@ public class CustomQsColor extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[] {"com.android.systemui"};
+        return new String[] {ScopeKeys.SYSTEM_UI.packageName};
     }
 
     @Override

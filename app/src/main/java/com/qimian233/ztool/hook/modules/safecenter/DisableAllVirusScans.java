@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.safecenter;
 import android.content.ContentResolver;
 import android.content.Context;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
@@ -24,7 +25,7 @@ public class DisableAllVirusScans extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[]{"com.lenovo.safecenter", "com.zui.safecenter"};
+        return new String[]{ScopeKeys.LENOVO_SAFE_CENTER.packageName, ScopeKeys.ZUI_SAFE_CENTER.packageName};
     }
 
     @Override

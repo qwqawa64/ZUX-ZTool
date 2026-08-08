@@ -2,6 +2,7 @@ package com.qimian233.ztool.data.systemui
 
 import android.content.Context
 import android.util.Log
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ScopeUtils
@@ -120,8 +121,8 @@ class StatusBarSettingsRepository(
     }
 
     fun forceStopScope(): ShellActionResult {
-        val packages = listOf("com.android.systemui", "com.zui.wallpapersetting")
-        return when (val result = ScopeUtils.restartScope(packages)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
+        return when (val result = ScopeUtils.restartScope(scopes)) {
             is ScopeUtils.RestartResult.Success -> ShellActionResult(success = true, error = "", exitCode = 0)
             is ScopeUtils.RestartResult.PartialSuccess -> ShellActionResult(
                 success = false,

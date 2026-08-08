@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.content.res.TypedArray
 import android.graphics.Rect
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -24,7 +25,7 @@ class SliderStyleHook: AppHookModule() {
 
     override fun getModuleName(): String = "customize_slider_style"
 
-    override fun getTargetPackages(): Array<out String> = arrayOf("com.android.systemui")
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
     private fun isFromBrightnessController(): Boolean =
         Throwable().stackTrace.any { it.className.contains("BrightnessDetailDialogController") }

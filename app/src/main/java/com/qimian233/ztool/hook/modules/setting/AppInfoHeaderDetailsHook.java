@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -26,7 +27,7 @@ import java.util.Objects;
 
 @SuppressLint({"PrivateApi", "DiscouragedApi"})
 public class AppInfoHeaderDetailsHook extends AppHookModule {
-    private static final String TARGET_PACKAGE = "com.android.settings";
+    private static final String TARGET_PACKAGE = ScopeKeys.SETTINGS.packageName;
     private static final String CONTROLLER_CLASS =
             "com.android.settings.applications.appinfo.AppHeaderViewPreferenceController";
     private static final String APP_ENTRY_CLASS =

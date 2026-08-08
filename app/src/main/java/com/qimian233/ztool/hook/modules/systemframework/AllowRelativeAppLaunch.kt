@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
 import android.annotation.SuppressLint
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -15,7 +16,7 @@ import java.lang.reflect.Method
 class AllowRelativeAppLaunch: SystemHookModule() {
     override fun getModuleName(): String = "allow_relative_app_launch"
 
-    override fun getTargetPackages(): Array<out String> = arrayOf("system")
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.SYSTEM_SERVER.packageName)
 
     override fun handleSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
         val classLoader: ClassLoader = param.classLoader

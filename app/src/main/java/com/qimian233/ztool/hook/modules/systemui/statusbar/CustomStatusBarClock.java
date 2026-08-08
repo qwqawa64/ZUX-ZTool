@@ -11,6 +11,7 @@ import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter;
@@ -28,7 +29,7 @@ import java.util.Date;
 public class CustomStatusBarClock extends AppHookModule {
 
     private static final String PREFS_NAME = "xposed_module_config";
-    private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
+    private static final String SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName;
     private static final String CLOCK_CLASS = "com.android.systemui.statusbar.policy.Clock";
 
     public CustomStatusBarClock() {}

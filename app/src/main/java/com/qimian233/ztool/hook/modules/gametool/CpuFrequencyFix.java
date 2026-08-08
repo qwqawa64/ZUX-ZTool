@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -26,7 +27,7 @@ public class CpuFrequencyFix extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[]{"com.zui.game.service"};
+        return new String[]{ScopeKeys.GAME_SERVICE.packageName};
     }
 
     @Override

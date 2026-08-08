@@ -12,6 +12,7 @@ import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
@@ -52,8 +53,8 @@ public class OwnerInfoHook extends BaseHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.settings",
-                "android"
+                ScopeKeys.SETTINGS.packageName,
+                ScopeKeys.ANDROID_SYSTEM.packageName
         };
     }
 
@@ -61,7 +62,7 @@ public class OwnerInfoHook extends BaseHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.settings".equals(packageName)) {
+        if (ScopeKeys.SETTINGS.packageName.equals(packageName)) {
             hookSettingsPackage(classLoader);
         }
     }

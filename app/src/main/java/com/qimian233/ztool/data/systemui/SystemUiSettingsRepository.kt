@@ -18,8 +18,8 @@ class SystemUiSettingsRepository(
     }
 
     fun forceStopScope(): ShellActionResult {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.SystemUi)
-        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
+        return when (val result = ScopeUtils.restartScope(scopes, shellExecutor)) {
             is ScopeUtils.RestartResult.Success -> ShellActionResult(success = true, error = "", exitCode = 0)
             is ScopeUtils.RestartResult.PartialSuccess -> ShellActionResult(
                 success = false,

@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -24,14 +25,14 @@ public class PackageInstallerPermissionHook extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[]{"com.android.packageinstaller"};
+        return new String[]{ScopeKeys.PACKAGE_INSTALLER.packageName};
     }
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.packageinstaller".equals(packageName)) {
+        if (ScopeKeys.PACKAGE_INSTALLER.packageName.equals(packageName)) {
             hookPackageInstaller(classLoader);
         }
     }

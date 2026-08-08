@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -17,7 +18,7 @@ import java.lang.reflect.Constructor
 class ZToolSettingsEntryHook : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.android.settings")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SETTINGS.packageName)
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader

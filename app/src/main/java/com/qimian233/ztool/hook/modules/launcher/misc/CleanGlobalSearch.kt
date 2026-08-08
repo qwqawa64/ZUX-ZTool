@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher.misc
 
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
@@ -9,7 +10,7 @@ class CleanGlobalSearch : AppHookModule() {
 
     companion object {
         private const val TARGET_CLASS = "com.zui.launcher.GlobalSearchView"
-        private const val SEARCH_PACKAGE = "com.zui.launcher"
+        private val SEARCH_PACKAGE = ScopeKeys.LAUNCHER.packageName
     }
 
     private var noHotWordView = false
@@ -17,7 +18,7 @@ class CleanGlobalSearch : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.CLEAN_GLOBAL_SEARCH.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.zui.launcher")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader

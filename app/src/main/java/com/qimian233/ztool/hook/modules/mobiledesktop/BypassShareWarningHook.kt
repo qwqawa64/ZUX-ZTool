@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.mobiledesktop
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface
@@ -17,7 +18,7 @@ import androidx.core.content.edit
 class BypassShareWarningHook : AppHookModule() {
 
     companion object {
-        private val TARGET_PACKAGE = arrayOf("com.motorola.mobiledesktop", "com.motorola.readyfor")
+        private val TARGET_PACKAGE = arrayOf(ScopeKeys.MOBILE_DESKTOP.packageName, ScopeKeys.READY_FOR.packageName)
         private const val TARGET_CLASS = "com.motorola.readyfor.tile.BaseFileUnionTile"
         private const val DIALOG_CLASS =
             "com.motorola.readyfor.common.dialog.ActionNoticeCommonDialogActivity"

@@ -50,6 +50,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.HomeRepository
 import com.qimian233.ztool.data.settings.SettingsRepository
@@ -904,7 +905,7 @@ private fun MainRouteNavHost(
         ) {
             PackageInstallerSettingsRoute(
                 title = stringResource(R.string.package_installer_app_name),
-                packageName = "com.android.packageinstaller",
+                packageName = ScopeKeys.PACKAGE_INSTALLER.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -923,7 +924,7 @@ private fun MainRouteNavHost(
         ) {
             SettingsDetailRoute(
                 title = stringResource(R.string.settings_app_name),
-                packageName = "com.android.settings",
+                packageName = ScopeKeys.SETTINGS.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -964,7 +965,7 @@ private fun MainRouteNavHost(
         ) {
             GameToolSettingsRoute(
                 title = stringResource(R.string.game_tool_app_name),
-                packageName = "com.zui.game.service",
+                packageName = ScopeKeys.GAME_SERVICE.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -983,7 +984,7 @@ private fun MainRouteNavHost(
         ) {
             SystemUiSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name),
-                packageName = "com.android.systemui",
+                packageName = ScopeKeys.SYSTEM_UI.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -1122,7 +1123,7 @@ private fun MainRouteNavHost(
         ) {
             OtaSettingsRoute(
                 title = stringResource(R.string.system_update_app_name),
-                packageName = "com.lenovo.ota",
+                packageName = ScopeKeys.OTA.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -1159,7 +1160,7 @@ private fun MainRouteNavHost(
         ) {
             LauncherSettingsRoute(
                 title = stringResource(R.string.launcher_app_name),
-                packageName = "com.zui.launcher",
+                packageName = ScopeKeys.LAUNCHER.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -1178,7 +1179,7 @@ private fun MainRouteNavHost(
         ) {
             MobileDesktopSettingsRoute(
                 title = stringResource(R.string.mobile_desktop_app_name),
-                packageName = "com.motorola.mobiledesktop",
+                packageName = ScopeKeys.MOBILE_DESKTOP.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {
@@ -1197,7 +1198,7 @@ private fun MainRouteNavHost(
         ) {
             SafeCenterSettingsRoute(
                 title = stringResource(R.string.safe_center_app_name),
-                packageName = "com.zui.safecenter",
+                packageName = ScopeKeys.ZUI_SAFE_CENTER.packageName,
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Features.name) {

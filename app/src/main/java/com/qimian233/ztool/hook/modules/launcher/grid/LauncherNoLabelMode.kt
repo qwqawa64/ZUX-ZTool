@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
@@ -23,7 +24,7 @@ class LauncherNoLabelMode : AppHookModule() {
 
     override fun getModuleName(): String = "launcher_no_label_mode"
 
-    override fun getTargetPackages(): Array<out String?> = arrayOf("com.zui.launcher")
+    override fun getTargetPackages(): Array<out String?> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installBubbleTextViewVisibilityHook(param)

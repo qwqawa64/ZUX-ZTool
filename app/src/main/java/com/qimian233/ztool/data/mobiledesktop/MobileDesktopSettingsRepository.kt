@@ -15,8 +15,8 @@ class MobileDesktopSettingsRepository(
 
     private val prefs = ModulePreferencesUtils(context)
     fun restartScope(): MobileDesktopRestartResult {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.MobileDesktop)
-        return when (val result = ScopeUtils.restartScope(packages, shellExecutor)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.MobileDesktop)
+        return when (val result = ScopeUtils.restartScope(scopes, shellExecutor)) {
             is ScopeUtils.RestartResult.Success -> MobileDesktopRestartResult.Success
             is ScopeUtils.RestartResult.PartialSuccess -> MobileDesktopRestartResult.Failure(
                 "Partial failure: ${result.failed.joinToString()}"

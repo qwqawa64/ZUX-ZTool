@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.ota
 
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -13,7 +14,7 @@ import java.util.Properties
 class LenovoOTAHook : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.lenovo.tbengine")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.TB_ENGINE.packageName)
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader

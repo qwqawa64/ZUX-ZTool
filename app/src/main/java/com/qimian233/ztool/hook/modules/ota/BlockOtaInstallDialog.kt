@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.ota
 
 import android.app.Dialog
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
@@ -21,7 +22,7 @@ class BlockOtaInstallDialog : AppHookModule() {
 
     override fun getModuleName(): String = "block_ota_install_dialog"
 
-    override fun getTargetPackages(): Array<out String> = arrayOf("com.lenovo.ota")
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.OTA.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val cl: ClassLoader = param.defaultClassLoader

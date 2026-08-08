@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.provider.Settings;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -27,7 +28,7 @@ public class GuestModeController extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.systemui"
+                ScopeKeys.SYSTEM_UI.packageName
         };
     }
 
@@ -35,7 +36,7 @@ public class GuestModeController extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.systemui".equals(packageName)) {
+        if (ScopeKeys.SYSTEM_UI.packageName.equals(packageName)) {
             hookGuestUserInteractor(classLoader);
         }
     }

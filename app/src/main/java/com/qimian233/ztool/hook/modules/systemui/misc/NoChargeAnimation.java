@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.misc;
 import android.annotation.SuppressLint;
 import android.os.Message;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 
@@ -27,7 +28,7 @@ import java.util.List;
  */
 public class NoChargeAnimation extends AppHookModule {
 
-    private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
+    private static final String SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName;
     private static final String TARGET_CLASS =
             "com.android.keyguard.lockscreen.charge.ChargingAnimationController";
 

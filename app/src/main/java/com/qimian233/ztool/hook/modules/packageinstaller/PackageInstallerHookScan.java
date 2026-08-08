@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -13,7 +14,7 @@ import java.lang.reflect.Method;
  */
 public class PackageInstallerHookScan extends AppHookModule {
 
-    private static final String PACKAGE_INSTALLER = "com.android.packageinstaller";
+    private static final String PACKAGE_INSTALLER = ScopeKeys.PACKAGE_INSTALLER.packageName;
 
     public PackageInstallerHookScan() {}
 

@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.setting
 
 import android.annotation.SuppressLint
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
@@ -14,7 +15,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 class SplitScreenMandatory : AppHookModule() {
     override fun getModuleName(): String = "Split_Screen_mandatory"
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.android.settings")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SETTINGS.packageName)
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         // 设置端 Hook 逻辑（当前无额外 hook，保留用于未来扩展）

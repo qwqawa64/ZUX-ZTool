@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.systemui.keyguard
 
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -41,10 +42,10 @@ class SystemUIRealWatts : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.SYSTEMUI_REAL_WATTS.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.android.systemui")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
-        if (param.packageName != "com.android.systemui") return
+        if (param.packageName != ScopeKeys.SYSTEM_UI.packageName) return
         hookKeyguardIndicationController(param.defaultClassLoader)
     }
 

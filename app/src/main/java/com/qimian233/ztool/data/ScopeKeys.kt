@@ -25,9 +25,13 @@ object ScopeKeys {
     @JvmField val ANDROID_SYSTEM = Scope("android", HowToRestart.Reboot)
     @JvmField val SYSTEM_SERVER = Scope("system", HowToRestart.Reboot)
     @JvmField val GAME_SERVICE = Scope("com.zui.game.service", HowToRestart.AmStop)
+    @JvmField val LENOVO_GAME_SERVICE = Scope("com.lenovo.gamingservice", HowToRestart.AmStop)
+    @JvmField val ANDROID_GAMING = Scope("com.android.gaming", HowToRestart.AmStop)
     @JvmField val PACKAGE_INSTALLER = Scope("com.android.packageinstaller", HowToRestart.AmStop)
+    @JvmField val GOOGLE_PACKAGE_INSTALLER = Scope("com.google.android.packageinstaller", HowToRestart.AmStop)
     @JvmField val SYSTEM_UI = Scope("com.android.systemui", HowToRestart.KillAll)
     @JvmField val WALLPAPER_SETTINGS = Scope("com.zui.wallpapersetting", HowToRestart.AmStop)
     @JvmField val LAUNCHER = Scope("com.zui.launcher", HowToRestart.AmStop)
     @JvmField val MOBILE_DESKTOP = Scope("com.motorola.mobiledesktop", HowToRestart.AmStop)
+    @JvmField val READY_FOR = Scope("com.motorola.readyfor", HowToRestart.AmStop)
 }

@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
@@ -77,7 +78,7 @@ fun FeaturesMainRoute(
     var scopeSet by remember { mutableStateOf(XposedServiceBridge.getScope().toSet()) }
     val scopeRequestFailReason = stringResource(R.string.scope_request_fail_message)
     // "system" is the LSPosed system-server scope entry — not a real installed package
-    val systemScopePackages = setOf("system")
+    val systemScopePackages = setOf(ScopeKeys.SYSTEM_SERVER.packageName)
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
@@ -175,7 +176,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.settings_app_name,
                 descriptionRes = R.string.settings_app_description,
-                packageName = "com.android.settings",
+                packageName = ScopeKeys.SETTINGS.packageName,
                 destination = FeatureDestination.SettingsDetail,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SettingsDetail)
             ),
@@ -183,7 +184,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.game_tool_app_name,
                 descriptionRes = R.string.game_tool_app_description,
-                packageName = "com.zui.game.service",
+                packageName = ScopeKeys.GAME_SERVICE.packageName,
                 destination = FeatureDestination.GameTool,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.GameTool)
             ),
@@ -191,7 +192,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.system_update_app_name,
                 descriptionRes = R.string.system_update_app_description,
-                packageName = "com.lenovo.ota",
+                packageName = ScopeKeys.OTA.packageName,
                 destination = FeatureDestination.Ota,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.Ota)
             ),
@@ -199,7 +200,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.package_installer_app_name,
                 descriptionRes = R.string.package_installer_app_description,
-                packageName = "com.android.packageinstaller",
+                packageName = ScopeKeys.PACKAGE_INSTALLER.packageName,
                 destination = FeatureDestination.PackageInstaller,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.PackageInstaller)
             ),
@@ -207,7 +208,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.system_ui_app_name,
                 descriptionRes = R.string.system_ui_app_description,
-                packageName = "com.android.systemui",
+                packageName = ScopeKeys.SYSTEM_UI.packageName,
                 destination = FeatureDestination.SystemUi,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SystemUi)
             ),
@@ -215,7 +216,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.launcher_app_name,
                 descriptionRes = R.string.launcher_app_description,
-                packageName = "com.zui.launcher",
+                packageName = ScopeKeys.LAUNCHER.packageName,
                 destination = FeatureDestination.Launcher,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.Launcher)
             ),
@@ -223,7 +224,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.mobile_desktop_app_name,
                 descriptionRes = R.string.mobile_desktop_app_description,
-                packageName = "com.motorola.mobiledesktop",
+                packageName = ScopeKeys.MOBILE_DESKTOP.packageName,
                 destination = FeatureDestination.MobileDesktop,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.MobileDesktop)
             ),
@@ -231,7 +232,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.system_framework_app_name,
                 descriptionRes = R.string.system_framework_app_description,
-                packageName = "android",
+                packageName = ScopeKeys.ANDROID_SYSTEM.packageName,
                 destination = FeatureDestination.Framework,
                 alwaysVisible = true,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.Framework)
@@ -240,7 +241,7 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 context = context,
                 nameRes = R.string.safe_center_app_name,
                 descriptionRes = R.string.safe_center_app_description,
-                packageName = "com.zui.safecenter",
+                packageName = ScopeKeys.ZUI_SAFE_CENTER.packageName,
                 destination = FeatureDestination.SafeCenter,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SafeCenter)
             )

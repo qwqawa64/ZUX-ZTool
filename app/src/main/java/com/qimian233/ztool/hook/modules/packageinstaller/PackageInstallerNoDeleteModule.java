@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.packageinstaller;
 
 import android.annotation.SuppressLint;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -26,7 +27,7 @@ public class PackageInstallerNoDeleteModule extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.packageinstaller"  // 系统包安装器应用
+                ScopeKeys.PACKAGE_INSTALLER.packageName  // 系统包安装器应用
         };
     }
 
@@ -34,7 +35,7 @@ public class PackageInstallerNoDeleteModule extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.packageinstaller".equals(packageName)) {
+        if (ScopeKeys.PACKAGE_INSTALLER.packageName.equals(packageName)) {
             hookPackageInstaller(classLoader);
         }
     }
@@ -78,7 +79,7 @@ public class PackageInstallerNoDeleteModule extends AppHookModule {
                     try {
                         android.app.Activity activity = (android.app.Activity) instance;
                         @SuppressLint("DiscouragedApi") int checkBoxId = activity.getResources().getIdentifier(
-                                "del_check_box", "id", "com.android.packageinstaller");
+                                "del_check_box", "id", ScopeKeys.PACKAGE_INSTALLER.packageName);
                         if (checkBoxId != 0) {
                             android.view.View view = activity.findViewById(checkBoxId);
                             if (view instanceof android.widget.CheckBox) {

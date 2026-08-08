@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
@@ -40,7 +41,7 @@ public class DisableForceStop extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.zui.launcher"
+                ScopeKeys.LAUNCHER.packageName
         };
     }
 
@@ -71,7 +72,7 @@ public class DisableForceStop extends AppHookModule {
      */
     private void hookForAndroid16Plus(ClassLoader classLoader, String packageName) {
         try {
-            if ("com.zui.launcher".equals(packageName)) {
+            if (ScopeKeys.LAUNCHER.packageName.equals(packageName)) {
                 hookZuiLauncherAndroid16(classLoader);
             } else if ("com.android.launcher3".equals(packageName)) {
                 hookBaseLauncherAndroid16();
@@ -120,7 +121,7 @@ public class DisableForceStop extends AppHookModule {
      */
     private void hookForAndroid15Minus(ClassLoader classLoader, String packageName) {
         try {
-            if ("com.zui.launcher".equals(packageName) || "com.android.launcher3".equals(packageName)) {
+            if (ScopeKeys.LAUNCHER.packageName.equals(packageName) || "com.android.launcher3".equals(packageName)) {
                 hookLegacyLauncher(classLoader);
             }
             logger.info("Android 15- Hook applied, whitelist protection enabled");
@@ -467,7 +468,7 @@ public class DisableForceStop extends AppHookModule {
         if (bridge != null) {
             try {
                 List<MethodData> methods = bridge.findMethod(FindMethod.create()
-                        .searchPackages("com.zui.launcher")
+                        .searchPackages(ScopeKeys.LAUNCHER.packageName)
                         .matcher(MethodMatcher.create()
                                 .paramTypes("android.content.Context",
                                         "java.lang.String", "int")

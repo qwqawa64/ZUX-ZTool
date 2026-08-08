@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.statusbar;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -31,7 +32,7 @@ public class NotificationIconHook extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.systemui"
+                ScopeKeys.SYSTEM_UI.packageName
         };
     }
 
@@ -39,7 +40,7 @@ public class NotificationIconHook extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.systemui".equals(packageName)) {
+        if (ScopeKeys.SYSTEM_UI.packageName.equals(packageName)) {
             SharedPreferences prefs = this.xposed.getRemotePreferences(PREFS_NAME);
             NEW_MAX_ICONS = prefs.getInt("notify_num_size", 4);
             hookSystemUIIconLimit(classLoader);

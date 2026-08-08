@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.mobiledesktop;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -20,7 +21,7 @@ import java.lang.reflect.Method;
  */
 public class AutoAcceptFileTransferHook extends AppHookModule {
 
-    private static final String TARGET_PACKAGE = "com.motorola.mobiledesktop";
+    private static final String TARGET_PACKAGE = ScopeKeys.MOBILE_DESKTOP.packageName;
     private static final String TARGET_CLASS =
             "com.motorola.mobiledesktop.files.pc2phone.FileConnectionConfirmActivity";
 

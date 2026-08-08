@@ -9,6 +9,7 @@ import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.widget.ProgressBar;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.data.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
@@ -32,7 +33,7 @@ public class CustomQsRoundCorner extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[] {"com.android.systemui"};
+        return new String[] {ScopeKeys.SYSTEM_UI.packageName};
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 
 import android.annotation.SuppressLint;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -27,7 +28,7 @@ public class DisableGameAudio extends BaseHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "android"  // 系统进程
+                ScopeKeys.ANDROID_SYSTEM.packageName  // 系统进程
         };
     }
 

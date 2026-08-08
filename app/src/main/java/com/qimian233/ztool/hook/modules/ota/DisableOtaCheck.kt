@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.ota
 
 import android.view.Menu
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -12,7 +13,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 class DisableOtaCheck : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.DISABLE_OTA_CHECK.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.lenovo.ota")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.OTA.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {

@@ -5,6 +5,7 @@ import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
 import android.widget.TextView;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -26,13 +27,13 @@ public class SystemUINetworkSpeedSizeHook extends AppHookModule {
 
     @Override
     public String[] getTargetPackages() {
-        return new String[]{"com.android.systemui"};
+        return new String[]{ScopeKeys.SYSTEM_UI.packageName};
     }
 
     @Override
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         String packageName = param.getPackageName();
-        if ("com.android.systemui".equals(packageName)) {
+        if (ScopeKeys.SYSTEM_UI.packageName.equals(packageName)) {
             hookSystemUI();
         }
     }

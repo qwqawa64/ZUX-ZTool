@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.wallpaper;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedInterface;
@@ -25,7 +26,7 @@ public class ChargeAnimationFixModule extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.zui.wallpapersetting"  // ZUI壁纸设置应用
+                ScopeKeys.WALLPAPER_SETTINGS.packageName  // ZUI壁纸设置应用
         };
     }
 
@@ -33,7 +34,7 @@ public class ChargeAnimationFixModule extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if (!"com.zui.wallpapersetting".equals(packageName)) {
+        if (!ScopeKeys.WALLPAPER_SETTINGS.packageName.equals(packageName)) {
             return;  // 提前返回，避免不必要的处理
         }
 

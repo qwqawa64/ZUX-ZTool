@@ -48,8 +48,8 @@ class PackageInstallerSettingsRepository(
     }
 
     fun forceStopPackage(): RestartPackageResult {
-        val packages = ScopeUtils.getScopePackages(FeatureDestination.PackageInstaller)
-        return when (val result = ScopeUtils.restartScope(packages)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.PackageInstaller)
+        return when (val result = ScopeUtils.restartScope(scopes)) {
             is ScopeUtils.RestartResult.Success -> RestartPackageResult(success = true, error = "")
             is ScopeUtils.RestartResult.PartialSuccess -> RestartPackageResult(
                 success = false,

@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.setting
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -24,8 +25,8 @@ class AllowDisplayDolbyHook : AppHookModule() {
     override fun getModuleName(): String = "allow_display_dolby"
 
     override fun getTargetPackages(): Array<String> = arrayOf(
-            "com.android.settings",
-            "com.android.systemui",
+            ScopeKeys.SETTINGS.packageName,
+            ScopeKeys.SYSTEM_UI.packageName,
         )
 
     @Throws(Throwable::class)
@@ -33,8 +34,8 @@ class AllowDisplayDolbyHook : AppHookModule() {
         val classLoader = param.defaultClassLoader
         val packageName = param.packageName
         when (packageName) {
-            "com.android.settings" -> hookSettingsPackage(classLoader)
-            "com.android.systemui" -> hookSystemUIPackage(classLoader)
+            ScopeKeys.SETTINGS.packageName -> hookSettingsPackage(classLoader)
+            ScopeKeys.SYSTEM_UI.packageName -> hookSystemUIPackage(classLoader)
         }
     }
 

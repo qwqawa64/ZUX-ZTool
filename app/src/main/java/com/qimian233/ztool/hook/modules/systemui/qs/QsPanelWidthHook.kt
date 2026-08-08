@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsSeekBar
 import android.widget.FrameLayout
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -30,10 +31,10 @@ class QsPanelWidthHook : AppHookModule() {
 
     override fun getModuleName(): String = "expand_qs_panel_portrait"
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.android.systemui")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
-        if (param.packageName != "com.android.systemui") return
+        if (param.packageName != ScopeKeys.SYSTEM_UI.packageName) return
         logger.info("QsPanelWidthTestHook: loading")
 
         val prefs = xposed.getRemotePreferences("xposed_module_config")
@@ -57,7 +58,7 @@ class QsPanelWidthHook : AppHookModule() {
             val frame = chain.thisObject as FrameLayout
             if (cachedQsFrameId == -1) {
                 cachedQsFrameId = frame.resources
-                    .getIdentifier("qs_frame", "id", "com.android.systemui")
+                    .getIdentifier("qs_frame", "id", ScopeKeys.SYSTEM_UI.packageName)
             }
             if (frame.id != cachedQsFrameId) {
                 return@hookWithId chain.proceed()
@@ -126,7 +127,7 @@ class QsPanelWidthHook : AppHookModule() {
             val frame = chain.thisObject as FrameLayout
             if (cachedVolumeRowSliderFrameId == -1) {
                 cachedVolumeRowSliderFrameId = frame.resources
-                    .getIdentifier("volume_row_slider_frame", "id", "com.android.systemui")
+                    .getIdentifier("volume_row_slider_frame", "id", ScopeKeys.SYSTEM_UI.packageName)
             }
             val orientation = frame.context.resources.configuration.orientation
             val isPortrait = orientation == Configuration.ORIENTATION_PORTRAIT

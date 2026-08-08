@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.launcher.dockbar
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.view.View
+import com.qimian233.ztool.data.ScopeKeys
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper.getBridgeForClass
@@ -19,7 +20,7 @@ import org.luckypray.dexkit.result.MethodData
 class ZuiLauncherHotseatHook : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
 
-    override fun getTargetPackages(): Array<String> = arrayOf("com.zui.launcher")
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {

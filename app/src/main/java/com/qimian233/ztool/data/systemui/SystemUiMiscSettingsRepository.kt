@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.systemui
 
 import android.content.Context
+import com.qimian233.ztool.FeatureDestination
 import com.qimian233.ztool.data.PreferenceKeys
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ScopeUtils
@@ -19,8 +20,8 @@ class SystemUiMiscSettingsRepository(private val context: Context) {
     fun saveDisableBiometricErrorVibration(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, enabled)
 
     fun forceStopScope(): ShellActionResult {
-        val packages = listOf("com.android.systemui", "com.zui.wallpapersetting")
-        return when (val result = ScopeUtils.restartScope(packages)) {
+        val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
+        return when (val result = ScopeUtils.restartScope(scopes)) {
             is ScopeUtils.RestartResult.Success -> ShellActionResult(success = true, error = "", exitCode = 0)
             is ScopeUtils.RestartResult.PartialSuccess -> ShellActionResult(success = false, error = "Partial failure: ${result.failed.joinToString()}", exitCode = -1)
             is ScopeUtils.RestartResult.Failure -> ShellActionResult(success = false, error = result.message, exitCode = -1)

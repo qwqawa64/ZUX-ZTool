@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
+import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
@@ -31,7 +32,7 @@ public class PackageInstallerStyleHook extends AppHookModule {
     @Override
     public String[] getTargetPackages() {
         return new String[]{
-                "com.android.packageinstaller"  // ZUI系统包安装器
+                ScopeKeys.PACKAGE_INSTALLER.packageName  // ZUI系统包安装器
         };
     }
 
@@ -39,7 +40,7 @@ public class PackageInstallerStyleHook extends AppHookModule {
     public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
-        if ("com.android.packageinstaller".equals(packageName)) {
+        if (ScopeKeys.PACKAGE_INSTALLER.packageName.equals(packageName)) {
             hookZuiPackageInstaller(classLoader);
             doNotShowWarnTextHook(classLoader);
         }
@@ -92,7 +93,7 @@ public class PackageInstallerStyleHook extends AppHookModule {
                 Activity activity = (Activity) chain.getThisObject();
 
                 // 检查是否为目标包安装器的Activity
-                if (activity.getPackageName().equals("com.android.packageinstaller")) {
+                if (activity.getPackageName().equals(ScopeKeys.PACKAGE_INSTALLER.packageName)) {
                     try {
                         // 设置对话框主题
                         activity.setTheme(themeAlertDialogActivity);
