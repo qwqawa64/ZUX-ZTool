@@ -21,6 +21,8 @@ import java.io.File
  * - Hook drawFrameOnCanvas → 阻止静态 bitmap 渲染
  * - 用 MediaCodec 直接解码视频到 Engine 的 Surface（零拷贝）
  * - 视频播放完毕后自动循环
+ * - 监听 onConfigurationChanged：方向切换后按新方向重新选视频，
+ *   该方向无对应视频时停止播放、回退静态壁纸（严格匹配，不跨方向回退）
  *
  * 视频文件路径：
  *   /sdcard/Download/ZTool/wallpaper_portrait.mp4  (竖屏)
@@ -48,6 +50,8 @@ class DesktopLiveWallpaperHook : AppHookModule() {
     @Volatile private var running = false
     private var engineSurface: Surface? = null
     private var reportedShown = false
+    // 当前生效的屏幕方向（用于方向切换时判断是否需要重新选视频）
+    private var currentOrientation = Configuration.ORIENTATION_UNDEFINED
 
     override fun getModuleName(): String = PreferenceKeys.DESKTOP_LIVE_WALLPAPER.name
 
@@ -85,6 +89,23 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                 chain.proceed()
             }
 
+            // ④ onConfigurationChanged → 方向切换时重新选择视频
+            // 用 getMethod 找继承的 public 方法，兼容 CanvasEngine 未覆写的情况
+            try {
+                hookWithId(
+                    engineClass.getMethod("onConfigurationChanged", Configuration::class.java),
+                    "dynwall_config_changed"
+                ) { chain ->
+                    chain.proceed()
+                    val newConfig = chain.args[0] as? Configuration
+                    if (newConfig != null) {
+                        onOrientationChanged(chain.thisObject, newConfig.orientation)
+                    }
+                }
+            } catch (t: Throwable) {
+                logger.error("DesktopLiveWallpaper: failed to hook onConfigurationChanged", t)
+            }
+
             logger.info("DesktopLiveWallpaper: hooks installed")
         } catch (t: Throwable) {
             logger.error("DesktopLiveWallpaper: failed to install hooks", t)
@@ -108,10 +129,12 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         }
         engineSurface = surface
 
-        val videoPath = resolveVideoPath(engine)
-        val videoFile = File(videoPath)
-        if (!videoFile.exists()) {
-            logger.warn("DesktopLiveWallpaper: video not found at $videoPath, fallback to static")
+        currentOrientation = detectOrientation(engine)
+        val videoPath = videoPathFor(currentOrientation)
+        if (videoPath == null) {
+            logger.warn(
+                "DesktopLiveWallpaper: no video for orientation $currentOrientation, keep static"
+            )
             return
         }
 
@@ -119,25 +142,33 @@ class DesktopLiveWallpaperHook : AppHookModule() {
     }
 
     /**
-     * 根据当前屏幕方向选择竖屏/横屏视频路径。
-     * 优先使用对应方向文件，若不存在则回退到另一个方向。
+     * 检测 Engine 当前绑定的 display 方向。
+     * 反射失败时返回 ORIENTATION_UNDEFINED，调用方按竖屏处理。
      */
-    private fun resolveVideoPath(engine: Any): String {
-        val baseDir = Environment.getExternalStorageDirectory().path + CUSTOM_VIDEO_DIR
-        val isLandscape = try {
+    private fun detectOrientation(engine: Any): Int {
+        return try {
             val displayContext = engine.javaClass.superclass
                 ?.getDeclaredMethod("getDisplayContext")?.apply { isAccessible = true }
                 ?.invoke(engine) as? android.content.Context
-            displayContext?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE
-        } catch (_: Exception) { false }
+            displayContext?.resources?.configuration?.orientation
+                ?: Configuration.ORIENTATION_UNDEFINED
+        } catch (_: Exception) {
+            Configuration.ORIENTATION_UNDEFINED
+        }
+    }
 
-        val (primary, fallback) = if (isLandscape)
-            VIDEO_LAND to VIDEO_PORTRAIT
-        else
-            VIDEO_PORTRAIT to VIDEO_LAND
-
-        val primaryPath = "$baseDir/$primary"
-        return if (File(primaryPath).exists()) primaryPath else "$baseDir/$fallback"
+    /**
+     * 严格匹配：只返回当前方向对应的视频路径。
+     * 该方向视频不存在时返回 null（不跨方向回退），调用方应保持静态壁纸。
+     */
+    private fun videoPathFor(orientation: Int): String? {
+        val baseDir = Environment.getExternalStorageDirectory().path + CUSTOM_VIDEO_DIR
+        val fileName = when (orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> VIDEO_LAND
+            else -> VIDEO_PORTRAIT // 未定义/未知方向按竖屏处理
+        }
+        val path = "$baseDir/$fileName"
+        return if (File(path).exists()) path else null
     }
 
     // ── 播放控制 ──────────────────────────────────────────────
@@ -181,13 +212,17 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         }
     }
 
-    private fun stopPlayback() {
+    /**
+     * 停止播放。默认同时清空 engineSurface；
+     * 方向切换等 Surface 仍然有效的场景传 clearSurface = false 保留 Surface 以便复用。
+     */
+    private fun stopPlayback(clearSurface: Boolean = true) {
         running = false
         decodeThread?.interrupt()
         decodeThread?.join(500)
         decodeThread = null
         releaseCodec()
-        engineSurface = null
+        if (clearSurface) engineSurface = null
     }
 
     private fun releaseCodec() {
@@ -284,6 +319,35 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         } catch (t: Throwable) {
             if (running) logger.error("DesktopLiveWallpaper: decode error", t)
         }
+    }
+
+    // ── 方向切换 ──────────────────────────────────────────────
+
+    /**
+     * 屏幕方向切换回调：按新方向重新选择视频。
+     * - 新方向有对应视频 → 停止旧播放并切换（Surface 复用，不重建）
+     * - 新方向无对应视频 → 停止播放，回退静态壁纸（drawFrameOnCanvas 恢复 proceed）
+     */
+    private fun onOrientationChanged(engine: Any, newOrientation: Int) {
+        if (newOrientation == currentOrientation) return
+        currentOrientation = newOrientation
+        // Surface 尚未就绪（engine 刚创建）时，等待 onSurfaceCreated 再解析
+        if (engineSurface == null) return
+
+        val videoPath = videoPathFor(newOrientation)
+        if (videoPath == null) {
+            logger.info(
+                "DesktopLiveWallpaper: no video for orientation $newOrientation, fallback to static"
+            )
+            stopPlayback(clearSurface = false)
+            return
+        }
+
+        logger.info(
+            "DesktopLiveWallpaper: orientation changed to $newOrientation, switching video"
+        )
+        stopPlayback(clearSurface = false)
+        startPlayback(engine, videoPath)
     }
 
     // ── 辅助 ──────────────────────────────────────────────────
