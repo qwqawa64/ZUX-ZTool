@@ -46,8 +46,6 @@ object ScopeUtils {
             )
             FeatureDestination.GameTool -> listOf(
                 ScopeKeys.GAME_SERVICE,
-                ScopeKeys.LENOVO_GAME_SERVICE,
-                ScopeKeys.ANDROID_GAMING
             )
             FeatureDestination.PackageInstaller -> listOf(ScopeKeys.PACKAGE_INSTALLER)
             FeatureDestination.SystemUi -> listOf(
@@ -57,7 +55,6 @@ object ScopeUtils {
             FeatureDestination.Launcher -> listOf(ScopeKeys.LAUNCHER)
             FeatureDestination.MobileDesktop -> listOf(
                 ScopeKeys.MOBILE_DESKTOP,
-                ScopeKeys.READY_FOR
             )
         }
     }
