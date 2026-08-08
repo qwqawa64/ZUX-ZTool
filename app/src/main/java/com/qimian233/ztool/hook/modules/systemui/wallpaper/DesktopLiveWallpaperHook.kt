@@ -44,6 +44,9 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         private const val VIDEO_PORTRAIT = "wallpaper_portrait.mp4"
         private const val VIDEO_LAND = "wallpaper_land.mp4"
         private const val DECODE_TIMEOUT_US = 10_000L
+        // 视频显示模式偏好值（与前端下拉选项一一对应）
+        private const val SCALE_MODE_FIT = "fit"
+        private const val SCALE_MODE_COVER = "cover"
     }
 
     // 每个 Engine 实例一份的播放状态
@@ -245,6 +248,7 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                 return
             }
             codec.configure(format, surface, null, 0)
+            applyVideoScalingMode(codec)
             codec.start()
 
             this.extractor = extractor
@@ -260,6 +264,36 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         } catch (t: Throwable) {
             logger.error("DesktopLiveWallpaper: startPlayback failed", t)
             releaseCodec()
+        }
+    }
+
+    /**
+     * 根据用户偏好设置视频在 Surface 上的显示模式（MediaCodec surface 输出官方缩放模式）：
+     * - fit   → VIDEO_SCALING_MODE_SCALE_TO_FIT（保持宽高比，完整显示，可能留黑边）
+     * - cover → VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING（等比裁剪铺满全屏，无黑边不变形）
+     *
+     * 偏好值由前端下拉选择写入 xposed_module_config。
+     * 未知值不调用（保持系统默认行为）；失败仅记录日志，不影响播放。
+     */
+    private fun applyVideoScalingMode(codec: MediaCodec) {
+        try {
+            val mode = xposed.getRemotePreferences("xposed_module_config")
+                .getString(
+                    PreferenceKeys.DESKTOP_LIVE_WALLPAPER_SCALE_MODE.name,
+                    PreferenceKeys.DESKTOP_LIVE_WALLPAPER_SCALE_MODE.default
+                )
+            val scalingMode = when (mode) {
+                SCALE_MODE_COVER -> MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                SCALE_MODE_FIT -> MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                else -> {
+                    logger.warn("DesktopLiveWallpaper: unknown scale mode '$mode', keep default")
+                    return
+                }
+            }
+            codec.setVideoScalingMode(scalingMode)
+            logger.debug("DesktopLiveWallpaper: video scaling mode = $mode ($scalingMode)")
+        } catch (t: Throwable) {
+            logger.error("DesktopLiveWallpaper: failed to set video scaling mode", t)
         }
     }
 

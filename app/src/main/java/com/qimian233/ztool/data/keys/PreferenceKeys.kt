@@ -223,6 +223,7 @@ object PreferenceKeys {
     @JvmField val CUSTOM_STATUSBAR_CLOCK_FORMAT = StringKey("Custom_StatusBarClockFormat", "")
     @JvmField val CHARGE_WATTS_SELECTED_OPTION = StringKey("charge_watts_selected_option", "")
     @JvmField val SYSTEMUI_REALWATTS_CUSTOM_FORMAT = StringKey("systemui_realwatts_custom_format", "")
+    @JvmField val DESKTOP_LIVE_WALLPAPER_SCALE_MODE = StringKey("desktop_live_wallpaper_scale_mode", "fit")
 
     // ═══════════════════════════════════════════════════════════
     // 按类型分组的列表 —— 供 ModulePreferencesUtils 备份/恢复
@@ -317,7 +318,8 @@ object PreferenceKeys {
         API_URL, REGULAR,
         CUSTOM_STATUSBAR_CLOCK_FORMAT,
         CHARGE_WATTS_SELECTED_OPTION,
-        SYSTEMUI_REALWATTS_CUSTOM_FORMAT
+        SYSTEMUI_REALWATTS_CUSTOM_FORMAT,
+        DESKTOP_LIVE_WALLPAPER_SCALE_MODE
     )
 
     // ═══════════════════════════════════════════════════════════

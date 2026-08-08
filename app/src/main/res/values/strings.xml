@@ -1020,4 +1020,7 @@
     <string name="desktop_live_wallpaper_portrait_video_save_failed">壁纸竖屏视频保存失败</string>
     <string name="desktop_live_wallpaper_land_video_saved">壁纸横屏视频已保存</string>
     <string name="desktop_live_wallpaper_land_video_save_failed">壁纸横屏视频保存失败</string>
+    <string name="desktop_live_wallpaper_scale_mode_title">视频显示模式</string>
+    <string name="desktop_live_wallpaper_scale_mode_fit">保持宽高比（完整显示）</string>
+    <string name="desktop_live_wallpaper_scale_mode_cover">铺满全屏（等比裁剪）</string>
 </resources>

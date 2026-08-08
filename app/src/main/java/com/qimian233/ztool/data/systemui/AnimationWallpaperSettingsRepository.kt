@@ -17,6 +17,9 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
             chargeAnimationFix = prefsUtils.loadBooleanSetting(KEY_CHARGE_ANIM_FIX, false),
             customChargeAnimation = prefsUtils.loadBooleanSetting(KEY_CUSTOM_CHARGE_ANIM, false),
             desktopLiveWallpaper = prefsUtils.loadBooleanSetting(KEY_DESKTOP_LIVE_WP, false),
+            wallpaperScaleMode = prefsUtils.loadStringSetting(
+                KEY_WP_SCALE_MODE, PreferenceKeys.DESKTOP_LIVE_WALLPAPER_SCALE_MODE.default
+            ),
         )
     }
 
@@ -24,6 +27,7 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
     fun saveChargeAnimationFix(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_CHARGE_ANIM_FIX, enabled)
     fun saveCustomChargeAnimation(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_CUSTOM_CHARGE_ANIM, enabled)
     fun saveDesktopLiveWallpaper(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_DESKTOP_LIVE_WP, enabled)
+    fun saveWallpaperScaleMode(mode: String) = prefsUtils.saveStringSetting(KEY_WP_SCALE_MODE, mode)
 
     fun saveVideo(uri: Uri, fileName: String): Boolean {
         try {
@@ -59,6 +63,7 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
         private val KEY_CHARGE_ANIM_FIX = PreferenceKeys.CHARGE_ANIMATION_FIX.name
         private val KEY_CUSTOM_CHARGE_ANIM = PreferenceKeys.CUSTOM_CHARGE_ANIMATION.name
         private val KEY_DESKTOP_LIVE_WP = PreferenceKeys.DESKTOP_LIVE_WALLPAPER.name
+        private val KEY_WP_SCALE_MODE = PreferenceKeys.DESKTOP_LIVE_WALLPAPER_SCALE_MODE.name
     }
 }
 
@@ -67,6 +72,7 @@ data class AnimationWallpaperSettingsUiState(
     val chargeAnimationFix: Boolean = false,
     val customChargeAnimation: Boolean = false,
     val desktopLiveWallpaper: Boolean = false,
+    val wallpaperScaleMode: String = "fit",
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

@@ -52,6 +52,11 @@ class AnimationWallpaperSettingsViewModel(
         repository.saveDesktopLiveWallpaper(enabled)
     }
 
+    fun setWallpaperScaleMode(mode: String) {
+        _uiState.value = _uiState.value.copy(wallpaperScaleMode = mode)
+        repository.saveWallpaperScaleMode(mode)
+    }
+
     fun saveCustomChargeVideo(uri: Uri, fileName: String): Boolean {
         return repository.saveVideo(uri, fileName)
     }

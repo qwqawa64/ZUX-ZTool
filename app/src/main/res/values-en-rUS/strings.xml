@@ -963,4 +963,7 @@
     <string name="desktop_live_wallpaper_portrait_video_save_failed">Failed to save portrait wallpaper video</string>
     <string name="desktop_live_wallpaper_land_video_saved">Landscape wallpaper video saved</string>
     <string name="desktop_live_wallpaper_land_video_save_failed">Failed to save landscape wallpaper video</string>
+    <string name="desktop_live_wallpaper_scale_mode_title">Video Display Mode</string>
+    <string name="desktop_live_wallpaper_scale_mode_fit">Keep Aspect Ratio (Fit)</string>
+    <string name="desktop_live_wallpaper_scale_mode_cover">Fill Screen (Crop)</string>
 </resources>

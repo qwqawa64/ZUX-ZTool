@@ -146,6 +146,7 @@ fun AnimationWallpaperSettingsRoute(
         onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
         onCustomChargeAnimationChanged = viewModel::setCustomChargeAnimation,
         onDesktopLiveWallpaperChanged = viewModel::setDesktopLiveWallpaper,
+        onWallpaperScaleModeChanged = viewModel::setWallpaperScaleMode,
         onRestartScope = viewModel::showRestartDialog,
         onSelectPortraitVideo = { portraitVideoLauncher.launch(arrayOf("video/*")) },
         onSelectLandVideo = { landVideoLauncher.launch(arrayOf("video/*")) },
@@ -191,6 +192,7 @@ private fun AnimationWallpaperSettingsScreen(
     onChargeAnimationFixChanged: (Boolean) -> Unit,
     onCustomChargeAnimationChanged: (Boolean) -> Unit,
     onDesktopLiveWallpaperChanged: (Boolean) -> Unit,
+    onWallpaperScaleModeChanged: (String) -> Unit,
     onRestartScope: () -> Unit,
     onSelectPortraitVideo: () -> Unit,
     onSelectLandVideo: () -> Unit,
@@ -239,6 +241,7 @@ private fun AnimationWallpaperSettingsScreen(
                         onChargeAnimationFixChanged = onChargeAnimationFixChanged,
                         onCustomChargeAnimationChanged = onCustomChargeAnimationChanged,
                         onDesktopLiveWallpaperChanged = onDesktopLiveWallpaperChanged,
+                        onWallpaperScaleModeChanged = onWallpaperScaleModeChanged,
                         onSelectPortraitVideo = onSelectPortraitVideo,
                         onSelectLandVideo = onSelectLandVideo,
                         onSelectWpPortraitVideo = onSelectWpPortraitVideo,
@@ -258,6 +261,7 @@ private fun animationWallpaperSettingsSections(
     onChargeAnimationFixChanged: (Boolean) -> Unit,
     onCustomChargeAnimationChanged: (Boolean) -> Unit,
     onDesktopLiveWallpaperChanged: (Boolean) -> Unit,
+    onWallpaperScaleModeChanged: (String) -> Unit,
     onSelectPortraitVideo: () -> Unit,
     onSelectLandVideo: () -> Unit,
     onSelectWpPortraitVideo: () -> Unit,
@@ -329,6 +333,26 @@ private fun animationWallpaperSettingsSections(
             )
         )
         if (state.desktopLiveWallpaper) {
+            val scaleFitLabel = stringResource(R.string.desktop_live_wallpaper_scale_mode_fit)
+            val scaleCoverLabel = stringResource(R.string.desktop_live_wallpaper_scale_mode_cover)
+            add(
+                SettingItem.Dropdown(
+                    key = "desktop_wallpaper_scale_mode",
+                    label = stringResource(R.string.desktop_live_wallpaper_scale_mode_title),
+                    value = if (state.wallpaperScaleMode == "cover") {
+                        scaleCoverLabel
+                    } else {
+                        scaleFitLabel
+                    },
+                    options = listOf(scaleFitLabel, scaleCoverLabel),
+                    optionLabel = { it },
+                    onOptionSelected = { selected ->
+                        onWallpaperScaleModeChanged(
+                            if (selected == scaleCoverLabel) "cover" else "fit"
+                        )
+                    }
+                )
+            )
             add(
                 SettingItem.Action(
                     title = stringResource(R.string.desktop_live_wallpaper_select_portrait),
