@@ -67,8 +67,16 @@ fun AnimationWallpaperSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    val customChargeVideoSavedText = stringResource(R.string.custom_charge_animation_video_saved)
-    val customChargeVideoSaveFailedText = stringResource(R.string.custom_charge_animation_video_save_failed)
+    val videoSavedText = stringResource(R.string.custom_charge_animation_video_saved)
+    val videoSaveFailedText = stringResource(R.string.custom_charge_animation_video_save_failed)
+
+    val wpPortraitVideoSavedText =
+        stringResource(R.string.desktop_live_wallpaper_portrait_video_saved)
+    val wpPortraitVideoSaveFailedText =
+        stringResource(R.string.desktop_live_wallpaper_portrait_video_save_failed)
+    val wpLandVideoSavedText = stringResource(R.string.desktop_live_wallpaper_land_video_saved)
+    val wpLandVideoSaveFailedText =
+        stringResource(R.string.desktop_live_wallpaper_land_video_save_failed)
 
     val portraitVideoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -79,7 +87,7 @@ fun AnimationWallpaperSettingsRoute(
             )
             Toast.makeText(
                 context,
-                if (saved) customChargeVideoSavedText else customChargeVideoSaveFailedText,
+                if (saved) videoSavedText else videoSaveFailedText,
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -94,7 +102,7 @@ fun AnimationWallpaperSettingsRoute(
             )
             Toast.makeText(
                 context,
-                if (saved) customChargeVideoSavedText else customChargeVideoSaveFailedText,
+                if (saved) videoSavedText else videoSaveFailedText,
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -109,7 +117,7 @@ fun AnimationWallpaperSettingsRoute(
             )
             Toast.makeText(
                 context,
-                if (saved) "壁纸竖屏视频已保存" else "壁纸竖屏视频保存失败",
+                if (saved) wpPortraitVideoSavedText else wpPortraitVideoSaveFailedText,
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -124,7 +132,7 @@ fun AnimationWallpaperSettingsRoute(
             )
             Toast.makeText(
                 context,
-                if (saved) "壁纸横屏视频已保存" else "壁纸横屏视频保存失败",
+                if (saved) wpLandVideoSavedText else wpLandVideoSaveFailedText,
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -313,8 +321,9 @@ private fun animationWallpaperSettingsSections(
     val desktopWallpaperItems = buildList {
         add(
             SettingItem.Switch(
-                title = "桌面动态壁纸",
-                summary = "使用自定义视频替换桌面动态壁纸。视频文件将保存至 /sdcard/Download/ZTool/ 目录，重启 SystemUI 后生效。",
+                title = stringResource(R.string.desktop_live_wallpaper_title),
+                summary = stringResource(R.string.desktop_live_wallpaper_summary) + "\n\n" +
+                    stringResource(R.string.desktop_live_wallpaper_rotation_warning),
                 checked = state.desktopLiveWallpaper,
                 onCheckedChange = onDesktopLiveWallpaperChanged
             )
@@ -322,7 +331,7 @@ private fun animationWallpaperSettingsSections(
         if (state.desktopLiveWallpaper) {
             add(
                 SettingItem.Action(
-                    title = "选择竖屏壁纸视频",
+                    title = stringResource(R.string.desktop_live_wallpaper_select_portrait),
                     onClick = onSelectWpPortraitVideo,
                     trailingContent = {
                         Icon(
@@ -335,7 +344,7 @@ private fun animationWallpaperSettingsSections(
             )
             add(
                 SettingItem.Action(
-                    title = "选择横屏壁纸视频",
+                    title = stringResource(R.string.desktop_live_wallpaper_select_land),
                     onClick = onSelectWpLandVideo,
                     trailingContent = {
                         Icon(
@@ -355,7 +364,7 @@ private fun animationWallpaperSettingsSections(
             items = chargeAnimItems
         ),
         SettingSection(
-            title = "桌面动态壁纸",
+            title = stringResource(R.string.desktop_live_wallpaper_title),
             items = desktopWallpaperItems
         )
     )

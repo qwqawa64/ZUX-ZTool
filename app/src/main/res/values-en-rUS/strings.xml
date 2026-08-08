@@ -952,4 +952,15 @@
     <string name="slider_style_forced_by_qs_panel">Forced to horizontal by \"Expand Portrait Control Center\"</string>
     <string name="force_relative_app_freeform_title">Open relative app in freeform</string>
     <string name="disable_recent_app_display">Hide recent apps in dock bar</string>
+
+    <!--Desktop live wallpaper resources-->
+    <string name="desktop_live_wallpaper_title">Desktop Live Wallpaper</string>
+    <string name="desktop_live_wallpaper_summary">Replace the desktop live wallpaper with a custom video. Videos are saved to /sdcard/Download/ZTool/. Restart SystemUI to take effect.</string>
+    <string name="desktop_live_wallpaper_rotation_warning">Note: Rapid screen rotation may prevent the live wallpaper from rendering; it will temporarily fall back to the static wallpaper.</string>
+    <string name="desktop_live_wallpaper_select_portrait">Select Portrait Wallpaper Video</string>
+    <string name="desktop_live_wallpaper_select_land">Select Landscape Wallpaper Video</string>
+    <string name="desktop_live_wallpaper_portrait_video_saved">Portrait wallpaper video saved</string>
+    <string name="desktop_live_wallpaper_portrait_video_save_failed">Failed to save portrait wallpaper video</string>
+    <string name="desktop_live_wallpaper_land_video_saved">Landscape wallpaper video saved</string>
+    <string name="desktop_live_wallpaper_land_video_save_failed">Failed to save landscape wallpaper video</string>
 </resources>

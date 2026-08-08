@@ -1009,4 +1009,15 @@
     <string name="allow_relative_app_launch_title">总是允许关联 APP 启动</string>
     <string name="force_relative_app_freeform_title">关联启动时强制小窗打开</string>
     <string name="disable_recent_app_display">在 Dock 栏隐藏最近使用的 APP</string>
+
+    <!--桌面动态壁纸页资源值-->
+    <string name="desktop_live_wallpaper_title">桌面动态壁纸</string>
+    <string name="desktop_live_wallpaper_summary">使用自定义视频替换桌面动态壁纸。视频文件将保存至 /sdcard/Download/ZTool/ 目录，重启 SystemUI 后生效。</string>
+    <string name="desktop_live_wallpaper_rotation_warning">注意：屏幕方向快速切换时动态壁纸可能无法及时渲染，会暂时回退为静态壁纸。</string>
+    <string name="desktop_live_wallpaper_select_portrait">选择竖屏壁纸视频</string>
+    <string name="desktop_live_wallpaper_select_land">选择横屏壁纸视频</string>
+    <string name="desktop_live_wallpaper_portrait_video_saved">壁纸竖屏视频已保存</string>
+    <string name="desktop_live_wallpaper_portrait_video_save_failed">壁纸竖屏视频保存失败</string>
+    <string name="desktop_live_wallpaper_land_video_saved">壁纸横屏视频已保存</string>
+    <string name="desktop_live_wallpaper_land_video_save_failed">壁纸横屏视频保存失败</string>
 </resources>
