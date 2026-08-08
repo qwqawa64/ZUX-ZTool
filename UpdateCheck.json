@@ -1,6 +1,6 @@
 {
-  "newVersionName": "Beta/260710",
-  "newVersionCode": 1106,
-  "whatNew": "关闭夜间安装确认弹窗\n禁止系统更新自动安装\n禁止互传自动关闭\n网速刷新时间自定义\n桌面无字模式\n添加热重载入口（大概率并不好用，后续再看）\n支持动态申请作用域\n备用更新查询 url\nUI 细节改进，MIUIx 分支初步可用\n支持 DEXKit 对抗混淆\n升级到 libxposed API 102 (min 101, target 102)\n自动接受互传请求\n关闭桌面 Dock 栏\n关闭互传启动时的警告\n调整亮度和音量百分比显示的颜色\n支持最近任务内存使用情况显示猜测的整数内存值和内存扩展值\n调整最近任务内存状况显示的样式和位置",
-  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/20260710-ZTool_Beta"
+  "newVersionName": "Beta/260808",
+  "newVersionCode": 1358,
+  "whatNew": "\"Beta/260808\" (c1358)\n动态壁纸（部分视频的渲染比例可能有问题）\n解除国行 ROM 的语言限制\n锁屏功率支持显示拼接的信息：实际电压、电流、充电功率、电池温度等（支持 bash 风格自定义字符串）\n使用 Hook 替代直接跑 Shell 命令的 Native AOD\n关联应用小窗启动\n任务栏关闭最近 APP 显示\n竖屏模式控制中心拓宽\n自动拒绝桌面应用推荐文件夹的用户协议\n关联应用启动不弹窗\n应用更新蓝点移除（从无字模式 Hook 独立出来）\n充电动画自定义\n禁止桌面角标提示版本更新可用\n适配老版本超级互传的跳过警告页面（需要进一步调整）\n部分（你不一定察觉的到的）细节优化",
+  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/20260808-ZTool_Beta"
 }
