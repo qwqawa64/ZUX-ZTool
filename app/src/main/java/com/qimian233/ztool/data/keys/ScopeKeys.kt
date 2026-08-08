@@ -1,4 +1,4 @@
-package com.qimian233.ztool.data
+package com.qimian233.ztool.data.keys
 
 data class Scope(@JvmField val packageName: String, @JvmField val howToRestart: HowToRestart)
 

@@ -1,4 +1,4 @@
-package com.qimian233.ztool.data
+package com.qimian233.ztool.data.keys
 
 /**
  * 所有 xposed_module_config 偏好键的单一可信源。

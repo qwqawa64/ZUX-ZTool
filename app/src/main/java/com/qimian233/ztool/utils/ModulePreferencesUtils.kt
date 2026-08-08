@@ -9,7 +9,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.XposedServiceBridge
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import java.io.File
 import androidx.core.content.edit
 

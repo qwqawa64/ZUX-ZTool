@@ -141,7 +141,8 @@ Core files:
 - `app/src/main/java/com/qimian233/ztool/hook/HookInit.java`: Xposed entry point.
 - `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`: base class for Hook modules.
 - `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`: registration and dispatch for Hook modules.
-- `app/src/main/java/com/qimian233/ztool/data/PreferenceKeys.kt`: **single source of truth for all preference keys** — every key in `xposed_module_config` is defined here, organized by data type. See `Add_New_Preference_Key_zh-CN.md`.
+- `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt`: **single source of truth for all preference keys** — every key in `xposed_module_config` is defined here, organized by data type. See `Add_New_Preference_Key_zh-CN.md`.
+- `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`: **single source of truth for all scope package names** — every package LSPosed may inject into (`Scope(packageName, HowToRestart)`), plus its preferred restart method. Hooks, `ScopeUtils`, and frontend entry points must reference `ScopeKeys` instead of hardcoding package name strings. See "Scope Management" below.
 - `app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write utility; uses `PreferenceKeys` list-based matching for backup/restore type inference.
 
 Hook module folders:
@@ -191,7 +192,7 @@ The durable rules are:
 To add a new Hook implementation on the backend:
 
 1. Create a Hook class that extends `AppHookModule` for non-system-framework-hook, and extend `SystemHookModule` for system-framework-hook. All new Hooks must be written in **Kotlin** (`.kt`). Java is only permitted for emergency fixes to existing Java infrastructure.
-2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
+2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `data/keys/ScopeKeys.kt` first (see "Scope Management"), and add it to `scope.list`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using `PreferenceKeys` constants (see `Add_New_Preference_Key_zh-CN.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
 5. If the Hook needs a user-facing toggle, add the frontend state according to `Add_New_Hook_zh-CN.md`.
@@ -202,9 +203,21 @@ Use `logger.<level>` for module logs when possible, see `/docs_archive/new_log_s
 
 ### Scope Management
 
-The `app/src/main/resources/META-INF/xposed/scope.list` declares which packages LSPosed should inject the module into. Rules for managing scope:
+**`ScopeKeys` (`app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`) is the single source of truth for scope package names in code.** Every place that manages scope packages — Hook `getTargetPackages()` implementations, `ScopeUtils.getScopes()` / `getScopePackages()`, and frontend feature entries (`FeaturesRoute`, `MainActivity`) — must reference `ScopeKeys.CONSTANT.packageName` and never hardcode package name strings. The `HowToRestart` registered on each `Scope` also drives the unified restart logic in `ScopeUtils.restartScope()`.
 
-- **When a new Hook targets a package not already in the scope, add it to `scope.list`.** The `getTargetPackages()` returned by each module must be a subset of the declared scope.
+When adding a Hook that targets a package:
+
+1. Register the package in `ScopeKeys.kt` (with its preferred `HowToRestart`) before using it anywhere.
+2. Reference `ScopeKeys.CONSTANT.packageName` in the Hook's `getTargetPackages()`, and add it to `ScopeUtils.getScopes(...)` if the package belongs to a frontend feature entry.
+3. Add the package to the build-time `scope.list` resource (see below).
+
+Build-time resource files intentionally keep package names hardcoded and are NOT driven by `ScopeKeys`:
+
+- `app/src/main/resources/META-INF/xposed/scope.list` — the LSPosed injection scope declaration. When a new Hook targets a package not already in the scope, add it here; `getTargetPackages()` returned by each module must be a subset of the declared scope.
+- `app/src/main/resources/META-INF/xposed/module.prop` — module metadata (e.g. `minApiVersion`, `staticScope`); keep hardcoded.
+
+Other scope rules:
+
 - **`android` and `system` (system framework) are already in scope** — no change needed for system-framework hooks.
 - **Always verify scope coverage after adding a new Hook module.** If a target package is missing from scope, the Hook will silently never execute.
 - Do NOT remove scope entries unless their corresponding Hook modules are also removed.

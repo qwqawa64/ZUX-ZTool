@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.mobiledesktop
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.qimian233.ztool.data.ScopeKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexKitHelper
 import io.github.libxposed.api.XposedModuleInterface

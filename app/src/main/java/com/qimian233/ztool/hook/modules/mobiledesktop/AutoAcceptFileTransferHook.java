@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.mobiledesktop;
 
-import com.qimian233.ztool.data.ScopeKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;

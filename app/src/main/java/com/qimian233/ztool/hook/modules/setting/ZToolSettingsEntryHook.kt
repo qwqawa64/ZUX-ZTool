@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import com.qimian233.ztool.data.ScopeKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.MainActivity
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam

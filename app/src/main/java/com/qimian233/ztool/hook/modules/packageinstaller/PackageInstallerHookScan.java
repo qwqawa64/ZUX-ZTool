@@ -1,8 +1,8 @@
 package com.qimian233.ztool.hook.modules.packageinstaller;
 
-import com.qimian233.ztool.data.ScopeKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
-import io.github.libxposed.api.XposedInterface;
+
 import io.github.libxposed.api.XposedModuleInterface;
 
 import java.lang.reflect.Field;

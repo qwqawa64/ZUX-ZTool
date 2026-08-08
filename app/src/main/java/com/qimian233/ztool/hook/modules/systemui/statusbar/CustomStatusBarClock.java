@@ -11,8 +11,8 @@ import android.text.style.ScaleXSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
 
-import com.qimian233.ztool.data.ScopeKeys;
-import com.qimian233.ztool.data.PreferenceKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
+import com.qimian233.ztool.data.keys.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter;
 

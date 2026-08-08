@@ -2,7 +2,7 @@ package com.qimian233.ztool.data.systemui
 
 import android.content.Context
 import com.qimian233.ztool.FeatureDestination
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ScopeUtils
 

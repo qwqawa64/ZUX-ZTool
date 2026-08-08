@@ -2,7 +2,7 @@ package com.qimian233.ztool.hook.modules.gametool;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.data.ScopeKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.hook.base.BaseHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;

@@ -8,7 +8,7 @@ import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.utils.ModulePreferencesUtils
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette

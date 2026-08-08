@@ -5,7 +5,7 @@ import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
 import android.widget.TextView;
 
-import com.qimian233.ztool.data.ScopeKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;

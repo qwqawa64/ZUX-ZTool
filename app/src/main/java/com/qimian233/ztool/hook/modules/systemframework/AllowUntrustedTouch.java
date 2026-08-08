@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework;
 
-import com.qimian233.ztool.data.ScopeKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import android.annotation.SuppressLint;

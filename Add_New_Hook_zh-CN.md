@@ -322,12 +322,28 @@ SettingItem.Custom(
 
 只有当新 Hook 有独立的复杂流程、多个子页面或已有页面无法合理承载时，再考虑新增 Route/Activity。保留 Manifest 中已有 Activity 的启动契约，不要随意改包名或类名。
 
+## 作用域管理
+
+Hook 的作用域包名**统一由 `ScopeKeys` 管理**（`app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`），不要在代码中手写包名字符串。
+
+- Hook 的 `getTargetPackages()` 必须返回 `ScopeKeys.CONSTANT.packageName` 引用。
+- `ScopeUtils.getScopes()` 集中定义每个功能入口的作用域列表（包名 + 推荐重启方式），同样引用 `ScopeKeys`；前端功能入口（`FeaturesRoute`、`MainActivity`）和各 Repository 的"重启作用域"逻辑也来自 `ScopeKeys` / `ScopeUtils`。
+- 每个 `Scope` 同时注册了 `HowToRestart`（`AmStop` / `KillAll` / `Reboot`），`ScopeUtils.restartScope()` 据此选择重启命令。
+
+新增 Hook 目标包时按以下顺序处理：
+
+1. 在 `ScopeKeys.kt` 中注册新包名（含推荐重启方式）。
+2. 在 Hook 的 `getTargetPackages()` 中引用 `ScopeKeys.CONSTANT.packageName`。
+3. 在构建期资源 `scope.list` 中添加该包名（LSPosed 注入声明）。
+
+> `module.prop` 等构建期资源文件必须保持硬编码，不引用 `ScopeKeys`。`scope.list` 是构建期声明，与 `ScopeKeys` 相互独立，两个都要维护；用户还需在 LSPosed Manager 中勾选作用域。
+
 ## Hook 侧一致性检查
 
 前端接入完成后，至少检查以下事项：
 
 1. Hook 模块是否已经注册到 `HookManager`。
-2. Hook 作用域包名是否已在 `res/values/array.xml` 的 `xposed_scope` 中覆盖。
+2. Hook 作用域包名是否已在 `ScopeKeys` 中注册、`getTargetPackages()` 是否引用 `ScopeKeys` 常量，并已加入构建期 `scope.list`。
 3. 前端保存的 SharedPrefs 键是否和 Hook 侧读取完全一致。
 4. 前端默认值是否和 Hook 侧默认值一致。
 5. 字符串、数值、列表格式是否和 Hook 侧解析方式一致。
@@ -353,7 +369,8 @@ SettingItem.Custom(
 4. 在 ViewModel 中增加 `setXxx(...)` 方法。
 5. 在设置页的 `SettingSection` 中加入 `SettingItem.Switch`、`Dropdown`、`Slider`、`TextInput` 或 `Custom`。
 6. 在 `PreferenceKeys.kt` 中注册新的偏好键，并在 Repository 和 Hook 中通过 `PreferenceKeys.CONSTANT_NAME.name` 引用。
-7. 在 `strings.xml` 增加标题和说明。
-8. 如需重启，复用或补充该页面的重启确认流程。
-9. 运行 `.\gradlew.bat assembleDebug` 验证。
+7. 如果新 Hook 的目标包尚未注册：在 `ScopeKeys.kt` 中注册该包，在 `getTargetPackages()` 中引用 `ScopeKeys`，并加入构建期 `scope.list`。
+8. 在 `strings.xml` 增加标题和说明。
+9. 如需重启，复用或补充该页面的重启确认流程。
+10. 运行 `.\gradlew.bat assembleDebug` 验证。
 

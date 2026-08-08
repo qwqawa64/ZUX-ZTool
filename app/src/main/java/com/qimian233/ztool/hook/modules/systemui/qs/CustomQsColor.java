@@ -3,8 +3,8 @@ package com.qimian233.ztool.hook.modules.systemui.qs;
 import android.annotation.SuppressLint;
 import android.graphics.Color;
 
-import com.qimian233.ztool.data.ScopeKeys;
-import com.qimian233.ztool.data.PreferenceKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
+import com.qimian233.ztool.data.keys.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;

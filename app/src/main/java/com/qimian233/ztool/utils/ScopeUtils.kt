@@ -3,9 +3,9 @@ package com.qimian233.ztool.utils
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.FeatureDestination
-import com.qimian233.ztool.data.HowToRestart
-import com.qimian233.ztool.data.Scope
-import com.qimian233.ztool.data.ScopeKeys
+import com.qimian233.ztool.data.keys.HowToRestart
+import com.qimian233.ztool.data.keys.Scope
+import com.qimian233.ztool.data.keys.ScopeKeys
 
 /**
  * 作用域工具类。

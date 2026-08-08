@@ -4,7 +4,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Environment
 import android.view.View
-import com.qimian233.ztool.data.ScopeKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.io.File

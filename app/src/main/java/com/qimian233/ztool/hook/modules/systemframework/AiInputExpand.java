@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework;
 
-import com.qimian233.ztool.data.PreferenceKeys;
+import com.qimian233.ztool.data.keys.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import android.annotation.SuppressLint;

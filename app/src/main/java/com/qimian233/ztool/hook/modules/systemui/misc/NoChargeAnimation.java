@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.misc;
 import android.annotation.SuppressLint;
 import android.os.Message;
 
-import com.qimian233.ztool.data.ScopeKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 

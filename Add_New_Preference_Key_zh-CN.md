@@ -7,7 +7,7 @@
 所有 Hook 和应用设置共用同一个 SharedPreferences 文件 `xposed_module_config`。偏好键的**名称**、**数据类型**、**默认值**现在统一在单一可信源中定义：
 
 ```
-app/src/main/java/com/qimian233/ztool/data/PreferenceKeys.kt    ← 所有键的权威定义
+app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt    ← 所有键的权威定义
 app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应用侧读写工具
 ```
 
@@ -34,7 +34,7 @@ app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应�
 
 ### 步骤 1：在 PreferenceKeys.kt 中注册
 
-打开 `app/src/main/java/com/qimian233/ztool/data/PreferenceKeys.kt`，根据键的数据类型在对应区域添加常量，同时将其加入对应的类型列表。
+打开 `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt`，根据键的数据类型在对应区域添加常量，同时将其加入对应的类型列表。
 
 #### Boolean 键（最常见：Hook 启用开关、子功能开关）
 
@@ -83,7 +83,7 @@ app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应�
 Repository 的 `companion object` 中不再直接写字符串字面量，而是引用 `PreferenceKeys` 常量：
 
 ```kotlin
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 
 class ExampleSettingsRepository(
     private val context: Context
@@ -126,7 +126,7 @@ class ExampleSettingsRepository(
 Kotlin Hook 中通过 `PreferenceKeys` 常量读取偏好键：
 
 ```kotlin
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
@@ -191,7 +191,7 @@ class NewFeatureHook : AppHookModule() {
 
 | 文件                                | 作用                                                     |
 |-----------------------------------|--------------------------------------------------------|
-| `data/PreferenceKeys.kt`          | 所有键的单一可信源，按类型分列表                                       |
+| `data/keys/PreferenceKeys.kt`    | 所有键的单一可信源，按类型分列表                                       |
 | `utils/ModulePreferencesUtils.kt` | 应用侧 SharedPreferences 读写工具                             |
 | `data/**/*Repository.kt`          | 各功能模块的 Repository，通过 `PreferenceKeys.CONST.name` 引用键   |
 | `hook/modules/**/`                | Hook 实现，Kotlin Hook 通过 `PreferenceKeys.CONST.name` 读取键 |

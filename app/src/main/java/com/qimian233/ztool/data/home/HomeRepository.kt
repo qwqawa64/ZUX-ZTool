@@ -20,7 +20,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import androidx.core.content.edit
 import com.qimian233.ztool.XposedServiceBridge
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 
 class HomeRepository(
     private val context: Context,

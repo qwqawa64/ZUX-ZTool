@@ -4,8 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 
-import com.qimian233.ztool.data.ScopeKeys;
-import com.qimian233.ztool.data.PreferenceKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
+import com.qimian233.ztool.data.keys.PreferenceKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexKitHelper;
 

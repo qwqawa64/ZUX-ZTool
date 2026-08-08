@@ -7,8 +7,8 @@ import android.media.MediaFormat
 import android.os.Environment
 import android.view.Surface
 import android.view.SurfaceHolder
-import com.qimian233.ztool.data.ScopeKeys
-import com.qimian233.ztool.data.PreferenceKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.io.File

@@ -2,8 +2,8 @@ package com.qimian233.ztool.hook.modules.systemframework;
 
 import android.annotation.SuppressLint;
 
-import com.qimian233.ztool.data.ScopeKeys;
-import com.qimian233.ztool.data.PreferenceKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
+import com.qimian233.ztool.data.keys.PreferenceKeys;
 import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;

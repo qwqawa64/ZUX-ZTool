@@ -50,7 +50,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.qimian233.ztool.data.ScopeKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.HomeRepository
 import com.qimian233.ztool.data.settings.SettingsRepository

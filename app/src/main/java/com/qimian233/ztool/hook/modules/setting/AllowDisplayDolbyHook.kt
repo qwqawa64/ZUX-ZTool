@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.modules.setting
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
-import com.qimian233.ztool.data.ScopeKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam

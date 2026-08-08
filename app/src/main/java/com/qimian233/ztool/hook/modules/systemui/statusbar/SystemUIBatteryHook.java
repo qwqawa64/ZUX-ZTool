@@ -7,7 +7,7 @@ import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.util.TypedValue;
 
-import com.qimian233.ztool.data.ScopeKeys;
+import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
