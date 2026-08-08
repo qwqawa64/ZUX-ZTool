@@ -24,7 +24,8 @@ import java.io.File
  * - 方向变化走 CanvasEngine 的 DisplayListener.onDisplayChanged 回调
  *   （SystemUI 壁纸自身的通知机制），另挂 onConfigurationChanged /
  *   onSurfaceChanged 兜底：按新方向重新选视频，
- *   该方向无对应视频时停止播放、回退静态壁纸（严格匹配，不跨方向回退）
+ *   该方向无对应视频时停止播放并主动触发 SystemUI 重绘，
+ *   重新显示静态壁纸（严格匹配，不跨方向回退）
  *
  * 视频文件路径：
  *   /sdcard/Download/ZTool/wallpaper_portrait.mp4  (竖屏)
@@ -376,6 +377,8 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                 "DesktopLiveWallpaper: no video for orientation $orientation, fallback to static"
             )
             stopPlayback(clearSurface = false)
+            // 清掉 Surface 上残留的视频最后一帧，重新显示静态壁纸
+            redrawStaticWallpaper(engine)
             return
         }
 
@@ -384,6 +387,33 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         )
         stopPlayback(clearSurface = false)
         startPlayback(engine, videoPath)
+    }
+
+    /**
+     * fallback 到静态壁纸时，主动触发 SystemUI 的重绘，
+     * 清掉 Surface 上残留的视频最后一帧。
+     *
+     * CanvasEngine 的重绘入口（onSurfaceRedrawNeeded → mLongExecutor）
+     * 带 `if (!mDrawn)` 检查，静态壁纸画过后 mDrawn=true 会被跳过；
+     * 因此这里先重置 mDrawn=false，再在 mLock 同步下直接调用
+     * drawFrameInternal()（内部经 drawFrameOnCanvas 绘制静态 bitmap）。
+     */
+    private fun redrawStaticWallpaper(engine: Any) {
+        try {
+            val engineClass = engine.javaClass
+            engineClass.getDeclaredField("mDrawn").apply { isAccessible = true }
+                .setBoolean(engine, false)
+            val lock = engineClass.getDeclaredField("mLock").apply { isAccessible = true }
+                .get(engine) ?: return
+            val drawFrameInternal = engineClass.getDeclaredMethod("drawFrameInternal")
+                .apply { isAccessible = true }
+            synchronized(lock) {
+                drawFrameInternal.invoke(engine)
+            }
+            logger.debug("DesktopLiveWallpaper: static wallpaper redrawn")
+        } catch (t: Throwable) {
+            logger.error("DesktopLiveWallpaper: redrawStaticWallpaper failed", t)
+        }
     }
 
     // ── 辅助 ──────────────────────────────────────────────────
