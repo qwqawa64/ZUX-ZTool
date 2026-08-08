@@ -1,42 +1,51 @@
-package com.qimian233.ztool.hook.modules.systemframework;
+package com.qimian233.ztool.hook.modules.systemframework
 
-import android.annotation.SuppressLint;
+import android.annotation.SuppressLint
+import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.hook.base.SystemHookModule
+import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
-import com.qimian233.ztool.data.keys.ScopeKeys;
-import com.qimian233.ztool.hook.base.SystemHookModule;
+@SuppressLint("PrivateApi")
+class NoMorePasswordPer24H : SystemHookModule() {
+    override fun getModuleName(): String = PreferenceKeys.NO_MORE_PASSWORD_PER_24H.name
 
-import io.github.libxposed.api.XposedModuleInterface;
+    override fun getTargetPackages(): Array<String> = arrayOf(
+        ScopeKeys.SYSTEM_SERVER.packageName
+    )
 
-import java.lang.reflect.Method;
+    override fun handleSystemServerStarting(param: SystemServerStartingParam) {
+        val classLoader = param.classLoader
 
-@SuppressLint({"PrivateApi"})
-public class NoMorePasswordPer24H extends SystemHookModule {
-    private static final String TAG = "NoMorePasswordPer24H";
+        val lockSettingsClass = classLoader.loadClass(
+            "com.android.server.locksettings.LockSettingsStrongAuth"
+        )
 
-    public NoMorePasswordPer24H() {}
+        val rescheduleMethod = lockSettingsClass.getDeclaredMethod(
+            "rescheduleStrongAuthTimeoutAlarm",
+            Long::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        hookWithId(
+            rescheduleMethod,
+            "reschedule_strong_auth"
+        ) { null }
 
-    @Override
-    public String getModuleName(){return TAG;}
-    @Override
-    public String[] getTargetPackages(){return new String[]{ScopeKeys.SYSTEM_SERVER.packageName};}
+        val handleIdleMethod = lockSettingsClass.getDeclaredMethod(
+            "handleScheduleNonStrongBiometricIdleTimeout", Int::class.javaPrimitiveType
+        )
+        hookWithId(
+            handleIdleMethod,
+            "handle_idle_timeout"
+        ) { null }
 
-    @Override
-    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
-        ClassLoader classLoader = param.getClassLoader();
-
-        Class<?> lockSettingsClass = classLoader.loadClass(
-                "com.android.server.locksettings.LockSettingsStrongAuth");
-
-        Method rescheduleMethod = lockSettingsClass.getDeclaredMethod(
-                "rescheduleStrongAuthTimeoutAlarm", long.class, int.class);
-        hookWithId(rescheduleMethod, "reschedule_strong_auth", chain -> null);
-
-        Method handleIdleMethod = lockSettingsClass.getDeclaredMethod(
-                "handleScheduleNonStrongBiometricIdleTimeout", int.class);
-        hookWithId(handleIdleMethod, "handle_idle_timeout", chain -> null);
-
-        Method handleTimeoutMethod = lockSettingsClass.getDeclaredMethod(
-                "handleScheduleNonStrongBiometricTimeout", int.class);
-        hookWithId(handleTimeoutMethod, "handle_timeout", chain -> null);
+        val handleTimeoutMethod = lockSettingsClass.getDeclaredMethod(
+            "handleScheduleNonStrongBiometricTimeout", Int::class.javaPrimitiveType
+        )
+        hookWithId(
+            handleTimeoutMethod,
+            "handle_timeout"
+        ) { null }
     }
+
 }
