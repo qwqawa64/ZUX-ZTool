@@ -18,7 +18,7 @@ import androidx.core.content.edit
 class BypassShareWarningHook : AppHookModule() {
 
     companion object {
-        private val TARGET_PACKAGE = arrayOf(ScopeKeys.MOBILE_DESKTOP.packageName, ScopeKeys.READY_FOR.packageName)
+        private val TARGET_PACKAGE = arrayOf(ScopeKeys.MOBILE_DESKTOP.packageName)
         private const val TARGET_CLASS = "com.motorola.readyfor.tile.BaseFileUnionTile"
         private const val DIALOG_CLASS =
             "com.motorola.readyfor.common.dialog.ActionNoticeCommonDialogActivity"
