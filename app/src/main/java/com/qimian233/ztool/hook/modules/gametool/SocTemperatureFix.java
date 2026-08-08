@@ -1,7 +1,5 @@
 package com.qimian233.ztool.hook.modules.gametool;
 
-import android.annotation.SuppressLint;
-
 import com.qimian233.ztool.data.ScopeKeys;
 import com.qimian233.ztool.hook.base.AppHookModule;
 
@@ -32,8 +30,6 @@ public class SocTemperatureFix extends AppHookModule {
     public String[] getTargetPackages() {
         return new String[]{
                 ScopeKeys.GAME_SERVICE.packageName,
-                ScopeKeys.LENOVO_GAME_SERVICE.packageName,
-                ScopeKeys.ANDROID_GAMING.packageName
         };
     }
 
@@ -42,15 +38,7 @@ public class SocTemperatureFix extends AppHookModule {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
         logger.debug("SocTemperatureFix: 开始处理包 " + packageName);
-
-        if (ScopeKeys.GAME_SERVICE.packageName.equals(packageName)) {
-            hookZuiGameService(classLoader);
-        } else if (ScopeKeys.LENOVO_GAME_SERVICE.packageName.equals(packageName)) {
-            hookLenovoGamingService(classLoader);
-        } else {
-            // 通用游戏服务的Hook
-            hookGenericGamingService(classLoader);
-        }
+        hookZuiGameService(classLoader);
     }
 
     private void hookZuiGameService(ClassLoader classLoader) {
@@ -92,79 +80,6 @@ public class SocTemperatureFix extends AppHookModule {
 
         } catch (Throwable t) {
             logger.error("Failed to hook ZUI game service!", t);
-        }
-    }
-
-    private void hookLenovoGamingService(ClassLoader classLoader) {
-        try {
-            // 尝试Hook联想游戏服务中的温度相关方法
-            Class<?> thermalManagerClass;
-            try {
-                thermalManagerClass = classLoader.loadClass("com.lenovo.gamingservice.ThermalManager");
-            } catch (ClassNotFoundException e) {
-                thermalManagerClass = null;
-            }
-
-            if (thermalManagerClass != null) {
-                Method getCurrentTempMethod = thermalManagerClass.getDeclaredMethod("getCurrentTemperature");
-                hookWithId(getCurrentTempMethod, "get_current_temp", chain -> {
-                    int originalResult = (int) chain.proceed();
-                    int newTemperature = readTemperatureFromFile();
-
-                    if (newTemperature > 0) {
-                        logger.trace("Lenovo Game Service - temperature fix: "
-                                + originalResult
-                                + " -> "
-                                + newTemperature);
-                        return newTemperature;
-                    }
-                    return originalResult;
-                });
-                logger.info("Hook for gaming service executed successfully.");
-            } else {
-                logger.error("Unable to find class ThermalManager");
-            }
-
-        } catch (Throwable t) {
-            logger.error("Hook failed!", t);
-        }
-    }
-
-    private void hookGenericGamingService(ClassLoader classLoader) {
-        try {
-            // 尝试Hook通用的温度读取方法
-            String[] temperatureMethods = {
-                    "getTemperature",
-                    "getCPUTemperature",
-                    "getGPUTemperature",
-                    "getThermalValue"
-            };
-
-            @SuppressLint("PrivateApi") Class<?> sysPropsClass = classLoader.loadClass("android.os.SystemProperties");
-
-            for (String methodName : temperatureMethods) {
-                try {
-                    Method method = sysPropsClass.getDeclaredMethod(methodName);
-                    hookWithId(method, "method", chain -> {
-                        int newTemperature = readTemperatureFromFile();
-                        if (newTemperature > 0) {
-                            logger.trace("Generic temperature detection method "
-                                    + methodName
-                                    + " fixed, new temperature: "
-                                    + newTemperature);
-                            return newTemperature;
-                        }
-                        return chain.proceed();
-                    });
-                } catch (Throwable t) {
-                    // 方法不存在是正常的，继续尝试下一个
-                }
-            }
-
-            logger.info("Generic detection method hook executed successfully.");
-
-        } catch (Throwable t) {
-            logger.error("Failed to hook generic temperature detection method", t);
         }
     }
 
