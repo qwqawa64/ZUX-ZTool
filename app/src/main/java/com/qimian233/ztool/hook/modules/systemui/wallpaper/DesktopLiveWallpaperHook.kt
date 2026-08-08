@@ -21,7 +21,9 @@ import java.io.File
  * - Hook drawFrameOnCanvas → 阻止静态 bitmap 渲染
  * - 用 MediaCodec 直接解码视频到 Engine 的 Surface（零拷贝）
  * - 视频播放完毕后自动循环
- * - 监听 onConfigurationChanged：方向切换后按新方向重新选视频，
+ * - 方向变化走 CanvasEngine 的 DisplayListener.onDisplayChanged 回调
+ *   （SystemUI 壁纸自身的通知机制），另挂 onConfigurationChanged /
+ *   onSurfaceChanged 兜底：按新方向重新选视频，
  *   该方向无对应视频时停止播放、回退静态壁纸（严格匹配，不跨方向回退）
  *
  * 视频文件路径：
@@ -89,7 +91,23 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                 chain.proceed()
             }
 
-            // ④ onConfigurationChanged → 方向切换时重新选择视频
+            // ④ onDisplayChanged → 方向/显示变化（SystemUI 壁纸自身的通知路径，旋转必触发）
+            try {
+                hookWithId(
+                    engineClass.getDeclaredMethod(
+                        "onDisplayChanged", Int::class.javaPrimitiveType
+                    ),
+                    "dynwall_display_changed"
+                ) { chain ->
+                    chain.proceed()
+                    logger.debug("DesktopLiveWallpaper: onDisplayChanged invoked")
+                    refreshOrientationAndPlayback(chain.thisObject)
+                }
+            } catch (t: Throwable) {
+                logger.error("DesktopLiveWallpaper: failed to hook onDisplayChanged", t)
+            }
+
+            // ⑤ onConfigurationChanged → framework 分发兜底（部分 ROM 路径）
             // 用 getMethod 找继承的 public 方法，兼容 CanvasEngine 未覆写的情况
             try {
                 hookWithId(
@@ -97,13 +115,29 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                     "dynwall_config_changed"
                 ) { chain ->
                     chain.proceed()
-                    val newConfig = chain.args[0] as? Configuration
-                    if (newConfig != null) {
-                        onOrientationChanged(chain.thisObject, newConfig.orientation)
-                    }
+                    refreshOrientationAndPlayback(chain.thisObject)
                 }
             } catch (t: Throwable) {
                 logger.error("DesktopLiveWallpaper: failed to hook onConfigurationChanged", t)
+            }
+
+            // ⑥ onSurfaceChanged → Surface 尺寸变化兜底（旋转通常伴随宽高互换）
+            try {
+                hookWithId(
+                    engineClass.getDeclaredMethod(
+                        "onSurfaceChanged",
+                        SurfaceHolder::class.java,
+                        Int::class.javaPrimitiveType,
+                        Int::class.javaPrimitiveType,
+                        Int::class.javaPrimitiveType
+                    ),
+                    "dynwall_surface_changed"
+                ) { chain ->
+                    chain.proceed()
+                    refreshOrientationAndPlayback(chain.thisObject)
+                }
+            } catch (t: Throwable) {
+                logger.error("DesktopLiveWallpaper: failed to hook onSurfaceChanged", t)
             }
 
             logger.info("DesktopLiveWallpaper: hooks installed")
@@ -324,27 +358,29 @@ class DesktopLiveWallpaperHook : AppHookModule() {
     // ── 方向切换 ──────────────────────────────────────────────
 
     /**
-     * 屏幕方向切换回调：按新方向重新选择视频。
+     * 方向/显示变化统一入口（onDisplayChanged / onConfigurationChanged / onSurfaceChanged 共用）：
+     * 重新检测方向，与当前生效方向不同时按新方向选择视频。
      * - 新方向有对应视频 → 停止旧播放并切换（Surface 复用，不重建）
      * - 新方向无对应视频 → 停止播放，回退静态壁纸（drawFrameOnCanvas 恢复 proceed）
      */
-    private fun onOrientationChanged(engine: Any, newOrientation: Int) {
-        if (newOrientation == currentOrientation) return
-        currentOrientation = newOrientation
+    private fun refreshOrientationAndPlayback(engine: Any) {
+        val orientation = detectOrientation(engine)
+        if (orientation == currentOrientation) return
+        currentOrientation = orientation
         // Surface 尚未就绪（engine 刚创建）时，等待 onSurfaceCreated 再解析
         if (engineSurface == null) return
 
-        val videoPath = videoPathFor(newOrientation)
+        val videoPath = videoPathFor(orientation)
         if (videoPath == null) {
             logger.info(
-                "DesktopLiveWallpaper: no video for orientation $newOrientation, fallback to static"
+                "DesktopLiveWallpaper: no video for orientation $orientation, fallback to static"
             )
             stopPlayback(clearSurface = false)
             return
         }
 
         logger.info(
-            "DesktopLiveWallpaper: orientation changed to $newOrientation, switching video"
+            "DesktopLiveWallpaper: orientation changed to $orientation, switching video"
         )
         stopPlayback(clearSurface = false)
         startPlayback(engine, videoPath)
