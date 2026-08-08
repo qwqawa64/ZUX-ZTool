@@ -1,5 +1,6 @@
 package com.qimian233.ztool.viewmodel
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,11 +52,11 @@ class AnimationWallpaperSettingsViewModel(
         repository.saveDesktopLiveWallpaper(enabled)
     }
 
-    fun saveCustomChargeVideo(context: android.content.Context, uri: android.net.Uri, fileName: String): Boolean {
+    fun saveCustomChargeVideo(uri: Uri, fileName: String): Boolean {
         return repository.saveVideo(uri, fileName)
     }
 
-    fun saveWallpaperVideo(context: android.content.Context, uri: android.net.Uri, fileName: String): Boolean {
+    fun saveWallpaperVideo(uri: Uri, fileName: String): Boolean {
         return repository.saveVideo(uri, fileName)
     }
 

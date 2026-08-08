@@ -75,7 +75,7 @@ fun AnimationWallpaperSettingsRoute(
     ) { uri ->
         if (uri != null) {
             val saved = viewModel.saveCustomChargeVideo(
-                context, uri, "charging_animation_portrait.mp4"
+                uri, "charging_animation_portrait.mp4"
             )
             Toast.makeText(
                 context,
@@ -90,7 +90,7 @@ fun AnimationWallpaperSettingsRoute(
     ) { uri ->
         if (uri != null) {
             val saved = viewModel.saveCustomChargeVideo(
-                context, uri, "charging_animation_land.mp4"
+                uri, "charging_animation_land.mp4"
             )
             Toast.makeText(
                 context,
@@ -105,7 +105,7 @@ fun AnimationWallpaperSettingsRoute(
     ) { uri ->
         if (uri != null) {
             val saved = viewModel.saveWallpaperVideo(
-                context, uri, "wallpaper_portrait.mp4"
+                uri, "wallpaper_portrait.mp4"
             )
             Toast.makeText(
                 context,
@@ -120,7 +120,7 @@ fun AnimationWallpaperSettingsRoute(
     ) { uri ->
         if (uri != null) {
             val saved = viewModel.saveWallpaperVideo(
-                context, uri, "wallpaper_land.mp4"
+                uri, "wallpaper_land.mp4"
             )
             Toast.makeText(
                 context,
