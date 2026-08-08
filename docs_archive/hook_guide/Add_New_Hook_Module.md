@@ -113,11 +113,11 @@ val prefs = remotePreferences
 val prefs = xposed.getRemotePreferences("xposed_module_config")
 ```
 
-拿到后像 `SharedPreferences` 一样按类型读取，键名和默认值都引用 `PreferenceKeys` 常量：
+拿到后像 `SharedPreferences` 一样按类型读取，键名引用 `PreferenceKeys` 常量：
 
 ```kotlin
-val enabled = prefs.getBoolean(PreferenceKeys.EXAMPLE_HOOK_ENABLED.name, PreferenceKeys.EXAMPLE_HOOK_ENABLED.default)
-val level = prefs.getInt(PreferenceKeys.EXAMPLE_HOOK_LEVEL.name, PreferenceKeys.EXAMPLE_HOOK_LEVEL.default)
+val enabled = prefs.getBoolean(PreferenceKeys.EXAMPLE_HOOK_ENABLED.name, false)
+val level = prefs.getInt(PreferenceKeys.EXAMPLE_HOOK_LEVEL.name, 0)
 ```
 
 ## 5. 注册到 HookManager
