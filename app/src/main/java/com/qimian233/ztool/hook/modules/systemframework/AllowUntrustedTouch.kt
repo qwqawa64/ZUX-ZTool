@@ -1,34 +1,21 @@
-package com.qimian233.ztool.hook.modules.systemframework;
+package com.qimian233.ztool.hook.modules.systemframework
 
-import com.qimian233.ztool.data.keys.ScopeKeys;
-import com.qimian233.ztool.hook.base.SystemHookModule;
-
-import android.annotation.SuppressLint;
-
-import io.github.libxposed.api.XposedModuleInterface;
-
-import java.lang.reflect.Method;
+import android.annotation.SuppressLint
+import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.hook.base.SystemHookModule
+import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 @SuppressLint("PrivateApi")
-public class AllowUntrustedTouch extends SystemHookModule {
+class AllowUntrustedTouch : SystemHookModule() {
+    override fun getModuleName(): String = PreferenceKeys.ALLOW_UNTRUSTED_TOUCH.name
 
-    public AllowUntrustedTouch() {}
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_SERVER.packageName)
 
-    @Override
-    public String getModuleName() {
-        return "allow_untrusted_touch";
-    }
-
-    @Override
-    public String[] getTargetPackages() {
-        return new String[] {ScopeKeys.SYSTEM_SERVER.packageName};
-    }
-
-    @Override
-    public void handleSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) throws Throwable {
-        ClassLoader classLoader = param.getClassLoader();
-        Method method = classLoader.loadClass("com.android.server.wm.WindowState")
-                .getDeclaredMethod("getTouchOcclusionMode");
-        hookWithId(method, "touch_occlusion_mode", chain -> 2);
+    override fun handleSystemServerStarting(param: SystemServerStartingParam) {
+        val classLoader = param.classLoader
+        val method = classLoader.loadClass("com.android.server.wm.WindowState")
+            .getDeclaredMethod("getTouchOcclusionMode")
+        hookWithId(method, "touch_occlusion_mode") { 2 }
     }
 }
