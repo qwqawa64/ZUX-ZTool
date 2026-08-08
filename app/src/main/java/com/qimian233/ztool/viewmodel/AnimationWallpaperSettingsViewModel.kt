@@ -52,29 +52,11 @@ class AnimationWallpaperSettingsViewModel(
     }
 
     fun saveCustomChargeVideo(context: android.content.Context, uri: android.net.Uri, fileName: String): Boolean {
-        return saveVideoDirect(context, uri, fileName)
+        return repository.saveVideo(uri, fileName)
     }
 
     fun saveWallpaperVideo(context: android.content.Context, uri: android.net.Uri, fileName: String): Boolean {
-        return saveVideoDirect(context, uri, fileName)
-    }
-
-    private fun saveVideoDirect(context: android.content.Context, uri: android.net.Uri, fileName: String): Boolean {
-        try {
-            val targetPath = "$CUSTOM_VIDEO_DIR/$fileName"
-            val shellExecutor = com.qimian233.ztool.EnhancedShellExecutor.getInstance()
-            shellExecutor.executeRootCommand("mkdir -p $CUSTOM_VIDEO_DIR", 5)
-
-            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: return false
-
-            val process = Runtime.getRuntime()
-                .exec(arrayOf("su", "-c", "cat > $targetPath && chmod 644 $targetPath"))
-            process.outputStream.use { it.write(bytes) }
-            return process.waitFor() == 0
-        } catch (e: Exception) {
-            return false
-        }
+        return repository.saveVideo(uri, fileName)
     }
 
     fun showRestartDialog() {
@@ -102,6 +84,5 @@ class AnimationWallpaperSettingsViewModel(
 
     companion object {
         private const val TAG = "AnimationWallpaperSettingsViewModel"
-        private const val CUSTOM_VIDEO_DIR = "/sdcard/Download/ZTool"
     }
 }
