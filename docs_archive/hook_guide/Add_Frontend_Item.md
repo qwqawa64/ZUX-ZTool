@@ -1,10 +1,10 @@
-# 新 Hook 接入前端指南
+# 新 Hook 前端接入指南
 
-> **偏好键管理已集中化。** 添加新 Hook 时，所有偏好键（SharedPreferences key）必须先在 `PreferenceKeys.kt` 中注册，然后通过 `PreferenceKeys.CONSTANT_NAME.name` 引用。详见 **[Add_New_Preference_Key_zh-CN.md](./Add_New_Preference_Key_zh-CN.md)**。
+> 本文面向**应用侧 Compose 设置页**的配置接入。后端 Hook 实现请阅读 **[Add_New_Hook_Module.md](./Add_New_Hook_Module.md)**；偏好键集中管理请阅读根目录 **[Add_New_Preference_Key_zh-CN.md](../../Add_New_Preference_Key_zh-CN.md)**。
 >
-> 本文档中的示例已更新为使用 `PreferenceKeys` 常量。手写键名字符串不再推荐。
+> 偏好键管理已集中化：所有偏好键必须先在 `PreferenceKeys.kt` 中注册，然后通过 `PreferenceKeys.CONSTANT_NAME.name` 引用；作用域包名统一由 `ScopeKeys` 管理，通过 `ScopeKeys.CONSTANT.packageName` 引用。手写键名/包名字符串不再推荐。
 
-本文说明在 ZUX-ZTool 中为新的 Hook 功能接入前端配置项的推荐做法，重点覆盖 SharedPreferences、开关项和其它自定义控件。这里的“前端”主要指应用侧 Compose 设置页、Repository、ViewModel 和 UiState；Hook 侧仍按既有模块入口和 HookManager 规则接入。
+本文说明在 ZUX-ZTool 中为新的 Hook 功能接入前端配置项的推荐做法，重点覆盖 SharedPreferences、开关项和其它自定义控件。
 
 ## 基本原则
 
@@ -78,7 +78,7 @@ class ExampleSettingsRepository(
 Hook 侧（Kotlin）读取时使用同一个常量：
 
 ```kotlin
-val prefs = xposed.getRemotePreferences("xposed_module_config")
+val prefs = remotePreferences
 val enabled = prefs.getBoolean(PreferenceKeys.NEW_HOOK_ENABLED.name, PreferenceKeys.NEW_HOOK_ENABLED.default)
 val level = prefs.getInt(PreferenceKeys.NEW_HOOK_LEVEL.name, PreferenceKeys.NEW_HOOK_LEVEL.default)
 ```
@@ -278,7 +278,7 @@ SettingItem.Custom(
 
 ## 字符串和文案
 
-新增 UI 文案应写入 `app/src/main/res/values` 中的字符串资源文件，考虑 i18n ，不要只写一个 strings.xml，页面中使用 `stringResource(R.string.xxx)`。不要在 Composable 中硬编码中文或英文文本，除非是调试临时内容。
+新增 UI 文案应写入 `app/src/main/res/values` 中的字符串资源文件，考虑 i18n，不要只写一个 strings.xml，页面中使用 `stringResource(R.string.xxx)`。不要在 Composable 中硬编码中文或英文文本，除非是调试临时内容。
 
 推荐命名：
 
@@ -326,28 +326,17 @@ SettingItem.Custom(
 
 Hook 的作用域包名**统一由 `ScopeKeys` 管理**（`app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`），不要在代码中手写包名字符串。
 
-- Hook 的 `getTargetPackages()` 必须返回 `ScopeKeys.CONSTANT.packageName` 引用。
-- `ScopeUtils.getScopes()` 集中定义每个功能入口的作用域列表（包名 + 推荐重启方式），同样引用 `ScopeKeys`；前端功能入口（`FeaturesRoute`、`MainActivity`）和各 Repository 的"重启作用域"逻辑也来自 `ScopeKeys` / `ScopeUtils`。
+- `ScopeUtils.getScopes()` 集中定义每个功能入口的作用域列表（包名 + 推荐重启方式），引用 `ScopeKeys`；前端功能入口（`FeaturesRoute`、`MainActivity`）和各 Repository 的"重启作用域"逻辑也来自 `ScopeKeys` / `ScopeUtils`。
 - 每个 `Scope` 同时注册了 `HowToRestart`（`AmStop` / `KillAll` / `Reboot`），`ScopeUtils.restartScope()` 据此选择重启命令。
+- 后端 Hook 的 `getTargetPackages()` 必须返回 `ScopeKeys.CONSTANT.packageName` 引用（详见 `Add_New_Hook_Module.md`）。
 
 新增 Hook 目标包时按以下顺序处理：
 
 1. 在 `ScopeKeys.kt` 中注册新包名（含推荐重启方式）。
-2. 在 Hook 的 `getTargetPackages()` 中引用 `ScopeKeys.CONSTANT.packageName`。
+2. 后端 Hook 的 `getTargetPackages()` 中引用 `ScopeKeys.CONSTANT.packageName`。
 3. 在构建期资源 `scope.list` 中添加该包名（LSPosed 注入声明）。
 
 > `module.prop` 等构建期资源文件必须保持硬编码，不引用 `ScopeKeys`。`scope.list` 是构建期声明，与 `ScopeKeys` 相互独立，两个都要维护；用户还需在 LSPosed Manager 中勾选作用域。
-
-## Hook 侧一致性检查
-
-前端接入完成后，至少检查以下事项：
-
-1. Hook 模块是否已经注册到 `HookManager`。
-2. Hook 作用域包名是否已在 `ScopeKeys` 中注册、`getTargetPackages()` 是否引用 `ScopeKeys` 常量，并已加入构建期 `scope.list`。
-3. 前端保存的 SharedPrefs 键是否和 Hook 侧读取完全一致。
-4. 前端默认值是否和 Hook 侧默认值一致。
-5. 字符串、数值、列表格式是否和 Hook 侧解析方式一致。
-6. 目标应用重启后配置是否能生效。
 
 ## 常见错误
 
@@ -373,4 +362,3 @@ Hook 的作用域包名**统一由 `ScopeKeys` 管理**（`app/src/main/java/com
 8. 在 `strings.xml` 增加标题和说明。
 9. 如需重启，复用或补充该页面的重启确认流程。
 10. 运行 `.\gradlew.bat assembleDebug` 验证。
-

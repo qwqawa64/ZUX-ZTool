@@ -47,11 +47,11 @@ https://compose-miuix-ui.github.io/miuix/dokka/index.html
   app/                         Android app module
   docs_archive/compose_refactor/        Compose migration notes and scoped agent guide
   docs_archive/gradle_upgrade/          Gradle upgrade notes
+  docs_archive/hook_guide/              Backend Hook module + frontend Hook setting guides
   docs_archive/material_enhancement/    Material UI notes
   reference/                    Reference AAR files
   gradle/                       Gradle wrapper and version catalog
   libs/                         Root local dependencies
-  Add_New_Hook_zh-CN.md         Frontend guide for adding Hook settings, UTF-8 encoding
   Add_New_Preference_Key_zh-CN.md  Guide for adding preference keys in the centralized system
   AGENTS.MD                     This root agent guide
   README.md
@@ -168,7 +168,13 @@ hook/modules/
 When adding a Hook switch or other Hook-facing setting in the app UI, read and follow:
 
 ```text
-Add_New_Hook_zh-CN.md
+docs_archive/hook_guide/Add_Frontend_Item.md
+```
+
+When adding a new backend Hook module, read and follow:
+
+```text
+docs_archive/hook_guide/Add_New_Hook_Module.md
 ```
 
 **For preference key management**, all keys are now centrally defined in `PreferenceKeys.kt`. When adding a new key, read:
@@ -195,9 +201,9 @@ To add a new Hook implementation on the backend:
 2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `data/keys/ScopeKeys.kt` first (see "Scope Management"), and add it to `scope.list`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using `PreferenceKeys` constants (see `Add_New_Preference_Key_zh-CN.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
-5. If the Hook needs a user-facing toggle, add the frontend state according to `Add_New_Hook_zh-CN.md`.
+5. If the Hook needs a user-facing toggle, add the frontend state according to `docs_archive/hook_guide/Add_Frontend_Item.md`.
 
-Use `logger.<level>` for module logs when possible, see `/docs_archive/new_log_system_migrate_and_use_new_logging_system.md` for more information.
+Use `logger.<level>` for module logs when possible, see `docs_archive/new_log_system/migrate_and_use_new_logging_system.md` for more information.
 
 ## Service, Scope, And Activation Rules
 
