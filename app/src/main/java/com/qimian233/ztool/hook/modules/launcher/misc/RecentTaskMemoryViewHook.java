@@ -34,8 +34,8 @@ public class RecentTaskMemoryViewHook extends AppHookModule {
     private static final long REFRESH_INTERVAL_MS = 1000L;
     private static final String STRING_RAM_FORMATTER = "ram_formatter";
     private static final String STRING_RAM_UNAVAILABLE = "ram_unavailable";
-    private static final String FALLBACK_RAM_FORMATTER = "%s / %s";
-    private static final String FALLBACK_RAM_UNAVAILABLE = "-- / --";
+    private static final String FALLBACK_RAM_FORMATTER = "%s | %s";
+    private static final String FALLBACK_RAM_UNAVAILABLE = "-- | --";
 
     private static final String PROP_MEMORY_EXPANSION_LIST = "persist.sys.zram_wb_list";
     private static final String PROP_MEMORY_EXPANSION_ENABLED = "persist.sys.zram_wb_enabled";
