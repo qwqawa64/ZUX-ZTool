@@ -675,10 +675,10 @@
     <string name="ai_input_quick_help_note">If only this module is configured and the target app scope is not enabled, the target app may still only support the official default trigger.</string>
     <string name="custom_detector_err">Format error: separate multiple detection symbols with English commas.</string>
     <string name="custom_detector_hint">Enter custom detection symbols. Separate multiple entries with English commas.</string>
-    <string name="ai_input_Title">AI global input</string>
+    <string name="framework_misc_title">Misc</string>
     <string name="ai_input_expand_Title">Custom trigger symbols</string>
     <string name="ai_input_expand_summary">Try to force-enable AI global input and customize AI trigger symbols. The official default is full-width/half-width "&amp;&amp;".</string>
-    <string name="keep_rotation_title">Screen orientation</string>
+    <string name="framework_screen_and_display_title">Screen and Display</string>
     <string name="keep_rotation_enable_title">Keep screen orientation portrait</string>
     <string name="keep_rotation_enable_summary">Change the default screen orientation from landscape to portrait.</string>
     <string name="disable_zui_applist_title">Security</string>
@@ -691,7 +691,6 @@
     <string name="disable_lockscreen_password_per24h_summary">Warning: this feature is likely to reduce device security. Do not enable it unless necessary.</string>
     <string name="restart_system_title">Restart system</string>
     <string name="restart_system_message">This change affects the system framework. Restart the system to apply it.</string>
-    <string name="hbm_settings_title">High-brightness mode</string>
     <string name="disable_hbm_thermal_limit_title">Disable brightness reduction at high temperature</string>
     <string name="disable_hbm_thermal_limit_summary">ZUI lowers brightness by disabling high-brightness mode (HBM) when the device gets hot. Keeps high brightness even at high temperature. Requires a system reboot.</string>
     <string name="bypassDocementsUI">Allow selecting user root directory</string>

@@ -776,10 +776,10 @@
     <string name="ai_input_quick_help_note">如果只配置模块本身、不勾选目标应用作用域，目标应用仍可能只能使用官方默认唤起符。</string>
     <string name="custom_detector_err">格式错误：请使用英文逗号分隔多个检测符</string>
     <string name="custom_detector_hint">请输入自定义的检测符，多个使用英文逗号分隔</string>
-    <string name="ai_input_Title">AI全局输入</string>
+    <string name="framework_misc_title">杂项</string>
     <string name="ai_input_expand_Title">自定义唤起符</string>
     <string name="ai_input_expand_summary">尝试强制启用AI全局输入，自定义AI触发符号，官方默认为全/半角的“&amp;&amp;”</string>
-    <string name="keep_rotation_title">屏幕方向</string>
+    <string name="framework_screen_and_display_title">屏幕与显示</string>
     <string name="keep_rotation_enable_title">保持屏幕方向为竖屏</string>
     <string name="keep_rotation_enable_summary">将默认屏幕方向由横屏改为竖屏</string>
     <string name="disable_zui_applist_title">安全相关</string>
@@ -792,7 +792,6 @@
     <string name="disable_lockscreen_password_per24h_summary">注意：此功能很可能降低设备安全性，如非刚需不建议开启</string>
     <string name="restart_system_title">重启系统</string>
     <string name="restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
-    <string name="hbm_settings_title">高亮模式</string>
     <string name="disable_hbm_thermal_limit_title">禁用高温降低亮度</string>
     <string name="disable_hbm_thermal_limit_summary">ZUI 在机身温度过高时会关闭高亮模式（HBM）以降低亮度，开启后高温下仍保持高亮。需要重启系统生效。</string>
     <!--安全中心功能页的资源值-->
