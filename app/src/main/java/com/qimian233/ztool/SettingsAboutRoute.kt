@@ -49,6 +49,8 @@ fun SettingsAboutRoute(
     onOpenGithub: () -> Unit,
     onOpenUnfuckZUI: () -> Unit,
     onOpenZuxOsPlus: () -> Unit,
+    onOpenGitHubAccelerationSite: () -> Unit,
+    onOpenHitokotoSite: () -> Unit,
     onOpenQimian233: () -> Unit,
     onOpenWasdDestroy: () -> Unit,
     onCheckUpdate: () -> Unit,
@@ -142,18 +144,30 @@ fun SettingsAboutRoute(
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_acknowledgements_title), 2) { getModifier ->
+                AboutSectionCard(stringResource(R.string.about_acknowledgements_title), 4) { getModifier ->
                     AboutActionRow(
-                        title = "UnfuckZUI",
+                        title = stringResource(R.string.credits_unfuck_zui),
                         summary = stringResource(R.string.about_unfuckzui_summary),
                         onClick = onOpenUnfuckZUI,
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
-                        title = "ZUXOS+",
+                        title = stringResource(R.string.credits_zuxos_plus),
                         summary = stringResource(R.string.about_zuxos_plus_summary),
                         onClick = onOpenZuxOsPlus,
                         modifier = getModifier(1),
+                    )
+                    AboutActionRow(
+                        title = stringResource(R.string.credits_github_acceleration),
+                        summary = stringResource(R.string.credits_github_acceleration_site),
+                        onClick = onOpenGitHubAccelerationSite,
+                        modifier = getModifier(2)
+                    )
+                    AboutActionRow(
+                        title = stringResource(R.string.credits_hitokoto_support),
+                        summary = stringResource(R.string.credits_hitokoto_support_site),
+                        onClick = onOpenHitokotoSite,
+                        modifier = getModifier(3)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))

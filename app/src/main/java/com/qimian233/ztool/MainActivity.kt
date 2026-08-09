@@ -848,6 +848,12 @@ private fun MainRouteNavHost(
                 onOpenUnfuckZUI = {
                     openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI")
                 },
+                onOpenGitHubAccelerationSite = {
+                    openExternalLink(context, "https://gh.absinthe.life/")
+                },
+                onOpenHitokotoSite = {
+                    openExternalLink(context, "https://docs.xygeng.cn/")
+                },
                 onOpenQimian233 = {
                     openExternalLink(
                         context,
