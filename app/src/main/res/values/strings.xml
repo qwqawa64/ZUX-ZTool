@@ -792,6 +792,9 @@
     <string name="disable_lockscreen_password_per24h_summary">注意：此功能很可能降低设备安全性，如非刚需不建议开启</string>
     <string name="restart_system_title">重启系统</string>
     <string name="restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
+    <string name="hbm_settings_title">高亮模式</string>
+    <string name="disable_hbm_thermal_limit_title">禁用高温降低亮度</string>
+    <string name="disable_hbm_thermal_limit_summary">ZUI 在机身温度过高时会关闭高亮模式（HBM）以降低亮度，开启后高温下仍保持高亮。需要重启系统生效。</string>
     <!--安全中心功能页的资源值-->
     <string name="bypassDocementsUI">允许选择用户根目录</string>
     <string name="bypassDocementsUISummary">解决无法使用此文件夹，允许在/storage/emulated/0/等受限目录进行选择操作</string>

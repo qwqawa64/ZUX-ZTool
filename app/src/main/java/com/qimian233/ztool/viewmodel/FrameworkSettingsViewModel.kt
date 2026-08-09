@@ -97,6 +97,11 @@ class FrameworkSettingsViewModel(
         repository.saveForceRelativeAppFreeform(enabled)
     }
 
+    fun setDisableHbmThermalLimit(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableHbmThermalLimit = enabled)
+        repository.saveDisableHbmThermalLimit(enabled)
+    }
+
     fun showAiInputInfoDialog() {
         _uiState.value = _uiState.value.copy(showAiInputInfoDialog = true)
     }
@@ -145,4 +150,5 @@ data class FrameworkSettingsUiState(
     val allowUntrustedTouch: Boolean = false,
     val allowRelativeAppLaunch: Boolean = false,
     val forceRelativeAppFreeform: Boolean = false,
+    val disableHbmThermalLimit: Boolean = false,
 )

@@ -691,6 +691,9 @@
     <string name="disable_lockscreen_password_per24h_summary">Warning: this feature is likely to reduce device security. Do not enable it unless necessary.</string>
     <string name="restart_system_title">Restart system</string>
     <string name="restart_system_message">This change affects the system framework. Restart the system to apply it.</string>
+    <string name="hbm_settings_title">High-brightness mode</string>
+    <string name="disable_hbm_thermal_limit_title">Disable brightness reduction at high temperature</string>
+    <string name="disable_hbm_thermal_limit_summary">ZUI lowers brightness by disabling high-brightness mode (HBM) when the device gets hot. Keeps high brightness even at high temperature. Requires a system reboot.</string>
     <string name="bypassDocementsUI">Allow selecting user root directory</string>
     <string name="bypassDocementsUISummary">Fixes "Cannot use this folder" and allows selection operations in restricted directories such as /storage/emulated/0/.</string>
     <string name="default_allow_autorun_title">Background behavior management</string>

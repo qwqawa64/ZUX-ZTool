@@ -95,7 +95,8 @@ fun FrameworkSettingsRoute(
         onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
         onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
         onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
-        onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform
+        onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
+        onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit
     )
 
     if (uiState.showAiInputInfoDialog) {
@@ -148,6 +149,7 @@ private fun FrameworkSettingsScreen(
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
+    onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit,
 ) {
@@ -200,6 +202,7 @@ private fun FrameworkSettingsScreen(
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
+                        onDisableHbmThermalLimitChanged = onDisableHbmThermalLimitChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -221,6 +224,7 @@ private fun frameworkSettingsSections(
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
+    onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
 ): List<SettingSection> {
@@ -285,6 +289,17 @@ private fun frameworkSettingsSections(
                             onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged
                         )
                     }
+                )
+            )
+        ),
+        SettingSection(
+            title = stringResource(R.string.hbm_settings_title),
+            items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_hbm_thermal_limit_title),
+                    summary = stringResource(R.string.disable_hbm_thermal_limit_summary),
+                    checked = state.disableHbmThermalLimit,
+                    onCheckedChange = onDisableHbmThermalLimitChanged
                 )
             )
         ),
