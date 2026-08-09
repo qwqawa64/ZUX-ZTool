@@ -2,7 +2,6 @@ package com.qimian233.ztool
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -41,11 +40,8 @@ import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
-import com.qimian233.ztool.data.advanced.HotReloadDetail
 import com.qimian233.ztool.viewmodel.AdvancedSettingsUiState
 import com.qimian233.ztool.viewmodel.AdvancedSettingsViewModel
-
-internal const val SettingsAdvancedRouteName = "SettingsAdvanced"
 
 @Composable
 fun SettingsAdvancedRoute(
@@ -80,13 +76,14 @@ fun SettingsAdvancedRoute(
     }
 
     val hotReloadResultSummary = buildHotReloadResultSummary(uiState, context)
+    val hotReloadStartingString = stringResource(R.string.advanced_hot_reload_starting)
 
     if (uiState.showHotReloadDialog) {
         HotReloadConfirmDialog(
             runningTargetCount = uiState.runningTargetCount,
             onConfirm = {
                 viewModel.performHotReload()
-                Toast.makeText(context, context.getString(R.string.advanced_hot_reload_starting), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, hotReloadStartingString, Toast.LENGTH_SHORT).show()
             },
             onDismiss = viewModel::dismissHotReloadDialog
         )
@@ -139,7 +136,6 @@ private fun advancedSettingsSections(
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
-    val sections = mutableListOf<SettingSection>()
 
     return listOf(
         SettingSection(
@@ -238,13 +234,16 @@ private fun buildHotReloadSummary(
     inProgress: Boolean,
     resultSummary: String?
 ): String {
-    val context = LocalContext.current
+    val hotReloadInProgressString = stringResource(R.string.advanced_hot_reload_in_progress)
+    val hotReloadNotSupportedString = stringResource(R.string.advanced_hot_reload_unsupported)
+    val hotReloadNoTargetsString = stringResource(R.string.advanced_hot_reload_no_targets)
+    val hotReloadSummaryString = stringResource(R.string.advanced_hot_reload_summary, targetCount)
     return when {
-        inProgress -> context.getString(R.string.advanced_hot_reload_in_progress)
-        !hotReloadSupported -> context.getString(R.string.advanced_hot_reload_unsupported)
-        !hasTargets -> context.getString(R.string.advanced_hot_reload_no_targets)
+        inProgress -> hotReloadInProgressString
+        !hotReloadSupported -> hotReloadNotSupportedString
+        !hasTargets -> hotReloadNoTargetsString
         resultSummary != null -> resultSummary
-        else -> context.getString(R.string.advanced_hot_reload_summary, targetCount)
+        else -> hotReloadSummaryString
     }
 }
 
