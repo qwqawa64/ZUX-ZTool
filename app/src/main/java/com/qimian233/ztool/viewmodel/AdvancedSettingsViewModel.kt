@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.advanced.AdvancedSettingsRepository
 import com.qimian233.ztool.data.advanced.HotReloadDetail
+import com.qimian233.ztool.data.advanced.PersistentResetDetail
 import io.github.libxposed.service.HookedTarget
 import io.github.libxposed.service.HotReloadResult
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,13 @@ class AdvancedSettingsViewModel(
                 runningTargetCount = runningTargets.size,
                 runningTargets = runningTargets,
                 hotReloadInProgress = _uiState.value.hotReloadInProgress,
-                showHotReloadDialog = _uiState.value.showHotReloadDialog
+                showHotReloadDialog = _uiState.value.showHotReloadDialog,
+                resetInProgress = _uiState.value.resetInProgress,
+                showResetDialog = _uiState.value.showResetDialog,
+                resetDetails = _uiState.value.resetDetails,
+                resetResultSucceeded = _uiState.value.resetResultSucceeded,
+                resetResultFailed = _uiState.value.resetResultFailed,
+                resetResultUnsupported = _uiState.value.resetResultUnsupported
             )
         }
     }
@@ -39,6 +46,14 @@ class AdvancedSettingsViewModel(
 
     fun dismissHotReloadDialog() {
         _uiState.value = _uiState.value.copy(showHotReloadDialog = false)
+    }
+
+    fun showResetConfirmDialog() {
+        _uiState.value = _uiState.value.copy(showResetDialog = true)
+    }
+
+    fun dismissResetDialog() {
+        _uiState.value = _uiState.value.copy(showResetDialog = false)
     }
 
     fun performHotReload() {
@@ -71,6 +86,32 @@ class AdvancedSettingsViewModel(
         )
     }
 
+    fun performResetPersistentValues() {
+        _uiState.value = _uiState.value.copy(
+            showResetDialog = false,
+            resetInProgress = true,
+            resetDetails = emptyList()
+        )
+
+        repository.resetPersistentValues(
+            onComplete = { succeeded, failed, unsupported, details ->
+                Log.d(TAG, "重置持久化值完成: 成功=$succeeded, 失败=$failed, 不支持=$unsupported")
+                for (d in details) {
+                    if (d.status != "SUCCEEDED") {
+                        Log.w(TAG, "  [${d.status}] ${d.key}: ${d.message}")
+                    }
+                }
+                _uiState.value = _uiState.value.copy(
+                    resetInProgress = false,
+                    resetResultSucceeded = succeeded,
+                    resetResultFailed = failed,
+                    resetResultUnsupported = unsupported,
+                    resetDetails = details
+                )
+            }
+        )
+    }
+
     companion object {
         private const val TAG = "AdvancedVM"
     }
@@ -86,5 +127,11 @@ data class AdvancedSettingsUiState(
     val hotReloadResultSucceeded: Int = 0,
     val hotReloadResultFailed: Int = 0,
     val hotReloadResultUnsupported: Int = 0,
-    val hotReloadResultDied: Int = 0
+    val hotReloadResultDied: Int = 0,
+    val resetInProgress: Boolean = false,
+    val showResetDialog: Boolean = false,
+    val resetDetails: List<PersistentResetDetail> = emptyList(),
+    val resetResultSucceeded: Int = 0,
+    val resetResultFailed: Int = 0,
+    val resetResultUnsupported: Int = 0
 )

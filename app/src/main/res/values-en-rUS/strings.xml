@@ -930,6 +930,17 @@
     <string name="advanced_hot_reload_no_targets">No scoped process is running. Please install hook first.</string>
     <string name="advanced_hot_reload_in_progress">Hot reload in progress…</string>
     <string name="advanced_title">Advanced Options</string>
+    <string name="advanced_reset_title">Reset all modified persistent values</string>
+    <string name="advanced_reset_summary">Reset persistent values modified by this app\'s hooks, such as app auto-start and device properties</string>
+    <string name="advanced_reset_confirm_title">Reset persistent values?</string>
+    <string name="advanced_reset_confirm_message">This will clear persistent settings written by this app\'s hooks (e.g. the native AOD switch) and restore system defaults.\n\nRoot access is required. This operation cannot be undone.</string>
+    <string name="advanced_reset_starting">Resetting persistent values…</string>
+    <string name="advanced_reset_in_progress">Reset in progress…</string>
+    <string name="advanced_reset_result">Success %1$d, failed %2$d, unsupported %3$d</string>
+    <string name="advanced_reset_detail_title">Reset Details</string>
+    <string name="advanced_reset_item_aod">Native AOD switch</string>
+    <string name="advanced_reset_item_autorun">App auto-start state</string>
+    <string name="advanced_reset_item_mistouch">Game anti-mistouch state</string>
     <string name="advanced_hot_reload_title">Hot reload all modules</string>
     <string name="advanced_hot_reload_summary">Will request hot reload for %d running processes</string>
     <string name="disable_nearby_share_auto_shutdown_title">Prevent nearby share auto shutdown</string>

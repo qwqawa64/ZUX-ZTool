@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,6 +78,8 @@ fun SettingsAdvancedRoute(
 
     val hotReloadResultSummary = buildHotReloadResultSummary(uiState, context)
     val hotReloadStartingString = stringResource(R.string.advanced_hot_reload_starting)
+    val resetResultSummary = buildResetResultSummary(uiState, context)
+    val resetStartingString = stringResource(R.string.advanced_reset_starting)
 
     if (uiState.showHotReloadDialog) {
         HotReloadConfirmDialog(
@@ -86,6 +89,16 @@ fun SettingsAdvancedRoute(
                 Toast.makeText(context, hotReloadStartingString, Toast.LENGTH_SHORT).show()
             },
             onDismiss = viewModel::dismissHotReloadDialog
+        )
+    }
+
+    if (uiState.showResetDialog) {
+        ResetConfirmDialog(
+            onConfirm = {
+                viewModel.performResetPersistentValues()
+                Toast.makeText(context, resetStartingString, Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = viewModel::dismissResetDialog
         )
     }
 
@@ -118,9 +131,13 @@ fun SettingsAdvancedRoute(
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
-                    sections = advancedSettingsSections(uiState, hotReloadResultSummary) {
-                        viewModel.showHotReloadConfirmDialog()
-                    },
+                    sections = advancedSettingsSections(
+                        state = uiState,
+                        hotReloadResultSummary = hotReloadResultSummary,
+                        resetResultSummary = resetResultSummary,
+                        onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
+                        onResetClick = { viewModel.showResetConfirmDialog() }
+                    ),
                     bottomPadding = 32.dp
                 )
             }
@@ -132,7 +149,9 @@ fun SettingsAdvancedRoute(
 private fun advancedSettingsSections(
     state: AdvancedSettingsUiState,
     hotReloadResultSummary: String?,
-    onHotReloadClick: () -> Unit
+    resetResultSummary: String?,
+    onHotReloadClick: () -> Unit,
+    onResetClick: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -140,6 +159,27 @@ private fun advancedSettingsSections(
     return listOf(
         SettingSection(
             items = listOf(
+                SettingItem.Action(
+                    key = "reset_persistent_values",
+                    title = stringResource(R.string.advanced_reset_title),
+                    summary = buildResetSummary(
+                        inProgress = state.resetInProgress,
+                        resultSummary = resetResultSummary
+                    ),
+                    onClick = onResetClick,
+                    enabled = !state.resetInProgress,
+                    icon = if (state.resetInProgress) null else Icons.Rounded.Restore,
+                    trailingContent = if (state.resetInProgress) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .padding(0.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else null
+                ),
                 SettingItem.Action(
                     key = "hot_reload_all",
                     title = stringResource(R.string.advanced_hot_reload_title),
@@ -166,7 +206,7 @@ private fun advancedSettingsSections(
                 )
             )
         )
-    ) + buildHotReloadDetailSection(state) + listOf(
+    ) + buildResetDetailSection(state) + buildHotReloadDetailSection(state) + listOf(
         SettingSection(
             title = stringResource(R.string.advanced_info_title),
             items = listOf(
@@ -181,6 +221,54 @@ private fun advancedSettingsSections(
             )
         )
     )
+}
+
+@Composable
+private fun buildResetDetailSection(
+    state: AdvancedSettingsUiState
+): List<SettingSection> {
+    if (state.resetInProgress || state.resetDetails.isEmpty()) return emptyList()
+    return listOf(
+        SettingSection(
+            title = stringResource(R.string.advanced_reset_detail_title),
+            items = state.resetDetails.map { detail ->
+                val statusColor = when (detail.status) {
+                    "SUCCEEDED" -> LocalZToolColorScheme.current.primary
+                    "FAILED" -> LocalZToolColorScheme.current.error
+                    "UNSUPPORTED" -> LocalZToolColorScheme.current.error
+                    else -> LocalZToolColorScheme.current.onSurfaceVariant
+                }
+                SettingItem.Action(
+                    key = "reset_${detail.key}",
+                    title = resetItemDisplayName(detail.key),
+                    summary = "[${detail.status}] ${detail.message}",
+                    onClick = {},
+                    enabled = false,
+                    icon = null,
+                    leadingContent = {
+                        Text(
+                            text = when (detail.status) {
+                                "SUCCEEDED" -> "✓"
+                                "FAILED" -> "✗"
+                                "UNSUPPORTED" -> "⊘"
+                                else -> "?"
+                            },
+                            color = statusColor,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                )
+            }
+        )
+    )
+}
+
+@Composable
+private fun resetItemDisplayName(key: String): String = when (key) {
+    "doze_always_on" -> stringResource(R.string.advanced_reset_item_aod)
+    "autorun" -> stringResource(R.string.advanced_reset_item_autorun)
+    "mistouch" -> stringResource(R.string.advanced_reset_item_mistouch)
+    else -> key
 }
 
 @Composable
@@ -260,6 +348,62 @@ private fun buildHotReloadResultSummary(
         state.hotReloadResultFailed,
         state.hotReloadResultUnsupported,
         state.hotReloadResultDied
+    )
+}
+
+@Composable
+private fun buildResetSummary(
+    inProgress: Boolean,
+    resultSummary: String?
+): String {
+    val resetInProgressString = stringResource(R.string.advanced_reset_in_progress)
+    val resetDefaultSummary = stringResource(R.string.advanced_reset_summary)
+    return when {
+        inProgress -> resetInProgressString
+        resultSummary != null -> resultSummary
+        else -> resetDefaultSummary
+    }
+}
+
+private fun buildResetResultSummary(
+    state: AdvancedSettingsUiState,
+    context: android.content.Context
+): String? {
+    if (state.resetInProgress) return null
+    val total = state.resetResultSucceeded + state.resetResultFailed + state.resetResultUnsupported
+    if (total == 0) return null
+    return context.getString(
+        R.string.advanced_reset_result,
+        state.resetResultSucceeded,
+        state.resetResultFailed,
+        state.resetResultUnsupported
+    )
+}
+
+@Composable
+private fun ResetConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.advanced_reset_confirm_title)) },
+        text = {
+            Text(stringResource(R.string.advanced_reset_confirm_message))
+        },
+        confirmButton = {
+            ZToolTextButton(
+                onClick = onConfirm,
+                text = stringResource(R.string.confirm)
+            )
+        },
+        dismissButton = {
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.cancel),
+                isPrimary = false
+            )
+        }
     )
 }
 

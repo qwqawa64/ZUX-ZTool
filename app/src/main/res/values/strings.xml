@@ -984,6 +984,17 @@
 
     <!--高级选项页资源值-->
     <string name="advanced_title">高级选项</string>
+    <string name="advanced_reset_title">重置所有被修改的持久化值</string>
+    <string name="advanced_reset_summary">重置本应用 Hook 修改的应用自启动、设备属性值等持久化信息</string>
+    <string name="advanced_reset_confirm_title">确认重置持久化值？</string>
+    <string name="advanced_reset_confirm_message">将清除本应用 Hook 曾经写入的持久化设置（如原生 AOD 开关等），使其恢复系统默认状态。\n\n需要 Root 权限，此操作不可撤销。</string>
+    <string name="advanced_reset_starting">正在重置持久化值…</string>
+    <string name="advanced_reset_in_progress">重置进行中…</string>
+    <string name="advanced_reset_result">成功 %1$d，失败 %2$d，不支持 %3$d</string>
+    <string name="advanced_reset_detail_title">重置详情</string>
+    <string name="advanced_reset_item_aod">原生 AOD 开关</string>
+    <string name="advanced_reset_item_autorun">应用自启动状态</string>
+    <string name="advanced_reset_item_mistouch">游戏防误触状态</string>
     <string name="advanced_hot_reload_title">热重载全部模块</string>
     <string name="advanced_hot_reload_summary">将向 %d 个运行中的进程发起热重载请求</string>
     <string name="advanced_hot_reload_unsupported">热重载需要 API 102+，当前框架版本不支持</string>
