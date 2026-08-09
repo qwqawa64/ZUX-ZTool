@@ -158,12 +158,16 @@ jobs:
       # ---- 生成 Job Summary，展示提交信息 ----
       - name: Generate job summary
         if: always()
+        env:
+          # 多行值必须经 env 传递：run 内联的 ${{ }} 会移除换行，
+          # 且反引号在 bash 双引号内会触发命令替换，破坏 markdown
+          COMMITS: ${{ steps.commit-range.outputs.commits }}
         run: |
           echo "## Build Details" >> $GITHUB_STEP_SUMMARY
           echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit SHA:** \`${{ steps.commit-info.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo '**Commit SHA:** `${{ steps.commit-info.outputs.sha }}`' >> $GITHUB_STEP_SUMMARY
           echo "### Commits" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.commit-range.outputs.commits }}" >> $GITHUB_STEP_SUMMARY
+          echo "$COMMITS" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ steps.check.outputs.should_build }}" == "true" ]]; then
             echo "**Status:** ✅ Built" >> $GITHUB_STEP_SUMMARY
           else
