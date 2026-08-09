@@ -72,6 +72,7 @@ import com.qimian233.ztool.hook.modules.systemui.qs.SliderStyleHook;
 import com.qimian233.ztool.hook.modules.systemui.qs.VolumeSliderPercentageHook;
 import com.qimian233.ztool.hook.modules.systemui.statusbar.CustomStatusBarClock;
 import com.qimian233.ztool.hook.modules.systemui.statusbar.NativeNotificationIcon;
+import com.qimian233.ztool.hook.modules.systemui.statusbar.NetworkSpeedHideSlowHook;
 import com.qimian233.ztool.hook.modules.systemui.statusbar.NetworkSpeedRefresh;
 import com.qimian233.ztool.hook.modules.systemui.statusbar.NotificationIconHook;
 import com.qimian233.ztool.hook.modules.systemui.statusbar.StatusBarClockSecondsHook;
@@ -139,6 +140,7 @@ public class HookManager {
         registerHookModule(new SystemUINetworkSpeedSizeHook());
         registerHookModule(new SystemUINetworkSpeeddoublelayerHook());
         registerHookModule(new NetworkSpeedRefresh());
+        registerHookModule(new NetworkSpeedHideSlowHook());
         registerHookModule(new SystemUIBatteryHook());
         registerHookModule(new ForceImmersiveMode());
         registerHookModule(new ForceLenovoAOD());

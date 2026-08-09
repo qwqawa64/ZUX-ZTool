@@ -134,6 +134,21 @@ class StatusBarSettingsViewModel(
         repository.saveNetworkSpeedRefreshInterval(value)
     }
 
+    fun setNetworkSpeedHideSlow(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(networkSpeedHideSlow = enabled)
+        repository.saveNetworkSpeedHideSlow(enabled)
+    }
+
+    fun setNetworkSpeedHideThreshold(value: Float) {
+        _uiState.value = _uiState.value.copy(networkSpeedHideThreshold = value)
+        repository.saveNetworkSpeedHideThreshold(value)
+    }
+
+    fun setNetworkSpeedHideBoth(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(networkSpeedHideBoth = enabled)
+        repository.saveNetworkSpeedHideBoth(enabled)
+    }
+
     fun setBatteryExternal(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(batteryExternal = enabled)
         repository.saveBatteryExternal(enabled)
@@ -206,6 +221,9 @@ data class StatusBarSettingsUiState(
     val networkSpeedDoubleLayer: Boolean = false,
     val networkSpeedRefreshEnabled: Boolean = false,
     val networkSpeedRefreshInterval: Float = 3.0f,
+    val networkSpeedHideSlow: Boolean = false,
+    val networkSpeedHideThreshold: Float = 10f,
+    val networkSpeedHideBoth: Boolean = false,
     val batteryExternal: Boolean = false,
     val showFormatHelpDialog: Boolean = false,
     val showSaveSuccessDialog: Boolean = false,

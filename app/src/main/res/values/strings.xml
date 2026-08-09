@@ -594,6 +594,11 @@
     <string name="statusBarNetworkRefreshTitle">自定义网速刷新间隔</string>
     <string name="statusBarNetworkRefreshSummary">开启后可以调整状态栏网速的刷新频率，默认 3 秒刷新一次</string>
     <string name="statusBarNetworkRefreshIntervalTitle">刷新间隔</string>
+    <string name="statusBarNetworkHideSlowTitle">隐藏慢速网速</string>
+    <string name="statusBarNetworkHideSlowSummary">当网速低于阈值时隐藏状态栏网速指示器，恢复后重新显示</string>
+    <string name="statusBarNetworkHideThresholdTitle">隐藏阈值</string>
+    <string name="statusBarNetworkHideBothTitle">上下行均慢速才隐藏</string>
+    <string name="statusBarNetworkHideBothSummary">关闭时仅下行低于阈值即隐藏；开启时需上下行同时低于阈值才隐藏</string>
     <!--系统界面 状态栏电池显示资源值-->
     <string name="statusBarBatteryTitle">电池</string>
     <string name="syatusBatteryExternalTitle">强制电池外百分比</string>

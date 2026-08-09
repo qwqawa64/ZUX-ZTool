@@ -527,6 +527,11 @@
     <string name="statusBarNetworkRefreshTitle">Customized network speed refresh interval</string>
     <string name="statusBarNetworkRefreshSummary">The default interval is 3s</string>
     <string name="statusBarNetworkRefreshIntervalTitle">Refresh interval</string>
+    <string name="statusBarNetworkHideSlowTitle">Hide slow network speed</string>
+    <string name="statusBarNetworkHideSlowSummary">Hide the status bar network speed indicator when the speed is below the threshold, and show it again when the speed recovers</string>
+    <string name="statusBarNetworkHideThresholdTitle">Hide threshold</string>
+    <string name="statusBarNetworkHideBothTitle">Hide only when both directions are slow</string>
+    <string name="statusBarNetworkHideBothSummary">When off, hides if the download speed is below the threshold; when on, hides only if both download and upload are below the threshold</string>
     <string name="statusBarBatteryTitle">Battery</string>
     <string name="syatusBatteryExternalTitle">Force battery percentage outside icon</string>
     <string name="syatusBatteryExternalSummary">Show remaining battery percentage to the right of the battery icon. Disable the system percentage display first.</string>

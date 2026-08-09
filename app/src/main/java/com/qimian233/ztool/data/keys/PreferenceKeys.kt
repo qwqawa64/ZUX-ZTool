@@ -46,6 +46,8 @@ object PreferenceKeys {
     @JvmField val SYSTEMUI_NETWORK_SPEED_SIZE = BoolKey("systemui_network_speed_size", false)
     @JvmField val SYSTEMUI_NETWORK_SPEED_DOUBLELAYER = BoolKey("systemui_network_speed_doublelayer", false)
     @JvmField val CUSTOM_NETWORK_SPEED_REFRESH_INTERVAL = BoolKey("custom_network_speed_refresh_interval", false)
+    @JvmField val SYSTEMUI_NETWORK_SPEED_HIDE_SLOW = BoolKey("systemui_network_speed_hide_slow", false)
+    @JvmField val SYSTEMUI_NETWORK_SPEED_HIDE_BOTH = BoolKey("systemui_network_speed_hide_both", false)
     @JvmField val SYSTEMUI_BATTERY_PERCENTAGE = BoolKey("systemui_battery_percentage", false)
     @JvmField val FORCE_IMMERSIVE_MODE = BoolKey("force_immersive_mode", false)
     @JvmField val FORCE_LENOVO_AOD = BoolKey("ForceLenovoAOD", false)
@@ -201,6 +203,7 @@ object PreferenceKeys {
     @JvmField val CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE = FloatKey("Custom_StatusBarClockTextSize", 16.0f)
     @JvmField val CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING = FloatKey("Custom_StatusBarClockLetterSpacing", 0.1f)
     @JvmField val SYSTEMUI_NETWORK_SPEED_REFRESH_INTERVAL = FloatKey("systemui_network_speed_refresh_interval", 3.0f)
+    @JvmField val SYSTEMUI_NETWORK_SPEED_HIDE_THRESHOLD = FloatKey("systemui_network_speed_hide_threshold", 10f)
     @JvmField val CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE = FloatKey("Custom_ControlCenterDateTextSize", 16.0f)
     @JvmField val CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING = FloatKey("Custom_ControlCenterDateLetterSpacing", 0.1f)
 
@@ -241,7 +244,8 @@ object PreferenceKeys {
         SYSTEMUI_REAL_WATTS, NOTIFICATION_ICON_LIMIT, CUSTOM_CONTROL_CENTER_DATE,
         CONTROL_CENTER_NO_TILE_LABELS, NO_CHARGE_ANIMATION, NATIVE_NOTIFICATION_ICON,
         SYSTEMUI_NETWORK_SPEED_SIZE, SYSTEMUI_NETWORK_SPEED_DOUBLELAYER,
-        CUSTOM_NETWORK_SPEED_REFRESH_INTERVAL, SYSTEMUI_BATTERY_PERCENTAGE,
+        CUSTOM_NETWORK_SPEED_REFRESH_INTERVAL, SYSTEMUI_NETWORK_SPEED_HIDE_SLOW,
+        SYSTEMUI_NETWORK_SPEED_HIDE_BOTH, SYSTEMUI_BATTERY_PERCENTAGE,
         FORCE_IMMERSIVE_MODE, FORCE_LENOVO_AOD, QS_ROUND_CORNER,
         BRIGHTNESS_SLIDER_PERCENTAGE, VOLUME_SLIDER_PERCENTAGE, QS_COLOR,
         NOTIFICATION_CENTER_BLUR, GUEST_MODE_CONTROLLER, EXPAND_QS_PANEL_PORTRAIT,
@@ -304,7 +308,7 @@ object PreferenceKeys {
     @JvmField
     val floatKeys: List<FloatKey> = listOf(
         CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE, CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING,
-        SYSTEMUI_NETWORK_SPEED_REFRESH_INTERVAL,
+        SYSTEMUI_NETWORK_SPEED_REFRESH_INTERVAL, SYSTEMUI_NETWORK_SPEED_HIDE_THRESHOLD,
         CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE, CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING
     )
 

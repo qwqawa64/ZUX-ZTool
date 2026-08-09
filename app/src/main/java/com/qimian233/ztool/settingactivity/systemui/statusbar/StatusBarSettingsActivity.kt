@@ -123,6 +123,9 @@ fun StatusBarSettingsRoute(
         onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
         onNetworkSpeedRefreshEnabledChanged = viewModel::setNetworkSpeedRefreshEnabled,
         onNetworkSpeedRefreshIntervalChanged = viewModel::setNetworkSpeedRefreshInterval,
+        onNetworkSpeedHideSlowChanged = viewModel::setNetworkSpeedHideSlow,
+        onNetworkSpeedHideThresholdChanged = viewModel::setNetworkSpeedHideThreshold,
+        onNetworkSpeedHideBothChanged = viewModel::setNetworkSpeedHideBoth,
         onBatteryExternalChanged = viewModel::setBatteryExternal,
         onRestartScope = viewModel::showRestartDialog,
     )
@@ -202,6 +205,9 @@ private fun StatusBarSettingsScreen(
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshEnabledChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshIntervalChanged: (Float) -> Unit,
+    onNetworkSpeedHideSlowChanged: (Boolean) -> Unit,
+    onNetworkSpeedHideThresholdChanged: (Float) -> Unit,
+    onNetworkSpeedHideBothChanged: (Boolean) -> Unit,
     onBatteryExternalChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
 ) {
@@ -262,6 +268,9 @@ private fun StatusBarSettingsScreen(
                         onNetworkSpeedDoubleLayerChanged = onNetworkSpeedDoubleLayerChanged,
                         onNetworkSpeedRefreshEnabledChanged = onNetworkSpeedRefreshEnabledChanged,
                         onNetworkSpeedRefreshIntervalChanged = onNetworkSpeedRefreshIntervalChanged,
+                        onNetworkSpeedHideSlowChanged = onNetworkSpeedHideSlowChanged,
+                        onNetworkSpeedHideThresholdChanged = onNetworkSpeedHideThresholdChanged,
+                        onNetworkSpeedHideBothChanged = onNetworkSpeedHideBothChanged,
                         onBatteryExternalChanged = onBatteryExternalChanged
                     ),
                     bottomPadding = 96.dp
@@ -293,6 +302,9 @@ private fun statusBarSettingsSections(
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshEnabledChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshIntervalChanged: (Float) -> Unit,
+    onNetworkSpeedHideSlowChanged: (Boolean) -> Unit,
+    onNetworkSpeedHideThresholdChanged: (Float) -> Unit,
+    onNetworkSpeedHideBothChanged: (Boolean) -> Unit,
     onBatteryExternalChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     val clockItems = buildList {
@@ -422,6 +434,40 @@ private fun statusBarSettingsSections(
                                     modifier = Modifier.padding(horizontal = 0.dp)
                                 )
                             }
+                        )
+                    )
+                }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.statusBarNetworkHideSlowTitle),
+                        summary = stringResource(R.string.statusBarNetworkHideSlowSummary),
+                        checked = state.networkSpeedHideSlow,
+                        onCheckedChange = onNetworkSpeedHideSlowChanged
+                    )
+                )
+                if (state.networkSpeedHideSlow) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ZToolSliderRow(
+                                    title = stringResource(R.string.statusBarNetworkHideThresholdTitle),
+                                    value = state.networkSpeedHideThreshold,
+                                    onValueChange = onNetworkSpeedHideThresholdChanged,
+                                    valueRange = 0f..100f,
+                                    steps = 19,
+                                    valueText = String.format("%.0f KB/s", state.networkSpeedHideThreshold),
+                                    horizontalPadding = 24.dp,
+                                    modifier = Modifier.padding(horizontal = 0.dp)
+                                )
+                            }
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.statusBarNetworkHideBothTitle),
+                            summary = stringResource(R.string.statusBarNetworkHideBothSummary),
+                            checked = state.networkSpeedHideBoth,
+                            onCheckedChange = onNetworkSpeedHideBothChanged
                         )
                     )
                 }

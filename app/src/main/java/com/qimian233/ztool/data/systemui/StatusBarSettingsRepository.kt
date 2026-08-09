@@ -26,6 +26,9 @@ class StatusBarSettingsRepository(
             networkSpeedDoubleLayer = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_DOUBLE_LAYER, false),
             networkSpeedRefreshEnabled = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_REFRESH_ENABLED, false),
             networkSpeedRefreshInterval = prefsUtils.loadFloatSetting(KEY_NETWORK_SPEED_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL),
+            networkSpeedHideSlow = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_HIDE_SLOW, false),
+            networkSpeedHideThreshold = prefsUtils.loadFloatSetting(KEY_NETWORK_SPEED_HIDE_THRESHOLD, DEFAULT_HIDE_THRESHOLD),
+            networkSpeedHideBoth = prefsUtils.loadBooleanSetting(KEY_NETWORK_SPEED_HIDE_BOTH, false),
             batteryExternal = prefsUtils.loadBooleanSetting(KEY_BATTERY_EXTERNAL, false),
             clockFormat = loadedClockFormat,
             clockPreview = buildClockPreview(loadedClockFormat),
@@ -116,6 +119,18 @@ class StatusBarSettingsRepository(
         prefsUtils.saveFloatSetting(KEY_NETWORK_SPEED_REFRESH_INTERVAL, value)
     }
 
+    fun saveNetworkSpeedHideSlow(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_NETWORK_SPEED_HIDE_SLOW, enabled)
+    }
+
+    fun saveNetworkSpeedHideThreshold(value: Float) {
+        prefsUtils.saveFloatSetting(KEY_NETWORK_SPEED_HIDE_THRESHOLD, value)
+    }
+
+    fun saveNetworkSpeedHideBoth(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_NETWORK_SPEED_HIDE_BOTH, enabled)
+    }
+
     fun saveBatteryExternal(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_BATTERY_EXTERNAL, enabled)
     }
@@ -185,7 +200,11 @@ class StatusBarSettingsRepository(
         private val KEY_NETWORK_SPEED_DOUBLE_LAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
         private val KEY_NETWORK_SPEED_REFRESH_ENABLED = PreferenceKeys.CUSTOM_NETWORK_SPEED_REFRESH_INTERVAL.name
         private val KEY_NETWORK_SPEED_REFRESH_INTERVAL = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_REFRESH_INTERVAL.name
+        private val KEY_NETWORK_SPEED_HIDE_SLOW = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_HIDE_SLOW.name
+        private val KEY_NETWORK_SPEED_HIDE_THRESHOLD = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_HIDE_THRESHOLD.name
+        private val KEY_NETWORK_SPEED_HIDE_BOTH = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_HIDE_BOTH.name
         private val KEY_BATTERY_EXTERNAL = PreferenceKeys.SYSTEMUI_BATTERY_PERCENTAGE.name
         private const val DEFAULT_REFRESH_INTERVAL = 3.0f
+        private const val DEFAULT_HIDE_THRESHOLD = 10f
     }
 }
