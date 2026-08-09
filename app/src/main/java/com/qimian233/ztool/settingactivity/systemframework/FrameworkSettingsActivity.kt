@@ -230,51 +230,19 @@ private fun frameworkSettingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.keep_rotation_title),
+            title = stringResource(R.string.framework_screen_and_display_title),
             items = listOf(
                 SettingItem.Switch(
                     title = stringResource(R.string.keep_rotation_enable_title),
                     summary = stringResource(R.string.keep_rotation_enable_summary),
                     checked = state.keepRotation,
                     onCheckedChange = onKeepRotationChanged
-                )
-            )
-        ),
-        SettingSection(
-            title = stringResource(R.string.disable_zui_applist_title),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.disable_zui_applist_enable_title),
-                    summary = stringResource(R.string.disable_zui_applist_enable_summary),
-                    checked = state.allowGetPackages,
-                    onCheckedChange = onAllowGetPackagesChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.allow_relative_app_launch_title),
-                    checked = state.allowRelativeAppLaunch,
-                    onCheckedChange = onAllowRelativeAppLaunchChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.force_relative_app_freeform_title),
-                    checked = state.forceRelativeAppFreeform,
-                    onCheckedChange = onForceRelativeAppFreeformChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.disable_flag_secure_title),
-                    summary = stringResource(R.string.disable_flag_secure_summary),
-                    checked = state.disableFlagSecure,
-                    onCheckedChange = onDisableFlagSecureChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.no_password_per_24h),
-                    summary = stringResource(R.string.no_password_per_24h_summary),
-                    checked = state.noPasswordPer24H,
-                    onCheckedChange = onNoPasswordPer24H
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.allow_untrusted_touch),
-                    checked = state.allowUntrustedTouch,
-                    onCheckedChange = onAllowUntrustedTouch
+                    title = stringResource(R.string.disable_hbm_thermal_limit_title),
+                    summary = stringResource(R.string.disable_hbm_thermal_limit_summary),
+                    checked = state.disableHbmThermalLimit,
+                    onCheckedChange = onDisableHbmThermalLimitChanged
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.force_on_off_animation),
@@ -293,19 +261,46 @@ private fun frameworkSettingsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.hbm_settings_title),
+            title = stringResource(R.string.disable_zui_applist_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_hbm_thermal_limit_title),
-                    summary = stringResource(R.string.disable_hbm_thermal_limit_summary),
-                    checked = state.disableHbmThermalLimit,
-                    onCheckedChange = onDisableHbmThermalLimitChanged
-                )
+                    title = stringResource(R.string.disable_zui_applist_enable_title),
+                    summary = stringResource(R.string.disable_zui_applist_enable_summary),
+                    checked = state.allowGetPackages,
+                    onCheckedChange = onAllowGetPackagesChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.allow_relative_app_launch_title),
+                    checked = state.allowRelativeAppLaunch,
+                    onCheckedChange = onAllowRelativeAppLaunchChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.no_password_per_24h),
+                    summary = stringResource(R.string.no_password_per_24h_summary),
+                    checked = state.noPasswordPer24H,
+                    onCheckedChange = onNoPasswordPer24H
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.allow_untrusted_touch),
+                    checked = state.allowUntrustedTouch,
+                    onCheckedChange = onAllowUntrustedTouch
+                ),
             )
         ),
         SettingSection(
-            title = stringResource(R.string.ai_input_Title),
+            title = stringResource(R.string.framework_misc_title),
             items = listOf(
+                SettingItem.Switch(
+                    title = stringResource(R.string.force_relative_app_freeform_title),
+                    checked = state.forceRelativeAppFreeform,
+                    onCheckedChange = onForceRelativeAppFreeformChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.disable_flag_secure_title),
+                    summary = stringResource(R.string.disable_flag_secure_summary),
+                    checked = state.disableFlagSecure,
+                    onCheckedChange = onDisableFlagSecureChanged
+                ),
                 SettingItem.Custom(
                     content = {
                         AiInputSettingsContent(
