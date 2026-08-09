@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui.statusbar
 
+import android.annotation.SuppressLint
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.RelativeSizeSpan
@@ -19,6 +20,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
  * what==1/what==10 分支）均只用于显示网速文本，因此按调用来源识别比原先匹配
  * "K/s"/"M/s" 等字符串后缀的方式更精确可靠，且不受系统文本格式变化影响。
  */
+@SuppressLint("PrivateApi")
 class SystemUINetworkSpeedSizeHook : AppHookModule() {
 
     companion object {
@@ -88,7 +90,7 @@ class SystemUINetworkSpeedSizeHook : AppHookModule() {
         }
 
         val numberPart = parts[0]
-        val unitPart: String? = parts[1]
+        val unitPart = parts[1]
 
         val spannableString = SpannableString(numberPart + "\n" + unitPart)
 
