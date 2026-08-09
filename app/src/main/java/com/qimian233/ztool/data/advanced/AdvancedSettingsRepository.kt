@@ -135,7 +135,8 @@ class AdvancedSettingsRepository(
      *
      * 当前支持：
      * - doze_always_on：清除旧版本通过 `settings put secure doze_always_on 1` 写入的残留。
-     * TODO(apk-analysis)：autorun / mistouch 待分析安全中心与游戏中心 APK 后实现。
+     * - mistouch：清除游戏中心防误触持久化（Settings.Global.key_game_assistant_prevent_misoperation）。
+     * TODO(apk-analysis)：autorun 待分析安全中心 APK 后实现。
      *
      * @param onComplete 全部项执行完成后回调（调用方线程），参数为 (succeeded, failed, unsupported, details)
      */
@@ -161,11 +162,11 @@ class AdvancedSettingsRepository(
             KEY_RESET_AUTORUN, "UNSUPPORTED", "尚未实现：待分析安全中心自启动数据库"
         )
 
-        // 3. 游戏防误触状态（游戏中心 SettingsValueUtilKt）
-        // TODO(apk-analysis)：分析 com.zui.game.service 的持久化写入目标后实现
-        unsupported++
+        // 3. 游戏防误触状态（游戏中心 SettingsValueUtilKt → Settings.Global）
+        val mistouch = resetMistakeTouch()
+        if (mistouch.success) succeeded++ else failed++
         details += PersistentResetDetail(
-            KEY_RESET_MISTOUCH, "UNSUPPORTED", "尚未实现：待分析游戏中心防误触持久化"
+            KEY_RESET_MISTOUCH, if (mistouch.success) "SUCCEEDED" else "FAILED", mistouch.message
         )
 
         onComplete(succeeded, failed, unsupported, details)
@@ -188,6 +189,32 @@ class AdvancedSettingsRepository(
             ResetOutcome(true, "已清除 doze_always_on 残留值")
         } else {
             ResetOutcome(false, "清除 doze_always_on 失败：${result.error ?: result.output}")
+        }
+    }
+
+    /**
+     * 清除游戏中心防误触持久化值。
+     * 写入方为 `com.zui.util.SettingsValueUtilKt.setPreventMisoperation`，
+     * 最终落到 `Settings.Global.key_game_assistant_prevent_misoperation`。
+     * AutoMistakeTouchHook 仅拦截内存态写入，删除残留让系统恢复默认。
+     */
+    private fun resetMistakeTouch(): ResetOutcome {
+        val current = shellExecutor.executeRootCommand(
+            "settings get global key_game_assistant_prevent_misoperation"
+        )
+        if (current.isSuccess) {
+            val value = current.output?.trim().orEmpty()
+            if (value.isEmpty() || value.equals("null", ignoreCase = true)) {
+                return ResetOutcome(true, "防误触无残留值，无需重置")
+            }
+        }
+        val result = shellExecutor.executeRootCommand(
+            "settings delete global key_game_assistant_prevent_misoperation"
+        )
+        return if (result.isSuccess) {
+            ResetOutcome(true, "已清除防误触持久化值")
+        } else {
+            ResetOutcome(false, "清除防误触失败：${result.error ?: result.output}")
         }
     }
 
