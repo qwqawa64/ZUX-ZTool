@@ -139,7 +139,6 @@ private fun advancedSettingsSections(
 
     return listOf(
         SettingSection(
-            title = stringResource(R.string.advanced_module_hot_reload),
             items = listOf(
                 SettingItem.Action(
                     key = "hot_reload_all",

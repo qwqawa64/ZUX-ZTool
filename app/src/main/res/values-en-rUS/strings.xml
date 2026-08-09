@@ -930,7 +930,6 @@
     <string name="advanced_hot_reload_no_targets">No scoped process is running. Please install hook first.</string>
     <string name="advanced_hot_reload_in_progress">Hot reload in progress…</string>
     <string name="advanced_title">Advanced Options</string>
-    <string name="advanced_module_hot_reload">Module hot reload</string>
     <string name="advanced_hot_reload_title">Hot reload all modules</string>
     <string name="advanced_hot_reload_summary">Will request hot reload for %d running processes</string>
     <string name="disable_nearby_share_auto_shutdown_title">Prevent nearby share auto shutdown</string>
