@@ -135,8 +135,8 @@ class AdvancedSettingsRepository(
      *
      * 当前支持：
      * - doze_always_on：清除旧版本通过 `settings put secure doze_always_on 1` 写入的残留。
+     * - autorun：清除安全中心 AutoRunManager 表 attr 列中被 Hook 写入的白名单位。
      * - mistouch：清除游戏中心防误触持久化（Settings.Global.key_game_assistant_prevent_misoperation）。
-     * TODO(apk-analysis)：autorun 待分析安全中心 APK 后实现。
      *
      * @param onComplete 全部项执行完成后回调（调用方线程），参数为 (succeeded, failed, unsupported, details)
      */
@@ -155,11 +155,11 @@ class AdvancedSettingsRepository(
             KEY_RESET_AOD, if (aod.success) "SUCCEEDED" else "FAILED", aod.message
         )
 
-        // 2. 应用自启动状态（安全中心 AutoRunDbItem）
-        // TODO(apk-analysis)：分析 com.lenovo.safecenter / com.zui.safecenter 的 autorun 数据库后实现
-        unsupported++
+        // 2. 应用自启动状态（安全中心 AutoRunManager.attr 白名单位）
+        val autorun = resetAutorun()
+        if (autorun.success) succeeded++ else failed++
         details += PersistentResetDetail(
-            KEY_RESET_AUTORUN, "UNSUPPORTED", "尚未实现：待分析安全中心自启动数据库"
+            KEY_RESET_AUTORUN, if (autorun.success) "SUCCEEDED" else "FAILED", autorun.message
         )
 
         // 3. 游戏防误触状态（游戏中心 SettingsValueUtilKt → Settings.Global）
@@ -189,6 +189,57 @@ class AdvancedSettingsRepository(
             ResetOutcome(true, "已清除 doze_always_on 残留值")
         } else {
             ResetOutcome(false, "清除 doze_always_on 失败：${result.error ?: result.output}")
+        }
+    }
+
+    /**
+     * 清除安全中心 AutoRunManager 表中被 EnableAutorunByDefault Hook 写入的白名单位。
+     * 数据库：com.zui.safecenter / com.lenovo.safecenter 的 databases/perf_leemcenter.db，
+     * 表 AutoRunManager 的 attr 列。位掩码：
+     * - USER_WHITE_LIST_APP = 0x20000000
+     * - RELATIVE_APP_WHITE_LIST = 0x40000000
+     * 仅清除白名单位，不动 state 列（用户手动设置的自启开关）。
+     */
+    private fun resetAutorun(): ResetOutcome {
+        val whitelistMask = 0x20000000 or 0x40000000 // 1610612736
+        val dbPaths = listOf(
+            "/data/user/0/com.zui.safecenter/databases/perf_leemcenter.db",
+            "/data/user/0/com.lenovo.safecenter/databases/perf_leemcenter.db"
+        )
+        var cleared = false
+        for (dbPath in dbPaths) {
+            // 库不存在则跳过（可能为另一包变体或无残留）
+            val exists = shellExecutor.executeRootCommand("ls $dbPath")
+            if (!exists.isSuccess) continue
+            // 表可能未创建（从未打开自启管理），先确认表存在，避免误报 sqlite3 不可用
+            val tableCheck = shellExecutor.executeRootCommand(
+                "sqlite3 \"$dbPath\" \"SELECT name FROM sqlite_master WHERE type='table' AND name='AutoRunManager';\""
+            )
+            if (!tableCheck.isSuccess) {
+                return ResetOutcome(false, "清除自启动白名单失败：sqlite3 不可用或数据库无法访问")
+            }
+            if (tableCheck.output?.trim().orEmpty().isEmpty()) continue
+            // 预检残留计数
+            val count = shellExecutor.executeRootCommand(
+                "sqlite3 \"$dbPath\" \"SELECT count(*) FROM AutoRunManager WHERE (attr & $whitelistMask) != 0;\""
+            )
+            if (!count.isSuccess) {
+                return ResetOutcome(false, "清除自启动白名单失败：${count.error ?: count.output}")
+            }
+            if (count.output?.trim().orEmpty() == "0") continue
+            // 清除白名单位（保留 stubborn / relative 等其他位）
+            val update = shellExecutor.executeRootCommand(
+                "sqlite3 \"$dbPath\" \"UPDATE AutoRunManager SET attr = attr & ~$whitelistMask;\""
+            )
+            if (!update.isSuccess) {
+                return ResetOutcome(false, "清除自启动白名单失败：${update.error ?: update.output}")
+            }
+            cleared = true
+        }
+        return if (cleared) {
+            ResetOutcome(true, "已清除自启动白名单残留")
+        } else {
+            ResetOutcome(true, "未发现自启动白名单残留")
         }
     }
 
