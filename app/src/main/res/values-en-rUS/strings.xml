@@ -976,4 +976,8 @@
     <string name="desktop_live_wallpaper_scale_mode_title">Video Display Mode</string>
     <string name="desktop_live_wallpaper_scale_mode_fit">Keep Aspect Ratio (Fit)</string>
     <string name="desktop_live_wallpaper_scale_mode_cover">Fill Screen (Crop)</string>
+    <string name="credits_github_acceleration">GitHub Mirror</string>
+    <string name="credits_github_acceleration_site">https://gh.absinthe.life/ delivers fast download and update check service for PRC region</string>
+    <string name="credits_hitokoto_support">Hitokoto Support</string>
+    <string name="credits_hitokoto_support_site">https://docs.xygeng.cn/ provides random words shown in home page</string>
 </resources>

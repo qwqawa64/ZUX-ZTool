@@ -1033,4 +1033,10 @@
     <string name="desktop_live_wallpaper_scale_mode_title">视频显示模式</string>
     <string name="desktop_live_wallpaper_scale_mode_fit">保持宽高比（完整显示）</string>
     <string name="desktop_live_wallpaper_scale_mode_cover">铺满全屏（等比裁剪）</string>
+    <string name="credits_zuxos_plus" translatable="false">ZUXOS+</string>
+    <string name="credits_unfuck_zui" translatable="false">UnfuckZUI</string>
+    <string name="credits_github_acceleration">GitHub 加速</string>
+    <string name="credits_github_acceleration_site">https://gh.absinthe.life/ 用于本应用的更新检查服务和 release 下载加速</string>
+    <string name="credits_hitokoto_support">一言支持</string>
+    <string name="credits_hitokoto_support_site">https://docs.xygeng.cn/ 用于主页一言</string>
 </resources>
