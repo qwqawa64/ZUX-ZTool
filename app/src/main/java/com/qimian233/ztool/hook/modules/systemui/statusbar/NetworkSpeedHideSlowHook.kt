@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.statusbar
 
 import android.annotation.SuppressLint
+import android.view.View
 import android.widget.TextView
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -11,25 +12,30 @@ import java.util.WeakHashMap
 /**
  * 状态栏网速指示器"隐藏慢速"Hook。
  *
- * 功能:当网速低于阈值时让 [com.android.systemui.zui.NetworkSpeedView] 不再占位显示,
- * 速度恢复后再显示。
+ * 功能:当网速低于阈值时让 com.android.systemui.zui.NetworkSpeedView 不再占位显示,
+ * 且文字消失;速度恢复后再显示。
  *
- * 实现思路:直接对 View 设 GONE 只能隐藏自身,无法让其它状态栏图标重新占据被网速
- * 指示器占用的空间——`StatusIconContainer.onMeasure/onLayout` 只依据
- * `StatusIconDisplayable.isIconVisible()` 决定是否测量/排列某个图标。因此本 Hook
- * 挂钩点改为 `NetworkSpeedView.isIconVisible()`(它读取 Settings.System 的
- * `network_realtime_speed_state` 持久化值,1=显示):慢速时让该方法返回 false,
- * 容器不再测量/排列该视图,其它图标即自动左移占位;速度恢复后返回 true,重新占位。
- * 注意只覆盖读取结果,绝不真实写入该持久化键,以免改动用户设置。
+ * 双挂钩点协同:
+ * 1. `isIconVisible()`(StatusIconDisplayable 接口实现):`StatusIconContainer.onMeasure/
+ *    onLayout` 只依据它决定是否测量/排列某个图标。慢速时让它返回 false,容器不再
+ *    测量/排列该视图,其它状态栏图标即自动左移占据被网速指示器占用的空间。
+ *    注意:`NetworkSpeedView.setVisibleState()` 是空实现、`getVisibleState()` 恒为 0,
+ *    因此仅靠返回值隐藏并不会让视图文字消失,还需第 2 个挂钩点。
+ * 2. `TextView.setText`(限定 NetworkSpeedView 实例)的 **after** 阶段:每次网速刷新
+ *    (原始实现约 3 秒一次)必然触发,慢速时设 View.GONE 让文字消失,恢复时设
+ *    View.VISIBLE。setText 是原始实现、size Hook、doublelayer Hook 三种显示路径的
+ *    共同汇聚点;原始刷新循环从不恢复 VISIBLE(仅 `updateNetworkSpeedViewStatus()`
+ *    设置可见性),因此 GONE 不会被后续刷新覆盖。
+ *
+ * 速度判定:两个挂钩点共享 [shouldHide] 与 per-instance 流量基线,用
+ * [android.net.TrafficStats] 两次采样间的差分自行计算,不依赖任何其他 Hook。
  *
  * 与既有 3 个网速 Hook 的兼容性设计:
- * - 速度获取:用 [android.net.TrafficStats] 两次采样间的差分自行计算,不依赖任何
- *   其他 Hook。因此与 `SystemUINetworkSpeeddoublelayerHook`(它拦截内部 Handler 的
- *   what==10/what==1 并 `return null` 切断 hook 链)互不干扰;该 Hook 反射调用
- *   `isIconVisible()` 判定是否刷新,慢速隐藏期间它会自然停止刷新文本,恢复后继续。
- * - 与 size Hook 共存:size Hook 改 setText 文本,本 Hook 改 isIconVisible 返回值,
- *   互不影响。
- * - 与 refresh Hook 共存:refresh 只改 Handler 消息延迟,不涉及 isIconVisible。
+ * - `SystemUINetworkSpeeddoublelayerHook` 拦截内部 Handler 的 what==10/what==1 并
+ *   `return null` 切断 hook 链;它反射调用 `isIconVisible()` 判定是否刷新,慢速隐藏
+ *   期间它会自然停止刷新文本,恢复后继续,与本 Hook 互不干扰。
+ * - size Hook 改 setText 文本,本 Hook 也在 setText 后处理可见性,互不影响。
+ * - refresh Hook 只改 Handler 消息延迟,不涉及 setText/isIconVisible。
  */
 @SuppressLint("PrivateApi")
 class NetworkSpeedHideSlowHook : AppHookModule() {
@@ -67,6 +73,8 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
             val networkSpeedViewClass =
                 param.defaultClassLoader.loadClass(NETWORK_SPEED_VIEW_CLASS)
 
+            // 挂钩点 1:isIconVisible —— 控制占位。容器只测量/排列 isIconVisible()==true
+            // 的图标,慢速时返回 false,其它图标自动左移占据被网速指示器占用的空间。
             val isIconVisibleMethod =
                 networkSpeedViewClass.getDeclaredMethod("isIconVisible")
             hookWithId(isIconVisibleMethod, "hide_slow_is_icon_visible") { chain ->
@@ -87,9 +95,37 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
                 }
             }
 
+            // 挂钩点 2:setText —— 控制文字消失。每次网速刷新必然触发 setText,after
+            // 阶段按慢速判定设置 visibility,让文字在慢速时真正消失。
+            val setTextMethod =
+                TextView::class.java.getDeclaredMethod("setText", CharSequence::class.java)
+            hookWithId(setTextMethod, "hide_slow_set_text") { chain ->
+                // 先让原始 setText(以及 size Hook 等)执行,再在 after 阶段设可见性
+                chain.proceed()
+                try {
+                    if (networkSpeedViewClass.isInstance(chain.thisObject)) {
+                        updateVisibility(chain.thisObject as TextView)
+                    }
+                } catch (_: Throwable) {
+                    // 可见性处理失败不影响网速文本显示
+                }
+            }
+
             logger.info("系统UI网速隐藏慢速Hook成功")
         } catch (e: Throwable) {
             logger.error("系统UI网速隐藏慢速Hook失败", e)
+        }
+    }
+
+    /** 慢速时隐藏视图自身(GONE),速度恢复后显示(VISIBLE)。仅在实际变化时设置。 */
+    private fun updateVisibility(view: TextView) {
+        val hide = shouldHide(view)
+        val visibility = if (hide) View.GONE else View.VISIBLE
+        if (view.visibility != visibility) {
+            view.visibility = visibility
+            logger.debug(
+                "NetworkSpeedView visibility -> " + if (hide) "GONE (slow)" else "VISIBLE"
+            )
         }
     }
 
@@ -149,7 +185,7 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
 
         if (isSlow != state.lastSlow) {
             logger.debug(
-                "NetworkSpeedView isIconVisible -> " + if (isSlow) "hidden (slow)" else "visible"
+                "NetworkSpeedView slow state -> " + if (isSlow) "slow (hide)" else "fast (show)"
             )
         }
         state.lastSlow = isSlow
