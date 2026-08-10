@@ -4,7 +4,7 @@ import com.qimian233.ztool.hook.modules.documentsui.DocumentsUIBypass;
 import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook;
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix;
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook;
-import com.qimian233.ztool.hook.modules.gametool.DisableGameAudio;
+import com.qimian233.ztool.hook.modules.systemframework.DisableGameAudio;
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudioApp;
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix;
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableDockBar;

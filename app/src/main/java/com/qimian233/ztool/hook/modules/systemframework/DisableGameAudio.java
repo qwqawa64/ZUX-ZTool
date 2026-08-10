@@ -1,9 +1,9 @@
-package com.qimian233.ztool.hook.modules.gametool;
+package com.qimian233.ztool.hook.modules.systemframework;
 
 import android.annotation.SuppressLint;
 
 import com.qimian233.ztool.data.keys.ScopeKeys;
-import com.qimian233.ztool.hook.base.BaseHookModule;
+import com.qimian233.ztool.hook.base.SystemHookModule;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
  * 拦截系统游戏音频属性设置，防止游戏模式干扰音频体验
  */
 @SuppressLint({"PrivateApi", "DiscouragedPrivateApi"})
-public class DisableGameAudio extends BaseHookModule {
+public class DisableGameAudio extends SystemHookModule {
 
     private static final String TARGET_PROPERTY = "sys.audio.game_name";
 
@@ -30,11 +30,6 @@ public class DisableGameAudio extends BaseHookModule {
         return new String[]{
                 ScopeKeys.ANDROID_SYSTEM.packageName  // 系统进程
         };
-    }
-
-    @Override
-    public void handleLoadPackage(XposedModuleInterface.PackageLoadedParam param) throws Throwable {
-        // App-layer hooks moved to DisableGameAudioApp
     }
 
     @Override
