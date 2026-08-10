@@ -305,7 +305,7 @@ public class CustomStatusBarClock extends AppHookModule {
      * 从SharedPreferences获取配置值的方法
      */
     private SharedPreferences getPrefs() {
-        return this.xposed.getRemotePreferences(PREFS_NAME);
+        return this.getXposed().getRemotePreferences(PREFS_NAME);
     }
 
     public String getCustomClock(String key) {

@@ -459,7 +459,7 @@ public class DisableForceStop extends AppHookModule {
      */
     private String findCMethodName() {
         String name = DexIndexStore.INSTANCE.string(
-                xposed,
+                getXposed(),
                 ScopeKeys.LAUNCHER.packageName,
                 DexIndexConstants.ModuleKeys.DISABLE_FORCE_STOP,
                 DexIndexConstants.Keys.FORCE_STOP_METHOD);

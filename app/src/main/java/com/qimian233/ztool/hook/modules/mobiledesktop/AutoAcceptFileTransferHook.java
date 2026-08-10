@@ -73,7 +73,7 @@ public class AutoAcceptFileTransferHook extends AppHookModule {
             final String finalAcceptedFieldName = acceptedFieldName;
             final String finalLiveDataFieldName = liveDataFieldName;
 
-            this.xposed.hook(activityClass.getDeclaredMethod("onCreate",
+            this.getXposed().hook(activityClass.getDeclaredMethod("onCreate",
                     android.os.Bundle.class)).intercept(chain -> {
                 Object result = chain.proceed();
 

@@ -41,7 +41,7 @@ public class NotificationIconHook extends AppHookModule {
         ClassLoader classLoader = param.getDefaultClassLoader();
         String packageName = param.getPackageName();
         if (ScopeKeys.SYSTEM_UI.packageName.equals(packageName)) {
-            SharedPreferences prefs = this.xposed.getRemotePreferences(PREFS_NAME);
+            SharedPreferences prefs = this.getXposed().getRemotePreferences(PREFS_NAME);
             NEW_MAX_ICONS = prefs.getInt("notify_num_size", 4);
             hookSystemUIIconLimit(classLoader);
         }

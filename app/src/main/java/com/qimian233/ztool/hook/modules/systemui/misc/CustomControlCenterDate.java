@@ -348,7 +348,7 @@ public class CustomControlCenterDate extends AppHookModule {
      * 获取SharedPreferences
      */
     private SharedPreferences getPrefs() {
-        return this.xposed.getRemotePreferences(PREFS_NAME);
+        return this.getXposed().getRemotePreferences(PREFS_NAME);
     }
 
     /**

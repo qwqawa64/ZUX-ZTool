@@ -30,7 +30,7 @@ class SliderStyleHook: AppHookModule() {
     private fun isFromBrightnessController(): Boolean =
         Throwable().stackTrace.any { it.className.contains("BrightnessDetailDialogController") }
 
-    override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam?) {
+    override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
 
         val prefs = xposed.getRemotePreferences("xposed_module_config")
         val fieldValue: Int = if (prefs.getBoolean(PreferenceKeys.CUSTOMIZE_SLIDER_STYLE_VALUE.name, false)) VERTICAL_TYPE else HORIZONTAL_TYPE

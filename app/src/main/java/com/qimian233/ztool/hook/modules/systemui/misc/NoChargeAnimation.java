@@ -51,7 +51,7 @@ public class NoChargeAnimation extends AppHookModule {
 
             // 从离线索引读取 Handler 字段名
             String handlerFieldName = DexIndexStore.INSTANCE.string(
-                    xposed, SYSTEMUI_PACKAGE,
+                    getXposed(), SYSTEMUI_PACKAGE,
                     DexIndexConstants.ModuleKeys.NO_CHARGE_ANIMATION,
                     DexIndexConstants.Keys.HANDLER_FIELD_NAME);
             if (handlerFieldName == null) handlerFieldName = "H"; // 默认回退

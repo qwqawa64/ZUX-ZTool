@@ -202,7 +202,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends AppHookModule {
                 }
             }
 
-            Long refreshInterval = (long) (xposed.getRemotePreferences(PREFS_NAME).getFloat("systemui_network_speed_refresh_interval", 3.0f) * 1000.0);
+            Long refreshInterval = (long) (getXposed().getRemotePreferences(PREFS_NAME).getFloat("systemui_network_speed_refresh_interval", 3.0f) * 1000.0);
             // 安排下一次更新
             findMethod(handlerCls, "sendEmptyMessageDelayed", int.class, long.class)
                     .invoke(handler, 10, refreshInterval);
@@ -303,7 +303,7 @@ public class SystemUINetworkSpeeddoublelayerHook extends AppHookModule {
     private Class<?> findHandlerInnerClass(ClassLoader classLoader) {
         // 先尝试离线索引中的 Handler 子类
         String indexed = DexIndexStore.INSTANCE.string(
-                xposed, SYSTEMUI_PACKAGE,
+                getXposed(), SYSTEMUI_PACKAGE,
                 DexIndexConstants.ModuleKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER,
                 DexIndexConstants.Keys.HANDLER_INNER_CLASS);
         if (indexed != null) {
