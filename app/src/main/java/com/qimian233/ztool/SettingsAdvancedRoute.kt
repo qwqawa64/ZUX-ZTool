@@ -22,7 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +34,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.qimian233.ztool.dexindex.base.DexIndexManager
+import com.qimian233.ztool.dexindex.base.DexIndexRegistry
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -43,6 +47,10 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.AdvancedSettingsUiState
 import com.qimian233.ztool.viewmodel.AdvancedSettingsViewModel
+
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun SettingsAdvancedRoute(
@@ -80,6 +88,12 @@ fun SettingsAdvancedRoute(
     val hotReloadStartingString = stringResource(R.string.advanced_hot_reload_starting)
     val resetResultSummary = buildResetResultSummary(uiState, context)
     val resetStartingString = stringResource(R.string.advanced_reset_starting)
+
+    // ── DexKit 索引 ────────────────────────────────────────────────
+    val dexIndexRefreshedStr = stringResource(R.string.dexIndexRefreshed)
+    val dexIndexRefreshFailedStr = stringResource(R.string.dexIndexRefreshFailed)
+    var dexIndexInProgress by remember { mutableStateOf(false) }
+    var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
 
     if (uiState.showHotReloadDialog) {
         HotReloadConfirmDialog(
@@ -136,7 +150,24 @@ fun SettingsAdvancedRoute(
                         hotReloadResultSummary = hotReloadResultSummary,
                         resetResultSummary = resetResultSummary,
                         onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
-                        onResetClick = { viewModel.showResetConfirmDialog() }
+                        onResetClick = { viewModel.showResetConfirmDialog() },
+                        dexIndexInProgress = dexIndexInProgress,
+                        dexIndexSummary = dexIndexSummary,
+                        onRefreshDexIndex = {
+                            dexIndexInProgress = true
+                            Thread {
+                                val results = DexIndexManager.indexAll(context)
+                                activity.runOnUiThread {
+                                    dexIndexInProgress = false
+                                    dexIndexSummary = buildDexIndexSummary(context)
+                                    Toast.makeText(
+                                        context,
+                                        if (results.values.any { it }) dexIndexRefreshedStr else dexIndexRefreshFailedStr,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }.start()
+                        }
                     ),
                     bottomPadding = 32.dp
                 )
@@ -151,7 +182,10 @@ private fun advancedSettingsSections(
     hotReloadResultSummary: String?,
     resetResultSummary: String?,
     onHotReloadClick: () -> Unit,
-    onResetClick: () -> Unit
+    onResetClick: () -> Unit,
+    dexIndexInProgress: Boolean,
+    dexIndexSummary: String,
+    onRefreshDexIndex: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -207,6 +241,29 @@ private fun advancedSettingsSections(
             )
         )
     ) + buildResetDetailSection(state) + buildHotReloadDetailSection(state) + listOf(
+        SettingSection(
+            title = stringResource(R.string.dexIndexSection),
+            items = listOf(
+                SettingItem.Action(
+                    key = "refresh_dex_index",
+                    title = stringResource(R.string.refreshDexIndex),
+                    summary = dexIndexSummary,
+                    onClick = onRefreshDexIndex,
+                    enabled = !dexIndexInProgress,
+                    icon = if (dexIndexInProgress) null else Icons.Rounded.Refresh,
+                    trailingContent = if (dexIndexInProgress) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .padding(0.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else null
+                )
+            )
+        ),
         SettingSection(
             title = stringResource(R.string.advanced_info_title),
             items = listOf(
@@ -433,4 +490,22 @@ private fun HotReloadConfirmDialog(
             )
         }
     )
+}
+
+/**
+ * 汇总 DexKit 索引状态：取各作用域最近一次成功索引时间，格式化为显示文本。
+ */
+private fun buildDexIndexSummary(context: android.content.Context): String {
+    val latest = DexIndexRegistry.indexers
+        .map { DexIndexManager.lastIndexedAt(context, it.scopePackage) }
+        .filter { it > 0L }
+        .maxOrNull()
+    return if (latest != null) {
+        context.getString(
+            R.string.dexIndexLastIndexedAt,
+            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(latest))
+        )
+    } else {
+        context.getString(R.string.dexIndexNotGenerated)
+    }
 }

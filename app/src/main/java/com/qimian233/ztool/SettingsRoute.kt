@@ -63,8 +63,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
-import com.qimian233.ztool.dexindex.base.DexIndexManager
-import com.qimian233.ztool.dexindex.base.DexIndexRegistry
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
@@ -83,10 +81,6 @@ import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.viewmodel.SettingsUiState
 import com.qimian233.ztool.viewmodel.SettingsViewModel
-
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -108,10 +102,6 @@ fun SettingsMainRoute(
     val restoreSuccessStr = stringResource(R.string.config_restore_success)
     val exportLogsSuccessStr = stringResource(R.string.export_logs_success)
     val exportLogsFailedStr = stringResource(R.string.export_logs_failed)
-
-    val dexIndexRefreshedStr = stringResource(R.string.dexIndexRefreshed)
-    val dexIndexRefreshFailedStr = stringResource(R.string.dexIndexRefreshFailed)
-    var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
 
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -194,20 +184,7 @@ fun SettingsMainRoute(
         onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
         onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
         onOpenAdvanced = onOpenAdvanced,
-        onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled,
-        onRefreshDexIndex = {
-            Thread {
-                val results = DexIndexManager.indexAll(context)
-                activity.runOnUiThread {
-                    dexIndexSummary = buildDexIndexSummary(context)
-                    showSettingsToast(
-                        context,
-                        if (results.values.any { it }) dexIndexRefreshedStr else dexIndexRefreshFailedStr
-                    )
-                }
-            }.start()
-        },
-        dexIndexSummary = dexIndexSummary
+        onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled
     )
 
     SettingsDialogs(
@@ -371,9 +348,7 @@ private fun SettingsRoute(
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
     onOpenAdvanced: () -> Unit,
-    onAutoCheckUpdateChanged: (Boolean) -> Unit,
-    onRefreshDexIndex: () -> Unit,
-    dexIndexSummary: String
+    onAutoCheckUpdateChanged: (Boolean) -> Unit
 ) {
     ZToolScaffold (
         topBar = {
@@ -411,8 +386,6 @@ private fun SettingsRoute(
                         onDeleteAllLogs = onDeleteAllLogs,
                         onOpenAdvanced = onOpenAdvanced,
                         onAutoCheckUpdateChanged = onAutoCheckUpdateChanged,
-                        onRefreshDexIndex = onRefreshDexIndex,
-                        dexIndexSummary = dexIndexSummary,
                     ),
                     bottomPadding = 32.dp
                 )
@@ -504,30 +477,9 @@ private fun settingsSections(
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
     onOpenAdvanced: () -> Unit,
-    onAutoCheckUpdateChanged: (Boolean) -> Unit,
-    onRefreshDexIndex: () -> Unit,
-    dexIndexSummary: String
+    onAutoCheckUpdateChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
-        SettingSection(
-            title = stringResource(R.string.dexIndexSection),
-            items = listOf(
-                SettingItem.Action(
-                    key = "refresh_dex_index",
-                    title = stringResource(R.string.refreshDexIndex),
-                    summary = dexIndexSummary,
-                    onClick = onRefreshDexIndex,
-                    icon = Icons.Rounded.Update,
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                            contentDescription = null,
-                            tint = LocalZToolColorScheme.current.onSurfaceVariant
-                        )
-                    }
-                )
-            )
-        ),
         SettingSection(
             title = stringResource(R.string.backupAndRestore),
             items = listOf(
@@ -1013,22 +965,4 @@ private fun DeleteLogsConfirmDialog(
             )
         }
     )
-}
-
-/**
- * 汇总离线索引状态：取各作用域最近一次成功索引时间，格式化为显示文本。
- */
-private fun buildDexIndexSummary(context: Context): String {
-    val latest = DexIndexRegistry.indexers
-        .map { DexIndexManager.lastIndexedAt(context, it.scopePackage) }
-        .filter { it > 0L }
-        .maxOrNull()
-    return if (latest != null) {
-        context.getString(
-            R.string.dexIndexLastIndexedAt,
-            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(latest))
-        )
-    } else {
-        context.getString(R.string.dexIndexNotGenerated)
-    }
 }
