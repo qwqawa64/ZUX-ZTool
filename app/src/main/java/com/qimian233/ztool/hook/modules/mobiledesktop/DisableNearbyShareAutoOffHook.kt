@@ -41,22 +41,19 @@ class DisableNearbyShareAutoOffHook : AppHookModule() {
         val targetMethodName = module?.get(DexIndexConstants.Keys.TARGET_METHOD)
             ?.takeIf { !it.isJsonNull }?.asString ?: FALLBACK_METHOD
 
-        val finalClassName = targetClassName
-        val finalMethodName = targetMethodName
-
         // ── 安装 Hook ─────────────────────────────────────────────
         try {
-            val targetClass = classLoader.loadClass(finalClassName)
+            val targetClass = classLoader.loadClass(targetClassName)
 
             val targetMethod = targetClass.declaredMethods.firstOrNull { method ->
-                method.name == finalMethodName
+                method.name == targetMethodName
                         && method.parameterTypes.isEmpty()
                         && method.returnType == Void.TYPE
             }
 
             if (targetMethod == null) {
                 logger.error(
-                    "Could not find startCountDown method ($finalMethodName) in $finalClassName",
+                    "Could not find startCountDown method ($targetMethodName) in $targetClassName",
                     null
                 )
                 return
@@ -66,9 +63,9 @@ class DisableNearbyShareAutoOffHook : AppHookModule() {
                 logger.debug("startCountDown() intercepted — auto-off timer prevented.")
                 null
             }
-            logger.info("Installed hook for FileUnionSwitchManager.$finalMethodName()")
+            logger.info("Installed hook for FileUnionSwitchManager.$targetMethodName()")
         } catch (e: ClassNotFoundException) {
-            logger.error("$finalClassName (FileUnionSwitchManager) not found", e)
+            logger.error("$targetClassName (FileUnionSwitchManager) not found", e)
         } catch (t: Throwable) {
             logger.error("Failed to hook FileUnionSwitchManager.startCountDown()", t)
         }

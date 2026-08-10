@@ -1,7 +1,9 @@
 package com.qimian233.ztool.dexindex.base
 
 import android.content.Context
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -185,8 +187,19 @@ object DexIndexManager {
         return try {
             val pm = context.packageManager
             val ai = pm.getApplicationInfo(scopePackage, 0)
-            val pi = pm.getPackageInfo(scopePackage, PackageManager.GET_SIGNATURES)
-            val sigHash = pi.signatures?.firstOrNull()?.toByteArray()?.let { sha256Hex(it) } ?: ""
+            val pi: PackageInfo
+            val sigBytes: ByteArray?
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                // API 28+：GET_SIGNING_CERTIFICATES + signingInfo（GET_SIGNATURES 已废弃）
+                pi = pm.getPackageInfo(scopePackage, PackageManager.GET_SIGNING_CERTIFICATES)
+                sigBytes = pi.signingInfo?.apkContentsSigners?.firstOrNull()?.toByteArray()
+            } else {
+                @Suppress("DEPRECATION")
+                pi = pm.getPackageInfo(scopePackage, PackageManager.GET_SIGNATURES)
+                @Suppress("DEPRECATION")
+                sigBytes = pi.signatures?.firstOrNull()?.toByteArray()
+            }
+            val sigHash = sigBytes?.let { sha256Hex(it) } ?: ""
             Fingerprint(ai.sourceDir, pi.lastUpdateTime, sigHash)
         } catch (t: Throwable) {
             Log.w(TAG, "fingerprint failed for $scopePackage", t)

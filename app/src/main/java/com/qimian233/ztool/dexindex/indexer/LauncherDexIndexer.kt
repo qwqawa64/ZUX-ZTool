@@ -44,10 +44,14 @@ class LauncherDexIndexer : DexIndexer {
                     declaredClass = "com.zui.launcher.GlobalSearchView"
                 }
             }
-            // 过滤类初始化方法（无参 void 查询会命中 <clinit>，反射无法获取）
-            methods.firstOrNull { it.name != "<clinit>" }?.let {
-                out.addProperty(DexIndexConstants.Keys.HOTWORD_INIT_METHOD, it.name)
-                Log.i(TAG, "CleanGlobalSearch: hotword init method = ${it.name}")
+            // 过滤类初始化方法（无参 void 查询会命中 <clinit>，反射无法获取）；
+            // 遍历取第一个匹配（DexKit 的 firstOrNull 扩展不推荐非唯一结果）
+            for (md in methods) {
+                if (md.name != "<clinit>") {
+                    out.addProperty(DexIndexConstants.Keys.HOTWORD_INIT_METHOD, md.name)
+                    Log.i(TAG, "CleanGlobalSearch: hotword init method = ${md.name}")
+                    break
+                }
             }
         } catch (t: Throwable) {
             Log.w(TAG, "CleanGlobalSearch: hotword init query failed", t)
@@ -118,9 +122,10 @@ class LauncherDexIndexer : DexIndexer {
                             .declaredClass("com.android.launcher3.model.LoaderCursor")
                     )
             )
-            methods.firstOrNull()?.let {
-                out.addProperty(DexIndexConstants.Keys.LOADER_CURSOR_B_METHOD, it.name)
-                Log.i(TAG, "ZuiLauncherHotseatHook: LoaderCursor method = ${it.name}")
+            for (md in methods) {
+                out.addProperty(DexIndexConstants.Keys.LOADER_CURSOR_B_METHOD, md.name)
+                Log.i(TAG, "ZuiLauncherHotseatHook: LoaderCursor method = ${md.name}")
+                break
             }
         } catch (t: Throwable) {
             Log.w(TAG, "ZuiLauncherHotseatHook: LoaderCursor query failed", t)

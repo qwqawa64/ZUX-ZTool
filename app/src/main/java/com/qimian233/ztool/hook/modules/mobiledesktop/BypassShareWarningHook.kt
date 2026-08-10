@@ -45,11 +45,7 @@ class BypassShareWarningHook : AppHookModule() {
             ?.takeIf { !it.isJsonNull }?.asString ?: "l"   // static factory: (Context) → manager
         val managerSetMethodName = module?.get(DexIndexConstants.Keys.MANAGER_SET_METHOD)
             ?.takeIf { !it.isJsonNull }?.asString ?: "z"    // instance: (boolean) → void
-
-        val finalManagerClass = managerClassName
-        val finalFactoryMethod = managerFactoryMethodName
-        val finalSetMethod = managerSetMethodName
-        val finalTileRefreshMethod = module?.get(DexIndexConstants.Keys.TILE_REFRESH_METHOD)
+        val tileRefreshMethod = module?.get(DexIndexConstants.Keys.TILE_REFRESH_METHOD)
             ?.takeIf { !it.isJsonNull }?.asString ?: "b"
 
         try {
@@ -70,8 +66,8 @@ class BypassShareWarningHook : AppHookModule() {
                     } else {
                         setNearbyShareEnabled(
                             tile, context, classLoader,
-                            finalManagerClass, finalFactoryMethod, finalSetMethod,
-                            finalTileRefreshMethod
+                            managerClassName, managerFactoryMethodName, managerSetMethodName,
+                            tileRefreshMethod
                         )
                         logger.debug("Bypassed warning and enabled nearby share directly.")
                         null
@@ -108,15 +104,15 @@ class BypassShareWarningHook : AppHookModule() {
                     logger.debug("dialog hook: enabled via MotoDiscoveryManager")
                 } catch (_: ReflectiveOperationException) {
                     // 回退旧版 manager
-                    val managerClass = classLoader.loadClass(finalManagerClass)
+                    val managerClass = classLoader.loadClass(managerClassName)
                     val lMethod =
-                        managerClass.getDeclaredMethod(finalFactoryMethod, Context::class.java)
+                        managerClass.getDeclaredMethod(managerFactoryMethodName, Context::class.java)
                     val manager = lMethod.invoke(null, context)
                     if (manager == null) {
                         logger.warn("Unable to get manager!")
                     } else {
                         val zMethod = manager.javaClass.getDeclaredMethod(
-                            finalSetMethod, Boolean::class.javaPrimitiveType
+                            managerSetMethodName, Boolean::class.javaPrimitiveType
                         )
                         zMethod.isAccessible = true
                         zMethod.invoke(manager, true)

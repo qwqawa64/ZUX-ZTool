@@ -96,9 +96,8 @@ class MobileDesktopDexIndexer : DexIndexer {
                     }
                 }
             }
-                // 过滤类初始化方法后要求唯一匹配（保留原 singleOrNull 语义）
-                .filter { it.name != "<clinit>" }
-                .singleOrNull()
+                // 排除类初始化方法后要求唯一匹配（保留原 singleOrNull 语义）
+                .singleOrNull { it.name != "<clinit>" }
             if (md != null) {
                 out.addProperty(DexIndexConstants.Keys.DIALOG_METHOD, md.name)
                 Log.i(TAG, "BypassShareWarningHook: dialog method = ${md.name}")
@@ -119,9 +118,8 @@ class MobileDesktopDexIndexer : DexIndexer {
                     declaredClass = "com.motorola.readyfor.tile.BaseFileUnionTile"
                 }
             }
-                // 过滤类初始化方法后要求唯一匹配（保留原 singleOrNull 语义）
-                .filter { it.name != "<clinit>" }
-                .singleOrNull()
+                // 排除类初始化方法后要求唯一匹配（保留原 singleOrNull 语义）
+                .singleOrNull { it.name != "<clinit>" }
             if (md != null) {
                 out.addProperty(DexIndexConstants.Keys.TILE_REFRESH_METHOD, md.name)
                 Log.i(TAG, "BypassShareWarningHook: tile refresh method = ${md.name}")
