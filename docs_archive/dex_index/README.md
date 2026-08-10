@@ -63,7 +63,7 @@ com.qimian233.ztool.hook.base/
    ```kotlin
    val name = DexIndexStore.string(
        xposed, ScopeKeys.XXX.packageName,
-       DexIndexConstants.ModuleKeys.MODULE,
+       DexIndexConstants.ModuleKeys.MODULE, // 或者 PreferenceKeys.MODULE_NAME.name
        DexIndexConstants.Keys.FIELD
    ) ?: "硬编码fallback"
    ```
