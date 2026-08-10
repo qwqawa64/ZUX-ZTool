@@ -53,3 +53,4 @@ build/
 /reference/*
 /package.json
 /package-lock.json
+/.reasonix/*
