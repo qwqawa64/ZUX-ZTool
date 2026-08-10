@@ -36,13 +36,13 @@ object DexIndexConstants {
      * 索引器写入与 Hook 侧读取必须使用同一常量。
      */
     object ModuleKeys {
-        val CLEAN_GLOBAL_SEARCH = PreferenceKeys.CLEAN_GLOBAL_SEARCH.name
-        val DISABLE_FORCE_STOP = PreferenceKeys.DISABLE_FORCE_STOP.name
-        val ZUI_LAUNCHER_HOTSEAT = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
-        val NO_CHARGE_ANIMATION = PreferenceKeys.NO_CHARGE_ANIMATION.name
-        val SYSTEMUI_NETWORK_SPEED_DOUBLELAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
-        val BYPASS_SHARE_WARNING = PreferenceKeys.BYPASS_SHARE_WARNING.name
-        val DISABLE_NEARBY_SHARE_COUNTDOWN = PreferenceKeys.DISABLE_NEARBY_SHARE_COUNTDOWN.name
+        @JvmField val CLEAN_GLOBAL_SEARCH = PreferenceKeys.CLEAN_GLOBAL_SEARCH.name
+        @JvmField val DISABLE_FORCE_STOP = PreferenceKeys.DISABLE_FORCE_STOP.name
+        @JvmField val ZUI_LAUNCHER_HOTSEAT = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
+        @JvmField val NO_CHARGE_ANIMATION = PreferenceKeys.NO_CHARGE_ANIMATION.name
+        @JvmField val SYSTEMUI_NETWORK_SPEED_DOUBLELAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
+        @JvmField val BYPASS_SHARE_WARNING = PreferenceKeys.BYPASS_SHARE_WARNING.name
+        @JvmField val DISABLE_NEARBY_SHARE_COUNTDOWN = PreferenceKeys.DISABLE_NEARBY_SHARE_COUNTDOWN.name
     }
 
     /** 各模块输出字段 key。 */
