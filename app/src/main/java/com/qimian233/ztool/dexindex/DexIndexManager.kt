@@ -59,9 +59,12 @@ object DexIndexManager {
     }
 
     /**
-     * 该作用域是否需要重新索引：现有文件缺失/损坏，或 apk 指纹（路径+更新+签名）变化。
+     * 该作用域是否需要重新索引：schemaVersion 不匹配（结构升级）、
+     * 现有文件缺失/损坏，或 apk 指纹（路径+更新+签名）变化。
      */
     fun needsReindex(context: Context, scopePackage: String): Boolean {
+        val schema = readStoredSchemaVersion(context, scopePackage)
+        if (schema == null || schema != DexIndexConstants.SCHEMA_VERSION) return true
         val target = readStoredFingerprint(context, scopePackage) ?: return true
         val current = currentFingerprint(context, scopePackage) ?: return false
         return target != current
@@ -147,6 +150,18 @@ object DexIndexManager {
         if (!tmp.renameTo(target)) {
             target.writeText(root.toString())
             tmp.delete()
+        }
+    }
+
+    /** 读取现有文件的 schemaVersion，缺失/损坏返回 null。 */
+    private fun readStoredSchemaVersion(context: Context, scopePackage: String): Int? {
+        return try {
+            val file = File(indexDir(context), DexIndexConstants.fileName(scopePackage))
+            if (!file.exists()) return null
+            JsonParser.parseString(file.readText()).asJsonObject
+                .get(DexIndexConstants.JSON_SCHEMA_VERSION)?.asInt
+        } catch (t: Throwable) {
+            null
         }
     }
 

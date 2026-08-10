@@ -28,10 +28,7 @@ class SystemUiDexIndexer : DexIndexer {
             DexIndexConstants.ModuleKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER,
             indexNetworkSpeedDoublelayer(bridge)
         )
-
-        val root = JsonObject()
-        root.add(DexIndexConstants.JSON_MODULES, modules)
-        return root
+        return modules
     }
 
     // ── NoChargeAnimation ───────────────────────────────────────────

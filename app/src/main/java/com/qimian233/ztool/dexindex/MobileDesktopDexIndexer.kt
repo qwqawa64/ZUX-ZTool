@@ -25,10 +25,7 @@ class MobileDesktopDexIndexer : DexIndexer {
             DexIndexConstants.ModuleKeys.DISABLE_NEARBY_SHARE_COUNTDOWN,
             indexDisableNearbyShareCountdown(bridge)
         )
-
-        val root = JsonObject()
-        root.add(DexIndexConstants.JSON_MODULES, modules)
-        return root
+        return modules
     }
 
     // ── BypassShareWarningHook ──────────────────────────────────────
@@ -96,7 +93,10 @@ class MobileDesktopDexIndexer : DexIndexer {
                         }
                     }
                 }
-            }.singleOrNull()
+            }
+                // 过滤类初始化方法后要求唯一匹配（保留原 singleOrNull 语义）
+                .filter { it.name != "<clinit>" }
+                .singleOrNull()
             if (md != null) {
                 out.addProperty(DexIndexConstants.Keys.DIALOG_METHOD, md.name)
                 Log.i(TAG, "BypassShareWarningHook: dialog method = ${md.name}")
@@ -116,7 +116,10 @@ class MobileDesktopDexIndexer : DexIndexer {
                     returnType = "void"
                     declaredClass = "com.motorola.readyfor.tile.BaseFileUnionTile"
                 }
-            }.singleOrNull()
+            }
+                // 过滤类初始化方法后要求唯一匹配（保留原 singleOrNull 语义）
+                .filter { it.name != "<clinit>" }
+                .singleOrNull()
             if (md != null) {
                 out.addProperty(DexIndexConstants.Keys.TILE_REFRESH_METHOD, md.name)
                 Log.i(TAG, "BypassShareWarningHook: tile refresh method = ${md.name}")
@@ -151,7 +154,7 @@ class MobileDesktopDexIndexer : DexIndexer {
             if (classData != null) {
                 out.addProperty(DexIndexConstants.Keys.TARGET_CLASS, classData.name)
                 for (md in classData.methods) {
-                    if (md.paramTypeNames.isEmpty() && md.returnTypeName == "void") {
+                    if (md.paramTypeNames.isEmpty() && md.returnTypeName == "void" && md.name != "<clinit>") {
                         out.addProperty(DexIndexConstants.Keys.TARGET_METHOD, md.name)
                         break
                     }

@@ -23,7 +23,9 @@ interface DexIndexer {
 
     /**
      * 对给定 bridge 执行该作用域的全部查询。
-     * 返回形如 `{ "modules": { "<moduleKey>": { "<fieldKey>": "<value>" } } }` 的 JSON。
+     * 返回形如 `{ "<moduleKey>": { "<fieldKey>": "<value>" } }` 的 JSON——
+     * **只含 modules 映射本身**，root 包装（schemaVersion/apk 指纹等）由
+     * [DexIndexManager] 负责，避免双重嵌套。
      */
     fun index(bridge: DexKitBridge, context: Context): JsonObject
 }

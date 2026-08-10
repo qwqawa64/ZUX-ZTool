@@ -11,8 +11,11 @@ object DexIndexConstants {
     /**
      * 索引文件直接位于模块 filesDir 根目录：libxposed Remote Files 的根即
      * filesDir，文件名不支持子目录/路径分隔符，文件名为 `<scopePackage>.json`。
+     *
+     * v2：indexer 输出改回纯 modules 映射（v1 曾双重嵌套 modules，且 v1 读取
+     * 端 ConcurrentHashMap 存 null 会 NPE）；needsReindex 校验该值以自动重建旧文件。
      */
-    const val SCHEMA_VERSION = 1
+    const val SCHEMA_VERSION = 2
 
     // ── JSON 结构 key ─────────────────────────────────────────────
     const val JSON_SCHEMA_VERSION = "schemaVersion"

@@ -20,13 +20,18 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object DexIndexStore {
 
-    private val cache = ConcurrentHashMap<String, JsonObject?>()
+    /** 读取失败的哨兵（ConcurrentHashMap 不允许 null 值，用单例空对象表示"已尝试但失败"）。 */
+    private val MISSING = JsonObject()
+
+    private val cache = ConcurrentHashMap<String, JsonObject>()
 
     /**
      * 取某作用域的整个索引 JSON（含 modules 分组），失败返回 null。
      */
     fun lookup(xposed: XposedInterface, scopePackage: String): JsonObject? {
-        if (cache.containsKey(scopePackage)) return cache[scopePackage]
+        val cached = cache[scopePackage]
+        if (cached === MISSING) return null
+        if (cached != null) return cached
         val result = try {
             val pfd = xposed.openRemoteFile(DexIndexConstants.fileName(scopePackage))
             pfd.use { p ->
@@ -38,7 +43,7 @@ object DexIndexStore {
         } catch (t: Throwable) {
             null
         }
-        cache[scopePackage] = result
+        cache[scopePackage] = result ?: MISSING
         return result
     }
 

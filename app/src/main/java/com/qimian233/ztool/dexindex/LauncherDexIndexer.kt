@@ -25,10 +25,7 @@ class LauncherDexIndexer : DexIndexer {
         modules.add(DexIndexConstants.ModuleKeys.CLEAN_GLOBAL_SEARCH, indexCleanGlobalSearch(bridge))
         modules.add(DexIndexConstants.ModuleKeys.DISABLE_FORCE_STOP, indexDisableForceStop(bridge))
         modules.add(DexIndexConstants.ModuleKeys.ZUI_LAUNCHER_HOTSEAT, indexZuiLauncherHotseat(bridge))
-
-        val root = JsonObject()
-        root.add(DexIndexConstants.JSON_MODULES, modules)
-        return root
+        return modules
     }
 
     // ── CleanGlobalSearch ───────────────────────────────────────────
@@ -45,7 +42,8 @@ class LauncherDexIndexer : DexIndexer {
                     declaredClass = "com.zui.launcher.GlobalSearchView"
                 }
             }
-            methods.firstOrNull()?.let {
+            // 过滤类初始化方法（无参 void 查询会命中 <clinit>，反射无法获取）
+            methods.firstOrNull { it.name != "<clinit>" }?.let {
                 out.addProperty(DexIndexConstants.Keys.HOTWORD_INIT_METHOD, it.name)
                 Log.i(TAG, "CleanGlobalSearch: hotword init method = ${it.name}")
             }
