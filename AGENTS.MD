@@ -145,6 +145,27 @@ Core files:
 - `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`: **single source of truth for all scope package names** — every package LSPosed may inject into (`Scope(packageName, HowToRestart)`), plus its preferred restart method. Hooks, `ScopeUtils`, and frontend entry points must reference `ScopeKeys` instead of hardcoding package name strings. See "Scope Management" below.
 - `app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write utility; uses `PreferenceKeys` list-based matching for backup/restore type inference.
 
+### Offline DexKit Index (DexIndex)
+
+DexKit lookups must NOT run inside `handleLoadPackage` (they break LSPosed hot reload —
+replay re-creates the bridge for the same APK and the native state conflicts). Instead,
+use the offline index pipeline:
+
+- App side (`com.qimian233.ztool.dexindex`, pure Kotlin, **no libxposed dependency**):
+  one `DexIndexer` per scope package (see `DexIndexRegistry`); `DexIndexManager` runs
+  them after install/update (triggered by `DexIndexReceiver`), on app start when the
+  target APK fingerprint changed, or via the Settings manual refresh entry. Results are
+  written atomically to `<scopePackage>.json` in the module's private `filesDir` root
+  (Remote Files cannot address subdirectories).
+- Hook side (`hook/base/DexIndexStore.kt`, the only index class allowed to touch
+  libxposed): reads the JSON via `XposedInterface.openRemoteFile(...)` (Remote Files —
+  the LSPosed daemon reads the module's private `filesDir` with privileges, no chmod
+  needed). Any failure returns null and the hook falls back to hardcoded names.
+- Never read the index inside hook lambdas (`hookWithId` callbacks) — resolve values in
+  `handleLoadPackage` and capture them.
+- Constants (module keys, field keys, file layout): `DexIndexConstants.kt`.
+  Full guide: `docs_archive/dex_index/README.md`.
+
 Hook module folders:
 
 ```text
