@@ -2,14 +2,8 @@ package com.qimian233.ztool
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
-import com.qimian233.ztool.dexindex.base.DexIndexManager
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,19 +36,10 @@ class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
             private set
     }
 
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-    override fun onCreate() {
-        super.onCreate()
-        // 离线 DexKit 索引：指纹变化（首次安装/模块更新/目标 app OTA）时后台重扫
-        appScope.launch {
-            try {
-                DexIndexManager.indexAllIfStale(applicationContext)
-            } catch (t: Throwable) {
-                Log.e(TAG, "stale dex index refresh failed", t)
-            }
-        }
-    }
+    // 离线 DexKit 索引的触发已迁移至主页进入判定（HomeViewModel.checkDexIndexOnEntry）：
+    // - Firstrun（无索引文件）：后台全量索引，进入主页后 Toast 结果；
+    // - 非 Firstrun 但缓存过期/损坏：前台进度 Dialog 刷新。
+    // 故 Application 启动阶段不再自动扫描。
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)

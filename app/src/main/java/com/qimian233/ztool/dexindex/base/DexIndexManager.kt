@@ -7,6 +7,9 @@ import android.os.Build
 import android.util.Log
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.luckypray.dexkit.DexKitBridge
 import java.io.File
 import java.security.MessageDigest
@@ -24,36 +27,18 @@ object DexIndexManager {
     /** 串行化索引执行，避免 Receiver/启动检查/手动刷新并发写同一文件。 */
     private val lock = Any()
 
-    /**
-     * 全量索引所有作用域。返回 scopePackage → 是否成功。
-     * 扫描期间发送前台进度通知，结束后更新结果通知。
-     */
-    fun indexAll(context: Context): Map<String, Boolean> {
-        DexIndexNotifier.start(context)
-        var results: Map<String, Boolean> = emptyMap()
-        try {
-            results = synchronized(lock) {
-                DexIndexRegistry.indexers.associate { it.scopePackage to indexScope(context, it) }
-            }
-        } finally {
-            DexIndexNotifier.finish(context, results)
-        }
-        return results
-    }
+    /** 全局索引进度（scope 级）。所有触发源共享，供 UI 进度 Dialog 展示。 */
+    private val _progress = MutableStateFlow(DexIndexProgress())
+    val progress: StateFlow<DexIndexProgress> = _progress.asStateFlow()
 
     /**
-     * 仅索引指纹过期（含首次无文件）的作用域。返回 scopePackage → 是否成功。
-     * 无过期作用域时静默返回，不发通知。
+     * 全量索引所有作用域。返回 scopePackage → 是否成功。
+     * 扫描期间经 [progress] 上报 scope 级进度，结束后更新结果通知（兜底）。
      */
-    fun indexAllIfStale(context: Context): Map<String, Boolean> {
-        val stale = DexIndexRegistry.indexers.filter { needsReindex(context, it.scopePackage) }
-        if (stale.isEmpty()) return emptyMap()
-        DexIndexNotifier.start(context)
+    fun indexAll(context: Context): Map<String, Boolean> {
         var results: Map<String, Boolean> = emptyMap()
         try {
-            results = synchronized(lock) {
-                stale.associate { it.scopePackage to indexScope(context, it) }
-            }
+            results = runIndexing(context, DexIndexRegistry.indexers)
         } finally {
             DexIndexNotifier.finish(context, results)
         }
@@ -88,6 +73,30 @@ object DexIndexManager {
     fun indexDir(context: Context): File = context.filesDir
 
     // ── 内部实现 ────────────────────────────────────────────────────
+
+    /**
+     * 串行执行一批索引器并上报 scope 级进度。
+     * 无论成败都会在 finally 中将 [DexIndexProgress.running] 复位。
+     */
+    private fun runIndexing(context: Context, indexers: List<DexIndexer>): Map<String, Boolean> {
+        val total = indexers.size
+        _progress.value = DexIndexProgress(running = true, current = 0, total = total)
+        return try {
+            synchronized(lock) {
+                indexers.mapIndexed { index, indexer ->
+                    _progress.value = DexIndexProgress(
+                        running = true,
+                        current = index + 1,
+                        total = total,
+                        currentScope = indexer.scopePackage
+                    )
+                    indexer.scopePackage to indexScope(context, indexer)
+                }.toMap()
+            }
+        } finally {
+            _progress.value = DexIndexProgress(running = false, current = total, total = total)
+        }
+    }
 
     private fun indexScope(context: Context, indexer: DexIndexer): Boolean {
         synchronized(lock) {
@@ -218,3 +227,17 @@ object DexIndexManager {
         val signatureHash: String,
     )
 }
+
+/**
+ * DexKit 索引进度（scope 级）。
+ *
+ * - [running]：是否有索引任务在执行；
+ * - [current]/[total]：当前第几个作用域 / 共几个作用域；
+ * - [currentScope]：正在索引的作用域包名。
+ */
+data class DexIndexProgress(
+    val running: Boolean = false,
+    val current: Int = 0,
+    val total: Int = 0,
+    val currentScope: String = "",
+)

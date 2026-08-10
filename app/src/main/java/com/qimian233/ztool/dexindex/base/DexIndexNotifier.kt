@@ -12,13 +12,15 @@ import androidx.core.app.NotificationCompat
 import com.qimian233.ztool.R
 
 /**
- * 离线索引扫描的前台进度通知。
+ * 离线索引扫描的结果通知（兜底）。
  *
- * 三个触发源（Receiver / 启动检查 / 设置页手动刷新）统一经 [DexIndexManager]
- * 调用，扫描开始发"进行中"通知，完成/失败更新后数秒自动消失。
+ * 前台场景的进度反馈由 UI 进度 Dialog 承担（见 DexIndexProgressDialog），
+ * 本对象仅在扫描结束后发送结果通知并数秒后自动消失；例如 DexIndexReceiver
+ * 在模块更新时后台触发索引、APP 未在前台运行的场景仍可向有通知权限的用户
+ * 反馈结果。
  *
  * 注意：Android 13+ 需要运行时授权 `POST_NOTIFICATIONS`，未授权时静默跳过通知
- * （扫描本身不受影响，设置页仍会 Toast 结果）。
+ * （扫描本身不受影响，前台 UI 仍会 Toast 结果）。
  */
 object DexIndexNotifier {
 
@@ -27,30 +29,11 @@ object DexIndexNotifier {
     private const val NOTIFICATION_ID = 0xD11
     private const val AUTO_CANCEL_DELAY_MS = 3_000L
 
-    /** 扫描开始：发"进行中"（不确定进度）通知。 */
-    fun start(context: Context) {
-        if (!canNotify(context)) return
-        try {
-            ensureChannel(context)
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(context.getString(R.string.dexIndexNotifyTitle))
-                .setContentText(context.getString(R.string.dexIndexNotifyText))
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setProgress(0, 0, true)
-                .setOngoing(true)
-                .setOnlyAlertOnce(true)
-                .build()
-            notificationManager(context)?.notify(NOTIFICATION_ID, notification)
-        } catch (t: Throwable) {
-            Log.w(TAG, "failed to show progress notification", t)
-        }
-    }
-
     /** 扫描结束：更新为结果通知，数秒后自动取消。 */
     fun finish(context: Context, results: Map<String, Boolean>) {
         if (!canNotify(context)) return
         try {
+            ensureChannel(context)
             val success = results.values.count { it }
             val total = results.size
             val done = total > 0 && success == total

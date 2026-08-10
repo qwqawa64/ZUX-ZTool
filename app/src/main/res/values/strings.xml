@@ -215,8 +215,8 @@
     <string name="dexIndexRefreshed">DexKit 索引已刷新</string>
     <string name="dexIndexRefreshFailed">DexKit 索引刷新失败</string>
     <string name="dexIndexChannelName">DexKit 索引</string>
-    <string name="dexIndexNotifyTitle">正在生成 DexKit 索引</string>
-    <string name="dexIndexNotifyText">正在扫描系统应用，请稍候…</string>
+    <string name="dexIndexDialogTitle">正在刷新 DexKit 索引</string>
+    <string name="dexIndexProgressText">正在扫描第 %1$d/%2$d 个作用域</string>
     <string name="dexIndexNotifyDone">DexKit 索引已生成</string>
     <string name="dexIndexNotifyFailed">DexKit 索引生成失败</string>
     <string name="dexIndexNotifyDoneText">成功 %1$d 个作用域</string>

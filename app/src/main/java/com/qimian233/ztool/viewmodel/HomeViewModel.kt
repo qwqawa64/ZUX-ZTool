@@ -1,11 +1,15 @@
 package com.qimian233.ztool.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ZToolApplication
 import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.dexindex.base.DexIndexManager
+import com.qimian233.ztool.dexindex.base.DexIndexProgress
+import com.qimian233.ztool.dexindex.base.DexIndexRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +27,11 @@ class HomeViewModel(
     private val isCheckingEnvironment = AtomicBoolean(false)
     private val isUpdatingSystemInfo = AtomicBoolean(false)
     private val isCheckingAppUpdate = AtomicBoolean(false)
+    private val isDexIndexTaskRunning = AtomicBoolean(false)
     private var started = false
+
+    private val _dexIndexState = MutableStateFlow(DexIndexUiState())
+    val dexIndexState: StateFlow<DexIndexUiState> = _dexIndexState.asStateFlow()
 
     init {
         // 热更新：监听模块激活状态变化，实时刷新 UI
@@ -36,6 +44,13 @@ class HomeViewModel(
                 }
             }
         }
+
+        // DexKit 索引进度热更新，供进度 Dialog 实时展示
+        viewModelScope.launch {
+            DexIndexManager.progress.collect { p ->
+                _dexIndexState.value = _dexIndexState.value.copy(progress = p)
+            }
+        }
     }
 
     fun start() {
@@ -44,6 +59,55 @@ class HomeViewModel(
         checkEnvironment()
         if (repository.isAutoCheckUpdateEnabled()) {
             checkAppUpdate()
+        }
+    }
+
+    /**
+     * 进入主页时判定 DexKit 索引是否需要生成/刷新：
+     * - Firstrun（无任何索引文件）：后台全量索引，完成后 Toast 结果；
+     * - 非 Firstrun 但有 scope 过期/损坏：前台进度 Dialog 刷新，完成后 Toast 结果。
+     */
+    fun checkDexIndexOnEntry(context: Context) {
+        if (isDexIndexTaskRunning.get()) return
+
+        val anyIndexed = DexIndexRegistry.indexers.any {
+            DexIndexManager.lastIndexedAt(context, it.scopePackage) > 0L
+        }
+        val needRefresh = if (anyIndexed) {
+            // 非 Firstrun：有缓存但指纹/schema 过期或文件损坏
+            DexIndexRegistry.indexers.any { DexIndexManager.needsReindex(context, it.scopePackage) }
+        } else {
+            true // Firstrun：索引文件完全不存在
+        }
+        if (needRefresh) {
+            startDexIndexTask(context, foreground = anyIndexed)
+        }
+    }
+
+    fun consumeDexIndexToast() {
+        _dexIndexState.value = _dexIndexState.value.copy(toastMessage = null)
+    }
+
+    private fun startDexIndexTask(context: Context, foreground: Boolean) {
+        if (!isDexIndexTaskRunning.compareAndSet(false, true)) return
+        _dexIndexState.value = _dexIndexState.value.copy(refreshing = foreground, toastMessage = null)
+        viewModelScope.launch(Dispatchers.Default) {
+            val results = try {
+                DexIndexManager.indexAll(context)
+            } catch (t: Throwable) {
+                Log.e(TAG, "dex index failed", t)
+                emptyMap()
+            }
+            val toastRes = if (results.isNotEmpty() && results.values.any { it }) {
+                R.string.dexIndexRefreshed
+            } else {
+                R.string.dexIndexRefreshFailed
+            }
+            _dexIndexState.value = _dexIndexState.value.copy(
+                refreshing = false,
+                toastMessage = toastRes
+            )
+            isDexIndexTaskRunning.set(false)
         }
     }
 
@@ -227,8 +291,7 @@ class HomeViewModel(
 }
 
 data class HomeUiState(
-    val isCheckingEnvironment: Boolean = true,
-    val isModuleActive: Boolean = false,
+    val isCheckingEnvironment: Boolean = true,    val isModuleActive: Boolean = false,
     val isRootAvailable: Boolean = false,
     val isZuxOsDevice: Boolean = true,
     val hintText: String = "",
@@ -250,6 +313,13 @@ data class HomeUiState(
     val environmentReady: Boolean
         get() = isModuleActive && isRootAvailable
 }
+
+/** DexKit 索引进度与结果（主页路径）。 */
+data class DexIndexUiState(
+    val refreshing: Boolean = false,
+    val progress: DexIndexProgress = DexIndexProgress(),
+    val toastMessage: Int? = null,
+)
 
 data class UpdateInfo(
     val versionName: String,

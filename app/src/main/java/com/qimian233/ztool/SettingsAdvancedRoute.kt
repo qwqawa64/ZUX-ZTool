@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexRegistry
+import com.qimian233.ztool.ui.components.DexIndexProgressDialog
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -72,6 +74,7 @@ fun SettingsAdvancedRoute(
         )[AdvancedSettingsViewModel::class.java]
     }
     val uiState by viewModel.uiState.collectAsState()
+    val dexIndexState by viewModel.dexIndexState.collectAsState()
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -91,9 +94,6 @@ fun SettingsAdvancedRoute(
     val resetStartingString = stringResource(R.string.advanced_reset_starting)
 
     // ── DexKit 索引 ────────────────────────────────────────────────
-    val dexIndexRefreshedStr = stringResource(R.string.dexIndexRefreshed)
-    val dexIndexRefreshFailedStr = stringResource(R.string.dexIndexRefreshFailed)
-    var dexIndexInProgress by remember { mutableStateOf(false) }
     var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
 
     if (uiState.showHotReloadDialog) {
@@ -115,6 +115,19 @@ fun SettingsAdvancedRoute(
             },
             onDismiss = viewModel::dismissResetDialog
         )
+    }
+
+    // DexKit 手动刷新：前台进度 Dialog + 完成后 Toast 结果
+    if (dexIndexState.refreshing) {
+        DexIndexProgressDialog(progress = dexIndexState.progress)
+    }
+
+    LaunchedEffect(dexIndexState.resultRes) {
+        dexIndexState.resultRes?.let { res ->
+            dexIndexSummary = buildDexIndexSummary(context)
+            Toast.makeText(context, res, Toast.LENGTH_SHORT).show()
+            viewModel.consumeDexIndexResult()
+        }
     }
 
     ZToolScaffold(
@@ -152,22 +165,10 @@ fun SettingsAdvancedRoute(
                         resetResultSummary = resetResultSummary,
                         onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
                         onResetClick = { viewModel.showResetConfirmDialog() },
-                        dexIndexInProgress = dexIndexInProgress,
+                        dexIndexInProgress = dexIndexState.refreshing,
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = {
-                            dexIndexInProgress = true
-                            Thread {
-                                val results = DexIndexManager.indexAll(context)
-                                activity.runOnUiThread {
-                                    dexIndexInProgress = false
-                                    dexIndexSummary = buildDexIndexSummary(context)
-                                    Toast.makeText(
-                                        context,
-                                        if (results.values.any { it }) dexIndexRefreshedStr else dexIndexRefreshFailedStr,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }.start()
+                            viewModel.refreshDexIndex(context)
                         }
                     ),
                     bottomPadding = 32.dp

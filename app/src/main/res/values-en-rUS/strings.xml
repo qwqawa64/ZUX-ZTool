@@ -201,8 +201,8 @@
     <string name="dexIndexRefreshed">DexKit index refreshed</string>
     <string name="dexIndexRefreshFailed">Failed to refresh DexKit index</string>
     <string name="dexIndexChannelName">DexKit index</string>
-    <string name="dexIndexNotifyTitle">Generating DexKit index</string>
-    <string name="dexIndexNotifyText">Scanning system apps, please wait…</string>
+    <string name="dexIndexDialogTitle">Refreshing DexKit index</string>
+    <string name="dexIndexProgressText">Scanning scope %1$d/%2$d</string>
     <string name="dexIndexNotifyDone">DexKit index ready</string>
     <string name="dexIndexNotifyFailed">DexKit index generation failed</string>
     <string name="dexIndexNotifyDoneText">%1$d scope(s) indexed successfully</string>
