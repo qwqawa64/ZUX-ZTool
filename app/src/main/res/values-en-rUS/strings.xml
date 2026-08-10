@@ -201,6 +201,12 @@
     <string name="dexIndexNotGenerated">Not generated yet</string>
     <string name="dexIndexRefreshed">Offline index refreshed</string>
     <string name="dexIndexRefreshFailed">Failed to refresh offline index</string>
+    <string name="dexIndexChannelName">Offline index</string>
+    <string name="dexIndexNotifyTitle">Generating offline index</string>
+    <string name="dexIndexNotifyText">Scanning system apps, please wait…</string>
+    <string name="dexIndexNotifyDone">Offline index ready</string>
+    <string name="dexIndexNotifyFailed">Offline index generation failed</string>
+    <string name="dexIndexNotifyDoneText">%1$d scope(s) indexed successfully</string>
     <string name="backupConfigToFile">Back up configuration to file</string>
     <string name="restoreConfigFromFile">Restore configuration from file</string>
     <string name="restoreDefaultConfig">Restore default configuration</string>

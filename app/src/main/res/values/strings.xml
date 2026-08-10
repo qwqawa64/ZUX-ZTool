@@ -215,6 +215,12 @@
     <string name="dexIndexNotGenerated">尚未生成</string>
     <string name="dexIndexRefreshed">离线索引已刷新</string>
     <string name="dexIndexRefreshFailed">离线索引刷新失败</string>
+    <string name="dexIndexChannelName">离线索引</string>
+    <string name="dexIndexNotifyTitle">正在生成离线索引</string>
+    <string name="dexIndexNotifyText">正在扫描系统应用，请稍候…</string>
+    <string name="dexIndexNotifyDone">离线索引已生成</string>
+    <string name="dexIndexNotifyFailed">离线索引生成失败</string>
+    <string name="dexIndexNotifyDoneText">成功 %1$d 个作用域</string>
     <string name="backupConfigToFile">备份配置到文件</string>
     <string name="restoreConfigFromFile">从文件恢复配置</string>
     <string name="restoreDefaultConfig">恢复默认配置</string>

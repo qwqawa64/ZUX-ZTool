@@ -24,17 +24,38 @@ object DexIndexManager {
 
     /**
      * 全量索引所有作用域。返回 scopePackage → 是否成功。
+     * 扫描期间发送前台进度通知，结束后更新结果通知。
      */
     fun indexAll(context: Context): Map<String, Boolean> {
-        return DexIndexRegistry.indexers.associate { it.scopePackage to indexScope(context, it) }
+        DexIndexNotifier.start(context)
+        var results: Map<String, Boolean> = emptyMap()
+        try {
+            results = synchronized(lock) {
+                DexIndexRegistry.indexers.associate { it.scopePackage to indexScope(context, it) }
+            }
+        } finally {
+            DexIndexNotifier.finish(context, results)
+        }
+        return results
     }
 
     /**
      * 仅索引指纹过期（含首次无文件）的作用域。返回 scopePackage → 是否成功。
+     * 无过期作用域时静默返回，不发通知。
      */
     fun indexAllIfStale(context: Context): Map<String, Boolean> {
         val stale = DexIndexRegistry.indexers.filter { needsReindex(context, it.scopePackage) }
-        return stale.associate { it.scopePackage to indexScope(context, it) }
+        if (stale.isEmpty()) return emptyMap()
+        DexIndexNotifier.start(context)
+        var results: Map<String, Boolean> = emptyMap()
+        try {
+            results = synchronized(lock) {
+                stale.associate { it.scopePackage to indexScope(context, it) }
+            }
+        } finally {
+            DexIndexNotifier.finish(context, results)
+        }
+        return results
     }
 
     /**
