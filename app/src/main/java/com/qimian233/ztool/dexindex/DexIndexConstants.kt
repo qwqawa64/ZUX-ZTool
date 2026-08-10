@@ -1,5 +1,7 @@
 package com.qimian233.ztool.dexindex
 
+import com.qimian233.ztool.data.keys.PreferenceKeys
+
 /**
  * 离线 DexKit 索引的常量定义。
  *
@@ -34,13 +36,13 @@ object DexIndexConstants {
      * 索引器写入与 Hook 侧读取必须使用同一常量。
      */
     object ModuleKeys {
-        const val CLEAN_GLOBAL_SEARCH = "clean_global_search"
-        const val DISABLE_FORCE_STOP = "disable_force_stop"
-        const val ZUI_LAUNCHER_HOTSEAT = "zui_launcher_hotseat"
-        const val NO_CHARGE_ANIMATION = "No_ChargeAnimation"
-        const val SYSTEMUI_NETWORK_SPEED_DOUBLELAYER = "systemui_network_speed_doublelayer"
-        const val BYPASS_SHARE_WARNING = "bypass_share_warning"
-        const val DISABLE_NEARBY_SHARE_COUNTDOWN = "disable_nearby_share_countdown"
+        val CLEAN_GLOBAL_SEARCH = PreferenceKeys.CLEAN_GLOBAL_SEARCH.name
+        val DISABLE_FORCE_STOP = PreferenceKeys.DISABLE_FORCE_STOP.name
+        val ZUI_LAUNCHER_HOTSEAT = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
+        val NO_CHARGE_ANIMATION = PreferenceKeys.NO_CHARGE_ANIMATION.name
+        val SYSTEMUI_NETWORK_SPEED_DOUBLELAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
+        val BYPASS_SHARE_WARNING = PreferenceKeys.BYPASS_SHARE_WARNING.name
+        val DISABLE_NEARBY_SHARE_COUNTDOWN = PreferenceKeys.DISABLE_NEARBY_SHARE_COUNTDOWN.name
     }
 
     /** 各模块输出字段 key。 */
