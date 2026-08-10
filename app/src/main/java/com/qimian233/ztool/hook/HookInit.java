@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 
 import com.qimian233.ztool.hook.base.HookManager;
 
+import java.util.List;
+
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -63,13 +65,37 @@ public class HookInit extends XposedModule {
 
     @Override
     public boolean onHotReloading(@NonNull XposedModuleInterface.HotReloadingParam param) {
-        log(4, TAG, "热重载请求，同意重载");
+        // 热重载会创建新一代模块代码（新 classloader），HookManager 的静态字段不跨代共享。
+        // 生命周期参数是框架创建的对象（classloader-neutral），必须在旧代码冻结前
+        // 通过 savedInstanceState 显式传递给新代码，供 onHotReloaded 重放 Hook 安装。
+        param.setSavedInstanceState(new Object[]{
+                HookManager.getSavedPackageParams(),
+                HookManager.getSavedSystemServerParam()
+        });
+        log(4, TAG, "热重载请求，已保存生命周期参数: "
+                + HookManager.getSavedPackageParams().size() + " 个包, 同意重载");
         return true;
     }
 
     @Override
     public void onHotReloaded(@NonNull XposedModuleInterface.HotReloadedParam param) {
         instance = this;
+        // 恢复旧代码传递过来的生命周期参数（静态字段不跨 classloader 共享，
+        // 否则 replayAllHooks 拿不到任何参数，Hook 将全部丢失）。
+        Object saved = param.getSavedInstanceState();
+        if (saved instanceof Object[]) {
+            Object[] arr = (Object[]) saved;
+            @SuppressWarnings("unchecked")
+            List<XposedModuleInterface.PackageLoadedParam> packages =
+                    arr.length > 0
+                            ? (List<XposedModuleInterface.PackageLoadedParam>) arr[0]
+                            : null;
+            XposedModuleInterface.SystemServerStartingParam systemServer =
+                    arr.length > 1
+                            ? (XposedModuleInterface.SystemServerStartingParam) arr[1]
+                            : null;
+            HookManager.restoreLifecycleParams(packages, systemServer);
+        }
         log(4, TAG, "热重载完成，重新注册模块并回放 Hook 安装");
         HookManager.reinitializeForHotReload(this);
         HookManager.replayAllHooks();

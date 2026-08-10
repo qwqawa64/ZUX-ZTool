@@ -254,10 +254,51 @@ public class HookManager {
     // ── 热重载支持 ─────────────────────────────────────────────
 
     /**
+     * 获取已保存的包加载生命周期参数（热重载时由旧代码传给新代码）。
+     * <p>
+     * 热重载会创建新一代模块代码（新 classloader），静态字段不跨代共享，
+     * 因此这些参数必须由旧代码在 {@code onHotReloading} 中通过
+     * {@code HotReloadingParam#setSavedInstanceState(Object)} 显式传递，
+     * 再由新代码在 {@code onHotReloaded} 中经 {@link #restoreLifecycleParams} 恢复。
+     * </p>
+     */
+    public static List<XposedModuleInterface.PackageLoadedParam> getSavedPackageParams() {
+        return savedPackageParams;
+    }
+
+    /**
+     * 获取已保存的系统服务器启动参数（热重载时由旧代码传给新代码）。
+     *
+     * @see #getSavedPackageParams()
+     */
+    public static XposedModuleInterface.SystemServerStartingParam getSavedSystemServerParam() {
+        return savedSystemServerParam;
+    }
+
+    /**
+     * 恢复上一代代码传递过来的生命周期参数，供 {@link #replayAllHooks()} 重放使用。
+     * <p>
+     * 必须在热重载后的 {@code onHotReloaded}（新代码）中、调用 {@link #replayAllHooks()} 之前执行；
+     * 否则新 classloader 下 {@link #savedPackageParams} / {@link #savedSystemServerParam}
+     * 为空，重放将不会安装任何 Hook。
+     * </p>
+     */
+    public static void restoreLifecycleParams(
+            List<XposedModuleInterface.PackageLoadedParam> packageParams,
+            XposedModuleInterface.SystemServerStartingParam systemServerParam) {
+        savedPackageParams.clear();
+        if (packageParams != null) {
+            savedPackageParams.addAll(packageParams);
+        }
+        savedSystemServerParam = systemServerParam;
+    }
+
+    /**
      * 热重载后重新初始化：清空旧模块列表，用新的 XposedInterface 重新注册全部模块。
      * <p>
-     * 不清理 {@link #savedPackageParams} / {@link #savedSystemServerParam}，
-     * 因为回放需要它们。
+     * 生命周期参数（{@link #savedPackageParams} / {@link #savedSystemServerParam}）
+     * 由旧代码在 {@code onHotReloading} 中经 savedInstanceState 传递，
+     * 新代码需先调用 {@link #restoreLifecycleParams} 恢复，再执行重放。
      * </p>
      */
     public static void reinitializeForHotReload(XposedInterface xposed) {
@@ -268,6 +309,7 @@ public class HookManager {
     /**
      * 热重载后回放已保存的生命周期参数，让新模块重新安装 Hook。
      * <p>
+     * 重放前必须先调用 {@link #restoreLifecycleParams} 恢复旧代码传递的参数。
      * 每个模块调用由 try-catch 包裹，单个模块失败不影响其他模块。
      * </p>
      */
