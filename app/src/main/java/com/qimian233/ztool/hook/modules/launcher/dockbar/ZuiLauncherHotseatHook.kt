@@ -5,7 +5,7 @@ import android.content.Intent
 import android.view.View
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.keys.PreferenceKeys
-import com.qimian233.ztool.dexindex.DexIndexConstants
+import com.qimian233.ztool.dexindex.base.DexIndexConstants
 import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexIndexStore
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam

@@ -1,9 +1,11 @@
-package com.qimian233.ztool.dexindex
+package com.qimian233.ztool.dexindex.indexer
 
 import android.content.Context
 import android.util.Log
 import com.google.gson.JsonObject
 import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.dexindex.base.DexIndexConstants
+import com.qimian233.ztool.dexindex.base.DexIndexer
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.query.FindClass
 import org.luckypray.dexkit.query.matchers.ClassMatcher

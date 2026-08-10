@@ -3,7 +3,7 @@ package com.qimian233.ztool
 import android.app.Application
 import android.content.Context
 import android.util.Log
-import com.qimian233.ztool.dexindex.DexIndexManager
+import com.qimian233.ztool.dexindex.base.DexIndexManager
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
 import kotlinx.coroutines.CoroutineScope

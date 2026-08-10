@@ -47,7 +47,7 @@
             android:exported="false"
             android:foregroundServiceType="specialUse" />
         <receiver
-            android:name=".dexindex.DexIndexReceiver"
+            android:name=".dexindex.base.DexIndexReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

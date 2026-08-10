@@ -1,4 +1,4 @@
-package com.qimian233.ztool.dexindex
+package com.qimian233.ztool.dexindex.base
 
 import com.qimian233.ztool.data.keys.PreferenceKeys
 

@@ -3,7 +3,7 @@ package com.qimian233.ztool.hook.base
 import android.os.ParcelFileDescriptor
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.qimian233.ztool.dexindex.DexIndexConstants
+import com.qimian233.ztool.dexindex.base.DexIndexConstants
 import io.github.libxposed.api.XposedInterface
 import java.util.concurrent.ConcurrentHashMap
 

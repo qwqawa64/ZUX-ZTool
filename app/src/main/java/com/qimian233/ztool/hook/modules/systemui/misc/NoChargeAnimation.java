@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.os.Message;
 
 import com.qimian233.ztool.data.keys.ScopeKeys;
-import com.qimian233.ztool.dexindex.DexIndexConstants;
+import com.qimian233.ztool.dexindex.base.DexIndexConstants;
 import com.qimian233.ztool.hook.base.AppHookModule;
 import com.qimian233.ztool.hook.base.DexIndexStore;
 

@@ -63,8 +63,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.data.settings.SettingsRepository
-import com.qimian233.ztool.dexindex.DexIndexManager
-import com.qimian233.ztool.dexindex.DexIndexRegistry
+import com.qimian233.ztool.dexindex.base.DexIndexManager
+import com.qimian233.ztool.dexindex.base.DexIndexRegistry
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
