@@ -209,6 +209,12 @@
     <string name="enableDetailedLogging">开启详细日志</string>
     <string name="enableDetailedLoggingDescription">显示更细节的Hook信息，开关状态变更后请重启作用域。反馈问题时必须打开本开关！</string>
     <string name="backupAndRestore">备份与还原</string>
+    <string name="dexIndexSection">离线索引</string>
+    <string name="refreshDexIndex">刷新离线索引</string>
+    <string name="dexIndexLastIndexedAt">上次索引：%1$s</string>
+    <string name="dexIndexNotGenerated">尚未生成</string>
+    <string name="dexIndexRefreshed">离线索引已刷新</string>
+    <string name="dexIndexRefreshFailed">离线索引刷新失败</string>
     <string name="backupConfigToFile">备份配置到文件</string>
     <string name="restoreConfigFromFile">从文件恢复配置</string>
     <string name="restoreDefaultConfig">恢复默认配置</string>

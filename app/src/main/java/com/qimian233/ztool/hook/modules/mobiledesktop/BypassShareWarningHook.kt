@@ -3,10 +3,10 @@ package com.qimian233.ztool.hook.modules.mobiledesktop
 import android.content.Context
 import android.content.SharedPreferences
 import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.dexindex.DexIndexConstants
 import com.qimian233.ztool.hook.base.AppHookModule
-import com.qimian233.ztool.hook.base.DexKitHelper
+import com.qimian233.ztool.hook.base.DexIndexStore
 import io.github.libxposed.api.XposedModuleInterface
-import java.lang.reflect.Modifier
 import androidx.core.content.edit
 
 /**
@@ -35,64 +35,22 @@ class BypassShareWarningHook : AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── DEXKit：通过 ApplicationInfo.sourceDir 获取桥（绕过 protectionDomain） ──
-        val bridge = DexKitHelper.getBridgeForApp(param.applicationInfo)
+        // ── 从离线索引读取混淆类名/方法名 ────────────────────────────
+        val module = DexIndexStore.lookup(xposed, ScopeKeys.MOBILE_DESKTOP.packageName)
+            ?.getAsJsonObject(DexIndexConstants.ModuleKeys.BYPASS_SHARE_WARNING)
 
-        var managerClassName: String? = null
-        var managerFactoryMethodName: String? = null   // static factory: (Context) → manager
-        var managerSetMethodName: String? = null        // instance: (boolean) → void
-
-        if (bridge != null) {
-            try {
-                // 1. 查找管理器类：在 manager 包中找一个有 static (Context) 方法和 (boolean)void 方法的类
-                val managerData = bridge.findClass {
-                    searchPackages(MANAGER_PKG)
-                    matcher {
-                        methods {
-                            add {
-                                modifiers = Modifier.STATIC or Modifier.PUBLIC
-                                paramTypes("android.content.Context")
-                            }
-                            add {
-                                paramTypes("boolean")
-                                returnType = "void"
-                            }
-                        }
-                    }
-                }.singleOrNull()
-
-                if (managerData != null) {
-                    managerClassName = managerData.name
-                    for (md in managerData.methods) {
-                        val params = md.paramTypeNames
-                        if (params.size == 1 && params[0] == "boolean" && md.returnTypeName == "void") {
-                            managerSetMethodName = md.name
-                        } else if (params.size == 1 && params[0] == "android.content.Context" && md.returnTypeName != "void") {
-                            managerFactoryMethodName = md.name
-                        }
-                    }
-                }
-
-                // 回退硬编码名称
-                if (managerClassName == null) managerClassName = "$MANAGER_PKG.c0"
-                if (managerFactoryMethodName == null) managerFactoryMethodName = "l"
-                if (managerSetMethodName == null) managerSetMethodName = "z"
-
-            } catch (dexKitError: Throwable) {
-                logger.error("DEXKit method discovery failed, using hardcoded names", dexKitError)
-                managerClassName = "$MANAGER_PKG.c0"
-                managerFactoryMethodName = "l"
-                managerSetMethodName = "z"
-            }
-        } else {
-            managerClassName = "$MANAGER_PKG.c0"
-            managerFactoryMethodName = "l"
-            managerSetMethodName = "z"
-        }
+        val managerClassName = module?.get(DexIndexConstants.Keys.MANAGER_CLASS)
+            ?.takeIf { !it.isJsonNull }?.asString ?: "$MANAGER_PKG.c0"
+        val managerFactoryMethodName = module?.get(DexIndexConstants.Keys.MANAGER_FACTORY_METHOD)
+            ?.takeIf { !it.isJsonNull }?.asString ?: "l"   // static factory: (Context) → manager
+        val managerSetMethodName = module?.get(DexIndexConstants.Keys.MANAGER_SET_METHOD)
+            ?.takeIf { !it.isJsonNull }?.asString ?: "z"    // instance: (boolean) → void
 
         val finalManagerClass = managerClassName
         val finalFactoryMethod = managerFactoryMethodName
         val finalSetMethod = managerSetMethodName
+        val finalTileRefreshMethod = module?.get(DexIndexConstants.Keys.TILE_REFRESH_METHOD)
+            ?.takeIf { !it.isJsonNull }?.asString ?: "b"
 
         try {
             // ── Hook 1: 磁贴点击 ───────────────────────────────────
@@ -113,7 +71,7 @@ class BypassShareWarningHook : AppHookModule() {
                         setNearbyShareEnabled(
                             tile, context, classLoader,
                             finalManagerClass, finalFactoryMethod, finalSetMethod,
-                            bridge
+                            finalTileRefreshMethod
                         )
                         logger.debug("Bypassed warning and enabled nearby share directly.")
                         null
@@ -129,37 +87,9 @@ class BypassShareWarningHook : AppHookModule() {
             // ── Hook 2: 通用弹窗场景 ─────────────────────────────────
             val actionNoticeClass = classLoader.loadClass(DIALOG_CLASS)
 
-            // 通过 DEXKit 动态查找 p() 方法 — 无参 void + 引用 file_share_expose_title 字段
-            var pMethodName = "p" // 默认回退
-            if (bridge != null) {
-                try {
-                    for (packageName in TARGET_PACKAGE) {
-                        val md = bridge.findMethod {
-                            searchPackages(packageName)
-                            matcher {
-                                paramTypes()
-                                returnType = "void"
-                                declaredClass = DIALOG_CLASS
-                                // 收窄：方法体中引用了 R.string.file_share_expose_title 字段，
-                                // R 类不会被混淆，因此字段名跨版本稳定。
-                                usingFields {
-                                    add {
-                                        name = "file_share_expose_title"
-                                    }
-                                }
-                            }
-                        }.singleOrNull()
-                        logger.debug("md: $md")
-                        if (md != null) {
-                            pMethodName = md.name
-                            break
-                        }
-                    }
-                } catch (th: Throwable) {
-                    logger.error("Unable to find method with DexKit: ", th)
-                }
-            }
-            val finalPMethodName = pMethodName
+            // p() 方法名来自离线索引 — 无参 void + 引用 file_share_expose_title 字段
+            val finalPMethodName = module?.get(DexIndexConstants.Keys.DIALOG_METHOD)
+                ?.takeIf { !it.isJsonNull }?.asString ?: "p" // 默认回退
             logger.debug("target method name of \"createAndStartExposureWarnDialog\": $finalPMethodName")
 
             val pMethod = actionNoticeClass.getDeclaredMethod(finalPMethodName)
@@ -227,7 +157,7 @@ class BypassShareWarningHook : AppHookModule() {
         managerClass: String,
         factoryMethod: String,
         setMethod: String,
-        bridge: org.luckypray.dexkit.DexKitBridge?
+        tileRefreshMethod: String
     ) {
         // 尝试多种策略启用以兼容新旧版本：
         //   旧版: managerClass.l(context).z(true)  (c0)
@@ -265,28 +195,8 @@ class BypassShareWarningHook : AppHookModule() {
             context.getSharedPreferences("sp_file_ble", Context.MODE_PRIVATE)
                 .edit { putBoolean("nearby_send_files", true) }
 
-            // ── 动态查找 b() 方法并刷新磁贴 ──────────────────────────
-            var bMethodName = "b"
-            if (bridge != null) {
-                for (packageName in TARGET_PACKAGE) {
-                    try {
-                        val md = bridge.findMethod {
-                            searchPackages(packageName)
-                            matcher {
-                                paramTypes()
-                                returnType = "void"
-                                declaredClass = TARGET_CLASS
-                            }
-                        }.singleOrNull()
-                        if (md != null) {
-                            bMethodName = md.name
-                            break
-                        }
-                    } catch (_: Throwable) {
-                    }
-                }
-            }
-            val bMethod = findMethod(tile!!.javaClass, bMethodName)
+            // ── 刷新磁贴的 b() 方法（handleLoadPackage 阶段已解析）────
+            val bMethod = findMethod(tile!!.javaClass, tileRefreshMethod)
             bMethod.isAccessible = true
             bMethod.invoke(tile)
 

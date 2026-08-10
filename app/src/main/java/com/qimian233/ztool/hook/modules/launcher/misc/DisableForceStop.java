@@ -6,15 +6,11 @@ import android.os.Build;
 
 import com.qimian233.ztool.data.keys.ScopeKeys;
 import com.qimian233.ztool.data.keys.PreferenceKeys;
+import com.qimian233.ztool.dexindex.DexIndexConstants;
 import com.qimian233.ztool.hook.base.AppHookModule;
-import com.qimian233.ztool.hook.base.DexKitHelper;
+import com.qimian233.ztool.hook.base.DexIndexStore;
 
 import io.github.libxposed.api.XposedModuleInterface;
-
-import org.luckypray.dexkit.DexKitBridge;
-import org.luckypray.dexkit.query.FindMethod;
-import org.luckypray.dexkit.query.matchers.MethodMatcher;
-import org.luckypray.dexkit.result.MethodData;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -159,7 +155,7 @@ public class DisableForceStop extends AppHookModule {
             });
 
             // Hook c方法 - 强制杀死进程的辅助方法（DEXKit 动态查找）
-            String cMethodName = findCMethodName(classLoader);
+            String cMethodName = findCMethodName();
             Method cMethod = overviewUtilitiesClass.getDeclaredMethod(
                     cMethodName, Context.class, String.class, int.class);
             hookWithId(cMethod, "hook_165", chain -> {
@@ -459,30 +455,18 @@ public class DisableForceStop extends AppHookModule {
     }
 
     /**
-     * 通过 DEXKit 查找 OverviewUtilities 中签名 (Context, String, int)→void 的混淆方法名。
-     * 跳过已知的非混淆方法 removeAppProcess (Context, int, String, int)。
+     * 从离线索引读取 OverviewUtilities 中签名 (Context, String, int)→void 的混淆方法名。
+     * 索引缺失/失败时回退硬编码 "c"。
      */
-    private String findCMethodName(ClassLoader classLoader) {
-        DexKitBridge bridge = DexKitHelper.INSTANCE.getBridgeForClass(
-                classLoader, "com.zui.launcher.util.OverviewUtilities");
-        if (bridge != null) {
-            try {
-                List<MethodData> methods = bridge.findMethod(FindMethod.create()
-                        .searchPackages(ScopeKeys.LAUNCHER.packageName)
-                        .matcher(MethodMatcher.create()
-                                .paramTypes("android.content.Context",
-                                        "java.lang.String", "int")
-                                .returnType("void")
-                                .declaredClass("com.zui.launcher.util.OverviewUtilities")
-                        )
-                );
-                for (MethodData md : methods) {
-                    if (!"removeAppProcess".equals(md.getName())) {
-                        logger.info("DEXKit found force-stop method: " + md.getName());
-                        return md.getName();
-                    }
-                }
-            } catch (Throwable ignored) {}
+    private String findCMethodName() {
+        String name = DexIndexStore.INSTANCE.string(
+                xposed,
+                ScopeKeys.LAUNCHER.packageName,
+                DexIndexConstants.ModuleKeys.DISABLE_FORCE_STOP,
+                DexIndexConstants.Keys.FORCE_STOP_METHOD);
+        if (name != null) {
+            logger.info("Loaded force-stop method from dex index: " + name);
+            return name;
         }
         return "c"; // 回退硬编码
     }

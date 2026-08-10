@@ -1,16 +1,17 @@
 package com.qimian233.ztool.hook.modules.launcher.misc
 
+import com.google.gson.JsonObject
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.dexindex.DexIndexConstants
 import com.qimian233.ztool.hook.base.AppHookModule
-import com.qimian233.ztool.hook.base.DexKitHelper
+import com.qimian233.ztool.hook.base.DexIndexStore
 import io.github.libxposed.api.XposedModuleInterface
 
 class CleanGlobalSearch : AppHookModule() {
 
     companion object {
         private const val TARGET_CLASS = "com.zui.launcher.GlobalSearchView"
-        private val SEARCH_PACKAGE = ScopeKeys.LAUNCHER.packageName
     }
 
     private var noHotWordView = false
@@ -24,10 +25,10 @@ class CleanGlobalSearch : AppHookModule() {
         val classLoader = param.defaultClassLoader
         readPreferences()
 
-        val bridge = DexKitHelper.getBridgeForClass(classLoader, TARGET_CLASS)
+        val idx = DexIndexStore.lookup(xposed, ScopeKeys.LAUNCHER.packageName)
 
         if (noHotWordView) {
-            installHotWordRemoval(classLoader, bridge)
+            installHotWordRemoval(classLoader, idx)
         }
 
         if (noSearchRecommend) {
@@ -37,12 +38,20 @@ class CleanGlobalSearch : AppHookModule() {
 
     private fun installHotWordRemoval(
         classLoader: ClassLoader,
-        bridge: org.luckypray.dexkit.DexKitBridge?
+        idx: JsonObject?
     ) {
         try {
             val globalSearchViewClass = classLoader.loadClass(TARGET_CLASS)
 
-            val methodNames = discoverInitMethods(bridge)
+            val module = idx?.getAsJsonObject(DexIndexConstants.ModuleKeys.CLEAN_GLOBAL_SEARCH)
+
+            // 候选列表：离线索引结果优先，缺失时回退硬编码（原 discoverInitMethods 语义）
+            val methodNames = listOfNotNull(
+                module?.get(DexIndexConstants.Keys.HOTWORD_INIT_METHOD)
+                    ?.takeIf { !it.isJsonNull }?.asString,
+                "K0",
+                "T0"
+            ).distinct()
 
             var hooked = false
             for (methodName in methodNames) {
@@ -60,7 +69,8 @@ class CleanGlobalSearch : AppHookModule() {
                 logger.error("Unable to find any hot word inflation method")
             }
 
-            val e0Name = discoverE0Method(bridge)
+            val e0Name = module?.get(DexIndexConstants.Keys.HOTWORD_DATA_METHOD)
+                ?.takeIf { !it.isJsonNull }?.asString ?: "E0"
             try {
                 val e0Method = globalSearchViewClass.getDeclaredMethod(e0Name, List::class.java)
                 hookWithId(e0Method, "hook_115") { null }
@@ -71,55 +81,6 @@ class CleanGlobalSearch : AppHookModule() {
         } catch (t: Throwable) {
             logger.error("Failed to install hotword removal hooks", t)
         }
-    }
-
-    /**
-     * DEXKit DSL：查找无参 void 方法（HotWordView 初始化方法）。
-     * 失败时回退硬编码名称列表。
-     */
-    private fun discoverInitMethods(
-        bridge: org.luckypray.dexkit.DexKitBridge?
-    ): List<String> {
-        if (bridge != null) {
-            try {
-                val methods = bridge.findMethod {
-                    searchPackages(SEARCH_PACKAGE)
-                    matcher {
-                        paramTypes()
-                        returnType = "void"
-                        declaredClass = TARGET_CLASS
-                    }
-                }
-                if (methods.isNotEmpty()) {
-                    return methods.map { it.name }
-                }
-            } catch (_: Throwable) {}
-        }
-        logger.warn("unable to locate hot word view initialization method, using fallback!")
-        return listOf("K0", "T0")
-    }
-
-    /**
-     * DEXKit DSL：查找 (List) → void 方法（热词数据填充方法 E0）。
-     * 失败时回退硬编码 "E0"。
-     */
-    private fun discoverE0Method(
-        bridge: org.luckypray.dexkit.DexKitBridge?
-    ): String {
-        if (bridge != null) {
-            try {
-                val result = bridge.findMethod {
-                    searchPackages(SEARCH_PACKAGE)
-                    matcher {
-                        paramTypes("java.util.List")
-                        returnType = "void"
-                        declaredClass = TARGET_CLASS
-                    }
-                }.singleOrNull()
-                if (result != null) return result.name
-            } catch (_: Throwable) {}
-        }
-        return "E0"
     }
 
     private fun installSearchRecommendRemoval(classLoader: ClassLoader) {

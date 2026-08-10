@@ -4,20 +4,13 @@ import android.annotation.SuppressLint;
 import android.os.Message;
 
 import com.qimian233.ztool.data.keys.ScopeKeys;
+import com.qimian233.ztool.dexindex.DexIndexConstants;
 import com.qimian233.ztool.hook.base.AppHookModule;
-import com.qimian233.ztool.hook.base.DexKitHelper;
+import com.qimian233.ztool.hook.base.DexIndexStore;
 
 import io.github.libxposed.api.XposedModuleInterface;
 
-import org.luckypray.dexkit.DexKitBridge;
-import org.luckypray.dexkit.query.FindClass;
-import org.luckypray.dexkit.query.matchers.ClassMatcher;
-import org.luckypray.dexkit.query.matchers.FieldsMatcher;
-import org.luckypray.dexkit.result.ClassData;
-import org.luckypray.dexkit.result.FieldData;
-
 import java.lang.reflect.Method;
-import java.util.List;
 
 /**
  * 移除充电动画 Hook。
@@ -56,47 +49,12 @@ public class NoChargeAnimation extends AppHookModule {
             logger.info("Hooking ChargingAnimationController...");
             @SuppressLint("PrivateApi") Class<?> controllerClass = classLoader.loadClass(TARGET_CLASS);
 
-            // 通过 DEXKit 按类型查找 Handler 字段
-            String handlerFieldName = "H"; // 默认回退
-            DexKitBridge bridge = DexKitHelper.INSTANCE.getBridgeForClass(
-                    classLoader, TARGET_CLASS);
-            if (bridge != null) {
-                try {
-                    ClassData classData = bridge.findClass(FindClass.create()
-                            .searchPackages(SYSTEMUI_PACKAGE)
-                            .matcher(ClassMatcher.create()
-                                    .className(TARGET_CLASS)
-                                    .fields(FieldsMatcher.create()
-                                            .add(org.luckypray.dexkit.query.matchers.FieldMatcher.create()
-                                                    .type("android.os.Handler"))
-                                    )
-                            )
-                    ).singleOrNull();
-
-                    if (classData != null) {
-                        List<FieldData> fields = classData.getFields();
-                        for (FieldData fd : fields) {
-                            String ft = fd.getTypeName();
-                            if (ft.equals("android.os.Handler") || ft.endsWith(".Handler") || ft.contains("$")) {
-                                handlerFieldName = fd.getName();
-                                break;
-                            }
-                        }
-                        // 如果 Handler 类型匹配失败，回退：找第一个非基本类型的字段
-                        if ("H".equals(handlerFieldName)) {
-                            for (FieldData fd : fields) {
-                                String ft = fd.getTypeName();
-                                if (!ft.startsWith("java.") && !ft.startsWith("android.") && !isPrimitiveType(ft)) {
-                                    handlerFieldName = fd.getName();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                } catch (Throwable dexKitError) {
-                    logger.error("DEXKit field discovery failed, using hardcoded name", dexKitError);
-                }
-            }
+            // 从离线索引读取 Handler 字段名
+            String handlerFieldName = DexIndexStore.INSTANCE.string(
+                    xposed, SYSTEMUI_PACKAGE,
+                    DexIndexConstants.ModuleKeys.NO_CHARGE_ANIMATION,
+                    DexIndexConstants.Keys.HANDLER_FIELD_NAME);
+            if (handlerFieldName == null) handlerFieldName = "H"; // 默认回退
 
             logger.debug("Using handler field name: " + handlerFieldName);
             java.lang.reflect.Field handlerField = controllerClass.getDeclaredField(handlerFieldName);
@@ -108,13 +66,5 @@ public class NoChargeAnimation extends AppHookModule {
         } catch (Exception e) {
             logger.error("Error hooking ChargingAnimationController", e);
         }
-    }
-
-    private static boolean isPrimitiveType(String typeName) {
-        return "boolean".equals(typeName) || "byte".equals(typeName)
-                || "char".equals(typeName) || "short".equals(typeName)
-                || "int".equals(typeName) || "long".equals(typeName)
-                || "float".equals(typeName) || "double".equals(typeName)
-                || "void".equals(typeName);
     }
 }

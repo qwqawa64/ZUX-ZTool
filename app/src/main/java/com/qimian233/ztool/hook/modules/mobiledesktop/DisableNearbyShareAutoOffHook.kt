@@ -1,10 +1,10 @@
 package com.qimian233.ztool.hook.modules.mobiledesktop
 
 import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.dexindex.DexIndexConstants
 import com.qimian233.ztool.hook.base.AppHookModule
-import com.qimian233.ztool.hook.base.DexKitHelper
+import com.qimian233.ztool.hook.base.DexIndexStore
 import io.github.libxposed.api.XposedModuleInterface
-import java.lang.reflect.Modifier
 
 /**
  * 测试 Hook — 禁用超级互联附近分享的 10 分钟自动关闭倒计时。
@@ -21,8 +21,6 @@ class DisableNearbyShareAutoOffHook : AppHookModule() {
 
     companion object {
         private val TARGET_PACKAGE = ScopeKeys.MOBILE_DESKTOP.packageName
-        // DEXKit 搜索的混淆包名
-        private const val SEARCH_PACKAGE = "ra"
         // 回退：硬编码的类名和方法名
         private const val FALLBACK_CLASS = "ra.c"
         private const val FALLBACK_METHOD = "q"
@@ -35,49 +33,13 @@ class DisableNearbyShareAutoOffHook : AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── DEXKit：通过 ApplicationInfo.sourceDir 获取桥 ─────────────
-        val bridge = DexKitHelper.getBridgeForApp(param.applicationInfo)
-
-        var targetClassName: String? = null
-        var targetMethodName: String? = null
-
-        if (bridge != null) {
-            try {
-                val classData = bridge.findClass {
-                    searchPackages(SEARCH_PACKAGE)
-                    matcher {
-                        methods {
-                            // startCountDown: () → void
-                            add {
-                                paramTypes()
-                                returnType = "void"
-                            }
-                            // 单例工厂: static (Context) → ra.c
-                            add {
-                                modifiers = Modifier.STATIC or Modifier.PUBLIC
-                                paramTypes("android.content.Context")
-                            }
-                        }
-                    }
-                }.singleOrNull()
-
-                if (classData != null) {
-                    targetClassName = classData.name
-                    for (md in classData.methods) {
-                        val params = md.paramTypeNames
-                        if (params.isEmpty() && md.returnTypeName == "void") {
-                            targetMethodName = md.name
-                            break
-                        }
-                    }
-                }
-            } catch (_: Throwable) {
-                logger.warn("DEXKit discovery failed, falling back to hardcoded names")
-            }
-        }
-
-        if (targetClassName == null) targetClassName = FALLBACK_CLASS
-        if (targetMethodName == null) targetMethodName = FALLBACK_METHOD
+        // ── 从离线索引读取混淆类名/方法名 ─────────────────────────────
+        val module = DexIndexStore.lookup(xposed, ScopeKeys.MOBILE_DESKTOP.packageName)
+            ?.getAsJsonObject(DexIndexConstants.ModuleKeys.DISABLE_NEARBY_SHARE_COUNTDOWN)
+        val targetClassName = module?.get(DexIndexConstants.Keys.TARGET_CLASS)
+            ?.takeIf { !it.isJsonNull }?.asString ?: FALLBACK_CLASS
+        val targetMethodName = module?.get(DexIndexConstants.Keys.TARGET_METHOD)
+            ?.takeIf { !it.isJsonNull }?.asString ?: FALLBACK_METHOD
 
         val finalClassName = targetClassName
         val finalMethodName = targetMethodName

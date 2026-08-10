@@ -195,6 +195,12 @@
     <string name="enableDetailedLogging">Detailed logging</string>
     <string name="enableDetailedLoggingDescription">Enable this when reporting issues. Restart the scope after changing this switch.</string>
     <string name="backupAndRestore">Backup and restore</string>
+    <string name="dexIndexSection">Offline index</string>
+    <string name="refreshDexIndex">Refresh offline index</string>
+    <string name="dexIndexLastIndexedAt">Last indexed: %1$s</string>
+    <string name="dexIndexNotGenerated">Not generated yet</string>
+    <string name="dexIndexRefreshed">Offline index refreshed</string>
+    <string name="dexIndexRefreshFailed">Failed to refresh offline index</string>
     <string name="backupConfigToFile">Back up configuration to file</string>
     <string name="restoreConfigFromFile">Restore configuration from file</string>
     <string name="restoreDefaultConfig">Restore default configuration</string>

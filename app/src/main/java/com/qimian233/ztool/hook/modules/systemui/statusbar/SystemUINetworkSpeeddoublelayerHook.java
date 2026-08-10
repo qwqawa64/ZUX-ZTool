@@ -4,15 +4,11 @@ import android.annotation.SuppressLint;
 import android.text.Html;
 
 import com.qimian233.ztool.data.keys.ScopeKeys;
+import com.qimian233.ztool.dexindex.DexIndexConstants;
 import com.qimian233.ztool.hook.base.AppHookModule;
-import com.qimian233.ztool.hook.base.DexKitHelper;
+import com.qimian233.ztool.hook.base.DexIndexStore;
 
 import io.github.libxposed.api.XposedModuleInterface;
-
-import org.luckypray.dexkit.DexKitBridge;
-import org.luckypray.dexkit.query.FindClass;
-import org.luckypray.dexkit.query.matchers.ClassMatcher;
-import org.luckypray.dexkit.result.ClassData;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -305,25 +301,17 @@ public class SystemUINetworkSpeeddoublelayerHook extends AppHookModule {
      * 遍历可能的内部类索引，替代硬编码的 $3。
      */
     private Class<?> findHandlerInnerClass(ClassLoader classLoader) {
-        // 先尝试 DEXKit 查找 Handler 子类
-        DexKitBridge bridge = DexKitHelper.INSTANCE.getBridgeForClass(
-                classLoader, NETWORK_SPEED_VIEW_CLASS);
-        if (bridge != null) {
+        // 先尝试离线索引中的 Handler 子类
+        String indexed = DexIndexStore.INSTANCE.string(
+                xposed, SYSTEMUI_PACKAGE,
+                DexIndexConstants.ModuleKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER,
+                DexIndexConstants.Keys.HANDLER_INNER_CLASS);
+        if (indexed != null) {
             try {
-                java.util.List<ClassData> matches = bridge.findClass(FindClass.create()
-                        .searchPackages(SYSTEMUI_PACKAGE)
-                        .matcher(ClassMatcher.create()
-                                .superClass("android.os.Handler")
-                        )
-                );
-                for (ClassData cd : matches) {
-                    String name = cd.getName();
-                    if (name.startsWith(NETWORK_SPEED_VIEW_CLASS + "$")) {
-                        logger.debug("DEXKit found Handler inner class: " + name);
-                        return classLoader.loadClass(name);
-                    }
-                }
-            } catch (Throwable ignored) {}
+                Class<?> cls = classLoader.loadClass(indexed);
+                logger.debug("Loaded Handler inner class from dex index: " + indexed);
+                return cls;
+            } catch (ClassNotFoundException ignored) {}
         }
         // 回退：遍历常见内部类索引
         for (int i = 1; i <= 10; i++) {

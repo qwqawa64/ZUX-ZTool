@@ -5,12 +5,10 @@ import android.content.Intent
 import android.view.View
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.dexindex.DexIndexConstants
 import com.qimian233.ztool.hook.base.AppHookModule
-import com.qimian233.ztool.hook.base.DexKitHelper.getBridgeForClass
+import com.qimian233.ztool.hook.base.DexIndexStore
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
-import org.luckypray.dexkit.query.FindMethod
-import org.luckypray.dexkit.query.matchers.MethodMatcher
-import org.luckypray.dexkit.result.MethodData
 
 /**
  * ZUI Launcher Hotseat扩展Hook模块
@@ -295,8 +293,8 @@ class ZuiLauncherHotseatHook : AppHookModule() {
                 chain.proceed()
             }
 
-            // Hook b方法（维度检查）— 通过 DEXKit 按签名动态查找
-            val bMethodName = findBMethodName(classLoader, itemInfoClass)
+            // Hook b方法（维度检查）— 方法名来自离线索引
+            val bMethodName = findBMethodName()
             val bMethod = loaderCursorClass.getDeclaredMethod(bMethodName, itemInfoClass)
             hookWithId(bMethod, "hook_289") { chain ->
                 val result = chain.proceed()
@@ -399,31 +397,15 @@ class ZuiLauncherHotseatHook : AppHookModule() {
     }
 
     /**
-     * 通过 DEXKit 在 LoaderCursor 中查找签名 (ItemInfo)→boolean 的混淆方法。
+     * 从离线索引读取 LoaderCursor 中签名 (ItemInfo)→boolean 的混淆方法名。
+     * 索引缺失/失败时回退硬编码 "b"。
      */
-    private fun findBMethodName(classLoader: ClassLoader, itemInfoClass: Class<*>): String {
-        val bridge = getBridgeForClass(
-            classLoader, "com.android.launcher3.model.LoaderCursor"
-        )
-        if (bridge != null) {
-            try {
-                val methods: MutableList<MethodData> = bridge.findMethod(
-                    FindMethod.create()
-                        .searchPackages("com.android.launcher3")
-                        .matcher(
-                            MethodMatcher.create()
-                                .paramTypes(itemInfoClass.name)
-                                .returnType("boolean")
-                                .declaredClass("com.android.launcher3.model.LoaderCursor")
-                        )
-                )
-                for (md in methods) {
-                    logger.info("DEXKit found dimension-check method: " + md.name)
-                    return md.name
-                }
-            } catch (_: Throwable) {
-            }
-        }
-        return "b" // 回退硬编码
+    private fun findBMethodName(): String {
+        return DexIndexStore.string(
+            xposed,
+            ScopeKeys.LAUNCHER.packageName,
+            DexIndexConstants.ModuleKeys.ZUI_LAUNCHER_HOTSEAT,
+            DexIndexConstants.Keys.LOADER_CURSOR_B_METHOD
+        ) ?: "b"
     }
 }
