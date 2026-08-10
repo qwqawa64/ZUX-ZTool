@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -199,7 +200,7 @@ private fun advancedSettingsSections(
                     summary = dexIndexSummary,
                     onClick = onRefreshDexIndex,
                     enabled = !dexIndexInProgress,
-                    icon = if (dexIndexInProgress) null else Icons.Rounded.Refresh,
+                    icon = if (dexIndexInProgress) null else Icons.Rounded.Search,
                     trailingContent = if (dexIndexInProgress) {
                         {
                             CircularProgressIndicator(
