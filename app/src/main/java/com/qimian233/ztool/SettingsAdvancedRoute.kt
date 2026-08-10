@@ -194,6 +194,24 @@ private fun advancedSettingsSections(
         SettingSection(
             items = listOf(
                 SettingItem.Action(
+                    key = "refresh_dex_index",
+                    title = stringResource(R.string.refreshDexIndex),
+                    summary = dexIndexSummary,
+                    onClick = onRefreshDexIndex,
+                    enabled = !dexIndexInProgress,
+                    icon = if (dexIndexInProgress) null else Icons.Rounded.Refresh,
+                    trailingContent = if (dexIndexInProgress) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .padding(0.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else null
+                ),
+                SettingItem.Action(
                     key = "reset_persistent_values",
                     title = stringResource(R.string.advanced_reset_title),
                     summary = buildResetSummary(
@@ -241,29 +259,6 @@ private fun advancedSettingsSections(
             )
         )
     ) + buildResetDetailSection(state) + buildHotReloadDetailSection(state) + listOf(
-        SettingSection(
-            title = stringResource(R.string.dexIndexSection),
-            items = listOf(
-                SettingItem.Action(
-                    key = "refresh_dex_index",
-                    title = stringResource(R.string.refreshDexIndex),
-                    summary = dexIndexSummary,
-                    onClick = onRefreshDexIndex,
-                    enabled = !dexIndexInProgress,
-                    icon = if (dexIndexInProgress) null else Icons.Rounded.Refresh,
-                    trailingContent = if (dexIndexInProgress) {
-                        {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .height(20.dp)
-                                    .padding(0.dp),
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    } else null
-                )
-            )
-        ),
         SettingSection(
             title = stringResource(R.string.advanced_info_title),
             items = listOf(
