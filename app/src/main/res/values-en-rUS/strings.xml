@@ -941,7 +941,7 @@
     <string name="launcher_hide_blue_point_title">Hide app update blue dot</string>
     <string name="advanced_hot_reload_starting">Requesting hot reload…</string>
     <string name="advanced_hot_reload_confirm_title">Trigger a Hot Reload?</string>
-    <string name="advanced_hot_reload_confirm_message">Send hot reload request to %d running APP? \\n\\n Hot reload allows (un)installing hooks without restarting target APPs. This operation cannot be undone.\\n\\nNote: System UI, Launcher and Ready For are unsupported due to DEXKit native library requirement (cold start already loads the latest hooks).</string>
+    <string name="advanced_hot_reload_confirm_message">Send hot reload request to %d running APP? \\n\\n Hot reload allows (un)installing hooks without restarting target APPs. This operation cannot be undone.</string>
     <string name="advanced_hot_reload_result">Success %1$d, failed %2$d, not supported %3$d, progress exit %4$d</string>
     <string name="advanced_hot_reload_detail_title">Hot Reload Details</string>
     <string name="advanced_hot_reload_unsupported">Hot reload requires libxposed API 102 or above</string>

@@ -1020,7 +1020,7 @@
     <string name="advanced_hot_reload_in_progress">热重载进行中…</string>
     <string name="advanced_hot_reload_starting">正在发起热重载…</string>
     <string name="advanced_hot_reload_confirm_title">确认热重载？</string>
-    <string name="advanced_hot_reload_confirm_message">将对 %d 个运行中的进程发起热重载。\n\n热重载可以让模块更新立即生效，无需重启进程。此操作不可撤销。\n\n注：系统界面、桌面、超级互联因模块使用了 DEXKit 原生库，不支持热重载（冷启动已自动加载最新代码）。</string>
+    <string name="advanced_hot_reload_confirm_message">将对 %d 个运行中的进程发起热重载。\n\n热重载可以让模块更新立即生效，无需重启进程。此操作不可撤销。</string>
     <string name="advanced_hot_reload_result">成功 %1$d，失败 %2$d，不支持 %3$d，进程退出 %4$d</string>
     <string name="advanced_hot_reload_detail_title">热重载详情</string>
     <string name="advanced_info_title">系统信息</string>
