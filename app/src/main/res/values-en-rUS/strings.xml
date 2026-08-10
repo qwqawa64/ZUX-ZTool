@@ -195,7 +195,6 @@
     <string name="enableDetailedLogging">Detailed logging</string>
     <string name="enableDetailedLoggingDescription">Enable this when reporting issues. Restart the scope after changing this switch.</string>
     <string name="backupAndRestore">Backup and restore</string>
-    <string name="dexIndexSection">DexKit index</string>
     <string name="refreshDexIndex">Refresh DexKit index</string>
     <string name="dexIndexLastIndexedAt">Last indexed: %1$s</string>
     <string name="dexIndexNotGenerated">Not generated yet</string>
