@@ -323,7 +323,7 @@ private fun rememberSettingsViewModel(activity: MainActivity): SettingsViewModel
     }
 }
 
-private fun openAppLanguageSettings(context: android.content.Context) {
+private fun openAppLanguageSettings(context: Context) {
     val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
             data = Uri.fromParts("package", context.packageName, null)
@@ -340,7 +340,7 @@ private fun openAppLanguageSettings(context: android.content.Context) {
     }
 }
 
-private fun showSettingsToast(context: android.content.Context, message: String) {
+private fun showSettingsToast(context: Context, message: String) {
     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }
 

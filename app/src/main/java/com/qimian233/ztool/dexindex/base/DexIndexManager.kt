@@ -77,7 +77,7 @@ object DexIndexManager {
             if (!file.exists()) return 0L
             JsonParser.parseString(file.readText()).asJsonObject
                 .get(DexIndexConstants.JSON_GENERATED_AT)?.asLong ?: 0L
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             0L
         }
     }
@@ -160,7 +160,7 @@ object DexIndexManager {
             if (!file.exists()) return null
             JsonParser.parseString(file.readText()).asJsonObject
                 .get(DexIndexConstants.JSON_SCHEMA_VERSION)?.asInt
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             null
         }
     }
@@ -176,7 +176,7 @@ object DexIndexManager {
                 lastUpdateTime = apk.get(DexIndexConstants.JSON_LAST_UPDATE_TIME).asLong,
                 signatureHash = apk.get(DexIndexConstants.JSON_SIGNATURE_HASH).asString,
             )
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             null
         }
     }

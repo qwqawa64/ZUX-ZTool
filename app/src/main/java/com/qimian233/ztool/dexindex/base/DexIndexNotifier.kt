@@ -84,7 +84,6 @@ object DexIndexNotifier {
         context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
 
     private fun ensureChannel(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = notificationManager(context) ?: return
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -92,7 +91,7 @@ object DexIndexNotifier {
             NotificationManager.IMPORTANCE_LOW
         )
         channel.setShowBadge(false)
-        channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE)
+        channel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         nm.createNotificationChannel(channel)
     }
 

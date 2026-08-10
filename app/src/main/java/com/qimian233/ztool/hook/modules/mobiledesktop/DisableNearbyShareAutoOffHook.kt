@@ -9,7 +9,7 @@ import io.github.libxposed.api.XposedModuleInterface
 /**
  * 测试 Hook — 禁用超级互联附近分享的 10 分钟自动关闭倒计时。
  *
- * 机制：[FileUnionSwitchManager.startCountDown] (混淆后为 `ra.c.q()`)
+ * 机制：FileUnionSwitchManager.startCountDown (混淆后为 `ra.c.q()`)
  * 在附近分享开启后发送延迟消息 (what=1, delay=600000ms=10min)，
  * handler 收到消息后调用 `c0.setNearbyShareStatus(false)` 自动关闭。
  * 此 Hook 将 startCountDown 替换为空操作，阻止倒计时启动。

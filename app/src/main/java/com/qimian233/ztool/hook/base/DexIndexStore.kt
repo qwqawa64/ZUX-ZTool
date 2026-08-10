@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
  * `filesDir` 根目录下的 `<scopePackage>.json`，框架以特权代读，无需 chmod。
  *
  * 使用约定：
- * - 在 [XposedInterface.PackageLoadedParam] 回调（非 hook lambda）阶段调用；
+ * - 在 XposedInterface.PackageLoadedParam 回调（非 hook lambda）阶段调用；
  * - 读取失败（老框架/未索引/文件缺失）返回 null，调用方回退硬编码；
  * - 结果按进程缓存，每进程只读一次。
  */
@@ -40,7 +40,7 @@ object DexIndexStore {
                     .use { it.readText() }
                 JsonParser.parseString(text).asJsonObject
             }
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             null
         }
         cache[scopePackage] = result ?: MISSING
@@ -63,7 +63,7 @@ object DexIndexStore {
                 ?.get(fieldKey)
                 ?.takeIf { !it.isJsonNull }
                 ?.asString
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             null
         }
     }
