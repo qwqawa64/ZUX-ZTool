@@ -43,6 +43,7 @@ object DexIndexConstants {
         @JvmField val SYSTEMUI_NETWORK_SPEED_DOUBLELAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
         @JvmField val BYPASS_SHARE_WARNING = PreferenceKeys.BYPASS_SHARE_WARNING.name
         @JvmField val DISABLE_NEARBY_SHARE_COUNTDOWN = PreferenceKeys.DISABLE_NEARBY_SHARE_COUNTDOWN.name
+        @JvmField val AUTO_ACCEPT_FILE_TRANSFER = PreferenceKeys.AUTO_ACCEPT_FILE_TRANSFER.name
     }
 
     /** 各模块输出字段 key。 */
@@ -67,5 +68,10 @@ object DexIndexConstants {
         // DisableNearbyShareAutoOffHook
         const val TARGET_CLASS = "targetClass"
         const val TARGET_METHOD = "targetMethod"
+        // AutoAcceptFileTransferHook
+        const val VM_FIELD_NAME = "vmFieldName"
+        const val ACCEPTED_FIELD_NAME = "acceptedFieldName"
+        const val LIVE_DATA_FIELD_NAME = "liveDataFieldName"
+        const val LIVE_DATA_UPDATE_METHOD = "liveDataUpdateMethod"
     }
 }

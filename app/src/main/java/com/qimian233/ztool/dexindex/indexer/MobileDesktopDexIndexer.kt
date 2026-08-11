@@ -7,6 +7,9 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.dexindex.base.DexIndexConstants
 import com.qimian233.ztool.dexindex.base.DexIndexer
 import org.luckypray.dexkit.DexKitBridge
+import org.luckypray.dexkit.result.ClassData
+import org.luckypray.dexkit.result.FieldData
+import org.luckypray.dexkit.result.MethodData
 import java.lang.reflect.Modifier
 
 /**
@@ -15,6 +18,7 @@ import java.lang.reflect.Modifier
  * 原样迁移自以下 Hook 的 DexKit 查询：
  * - BypassShareWarningHook（manager 类/工厂/设置方法、弹窗方法、磁贴刷新方法）
  * - DisableNearbyShareAutoOffHook（混淆类名与方法名）
+ * - AutoAcceptFileTransferHook（ViewModel 字段、boolean 字段、LiveData 字段、LiveData 更新方法）
  */
 class MobileDesktopDexIndexer : DexIndexer {
 
@@ -26,6 +30,10 @@ class MobileDesktopDexIndexer : DexIndexer {
         modules.add(
             DexIndexConstants.ModuleKeys.DISABLE_NEARBY_SHARE_COUNTDOWN,
             indexDisableNearbyShareCountdown(bridge)
+        )
+        modules.add(
+            DexIndexConstants.ModuleKeys.AUTO_ACCEPT_FILE_TRANSFER,
+            indexAutoAcceptFileTransfer(bridge)
         )
         return modules
     }
@@ -165,6 +173,103 @@ class MobileDesktopDexIndexer : DexIndexer {
             Log.w(TAG, "DisableNearbyShareAutoOffHook: discovery failed", t)
         }
         return out
+    }
+
+    // ── AutoAcceptFileTransferHook ──────────────────────────────────
+
+    /**
+     * 链式 4 查询：Activity 中找 ViewModel 字段 → ViewModel 类中找
+     * boolean/LiveData 字段 → LiveData 继承链中找 (Object)void 更新方法。
+     * 查询 A/C 按父类/接口匹配字段类型，查询 D 沿 superClass 链上溯
+     * （与 Java 反射版 while 循环语义一致）。
+     */
+    private fun indexAutoAcceptFileTransfer(bridge: DexKitBridge): JsonObject {
+        val out = JsonObject()
+        try {
+            // 步骤 A：FileConnectionConfirmActivity 中找 ViewModel 子类型字段
+            val activityClass = bridge.findClass {
+                searchPackages(scopePackage)
+                matcher {
+                    className("com.motorola.mobiledesktop.files.pc2phone.FileConnectionConfirmActivity")
+                }
+            }.singleOrNull()
+            if (activityClass == null) {
+                Log.w(TAG, "AutoAcceptFileTransferHook: activity class not found")
+                return out
+            }
+
+            val vmField: FieldData? = activityClass.fields.firstOrNull { field ->
+                isSubclassOf(field.type, "androidx.lifecycle.ViewModel")
+            }
+            if (vmField == null) {
+                Log.w(TAG, "AutoAcceptFileTransferHook: ViewModel field not found")
+                return out
+            }
+            out.addProperty(DexIndexConstants.Keys.VM_FIELD_NAME, vmField.name)
+            val vmClass: ClassData = vmField.type
+            Log.i(TAG, "AutoAcceptFileTransferHook: vm field = ${vmField.name} / class = ${vmClass.name}")
+
+            // 步骤 B：ViewModel 类中找 boolean 字段
+            val acceptedField: FieldData? = vmClass.fields.firstOrNull { field ->
+                field.typeName == "boolean"
+            }
+            if (acceptedField != null) {
+                out.addProperty(DexIndexConstants.Keys.ACCEPTED_FIELD_NAME, acceptedField.name)
+                Log.i(TAG, "AutoAcceptFileTransferHook: accepted field = ${acceptedField.name}")
+            }
+
+            // 步骤 C：ViewModel 类中找 LiveData 子类型字段
+            val liveDataField: FieldData? = vmClass.fields.firstOrNull { field ->
+                isSubclassOf(field.type, "androidx.lifecycle.LiveData")
+            }
+            if (liveDataField == null) {
+                Log.w(TAG, "AutoAcceptFileTransferHook: LiveData field not found")
+                return out
+            }
+            out.addProperty(DexIndexConstants.Keys.LIVE_DATA_FIELD_NAME, liveDataField.name)
+            val liveDataClass: ClassData = liveDataField.type
+            Log.i(TAG, "AutoAcceptFileTransferHook: liveData field = ${liveDataField.name} / class = ${liveDataClass.name}")
+
+            // 步骤 D：LiveData 继承链中找 (Object)void 方法（第一个匹配，与 Java 语义一致）
+            val updateMethod: MethodData? = findObjectVoidMethod(liveDataClass)
+            if (updateMethod != null) {
+                out.addProperty(DexIndexConstants.Keys.LIVE_DATA_UPDATE_METHOD, updateMethod.name)
+                Log.i(TAG, "AutoAcceptFileTransferHook: update method = ${updateMethod.name}")
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "AutoAcceptFileTransferHook: discovery failed", t)
+        }
+        return out
+    }
+
+    /** 检查 [cls] 的继承链（含接口）是否包含指定名称的超类。 */
+    private fun isSubclassOf(cls: ClassData, superName: String): Boolean {
+        var current: ClassData? = cls
+        while (current != null && current.name != "java.lang.Object") {
+            if (superName == current.name) return true
+            for (iface in current.interfaces) {
+                if (superName == iface.name) return true
+            }
+            current = current.superClass
+        }
+        return false
+    }
+
+    /** 沿继承链上溯找第一个签名 (Object)void 的方法。 */
+    private fun findObjectVoidMethod(cls: ClassData): MethodData? {
+        var current: ClassData? = cls
+        while (current != null && current.name != "java.lang.Object") {
+            for (m in current.methods) {
+                val params = m.paramTypeNames
+                if (params.size == 1 && params[0] == "java.lang.Object"
+                    && m.returnTypeName == "void"
+                ) {
+                    return m
+                }
+            }
+            current = current.superClass
+        }
+        return null
     }
 
     private companion object {
