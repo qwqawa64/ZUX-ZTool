@@ -1,6 +1,6 @@
 # 迁移剩余全部 Java Hook 到 Kotlin 计划
 
-> 状态: 执行中(批次 A 已完成并提交)
+> 状态: ✅ 全部完成(22 个 Hook + 1 个工具类均已迁移 Kotlin, 分 6 批提交)
 > 目标: 将 `hook/modules/` 下剩余的 22 个 Java Hook + 1 个 Java 工具类全部迁移为 Kotlin,
 > 消除项目内 Java Hook 代码, 达成 AGENTS.md 要求的"新代码必须 Kotlin"。
 
