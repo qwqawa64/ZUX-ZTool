@@ -38,7 +38,7 @@ import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo
 import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint
 import com.qimian233.ztool.hook.modules.setting.LocaleListEditorHook
 import com.qimian233.ztool.hook.modules.setting.OneVisionCompletion
-import com.qimian233.ztool.hook.modules.setting.OwnerInfoHook
+import com.qimian233.ztool.hook.modules.setting.OwnerInfoSettingsHook
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
@@ -52,6 +52,7 @@ import com.qimian233.ztool.hook.modules.systemframework.DisableHbmThermalLimit
 import com.qimian233.ztool.hook.modules.systemframework.ForceRelativeAppFreeform
 import com.qimian233.ztool.hook.modules.systemframework.ForceScreenOnOffAnimation
 import com.qimian233.ztool.hook.modules.systemframework.KeepRotation
+import com.qimian233.ztool.hook.modules.systemframework.OwnerInfoSystemHook
 import com.qimian233.ztool.hook.modules.systemframework.NoMorePasswordPer24H
 import com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory as SystemSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceLenovoAOD
@@ -164,7 +165,8 @@ object HookManager {
         registerHookModule(OneVisionCompletion())
         registerHookModule(AllowDisplayDolbyHook())
         registerHookModule(PermissionControllerHook())
-        registerHookModule(OwnerInfoHook())
+        registerHookModule(OwnerInfoSettingsHook())
+        registerHookModule(OwnerInfoSystemHook())
         registerHookModule(SettingSplitScreenMandatory()) // 你别笑，为了防止重名冲突必须用全限定名
         registerHookModule(AppInfoHeaderDetailsHook())
         registerHookModule(CustomizeAboutDeviceInfo())
