@@ -54,7 +54,7 @@ class CustomQsRoundCorner : AppHookModule() {
                 if (rippleDrawable != null) {
                     val mask = rippleDrawable.findDrawableByLayerId(android.R.id.mask)
                     if (mask is GradientDrawable) {
-                        mask.setCornerRadius(normalTileRoundCornerRadius.toFloat())
+                        mask.cornerRadius = normalTileRoundCornerRadius.toFloat()
                     }
                 }
 
@@ -66,7 +66,7 @@ class CustomQsRoundCorner : AppHookModule() {
                     for (i in 0 until count) {
                         val layer = backgroundDrawable.getDrawable(i)
                         if (layer is GradientDrawable) {
-                            layer.setCornerRadius(normalTileRoundCornerRadius.toFloat())
+                            layer.cornerRadius = normalTileRoundCornerRadius.toFloat()
                         }
                     }
                 }
@@ -158,25 +158,23 @@ class CustomQsRoundCorner : AppHookModule() {
         }
 
         try {
-            val layerDrawable = progressDrawable
-            val backgroundDrawable = layerDrawable.findDrawableByLayerId(android.R.id.background)
+            val backgroundDrawable = progressDrawable.findDrawableByLayerId(android.R.id.background)
             if (backgroundDrawable is GradientDrawable) {
-                backgroundDrawable.setCornerRadius(headUpTileRoundCornerRadius.toFloat())
+                backgroundDrawable.cornerRadius = headUpTileRoundCornerRadius.toFloat()
             } else {
                 logger.debug(
                     "Background layer is " + describeDrawable(backgroundDrawable) + " from refreshSeekBar"
                 )
             }
 
-            val progressLayer = layerDrawable.findDrawableByLayerId(android.R.id.progress)
+            val progressLayer = progressDrawable.findDrawableByLayerId(android.R.id.progress)
             if (progressLayer is StateListDrawable) {
-                val stateListDrawable = progressLayer
-                for (i in 0 until stateListDrawable.stateCount) {
-                    val stateDrawable = stateListDrawable.getStateDrawable(i)
+                for (i in 0 until progressLayer.stateCount) {
+                    val stateDrawable = progressLayer.getStateDrawable(i)
                     if (stateDrawable is ClipDrawable) {
                         val innerDrawable = stateDrawable.drawable
                         if (innerDrawable is GradientDrawable) {
-                            innerDrawable.setCornerRadius(headUpTileRoundCornerRadius.toFloat())
+                            innerDrawable.cornerRadius = headUpTileRoundCornerRadius.toFloat()
                         }
                     }
                 }

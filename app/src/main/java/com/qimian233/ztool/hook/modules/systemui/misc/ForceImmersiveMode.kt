@@ -103,7 +103,7 @@ class ForceImmersiveMode : AppHookModule() {
 
                 if (state == WINDOW_STATE_SHOWING) {
                     logger.debug("ForceImmersiveMode: setWindowState(" +
-                        "displayId=$displayId, type=$type, state=$state" +
+                        "displayId=$displayId, type=$type, state=${0}" +
                         ") -> forcing state=$WINDOW_STATE_HIDDEN")
                     chain.proceed(arrayOf(displayId, type, WINDOW_STATE_HIDDEN))
                 } else {

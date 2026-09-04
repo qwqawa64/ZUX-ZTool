@@ -64,7 +64,7 @@ class HookInit : XposedModule() {
         // 生命周期参数是框架创建的对象（classloader-neutral），必须在旧代码冻结前
         // 通过 savedInstanceState 显式传递给新代码，供 onHotReloaded 重放 Hook 安装。
         param.setSavedInstanceState(
-            arrayOf<Any?>(
+            arrayOf(
                 HookManager.getSavedPackageParams(),
                 HookManager.getSavedSystemServerParam()
             )

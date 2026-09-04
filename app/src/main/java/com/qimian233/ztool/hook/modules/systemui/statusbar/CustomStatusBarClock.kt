@@ -246,7 +246,7 @@ class CustomStatusBarClock : AppHookModule() {
                 try {
                     cl.getDeclaredMethod("setLetterSpacing", Float::class.javaPrimitiveType)
                         .invoke(clockInstance, letterSpacing)
-                } catch (e: NoSuchMethodError) {
+                } catch (_: NoSuchMethodError) {
                     // 如果 setLetterSpacing 不存在，使用备选方案
                     applyAlternativeLetterSpacing(clockInstance)
                 }
@@ -385,7 +385,6 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     companion object {
-        private const val PREFS_NAME = "xposed_module_config"
         private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
         private const val CLOCK_CLASS = "com.android.systemui.statusbar.policy.Clock"
     }

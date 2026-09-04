@@ -68,13 +68,10 @@ class CustomControlCenterDate : AppHookModule() {
                     if (!isEnabled()) return@hookWithId chain.proceed()
                     if (!isTargetVariableDateView(chain.thisObject)) return@hookWithId chain.proceed()
 
-                    val originalText = chain.args[0] as CharSequence
-                    if (originalText != null) {
-                        // 使用自定义格式化器生成新的日期文本
-                        val styledText = createStyledCustomDateText()
-                        logger.debug("VariableDateView文本替换成功: $styledText")
-                        return@hookWithId chain.proceed(arrayOf(styledText))
-                    }
+                    // 使用自定义格式化器生成新的日期文本
+                    val styledText = createStyledCustomDateText()
+                    logger.debug("VariableDateView文本替换成功: $styledText")
+                    return@hookWithId chain.proceed(arrayOf(styledText))
                 } catch (e: Exception) {
                     logger.error("VariableDateView文本替换失败", e)
                 }
@@ -82,7 +79,7 @@ class CustomControlCenterDate : AppHookModule() {
             }
 
             logger.info("VariableDateView.setText Hook成功")
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             logger.warn("VariableDateView.setText Hook失败（可能是类不存在）")
         }
     }
@@ -97,7 +94,7 @@ class CustomControlCenterDate : AppHookModule() {
 
             // Hook access$updateClock静态方法
             val accessMethod: Method =
-                controllerClass.getDeclaredMethod("access\$updateClock", controllerClass)
+                controllerClass.getDeclaredMethod($$"access$updateClock", controllerClass)
             hookWithId(accessMethod, "access") { chain ->
                 val result = chain.proceed()
                 try {
@@ -113,7 +110,7 @@ class CustomControlCenterDate : AppHookModule() {
             }
 
             logger.info("VariableDateViewController Hook成功")
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             logger.warn("VariableDateViewController Hook失败（可能是类不存在）")
         }
     }
@@ -143,7 +140,7 @@ class CustomControlCenterDate : AppHookModule() {
                 }
                 result
             }
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             logger.warn("TextView.onAttachedToWindow Hook失败")
         }
     }
@@ -189,15 +186,14 @@ class CustomControlCenterDate : AppHookModule() {
             return false
         }
 
-        val androidView = view
-        val id = androidView.id
+        val id = view.id
         if (id == View.NO_ID) {
             logger.debug("VariableDateView rejected because it has no resource id")
             return false
         }
 
         return try {
-            val entryName = androidView.resources.getResourceEntryName(id)
+            val entryName = view.resources.getResourceEntryName(id)
             val matched = "date" == entryName
             if (!matched) {
                 logger.debug("VariableDateView resource rejected: $entryName")
@@ -430,7 +426,6 @@ class CustomControlCenterDate : AppHookModule() {
     }
 
     companion object {
-        private const val PREFS_NAME = "xposed_module_config"
         private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
         private const val VARIABLE_DATE_VIEW_CLASS = "com.android.systemui.statusbar.policy.VariableDateView"
         private const val VARIABLE_DATE_CONTROLLER_CLASS = "com.android.systemui.statusbar.policy.VariableDateViewController"

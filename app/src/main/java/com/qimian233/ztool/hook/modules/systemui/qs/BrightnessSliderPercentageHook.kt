@@ -9,7 +9,6 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewParent
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.SeekBar
@@ -22,6 +21,7 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.Locale
 import java.util.WeakHashMap
+import kotlin.math.roundToInt
 
 @SuppressLint("PrivateApi")
 class BrightnessSliderPercentageHook : AppHookModule() {
@@ -131,10 +131,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
             hookWithId(setProgressMethod, "set_progress") { chain ->
                 val result = chain.proceed()
                 val seekBar = chain.thisObject as SeekBar
-                val sliderView = findToggleSliderView(seekBar)
-                if (sliderView == null) {
-                    return@hookWithId result
-                }
+                val sliderView = findToggleSliderView(seekBar) ?: return@hookWithId result
                 if (isBrightnessSlider(sliderView, seekBar)) {
                     refreshBrightnessLabel(sliderView)
                 }
@@ -180,10 +177,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
             detachBrightnessLabel(sliderView)
             return
         }
-        val root = getFrameLayoutField(sliderView)
-        if (root == null) {
-            return
-        }
+        val root = getFrameLayoutField(sliderView) ?: return
         val percentView = findPercentView(root)
         if (percentView != null) {
             refreshBrightnessLabel(sliderView, percentView)
@@ -203,10 +197,6 @@ class BrightnessSliderPercentageHook : AppHookModule() {
             }
             val cl = sliderView.javaClass
             val brightnessSlider = cl.getDeclaredField("mBrightnessSlider").get(sliderView) as SeekBar
-            if (brightnessSlider == null) {
-                setPercentTextIfChanged(percentView, "--%")
-                return
-            }
             setPercentTextIfChanged(
                 percentView,
                 formatPercent(
@@ -224,15 +214,12 @@ class BrightnessSliderPercentageHook : AppHookModule() {
     }
 
     private fun refreshBrightnessFromController(brightnessController: Any, progress: Int) {
-        if (!percentageEnabled || brightnessController == null) {
+        if (!percentageEnabled) {
             return
         }
         try {
             val bcCls = brightnessController.javaClass
-            val control = bcCls.getDeclaredField("mControl").get(brightnessController)
-            if (control == null) {
-                return
-            }
+            val control = bcCls.getDeclaredField("mControl").get(brightnessController) ?: return
             try {
                 bcCls.getDeclaredField("mBrightnessObserver")
             } catch (_: NoSuchFieldException) {
@@ -250,28 +237,16 @@ class BrightnessSliderPercentageHook : AppHookModule() {
     }
 
     private fun refreshBrightnessFromView(view: View, progress: Int) {
-        if (view == null) {
-            return
-        }
-        val sliderView = findToggleSliderView(view)
-        if (sliderView == null) {
-            return
-        }
-        val root = getFrameLayoutField(sliderView)
-        if (root == null) {
-            return
-        }
-        val percentView = findPercentView(root)
-        if (percentView == null) {
-            return
-        }
+        val sliderView = findToggleSliderView(view) ?: return
+        val root = getFrameLayoutField(sliderView) ?: return
+        val percentView = findPercentView(root) ?: return
 
         try {
             val cl = sliderView.javaClass
             val brightnessSlider = cl.getDeclaredField("mBrightnessSlider").get(sliderView) as SeekBar
-            var max = if (brightnessSlider != null) brightnessSlider.max else 65535
-            max = Math.max(1, max)
-            val percent = Math.max(0, Math.min(100, Math.round((progress * 100f) / max)))
+            var max = brightnessSlider.max
+            max = 1.coerceAtLeast(max)
+            val percent = 0.coerceAtLeast(100.coerceAtMost(((progress * 100f) / max).roundToInt()))
             if (root.isInLayout) {
                 schedulePositionUpdate(sliderView)
                 return
@@ -291,43 +266,37 @@ class BrightnessSliderPercentageHook : AppHookModule() {
     private fun resolveBrightnessPercentColor(sliderView: Any): Int {
         val brightnessSlider: SeekBar?
         try {
-            brightnessSlider = if (sliderView is SeekBar) {
-                sliderView
-            } else {
-                sliderView.javaClass.getDeclaredField("mBrightnessSlider").get(sliderView) as SeekBar
-            }
-        } catch (t: Throwable) {
-            return Color.argb(0xff, 0xd8, 0xd8, 0xd8)
-        }
-        if (brightnessSlider == null) {
+            brightnessSlider = sliderView as? SeekBar
+                ?: sliderView.javaClass.getDeclaredField("mBrightnessSlider").get(sliderView) as SeekBar
+        } catch (_: Throwable) {
             return Color.argb(0xff, 0xd8, 0xd8, 0xd8)
         }
         val progress = ((brightnessSlider.progress - brightnessSlider.min) * 1.0f) /
-            Math.max(1, brightnessSlider.max - brightnessSlider.min)
+                1.coerceAtLeast(brightnessSlider.max - brightnessSlider.min)
         if (progress < 0.2f) {
             return Color.argb(0xff, 0xd8, 0xd8, 0xd8)
         }
-        var gray = ((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f).toInt()
-        gray = Math.max(gray, 0x80)
-        val alpha = Math.min(kotlin.math.floor(progress * 85.0f).toInt() + 170, 255)
+        var gray = ((1.0f - ((progress - 0.2f) / 0.2f).coerceAtMost(1.0f)) * 216.0f).toInt()
+        gray = gray.coerceAtLeast(0x80)
+        val alpha = (kotlin.math.floor(progress * 85.0f).toInt() + 170).coerceAtMost(255)
         return Color.argb(alpha, gray, gray, gray)
     }
 
     private fun formatPercent(progress: Int, min: Int, max: Int): String {
-        val range = Math.max(1, max - min)
-        var value = Math.round(((progress - min) * 100f) / range)
-        value = Math.max(0, Math.min(100, value))
+        val range = 1.coerceAtLeast(max - min)
+        var value = (((progress - min) * 100f) / range).roundToInt()
+        value = 0.coerceAtLeast(100.coerceAtMost(value))
         return String.format(Locale.US, "%d%%", value)
     }
 
     private fun createPercentView(context: Context): TextView {
         val textView = TextView(context)
-        textView.setTag(SLIDER_PERCENT_TAG)
+        textView.tag = SLIDER_PERCENT_TAG
         textView.setTextColor(Color.argb(0xff, 0xd8, 0xd8, 0xd8))
         textView.setTypeface(Typeface.DEFAULT_BOLD)
         textView.textSize = 13f
         textView.setShadowLayer(2f, 0f, 0f, Color.BLACK)
-        textView.setSingleLine(true)
+        textView.isSingleLine = true
         textView.includeFontPadding = false
         textView.gravity = Gravity.CENTER
         textView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -432,17 +401,11 @@ class BrightnessSliderPercentageHook : AppHookModule() {
         if (root == null || icon == null) {
             return
         }
-        val percentView = findPercentView(root)
-        if (percentView == null) {
-            return
-        }
+        val percentView = findPercentView(root) ?: return
         schedulePositionUpdate(root, icon, percentView)
     }
 
     private fun schedulePositionUpdate(root: FrameLayout, icon: View, percentView: TextView) {
-        if (root == null || icon == null || percentView == null) {
-            return
-        }
         if (java.lang.Boolean.TRUE == pendingPositionUpdates[root]) {
             return
         }
@@ -457,9 +420,6 @@ class BrightnessSliderPercentageHook : AppHookModule() {
     }
 
     private fun positionLabel(root: FrameLayout, icon: View, percentView: TextView) {
-        if (root == null || icon == null || percentView == null) {
-            return
-        }
 
         val rootWidth = root.width
         val rootHeight = root.height
@@ -474,14 +434,14 @@ class BrightnessSliderPercentageHook : AppHookModule() {
             )
         }
 
-        val labelWidth = Math.max(1, percentView.measuredWidth)
-        val labelHeight = Math.max(1, percentView.measuredHeight)
+        val labelWidth = 1.coerceAtLeast(percentView.measuredWidth)
+        val labelHeight = 1.coerceAtLeast(percentView.measuredHeight)
         val iconCenterX = icon.left + (icon.width / 2)
         var targetLeft = iconCenterX - (labelWidth / 2)
         var targetTop = icon.bottom + dp(root.context, LABEL_GAP_DP)
 
-        targetLeft = Math.max(0, Math.min(targetLeft, Math.max(0, rootWidth - labelWidth)))
-        targetTop = Math.max(0, Math.min(targetTop, Math.max(0, rootHeight - labelHeight)))
+        targetLeft = 0.coerceAtLeast(targetLeft.coerceAtMost(0.coerceAtLeast(rootWidth - labelWidth)))
+        targetTop = 0.coerceAtLeast(targetTop.coerceAtMost(0.coerceAtLeast(rootHeight - labelHeight)))
 
         var params = percentView.layoutParams as? FrameLayout.LayoutParams
         if (params == null) {
@@ -503,14 +463,14 @@ class BrightnessSliderPercentageHook : AppHookModule() {
     }
 
     private fun setPercentTextIfChanged(percentView: TextView, text: String) {
-        if (percentView == null || TextUtils.equals(percentView.text, text)) {
+        if (TextUtils.equals(percentView.text, text)) {
             return
         }
         percentView.text = text
     }
 
     private fun dp(context: Context, value: Int): Int {
-        return Math.round(value * context.resources.displayMetrics.density)
+        return (value * context.resources.displayMetrics.density).roundToInt()
     }
 
     private fun updatePrefs() {

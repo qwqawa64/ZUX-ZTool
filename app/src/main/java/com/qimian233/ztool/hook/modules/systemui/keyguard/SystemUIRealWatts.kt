@@ -31,7 +31,6 @@ class SystemUIRealWatts : AppHookModule() {
         const val VOLTAGE_NOW_PATH = "/sys/class/power_supply/battery/voltage_now"
         const val STATUS_PATH = "/sys/class/power_supply/battery/status"
         const val TEMP_PATH = "/sys/class/power_supply/battery/temp"
-        const val PREFS_NAME = "xposed_module_config"
 
         val POWER_FORMAT = DecimalFormat("0.00")
     }

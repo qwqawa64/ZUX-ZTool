@@ -99,7 +99,7 @@ object CustomDateFormatter {
 
         // 使用正则表达式匹配并替换标准格式部分
         val result = StringBuilder()
-        val stdPattern = Pattern.compile("([^a-zA-Z]|^)([yMdHhmsSEDFwWkKzZ]+)([^a-zA-Z]|\$)")
+        val stdPattern = Pattern.compile("([^a-zA-Z]|^)([yMdHhmsSEDFwWkKzZ]+)([^a-zA-Z]|$)")
         val matcher = stdPattern.matcher(pattern)
 
         var lastEnd = 0
@@ -237,13 +237,13 @@ object CustomDateFormatter {
             val hourFormat = SimpleDateFormat("H", Locale.getDefault())
             val hour = hourFormat.format(date).toInt()
 
-            when {
-                hour >= 0 && hour < 6 -> "凌晨"
-                hour >= 6 && hour < 9 -> "早上"
-                hour >= 9 && hour < 12 -> "上午"
-                hour >= 12 && hour < 14 -> "中午"
-                hour >= 14 && hour < 18 -> "下午"
-                hour >= 18 && hour < 24 -> "晚上"
+            when (hour) {
+                in 0..<6 -> "凌晨"
+                in 6..<9 -> "早上"
+                in 9..<12 -> "上午"
+                in 12..<14 -> "中午"
+                in 14..<18 -> "下午"
+                in 18..<24 -> "晚上"
                 else -> ""
             }
         } catch (e: Exception) {

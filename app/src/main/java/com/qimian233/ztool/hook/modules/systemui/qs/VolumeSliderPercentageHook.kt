@@ -9,7 +9,6 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewParent
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.SeekBar
@@ -22,6 +21,7 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.Locale
 import java.util.WeakHashMap
+import kotlin.math.roundToInt
 
 @SuppressLint("PrivateApi")
 class VolumeSliderPercentageHook : AppHookModule() {
@@ -120,7 +120,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
     private fun hookSeekProgressChanges(classLoader: ClassLoader) {
         try {
             val onProgressChangedMethod: Method = classLoader
-                .loadClass("com.android.systemui.settings.ToggleSliderView\$2")
+                .loadClass($$"com.android.systemui.settings.ToggleSliderView$2")
                 .getDeclaredMethod(
                     "onProgressChanged",
                     SeekBar::class.java,
@@ -186,10 +186,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
             detachVolumeLabel(sliderView)
             return
         }
-        val root = getFrameLayoutField(sliderView)
-        if (root == null) {
-            return
-        }
+        val root = getFrameLayoutField(sliderView) ?: return
         val percentView = findPercentView(root)
         if (percentView != null) {
             refreshVolumeLabel(sliderView, percentView, rawProgress)
@@ -223,7 +220,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
     }
 
     private fun refreshVolumeFromToggleSlider(sliderView: Any) {
-        if (!percentageEnabled || sliderView == null) {
+        if (!percentageEnabled) {
             return
         }
         try {
@@ -232,14 +229,8 @@ class VolumeSliderPercentageHook : AppHookModule() {
             if (rawProgress2 == null || volumeProgress == null) {
                 return
             }
-            val root = getFrameLayoutField(sliderView)
-            if (root == null) {
-                return
-            }
-            val percentView = findPercentView(root)
-            if (percentView == null) {
-                return
-            }
+            val root = getFrameLayoutField(sliderView) ?: return
+            val percentView = findPercentView(root) ?: return
             updateVolumePercentColor(percentView, rawProgress2)
             if (root.isInLayout) {
                 schedulePositionUpdate(sliderView)
@@ -256,11 +247,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         return try {
             val volumeSlider = sliderView.javaClass
                 .getDeclaredField("mMediaVolumeSlider").get(sliderView) as SeekBar
-            if (volumeSlider == null) {
-                null
-            } else {
-                rawProgress ?: volumeSlider.progress
-            }
+            rawProgress ?: volumeSlider.progress
         } catch (_: Throwable) {
             null
         }
@@ -270,15 +257,12 @@ class VolumeSliderPercentageHook : AppHookModule() {
         return try {
             val volumeSlider = sliderView.javaClass
                 .getDeclaredField("mMediaVolumeSlider").get(sliderView) as SeekBar
-            if (volumeSlider == null) {
-                return null
-            }
             val progress = rawProgress ?: volumeSlider.progress
             val min = volumeSlider.min
             val max = volumeSlider.max
-            val range = Math.max(1, max - min)
-            var percent = Math.round(((progress - min) * 100f) / range)
-            percent = Math.max(0, Math.min(100, percent))
+            val range = 1.coerceAtLeast(max - min)
+            var percent = (((progress - min) * 100f) / range).roundToInt()
+            percent = 0.coerceAtLeast(100.coerceAtMost(percent))
             percent
         } catch (t: Throwable) {
             logger.error("Failed to resolve volume progress", t)
@@ -287,20 +271,20 @@ class VolumeSliderPercentageHook : AppHookModule() {
     }
 
     private fun formatPercent(progress: Int): String {
-        val range = Math.max(1, 100)
-        var value = Math.round((progress * 100f) / range)
-        value = Math.max(0, Math.min(100, value))
+        val range = 1.coerceAtLeast(100)
+        var value = ((progress * 100f) / range).roundToInt()
+        value = 0.coerceAtLeast(100.coerceAtMost(value))
         return String.format(Locale.US, "%d%%", value)
     }
 
     private fun createPercentView(context: Context): TextView {
         val textView = TextView(context)
-        textView.setTag(SLIDER_PERCENT_TAG)
+        textView.tag = SLIDER_PERCENT_TAG
         textView.setTextColor(Color.argb(0xff, 0xd8, 0xd8, 0xd8))
         textView.setTypeface(Typeface.DEFAULT_BOLD)
         textView.textSize = 13f
         textView.setShadowLayer(2f, 0f, 0f, Color.BLACK)
-        textView.setSingleLine(true)
+        textView.isSingleLine = true
         textView.includeFontPadding = false
         textView.gravity = Gravity.CENTER
         textView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -405,17 +389,11 @@ class VolumeSliderPercentageHook : AppHookModule() {
         if (root == null || icon == null) {
             return
         }
-        val percentView = findPercentView(root)
-        if (percentView == null) {
-            return
-        }
+        val percentView = findPercentView(root) ?: return
         schedulePositionUpdate(root, icon, percentView)
     }
 
     private fun schedulePositionUpdate(root: FrameLayout, icon: View, percentView: TextView) {
-        if (root == null || icon == null || percentView == null) {
-            return
-        }
         if (java.lang.Boolean.TRUE == pendingPositionUpdates[root]) {
             return
         }
@@ -430,9 +408,6 @@ class VolumeSliderPercentageHook : AppHookModule() {
     }
 
     private fun positionLabel(root: FrameLayout, icon: View, percentView: TextView) {
-        if (root == null || icon == null || percentView == null) {
-            return
-        }
 
         val rootWidth = root.width
         val rootHeight = root.height
@@ -447,14 +422,14 @@ class VolumeSliderPercentageHook : AppHookModule() {
             )
         }
 
-        val labelWidth = Math.max(1, percentView.measuredWidth)
-        val labelHeight = Math.max(1, percentView.measuredHeight)
+        val labelWidth = 1.coerceAtLeast(percentView.measuredWidth)
+        val labelHeight = 1.coerceAtLeast(percentView.measuredHeight)
         val iconCenterX = icon.left + (icon.width / 2)
         var targetLeft = iconCenterX - (labelWidth / 2)
         var targetTop = icon.bottom + dp(root.context, LABEL_GAP_DP)
 
-        targetLeft = Math.max(0, Math.min(targetLeft, Math.max(0, rootWidth - labelWidth)))
-        targetTop = Math.max(0, Math.min(targetTop, Math.max(0, rootHeight - labelHeight)))
+        targetLeft = 0.coerceAtLeast(targetLeft.coerceAtMost(0.coerceAtLeast(rootWidth - labelWidth)))
+        targetTop = 0.coerceAtLeast(targetTop.coerceAtMost(0.coerceAtLeast(rootHeight - labelHeight)))
 
         var params = percentView.layoutParams as? FrameLayout.LayoutParams
         if (params == null) {
@@ -476,14 +451,14 @@ class VolumeSliderPercentageHook : AppHookModule() {
     }
 
     private fun setPercentTextIfChanged(percentView: TextView, text: String) {
-        if (percentView == null || TextUtils.equals(percentView.text, text)) {
+        if (TextUtils.equals(percentView.text, text)) {
             return
         }
         percentView.text = text
     }
 
     private fun dp(context: Context, value: Int): Int {
-        return Math.round(value * context.resources.displayMetrics.density)
+        return (value * context.resources.displayMetrics.density).roundToInt()
     }
 
     private fun updateVolumePercentColor(percentView: TextView, seekBarProgress: Int) {
@@ -495,9 +470,9 @@ class VolumeSliderPercentageHook : AppHookModule() {
         if (progress < 0.2f) {
             return Color.argb(0xff, 0xd8, 0xd8, 0xd8)
         }
-        var gray = ((1.0f - Math.min((progress - 0.2f) / 0.2f, 1.0f)) * 216.0f).toInt()
-        gray = Math.max(gray, 0x80)
-        val alpha = Math.min(kotlin.math.floor(progress * 85.0f).toInt() + 170, 255)
+        var gray = ((1.0f - ((progress - 0.2f) / 0.2f).coerceAtMost(1.0f)) * 216.0f).toInt()
+        gray = gray.coerceAtLeast(0x80)
+        val alpha = (kotlin.math.floor(progress * 85.0f).toInt() + 170).coerceAtMost(255)
         return Color.argb(alpha, gray, gray, gray)
     }
 

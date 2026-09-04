@@ -8,6 +8,7 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
+import kotlin.math.roundToInt
 
 @SuppressLint("PrivateApi")
 class NotificationCenterTransparency : AppHookModule() {
@@ -82,7 +83,7 @@ class NotificationCenterTransparency : AppHookModule() {
                     val pairClass = classLoader.loadClass("kotlin.Pair")
                     val blur = pairClass.getDeclaredMethod("component1").invoke(result)
                     val zoomOut = pairClass.getDeclaredMethod("component2").invoke(result)
-                    return@hookWithId pairClass.getDeclaredConstructor(Object::class.java, Object::class.java)
+                    return@hookWithId pairClass.getDeclaredConstructor(Any::class.java, Any::class.java)
                         .newInstance(scaleBlur(blur), zoomOut)
                 }
                 null
@@ -96,7 +97,7 @@ class NotificationCenterTransparency : AppHookModule() {
                 .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
                 .getDeclaredMethod("animateBlur", Float::class.javaPrimitiveType, Boolean::class.javaPrimitiveType)
             hookWithId(animateBlurMethod, "animate_blur") { chain ->
-                var newBlur = scaleBlur(chain.args[0] as Float)
+                val newBlur = scaleBlur(chain.args[0] as Float)
                 var newAnimate = chain.args[1] as Boolean
                 if (isBlurCleared()) {
                     newAnimate = false
@@ -146,9 +147,8 @@ class NotificationCenterTransparency : AppHookModule() {
         view.setRenderEffect(null)
 
         if (view is ViewGroup) {
-            val viewGroup = view
-            for (i in 0 until viewGroup.childCount) {
-                clearBlurFromViewTree(viewGroup.getChildAt(i))
+            for (i in 0 until view.childCount) {
+                clearBlurFromViewTree(view.getChildAt(i))
             }
         }
     }
@@ -173,7 +173,7 @@ class NotificationCenterTransparency : AppHookModule() {
 
     private fun scaleBlur(blur: Int): Int {
         updatePrefs()
-        return Math.round(blur * (blurPercent / 100.0f))
+        return (blur * (blurPercent / 100.0f)).roundToInt()
     }
 
     private fun scaleBlur(blur: Float): Float {
@@ -190,7 +190,7 @@ class NotificationCenterTransparency : AppHookModule() {
         }
         if (blur is Number) {
             updatePrefs()
-            return Math.round(blur.toFloat() * (blurPercent / 100.0f))
+            return (blur.toFloat() * (blurPercent / 100.0f)).roundToInt()
         }
         return blur
     }
