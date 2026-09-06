@@ -32,6 +32,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.RadioButton
@@ -41,6 +42,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.qimian233.ztool.ui.theme.FrontendStyle
@@ -69,6 +72,18 @@ import top.yukonga.miuix.kmp.basic.PopupPositionProvider as MiuixPopupPositionPr
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
 import top.yukonga.miuix.kmp.icon.MiuixIcons.Basic as MiuixIcons
 import top.yukonga.miuix.kmp.window.WindowListPopup as MiuixWindowListPopup
+
+/**
+ * Reduced minimum interactive size for controls trailing inside a clickable row: the row
+ * itself is the touch target and its horizontal padding already contributes to it, so the
+ * 48dp enforcement must not inflate the row height (same approach as the androidx
+ * Material3 ListItem decorators).
+ */
+@Composable
+private fun trailingControlMinimumInteractiveSize(horizontalPadding: Dp): Dp {
+    return (LocalMinimumInteractiveComponentSize.current.takeOrElse { 0.dp } - horizontalPadding)
+        .coerceAtLeast(0.dp)
+}
 
 @Composable
 fun ZListItem(
@@ -103,7 +118,7 @@ fun ZListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .heightIn(min = if (summary == null) 56.dp else 72.dp)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(enabled = enabled) { onClick() }
@@ -111,7 +126,7 @@ fun ZListItem(
                     Modifier
                 }
             )
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (leadingContent != null) {
@@ -197,9 +212,9 @@ fun ZToolSwitchRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .heightIn(min = if (summary == null) 56.dp else 72.dp)
             .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(horizontal = padding, vertical = 16.dp),
+            .padding(horizontal = padding, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
@@ -227,37 +242,41 @@ fun ZToolSwitchRow(
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            enabled = enabled,
-            colors = SwitchDefaults.colors(
-                disabledCheckedThumbColor = LocalZToolColorScheme.current.primary.copy(alpha = 0.38f),
-                disabledCheckedTrackColor = LocalZToolColorScheme.current.primary.copy(alpha = 0.12f),
-                disabledCheckedIconColor = LocalZToolColorScheme.current.onPrimary.copy(alpha = 0.38f),
-                disabledUncheckedThumbColor = LocalZToolColorScheme.current.onSurface.copy(alpha = 0.38f),
-                disabledUncheckedTrackColor = LocalZToolColorScheme.current.surfaceContainerHighest.copy(alpha = 0.12f),
-                disabledUncheckedBorderColor = LocalZToolColorScheme.current.outline.copy(alpha = 0.12f),
-                disabledUncheckedIconColor = LocalZToolColorScheme.current.onSurface.copy(alpha = 0.38f)
-            ),
-            thumbContent = if (checked) {
-                {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                    )
+        CompositionLocalProvider(
+            LocalMinimumInteractiveComponentSize provides trailingControlMinimumInteractiveSize(padding)
+        ) {
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                enabled = enabled,
+                colors = SwitchDefaults.colors(
+                    disabledCheckedThumbColor = LocalZToolColorScheme.current.primary.copy(alpha = 0.38f),
+                    disabledCheckedTrackColor = LocalZToolColorScheme.current.primary.copy(alpha = 0.12f),
+                    disabledCheckedIconColor = LocalZToolColorScheme.current.onPrimary.copy(alpha = 0.38f),
+                    disabledUncheckedThumbColor = LocalZToolColorScheme.current.onSurface.copy(alpha = 0.38f),
+                    disabledUncheckedTrackColor = LocalZToolColorScheme.current.surfaceContainerHighest.copy(alpha = 0.12f),
+                    disabledUncheckedBorderColor = LocalZToolColorScheme.current.outline.copy(alpha = 0.12f),
+                    disabledUncheckedIconColor = LocalZToolColorScheme.current.onSurface.copy(alpha = 0.38f)
+                ),
+                thumbContent = if (checked) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                } else {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
                 }
-            } else {
-                {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                    )
-                }
-            }
-        )
+            )
+        }
     }
 }
 
@@ -296,9 +315,9 @@ fun ZToolCheckboxRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .heightIn(min = if (summary == null) 56.dp else 72.dp)
             .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
@@ -326,11 +345,15 @@ fun ZToolCheckboxRow(
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            enabled = enabled
-        )
+        CompositionLocalProvider(
+            LocalMinimumInteractiveComponentSize provides trailingControlMinimumInteractiveSize(24.dp)
+        ) {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                enabled = enabled
+            )
+        }
     }
 }
 
@@ -477,11 +500,11 @@ fun <T> ZToolPopupMenuSettingRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .heightIn(min = if (summary == null) 56.dp else 72.dp)
             .clickable(enabled = enabled && options.isNotEmpty()) {
                 expanded = true
             }
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
@@ -505,16 +528,20 @@ fun <T> ZToolPopupMenuSettingRow(
             }
         }
         Spacer(modifier = Modifier.width(16.dp))
-        ZToolPopupMenuField(
-            value = value,
-            options = options,
-            optionLabel = optionLabel,
-            onOptionSelected = onOptionSelected,
-            enabled = enabled,
-            modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth),
-            externalExpanded = expanded,
-            onExternalExpandedChange = { expanded = it }
-        )
+        CompositionLocalProvider(
+            LocalMinimumInteractiveComponentSize provides trailingControlMinimumInteractiveSize(24.dp)
+        ) {
+            ZToolPopupMenuField(
+                value = value,
+                options = options,
+                optionLabel = optionLabel,
+                onOptionSelected = onOptionSelected,
+                enabled = enabled,
+                modifier = Modifier.widthIn(min = fieldMinWidth, max = fieldMaxWidth),
+                externalExpanded = expanded,
+                onExternalExpandedChange = { expanded = it }
+            )
+        }
     }
 }
 
