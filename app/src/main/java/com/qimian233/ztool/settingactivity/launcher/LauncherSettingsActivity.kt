@@ -113,6 +113,7 @@ fun LauncherSettingsRoute(
         onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
         onDisableDockBarChanged = viewModel::setDisableDockBar,
         onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode,
+        onLauncherDrawerNoLabelModeChanged = viewModel::setLauncherDrawerNoLabelMode,
         onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
         onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
         onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay
@@ -181,6 +182,7 @@ private fun LauncherSettingsScreen(
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
+    onLauncherDrawerNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
@@ -235,6 +237,7 @@ private fun LauncherSettingsScreen(
                         onBeautifyRamInfoChanged = onBeautifyRamInfoChanged,
                         onDisableDockBarChanged = onDisableDockBarChanged,
                         onLauncherNoLabelModeChanged = onLauncherNoLabelModeChanged,
+                        onLauncherDrawerNoLabelModeChanged = onLauncherDrawerNoLabelModeChanged,
                         onLauncherHideBluePointChanged = onLauncherHideBluePointChanged,
                         onCloudFolderDismissChanged = onCloudFolderDismissChanged,
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
@@ -262,6 +265,7 @@ private fun launcherSettingsSections(
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
+    onLauncherDrawerNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
@@ -298,6 +302,14 @@ private fun launcherSettingsSections(
                 summary = stringResource(R.string.launcher_no_label_mode_summary),
                 checked = state.noLabelMode,
                 onCheckedChange = onLauncherNoLabelModeChanged
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_drawer_no_label_mode_title),
+                summary = stringResource(R.string.launcher_drawer_no_label_mode_summary),
+                checked = state.drawerNoLabelMode,
+                onCheckedChange = onLauncherDrawerNoLabelModeChanged
             )
         )
         add(

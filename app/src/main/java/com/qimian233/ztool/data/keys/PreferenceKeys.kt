@@ -125,6 +125,7 @@ object PreferenceKeys {
     @JvmField val DISABLE_DOCK_BAR = BoolKey("disable_dock_bar", false)
     @JvmField val LAUNCHER_RECENT_TASK_MEMORY_VIEW = BoolKey("launcher_recent_task_memory_view", false)
     @JvmField val LAUNCHER_NO_LABEL_MODE = BoolKey("launcher_no_label_mode", false)
+    @JvmField val LAUNCHER_DRAWER_NO_LABEL_MODE = BoolKey("launcher_drawer_no_label_mode", false)
     @JvmField val LAUNCHER_HIDE_BLUE_POINT = BoolKey("launcher_hide_blue_point", false)
     @JvmField val DISMISS_CLOUD_FOLDER_CONFIRMATION = BoolKey("dismiss_cloud_folder_confirmation", false)
     @JvmField val DISABLE_RECENT_APPS_DISPLAY = BoolKey("disable_recent_apps_display", false)
@@ -270,6 +271,7 @@ object PreferenceKeys {
         DISABLE_FORCE_STOP, ZUI_LAUNCHER_HOTSEAT, CUSTOM_GRID_SIZE,
         CLEAN_GLOBAL_SEARCH, DISABLE_DOCK_BAR,
         LAUNCHER_RECENT_TASK_MEMORY_VIEW, LAUNCHER_NO_LABEL_MODE,
+        LAUNCHER_DRAWER_NO_LABEL_MODE,
         LAUNCHER_HIDE_BLUE_POINT, DISMISS_CLOUD_FOLDER_CONFIRMATION,
         DISABLE_RECENT_APPS_DISPLAY,
         REMOVE_HOT_WORD_VIEW, REMOVE_SEARCH_RECOMMEND, BEAUTIFY_RAM_INFO,

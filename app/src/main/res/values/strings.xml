@@ -1027,6 +1027,8 @@
     <string name="advanced_api_version">libxposed API 版本</string>
     <string name="launcher_no_label_mode_title">桌面无字模式</string>
     <string name="launcher_no_label_mode_summary">不显示文件夹和应用图标的文字。如果不生效就把图标移入再移出文件夹。</string>
+    <string name="launcher_drawer_no_label_mode_title">抽屉无字模式</string>
+    <string name="launcher_drawer_no_label_mode_summary">不显示应用抽屉内图标的文字，仅影响全部应用列表和预测行。</string>
     <string name="launcher_hide_blue_point_title">隐藏应用更新蓝点提示</string>
     <string name="disable_nearby_share_auto_shutdown_title">禁止互传自动关闭</string>
     <string name="disable_ota_auto_install_title">禁止 OTA 自动安装</string>

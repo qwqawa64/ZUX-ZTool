@@ -97,6 +97,11 @@ class LauncherSettingsViewModel(
         repository.saveLauncherNoLabelMode(enabled)
     }
 
+    fun setLauncherDrawerNoLabelMode(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(drawerNoLabelMode = enabled)
+        repository.saveLauncherDrawerNoLabelMode(enabled)
+    }
+
     fun setCloudFolderAutoDismiss(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(cloudFolderDismiss = enabled)
         repository.saveCloudFolderAutoDismiss(enabled)
@@ -184,6 +189,7 @@ data class LauncherSettingsUiState(
     val disableDockBar: Boolean = false,
     val showDisableDockWarningDialog: Boolean = false,
     val noLabelMode: Boolean = false,
+    val drawerNoLabelMode: Boolean = false,
     val hideBluePoint: Boolean = false,
     val cloudFolderDismiss: Boolean = false,
     val disableRecentAppDisplay: Boolean = false,

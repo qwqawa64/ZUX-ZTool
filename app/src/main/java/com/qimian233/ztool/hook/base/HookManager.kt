@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.modules.launcher.dockbar.ZuiLauncherHotseatHook
 import com.qimian233.ztool.hook.modules.launcher.grid.BluePointRemovalHook
 import com.qimian233.ztool.hook.modules.launcher.grid.CustomGridSize
 import com.qimian233.ztool.hook.modules.launcher.grid.DismissCloudFolderConfirmation
+import com.qimian233.ztool.hook.modules.launcher.grid.LauncherDrawerNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
@@ -190,6 +191,7 @@ object HookManager {
         registerHookModule(DisableDockBar())
         registerHookModule(RecentTaskMemoryViewHook())
         registerHookModule(LauncherNoLabelMode())
+        registerHookModule(LauncherDrawerNoLabelMode())
         registerHookModule(BluePointRemovalHook())
         registerHookModule(DismissCloudFolderConfirmation())
         registerHookModule(DisableRecentAppsDisplay())

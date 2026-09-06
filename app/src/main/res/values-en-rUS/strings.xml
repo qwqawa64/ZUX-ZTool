@@ -938,6 +938,8 @@
     <string name="advanced_api_version">libxposed API version</string>
     <string name="launcher_no_label_mode_title">Launcher No-label Mode</string>
     <string name="launcher_no_label_mode_summary">Remove label of APP and folder. Move the icon into and then out of the folder if it does not work.</string>
+    <string name="launcher_drawer_no_label_mode_title">Drawer No-label Mode</string>
+    <string name="launcher_drawer_no_label_mode_summary">Remove label of apps in the app drawer. Only affects the all-apps list and the prediction row.</string>
     <string name="launcher_hide_blue_point_title">Hide app update blue dot</string>
     <string name="advanced_hot_reload_starting">Requesting hot reload…</string>
     <string name="advanced_hot_reload_confirm_title">Trigger a Hot Reload?</string>
