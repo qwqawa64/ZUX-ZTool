@@ -202,7 +202,12 @@ fun ZToolSwitchRow(
                     enabled = enabled
                 )
             },
-            insideMargin = PaddingValues(horizontal = padding, vertical = 16.dp),
+            // The 28dp-tall Miuix switch would push single-line rows to 60dp; trim the
+            // vertical inset for single-line rows so they stay at the 56dp baseline.
+            insideMargin = PaddingValues(
+                horizontal = padding,
+                vertical = if (summary == null) 14.dp else 16.dp
+            ),
             onClick = { onCheckedChange(!checked) },
             enabled = enabled
         )
@@ -305,7 +310,10 @@ fun ZToolCheckboxRow(
                     enabled = enabled
                 )
             },
-            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+            insideMargin = PaddingValues(
+                horizontal = 24.dp,
+                vertical = if (summary == null) 14.dp else 16.dp
+            ),
             onClick = { onCheckedChange(!checked) },
             enabled = enabled
         )
@@ -486,7 +494,12 @@ fun <T> ZToolPopupMenuSettingRow(
                     onExternalExpandedChange = { expanded = it }
                 )
             },
-            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+            insideMargin = PaddingValues(
+                horizontal = 24.dp,
+                // The 40dp-wide value field would push single-line rows to 80dp; trim the
+                // vertical inset for single-line rows so they stay at the 56dp baseline.
+                vertical = if (summary == null) 12.dp else 16.dp
+            ),
             onClick = {
                 if (enabled && options.isNotEmpty()) {
                     expanded = true
@@ -724,7 +737,7 @@ private fun <T> ZToolMiuixPopupMenuField(
             IconButton(
                 enabled = enabled && options.isNotEmpty(),
                 onClick = { setExpanded(true) },
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(24.dp)
             ) {
                 Icon(
                     imageVector = MiuixIcons.ArrowUpDown,
@@ -833,7 +846,7 @@ private fun <T> ZToolMaterialPopupMenuField(
             IconButton(
                 enabled = enabled && options.isNotEmpty(),
                 onClick = { setExpanded(true) },
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(24.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.ArrowDropDown,
