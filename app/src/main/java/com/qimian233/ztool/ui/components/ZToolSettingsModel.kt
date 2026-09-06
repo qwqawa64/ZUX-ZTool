@@ -270,21 +270,27 @@ fun ColumnScope.ExpressiveSectionItems(
     shapeForIndex: ((index: Int, count: Int) -> Shape)? = null,
     content: @Composable ColumnScope.((Int) -> Modifier) -> Unit
 ) {
-    val itemColor = LocalZToolColorScheme.current.surfaceContainerHigh
+    // MIUI cards keep rows flush and transparent; the stepped chip look is M3-expressive only.
+    val isMiuix = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
+    val itemColor = if (isMiuix) Color.Transparent else LocalZToolColorScheme.current.surfaceContainerHigh
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(if (isMiuix) 0.dp else 4.dp)
     ) {
         content { index ->
-            val shape = shapeForIndex?.invoke(index, count)
-                ?: expressiveSettingsItemShape(index = index, count = count)
-            Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(
-                    color = itemColor,
-                    shape = shape
-                )
+            if (isMiuix) {
+                Modifier.fillMaxWidth()
+            } else {
+                val shape = shapeForIndex?.invoke(index, count)
+                    ?: expressiveSettingsItemShape(index = index, count = count)
+                Modifier
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(
+                        color = itemColor,
+                        shape = shape
+                    )
+            }
         }
     }
 }
@@ -296,23 +302,30 @@ fun ExpressiveSectionItems(
     itemSpacing: Dp = 4.dp,
     shapeForIndex: ((index: Int, count: Int) -> Shape)? = null
 ) {
-    val itemColor = LocalZToolColorScheme.current.surfaceContainerHigh
+    // MIUI cards keep rows flush and transparent; the stepped chip look is M3-expressive only.
+    val isMiuix = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
+    val itemColor = if (isMiuix) Color.Transparent else LocalZToolColorScheme.current.surfaceContainerHigh
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(itemSpacing)
+        verticalArrangement = Arrangement.spacedBy(if (isMiuix) 0.dp else itemSpacing)
     ) {
         items.forEachIndexed { index, item ->
-            val shape = shapeForIndex?.invoke(index, items.size)
-                ?: expressiveSettingsItemShape(index = index, count = items.size)
-            ZToolSettingItem(
-                item = item,
-                modifier = Modifier
+            val rowModifier = if (isMiuix) {
+                Modifier.fillMaxWidth()
+            } else {
+                val shape = shapeForIndex?.invoke(index, items.size)
+                    ?: expressiveSettingsItemShape(index = index, count = items.size)
+                Modifier
                     .fillMaxWidth()
                     .clip(shape)
                     .background(
                         color = itemColor,
                         shape = shape
                     )
+            }
+            ZToolSettingItem(
+                item = item,
+                modifier = rowModifier
             )
         }
     }

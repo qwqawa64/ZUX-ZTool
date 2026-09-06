@@ -82,7 +82,7 @@ fun ZListItem(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = 24.dp).heightIn(min = 64.dp),
+            modifier = modifier.heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = leadingContent?.let {
@@ -93,7 +93,7 @@ fun ZListItem(
                 }
             },
             endActions = trailingContent,
-            insideMargin = PaddingValues(vertical = 16.dp),
+            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             onClick = onClick,
             enabled = enabled
         )
@@ -174,7 +174,7 @@ fun ZToolSwitchRow(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = padding).heightIn(min = 64.dp),
+            modifier = modifier.heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -187,7 +187,7 @@ fun ZToolSwitchRow(
                     enabled = enabled
                 )
             },
-            insideMargin = PaddingValues(vertical = 16.dp),
+            insideMargin = PaddingValues(horizontal = padding, vertical = 16.dp),
             onClick = { onCheckedChange(!checked) },
             enabled = enabled
         )
@@ -273,7 +273,7 @@ fun ZToolCheckboxRow(
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = 24.dp).heightIn(min = 64.dp),
+            modifier = modifier.heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -286,7 +286,7 @@ fun ZToolCheckboxRow(
                     enabled = enabled
                 )
             },
-            insideMargin = PaddingValues(vertical = 16.dp),
+            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             onClick = { onCheckedChange(!checked) },
             enabled = enabled
         )
@@ -445,7 +445,7 @@ fun <T> ZToolPopupMenuSettingRow(
 
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier.padding(horizontal = 24.dp).heightIn(min = 64.dp),
+            modifier = modifier.heightIn(min = 64.dp),
             title = title,
             summary = summary,
             startAction = icon?.let { ic ->
@@ -463,7 +463,7 @@ fun <T> ZToolPopupMenuSettingRow(
                     onExternalExpandedChange = { expanded = it }
                 )
             },
-            insideMargin = PaddingValues(vertical = 16.dp),
+            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             onClick = {
                 if (enabled && options.isNotEmpty()) {
                     expanded = true

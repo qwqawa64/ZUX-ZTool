@@ -261,7 +261,6 @@ private fun AboutSectionContainer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(if (isExpressive) 12.dp else 0.dp)
-                    .padding(vertical = if (isExpressive) 0.dp else 12.dp)
             ) {
                 if (isExpressive && title != null) {
                     Text(
@@ -298,7 +297,6 @@ private fun AboutSectionCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(if (isExpressive) 12.dp else 0.dp)
-                    .padding(vertical = if (isExpressive) 0.dp else 12.dp)
             ) {
                 if (isExpressive) {
                     Text(
