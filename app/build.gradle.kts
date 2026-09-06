@@ -166,6 +166,7 @@ dependencies {
     implementation(libs.androidx.navigationevent.compose)
     implementation(libs.miuix.android)
     implementation(libs.miuix.blur)
+    implementation(libs.material.color.utilities)
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.savedstate)

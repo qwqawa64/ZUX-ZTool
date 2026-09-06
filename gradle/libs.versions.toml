@@ -12,6 +12,7 @@ navigationCompose = "2.10.0-alpha05"
 navigationEvent = "1.1.1"
 miuix = "0.9.3"
 miuix-blur = "0.9.3"
+materialColorUtilities = "4.1.1"
 libxposedApi = "102.0.0"
 commonmark = "0.24.0"
 lunar = "1.7.5"
@@ -37,6 +38,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 miuix-android = { group = "top.yukonga.miuix.kmp", name = "miuix-ui-android", version.ref = "miuix" }
+material-color-utilities = { group = "com.materialkolor", name = "material-color-utilities", version.ref = "materialColorUtilities" }
 miuix-blur = { group = "top.yukonga.miuix.kmp", name = "miuix-blur-android", version.ref = "miuix-blur" }
 commonmark = { group = "org.commonmark", name = "commonmark", version.ref = "commonmark" }
 lunar = { group = "cn.6tail", name = "lunar", version.ref = "lunar" }
