@@ -18,6 +18,11 @@ import java.lang.reflect.Method
  * - BubbleTextView: desktop & folder icons for non-ZUI apps, folder names
  * - ActiveIconView: desktop & folder icons for ZUI system apps
  *   (Calendar, SafeCenter, Lenovo Switch, etc.)
+ *
+ * Excluded paths (labels stay visible):
+ * - App drawer icons: callers from com.android.launcher3.allapps /
+ *   com.android.launcher3.appprediction bypass the no-label logic
+ * - Shortcut popups and Deep Shortcut widget labels
  */
 @SuppressLint("PrivateApi")
 class LauncherNoLabelMode : AppHookModule() {
@@ -38,6 +43,8 @@ class LauncherNoLabelMode : AppHookModule() {
      *   → system-shortcut popup labels must remain visible
      * - DeepShortcutTextView (com.android.launcher3.shortcuts)
      *   → Deep Shortcut widget labels must remain visible
+     * - com.android.launcher3.allapps / com.android.launcher3.appprediction
+     *   → app drawer icons (all apps list and prediction row) must keep labels
      *
      * When these callers are on the stack, the no-label logic is skipped
      * so the relevant labels display correctly.
@@ -46,7 +53,9 @@ class LauncherNoLabelMode : AppHookModule() {
         return Thread.currentThread().stackTrace.any { frame ->
             frame.className == "com.android.launcher3.popup.PopupContainerWithArrow" &&
                     frame.methodName == "initializeSystemShortcut" ||
-                    frame.className == "com.android.launcher3.shortcuts.DeepShortcutTextView"
+                    frame.className == "com.android.launcher3.shortcuts.DeepShortcutTextView" ||
+                    frame.className.startsWith("com.android.launcher3.allapps.") ||
+                    frame.className.startsWith("com.android.launcher3.appprediction.")
         }
     }
 
