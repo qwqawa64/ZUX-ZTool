@@ -64,7 +64,7 @@ class AutoMistakeTouchHook : AppHookModule() {
             hookWithId(setPkgNameMethod, "set_pkg_name") { chain ->
                 chain.proceed()
                 val pkgName = chain.args[0] as String
-                if (pkgName != null && pkgName.isNotEmpty()) {
+                if (pkgName.isNotEmpty()) {
                     // 检查是否为白名单游戏
                     if (isTargetGame(pkgName)) {
                         logger.debug("Target game detected: $pkgName")
@@ -109,7 +109,7 @@ class AutoMistakeTouchHook : AppHookModule() {
             // Hook LiveData的postValue方法，确保状态同步
             val liveDataClass = classLoader.loadClass("androidx.lifecycle.MutableLiveData")
             val postValueMethod: Method =
-                liveDataClass.getDeclaredMethod("postValue", Object::class.java)
+                liveDataClass.getDeclaredMethod("postValue", Any::class.java)
             hookWithId(postValueMethod, "post_value") { chain ->
                 val value = chain.args[0]
                 if (value is Int) {

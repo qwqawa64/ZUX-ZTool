@@ -121,15 +121,11 @@ class OwnerInfoSettingsHook : AppHookModule() {
             filter.addAction(Intent.ACTION_SCREEN_ON)
             filter.addAction(Intent.ACTION_USER_PRESENT)
 
-            if (context != null) {
-                context.registerReceiver(mScreenReceiver, filter)
-                mIsReceiverRegistered = true
-                logger.debug("Successfully registered screen state broadcast receiver")
-                // 立即更新一次
-                updater.updateOwnerInfo(context, classLoader)
-            } else {
-                logger.error("Failed to register screen state broadcast receiver: context is null!")
-            }
+            context.registerReceiver(mScreenReceiver, filter)
+            mIsReceiverRegistered = true
+            logger.debug("Successfully registered screen state broadcast receiver")
+            // 立即更新一次
+            updater.updateOwnerInfo(context, classLoader)
         } catch (e: Throwable) {
             logger.error("注册广播接收器失败", e)
         }

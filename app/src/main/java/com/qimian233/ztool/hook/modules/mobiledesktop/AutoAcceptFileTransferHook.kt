@@ -98,7 +98,7 @@ class AutoAcceptFileTransferHook : AppHookModule() {
                     if (liveData != null) {
                         val updateMethod = liveDataUpdateMethodName?.let { methodName ->
                             try {
-                                liveData.javaClass.getDeclaredMethod(methodName, Object::class.java)
+                                liveData.javaClass.getDeclaredMethod(methodName, Any::class.java)
                             } catch (_: NoSuchMethodException) {
                                 null
                             }

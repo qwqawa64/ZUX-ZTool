@@ -119,6 +119,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
                 val this0Field: Field = handlerCls.getDeclaredField("this\$0")
                 this0Field.isAccessible = true
                 val networkSpeedView = this0Field.get(handler)
+                    ?: return@hookWithId chain.proceed()
 
                 // 获取消息对象
                 val message = chain.args[0]
@@ -214,8 +215,9 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
 
     private fun handleSpeedDisplay(networkSpeedView: Any, message: Any) {
         try {
-            val speeds = message.javaClass.getDeclaredField("obj").get(message) as LongArray
-            if (speeds == null || speeds.size != 2) return
+            val speeds = message.javaClass.getDeclaredField("obj").get(message) as? LongArray
+                ?: return
+            if (speeds.size != 2) return
 
             val downSpeed = speeds[0]
             val upSpeed = speeds[1]

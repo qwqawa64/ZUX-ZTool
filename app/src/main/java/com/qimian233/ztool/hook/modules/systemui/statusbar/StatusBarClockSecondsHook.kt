@@ -99,7 +99,8 @@ class StatusBarClockSecondsHook : AppHookModule() {
             val secondsHandler = handlerField.get(clockInstance)
             if (secondsHandler == null) {
                 val clLoader = clockInstance.javaClass.classLoader
-                val handlerClass = clLoader.loadClass("android.os.Handler")
+                val handlerClass = clLoader?.loadClass("android.os.Handler")
+                    ?: throw IllegalStateException("ClassLoader is null")
                 val newHandler = handlerClass.getDeclaredConstructor().newInstance()
                 handlerField.set(clockInstance, newHandler)
             }

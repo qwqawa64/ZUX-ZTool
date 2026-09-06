@@ -120,14 +120,14 @@ class OwnerInfoUpdater(
             // 使用正则表达式匹配content字段，处理转义字符
             val regular = getString(PreferenceKeys.REGULAR.name)
             // 增加对表达式为空的保护：如果正则表达式为null或空，则跳过匹配
-            if (regular == null || regular.isEmpty()) {
+            if (regular.isEmpty()) {
                 return jsonString
             }
             val pattern = Pattern.compile(regular)
             val matcher = pattern.matcher(jsonString)
 
             if (matcher.find()) {
-                var content = matcher.group(1)
+                var content = matcher.group(1) ?: return jsonString
                 // 处理转义字符（如\"转换为"）
                 content = content
                     .replace("\\\"", "\"")

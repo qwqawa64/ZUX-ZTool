@@ -192,7 +192,7 @@ class AppInfoHeaderDetailsHook : AppHookModule() {
             if (!TextUtils.isEmpty(label)) {
                 return label.toString() + " (" + source + ")"
             }
-            return source!!
+            return source
         } catch (t: Throwable) {
             systemLanguage = Locale.getDefault().language
             return getDisplayString(5)

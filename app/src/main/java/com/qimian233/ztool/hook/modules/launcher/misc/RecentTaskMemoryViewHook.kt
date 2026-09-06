@@ -398,7 +398,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
         }
 
         val list = getSystemProperty(PROP_MEMORY_EXPANSION_LIST, "")
-        if (list == null || list.isEmpty()) {
+        if (list.isEmpty()) {
             return null
         }
 

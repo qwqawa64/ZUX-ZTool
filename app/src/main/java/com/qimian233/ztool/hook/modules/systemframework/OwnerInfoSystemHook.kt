@@ -102,7 +102,7 @@ class OwnerInfoSystemHook : SystemHookModule() {
                 }
 
                 val filter = chain.args[1] as IntentFilter
-                if (filter != null && hasScreenActions(filter)) {
+                if (hasScreenActions(filter)) {
                     // 这是一个包含屏幕动作的过滤器，我们可以在这里注册自己的接收器
                     registerScreenReceiver(chain.thisObject, classLoader, updater)
                 }
@@ -171,15 +171,11 @@ class OwnerInfoSystemHook : SystemHookModule() {
             filter.addAction(Intent.ACTION_SCREEN_ON)
             filter.addAction(Intent.ACTION_USER_PRESENT)
 
-            if (context != null) {
-                context.registerReceiver(mScreenReceiver, filter)
-                mIsReceiverRegistered = true
-                logger.debug("Successfully registered screen state broadcast receiver")
-                // 立即更新一次
-                updater.updateOwnerInfo(context, classLoader)
-            } else {
-                logger.error("Failed to register screen state broadcast receiver: context is null!")
-            }
+            context.registerReceiver(mScreenReceiver, filter)
+            mIsReceiverRegistered = true
+            logger.debug("Successfully registered screen state broadcast receiver")
+            // 立即更新一次
+            updater.updateOwnerInfo(context, classLoader)
         } catch (e: Throwable) {
             logger.error("注册广播接收器失败", e)
         }

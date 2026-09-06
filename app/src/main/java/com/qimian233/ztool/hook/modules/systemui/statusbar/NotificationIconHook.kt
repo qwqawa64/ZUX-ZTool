@@ -95,7 +95,7 @@ class NotificationIconHook : AppHookModule() {
             )
 
             val ctor: Constructor<*> = viewDataClass.getDeclaredConstructor(
-                java.util.List::class.java,
+                List::class.java,
                 Int::class.javaPrimitiveType,
                 classLoader.loadClass("com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData\$LimitType")
             )

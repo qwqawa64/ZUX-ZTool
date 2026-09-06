@@ -98,10 +98,6 @@ class SystemUIBatteryHook : AppHookModule() {
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
 
-            if (container == null || percentView == null) {
-                return
-            }
-
             // 将百分比文本从 FrameLayout 中移除
             container.removeView(percentView)
 
@@ -134,10 +130,6 @@ class SystemUIBatteryHook : AppHookModule() {
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
 
-            if (percentView == null) {
-                return
-            }
-
             // 获取原始字体大小
             val originalSize = getOriginalTextSize(batteryMeterView)
 
@@ -166,7 +158,10 @@ class SystemUIBatteryHook : AppHookModule() {
             if (originalSizeRes != 0) {
                 val sizeInPixels = context.resources.getDimension(originalSizeRes)
                 // 将像素转换为sp
-                return sizeInPixels / context.resources.displayMetrics.scaledDensity
+                val oneSpInPx = TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_SP, 1f, context.resources.displayMetrics
+                )
+                return sizeInPixels / oneSpInPx
             }
         } catch (t: Throwable) {
             logger.warn("获取原始电池字体大小失败，使用默认值")
@@ -181,10 +176,6 @@ class SystemUIBatteryHook : AppHookModule() {
             val cl = batteryMeterView.javaClass
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
-
-            if (percentView == null) {
-                return
-            }
 
             // 强制显示百分比视图，无论系统设置如何
             if (percentView.visibility != View.VISIBLE) {
@@ -203,10 +194,6 @@ class SystemUIBatteryHook : AppHookModule() {
             val cl = batteryMeterView.javaClass
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
-
-            if (percentView == null) {
-                return
-            }
 
             // 获取当前电量级别
             val level = cl.getDeclaredField("mLevel").getInt(batteryMeterView)
