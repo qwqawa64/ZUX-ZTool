@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
+import android.view.View
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -22,6 +23,16 @@ import java.lang.reflect.Method
  * - ActiveIconView: drawer icons for ZUI system apps
  *   (Calendar, SafeCenter, Lenovo Switch, etc.)
  *
+ * Additionally, drawer ActiveIconView labels are force-hidden at
+ * onAttachedToWindow and applyFrom* bind time. The drawer never calls
+ * setTextVisibility/setTextAlpha on ActiveIconView — their only callers
+ * live in the desktop/folder/taskbar/popup paths — so the visibility-call
+ * hooks above never fire on the drawer path and freshly inflated icons
+ * (PredictionRowView.l / BaseAllAppsAdapter.onCreateViewHolder) keep their
+ * labels. The attach/bind hooks gate on the parent container
+ * (AllAppsRecyclerView / PredictionRowView), so desktop, taskbar and
+ * folder icons remain handled by the visibility-call hooks only.
+ *
  * The two modules can coexist: LauncherNoLabelMode skips drawer callers
  * while this module only handles drawer callers, so they never fight
  * over the same icon. Hook ids are prefixed with "drawer_" because both
@@ -37,6 +48,7 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installBubbleTextViewVisibilityHook(param)
         installActiveIconViewVisibilityHook(param)
+        installActiveIconViewDrawerLabelHook(param)
     }
 
     /**
@@ -156,6 +168,89 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
             logger.info("ActiveIconView drawer visibility-block hook installed successfully!")
         } catch (e: Throwable) {
             logger.error("Exception caught in ActiveIconView drawer visibility hook: ", e)
+        }
+    }
+
+    /**
+     * Force-hide ActiveIconView labels that the visibility-call hooks above
+     * can never reach: drawer ActiveIconViews are born with a visible label
+     * and their bind path only sets the title text, so hide them at the two
+     * moments the drawer owns:
+     *
+     * - onAttachedToWindow: the parent is only known here for freshly
+     *   created icons (PredictionRowView.l / BaseAllAppsAdapter.onCreateViewHolder);
+     * - applyFrom* rebinds: notifyDataSetChanged rebinds already-attached
+     *   views without re-attaching them, which the attach hook cannot see.
+     *
+     * Both hooks gate on the parent container (AllAppsRecyclerView /
+     * PredictionRowView — the same containers ActiveIconView.I() checks for
+     * the drawer), so desktop, taskbar and folder icons are untouched.
+     */
+    fun installActiveIconViewDrawerLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
+        try {
+            val loader: ClassLoader = param.defaultClassLoader
+            val activeIconViewClass: Class<*> =
+                loader.loadClass("com.zui.launcher.ActiveIconView")
+            val allAppsRecyclerViewClass: Class<*> =
+                loader.loadClass("com.android.launcher3.allapps.AllAppsRecyclerView")
+            val predictionRowViewClass: Class<*> =
+                loader.loadClass("com.android.launcher3.appprediction.PredictionRowView")
+            val setTextVisibilityMethod: Method = findMethod(
+                activeIconViewClass, "setTextVisibility",
+                Boolean::class.javaPrimitiveType
+            )
+
+            fun hideLabelIfInDrawer(iconView: View) {
+                val parent = iconView.parent ?: return
+                if (allAppsRecyclerViewClass.isInstance(parent) ||
+                    predictionRowViewClass.isInstance(parent)
+                ) {
+                    // Re-enters the setTextVisibility hooks once; both gates
+                    // pass the call through and the original hides the label.
+                    setTextVisibilityMethod.invoke(iconView, java.lang.Boolean.valueOf(false))
+                }
+            }
+
+            val attachMethod: Method = findMethod(activeIconViewClass, "onAttachedToWindow")
+            hookWithId(attachMethod, "drawer_active_icon_attach") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            val appInfoClass: Class<*> =
+                loader.loadClass("com.android.launcher3.model.data.AppInfo")
+            val workspaceItemInfoClass: Class<*> =
+                loader.loadClass("com.android.launcher3.model.data.WorkspaceItemInfo")
+            val itemInfoWithIconClass: Class<*> =
+                loader.loadClass("com.android.launcher3.model.data.ItemInfoWithIcon")
+
+            val applyFromApplicationInfoMethod: Method = findMethod(
+                activeIconViewClass, "applyFromApplicationInfo", appInfoClass
+            )
+            hookWithId(applyFromApplicationInfoMethod, "drawer_active_icon_bind_appinfo") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            val applyFromWorkspaceItemMethod: Method = findMethod(
+                activeIconViewClass, "applyFromWorkspaceItem", workspaceItemInfoClass
+            )
+            hookWithId(applyFromWorkspaceItemMethod, "drawer_active_icon_bind_workspaceitem") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            val applyFromItemInfoWithIconMethod: Method = findMethod(
+                activeIconViewClass, "applyFromItemInfoWithIcon", itemInfoWithIconClass
+            )
+            hookWithId(applyFromItemInfoWithIconMethod, "drawer_active_icon_bind_itemwithicon") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            logger.info("ActiveIconView drawer label hooks installed successfully!")
+        } catch (e: Throwable) {
+            logger.error("Exception caught in ActiveIconView drawer label hook: ", e)
         }
     }
 
