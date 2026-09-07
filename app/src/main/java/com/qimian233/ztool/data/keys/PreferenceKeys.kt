@@ -129,6 +129,7 @@ object PreferenceKeys {
     @JvmField val LAUNCHER_HIDE_BLUE_POINT = BoolKey("launcher_hide_blue_point", false)
     @JvmField val DISMISS_CLOUD_FOLDER_CONFIRMATION = BoolKey("dismiss_cloud_folder_confirmation", false)
     @JvmField val DISABLE_RECENT_APPS_DISPLAY = BoolKey("disable_recent_apps_display", false)
+    @JvmField val LAUNCHER_BATCH_UNINSTALL = BoolKey("launcher_batch_uninstall", false)
 
     // Launcher 子功能开关 + 内部键
     @JvmField val REMOVE_HOT_WORD_VIEW = BoolKey("remove_hot_word_view", false)
@@ -273,7 +274,7 @@ object PreferenceKeys {
         LAUNCHER_RECENT_TASK_MEMORY_VIEW, LAUNCHER_NO_LABEL_MODE,
         LAUNCHER_DRAWER_NO_LABEL_MODE,
         LAUNCHER_HIDE_BLUE_POINT, DISMISS_CLOUD_FOLDER_CONFIRMATION,
-        DISABLE_RECENT_APPS_DISPLAY,
+        DISABLE_RECENT_APPS_DISPLAY, LAUNCHER_BATCH_UNINSTALL,
         REMOVE_HOT_WORD_VIEW, REMOVE_SEARCH_RECOMMEND, BEAUTIFY_RAM_INFO,
         FORCE_STOP_WHITE_LIST_ENABLE, ZUI_LAUNCHER_HOTSEAT_BACKUP,
         DISABLE_DOCK_WARNING_CONFIRMED,

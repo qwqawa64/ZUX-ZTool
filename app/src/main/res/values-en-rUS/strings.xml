@@ -1000,4 +1000,20 @@
     <string name="credits_github_acceleration_site">https://gh.absinthe.life/ delivers fast download and update check service for PRC region</string>
     <string name="credits_hitokoto_support">Hitokoto Support</string>
     <string name="credits_hitokoto_support_site">https://docs.xygeng.cn/ provides random words shown in home page</string>
+    <!-- Desktop multi-select batch uninstall -->
+    <string name="launcher_batch_uninstall">Batch uninstall from desktop multi-select</string>
+    <string name="launcher_batch_uninstall_summary">Adds an "Uninstall" button to the desktop edit-mode bottom bar. Selected icons are handed to ZTool and silently uninstalled via Root. Restart the launcher to take effect.</string>
+    <string name="batch_uninstall_title">Batch Uninstall</string>
+    <string name="batch_uninstall_referrer_rejected">Untrusted request source</string>
+    <string name="batch_uninstall_confirm_message">The following %1$d apps will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:</string>
+    <string name="batch_uninstall_start">Uninstall</string>
+    <string name="batch_uninstall_cancel">Cancel</string>
+    <string name="batch_uninstall_running">Uninstalling…</string>
+    <string name="batch_uninstall_summary">Finished: %1$d succeeded, %2$d failed</string>
+    <string name="batch_uninstall_root_unavailable">Root access unavailable. Please grant ZTool root access in the superuser manager first.</string>
+    <string name="batch_uninstall_empty">No packages received</string>
+    <string name="batch_uninstall_done">Done</string>
+    <!-- Read by the hook side (BatchUninstall) -->
+    <string name="ztool_batch_uninstall_button">Uninstall</string>
+    <string name="ztool_batch_uninstall_no_apps">No uninstallable apps in the selection</string>
 </resources>

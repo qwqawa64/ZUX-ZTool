@@ -14,6 +14,7 @@ import com.qimian233.ztool.hook.modules.launcher.grid.CustomGridSize
 import com.qimian233.ztool.hook.modules.launcher.grid.DismissCloudFolderConfirmation
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherDrawerNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherNoLabelMode
+import com.qimian233.ztool.hook.modules.launcher.misc.BatchUninstall
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
@@ -195,6 +196,7 @@ object HookManager {
         registerHookModule(BluePointRemovalHook())
         registerHookModule(DismissCloudFolderConfirmation())
         registerHookModule(DisableRecentAppsDisplay())
+        registerHookModule(BatchUninstall())
 
         // ── GameTool (target: com.zui.game.service) ──
         registerHookModule(AutoMistakeTouchHook())

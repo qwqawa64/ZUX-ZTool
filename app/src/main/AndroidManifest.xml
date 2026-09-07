@@ -65,6 +65,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".settingactivity.launcher.BatchUninstallActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/batch_uninstall_title"
+            android:launchMode="singleTask" />
     </application>
 
 </manifest>

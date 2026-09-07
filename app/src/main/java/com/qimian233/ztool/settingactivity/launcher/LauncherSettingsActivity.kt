@@ -116,7 +116,8 @@ fun LauncherSettingsRoute(
         onLauncherDrawerNoLabelModeChanged = viewModel::setLauncherDrawerNoLabelMode,
         onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
         onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
-        onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay
+        onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
+        onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -186,6 +187,7 @@ private fun LauncherSettingsScreen(
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
+    onLauncherBatchUninstallChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -241,6 +243,7 @@ private fun LauncherSettingsScreen(
                         onLauncherHideBluePointChanged = onLauncherHideBluePointChanged,
                         onCloudFolderDismissChanged = onCloudFolderDismissChanged,
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
+                        onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -269,6 +272,7 @@ private fun launcherSettingsSections(
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
+    onLauncherBatchUninstallChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     val forceStopItems = buildList {
         add(
@@ -436,6 +440,17 @@ private fun launcherSettingsSections(
         }
     }
 
+    val batchUninstallLayoutItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_batch_uninstall),
+                summary = stringResource(R.string.launcher_batch_uninstall_summary),
+                checked = state.launcherBatchUninstall,
+                onCheckedChange = onLauncherBatchUninstallChanged
+            )
+        )
+    }
+
     return listOf(
         SettingSection(
             title = stringResource(R.string.disable_force_stop_title),
@@ -456,6 +471,10 @@ private fun launcherSettingsSections(
         SettingSection(
             title = stringResource(R.string.customLauncherLayoutTitle),
             items = launcherLayoutItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.launcher_batch_uninstall),
+            items = batchUninstallLayoutItems
         ),
     )
 }

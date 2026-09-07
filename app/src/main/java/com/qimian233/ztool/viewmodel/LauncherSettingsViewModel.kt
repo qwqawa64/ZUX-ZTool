@@ -117,6 +117,11 @@ class LauncherSettingsViewModel(
         repository.saveDisableRecentAppDisplay(enabled)
     }
 
+    fun setLauncherBatchUninstall(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(launcherBatchUninstall = enabled)
+        repository.saveLauncherBatchUninstall(enabled)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
@@ -193,6 +198,7 @@ data class LauncherSettingsUiState(
     val hideBluePoint: Boolean = false,
     val cloudFolderDismiss: Boolean = false,
     val disableRecentAppDisplay: Boolean = false,
+    val launcherBatchUninstall: Boolean = false,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
