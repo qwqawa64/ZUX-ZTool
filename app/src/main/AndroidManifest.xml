@@ -71,7 +71,8 @@
             android:exported="true"
             android:label="@string/batch_uninstall_title"
             android:launchMode="singleTask"
-            android:taskAffinity="" />
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 
 </manifest>

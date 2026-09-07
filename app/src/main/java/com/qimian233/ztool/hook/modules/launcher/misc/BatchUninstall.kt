@@ -1,8 +1,11 @@
 package com.qimian233.ztool.hook.modules.launcher.misc
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.ComponentName
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
@@ -21,6 +24,7 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Array as JvmArray
 import java.util.Locale
+import java.util.UUID
 
 /**
  * 桌面编辑模式（多选）批量卸载。
@@ -350,19 +354,197 @@ class BatchUninstall : AppHookModule() {
                 ).show()
                 return
             }
+            if (!showConfirmDialog(panel, context, packages)) {
+                logger.warn("BatchUninstall: no confirm dialog available, aborted")
+                return
+            }
+        } catch (t: Throwable) {
+            logger.error("BatchUninstall: failed to show confirm dialog", t)
+        }
+    }
+
+    /**
+     * 弹 ZUI 风格确认框；MessageDialog 反射失败时回退标准 AlertDialog，
+     * 两者都失败则返回 false（宁可中止也绝不无确认卸载）。
+     */
+    private fun showConfirmDialog(panel: ViewGroup, context: Context, packages: List<String>): Boolean {
+        val packageList = packages.joinToString(separator = "\n") { "• $it" }
+        val message = String.format(
+            Locale.getDefault(),
+            moduleString(context, STRING_DIALOG_MESSAGE, FALLBACK_DIALOG_MESSAGE),
+            packages.size,
+            packageList
+        )
+        val title = moduleString(context, STRING_DIALOG_TITLE, FALLBACK_DIALOG_TITLE)
+        val onConfirm = Runnable { dispatchBatchUninstall(panel, context, packages) }
+        if (showZuiConfirmDialog(context, title, message, onConfirm)) {
+            logger.debug("BatchUninstall: ZUI MessageDialog shown")
+            return true
+        }
+        if (showFallbackConfirmDialog(context, title, message, onConfirm)) {
+            logger.info("BatchUninstall: fallback AlertDialog shown")
+            return true
+        }
+        return false
+    }
+
+    /**
+     * 反射调用启动器自带的 zui.app.MessageDialog，用法对照
+     * EditModeRemoveDropTarget.m()（Builder 链 + 窗口 2038）。
+     */
+    private fun showZuiConfirmDialog(
+        launcher: Context,
+        title: CharSequence,
+        message: CharSequence,
+        onConfirm: Runnable
+    ): Boolean {
+        return try {
+            val loader = launcher.classLoader
+            val dialogClass = Class.forName("zui.app.MessageDialog", true, loader)
+            val builderClass = Class.forName("zui.app.MessageDialog\$Builder", true, loader)
+            val builder = builderClass.getConstructor(Context::class.java).newInstance(launcher)
+            val resources = launcher.resources
+            val packageName = launcher.packageName
+
+            val cancelListener = DialogInterface.OnCancelListener { }
+            val clickListener = DialogInterface.OnClickListener { _, _ -> onConfirm.run() }
+
+            builderClass.getMethod("setCancelable", Boolean::class.javaPrimitiveType)
+                .invoke(builder, true)
+            builderClass.getMethod("setOnCancelListener", DialogInterface.OnCancelListener::class.java)
+                .invoke(builder, cancelListener)
+            try {
+                builderClass.getMethod("setTitle", CharSequence::class.java).invoke(builder, title)
+            } catch (_: Throwable) {
+                val resId = resources.getIdentifier("uninstall_item_title", "string", packageName)
+                builderClass.getMethod("setTitle", Int::class.javaPrimitiveType).invoke(builder, resId)
+            }
+            try {
+                builderClass.getMethod("setMessageDialogType", Int::class.javaPrimitiveType)
+                    .invoke(builder, 0)
+            } catch (_: Throwable) {
+                // 旧版本可能没有该选项，忽略
+            }
+            try {
+                builderClass.getMethod("setMessage", CharSequence::class.java).invoke(builder, message)
+            } catch (_: Throwable) {
+                // Builder 不支持 setMessage 时改为拼进标题
+                builderClass.getMethod("setTitle", CharSequence::class.java)
+                    .invoke(builder, "$title\n\n$message")
+            }
+            setDialogButton(builderClass, builder, "setNegativeButton", resources, packageName,
+                "cancel_action", android.R.string.cancel, clickListener)
+            setDialogButton(builderClass, builder, "setPositiveButton", resources, packageName,
+                "uninstall_item_title", 0, clickListener)
+
+            val dialog = builderClass.getMethod("create").invoke(builder) as Dialog
+            dialog.setCanceledOnTouchOutside(true)
+            runCatching { dialog.window?.setType(DIALOG_WINDOW_TYPE) }
+            dialog.show()
+            true
+        } catch (t: Throwable) {
+            logger.warn("BatchUninstall: MessageDialog reflection failed: " + t.message)
+            false
+        }
+    }
+
+    /** 优先 (int resId, listener) 形参，失败再试 (CharSequence, listener)。 */
+    private fun setDialogButton(
+        builderClass: Class<*>,
+        builder: Any,
+        methodName: String,
+        resources: Resources,
+        packageName: String,
+        resName: String,
+        fallbackResId: Int,
+        clickListener: DialogInterface.OnClickListener
+    ) {
+        val resId = resources.getIdentifier(resName, "string", packageName)
+            .takeIf { it != 0 } ?: fallbackResId
+        try {
+            builderClass.getMethod(
+                methodName,
+                Int::class.javaPrimitiveType,
+                DialogInterface.OnClickListener::class.java
+            ).invoke(builder, resId, clickListener)
+        } catch (_: Throwable) {
+            val text = if (resId != 0) {
+                runCatching { resources.getString(resId) }.getOrDefault("")
+            } else ""
+            builderClass.getMethod(
+                methodName,
+                CharSequence::class.java,
+                DialogInterface.OnClickListener::class.java
+            ).invoke(builder, text, clickListener)
+        }
+    }
+
+    private fun showFallbackConfirmDialog(
+        context: Context,
+        title: CharSequence,
+        message: CharSequence,
+        onConfirm: Runnable
+    ): Boolean {
+        return try {
+            val dialog = AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(true)
+                .setNegativeButton(android.R.string.cancel) { d, _ -> d.dismiss() }
+                .setPositiveButton(android.R.string.ok) { d, _ ->
+                    d.dismiss()
+                    onConfirm.run()
+                }
+                .create()
+            dialog.setCanceledOnTouchOutside(true)
+            runCatching { dialog.window?.setType(DIALOG_WINDOW_TYPE) }
+            dialog.show()
+            true
+        } catch (t: Throwable) {
+            logger.warn("BatchUninstall: AlertDialog fallback failed: " + t.message)
+            false
+        }
+    }
+
+    private fun dispatchBatchUninstall(panel: ViewGroup, context: Context, packages: List<String>) {
+        try {
+            // 一次性鉴权令牌：写入共享的 xposed_module_config，ZTool 侧比对后立即作废。
+            // referrer 可被任意调用方伪造，令牌是防止其他 App 直接触发 root 卸载的
+            // 真正防线（随机 + 一次性 + 30 秒时效）。
+            val token = UUID.randomUUID().toString() + "|" + System.currentTimeMillis()
+            val wrote = try {
+                remotePreferences.edit()
+                    .putString(PreferenceKeys.LAUNCHER_BATCH_UNINSTALL_TOKEN.name, token)
+                    .commit()
+            } catch (t: Throwable) {
+                logger.error("BatchUninstall: failed to persist auth token", t)
+                false
+            }
+            if (!wrote) {
+                Toast.makeText(
+                    context,
+                    moduleString(context, STRING_DISPATCH_FAILED, FALLBACK_DISPATCH_FAILED),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
             val intent = Intent()
             intent.setClassName(MODULE_PACKAGE, ACTIVITY_CLASS)
             intent.putStringArrayListExtra(EXTRA_PACKAGES, ArrayList(packages))
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.putExtra(EXTRA_TOKEN, token)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
             context.startActivity(intent)
             // 分发后清空选择，避免卸载完成后编辑模式残留失效的选中项
-            button.post {
-                runCatching {
-                    panel.javaClass.getMethod("clearSelectedItems").invoke(panel)
-                }.onFailure { logger.warn("BatchUninstall: clearSelectedItems failed: " + it.message) }
-            }
+            runCatching {
+                panel.javaClass.getMethod("clearSelectedItems").invoke(panel)
+            }.onFailure { logger.warn("BatchUninstall: clearSelectedItems failed: " + it.message) }
         } catch (t: Throwable) {
             logger.error("BatchUninstall: failed to dispatch batch uninstall", t)
+            Toast.makeText(
+                context,
+                moduleString(context, STRING_DISPATCH_FAILED, FALLBACK_DISPATCH_FAILED),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -447,16 +629,33 @@ class BatchUninstall : AppHookModule() {
         private const val EDIT_MODE_PANEL_CLASS = "com.zui.launcher.uiextend.ZuiEditModePanel"
         private const val ACTIVITY_CLASS = "com.qimian233.ztool.settingactivity.launcher.BatchUninstallActivity"
         private const val EXTRA_PACKAGES = "ztool_extra_batch_uninstall_packages"
+        private const val EXTRA_TOKEN = "ztool_extra_batch_uninstall_token"
         private const val BUTTON_TAG = "ztool_edit_mode_batch_uninstall"
         private const val CONSTRAINT_LAYOUT_LP = "androidx.constraintlayout.widget.ConstraintLayout\$LayoutParams"
         private const val ITEM_TYPE_APPLICATION = 0
 
         private const val STRING_BUTTON = "ztool_batch_uninstall_button"
         private const val STRING_NO_APPS = "ztool_batch_uninstall_no_apps"
+        private const val STRING_DIALOG_TITLE = "ztool_batch_uninstall_dialog_title"
+        private const val STRING_DIALOG_MESSAGE = "ztool_batch_uninstall_dialog_message"
+        private const val STRING_DISPATCH_FAILED = "ztool_batch_uninstall_dispatch_failed"
+
+        /** 与 EditModeRemoveDropTarget 的确认框一致：TYPE_APPLICATION_OVERLAY。 */
+        private const val DIALOG_WINDOW_TYPE = 2038
 
         private val FALLBACK_BUTTON: String
             get() = if (Locale.getDefault().language == "zh") "卸载应用" else "Uninstall"
         private val FALLBACK_NO_APPS: String
             get() = if (Locale.getDefault().language == "zh") "所选中内容没有可卸载的应用" else "No uninstallable apps in the selection"
+        private val FALLBACK_DIALOG_TITLE: String
+            get() = if (Locale.getDefault().language == "zh") "批量卸载" else "Batch Uninstall"
+        private val FALLBACK_DIALOG_MESSAGE: String
+            get() = if (Locale.getDefault().language == "zh") {
+                "将通过 Root 权限静默卸载以下 %1\$d 个应用，桌面图标会在卸载后自动移除：\n\n%2\$s"
+            } else {
+                "The following %1\$d app(s) will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:\n\n%2\$s"
+            }
+        private val FALLBACK_DISPATCH_FAILED: String
+            get() = if (Locale.getDefault().language == "zh") "无法打开 ZTool 执行卸载" else "Failed to open ZTool for uninstall"
     }
 }

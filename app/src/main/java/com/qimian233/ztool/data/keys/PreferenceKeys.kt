@@ -226,6 +226,7 @@ object PreferenceKeys {
     @JvmField val CUSTOM_CONTROL_CENTER_DATE_FORMAT = StringKey("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE")
     @JvmField val API_URL = StringKey("API_URL", "")
     @JvmField val REGULAR = StringKey("Regular", "")
+    @JvmField val LAUNCHER_BATCH_UNINSTALL_TOKEN = StringKey("launcher_batch_uninstall_token", "")
     @JvmField val CUSTOM_STATUSBAR_CLOCK_FORMAT = StringKey("Custom_StatusBarClockFormat", "")
     @JvmField val CHARGE_WATTS_SELECTED_OPTION = StringKey("charge_watts_selected_option", "")
     @JvmField val SYSTEMUI_REALWATTS_CUSTOM_FORMAT = StringKey("systemui_realwatts_custom_format", "")
@@ -328,7 +329,8 @@ object PreferenceKeys {
         CUSTOM_STATUSBAR_CLOCK_FORMAT,
         CHARGE_WATTS_SELECTED_OPTION,
         SYSTEMUI_REALWATTS_CUSTOM_FORMAT,
-        DESKTOP_LIVE_WALLPAPER_SCALE_MODE
+        DESKTOP_LIVE_WALLPAPER_SCALE_MODE,
+        LAUNCHER_BATCH_UNINSTALL_TOKEN
     )
 
     // ═══════════════════════════════════════════════════════════

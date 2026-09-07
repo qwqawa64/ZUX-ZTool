@@ -1063,15 +1063,16 @@
     <string name="launcher_batch_uninstall">桌面多选批量卸载</string>
     <string name="launcher_batch_uninstall_summary">桌面编辑模式底栏增加“卸载应用”按钮，多选图标后交由 ZTool 通过 Root 静默卸载，需重启桌面生效</string>
     <string name="batch_uninstall_title">批量卸载</string>
-    <string name="batch_uninstall_referrer_rejected">请求来源不受信任</string>
-    <string name="batch_uninstall_confirm_message">将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：</string>
-    <string name="batch_uninstall_start">卸载</string>
-    <string name="batch_uninstall_cancel">取消</string>
-    <string name="batch_uninstall_running">正在卸载…</string>
-    <string name="batch_uninstall_summary">卸载完成：成功 %1$d 个，失败 %2$d 个</string>
+    <string name="batch_uninstall_auth_failed">请求未通过安全校验，已取消卸载</string>
     <string name="batch_uninstall_root_unavailable">无法获取 Root 权限，请先在授权管理中允许 ZTool 获取 Root</string>
     <string name="batch_uninstall_empty">未收到要卸载的应用列表</string>
-    <string name="batch_uninstall_done">完成</string>
+    <string name="batch_uninstall_result">批量卸载完成：成功 %1$d 个，失败 %2$d 个</string>
+    <!-- Hook 侧读取（BatchUninstall 确认框） -->
+    <string name="ztool_batch_uninstall_dialog_title">批量卸载</string>
+    <string name="ztool_batch_uninstall_dialog_message">将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：
+
+%2$s</string>
+    <string name="ztool_batch_uninstall_dispatch_failed">无法打开 ZTool 执行卸载</string>
     <!-- Hook 侧读取（BatchUninstall） -->
     <string name="ztool_batch_uninstall_button">卸载应用</string>
     <string name="ztool_batch_uninstall_no_apps">所选中内容没有可卸载的应用</string>

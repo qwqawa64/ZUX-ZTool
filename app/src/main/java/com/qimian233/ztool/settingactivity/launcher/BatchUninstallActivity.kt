@@ -1,57 +1,29 @@
 package com.qimian233.ztool.settingactivity.launcher
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.launcher.BatchUninstallRepository
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
-import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolTextButton
-import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.ZToolTheme
-import com.qimian233.ztool.viewmodel.BatchUninstallStage
-import com.qimian233.ztool.viewmodel.BatchUninstallUiState
-import com.qimian233.ztool.viewmodel.BatchUninstallViewModel
+import com.qimian233.ztool.utils.ModulePreferencesUtils
+import kotlin.math.abs
 
 /**
- * 批量卸载执行页：接收启动器编辑模式 Hook 分发过来的包名列表，
- * 展示确认 → Root 执行进度 → 结果摘要。
+ * 批量卸载执行跳板：接收启动器编辑模式 Hook 分发过来的包名列表，
+ * 只做鉴权和 Root shell 执行，本身无任何可视组件（除 Toast）。
  *
- * 仅允许启动器（或无 referrer 的系统场景）唤起；执行全程需要用户
- * 在本页二次确认，Root 通过 [BatchUninstallRepository] 完成。
+ * 鉴权（referrer 可被任意调用方伪造，令牌才是真正的防线）：
+ * 1. Hook 在用户于 ZUI 确认框点击"卸载"时生成随机令牌，写入共享的
+ *    `xposed_module_config` 并随 Intent 携带；
+ * 2. 本页比对令牌，通过后立即作废（一次性），并校验 30 秒时效。
+ * 拿不到令牌的外部调用方（即使伪造 referrer）只会收到失败 Toast。
+ *
+ * 窗口设为不聚焦、不可触摸，执行期间桌面保持可交互。
+ * 执行结果只通过 Toast 汇报，完成后立即结束。
  */
 class BatchUninstallActivity : ComponentActivity() {
 
@@ -60,238 +32,101 @@ class BatchUninstallActivity : ComponentActivity() {
 
         val referrer = referrer
         if (referrer != null && referrer.host != ScopeKeys.LAUNCHER.packageName) {
-            Toast.makeText(this, R.string.batch_uninstall_referrer_rejected, Toast.LENGTH_SHORT).show()
+            toast(R.string.batch_uninstall_auth_failed)
             finish()
             return
         }
-        val packages = intent?.getStringArrayListExtra(EXTRA_PACKAGES).orEmpty()
+        val packages = resolvePackages(intent).map { it.trim() }
+            .filter { PACKAGE_NAME_REGEX.matches(it) }
+            .distinct()
+            .take(MAX_SELECTED_COUNT)
+        if (packages.isEmpty()) {
+            toast(R.string.batch_uninstall_empty)
+            finish()
+            return
+        }
+
+        // 执行期间不拦截桌面交互
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        )
 
         val repository = BatchUninstallRepository()
-        val viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                if (modelClass.isAssignableFrom(BatchUninstallViewModel::class.java)) {
-                    return BatchUninstallViewModel(repository) as T
+        Thread {
+            if (!authenticate(intent)) {
+                runOnUiThread {
+                    toast(R.string.batch_uninstall_auth_failed)
+                    finish()
                 }
-                throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+                return@Thread
             }
-        })[BatchUninstallViewModel::class.java]
-
-        if (savedInstanceState == null) {
-            viewModel.start(packages)
-        }
-
-        setContent {
-            ZToolTheme {
-                val state by viewModel.uiState.collectAsState()
-                BatchUninstallScreen(
-                    state = state,
-                    onConfirm = viewModel::confirmAndRun,
-                    onClose = { finish() }
-                )
+            if (!repository.checkRootAvailable()) {
+                runOnUiThread {
+                    toast(R.string.batch_uninstall_root_unavailable)
+                    finish()
+                }
+                return@Thread
             }
+            var successCount = 0
+            var failureCount = 0
+            for (packageName in packages) {
+                if (repository.uninstallPackage(packageName).success) {
+                    successCount++
+                } else {
+                    failureCount++
+                }
+            }
+            runOnUiThread {
+                toast(R.string.batch_uninstall_result, successCount, failureCount)
+                finish()
+            }
+        }.start()
+    }
+
+    /**
+     * 令牌校验。Hook 侧经 LSPosed 写入共享偏好存在同步延迟，
+     * 读取侧短暂重试；通过后立即清空令牌防止重放。
+     */
+    private fun authenticate(intent: Intent?): Boolean {
+        val provided = intent?.getStringExtra(EXTRA_TOKEN)
+        if (provided.isNullOrEmpty()) return false
+        val prefs = ModulePreferencesUtils(this)
+        val key = PreferenceKeys.LAUNCHER_BATCH_UNINSTALL_TOKEN.name
+        var expected = ""
+        for (attempt in 0 until TOKEN_READ_RETRY) {
+            expected = prefs.loadStringSetting(key, "")
+            if (expected.isNotBlank()) break
+            Thread.sleep(TOKEN_READ_RETRY_INTERVAL_MS)
         }
+        if (expected.isBlank() || expected != provided) return false
+        prefs.saveStringSetting(key, "")
+        val issuedAt = expected.substringAfterLast('|', "").toLongOrNull() ?: return false
+        return abs(System.currentTimeMillis() - issuedAt) <= TOKEN_MAX_AGE_MS
+    }
+
+    private fun toast(resId: Int, vararg args: Any) {
+        Toast.makeText(this, getString(resId, *args), Toast.LENGTH_LONG).show()
+    }
+
+    /** Hook 侧写 ArrayList；adb 调试（am start --esa）写入的是 String[]，一并兼容。 */
+    private fun resolvePackages(intent: Intent?): List<String> {
+        if (intent == null) return emptyList()
+        return intent.getStringArrayListExtra(EXTRA_PACKAGES)
+            ?: intent.getStringExtra(EXTRA_PACKAGES)?.let { arrayListOf(it) }
+            ?: intent.getStringArrayExtra(EXTRA_PACKAGES)?.toList()
+            ?: emptyList()
     }
 
     companion object {
         const val EXTRA_PACKAGES = "ztool_extra_batch_uninstall_packages"
-    }
-}
+        const val EXTRA_TOKEN = "ztool_extra_batch_uninstall_token"
 
-/** 单个包在结果列表中的展示状态。 */
-private sealed interface PackageStatus {
-    data object Pending : PackageStatus
-    data object Success : PackageStatus
-    data class Failed(val message: String) : PackageStatus
-}
-
-@Composable
-private fun BatchUninstallScreen(
-    state: BatchUninstallUiState,
-    onConfirm: () -> Unit,
-    onClose: () -> Unit
-) {
-    val showBottomButtons = state.stage != BatchUninstallStage.Running
-    ZToolScaffold(
-        topBar = {
-            ZToolTopAppBar(
-                title = stringResource(R.string.batch_uninstall_title),
-                navigationIcon = {
-                    IconButton(onClick = onClose) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                when (state.stage) {
-                    BatchUninstallStage.Empty -> {
-                        StageText(stringResource(R.string.batch_uninstall_empty))
-                    }
-
-                    BatchUninstallStage.RootUnavailable -> {
-                        StageText(stringResource(R.string.batch_uninstall_root_unavailable))
-                    }
-
-                    BatchUninstallStage.Confirm -> {
-                        StageText(
-                            stringResource(
-                                R.string.batch_uninstall_confirm_message,
-                                state.packages.size
-                            )
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        state.packages.forEach { packageName ->
-                            PackageRow(packageName = packageName, status = PackageStatus.Pending)
-                        }
-                    }
-
-                    BatchUninstallStage.Running -> {
-                        val done = state.results.size
-                        StageText(
-                            stringResource(R.string.batch_uninstall_running) +
-                                " (${done}/${state.packages.size})"
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        state.packages.forEachIndexed { index, packageName ->
-                            val result = state.results.getOrNull(index)
-                            val status = when {
-                                result == null -> PackageStatus.Pending
-                                result.success -> PackageStatus.Success
-                                else -> PackageStatus.Failed(result.message)
-                            }
-                            PackageRow(packageName = packageName, status = status)
-                        }
-                    }
-
-                    BatchUninstallStage.Finished -> {
-                        StageText(
-                            stringResource(
-                                R.string.batch_uninstall_summary,
-                                state.successCount,
-                                state.failureCount
-                            )
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        state.results.forEach { result ->
-                            val status = if (result.success) {
-                                PackageStatus.Success
-                            } else {
-                                PackageStatus.Failed(result.message)
-                            }
-                            PackageRow(packageName = result.packageName, status = status)
-                        }
-                    }
-                }
-            }
-
-            if (showBottomButtons) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    ZToolTextButton(
-                        text = stringResource(
-                            if (state.stage == BatchUninstallStage.Confirm) {
-                                R.string.batch_uninstall_cancel
-                            } else {
-                                R.string.batch_uninstall_done
-                            }
-                        ),
-                        onClick = onClose,
-                        isPrimary = false
-                    )
-                    if (state.stage == BatchUninstallStage.Confirm) {
-                        Spacer(Modifier.width(12.dp))
-                        ZToolTextButton(
-                            text = stringResource(R.string.batch_uninstall_start),
-                            onClick = onConfirm
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StageText(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-}
-
-@Composable
-private fun PackageRow(packageName: String, status: PackageStatus) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        when (status) {
-            PackageStatus.Pending -> {
-                Text(
-                    text = "•",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            PackageStatus.Success -> {
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            is PackageStatus.Failed -> {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = packageName,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (status is PackageStatus.Failed && status.message.isNotBlank()) {
-                Text(
-                    text = status.message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
+        /** 与启动器 ZuiEditModePanel.MAX_SELECTED_COUNT 保持一致的兜底上限。 */
+        private const val MAX_SELECTED_COUNT = 24
+        private const val TOKEN_MAX_AGE_MS = 30_000L
+        private const val TOKEN_READ_RETRY = 6
+        private const val TOKEN_READ_RETRY_INTERVAL_MS = 250L
+        private val PACKAGE_NAME_REGEX = Regex("[A-Za-z0-9_.]+")
     }
 }
