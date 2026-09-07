@@ -75,6 +75,7 @@ class BatchUninstall : AppHookModule() {
                     val merged = JvmArray.newInstance(componentType, views.size + 1)
                     System.arraycopy(views, 0, merged, 0, views.size)
                     JvmArray.set(merged, views.size, button)
+                    logger.debug("BatchUninstall: button joined edit mode translate anim views")
                     merged
                 } catch (t: Throwable) {
                     logger.error("BatchUninstall: failed to attach button to edit mode anim views", t)
@@ -135,7 +136,9 @@ class BatchUninstall : AppHookModule() {
             return
         }
         adjustLayoutParams(layoutParams, removeTarget, button.id, resources, packageName)
-        button.visibility = View.INVISIBLE
+        // 编辑模式的显隐由面板 alpha 与 translationY 动画驱动，行内视图从不调
+        // setVisibility，因此按钮必须保持 VISIBLE，跟随面板一起被隐藏
+        button.visibility = View.VISIBLE
 
         (removeTarget.parent as? ViewGroup)?.addView(button, layoutParams)
             ?: run { panel.addView(button, layoutParams) }
