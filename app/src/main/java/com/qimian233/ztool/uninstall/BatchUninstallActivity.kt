@@ -1,4 +1,4 @@
-package com.qimian233.ztool.settingactivity.launcher
+package com.qimian233.ztool.uninstall
 
 import android.content.Intent
 import android.os.Bundle

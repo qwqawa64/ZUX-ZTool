@@ -1010,9 +1010,7 @@
     <string name="batch_uninstall_result">Batch uninstall finished: %1$d succeeded, %2$d failed</string>
     <!-- Read by the hook side (BatchUninstall confirm dialog) -->
     <string name="ztool_batch_uninstall_dialog_title">Batch Uninstall</string>
-    <string name="ztool_batch_uninstall_dialog_message">The following %1$d app(s) will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:
-
-%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message">The following %1$d app(s) will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:\n\n%2$s</string>
     <string name="ztool_batch_uninstall_dispatch_failed">Failed to open ZTool for uninstall</string>
     <!-- Read by the hook side (BatchUninstall) -->
     <string name="ztool_batch_uninstall_button">Uninstall</string>

@@ -1069,9 +1069,7 @@
     <string name="batch_uninstall_result">批量卸载完成：成功 %1$d 个，失败 %2$d 个</string>
     <!-- Hook 侧读取（BatchUninstall 确认框） -->
     <string name="ztool_batch_uninstall_dialog_title">批量卸载</string>
-    <string name="ztool_batch_uninstall_dialog_message">将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：
-
-%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message">将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：\n\n%2$s</string>
     <string name="ztool_batch_uninstall_dispatch_failed">无法打开 ZTool 执行卸载</string>
     <!-- Hook 侧读取（BatchUninstall） -->
     <string name="ztool_batch_uninstall_button">卸载应用</string>

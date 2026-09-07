@@ -342,11 +342,14 @@ class BatchUninstall : AppHookModule() {
 
     // ── 点击分发 ────────────────────────────────────────────────
 
+    /** 一个待卸载候选：展示用应用名 + 执行用包名。 */
+    private data class UninstallCandidate(val label: String, val packageName: String)
+
     private fun handleClicked(panel: ViewGroup, button: View) {
         try {
             val context = panel.context
-            val packages = collectUninstallablePackages(panel, context)
-            if (packages.isEmpty()) {
+            val candidates = collectUninstallableCandidates(panel, context)
+            if (candidates.isEmpty()) {
                 Toast.makeText(
                     context,
                     moduleString(context, STRING_NO_APPS, FALLBACK_NO_APPS),
@@ -354,7 +357,7 @@ class BatchUninstall : AppHookModule() {
                 ).show()
                 return
             }
-            if (!showConfirmDialog(panel, context, packages)) {
+            if (!showConfirmDialog(panel, context, candidates)) {
                 logger.warn("BatchUninstall: no confirm dialog available, aborted")
                 return
             }
@@ -367,15 +370,23 @@ class BatchUninstall : AppHookModule() {
      * 弹 ZUI 风格确认框；MessageDialog 反射失败时回退标准 AlertDialog，
      * 两者都失败则返回 false（宁可中止也绝不无确认卸载）。
      */
-    private fun showConfirmDialog(panel: ViewGroup, context: Context, packages: List<String>): Boolean {
-        val packageList = packages.joinToString(separator = "\n") { "• $it" }
+    private fun showConfirmDialog(
+        panel: ViewGroup,
+        context: Context,
+        candidates: List<UninstallCandidate>
+    ): Boolean {
+        // 展示应用名，缺失时回退包名
+        val labelList = candidates.joinToString(separator = "\n") {
+            "- " + it.label.ifBlank { it.packageName }
+        }
         val message = String.format(
             Locale.getDefault(),
             moduleString(context, STRING_DIALOG_MESSAGE, FALLBACK_DIALOG_MESSAGE),
-            packages.size,
-            packageList
+            candidates.size,
+            labelList
         )
         val title = moduleString(context, STRING_DIALOG_TITLE, FALLBACK_DIALOG_TITLE)
+        val packages = candidates.map { it.packageName }
         val onConfirm = Runnable { dispatchBatchUninstall(panel, context, packages) }
         if (showZuiConfirmDialog(context, title, message, onConfirm)) {
             logger.debug("BatchUninstall: ZUI MessageDialog shown")
@@ -425,19 +436,20 @@ class BatchUninstall : AppHookModule() {
             } catch (_: Throwable) {
                 // 旧版本可能没有该选项，忽略
             }
-            try {
-                builderClass.getMethod("setMessage", CharSequence::class.java).invoke(builder, message)
-            } catch (_: Throwable) {
-                // Builder 不支持 setMessage 时改为拼进标题
-                builderClass.getMethod("setTitle", CharSequence::class.java)
-                    .invoke(builder, "$title\n\n$message")
-            }
             setDialogButton(builderClass, builder, "setNegativeButton", resources, packageName,
                 "cancel_action", android.R.string.cancel, clickListener)
             setDialogButton(builderClass, builder, "setPositiveButton", resources, packageName,
                 "uninstall_item_title", 0, clickListener)
 
             val dialog = builderClass.getMethod("create").invoke(builder) as Dialog
+            // Builder 没有 setMessage（参考 EditModeRemoveDropTarget 的用法），
+            // 必须在 create 之后调 MessageDialog.setMessage，标题会吞掉换行
+            dialogClass.getMethod("setMessage", CharSequence::class.java).invoke(dialog, message)
+            runCatching {
+                // 长列表（最多 24 项）需要放开高度限制
+                dialogClass.getMethod("disableHeightRestrictions", Boolean::class.javaPrimitiveType)
+                    .invoke(dialog, true)
+            }
             dialog.setCanceledOnTouchOutside(true)
             runCatching { dialog.window?.setType(DIALOG_WINDOW_TYPE) }
             dialog.show()
@@ -549,10 +561,11 @@ class BatchUninstall : AppHookModule() {
     }
 
     /**
-     * 从选中视图收集可卸载的包名。仅保留：
-     * itemInfo.itemType == 0（应用图标）、主用户、LauncherApps 可解析且非系统应用。
+     * 从选中视图收集可卸载候选。仅保留：
+     * itemInfo.itemType == 0（应用图标）、主用户、LauncherApps 可解析且非系统应用；
+     * 按包名去重，应用名取 ItemInfo.title，缺失时回退包名。
      */
-    private fun collectUninstallablePackages(panel: View, context: Context): List<String> {
+    private fun collectUninstallableCandidates(panel: View, context: Context): List<UninstallCandidate> {
         val selectedViews = try {
             val method = panel.javaClass.getMethod("getSelectedViews")
             @Suppress("UNCHECKED_CAST")
@@ -572,11 +585,12 @@ class BatchUninstall : AppHookModule() {
         }
         val itemTypeField = itemInfoClass.getField("itemType")
         val userField = itemInfoClass.getField("user")
+        val titleField = itemInfoClass.getField("title")
         val targetComponentMethod = itemInfoClass.getMethod("getTargetComponent")
         val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps
         val myUser = Process.myUserHandle()
 
-        val packages = LinkedHashSet<String>()
+        val candidates = LinkedHashMap<String, UninstallCandidate>()
         for (view in selectedViews) {
             try {
                 val info = view.tag ?: continue
@@ -588,13 +602,15 @@ class BatchUninstall : AppHookModule() {
                 val packageName = component.packageName
                 if (packageName.isNullOrEmpty()) continue
                 if (!isUninstallable(launcherApps, component, user)) continue
-                packages.add(packageName)
+                if (candidates.containsKey(packageName)) continue
+                val label = (titleField.get(info) as? CharSequence)?.toString().orEmpty()
+                candidates[packageName] = UninstallCandidate(label, packageName)
             } catch (t: Throwable) {
                 logger.warn("BatchUninstall: failed to inspect selected view: " + t.message)
             }
         }
-        logger.info("BatchUninstall: ${packages.size} uninstallable package(s) collected")
-        return packages.toList()
+        logger.info("BatchUninstall: ${candidates.size} uninstallable package(s) collected")
+        return candidates.values.toList()
     }
 
     private fun isUninstallable(launcherApps: LauncherApps?, component: ComponentName, user: UserHandle): Boolean {
@@ -627,7 +643,7 @@ class BatchUninstall : AppHookModule() {
     companion object {
         private const val MODULE_PACKAGE = "com.qimian233.ztool"
         private const val EDIT_MODE_PANEL_CLASS = "com.zui.launcher.uiextend.ZuiEditModePanel"
-        private const val ACTIVITY_CLASS = "com.qimian233.ztool.settingactivity.launcher.BatchUninstallActivity"
+        private const val ACTIVITY_CLASS = "com.qimian233.ztool.uninstall.BatchUninstallActivity"
         private const val EXTRA_PACKAGES = "ztool_extra_batch_uninstall_packages"
         private const val EXTRA_TOKEN = "ztool_extra_batch_uninstall_token"
         private const val BUTTON_TAG = "ztool_edit_mode_batch_uninstall"
