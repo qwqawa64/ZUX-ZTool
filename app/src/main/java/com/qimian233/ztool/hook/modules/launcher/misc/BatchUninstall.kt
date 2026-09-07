@@ -13,6 +13,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.Process
 import android.os.UserHandle
 import android.view.View
@@ -168,7 +170,7 @@ class BatchUninstall : AppHookModule() {
         button.text = moduleString(context, STRING_BUTTON, FALLBACK_BUTTON)
         button.isAllCaps = false
         copyStyle(button, styleSource)
-        applyIcon(button, styleSource, resources, packageName)
+        applyIcon(button, styleSource, removeTarget, resources, packageName)
 
         val layoutParams = buildLayoutParams(button.id, anchor, combineContainer)
         if (layoutParams == null) {
@@ -181,7 +183,7 @@ class BatchUninstall : AppHookModule() {
         syncButtonVisibility(panel)
 
         (anchor.parent as? ViewGroup ?: panel).addView(button, layoutParams)
-        button.setOnClickListener { handleClicked(panel, button) }
+        button.setOnClickListener { handleClicked(panel) }
         logger.info(
             "BatchUninstall: edit mode button injected into " +
                 anchor.parent.javaClass.name
@@ -206,36 +208,96 @@ class BatchUninstall : AppHookModule() {
         }.onFailure { logger.warn("BatchUninstall: failed to copy button style: " + it.message) }
     }
 
-    /** 按样式模板的 drawable 方位补上图标，优先用启动器自带的卸载图标 ic_delete_zui。 */
+    /**
+     * 按样式模板的 drawable 方位放置图标，素材按优先级：
+     * 1. drop_remove_icon 的复合图标——编辑模式设计体系里的删除图标
+     *    （圆形底 + glyph、与组成文件夹同规格）；该视图静止时 GONE，
+     *    但 XML 设置的 drawable 依然存在；
+     * 2. 自绘复合图标：半透明圆形底 + ic_delete_zui 居中缩放，尺寸参照
+     *    drop_combine_folder 的实测 intrinsic；
+     * 3. 最后回退 ic_delete_zui intrinsic（旧的小图标行为）。
+     */
     private fun applyIcon(
         button: TextView,
         styleSource: TextView,
+        removeTarget: View?,
         resources: Resources,
         packageName: String
     ) {
-        val template = styleSource.compoundDrawablesRelative
-        var index = -1
-        for (i in template.indices) {
-            if (template[i] != null) {
-                index = i
-                break
-            }
-        }
+        val templates = styleSource.compoundDrawablesRelative
+        var index = templates.indexOfFirst { it != null }
         if (index < 0) index = 1 // 模板无图标时默认放顶部，与底栏图标按钮一致
+
         var icon: Drawable? = null
-        val deleteId = resources.getIdentifier("ic_delete_zui", "drawable", packageName)
-        if (deleteId != 0) {
-            icon = runCatching { resources.getDrawable(deleteId, button.context.theme) }.getOrNull()
+        var source = "none"
+        val removeDrawable = (removeTarget as? TextView)
+            ?.compoundDrawablesRelative
+            ?.getOrNull(index)
+        if (removeDrawable != null) {
+            icon = removeDrawable.constantState?.newDrawable()
+            source = "remove_target"
         }
         if (icon == null) {
-            icon = template.getOrNull(index)?.constantState?.newDrawable()
+            icon = buildCompositeIcon(button.context, templates.getOrNull(index), resources, packageName)
+            if (icon != null) source = "composite"
         }
-        if (icon == null) return
+        if (icon == null) {
+            val deleteId = resources.getIdentifier("ic_delete_zui", "drawable", packageName)
+            if (deleteId != 0) {
+                icon = runCatching { resources.getDrawable(deleteId, button.context.theme) }.getOrNull()
+                source = "ic_delete_zui"
+            }
+        }
+        if (icon == null) {
+            logger.warn("BatchUninstall: no icon drawable available")
+            return
+        }
         val arranged = arrayOfNulls<Drawable>(4)
         arranged[index] = icon
         button.setCompoundDrawablesRelativeWithIntrinsicBounds(
             arranged[0], arranged[1], arranged[2], arranged[3]
         )
+        logger.info(
+            "BatchUninstall: icon from $source " +
+                "intrinsic=${icon.intrinsicWidth}x${icon.intrinsicHeight} " +
+                "(template=${templates.getOrNull(index)?.intrinsicWidth}x" +
+                "${templates.getOrNull(index)?.intrinsicHeight})"
+        )
+    }
+
+    /** 兜底：半透明圆形底 + 居中缩放的删除 glyph，尺寸参照模板图标的 intrinsic。 */
+    private fun buildCompositeIcon(
+        context: Context,
+        sizeReference: Drawable?,
+        resources: Resources,
+        packageName: String
+    ): Drawable? {
+        val deleteId = resources.getIdentifier("ic_delete_zui", "drawable", packageName)
+        val glyph = if (deleteId != 0) {
+            runCatching { resources.getDrawable(deleteId, context.theme) }.getOrNull()
+        } else null
+        val scrim = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(0x66000000)
+        }
+        val size = sizeReference?.intrinsicWidth?.takeIf { it > 0 }
+            ?: android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP,
+                60f,
+                resources.displayMetrics
+            ).toInt()
+        val inset = (size * 0.28f).toInt()
+        return if (glyph != null) {
+            object : LayerDrawable(arrayOf(scrim, glyph)) {
+                override fun getIntrinsicWidth(): Int = size
+                override fun getIntrinsicHeight(): Int = size
+            }.apply { setLayerInset(1, inset, inset, inset, inset) }
+        } else {
+            object : LayerDrawable(arrayOf(scrim)) {
+                override fun getIntrinsicWidth(): Int = size
+                override fun getIntrinsicHeight(): Int = size
+            }
+        }
     }
 
     private fun findViewByIdOrNull(panel: View, resources: Resources, packageName: String, name: String): View? {
@@ -243,15 +305,45 @@ class BatchUninstall : AppHookModule() {
         return if (id != 0) panel.findViewById(id) else null
     }
 
-    /** 有选中项才显示按钮（仅在 VISIBLE/GONE 间切换，不参与面板显隐动画）。 */
+    /**
+     * 有选中项才显示按钮（仅在 VISIBLE/GONE 间切换，不参与面板显隐动画），
+     * 并把"组成文件夹"容器与按钮摆成关于屏幕中轴线对称的双槽布局。
+     *
+     * bottom_panel 是自定义 ViewGroup（子项 LayoutParams 为私有类型，无法
+     * 用规则/锚点定位），因此采用类型无关的平移方案：读取两者当前布局
+     * 中心，各自 translationX 到 1600±(面板宽度*0.086)（本机 ±275px，
+     * 对应三槽布局的半槽距）。translationX 与进出场动画驱动的
+     * translationY 互不干扰；未选中态复位容器偏移。
+     */
     private fun syncButtonVisibility(panel: View?) {
         val button = panel?.findViewWithTag<View>(BUTTON_TAG) ?: return
         try {
             val count = panel.javaClass.getMethod("getSelectedCount").invoke(panel) as? Int ?: 0
-            val visibility = if (count > 0) View.VISIBLE else View.GONE
-            if (button.visibility != visibility) {
-                button.visibility = visibility
-                logger.debug("BatchUninstall: button visibility -> $visibility (selected=$count)")
+            val visible = count > 0
+            if (button.visibility != (if (visible) View.VISIBLE else View.GONE)) {
+                button.visibility = if (visible) View.VISIBLE else View.GONE
+                logger.debug("BatchUninstall: button visibility -> $visible (selected=$count)")
+            }
+            val context = panel.context
+            val combine = findViewByIdOrNull(
+                panel, context.resources, context.packageName, "drop_combine_folder_container"
+            ) ?: return
+            if (panel.width == 0 || combine.width == 0) return
+            if (visible) {
+                val centerX = panel.width / 2f
+                val slotOffset = panel.width * SLOT_OFFSET_RATIO
+                // 组成文件夹容器原生居中于中央槽
+                combine.translationX =
+                    (centerX - slotOffset) - (combine.left + combine.width / 2f)
+                // 按钮布局位置由克隆参数决定（右侧槽），置零后等布局完成再对称偏移
+                button.translationX = 0f
+                button.post {
+                    button.translationX =
+                        (centerX + slotOffset) - (button.left + button.width / 2f)
+                }
+            } else {
+                combine.translationX = 0f
+                button.translationX = 0f
             }
         } catch (t: Throwable) {
             logger.warn("BatchUninstall: failed to sync button visibility: " + t.message)
@@ -288,14 +380,12 @@ class BatchUninstall : AppHookModule() {
             return layoutParams
         }
         if (source is RelativeLayout.LayoutParams) {
+            // 布局位置取中央槽，视觉对称由 syncButtonVisibility 的 translationX 完成
             val layoutParams = RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE)
-            if (anchor.id != View.NO_ID) {
-                layoutParams.addRule(RelativeLayout.LEFT_OF, anchor.id)
-            }
+            layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE)
             return layoutParams
         }
         return cloneLayoutParams(source)
@@ -346,7 +436,7 @@ class BatchUninstall : AppHookModule() {
     /** 一个待卸载候选：展示用应用名 + 执行用包名。 */
     private data class UninstallCandidate(val label: String, val packageName: String)
 
-    private fun handleClicked(panel: ViewGroup, button: View) {
+    private fun handleClicked(panel: ViewGroup) {
         try {
             val context = panel.context
             val candidates = collectUninstallableCandidates(panel, context)
@@ -413,13 +503,15 @@ class BatchUninstall : AppHookModule() {
         return try {
             val loader = launcher.classLoader
             val dialogClass = Class.forName("zui.app.MessageDialog", true, loader)
-            val builderClass = Class.forName("zui.app.MessageDialog\$Builder", true, loader)
+            val builderClass = Class.forName($$"zui.app.MessageDialog$Builder", true, loader)
             val builder = builderClass.getConstructor(Context::class.java).newInstance(launcher)
             val resources = launcher.resources
             val packageName = launcher.packageName
 
             val cancelListener = DialogInterface.OnCancelListener { }
-            val clickListener = DialogInterface.OnClickListener { _, _ -> onConfirm.run() }
+            // 取消与确认必须是两个监听器：共用会使得点取消也触发卸载
+            val negativeListener = DialogInterface.OnClickListener { dialog, _ -> dialog.dismiss() }
+            val positiveListener = DialogInterface.OnClickListener { _, _ -> onConfirm.run() }
 
             builderClass.getMethod("setCancelable", Boolean::class.javaPrimitiveType)
                 .invoke(builder, true)
@@ -438,9 +530,9 @@ class BatchUninstall : AppHookModule() {
                 // 旧版本可能没有该选项，忽略
             }
             setDialogButton(builderClass, builder, "setNegativeButton", resources, packageName,
-                "cancel_action", android.R.string.cancel, clickListener)
+                "cancel_action", android.R.string.cancel, negativeListener)
             setDialogButton(builderClass, builder, "setPositiveButton", resources, packageName,
-                "uninstall_item_title", 0, clickListener)
+                "uninstall_item_title", 0, positiveListener)
 
             val dialog = builderClass.getMethod("create").invoke(builder) as Dialog
             // Builder 没有 setMessage（参考 EditModeRemoveDropTarget 的用法），
@@ -601,7 +693,7 @@ class BatchUninstall : AppHookModule() {
                 if (user != myUser) continue
                 val component = targetComponentMethod.invoke(info) as? ComponentName ?: continue
                 val packageName = component.packageName
-                if (packageName.isNullOrEmpty()) continue
+                if (packageName.isEmpty()) continue
                 if (!isUninstallable(launcherApps, component, user)) continue
                 if (candidates.containsKey(packageName)) continue
                 val label = (titleField.get(info) as? CharSequence)?.toString().orEmpty()
@@ -650,8 +742,12 @@ class BatchUninstall : AppHookModule() {
         private const val AUTH_PROOF_ACTION = "com.qimian233.ztool.action.BATCH_UNINSTALL_PROOF"
         private const val DISPATCH_REQUEST_CODE = 21001
         private const val BUTTON_TAG = "ztool_edit_mode_batch_uninstall"
-        private const val CONSTRAINT_LAYOUT_LP = "androidx.constraintlayout.widget.ConstraintLayout\$LayoutParams"
+        private const val CONSTRAINT_LAYOUT_LP =
+            $$"androidx.constraintlayout.widget.ConstraintLayout$LayoutParams"
         private const val ITEM_TYPE_APPLICATION = 0
+
+        /** 底栏三槽布局的槽距占面板宽度的比例（实测 550/3200）。 */
+        private const val SLOT_OFFSET_RATIO = 0.086f
 
         private const val STRING_BUTTON = "ztool_batch_uninstall_button"
         private const val STRING_NO_APPS = "ztool_batch_uninstall_no_apps"
@@ -670,9 +766,9 @@ class BatchUninstall : AppHookModule() {
             get() = if (Locale.getDefault().language == "zh") "批量卸载" else "Batch Uninstall"
         private val FALLBACK_DIALOG_MESSAGE: String
             get() = if (Locale.getDefault().language == "zh") {
-                "将通过 Root 权限静默卸载以下 %1\$d 个应用，桌面图标会在卸载后自动移除：\n\n%2\$s"
+                $$"将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：\n\n%2$s"
             } else {
-                "The following %1\$d app(s) will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:\n\n%2\$s"
+                $$"The following %1$d app(s) will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:\n\n%2$s"
             }
         private val FALLBACK_DISPATCH_FAILED: String
             get() = if (Locale.getDefault().language == "zh") "无法打开 ZTool 执行卸载" else "Failed to open ZTool for uninstall"
