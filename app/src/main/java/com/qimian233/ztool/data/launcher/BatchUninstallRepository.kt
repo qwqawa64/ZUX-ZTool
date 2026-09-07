@@ -15,6 +15,15 @@ class BatchUninstallRepository {
         return EnhancedShellExecutor.getInstance().checkRootAccess().isSuccess()
     }
 
+    /** 诊断用：返回 root 检测结果与原始输出，便于现场排查 KernelSU/Magisk 差异。 */
+    fun checkRootAccess(): Pair<Boolean, String> {
+        val result = EnhancedShellExecutor.getInstance().checkRootAccess()
+        return Pair(
+            result.isSuccess(),
+            "exit=${result.exitCode} out=${result.output.take(160)} err=${result.error.take(160)}"
+        )
+    }
+
     fun uninstallPackage(packageName: String): UninstallResult {
         val sanitized = packageName.trim()
         if (!PACKAGE_NAME_REGEX.matches(sanitized)) {

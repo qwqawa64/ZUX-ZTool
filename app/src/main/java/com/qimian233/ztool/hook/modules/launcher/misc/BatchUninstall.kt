@@ -1,8 +1,10 @@
 package com.qimian233.ztool.hook.modules.launcher.misc
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.DialogInterface
@@ -24,7 +26,6 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Array as JvmArray
 import java.util.Locale
-import java.util.UUID
 
 /**
  * 桌面编辑模式（多选）批量卸载。
@@ -520,19 +521,24 @@ class BatchUninstall : AppHookModule() {
 
     private fun dispatchBatchUninstall(panel: ViewGroup, context: Context, packages: List<String>) {
         try {
-            // 一次性鉴权令牌：写入共享的 xposed_module_config，ZTool 侧比对后立即作废。
-            // referrer 可被任意调用方伪造，令牌是防止其他 App 直接触发 root 卸载的
-            // 真正防线（随机 + 一次性 + 30 秒时效）。
-            val token = UUID.randomUUID().toString() + "|" + System.currentTimeMillis()
-            val wrote = try {
-                remotePreferences.edit()
-                    .putString(PreferenceKeys.LAUNCHER_BATCH_UNINSTALL_TOKEN.name, token)
-                    .commit()
-            } catch (t: Throwable) {
-                logger.error("BatchUninstall: failed to persist auth token", t)
-                false
-            }
-            if (!wrote) {
+            val intent = Intent()
+            intent.setClassName(MODULE_PACKAGE, ACTIVITY_CLASS)
+            intent.putStringArrayListExtra(EXTRA_PACKAGES, ArrayList(packages))
+            // 鉴权凭据：用启动器身份创建 PendingIntent 随 Intent 携带。创建者由系统
+            // 绑定（creatorPackage=启动器），第三方既无法伪造创建者、也无法拿到
+            // 启动器创建的实例。callingPackage 在部分 ROM 上跨任务启动会返回 null，
+            // referrer extra 又可伪造，PendingIntent 是可靠且不可伪造的凭据。
+            val proof = PendingIntent.getActivity(
+                context,
+                0,
+                Intent(AUTH_PROOF_ACTION).setPackage(MODULE_PACKAGE),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            intent.putExtra(EXTRA_PROOF, proof)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            val activity = context as? Activity
+            if (activity == null) {
+                logger.error("BatchUninstall: context is not an activity, dispatch aborted")
                 Toast.makeText(
                     context,
                     moduleString(context, STRING_DISPATCH_FAILED, FALLBACK_DISPATCH_FAILED),
@@ -540,12 +546,7 @@ class BatchUninstall : AppHookModule() {
                 ).show()
                 return
             }
-            val intent = Intent()
-            intent.setClassName(MODULE_PACKAGE, ACTIVITY_CLASS)
-            intent.putStringArrayListExtra(EXTRA_PACKAGES, ArrayList(packages))
-            intent.putExtra(EXTRA_TOKEN, token)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-            context.startActivity(intent)
+            activity.startActivityForResult(intent, DISPATCH_REQUEST_CODE)
             // 分发后清空选择，避免卸载完成后编辑模式残留失效的选中项
             runCatching {
                 panel.javaClass.getMethod("clearSelectedItems").invoke(panel)
@@ -645,7 +646,9 @@ class BatchUninstall : AppHookModule() {
         private const val EDIT_MODE_PANEL_CLASS = "com.zui.launcher.uiextend.ZuiEditModePanel"
         private const val ACTIVITY_CLASS = "com.qimian233.ztool.uninstall.BatchUninstallActivity"
         private const val EXTRA_PACKAGES = "ztool_extra_batch_uninstall_packages"
-        private const val EXTRA_TOKEN = "ztool_extra_batch_uninstall_token"
+        private const val EXTRA_PROOF = "ztool_extra_batch_uninstall_proof"
+        private const val AUTH_PROOF_ACTION = "com.qimian233.ztool.action.BATCH_UNINSTALL_PROOF"
+        private const val DISPATCH_REQUEST_CODE = 21001
         private const val BUTTON_TAG = "ztool_edit_mode_batch_uninstall"
         private const val CONSTRAINT_LAYOUT_LP = "androidx.constraintlayout.widget.ConstraintLayout\$LayoutParams"
         private const val ITEM_TYPE_APPLICATION = 0
