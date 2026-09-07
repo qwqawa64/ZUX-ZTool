@@ -7,10 +7,12 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.res.Resources
+import android.graphics.drawable.Drawable
 import android.os.Process
 import android.os.UserHandle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.qimian233.ztool.data.keys.PreferenceKeys
@@ -35,7 +37,7 @@ import java.util.Locale
  * Hook 的方法名均为未混淆的稳定名称（框架覆写或描述性 getter），
  * 因此不走 DexIndex，失败时直接降级为无此按钮并记录日志。
  */
-@SuppressLint("PrivateApi", "DiscouragedApi")
+@SuppressLint("PrivateApi", "DiscouragedApi", "UseCompatLoadingForDrawables")
 class BatchUninstall : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.LAUNCHER_BATCH_UNINSTALL.name
@@ -83,6 +85,47 @@ class BatchUninstall : AppHookModule() {
                 }
             }
 
+            // 底栏是双态布局：未选中时显示 壁纸/小组件/设置 行，选中后切换为
+            // 组成文件夹/移除图标 行。批量卸载只在有选中项时显示，跟随这三个
+            // 公开的选中集变更方法同步可见性。
+            // 注意：switchSelectedState 返回原始 boolean，hooker 必须透传
+            // proceed() 的结果，返回 null 会在桥接层拆箱时 NPE。
+            val switchSelectedState = panelClass.getDeclaredMethod("switchSelectedState", View::class.java)
+            hookWithId(switchSelectedState, "batch_uninstall_switch_selected") { chain ->
+                val result = chain.proceed()
+                try {
+                    syncButtonVisibility(chain.thisObject as? View)
+                } catch (t: Throwable) {
+                    logger.error("BatchUninstall: failed to sync after switchSelectedState", t)
+                }
+                result
+            }
+
+            val clearSelectedItems = panelClass.getDeclaredMethod("clearSelectedItems")
+            hookWithId(clearSelectedItems, "batch_uninstall_clear_selected") { chain ->
+                val result = chain.proceed()
+                try {
+                    syncButtonVisibility(chain.thisObject as? View)
+                } catch (t: Throwable) {
+                    logger.error("BatchUninstall: failed to sync after clearSelectedItems", t)
+                }
+                result
+            }
+
+            val initSelectedItemByIds = panelClass.getDeclaredMethod(
+                "initSelectedItemByIds",
+                ArrayList::class.java
+            )
+            hookWithId(initSelectedItemByIds, "batch_uninstall_init_selected") { chain ->
+                val result = chain.proceed()
+                try {
+                    syncButtonVisibility(chain.thisObject as? View)
+                } catch (t: Throwable) {
+                    logger.error("BatchUninstall: failed to sync after initSelectedItemByIds", t)
+                }
+                result
+            }
+
             logger.info("BatchUninstall hooks installed")
         } catch (t: Throwable) {
             logger.error("Failed to install batch uninstall hooks", t)
@@ -97,10 +140,20 @@ class BatchUninstall : AppHookModule() {
         val resources = context.resources
         val packageName = context.packageName
 
-        val removeId = resources.getIdentifier("drop_remove_icon", "id", packageName)
-        val removeTarget = if (removeId != 0) panel.findViewById<View>(removeId) else null
-        if (removeTarget == null) {
-            logger.warn("BatchUninstall: drop_remove_icon not found, button skipped")
+        // 实测 ZUI 平板 18.1.9：bottom_panel 下是两个 RelativeLayout 容器，
+        // drop_combine_folder（图标+文字，静止可见）与 drop_remove_icon_container
+        // （静止时 GONE，拖拽时才出现"移除"目标）。按钮必须挂在 bottom_panel 上、
+        // 插在两个容器之间，绝不能进 remove 容器内部，否则与拖拽态重叠。
+        val combineContainer = findViewByIdOrNull(panel, resources, packageName, "drop_combine_folder_container")
+        val combineText = findViewByIdOrNull(panel, resources, packageName, "drop_combine_folder") as? TextView
+        val removeTarget = findViewByIdOrNull(panel, resources, packageName, "drop_remove_icon")
+        val removeContainer = findViewByIdOrNull(panel, resources, packageName, "drop_remove_icon_container")
+            ?: (removeTarget?.parent as? View)
+
+        val styleSource = combineText ?: (removeTarget as? TextView)
+        val anchor = removeContainer ?: removeTarget
+        if (styleSource == null || anchor == null) {
+            logger.warn("BatchUninstall: edit mode bottom anchors not found, button skipped")
             return
         }
 
@@ -109,41 +162,95 @@ class BatchUninstall : AppHookModule() {
         button.id = View.generateViewId()
         button.text = moduleString(context, STRING_BUTTON, FALLBACK_BUTTON)
         button.isAllCaps = false
-        (removeTarget as? TextView)?.let { styleSource ->
-            runCatching {
-                button.setTextSize(
-                    android.util.TypedValue.COMPLEX_UNIT_PX,
-                    styleSource.textSize
-                )
-                styleSource.textColors?.let { button.setTextColor(it) }
-                button.gravity = styleSource.gravity
-                button.setPadding(
-                    styleSource.paddingLeft,
-                    styleSource.paddingTop,
-                    styleSource.paddingRight,
-                    styleSource.paddingBottom
-                )
-                styleSource.background?.constantState?.newDrawable()?.let { button.background = it }
-                button.compoundDrawablePadding = styleSource.compoundDrawablePadding
-                button.typeface = styleSource.typeface
-                button.includeFontPadding = styleSource.includeFontPadding
-            }.onFailure { logger.warn("BatchUninstall: failed to copy button style: " + it.message) }
-        }
+        copyStyle(button, styleSource)
+        applyIcon(button, styleSource, resources, packageName)
 
-        val layoutParams = cloneLayoutParams(removeTarget.layoutParams)
+        val layoutParams = buildLayoutParams(button.id, anchor, combineContainer)
         if (layoutParams == null) {
-            logger.warn("BatchUninstall: cannot clone layout params, button skipped")
+            logger.warn("BatchUninstall: cannot build layout params, button skipped")
             return
         }
-        adjustLayoutParams(layoutParams, removeTarget, button.id, resources, packageName)
         // 编辑模式的显隐由面板 alpha 与 translationY 动画驱动，行内视图从不调
-        // setVisibility，因此按钮必须保持 VISIBLE，跟随面板一起被隐藏
-        button.visibility = View.VISIBLE
+        // setVisibility，因此可见性只在 VISIBLE/GONE 之间切换（跟随选中数）
+        button.visibility = View.GONE
+        syncButtonVisibility(panel)
 
-        (removeTarget.parent as? ViewGroup)?.addView(button, layoutParams)
-            ?: run { panel.addView(button, layoutParams) }
+        (anchor.parent as? ViewGroup ?: panel).addView(button, layoutParams)
         button.setOnClickListener { handleClicked(panel, button) }
-        logger.info("BatchUninstall: edit mode button injected")
+        logger.info(
+            "BatchUninstall: edit mode button injected into " +
+                anchor.parent.javaClass.name
+        )
+    }
+
+    private fun copyStyle(button: TextView, styleSource: TextView) {
+        runCatching {
+            button.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, styleSource.textSize)
+            styleSource.textColors?.let { button.setTextColor(it) }
+            button.gravity = styleSource.gravity
+            button.setPadding(
+                styleSource.paddingLeft,
+                styleSource.paddingTop,
+                styleSource.paddingRight,
+                styleSource.paddingBottom
+            )
+            styleSource.background?.constantState?.newDrawable()?.let { button.background = it }
+            button.compoundDrawablePadding = styleSource.compoundDrawablePadding
+            button.typeface = styleSource.typeface
+            button.includeFontPadding = styleSource.includeFontPadding
+        }.onFailure { logger.warn("BatchUninstall: failed to copy button style: " + it.message) }
+    }
+
+    /** 按样式模板的 drawable 方位补上图标，优先用启动器自带的卸载图标 ic_delete_zui。 */
+    private fun applyIcon(
+        button: TextView,
+        styleSource: TextView,
+        resources: Resources,
+        packageName: String
+    ) {
+        val template = styleSource.compoundDrawablesRelative
+        var index = -1
+        for (i in template.indices) {
+            if (template[i] != null) {
+                index = i
+                break
+            }
+        }
+        if (index < 0) index = 1 // 模板无图标时默认放顶部，与底栏图标按钮一致
+        var icon: Drawable? = null
+        val deleteId = resources.getIdentifier("ic_delete_zui", "drawable", packageName)
+        if (deleteId != 0) {
+            icon = runCatching { resources.getDrawable(deleteId, button.context.theme) }.getOrNull()
+        }
+        if (icon == null) {
+            icon = template.getOrNull(index)?.constantState?.newDrawable()
+        }
+        if (icon == null) return
+        val arranged = arrayOfNulls<Drawable>(4)
+        arranged[index] = icon
+        button.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            arranged[0], arranged[1], arranged[2], arranged[3]
+        )
+    }
+
+    private fun findViewByIdOrNull(panel: View, resources: Resources, packageName: String, name: String): View? {
+        val id = resources.getIdentifier(name, "id", packageName)
+        return if (id != 0) panel.findViewById(id) else null
+    }
+
+    /** 有选中项才显示按钮（仅在 VISIBLE/GONE 间切换，不参与面板显隐动画）。 */
+    private fun syncButtonVisibility(panel: View?) {
+        val button = panel?.findViewWithTag<View>(BUTTON_TAG) ?: return
+        try {
+            val count = panel.javaClass.getMethod("getSelectedCount").invoke(panel) as? Int ?: 0
+            val visibility = if (count > 0) View.VISIBLE else View.GONE
+            if (button.visibility != visibility) {
+                button.visibility = visibility
+                logger.debug("BatchUninstall: button visibility -> $visibility (selected=$count)")
+            }
+        } catch (t: Throwable) {
+            logger.warn("BatchUninstall: failed to sync button visibility: " + t.message)
+        }
     }
 
     private fun cloneLayoutParams(source: ViewGroup.LayoutParams?): ViewGroup.LayoutParams? {
@@ -158,22 +265,47 @@ class BatchUninstall : AppHookModule() {
     }
 
     /**
-     * 调整克隆出的布局参数：垂直锚点与"移除"按钮一致，水平上插在
-     * "合并文件夹"容器与"移除"按钮之间（ConstraintLayout），其他布局
-     * 类型退化为 LEFT_OF 规则；不识别的布局直接保持克隆值。
+     * 构建按钮布局参数：ConstraintLayout 宿主锚在合并容器与移除锚点之间；
+     * RelativeLayout 宿主（实测 ZUI 平板 bottom_panel）垂直居中并置于移除
+     * 容器左侧；其他布局保持克隆值。
      */
-    private fun adjustLayoutParams(
-        layoutParams: ViewGroup.LayoutParams,
-        removeTarget: View,
+    private fun buildLayoutParams(
         buttonId: Int,
-        resources: Resources,
-        packageName: String
+        anchor: View,
+        combineContainer: View?
+    ): ViewGroup.LayoutParams? {
+        val source = anchor.layoutParams ?: return null
+        if (source.javaClass.name == CONSTRAINT_LAYOUT_LP) {
+            val layoutParams = cloneLayoutParams(source) ?: return null
+            adjustConstraintLayoutParams(layoutParams, anchor, combineContainer, buttonId)
+            layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            return layoutParams
+        }
+        if (source is RelativeLayout.LayoutParams) {
+            val layoutParams = RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE)
+            if (anchor.id != View.NO_ID) {
+                layoutParams.addRule(RelativeLayout.LEFT_OF, anchor.id)
+            }
+            return layoutParams
+        }
+        return cloneLayoutParams(source)
+    }
+
+    private fun adjustConstraintLayoutParams(
+        layoutParams: ViewGroup.LayoutParams,
+        anchor: View,
+        combineContainer: View?,
+        buttonId: Int
     ) {
-        if (layoutParams.javaClass.name != CONSTRAINT_LAYOUT_LP) return
         try {
             val lpClass = layoutParams.javaClass
             val unset = lpClass.getField("UNSET").getInt(null)
-            val source = removeTarget.layoutParams
+            val source = anchor.layoutParams
             val sourceClass = source.javaClass
 
             for (field in listOf("topToTop", "topToBottom", "bottomToTop", "bottomToBottom")) {
@@ -186,23 +318,19 @@ class BatchUninstall : AppHookModule() {
             lpClass.getField("startToStart").setInt(layoutParams, unset)
             lpClass.getField("endToEnd").setInt(layoutParams, unset)
 
-            val combineId = resources.getIdentifier("drop_combine_folder_container", "id", packageName)
-            val combine = if (combineId != 0) removeTarget.rootView.findViewById<View>(combineId) else null
-            if (combine != null && combine !== removeTarget) {
-                lpClass.getField("startToEnd").setInt(layoutParams, combine.id)
-                lpClass.getField("endToStart").setInt(layoutParams, removeTarget.id)
-                val combineLp = combine.layoutParams
+            if (combineContainer != null && combineContainer !== anchor) {
+                lpClass.getField("startToEnd").setInt(layoutParams, combineContainer.id)
+                lpClass.getField("endToStart").setInt(layoutParams, anchor.id)
+                val combineLp = combineContainer.layoutParams
                 if (combineLp.javaClass == lpClass &&
-                    combineLp.javaClass.getField("endToStart").getInt(combineLp) == removeTarget.id
+                    combineLp.javaClass.getField("endToStart").getInt(combineLp) == anchor.id
                 ) {
                     combineLp.javaClass.getField("endToStart").setInt(combineLp, buttonId)
-                    combine.layoutParams = combineLp
+                    combineContainer.layoutParams = combineLp
                 }
             } else {
-                lpClass.getField("endToStart").setInt(layoutParams, removeTarget.id)
+                lpClass.getField("endToStart").setInt(layoutParams, anchor.id)
             }
-            layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
-            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
         } catch (t: Throwable) {
             logger.warn("BatchUninstall: failed to adjust constraint params: " + t.message)
         }

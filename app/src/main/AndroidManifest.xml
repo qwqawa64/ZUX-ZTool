@@ -70,7 +70,8 @@
             android:excludeFromRecents="true"
             android:exported="true"
             android:label="@string/batch_uninstall_title"
-            android:launchMode="singleTask" />
+            android:launchMode="singleTask"
+            android:taskAffinity="" />
     </application>
 
 </manifest>
