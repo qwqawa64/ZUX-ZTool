@@ -33,8 +33,9 @@ import java.lang.reflect.Method
  *     ClippedFolderIconLayoutRule.e() 自动跟随为 cols*rows。
  *  6. ClippedFolderIconLayoutRule.c(...) 手机分支是硬编码 2 列定位, 统一改写为
  *     rule 自身的 getOffsetX/getOffsetY 通用网格（与平板分支同源, cols/rows/gap 全部生效）。
- *  7. setup(...) 垂直改写: offsetY=q 字段=cellYInset, previewSizeY=(spanY-1)*(cellH+gapY)+iconSize,
- *     使背景上下边缘与竖排两枚图标的边界线对齐。
+ *  7. setup(...) 垂直改写(第二轮修正): offsetY=q 保持宿主原值不动(防止整体抬高),
+ *     仅向下延展 previewSizeY 使底边 = (spanY-1)*(cellH+gapY) + cellYInset + iconSize,
+ *     即与竖排相邻图标中下面那枚图标的底边线对齐; 顶边维持 stock 位置。
  *
  * PreviewBackground 的关键字段在宿主内是混淆短名（JADX 因与根包冲突显示为 f4283o 等）：
  *   o = 背景宽度, p = offsetX, q = offsetY；spanX/spanY/previewSizeY 为原名。
@@ -200,16 +201,20 @@ class BigFolderAlignTestHook : AppHookModule() {
         widthField.setInt(pb, newWidth)
         offsetXField.setInt(pb, inset)
 
-        // 需求2：垂直对齐竖排两枚图标的边界线（上边缘=上图标顶, 下边缘=下图标底）
-        val newOffsetY = metrics.cellYInset
-        val newPreviewSizeY = (spanY - 1) * (metrics.cellHeight + metrics.gapY) + metrics.iconSizePx
+        // 需求2(第二轮修正)：顶边保持宿主原值(q 不改写, 否则整体抬高),
+        // 仅延展 previewSizeY 使底边 = (spanY-1)*(cellH+gapY) + cellYInset + iconSize,
+        // 即对齐竖排相邻两枚图标中下面那枚的图标底边线。
+        val targetBottom =
+            (spanY - 1) * (metrics.cellHeight + metrics.gapY) + metrics.cellYInset + metrics.iconSizePx
         val oldOffsetY = offsetYField.getInt(pb)
         val oldPreviewSizeY = previewSizeYField.getInt(pb)
-        offsetYField.setInt(pb, newOffsetY)
-        previewSizeYField.setInt(pb, newPreviewSizeY)
+        val newPreviewSizeY = targetBottom - oldOffsetY
+        if (newPreviewSizeY > 0) {
+            previewSizeYField.setInt(pb, newPreviewSizeY)
+        }
 
         // 观测: 标签 topMargin 由宿主 z() 每帧重算, 本 Hook 不与其对抗;
-        // 若 newBgBottom 越过 labelTop, 下一轮需要专门的标签策略
+        // 若 bgBottom 越过 labelTop, 下一轮需要专门的标签策略
         var labelTopMargin = -1
         try {
             if (folderIconView != null) {
@@ -219,17 +224,18 @@ class BigFolderAlignTestHook : AppHookModule() {
             }
         } catch (_: Throwable) {
         }
-        val newBgBottom = newOffsetY + newPreviewSizeY
+        val bgBottom = offsetYField.getInt(pb) + previewSizeYField.getInt(pb)
 
         logger.info(
             "BigFolderAlign span=${spanX}x${spanY}" +
                 " width $oldWidth->$newWidth offsetX $oldOffsetX->$inset" +
-                " offsetY $oldOffsetY->$newOffsetY previewY $oldPreviewSizeY->$newPreviewSizeY" +
+                " offsetY=$oldOffsetY previewY $oldPreviewSizeY->${previewSizeYField.getInt(pb)}" +
+                " targetBottom=$targetBottom" +
                 " cellW=${metrics.cellWidth} nominalW=${metrics.nominalCellWidth} gap=${metrics.gapX}" +
                 " cellH=${metrics.cellHeight} gapY=${metrics.gapY} cellYInset=${metrics.cellYInset}" +
                 " folderIcon=${metrics.folderIconSizePx} icon=${metrics.iconSizePx}" +
-                " widgetPadL=${metrics.widgetPaddingLeft}" +
-                " bgBottom=$newBgBottom labelTop=$labelTopMargin"
+                " widgetPadL=${metrics.widgetPaddingLeft} widgetPadT=${metrics.widgetPaddingTop}" +
+                " bgBottom=$bgBottom labelTop=$labelTopMargin"
         )
     }
 
@@ -248,7 +254,8 @@ class BigFolderAlignTestHook : AppHookModule() {
         val insetIcon: Int,
         val iconSizePx: Int,
         val folderIconSizePx: Int,
-        val widgetPaddingLeft: Int
+        val widgetPaddingLeft: Int,
+        val widgetPaddingTop: Int
     )
 
     private fun readGridMetrics(activityContext: Any): GridMetrics? {
@@ -297,7 +304,8 @@ class BigFolderAlignTestHook : AppHookModule() {
                 insetIcon = (cellWidth - iconSizePx) / 2,
                 iconSizePx = iconSizePx,
                 folderIconSizePx = folderIconSizePx,
-                widgetPaddingLeft = widgetPadding.left
+                widgetPaddingLeft = widgetPadding.left,
+                widgetPaddingTop = widgetPadding.top
             )
         } catch (t: Throwable) {
             logger.error("readGridMetrics failed", t)
