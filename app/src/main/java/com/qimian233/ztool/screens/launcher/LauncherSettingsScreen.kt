@@ -274,7 +274,7 @@ private fun launcherSettingsSections(
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
-    val forceStopItems = buildList {
+    val launcherBehaviorItems = buildList {
         add(
             SettingItem.Custom(
                 content = {
@@ -297,6 +297,13 @@ private fun launcherSettingsSections(
                 )
             )
         }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_launcher_batch_uninstall),
+                checked = state.launcherBatchUninstall,
+                onCheckedChange = onLauncherBatchUninstallChanged
+            )
+        )
     }
 
     val launcherLayoutItems = buildList {
@@ -440,20 +447,10 @@ private fun launcherSettingsSections(
         }
     }
 
-    val batchUninstallLayoutItems = buildList {
-        add(
-            SettingItem.Switch(
-                title = stringResource(R.string.launcher_launcher_batch_uninstall),
-                checked = state.launcherBatchUninstall,
-                onCheckedChange = onLauncherBatchUninstallChanged
-            )
-        )
-    }
-
     return listOf(
         SettingSection(
             title = stringResource(R.string.launcher_disable_force_stop_title),
-            items = forceStopItems
+            items = launcherBehaviorItems
         ),
         SettingSection(
             title = stringResource(R.string.launcher_dock_title),
@@ -470,10 +467,6 @@ private fun launcherSettingsSections(
         SettingSection(
             title = stringResource(R.string.launcher_custom_launcher_layout_title),
             items = launcherLayoutItems
-        ),
-        SettingSection(
-            title = stringResource(R.string.launcher_launcher_batch_uninstall),
-            items = batchUninstallLayoutItems
         ),
     )
 }
