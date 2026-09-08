@@ -122,8 +122,6 @@
     <string name="features_app_list_permission_warning">无法读取已安装的应用，请检查是否已授权本应用读取应用列表，然后重启 APP 。</string>
     <string name="features_all_filtered_warning">全部应用包都被过滤！</string>
     <!--日志页资源值-->
-    <string name="logs_cleared_message">日志已清除</string>
-    <string name="none">无</string>
     <string name="close_button">关闭</string>
     <string name="export_logs_success">日志导出成功</string>
     <string name="export_logs_failed">日志导出失败</string>
@@ -525,10 +523,6 @@
         <item>握手功率</item>
         <item>实际功率</item>
     </string-array>
-    <string-array name="real_watt_interval">
-        <item>功率变化时</item>
-        <item>一定时长后</item>
-    </string-array>
     <string name="watt_option_disabled">不启用</string>
     <string name="watt_option_handshake">握手功率</string>
     <string name="watt_option_actual">实际功率</string>
@@ -595,23 +589,6 @@
     <string name="error_prefix">错误: </string>
     <string name="notify_num_default">4</string>
     <string name="notify_num_unlimited">无限制</string>
-    <string-array name="color_names">
-        <item>白色</item>
-        <item>黑色</item>
-        <item>红色</item>
-        <item>绿色</item>
-        <item>蓝色</item>
-        <item>黄色</item>
-        <item>青色</item>
-        <item>洋红</item>
-        <item>蓝色</item>
-        <item>绿色</item>
-        <item>橙色</item>
-        <item>紫色</item>
-        <item>灰色</item>
-        <item>深橙</item>
-        <item>棕色</item>
-    </string-array>
     <!--启动器功能页的资源值-->
     <string name="force_stop_title">选择需要保护的APP</string>
     <string name="protected_apps_summary">已保护%d个应用后台</string>

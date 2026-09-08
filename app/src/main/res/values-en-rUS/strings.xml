@@ -110,9 +110,7 @@
     <string name="safe_center_app_description">Allow selection Internal Storage, disable safe scan and manage APP auto start.</string>
     <string name="features_app_list_permission_warning">Unable to get all installed APPs. Please, check the permission of querying APP list and restart ZTool to fix this problem.</string>
     <string name="features_all_filtered_warning">All applications are filtered!</string>
-    <string name="logs_cleared_message">Logs cleared.</string>
     <string name="config_upgraded_tip_message">The current version changed the configuration file format.\nRestart the system to keep configuration reading and writing working correctly.</string>
-    <string name="none">None</string>
     <string name="close_button">Close</string>
     <string name="export_logs_success">Logs exported</string>
     <string name="export_logs_failed">Failed to export logs</string>
@@ -643,27 +641,6 @@
         <item>Disabled</item>
         <item>Negotiated power</item>
         <item>Actual power</item>
-    </string-array>
-    <string-array name="real_watt_interval">
-        <item>When power changes</item>
-        <item>After a fixed interval</item>
-    </string-array>
-    <string-array name="color_names">
-        <item>White</item>
-        <item>Black</item>
-        <item>Red</item>
-        <item>Green</item>
-        <item>Blue</item>
-        <item>Yellow</item>
-        <item>Cyan</item>
-        <item>Magenta</item>
-        <item>Blue</item>
-        <item>Green</item>
-        <item>Orange</item>
-        <item>Purple</item>
-        <item>Gray</item>
-        <item>Deep orange</item>
-        <item>Brown</item>
     </string-array>
     <string name="enable_floating_bottom_bar_blur_summary">Enable blurring and other advanced visual effects</string>
     <string name="app_details_completion">Detailed APP information</string>
