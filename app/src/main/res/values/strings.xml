@@ -594,17 +594,16 @@
     <string name="launcher_force_stop_success">已重启应用进程</string>
     <string name="launcher_force_stop_fail">重启失败</string>
     <string name="launcher_select_all_app">全部app</string>
-    <string name="launcher_disable_force_stop_title">启动器行为</string>
+    <string name="launcher_misc_title">杂项</string>
     <string name="launcher_disable_force_stop_enable_title">原生后台管理</string>
     <string name="launcher_disable_force_stop_enable_summary">联想的后台策略比较激进，开启后使用原生后台策略，保证后台服务存活</string>
     <string name="launcher_dock_title">Dock栏</string>
-    <string name="launcher_more_big_dock_title">更大的Dock栏</string>
-    <string name="launcher_more_big_dock_summary">解除Dock栏的图标数量限制，能够塞下更多图标</string>
+    <string name="launcher_larger_dock_title">Dock栏扩容</string>
     <string name="launcher_layout_title">桌面布局</string>
     <string name="launcher_custom_grid_title">自定义桌面网格行列数</string>
     <string name="launcher_custom_grid_summary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
     <string name="launcher_big_folder_align_title">大文件夹对齐</string>
-    <string name="launcher_big_folder_align_summary">对齐大文件夹背景、图标与标签</string>
+    <string name="launcher_big_folder_align_summary">让大文件夹样式更接近主流系统</string>
     <string name="launcher_input_row_number_here">行数</string>
     <string name="launcher_input_column_number_here">列数</string>
     <!--系统框架功能页的资源值-->
@@ -733,10 +732,8 @@
     <string name="safe_center_disable_all_virus_scan">禁止病毒提示</string>
     <string name="safe_center_disable_all_virus_scan_summary">禁止在安全中心内提示病毒，暂时无法解决桌面图标提示病毒。启用后请清除一次安全中心的应用数据</string>
     <string name="launcher_clean_search">净化全局搜索</string>
-    <string name="launcher_clean_search_summary">移除烦人的低质推荐</string>
     <string name="launcher_remove_search_recommend">移除搜索栏的搜索推荐</string>
     <string name="launcher_remove_hot_word_view">移除热门搜索卡片</string>
-    <string name="launcher_global_search">全局搜索</string>
     <string name="launcher_recent_task">最近任务</string>
     <string name="launcher_show_ram_info">显示内存信息</string>
     <string name="launcher_show_ram_info_summary">内存信息不能完全反映设备真实安装的物理内存量</string>
@@ -837,9 +834,7 @@
     <string name="page_settings_advanced_info_title">系统信息</string>
     <string name="page_settings_advanced_api_version">libxposed API 版本</string>
     <string name="launcher_launcher_no_label_mode_title">桌面无字模式</string>
-    <string name="launcher_launcher_no_label_mode_summary">不显示文件夹和应用图标的文字。如果不生效就把图标移入再移出文件夹。</string>
     <string name="launcher_launcher_drawer_no_label_mode_title">抽屉无字模式</string>
-    <string name="launcher_launcher_drawer_no_label_mode_summary">不显示应用抽屉内图标的文字，仅影响全部应用列表和预测行。</string>
     <string name="launcher_launcher_hide_blue_point_title">隐藏应用更新蓝点提示</string>
     <string name="mobile_desktop_disable_nearby_share_auto_shutdown_title">禁止互传自动关闭</string>
     <string name="system_update_disable_ota_auto_install_title">禁止 OTA 自动安装</string>
