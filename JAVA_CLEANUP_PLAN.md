@@ -69,32 +69,34 @@ unchanged after conversion. No Kotlin code constructs `ShellResult` / `ConfigFil
 10. Preserve all logic, log tags, Chinese comments and messages; all files UTF-8.
     No Manifest / preference-key / scope.list changes in this task.
 
-## Batches
+## Batches (executed 2026-09-09 — all complete)
 
-- [ ] **Batch 0 — baseline.** `git status --short` clean check; run
-  `cmd.exe /c "gradlew.bat assembleDebug"`, confirm green before touching anything.
-- [ ] **Batch 1 — leaf utils.** Convert `FileUtils` and `FileManager` to `object`.
-  Build → commit `utils: migrate FileUtils and FileManager to Kotlin`.
-- [ ] **Batch 2 — shell executor.** Convert `EnhancedShellExecutor` (+ `ShellResult`
-  property change), fix 3 call sites in `BatchUninstallRepository.kt`.
-  Build → commit `utils: migrate EnhancedShellExecutor to Kotlin`.
-- [ ] **Batch 3 — managers.** Convert `MagiskModuleManager`, `EmbeddingConfigManager`,
-  `FontInstallerManager`, `OvCommonConfigManager`.
-  Build → commit `utils: migrate config/font/magisk managers to Kotlin`.
-- [ ] **Batch 4 — misc utils.** Convert `ConfigUpgrade` (object) and `GetPCFlashFirmware`.
-  Build → commit `utils: migrate ConfigUpgrade and GetPCFlashFirmware to Kotlin`.
-- [ ] **Batch 5 — magicwindowsearch + dead code.** Convert `PackageInfo`, `ActivityPair`;
-  delete `PermissionChecker.java`.
-  Build → commit `frontend: migrate magic window search models to Kotlin` and
-  `utils: remove dead PermissionChecker`.
-- [ ] **Batch 6 — services + tests.** Convert `LogCollectorService` (keep class name —
-  Manifest contract), `LogServiceManager`, and the two example test boilerplate files.
-  Build → commit `module: migrate log services to Kotlin` and
-  `chore: convert test boilerplate to Kotlin`.
-- [ ] **Final gate.**
-  - `find app/src -name "*.java"` → zero results (hook infra is already Kotlin).
-  - `cmd.exe /c "gradlew.bat assembleDebug"` green.
+- [x] **Batch 0 — baseline.** `assembleDebug` green before touching anything.
+- [x] **Batch 1 — FileManager → `object`** (no Java callers). Commit `1cf34b43`.
+- [x] **Batch 2 — the 5 utils that CALL EnhancedShellExecutor/FileUtils**
+  (`MagiskModuleManager`, `EmbeddingConfigManager`, `FontInstallerManager`,
+  `OvCommonConfigManager`, `ConfigUpgrade`), converted while those deps were still Java.
+  Commits `041fed71`, `aca5dcfd` (nullable font-file guard in `SettingsDetailRepository`).
+- [x] **Batch 3 — EnhancedShellExecutor + FileUtils** (no Java callers left).
+  `ShellResult.isSuccess()` became a `val isSuccess` property; the 3 method-syntax call
+  sites in `BatchUninstallRepository.kt` updated. Commit `ca36f290`.
+- [x] **Batch 4 — GetPCFlashFirmware** (`fun interface` listener, `Array<String?>?`
+  faithful to Java's null-able elements, 2 safe-call fixes in `OtaSettingsRepository`)
+  **+ magicwindowsearch models** (`PackageInfo`/`ActivityPair` data classes) +
+  **deleted dead `PermissionChecker`.** Commits `1b4c835b`, `163463f8`.
+- [x] **Batch 5 — services + tests.** `LogCollectorService` (class name kept — Manifest
+  contract), `LogServiceManager` (`object`, `ServiceStatusListener` interface —
+  `MainActivity` implements it unchanged), both example tests. Verified with
+  `assembleDebug` + `compileDebugUnitTestKotlin` + `compileDebugAndroidTestKotlin`.
+  Commits `c8eefe81`, `e0014434`.
+- [x] **Final gate.**
+  - `find app/src -name "*.java"` → **zero results**.
+  - `assembleDebug` green (per batch and final).
   - `git diff --check` clean.
+
+Note: execution order differs from the original draft — it follows the real Java caller
+dependency graph (callers convert before the Java classes they reference), so intermediate
+batches always compile.
 
 ## Risks & mitigations
 
