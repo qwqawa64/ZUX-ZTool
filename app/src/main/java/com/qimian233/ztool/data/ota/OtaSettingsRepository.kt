@@ -105,8 +105,8 @@ class OtaSettingsRepository(
                             password = firmwareInfo[1].orEmpty(),
                             platform = firmwareInfo[2].orEmpty(),
                             method = firmwareInfo[3].orEmpty(),
-                            firstUploadTime = formatTimestamp(firmwareInfo[4].toLongOrNull() ?: 0L),
-                            lastUpdateTime = formatTimestamp(firmwareInfo[5].toLongOrNull() ?: 0L)
+                            firstUploadTime = formatTimestamp(firmwareInfo[4]?.toLongOrNull() ?: 0L),
+                            lastUpdateTime = formatTimestamp(firmwareInfo[5]?.toLongOrNull() ?: 0L)
                         )
                     )
                 )
