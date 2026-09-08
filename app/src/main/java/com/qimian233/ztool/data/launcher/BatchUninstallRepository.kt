@@ -12,14 +12,14 @@ import com.qimian233.ztool.EnhancedShellExecutor
 class BatchUninstallRepository {
 
     fun checkRootAvailable(): Boolean {
-        return EnhancedShellExecutor.getInstance().checkRootAccess().isSuccess()
+        return EnhancedShellExecutor.getInstance().checkRootAccess().isSuccess
     }
 
     /** 诊断用：返回 root 检测结果与原始输出，便于现场排查 KernelSU/Magisk 差异。 */
     fun checkRootAccess(): Pair<Boolean, String> {
         val result = EnhancedShellExecutor.getInstance().checkRootAccess()
         return Pair(
-            result.isSuccess(),
+            result.isSuccess,
             "exit=${result.exitCode} out=${result.output.take(160)} err=${result.error.take(160)}"
         )
     }
@@ -31,7 +31,7 @@ class BatchUninstallRepository {
         }
         val result = EnhancedShellExecutor.getInstance()
             .executeRootCommand("pm uninstall --user 0 $sanitized", UNINSTALL_TIMEOUT_SECONDS)
-        val success = result.isSuccess()
+        val success = result.isSuccess
         val message = if (success) {
             ""
         } else {
