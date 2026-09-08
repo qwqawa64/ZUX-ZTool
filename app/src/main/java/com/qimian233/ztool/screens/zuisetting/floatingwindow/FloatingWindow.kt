@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.setting.floatingwindow
+package com.qimian233.ztool.screens.zuisetting.floatingwindow
 
 import android.content.Context
 import android.graphics.PixelFormat

@@ -1,5 +1,5 @@
 // PackageInfo.java
-package com.qimian233.ztool.screens.setting.magicwindowsearch;
+package com.qimian233.ztool.screens.zuisetting.magicwindowsearch;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.setting.magicwindowsearch
+package com.qimian233.ztool.screens.zuisetting.magicwindowsearch
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable

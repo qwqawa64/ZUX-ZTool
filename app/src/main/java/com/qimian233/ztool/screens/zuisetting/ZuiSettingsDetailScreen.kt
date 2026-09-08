@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.setting
+package com.qimian233.ztool.screens.zuisetting
 
 import android.app.AppOpsManager
 import android.app.Dialog
@@ -60,7 +60,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.screens.safecenter.RestartConfirmDialog
-import com.qimian233.ztool.screens.setting.floatingwindow.FloatingWindow
+import com.qimian233.ztool.screens.zuisetting.floatingwindow.FloatingWindow
 import com.qimian233.ztool.ui.components.DIALOG_BUTTON_VERTICAL_ARRANGEMENT
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection

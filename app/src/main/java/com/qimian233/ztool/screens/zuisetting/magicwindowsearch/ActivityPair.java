@@ -1,5 +1,5 @@
 // ActivityPair.java
-package com.qimian233.ztool.screens.setting.magicwindowsearch;
+package com.qimian233.ztool.screens.zuisetting.magicwindowsearch;
 
 public class ActivityPair {
     private final String from;

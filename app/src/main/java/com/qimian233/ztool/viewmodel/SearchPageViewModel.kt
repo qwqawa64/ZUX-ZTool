@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.qimian233.ztool.data.settings.MagicWindowConfigLoadResult
 import com.qimian233.ztool.data.settings.MagicWindowSearchRepository
-import com.qimian233.ztool.screens.setting.magicwindowsearch.PackageInfo
+import com.qimian233.ztool.screens.zuisetting.magicwindowsearch.PackageInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
