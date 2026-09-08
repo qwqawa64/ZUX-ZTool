@@ -166,16 +166,16 @@ private fun systemUiMiscSettingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.systemUIMisc),
+            title = stringResource(R.string.system_ui_common_misc),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_guest_user_enable_title),
-                    summary = stringResource(R.string.disable_guest_user_enable_summary),
+                    title = stringResource(R.string.system_ui_misc_disable_guest_user_enable_title),
+                    summary = stringResource(R.string.system_ui_misc_disable_guest_user_enable_summary),
                     checked = state.guestModeController,
                     onCheckedChange = onGuestModeChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_biometric_error_vibration_title),
+                    title = stringResource(R.string.system_ui_misc_disable_biometric_error_vibration_title),
                     checked = state.disableBiometricErrorVibration,
                     onCheckedChange = onDisableBiometricErrorVibrationChanged
                 )

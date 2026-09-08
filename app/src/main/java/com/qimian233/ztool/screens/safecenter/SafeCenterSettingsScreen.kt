@@ -93,7 +93,7 @@ fun SafeCenterSettingsRoute(
                             SafeCenterRestartResult.Success -> {
                                 Toast.makeText(
                                     context,
-                                    R.string.app_process_restarted_message,
+                                    R.string.safe_center_app_process_restarted_message,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -185,11 +185,11 @@ internal fun safeCenterSettingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.default_allow_autorun_title),
+            title = stringResource(R.string.safe_center_default_allow_autorun_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.default_allow_autorun_enable_title),
-                    summary = stringResource(R.string.default_allow_autorun_enable_summary),
+                    title = stringResource(R.string.safe_center_default_allow_autorun_enable_title),
+                    summary = stringResource(R.string.safe_center_default_allow_autorun_enable_summary),
                     checked = state.defaultEnableAutorun,
                     onCheckedChange = onDefaultEnableAutorunChanged
                 ),
@@ -199,14 +199,14 @@ internal fun safeCenterSettingsSections(
             title = stringResource(R.string.common_sec_title_function),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_all_virus_scan),
-                    summary = stringResource(R.string.disable_all_virus_scan_summary),
+                    title = stringResource(R.string.safe_center_disable_all_virus_scan),
+                    summary = stringResource(R.string.safe_center_disable_all_virus_scan_summary),
                     checked = state.disableAllVirusScan,
                     onCheckedChange = onDisableAllVirusScanChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.bypassDocementsUI),
-                    summary = stringResource(R.string.bypassDocementsUISummary),
+                    title = stringResource(R.string.safe_center_bypass_docements_ui),
+                    summary = stringResource(R.string.safe_center_bypass_docements_ui_summary),
                     checked = state.documentsUiBypass,
                     onCheckedChange = onDocumentsUiBypassChanged
                 )

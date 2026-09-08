@@ -45,13 +45,13 @@ class StatusBarSettingsRepository(
 
     fun buildClockPreview(format: String): String {
         return if (format.isEmpty()) {
-            context.getString(R.string.preview_default)
+            context.getString(R.string.system_ui_preview_default)
         } else {
             try {
-                context.getString(R.string.preview_display, CustomDateFormatter.format(format, Date()))
+                context.getString(R.string.system_ui_preview_display, CustomDateFormatter.format(format, Date()))
             } catch (e: Exception) {
                 Log.e(TAG, "Error formatting date: $format", e)
-                context.getString(R.string.preview_invalid) +
+                context.getString(R.string.system_ui_preview_invalid) +
                     "\n" +
                     context.getString(R.string.common_error_prefix) +
                     e.message
@@ -153,13 +153,13 @@ class StatusBarSettingsRepository(
     }
 
     fun saveNotificationIconLimit(option: String): Boolean {
-        if (option == context.getString(R.string.notify_num_default)) {
+        if (option == context.getString(R.string.system_ui_notify_num_default)) {
             prefsUtils.saveBooleanSetting(KEY_NOTIFICATION_ICON_LIMIT, false)
             return true
         }
 
         prefsUtils.saveBooleanSetting(KEY_NOTIFICATION_ICON_LIMIT, true)
-        if (option == context.getString(R.string.notify_num_unlimited)) {
+        if (option == context.getString(R.string.system_ui_notify_num_unlimited)) {
             prefsUtils.saveIntegerSetting(KEY_NOTIFY_NUM_SIZE, 100)
             return true
         }
@@ -176,7 +176,7 @@ class StatusBarSettingsRepository(
 
     private fun notifyNumSizeToOption(value: Int): String {
         return when (value) {
-            100 -> context.getString(R.string.notify_num_unlimited)
+            100 -> context.getString(R.string.system_ui_notify_num_unlimited)
             else -> value.coerceIn(1, 14).toString()
         }
     }

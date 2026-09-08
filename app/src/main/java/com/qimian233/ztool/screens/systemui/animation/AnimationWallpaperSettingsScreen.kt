@@ -67,16 +67,16 @@ fun AnimationWallpaperSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    val videoSavedText = stringResource(R.string.custom_charge_animation_video_saved)
-    val videoSaveFailedText = stringResource(R.string.custom_charge_animation_video_save_failed)
+    val videoSavedText = stringResource(R.string.system_ui_animation_custom_charge_animation_video_saved)
+    val videoSaveFailedText = stringResource(R.string.system_ui_animation_custom_charge_animation_video_save_failed)
 
     val wpPortraitVideoSavedText =
-        stringResource(R.string.desktop_live_wallpaper_portrait_video_saved)
+        stringResource(R.string.system_ui_animation_desktop_live_wallpaper_portrait_video_saved)
     val wpPortraitVideoSaveFailedText =
-        stringResource(R.string.desktop_live_wallpaper_portrait_video_save_failed)
-    val wpLandVideoSavedText = stringResource(R.string.desktop_live_wallpaper_land_video_saved)
+        stringResource(R.string.system_ui_animation_desktop_live_wallpaper_portrait_video_save_failed)
+    val wpLandVideoSavedText = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_land_video_saved)
     val wpLandVideoSaveFailedText =
-        stringResource(R.string.desktop_live_wallpaper_land_video_save_failed)
+        stringResource(R.string.system_ui_animation_desktop_live_wallpaper_land_video_save_failed)
 
     val portraitVideoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -270,24 +270,24 @@ private fun animationWallpaperSettingsSections(
     val chargeAnimItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.noChargingAnimation_enable_title),
-                summary = stringResource(R.string.noChargingAnimation_enable_summary),
+                title = stringResource(R.string.system_ui_animation_no_charging_animation_enable_title),
+                summary = stringResource(R.string.system_ui_animation_no_charging_animation_enable_summary),
                 checked = state.noChargeAnimation,
                 onCheckedChange = onNoChargeAnimationChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.Charge_Animation_Fix),
-                summary = stringResource(R.string.Charge_Animation_Fix_Summary),
+                title = stringResource(R.string.system_ui_animation_charge_animation_fix),
+                summary = stringResource(R.string.system_ui_animation_charge_animation_fix_summary),
                 checked = state.chargeAnimationFix,
                 onCheckedChange = onChargeAnimationFixChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.custom_charge_animation_title),
-                summary = stringResource(R.string.custom_charge_animation_summary),
+                title = stringResource(R.string.system_ui_animation_custom_charge_animation_title),
+                summary = stringResource(R.string.system_ui_animation_custom_charge_animation_summary),
                 checked = state.customChargeAnimation,
                 onCheckedChange = onCustomChargeAnimationChanged
             )
@@ -295,7 +295,7 @@ private fun animationWallpaperSettingsSections(
         if (state.customChargeAnimation) {
             add(
                 SettingItem.Action(
-                    title = stringResource(R.string.custom_charge_animation_portrait_action_title),
+                    title = stringResource(R.string.system_ui_animation_custom_charge_animation_portrait_action_title),
                     onClick = onSelectPortraitVideo,
                     trailingContent = {
                         Icon(
@@ -308,7 +308,7 @@ private fun animationWallpaperSettingsSections(
             )
             add(
                 SettingItem.Action(
-                    title = stringResource(R.string.custom_charge_animation_land_action_title),
+                    title = stringResource(R.string.system_ui_animation_custom_charge_animation_land_action_title),
                     onClick = onSelectLandVideo,
                     trailingContent = {
                         Icon(
@@ -325,20 +325,20 @@ private fun animationWallpaperSettingsSections(
     val desktopWallpaperItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.desktop_live_wallpaper_title),
-                summary = stringResource(R.string.desktop_live_wallpaper_summary) + "\n\n" +
-                    stringResource(R.string.desktop_live_wallpaper_rotation_warning),
+                title = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_title),
+                summary = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_summary) + "\n\n" +
+                    stringResource(R.string.system_ui_animation_desktop_live_wallpaper_rotation_warning),
                 checked = state.desktopLiveWallpaper,
                 onCheckedChange = onDesktopLiveWallpaperChanged
             )
         )
         if (state.desktopLiveWallpaper) {
-            val scaleFitLabel = stringResource(R.string.desktop_live_wallpaper_scale_mode_fit)
-            val scaleCoverLabel = stringResource(R.string.desktop_live_wallpaper_scale_mode_cover)
+            val scaleFitLabel = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_scale_mode_fit)
+            val scaleCoverLabel = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_scale_mode_cover)
             add(
                 SettingItem.Dropdown(
                     key = "desktop_wallpaper_scale_mode",
-                    label = stringResource(R.string.desktop_live_wallpaper_scale_mode_title),
+                    label = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_scale_mode_title),
                     value = if (state.wallpaperScaleMode == "cover") {
                         scaleCoverLabel
                     } else {
@@ -355,7 +355,7 @@ private fun animationWallpaperSettingsSections(
             )
             add(
                 SettingItem.Action(
-                    title = stringResource(R.string.desktop_live_wallpaper_select_portrait),
+                    title = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_select_portrait),
                     onClick = onSelectWpPortraitVideo,
                     trailingContent = {
                         Icon(
@@ -368,7 +368,7 @@ private fun animationWallpaperSettingsSections(
             )
             add(
                 SettingItem.Action(
-                    title = stringResource(R.string.desktop_live_wallpaper_select_land),
+                    title = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_select_land),
                     onClick = onSelectWpLandVideo,
                     trailingContent = {
                         Icon(
@@ -384,11 +384,11 @@ private fun animationWallpaperSettingsSections(
 
     return listOf(
         SettingSection(
-            title = stringResource(R.string.noChargingAnimation_title),
+            title = stringResource(R.string.system_ui_animation_no_charging_animation_title),
             items = chargeAnimItems
         ),
         SettingSection(
-            title = stringResource(R.string.desktop_live_wallpaper_title),
+            title = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_title),
             items = desktopWallpaperItems
         )
     )

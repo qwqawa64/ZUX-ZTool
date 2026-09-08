@@ -75,9 +75,9 @@ fun OtaSettingsRoute(
         )[OtaSettingsViewModel::class.java]
     }
     val unknownText = stringResource(R.string.common_unknown)
-    val otaInfoFetchFailed = stringResource(R.string.ota_info_fetch_failed)
-    val snDefaultHint = stringResource(R.string.SN_default_hint)
-    val clipboardLabel = stringResource(R.string.ota_info_clipboard_label)
+    val otaInfoFetchFailed = stringResource(R.string.system_update_ota_info_fetch_failed)
+    val snDefaultHint = stringResource(R.string.system_update_sn_default_hint)
+    val clipboardLabel = stringResource(R.string.system_update_ota_info_clipboard_label)
 
     LaunchedEffect(viewModel) {
         viewModel.initialize(unknownText)
@@ -112,15 +112,15 @@ fun OtaSettingsRoute(
         onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
         onCopyDownloadLink = {
             copyToClipboard(it)
-            Toast.makeText(context, R.string.download_link_copied, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.system_update_download_link_copied, Toast.LENGTH_SHORT).show()
         },
         onCopyChangelog = {
             copyToClipboard(it)
-            Toast.makeText(context, R.string.changelog_copied, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.system_update_changelog_copied, Toast.LENGTH_SHORT).show()
         },
         onCopyPassword = {
             copyToClipboard(it)
-            Toast.makeText(context, R.string.password_copied, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.system_update_password_copied, Toast.LENGTH_SHORT).show()
         },
         onRestartScope = viewModel::showRestartDialog
     )
@@ -138,7 +138,7 @@ fun OtaSettingsRoute(
             onConfirm = {
                 viewModel.restartScope(
                     onFailure = {
-                        Toast.makeText(context, R.string.restart_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.system_update_restart_failed, Toast.LENGTH_SHORT).show()
                     }
                 )
             },
@@ -254,39 +254,39 @@ private fun otaSettingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.Ota_Setting_Title),
+            title = stringResource(R.string.system_update_ota_setting_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.OtaDisable_title),
-                    summary = stringResource(R.string.OtaDisable_summary),
+                    title = stringResource(R.string.system_update_ota_disable_title),
+                    summary = stringResource(R.string.system_update_ota_disable_summary),
                     checked = state.disableOtaCheck,
                     onCheckedChange = onDisableOtaCheckChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_ota_auto_install_title),
+                    title = stringResource(R.string.system_update_disable_ota_auto_install_title),
                     checked = state.noAutoOtaInstall,
                     onCheckedChange = onDisableOtaAutoInstallChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.block_ota_install_dialog_title),
+                    title = stringResource(R.string.system_update_block_ota_install_dialog_title),
                     checked = state.blockOtaInstallDialog,
                     onCheckedChange = onBlockOtaInstallDialogChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.hide_ota_update_hint),
+                    title = stringResource(R.string.system_update_hide_ota_update_hint),
                     checked = state.hideOtaUpdateHint,
                     onCheckedChange = onHideOtaUpdateHintChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_ota_notification_and_red_dot_title),
-                    summary = stringResource(R.string.disable_ota_notification_and_red_dot_summary),
+                    title = stringResource(R.string.system_update_disable_ota_notification_and_red_dot_title),
+                    summary = stringResource(R.string.system_update_disable_ota_notification_and_red_dot_summary),
                     checked = state.disableOtaNotificationAndRedDot,
                     onCheckedChange = onDisableOtaNotificationAndRedDot
                 )
             )
         ),
         SettingSection(
-            title = stringResource(R.string.Ota_Custom_Params_Title),
+            title = stringResource(R.string.system_update_custom_params_title),
             items = listOf(
                 SettingItem.Custom(
                     content = {
@@ -300,7 +300,7 @@ private fun otaSettingsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.OtaInfoFetch_title),
+            title = stringResource(R.string.system_update_ota_info_fetch_title),
             items = listOf(
                 SettingItem.Custom(
                     content = {
@@ -316,7 +316,7 @@ private fun otaSettingsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.PCFlashFirmwareFetch_title),
+            title = stringResource(R.string.system_update_pc_flash_firmware_fetch_title),
             items = listOf(
                 SettingItem.Custom(
                     content = {
@@ -354,7 +354,7 @@ private fun OtaInfoContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(R.string.OtaInfoFetch_summary),
+                text = stringResource(R.string.system_update_ota_info_fetch_summary),
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalZToolColorScheme.current.onSurface,
                 modifier = Modifier
@@ -368,9 +368,9 @@ private fun OtaInfoContent(
             ) {
                 Text(
                     if (isFetching) {
-                        stringResource(R.string.loading_ellipsis)
+                        stringResource(R.string.system_update_loading_ellipsis)
                     } else {
-                        stringResource(R.string.OtaInfoFetch_title)
+                        stringResource(R.string.system_update_ota_info_fetch_title)
                     }
                 )
             }
@@ -380,16 +380,16 @@ private fun OtaInfoContent(
             HorizontalDivider(modifier = Modifier.padding(start = 24.dp, end = 24.dp))
             Spacer(modifier = Modifier.height(16.dp))
             ResultText(
-                title = stringResource(R.string.ota_update_info_title),
+                title = stringResource(R.string.system_update_update_info_title),
                 body = stringResource(
-                    R.string.version_info_format,
+                    R.string.system_update_version_info_format,
                     result.fromVersion,
                     result.toVersion
                 )
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = stringResource(R.string.updateLog),
+                text = stringResource(R.string.system_update_update_log),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = LocalZToolColorScheme.current.onSurfaceVariant
@@ -403,10 +403,10 @@ private fun OtaInfoContent(
             if (result.isNewVersionAvailable) {
                 Spacer(modifier = Modifier.height(12.dp))
                 ResultText(
-                    title = stringResource(R.string.copy_download_link),
+                    title = stringResource(R.string.system_update_copy_download_link),
                     body =
                         stringResource(
-                            R.string.download_info_format,
+                            R.string.system_update_download_info_format,
                             result.downloadUrl,
                             result.formattedSize,
                             result.md5
@@ -419,14 +419,14 @@ private fun OtaInfoContent(
                     Spacer(modifier = Modifier.weight(1f))
                     ZToolTextButton(
                         onClick = { onCopyChangelog(result.changelogCopyText) },
-                        text = stringResource(R.string.copy_changelog),
+                        text = stringResource(R.string.system_update_copy_changelog),
                         isPrimary = false,
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     ZToolTextButton(
                         onClick = { onCopyDownloadLink(result.downloadUrl) },
                         enabled = result.isNewVersionAvailable,
-                        text = stringResource(R.string.copy_download_link),
+                        text = stringResource(R.string.system_update_copy_download_link),
                         isPrimary = true,
                     )
                 }
@@ -434,7 +434,7 @@ private fun OtaInfoContent(
                 Column {
                     ZToolTextButton(
                         onClick = { onCopyChangelog(result.changelogCopyText) },
-                        text = stringResource(R.string.copy_changelog),
+                        text = stringResource(R.string.system_update_copy_changelog),
                         isPrimary = false,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -442,7 +442,7 @@ private fun OtaInfoContent(
                     ZToolTextButton(
                         onClick = { onCopyDownloadLink(result.downloadUrl) },
                         enabled = result.isNewVersionAvailable,
-                        text = stringResource(R.string.copy_download_link),
+                        text = stringResource(R.string.system_update_copy_download_link),
                         isPrimary = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -471,7 +471,7 @@ private fun FirmwareContent(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(R.string.PCFlashFirmwareFetch_summary),
+                text = stringResource(R.string.system_update_pc_flash_firmware_fetch_summary),
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalZToolColorScheme.current.onSurface
             )
@@ -487,10 +487,10 @@ private fun FirmwareContent(
                         .fillMaxWidth()
                         .weight(1f)
                         .widthIn(720.dp),
-                    label = if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.loading_ellipsis)) {
-                                stringResource(R.string.SN_current_machine_hint, currentSn)
+                    label = if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.system_update_loading_ellipsis)) {
+                                stringResource(R.string.system_update_sn_current_machine_hint, currentSn)
                             } else {
-                                stringResource(R.string.SN_default_hint)
+                                stringResource(R.string.system_update_sn_default_hint)
                             },
                     singleLine = true,
                     horizontalPadding = 0.dp
@@ -501,7 +501,7 @@ private fun FirmwareContent(
                     enabled = !isFetching,
                 ) {
                     Text(
-                        if (isFetching) stringResource(R.string.fetching_firmware_info) else stringResource(
+                        if (isFetching) stringResource(R.string.system_update_fetching_firmware_info) else stringResource(
                             R.string.common_confirm
                         )
                     )
@@ -513,20 +513,20 @@ private fun FirmwareContent(
                 HorizontalDivider(modifier = Modifier.padding(start = 24.dp, end = 24.dp))
                 Spacer(modifier = Modifier.height(16.dp))
                 ResultText(
-                    title = stringResource(R.string.PCFlashFirmwareFetch_result),
+                    title = stringResource(R.string.system_update_pc_flash_firmware_fetch_result),
                     body = buildString {
-                        append(stringResource(R.string.firmware_download_link)).append(result.downloadUrl)
+                        append(stringResource(R.string.system_update_firmware_download_link)).append(result.downloadUrl)
                             .append("\n")
-                        append(stringResource(R.string.firmware_extract_password)).append(result.password)
+                        append(stringResource(R.string.system_update_firmware_extract_password)).append(result.password)
                             .append("\n")
-                        append(stringResource(R.string.firmware_platform_and_method))
+                        append(stringResource(R.string.system_update_firmware_platform_and_method))
                             .append(result.platform)
-                            .append(stringResource(R.string.firmware_platform_suffix))
+                            .append(stringResource(R.string.system_update_firmware_platform_suffix))
                             .append(result.method)
                             .append("\n")
-                        append(stringResource(R.string.firmware_first_upload_time)).append(result.firstUploadTime)
+                        append(stringResource(R.string.system_update_firmware_first_upload_time)).append(result.firstUploadTime)
                             .append("\n")
-                        append(stringResource(R.string.firmware_last_update_time)).append(result.lastUpdateTime)
+                        append(stringResource(R.string.system_update_firmware_last_update_time)).append(result.lastUpdateTime)
                     }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -535,27 +535,27 @@ private fun FirmwareContent(
                         Spacer(modifier = Modifier.weight(1f))
                         ZToolTextButton(
                             onClick = { onCopyPassword(result.password) },
-                            text = stringResource(R.string.copy_password),
+                            text = stringResource(R.string.system_update_copy_password),
                             isPrimary = false,
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         ZToolTextButton(
                             onClick = { onCopyDownloadLink(result.downloadUrl) },
-                            text = stringResource(R.string.copy_download_link),
+                            text = stringResource(R.string.system_update_copy_download_link),
                         )
                     }
                 } else {
                     Column {
                         ZToolTextButton(
                             onClick = { onCopyPassword(result.password) },
-                            text = stringResource(R.string.copy_password),
+                            text = stringResource(R.string.system_update_copy_password),
                             isPrimary = false,
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         ZToolTextButton(
                             onClick = { onCopyDownloadLink(result.downloadUrl) },
-                            text = stringResource(R.string.copy_download_link),
+                            text = stringResource(R.string.system_update_copy_download_link),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -580,7 +580,7 @@ private fun OtaCustomParamsContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.Ota_Custom_Params_Desc),
+                text = stringResource(R.string.system_update_custom_params_desc),
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalZToolColorScheme.current.onSurface
             )
@@ -591,7 +591,7 @@ private fun OtaCustomParamsContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 4.dp),
-            label = stringResource(R.string.current_version_fmt, state.currentVersion),
+            label = stringResource(R.string.system_update_current_version_fmt, state.currentVersion),
             singleLine = true,
             horizontalPadding = 0.dp
         )
@@ -601,7 +601,7 @@ private fun OtaCustomParamsContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 4.dp),
-            label = stringResource(R.string.current_sn_fmt, state.currentSn),
+            label = stringResource(R.string.system_update_current_sn_fmt, state.currentSn),
             singleLine = true,
             horizontalPadding = 0.dp
         )

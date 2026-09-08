@@ -74,7 +74,7 @@ fun GameToolSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
-    val selectGameString = stringResource(R.string.SelectGame)
+    val selectGameString = stringResource(R.string.game_tool_select_game)
 
     GameToolSettingsScreen(
         title = title,
@@ -112,7 +112,7 @@ fun GameToolSettingsRoute(
             onConfirm = {
                 viewModel.forceStopPackage(
                     onFailure = {
-                        Toast.makeText(context, R.string.restart_fail_short, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.game_tool_restart_fail_short, Toast.LENGTH_SHORT).show()
                     }
                 )
             },
@@ -210,24 +210,24 @@ private fun gameToolSettingsSections(
     val functionItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.Device_Model_Disguise),
-                summary = stringResource(R.string.Device_Model_Disguise_summary),
+                title = stringResource(R.string.game_tool_device_model_disguise),
+                summary = stringResource(R.string.game_tool_device_model_disguise_summary),
                 checked = state.disguiseDevice,
                 onCheckedChange = onDisguiseDeviceChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.FIx_CPU_Frequency),
-                summary = stringResource(R.string.FIx_CPU_Frequency_summary),
+                title = stringResource(R.string.game_tool_f_ix_cpu_frequency),
+                summary = stringResource(R.string.game_tool_f_ix_cpu_frequency_summary),
                 checked = state.fixCpuFrequency,
                 onCheckedChange = onFixCpuFrequencyChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.Fix_SocTemp),
-                summary = stringResource(R.string.Fix_SocTemp_summary),
+                title = stringResource(R.string.game_tool_fix_soc_temp),
+                summary = stringResource(R.string.game_tool_fix_soc_temp_summary),
                 checked = state.fixSocTemperature,
                 onCheckedChange = onFixSocTemperatureChanged
             )
@@ -258,18 +258,18 @@ private fun gameToolSettingsSections(
 
     return listOf(
         SettingSection(
-            title = stringResource(R.string.Game_Audio_Setting_Title),
+            title = stringResource(R.string.game_tool_game_audio_setting_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.Game_Audio_title),
-                    summary = stringResource(R.string.Game_Audio_summary),
+                    title = stringResource(R.string.game_tool_game_audio_title),
+                    summary = stringResource(R.string.game_tool_game_audio_summary),
                     checked = state.disableGameAudio,
                     onCheckedChange = onDisableGameAudioChanged
                 )
             )
         ),
         SettingSection(
-            title = stringResource(R.string.function_title),
+            title = stringResource(R.string.game_tool_function_title),
             items = functionItems
         )
     )
@@ -282,14 +282,14 @@ private fun MistakeTouchModeRow(
 ) {
     val options = listOf(
         MistakeTouchMode.Default to stringResource(R.string.common_select_default),
-        MistakeTouchMode.AllGames to stringResource(R.string.SelectAllGames),
+        MistakeTouchMode.AllGames to stringResource(R.string.game_tool_select_all_games),
         MistakeTouchMode.Whitelist to stringResource(R.string.common_select_white_list)
     )
     val selectedLabel = options.first { it.first == selectedMode }.second
 
     ZToolPopupMenuSettingRow(
-        title = stringResource(R.string.auto_open_prevent_touch_title),
-        summary = stringResource(R.string.auto_open_prevent_touch_summary),
+        title = stringResource(R.string.game_tool_auto_open_prevent_touch_title),
+        summary = stringResource(R.string.game_tool_auto_open_prevent_touch_summary),
         value = selectedLabel,
         options = options,
         optionLabel = { it.second },
@@ -311,12 +311,12 @@ private fun WhitelistRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(R.string.whitelist_config_title),
+                text = stringResource(R.string.game_tool_whitelist_config_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalZToolColorScheme.current.onSurface
             )
             Text(
-                text = stringResource(R.string.whitelist_count, whitelistCount),
+                text = stringResource(R.string.game_tool_whitelist_count, whitelistCount),
                 style = MaterialTheme.typography.bodyMedium,
                 color = LocalZToolColorScheme.current.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)

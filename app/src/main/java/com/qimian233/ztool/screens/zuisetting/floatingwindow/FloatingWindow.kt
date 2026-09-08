@@ -282,7 +282,7 @@ private fun FloatingWindowContent(
 
                 Text(
                     text = if (state.shouldBlockProgress && state.selectedApp != null) {
-                        stringResource(R.string.return_to_app, state.selectedApp)
+                        stringResource(R.string.settings_return_to_app, state.selectedApp)
                     } else {
                         stepText(state.currentStep, state.selectedApp)
                     },
@@ -334,7 +334,7 @@ private fun FloatingWindowContent(
                         onClick = onAddActivity,
                         enabled = !state.shouldBlockProgress
                     ) {
-                        Text(stringResource(R.string.addCurrentActivity))
+                        Text(stringResource(R.string.settings_add_current_activity))
                     }
                     Text(
                         text = state.addedActivitiesText,
@@ -349,27 +349,27 @@ private fun FloatingWindowContent(
                 if (state.currentStep == FloatingWizardStep.SetOptions) {
                     Spacer(modifier = Modifier.height(8.dp))
                     FloatingOptionRow(
-                        text = stringResource(R.string.showEmbeddingDivider),
+                        text = stringResource(R.string.settings_show_embedding_divider),
                         checked = state.showEmbeddingDivider,
                         onCheckedChange = onShowEmbeddingDividerChanged
                     )
                     FloatingOptionRow(
-                        text = stringResource(R.string.skipLetterBoxToDisplay),
+                        text = stringResource(R.string.settings_skip_letter_box_to_display),
                         checked = state.skipLetterboxDisplayInfo,
                         onCheckedChange = onSkipLetterboxDisplayInfoChanged
                     )
                     FloatingOptionRow(
-                        text = stringResource(R.string.skipMultiWindowMode),
+                        text = stringResource(R.string.settings_skip_multi_window_mode_title),
                         checked = state.skipMultiWindowMode,
                         onCheckedChange = onSkipMultiWindowModeChanged
                     )
                     FloatingOptionRow(
-                        text = stringResource(R.string.displaySurfaceViewBackground),
+                        text = stringResource(R.string.settings_display_surface_view_background),
                         checked = state.showSurfaceViewBackground,
                         onCheckedChange = onShowSurfaceViewBackgroundChanged
                     )
                     FloatingOptionRow(
-                        text = stringResource(R.string.shouldStopMainActivity),
+                        text = stringResource(R.string.settings_should_stop_main_activity),
                         checked = state.shouldPausePrimaryActivity,
                         onCheckedChange = onShouldPausePrimaryActivityChanged
                     )
@@ -391,35 +391,35 @@ private fun FloatingWindowContent(
 @Composable
 private fun titleText(step: FloatingWizardStep): String {
     return when (step) {
-        FloatingWizardStep.SelectApp -> stringResource(R.string.welcome_message)
-        FloatingWizardStep.SetMainPage -> stringResource(R.string.set_main_page_title)
-        FloatingWizardStep.AddActivities -> stringResource(R.string.add_activities_title)
-        FloatingWizardStep.SetOptions -> stringResource(R.string.config_options_title)
-        FloatingWizardStep.Complete -> stringResource(R.string.config_complete_title)
+        FloatingWizardStep.SelectApp -> stringResource(R.string.settings_welcome_message)
+        FloatingWizardStep.SetMainPage -> stringResource(R.string.settings_set_main_page_title)
+        FloatingWizardStep.AddActivities -> stringResource(R.string.settings_add_activities_title)
+        FloatingWizardStep.SetOptions -> stringResource(R.string.settings_config_options_title)
+        FloatingWizardStep.Complete -> stringResource(R.string.settings_config_complete_title)
     }
 }
 
 @Composable
 private fun stepText(step: FloatingWizardStep, selectedApp: String?): String {
     return when (step) {
-        FloatingWizardStep.SelectApp -> stringResource(R.string.step_1_instruction)
+        FloatingWizardStep.SelectApp -> stringResource(R.string.settings_step_1_instruction)
         FloatingWizardStep.SetMainPage -> stringResource(
-            R.string.step_2_instruction,
+            R.string.settings_step_2_instruction,
             selectedApp.orEmpty()
         )
-        FloatingWizardStep.AddActivities -> stringResource(R.string.step_3_instruction)
-        FloatingWizardStep.SetOptions -> stringResource(R.string.step_4_instruction)
-        FloatingWizardStep.Complete -> stringResource(R.string.step_complete_instruction)
+        FloatingWizardStep.AddActivities -> stringResource(R.string.settings_step_3_instruction)
+        FloatingWizardStep.SetOptions -> stringResource(R.string.settings_step_4_instruction)
+        FloatingWizardStep.Complete -> stringResource(R.string.settings_step_complete_instruction)
     }
 }
 
 @Composable
 private fun nextButtonText(step: FloatingWizardStep): String {
     return when (step) {
-        FloatingWizardStep.AddActivities -> stringResource(R.string.continue_button)
-        FloatingWizardStep.SetOptions -> stringResource(R.string.finish_config_button)
-        FloatingWizardStep.Complete -> stringResource(R.string.save_config_button)
-        else -> stringResource(R.string.next_button)
+        FloatingWizardStep.AddActivities -> stringResource(R.string.settings_continue_button)
+        FloatingWizardStep.SetOptions -> stringResource(R.string.settings_finish_config_button)
+        FloatingWizardStep.Complete -> stringResource(R.string.settings_save_config_button)
+        else -> stringResource(R.string.settings_next_button)
     }
 }
 

@@ -26,15 +26,15 @@ class FloatingWindowRepository(
         get() = context.getString(R.string.common_unknown)
 
     fun initialForegroundInfo(): String {
-        return context.getString(R.string.current_activity, unknownText)
+        return context.getString(R.string.settings_current_activity, unknownText)
     }
 
     fun initialForegroundAppLabel(): String {
-        return context.getString(R.string.app_name_label, unknownText)
+        return context.getString(R.string.settings_app_name_label, unknownText)
     }
 
     fun initialAddedActivitiesText(): String {
-        return context.getString(R.string.noActivityAdded)
+        return context.getString(R.string.settings_no_activity_added)
     }
 
     fun loadForegroundSnapshot(): FloatingForegroundSnapshot {
@@ -42,8 +42,8 @@ class FloatingWindowRepository(
         val foregroundPackage = getForegroundActivityByShell(onlyPackageName = true)
         val appName = getAppNameFromPackage(foregroundPackage) ?: unknownText
         return FloatingForegroundSnapshot(
-            foregroundInfo = context.getString(R.string.current_activity, foregroundApp),
-            foregroundAppLabel = context.getString(R.string.app_name_label, appName),
+            foregroundInfo = context.getString(R.string.settings_current_activity, foregroundApp),
+            foregroundAppLabel = context.getString(R.string.settings_app_name_label, appName),
             appName = appName
         )
     }
@@ -70,7 +70,7 @@ class FloatingWindowRepository(
 
     fun addedActivitiesText(activities: Set<String>): String {
         return buildString {
-            append(context.getString(R.string.added_activities_count, activities.size))
+            append(context.getString(R.string.settings_added_activities_count, activities.size))
             if (activities.isNotEmpty()) {
                 append("\n")
                 append(activities.joinToString("\n"))

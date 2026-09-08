@@ -94,9 +94,9 @@ class FrameworkSettingsRepository(
 
     fun validateAiInputSigns(input: String): String? {
         if (input.isEmpty()) return null
-        if (input.contains("\uFF0C")) return context.getString(R.string.custom_detector_err)
+        if (input.contains("\uFF0C")) return context.getString(R.string.system_framework_custom_detector_err)
         return if (input.split(",").any { it.trim().isEmpty() }) {
-            context.getString(R.string.custom_detector_err)
+            context.getString(R.string.system_framework_custom_detector_err)
         } else {
             null
         }

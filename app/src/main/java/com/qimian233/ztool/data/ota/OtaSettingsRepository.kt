@@ -46,8 +46,8 @@ class OtaSettingsRepository(
             disableOtaNotificationAndRedDot = prefsUtils.loadBooleanSetting(KEY_BLOCK_OTA_NOTIFICATION_AND_RED_DOT, false),
             customVersion = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_VERSION, ""),
             customDeviceId = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_DEVICE_ID, ""),
-            currentVersion = context.getString(R.string.loading_ellipsis),
-            currentSn = context.getString(R.string.loading_ellipsis)
+            currentVersion = context.getString(R.string.system_update_loading_ellipsis),
+            currentSn = context.getString(R.string.system_update_loading_ellipsis)
         )
     }
 
@@ -113,7 +113,7 @@ class OtaSettingsRepository(
             } else {
                 callback(
                     FirmwareFetchResult.Failure(
-                        context.getString(R.string.PCFlashFirmwareFetch_failed_message)
+                        context.getString(R.string.system_update_pc_flash_firmware_fetch_failed_message)
                     )
                 )
             }
@@ -208,7 +208,7 @@ class OtaSettingsRepository(
     private fun Map<String, String>.toOtaInfoResult(): OtaInfoResult {
         val fromVersion = getOrDefault("mUpdateFromVersion", context.getString(R.string.common_unknown))
         val toVersion = getOrDefault("updateToVersion", context.getString(R.string.common_unknown))
-        val downloadUrl = getOrDefault("downloadUrl", context.getString(R.string.no_download_link))
+        val downloadUrl = getOrDefault("downloadUrl", context.getString(R.string.system_update_no_download_link))
         val size = getOrDefault("size", "0").toLongOrNull() ?: 0L
         val md5 = getOrDefault("md5", context.getString(R.string.common_unknown))
         val changelog = getChangelogByLocale(this)
@@ -223,7 +223,7 @@ class OtaSettingsRepository(
             md5 = md5,
             changelog = changelog,
             changelogCopyText = context.getString(
-                R.string.changelog_full_format,
+                R.string.system_update_changelog_full_format,
                 fromVersion,
                 toVersion,
                 changelog,
@@ -249,7 +249,7 @@ class OtaSettingsRepository(
             return otaInfo[languageKey].orEmpty()
         }
 
-        return otaInfo.getOrDefault("HashMap.en", context.getString(R.string.no_changelog_available))
+        return otaInfo.getOrDefault("HashMap.en", context.getString(R.string.system_update_no_changelog_available))
     }
 
     private fun formatFileSize(size: Long): String {

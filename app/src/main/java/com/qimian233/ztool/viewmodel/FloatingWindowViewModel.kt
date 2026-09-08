@@ -35,7 +35,7 @@ class FloatingWindowViewModel(
             FloatingWizardStep.SelectApp -> {
                 appPackage = repository.getForegroundPackageForSelection()
                 if (appPackage == null) {
-                    onEffect(FloatingWindowEffect.ToastResource(R.string.cannot_get_app_foreground))
+                    onEffect(FloatingWindowEffect.ToastResource(R.string.settings_cannot_get_app_foreground))
                     return
                 }
                 uiState = uiState.copy(
@@ -47,7 +47,7 @@ class FloatingWindowViewModel(
             FloatingWizardStep.SetMainPage -> {
                 mainActivity = repository.getForegroundActivityForSelection()
                 if (mainActivity == null) {
-                    onEffect(FloatingWindowEffect.ToastResource(R.string.cannot_get_activity))
+                    onEffect(FloatingWindowEffect.ToastResource(R.string.settings_cannot_get_activity))
                     return
                 }
                 activityFromSet.add(mainActivity.orEmpty())
@@ -80,7 +80,7 @@ class FloatingWindowViewModel(
                 )
                 onEffect(
                     FloatingWindowEffect.ToastResource(
-                        if (saved) R.string.config_generated else R.string.config_generation_error,
+                        if (saved) R.string.settings_config_generated else R.string.settings_config_generation_error,
                         isLong = saved
                     )
                 )
@@ -94,15 +94,15 @@ class FloatingWindowViewModel(
     fun addCurrentActivity(onEffect: (FloatingWindowEffect) -> Unit) {
         val currentActivity = repository.getForegroundActivityForSelection()
         if (currentActivity == null) {
-            onEffect(FloatingWindowEffect.ToastResource(R.string.cannot_get_activity))
+            onEffect(FloatingWindowEffect.ToastResource(R.string.settings_cannot_get_activity))
             return
         }
 
         if (activityFromSet.add(currentActivity)) {
             uiState = uiState.copy(addedActivitiesText = repository.addedActivitiesText(activityFromSet))
-            onEffect(FloatingWindowEffect.ToastTextResource(R.string.activity_added, currentActivity))
+            onEffect(FloatingWindowEffect.ToastTextResource(R.string.settings_activity_added, currentActivity))
         } else {
-            onEffect(FloatingWindowEffect.ToastResource(R.string.activity_already_added))
+            onEffect(FloatingWindowEffect.ToastResource(R.string.settings_activity_already_added))
         }
     }
 

@@ -406,7 +406,7 @@ internal fun MainRouteNavHost(
         ) {
             StatusBarSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
-                        stringResource(R.string.status_bar_settings_title_suffix),
+                        stringResource(R.string.system_ui_status_bar_title_suffix),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {
@@ -425,7 +425,7 @@ internal fun MainRouteNavHost(
         ) {
             LockScreenSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
-                        stringResource(R.string.lock_screen_settings_title_suffix),
+                        stringResource(R.string.system_ui_lock_screen_title_suffix),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {
@@ -444,7 +444,7 @@ internal fun MainRouteNavHost(
         ) {
             ControlCenterSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
-                        stringResource(R.string.control_center_settings_title_suffix),
+                        stringResource(R.string.system_ui_control_center_title_suffix),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {
@@ -482,7 +482,7 @@ internal fun MainRouteNavHost(
         ) {
             SystemUiMiscSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
-                        " — " + stringResource(R.string.systemUIMisc),
+                        " — " + stringResource(R.string.system_ui_common_misc),
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(FeatureDestination.SystemUi.route) {

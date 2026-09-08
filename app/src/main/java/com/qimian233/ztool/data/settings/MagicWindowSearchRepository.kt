@@ -21,14 +21,14 @@ class MagicWindowSearchRepository(
         return try {
             embeddingConfig = JSONObject(requireNotNull(readFileWithRoot(MODULE_CONFIG_PATH)))
             val count = embeddingConfig?.getJSONArray("packages")?.length() ?: 0
-            MagicWindowConfigLoadResult.Loaded(context.getString(R.string.module_config_tips, count))
+            MagicWindowConfigLoadResult.Loaded(context.getString(R.string.settings_module_config_tips, count))
         } catch (_: Exception) {
             try {
                 embeddingConfig = JSONObject(requireNotNull(loadJsonFromAsset(ASSET_CONFIG_PATH)))
-                MagicWindowConfigLoadResult.Loaded(context.getString(R.string.official_config_tips))
+                MagicWindowConfigLoadResult.Loaded(context.getString(R.string.settings_official_config_tips))
             } catch (_: Exception) {
                 embeddingConfig = null
-                MagicWindowConfigLoadResult.Missing(context.getString(R.string.config_not_exists_tips))
+                MagicWindowConfigLoadResult.Missing(context.getString(R.string.settings_config_not_exists_tips))
             }
         }
     }

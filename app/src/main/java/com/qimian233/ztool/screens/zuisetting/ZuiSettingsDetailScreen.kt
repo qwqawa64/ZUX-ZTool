@@ -108,38 +108,38 @@ fun SettingsDetailRoute(
             )
         )[SettingsDetailViewModel::class.java]
     }
-    val gotItButtonText = stringResource(R.string.got_it_button)
-    val savingConfigText = stringResource(R.string.saving_config)
-    val saveSuccessTitleText = stringResource(R.string.success_title)
-    val saveSuccessMessageText = stringResource(R.string.save_success_message)
+    val gotItButtonText = stringResource(R.string.settings_got_it_button)
+    val savingConfigText = stringResource(R.string.settings_saving_config)
+    val saveSuccessTitleText = stringResource(R.string.settings_success_title)
+    val saveSuccessMessageText = stringResource(R.string.settings_save_success_message)
     val errorTitleText = stringResource(R.string.common_error_title)
     val errorPrefixText = stringResource(R.string.common_error_prefix)
-    val configSuffixText = stringResource(R.string.config_suffix)
-    val tipTitleText = stringResource(R.string.tip_title)
-    val installModuleFirstText = stringResource(R.string.install_module_first)
-    val flashingConfigText = stringResource(R.string.flashing_config)
-    val confirmRestoreTitleText = stringResource(R.string.confirm_restore_title)
-    val confirmRestoreMessageText = stringResource(R.string.confirm_restore_message)
-    val confirmButtonText = stringResource(R.string.confirm_button)
+    val configSuffixText = stringResource(R.string.settings_config_suffix)
+    val tipTitleText = stringResource(R.string.settings_tip_title)
+    val installModuleFirstText = stringResource(R.string.settings_install_module_first)
+    val flashingConfigText = stringResource(R.string.settings_flashing_config)
+    val confirmRestoreTitleText = stringResource(R.string.settings_confirm_restore_title)
+    val confirmRestoreMessageText = stringResource(R.string.settings_confirm_restore_message)
+    val confirmButtonText = stringResource(R.string.settings_confirm_button)
     val restartNoText = stringResource(R.string.common_restart_no)
-    val restoringModuleText = stringResource(R.string.restoring_module)
-    val restoreSuccessMessageText = stringResource(R.string.restore_success_message)
-    val importingFontText = stringResource(R.string.importing_font)
-    val importSuccessTitleText = stringResource(R.string.import_success_title)
-    val importSuccessMessageText = stringResource(R.string.import_success_message)
-    val importFailedTitleText = stringResource(R.string.import_failed_title)
-    val preparingFontFileText = stringResource(R.string.preparing_font_file)
-    val unknownFontFilenameText = stringResource(R.string.unknown_font_filename)
-    val selectTtfFileText = stringResource(R.string.select_ttf_file)
-    val zuiForceSplitTitleText = stringResource(R.string.zui_force_split_title)
-    val zuiForceFreeformTitleText = stringResource(R.string.zui_force_freeform_title)
-    val zuiForceFixedTitleText = stringResource(R.string.zui_force_fixed_title)
-    val installingModuleText = stringResource(R.string.installing_module)
-    val removingModuleText = stringResource(R.string.removing_module)
-    val installSuccessText = stringResource(R.string.install_success_message)
-    val removeSuccessText = stringResource(R.string.remove_success_message)
-    val aboutDeviceInfoImageSavedText = stringResource(R.string.about_device_info_image_saved)
-    val aboutDeviceInfoImageSaveFailedText = stringResource(R.string.about_device_info_image_save_failed)
+    val restoringModuleText = stringResource(R.string.settings_restoring_module)
+    val restoreSuccessMessageText = stringResource(R.string.settings_restore_success_message)
+    val importingFontText = stringResource(R.string.settings_importing_font)
+    val importSuccessTitleText = stringResource(R.string.settings_import_success_title)
+    val importSuccessMessageText = stringResource(R.string.settings_import_success_message)
+    val importFailedTitleText = stringResource(R.string.settings_import_failed_title)
+    val preparingFontFileText = stringResource(R.string.settings_preparing_font_file)
+    val unknownFontFilenameText = stringResource(R.string.settings_unknown_font_filename)
+    val selectTtfFileText = stringResource(R.string.settings_select_ttf_file)
+    val zuiForceSplitTitleText = stringResource(R.string.settings_zui_force_split_title)
+    val zuiForceFreeformTitleText = stringResource(R.string.settings_zui_force_freeform_title)
+    val zuiForceFixedTitleText = stringResource(R.string.settings_zui_force_fixed_title)
+    val installingModuleText = stringResource(R.string.settings_installing_module)
+    val removingModuleText = stringResource(R.string.settings_removing_module)
+    val installSuccessText = stringResource(R.string.settings_install_success_message)
+    val removeSuccessText = stringResource(R.string.settings_remove_success_message)
+    val aboutDeviceInfoImageSavedText = stringResource(R.string.settings_about_device_info_image_saved)
+    val aboutDeviceInfoImageSaveFailedText = stringResource(R.string.settings_about_device_info_image_save_failed)
     var floatingWindow by remember { mutableStateOf<FloatingWindow?>(null) }
     var loadingDialog by remember { mutableStateOf<LoadingDialog?>(null) }
     val aboutDeviceInfoImageLauncher = rememberLauncherForActivityResult(
@@ -205,7 +205,7 @@ fun SettingsDetailRoute(
         floatingWindow?.hide()
         if (floatingWindow != null) {
             floatingWindow = null
-            Toast.makeText(context, R.string.floating_window_closed, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.settings_floating_window_closed, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -216,7 +216,7 @@ fun SettingsDetailRoute(
             return
         }
         floatingWindow = FloatingWindow.create(hostActivity)
-        Toast.makeText(context, R.string.floating_window_started, Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.settings_floating_window_started, Toast.LENGTH_SHORT).show()
     }
 
     fun hasUsageStatsPermission(): Boolean {
@@ -236,7 +236,7 @@ fun SettingsDetailRoute(
             return
         }
         if (!hasUsageStatsPermission()) {
-            Toast.makeText(context, R.string.request_usage_stats_permission, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.settings_request_usage_stats_permission, Toast.LENGTH_LONG).show()
             context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             return
         }
@@ -249,7 +249,7 @@ fun SettingsDetailRoute(
         if (Settings.canDrawOverlays(context)) {
             startFloatingWindow()
         } else {
-            Toast.makeText(context, R.string.overlay_permission_denied, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.settings_overlay_permission_denied, Toast.LENGTH_SHORT).show()
         }
     }
     requestOverlayPermission = {
@@ -294,7 +294,7 @@ fun SettingsDetailRoute(
     fun showConfigSelectionDialog(configs: List<EmbeddingConfigManager.ConfigFileInfo>) {
         if (activity == null) return
         if (configs.isEmpty()) {
-            Toast.makeText(context, R.string.no_config_files_prompt, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.settings_no_config_files_prompt, Toast.LENGTH_SHORT).show()
             return
         }
         val flashedConfigs = viewModel.loadFlashedConfigs()
@@ -307,13 +307,13 @@ fun SettingsDetailRoute(
                     config.timestamp + " " + config.appName + configSuffixText
                 },
                 onAlreadyFlashedClick = {
-                    Toast.makeText(context, R.string.config_already_flashed, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.settings_config_already_flashed, Toast.LENGTH_SHORT).show()
                 },
                 onDelete = { selectedConfigs ->
                     val count = viewModel.deleteEmbeddingConfigs(selectedConfigs, flashedConfigs)
                     Toast.makeText(
                         context,
-                        context.resources.getString(R.string.delete_success, count),
+                        context.resources.getString(R.string.settings_delete_success, count),
                         Toast.LENGTH_SHORT
                     ).show()
                     dialog.dismiss()
@@ -344,7 +344,7 @@ fun SettingsDetailRoute(
                                 is SettingsDetailConfigFlashResult.Failure -> {
                                     showMessageDialog(
                                         dialogTitle = errorTitleText,
-                                        message = context.resources.getString(R.string.flash_failed_message, result.message)
+                                        message = context.resources.getString(R.string.settings_flash_failed_message, result.message)
                                     )
                                 }
                             }
@@ -442,9 +442,9 @@ fun SettingsDetailRoute(
                         showMessageDialog(
                             dialogTitle = errorTitleText,
                             message = if (result.requestedEnabled) {
-                                context.resources.getString(R.string.install_failed_message, result.message)
+                                context.resources.getString(R.string.settings_install_failed_message, result.message)
                             } else {
-                                context.resources.getString(R.string.remove_failed_message, result.message)
+                                context.resources.getString(R.string.settings_remove_failed_message, result.message)
                             }
                         )
                     }
@@ -494,7 +494,7 @@ fun SettingsDetailRoute(
         lateinit var dialog: Dialog
         val shownDialog = showComposeDialog {
             FontInputDialogContent(
-                originalDescription = stringResource(R.string.default_font_description, originalFileName),
+                originalDescription = stringResource(R.string.settings_default_font_description, originalFileName),
                 onConfirm = { name, description ->
                     if (name.isNotEmpty() && description.isNotEmpty()) {
                         dialog.dismiss()
@@ -546,7 +546,7 @@ fun SettingsDetailRoute(
                 Intent.createChooser(intent, selectTtfFileText)
             )
         } catch (_: Exception) {
-            Toast.makeText(context, R.string.no_file_manager_found, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.settings_no_file_manager_found, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -820,23 +820,23 @@ private fun settingsDetailSections(
     return buildList {
         add(
             SettingSection(
-                title = stringResource(R.string.embedding_setting_title),
+                title = stringResource(R.string.settings_embedding_setting_title),
                 items = listOf(
                     SettingItem.Switch(
-                        title = stringResource(R.string.embedding_setting_removeBlacklist),
-                        summary = stringResource(R.string.embedding_setting_removeBlacklist_summary),
+                        title = stringResource(R.string.settings_embedding_setting_remove_blacklist),
+                        summary = stringResource(R.string.settings_embedding_setting_remove_blacklist_summary),
                         checked = state.removeBlacklist,
                         onCheckedChange = onRemoveBlacklistChanged
                     ),
                     SettingItem.Switch(
-                        title = stringResource(R.string.RoleModule_Title),
-                        summary = stringResource(R.string.RoleModule_Summary),
+                        title = stringResource(R.string.settings_role_module_title),
+                        summary = stringResource(R.string.settings_role_module_summary),
                         checked = state.moduleEnabled,
                         onCheckedChange = onModuleEnabledChanged
                     ),
                     settingsDetailActionItem(
-                        title = stringResource(R.string.custom_landscape_view),
-                        summary = stringResource(R.string.custom_landscape_view_summary),
+                        title = stringResource(R.string.settings_custom_landscape_view),
+                        summary = stringResource(R.string.settings_custom_landscape_view_summary),
                         onClick = onStartFloatingWindow,
                         icon = {
                             Icon(
@@ -847,13 +847,13 @@ private fun settingsDetailSections(
                         }
                     ),
                     settingsDetailActionItem(
-                        title = stringResource(R.string.custom_landscapeResult_Title),
-                        summary = stringResource(R.string.custom_landscapeResult_Summary),
+                        title = stringResource(R.string.settings_custom_landscape_result_title),
+                        summary = stringResource(R.string.settings_custom_landscape_result_summary),
                         onClick = onOpenConfigSelection
                     ),
                     settingsDetailActionItem(
-                        title = stringResource(R.string.YiShiJieRules),
-                        summary = stringResource(R.string.YiShiJieRules_Summary),
+                        title = stringResource(R.string.settings_yi_shi_jie_rules),
+                        summary = stringResource(R.string.settings_yi_shi_jie_rules_summary),
                         onClick = onOpenStrategySearch
                     )
                 )
@@ -863,12 +863,12 @@ private fun settingsDetailSections(
         if (state.showZuiForceConfig) {
             add(
                 SettingSection(
-                    title = stringResource(R.string.zui_force_config_title),
+                    title = stringResource(R.string.settings_zui_force_config_title),
                     items = listOf(
                         SettingItem.Custom(
                             content = {
                                 Text(
-                                    text = stringResource(R.string.zui_force_config_summary),
+                                    text = stringResource(R.string.settings_zui_force_config_summary),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = LocalZToolColorScheme.current.onSurfaceVariant,
                                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
@@ -876,18 +876,18 @@ private fun settingsDetailSections(
                             }
                         ),
                         settingsDetailActionItem(
-                            title = stringResource(R.string.zui_force_split_title),
-                            summary = stringResource(R.string.zui_force_split_summary),
+                            title = stringResource(R.string.settings_zui_force_split_title),
+                            summary = stringResource(R.string.settings_zui_force_split_summary),
                             onClick = onZuiForceSplit
                         ),
                         settingsDetailActionItem(
-                            title = stringResource(R.string.zui_force_freeform_title),
-                            summary = stringResource(R.string.zui_force_freeform_summary),
+                            title = stringResource(R.string.settings_zui_force_freeform_title),
+                            summary = stringResource(R.string.settings_zui_force_freeform_summary),
                             onClick = onZuiForceFreeform
                         ),
                         settingsDetailActionItem(
-                            title = stringResource(R.string.zui_force_fixed_title),
-                            summary = stringResource(R.string.zui_force_fixed_summary),
+                            title = stringResource(R.string.settings_zui_force_fixed_title),
+                            summary = stringResource(R.string.settings_zui_force_fixed_summary),
                             onClick = onZuiForceFixed
                         )
                     )
@@ -896,17 +896,17 @@ private fun settingsDetailSections(
         } else {
             add(
                 SettingSection(
-                    title = stringResource(R.string.embedding_Title),
+                    title = stringResource(R.string.settings_embedding_title),
                     items = listOf(
                         SettingItem.Switch(
-                            title = stringResource(R.string.Float_app_Mandatory),
-                            summary = stringResource(R.string.Float_app_Mandatory_summary),
+                            title = stringResource(R.string.settings_float_app_mandatory),
+                            summary = stringResource(R.string.settings_float_app_mandatory_summary),
                             checked = state.floatMandatory,
                             onCheckedChange = onFloatMandatoryChanged
                         ),
                         SettingItem.Switch(
-                            title = stringResource(R.string.Split_screen_Mandatory_Title),
-                            summary = stringResource(R.string.Split_screen_Mandatory_Summary),
+                            title = stringResource(R.string.settings_split_screen_mandatory_title),
+                            summary = stringResource(R.string.settings_split_screen_mandatory_summary),
                             checked = state.splitScreenMandatory,
                             onCheckedChange = onSplitScreenMandatoryChanged
                         )
@@ -917,11 +917,11 @@ private fun settingsDetailSections(
 
         add(
             SettingSection(
-                title = stringResource(R.string.font_settings_title),
+                title = stringResource(R.string.settings_font_settings_title),
                 items = listOf(
                     settingsDetailActionItem(
-                        title = stringResource(R.string.import_font_title),
-                        summary = stringResource(R.string.import_font_summary),
+                        title = stringResource(R.string.settings_import_font_title),
+                        summary = stringResource(R.string.settings_import_font_summary),
                         onClick = onImportFont,
                         icon = {
                             Icon(
@@ -937,12 +937,12 @@ private fun settingsDetailSections(
 
         add(
             SettingSection(
-                title = stringResource(R.string.about_device_info_title),
+                title = stringResource(R.string.settings_about_device_info_title),
                 items = buildList {
                     add(
                         SettingItem.Switch(
-                            title = stringResource(R.string.about_device_info_master),
-                            summary = stringResource(R.string.about_device_info_master_summary),
+                            title = stringResource(R.string.settings_about_device_info_master),
+                            summary = stringResource(R.string.settings_about_device_info_master_summary),
                             checked = aboutDeviceInfoState.enabled,
                             onCheckedChange = onAboutDeviceInfoEnabledChanged
                         )
@@ -950,77 +950,77 @@ private fun settingsDetailSections(
                     if (aboutDeviceInfoState.enabled) {
                         add(
                             SettingItem.Switch(
-                                title = stringResource(R.string.about_device_info_model_title),
+                                title = stringResource(R.string.settings_about_device_info_model_title),
                                 checked = aboutDeviceInfoState.modelEnabled,
                                 onCheckedChange = onAboutDeviceInfoModelEnabledChanged
                             )
                         )
                         if (aboutDeviceInfoState.modelEnabled) {
                             add(SettingItem.TextInput(
-                                label = stringResource(R.string.about_device_info_model_label),
+                                label = stringResource(R.string.settings_about_device_info_model_label),
                                 value = aboutDeviceInfoState.model,
                                 onValueChange = onAboutDeviceInfoModelChanged
                             ))
                         }
                         add(
                             SettingItem.Switch(
-                                title = stringResource(R.string.about_device_info_cpu_title),
+                                title = stringResource(R.string.settings_about_device_info_cpu_title),
                                 checked = aboutDeviceInfoState.cpuEnabled,
                                 onCheckedChange = onAboutDeviceInfoCpuEnabledChanged
                             )
                         )
                         if (aboutDeviceInfoState.cpuEnabled) {
                             add(SettingItem.TextInput(
-                                label = stringResource(R.string.about_device_info_cpu_label),
+                                label = stringResource(R.string.settings_about_device_info_cpu_label),
                                 value = aboutDeviceInfoState.cpu,
                                 onValueChange = onAboutDeviceInfoCpuChanged
                             ))
                         }
                         add(
                             SettingItem.Switch(
-                                title = stringResource(R.string.about_device_info_ram_title),
+                                title = stringResource(R.string.settings_about_device_info_ram_title),
                                 checked = aboutDeviceInfoState.ramEnabled,
                                 onCheckedChange = onAboutDeviceInfoRamEnabledChanged
                             )
                         )
                         if (aboutDeviceInfoState.ramEnabled) {
                             add(SettingItem.TextInput(
-                                label = stringResource(R.string.about_device_info_ram_label),
+                                label = stringResource(R.string.settings_about_device_info_ram_label),
                                 value = aboutDeviceInfoState.ram,
                                 onValueChange = onAboutDeviceInfoRamChanged
                             ))
                         }
                         add(
                             SettingItem.Switch(
-                                title = stringResource(R.string.about_device_info_rom_title),
+                                title = stringResource(R.string.settings_about_device_info_rom_title),
                                 checked = aboutDeviceInfoState.romEnabled,
                                 onCheckedChange = onAboutDeviceInfoRomEnabledChanged
                             )
                         )
                         if (aboutDeviceInfoState.romEnabled) {
                             add(SettingItem.TextInput(
-                                label = stringResource(R.string.about_device_info_rom_label),
+                                label = stringResource(R.string.settings_about_device_info_rom_label),
                                 value = aboutDeviceInfoState.rom,
                                 onValueChange = onAboutDeviceInfoRomChanged
                             ))
                         }
                         add(
                             SettingItem.Switch(
-                                title = stringResource(R.string.about_device_info_software_title),
+                                title = stringResource(R.string.settings_about_device_info_software_title),
                                 checked = aboutDeviceInfoState.softwareEnabled,
                                 onCheckedChange = onAboutDeviceInfoSoftwareEnabledChanged
                             )
                         )
                         if (aboutDeviceInfoState.softwareEnabled) {
                             add(SettingItem.TextInput(
-                                label = stringResource(R.string.about_device_info_software_label),
+                                label = stringResource(R.string.settings_about_device_info_software_label),
                                 value = aboutDeviceInfoState.software,
                                 onValueChange = onAboutDeviceInfoSoftwareChanged
                             ))
                         }
                         add(
                             SettingItem.Switch(
-                                title = stringResource(R.string.about_device_info_header_title),
+                                title = stringResource(R.string.settings_about_device_info_header_title),
                                 checked = aboutDeviceInfoState.headerEnabled,
                                 onCheckedChange = onAboutDeviceInfoHeaderEnabledChanged
                             )
@@ -1028,8 +1028,8 @@ private fun settingsDetailSections(
                         if (aboutDeviceInfoState.headerEnabled) {
                             add(
                                 settingsDetailActionItem(
-                                    title = stringResource(R.string.about_device_info_header_action),
-                                    summary = stringResource(R.string.about_device_info_header_action_summary),
+                                    title = stringResource(R.string.settings_about_device_info_header_action),
+                                    summary = stringResource(R.string.settings_about_device_info_header_action_summary),
                                     onClick = { onAboutDeviceInfoHeaderSelected(Uri.EMPTY) }
                                 )
                             )
@@ -1041,28 +1041,28 @@ private fun settingsDetailSections(
 
         add(
             SettingSection(
-                title = stringResource(R.string.misc),
+                title = stringResource(R.string.settings_misc),
                 items = listOf(
                     SettingItem.Switch(
-                        title = stringResource(R.string.NativePermissionController_enable_title),
-                        summary = stringResource(R.string.NativePermissionController_enable_summary),
+                        title = stringResource(R.string.settings_native_permission_controller_enable_title),
+                        summary = stringResource(R.string.settings_native_permission_controller_enable_summary),
                         checked = state.allowNativePermissionController,
                         onCheckedChange = onAllowNativePermissionControllerChanged
                     ),
                     SettingItem.Switch(
-                        title = stringResource(R.string.allow_adding_language),
+                        title = stringResource(R.string.settings_allow_adding_language),
                         checked = state.allowAddingLanguages,
                         onCheckedChange = onAllowAddingLanguageChanged
                     ),
                     SettingItem.Switch(
-                        title = stringResource(R.string.AllowDisableDolby),
-                        summary = stringResource(R.string.AllowDisableDolby_summary),
+                        title = stringResource(R.string.settings_allow_disable_dolby),
+                        summary = stringResource(R.string.settings_allow_disable_dolby_summary),
                         checked = state.allowDisableDolby,
                         onCheckedChange = onAllowDisableDolbyChanged
                     ),
                     SettingItem.Switch(
-                        title = stringResource(R.string.app_details_completion),
-                        summary = stringResource(R.string.app_details_completion_summary),
+                        title = stringResource(R.string.settings_app_details_completion),
+                        summary = stringResource(R.string.settings_app_details_completion_summary),
                         checked = state.appDetail,
                         onCheckedChange = onAppDetailsChanged
                     ),
@@ -1117,12 +1117,12 @@ private fun ConfigSelectionDialogContent(
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = stringResource(R.string.select_config_files),
+                    text = stringResource(R.string.settings_select_config_files),
                     fontWeight = FontWeight.SemiBold
                 )
                 if (flashedConfigs.isNotEmpty()) {
                     Text(
-                        text = stringResource(R.string.flashed_configs_count, flashedConfigs.size),
+                        text = stringResource(R.string.settings_flashed_configs_count, flashedConfigs.size),
                         style = MaterialTheme.typography.bodyMedium,
                         color = LocalZToolColorScheme.current.primary,
                         modifier = Modifier.padding(top = 8.dp)
@@ -1163,7 +1163,7 @@ private fun ConfigSelectionDialogContent(
                     val selectedConfigs = selectedIndexes.map { configs[it] }
                     if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
                 },
-                text = stringResource(R.string.flashAddedConfig)
+                text = stringResource(R.string.settings_flash_added_config)
             )
         },
         dismissButton = {
@@ -1179,13 +1179,13 @@ private fun ConfigSelectionDialogContent(
                             val selectedConfigs = selectedIndexes.map { configs[it] }
                             if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
                         },
-                        text = stringResource(R.string.delete),
+                        text = stringResource(R.string.settings_delete),
                         isPrimary = false
                     )
                     if (flashedConfigs.isNotEmpty()) {
                         ZToolTextButton(
                             onClick = onRestore,
-                            text = stringResource(R.string.restoreModule),
+                            text = stringResource(R.string.settings_restore_module),
                             isPrimary = false
                         )
                     }
@@ -1197,13 +1197,13 @@ private fun ConfigSelectionDialogContent(
                             val selectedConfigs = selectedIndexes.map { configs[it] }
                             if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
                         },
-                        text = stringResource(R.string.delete),
+                        text = stringResource(R.string.settings_delete),
                         isPrimary = false
                     )
                     if (flashedConfigs.isNotEmpty()) {
                         ZToolTextButton(
                             onClick = onRestore,
-                            text = stringResource(R.string.restoreModule),
+                            text = stringResource(R.string.settings_restore_module),
                             isPrimary = false
                         )
                     }
@@ -1267,11 +1267,11 @@ private fun FontInputDialogContent(
         title = {
             Column {
                 Text(
-                    text = stringResource(R.string.input_font_info_title),
+                    text = stringResource(R.string.settings_input_font_info_title),
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = stringResource(R.string.doNotUseDuplicatedFontName),
+                    text = stringResource(R.string.settings_do_not_use_duplicated_font_name),
                     style = MaterialTheme.typography.bodySmall,
                     color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -1281,14 +1281,14 @@ private fun FontInputDialogContent(
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 ZToolTextInputRow(
-                    label = stringResource(R.string.fontName),
+                    label = stringResource(R.string.settings_font_name),
                     value = fontName,
                     onValueChange = { fontName = it },
                     singleLine = true,
                     horizontalPadding = 0.dp
                 )
                 ZToolTextInputRow(
-                    label = stringResource(R.string.fontDescription),
+                    label = stringResource(R.string.settings_font_description),
                     value = fontDescription,
                     onValueChange = { fontDescription = it },
                     singleLine = false,
@@ -1301,7 +1301,7 @@ private fun FontInputDialogContent(
                 onClick = {
                     onConfirm(fontName.trim(), fontDescription.trim())
                 },
-                text = stringResource(R.string.confirm_button)
+                text = stringResource(R.string.settings_confirm_button)
             )
         },
         dismissButton = {

@@ -82,8 +82,8 @@ fun StatusBarSettingsRoute(
         viewModel.loadSettings()
     }
 
-    val clockFormatExampleString = stringResource(R.string.clock_format_example)
-    val clockFormatSampleString = stringResource(R.string.clock_format_sample)
+    val clockFormatExampleString = stringResource(R.string.system_ui_status_bar_clock_format_example)
+    val clockFormatSampleString = stringResource(R.string.system_ui_status_bar_clock_format_sample)
 
     fun copyClockFormatExample() {
         val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -92,7 +92,7 @@ fun StatusBarSettingsRoute(
             clockFormatSampleString
         )
         clipboard.setPrimaryClip(clip)
-        Toast.makeText(context, R.string.example_copied_message, Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.system_ui_common_example_copied_message, Toast.LENGTH_SHORT).show()
     }
 
     val uiState by viewModel.uiState.collectAsState()
@@ -116,7 +116,7 @@ fun StatusBarSettingsRoute(
         onTextBoldChanged = viewModel::setTextBold,
         onNotificationIconLimitChanged = { option ->
             if (!viewModel.setNotificationIconLimit(option)) {
-                Toast.makeText(context, R.string.save_failed_message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.system_ui_status_bar_save_failed_message, Toast.LENGTH_SHORT).show()
             }
         },
         onNativeNotificationIconChanged = viewModel::setNativeNotificationIcon,
@@ -161,8 +161,8 @@ fun StatusBarSettingsRoute(
     if (uiState.showSaveSuccessDialog) {
         ZToolDialog(
             onDismissRequest = viewModel::dismissSaveSuccessDialog,
-            title = { Text(stringResource(R.string.save_success_title)) },
-            text = { Text(stringResource(R.string.clock_format_saved_message)) },
+            title = { Text(stringResource(R.string.system_ui_common_save_success_title)) },
+            text = { Text(stringResource(R.string.system_ui_status_bar_clock_format_saved_message)) },
             confirmButton = {
                 ZToolTextButton(onClick = viewModel::dismissSaveSuccessDialog, text = stringResource(R.string.common_confirm))
             }
@@ -311,8 +311,8 @@ private fun statusBarSettingsSections(
     val clockItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.display_seconds_title),
-                summary = stringResource(R.string.display_seconds_summary),
+                title = stringResource(R.string.system_ui_status_bar_display_seconds_title),
+                summary = stringResource(R.string.system_ui_status_bar_display_seconds_summary),
                 checked = state.displaySeconds,
                 onCheckedChange = onDisplaySecondsChanged
             )
@@ -321,8 +321,8 @@ private fun statusBarSettingsSections(
             SettingItem.Custom(
                 content = {
                     ZToolSwitchRow(
-                        title = stringResource(R.string.custom_clock_title),
-                        summary = stringResource(R.string.custom_clock_summary),
+                        title = stringResource(R.string.system_ui_status_bar_custom_clock_title),
+                        summary = stringResource(R.string.system_ui_status_bar_custom_clock_summary),
                         checked = state.customClock,
                         onCheckedChange = onCustomClockChanged
                     )
@@ -367,55 +367,55 @@ private fun statusBarSettingsSections(
 
     return listOf(
         SettingSection(
-            title = stringResource(R.string.status_bar_clock_settings_title),
+            title = stringResource(R.string.system_ui_status_bar_clock_settings_title),
             items = clockItems
         ),
         SettingSection(
-            title = stringResource(R.string.status_bar_notification_settings_title),
+            title = stringResource(R.string.system_ui_status_bar_notification_settings_title),
             items = listOf(
                 SettingItem.Custom(
                     content = {
                         ZToolPopupMenuSettingRow(
-                            title = stringResource(R.string.notification_icon_limit_title),
-                            summary = stringResource(R.string.notification_icon_limit_summary),
+                            title = stringResource(R.string.system_ui_status_bar_notification_icon_limit_title),
+                            summary = stringResource(R.string.system_ui_status_bar_notification_icon_limit_summary),
                             options = stringArrayResource(R.array.notify_num_size_options).toList(),
-                            value = stringResource(R.string.notification_icon_number_to_show, state.notificationIconLimitOption),
+                            value = stringResource(R.string.system_ui_status_bar_notification_icon_number_to_show, state.notificationIconLimitOption),
                             optionLabel = { it },
                             onOptionSelected = onNotificationIconLimitChanged
                         )
                     }
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.notification_icon_native_title),
-                    summary = stringResource(R.string.notification_icon_native_summary),
+                    title = stringResource(R.string.system_ui_status_bar_notification_icon_native_title),
+                    summary = stringResource(R.string.system_ui_status_bar_notification_icon_native_summary),
                     checked = state.nativeNotificationIcon,
                     onCheckedChange = onNativeNotificationIconChanged
                 )
             )
         ),
         SettingSection(
-            title = stringResource(R.string.statusBarNetworkTitle),
+            title = stringResource(R.string.system_ui_status_bar_network_title),
             items = buildList {
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.statusBarNetworkSizeTitle),
-                        summary = stringResource(R.string.statusBarNetworkSizeSummary),
+                        title = stringResource(R.string.system_ui_status_bar_network_size_title),
+                        summary = stringResource(R.string.system_ui_status_bar_network_size_summary),
                         checked = state.networkSpeedSize,
                         onCheckedChange = onNetworkSpeedSizeChanged
                     )
                 )
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.statusBarNetworkSizeDoubleLayer),
-                        summary = stringResource(R.string.statusBarNetworkSizeDoubleLayerSummary),
+                        title = stringResource(R.string.system_ui_status_bar_network_size_double_layer),
+                        summary = stringResource(R.string.system_ui_status_bar_network_size_double_layer_summary),
                         checked = state.networkSpeedDoubleLayer,
                         onCheckedChange = onNetworkSpeedDoubleLayerChanged
                     )
                 )
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.statusBarNetworkRefreshTitle),
-                        summary = stringResource(R.string.statusBarNetworkRefreshSummary),
+                        title = stringResource(R.string.system_ui_status_bar_network_refresh_title),
+                        summary = stringResource(R.string.system_ui_status_bar_network_refresh_summary),
                         checked = state.networkSpeedRefreshEnabled,
                         onCheckedChange = onNetworkSpeedRefreshEnabledChanged
                     )
@@ -425,7 +425,7 @@ private fun statusBarSettingsSections(
                         SettingItem.Custom(
                             content = {
                                 ZToolSliderRow(
-                                    title = stringResource(R.string.statusBarNetworkRefreshIntervalTitle),
+                                    title = stringResource(R.string.system_ui_status_bar_network_refresh_interval_title),
                                     value = state.networkSpeedRefreshInterval,
                                     onValueChange = onNetworkSpeedRefreshIntervalChanged,
                                     valueRange = 0f..10f,
@@ -440,8 +440,8 @@ private fun statusBarSettingsSections(
                 }
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.statusBarNetworkHideSlowTitle),
-                        summary = stringResource(R.string.statusBarNetworkHideSlowSummary),
+                        title = stringResource(R.string.system_ui_status_bar_network_hide_slow_title),
+                        summary = stringResource(R.string.system_ui_status_bar_network_hide_slow_summary),
                         checked = state.networkSpeedHideSlow,
                         onCheckedChange = onNetworkSpeedHideSlowChanged
                     )
@@ -451,7 +451,7 @@ private fun statusBarSettingsSections(
                         SettingItem.Custom(
                             content = {
                                 ZToolSliderRow(
-                                    title = stringResource(R.string.statusBarNetworkHideThresholdTitle),
+                                    title = stringResource(R.string.system_ui_status_bar_network_hide_threshold_title),
                                     value = state.networkSpeedHideThreshold,
                                     onValueChange = onNetworkSpeedHideThresholdChanged,
                                     valueRange = 0f..100f,
@@ -465,8 +465,8 @@ private fun statusBarSettingsSections(
                     )
                     add(
                         SettingItem.Switch(
-                            title = stringResource(R.string.statusBarNetworkHideBothTitle),
-                            summary = stringResource(R.string.statusBarNetworkHideBothSummary),
+                            title = stringResource(R.string.system_ui_status_bar_network_hide_both_title),
+                            summary = stringResource(R.string.system_ui_status_bar_network_hide_both_summary),
                             checked = state.networkSpeedHideBoth,
                             onCheckedChange = onNetworkSpeedHideBothChanged
                         )
@@ -475,11 +475,11 @@ private fun statusBarSettingsSections(
             }
         ),
         SettingSection(
-            title = stringResource(R.string.statusBarBatteryTitle),
+            title = stringResource(R.string.system_ui_status_bar_battery_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.syatusBatteryExternalTitle),
-                    summary = stringResource(R.string.syatusBatteryExternalSummary),
+                    title = stringResource(R.string.system_ui_status_bar_syatus_battery_external_title),
+                    summary = stringResource(R.string.system_ui_status_bar_syatus_battery_external_summary),
                     checked = state.batteryExternal,
                     onCheckedChange = onBatteryExternalChanged
                 )
@@ -520,13 +520,13 @@ private fun CustomClockConfig(
                 value = clockFormat,
                 onValueChange = onClockFormatChanged,
                 modifier = Modifier.weight(1f),
-                label = stringResource(R.string.clock_format_hint),
+                label = stringResource(R.string.system_ui_status_bar_clock_format_hint),
                 singleLine = true,
                 horizontalPadding = 0.dp
             )
             Spacer(modifier = Modifier.width(16.dp))
             ZToolButton(onClick = onSaveClockFormat) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(R.string.system_ui_common_save))
             }
         }
         Text(
@@ -537,8 +537,8 @@ private fun CustomClockConfig(
         )
 
         SliderSettingRow(
-            title = stringResource(R.string.text_size_title),
-            valueLabel = stringResource(R.string.sp_unit, textSize),
+            title = stringResource(R.string.system_ui_status_bar_text_size_title),
+            valueLabel = stringResource(R.string.system_ui_common_sp_unit, textSize),
             enabled = textSizeEnabled,
             value = textSize,
             valueRange = 10f..30f,
@@ -547,7 +547,7 @@ private fun CustomClockConfig(
             onValueChanged = onTextSizeChanged
         )
         SliderSettingRow(
-            title = stringResource(R.string.letter_spacing_title),
+            title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),
             valueLabel = "%.1f".format(letterSpacing),
             enabled = letterSpacingEnabled,
             value = letterSpacing,
@@ -557,7 +557,7 @@ private fun CustomClockConfig(
             onValueChanged = onLetterSpacingChanged
         )
         ZToolSwitchRow(
-            title = stringResource(R.string.text_color_title),
+            title = stringResource(R.string.system_ui_status_bar_text_color_title),
             summary = "#%08X".format(textColor),
             checked = textColorEnabled,
             onCheckedChange = onTextColorEnabledChanged,
@@ -565,17 +565,17 @@ private fun CustomClockConfig(
         )
         if (textColorEnabled) {
             ZToolArgbColorTextFieldRow(
-                label = stringResource(R.string.select_font_color_title),
+                label = stringResource(R.string.system_ui_common_select_font_color_title),
                 value = textColorText,
                 onValueChange = onClockTextColorChanged,
                 defaultText = "FFFFFFFF",
-                summary = stringResource(R.string.custom_qs_active_color_summary),
-                errorText = stringResource(R.string.argb_color_input_error),
+                summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
+                errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
                 onEditingFinished = onClockTextColorEditingFinished
             )
         }
         ZToolSwitchRow(
-            title = stringResource(R.string.text_bold_title),
+            title = stringResource(R.string.system_ui_status_bar_text_bold_title),
             summary = null,
             checked = textBold,
             onCheckedChange = onTextBoldChanged,
@@ -621,36 +621,36 @@ private fun FormatHelpDialog(
     onCopyExample: () -> Unit
 ) {
     ZToolQuickHelpDialog(
-        title = stringResource(R.string.clock_format_help_title),
-        summary = stringResource(R.string.clock_format_quick_help_summary),
+        title = stringResource(R.string.system_ui_status_bar_clock_format_help_title),
+        summary = stringResource(R.string.system_ui_status_bar_clock_format_quick_help_summary),
         quickLabel = stringResource(R.string.common_quick_help_lookup_title),
         examplesLabel = stringResource(R.string.common_quick_help_examples_title),
         items = listOf(
-            QuickHelpItem("HH", stringResource(R.string.format_help_hour_24)),
-            QuickHelpItem("mm", stringResource(R.string.format_help_minute)),
-            QuickHelpItem("ss", stringResource(R.string.format_help_second)),
-            QuickHelpItem("E", stringResource(R.string.format_help_weekday)),
-            QuickHelpItem("N", stringResource(R.string.format_help_lunar_date)),
-            QuickHelpItem("T", stringResource(R.string.format_help_period))
+            QuickHelpItem("HH", stringResource(R.string.system_ui_status_bar_format_help_hour_24)),
+            QuickHelpItem("mm", stringResource(R.string.system_ui_status_bar_format_help_minute)),
+            QuickHelpItem("ss", stringResource(R.string.system_ui_status_bar_format_help_second)),
+            QuickHelpItem("E", stringResource(R.string.system_ui_common_format_help_weekday)),
+            QuickHelpItem("N", stringResource(R.string.system_ui_common_format_help_lunar_date)),
+            QuickHelpItem("T", stringResource(R.string.system_ui_status_bar_format_help_period))
         ),
         examples = listOf(
             QuickHelpExample(
-                stringResource(R.string.format_help_clock_pattern_short),
-                stringResource(R.string.format_help_clock_example_short)
+                stringResource(R.string.system_ui_status_bar_format_help_clock_pattern_short),
+                stringResource(R.string.system_ui_status_bar_format_help_clock_example_short)
             ),
             QuickHelpExample(
-                stringResource(R.string.format_help_clock_pattern_seconds),
-                stringResource(R.string.format_help_clock_example_seconds)
+                stringResource(R.string.system_ui_status_bar_format_help_clock_pattern_seconds),
+                stringResource(R.string.system_ui_status_bar_format_help_clock_example_seconds)
             ),
             QuickHelpExample(
-                stringResource(R.string.format_help_clock_pattern_lunar),
-                stringResource(R.string.format_help_clock_example_lunar)
+                stringResource(R.string.system_ui_status_bar_format_help_clock_pattern_lunar),
+                stringResource(R.string.system_ui_status_bar_format_help_clock_example_lunar)
             )
         ),
-        note = stringResource(R.string.clock_format_quick_help_note),
+        note = stringResource(R.string.system_ui_status_bar_clock_format_quick_help_note),
         onDismiss = onDismiss,
         onCopyExample = onCopyExample,
-        copyButtonText = stringResource(R.string.copy_example_button),
+        copyButtonText = stringResource(R.string.system_ui_common_copy_example_button),
         confirmButtonText = stringResource(R.string.common_confirm)
     )
 }

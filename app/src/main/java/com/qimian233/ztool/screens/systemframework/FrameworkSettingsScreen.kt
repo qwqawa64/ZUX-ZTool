@@ -230,23 +230,23 @@ private fun frameworkSettingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.framework_screen_and_display_title),
+            title = stringResource(R.string.system_framework_screen_and_display_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.keep_rotation_enable_title),
-                    summary = stringResource(R.string.keep_rotation_enable_summary),
+                    title = stringResource(R.string.system_framework_keep_rotation_enable_title),
+                    summary = stringResource(R.string.system_framework_keep_rotation_enable_summary),
                     checked = state.keepRotation,
                     onCheckedChange = onKeepRotationChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_hbm_thermal_limit_title),
-                    summary = stringResource(R.string.disable_hbm_thermal_limit_summary),
+                    title = stringResource(R.string.system_framework_disable_hbm_thermal_limit_title),
+                    summary = stringResource(R.string.system_framework_disable_hbm_thermal_limit_summary),
                     checked = state.disableHbmThermalLimit,
                     onCheckedChange = onDisableHbmThermalLimitChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.force_on_off_animation),
-                    summary = stringResource(R.string.force_on_off_animation_summary),
+                    title = stringResource(R.string.system_framework_force_on_off_animation),
+                    summary = stringResource(R.string.system_framework_force_on_off_animation_summary),
                     checked = state.forceOnOffAnimation,
                     onCheckedChange = onForceOnOffAnimationChanged
                 ),
@@ -261,43 +261,43 @@ private fun frameworkSettingsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.disable_zui_applist_title),
+            title = stringResource(R.string.system_framework_disable_zui_applist_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_zui_applist_enable_title),
-                    summary = stringResource(R.string.disable_zui_applist_enable_summary),
+                    title = stringResource(R.string.system_framework_disable_zui_applist_enable_title),
+                    summary = stringResource(R.string.system_framework_disable_zui_applist_enable_summary),
                     checked = state.allowGetPackages,
                     onCheckedChange = onAllowGetPackagesChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.allow_relative_app_launch_title),
+                    title = stringResource(R.string.system_framework_allow_relative_app_launch_title),
                     checked = state.allowRelativeAppLaunch,
                     onCheckedChange = onAllowRelativeAppLaunchChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.no_password_per_24h),
-                    summary = stringResource(R.string.no_password_per_24h_summary),
+                    title = stringResource(R.string.system_framework_no_password_per_24h),
+                    summary = stringResource(R.string.system_framework_no_password_per_24h_summary),
                     checked = state.noPasswordPer24H,
                     onCheckedChange = onNoPasswordPer24H
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.allow_untrusted_touch),
+                    title = stringResource(R.string.system_framework_allow_untrusted_touch),
                     checked = state.allowUntrustedTouch,
                     onCheckedChange = onAllowUntrustedTouch
                 ),
             )
         ),
         SettingSection(
-            title = stringResource(R.string.framework_misc_title),
+            title = stringResource(R.string.system_framework_misc_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.force_relative_app_freeform_title),
+                    title = stringResource(R.string.system_framework_force_relative_app_freeform_title),
                     checked = state.forceRelativeAppFreeform,
                     onCheckedChange = onForceRelativeAppFreeformChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.disable_flag_secure_title),
-                    summary = stringResource(R.string.disable_flag_secure_summary),
+                    title = stringResource(R.string.system_framework_disable_flag_secure_title),
+                    summary = stringResource(R.string.system_framework_disable_flag_secure_summary),
                     checked = state.disableFlagSecure,
                     onCheckedChange = onDisableFlagSecureChanged
                 ),
@@ -323,7 +323,7 @@ private fun ScreenOnOffAnimationDuration(
 ) {
     if (state.forceOnOffAnimation) {
         ZToolSliderRow(
-            title = stringResource(R.string.screen_on_off_animation_duration),
+            title = stringResource(R.string.system_framework_screen_on_off_animation_duration),
             value = state.forceOnOffAnimationDuration.toFloat(),
             valueText = state.forceOnOffAnimationDuration.toString() + "ms",
             onValueChange = {
@@ -356,8 +356,8 @@ private fun AiInputSettingsContent(
     onShowAiInputInfo: () -> Unit
 ) {
     ZToolSwitchRow(
-        title = stringResource(R.string.ai_input_expand_Title),
-        summary = stringResource(R.string.ai_input_expand_summary),
+        title = stringResource(R.string.system_framework_ai_input_expand_title),
+        summary = stringResource(R.string.system_framework_ai_input_expand_summary),
         checked = state.aiInputExpand,
         onCheckedChange = onAiInputExpandChanged
     )
@@ -378,7 +378,7 @@ private fun AiInputSettingsContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 8.dp),
-            label = stringResource(R.string.custom_detector_hint),
+            label = stringResource(R.string.system_framework_custom_detector_hint),
             isError = state.aiInputSignsError != null,
             supportingText = state.aiInputSignsError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
@@ -391,35 +391,35 @@ private fun AiInputInfoDialog(
     onDismiss: () -> Unit
 ) {
     ZToolQuickHelpDialog(
-        title = stringResource(R.string.ai_input_quick_help_title),
-        summary = stringResource(R.string.ai_input_quick_help_summary),
+        title = stringResource(R.string.system_framework_ai_input_quick_help_title),
+        summary = stringResource(R.string.system_framework_ai_input_quick_help_summary),
         quickLabel = stringResource(R.string.common_quick_help_lookup_title),
         examplesLabel = stringResource(R.string.common_quick_help_examples_title),
         items = listOf(
             QuickHelpItem(
-                stringResource(R.string.ai_input_quick_help_scope),
-                stringResource(R.string.ai_input_quick_help_scope_desc)
+                stringResource(R.string.system_framework_ai_input_quick_help_scope),
+                stringResource(R.string.system_framework_ai_input_quick_help_scope_desc)
             ),
             QuickHelpItem(
-                stringResource(R.string.ai_input_quick_help_separator),
-                stringResource(R.string.ai_input_quick_help_separator_desc)
+                stringResource(R.string.system_framework_ai_input_quick_help_separator),
+                stringResource(R.string.system_framework_ai_input_quick_help_separator_desc)
             ),
             QuickHelpItem(
-                stringResource(R.string.ai_input_quick_help_conflict),
-                stringResource(R.string.ai_input_quick_help_conflict_desc)
+                stringResource(R.string.system_framework_ai_input_quick_help_conflict),
+                stringResource(R.string.system_framework_ai_input_quick_help_conflict_desc)
             )
         ),
         examples = listOf(
             QuickHelpExample(
-                stringResource(R.string.ai_input_quick_help_example_default_value),
-                stringResource(R.string.ai_input_quick_help_example_default)
+                stringResource(R.string.system_framework_ai_input_quick_help_example_default_value),
+                stringResource(R.string.system_framework_ai_input_quick_help_example_default)
             ),
             QuickHelpExample(
-                stringResource(R.string.ai_input_quick_help_example_custom_value),
-                stringResource(R.string.ai_input_quick_help_example_custom)
+                stringResource(R.string.system_framework_ai_input_quick_help_example_custom_value),
+                stringResource(R.string.system_framework_ai_input_quick_help_example_custom)
             )
         ),
-        note = stringResource(R.string.ai_input_quick_help_note),
+        note = stringResource(R.string.system_framework_ai_input_quick_help_note),
         onDismiss = onDismiss,
         confirmButtonText = stringResource(android.R.string.ok)
     )
@@ -441,8 +441,8 @@ private fun RestartSystemDialog(
 
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_system_title)) },
-        text = { Text(stringResource(R.string.restart_system_message)) },
+        title = { Text(stringResource(R.string.system_framework_restart_system_title)) },
+        text = { Text(stringResource(R.string.system_framework_restart_system_message)) },
         confirmButton = {
             ZToolTextButton(
                 enabled = countdown == 0,

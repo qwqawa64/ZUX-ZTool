@@ -76,7 +76,7 @@ fun LauncherSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
-    val forceStopTitleString = stringResource(R.string.force_stop_title)
+    val forceStopTitleString = stringResource(R.string.launcher_force_stop_title)
 
     LauncherSettingsScreen(
         title = title,
@@ -128,10 +128,10 @@ fun LauncherSettingsRoute(
                     onResult = { result ->
                         when (result) {
                             is LauncherRestartResult.Failure -> {
-                                Toast.makeText(context, R.string.force_stop_fail, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, R.string.launcher_force_stop_fail, Toast.LENGTH_SHORT).show()
                             }
                             LauncherRestartResult.Success -> {
-                                Toast.makeText(context, R.string.force_stop_success, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, R.string.launcher_force_stop_success, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -302,38 +302,38 @@ private fun launcherSettingsSections(
     val launcherLayoutItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.launcher_no_label_mode_title),
-                summary = stringResource(R.string.launcher_no_label_mode_summary),
+                title = stringResource(R.string.launcher_launcher_no_label_mode_title),
+                summary = stringResource(R.string.launcher_launcher_no_label_mode_summary),
                 checked = state.noLabelMode,
                 onCheckedChange = onLauncherNoLabelModeChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.launcher_drawer_no_label_mode_title),
-                summary = stringResource(R.string.launcher_drawer_no_label_mode_summary),
+                title = stringResource(R.string.launcher_launcher_drawer_no_label_mode_title),
+                summary = stringResource(R.string.launcher_launcher_drawer_no_label_mode_summary),
                 checked = state.drawerNoLabelMode,
                 onCheckedChange = onLauncherDrawerNoLabelModeChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.launcher_hide_blue_point_title),
+                title = stringResource(R.string.launcher_launcher_hide_blue_point_title),
                 checked = state.hideBluePoint,
                 onCheckedChange = onLauncherHideBluePointChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.cloud_folder_auto_dismiss_title),
+                title = stringResource(R.string.launcher_cloud_folder_auto_dismiss_title),
                 checked = state.cloudFolderDismiss,
                 onCheckedChange = onCloudFolderDismissChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.customGridTitle),
-                summary = stringResource(R.string.customGridSummary),
+                title = stringResource(R.string.launcher_custom_grid_title),
+                summary = stringResource(R.string.launcher_custom_grid_summary),
                 checked = state.customGridSize,
                 onCheckedChange = onCustomGridSizeChanged
             )
@@ -343,7 +343,7 @@ private fun launcherSettingsSections(
                 SettingItem.Custom(
                     content = {
                         GridSliderRow(
-                            label = stringResource(R.string.inputRowNumberHere),
+                            label = stringResource(R.string.launcher_input_row_number_here),
                             value = state.customGridRow,
                             onValueChanged = onCustomGridRowChanged
                         )
@@ -354,7 +354,7 @@ private fun launcherSettingsSections(
                 SettingItem.Custom(
                     content = {
                         GridSliderRow(
-                            label = stringResource(R.string.inputColumnNumberHere),
+                            label = stringResource(R.string.launcher_input_column_number_here),
                             value = state.customGridColumn,
                             onValueChanged = onCustomGridColumnChanged
                         )
@@ -367,8 +367,8 @@ private fun launcherSettingsSections(
     val cleanGlobalSearchLayoutItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.clean_search),
-                summary = stringResource(R.string.clean_search_summary),
+                title = stringResource(R.string.launcher_clean_search),
+                summary = stringResource(R.string.launcher_clean_search_summary),
                 checked = state.cleanGlobalSearch,
                 onCheckedChange = onCleanSearchChanged
             )
@@ -376,14 +376,14 @@ private fun launcherSettingsSections(
         if (state.cleanGlobalSearch) {
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.remove_search_recommend),
+                    title = stringResource(R.string.launcher_remove_search_recommend),
                     checked = state.removeSearchRecommend,
                     onCheckedChange = onRemoveSearchRecommendationChanged
                 )
             )
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.remove_hot_word_view),
+                    title = stringResource(R.string.launcher_remove_hot_word_view),
                     checked = state.removeHotWordView,
                     onCheckedChange = onRemoveHotWordViewChanged
                 )
@@ -394,8 +394,8 @@ private fun launcherSettingsSections(
     val ramInfoLayoutItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.show_ram_info),
-                summary = stringResource(R.string.show_ram_info_summary),
+                title = stringResource(R.string.launcher_show_ram_info),
+                summary = stringResource(R.string.launcher_show_ram_info_summary),
                 checked = state.showRamInfo,
                 onCheckedChange = onShowRamInfoChanged
             )
@@ -403,8 +403,8 @@ private fun launcherSettingsSections(
         if (state.showRamInfo) {
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.beautify_ram_info),
-                    summary = stringResource(R.string.beautify_ram_info_summary),
+                    title = stringResource(R.string.launcher_beautify_ram_info),
+                    summary = stringResource(R.string.launcher_beautify_ram_info_summary),
                     checked = state.beautifyRamInfo,
                     onCheckedChange = onBeautifyRamInfoChanged
                 )
@@ -415,15 +415,15 @@ private fun launcherSettingsSections(
     val dockBarLayoutItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.disable_recent_app_display),
+                title = stringResource(R.string.launcher_disable_recent_app_display),
                 checked = state.disableRecentAppDisplay,
                 onCheckedChange = onDisableRecentAppDisplayChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.disable_dock_bar_title),
-                summary = stringResource(R.string.disable_dock_bar_summary),
+                title = stringResource(R.string.launcher_disable_dock_bar_title),
+                summary = stringResource(R.string.launcher_disable_dock_bar_summary),
                 checked = state.disableDockBar,
                 onCheckedChange = onDisableDockBarChanged
             )
@@ -431,8 +431,8 @@ private fun launcherSettingsSections(
         if (!state.disableDockBar) {
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.moreBig_dockTitle),
-                    summary = stringResource(R.string.moreBig_dockSummary),
+                    title = stringResource(R.string.launcher_more_big_dock_title),
+                    summary = stringResource(R.string.launcher_more_big_dock_summary),
                     checked = state.moreBigDock,
                     onCheckedChange = onMoreBigDockChanged
                 )
@@ -443,8 +443,8 @@ private fun launcherSettingsSections(
     val batchUninstallLayoutItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.launcher_batch_uninstall),
-                summary = stringResource(R.string.launcher_batch_uninstall_summary),
+                title = stringResource(R.string.launcher_launcher_batch_uninstall),
+                summary = stringResource(R.string.launcher_launcher_batch_uninstall_summary),
                 checked = state.launcherBatchUninstall,
                 onCheckedChange = onLauncherBatchUninstallChanged
             )
@@ -453,27 +453,27 @@ private fun launcherSettingsSections(
 
     return listOf(
         SettingSection(
-            title = stringResource(R.string.disable_force_stop_title),
+            title = stringResource(R.string.launcher_disable_force_stop_title),
             items = forceStopItems
         ),
         SettingSection(
-            title = stringResource(R.string.dock_Title),
+            title = stringResource(R.string.launcher_dock_title),
             items = dockBarLayoutItems
         ),
         SettingSection(
-            title = stringResource(R.string.recent_task),
+            title = stringResource(R.string.launcher_recent_task),
             items = ramInfoLayoutItems
         ),
         SettingSection(
-            title = stringResource(R.string.global_search),
+            title = stringResource(R.string.launcher_global_search),
             items = cleanGlobalSearchLayoutItems
         ),
         SettingSection(
-            title = stringResource(R.string.customLauncherLayoutTitle),
+            title = stringResource(R.string.launcher_custom_launcher_layout_title),
             items = launcherLayoutItems
         ),
         SettingSection(
-            title = stringResource(R.string.launcher_batch_uninstall),
+            title = stringResource(R.string.launcher_launcher_batch_uninstall),
             items = batchUninstallLayoutItems
         ),
     )
@@ -486,14 +486,14 @@ private fun ForceStopModeRow(
 ) {
     val options = listOf(
         ForceStopMode.Default to stringResource(R.string.common_select_default),
-        ForceStopMode.AllApps to stringResource(R.string.SelectAllAPP),
+        ForceStopMode.AllApps to stringResource(R.string.launcher_select_all_app),
         ForceStopMode.Whitelist to stringResource(R.string.common_select_white_list)
     )
     val selectedLabel = options.first { it.first == selectedMode }.second
 
     ZToolPopupMenuSettingRow(
-        title = stringResource(R.string.disable_force_stop_enable_title),
-        summary = stringResource(R.string.disable_force_stop_enable_summary),
+        title = stringResource(R.string.launcher_disable_force_stop_enable_title),
+        summary = stringResource(R.string.launcher_disable_force_stop_enable_summary),
         value = selectedLabel,
         options = options,
         optionLabel = { it.second },
@@ -514,7 +514,7 @@ private fun WhitelistRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = stringResource(R.string.protected_apps_summary, whitelistCount),
+            text = stringResource(R.string.launcher_protected_apps_summary, whitelistCount),
             style = MaterialTheme.typography.bodyMedium,
             color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.weight(1f)
@@ -576,8 +576,8 @@ private fun DisableDockWarningDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onConfirm,
-        title = { Text(stringResource(R.string.disable_dock_warning_title)) },
-        text = { Text(stringResource(R.string.disable_dock_warning_message)) },
+        title = { Text(stringResource(R.string.launcher_disable_dock_warning_title)) },
+        text = { Text(stringResource(R.string.launcher_disable_dock_warning_message)) },
         confirmButton = {
             ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_confirm))
         },

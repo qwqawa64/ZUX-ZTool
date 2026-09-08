@@ -96,7 +96,7 @@ fun LockScreenSettingsRoute(
         onCustomFormatChanged = viewModel::setCustomFormat,
         onTestApi = {
             viewModel.testApiConnection {
-                Toast.makeText(context, R.string.please_input_api_address, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.system_ui_lock_screen_please_input_api_address, Toast.LENGTH_SHORT).show()
             }
         },
         onRestartScope = viewModel::showRestartDialog,
@@ -134,7 +134,7 @@ fun LockScreenSettingsRoute(
             result = result,
             onSave = {
                 viewModel.saveYiYanConfiguration()
-                Toast.makeText(context, R.string.configuration_saved_message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.system_ui_lock_screen_configuration_saved_message, Toast.LENGTH_SHORT).show()
             },
             onDismiss = viewModel::dismissApiTestResult
         )
@@ -258,8 +258,8 @@ private fun lockScreenSettingsSections(
     val yiYanItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.YiYanSwitchTitle),
-                summary = stringResource(R.string.YiYanSummary),
+                title = stringResource(R.string.system_ui_lock_screen_yi_yan_switch_title),
+                summary = stringResource(R.string.system_ui_lock_screen_yi_yan_summary),
                 checked = state.yiYanEnabled,
                 onCheckedChange = onYiYanChanged
             )
@@ -285,16 +285,16 @@ private fun lockScreenSettingsSections(
     val aodItems = buildList {
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.aod_native_enable_title),
-                summary = stringResource(R.string.aod_native_enable_summary),
+                title = stringResource(R.string.system_ui_lock_screen_aod_native_enable_title),
+                summary = stringResource(R.string.system_ui_lock_screen_aod_native_enable_summary),
                 checked = state.nativeAod,
                 onCheckedChange = onNativeAodChanged
             )
         )
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.aod_lenovo_enable_title),
-                summary = stringResource(R.string.aod_lenovo_enable_summary),
+                title = stringResource(R.string.system_ui_lock_screen_aod_lenovo_enable_title),
+                summary = stringResource(R.string.system_ui_lock_screen_aod_lenovo_enable_summary),
                 checked = state.lenovoAod,
                 onCheckedChange = onLenovoAodChanged
             )
@@ -302,8 +302,8 @@ private fun lockScreenSettingsSections(
         if (state.lenovoAod) {
             add(
                 SettingItem.Action(
-                    title = stringResource(R.string.aod_lenovo_activity_title),
-                    summary = stringResource(R.string.aod_lenovo_activity_summary),
+                    title = stringResource(R.string.system_ui_lock_screen_aod_lenovo_activity_title),
+                    summary = stringResource(R.string.system_ui_lock_screen_aod_lenovo_activity_summary),
                     onClick = onOpenLenovoAodSettings,
                     trailingContent = {
                         Icon(
@@ -330,44 +330,44 @@ private fun lockScreenSettingsSections(
         )
 
         // 当选择"实际功率"时展开子开关
-        val isActualWatts = state.chargeWattsOption == stringResource(R.string.watt_option_actual)
+        val isActualWatts = state.chargeWattsOption == stringResource(R.string.system_ui_common_watt_option_actual)
         if (isActualWatts) {
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.realwatts_show_power),
-                    summary = stringResource(R.string.realwatts_show_power_summary),
+                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_power),
+                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_power_summary),
                     checked = state.showPower,
                     onCheckedChange = onShowPowerChanged
                 )
             )
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.realwatts_show_voltage),
-                    summary = stringResource(R.string.realwatts_show_voltage_summary),
+                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage),
+                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage_summary),
                     checked = state.showVoltage,
                     onCheckedChange = onShowVoltageChanged
                 )
             )
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.realwatts_show_current),
-                    summary = stringResource(R.string.realwatts_show_current_summary),
+                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_current),
+                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_current_summary),
                     checked = state.showCurrent,
                     onCheckedChange = onShowCurrentChanged
                 )
             )
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.realwatts_show_temperature),
-                    summary = stringResource(R.string.realwatts_show_temperature_summary),
+                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature),
+                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature_summary),
                     checked = state.showTemperature,
                     onCheckedChange = onShowTemperatureChanged
                 )
             )
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.realwatts_show_indicator),
-                    summary = stringResource(R.string.realwatts_show_indicator_summary),
+                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator),
+                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator_summary),
                     checked = state.showIndicator,
                     onCheckedChange = onShowIndicatorChanged
                 )
@@ -375,8 +375,8 @@ private fun lockScreenSettingsSections(
             // 高级自定义格式
             add(
                 SettingItem.Switch(
-                    title = stringResource(R.string.realwatts_custom_format_enabled),
-                    summary = stringResource(R.string.realwatts_custom_format_enabled_summary),
+                    title = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_enabled),
+                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_enabled_summary),
                     checked = state.customFormatEnabled,
                     onCheckedChange = onCustomFormatEnabledChanged
                 )
@@ -398,15 +398,15 @@ private fun lockScreenSettingsSections(
 
     return listOf(
         SettingSection(
-            title = stringResource(R.string.YiYanTile),
+            title = stringResource(R.string.system_ui_lock_screen_yi_yan_tile),
             items = yiYanItems
         ),
         SettingSection(
-            title = stringResource(R.string.aod_title),
+            title = stringResource(R.string.system_ui_lock_screen_aod_title),
             items = aodItems
         ),
         SettingSection(
-            title = stringResource(R.string.ChargeWattsTitle),
+            title = stringResource(R.string.system_ui_lock_screen_charge_watts_title),
             items = chargeWattsItems
         )
     )
@@ -418,8 +418,8 @@ private fun ChargeWattsSettingsContent(
     onChargeWattsOptionChanged: (String) -> Unit,
 ) {
     ZToolPopupMenuSettingRow(
-        title = stringResource(R.string.ChargeWattsEnableTitle),
-        summary = stringResource(R.string.ChargeWattsSummary),
+        title = stringResource(R.string.system_ui_lock_screen_charge_watts_enable_title),
+        summary = stringResource(R.string.system_ui_lock_screen_charge_watts_summary),
         options = stringArrayResource(R.array.watt_options).toList(),
         value = state.chargeWattsOption,
         optionLabel = { it },
@@ -446,7 +446,7 @@ private fun YiYanConfigFields(
                 value = apiAddress,
                 onValueChange = onApiAddressChanged,
                 modifier = Modifier.weight(1f),
-                label = stringResource(R.string.api_address_hint),
+                label = stringResource(R.string.system_ui_lock_screen_api_address_hint),
                 singleLine = true,
                 horizontalPadding = 0.dp
             )
@@ -457,9 +457,9 @@ private fun YiYanConfigFields(
             ) {
                 Text(
                     if (isTestingApi) {
-                        stringResource(R.string.testing_api_connection)
+                        stringResource(R.string.system_ui_lock_screen_testing_api_connection)
                     } else {
-                        stringResource(R.string.test)
+                        stringResource(R.string.system_ui_lock_screen_test)
                     }
                 )
             }
@@ -470,7 +470,7 @@ private fun YiYanConfigFields(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
-            label = stringResource(R.string.regex_label),
+            label = stringResource(R.string.system_ui_lock_screen_regex_label),
             singleLine = true,
             horizontalPadding = 0.dp
         )
@@ -491,12 +491,12 @@ private fun CustomFormatInput(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            label = stringResource(R.string.realwatts_custom_format_label),
+            label = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_label),
             singleLine = false,
             horizontalPadding = 0.dp
         )
         Text(
-            text = stringResource(R.string.realwatts_custom_format_hint),
+            text = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
@@ -511,8 +511,8 @@ private fun RootPermissionDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onConfirm,
-        title = { Text(stringResource(R.string.tooltip_content_description)) },
-        text = { Text(stringResource(R.string.systemui_root_permission_required_message)) },
+        title = { Text(stringResource(R.string.system_ui_common_tooltip_content_description)) },
+        text = { Text(stringResource(R.string.system_ui_lock_screen_root_permission_required_message)) },
         confirmButton = {
             ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_confirm))
         },
@@ -534,7 +534,7 @@ private fun ApiTestResultDialog(
         text = { Text(result.message) },
         confirmButton = {
             if (result.success) {
-                ZToolTextButton(onClick = onSave, text = stringResource(R.string.save_configuration_button))
+                ZToolTextButton(onClick = onSave, text = stringResource(R.string.system_ui_lock_screen_save_configuration_button))
             }
         },
         dismissButton = {

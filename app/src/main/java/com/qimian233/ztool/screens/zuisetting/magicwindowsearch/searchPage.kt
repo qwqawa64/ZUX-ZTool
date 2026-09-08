@@ -81,7 +81,7 @@ fun SearchPageRoute(
             viewModel.search {
                 Toast.makeText(
                     context,
-                    R.string.unable_to_find_application,
+                    R.string.settings_unable_to_find_application,
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -121,7 +121,7 @@ private fun SearchPageScreen(
     ZToolScaffold(
         topBar = {
             ZToolTopAppBar(
-                title = stringResource(R.string.FindRules),
+                title = stringResource(R.string.settings_find_rules),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -178,7 +178,7 @@ private fun SearchCard(
         Column {
             Column(modifier = Modifier.padding(start = 24.dp, top = 16.dp)) {
                 Text(
-                    text = stringResource(R.string.FindRules),
+                    text = stringResource(R.string.settings_find_rules),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = LocalZToolColorScheme.current.onSurface // 临时修复，不要扩散这里的模式
@@ -200,11 +200,11 @@ private fun SearchCard(
                     onValueChange = onKeywordChanged,
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    label = stringResource(R.string.FindRules_Hint),
+                    label = stringResource(R.string.settings_find_rules_hint),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 ZToolButton(onClick = onSearch) {
-                    Text(stringResource(R.string.SearchRules))
+                    Text(stringResource(R.string.settings_search_rules))
                 }
             }
         }
@@ -223,7 +223,7 @@ private fun ResultsCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(R.string.RulesResult),
+                text = stringResource(R.string.settings_rules_result),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -282,7 +282,7 @@ private fun EmptyResultCard() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = stringResource(R.string.unable_to_find_application),
+                text = stringResource(R.string.settings_unable_to_find_application),
                 style = MaterialTheme.typography.bodyLarge,
                 color = LocalZToolColorScheme.current.onSurfaceVariant
             )
@@ -297,7 +297,7 @@ private fun PackageDetailsDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.parallel_window_details_title)) },
+        title = { Text(stringResource(R.string.settings_parallel_window_details_title)) },
         text = {
             Column(
                 modifier = Modifier
@@ -312,7 +312,7 @@ private fun PackageDetailsDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close_button))
+                Text(stringResource(R.string.settings_close_button))
             }
         }
     )
@@ -321,28 +321,28 @@ private fun PackageDetailsDialog(
 @Composable
 private fun buildPackageDetails(packageInfo: PackageInfo): String {
     return buildString {
-        append(stringResource(R.string.package_info_header)).append("\n\n")
-        append(stringResource(R.string.app_package_name)).append(packageInfo.name).append("\n\n")
-        append(stringResource(R.string.main_activity_info)).append(packageInfo.mainPage).append("\n\n")
+        append(stringResource(R.string.settings_package_info_header)).append("\n\n")
+        append(stringResource(R.string.settings_app_package_name)).append(packageInfo.name).append("\n\n")
+        append(stringResource(R.string.settings_main_activity_info)).append(packageInfo.mainPage).append("\n\n")
 
         if (packageInfo.activityPairs.isNotEmpty()) {
-            append(stringResource(R.string.activity_pairs_info)).append("\n")
+            append(stringResource(R.string.settings_activity_pairs_info)).append("\n")
             packageInfo.activityPairs.forEach { pair ->
-                append(stringResource(R.string.activity_pair_format, pair.from, pair.to)).append("\n")
+                append(stringResource(R.string.settings_activity_pair_format, pair.from, pair.to)).append("\n")
             }
             append("\n")
         }
 
-        AppendStringList(stringResource(R.string.force_fullscreen_pages), packageInfo.forceFullscreenPages)
-        AppendStringList(stringResource(R.string.transparent_activities), packageInfo.transActivities)
-        AppendStringList(stringResource(R.string.left_transparent_activities), packageInfo.leftTransActivities)
+        AppendStringList(stringResource(R.string.settings_force_fullscreen_pages), packageInfo.forceFullscreenPages)
+        AppendStringList(stringResource(R.string.settings_transparent_activities), packageInfo.transActivities)
+        AppendStringList(stringResource(R.string.settings_left_transparent_activities), packageInfo.leftTransActivities)
 
-        append(stringResource(R.string.split_screen_config_header)).append("\n\n")
-        append(stringResource(R.string.adjust_window_ratio)).append(packageInfo.showEmbeddingDivider).append("\n")
-        append(stringResource(R.string.skip_multi_window_mode)).append(packageInfo.skipMultiWindowMode).append("\n")
-        append(stringResource(R.string.skip_letterbox_display)).append(packageInfo.skipLetterboxDisplayInfo).append("\n")
-        append(stringResource(R.string.show_surface_view_bg)).append(packageInfo.showSurfaceViewBackground).append("\n")
-        append(stringResource(R.string.pause_primary_activity)).append(packageInfo.shouldPausePrimaryActivity).append("\n")
+        append(stringResource(R.string.settings_split_screen_config_header)).append("\n\n")
+        append(stringResource(R.string.settings_adjust_window_ratio)).append(packageInfo.showEmbeddingDivider).append("\n")
+        append(stringResource(R.string.settings_skip_multi_window_mode_label)).append(packageInfo.skipMultiWindowMode).append("\n")
+        append(stringResource(R.string.settings_skip_letterbox_display)).append(packageInfo.skipLetterboxDisplayInfo).append("\n")
+        append(stringResource(R.string.settings_show_surface_view_bg)).append(packageInfo.showSurfaceViewBackground).append("\n")
+        append(stringResource(R.string.settings_pause_primary_activity)).append(packageInfo.shouldPausePrimaryActivity).append("\n")
     }
 }
 
@@ -354,7 +354,7 @@ private fun StringBuilder.AppendStringList(
     if (values.isEmpty()) return
     append(title).append("\n")
     values.forEach { value ->
-        append(stringResource(R.string.list_item_format, value)).append("\n")
+        append(stringResource(R.string.settings_list_item_format, value)).append("\n")
     }
     append("\n")
 }

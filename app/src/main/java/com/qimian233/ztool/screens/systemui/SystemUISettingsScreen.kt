@@ -189,18 +189,18 @@ private fun systemUiSettingsSections(
         SettingSection(
             items = listOf(
                 systemUiNavigationItem(
-                    title = stringResource(R.string.statusBarSettingTitle),
-                    summary = stringResource(R.string.statusBarSettingSummary),
+                    title = stringResource(R.string.system_ui_status_bar_setting_title),
+                    summary = stringResource(R.string.system_ui_status_bar_setting_summary),
                     onClick = onOpenStatusBar
                 ),
                 systemUiNavigationItem(
-                    title = stringResource(R.string.LockScreenSettingTitle),
-                    summary = stringResource(R.string.LockScreenSummary),
+                    title = stringResource(R.string.system_ui_lock_screen_setting_title),
+                    summary = stringResource(R.string.system_ui_lock_screen_summary),
                     onClick = onOpenLockScreen
                 ),
                 systemUiNavigationItem(
-                    title = stringResource(R.string.controlCenterTitle),
-                    summary = stringResource(R.string.controlCenterSummary),
+                    title = stringResource(R.string.system_ui_control_center_title),
+                    summary = stringResource(R.string.system_ui_control_center_summary),
                     onClick = onOpenControlCenter
                 ),
                 systemUiNavigationItem(
@@ -209,7 +209,7 @@ private fun systemUiSettingsSections(
                     onClick = onOpenAnimationWallpaper
                 ),
                 systemUiNavigationItem(
-                    title = stringResource(R.string.systemUIMisc),
+                    title = stringResource(R.string.system_ui_common_misc),
                     summary = "访客模式、生物识别震动等杂项设置",
                     onClick = onOpenMisc
                 )

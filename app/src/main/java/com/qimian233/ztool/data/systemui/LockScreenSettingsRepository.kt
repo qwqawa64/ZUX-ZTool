@@ -27,9 +27,9 @@ class LockScreenSettingsRepository(
         val chargeWattsEnabled = prefsUtils.loadBooleanSetting(KEY_CHARGE_WATTS, false)
         val realWattsEnabled = prefsUtils.loadBooleanSetting(KEY_REAL_WATTS, false)
         val chargeWattsOption = when {
-            chargeWattsEnabled && !realWattsEnabled -> context.getString(R.string.watt_option_handshake)
-            !chargeWattsEnabled && realWattsEnabled -> context.getString(R.string.watt_option_actual)
-            else -> context.getString(R.string.watt_option_disabled)
+            chargeWattsEnabled && !realWattsEnabled -> context.getString(R.string.system_ui_watt_option_handshake)
+            !chargeWattsEnabled && realWattsEnabled -> context.getString(R.string.system_ui_common_watt_option_actual)
+            else -> context.getString(R.string.system_ui_watt_option_disabled)
         }
 
         zToolPrefs.saveStringSetting(KEY_CHARGE_WATTS_SELECTED_OPTION, chargeWattsOption)
@@ -87,21 +87,21 @@ class LockScreenSettingsRepository(
 
     fun saveChargeWattsOption(selectedOption: String): Boolean {
         when (selectedOption) {
-            context.getString(R.string.watt_option_disabled) -> {
+            context.getString(R.string.system_ui_watt_option_disabled) -> {
                 prefsUtils.saveBooleanSetting(KEY_CHARGE_WATTS, false)
                 prefsUtils.saveBooleanSetting(KEY_REAL_WATTS, false)
             }
-            context.getString(R.string.watt_option_handshake) -> {
+            context.getString(R.string.system_ui_watt_option_handshake) -> {
                 prefsUtils.saveBooleanSetting(KEY_CHARGE_WATTS, true)
                 prefsUtils.saveBooleanSetting(KEY_REAL_WATTS, false)
             }
-            context.getString(R.string.watt_option_actual) -> {
+            context.getString(R.string.system_ui_common_watt_option_actual) -> {
                 prefsUtils.saveBooleanSetting(KEY_CHARGE_WATTS, false)
                 prefsUtils.saveBooleanSetting(KEY_REAL_WATTS, true)
             }
         }
         zToolPrefs.saveStringSetting(KEY_CHARGE_WATTS_SELECTED_OPTION, selectedOption)
-        return selectedOption == context.getString(R.string.watt_option_actual) &&
+        return selectedOption == context.getString(R.string.system_ui_common_watt_option_actual) &&
             !prefsUtils.loadBooleanSetting(KEY_SYSTEMUI_PERMISSION_CONFIRMED, false)
     }
 
@@ -140,8 +140,8 @@ class LockScreenSettingsRepository(
             buildApiResponseResult(response, regexValue)
         } catch (e: Exception) {
             ApiTestResult(
-                title = context.getString(R.string.request_failed),
-                message = context.getString(R.string.error_message_prefix) + e.message,
+                title = context.getString(R.string.system_ui_request_failed),
+                message = context.getString(R.string.system_ui_error_message_prefix) + e.message,
                 success = false
             )
         }
@@ -171,7 +171,7 @@ class LockScreenSettingsRepository(
                 return reader.readText()
             }
 
-            throw Exception(context.getString(R.string.http_error_prefix) + responseCode)
+            throw Exception(context.getString(R.string.system_ui_http_error_prefix) + responseCode)
         } finally {
             reader?.close()
             connection?.disconnect()
@@ -198,33 +198,33 @@ class LockScreenSettingsRepository(
                         .orEmpty()
                 } else {
                     return ApiTestResult(
-                        title = context.getString(R.string.regex_match_failed),
-                        message = context.getString(R.string.response_body_prefix) +
+                        title = context.getString(R.string.system_ui_regex_match_failed),
+                        message = context.getString(R.string.system_ui_response_body_prefix) +
                             response +
-                            context.getString(R.string.regex_no_match_message),
+                            context.getString(R.string.system_ui_regex_no_match_message),
                         success = false
                     )
                 }
             } catch (e: Exception) {
                 return ApiTestResult(
-                    title = context.getString(R.string.regex_error),
-                    message = context.getString(R.string.error_message_prefix) +
+                    title = context.getString(R.string.system_ui_regex_error),
+                    message = context.getString(R.string.system_ui_error_message_prefix) +
                         e.message +
-                        context.getString(R.string.response_body_prefix) +
+                        context.getString(R.string.system_ui_response_body_prefix) +
                         response,
                     success = false
                 )
             }
         }
 
-        var message = context.getString(R.string.api_request_success)
+        var message = context.getString(R.string.system_ui_api_request_success)
         if (hasRegex) {
-            message += context.getString(R.string.regex_match_result_prefix) + extractedContent + "\n\n"
+            message += context.getString(R.string.system_ui_regex_match_result_prefix) + extractedContent + "\n\n"
         }
-        message += context.getString(R.string.original_response_prefix) + response
+        message += context.getString(R.string.system_ui_original_response_prefix) + response
 
         return ApiTestResult(
-            title = context.getString(R.string.test_success),
+            title = context.getString(R.string.system_ui_test_success),
             message = message,
             success = true
         )

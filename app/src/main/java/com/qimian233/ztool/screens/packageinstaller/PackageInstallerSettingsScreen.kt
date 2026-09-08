@@ -83,7 +83,7 @@ fun PackageInstallerSettingsRoute(
             onConfirm = {
                 viewModel.forceStopPackage(
                     onFailure = {
-                        Toast.makeText(context, R.string.restart_fail_simple, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.package_installer_restart_fail_simple, Toast.LENGTH_SHORT).show()
                     }
                 )
             },
@@ -183,43 +183,43 @@ internal fun packageInstallerSettingsSections(
             title = stringResource(R.string.common_sec_title_function),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.Disable_ScanAPK_Title),
-                    summary = stringResource(R.string.Disable_ScanAPK_Summary),
+                    title = stringResource(R.string.package_installer_disable_scan_apk_title),
+                    summary = stringResource(R.string.package_installer_disable_scan_apk_summary),
                     checked = state.disableScanApk,
                     onCheckedChange = onDisableScanApkChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.OnlyAllow_Title),
-                    summary = stringResource(R.string.OnlyAllow_Summary),
+                    title = stringResource(R.string.package_installer_only_allow_title),
+                    summary = stringResource(R.string.package_installer_only_allow_summary),
                     checked = state.alwaysAllowPermission,
                     onCheckedChange = onAlwaysAllowPermissionChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.skip_warn_page_title),
-                    summary = stringResource(R.string.skip_warn_page_summary),
+                    title = stringResource(R.string.package_installer_skip_warn_page_title),
+                    summary = stringResource(R.string.package_installer_skip_warn_page_summary),
                     checked = state.skipWarnPage,
                     onCheckedChange = onSkipWarnPageChanged
                 )
             )
         ),
         SettingSection(
-            title = stringResource(R.string.fun_title_function),
+            title = stringResource(R.string.package_installer_fun_title_function),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.Disable_installerAD_Title),
-                    summary = stringResource(R.string.Disable_installerAD_Summary),
+                    title = stringResource(R.string.package_installer_disable_installer_ad_title),
+                    summary = stringResource(R.string.package_installer_disable_installer_ad_summary),
                     checked = state.disableInstallerAd,
                     onCheckedChange = onDisableInstallerAdChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.Enable_rowStyle_title),
-                    summary = stringResource(R.string.Enable_rowStyle_summary),
+                    title = stringResource(R.string.package_installer_enable_row_style_title),
+                    summary = stringResource(R.string.package_installer_enable_row_style_summary),
                     checked = state.packageInstallerStyleHook,
                     onCheckedChange = onPackageInstallerStyleHookChanged
                 ),
                 SettingItem.Switch(
-                    title = stringResource(R.string.Disable_deletePackage_Title),
-                    summary = stringResource(R.string.Disable_deletePackage_Summary),
+                    title = stringResource(R.string.package_installer_disable_delete_package_title),
+                    summary = stringResource(R.string.package_installer_disable_delete_package_summary),
                     checked = state.disableDeletePackage,
                     onCheckedChange = onDisableDeletePackageChanged
                 )

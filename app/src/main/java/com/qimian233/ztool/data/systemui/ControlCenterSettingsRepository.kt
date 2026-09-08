@@ -20,7 +20,7 @@ class ControlCenterSettingsRepository(
     fun loadState(): ControlCenterSettingsUiState {
         val loadedDateFormat = prefsUtils.loadStringSetting(
             KEY_DATE_FORMAT,
-            context.getString(R.string.default_date_format)
+            context.getString(R.string.system_ui_default_date_format)
         )
         return ControlCenterSettingsUiState(
             customDate = prefsUtils.loadBooleanSetting(KEY_CUSTOM_DATE, false),
@@ -65,18 +65,18 @@ class ControlCenterSettingsRepository(
     }
 
     fun getDefaultDateFormat(): String {
-        return context.getString(R.string.default_date_format)
+        return context.getString(R.string.system_ui_default_date_format)
     }
 
     fun buildDatePreview(format: String): String {
         return if (format.isEmpty()) {
-            context.getString(R.string.preview_default)
+            context.getString(R.string.system_ui_preview_default)
         } else {
             try {
-                context.getString(R.string.preview_display, CustomDateFormatter.format(format, Date()))
+                context.getString(R.string.system_ui_preview_display, CustomDateFormatter.format(format, Date()))
             } catch (e: Exception) {
                 Log.e(TAG, "Error formatting date: $format", e)
-                context.getString(R.string.preview_invalid) +
+                context.getString(R.string.system_ui_preview_invalid) +
                     "\n" +
                     context.getString(R.string.common_error_prefix) +
                     e.message

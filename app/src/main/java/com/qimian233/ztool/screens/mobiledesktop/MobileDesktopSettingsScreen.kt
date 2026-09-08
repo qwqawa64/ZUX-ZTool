@@ -160,24 +160,24 @@ private fun MobileDesktopSettingsScreen(
                 ZToolSettingsList(
                     sections = listOf(
                         SettingSection(
-                            title = stringResource(R.string.super_connect_scope_title),
+                            title = stringResource(R.string.mobile_desktop_super_connect_scope_title),
                             items = listOf(
                                 SettingItem.Switch(
                                     checked = state.skipExposeWarn,
                                     onCheckedChange = onSkipExposeChanged,
-                                    title = stringResource(R.string.skip_nearby_exposure_warn),
-                                    summary = stringResource(R.string.skip_nearby_exposure_warn_summary)
+                                    title = stringResource(R.string.mobile_desktop_skip_nearby_exposure_warn),
+                                    summary = stringResource(R.string.mobile_desktop_skip_nearby_exposure_warn_summary)
                                 ),
                                 SettingItem.Switch(
                                     checked = state.autoAcceptFileTransfer,
                                     onCheckedChange = onAutoAcceptFileTransferChanged,
-                                    title = stringResource(R.string.auto_accept_file_transfer),
-                                    summary = stringResource(R.string.auto_accept_file_transfer_summary)
+                                    title = stringResource(R.string.mobile_desktop_auto_accept_file_transfer),
+                                    summary = stringResource(R.string.mobile_desktop_auto_accept_file_transfer_summary)
                                 ),
                                 SettingItem.Switch(
                                     checked = state.disableNearbyShareAutoShutdown,
                                     onCheckedChange = onDisableNearbyShareAutoShutdownChanged,
-                                    title = stringResource(R.string.disable_nearby_share_auto_shutdown_title)
+                                    title = stringResource(R.string.mobile_desktop_disable_nearby_share_auto_shutdown_title)
                                 )
                             )
                         )
