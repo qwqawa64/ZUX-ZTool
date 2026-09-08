@@ -1,6 +1,6 @@
 package com.qimian233.ztool.data.keys
 
-data class Scope(@JvmField val packageName: String, @JvmField val howToRestart: HowToRestart)
+data class Scope(val packageName: String, val howToRestart: HowToRestart)
 
 enum class HowToRestart {
     KillAll,
@@ -14,20 +14,20 @@ enum class HowToRestart {
  * 
  * 性能服务之类的到时候也加上，要记得在这里添加作用域 key 了。
  */
-object ScopeKeys {
-    @JvmField val SETTINGS = Scope("com.android.settings", HowToRestart.AmStop)
-    @JvmField val PERMISSION_CONTROLLER = Scope("com.android.permissioncontroller", HowToRestart.AmStop)
-    @JvmField val ZUI_SAFE_CENTER = Scope("com.zui.safecenter", HowToRestart.AmStop)
-    @JvmField val OTA = Scope("com.lenovo.ota", HowToRestart.AmStop)
-    @JvmField val TB_ENGINE = Scope("com.lenovo.tbengine", HowToRestart.AmStop)
-    @JvmField val LENOVO_SAFE_CENTER = Scope("com.lenovo.safecenter", HowToRestart.AmStop)
-    @JvmField val DOCUMENTS_UI = Scope("com.android.documentsui", HowToRestart.AmStop)
-    @JvmField val ANDROID_SYSTEM = Scope("android", HowToRestart.Reboot)
-    @JvmField val SYSTEM_SERVER = Scope("system", HowToRestart.Reboot)
-    @JvmField val GAME_SERVICE = Scope("com.zui.game.service", HowToRestart.AmStop)
-    @JvmField val PACKAGE_INSTALLER = Scope("com.android.packageinstaller", HowToRestart.AmStop)
-    @JvmField val SYSTEM_UI = Scope("com.android.systemui", HowToRestart.KillAll)
-    @JvmField val WALLPAPER_SETTINGS = Scope("com.zui.wallpapersetting", HowToRestart.AmStop)
-    @JvmField val LAUNCHER = Scope("com.zui.launcher", HowToRestart.AmStop)
-    @JvmField val MOBILE_DESKTOP = Scope("com.motorola.mobiledesktop", HowToRestart.AmStop)
+object ScopeKeys { 
+    val SETTINGS = Scope("com.android.settings", HowToRestart.AmStop)
+    val PERMISSION_CONTROLLER = Scope("com.android.permissioncontroller", HowToRestart.AmStop)
+    val ZUI_SAFE_CENTER = Scope("com.zui.safecenter", HowToRestart.AmStop)
+    val OTA = Scope("com.lenovo.ota", HowToRestart.AmStop)
+    val TB_ENGINE = Scope("com.lenovo.tbengine", HowToRestart.AmStop)
+    val LENOVO_SAFE_CENTER = Scope("com.lenovo.safecenter", HowToRestart.AmStop)
+    val DOCUMENTS_UI = Scope("com.android.documentsui", HowToRestart.AmStop)
+    val ANDROID_SYSTEM = Scope("android", HowToRestart.Reboot)
+    val SYSTEM_SERVER = Scope("system", HowToRestart.Reboot)
+    val GAME_SERVICE = Scope("com.zui.game.service", HowToRestart.AmStop)
+    val PACKAGE_INSTALLER = Scope("com.android.packageinstaller", HowToRestart.AmStop)
+    val SYSTEM_UI = Scope("com.android.systemui", HowToRestart.KillAll)
+    val WALLPAPER_SETTINGS = Scope("com.zui.wallpapersetting", HowToRestart.AmStop)
+    val LAUNCHER = Scope("com.zui.launcher", HowToRestart.AmStop)
+    val MOBILE_DESKTOP = Scope("com.motorola.mobiledesktop", HowToRestart.AmStop)
 }
