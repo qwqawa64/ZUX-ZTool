@@ -477,7 +477,7 @@ private fun launcherSettingsSections(
             items = cleanGlobalSearchLayoutItems
         ),
         SettingSection(
-            title = stringResource(R.string.launcher_custom_launcher_layout_title),
+            title = stringResource(R.string.launcher_layout_title),
             items = launcherLayoutItems
         ),
     )

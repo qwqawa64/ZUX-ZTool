@@ -600,7 +600,7 @@
     <string name="launcher_dock_title">Dock栏</string>
     <string name="launcher_more_big_dock_title">更大的Dock栏</string>
     <string name="launcher_more_big_dock_summary">解除Dock栏的图标数量限制，能够塞下更多图标</string>
-    <string name="launcher_custom_launcher_layout_title">自定义桌面布局</string>
+    <string name="launcher_layout_title">桌面布局</string>
     <string name="launcher_custom_grid_title">自定义桌面网格行列数</string>
     <string name="launcher_custom_grid_summary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
     <string name="launcher_big_folder_align_title">大文件夹对齐</string>

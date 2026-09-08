@@ -526,7 +526,7 @@
     <string name="launcher_dock_title">Dock</string>
     <string name="launcher_more_big_dock_title">Larger dock</string>
     <string name="launcher_more_big_dock_summary">Remove the dock icon count limit so more icons can fit.</string>
-    <string name="launcher_custom_launcher_layout_title">Custom launcher layout</string>
+    <string name="launcher_layout_title">Launcher layout</string>
     <string name="launcher_custom_grid_title">Custom launcher grid rows and columns</string>
     <string name="launcher_custom_grid_summary">Adjust the spacious icon layout. May cause some widgets to display incorrectly.</string>
     <string name="launcher_big_folder_align_title">Big folder alignment</string>
