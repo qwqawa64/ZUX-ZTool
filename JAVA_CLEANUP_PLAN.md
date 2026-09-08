@@ -34,13 +34,11 @@ Call-site churn already verified: the only Kotlin call sites that break mechanic
 unchanged after conversion. No Kotlin code constructs `ShellResult` / `ConfigFileInfo` /
 `AppConfig` directly. Proguard rules reference none of these classes.
 
-## Exemptions (must NOT be touched)
+## Scope revision (2026-09-09, user confirmed)
 
-- `hook/HookInit.java`, `hook/base/HookManager.java`, `hook/base/BaseHookModule.java` —
-  explicitly permitted Java infrastructure per `AGENTS.MD`.
-- Not in the user's stated scope (listed as optional Phase 6, needs user approval):
-  `service/LogCollectorService.java` (448), `service/LogServiceManager.java` (162),
-  `src/test/.../ExampleUnitTest.java`, `src/androidTest/.../ExampleInstrumentedTest.java`.
+- The `service/` log classes and the two test boilerplate files ARE in scope (former Phase 6
+  promoted to Batch 6). `hook/` is already 100% Kotlin — no Java there at all.
+- Final target: **zero `.java` files in the whole `app` module.**
 
 ## Conversion rules
 
@@ -89,13 +87,14 @@ unchanged after conversion. No Kotlin code constructs `ShellResult` / `ConfigFil
   delete `PermissionChecker.java`.
   Build → commit `frontend: migrate magic window search models to Kotlin` and
   `utils: remove dead PermissionChecker`.
+- [ ] **Batch 6 — services + tests.** Convert `LogCollectorService` (keep class name —
+  Manifest contract), `LogServiceManager`, and the two example test boilerplate files.
+  Build → commit `module: migrate log services to Kotlin` and
+  `chore: convert test boilerplate to Kotlin`.
 - [ ] **Final gate.**
-  - `find app/src/main/java -name "*.java"` → only the three hook-infra exemptions remain.
+  - `find app/src -name "*.java"` → zero results (hook infra is already Kotlin).
   - `cmd.exe /c "gradlew.bat assembleDebug"` green.
   - `git diff --check` clean.
-- [ ] **Phase 6 (optional, ask user first).** Convert `service/LogCollectorService.java`
-  (foreground service — highest risk), `service/LogServiceManager.java`, and the two
-  test boilerplate files.
 
 ## Risks & mitigations
 
