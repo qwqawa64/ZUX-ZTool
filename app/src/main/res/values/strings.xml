@@ -603,6 +603,8 @@
     <string name="launcher_custom_launcher_layout_title">自定义桌面布局</string>
     <string name="launcher_custom_grid_title">自定义桌面网格行列数</string>
     <string name="launcher_custom_grid_summary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
+    <string name="launcher_big_folder_align_title">大文件夹对齐</string>
+    <string name="launcher_big_folder_align_summary">对齐大文件夹背景、图标与标签</string>
     <string name="launcher_input_row_number_here">行数</string>
     <string name="launcher_input_column_number_here">列数</string>
     <!--系统框架功能页的资源值-->

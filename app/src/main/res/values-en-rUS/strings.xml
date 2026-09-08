@@ -529,6 +529,8 @@
     <string name="launcher_custom_launcher_layout_title">Custom launcher layout</string>
     <string name="launcher_custom_grid_title">Custom launcher grid rows and columns</string>
     <string name="launcher_custom_grid_summary">Adjust the spacious icon layout. May cause some widgets to display incorrectly.</string>
+    <string name="launcher_big_folder_align_title">Big folder alignment</string>
+    <string name="launcher_big_folder_align_summary">Align big folder background, icons and label</string>
     <string name="launcher_input_row_number_here">Rows</string>
     <string name="launcher_input_column_number_here">Columns</string>
     <string name="system_framework_ai_input_quick_help_title">Trigger symbol help</string>

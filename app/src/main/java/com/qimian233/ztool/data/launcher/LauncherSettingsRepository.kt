@@ -44,7 +44,8 @@ class LauncherSettingsRepository(
             hideBluePoint = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, false),
             cloudFolderDismiss = prefsUtils.loadBooleanSetting(KEY_CLOUD_FOLDER_DISMISS, false),
             disableRecentAppDisplay = prefsUtils.loadBooleanSetting(KEY_DISABLE_RECENT_APP_DISPLAY, false),
-            launcherBatchUninstall = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_BATCH_UNINSTALL, false)
+            launcherBatchUninstall = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_BATCH_UNINSTALL, false),
+            bigFolderAlign = prefsUtils.loadBooleanSetting(KEY_BIG_FOLDER_ALIGN, false)
         )
     }
 
@@ -129,6 +130,10 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_BATCH_UNINSTALL, enabled)
     }
 
+    fun saveBigFolderAlign(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_BIG_FOLDER_ALIGN, enabled)
+    }
+
     fun saveDisableDockBar(enabled: Boolean): Boolean {
         val previousMoreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false)
         prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, previousMoreBigDock)
@@ -209,6 +214,7 @@ class LauncherSettingsRepository(
         private val KEY_CLOUD_FOLDER_DISMISS = PreferenceKeys.DISMISS_CLOUD_FOLDER_CONFIRMATION.name
         private val KEY_DISABLE_RECENT_APP_DISPLAY = PreferenceKeys.DISABLE_RECENT_APPS_DISPLAY.name
         private val KEY_LAUNCHER_BATCH_UNINSTALL = PreferenceKeys.LAUNCHER_BATCH_UNINSTALL.name
+        private val KEY_BIG_FOLDER_ALIGN = PreferenceKeys.LAUNCHER_BIG_FOLDER_ALIGN.name
     }
 }
 

@@ -117,7 +117,8 @@ fun LauncherSettingsRoute(
         onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
         onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
         onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
-        onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall
+        onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
+        onBigFolderAlignChanged = viewModel::setBigFolderAlign
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -188,6 +189,7 @@ private fun LauncherSettingsScreen(
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
+    onBigFolderAlignChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -244,6 +246,7 @@ private fun LauncherSettingsScreen(
                         onCloudFolderDismissChanged = onCloudFolderDismissChanged,
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
+                        onBigFolderAlignChanged = onBigFolderAlignChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -273,6 +276,7 @@ private fun launcherSettingsSections(
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
+    onBigFolderAlignChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     val launcherBehaviorItems = buildList {
         add(
@@ -369,6 +373,14 @@ private fun launcherSettingsSections(
                 )
             )
         }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_big_folder_align_title),
+                summary = stringResource(R.string.launcher_big_folder_align_summary),
+                checked = state.bigFolderAlign,
+                onCheckedChange = onBigFolderAlignChanged
+            )
+        )
     }
 
     val cleanGlobalSearchLayoutItems = buildList {

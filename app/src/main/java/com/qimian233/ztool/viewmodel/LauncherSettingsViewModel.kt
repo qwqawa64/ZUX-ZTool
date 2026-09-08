@@ -122,6 +122,11 @@ class LauncherSettingsViewModel(
         repository.saveLauncherBatchUninstall(enabled)
     }
 
+    fun setBigFolderAlign(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(bigFolderAlign = enabled)
+        repository.saveBigFolderAlign(enabled)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
@@ -199,6 +204,7 @@ data class LauncherSettingsUiState(
     val cloudFolderDismiss: Boolean = false,
     val disableRecentAppDisplay: Boolean = false,
     val launcherBatchUninstall: Boolean = false,
+    val bigFolderAlign: Boolean = false,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
