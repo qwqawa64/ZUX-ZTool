@@ -231,33 +231,43 @@ private fun frameworkSettingsSections(
     return listOf(
         SettingSection(
             title = stringResource(R.string.system_framework_screen_and_display_title),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_keep_rotation_enable_title),
-                    summary = stringResource(R.string.system_framework_keep_rotation_enable_summary),
-                    checked = state.keepRotation,
-                    onCheckedChange = onKeepRotationChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_disable_hbm_thermal_limit_title),
-                    checked = state.disableHbmThermalLimit,
-                    onCheckedChange = onDisableHbmThermalLimitChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_force_on_off_animation),
-                    summary = stringResource(R.string.system_framework_force_on_off_animation_summary),
-                    checked = state.forceOnOffAnimation,
-                    onCheckedChange = onForceOnOffAnimationChanged
-                ),
-                SettingItem.Custom(
-                    content = {
-                        ScreenOnOffAnimationDuration(
-                            state = state,
-                            onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged
-                        )
-                    }
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_keep_rotation_enable_title),
+                        summary = stringResource(R.string.system_framework_keep_rotation_enable_summary),
+                        checked = state.keepRotation,
+                        onCheckedChange = onKeepRotationChanged
+                    )
                 )
-            )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_disable_hbm_thermal_limit_title),
+                        checked = state.disableHbmThermalLimit,
+                        onCheckedChange = onDisableHbmThermalLimitChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_force_on_off_animation),
+                        summary = stringResource(R.string.system_framework_force_on_off_animation_summary),
+                        checked = state.forceOnOffAnimation,
+                        onCheckedChange = onForceOnOffAnimationChanged
+                    )
+                )
+                if (state.forceOnOffAnimation) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ScreenOnOffAnimationDuration(
+                                    state = state,
+                                    onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged
+                                )
+                            }
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.system_framework_disable_zui_applist_title),
