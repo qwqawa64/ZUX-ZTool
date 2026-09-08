@@ -418,7 +418,6 @@
     <string name="system_ui_animation_charge_animation_fix">补全充电动画列表</string>
     <string name="system_ui_animation_charge_animation_fix_summary">修复充电动画列表，这可以使用更多充电动画</string>
     <string name="system_ui_animation_custom_charge_animation_title">自定义充电动画</string>
-    <string name="system_ui_animation_custom_charge_animation_summary">使用自定义视频替换内置充电动画。视频文件将保存至 /sdcard/Download/ZTool/ 目录，重启 SystemUI 后生效。</string>
     <string name="system_ui_animation_custom_charge_animation_portrait_action_title">选择竖屏视频</string>
     <string name="system_ui_animation_custom_charge_animation_land_action_title">选择横屏视频</string>
     <string name="system_ui_animation_custom_charge_animation_video_saved">视频已保存</string>
@@ -636,7 +635,6 @@
     <string name="system_framework_restart_system_title">重启系统</string>
     <string name="system_framework_restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
     <string name="system_framework_disable_hbm_thermal_limit_title">禁用高温降低亮度</string>
-    <string name="system_framework_disable_hbm_thermal_limit_summary">ZUI 在机身温度过高时会关闭高亮模式（HBM）以降低亮度，开启后高温下仍保持高亮。需要重启系统生效。</string>
     <!--安全中心功能页的资源值-->
     <string name="safe_center_bypass_docements_ui">允许选择用户根目录</string>
     <string name="safe_center_bypass_docements_ui_summary">解决无法使用此文件夹，允许在/storage/emulated/0/等受限目录进行选择操作</string>
@@ -778,13 +776,12 @@
     <string name="system_ui_control_center_notification_center_blur_title">控制通知中心模糊</string>
     <string name="system_ui_control_center_notification_center_blur_summary">调整通知中心和控制中心展开时的背景模糊强度，0% 为关闭模糊。</string>
     <string name="system_ui_control_center_notification_center_blur_strength_title">模糊强度</string>
-    <string name="system_ui_control_center_notification_center_blur_strength_summary">按系统原始模糊强度缩放，重启 SystemUI 后生效。</string>
+    <string name="system_ui_control_center_notification_center_blur_strength_summary">按系统原始模糊强度缩放</string>
     <string name="system_ui_control_center_percent_unit">%d%%</string>
     <string name="system_framework_no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
-    <string name="system_framework_no_password_per_24h_summary">两次使用密码的间隔时间太长（比如一个月）时失效</string>
+    <string name="system_framework_no_password_per_24h_summary">测试功能，可能并没有效果</string>
     <string name="system_framework_allow_untrusted_touch">允许不受信任的触摸</string>
     <string name="page_settings_auto_check_update_title">自动检查更新</string>
-    <string name="page_settings_auto_check_update_summary">启动 APP 时自动检查更新</string>
     <string name="common_splash_logo_description" translatable="false">ZTool Logo</string>
     <string name="common_splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
     <string name="page_firstrun_splash_welcome_text">欢迎使用 ZTool</string>
@@ -807,7 +804,6 @@
     <string name="mobile_desktop_auto_accept_file_transfer_summary">可能会导致您意外收到某些文件</string>
     <string name="common_app_search_page_selected_string">已选择 %d 个应用</string>
     <string name="page_settings_log_settings_title">日志设置</string>
-    <string name="page_settings_export_logs_summary">如果模块或者 Hook 遇到了问题，请导出日志并发送给开发者</string>
     <string name="system_ui_status_bar_notification_icon_number_to_show">显示 %s 个</string>
     <string name="page_features_scope_request_dialog_message">将向框架提交添加作用域的申请，点击确认后请在框架发送的通知中点击“允许”。</string>
     <string name="page_features_scope_request_fail_message">添加到作用域失败：%s</string>
@@ -855,8 +851,7 @@
 
     <!--桌面动态壁纸页资源值-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">桌面动态壁纸</string>
-    <string name="system_ui_animation_desktop_live_wallpaper_summary">使用自定义视频替换桌面动态壁纸。视频文件将保存至 /sdcard/Download/ZTool/ 目录，重启 SystemUI 后生效。</string>
-    <string name="system_ui_animation_desktop_live_wallpaper_rotation_warning">注意：屏幕方向快速切换时动态壁纸可能无法及时渲染，会暂时回退为静态壁纸。</string>
+    <string name="system_ui_animation_desktop_live_wallpaper_rotation_warning">屏幕方向快速切换时动态壁纸可能无法及时渲染，会暂时回退为静态壁纸。</string>
     <string name="system_ui_animation_desktop_live_wallpaper_select_portrait">选择竖屏壁纸视频</string>
     <string name="system_ui_animation_desktop_live_wallpaper_select_land">选择横屏壁纸视频</string>
     <string name="system_ui_animation_desktop_live_wallpaper_portrait_video_saved">壁纸竖屏视频已保存</string>
@@ -874,7 +869,6 @@
     <string name="page_settings_credits_hitokoto_support_site">https://docs.xygeng.cn/ 用于主页一言</string>
     <!-- 桌面多选批量卸载 -->
     <string name="launcher_launcher_batch_uninstall">桌面多选批量卸载</string>
-    <string name="launcher_launcher_batch_uninstall_summary">桌面编辑模式底栏增加“卸载应用”按钮，多选图标后交由 ZTool 通过 Root 静默卸载，需重启桌面生效</string>
     <string name="page_uninstall_title">批量卸载</string>
     <string name="page_uninstall_auth_failed">请求未通过安全校验，已取消卸载</string>
     <string name="page_uninstall_root_unavailable">无法获取 Root 权限，请先在授权管理中允许 ZTool 获取 Root</string>
@@ -882,7 +876,7 @@
     <string name="page_uninstall_result">批量卸载完成：成功 %1$d 个，失败 %2$d 个</string>
     <!-- Hook 侧读取（BatchUninstall 确认框）；经 getIdentifier 按名加载，勿改名勿删 -->
     <string name="ztool_batch_uninstall_dialog_title" tools:ignore="UnusedResources">批量卸载</string>
-    <string name="ztool_batch_uninstall_dialog_message" tools:ignore="UnusedResources">将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：\n\n%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message" tools:ignore="UnusedResources">将卸载以下 %1$d 个应用：\n\n%2$s</string>
     <string name="ztool_batch_uninstall_dispatch_failed" tools:ignore="UnusedResources">无法打开 ZTool 执行卸载</string>
     <!-- Hook 侧读取（BatchUninstall）；经 getIdentifier 按名加载，勿改名勿删 -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">卸载应用</string>

@@ -444,7 +444,6 @@ private fun launcherSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_launcher_batch_uninstall),
-                summary = stringResource(R.string.launcher_launcher_batch_uninstall_summary),
                 checked = state.launcherBatchUninstall,
                 onCheckedChange = onLauncherBatchUninstallChanged
             )

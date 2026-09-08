@@ -410,7 +410,6 @@ private fun settingsSections(
                 SettingItem.Switch(
                     key = "auto_check_update",
                     title = stringResource(R.string.page_settings_auto_check_update_title),
-                    summary = stringResource(R.string.page_settings_auto_check_update_summary),
                     checked = state.isAutoCheckUpdateEnabled,
                     onCheckedChange = onAutoCheckUpdateChanged,
                     icon = Icons.Rounded.Update
@@ -431,7 +430,6 @@ private fun settingsSections(
                 SettingItem.Action(
                     key = "export_logs",
                     title = stringResource(R.string.page_settings_export_logs),
-                    summary = stringResource(R.string.page_settings_export_logs_summary),
                     onClick = onExportLogs,
                     icon = Icons.Rounded.Save,
                     trailingContent = {

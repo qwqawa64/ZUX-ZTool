@@ -287,7 +287,6 @@ private fun animationWallpaperSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_animation_custom_charge_animation_title),
-                summary = stringResource(R.string.system_ui_animation_custom_charge_animation_summary),
                 checked = state.customChargeAnimation,
                 onCheckedChange = onCustomChargeAnimationChanged
             )
@@ -326,8 +325,7 @@ private fun animationWallpaperSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_title),
-                summary = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_summary) + "\n\n" +
-                    stringResource(R.string.system_ui_animation_desktop_live_wallpaper_rotation_warning),
+                summary = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_rotation_warning),
                 checked = state.desktopLiveWallpaper,
                 onCheckedChange = onDesktopLiveWallpaperChanged
             )

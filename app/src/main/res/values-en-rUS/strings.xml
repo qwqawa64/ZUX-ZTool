@@ -376,7 +376,6 @@
     <string name="system_ui_animation_charge_animation_fix">Complete charging animation list</string>
     <string name="system_ui_animation_charge_animation_fix_summary">Fix the charging animation list to make more charging animations available.</string>
     <string name="system_ui_animation_custom_charge_animation_title">Custom charging animation</string>
-    <string name="system_ui_animation_custom_charge_animation_summary">Replace built-in charging animation with custom video files. Videos are saved to /sdcard/Download/ZTool/. Restart SystemUI to take effect.</string>
     <string name="system_ui_animation_custom_charge_animation_portrait_action_title">Select portrait video</string>
     <string name="system_ui_animation_custom_charge_animation_land_action_title">Select landscape video</string>
     <string name="system_ui_animation_custom_charge_animation_video_saved">Video saved</string>
@@ -561,7 +560,6 @@
     <string name="system_framework_restart_system_title">Restart system</string>
     <string name="system_framework_restart_system_message">This change affects the system framework. Restart the system to apply it.</string>
     <string name="system_framework_disable_hbm_thermal_limit_title">Disable brightness reduction at high temperature</string>
-    <string name="system_framework_disable_hbm_thermal_limit_summary">ZUI lowers brightness by disabling high-brightness mode (HBM) when the device gets hot. Keeps high brightness even at high temperature. Requires a system reboot.</string>
     <string name="safe_center_bypass_docements_ui">Allow selecting user root directory</string>
     <string name="safe_center_bypass_docements_ui_summary">Fixes "Cannot use this folder" and allows selection operations in restricted directories such as /storage/emulated/0/.</string>
     <string name="safe_center_default_allow_autorun_title">Background behavior management</string>
@@ -742,7 +740,6 @@
     <string name="mobile_desktop_auto_accept_file_transfer_summary">You may receive some file by accident after enabling this feature</string>
     <string name="common_app_search_page_selected_string">%d APP(s) selected</string>
     <string name="page_settings_log_settings_title">Log Settings</string>
-    <string name="page_settings_export_logs_summary">Export logs and send them to the developer if module APP or hooks encounter a problem</string>
     <string name="system_ui_status_bar_notification_icon_number_to_show">Show %s</string>
     <string name="page_settings_enable_floating_bottom_bar_summary">iOS-style floting bottom bar</string>
     <string name="page_settings_enable_floating_bottom_bar_blur_title">Liquid Glass Bottom Bar</string>
@@ -754,7 +751,6 @@
     <string name="page_settings_about_app_update_title">Check APP Update</string>
     <string name="page_settings_about_app_update_placeholder_summary">Click to check ZTool\'s update</string>
     <string name="page_settings_auto_check_update_title">Check Updates Automatically</string>
-    <string name="page_settings_auto_check_update_summary">Checks update when APP starts up</string>
     <string name="page_settings_advanced_info_title">System Info</string>
     <string name="page_settings_advanced_api_version">libxposed API version</string>
     <string name="launcher_launcher_no_label_mode_title">Launcher No-label Mode</string>
@@ -806,8 +802,7 @@
 
     <!--Desktop live wallpaper resources-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">Desktop Live Wallpaper</string>
-    <string name="system_ui_animation_desktop_live_wallpaper_summary">Replace the desktop live wallpaper with a custom video. Videos are saved to /sdcard/Download/ZTool/. Restart SystemUI to take effect.</string>
-    <string name="system_ui_animation_desktop_live_wallpaper_rotation_warning">Note: Rapid screen rotation may prevent the live wallpaper from rendering; it will temporarily fall back to the static wallpaper.</string>
+    <string name="system_ui_animation_desktop_live_wallpaper_rotation_warning">Rapid screen rotation may prevent the live wallpaper from rendering; it will temporarily fall back to the static wallpaper.</string>
     <string name="system_ui_animation_desktop_live_wallpaper_select_portrait">Select Portrait Wallpaper Video</string>
     <string name="system_ui_animation_desktop_live_wallpaper_select_land">Select Landscape Wallpaper Video</string>
     <string name="system_ui_animation_desktop_live_wallpaper_portrait_video_saved">Portrait wallpaper video saved</string>
@@ -823,7 +818,6 @@
     <string name="page_settings_credits_hitokoto_support_site">https://docs.xygeng.cn/ provides random words shown in home page</string>
     <!-- Desktop multi-select batch uninstall -->
     <string name="launcher_launcher_batch_uninstall">Batch uninstall from desktop multi-select</string>
-    <string name="launcher_launcher_batch_uninstall_summary">Adds an "Uninstall" button to the desktop edit-mode bottom bar. Selected icons are handed to ZTool and silently uninstalled via Root. Restart the launcher to take effect.</string>
     <string name="page_uninstall_title">Batch Uninstall</string>
     <string name="page_uninstall_auth_failed">Request failed the security check, uninstall cancelled</string>
     <string name="page_uninstall_root_unavailable">Root access unavailable. Please grant ZTool root access in the superuser manager first.</string>
@@ -831,7 +825,7 @@
     <string name="page_uninstall_result">Batch uninstall finished: %1$d succeeded, %2$d failed</string>
     <!-- Read by the hook side (BatchUninstall confirm dialog) -->
     <string name="ztool_batch_uninstall_dialog_title" tools:ignore="UnusedResources">Batch Uninstall</string>
-    <string name="ztool_batch_uninstall_dialog_message" tools:ignore="UnusedResources">The following %1$d app(s) will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:\n\n%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message" tools:ignore="UnusedResources">The following %1$d app(s) will be uninstalled:\n\n%2$s</string>
     <string name="ztool_batch_uninstall_dispatch_failed" tools:ignore="UnusedResources">Failed to open ZTool for uninstall</string>
     <!-- Read by the hook side (BatchUninstall) -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">Uninstall</string>

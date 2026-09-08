@@ -240,7 +240,6 @@ private fun frameworkSettingsSections(
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_disable_hbm_thermal_limit_title),
-                    summary = stringResource(R.string.system_framework_disable_hbm_thermal_limit_summary),
                     checked = state.disableHbmThermalLimit,
                     onCheckedChange = onDisableHbmThermalLimitChanged
                 ),
