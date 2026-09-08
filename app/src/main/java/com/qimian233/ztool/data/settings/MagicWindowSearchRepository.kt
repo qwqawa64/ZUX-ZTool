@@ -3,7 +3,7 @@ package com.qimian233.ztool.data.settings
 import android.content.Context
 import android.util.Log
 import com.qimian233.ztool.R
-import com.qimian233.ztool.settingactivity.setting.magicwindowsearch.PackageInfo
+import com.qimian233.ztool.screens.setting.magicwindowsearch.PackageInfo
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.DataInputStream
