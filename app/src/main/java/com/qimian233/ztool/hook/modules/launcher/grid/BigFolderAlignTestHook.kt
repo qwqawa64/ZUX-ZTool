@@ -36,6 +36,10 @@ import java.lang.reflect.Method
  *  7. setup(...) 垂直改写(第二轮修正): offsetY=q 保持宿主原值不动(防止整体抬高),
  *     仅向下延展 previewSizeY 使底边 = (spanY-1)*(cellH+gapY) + cellYInset + iconSize,
  *     即与竖排相邻图标中下面那枚图标的底边线对齐; 顶边维持 stock 位置。
+ *  8. FolderIcon.z() 整体替换(第三轮): stock 标签 topMargin 用名义格宽 C 推导,
+ *     天然比邻居标签高数像素(用户实测 stock 即偏高)。改为小文件夹分支复刻 stock 公式,
+ *     大文件夹分支 topMargin = (spanY-1)*(cellH+gapY) + cellYInset + iconSize + drawablePadding,
+ *     与最后一行邻居图标的标签完全同高(标签贴在背景底边下方, 如同普通图标的图标→标签关系)。
  *
  * PreviewBackground 的关键字段在宿主内是混淆短名（JADX 因与根包冲突显示为 f4283o 等）：
  *   o = 背景宽度, p = offsetX, q = offsetY；spanX/spanY/previewSizeY 为原名。
@@ -100,6 +104,9 @@ class BigFolderAlignTestHook : AppHookModule() {
         // 需求1：大文件夹子图标网格（2x2 → 每行 3 个）
         hookChildGridLayout(classLoader)
 
+        // 需求3：文件夹标签与邻居图标标签同高（替换 FolderIcon.z()）
+        hookFolderLabel(classLoader)
+
         // Hook 点 2：computeBigFolderAvaliableWh 宽度同步
         try {
             val computeWh = findMethod(
@@ -112,7 +119,9 @@ class BigFolderAlignTestHook : AppHookModule() {
                 try {
                     val args = chain.args
                     val wh = args[3] as IntArray
-                    val metrics = readGridMetrics(args[0] ?: return@hookWithId null)
+                    val holder = args[0] ?: return@hookWithId null
+                    val metrics =
+                        readGridMetrics(getDeviceProfileOf(holder) ?: return@hookWithId null)
                     val spanX = args[1] as Int
                     if (metrics != null && spanX > 1) {
                         val inset = if (alignToSmallFolder) metrics.insetFolder else metrics.insetIcon
@@ -192,7 +201,8 @@ class BigFolderAlignTestHook : AppHookModule() {
         // 与宿主 BigFolderConfig.isBigFolder 一致：(spanX > 1 || spanY > 1) && feature
         if (spanX <= 1 && spanY <= 1) return
 
-        val metrics = readGridMetrics(activityContext) ?: return
+        val dp = getDeviceProfileOf(activityContext) ?: return
+        val metrics = readGridMetrics(dp) ?: return
         val inset = if (alignToSmallFolder) metrics.insetFolder else metrics.insetIcon
         val newWidth = spanX * metrics.cellWidth + (spanX - 1) * metrics.gapX - 2 * inset
 
@@ -258,29 +268,38 @@ class BigFolderAlignTestHook : AppHookModule() {
         val widgetPaddingTop: Int
     )
 
-    private fun readGridMetrics(activityContext: Any): GridMetrics? {
+    // ── 反射缓存（宿主公开字段/方法, 进程内首次访问解析, 之后走缓存） ──
+
+    private val fieldCache = java.util.concurrent.ConcurrentHashMap<String, Field>()
+    private val methodCache = java.util.concurrent.ConcurrentHashMap<String, Method>()
+
+    private fun publicField(clazz: Class<*>, name: String): Field =
+        fieldCache.computeIfAbsent("${clazz.name}#$name") { clazz.getField(name) }
+
+    private fun publicMethod(clazz: Class<*>, name: String, vararg params: Class<*>): Method =
+        methodCache.computeIfAbsent("${clazz.name}#${name}#${params.size}") { clazz.getMethod(name, *params) }
+
+    private fun getDeviceProfileOf(holder: Any): Any? =
+        publicMethod(holder.javaClass, "getDeviceProfile").invoke(holder)
+
+    private fun readGridMetrics(dp: Any): GridMetrics? {
         try {
-            val dp = activityContext.javaClass
-                .getMethod("getDeviceProfile")
-                .invoke(activityContext) ?: return null
             val dpClass = dp.javaClass
-            val inv = dpClass.getField("inv").get(dp)
-            val columns = inv.javaClass.getField("numColumns").getInt(inv)
-            val rows = inv.javaClass.getField("numRows").getInt(inv)
-            val padding = dpClass.getField("cellLayoutPaddingPx").get(dp) as Rect
-            val borderSpace = dpClass.getField("cellLayoutBorderSpacePx").get(dp) as Point
-            val widgetPadding = dpClass.getField("widgetPadding").get(dp) as Rect
-            val iconSizePx = dpClass.getField("iconSizePx").getInt(dp)
-            val folderIconSizePx = dpClass.getField("folderIconSizePx").getInt(dp)
-            val cellLayoutWidth =
-                dpClass.getMethod("getCellLayoutWidth").invoke(dp) as Int
-            val cellLayoutHeight =
-                dpClass.getMethod("getCellLayoutHeight").invoke(dp) as Int
-            // 单元格内容块垂直内缩（图标顶边相对格顶边的距离）, 取不到时回退 0
+            val inv = publicField(dpClass, "inv").get(dp)
+            val invClass = inv.javaClass
+            val columns = publicField(invClass, "numColumns").getInt(inv)
+            val rows = publicField(invClass, "numRows").getInt(inv)
+            val padding = publicField(dpClass, "cellLayoutPaddingPx").get(dp) as Rect
+            val borderSpace = publicField(dpClass, "cellLayoutBorderSpacePx").get(dp) as Point
+            val widgetPadding = publicField(dpClass, "widgetPadding").get(dp) as Rect
+            val iconSizePx = publicField(dpClass, "iconSizePx").getInt(dp)
+            val folderIconSizePx = publicField(dpClass, "folderIconSizePx").getInt(dp)
+            val cellLayoutWidth = publicMethod(dpClass, "getCellLayoutWidth").invoke(dp) as Int
+            val cellLayoutHeight = publicMethod(dpClass, "getCellLayoutHeight").invoke(dp) as Int
+            // 单元格内容块垂直内缩（图标顶边相对格顶边的距离）, 字段缺失时回退 0
             val cellYInset = try {
-                dpClass.getField("cellYPaddingPx").getInt(dp)
+                publicField(dpClass, "cellYPaddingPx").getInt(dp)
             } catch (_: Throwable) {
-                logger.warn("DeviceProfile.cellYPaddingPx not found, vertical top inset falls back to 0")
                 0
             }
 
@@ -467,6 +486,66 @@ class BigFolderAlignTestHook : AppHookModule() {
             logger.info("hooked ClippedFolderIconLayoutRule.c (generic grid)")
         } catch (t: Throwable) {
             logger.error("hook ClippedFolderIconLayoutRule.c failed", t)
+        }
+    }
+
+    // ── 需求3：文件夹标签与邻居图标标签同高（整体替换 FolderIcon.z()） ──
+
+    /**
+     * stock z() 的大文件夹标签 topMargin 用名义格宽 C 推导（C*(spanY-1) + (C-cellHeightPx)/2 ...）,
+     * 与 CellLayout 实际行距 (cellHeight+gapY) 存在固有偏差, 导致文件夹标签比邻居图标标签偏高。
+     * 这里整体替换 z()：小文件夹分支复刻 stock 公式（iconSizePx + iconDrawablePaddingPx）,
+     * 大文件夹分支用实际行距把标签钉在与最后一行邻居标签相同的高度上——
+     * 即紧贴背景底边下方, 与普通图标"图标→标签"的间距关系一致。
+     * 任何反射失败都会回退到 chain.proceed() 走 stock 逻辑, 不会让标签失控。
+     */
+    private fun hookFolderLabel(classLoader: ClassLoader) {
+        try {
+            val folderIconClass = classLoader.loadClass("com.android.launcher3.folder.FolderIcon")
+            val zMethod = findMethod(folderIconClass, "z")
+            // FolderIcon.b = ActivityContext（混淆短名）; mInfo / folderBubbleTextView 为原名
+            val activityContextField = folderIconClass.getDeclaredField("b").apply { isAccessible = true }
+            val infoField = folderIconClass.getField("mInfo")
+            val labelField = folderIconClass.getField("folderBubbleTextView")
+            hookWithId(zMethod, "big_folder_align_label") { chain ->
+                try {
+                    val icon = chain.thisObject
+                    val info = infoField.get(icon)
+                        ?: return@hookWithId chain.proceed()
+                    val spanX = publicField(info.javaClass, "spanX").getInt(info)
+                    val spanY = publicField(info.javaClass, "spanY").getInt(info)
+                    val activityContext = activityContextField.get(icon)
+                        ?: return@hookWithId chain.proceed()
+                    val dp = getDeviceProfileOf(activityContext)
+                        ?: return@hookWithId chain.proceed()
+                    val dpClass = dp.javaClass
+                    val iconSizePx = publicField(dpClass, "iconSizePx").getInt(dp)
+                    val drawablePadding = publicField(dpClass, "iconDrawablePaddingPx").getInt(dp)
+                    val topMargin: Int
+                    if (spanX <= 1 && spanY <= 1) {
+                        topMargin = iconSizePx + drawablePadding
+                    } else {
+                        val metrics = readGridMetrics(dp)
+                            ?: return@hookWithId chain.proceed()
+                        topMargin = (spanY - 1) * (metrics.cellHeight + metrics.gapY) +
+                            metrics.cellYInset + iconSizePx + drawablePadding
+                    }
+                    val label = labelField.get(icon) as View
+                    val lp = label.layoutParams as android.view.ViewGroup.MarginLayoutParams
+                    if (lp.topMargin != topMargin) {
+                        lp.topMargin = topMargin
+                        label.requestLayout()
+                        logger.debug("label topMargin -> $topMargin (span=${spanX}x${spanY})")
+                    }
+                    null // 已完整替代宿主 z()
+                } catch (t: Throwable) {
+                    logger.error("label align failed, fallback to stock z()", t)
+                    chain.proceed()
+                }
+            }
+            logger.info("hooked FolderIcon.z (label alignment)")
+        } catch (t: Throwable) {
+            logger.error("hook FolderIcon.z failed", t)
         }
     }
 
