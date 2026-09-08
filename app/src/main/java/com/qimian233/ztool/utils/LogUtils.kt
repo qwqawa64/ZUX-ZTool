@@ -138,7 +138,7 @@ object LogUtils {
         handler.post {
             Toast.makeText(
                 context,
-                context.getString(R.string.lsposed_log_sync_failed),
+                context.getString(R.string.common_lsposed_log_sync_failed),
                 Toast.LENGTH_SHORT
             ).show()
         }

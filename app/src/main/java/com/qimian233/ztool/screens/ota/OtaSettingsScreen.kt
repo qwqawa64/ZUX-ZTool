@@ -74,7 +74,7 @@ fun OtaSettingsRoute(
             )
         )[OtaSettingsViewModel::class.java]
     }
-    val unknownText = stringResource(R.string.unknown)
+    val unknownText = stringResource(R.string.common_unknown)
     val otaInfoFetchFailed = stringResource(R.string.ota_info_fetch_failed)
     val snDefaultHint = stringResource(R.string.SN_default_hint)
     val clipboardLabel = stringResource(R.string.ota_info_clipboard_label)
@@ -194,7 +194,7 @@ private fun OtaSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestartScope,
                 icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
-                text = { Text(stringResource(R.string.restart_yes)) }
+                text = { Text(stringResource(R.string.common_restart_yes)) }
             )
         }
     ) { innerPadding ->
@@ -502,7 +502,7 @@ private fun FirmwareContent(
                 ) {
                     Text(
                         if (isFetching) stringResource(R.string.fetching_firmware_info) else stringResource(
-                            R.string.confirm
+                            R.string.common_confirm
                         )
                     )
                 }
@@ -636,10 +636,10 @@ private fun ErrorDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.error_title)) },
+        title = { Text(stringResource(R.string.common_error_title)) },
         text = { Text(message) },
         confirmButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.confirm))
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_confirm))
         }
     )
 }
@@ -652,23 +652,23 @@ private fun RestartScopeDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
+        title = { Text(stringResource(R.string.common_restart_xp_title)) },
         text = {
             Text(
-                stringResource(R.string.restart_xp_message_header) +
+                stringResource(R.string.common_restart_xp_message_header) +
                         packageName +
                         ", com.lenovo.tbengine" +
                         ", com.android.settings " +
-                        stringResource(R.string.restart_xp_message)
+                        stringResource(R.string.common_restart_xp_message)
             )
         },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_restart_yes))
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onDismiss,
-                text = stringResource(R.string.restart_no),
+                text = stringResource(R.string.common_restart_no),
                 isPrimary = false
             )
         }

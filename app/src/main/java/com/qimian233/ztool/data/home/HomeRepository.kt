@@ -61,7 +61,7 @@ class HomeRepository(
     }
 
     fun updateSystemInfo(): SystemInfo {
-        val unknown = context.getString(R.string.unknown)
+        val unknown = context.getString(R.string.common_unknown)
         val deviceModel = Build.MODEL.ifBlank { unknown }
         val androidVersion = Build.VERSION.RELEASE.ifBlank { unknown }
             .let { if (it == unknown) it else context.getString(R.string.page_home_android_version_prefix, it) }
@@ -271,10 +271,10 @@ class HomeRepository(
             when (result.output.trim()) {
                 "_a" -> context.getString(R.string.page_home_slot_a)
                 "_b" -> context.getString(R.string.page_home_slot_b)
-                else -> context.getString(R.string.unknown)
+                else -> context.getString(R.string.common_unknown)
             }
         } else {
-            context.getString(R.string.unknown)
+            context.getString(R.string.common_unknown)
         }
     }
 
@@ -288,10 +288,10 @@ class HomeRepository(
             commands.firstNotNullOfOrNull { command ->
                 val result = shellExecutor.executeRootCommand(command, 3)
                 result.output?.trim()?.takeIf { it.isNotEmpty() }
-            } ?: context.getString(R.string.unknown)
+            } ?: context.getString(R.string.common_unknown)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch ROM region: ${e.message}")
-            context.getString(R.string.unknown)
+            context.getString(R.string.common_unknown)
         }
     }
 

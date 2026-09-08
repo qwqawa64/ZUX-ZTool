@@ -191,7 +191,7 @@ class MainActivity : ComponentActivity(),
         runOnUiThread {
             Toast.makeText(
                 this,
-                getString(R.string.log_service_require_manual_restart),
+                getString(R.string.common_log_service_require_manual_restart),
                 Toast.LENGTH_LONG
             ).show()
         }

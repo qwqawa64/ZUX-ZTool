@@ -135,7 +135,7 @@ internal fun PackageInstallerSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestart,
                 icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
-                text = {Text(stringResource(R.string.restart_yes))})
+                text = {Text(stringResource(R.string.common_restart_yes))})
         }
     ) { innerPadding ->
         Box(
@@ -180,7 +180,7 @@ internal fun packageInstallerSettingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.sec_title_function),
+            title = stringResource(R.string.common_sec_title_function),
             items = listOf(
                 SettingItem.Switch(
                     title = stringResource(R.string.Disable_ScanAPK_Title),
@@ -236,19 +236,19 @@ internal fun RestartConfirmDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
+        title = { Text(stringResource(R.string.common_restart_xp_title)) },
         text = {
             Text(
-                stringResource(R.string.restart_xp_message_header) +
+                stringResource(R.string.common_restart_xp_message_header) +
                     packageName +
-                    stringResource(R.string.restart_xp_message)
+                    stringResource(R.string.common_restart_xp_message)
             )
         },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_restart_yes))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }

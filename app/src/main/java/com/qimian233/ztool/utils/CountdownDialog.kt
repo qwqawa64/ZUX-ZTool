@@ -57,11 +57,11 @@ class CountdownDialog private constructor(
         private val context: Context,
         private var listener: OnCountdownFinishListener?
     ) {
-        private var title = context.getString(R.string.confirm)
-        private var message = context.getString(R.string.page_firstrun_customized_confirm_with_countdown, context.getString(R.string.confirm), 10)
+        private var title = context.getString(R.string.common_confirm)
+        private var message = context.getString(R.string.page_firstrun_customized_confirm_with_countdown, context.getString(R.string.common_confirm), 10)
         private var countdownSeconds = 10
-        private var positiveText = context.getString(R.string.confirm)
-        private var negativeText = context.getString(R.string.cancel)
+        private var positiveText = context.getString(R.string.common_confirm)
+        private var negativeText = context.getString(R.string.common_cancel)
         private var cancelable = true
 
         fun setTitle(title: String): Builder {

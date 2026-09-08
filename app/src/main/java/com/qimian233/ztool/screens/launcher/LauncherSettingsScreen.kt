@@ -146,7 +146,7 @@ fun LauncherSettingsRoute(
             onConfirm = viewModel::dismissDisableDockWarningDialog,
             onDoNotShowAgain = {
                 viewModel.confirmDisableDockWarning()
-                Toast.makeText(context, R.string.no_tip_next_time, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.common_no_tip_next_time, Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -207,7 +207,7 @@ private fun LauncherSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestart,
                 icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
-                text = {Text(stringResource(R.string.restart_yes))})
+                text = {Text(stringResource(R.string.common_restart_yes))})
         }
     ) { innerPadding ->
         Box(
@@ -485,9 +485,9 @@ private fun ForceStopModeRow(
     onModeChanged: (ForceStopMode) -> Unit
 ) {
     val options = listOf(
-        ForceStopMode.Default to stringResource(R.string.SelectDefault),
+        ForceStopMode.Default to stringResource(R.string.common_select_default),
         ForceStopMode.AllApps to stringResource(R.string.SelectAllAPP),
-        ForceStopMode.Whitelist to stringResource(R.string.SelectWhiteList)
+        ForceStopMode.Whitelist to stringResource(R.string.common_select_white_list)
     )
     val selectedLabel = options.first { it.first == selectedMode }.second
 
@@ -552,19 +552,19 @@ private fun RestartConfirmDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
+        title = { Text(stringResource(R.string.common_restart_xp_title)) },
         text = {
             Text(
-                stringResource(R.string.restart_xp_message_header) +
+                stringResource(R.string.common_restart_xp_message_header) +
                     packageName +
-                    stringResource(R.string.restart_xp_message)
+                    stringResource(R.string.common_restart_xp_message)
             )
         },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_restart_yes))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }
@@ -579,10 +579,10 @@ private fun DisableDockWarningDialog(
         title = { Text(stringResource(R.string.disable_dock_warning_title)) },
         text = { Text(stringResource(R.string.disable_dock_warning_message)) },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.confirm))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_confirm))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDoNotShowAgain, text = stringResource(R.string.do_not_show_again), isPrimary = false)
+            ZToolTextButton(onClick = onDoNotShowAgain, text = stringResource(R.string.common_do_not_show_again), isPrimary = false)
         }
     )
 }

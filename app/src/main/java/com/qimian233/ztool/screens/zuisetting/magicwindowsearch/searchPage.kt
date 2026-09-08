@@ -126,7 +126,7 @@ private fun SearchPageScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.cancel)
+                            contentDescription = stringResource(R.string.common_cancel)
                         )
                     }
                 }

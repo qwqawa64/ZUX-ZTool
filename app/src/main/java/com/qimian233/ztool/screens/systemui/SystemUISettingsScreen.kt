@@ -85,13 +85,13 @@ fun SystemUiSettingsRoute(
     )
 
     if (uiState.showRestartDialog) {
-        val restartFailString = stringResource(R.string.restartFail)
+        val restartFailString = stringResource(R.string.common_restart_fail)
         RestartScopeDialog(
             packageName = packageName,
             onConfirm = {
                 viewModel.forceStopScope { success, error ->
                     if (success) {
-                        Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.common_restart_success, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(
                             context,
@@ -144,7 +144,7 @@ private fun SystemUiSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestartScope,
                 icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
-                text = { Text(stringResource(R.string.restart_yes)) }
+                text = { Text(stringResource(R.string.common_restart_yes)) }
             )
         }
     ) { innerPadding ->
@@ -249,20 +249,20 @@ private fun RestartScopeDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
+        title = { Text(stringResource(R.string.common_restart_xp_title)) },
         text = {
             Text(
-                stringResource(R.string.restart_xp_message_header) +
+                stringResource(R.string.common_restart_xp_message_header) +
                     packageName +
                     "，com.zui.wallpapersetting" +
-                    stringResource(R.string.restart_xp_message)
+                    stringResource(R.string.common_restart_xp_message)
             )
         },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_restart_yes))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }

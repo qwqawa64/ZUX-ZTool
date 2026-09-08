@@ -27,15 +27,15 @@ public class MagiskModuleManager {
 
         // 执行卸载脚本
         EnhancedShellExecutor.ShellResult res0 = executor.executeRootCommand("sh " + MODULE_PATH + "/uninstall.sh");
-        if (!res0.isSuccess()) return context.getString(R.string.error_shell_command_failed, "Failed to execute uninstall.sh");
+        if (!res0.isSuccess()) return context.getString(R.string.common_error_shell_command_failed, "Failed to execute uninstall.sh");
 
         // 删除模块目录
         EnhancedShellExecutor.ShellResult res1 = executor.executeRootCommand("rm -rf " + MODULE_PATH);
-        if (!res1.isSuccess()) return context.getString(R.string.error_shell_command_failed, "Failed to remove module dir");
+        if (!res1.isSuccess()) return context.getString(R.string.common_error_shell_command_failed, "Failed to remove module dir");
 
         // 删除系统配置残留 (可选，视需求而定)
         EnhancedShellExecutor.ShellResult res2 = executor.executeRootCommand("rm -f " + MODULE_CONFIG_PATH);
-        if (!res2.isSuccess()) return context.getString(R.string.error_shell_command_failed, "Failed to remove config");
+        if (!res2.isSuccess()) return context.getString(R.string.common_error_shell_command_failed, "Failed to remove config");
 
         return "success";
     }
@@ -48,11 +48,11 @@ public class MagiskModuleManager {
 
         // 1. 清理并准备临时目录
         FileUtils.deleteRecursive(tempDir);
-        if (!tempDir.mkdirs()) return context.getString(R.string.error_create_temp_dir);
+        if (!tempDir.mkdirs()) return context.getString(R.string.common_error_create_temp_dir);
 
         // 2. 从 Assets 复制到私有目录
         if (FileUtils.copyAssetsToDirectory(context, sourceAssetsPath, tempDir)) {
-            return context.getString(R.string.error_copy_assets);
+            return context.getString(R.string.common_error_copy_assets);
         }
 
         String MODULE_INSTALL_PATH = "/data/adb/modules_update/" + MODULE_ID;
@@ -74,7 +74,7 @@ public class MagiskModuleManager {
         FileUtils.deleteRecursive(tempDir);
 
         if (!result.isSuccess()) {
-            return context.getString(R.string.error_shell_command_failed, result.error);
+            return context.getString(R.string.common_error_shell_command_failed, result.error);
         }
         return "success";
     }

@@ -78,7 +78,7 @@ class ControlCenterSettingsRepository(
                 Log.e(TAG, "Error formatting date: $format", e)
                 context.getString(R.string.preview_invalid) +
                     "\n" +
-                    context.getString(R.string.error_prefix) +
+                    context.getString(R.string.common_error_prefix) +
                     e.message
             }
         }

@@ -163,7 +163,7 @@ public class OvCommonConfigManager {
             if (result.isSuccess()) {
                 return "success";
             } else {
-                return context.getString(R.string.error_shell_command_failed, result.error);
+                return context.getString(R.string.common_error_shell_command_failed, result.error);
             }
 
         } catch (Exception e) {

@@ -39,7 +39,7 @@ fun DexIndexProgressDialog(
                     .padding(vertical = 12.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.dexIndexDialogTitle),
+                    text = stringResource(R.string.common_dex_index_dialog_title),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -52,7 +52,7 @@ fun DexIndexProgressDialog(
                 )
                 Text(
                     text = stringResource(
-                        R.string.dexIndexProgressText,
+                        R.string.common_dex_index_progress_text,
                         progress.current,
                         progress.total
                     ),

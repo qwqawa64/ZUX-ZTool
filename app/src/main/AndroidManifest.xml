@@ -31,7 +31,7 @@
         android:enableOnBackInvokedCallback="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:description="@string/splash_slogan"
+        android:description="@string/common_splash_slogan"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/page_settings_app_name"

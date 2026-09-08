@@ -164,7 +164,7 @@ private fun GameToolSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestart,
                 icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
-                text = {Text(stringResource(R.string.restart_yes))})
+                text = {Text(stringResource(R.string.common_restart_yes))})
         }
     ) { innerPadding ->
         Box(
@@ -281,9 +281,9 @@ private fun MistakeTouchModeRow(
     onModeChanged: (MistakeTouchMode) -> Unit
 ) {
     val options = listOf(
-        MistakeTouchMode.Default to stringResource(R.string.SelectDefault),
+        MistakeTouchMode.Default to stringResource(R.string.common_select_default),
         MistakeTouchMode.AllGames to stringResource(R.string.SelectAllGames),
-        MistakeTouchMode.Whitelist to stringResource(R.string.SelectWhiteList)
+        MistakeTouchMode.Whitelist to stringResource(R.string.common_select_white_list)
     )
     val selectedLabel = options.first { it.first == selectedMode }.second
 
@@ -339,19 +339,19 @@ private fun RestartConfirmDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
+        title = { Text(stringResource(R.string.common_restart_xp_title)) },
         text = {
             Text(
-                stringResource(R.string.restart_xp_message_header) +
+                stringResource(R.string.common_restart_xp_message_header) +
                     packageName +
-                    stringResource(R.string.restart_xp_message)
+                    stringResource(R.string.common_restart_xp_message)
             )
         },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_restart_yes))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }

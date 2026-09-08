@@ -27,7 +27,7 @@ class LoadingDialog(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
     private var dialog: Dialog? = null
     private var showing = false
-    private var message by mutableStateOf(context.getString(R.string.loading))
+    private var message by mutableStateOf(context.getString(R.string.common_loading))
 
     fun show(message: String) {
         runOnMain {
@@ -47,7 +47,7 @@ class LoadingDialog(private val context: Context) {
     }
 
     fun show() {
-        show(context.getString(R.string.loading))
+        show(context.getString(R.string.common_loading))
     }
 
     fun dismiss() {

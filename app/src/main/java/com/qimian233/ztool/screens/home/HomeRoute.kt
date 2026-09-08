@@ -184,7 +184,7 @@ private fun openUpdateUrl(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     } catch (_: Exception) {
-        Toast.makeText(context, R.string.open_web_link_failed, Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.common_open_web_link_failed, Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -317,7 +317,7 @@ private fun HomeScreen(
                     SystemInfoCard(state)
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = state.hintText.ifBlank { stringResource(R.string.loading) },
+                        text = state.hintText.ifBlank { stringResource(R.string.common_loading) },
                         style = MaterialTheme.typography.bodySmall,
                         color = LocalZToolColorScheme.current.onSurfaceVariant,
                         modifier = Modifier
@@ -526,17 +526,17 @@ private fun ModuleStatusCard(
                 ) {
                     InfoBlock(
                         label = stringResource(R.string.page_home_version),
-                        value = state.moduleVersion.ifBlank { stringResource(R.string.loading) },
+                        value = state.moduleVersion.ifBlank { stringResource(R.string.common_loading) },
                         colorOnContainer = contentColor
                     )
                     InfoBlock(
                         label = stringResource(R.string.page_home_root),
-                        value = state.rootSource.ifBlank { stringResource(R.string.loading) },
+                        value = state.rootSource.ifBlank { stringResource(R.string.common_loading) },
                         colorOnContainer = contentColor
                     )
                     InfoBlock(
                         label = stringResource(R.string.page_home_framework),
-                        value = state.frameworkVersion.ifBlank { stringResource(R.string.loading) },
+                        value = state.frameworkVersion.ifBlank { stringResource(R.string.common_loading) },
                         colorOnContainer = contentColor
                     )
                 }
@@ -610,14 +610,14 @@ private fun SystemInfoCard(state: HomeUiState) {
                     onClick = {},
                     label = {
                         Text(stringResource(R.string.page_home_current_slot) + state.currentSlot.ifBlank { stringResource(
-                            R.string.unknown) })
+                            R.string.common_unknown) })
                     }
                 )
                 SuggestionChip(
                     onClick = {},
                     label = {
                         Text(stringResource(R.string.page_home_rom_region) + state.romRegion.ifBlank { stringResource(
-                            R.string.unknown) })
+                            R.string.common_unknown) })
                     }
                 )
             }
@@ -684,13 +684,13 @@ private fun RebootConfirmDialog(
         confirmButton = {
             ZToolTextButton(
                 onClick = onConfirm,
-                text = stringResource(R.string.confirm)
+                text = stringResource(R.string.common_confirm)
             )
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onDismiss,
-                text = stringResource(R.string.cancel),
+                text = stringResource(R.string.common_cancel),
                 isPrimary = false
             )
         }

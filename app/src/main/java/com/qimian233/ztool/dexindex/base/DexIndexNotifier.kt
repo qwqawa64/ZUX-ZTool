@@ -41,10 +41,10 @@ object DexIndexNotifier {
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(
                     context.getString(
-                        if (done) R.string.dexIndexNotifyDone else R.string.dexIndexNotifyFailed
+                        if (done) R.string.common_dex_index_notify_done else R.string.common_dex_index_notify_failed
                     )
                 )
-                .setContentText(context.getString(R.string.dexIndexNotifyDoneText, success))
+                .setContentText(context.getString(R.string.common_dex_index_notify_done_text, success))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setAutoCancel(true)
                 .build()
@@ -70,7 +70,7 @@ object DexIndexNotifier {
         val nm = notificationManager(context) ?: return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            context.getString(R.string.dexIndexChannelName),
+            context.getString(R.string.common_dex_index_channel_name),
             NotificationManager.IMPORTANCE_LOW
         )
         channel.setShowBadge(false)

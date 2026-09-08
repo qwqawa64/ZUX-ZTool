@@ -76,7 +76,7 @@ public class FontInstallerManager {
         small.recycle();
 
         // Preview
-        Bitmap preview = generateFontPreviewBitmap(tf, context.getString(R.string.font_preview_text), 948, 945);
+        Bitmap preview = generateFontPreviewBitmap(tf, context.getString(R.string.common_font_preview_text), 948, 945);
         File previewFile = saveBitmapToTemp(context, preview, "preview.png");
         copyFileWithRoot(executor, previewFile.getAbsolutePath(), targetFolderPath + "/preview.png");
         preview.recycle();
@@ -137,8 +137,8 @@ public class FontInstallerManager {
         return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
                 "<ZFont>\n" +
                 "<name>" + name + "</name>\n" +
-                "<language>" + context.getString(R.string.font_language) + "</language>\n" +
-                "<author>" + context.getString(R.string.font_author) + "</author>\n" +
+                "<language>" + context.getString(R.string.common_font_language) + "</language>\n" +
+                "<author>" + context.getString(R.string.common_font_author) + "</author>\n" +
                 "<abstract>" + desc + "</abstract>\n" +
                 "</ZFont>";
     }

@@ -127,7 +127,7 @@ private fun SettingsAboutScreen(
     onOpenUdl: () -> Unit
 ) {
     val context = LocalContext.current
-    val unknownString = stringResource(R.string.unknown)
+    val unknownString = stringResource(R.string.common_unknown)
     val versionName = remember(context) {
         runCatching {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
@@ -137,7 +137,7 @@ private fun SettingsAboutScreen(
     val commitCount = BuildConfig.GIT_COMMIT_COUNT
     val commitHash = BuildConfig.GIT_COMMIT_HASH
     val updateSummary = when {
-        isCheckingUpdate -> stringResource(R.string.loading)
+        isCheckingUpdate -> stringResource(R.string.common_loading)
         updateInfo != null -> stringResource(
             R.string.page_settings_update_available_version_format,
             updateInfo.versionName,
@@ -280,7 +280,7 @@ private fun AboutHeaderCard(
         ) {
             Image(
                 bitmap = ImageBitmap.imageResource(R.drawable.splash_logo),
-                contentDescription = stringResource(R.string.splash_logo_description),
+                contentDescription = stringResource(R.string.common_splash_logo_description),
                 modifier = Modifier.height(88.dp)
             )
             Text(
@@ -295,7 +295,7 @@ private fun AboutHeaderCard(
                 color = LocalZToolColorScheme.current.onSurfaceVariant
             )
             Text(
-                text = stringResource(R.string.splash_slogan),
+                text = stringResource(R.string.common_splash_slogan),
                 style = MaterialTheme.typography.bodyLarge,
                 color = LocalZToolColorScheme.current.onSurfaceVariant
             )
@@ -413,6 +413,6 @@ internal fun openExternalLink(
             }
         )
     } catch (_: Exception) {
-        Toast.makeText(context, context.getString(R.string.open_web_link_failed), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.common_open_web_link_failed), Toast.LENGTH_SHORT).show()
     }
 }

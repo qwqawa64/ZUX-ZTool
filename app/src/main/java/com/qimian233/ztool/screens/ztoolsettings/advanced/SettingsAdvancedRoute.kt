@@ -475,13 +475,13 @@ private fun ResetConfirmDialog(
         confirmButton = {
             ZToolTextButton(
                 onClick = onConfirm,
-                text = stringResource(R.string.confirm)
+                text = stringResource(R.string.common_confirm)
             )
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onDismiss,
-                text = stringResource(R.string.cancel),
+                text = stringResource(R.string.common_cancel),
                 isPrimary = false
             )
         }
@@ -503,13 +503,13 @@ private fun HotReloadConfirmDialog(
         confirmButton = {
             ZToolTextButton(
                 onClick = onConfirm,
-                text = stringResource(R.string.confirm)
+                text = stringResource(R.string.common_confirm)
             )
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onDismiss,
-                text = stringResource(R.string.cancel),
+                text = stringResource(R.string.common_cancel),
                 isPrimary = false
             )
         }

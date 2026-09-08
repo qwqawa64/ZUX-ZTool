@@ -112,8 +112,8 @@ fun SettingsDetailRoute(
     val savingConfigText = stringResource(R.string.saving_config)
     val saveSuccessTitleText = stringResource(R.string.success_title)
     val saveSuccessMessageText = stringResource(R.string.save_success_message)
-    val errorTitleText = stringResource(R.string.error_title)
-    val errorPrefixText = stringResource(R.string.error_prefix)
+    val errorTitleText = stringResource(R.string.common_error_title)
+    val errorPrefixText = stringResource(R.string.common_error_prefix)
     val configSuffixText = stringResource(R.string.config_suffix)
     val tipTitleText = stringResource(R.string.tip_title)
     val installModuleFirstText = stringResource(R.string.install_module_first)
@@ -121,7 +121,7 @@ fun SettingsDetailRoute(
     val confirmRestoreTitleText = stringResource(R.string.confirm_restore_title)
     val confirmRestoreMessageText = stringResource(R.string.confirm_restore_message)
     val confirmButtonText = stringResource(R.string.confirm_button)
-    val restartNoText = stringResource(R.string.restart_no)
+    val restartNoText = stringResource(R.string.common_restart_no)
     val restoringModuleText = stringResource(R.string.restoring_module)
     val restoreSuccessMessageText = stringResource(R.string.restore_success_message)
     val importingFontText = stringResource(R.string.importing_font)
@@ -727,7 +727,7 @@ private fun SettingsDetailScreen(
                         contentDescription = null
                     )
                 },
-                text = { Text(stringResource(R.string.restart_yes)) }
+                text = { Text(stringResource(R.string.common_restart_yes)) }
             )
         }
     ) { innerPadding ->
@@ -1171,7 +1171,7 @@ private fun ConfigSelectionDialogContent(
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     ZToolTextButton(
                         onClick = onCancel,
-                        text = stringResource(R.string.cancel),
+                        text = stringResource(R.string.common_cancel),
                         isPrimary = false
                     )
                     ZToolTextButton(
@@ -1209,7 +1209,7 @@ private fun ConfigSelectionDialogContent(
                     }
                     ZToolTextButton(
                         onClick = onCancel,
-                        text = stringResource(R.string.cancel),
+                        text = stringResource(R.string.common_cancel),
                         isPrimary = false
                     )
                 }
@@ -1307,7 +1307,7 @@ private fun FontInputDialogContent(
         dismissButton = {
             ZToolTextButton(
                 onClick = onCancel,
-                text = stringResource(R.string.cancel),
+                text = stringResource(R.string.common_cancel),
                 isPrimary = false
             )
         }

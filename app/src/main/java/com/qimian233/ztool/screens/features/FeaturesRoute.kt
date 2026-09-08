@@ -131,13 +131,13 @@ fun FeaturesMainRoute(
                         )
                         scopeRequestItem = null
                     },
-                    text = stringResource(R.string.confirm)
+                    text = stringResource(R.string.common_confirm)
                 )
             },
             dismissButton = {
                 ZToolTextButton(
                     onClick = { scopeRequestItem = null },
-                    text = stringResource(R.string.cancel),
+                    text = stringResource(R.string.common_cancel),
                     isPrimary = false
                 )
             }

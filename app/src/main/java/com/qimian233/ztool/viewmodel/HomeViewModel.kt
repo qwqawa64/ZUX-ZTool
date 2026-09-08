@@ -99,9 +99,9 @@ class HomeViewModel(
                 emptyMap()
             }
             val toastRes = if (results.isNotEmpty() && results.values.any { it }) {
-                R.string.dexIndexRefreshed
+                R.string.common_dex_index_refreshed
             } else {
-                R.string.dexIndexRefreshFailed
+                R.string.common_dex_index_refresh_failed
             }
             _dexIndexState.value = _dexIndexState.value.copy(
                 refreshing = false,

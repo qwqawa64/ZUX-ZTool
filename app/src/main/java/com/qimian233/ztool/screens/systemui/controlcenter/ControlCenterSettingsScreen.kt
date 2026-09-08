@@ -174,20 +174,20 @@ fun ControlCenterSettingsRoute(
             confirmButton = {
                 ZToolTextButton(
                     onClick = viewModel::dismissSaveSuccessDialog,
-                    text = stringResource(R.string.confirm)
+                    text = stringResource(R.string.common_confirm)
                 )
             }
         )
     }
 
     if (uiState.showRestartDialog) {
-        val restartFailString = stringResource(R.string.restartFail)
+        val restartFailString = stringResource(R.string.common_restart_fail)
         RestartScopeDialog(
             packageName = ScopeKeys.SYSTEM_UI.packageName,
             onConfirm = {
                 viewModel.forceStopScope { success, error ->
                     if (success) {
-                        Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.common_restart_success, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, restartFailString + error, Toast.LENGTH_SHORT).show()
                     }
@@ -270,7 +270,7 @@ private fun ControlCenterSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestartScope,
                 icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
-                text = { Text(stringResource(R.string.restart_yes)) }
+                text = { Text(stringResource(R.string.common_restart_yes)) }
             )
         }
     ) { innerPadding ->
@@ -888,8 +888,8 @@ private fun FormatHelpDialog(
     ZToolQuickHelpDialog(
         title = stringResource(R.string.date_format_help_title),
         summary = stringResource(R.string.date_format_quick_help_summary),
-        quickLabel = stringResource(R.string.quick_help_lookup_title),
-        examplesLabel = stringResource(R.string.quick_help_examples_title),
+        quickLabel = stringResource(R.string.common_quick_help_lookup_title),
+        examplesLabel = stringResource(R.string.common_quick_help_examples_title),
         items = listOf(
             QuickHelpItem("yyyy", stringResource(R.string.format_help_year)),
             QuickHelpItem("MM", stringResource(R.string.format_help_month)),
@@ -916,7 +916,7 @@ private fun FormatHelpDialog(
         onDismiss = onDismiss,
         onCopyExample = onCopyExample,
         copyButtonText = stringResource(R.string.copy_example_button),
-        confirmButtonText = stringResource(R.string.confirm)
+        confirmButtonText = stringResource(R.string.common_confirm)
     )
 }
 
@@ -928,19 +928,19 @@ private fun RestartScopeDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
+        title = { Text(stringResource(R.string.common_restart_xp_title)) },
         text = {
             Text(
-                stringResource(R.string.restart_xp_message_header) +
+                stringResource(R.string.common_restart_xp_message_header) +
                     packageName +
-                    stringResource(R.string.restart_xp_message)
+                    stringResource(R.string.common_restart_xp_message)
             )
         },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_restart_yes))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }

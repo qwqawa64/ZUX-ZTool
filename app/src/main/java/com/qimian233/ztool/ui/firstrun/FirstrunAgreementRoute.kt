@@ -231,7 +231,7 @@ private fun SplashPage(
         ) {
             Image(
                 bitmap = ImageBitmap.imageResource(R.drawable.splash_logo),
-                contentDescription = stringResource(R.string.splash_logo_description),
+                contentDescription = stringResource(R.string.common_splash_logo_description),
             )
             Spacer(modifier = Modifier.height(64.dp))
             Text(
@@ -243,7 +243,7 @@ private fun SplashPage(
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = stringResource(R.string.splash_slogan),
+                text = stringResource(R.string.common_splash_slogan),
                 style = MaterialTheme.typography.bodyLarge,
                 color = LocalZToolColorScheme.current.onSurfaceVariant,
                 fontFamily = FontFamily.Monospace

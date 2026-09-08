@@ -165,10 +165,10 @@ class SettingsRepository(
             packageInfo.versionName.orEmpty()
         } catch (e: PackageManager.NameNotFoundException) {
             Log.w(TAG, "Unable to get module version: ${e.message}")
-            context.getString(R.string.unknown)
+            context.getString(R.string.common_unknown)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to update module status: ${e.message}")
-            context.getString(R.string.unknown)
+            context.getString(R.string.common_unknown)
         }
     }
 }

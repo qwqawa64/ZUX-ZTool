@@ -97,12 +97,12 @@ public class EmbeddingConfigManager {
 
         // 1. 准备环境
         FileUtils.deleteRecursive(tempDir);
-        if (!tempDir.mkdirs()) throw new Exception(context.getString(R.string.error_create_temp_dir));
+        if (!tempDir.mkdirs()) throw new Exception(context.getString(R.string.common_error_create_temp_dir));
 
         // 2. 复制原配置到临时目录 (Root -> App Cache)
         String cpCmd = "cat " + MODULE_CONFIG_FILE + " > " + tempJsonFile.getAbsolutePath();
         EnhancedShellExecutor.ShellResult cpRes = executor.executeRootCommand(cpCmd);
-        if (!cpRes.isSuccess()) throw new Exception(context.getString(R.string.error_copy_original_config));
+        if (!cpRes.isSuccess()) throw new Exception(context.getString(R.string.common_error_copy_original_config));
 
         // 3. 修改权限以便 App 读取
         int uid = android.os.Process.myUid();
@@ -111,7 +111,7 @@ public class EmbeddingConfigManager {
 
         // 4. 解析 JSON 并合并
         String originalContent = FileUtils.readFileContent(tempJsonFile);
-        if (originalContent == null) throw new Exception(context.getString(R.string.error_read_original_config));
+        if (originalContent == null) throw new Exception(context.getString(R.string.common_error_read_original_config));
 
         JSONObject rootJson = new JSONObject(originalContent);
         JSONArray packages = rootJson.getJSONArray("packages");
@@ -145,7 +145,7 @@ public class EmbeddingConfigManager {
         FileUtils.deleteRecursive(tempDir); // 清理
 
         if (!restoreRes.isSuccess()) {
-            throw new Exception(context.getString(R.string.error_update_module_config));
+            throw new Exception(context.getString(R.string.common_error_update_module_config));
         }
     }
 }

@@ -103,13 +103,13 @@ fun LockScreenSettingsRoute(
     )
 
     if (uiState.showRestartDialog) {
-        val restartFailString = stringResource(R.string.restartFail)
+        val restartFailString = stringResource(R.string.common_restart_fail)
         RestartScopeDialog(
             packageName = ScopeKeys.SYSTEM_UI.packageName,
             onConfirm = {
                 viewModel.forceStopScope { success, error ->
                     if (success) {
-                        Toast.makeText(context, R.string.restartSuccess, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.common_restart_success, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, restartFailString + error, Toast.LENGTH_SHORT).show()
                     }
@@ -124,7 +124,7 @@ fun LockScreenSettingsRoute(
             onConfirm = viewModel::dismissRootPermissionDialog,
             onDoNotShowAgain = {
                 viewModel.confirmSystemUiPermission()
-                Toast.makeText(context, R.string.no_tip_next_time, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.common_no_tip_next_time, Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -193,7 +193,7 @@ private fun LockScreenSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestartScope,
                 icon = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
-                text = { Text(stringResource(R.string.restart_yes)) }
+                text = { Text(stringResource(R.string.common_restart_yes)) }
             )
         }
     ) { innerPadding ->
@@ -514,10 +514,10 @@ private fun RootPermissionDialog(
         title = { Text(stringResource(R.string.tooltip_content_description)) },
         text = { Text(stringResource(R.string.systemui_root_permission_required_message)) },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.confirm))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_confirm))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDoNotShowAgain, text = stringResource(R.string.do_not_show_again), isPrimary = false)
+            ZToolTextButton(onClick = onDoNotShowAgain, text = stringResource(R.string.common_do_not_show_again), isPrimary = false)
         }
     )
 }
@@ -538,7 +538,7 @@ private fun ApiTestResultDialog(
             }
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }
@@ -551,19 +551,19 @@ private fun RestartScopeDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.restart_xp_title)) },
+        title = { Text(stringResource(R.string.common_restart_xp_title)) },
         text = {
             Text(
-                stringResource(R.string.restart_xp_message_header) +
+                stringResource(R.string.common_restart_xp_message_header) +
                     packageName +
-                    stringResource(R.string.restart_xp_message)
+                    stringResource(R.string.common_restart_xp_message)
             )
         },
         confirmButton = {
-            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.restart_yes))
+            ZToolTextButton(onClick = onConfirm, text = stringResource(R.string.common_restart_yes))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }

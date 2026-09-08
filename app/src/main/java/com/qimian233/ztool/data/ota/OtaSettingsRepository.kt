@@ -82,10 +82,10 @@ class OtaSettingsRepository(
     fun loadCurrentDeviceInfo(): CurrentDeviceInfo {
         val versionResult = Build.DISPLAY
         val version = versionResult.ifEmpty {
-            context.getString(R.string.unknown)
+            context.getString(R.string.common_unknown)
         }
 
-        val sn = getMachineSnByProps()?.takeIf { it.isNotEmpty() } ?: context.getString(R.string.unknown)
+        val sn = getMachineSnByProps()?.takeIf { it.isNotEmpty() } ?: context.getString(R.string.common_unknown)
         return CurrentDeviceInfo(version = version, sn = sn)
     }
 
@@ -206,11 +206,11 @@ class OtaSettingsRepository(
     }
 
     private fun Map<String, String>.toOtaInfoResult(): OtaInfoResult {
-        val fromVersion = getOrDefault("mUpdateFromVersion", context.getString(R.string.unknown))
-        val toVersion = getOrDefault("updateToVersion", context.getString(R.string.unknown))
+        val fromVersion = getOrDefault("mUpdateFromVersion", context.getString(R.string.common_unknown))
+        val toVersion = getOrDefault("updateToVersion", context.getString(R.string.common_unknown))
         val downloadUrl = getOrDefault("downloadUrl", context.getString(R.string.no_download_link))
         val size = getOrDefault("size", "0").toLongOrNull() ?: 0L
-        val md5 = getOrDefault("md5", context.getString(R.string.unknown))
+        val md5 = getOrDefault("md5", context.getString(R.string.common_unknown))
         val changelog = getChangelogByLocale(this)
         val formattedSize = formatFileSize(size)
         val isNewVersionAvailable = formattedSize != "0 B"

@@ -97,7 +97,7 @@ object AppChooserDialog {
         callback: AppSelectionCallback?
     ) {
         val loadingDialog = showComposeDialog(context, cancelable = false) { _ ->
-            LoadingContent(message = stringResource(R.string.loadingUserAPP))
+            LoadingContent(message = stringResource(R.string.common_loading_user_app))
         }
 
         val executor = Executors.newSingleThreadExecutor()
@@ -247,14 +247,14 @@ private fun AppChooserContent(
         confirmButton = {
             ZToolTextButton(
                 onClick = { onConfirm(selectedPackages.toSet()) },
-                text = stringResource(R.string.confirm),
+                text = stringResource(R.string.common_confirm),
                 modifier = Modifier
             )
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onCancel,
-                text = stringResource(R.string.restart_no),
+                text = stringResource(R.string.common_restart_no),
                 isPrimary = false,
                 modifier = Modifier
             )
@@ -267,14 +267,14 @@ private fun AppChooserContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 ZToolTextInputRow(
-                    label = stringResource(R.string.SearchHint),
+                    label = stringResource(R.string.common_search_hint),
                     value = query,
                     onValueChange = { query = it },
                     singleLine = true
                 )
 
                 Text(
-                    text = stringResource(R.string.app_search_page_selected_string, selectedPackages.size),
+                    text = stringResource(R.string.common_app_search_page_selected_string, selectedPackages.size),
                     style = MaterialTheme.typography.labelMedium,
                     color = LocalZToolColorScheme.current.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 24.dp)
@@ -328,7 +328,7 @@ private fun AppChooserRow(
             factory = { context ->
                 ImageView(context).apply {
                     scaleType = ImageView.ScaleType.FIT_CENTER
-                    contentDescription = context.getString(R.string.app_icon)
+                    contentDescription = context.getString(R.string.common_app_icon)
                 }
             },
             update = { imageView ->

@@ -104,7 +104,7 @@ fun FrameworkSettingsRoute(
             onDismiss = viewModel::dismissAiInputInfoDialog
         )
     }
-    val restartFailPrefix = stringResource(R.string.restart_fail_prefix)
+    val restartFailPrefix = stringResource(R.string.common_restart_fail_prefix)
     if (uiState.showRestartConfirmDialog) {
         RestartSystemDialog(
             onConfirm = {
@@ -171,7 +171,7 @@ private fun FrameworkSettingsScreen(
             ZToolExtendedFloatingActionButton(
                 onClick = onRestart,
                 icon = {Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)},
-                text = {Text(stringResource(R.string.restart_yes))})
+                text = {Text(stringResource(R.string.common_restart_yes))})
         }
     ) { innerPadding ->
         Box(
@@ -393,8 +393,8 @@ private fun AiInputInfoDialog(
     ZToolQuickHelpDialog(
         title = stringResource(R.string.ai_input_quick_help_title),
         summary = stringResource(R.string.ai_input_quick_help_summary),
-        quickLabel = stringResource(R.string.quick_help_lookup_title),
-        examplesLabel = stringResource(R.string.quick_help_examples_title),
+        quickLabel = stringResource(R.string.common_quick_help_lookup_title),
+        examplesLabel = stringResource(R.string.common_quick_help_examples_title),
         items = listOf(
             QuickHelpItem(
                 stringResource(R.string.ai_input_quick_help_scope),
@@ -448,14 +448,14 @@ private fun RestartSystemDialog(
                 enabled = countdown == 0,
                 onClick = onConfirm,
                 text = if (countdown > 0) {
-                    stringResource(R.string.confirm) + " ($countdown)"
+                    stringResource(R.string.common_confirm) + " ($countdown)"
                 } else {
-                    stringResource(R.string.confirm)
+                    stringResource(R.string.common_confirm)
                 }
             )
         },
         dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.restart_no), isPrimary = false)
+            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
     )
 }

@@ -23,7 +23,7 @@ class FloatingWindowRepository(
     private val context: Context
 ) {
     private val unknownText: String
-        get() = context.getString(R.string.unknown)
+        get() = context.getString(R.string.common_unknown)
 
     fun initialForegroundInfo(): String {
         return context.getString(R.string.current_activity, unknownText)

@@ -533,13 +533,13 @@ private fun RestoreDefaultDialog(
         confirmButton = {
             ZToolTextButton(
                 onClick = onConfirm,
-                text = stringResource(R.string.confirm)
+                text = stringResource(R.string.common_confirm)
             )
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onDismiss,
-                text = stringResource(R.string.restart_no),
+                text = stringResource(R.string.common_restart_no),
                 isPrimary = false
             )
         }
@@ -558,12 +558,12 @@ private fun DeleteLogsConfirmDialog(
         confirmButton = {
             ZToolTextButton(
                 onClick = onConfirm,
-                text = stringResource(R.string.confirm))
+                text = stringResource(R.string.common_confirm))
         },
         dismissButton = {
             ZToolTextButton(
                 onClick = onDismiss,
-                text = stringResource(R.string.restart_no),
+                text = stringResource(R.string.common_restart_no),
                 isPrimary = false
             )
         }

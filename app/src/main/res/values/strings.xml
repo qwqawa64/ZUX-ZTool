@@ -1,26 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!--将常用的字符串资源放置在下面-->
     <string name="tooltip_content_description">提示</string>
-    <string name="quick_help_lookup_title">速查</string>
-    <string name="quick_help_examples_title">示例</string>
+    <string name="common_quick_help_lookup_title">速查</string>
+    <string name="common_quick_help_examples_title">示例</string>
     <string name="save">保存</string>
     <string name="delete">删除</string>
-    <string name="confirm">确认</string>
+    <string name="common_confirm">确认</string>
     <string name="page_firstrun_customized_confirm_with_countdown">%1$s（%2$d秒）</string>
-    <string name="cancel">取消</string>
+    <string name="common_cancel">取消</string>
     <string name="test">测试</string>
     <string name="page_firstrun_next_step">下一步</string>
     <string name="regex_label">正则表达式（可选）</string>
-    <string name="loading">加载中…</string>
-    <string name="do_not_show_again">不再提示</string>
-    <string name="no_tip_next_time">下次将不再提示此内容</string>
-    <string name="loadingUserAPP">加载用户应用列表…</string>
-    <string name="unknown">未知</string>
+    <string name="common_loading">加载中…</string>
+    <string name="common_do_not_show_again">不再提示</string>
+    <string name="common_no_tip_next_time">下次将不再提示此内容</string>
+    <string name="common_loading_user_app">加载用户应用列表…</string>
+    <string name="common_unknown">未知</string>
     <string name="page_home_version">模块版本</string>
     <string name="page_home_root">Root 来源</string>
     <string name="page_home_framework">框架信息</string>
     <string name="misc">杂项</string>
-    <string name="app_icon">应用图标</string>
+    <string name="common_app_icon">应用图标</string>
     <!--FirstRun资源值-->
     <string name="page_firstrun_agreement_title">请滑动阅读用户协议</string>
     <string name="page_firstrun_agreement_confirm">同意并进入</string>
@@ -131,7 +131,7 @@
     <string name="page_settings_delete_logs_success">日志已全部删除</string>
     <string name="page_settings_delete_logs_failed">删除日志失败</string>
     <string name="page_settings_delete_logs_confirmation">确定要删除所有日志吗？此操作不可撤销。</string>
-    <string name="lsposed_log_sync_failed">无法同步 LSPosed 日志，请检查 Root 权限</string>
+    <string name="common_lsposed_log_sync_failed">无法同步 LSPosed 日志，请检查 Root 权限</string>
 
     <!--设置页资源值-->
     <string name="page_settings_title">设置</string>
@@ -141,21 +141,21 @@
     <string name="page_settings_refresh_dex_index">刷新 DexKit 索引</string>
     <string name="page_settings_dex_index_last_indexed_at">上次索引：%1$s</string>
     <string name="page_settings_dex_index_not_generated">尚未生成</string>
-    <string name="dexIndexRefreshed">DexKit 索引已刷新</string>
-    <string name="dexIndexRefreshFailed">DexKit 索引刷新失败</string>
-    <string name="dexIndexChannelName">DexKit 索引</string>
-    <string name="dexIndexDialogTitle">正在刷新 DexKit 索引</string>
-    <string name="dexIndexProgressText">正在扫描第 %1$d/%2$d 个作用域</string>
-    <string name="dexIndexNotifyDone">DexKit 索引已生成</string>
-    <string name="dexIndexNotifyFailed">DexKit 索引生成失败</string>
-    <string name="dexIndexNotifyDoneText">成功 %1$d 个作用域</string>
+    <string name="common_dex_index_refreshed">DexKit 索引已刷新</string>
+    <string name="common_dex_index_refresh_failed">DexKit 索引刷新失败</string>
+    <string name="common_dex_index_channel_name">DexKit 索引</string>
+    <string name="common_dex_index_dialog_title">正在刷新 DexKit 索引</string>
+    <string name="common_dex_index_progress_text">正在扫描第 %1$d/%2$d 个作用域</string>
+    <string name="common_dex_index_notify_done">DexKit 索引已生成</string>
+    <string name="common_dex_index_notify_failed">DexKit 索引生成失败</string>
+    <string name="common_dex_index_notify_done_text">成功 %1$d 个作用域</string>
     <string name="page_settings_backup_config_to_file">备份配置到文件</string>
     <string name="page_settings_restore_config_from_file">从文件恢复配置</string>
     <string name="page_settings_restore_default_config">恢复默认配置</string>
     <string name="page_settings_more_settings">更多设置</string>
     <string name="page_settings_enable_home_page_yiyan">随机一言</string>
     <string name="page_settings_enable_home_page_yiyan_summary">启用主界面下方的随机一言，此功能需要联网</string>
-    <string name="open_web_link_failed">无法打开链接</string>
+    <string name="common_open_web_link_failed">无法打开链接</string>
     <string name="page_settings_show_about_page">关于ZTool</string>
     <string name="page_settings_config_backup_success">配置已备份</string>
     <string name="page_settings_about_ztool_title">关于ZTool</string>
@@ -178,20 +178,20 @@
     <string name="page_settings_restore_default_confirmation">你确定要恢复默认配置吗？这将重置所有设置到初始状态。</string>
     <string name="page_settings_default_config_restored">已恢复默认配置</string>
     <string name="page_settings_config_restore_success">配置已从文件恢复</string>
-    <string name="log_service_require_manual_restart">日志服务自动重启失败，请手动启动</string>
+    <string name="common_log_service_require_manual_restart">日志服务自动重启失败，请手动启动</string>
 
     <!--通用重启作用域资源-->
-    <string name="restart_xp_title">确认重启作用域?</string>
-    <string name="restart_xp_message_header">"是否重启此页的作用域？这将强行停止 "</string>
-    <string name="restart_xp_message"> 的进程。</string>
-    <string name="restart_yes">重启作用域</string>
-    <string name="restart_no">取消</string>
-    <string name="restartSuccess">重启成功</string>
-    <string name="restartFail">重启失败：</string>
+    <string name="common_restart_xp_title">确认重启作用域?</string>
+    <string name="common_restart_xp_message_header">"是否重启此页的作用域？这将强行停止 "</string>
+    <string name="common_restart_xp_message"> 的进程。</string>
+    <string name="common_restart_yes">重启作用域</string>
+    <string name="common_restart_no">取消</string>
+    <string name="common_restart_success">重启成功</string>
+    <string name="common_restart_fail">重启失败：</string>
     <!--游戏助手功能页资源值-->
-    <string name="SelectDefault">不开启</string>
+    <string name="common_select_default">不开启</string>
     <string name="SelectAllGames">全部游戏</string>
-    <string name="SelectWhiteList">白名单内</string>
+    <string name="common_select_white_list">白名单内</string>
     <string name="SelectGame">选择游戏</string>
     <string name="whitelist_config_title">配置白名单</string>
     <string name="whitelist_count">已启用 %d 个游戏</string>
@@ -254,16 +254,16 @@
     <string name="tip_title">提示</string>
     <string name="install_success_message">安装成功，重启系统生效</string>
     <string name="remove_success_message">移除成功，重启系统生效</string>
-    <string name="error_title">错误</string>
+    <string name="common_error_title">错误</string>
     <string name="install_failed_message">安装失败：%1$s</string>
     <string name="remove_failed_message">移除失败：%1$s</string>
     <string name="request_usage_stats_permission">请授予使用情况统计权限</string>
     <string name="overlay_permission_denied">悬浮窗权限未授予</string>
     <string name="floating_window_started">配置向导已启动</string>
     <string name="floating_window_closed">配置向导已关闭</string>
-    <string name="error_create_temp_dir">Error: Failed to create temp directory</string>
-    <string name="error_copy_assets">Error: Failed to copy assets to temp directory</string>
-    <string name="error_shell_command_failed">Error: Shell command failed - %1$s</string>
+    <string name="common_error_create_temp_dir">Error: Failed to create temp directory</string>
+    <string name="common_error_copy_assets">Error: Failed to copy assets to temp directory</string>
+    <string name="common_error_shell_command_failed">Error: Shell command failed - %1$s</string>
     <string name="no_config_files_prompt">请使用配置向导生成第一个配置文件吧</string>
     <string name="select_config_files">选择配置文件</string>
     <string name="config_suffix"> 配置</string>
@@ -273,9 +273,9 @@
     <string name="install_module_first">请先安装拓展模块</string>
     <string name="continue_button">继续</string>
     <string name="flashing_config">正在刷入配置…</string>
-    <string name="error_copy_original_config">复制原配置文件失败，请检查模块是否完整安装</string>
-    <string name="error_read_original_config">读取原配置文件失败</string>
-    <string name="error_update_module_config">更新模块配置失败，请检查root权限</string>
+    <string name="common_error_copy_original_config">复制原配置文件失败，请检查模块是否完整安装</string>
+    <string name="common_error_read_original_config">读取原配置文件失败</string>
+    <string name="common_error_update_module_config">更新模块配置失败，请检查root权限</string>
     <string name="success_title">成功</string>
     <string name="flash_failed_message">刷入配置失败：%1$s</string>
     <string name="confirm_restore_title">确认还原</string>
@@ -293,9 +293,9 @@
     <string name="import_success_title">导入成功</string>
     <string name="import_success_message">字体已成功导入到系统字体库\n前往 设置-个性定制-字体-本地 即可查看</string>
     <string name="import_failed_title">导入失败</string>
-    <string name="font_language">简体</string>
-    <string name="font_author">Import By ZTool</string>
-    <string name="font_preview_text">有言\n\n   与恶龙缠斗过久，自身亦成为恶龙；\n   凝视深渊过久，深渊将回以凝视。\n\n           ---弗里德里希·威廉·尼采</string>
+    <string name="common_font_language">简体</string>
+    <string name="common_font_author">Import By ZTool</string>
+    <string name="common_font_preview_text">有言\n\n   与恶龙缠斗过久，自身亦成为恶龙；\n   凝视深渊过久，深渊将回以凝视。\n\n           ---弗里德里希·威廉·尼采</string>
     <!--设置页：一视界策略搜索页功能资源值-->
     <string name="zui_force_config_title">小窗与分屏</string>
     <string name="zui_force_config_summary">需要重启系统，此项配置优先级相当高，会覆盖所有用户及系统配置，不勾选的应用保持系统默认行为</string>
@@ -386,7 +386,7 @@
     <string name="Disable_ScanAPK_Title">跳过安全扫描</string>
     <string name="Disable_ScanAPK_Summary">跳过安全扫描，节省时间</string>
     <string name="restart_fail_simple">重启失败</string>
-    <string name="sec_title_function">安全相关</string>
+    <string name="common_sec_title_function">安全相关</string>
     <string name="OnlyAllow_Title">总是给予应用权限</string>
     <string name="OnlyAllow_Summary">安装应用时，总是允许安装应用所需的权限</string>
     <string name="skip_warn_page_title">跳过未上架警告页</string>
@@ -586,7 +586,7 @@
     <string name="example_copied_message">示例已复制到剪贴板</string>
     <string name="sp_unit">%.1fsp</string>
     <string name="save_failed_message">保存失败，请查看Logcat</string>
-    <string name="error_prefix">错误: </string>
+    <string name="common_error_prefix">错误: </string>
     <string name="notify_num_default">4</string>
     <string name="notify_num_unlimited">无限制</string>
     <!--启动器功能页的资源值-->
@@ -644,7 +644,7 @@
     <string name="default_allow_autorun_enable_title">默认允许APP自启</string>
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
     <string name="app_process_restarted_message">已重启应用进程</string>
-    <string name="restart_fail_prefix">重启失败: </string>
+    <string name="common_restart_fail_prefix">重启失败: </string>
 
     <!--配置选择页的资源值-->
     <string name="flashAddedConfig">刷入配置</string>
@@ -668,7 +668,7 @@
     <string name="nav_features">功能</string>
     <string name="nav_settings">设置</string>
     <!--应用名单选择界面弹窗-->
-    <string name="SearchHint">搜索…</string>
+    <string name="common_search_hint">搜索…</string>
     <string name="page_settings_app_ui_theme_settings">应用主题模式</string>
     <string name="page_settings_app_language_settings">应用语言</string>
     <string name="page_settings_open_app_language_settings_failed">无法打开应用语言设置</string>
@@ -785,8 +785,8 @@
     <string name="allow_untrusted_touch">允许不受信任的触摸</string>
     <string name="page_settings_auto_check_update_title">自动检查更新</string>
     <string name="page_settings_auto_check_update_summary">启动 APP 时自动检查更新</string>
-    <string name="splash_logo_description" translatable="false">ZTool Logo</string>
-    <string name="splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
+    <string name="common_splash_logo_description" translatable="false">ZTool Logo</string>
+    <string name="common_splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
     <string name="page_firstrun_splash_welcome_text">欢迎使用 ZTool</string>
     <string name="page_home_non_zuxos_warn">当前设备运行的系统很可能不是 ZUXOS/ZUI ，无法保证 Hook 正确执行!</string>
     <string name="page_settings_display_entry_in_settings">在设置中显示入口</string>
@@ -805,7 +805,7 @@
     <string name="disable_dock_warning_message">必须把所有固定在 Dock 栏的应用全部挪出来再重启作用域。如果不这么做，这些应用会被“吞掉”，假如本模块恰好位列其中的话......</string>
     <string name="auto_accept_file_transfer">自动接受互传请求</string>
     <string name="auto_accept_file_transfer_summary">可能会导致您意外收到某些文件</string>
-    <string name="app_search_page_selected_string">已选择 %d 个应用</string>
+    <string name="common_app_search_page_selected_string">已选择 %d 个应用</string>
     <string name="page_settings_log_settings_title">日志设置</string>
     <string name="page_settings_export_logs_summary">如果模块或者 Hook 遇到了问题，请导出日志并发送给开发者</string>
     <string name="notification_icon_number_to_show">显示 %s 个</string>
