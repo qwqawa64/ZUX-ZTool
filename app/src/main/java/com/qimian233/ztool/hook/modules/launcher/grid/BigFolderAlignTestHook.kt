@@ -33,12 +33,13 @@ import java.lang.reflect.Method
  *     ClippedFolderIconLayoutRule.e() 自动跟随为 cols*rows。
  *  6. ClippedFolderIconLayoutRule.c(...) 手机分支是硬编码 2 列定位, 统一改写为
  *     rule 自身的 getOffsetX/getOffsetY 通用网格（与平板分支同源, cols/rows/gap 全部生效）。
- *  7. setup(...) 垂直改写(第三轮修正): offsetY=q 保持宿主原值不动; previewSizeY 使底边 =
- *     (spanY-1)*(cellH+gapY) + rowInset + iconSize, rowInset = (cellHeight - cellHeightPx)/2
- *     （图标在行内的真实内缩, 与宿主公式 max(0,(C-cellHeightPx)/2) 同源）。
- *     注意 DeviceProfile.cellYPaddingPx 在实测设备上为 -1（未初始化）, 不可用。
- *     实测数据: 行距348 gapY=0 cellHeightPx≈260 → rowInset=44, 底边=348+44+190=582,
- *     stock 底边=566（停在 158px 虚拟文件夹圆底）, 差 16px 即用户所需的"略微抬高"。
+ *  7. setup(...) 垂直改写(第四轮修正, 基于截屏实测): 背景对齐参考图标的"图形"边缘
+ *     而非图标盒子。实测: 图标盒 190px 内四周透明边距约 21px(iconSize*0.11),
+ *     图形边缘 [252..750], stock 背景按盒子对齐 [228..770], 上下各多出一个边距。
+ *     bgTop    = rowInset + artInset
+ *     bgBottom = (spanY-1)*(cellH+gapY) + rowInset + iconSize - artInset
+ *     rowInset = (cellHeight - cellHeightPx)/2（实测 348/260 → 44;
+ *     DeviceProfile.cellYPaddingPx 实测为 -1 未初始化, 不可用）。
  *  8. FolderIcon.z() 整体替换(第三轮): 小文件夹分支复刻 stock 公式, 大文件夹分支
  *     topMargin = (spanY-1)*(cellH+gapY) + rowInset + iconSize + drawablePadding,
  *     与最后一行邻居图标的标签完全同高。实测设备上 folderBubbleTextView 字段名不符
@@ -223,15 +224,20 @@ class BigFolderAlignTestHook : AppHookModule() {
         widthField.setInt(pb, newWidth)
         offsetXField.setInt(pb, inset)
 
-        // 需求2(第三轮修正)：顶边保持宿主原值(q 不改写); previewSizeY 使底边 =
-        // (spanY-1)*(cellH+gapY) + rowInset + iconSize, 即对齐竖排图标中下面那枚的图标底边线。
-        // rowInset 用 (cellHeight-cellHeightPx)/2, 不用 cellYPaddingPx（实测=-1）。
-        val targetBottom =
-            (spanY - 1) * (metrics.cellHeight + metrics.gapY) + metrics.rowInset + metrics.iconSizePx
+        // 需求2(第四轮修正)：对齐参考图标的"图形"边缘而非 190px 图标盒子。
+        // 实测(uiautomator 视图边界 + 截屏 2px 逐行扫描): 图标盒四周约有
+        // iconSize*ART_INSET_RATIO ≈ 21px 的透明边距(图形≈0.78x盒子), 图形边缘
+        // [252..750], stock 背景按盒子对齐 [228..770], 故上下各多出约一个边距。
+        // bgTop    = rowInset + artInset                                      (对齐上排图形顶边)
+        // bgBottom = (spanY-1)*pitch + rowInset + iconSize - artInset         (对齐下排图形底边)
+        val artInset = Math.round(metrics.iconSizePx * ART_INSET_RATIO)
+        val newOffsetY = metrics.rowInset + artInset
+        val newPreviewSizeY = (spanY - 1) * (metrics.cellHeight + metrics.gapY) +
+            metrics.rowInset + metrics.iconSizePx - artInset - newOffsetY
         val oldOffsetY = offsetYField.getInt(pb)
         val oldPreviewSizeY = previewSizeYField.getInt(pb)
-        val newPreviewSizeY = targetBottom - oldOffsetY
         if (newPreviewSizeY > 0) {
+            offsetYField.setInt(pb, newOffsetY)
             previewSizeYField.setInt(pb, newPreviewSizeY)
         }
 
@@ -254,8 +260,8 @@ class BigFolderAlignTestHook : AppHookModule() {
         logger.info(
             "BigFolderAlign span=${spanX}x${spanY}" +
                 " width $oldWidth->$newWidth offsetX $oldOffsetX->$inset" +
-                " offsetY=$oldOffsetY previewY $oldPreviewSizeY->${previewSizeYField.getInt(pb)}" +
-                " targetBottom=$targetBottom" +
+                " offsetY $oldOffsetY->$newOffsetY previewY $oldPreviewSizeY->${previewSizeYField.getInt(pb)}" +
+                " artInset=$artInset" +
                 " cellW=${metrics.cellWidth} nominalW=${metrics.nominalCellWidth} gap=${metrics.gapX}" +
                 " cellH=${metrics.cellHeight} gapY=${metrics.gapY} rowInset=${metrics.rowInset}" +
                 " cellHeightPx=${metrics.cellHeightPx}" +
@@ -589,6 +595,12 @@ class BigFolderAlignTestHook : AppHookModule() {
         private const val TARGET_SPAN_Y = 2
         private const val CHILD_COLS = 3
         private const val CHILD_ROWS = 2
+
+        /**
+         * 需求2：图标盒内图形的透明边距比例（实测 190px 盒 → 约 21px 边距, 图形≈0.78x盒子,
+         * 截屏 2px 逐行扫描测得）。背景矩形按图形边缘对齐时, 上下各收进一个该边距。
+         */
+        private const val ART_INSET_RATIO = 0.11f
 
         /** childCount 改写日志去重（每个 span 组合只记一次, 该调用非常频繁）。 */
         private val loggedChildCountSpans: MutableSet<String> =
