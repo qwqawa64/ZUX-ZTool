@@ -2,8 +2,9 @@ package com.qimian233.ztool.data.systemui
 
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.FeatureDestination
+import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ScopeUtils
@@ -42,7 +43,7 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
                 .exec(arrayOf("su", "-c", "cat > $targetPath && chmod 644 $targetPath"))
             process.outputStream.use { it.write(bytes) }
             return process.waitFor() == 0
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return false
         }
     }
@@ -57,7 +58,7 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
     }
 
     companion object {
-        private const val CUSTOM_VIDEO_DIR = "/sdcard/Download/ZTool"
+        private var CUSTOM_VIDEO_DIR = Environment.getExternalStorageDirectory().path + "/Download/ZTool"
 
         private val KEY_NO_CHARGE_ANIM = PreferenceKeys.NO_CHARGE_ANIMATION.name
         private val KEY_CHARGE_ANIM_FIX = PreferenceKeys.CHARGE_ANIMATION_FIX.name

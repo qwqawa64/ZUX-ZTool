@@ -59,6 +59,7 @@ import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.StatusBarSettingsUiState
 import com.qimian233.ztool.viewmodel.StatusBarSettingsViewModel
+import java.util.Locale
 
 @Composable
 fun StatusBarSettingsRoute(
@@ -429,7 +430,7 @@ private fun statusBarSettingsSections(
                                     onValueChange = onNetworkSpeedRefreshIntervalChanged,
                                     valueRange = 0f..10f,
                                     steps = 19,
-                                    valueText = String.format("%.1f s", state.networkSpeedRefreshInterval),
+                                    valueText = String.format(Locale.US, "%.1f s", state.networkSpeedRefreshInterval),
                                     horizontalPadding = 24.dp,
                                     modifier = Modifier.padding(horizontal = 0.dp)
                                 )
@@ -455,7 +456,7 @@ private fun statusBarSettingsSections(
                                     onValueChange = onNetworkSpeedHideThresholdChanged,
                                     valueRange = 0f..100f,
                                     steps = 19,
-                                    valueText = String.format("%.0f KB/s", state.networkSpeedHideThreshold),
+                                    valueText = String.format(Locale.US, "%.0f KB/s", state.networkSpeedHideThreshold),
                                     horizontalPadding = 24.dp,
                                     modifier = Modifier.padding(horizontal = 0.dp)
                                 )
@@ -605,7 +606,6 @@ private fun SliderSettingRow(
             value = value,
             valueText = valueLabel,
             onValueChange = onValueChanged,
-            enabled = enabled,
             valueRange = valueRange,
             steps = steps,
             modifier = Modifier.padding(horizontal = 0.dp),

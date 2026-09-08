@@ -1,5 +1,7 @@
-package com.qimian233.ztool
+package com.qimian233.ztool.screens.settings.about
 
+import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +24,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +36,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.ViewModelProvider
+import com.qimian233.ztool.BuildConfig
+import com.qimian233.ztool.MainActivity
+import com.qimian233.ztool.ModuleActivationProbe
+import com.qimian233.ztool.R
+import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.screens.home.HomeViewModelFactory
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
 import com.qimian233.ztool.ui.components.ZListItem
 import com.qimian233.ztool.ui.components.ZToolCard
@@ -41,10 +52,65 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import com.qimian233.ztool.viewmodel.HomeViewModel
 import com.qimian233.ztool.viewmodel.UpdateInfo
 
 @Composable
 fun SettingsAboutRoute(
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val activity = context as MainActivity
+    val homeViewModel = remember(activity) {
+        val repository = HomeRepository(
+            context = context.applicationContext,
+            moduleActiveChecker = ModuleActivationProbe::isModuleActive
+        )
+        ViewModelProvider(
+            activity,
+            HomeViewModelFactory(repository)
+        )[HomeViewModel::class.java]
+    }
+    val homeState by homeViewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        homeViewModel.checkAppUpdate()
+    }
+
+    SettingsAboutScreen(
+        onBack = onBack,
+        onOpenGithub = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool") },
+        onOpenUnfuckZUI = { openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI") },
+        onOpenZuxOsPlus = { openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos") },
+        onOpenGitHubAccelerationSite = { openExternalLink(context, "https://gh.absinthe.life/") },
+        onOpenHitokotoSite = { openExternalLink(context, "https://docs.xygeng.cn/") },
+        onOpenQimian233 = {
+            openExternalLink(
+                context,
+                "http://www.coolapk.com/u/10099756",
+                true,
+                "com.coolapk.market"
+            )
+        },
+        onOpenWasdDestroy = {
+            openExternalLink(
+                context,
+                "http://www.coolapk.com/u/18634835",
+                true,
+                "com.coolapk.market"
+            )
+        },
+        onOpenUdl = { openExternalLink(context, "https://github.com/uuuddddl") },
+        onCheckUpdate = homeViewModel::checkAppUpdate,
+        isCheckingUpdate = homeState.isCheckingAppUpdate,
+        updateCheckCompleted = homeState.updateCheckCompleted,
+        updateInfo = homeState.updateInfo,
+        onOpenUpdate = { url -> openExternalLink(context, url) }
+    )
+}
+
+@Composable
+private fun SettingsAboutScreen(
     onBack: () -> Unit,
     onOpenGithub: () -> Unit,
     onOpenUnfuckZUI: () -> Unit,
@@ -86,10 +152,6 @@ fun SettingsAboutRoute(
         } else {
             onCheckUpdate()
         }
-    }
-
-    LaunchedEffect(Unit) {
-        onCheckUpdate()
     }
 
     ZToolScaffold(
@@ -339,14 +401,14 @@ private fun AboutActionRow(
 
 
 internal fun openExternalLink(
-    context: android.content.Context,
+    context: Context,
     link: String,
     shouldDeterminePackage: Boolean = false,
     packageName: String = ""
 ) {
     try {
         context.startActivity(
-            android.content.Intent(android.content.Intent.ACTION_VIEW, link.toUri()).apply {
+            Intent(Intent.ACTION_VIEW, link.toUri()).apply {
                 if (shouldDeterminePackage) setPackage(packageName)
             }
         )

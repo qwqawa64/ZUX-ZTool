@@ -2,7 +2,7 @@ package com.qimian233.ztool.data.gametool
 
 import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.FeatureDestination
+import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils

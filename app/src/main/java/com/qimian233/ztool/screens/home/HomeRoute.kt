@@ -1,4 +1,4 @@
-package com.qimian233.ztool
+package com.qimian233.ztool.screens.home
 
 import android.content.Context
 import android.content.Intent
@@ -60,6 +60,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.qimian233.ztool.MainActivity
+import com.qimian233.ztool.ModuleActivationProbe
+import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.HomeRepository
 import com.qimian233.ztool.ui.components.DexIndexProgressDialog
 import com.qimian233.ztool.ui.components.ZToolButton
@@ -71,7 +74,9 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.HomeViewModel
 import com.qimian233.ztool.viewmodel.RebootTarget
@@ -418,7 +423,7 @@ private fun ModuleStatusCard(
     state: HomeUiState,
     onRefreshEnvironment: () -> Unit
 ) {
-    val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
+    val themeSpec = LocalZToolThemeSpec.current
     val isDefaultColor = !themeSpec.dynamicColorEnabled && !themeSpec.manualColorEnabled
     val bothActive = state.isModuleActive && state.isRootAvailable
     val anyActive = state.isModuleActive || state.isRootAvailable
@@ -565,8 +570,8 @@ private fun InfoBlock(
 
 @Composable
 private fun SystemInfoCard(state: HomeUiState) {
-    val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
-    val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
+    val themeSpec = LocalZToolThemeSpec.current
+    val isMiuix = themeSpec.style == FrontendStyle.Miuix
     val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
     val containerColor = if (isMiuix) {
         if (isDark) LocalZToolColorScheme.current.surfaceContainer else Color.White
@@ -604,13 +609,15 @@ private fun SystemInfoCard(state: HomeUiState) {
                 SuggestionChip(
                     onClick = {},
                     label = {
-                        Text(stringResource(R.string.currentSlot) + state.currentSlot.ifBlank { stringResource(R.string.unknown) })
+                        Text(stringResource(R.string.currentSlot) + state.currentSlot.ifBlank { stringResource(
+                            R.string.unknown) })
                     }
                 )
                 SuggestionChip(
                     onClick = {},
                     label = {
-                        Text(stringResource(R.string.romRegion) + state.romRegion.ifBlank { stringResource(R.string.unknown) })
+                        Text(stringResource(R.string.romRegion) + state.romRegion.ifBlank { stringResource(
+                            R.string.unknown) })
                     }
                 )
             }
@@ -623,8 +630,8 @@ private fun DeviceInfoItem(
     label: String,
     value: String
 ) {
-    val themeSpec = com.qimian233.ztool.ui.theme.LocalZToolThemeSpec.current
-    val isMiuix = themeSpec.style == com.qimian233.ztool.ui.theme.FrontendStyle.Miuix
+    val themeSpec = LocalZToolThemeSpec.current
+    val isMiuix = themeSpec.style == FrontendStyle.Miuix
     val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
     val valueColor = if (isMiuix && isDark) Color.White else Color.Unspecified
     

@@ -2,7 +2,7 @@ package com.qimian233.ztool.utils
 
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.FeatureDestination
+import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.data.keys.HowToRestart
 import com.qimian233.ztool.data.keys.Scope
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -79,8 +79,8 @@ object ScopeUtils {
 
     /**
      * 重启一组作用域进程，按每个 Scope 注册的 [HowToRestart] 分发策略：
-     * - [HowToRestart.AmStop]：先尝试 [am force-stop]，失败时回退到 [killall]；
-     * - [HowToRestart.KillAll]：直接 [killall]（例如 SystemUI 无法被 force-stop）；
+     * - [HowToRestart.AmStop]：先尝试 [am force-stop]，失败时回退到 killall；
+     * - [HowToRestart.KillAll]：直接 killall（例如 SystemUI 无法被 force-stop）；
      * - [HowToRestart.Reboot]：系统框架进程无法按包重启，跳过并提示需要重启系统。
      */
     fun restartScope(

@@ -27,7 +27,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -37,40 +36,46 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.home.AgreementRepository
-import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
-import com.qimian233.ztool.service.LogServiceManager
+import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.screens.features.FeaturesMainRoute
 import com.qimian233.ztool.screens.gametool.GameToolSettingsRoute
+import com.qimian233.ztool.screens.home.EnvironmentStateListener
+import com.qimian233.ztool.screens.home.HomeMainRoute
 import com.qimian233.ztool.screens.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.screens.mobiledesktop.MobileDesktopSettingsRoute
 import com.qimian233.ztool.screens.ota.OtaSettingsRoute
 import com.qimian233.ztool.screens.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.screens.safecenter.SafeCenterSettingsRoute
-import com.qimian233.ztool.screens.setting.SettingsDetailRoute
-import com.qimian233.ztool.screens.setting.magicwindowsearch.SearchPageRoute
+import com.qimian233.ztool.screens.settings.SettingsMainRoute
+import com.qimian233.ztool.screens.settings.about.SettingsAboutRoute
+import com.qimian233.ztool.screens.settings.about.SettingsAboutRouteName
+import com.qimian233.ztool.screens.settings.advanced.SettingsAdvancedRoute
+import com.qimian233.ztool.screens.settings.theme.ThemeSettingsRoute
 import com.qimian233.ztool.screens.systemframework.FrameworkSettingsRoute
-import com.qimian233.ztool.screens.systemui.controlcenter.ControlCenterSettingsRoute
 import com.qimian233.ztool.screens.systemui.SystemUiSettingsRoute
 import com.qimian233.ztool.screens.systemui.animation.AnimationWallpaperSettingsRoute
+import com.qimian233.ztool.screens.systemui.controlcenter.ControlCenterSettingsRoute
 import com.qimian233.ztool.screens.systemui.lockscreen.LockScreenSettingsRoute
 import com.qimian233.ztool.screens.systemui.misc.SystemUiMiscSettingsRoute
 import com.qimian233.ztool.screens.systemui.statusbar.StatusBarSettingsRoute
+import com.qimian233.ztool.screens.zuisetting.SettingsDetailRoute
+import com.qimian233.ztool.screens.zuisetting.magicwindowsearch.SearchPageRoute
+import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.FloatingBottomBar
 import com.qimian233.ztool.ui.components.FloatingBottomBarItem
 import com.qimian233.ztool.ui.components.ZToolNavigationBar
@@ -91,7 +96,6 @@ import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.utils.ConfigUpgrade
-import com.qimian233.ztool.viewmodel.HomeViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -626,7 +630,6 @@ private fun MainRouteNavHost(
     onEnvironmentStateChanged: (Boolean) -> Unit,
     useHorizontalAnimation: Boolean = false
 ) {
-    val context = LocalContext.current
     val mainForward = if (useHorizontalAnimation)
         AnimatedContentTransitionScope.SlideDirection.Left
     else
@@ -804,7 +807,7 @@ private fun MainRouteNavHost(
             popEnterTransition = horizontalPopEnter,
             popExitTransition = horizontalPopExit
         ) {
-            SettingsThemeMainRoute(
+            ThemeSettingsRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Settings.name) {
@@ -821,19 +824,6 @@ private fun MainRouteNavHost(
             popEnterTransition = horizontalPopEnter,
             popExitTransition = horizontalPopExit
         ) {
-            val activity = context as MainActivity
-            val homeViewModel = androidx.compose.runtime.remember {
-                val repository = HomeRepository(
-                    context = context.applicationContext,
-                    moduleActiveChecker = ModuleActivationProbe::isModuleActive
-                )
-                ViewModelProvider(
-                    activity,
-                    HomeViewModelFactory(repository)
-                )[HomeViewModel::class.java]
-            }
-            val homeState by homeViewModel.uiState.collectAsState()
-
             SettingsAboutRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -841,47 +831,6 @@ private fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                },
-                onOpenGithub = {
-                    openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool")
-                },
-                onOpenUnfuckZUI = {
-                    openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI")
-                },
-                onOpenGitHubAccelerationSite = {
-                    openExternalLink(context, "https://gh.absinthe.life/")
-                },
-                onOpenHitokotoSite = {
-                    openExternalLink(context, "https://docs.xygeng.cn/")
-                },
-                onOpenQimian233 = {
-                    openExternalLink(
-                        context,
-                        "http://www.coolapk.com/u/10099756",
-                        true,
-                        "com.coolapk.market"
-                    )
-                },
-                onOpenWasdDestroy = {
-                    openExternalLink(
-                        context,
-                        "http://www.coolapk.com/u/18634835",
-                        true,
-                        "com.coolapk.market"
-                    )
-                },
-                onOpenZuxOsPlus = {
-                    openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos")
-                },
-                onOpenUdl = {
-                    openExternalLink(context, "https://github.com/uuuddddl")
-                },
-                onCheckUpdate = homeViewModel::checkAppUpdate,
-                isCheckingUpdate = homeState.isCheckingAppUpdate,
-                updateCheckCompleted = homeState.updateCheckCompleted,
-                updateInfo = homeState.updateInfo,
-                onOpenUpdate = { url ->
-                    openExternalLink(context, url)
                 }
             )
         }

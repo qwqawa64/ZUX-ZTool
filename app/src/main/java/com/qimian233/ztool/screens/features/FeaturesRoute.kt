@@ -1,4 +1,4 @@
-package com.qimian233.ztool
+package com.qimian233.ztool.screens.features
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -43,6 +43,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.qimian233.ztool.R
+import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog

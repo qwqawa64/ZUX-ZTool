@@ -7,7 +7,7 @@ import android.os.Build
 import android.provider.OpenableColumns
 import androidx.core.content.edit
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.FeatureDestination
+import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager

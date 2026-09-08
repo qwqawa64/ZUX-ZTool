@@ -1,17 +1,13 @@
 package com.qimian233.ztool.data.systemui
 
-import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.FeatureDestination
-import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 
 class SystemUiSettingsRepository(
-    context: Context,
     private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance()
 ) {
-    private val prefsUtils = ModulePreferencesUtils(context)
 
     fun loadState(): SystemUiSettingsUiState {
         return SystemUiSettingsUiState()
@@ -32,9 +28,6 @@ class SystemUiSettingsRepository(
                 exitCode = -1
             )
         }
-    }
-
-    companion object {
     }
 }
 

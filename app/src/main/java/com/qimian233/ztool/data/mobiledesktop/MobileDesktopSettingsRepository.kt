@@ -2,7 +2,7 @@ package com.qimian233.ztool.data.mobiledesktop
 
 import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.FeatureDestination
+import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.ScopeUtils
@@ -46,7 +46,6 @@ class MobileDesktopSettingsRepository(
     }
 
     companion object {
-        private const val TAG = "MobileDesktopSettings"
         private val KEY_SKIP_EXPOSE_WARN = PreferenceKeys.BYPASS_SHARE_WARNING.name
         private val KEY_AUTO_ACCEPT_FILE_TRANSFER = PreferenceKeys.AUTO_ACCEPT_FILE_TRANSFER.name
         private val KEY_DISABLE_NEARBY_SHARE_AUTO_SHUTDOWN = PreferenceKeys.DISABLE_NEARBY_SHARE_COUNTDOWN.name

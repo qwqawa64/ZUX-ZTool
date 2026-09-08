@@ -62,7 +62,7 @@ fun SystemUiSettingsRoute(
         ViewModelProvider(
             owner,
             SystemUiSettingsViewModelFactory(
-                SystemUiSettingsRepository(context.applicationContext)
+                SystemUiSettingsRepository()
             )
         )[SystemUiSettingsViewModel::class.java]
     }

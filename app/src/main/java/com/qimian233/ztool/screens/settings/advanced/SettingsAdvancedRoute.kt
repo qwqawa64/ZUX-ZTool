@@ -1,5 +1,6 @@
-package com.qimian233.ztool
+package com.qimian233.ztool.screens.settings.advanced
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +37,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.qimian233.ztool.MainActivity
+import com.qimian233.ztool.R
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexRegistry
 import com.qimian233.ztool.ui.components.DexIndexProgressDialog
@@ -60,7 +64,7 @@ fun SettingsAdvancedRoute(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val activity = context as MainActivity
     val viewModel = remember {
         ViewModelProvider(
@@ -130,6 +134,31 @@ fun SettingsAdvancedRoute(
         }
     }
 
+    SettingsAdvancedScreen(
+        state = uiState,
+        onBack = onBack,
+        hotReloadResultSummary = hotReloadResultSummary,
+        resetResultSummary = resetResultSummary,
+        dexIndexInProgress = dexIndexState.refreshing,
+        dexIndexSummary = dexIndexSummary,
+        onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
+        onResetClick = { viewModel.showResetConfirmDialog() },
+        onRefreshDexIndex = { viewModel.refreshDexIndex(context) }
+    )
+}
+
+@Composable
+private fun SettingsAdvancedScreen(
+    state: AdvancedSettingsUiState,
+    onBack: () -> Unit,
+    hotReloadResultSummary: String?,
+    resetResultSummary: String?,
+    dexIndexInProgress: Boolean,
+    dexIndexSummary: String,
+    onHotReloadClick: () -> Unit,
+    onResetClick: () -> Unit,
+    onRefreshDexIndex: () -> Unit
+) {
     ZToolScaffold(
         topBar = {
             ZToolTopAppBar(
@@ -160,16 +189,14 @@ fun SettingsAdvancedRoute(
             ) {
                 ZToolSettingsList(
                     sections = advancedSettingsSections(
-                        state = uiState,
+                        state = state,
                         hotReloadResultSummary = hotReloadResultSummary,
                         resetResultSummary = resetResultSummary,
-                        onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
-                        onResetClick = { viewModel.showResetConfirmDialog() },
-                        dexIndexInProgress = dexIndexState.refreshing,
+                        onHotReloadClick = onHotReloadClick,
+                        onResetClick = onResetClick,
+                        dexIndexInProgress = dexIndexInProgress,
                         dexIndexSummary = dexIndexSummary,
-                        onRefreshDexIndex = {
-                            viewModel.refreshDexIndex(context)
-                        }
+                        onRefreshDexIndex = onRefreshDexIndex
                     ),
                     bottomPadding = 32.dp
                 )
@@ -390,7 +417,7 @@ private fun buildHotReloadSummary(
 
 private fun buildHotReloadResultSummary(
     state: AdvancedSettingsUiState,
-    context: android.content.Context
+    context: Context
 ): String? {
     if (state.hotReloadInProgress) return null
     val total = state.hotReloadResultSucceeded + state.hotReloadResultFailed +
@@ -421,7 +448,7 @@ private fun buildResetSummary(
 
 private fun buildResetResultSummary(
     state: AdvancedSettingsUiState,
-    context: android.content.Context
+    context: Context
 ): String? {
     if (state.resetInProgress) return null
     val total = state.resetResultSucceeded + state.resetResultFailed + state.resetResultUnsupported
@@ -492,7 +519,7 @@ private fun HotReloadConfirmDialog(
 /**
  * 汇总 DexKit 索引状态：取各作用域最近一次成功索引时间，格式化为显示文本。
  */
-private fun buildDexIndexSummary(context: android.content.Context): String {
+private fun buildDexIndexSummary(context: Context): String {
     val latest = DexIndexRegistry.indexers
         .map { DexIndexManager.lastIndexedAt(context, it.scopePackage) }
         .filter { it > 0L }
