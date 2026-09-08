@@ -28,9 +28,9 @@ import java.lang.reflect.Method
  *  4. DeviceProfile.updateIconSize(...) 只读遥测（图标/内缩/网格派生量）
  *
  * 第二轮试验：
- *  5. BigFolderConfig.getBigFolderIconChildCount(...) 把 (2,2) span 的子网格改成
- *     [CHILD_COLS, CHILD_ROWS]（每行 3 个, 共 6 个）; maxNumItemsInPreview 由
- *     ClippedFolderIconLayoutRule.e() 自动跟随为 cols*rows。
+ *  5. BigFolderConfig.getBigFolderIconChildCount(...) 改写子网格：(2,2) → 每行 3 个 ×
+ *     3 行(3x3=9); 其它 spanY==2 且 stock 行数为 2 的状态(如 3x2)→ 行数改 3、列数沿用
+ *     stock; maxNumItemsInPreview 由 ClippedFolderIconLayoutRule.e() 自动跟随 cols*rows。
  *  6. ClippedFolderIconLayoutRule.c(...) 手机分支是硬编码 2 列定位, 统一改写为
  *     rule 自身的 getOffsetX/getOffsetY 通用网格（与平板分支同源, cols/rows/gap 全部生效）。
  *  7. setup(...) 垂直改写(第四轮修正, 基于截屏实测): 背景对齐参考图标的"图形"边缘
@@ -403,12 +403,16 @@ class BigFolderAlignTestHook : AppHookModule() {
      *    out[0]=子网格列数, out[1]=子网格行数, 返回值=总数。ClippedFolderIconLayoutRule.e()
      *    用它设置列/行/maxNumItemsInPreview, PreviewItemManager/FolderAnimationManager/
      *    CellLayout(投放容量) 也都从它取值, 一处改写全链路生效。
+     *    改写规则：2x2 → 每行 CHILD_COLS 个、共 CHILD_ROWS 行(3x3=9);
+     *    其它 spanY==2 且 stock 子网格行数为 2 的状态(如 3x2)→ 行数改 3、列数沿用 stock。
+     *    stock 网格从带数组参数的调用(e() 等)学习, 部分调用传 null 数组时查缓存;
+     *    spanX==1 的窄胶囊(1x2)横向放不下多列, 不改写。
      *  - ClippedFolderIconLayoutRule.c(...) 手机分支是硬编码 2 列定位, 与样式表列数不匹配,
      *    统一改写为 rule 自身的 getOffsetX/getOffsetY 通用网格（平板分支本来就走这条,
      *    改写为等值覆盖, 两条分支行为一致）。
      */
     private fun hookChildGridLayout(classLoader: ClassLoader) {
-        // 5. 样式表汇聚点：(2,2) → [CHILD_COLS, CHILD_ROWS], 返回值改为总数
+        // 5. 样式表汇聚点：按 span 改写子网格
         try {
             val bfcClass = classLoader.loadClass("com.zui.launcher.folder.bigfolder.BigFolderConfig")
             val getChildCount = findMethod(
@@ -420,18 +424,30 @@ class BigFolderAlignTestHook : AppHookModule() {
                 try {
                     val spanX = chain.args[0] as Int
                     val spanY = chain.args[1] as Int
-                    if (spanX == TARGET_SPAN_X && spanY == TARGET_SPAN_Y) {
-                        (chain.args[2] as IntArray?).let { out ->
-                            out?.set(0, CHILD_COLS)
-                            out?.set(1, CHILD_ROWS)
+                    val out = chain.args[2] as IntArray?
+                    val key = "${spanX}x$spanY"
+                    if (out != null) {
+                        // 学习 stock 网格（改写前记录）
+                        stockGrids[key] = intArrayOf(out[0], out[1])
+                    }
+                    val rewrite: IntArray? = when {
+                        spanX == TARGET_SPAN_X && spanY == TARGET_SPAN_Y ->
+                            intArrayOf(CHILD_COLS, CHILD_ROWS)
+                        spanY == TARGET_SPAN_Y && spanX >= 2 -> {
+                            val stock = stockGrids[key]
+                            if (stock != null && stock[1] == 2) intArrayOf(stock[0], CHILD_ROWS)
+                            else null
                         }
-                        val newCount = CHILD_COLS * CHILD_ROWS
-                        if ((result as Int) != newCount &&
-                            loggedChildCountSpans.add("${spanX}x$spanY")
-                        ) {
+                        else -> null
+                    }
+                    if (rewrite != null) {
+                        out?.set(0, rewrite[0])
+                        out?.set(1, rewrite[1])
+                        val newCount = rewrite[0] * rewrite[1]
+                        if ((result as Int) != newCount && loggedChildCountSpans.add(key)) {
                             logger.info(
-                                "childCount($spanX,$spanY) $result -> $newCount" +
-                                    " (cols=$CHILD_COLS rows=$CHILD_ROWS), rewriting every call"
+                                "childCount($key) $result -> $newCount" +
+                                    " (cols=${rewrite[0]} rows=${rewrite[1]}), rewriting every call"
                             )
                         }
                         return@hookWithId newCount
@@ -590,11 +606,16 @@ class BigFolderAlignTestHook : AppHookModule() {
     }
 
     companion object {
-        /** 需求1：该 span 的大文件夹子图标网格改为每行 CHILD_COLS 个、共 CHILD_ROWS 行。 */
+        /**
+         * 需求1：2x2 大文件夹子图标网格 = 每行 CHILD_COLS 个 × CHILD_ROWS 行(3x3=9)。
+         * stock (2,2) 样式为 12 个(4x3), 行数 3 已被 stock 证明放得下。
+         */
         private const val TARGET_SPAN_X = 2
         private const val TARGET_SPAN_Y = 2
         private const val CHILD_COLS = 3
-        private const val CHILD_ROWS = 2
+        private const val CHILD_ROWS = 3
+
+        /** 其它 spanY==2 且 stock 子网格行数为 2 的状态(如 3x2)同样改为 CHILD_ROWS 行。 */
 
         /**
          * 需求2：图标盒内图形的透明边距比例（实测 190px 盒 → 约 21px 边距, 图形≈0.78x盒子,
@@ -605,5 +626,8 @@ class BigFolderAlignTestHook : AppHookModule() {
         /** childCount 改写日志去重（每个 span 组合只记一次, 该调用非常频繁）。 */
         private val loggedChildCountSpans: MutableSet<String> =
             java.util.Collections.newSetFromMap(java.util.concurrent.ConcurrentHashMap())
+
+        /** 学习到的 stock 子网格（span -> [cols, rows]）, 供 out=null 的调用查表。 */
+        private val stockGrids = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
     }
 }
