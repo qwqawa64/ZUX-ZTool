@@ -1,4 +1,4 @@
-package com.qimian233.ztool
+package com.qimian233.ztool.ui.components
 
 import android.app.Dialog
 import android.content.Context
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,9 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.qimian233.ztool.ui.components.ZToolCircularProgressIndicator
-import com.qimian233.ztool.ui.components.ZToolDialog
-import com.qimian233.ztool.ui.components.createPlatformComposeDialog
+import com.qimian233.ztool.R
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 
 class LoadingDialog(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
