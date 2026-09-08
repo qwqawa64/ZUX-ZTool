@@ -582,9 +582,9 @@
     <string name="skipMultiWindowMode">Skip multi-window mode</string>
     <string name="displaySurfaceViewBackground">Show SurfaceView background</string>
     <string name="shouldStopMainActivity">Should pause main activity</string>
-    <string name="gotoHomePage">Home</string>
-    <string name="gotoFeaturePage">Features</string>
-    <string name="gotoSettingsPage">Settings</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_features">Features</string>
+    <string name="nav_settings">Settings</string>
     <string name="SearchHint">Search…</string>
     <string name="app_ui_theme_settings">App theme mode</string>
     <string name="app_language_settings">App language</string>

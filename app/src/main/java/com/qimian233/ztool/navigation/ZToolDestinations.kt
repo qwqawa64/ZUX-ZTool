@@ -6,9 +6,9 @@ internal enum class MainRoute(
     val labelRes: Int,
     val iconRes: Int
 ) {
-    Home(R.string.gotoHomePage, R.drawable.ic_home),
-    Features(R.string.gotoFeaturePage, R.drawable.ic_features),
-    Settings(R.string.gotoSettingsPage, R.drawable.ic_settings);
+    Home(R.string.nav_home, R.drawable.ic_home),
+    Features(R.string.nav_features, R.drawable.ic_features),
+    Settings(R.string.nav_settings, R.drawable.ic_settings);
 
     companion object {
         val entriesInOrder = listOf(Home, Features, Settings)

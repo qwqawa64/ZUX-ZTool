@@ -664,9 +664,9 @@
     <string name="displaySurfaceViewBackground">显示SurfaceView背景</string>
     <string name="shouldStopMainActivity">应暂停主活动</string>
     <!--导航栏资源值-->
-    <string name="gotoHomePage">主页</string>
-    <string name="gotoFeaturePage">功能</string>
-    <string name="gotoSettingsPage">设置</string>
+    <string name="nav_home">主页</string>
+    <string name="nav_features">功能</string>
+    <string name="nav_settings">设置</string>
     <!--应用名单选择界面弹窗-->
     <string name="SearchHint">搜索…</string>
     <string name="app_ui_theme_settings">应用主题模式</string>
