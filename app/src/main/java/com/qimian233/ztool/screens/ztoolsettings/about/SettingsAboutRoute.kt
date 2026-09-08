@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.settings.about
+package com.qimian233.ztool.screens.ztoolsettings.about
 
 import android.content.Context
 import android.content.Intent

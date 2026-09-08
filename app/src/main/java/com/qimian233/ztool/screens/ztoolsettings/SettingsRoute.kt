@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.settings
+package com.qimian233.ztool.screens.ztoolsettings
 
 import android.annotation.SuppressLint
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.settings.advanced
+package com.qimian233.ztool.screens.ztoolsettings.advanced
 
 import android.content.Context
 import android.widget.Toast

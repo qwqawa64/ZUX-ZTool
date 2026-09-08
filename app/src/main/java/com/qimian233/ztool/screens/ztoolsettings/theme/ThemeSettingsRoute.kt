@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.settings.theme
+package com.qimian233.ztool.screens.ztoolsettings.theme
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +35,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
-import com.qimian233.ztool.screens.settings.rememberSettingsViewModel
+import com.qimian233.ztool.screens.ztoolsettings.rememberSettingsViewModel
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow

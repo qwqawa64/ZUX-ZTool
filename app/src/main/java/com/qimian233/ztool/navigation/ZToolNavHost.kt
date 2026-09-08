@@ -26,11 +26,11 @@ import com.qimian233.ztool.screens.mobiledesktop.MobileDesktopSettingsRoute
 import com.qimian233.ztool.screens.ota.OtaSettingsRoute
 import com.qimian233.ztool.screens.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.screens.safecenter.SafeCenterSettingsRoute
-import com.qimian233.ztool.screens.settings.SettingsMainRoute
-import com.qimian233.ztool.screens.settings.about.SettingsAboutRoute
-import com.qimian233.ztool.screens.settings.about.SettingsAboutRouteName
-import com.qimian233.ztool.screens.settings.advanced.SettingsAdvancedRoute
-import com.qimian233.ztool.screens.settings.theme.ThemeSettingsRoute
+import com.qimian233.ztool.screens.ztoolsettings.SettingsMainRoute
+import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRoute
+import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRouteName
+import com.qimian233.ztool.screens.ztoolsettings.advanced.SettingsAdvancedRoute
+import com.qimian233.ztool.screens.ztoolsettings.theme.ThemeSettingsRoute
 import com.qimian233.ztool.screens.systemframework.FrameworkSettingsRoute
 import com.qimian233.ztool.screens.systemui.SystemUiSettingsRoute
 import com.qimian233.ztool.screens.systemui.animation.AnimationWallpaperSettingsRoute
