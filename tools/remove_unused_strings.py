@@ -56,7 +56,7 @@ REF_RES = [
 def name_is_referenced(name: str, texts) -> tuple[bool, str]:
     """True if any live textual reference to the string resource exists."""
     esc = re.escape(name)
-    base = [re.compile(r"\bR\.string\.%s\b" % esc),
+    base = [re.compile(r"(?<![\w.])R\.string\.%s\b" % esc),
             re.compile(r"@string/%s\b" % esc)]
     quoted = re.compile(r'"%s"' % esc)
     for path, text in texts:

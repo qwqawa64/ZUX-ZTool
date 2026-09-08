@@ -81,7 +81,7 @@ PLURALS_TAG_RE = re.compile(r'<plurals\b([^>]*?)/?>', re.I)
 NAME_ATTR_RE = re.compile(r'\bname="([^"]+)"')
 TRANSLATABLE_FALSE_RE = re.compile(r'\btranslatable="false"')
 
-RSTRING_RE = re.compile(r'\bR\.string\.([A-Za-z0-9_]+)')
+RSTRING_RE = re.compile(r'(?<![\w.])R\.string\.([A-Za-z0-9_]+)')
 ATSTRING_RE = re.compile(r'@string/([A-Za-z0-9_]+)')
 RARRAY_RE = re.compile(r'\bR\.array\.([A-Za-z0-9_]+)')
 ATARRAY_RE = re.compile(r'@array/([A-Za-z0-9_]+)')
