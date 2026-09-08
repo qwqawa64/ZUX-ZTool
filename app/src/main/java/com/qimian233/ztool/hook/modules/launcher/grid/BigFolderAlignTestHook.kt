@@ -549,7 +549,7 @@ class BigFolderAlignTestHook : AppHookModule() {
     /**
      * stock HGap/VGap 按 stock 网格(2,2)=4 列 x 3 行调校(实测 45/33), 网格改为
      * 3x3 等形态后间距占比过大: 水平方向外围图标贴近左右边缘, 垂直方向贴近上下边缘。
-     * 这里对 span 家族（(2,2) 及 spanY==2 且 spanX>=2）按 背景尺寸 x GRID_OCCUPANCY 重算间距,
+     * 这里对所有大文件夹 span（spanX>1 || spanY>1）按 背景尺寸 x GRID_OCCUPANCY 重算间距,
      *   gap = max(0, (bgAxis * 占比 - n * childSize) / (n - 1))
      * 居中布局会把省出的空间变成外围边距, 两个方向同时收敛。
      * childSize = folderIconSizePx * CHILD_ICON_SCALE（实测 158*0.8235 ≈ 130, 与截图吻合;
@@ -571,12 +571,12 @@ class BigFolderAlignTestHook : AppHookModule() {
                         val spanX = chain.args[0] as Int
                         val spanY = chain.args[1] as Int
                         val spanKey = "${spanX}x$spanY"
-                        // 间距重算覆盖整个 span 家族: (2,2) 及 spanY==2 且 spanX>=2。
-                        // 网格取 改写网格, 未改写则取 stock 网格（如 3x2 的 stock 本就是 6x3,
-                        // 网格无需改写, 但 stock 间距仍会把 6 列推到贴边, 间距必须重算）。
-                        val inFamily = (spanX == TARGET_SPAN_X && spanY == TARGET_SPAN_Y) ||
-                            (spanY == TARGET_SPAN_Y && spanX >= 2)
-                        if (!inFamily) return@hookWithId result
+                        // 间距重算覆盖所有大文件夹 span（与宿主 isBigFolder 同语义:
+                        // spanX>1 || spanY>1, 含 2x2/3x2/3x3/2x1 等）。
+                        // 网格取 改写网格, 未改写则取 stock 网格（如 3x2/3x3 的 stock
+                        // 多列网格无需改写, 但 stock 间距仍会把列推到贴边, 间距必须重算）。
+                        // 重算只会缩小间距（下限 0）, 对任何 span 都不会比 stock 更差。
+                        if (spanX <= 1 && spanY <= 1) return@hookWithId result
                         val grid = rewrittenGrids[spanKey] ?: stockGrids[spanKey]
                             ?: return@hookWithId result
                         if (cachedCellWidth == 0) return@hookWithId result
