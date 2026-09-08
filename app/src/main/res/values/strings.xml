@@ -9,14 +9,9 @@
     <string name="customizedConfirmWithCountdown">%1$s（%2$d秒）</string>
     <string name="cancel">取消</string>
     <string name="test">测试</string>
-    <string name="retry">重试</string>
     <string name="nextStep">下一步</string>
-    <string name="regex_label_title">正则表达式</string>
     <string name="regex_label">正则表达式（可选）</string>
     <string name="loading">加载中…</string>
-    <string name="seeDetail">详情</string>
-    <string name="restart_scope_required">请重启作用域</string>
-    <string name="request_retry">请再试一次</string>
     <string name="do_not_show_again">不再提示</string>
     <string name="no_tip_next_time">下次将不再提示此内容</string>
     <string name="loadingUserAPP">加载用户应用列表…</string>
@@ -24,12 +19,9 @@
     <string name="version">模块版本</string>
     <string name="root">Root 来源</string>
     <string name="framework">框架信息</string>
-    <string name="multiply" translatable="false">×</string>
     <string name="misc">杂项</string>
     <string name="app_icon">应用图标</string>
     <!--FirstRun资源值-->
-    <string name="user_confirm_agreement">已确认声明</string>
-    <string name="user_dismiss_agreement">已拒绝声明，正在退出</string>
     <string name="agreement_title">请滑动阅读用户协议</string>
     <string name="agreement_confirm">同意并进入</string>
     <string name="agreement_dismiss">不同意并退出</string>
@@ -53,7 +45,6 @@
     <string name="firstrun_overlay_title">悬浮窗</string>
     <string name="firstrun_overlay_summary">检查是否可以获取悬浮窗权限。该权限用于显示一视界配置向导。</string>
     <!--重启菜单资源值-->
-    <string name="reboot_menu_description">重启菜单</string>
     <string name="soft_reboot">软重启</string>
     <string name="reboot">重启</string>
     <string name="bootloader">Bootloader</string>
@@ -67,14 +58,12 @@
     <string name="edl_confirm_message">确定要重启到EDL模式吗？\n\n按电源键和音量下键可以退出。如果无效，尝试同时按住三个按键直到看到屏幕亮起。</string>
     <string name="reboot_success">重启命令已发送</string>
     <string name="reboot_failed">重启失败：%s</string>
-    <string name="soft_reboot_not_supported">软重启仅支持Android 14及以下版本</string>
     <!--主页资源值-->
     <string name="update_available_title">发现新版本</string>
     <string name="update_available_version_format">新版本: %1$s (Build %2$d)</string>
     <string name="update_button_update">立即更新</string>
     <string name="update_button_ignore">跳过此版本</string>
     <string name="update_ignore_toast">已忽略此版本，将不再提醒</string>
-    <string name="update_check_failed">检查更新失败</string>
     <string name="app_name" translatable="false">ZTool</string>
     <string name="buildCode" translatable="false">%s (Build %d)</string>
     <string name="deviceInfo">设备信息</string>
@@ -86,8 +75,6 @@
     <string name="romRegion">ROM地区</string>
     <string name="placeHolderUnknown">未知</string>
     <string name="homeFragment_title">主页</string>
-    <string name="workModeRequirement">工作模式要求</string>
-    <string name="workModeRequirementDetail">• 需要Root权限 • 需要LSPosed框架</string>
     <string name="environmentState">状态</string>
     <string name="environment_ready">环境就绪</string>
     <string name="homepage_yiyan" translatable="false">%1$s - %2$s</string>
@@ -135,61 +122,9 @@
     <string name="features_app_list_permission_warning">无法读取已安装的应用，请检查是否已授权本应用读取应用列表，然后重启 APP 。</string>
     <string name="features_all_filtered_warning">全部应用包都被过滤！</string>
     <!--日志页资源值-->
-    <string name="logsFragment_title">日志</string>
-    <string name="logFilter">过滤器</string>
-    <string name="filterByType">类别</string>
-    <string name="filterByModule">模块</string>
-    <string name="filterByLevel">级别</string>
-    <string name="searchLog">搜索…</string>
-    <string name="advancedFilterError">仅显示错误</string>
-    <string name="logRefresh">刷新</string>
-    <string name="logClear">清除</string>
-    <string name="logStatistic">统计</string>
-    <string name="placeHolderLogStat">总计: 0 条 | 显示: 0 条 | 模块: 0 个 | 文件: 0</string>
-    <string name="notificationIcon">通知图标</string>
-    <string name="multiLineStackTrace">多行堆栈</string>
-    <string name="all_categories">所有类别</string>
-    <string name="all_levels">所有级别</string>
-    <string name="all_modules">所有模块</string>
-    <string name="log_directory_not_exists">日志目录不存在</string>
-    <string name="no_log_records_found">未找到日志记录</string>
-    <string name="load_logs_failed">加载日志失败: </string>
-    <string name="no_matching_log_records">没有匹配的日志记录</string>
-    <string name="stats_format">总计: %1$d 条 | 显示: %2$d 条 | 模块: %3$d 个 | 文件: %4$s</string>
-    <string name="clear_logs_title">清除日志</string>
-    <string name="clear_logs_message">确定要清除所有日志文件吗？此操作不可恢复。</string>
-    <string name="clear_button">清除</string>
     <string name="logs_cleared_message">日志已清除</string>
-    <string name="clear_logs_success">日志清除成功</string>
-    <string name="clear_logs_failed">清除日志失败: </string>
-    <string name="log_statistics_title">日志统计</string>
-    <string name="log_statistics_header">=== 日志统计 ===</string>
-    <string name="total_logs">总日志数: </string>
-    <string name="total_modules">模块数量: </string>
-    <string name="total_errors">错误数量: </string>
-    <string name="log_files_count">日志文件: </string>
-    <string name="log_files_unit"> 个</string>
-    <string name="module_statistics_header">=== 模块统计 ===</string>
-    <string name="log_count_unit"> 条</string>
-    <string name="log_detail_title">日志详情</string>
-    <string name="log_detail_time">时间: </string>
-    <string name="log_detail_module">模块: </string>
-    <string name="log_detail_level">级别: </string>
-    <string name="log_detail_tag">标签: </string>
-    <string name="log_detail_pid">PID: </string>
-    <string name="log_detail_mode">模式: </string>
-    <string name="log_detail_function">函数: </string>
-    <string name="log_detail_multiline">多行: </string>
     <string name="none">无</string>
-    <string name="yes">是</string>
-    <string name="no">否</string>
-    <string name="full_message_header">=== 完整消息 ===</string>
-    <string name="extracted_data_header">=== 提取数据 ===</string>
-    <string name="copy_button">复制</string>
     <string name="close_button">关闭</string>
-    <string name="log_content">日志内容</string>
-    <string name="copied_to_clipboard">已复制到剪贴板</string>
-    <string name="more_lines_suffix"> 更多行</string>
     <string name="export_logs_success">日志导出成功</string>
     <string name="export_logs_failed">日志导出失败</string>
     <string name="export_logs">导出日志</string>
@@ -199,13 +134,9 @@
     <string name="delete_logs_failed">删除日志失败</string>
     <string name="delete_logs_confirmation">确定要删除所有日志吗？此操作不可撤销。</string>
     <string name="lsposed_log_sync_failed">无法同步 LSPosed 日志，请检查 Root 权限</string>
-    <string name="zip_logs_failed">压缩日志时出现问题，无法导出日志</string>
 
     <!--设置页资源值-->
-    <string name="default_title">XXX - 详细设置</string>
     <string name="settingsFragment_title">设置</string>
-    <string name="SettingsTitle">设置项标题</string>
-    <string name="SettingsDescription">设置项描述</string>
     <string name="enableDetailedLogging">开启详细日志</string>
     <string name="enableDetailedLoggingDescription">显示更细节的Hook信息，开关状态变更后请重启作用域。反馈问题时必须打开本开关！</string>
     <string name="backupAndRestore">备份与还原</string>
@@ -226,12 +157,10 @@
     <string name="moreSettings">更多设置</string>
     <string name="enableHomePageYiyan">随机一言</string>
     <string name="enableHomePageYiyanSummary">启用主界面下方的随机一言，此功能需要联网</string>
-    <string name="open_browser_failed">无法打开浏览器</string>
     <string name="open_web_link_failed">无法打开链接</string>
     <string name="showAboutPage">关于ZTool</string>
     <string name="config_backup_success">配置已备份</string>
     <string name="about_ztool_title">关于ZTool</string>
-    <string name="about_description">ZTool是个针对ZUXOS的LSPosed功能增强模块。&lt;br&gt;开发者: Qimian233, WASDDestroy&lt;br&gt;本项目遵守Apache 2.0协议发布。&lt;br&gt;本项目部分功能来自于dantmnf的UnfuckZUI。</string>
     <string name="about_developers_title">开发者</string>
     <string name="about_acknowledgements_title">致谢</string>
     <string name="about_open_source_title">开源信息</string>
@@ -252,11 +181,6 @@
     <string name="default_config_restored">已恢复默认配置</string>
     <string name="config_restore_success">配置已从文件恢复</string>
     <string name="log_service_require_manual_restart">日志服务自动重启失败，请手动启动</string>
-    <string name="unknown_activity_null">未知 (Activity 为空)</string>
-    <string name="button_project_homepage">Our GitHub</string>
-    <string name="button_credits">UnfuckZUI</string>
-    <string name="button_qimian233_coolapk" translatable="false">七眠233</string>
-    <string name="button_wasddestroy_coolapk" translatable="false">WASD_Destroy</string>
 
     <!--通用重启作用域资源-->
     <string name="restart_xp_title">确认重启作用域?</string>
@@ -266,14 +190,12 @@
     <string name="restart_no">取消</string>
     <string name="restartSuccess">重启成功</string>
     <string name="restartFail">重启失败：</string>
-    <!--从这里开始是各项Hook功能的资源值-->
     <!--游戏助手功能页资源值-->
     <string name="SelectDefault">不开启</string>
     <string name="SelectAllGames">全部游戏</string>
     <string name="SelectWhiteList">白名单内</string>
     <string name="SelectGame">选择游戏</string>
     <string name="whitelist_config_title">配置白名单</string>
-    <string name="whitelist_config_summary">当前已启用X个游戏</string>
     <string name="whitelist_count">已启用 %d 个游戏</string>
     <string name="auto_open_prevent_touch_title">自动开启防误触</string>
     <string name="auto_open_prevent_touch_summary">在游戏启动时候，允许白名单内或所有游戏自动开启防误触</string>
@@ -296,8 +218,6 @@
     <string name="firmware_first_upload_time">首次上传时间：</string>
     <string name="firmware_last_update_time">最后更新时间：</string>
     <string name="fetching_firmware_info">正在获取固件信息…</string>
-    <string name="firmware_fetch_success">固件信息获取成功</string>
-    <string name="firmware_fetch_failed">固件信息获取失败</string>
     <string name="Ota_Setting_Title">系统更新</string>
     <string name="OtaDisable_title">启用本地安装</string>
     <string name="OtaDisable_summary">开启后在系统更新-右上角更多中找到本地安装选项，快速点击 10 次版本号可达到一样的效果</string>
@@ -306,13 +226,11 @@
     <string name="ota_info_fetch_failed">读取OTA信息失败: </string>
     <string name="no_changelog_available">无可用更新日志</string>
     <string name="no_download_link">无下载链接</string>
-    <string name="firmware_query_failed">获取固件信息失败</string>
     <string name="version_info_format">当前版本: %1$s\n新版本: %2$s</string>
     <string name="download_info_format">下载链接: %1$s\n文件大小: %2$s\nMD5: %3$s</string>
     <string name="ota_update_info_title">OTA更新信息</string>
     <string name="copy_download_link">复制下载链接</string>
     <string name="copy_changelog">复制更新日志</string>
-    <string name="close">关闭</string>
     <string name="download_link_copied">下载链接已复制到剪贴板</string>
     <string name="changelog_copied">更新日志已复制到剪贴板</string>
     <string name="ota_info_clipboard_label">OTA信息</string>
@@ -320,25 +238,18 @@
     <string name="changelog_full_format">版本信息:\n当前版本: %1$s\n新版本: %2$s\n\n更新日志:\n%3$s\n\n文件信息:\n文件大小: %4$s\nMD5: %5$s</string>
     <string name="PCFlashFirmwareFetch_title">获取9008/联发科深刷救砖包链接</string>
     <string name="PCFlashFirmwareFetch_summary">根据提供的SN在服务器上抓取当前最新救砖包</string>
-    <string name="ProvideSerialNumber">在下方填写希望获取刷机包设备的SN，留空将使用本机SN尝试获取</string>
     <string name="SN_default_hint">请输入SN码，可以在设备设置、平板上的贴纸或者包装盒等地找到它</string>
     <string name="SN_current_machine_hint">当前使用本机SN: %s</string>
     <string name="PCFlashFirmwareFetch_result">固件获取结果</string>
     <string name="copy_password">复制密码</string>
     <string name="password_copied">密码已复制到剪贴板</string>
-    <string name="PCFlashFirmwareFetch_error">无法获取固件</string>
     <string name="PCFlashFirmwareFetch_failed_message">获取下载链接的过程中出错。检查网络状况并确认SN是否正确输入，然后再试一次。</string>
     <string name="Ota_Custom_Params_Title">OTA请求伪装</string>
     <string name="Ota_Custom_Params_Desc">覆盖 OTA 请求中的参数以获取不同版本的增量包或者全量包，使用内测SN可升级至内测开发版本。留空则表示保持系统原值。</string>
-    <string name="Ota_Custom_Version_Hint">系统版本</string>
-    <string name="Ota_Custom_DeviceID_Hint">SN</string>
     <string name="current_version_fmt">当前系统版本: %1$s</string>
     <string name="current_sn_fmt">当前机器SN: %1$s</string>
     <string name="loading_ellipsis">加载中…</string>
-    <!--设置页：代码内资源值-->
     <!-- 详细设置相关字符串 -->
-    <string name="warning_title">警告</string>
-    <string name="module_uninstall_warning">APP内暂不支持卸载模块，请在Magisk/KSU模块管理中卸载模块后再重启APP</string>
     <string name="got_it_button">知道了</string>
     <string name="installing_module">正在安装模块…</string>
     <string name="removing_module">正在移除模块…</string>
@@ -355,75 +266,38 @@
     <string name="error_create_temp_dir">Error: Failed to create temp directory</string>
     <string name="error_copy_assets">Error: Failed to copy assets to temp directory</string>
     <string name="error_shell_command_failed">Error: Shell command failed - %1$s</string>
-    <string name="releasing_files">正在释放文件…</string>
-    <string name="cleaning_temp_files">正在清理临时文件…</string>
     <string name="no_config_files_prompt">请使用配置向导生成第一个配置文件吧</string>
     <string name="select_config_files">选择配置文件</string>
     <string name="config_suffix"> 配置</string>
     <string name="flashed_configs_count">已刷入 %1$d 个自定义策略</string>
     <string name="config_already_flashed">已刷入的配置不可选择</string>
-    <string name="select_config_to_delete">请选择要删除的配置文件</string>
     <string name="delete_success">成功删除 %1$d 个配置文件</string>
-    <string name="delete_skipped">自动跳过 %1$d 个已刷入的配置</string>
-    <string name="no_files_deleted">没有文件被删除</string>
-    <string name="all_configs_deleted">所有配置文件已删除</string>
     <string name="install_module_first">请先安装拓展模块</string>
-    <string name="duplicate_package_warning">一个应用只允许一次刷入一次配置，请检查选择的应用：%1$s</string>
-    <string name="flash_config_warning">刷入的策略如果与原策略冲突将会覆盖处理</string>
     <string name="continue_button">继续</string>
     <string name="flashing_config">正在刷入配置…</string>
-    <string name="extracting_original_config">正在提取原配置文件…</string>
-    <string name="error_module_dir_not_exists">模块目录不存在或无法访问</string>
     <string name="error_copy_original_config">复制原配置文件失败，请检查模块是否完整安装</string>
-    <string name="setting_file_permissions">正在设置文件权限…</string>
-    <string name="error_set_permissions">设置文件权限和所有者失败</string>
-    <string name="parsing_original_config">正在解析原配置…</string>
-    <string name="error_temp_config_not_exists">临时配置文件不存在</string>
     <string name="error_read_original_config">读取原配置文件失败</string>
-    <string name="processing_new_config">正在处理新配置…</string>
-    <string name="generating_new_config">正在生成新配置文件…</string>
-    <string name="updating_module_config">正在更新模块配置…</string>
     <string name="error_update_module_config">更新模块配置失败，请检查root权限</string>
     <string name="success_title">成功</string>
-    <string name="flash_success_message">配置刷入成功，重启系统生效</string>
     <string name="flash_failed_message">刷入配置失败：%1$s</string>
     <string name="confirm_restore_title">确认还原</string>
     <string name="confirm_restore_message">此操作将删除所有自定义配置并重新安装原始模块，是否继续？</string>
     <string name="confirm_button">确认</string>
     <string name="restoring_module">正在还原模块…</string>
-    <string name="deleting_module">正在删除模块…</string>
-    <string name="error_delete_module">删除模块失败，请检查root权限</string>
-    <string name="reinstalling_module">正在重新安装模块…</string>
-    <string name="reinstall_failed_message">重新安装模块失败: %1$s</string>
     <string name="restore_success_message">模块还原成功，重启系统生效</string>
-    <string name="restore_failed_message">模块还原失败：%1$s</string>
     <string name="select_ttf_file">选择TTF字体文件</string>
     <string name="no_file_manager_found">未找到文件管理器</string>
     <string name="preparing_font_file">正在准备字体文件…</string>
     <string name="unknown_font_filename">unknown_font.ttf</string>
-    <string name="file_copy_failed">文件复制失败: %1$s</string>
     <string name="input_font_info_title">输入字体信息</string>
     <string name="default_font_description">自定义导入的字体%1$s</string>
-    <string name="font_name_empty">字体名称不能为空</string>
-    <string name="font_description_empty">字体描述不能为空</string>
     <string name="importing_font">正在导入字体…</string>
-    <string name="creating_font_directory">正在创建字体目录…</string>
-    <string name="copying_font_file">正在复制字体文件…</string>
-    <string name="creating_font_metadata">正在创建字体元数据…</string>
-    <string name="generating_preview_images">正在生成预览图片…</string>
-    <string name="setting_folder_permissions">正在设置文件夹权限…</string>
     <string name="import_success_title">导入成功</string>
     <string name="import_success_message">字体已成功导入到系统字体库\n前往 设置-个性定制-字体-本地 即可查看</string>
     <string name="import_failed_title">导入失败</string>
-    <string name="import_failed_message">字体导入失败: %1$s</string>
     <string name="font_language">简体</string>
     <string name="font_author">Import By ZTool</string>
-    <string name="generating_thumbnail">正在生成缩略图…</string>
-    <string name="generating_detailed_preview">正在生成详细预览图…</string>
-    <string name="error_root_command_failed">Root命令执行失败，退出码: %1$d</string>
-    <string name="error_get_folder_permissions">无法获取参考文件夹的权限信息</string>
     <string name="font_preview_text">有言\n\n   与恶龙缠斗过久，自身亦成为恶龙；\n   凝视深渊过久，深渊将回以凝视。\n\n           ---弗里德里希·威廉·尼采</string>
-    <string name="select_at_least_one_config">请选择至少一个配置文件</string>
     <!--设置页：一视界策略搜索页功能资源值-->
     <string name="zui_force_config_title">小窗与分屏</string>
     <string name="zui_force_config_summary">需要重启系统，此项配置优先级相当高，会覆盖所有用户及系统配置，不勾选的应用保持系统默认行为</string>
@@ -433,9 +307,7 @@
     <string name="zui_force_freeform_summary">与固定比例小窗冲突，强制指定应用使用任意比例小窗</string>
     <string name="zui_force_fixed_title">强制固定比例小窗</string>
     <string name="zui_force_fixed_summary">与自由小窗冲突，强制指定应用使用固定比例小窗</string>
-    <string name="loading_config">正在读取系统配置…</string>
     <string name="saving_config">正在保存系统配置…</string>
-    <string name="select_apps_title">选择应用</string>
     <string name="save_success_message">保存成功</string>
     <string name="module_config_tips">Tips:当前已使用模块配置文件，已适配应用策略数量：%d</string>
     <string name="official_config_tips">Tips:当前使用官方配置文件，已适配应用策略数量：244</string>
@@ -456,7 +328,6 @@
     <string name="skip_letterbox_display">• 跳过信箱模式显示: </string>
     <string name="show_surface_view_bg">• 显示SurfaceView背景: </string>
     <string name="pause_primary_activity">• 暂停主活动: </string>
-    <string name="unsetValue">未设置</string>
     <!-- 设置页：悬浮窗适配向导相关字符串 -->
     <string name="cannot_get_app_foreground">无法获取当前应用，请确保应用在前台</string>
     <string name="cannot_get_activity">无法获取当前Activity</string>
@@ -530,7 +401,6 @@
     <string name="Disable_deletePackage_Title">不要删除安装包</string>
     <string name="Disable_deletePackage_Summary">拦截安装器安装完成后的删除安装包行为</string>
     <!--系统界面 一级功能页导航资源值-->
-    <string name="SystemUI_title">系统界面</string>
     <string name="statusBarSettingTitle">状态栏设置</string>
     <string name="statusBarSettingSummary">自定义状态栏时钟、通知图标等设置</string>
     <string name="LockScreenSettingTitle">锁屏设置</string>
@@ -566,12 +436,7 @@
     <string name="display_seconds_summary">在状态栏时钟中显示秒数</string>
     <string name="custom_clock_title">自定义时钟</string>
     <string name="custom_clock_summary">对状态栏时钟的显示进行自定义</string>
-    <string name="Display_StatusBarSeconds_title">显示秒</string>
-    <string name="Display_StatusBarSeconds_Summary">为状态栏更新秒数显示，自定义时钟使用秒数时请打开开关</string>
     <string name="clock_format_hint">输入时钟格式</string>
-    <string name="text_bold_summary">启用时钟文字的粗体显示效果</string>
-    <string name="pick_color_button">选择颜色</string>
-    <string name="clock_preview_default">预览自定义时钟</string>
     <!--系统界面 状态栏通知资源值-->
     <string name="status_bar_notification_settings_title">状态栏通知设置</string>
     <string name="notification_icon_limit_title">通知图标数量限制</string>
@@ -637,7 +502,6 @@
     <string name="realwatts_custom_format_enabled_summary">使用占位符自定义显示文本，开启后子开关将失效</string>
     <string name="realwatts_custom_format_label">自定义格式</string>
     <string name="realwatts_custom_format_hint">可用占位符：${voltage} ${current} ${power} ${temperature} ${ind}\n示例：Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
-    <string name="api_address_label">API地址</string>
     <string name="api_address_hint">输入API地址</string>
     <!-- 锁屏设置相关字符串 -->
     <string name="lock_screen_settings_title_suffix">\ - 锁屏设置</string>
@@ -668,22 +532,16 @@
     <string name="watt_option_disabled">不启用</string>
     <string name="watt_option_handshake">握手功率</string>
     <string name="watt_option_actual">实际功率</string>
-    <string name="real_watt_custom_refresh_interval_enabled">一定时长后</string>
-    <string name="real_watt_custom_refresh_interval_disabled">功率变化时</string>
     <!--系统界面 控制中心页资源值-->
     <string name="ControllerDate">控制中心日期设置</string>
     <string name="CustomDateSettingTitle">自定义日期格式</string>
     <string name="CustomDateSettingSummary">自定义控制中心时间的显示格式</string>
     <string name="custom_clock_text_size_title">修改字体大小</string>
-    <string name="custom_clock_default_text_size">16sp</string>
     <string name="custom_clock_letter_spacing_title">修改字间距</string>
-    <string name="custom_clock_letter_spacing_default">0.1</string>>
     <string name="custom_clock_text_color_title">修改字体颜色</string>
-    <string name="custom_clock_text_color_default">#FFFFFFFF</string>
     <string name="custom_clock_text_bold_title">启用粗体显示</string>
     <string name="useBoldDate">启用日期文字的粗体显示效果</string>
     <string name="ControllerDateFormat">输入时间格式</string>
-    <string name="DateFormateExample">M月d日 EEE</string>
     <string name="control_center_settings_title_suffix">\ - 控制中心设置</string>
     <string name="date_format_saved_message">自定义时间格式已保存</string>
     <string name="date_format_help_title">时间格式帮助</string>
@@ -694,7 +552,6 @@
     <string name="preview_default">预览：输入格式以查看效果</string>
     <string name="preview_display">预览：%s</string>
     <string name="preview_invalid">预览：格式无效</string>
-    <string name="pick_color">选择颜色</string>
     <string name="text_size_title">修改字体大小</string>
     <string name="letter_spacing_title">修改字间距</string>
     <string name="text_color_title">修改字体颜色</string>
@@ -755,7 +612,6 @@
         <item>深橙</item>
         <item>棕色</item>
     </string-array>
-    <string name="clock_format_help_content">时间格式基于ISO 8601进行拓展，自定义时钟格式说明：\n\n📅 ISO 8601标准日期格式：\n  yyyy – 年份(2024)\n  yy   – 年份后两位(24)\n  MM   – 月份(12)\n  MMM  – 月份缩写(12月)\n  MMMM – 月份全称(十二月)\n  dd   – 日期(25)\n  HH   – 24小时制(14)\n  hh   – 12小时制(02)\n  mm   – 分钟(30)\n  ss   – 秒(45)\n  SSS  – 毫秒(123)\n\n📅 星期格式：\n  E    – 星期缩写(周一)\n  EE   – 星期缩写(周一)\n  EEE  – 星期缩写(周一)\n  EEEE – 星期全称(星期一)\n  u    – 数字星期(1–7,1=周一)\n  W    – 自定义星期格式(周一)\n\n🌙 农历相关：\n  N – 农历日期(腊月廿三)\n  J – 节气(仅当天显示，如立春)\n  A – 生肖(龙)\n\n⏰ 时间相关：\n  T – 时辰(子时)\n  a – 凌晨/上午/下午/晚上 标记\n  k – 24小时制(1–24)\n  K – 12小时制(0–11)\n\n✨ 其他特殊格式：\n  C – 星座(水瓶座)\n  D – 一年中的第几天(1–365)\n  F – 一个月中的第几个星期\n  w – 一年中的第几周(1–53)\n  W – 一个月中的第几周(1–5)\n  z – 时区名称(GMT+08:00)\n  Z – 时区偏移量(+0800)\n\n🎯 使用示例：\n  \"yyyy–MM–dd HH:mm:ss\" → \"2024–12–25 14:30:45\"\n  \"MM月dd日 EEEE\" → \"12月25日 星期三\"\n  \"HH:mm T\" → \"14:30 午时\"\n  \"yyyy年MM月dd日 N A\" → \"2024年12月25日 腊月廿三 龙\"\n  \"yyyy/MM/dd E C\" → \"2024/12/25 周三 摩羯座\"\n\n💡 注意事项：\n  • 农历和节气基于中国农历算法\n  • 时辰按2小时一个时段划分\n  • 星座基于公历日期计算\n  • 生肖基于农历年份确定\n  • 自定义格式符(N,J,T,C,A,W)区分大小写</string>
     <!--启动器功能页的资源值-->
     <string name="force_stop_title">选择需要保护的APP</string>
     <string name="protected_apps_summary">已保护%d个应用后台</string>
@@ -774,9 +630,6 @@
     <string name="inputRowNumberHere">行数</string>
     <string name="inputColumnNumberHere">列数</string>
     <!--系统框架功能页的资源值-->
-    <string name="Custom_attention">注意！</string>
-    <string name="Custom_Attention_content">自定义唤醒符后，一定一定需要额外勾选使用全局输入的APP作用域（如QQ）不勾选只能使用官方的唤醒符号，效果测试可在下面输入框进行，比如打出&amp;&amp;你好，你是谁&amp;&amp;。</string>
-    <string name="test_Input">在此输入测试文本…</string>
     <string name="ai_input_quick_help_title">唤起符帮助</string>
     <string name="ai_input_quick_help_summary">自定义唤起符会替换官方默认的全角/半角“&amp;&amp;”。多个唤起符请用英文逗号分隔。</string>
     <string name="ai_input_quick_help_scope">作用域</string>
@@ -803,9 +656,6 @@
     <string name="disable_flag_secure_summary">移除安全窗口标志，解决安全窗口截屏为全黑问题</string>
     <string name="disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
     <string name="disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
-    <string name="framework_lockscreen_settings_title">锁屏</string>
-    <string name="disable_lockscreen_password_per24h">禁止每24小时验证一次锁屏密码</string>
-    <string name="disable_lockscreen_password_per24h_summary">注意：此功能很可能降低设备安全性，如非刚需不建议开启</string>
     <string name="restart_system_title">重启系统</string>
     <string name="restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
     <string name="disable_hbm_thermal_limit_title">禁用高温降低亮度</string>
@@ -816,15 +666,10 @@
     <string name="default_allow_autorun_title">后台行为管理</string>
     <string name="default_allow_autorun_enable_title">默认允许APP自启</string>
     <string name="default_allow_autorun_enable_summary">默认允许所有APP自启动</string>
-    <string name="empty_package_name_message">应用包名为空</string>
     <string name="app_process_restarted_message">已重启应用进程</string>
     <string name="restart_fail_prefix">重启失败: </string>
 
-    <!--Hook功能页的资源值到这里结束-->
-    <!--对话（框）的资源值从这里开始-->
     <!--配置选择页的资源值-->
-    <string name="selectConfigFile">选择配置文件</string>
-    <string name="customPolicyAppliedCount">已刷入 X 个自定义策略</string>
     <string name="flashAddedConfig">刷入配置</string>
     <string name="restoreModule">还原模块</string>
     <!--字体导入页的资源值-->
@@ -834,10 +679,6 @@
     <!--获取更新日志页面的资源值-->
     <string name="updateLog">更新日志</string>
     <!--一视界适配助手页的资源值-->
-    <string name="howToAdapt">步骤提示</string>
-    <string name="currentApp">当前应用:</string>
-    <string name="currentActivity">当前Activity:</string>
-    <string name="welcomeToUse">欢迎使用适配向导，请按照上面步骤提示操作:</string>
     <string name="addCurrentActivity">添加当前活动</string>
     <string name="noActivityAdded">已添加活动: 无</string>
     <string name="showEmbeddingDivider">显示嵌入分隔符</string>
@@ -845,11 +686,9 @@
     <string name="skipMultiWindowMode">跳过多窗口模式</string>
     <string name="displaySurfaceViewBackground">显示SurfaceView背景</string>
     <string name="shouldStopMainActivity">应暂停主活动</string>
-    <!--对话（框）的资源值到此结束-->
     <!--导航栏资源值-->
     <string name="gotoHomePage">主页</string>
     <string name="gotoFeaturePage">功能</string>
-    <string name="gotoLogPage">日志</string>
     <string name="gotoSettingsPage">设置</string>
     <!--应用名单选择界面弹窗-->
     <string name="SearchHint">搜索…</string>
@@ -864,7 +703,6 @@
     <string name="theme_mode_light">亮色</string>
     <string name="theme_mode_dark">暗色</string>
     <string name="material_color_spec_title">Material 色彩标准</string>
-    <string name="material_color_spec_summary">仅 TonalSpot、Neutral、Vibrant 和 Expressive 调色板风格支持 SPEC 2025</string>
     <string name="material_color_spec_2021">SPEC_2021</string>
     <string name="material_color_spec_2025">SPEC_2025</string>
     <string name="material_palette_mode_title">Material 调色板</string>
@@ -892,7 +730,6 @@
     <string name="enable_floating_bottom_bar_summary">iOS 风格的胶囊式悬浮底栏</string>
     <string name="enable_floating_bottom_bar_blur_title">液态玻璃底栏</string>
     <string name="enable_floating_bottom_bar_blur_summary">使用 iOS 风格的模糊、透射等视觉效果</string>
-    <string name="back_to_top">回顶部</string>
     <string name="app_details_completion">补全应用信息</string>
     <string name="app_details_completion_summary">为设置的应用页面补全应用包名、SDK信息、安装和更新信息以及安装来源</string>
     <string name="about_device_info_title">关于设备信息</string>
@@ -977,7 +814,6 @@
     <string name="non_zuxos_warn">当前设备运行的系统很可能不是 ZUXOS/ZUI ，无法保证 Hook 正确执行!</string>
     <string name="display_entry_in_settings">在设置中显示入口</string>
     <string name="display_entry_in_settings_summary">需要重启系统设置 APP</string>
-    <string name="show_slider_percentage">显示滑动条百分比</string>
     <string name="show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="show_volume_slider_percentage">显示音量滑动条百分比</string>
     <string name="ram_unavailable" translatable="false" tools:ignore="UnusedResources">-- | --</string>

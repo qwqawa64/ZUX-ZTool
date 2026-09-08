@@ -54,3 +54,6 @@ build/
 /package.json
 /package-lock.json
 /.reasonix/*
+
+# Python
+__pycache__/
