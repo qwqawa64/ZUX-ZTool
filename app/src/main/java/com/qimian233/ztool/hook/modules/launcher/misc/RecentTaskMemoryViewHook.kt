@@ -481,8 +481,8 @@ class RecentTaskMemoryViewHook : AppHookModule() {
         private const val RECENTS_VIEW_CLASS = "com.android.quickstep.views.RecentsView"
         private const val MEMORY_VIEW_TAG = "ztool_recent_task_memory_view"
         private const val REFRESH_INTERVAL_MS = 1000L
-        private const val STRING_RAM_FORMATTER = "ram_formatter"
-        private const val STRING_RAM_UNAVAILABLE = "ram_unavailable"
+        private const val STRING_RAM_FORMATTER = "ztool_ram_formatter"
+        private const val STRING_RAM_UNAVAILABLE = "ztool_ram_unavailable"
         private const val FALLBACK_RAM_FORMATTER = "%s | %s"
         private const val FALLBACK_RAM_UNAVAILABLE = "-- | --"
 

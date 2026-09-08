@@ -793,8 +793,8 @@
     <string name="page_settings_display_entry_in_settings_summary">需要重启系统设置 APP</string>
     <string name="system_ui_control_center_show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="system_ui_control_center_show_volume_slider_percentage">显示音量滑动条百分比</string>
-    <string name="ram_unavailable" translatable="false" tools:ignore="UnusedResources">-- | --</string>
-    <string name="ram_formatter" tools:ignore="UnusedResources">%1$s 已用 | %2$s</string>
+    <string name="ztool_ram_unavailable" translatable="false" tools:ignore="UnusedResources">-- | --</string>
+    <string name="ztool_ram_formatter" tools:ignore="UnusedResources">%1$s 已用 | %2$s</string>
     <string name="launcher_beautify_ram_info">美化总内存信息</string>
     <string name="launcher_beautify_ram_info_summary">显示猜测的物理内存总量并显示内存扩展值（如果有）</string>
     <string name="mobile_desktop_skip_nearby_exposure_warn">跳过互传开启警告</string>

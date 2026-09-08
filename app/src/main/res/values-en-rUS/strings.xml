@@ -728,7 +728,7 @@
     <string name="page_settings_about_wasd_destroy_summary">Hooks and User Interface</string>
     <string name="page_settings_about_uuuddddl">Hooks</string>
     <string name="page_settings_about_unfuckzui_summary">Fearure references and inspirations</string>
-    <string name="ram_formatter" tools:ignore="UnusedResources">%1$s Used | %2$s</string>
+    <string name="ztool_ram_formatter" tools:ignore="UnusedResources">%1$s Used | %2$s</string>
     <string name="launcher_beautify_ram_info">Beautify total RAM info</string>
     <string name="launcher_beautify_ram_info_summary">Replace total RAM value with guessed total physical RAM + RAM expansion value</string>
     <string name="mobile_desktop_app_name">Readyfor</string>
