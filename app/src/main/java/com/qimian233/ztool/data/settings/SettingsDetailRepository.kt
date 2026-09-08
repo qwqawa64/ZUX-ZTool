@@ -142,7 +142,13 @@ class SettingsDetailRepository(
     }
 
     fun installFont(fontFile: File?, fontName: String, fontDescription: String) {
-        fontInstallerManager.installFont(context, fontFile, fontName, fontDescription)
+        // null 文件交由 requireNotNull 抛出异常，与 Java 时期的 NPE 行为一致（由 ViewModel 捕获上报）
+        fontInstallerManager.installFont(
+            context,
+            requireNotNull(fontFile) { "fontFile must be prepared before installing" },
+            fontName,
+            fontDescription
+        )
     }
 
     fun loadOvConfigSelection(mode: Int): OvConfigSelection {
