@@ -10,7 +10,7 @@ import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableDockBar
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableRecentAppsDisplay
 import com.qimian233.ztool.hook.modules.launcher.dockbar.ZuiLauncherHotseatHook
 import com.qimian233.ztool.hook.modules.launcher.grid.BluePointRemovalHook
-import com.qimian233.ztool.hook.modules.launcher.grid.BigFolderAlignTestHook
+import com.qimian233.ztool.hook.modules.launcher.grid.BigFolderAlignHook
 import com.qimian233.ztool.hook.modules.launcher.grid.CustomGridSize
 import com.qimian233.ztool.hook.modules.launcher.grid.DismissCloudFolderConfirmation
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherDrawerNoLabelMode
@@ -196,7 +196,7 @@ object HookManager {
         registerHookModule(LauncherDrawerNoLabelMode())
         registerHookModule(BluePointRemovalHook())
         registerHookModule(DismissCloudFolderConfirmation())
-        registerHookModule(BigFolderAlignTestHook()) // test_hook: 大文件夹水平几何对齐试验
+        registerHookModule(BigFolderAlignHook()) // 大文件夹背景/子网格/标签几何对齐
         registerHookModule(DisableRecentAppsDisplay())
         registerHookModule(BatchUninstall())
 

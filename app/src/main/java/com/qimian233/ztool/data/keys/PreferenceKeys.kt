@@ -130,6 +130,7 @@ object PreferenceKeys {
     @JvmField val DISMISS_CLOUD_FOLDER_CONFIRMATION = BoolKey("dismiss_cloud_folder_confirmation", false)
     @JvmField val DISABLE_RECENT_APPS_DISPLAY = BoolKey("disable_recent_apps_display", false)
     @JvmField val LAUNCHER_BATCH_UNINSTALL = BoolKey("launcher_batch_uninstall", false)
+    @JvmField val LAUNCHER_BIG_FOLDER_ALIGN = BoolKey("big_folder_align", false)
 
     // Launcher 子功能开关 + 内部键
     @JvmField val REMOVE_HOT_WORD_VIEW = BoolKey("remove_hot_word_view", false)
@@ -272,7 +273,7 @@ object PreferenceKeys {
         DISABLE_FORCE_STOP, ZUI_LAUNCHER_HOTSEAT, CUSTOM_GRID_SIZE,
         CLEAN_GLOBAL_SEARCH, DISABLE_DOCK_BAR,
         LAUNCHER_RECENT_TASK_MEMORY_VIEW, LAUNCHER_NO_LABEL_MODE,
-        LAUNCHER_DRAWER_NO_LABEL_MODE,
+        LAUNCHER_DRAWER_NO_LABEL_MODE, LAUNCHER_BIG_FOLDER_ALIGN,
         LAUNCHER_HIDE_BLUE_POINT, DISMISS_CLOUD_FOLDER_CONFIRMATION,
         DISABLE_RECENT_APPS_DISPLAY, LAUNCHER_BATCH_UNINSTALL,
         REMOVE_HOT_WORD_VIEW, REMOVE_SEARCH_RECOMMEND, BEAUTIFY_RAM_INFO,
@@ -348,15 +349,19 @@ object PreferenceKeys {
      * 根据键名查找对应的类型化键对象。
      * 找不到则返回 null。
      */
+    @Suppress("unused")
     @JvmStatic
     fun findBooleanKey(name: String): BoolKey? = booleanKeys.find { it.name == name }
 
+    @Suppress("unused")
     @JvmStatic
     fun findIntKey(name: String): IntKey? = intKeys.find { it.name == name }
 
+    @Suppress("unused")
     @JvmStatic
     fun findFloatKey(name: String): FloatKey? = floatKeys.find { it.name == name }
 
+    @Suppress("unused")
     @JvmStatic
     fun findStringKey(name: String): StringKey? = stringKeys.find { it.name == name }
 }
