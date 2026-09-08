@@ -31,6 +31,10 @@ import java.lang.reflect.Method
  *  5. BigFolderConfig.getBigFolderIconChildCount(...) 改写子网格：(2,2) → 每行 3 个 ×
  *     3 行(3x3=9); 其它 spanY==2 且 stock 行数为 2 的状态(如 3x2)→ 行数改 3、列数沿用
  *     stock; maxNumItemsInPreview 由 ClippedFolderIconLayoutRule.e() 自动跟随 cols*rows。
+ *  5b. BigFolderConfig.getBigFolderIconHGap/VGap(...)：被改写网格的间距按
+ *     背景尺寸 x GRID_OCCUPANCY(75%) 重算。stock 间距(实测 45/33)按 4x3 调校, 网格
+ *     变更后过大致外围图标贴边; childSize = folderIconSizePx * CHILD_ICON_SCALE
+ *     (实测 158*0.8235≈130, 与截图吻合)。
  *  6. ClippedFolderIconLayoutRule.c(...) 手机分支是硬编码 2 列定位, 统一改写为
  *     rule 自身的 getOffsetX/getOffsetY 通用网格（与平板分支同源, cols/rows/gap 全部生效）。
  *  7. setup(...) 垂直改写(第四轮修正, 基于截屏实测): 背景对齐参考图标的"图形"边缘
@@ -107,6 +111,9 @@ class BigFolderAlignTestHook : AppHookModule() {
 
         // 需求1：大文件夹子图标网格（2x2 → 每行 3 个）
         hookChildGridLayout(classLoader)
+
+        // 需求4：被改写网格的子图标间距按背景占比重算（stock 间距按 4x3 调校, 偏大）
+        hookFolderGaps(classLoader)
 
         // 需求3：文件夹标签与邻居图标标签同高（替换 FolderIcon.z()）
         labelField = try {
@@ -216,6 +223,12 @@ class BigFolderAlignTestHook : AppHookModule() {
 
         val dp = getDeviceProfileOf(activityContext) ?: return
         val metrics = readGridMetrics(dp) ?: return
+        // 供静态方法 Hook（间距重算）在无 context 参数的调用点使用
+        cachedCellWidth = metrics.cellWidth
+        cachedCellPitch = metrics.cellHeight + metrics.gapY
+        cachedRowInset = metrics.rowInset
+        cachedIconSizePx = metrics.iconSizePx
+        cachedFolderIconSizePx = metrics.folderIconSizePx
         val inset = if (alignToSmallFolder) metrics.insetFolder else metrics.insetIcon
         val newWidth = spanX * metrics.cellWidth + (spanX - 1) * metrics.gapX - 2 * inset
 
@@ -443,6 +456,7 @@ class BigFolderAlignTestHook : AppHookModule() {
                     if (rewrite != null) {
                         out?.set(0, rewrite[0])
                         out?.set(1, rewrite[1])
+                        rewrittenGrids[key] = rewrite
                         val newCount = rewrite[0] * rewrite[1]
                         if ((result as Int) != newCount && loggedChildCountSpans.add(key)) {
                             logger.info(
@@ -527,6 +541,66 @@ class BigFolderAlignTestHook : AppHookModule() {
             logger.info("hooked ClippedFolderIconLayoutRule.c (generic grid)")
         } catch (t: Throwable) {
             logger.error("hook ClippedFolderIconLayoutRule.c failed", t)
+        }
+    }
+
+    // ── 需求4：被改写网格的子图标间距重算 ──
+
+    /**
+     * stock HGap/VGap 按 stock 网格(2,2)=4 列 x 3 行调校(实测 45/33), 网格改为
+     * 3x3 等形态后间距占比过大: 水平方向外围图标贴近左右边缘, 垂直方向贴近上下边缘。
+     * 这里对"已被改写网格"的 span, 按 背景尺寸 x GRID_OCCUPANCY 重算间距:
+     *   gap = max(0, (bgAxis * 占比 - n * childSize) / (n - 1))
+     * 居中布局会把省出的空间变成外围边距, 两个方向同时收敛。
+     * childSize = folderIconSizePx * CHILD_ICON_SCALE（实测 158*0.8235 ≈ 130, 与截图吻合;
+     * 注意不是 iconSizePx, rule.init 的第三个参数传的是 folderIconSizePx）。
+     * 未被改写的 span 一律走 stock 值。
+     */
+    private fun hookFolderGaps(classLoader: ClassLoader) {
+        try {
+            val bfcClass = classLoader.loadClass("com.zui.launcher.folder.bigfolder.BigFolderConfig")
+            val scaleField = publicField(bfcClass, "CHILD_ICON_SCALE")
+            for ((methodName, isH) in listOf("getBigFolderIconHGap" to true, "getBigFolderIconVGap" to false)) {
+                val method = findMethod(
+                    bfcClass, methodName,
+                    Int::class.javaPrimitiveType, Int::class.javaPrimitiveType
+                )
+                hookWithId(method, "big_folder_align_${if (isH) "h" else "v"}gap") { chain ->
+                    val result = chain.proceed()
+                    try {
+                        val spanX = chain.args[0] as Int
+                        val spanY = chain.args[1] as Int
+                        val spanKey = "${spanX}x$spanY"
+                        val grid = rewrittenGrids[spanKey]
+                            ?: return@hookWithId result
+                        if (cachedCellWidth == 0) return@hookWithId result
+                        val n = if (isH) grid[0] else grid[1]
+                        if (n <= 1) return@hookWithId 0f
+                        val artInset = Math.round(cachedIconSizePx * ART_INSET_RATIO)
+                        val bgAxis: Int = if (isH) {
+                            (spanX - 1) * cachedCellWidth + cachedFolderIconSizePx
+                        } else {
+                            (spanY - 1) * cachedCellPitch + cachedIconSizePx - 2 * artInset
+                        }
+                        val childSize = cachedFolderIconSizePx * scaleField.getFloat(null)
+                        val newGap = maxOf(
+                            0f,
+                            (bgAxis * GRID_OCCUPANCY - n * childSize) / (n - 1)
+                        )
+                        val logKey = "${if (isH) "h" else "v"}Gap$spanKey"
+                        if (loggedChildCountSpans.add(logKey) && newGap != (result as Float)) {
+                            logger.info("$methodName($spanX,$spanY) $result -> $newGap (n=$n bg=$bgAxis)")
+                        }
+                        return@hookWithId newGap
+                    } catch (t: Throwable) {
+                        logger.error("gap rewrite failed", t)
+                        result
+                    }
+                }
+            }
+            logger.info("hooked BigFolderConfig.getBigFolderIconHGap/VGap")
+        } catch (t: Throwable) {
+            logger.error("hook folder gaps failed", t)
         }
     }
 
@@ -616,6 +690,22 @@ class BigFolderAlignTestHook : AppHookModule() {
         private const val CHILD_ROWS = 3
 
         /** 其它 spanY==2 且 stock 子网格行数为 2 的状态(如 3x2)同样改为 CHILD_ROWS 行。 */
+
+        /**
+         * 需求4：子网格占背景尺寸的目标占比。间距按 (bg*占比 - n*childSize)/(n-1) 重算,
+         * 占比越小间距越小、外围边距越大（居中布局自动分配）。
+         */
+        private const val GRID_OCCUPANCY = 0.75f
+
+        /** 间距重算用的网格度量缓存（applyAlignedGeometry 每次 setup 刷新, 无 context 的静态 Hook 读取）。 */
+        @Volatile var cachedCellWidth = 0
+        @Volatile var cachedCellPitch = 0
+        @Volatile var cachedRowInset = 0
+        @Volatile var cachedIconSizePx = 0
+        @Volatile var cachedFolderIconSizePx = 0
+
+        /** 已改写子网格的 span -> [cols, rows]，间距重算只对这些 span 生效。 */
+        private val rewrittenGrids = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
 
         /**
          * 需求2：图标盒内图形的透明边距比例（实测 190px 盒 → 约 21px 边距, 图形≈0.78x盒子,
