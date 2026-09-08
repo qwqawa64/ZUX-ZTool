@@ -93,9 +93,9 @@ fun SettingsAdvancedRoute(
     }
 
     val hotReloadResultSummary = buildHotReloadResultSummary(uiState, context)
-    val hotReloadStartingString = stringResource(R.string.advanced_hot_reload_starting)
+    val hotReloadStartingString = stringResource(R.string.page_settings_advanced_hot_reload_starting)
     val resetResultSummary = buildResetResultSummary(uiState, context)
-    val resetStartingString = stringResource(R.string.advanced_reset_starting)
+    val resetStartingString = stringResource(R.string.page_settings_advanced_reset_starting)
 
     // ── DexKit 索引 ────────────────────────────────────────────────
     var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
@@ -162,7 +162,7 @@ private fun SettingsAdvancedScreen(
     ZToolScaffold(
         topBar = {
             ZToolTopAppBar(
-                title = stringResource(R.string.advanced_title),
+                title = stringResource(R.string.page_settings_advanced_title),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -224,7 +224,7 @@ private fun advancedSettingsSections(
             items = listOf(
                 SettingItem.Action(
                     key = "refresh_dex_index",
-                    title = stringResource(R.string.refreshDexIndex),
+                    title = stringResource(R.string.page_settings_refresh_dex_index),
                     summary = dexIndexSummary,
                     onClick = onRefreshDexIndex,
                     enabled = !dexIndexInProgress,
@@ -242,7 +242,7 @@ private fun advancedSettingsSections(
                 ),
                 SettingItem.Action(
                     key = "reset_persistent_values",
-                    title = stringResource(R.string.advanced_reset_title),
+                    title = stringResource(R.string.page_settings_advanced_reset_title),
                     summary = buildResetSummary(
                         inProgress = state.resetInProgress,
                         resultSummary = resetResultSummary
@@ -263,7 +263,7 @@ private fun advancedSettingsSections(
                 ),
                 SettingItem.Action(
                     key = "hot_reload_all",
-                    title = stringResource(R.string.advanced_hot_reload_title),
+                    title = stringResource(R.string.page_settings_advanced_hot_reload_title),
                     summary = buildHotReloadSummary(
                         hotReloadSupported = hotReloadSupported,
                         hasTargets = hasTargets,
@@ -289,11 +289,11 @@ private fun advancedSettingsSections(
         )
     ) + buildResetDetailSection(state) + buildHotReloadDetailSection(state) + listOf(
         SettingSection(
-            title = stringResource(R.string.advanced_info_title),
+            title = stringResource(R.string.page_settings_advanced_info_title),
             items = listOf(
                 SettingItem.Action(
                     key = "api_version",
-                    title = stringResource(R.string.advanced_api_version),
+                    title = stringResource(R.string.page_settings_advanced_api_version),
                     summary = "${state.apiVersion}",
                     onClick = {},
                     enabled = false,
@@ -311,7 +311,7 @@ private fun buildResetDetailSection(
     if (state.resetInProgress || state.resetDetails.isEmpty()) return emptyList()
     return listOf(
         SettingSection(
-            title = stringResource(R.string.advanced_reset_detail_title),
+            title = stringResource(R.string.page_settings_advanced_reset_detail_title),
             items = state.resetDetails.map { detail ->
                 val statusColor = when (detail.status) {
                     "SUCCEEDED" -> LocalZToolColorScheme.current.primary
@@ -346,9 +346,9 @@ private fun buildResetDetailSection(
 
 @Composable
 private fun resetItemDisplayName(key: String): String = when (key) {
-    "doze_always_on" -> stringResource(R.string.advanced_reset_item_aod)
-    "autorun" -> stringResource(R.string.advanced_reset_item_autorun)
-    "mistouch" -> stringResource(R.string.advanced_reset_item_mistouch)
+    "doze_always_on" -> stringResource(R.string.page_settings_advanced_reset_item_aod)
+    "autorun" -> stringResource(R.string.page_settings_advanced_reset_item_autorun)
+    "mistouch" -> stringResource(R.string.page_settings_advanced_reset_item_mistouch)
     else -> key
 }
 
@@ -359,7 +359,7 @@ private fun buildHotReloadDetailSection(
     if (state.hotReloadInProgress || state.hotReloadDetails.isEmpty()) return emptyList()
     return listOf(
         SettingSection(
-            title = stringResource(R.string.advanced_hot_reload_detail_title),
+            title = stringResource(R.string.page_settings_advanced_hot_reload_detail_title),
             items = state.hotReloadDetails.map { detail ->
                 val statusColor = when (detail.status) {
                     "SUCCEEDED" -> LocalZToolColorScheme.current.primary
@@ -402,10 +402,10 @@ private fun buildHotReloadSummary(
     inProgress: Boolean,
     resultSummary: String?
 ): String {
-    val hotReloadInProgressString = stringResource(R.string.advanced_hot_reload_in_progress)
-    val hotReloadNotSupportedString = stringResource(R.string.advanced_hot_reload_unsupported)
-    val hotReloadNoTargetsString = stringResource(R.string.advanced_hot_reload_no_targets)
-    val hotReloadSummaryString = stringResource(R.string.advanced_hot_reload_summary, targetCount)
+    val hotReloadInProgressString = stringResource(R.string.page_settings_advanced_hot_reload_in_progress)
+    val hotReloadNotSupportedString = stringResource(R.string.page_settings_advanced_hot_reload_unsupported)
+    val hotReloadNoTargetsString = stringResource(R.string.page_settings_advanced_hot_reload_no_targets)
+    val hotReloadSummaryString = stringResource(R.string.page_settings_advanced_hot_reload_summary, targetCount)
     return when {
         inProgress -> hotReloadInProgressString
         !hotReloadSupported -> hotReloadNotSupportedString
@@ -424,7 +424,7 @@ private fun buildHotReloadResultSummary(
             state.hotReloadResultUnsupported + state.hotReloadResultDied
     if (total == 0) return null
     return context.getString(
-        R.string.advanced_hot_reload_result,
+        R.string.page_settings_advanced_hot_reload_result,
         state.hotReloadResultSucceeded,
         state.hotReloadResultFailed,
         state.hotReloadResultUnsupported,
@@ -437,8 +437,8 @@ private fun buildResetSummary(
     inProgress: Boolean,
     resultSummary: String?
 ): String {
-    val resetInProgressString = stringResource(R.string.advanced_reset_in_progress)
-    val resetDefaultSummary = stringResource(R.string.advanced_reset_summary)
+    val resetInProgressString = stringResource(R.string.page_settings_advanced_reset_in_progress)
+    val resetDefaultSummary = stringResource(R.string.page_settings_advanced_reset_summary)
     return when {
         inProgress -> resetInProgressString
         resultSummary != null -> resultSummary
@@ -454,7 +454,7 @@ private fun buildResetResultSummary(
     val total = state.resetResultSucceeded + state.resetResultFailed + state.resetResultUnsupported
     if (total == 0) return null
     return context.getString(
-        R.string.advanced_reset_result,
+        R.string.page_settings_advanced_reset_result,
         state.resetResultSucceeded,
         state.resetResultFailed,
         state.resetResultUnsupported
@@ -468,9 +468,9 @@ private fun ResetConfirmDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.advanced_reset_confirm_title)) },
+        title = { Text(stringResource(R.string.page_settings_advanced_reset_confirm_title)) },
         text = {
-            Text(stringResource(R.string.advanced_reset_confirm_message))
+            Text(stringResource(R.string.page_settings_advanced_reset_confirm_message))
         },
         confirmButton = {
             ZToolTextButton(
@@ -496,9 +496,9 @@ private fun HotReloadConfirmDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.advanced_hot_reload_confirm_title)) },
+        title = { Text(stringResource(R.string.page_settings_advanced_hot_reload_confirm_title)) },
         text = {
-            Text(stringResource(R.string.advanced_hot_reload_confirm_message, runningTargetCount))
+            Text(stringResource(R.string.page_settings_advanced_hot_reload_confirm_message, runningTargetCount))
         },
         confirmButton = {
             ZToolTextButton(
@@ -526,10 +526,10 @@ private fun buildDexIndexSummary(context: Context): String {
         .maxOrNull()
     return if (latest != null) {
         context.getString(
-            R.string.dexIndexLastIndexedAt,
+            R.string.page_settings_dex_index_last_indexed_at,
             SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(latest))
         )
     } else {
-        context.getString(R.string.dexIndexNotGenerated)
+        context.getString(R.string.page_settings_dex_index_not_generated)
     }
 }

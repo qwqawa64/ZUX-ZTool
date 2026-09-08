@@ -124,7 +124,7 @@ private fun ThemeSettingsScreen(
         modifier = modifier,
         topBar = {
             ZToolTopAppBar(
-                title = stringResource(R.string.app_ui_theme_settings),
+                title = stringResource(R.string.page_settings_app_ui_theme_settings),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
@@ -191,88 +191,88 @@ private fun themeSettingsSections(
     val frontendStyleOptions: List<LabeledOption<FrontendStyle>> = listOf(
         LabeledOption(
             value = FrontendStyle.Material3Expressive,
-            label = stringResource(R.string.frontend_style_material3)
+            label = stringResource(R.string.page_settings_frontend_style_material3)
         ),
         LabeledOption(
             value = FrontendStyle.Miuix,
-            label = stringResource(R.string.frontend_style_miuix)
+            label = stringResource(R.string.page_settings_frontend_style_miuix)
         )
     )
     val themeModeOptions: List<LabeledOption<ThemeMode>> = listOf(
         LabeledOption(
             value = ThemeMode.FollowSystem,
-            label = stringResource(R.string.theme_mode_follow_system)
+            label = stringResource(R.string.page_settings_theme_mode_follow_system)
         ),
         LabeledOption(
             value = ThemeMode.Light,
-            label = stringResource(R.string.theme_mode_light)
+            label = stringResource(R.string.page_settings_theme_mode_light)
         ),
         LabeledOption(
             value = ThemeMode.Dark,
-            label = stringResource(R.string.theme_mode_dark)
+            label = stringResource(R.string.page_settings_theme_mode_dark)
         )
     )
     val colorSpecOptions: List<LabeledOption<MaterialColorSpec>> = listOf(
         LabeledOption(
             value = MaterialColorSpec.Spec2021,
-            label = stringResource(R.string.material_color_spec_2021)
+            label = stringResource(R.string.page_settings_material_color_spec_2021)
         ),
         LabeledOption(
             value = MaterialColorSpec.Spec2025,
-            label = stringResource(R.string.material_color_spec_2025)
+            label = stringResource(R.string.page_settings_material_color_spec_2025)
         )
     )
     val paletteOptions: List<LabeledOption<MaterialPalette>> = listOf(
         LabeledOption(
             value = MaterialPalette.TonalSpot,
-            label = stringResource(R.string.material_palette_mode_tonal_spot)
+            label = stringResource(R.string.page_settings_material_palette_mode_tonal_spot)
         ),
         LabeledOption(
             value = MaterialPalette.Neutral,
-            label = stringResource(R.string.material_palette_mode_neutral)
+            label = stringResource(R.string.page_settings_material_palette_mode_neutral)
         ),
         LabeledOption(
             value = MaterialPalette.Vibrant,
-            label = stringResource(R.string.material_palette_mode_vibrant)
+            label = stringResource(R.string.page_settings_material_palette_mode_vibrant)
         ),
         LabeledOption(
             value = MaterialPalette.Expressive,
-            label = stringResource(R.string.material_palette_mode_expressive)
+            label = stringResource(R.string.page_settings_material_palette_mode_expressive)
         ),
         LabeledOption(
             value = MaterialPalette.Rainbow,
-            label = stringResource(R.string.material_palette_mode_rainbow)
+            label = stringResource(R.string.page_settings_material_palette_mode_rainbow)
         ),
         LabeledOption(
             value = MaterialPalette.FruitSalad,
-            label = stringResource(R.string.material_palette_mode_fruit_salad)
+            label = stringResource(R.string.page_settings_material_palette_mode_fruit_salad)
         ),
         LabeledOption(
             value = MaterialPalette.MonoChrome,
-            label = stringResource(R.string.material_palette_mode_mono_chrome)
+            label = stringResource(R.string.page_settings_material_palette_mode_mono_chrome)
         ),
         LabeledOption(
             value = MaterialPalette.Fidelity,
-            label = stringResource(R.string.material_palette_mode_fidelity)
+            label = stringResource(R.string.page_settings_material_palette_mode_fidelity)
         ),
         LabeledOption(
             value = MaterialPalette.Content,
-            label = stringResource(R.string.material_palette_mode_content)
+            label = stringResource(R.string.page_settings_material_palette_mode_content)
         )
     )
     val selectedPaletteLabel = paletteOptions
         .firstOrNull { it.value == settings.materialPalette }
         ?.label
-        ?: stringResource(R.string.material_palette_mode_tonal_spot)
+        ?: stringResource(R.string.page_settings_material_palette_mode_tonal_spot)
 
     return listOf(
         SettingSection(
-            title = stringResource(R.string.app_ui_theme_settings),
+            title = stringResource(R.string.page_settings_app_ui_theme_settings),
             items = buildList {
                 add(
                     SettingItem.Dropdown(
                         key = "frontend_style",
-                        label = stringResource(R.string.frontend_style_title),
+                        label = stringResource(R.string.page_settings_frontend_style_title),
                         value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
                         options = frontendStyleOptions,
                         optionLabel = { it.label },
@@ -283,7 +283,7 @@ private fun themeSettingsSections(
                 add(
                     SettingItem.Dropdown(
                         key = "theme_mode",
-                        label = stringResource(R.string.theme_mode_title),
+                        label = stringResource(R.string.page_settings_theme_mode_title),
                         value = themeModeOptions.first { it.value == settings.themeMode }.label,
                         options = themeModeOptions,
                         optionLabel = { it.label },
@@ -294,7 +294,7 @@ private fun themeSettingsSections(
                 add(
                     SettingItem.Dropdown(
                         key = "material_color_spec",
-                        label = stringResource(R.string.material_color_spec_title),
+                        label = stringResource(R.string.page_settings_material_color_spec_title),
                         value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
                         options = colorSpecOptions,
                         optionLabel = { it.label },
@@ -305,7 +305,7 @@ private fun themeSettingsSections(
                 add(
                     SettingItem.Dropdown(
                         key = "material_palette_mode",
-                        label = stringResource(R.string.material_palette_mode_title),
+                        label = stringResource(R.string.page_settings_material_palette_mode_title),
                         value = selectedPaletteLabel,
                         options = paletteOptions,
                         optionLabel = { it.label },
@@ -316,8 +316,8 @@ private fun themeSettingsSections(
                 add(
                     SettingItem.Switch(
                         key = "predictive_back_gesture",
-                        title = stringResource(R.string.predictive_back_gesture_title),
-                        summary = stringResource(R.string.predictive_back_gesture_summary),
+                        title = stringResource(R.string.page_settings_predictive_back_gesture_title),
+                        summary = stringResource(R.string.page_settings_predictive_back_gesture_summary),
                         checked = settings.predictiveBackGestureEnabled,
                         onCheckedChange = onPredictiveBackGestureChanged,
                         icon = Icons.Rounded.Swipe
@@ -327,8 +327,8 @@ private fun themeSettingsSections(
                     add(
                         SettingItem.Switch(
                             key = "amoled_black",
-                            title = stringResource(R.string.amoled_black_title),
-                            summary = stringResource(R.string.amoled_black_summary),
+                            title = stringResource(R.string.page_settings_amoled_black_title),
+                            summary = stringResource(R.string.page_settings_amoled_black_summary),
                             checked = settings.amoledBlackEnabled,
                             onCheckedChange = onAmoledBlackChanged,
                             icon = Icons.Rounded.Contrast
@@ -338,8 +338,8 @@ private fun themeSettingsSections(
                 add(
                     SettingItem.Switch(
                         key = "dynamic_color",
-                        title = stringResource(R.string.dynamic_color_title),
-                        summary = stringResource(R.string.dynamic_color_summary),
+                        title = stringResource(R.string.page_settings_dynamic_color_title),
+                        summary = stringResource(R.string.page_settings_dynamic_color_summary),
                         checked = settings.dynamicColorEnabled,
                         onCheckedChange = onDynamicColorChanged,
                         enabled = !settings.manualColorEnabled,
@@ -349,8 +349,8 @@ private fun themeSettingsSections(
                 add(
                     SettingItem.Switch(
                         key = "manual_color",
-                        title = stringResource(R.string.manual_color_title),
-                        summary = stringResource(R.string.manual_color_summary),
+                        title = stringResource(R.string.page_settings_manual_color_title),
+                        summary = stringResource(R.string.page_settings_manual_color_summary),
                         checked = settings.manualColorEnabled,
                         onCheckedChange = onManualColorChanged,
                         icon = Icons.Rounded.FormatColorFill
@@ -378,8 +378,8 @@ private fun themeSettingsSections(
                     add(
                         SettingItem.Switch(
                             key = "enable_floating_bottom_bar",
-                            title = stringResource(R.string.enable_floating_bottom_bar_title),
-                            summary = stringResource(R.string.enable_floating_bottom_bar_summary),
+                            title = stringResource(R.string.page_settings_enable_floating_bottom_bar_title),
+                            summary = stringResource(R.string.page_settings_enable_floating_bottom_bar_summary),
                             checked = settings.enableFloatingBottomBar,
                             onCheckedChange = onEnableFloatingBottomBarChanged,
                             icon = Icons.Rounded.CallToAction
@@ -389,8 +389,8 @@ private fun themeSettingsSections(
                         add(
                             SettingItem.Switch(
                                 key = "enable_floating_bottom_bar_blur",
-                                title = stringResource(R.string.enable_floating_bottom_bar_blur_title),
-                                summary = stringResource(R.string.enable_floating_bottom_bar_blur_summary),
+                                title = stringResource(R.string.page_settings_enable_floating_bottom_bar_blur_title),
+                                summary = stringResource(R.string.page_settings_enable_floating_bottom_bar_blur_summary),
                                 checked = settings.enableFloatingBottomBarBlur,
                                 onCheckedChange = onEnableFloatingBottomBarBlurChanged,
                                 icon = Icons.Rounded.BlurOn
@@ -419,12 +419,12 @@ private fun ManualSeedColorRow(
     icon: ImageVector? = null,
 ) {
     ZToolArgbColorTextFieldRow(
-        label = stringResource(R.string.manual_seed_color_title),
+        label = stringResource(R.string.page_settings_manual_seed_color_title),
         value = colorText,
         onValueChange = onColorTextChanged,
         defaultText = color.toULong().toString(16).padStart(8, '0').takeLast(8).uppercase(),
-        summary = stringResource(R.string.manual_seed_color_summary),
-        errorText = if (isError) stringResource(R.string.manual_seed_color_error) else null,
+        summary = stringResource(R.string.page_settings_manual_seed_color_summary),
+        errorText = if (isError) stringResource(R.string.page_settings_manual_seed_color_error) else null,
         onEditingFinished = onEditingFinished,
         icon = icon,
         modifier = modifier

@@ -78,12 +78,12 @@ fun SettingsMainRoute(
     val uiState by viewModel.uiState.collectAsState()
     var showRestoreConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteLogsConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    val defaultConfigRestoredStr = stringResource(R.string.default_config_restored)
+    val defaultConfigRestoredStr = stringResource(R.string.page_settings_default_config_restored)
     
-    val backupSuccessStr = stringResource(R.string.config_backup_success)
-    val restoreSuccessStr = stringResource(R.string.config_restore_success)
-    val exportLogsSuccessStr = stringResource(R.string.export_logs_success)
-    val exportLogsFailedStr = stringResource(R.string.export_logs_failed)
+    val backupSuccessStr = stringResource(R.string.page_settings_config_backup_success)
+    val restoreSuccessStr = stringResource(R.string.page_settings_config_restore_success)
+    val exportLogsSuccessStr = stringResource(R.string.page_settings_export_logs_success)
+    val exportLogsFailedStr = stringResource(R.string.page_settings_export_logs_failed)
 
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -143,8 +143,8 @@ fun SettingsMainRoute(
         }
     }
 
-    val deleteLogsSuccessStr = stringResource(R.string.delete_logs_success)
-    val deleteLogsFailedStr = stringResource(R.string.delete_logs_failed)
+    val deleteLogsSuccessStr = stringResource(R.string.page_settings_delete_logs_success)
+    val deleteLogsFailedStr = stringResource(R.string.page_settings_delete_logs_failed)
 
     SettingsRoute(
         state = uiState,
@@ -245,7 +245,7 @@ private fun openAppLanguageSettings(context: Context) {
     try {
         context.startActivity(intent)
     } catch (_: Exception) {
-        showSettingsToast(context, context.getString(R.string.open_app_language_settings_failed))
+        showSettingsToast(context, context.getString(R.string.page_settings_open_app_language_settings_failed))
     }
 }
 
@@ -285,7 +285,7 @@ private fun SettingsRoute(
     ZToolScaffold (
         topBar = {
             ZToolTopAppBar(
-                title = stringResource(R.string.settingsFragment_title),
+                title = stringResource(R.string.page_settings_title),
                 addNavIcon = false
             )
         }
@@ -345,11 +345,11 @@ private fun settingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.backupAndRestore),
+            title = stringResource(R.string.page_settings_backup_and_restore),
             items = listOf(
                 SettingItem.Action(
                     key = "backup_config",
-                    title = stringResource(R.string.backupConfigToFile),
+                    title = stringResource(R.string.page_settings_backup_config_to_file),
                     onClick = onBackup,
                     icon = Icons.Rounded.Backup,
                     trailingContent = {
@@ -362,7 +362,7 @@ private fun settingsSections(
                 ),
                 SettingItem.Action(
                     key = "restore_config",
-                    title = stringResource(R.string.restoreConfigFromFile),
+                    title = stringResource(R.string.page_settings_restore_config_from_file),
                     onClick = onRestore,
                     icon = Icons.Rounded.RestorePage,
                     trailingContent = {
@@ -375,7 +375,7 @@ private fun settingsSections(
                 ),
                 SettingItem.Action(
                     key = "restore_default",
-                    title = stringResource(R.string.restoreDefaultConfig),
+                    title = stringResource(R.string.page_settings_restore_default_config),
                     onClick = onRestoreDefault,
                     icon = Icons.Rounded.SettingsBackupRestore,
                     trailingContent = {
@@ -389,28 +389,28 @@ private fun settingsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.moreSettings),
+            title = stringResource(R.string.page_settings_more_settings),
             items = listOf(
                 SettingItem.Switch(
                     key = "display_entry_in_settings",
-                    title = stringResource(R.string.display_entry_in_settings),
-                    summary = stringResource(R.string.display_entry_in_settings_summary),
+                    title = stringResource(R.string.page_settings_display_entry_in_settings),
+                    summary = stringResource(R.string.page_settings_display_entry_in_settings_summary),
                     checked = state.isEntryDisplayedInSettings,
                     onCheckedChange = onEntryDisplayChanged,
                     icon = Icons.AutoMirrored.Rounded.OpenInNew
                 ),
                 SettingItem.Switch(
                     key = "enable_homepage_yiyan",
-                    title = stringResource(R.string.enableHomePageYiyan),
-                    summary = stringResource(R.string.enableHomePageYiyanSummary),
+                    title = stringResource(R.string.page_settings_enable_home_page_yiyan),
+                    summary = stringResource(R.string.page_settings_enable_home_page_yiyan_summary),
                     checked = state.isHomepageYiyanEnabled,
                     onCheckedChange = onHomepageYiyanChanged,
                     icon = Icons.AutoMirrored.Filled.Notes
                 ),
                 SettingItem.Switch(
                     key = "auto_check_update",
-                    title = stringResource(R.string.auto_check_update_title),
-                    summary = stringResource(R.string.auto_check_update_summary),
+                    title = stringResource(R.string.page_settings_auto_check_update_title),
+                    summary = stringResource(R.string.page_settings_auto_check_update_summary),
                     checked = state.isAutoCheckUpdateEnabled,
                     onCheckedChange = onAutoCheckUpdateChanged,
                     icon = Icons.Rounded.Update
@@ -418,20 +418,20 @@ private fun settingsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.log_settings_title),
+            title = stringResource(R.string.page_settings_log_settings_title),
             items = listOf(
                 SettingItem.Switch(
                     key = "enable_detailed_logging",
-                    title = stringResource(R.string.enableDetailedLogging),
-                    summary = stringResource(R.string.enableDetailedLoggingDescription),
+                    title = stringResource(R.string.page_settings_enable_detailed_logging),
+                    summary = stringResource(R.string.page_settings_enable_detailed_logging_description),
                     checked = state.isDetailedLoggingEnabled,
                     onCheckedChange = onDetailedLoggingChanged,
                     icon = Icons.AutoMirrored.Rounded.Article
                 ),
                 SettingItem.Action(
                     key = "export_logs",
-                    title = stringResource(R.string.export_logs),
-                    summary = stringResource(R.string.export_logs_summary),
+                    title = stringResource(R.string.page_settings_export_logs),
+                    summary = stringResource(R.string.page_settings_export_logs_summary),
                     onClick = onExportLogs,
                     icon = Icons.Rounded.Save,
                     trailingContent = {
@@ -444,8 +444,8 @@ private fun settingsSections(
                 ),
                 SettingItem.Action(
                     key = "delete_all_logs",
-                    title = stringResource(R.string.delete_all_logs),
-                    summary = stringResource(R.string.delete_all_logs_summary),
+                    title = stringResource(R.string.page_settings_delete_all_logs),
+                    summary = stringResource(R.string.page_settings_delete_all_logs_summary),
                     onClick = onDeleteAllLogs,
                     icon = Icons.Rounded.DeleteForever,
                     trailingContent = {
@@ -462,7 +462,7 @@ private fun settingsSections(
             items = listOf(
                 SettingItem.Action(
                     key = "open_theme_settings",
-                    title = stringResource(R.string.app_ui_theme_settings),
+                    title = stringResource(R.string.page_settings_app_ui_theme_settings),
                     onClick = onOpenThemeSettings,
                     icon = Icons.Rounded.Palette,
                     trailingContent = {
@@ -475,7 +475,7 @@ private fun settingsSections(
                 ),
                 SettingItem.Action(
                     key = "open_language_settings",
-                    title = stringResource(R.string.app_language_settings),
+                    title = stringResource(R.string.page_settings_app_language_settings),
                     onClick = onOpenLanguageSettings,
                     icon = Icons.Rounded.Language,
                     trailingContent = {
@@ -488,7 +488,7 @@ private fun settingsSections(
                 ),
                 SettingItem.Action(
                     key = "open_advanced_settings",
-                    title = stringResource(R.string.advanced_title),
+                    title = stringResource(R.string.page_settings_advanced_title),
                     onClick = onOpenAdvanced,
                     icon = Icons.Rounded.Build,
                     trailingContent = {
@@ -505,7 +505,7 @@ private fun settingsSections(
             items = listOf(
                 SettingItem.Action(
                     key = "show_about",
-                    title = stringResource(R.string.showAboutPage),
+                    title = stringResource(R.string.page_settings_show_about_page),
                     onClick = onAbout,
                     icon = Icons.Rounded.Info,
                     trailingContent = {
@@ -528,8 +528,8 @@ private fun RestoreDefaultDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.final_confirmation_title)) },
-        text = { Text(stringResource(R.string.restore_default_confirmation)) },
+        title = { Text(stringResource(R.string.page_settings_final_confirmation_title)) },
+        text = { Text(stringResource(R.string.page_settings_restore_default_confirmation)) },
         confirmButton = {
             ZToolTextButton(
                 onClick = onConfirm,
@@ -553,8 +553,8 @@ private fun DeleteLogsConfirmDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.delete_all_logs)) },
-        text = { Text(stringResource(R.string.delete_logs_confirmation)) },
+        title = { Text(stringResource(R.string.page_settings_delete_all_logs)) },
+        text = { Text(stringResource(R.string.page_settings_delete_logs_confirmation)) },
         confirmButton = {
             ZToolTextButton(
                 onClick = onConfirm,

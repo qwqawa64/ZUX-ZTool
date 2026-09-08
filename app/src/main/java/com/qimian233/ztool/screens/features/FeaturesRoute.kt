@@ -78,7 +78,7 @@ fun FeaturesMainRoute(
     val allItems = rememberFeatureItems(context)
     val installedPackages = rememberInstalledPackages(context)
     var scopeSet by remember { mutableStateOf(XposedServiceBridge.getScope().toSet()) }
-    val scopeRequestFailReason = stringResource(R.string.scope_request_fail_message)
+    val scopeRequestFailReason = stringResource(R.string.page_features_scope_request_fail_message)
     // "system" is the LSPosed system-server scope entry — not a real installed package
     val systemScopePackages = setOf(ScopeKeys.SYSTEM_SERVER.packageName)
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
@@ -93,9 +93,9 @@ fun FeaturesMainRoute(
             item.alwaysVisible || item.packageName in installedPackages
         }
         if (installedPackages.isEmpty()) {
-            scopedItems to R.string.features_app_list_permission_warning
+            scopedItems to R.string.page_features_app_list_permission_warning
         } else if (visible.isEmpty()) {
-            scopedItems to R.string.features_all_filtered_warning
+            scopedItems to R.string.page_features_all_filtered_warning
         } else {
             visible to null
         }
@@ -106,7 +106,7 @@ fun FeaturesMainRoute(
         ZToolDialog(
             onDismissRequest = { scopeRequestItem = null },
             title = { Text(stringResource(item.nameRes)) },
-            text = { Text(stringResource(R.string.scope_request_dialog_message)) },
+            text = { Text(stringResource(R.string.page_features_scope_request_dialog_message)) },
             confirmButton = {
                 ZToolTextButton(
                     onClick = {
@@ -304,7 +304,7 @@ private fun FeaturesRoute(
     ZToolScaffold(
         topBar = {
             ZToolTopAppBar(
-                title = stringResource(R.string.featuresFragment_title),
+                title = stringResource(R.string.page_features_title),
                 addNavIcon = false
             )
         }
@@ -418,7 +418,7 @@ private fun FeatureCard(
                     )
                 } else {
                     Text(
-                        text = stringResource(R.string.not_in_scope_tip),
+                        text = stringResource(R.string.page_features_not_in_scope_tip),
                         style = MaterialTheme.typography.bodyMedium,
                         color = LocalZToolColorScheme.current.error,
                         maxLines = 1,

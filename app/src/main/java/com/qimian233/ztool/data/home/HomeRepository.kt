@@ -64,7 +64,7 @@ class HomeRepository(
         val unknown = context.getString(R.string.unknown)
         val deviceModel = Build.MODEL.ifBlank { unknown }
         val androidVersion = Build.VERSION.RELEASE.ifBlank { unknown }
-            .let { if (it == unknown) it else context.getString(R.string.android_version_prefix, it) }
+            .let { if (it == unknown) it else context.getString(R.string.page_home_android_version_prefix, it) }
         val buildVersion = Build.DISPLAY.ifBlank { unknown }
 
         if (cachedKernelVersion.isEmpty() || isSystemInfoCacheExpired()) {
@@ -95,7 +95,7 @@ class HomeRepository(
 
     fun shouldRefreshSystemInfo(): Boolean = isSystemInfoCacheExpired()
 
-    fun environmentReadyHint(): String = context.getString(R.string.environment_ready)
+    fun environmentReadyHint(): String = context.getString(R.string.page_home_environment_ready)
 
     fun isAutoCheckUpdateEnabled(): Boolean {
         return ModulePreferencesUtils(context)
@@ -118,7 +118,7 @@ class HomeRepository(
 
         val data = jsonResponse.getJSONObject("data")
         return context.getString(
-            R.string.homepage_yiyan,
+            R.string.page_home_homepage_yiyan,
             data.getString("content"),
             data.getString("origin")
         )
@@ -217,7 +217,7 @@ class HomeRepository(
             "${packageInfo.versionName} ($versionCode)"
         } catch (e: PackageManager.NameNotFoundException) {
             Log.e(TAG, "Failed to get module version: ${e.message}")
-            context.getString(R.string.module_version_unknown)
+            context.getString(R.string.page_home_module_version_unknown)
         }
     }
 
@@ -229,21 +229,21 @@ class HomeRepository(
                 if (result.isSuccess && !result.output.isNullOrBlank()) {
                     val output = result.output.trim()
                     if (cmd.contains("magisk")) {
-                        return context.getString(R.string.magisk_su_format, output)
+                        return context.getString(R.string.page_home_magisk_su_format, output)
                     }
                     if (cmd.contains("su -v") && output.contains("KernelSU")) {
                         val endPosition = output.indexOf("KernelSU")
-                        return context.getString(R.string.kernelsu_format, output.substring(0, endPosition - 1))
+                        return context.getString(R.string.page_home_kernelsu_format, output.substring(0, endPosition - 1))
                     }
                     if (cmd.contains("apd")) {
-                        return context.getString(R.string.apatch_format, output)
+                        return context.getString(R.string.page_home_apatch_format, output)
                     }
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to detect root source: ${e.message}")
             }
         }
-        return context.getString(R.string.unknown_root_available)
+        return context.getString(R.string.page_home_unknown_root_available)
     }
 
     private fun detectFrameworkVersionAndMode(): String {
@@ -253,12 +253,12 @@ class HomeRepository(
             val frameworkVersion: String? = XposedServiceBridge.getFrameworkVersion()
             val frameworkVersionCode: Long = XposedServiceBridge.getFrameworkVersionCode()
             Log.i(TAG, "Successfully fetched API information: API version: ${apiVersion}, framework name: ${frameworkName}, framework version: ${frameworkVersion}, framework version code: $frameworkVersionCode")
-            return context.getString(R.string.lsposed_standard_format, frameworkName, frameworkVersion, frameworkVersionCode, apiVersion)
+            return context.getString(R.string.page_home_lsposed_standard_format, frameworkName, frameworkVersion, frameworkVersionCode, apiVersion)
         } catch (e: Exception) {
             Log.w(TAG, "Failed to detect framework property: ${e.message}")
         }
 
-        return context.getString(R.string.unknown_framework)
+        return context.getString(R.string.page_home_unknown_framework)
     }
 
     private fun getKernelVersion(): String {
@@ -269,8 +269,8 @@ class HomeRepository(
         val result = shellExecutor.executeRootCommand("getprop ro.boot.slot_suffix", 3)
         return if (result.isSuccess && !result.output.isNullOrBlank()) {
             when (result.output.trim()) {
-                "_a" -> context.getString(R.string.slot_a)
-                "_b" -> context.getString(R.string.slot_b)
+                "_a" -> context.getString(R.string.page_home_slot_a)
+                "_b" -> context.getString(R.string.page_home_slot_b)
                 else -> context.getString(R.string.unknown)
             }
         } else {

@@ -34,7 +34,7 @@ class BatchUninstallActivity : ComponentActivity() {
         )
         Log.i(TAG, "auth check: creatorPackage=${proof?.creatorPackage} referrer=$referrer")
         if (proof?.creatorPackage != ScopeKeys.LAUNCHER.packageName) {
-            toast(R.string.batch_uninstall_auth_failed)
+            toast(R.string.page_uninstall_auth_failed)
             finish()
             return
         }
@@ -43,7 +43,7 @@ class BatchUninstallActivity : ComponentActivity() {
             .distinct()
             .take(MAX_SELECTED_COUNT)
         if (packages.isEmpty()) {
-            toast(R.string.batch_uninstall_empty)
+            toast(R.string.page_uninstall_empty)
             finish()
             return
         }
@@ -60,7 +60,7 @@ class BatchUninstallActivity : ComponentActivity() {
             Log.i(TAG, "root check: success=${rootCheck.first} output=${rootCheck.second}")
             if (!rootCheck.first) {
                 runOnUiThread {
-                    toast(R.string.batch_uninstall_root_unavailable)
+                    toast(R.string.page_uninstall_root_unavailable)
                     finish()
                 }
                 return@Thread
@@ -77,7 +77,7 @@ class BatchUninstallActivity : ComponentActivity() {
                 }
             }
             runOnUiThread {
-                toast(R.string.batch_uninstall_result, successCount, failureCount)
+                toast(R.string.page_uninstall_result, successCount, failureCount)
                 finish()
             }
         }.start()

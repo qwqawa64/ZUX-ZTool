@@ -334,9 +334,9 @@ enum class RebootTarget(
     val messageRes: Int,
     val displayNameRes: Int
 ) {
-    Userspace("reboot userspace", R.string.soft_reboot_confirm_message, R.string.soft_reboot),
-    System("reboot", R.string.reboot_confirm_message, R.string.reboot),
-    Bootloader("reboot bootloader", R.string.bootloader_confirm_message, R.string.bootloader),
-    Recovery("reboot recovery", R.string.recovery_confirm_message, R.string.recovery),
-    Edl("reboot edl", R.string.edl_confirm_message, R.string.edl)
+    Userspace("reboot userspace", R.string.page_home_soft_reboot_confirm_message, R.string.page_home_soft_reboot),
+    System("reboot", R.string.page_home_reboot_confirm_message, R.string.page_home_reboot),
+    Bootloader("reboot bootloader", R.string.page_home_bootloader_confirm_message, R.string.page_home_bootloader),
+    Recovery("reboot recovery", R.string.page_home_recovery_confirm_message, R.string.page_home_recovery),
+    Edl("reboot edl", R.string.page_home_edl_confirm_message, R.string.page_home_edl)
 }

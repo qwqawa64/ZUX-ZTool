@@ -151,11 +151,23 @@ def main() -> int:
     if clash:
         sys.exit(f"[abort] target names already declared: {sorted(set(clash))}")
 
-    dynamic = {r["old"] for r in rows
-               if any(p.suffix.lower() != ".xml" and f'"{r["old"]}"' in t
-                      for p, t in all_texts)}
+    # quoted-literal rewriting is ONLY legitimate for the ztool batch: those
+    # are cross-process getIdentifier contracts (Hook-side STRING_* constants).
+    # For every other batch, quoted literals like "reboot" (shell commands) or
+    # preference keys are coincidences and MUST NOT be touched.
+    dynamic: set[str] = set()
+    if args.batch in ("ztool", "all"):
+        dynamic = {r["old"] for r in rows
+                   if any(p.suffix.lower() != ".xml" and f'"{r["old"]}"' in t
+                          for p, t in all_texts)}
+    coincidental = {r["old"] for r in rows
+                    if any(p.suffix.lower() != ".xml" and f'"{r["old"]}"' in t
+                           for p, t in all_texts)} - dynamic
     if dynamic:
         print(f"dynamic (quoted-literal) renames: {sorted(dynamic)}")
+    if coincidental:
+        print(f"[info] quoted literals left untouched (coincidental): "
+              f"{sorted(coincidental)}")
 
     targets = sorted(set(RES_DIR.glob("values*/*.xml")) | {p for p, _ in all_texts})
     total_d = total_r = total_l = 0

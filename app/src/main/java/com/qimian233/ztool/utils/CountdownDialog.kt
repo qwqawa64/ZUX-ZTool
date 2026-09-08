@@ -58,7 +58,7 @@ class CountdownDialog private constructor(
         private var listener: OnCountdownFinishListener?
     ) {
         private var title = context.getString(R.string.confirm)
-        private var message = context.getString(R.string.customizedConfirmWithCountdown, context.getString(R.string.confirm), 10)
+        private var message = context.getString(R.string.page_firstrun_customized_confirm_with_countdown, context.getString(R.string.confirm), 10)
         private var countdownSeconds = 10
         private var positiveText = context.getString(R.string.confirm)
         private var negativeText = context.getString(R.string.cancel)
@@ -219,7 +219,7 @@ class CountdownDialog private constructor(
         return if (positiveEnabled) {
             positiveText
         } else {
-            context.getString(R.string.customizedConfirmWithCountdown, positiveText, remainingSeconds)
+            context.getString(R.string.page_firstrun_customized_confirm_with_countdown, positiveText, remainingSeconds)
         }
     }
 

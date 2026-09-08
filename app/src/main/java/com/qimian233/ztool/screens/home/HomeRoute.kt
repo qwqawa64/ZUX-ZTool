@@ -143,7 +143,7 @@ fun HomeMainRoute(
         onToggleUpdateExpanded = viewModel::toggleUpdateExpanded,
         onIgnoreUpdate = {
             viewModel.ignoreUpdate(it)
-            Toast.makeText(context, R.string.update_ignore_toast, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.page_home_update_ignore_toast, Toast.LENGTH_SHORT).show()
         },
         onOpenUpdate = { url ->
             openUpdateUrl(context, url)
@@ -159,7 +159,7 @@ fun HomeMainRoute(
             },
             onLater = {
                 viewModel.dismissConfigUpgradeDialog()
-                Toast.makeText(context, R.string.have_not_restart_warn, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.page_home_have_not_restart_warn, Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -196,11 +196,11 @@ private fun executeReboot(
     viewModel.executeReboot(target) { success, error ->
         (context as? MainActivity)?.runOnUiThread {
             if (success) {
-                Toast.makeText(context, R.string.reboot_success, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.page_home_reboot_success, Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(
                     context,
-                    context.getString(R.string.reboot_failed, error),
+                    context.getString(R.string.page_home_reboot_failed, error),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -234,7 +234,7 @@ private fun HomeScreen(
     ZToolScaffold (
         topBar = {
             ZToolTopAppBar(
-                title = stringResource(R.string.homeFragment_title),
+                title = stringResource(R.string.page_home_title),
                 addNavIcon = false
             )
         },
@@ -352,7 +352,7 @@ private fun NonZuxOsCard() {
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = stringResource(R.string.non_zuxos_warn),
+                text = stringResource(R.string.page_home_non_zuxos_warn),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = LocalZToolColorScheme.current.onErrorContainer
@@ -383,14 +383,14 @@ private fun UpdateCard(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = stringResource(R.string.update_available_title),
+                    text = stringResource(R.string.page_home_update_available_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = LocalZToolColorScheme.current.onTertiaryContainer,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = stringResource(R.string.buildCode, update.versionName, update.versionCode),
+                    text = stringResource(R.string.page_home_build_code, update.versionName, update.versionCode),
                     style = MaterialTheme.typography.labelMedium,
                     color = LocalZToolColorScheme.current.onTertiaryContainer
                 )
@@ -408,10 +408,10 @@ private fun UpdateCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                ZToolTextButton(onClick = onIgnore, text = stringResource(R.string.update_button_ignore), isPrimary = false)
+                ZToolTextButton(onClick = onIgnore, text = stringResource(R.string.page_home_update_button_ignore), isPrimary = false)
                 Spacer(modifier = Modifier.width(8.dp))
                 ZToolButton(onClick = onOpenUpdate) {
-                    Text(stringResource(R.string.update_button_update))
+                    Text(stringResource(R.string.page_home_update_button_update))
                 }
             }
         }
@@ -449,10 +449,10 @@ private fun ModuleStatusCard(
     }
 
     val statusText = when {
-        bothActive -> stringResource(R.string.module_active)
-        state.isModuleActive -> stringResource(R.string.no_root_permission)
-        state.isRootAvailable -> stringResource(R.string.module_inactive)
-        else -> stringResource(R.string.no_root_and_module_inactive)
+        bothActive -> stringResource(R.string.page_home_module_active)
+        state.isModuleActive -> stringResource(R.string.page_home_no_root_permission)
+        state.isRootAvailable -> stringResource(R.string.page_home_module_inactive)
+        else -> stringResource(R.string.page_home_no_root_and_module_inactive)
     }
 
     val icon = when {
@@ -478,7 +478,7 @@ private fun ModuleStatusCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.environmentState),
+                        text = stringResource(R.string.page_home_environment_state),
                         style = MaterialTheme.typography.titleMedium,
                         color = contentColor.copy(alpha = 0.8f)
                     )
@@ -499,7 +499,7 @@ private fun ModuleStatusCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = stringResource(R.string.environment_tap_to_refresh),
+                                text = stringResource(R.string.page_home_environment_tap_to_refresh),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = contentColor.copy(alpha = 0.6f)
                             )
@@ -525,17 +525,17 @@ private fun ModuleStatusCard(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     InfoBlock(
-                        label = stringResource(R.string.version),
+                        label = stringResource(R.string.page_home_version),
                         value = state.moduleVersion.ifBlank { stringResource(R.string.loading) },
                         colorOnContainer = contentColor
                     )
                     InfoBlock(
-                        label = stringResource(R.string.root),
+                        label = stringResource(R.string.page_home_root),
                         value = state.rootSource.ifBlank { stringResource(R.string.loading) },
                         colorOnContainer = contentColor
                     )
                     InfoBlock(
-                        label = stringResource(R.string.framework),
+                        label = stringResource(R.string.page_home_framework),
                         value = state.frameworkVersion.ifBlank { stringResource(R.string.loading) },
                         colorOnContainer = contentColor
                     )
@@ -585,7 +585,7 @@ private fun SystemInfoCard(state: HomeUiState) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = stringResource(R.string.deviceInfo),
+                text = stringResource(R.string.page_home_device_info),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = LocalZToolColorScheme.current.onSurfaceVariant
@@ -596,10 +596,10 @@ private fun SystemInfoCard(state: HomeUiState) {
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                DeviceInfoItem(stringResource(R.string.deviceCodeName), state.deviceModel)
-                DeviceInfoItem(stringResource(R.string.AndroidVersion), state.androidVersion)
-                DeviceInfoItem(stringResource(R.string.buildVersion), state.buildVersion)
-                DeviceInfoItem(stringResource(R.string.kernelVersion), state.kernelVersion)
+                DeviceInfoItem(stringResource(R.string.page_home_device_code_name), state.deviceModel)
+                DeviceInfoItem(stringResource(R.string.page_home_android_version), state.androidVersion)
+                DeviceInfoItem(stringResource(R.string.page_home_build_version), state.buildVersion)
+                DeviceInfoItem(stringResource(R.string.page_home_kernel_version), state.kernelVersion)
             }
             Spacer(modifier = Modifier.height(18.dp))
             FlowRow(
@@ -609,14 +609,14 @@ private fun SystemInfoCard(state: HomeUiState) {
                 SuggestionChip(
                     onClick = {},
                     label = {
-                        Text(stringResource(R.string.currentSlot) + state.currentSlot.ifBlank { stringResource(
+                        Text(stringResource(R.string.page_home_current_slot) + state.currentSlot.ifBlank { stringResource(
                             R.string.unknown) })
                     }
                 )
                 SuggestionChip(
                     onClick = {},
                     label = {
-                        Text(stringResource(R.string.romRegion) + state.romRegion.ifBlank { stringResource(
+                        Text(stringResource(R.string.page_home_rom_region) + state.romRegion.ifBlank { stringResource(
                             R.string.unknown) })
                     }
                 )
@@ -642,7 +642,7 @@ private fun DeviceInfoItem(
             color = LocalZToolColorScheme.current.onSurfaceVariant
         )
         Text(
-            text = value.ifBlank { stringResource(R.string.placeHolderUnknown) },
+            text = value.ifBlank { stringResource(R.string.page_home_place_holder_unknown) },
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
             color = valueColor,
@@ -660,13 +660,13 @@ private fun ConfigUpgradeDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onLater,
-        title = { Text(stringResource(R.string.config_upgraded_tip_title)) },
-        text = { Text(stringResource(R.string.config_upgraded_tip_message)) },
+        title = { Text(stringResource(R.string.page_home_config_upgraded_tip_title)) },
+        text = { Text(stringResource(R.string.page_home_config_upgraded_tip_message)) },
         confirmButton = {
-            ZToolTextButton(onClick = onRestart, text = stringResource(R.string.restart_system_button))
+            ZToolTextButton(onClick = onRestart, text = stringResource(R.string.page_home_restart_system_button))
         },
         dismissButton = {
-            ZToolTextButton(onClick = onLater, text = stringResource(R.string.do_not_restart_system_button), isPrimary = false)
+            ZToolTextButton(onClick = onLater, text = stringResource(R.string.page_home_do_not_restart_system_button), isPrimary = false)
         }
     )
 }
@@ -679,7 +679,7 @@ private fun RebootConfirmDialog(
 ) {
     ZToolDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.reboot_confirm_title)) },
+        title = { Text(stringResource(R.string.page_home_reboot_confirm_title)) },
         text = { Text(stringResource(target.messageRes)) },
         confirmButton = {
             ZToolTextButton(

@@ -139,12 +139,12 @@ private fun SettingsAboutScreen(
     val updateSummary = when {
         isCheckingUpdate -> stringResource(R.string.loading)
         updateInfo != null -> stringResource(
-            R.string.update_available_version_format,
+            R.string.page_settings_update_available_version_format,
             updateInfo.versionName,
             updateInfo.versionCode
         )
-        updateCheckCompleted -> stringResource(R.string.about_app_update_latest_summary)
-        else -> stringResource(R.string.about_app_update_placeholder_summary)
+        updateCheckCompleted -> stringResource(R.string.page_settings_about_app_update_latest_summary)
+        else -> stringResource(R.string.page_settings_about_app_update_placeholder_summary)
     }
     val updateRowClick = {
         if (updateInfo != null) {
@@ -157,7 +157,7 @@ private fun SettingsAboutScreen(
     ZToolScaffold(
         topBar = {
             ZToolTopAppBar(
-                title = stringResource(R.string.about_ztool_title),
+                title = stringResource(R.string.page_settings_about_ztool_title),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -185,73 +185,73 @@ private fun SettingsAboutScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 AboutHeaderCard(versionName, commitCount, commitHash)
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_developers_title), 3) { getModifier ->
+                AboutSectionCard(stringResource(R.string.page_settings_about_developers_title), 3) { getModifier ->
                     AboutActionRow(
                         title = "Qimian233",
-                        summary = stringResource(R.string.about_qimian233_summary),
+                        summary = stringResource(R.string.page_settings_about_qimian233_summary),
                         onClick = onOpenQimian233,
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
                         title = "WASDDestroy",
-                        summary = stringResource(R.string.about_wasd_destroy_summary),
+                        summary = stringResource(R.string.page_settings_about_wasd_destroy_summary),
                         onClick = onOpenWasdDestroy,
                         modifier = getModifier(1)
                     )
                     AboutActionRow(
                         title = "uuuddddl",
-                        summary = stringResource(R.string.about_uuuddddl),
+                        summary = stringResource(R.string.page_settings_about_uuuddddl),
                         onClick = onOpenUdl,
                         modifier = getModifier(2)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_acknowledgements_title), 4) { getModifier ->
+                AboutSectionCard(stringResource(R.string.page_settings_about_acknowledgements_title), 4) { getModifier ->
                     AboutActionRow(
-                        title = stringResource(R.string.credits_unfuck_zui),
-                        summary = stringResource(R.string.about_unfuckzui_summary),
+                        title = stringResource(R.string.page_settings_credits_unfuck_zui),
+                        summary = stringResource(R.string.page_settings_about_unfuckzui_summary),
                         onClick = onOpenUnfuckZUI,
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
-                        title = stringResource(R.string.credits_zuxos_plus),
-                        summary = stringResource(R.string.about_zuxos_plus_summary),
+                        title = stringResource(R.string.page_settings_credits_zuxos_plus),
+                        summary = stringResource(R.string.page_settings_about_zuxos_plus_summary),
                         onClick = onOpenZuxOsPlus,
                         modifier = getModifier(1),
                     )
                     AboutActionRow(
-                        title = stringResource(R.string.credits_github_acceleration),
-                        summary = stringResource(R.string.credits_github_acceleration_site),
+                        title = stringResource(R.string.page_settings_credits_github_acceleration),
+                        summary = stringResource(R.string.page_settings_credits_github_acceleration_site),
                         onClick = onOpenGitHubAccelerationSite,
                         modifier = getModifier(2)
                     )
                     AboutActionRow(
-                        title = stringResource(R.string.credits_hitokoto_support),
-                        summary = stringResource(R.string.credits_hitokoto_support_site),
+                        title = stringResource(R.string.page_settings_credits_hitokoto_support),
+                        summary = stringResource(R.string.page_settings_credits_hitokoto_support_site),
                         onClick = onOpenHitokotoSite,
                         modifier = getModifier(3)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_open_source_title), 2) { getModifier ->
+                AboutSectionCard(stringResource(R.string.page_settings_about_open_source_title), 2) { getModifier ->
                     AboutActionRow(
-                        title = stringResource(R.string.about_view_source_title),
+                        title = stringResource(R.string.page_settings_about_view_source_title),
                         summary = null,
                         onClick = onOpenGithub,
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
-                        title = stringResource(R.string.about_license_title),
-                        summary = stringResource(R.string.about_license_summary),
+                        title = stringResource(R.string.page_settings_about_license_title),
+                        summary = stringResource(R.string.page_settings_about_license_summary),
                         onClick = {},
                         modifier = getModifier(1),
                         showTrailingArrow = false
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.about_app_update_section_title), 1) { getModifier ->
+                AboutSectionCard(stringResource(R.string.page_settings_about_app_update_section_title), 1) { getModifier ->
                     AboutActionRow(
-                        title = stringResource(R.string.about_app_update_title),
+                        title = stringResource(R.string.page_settings_about_app_update_title),
                         summary = updateSummary,
                         onClick = updateRowClick,
                         modifier = getModifier(0),
@@ -284,7 +284,7 @@ private fun AboutHeaderCard(
                 modifier = Modifier.height(88.dp)
             )
             Text(
-                text = stringResource(R.string.app_name),
+                text = stringResource(R.string.page_settings_app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = LocalZToolColorScheme.current.onSurface

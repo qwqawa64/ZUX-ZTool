@@ -235,7 +235,7 @@ private fun SplashPage(
             )
             Spacer(modifier = Modifier.height(64.dp))
             Text(
-                text = stringResource(R.string.splash_welcome_text),
+                text = stringResource(R.string.page_firstrun_splash_welcome_text),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 fontSize = 48.sp,
@@ -256,7 +256,7 @@ private fun SplashPage(
                 .fillMaxWidth()
                 .height(56.dp)
         ) {
-            Text(stringResource(R.string.firstrun_start))
+            Text(stringResource(R.string.page_firstrun_start))
         }
     }
 }
@@ -286,8 +286,8 @@ private fun AgreementPage(
         ) {
             if (showHeader) {
                 HeaderCard(
-                    title = stringResource(R.string.agreement_screen_title),
-                    subtitle = stringResource(R.string.agreement_screen_subtitle)
+                    title = stringResource(R.string.page_firstrun_agreement_screen_title),
+                    subtitle = stringResource(R.string.page_firstrun_agreement_screen_subtitle)
                 )
             }
 
@@ -297,7 +297,7 @@ private fun AgreementPage(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = stringResource(R.string.agreement_title),
+                        text = stringResource(R.string.page_firstrun_agreement_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -328,12 +328,12 @@ private fun AgreementPage(
             modifier = Modifier.align(Alignment.BottomCenter),
             nextText = if (countdownSeconds > 0) {
                 stringResource(
-                    R.string.customizedConfirmWithCountdown,
-                    stringResource(R.string.nextStep),
+                    R.string.page_firstrun_customized_confirm_with_countdown,
+                    stringResource(R.string.page_firstrun_next_step),
                     countdownSeconds
                 )
             } else {
-                stringResource(R.string.nextStep)
+                stringResource(R.string.page_firstrun_next_step)
             },
             nextEnabled = firstPageReady,
             onNext = onNext,
@@ -368,8 +368,8 @@ private fun PermissionPage(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             HeaderCard(
-                title = stringResource(R.string.firstrun_permissions_title),
-                subtitle = stringResource(R.string.firstrun_permissions_subtitle)
+                title = stringResource(R.string.page_firstrun_permissions_title),
+                subtitle = stringResource(R.string.page_firstrun_permissions_subtitle)
             )
 
             ZToolCard(
@@ -378,7 +378,7 @@ private fun PermissionPage(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = stringResource(R.string.firstrun_permissions_check_title),
+                        text = stringResource(R.string.page_firstrun_permissions_check_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -396,9 +396,9 @@ private fun PermissionPage(
 
             StatusBanner(
                 text = if (allGranted) {
-                    stringResource(R.string.firstrun_permissions_ready)
+                    stringResource(R.string.page_firstrun_permissions_ready)
                 } else {
-                    stringResource(R.string.firstrun_permissions_pending)
+                    stringResource(R.string.page_firstrun_permissions_pending)
                 },
                 ready = allGranted
             )
@@ -406,11 +406,11 @@ private fun PermissionPage(
 
         BottomActionBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            nextText = stringResource(R.string.agreement_confirm),
+            nextText = stringResource(R.string.page_firstrun_agreement_confirm),
             nextEnabled = allGranted,
             onNext = onAgree,
             onDisagree = onBack,
-            negativeText = stringResource(R.string.firstrun_previous)
+            negativeText = stringResource(R.string.page_firstrun_previous)
         )
     }
 }
@@ -478,36 +478,36 @@ private fun ActionRow(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         FirstrunActionCard(
-            title = stringResource(R.string.firstrun_root_title),
-            summary = stringResource(R.string.firstrun_root_summary),
+            title = stringResource(R.string.page_firstrun_root_title),
+            summary = stringResource(R.string.page_firstrun_root_summary),
             checked = state.hasRoot,
             icon = Icons.Rounded.Numbers,
             onClick = onRequestRoot
         )
         FirstrunActionCard(
-            title = stringResource(R.string.firstrun_module_title),
-            summary = stringResource(R.string.firstrun_module_summary),
+            title = stringResource(R.string.page_firstrun_module_title),
+            summary = stringResource(R.string.page_firstrun_module_summary),
             checked = state.isModuleActive,
             icon = Icons.Rounded.Extension,
             onClick = onCheckModule
         )
         FirstrunActionCard(
-            title = stringResource(R.string.firstrun_packages_title),
-            summary = stringResource(R.string.firstrun_packages_summary),
+            title = stringResource(R.string.page_firstrun_packages_title),
+            summary = stringResource(R.string.page_firstrun_packages_summary),
             checked = state.canListApps,
             icon = Icons.Rounded.Apps,
             onClick = onRequestPackages
         )
         FirstrunActionCard(
-            title = stringResource(R.string.firstrun_usage_title),
-            summary = stringResource(R.string.firstrun_usage_summary),
+            title = stringResource(R.string.page_firstrun_usage_title),
+            summary = stringResource(R.string.page_firstrun_usage_summary),
             checked = state.hasUsageStats,
             icon = Icons.Rounded.QueryStats,
             onClick = onRequestUsage
         )
         FirstrunActionCard(
-            title = stringResource(R.string.firstrun_overlay_title),
-            summary = stringResource(R.string.firstrun_overlay_summary),
+            title = stringResource(R.string.page_firstrun_overlay_title),
+            summary = stringResource(R.string.page_firstrun_overlay_summary),
             checked = state.hasOverlay,
             icon = Icons.AutoMirrored.Rounded.OpenInNew,
             onClick = onRequestOverlay
@@ -575,7 +575,7 @@ private fun BottomActionBar(
     nextEnabled: Boolean,
     onNext: () -> Unit,
     onDisagree: () -> Unit,
-    negativeText: String = stringResource(R.string.agreement_dismiss)
+    negativeText: String = stringResource(R.string.page_firstrun_agreement_dismiss)
 ) {
     Row(
         modifier = modifier
