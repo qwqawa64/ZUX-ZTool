@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!--将常用的字符串资源放置在下面-->
     <string name="tooltip_content_description">提示</string>
     <string name="quick_help_lookup_title">速查</string>
@@ -980,8 +980,8 @@
     <string name="show_slider_percentage">显示滑动条百分比</string>
     <string name="show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="show_volume_slider_percentage">显示音量滑动条百分比</string>
-    <string name="ram_unavailable" translatable="false">-- | --</string>
-    <string name="ram_formatter">%1$s 已用 | %2$s</string>
+    <string name="ram_unavailable" translatable="false" tools:ignore="UnusedResources">-- | --</string>
+    <string name="ram_formatter" tools:ignore="UnusedResources">%1$s 已用 | %2$s</string>
     <string name="beautify_ram_info">美化总内存信息</string>
     <string name="beautify_ram_info_summary">显示猜测的物理内存总量并显示内存扩展值（如果有）</string>
     <string name="skip_nearby_exposure_warn">跳过互传开启警告</string>
@@ -1067,11 +1067,11 @@
     <string name="batch_uninstall_root_unavailable">无法获取 Root 权限，请先在授权管理中允许 ZTool 获取 Root</string>
     <string name="batch_uninstall_empty">未收到要卸载的应用列表</string>
     <string name="batch_uninstall_result">批量卸载完成：成功 %1$d 个，失败 %2$d 个</string>
-    <!-- Hook 侧读取（BatchUninstall 确认框） -->
-    <string name="ztool_batch_uninstall_dialog_title">批量卸载</string>
-    <string name="ztool_batch_uninstall_dialog_message">将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：\n\n%2$s</string>
-    <string name="ztool_batch_uninstall_dispatch_failed">无法打开 ZTool 执行卸载</string>
-    <!-- Hook 侧读取（BatchUninstall） -->
-    <string name="ztool_batch_uninstall_button">卸载应用</string>
-    <string name="ztool_batch_uninstall_no_apps">所选中内容没有可卸载的应用</string>
+    <!-- Hook 侧读取（BatchUninstall 确认框）；经 getIdentifier 按名加载，勿改名勿删 -->
+    <string name="ztool_batch_uninstall_dialog_title" tools:ignore="UnusedResources">批量卸载</string>
+    <string name="ztool_batch_uninstall_dialog_message" tools:ignore="UnusedResources">将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：\n\n%2$s</string>
+    <string name="ztool_batch_uninstall_dispatch_failed" tools:ignore="UnusedResources">无法打开 ZTool 执行卸载</string>
+    <!-- Hook 侧读取（BatchUninstall）；经 getIdentifier 按名加载，勿改名勿删 -->
+    <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">卸载应用</string>
+    <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">所选中内容没有可卸载的应用</string>
 </resources>
