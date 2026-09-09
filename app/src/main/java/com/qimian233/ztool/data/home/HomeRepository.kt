@@ -226,7 +226,7 @@ class HomeRepository(
         for (cmd in detectionCommands) {
             try {
                 val result = shellExecutor.executeRootCommand(cmd, 3)
-                if (result.isSuccess && !result.output.isNullOrBlank()) {
+                if (result.isSuccess && !result.output.isBlank()) {
                     val output = result.output.trim()
                     if (cmd.contains("magisk")) {
                         return context.getString(R.string.page_home_magisk_su_format, output)
@@ -267,7 +267,7 @@ class HomeRepository(
 
     private fun getCurrentBootSlot(): String {
         val result = shellExecutor.executeRootCommand("getprop ro.boot.slot_suffix", 3)
-        return if (result.isSuccess && !result.output.isNullOrBlank()) {
+        return if (result.isSuccess && !result.output.isBlank()) {
             when (result.output.trim()) {
                 "_a" -> context.getString(R.string.page_home_slot_a)
                 "_b" -> context.getString(R.string.page_home_slot_b)
@@ -287,7 +287,7 @@ class HomeRepository(
             )
             commands.firstNotNullOfOrNull { command ->
                 val result = shellExecutor.executeRootCommand(command, 3)
-                result.output?.trim()?.takeIf { it.isNotEmpty() }
+                result.output.trim().takeIf { it.isNotEmpty() }
             } ?: context.getString(R.string.common_unknown)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch ROM region: ${e.message}")
