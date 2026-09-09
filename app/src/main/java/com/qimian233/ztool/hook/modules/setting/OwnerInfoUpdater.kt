@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.setting
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -19,11 +20,12 @@ import java.util.regex.Pattern
 /**
  * 锁屏 OwnerInfo 更新核心逻辑（OwnerInfoHook 拆分后的共享类）。
  * <p>
- * 由 [OwnerInfoSettingsHook] 与 [OwnerInfoSystemHook] 双侧共用：从 API 拉取
+ * 由 [OwnerInfoSettingsHook] 与 OwnerInfoSystemHook 双侧共用：从 API 拉取
  * 每日一言并写入锁屏 OwnerInfo。构造注入 [xposed] 与 [logger]，两侧 Hook
  * 在各自回调阶段各建实例。
  * </p>
  */
+@SuppressLint("DiscouragedPrivateApi", "PrivateApi")
 class OwnerInfoUpdater(
     private val xposed: XposedInterface,
     private val logger: ModuleLog
@@ -44,19 +46,17 @@ class OwnerInfoUpdater(
                     if (!apiUrl!!.startsWith("http://") && !apiUrl!!.startsWith("https://") &&
                         !apiUrl!!.startsWith("Https://") && !apiUrl!!.startsWith("Http://")
                     ) {
-                        apiUrl = "https://" + apiUrl
+                        apiUrl = "https://$apiUrl"
                     }
                 } else {
                     logger.warn("API_URL配置为空，使用默认值")
                     apiUrl = "https://api.example.com" // 设置一个默认URL
                 }
                 val content = fetchContentFromAPI()
-                if (content != null && content != cachedContent) {
+                if (content != cachedContent) {
                     cachedContent = content
                     logger.debug("从API获取新内容: $content")
                     setOwnerInfoContent(content, context, classLoader)
-                } else if (content == null) {
-                    logger.warn("从API获取内容失败$apiUrl")
                 } else {
                     logger.debug("内容未变化，跳过更新")
                 }
@@ -66,7 +66,7 @@ class OwnerInfoUpdater(
         }.start()
     }
 
-    private fun fetchContentFromAPI(): String? {
+    private fun fetchContentFromAPI(): String {
         var connection: HttpURLConnection? = null
         try {
             val url = URL(apiUrl)
