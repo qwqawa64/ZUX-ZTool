@@ -11,10 +11,6 @@ import com.qimian233.ztool.EnhancedShellExecutor
  */
 class BatchUninstallRepository {
 
-    fun checkRootAvailable(): Boolean {
-        return EnhancedShellExecutor.getInstance().checkRootAccess().isSuccess
-    }
-
     /** 诊断用：返回 root 检测结果与原始输出，便于现场排查 KernelSU/Magisk 差异。 */
     fun checkRootAccess(): Pair<Boolean, String> {
         val result = EnhancedShellExecutor.getInstance().checkRootAccess()
