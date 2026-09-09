@@ -150,7 +150,7 @@ class AdvancedSettingsRepository(
         val details = mutableListOf<PersistentResetDetail>()
         var succeeded = 0
         var failed = 0
-        var unsupported = 0
+        val unsupported = 0
 
         // 1. 原生 AOD 开关（旧版 shell 写入的残留值）
         val aod = resetDozeAlwaysOn()
@@ -183,7 +183,7 @@ class AdvancedSettingsRepository(
     private fun resetDozeAlwaysOn(): ResetOutcome {
         val current = shellExecutor.executeRootCommand("settings get secure doze_always_on")
         if (current.isSuccess) {
-            val value = current.output?.trim().orEmpty()
+            val value = current.output.trim()
             if (value.isEmpty() || value.equals("null", ignoreCase = true)) {
                 return ResetOutcome(true, "doze_always_on 无残留值，无需重置")
             }
@@ -192,7 +192,7 @@ class AdvancedSettingsRepository(
         return if (result.isSuccess) {
             ResetOutcome(true, "已清除 doze_always_on 残留值")
         } else {
-            ResetOutcome(false, "清除 doze_always_on 失败：${result.error ?: result.output}")
+            ResetOutcome(false, "清除 doze_always_on 失败：${result.error}")
         }
     }
 
@@ -222,21 +222,21 @@ class AdvancedSettingsRepository(
             if (!tableCheck.isSuccess) {
                 return ResetOutcome(false, "清除自启动白名单失败：sqlite3 不可用或数据库无法访问")
             }
-            if (tableCheck.output?.trim().orEmpty().isEmpty()) continue
+            if (tableCheck.output.trim().isEmpty()) continue
             // 预检残留计数
             val count = shellExecutor.executeRootCommand(
                 "sqlite3 \"$dbPath\" \"SELECT count(*) FROM AutoRunManager WHERE (attr & $whitelistMask) != 0;\""
             )
             if (!count.isSuccess) {
-                return ResetOutcome(false, "清除自启动白名单失败：${count.error ?: count.output}")
+                return ResetOutcome(false, "清除自启动白名单失败：${count.error}")
             }
-            if (count.output?.trim().orEmpty() == "0") continue
+            if (count.output.trim() == "0") continue
             // 清除白名单位（保留 stubborn / relative 等其他位）
             val update = shellExecutor.executeRootCommand(
                 "sqlite3 \"$dbPath\" \"UPDATE AutoRunManager SET attr = attr & ~$whitelistMask;\""
             )
             if (!update.isSuccess) {
-                return ResetOutcome(false, "清除自启动白名单失败：${update.error ?: update.output}")
+                return ResetOutcome(false, "清除自启动白名单失败：${update.error}")
             }
             cleared = true
         }
@@ -258,7 +258,7 @@ class AdvancedSettingsRepository(
             "settings get global key_game_assistant_prevent_misoperation"
         )
         if (current.isSuccess) {
-            val value = current.output?.trim().orEmpty()
+            val value = current.output.trim()
             if (value.isEmpty() || value.equals("null", ignoreCase = true)) {
                 return ResetOutcome(true, "防误触无残留值，无需重置")
             }
@@ -269,7 +269,7 @@ class AdvancedSettingsRepository(
         return if (result.isSuccess) {
             ResetOutcome(true, "已清除防误触持久化值")
         } else {
-            ResetOutcome(false, "清除防误触失败：${result.error ?: result.output}")
+            ResetOutcome(false, "清除防误触失败：${result.error}")
         }
     }
 
