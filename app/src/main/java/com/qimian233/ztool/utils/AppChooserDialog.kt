@@ -59,7 +59,6 @@ object AppChooserDialog {
         var isSelected: Boolean = false
     }
 
-    @JvmStatic
     fun show(
         context: Context,
         packageNames: List<String>,
@@ -68,7 +67,6 @@ object AppChooserDialog {
         show(context, packageNames, null, null, callback)
     }
 
-    @JvmStatic
     fun show(
         context: Context,
         packageNames: List<String>,
@@ -78,7 +76,6 @@ object AppChooserDialog {
         show(context, packageNames, null, title, callback)
     }
 
-    @JvmStatic
     fun show(
         context: Context,
         packageNames: List<String>,
@@ -88,7 +85,6 @@ object AppChooserDialog {
         show(context, packageNames, selectedPackageNames, null, callback)
     }
 
-    @JvmStatic
     fun show(
         context: Context,
         packageNames: List<String>,

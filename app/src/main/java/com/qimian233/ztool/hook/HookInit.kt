@@ -23,10 +23,8 @@ class HookInit : XposedModule() {
         @Volatile
         private var instance: HookInit? = null
 
-        @JvmStatic
         fun getInstance(): HookInit? = instance
 
-        @JvmStatic
         fun getXposedInterface(): XposedInterface? = instance
     }
 

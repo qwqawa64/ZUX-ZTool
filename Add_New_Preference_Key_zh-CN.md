@@ -22,7 +22,7 @@ app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应�
 | Float   | `FloatKey(name, default)`  | `FloatKey("Custom_StatusBarClockTextSize", 16.0f)` |
 | String  | `StringKey(name, default)` | `StringKey("ForceStopWhiteList", "")`              |
 
-每个键同时作为 `PreferenceKeys` object 的 `@JvmField val` 常量暴露，在 Kotlin 中可通过 `PreferenceKeys.CONSTANT_NAME.name` 访问，在 Java 中可通过 `PreferenceKeys.CONSTANT_NAME.name`（或 `.getName()`）访问。
+每个键同时作为 `PreferenceKeys` object 的 `val` 常量暴露，在 Kotlin 中通过 `PreferenceKeys.CONSTANT_NAME.name` 访问。
 
 ### 自动类型推断
 
@@ -40,7 +40,7 @@ app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应�
 
 ```kotlin
 // 在 Boolean 键区域按作用域分组的适当位置添加：
-@JvmField val NEW_FEATURE_ENABLED = BoolKey("new_feature_enabled", false)
+val NEW_FEATURE_ENABLED = BoolKey("new_feature_enabled", false)
 
 // 然后在 booleanKeys 列表末尾加入 NEW_FEATURE_ENABLED
 ```
@@ -50,7 +50,7 @@ app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应�
 #### Int 键
 
 ```kotlin
-@JvmField val NEW_FEATURE_LEVEL = IntKey("new_feature_level", 5)
+val NEW_FEATURE_LEVEL = IntKey("new_feature_level", 5)
 
 // 加入 intKeys 列表
 ```
@@ -58,7 +58,7 @@ app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应�
 #### Float 键
 
 ```kotlin
-@JvmField val NEW_FEATURE_SCALE = FloatKey("new_feature_scale", 1.0f)
+val NEW_FEATURE_SCALE = FloatKey("new_feature_scale", 1.0f)
 
 // 加入 floatKeys 列表
 ```
@@ -66,14 +66,13 @@ app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt  ← 应�
 #### String 键
 
 ```kotlin
-@JvmField val NEW_FEATURE_PATTERN = StringKey("new_feature_pattern", "")
+val NEW_FEATURE_PATTERN = StringKey("new_feature_pattern", "")
 
 // 加入 stringKeys 列表
 ```
 
 **关键规则：**
 - 默认值必须与 Hook 侧和 Repository 侧使用的一致
-- `@JvmField` 使常量可从 Java Hook 中直接访问
 - 必须将新键加入对应类型的列表（`booleanKeys` / `intKeys` / `floatKeys` / `stringKeys`），否则备份/恢复无法识别
 
 ---
@@ -183,7 +182,7 @@ class NewFeatureHook : AppHookModule() {
 3. **默认值必须一致**：`PreferenceKeys` 中定义的默认值应与 Repository 和 Hook 中使用的默认值完全一致。
 4. **类型必须匹配**：Boolean 键加入 `booleanKeys` 列表，Int 键加入 `intKeys` 列表，以此类推。类型不匹配会导致备份/恢复时数据损坏。
 5. **不要手写键名字符串**。始终使用 `PreferenceKeys.CONSTANT_NAME.name` 引用，确保拼写和大小写完全一致。
-6. **`PreferenceKeys` 中的 `@JvmField val` 常量命名**使用 `SCREAMING_SNAKE_CASE`，与 `BoolKey` 的 `name` 参数（通常为 `snake_case` 或 `PascalCase` 的历史命名）区分开。
+6. **`PreferenceKeys` 中的 `val` 常量命名**使用 `SCREAMING_SNAKE_CASE`，与 `BoolKey` 的 `name` 参数（通常为 `snake_case` 或 `PascalCase` 的历史命名）区分开。
 
 ---
 

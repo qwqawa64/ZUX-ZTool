@@ -49,7 +49,6 @@ object CustomDateFormatter {
      * @param date 要格式化的日期
      * @return 格式化后的字符串
      */
-    @JvmStatic
     fun format(pattern: String?, date: Date?): String {
         if (pattern == null || date == null) {
             return ""

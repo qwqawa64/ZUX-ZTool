@@ -108,7 +108,6 @@ object HookManager {
             ArrayList()
     private var savedSystemServerParam: XposedModuleInterface.SystemServerStartingParam? = null
 
-    @JvmStatic
     fun initialize(xposed: XposedInterface) {
         if (initialized) return
         registerAllModules(xposed)
@@ -238,14 +237,12 @@ object HookManager {
         initialized = true
     }
 
-    @JvmStatic
     fun registerHookModule(module: BaseHookModule) {
         if (!hookModules.contains(module)) {
             hookModules.add(module)
         }
     }
 
-    @JvmStatic
     fun handlePackageLoaded(param: XposedModuleInterface.PackageLoadedParam) {
         savedPackageParams.add(param)
         for (module in hookModules) {
@@ -253,7 +250,6 @@ object HookManager {
         }
     }
 
-    @JvmStatic
     fun handleSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
         savedSystemServerParam = param
         for (module in hookModules) {
@@ -272,7 +268,6 @@ object HookManager {
      * 再由新代码在 [onHotReloaded][XposedModuleInterface.HotReloadedParam] 中经 [restoreLifecycleParams] 恢复。
      * </p>
      */
-    @JvmStatic
     fun getSavedPackageParams(): List<XposedModuleInterface.PackageLoadedParam> =
             savedPackageParams
 
@@ -281,7 +276,6 @@ object HookManager {
      *
      * @see getSavedPackageParams
      */
-    @JvmStatic
     fun getSavedSystemServerParam(): XposedModuleInterface.SystemServerStartingParam? =
             savedSystemServerParam
 
@@ -293,7 +287,6 @@ object HookManager {
      * [savedSystemServerParam] 为空，重放将不会安装任何 Hook。
      * </p>
      */
-    @JvmStatic
     fun restoreLifecycleParams(
         packageParams: List<XposedModuleInterface.PackageLoadedParam>?,
         systemServerParam: XposedModuleInterface.SystemServerStartingParam?
@@ -313,7 +306,6 @@ object HookManager {
      * 新代码需先调用 [restoreLifecycleParams] 恢复，再执行重放。
      * </p>
      */
-    @JvmStatic
     fun reinitializeForHotReload(xposed: XposedInterface) {
         hookModules.clear()
         registerAllModules(xposed)
@@ -326,7 +318,6 @@ object HookManager {
      * 每个模块调用由 try-catch 包裹，单个模块失败不影响其他模块。
      * </p>
      */
-    @JvmStatic
     fun replayAllHooks() {
         for (module in hookModules) {
             val systemServer = savedSystemServerParam

@@ -21,7 +21,6 @@ object HookReflectionHelper {
      * @return 可访问的 [Field]
      * @throws NoSuchFieldException 如果在整个继承链中都未找到
      */
-    @JvmStatic
     @Throws(NoSuchFieldException::class)
     fun findField(startClass: Class<*>?, name: String): Field {
         var current: Class<*>? = startClass
@@ -47,7 +46,6 @@ object HookReflectionHelper {
      * @return 可访问的 [Method]
      * @throws NoSuchMethodException 如果在整个继承链中都未找到
      */
-    @JvmStatic
     @Throws(NoSuchMethodException::class)
     fun findMethod(startClass: Class<*>?, name: String, vararg parameterTypes: Class<*>?): Method {
         var current: Class<*>? = startClass

@@ -18,7 +18,7 @@ import androidx.core.content.edit
  *
  * 类型推断使用 [PreferenceKeys] 中的列表循环匹配，替代硬编码的 || + equals 链。
  */
-class ModulePreferencesUtils @JvmOverloads constructor(
+class ModulePreferencesUtils(
     private val context: Context,
     private val modulePackageName: String = "com.qimian233.ztool"
 ) {
@@ -353,7 +353,6 @@ class ModulePreferencesUtils @JvmOverloads constructor(
         private const val PREFS_NAME = "xposed_module_config"
         private const val TAG = "ZToolXposedModulePrefsUtils"
 
-        @JvmStatic
         fun getAllSettingsAsJSON(context: Context): String? {
             return try {
                 val utils = ModulePreferencesUtils(context)
@@ -366,7 +365,6 @@ class ModulePreferencesUtils @JvmOverloads constructor(
             }
         }
 
-        @JvmStatic
         fun restoreConfig(context: Context, jsonToRestore: String) {
             try {
                 val utils = ModulePreferencesUtils(context)
@@ -377,7 +375,6 @@ class ModulePreferencesUtils @JvmOverloads constructor(
             }
         }
 
-        @JvmStatic
         fun jsonToHashMap(jsonString: String): HashMap<String, Any> {
             return try {
                 val gson = Gson()
@@ -409,7 +406,6 @@ class ModulePreferencesUtils @JvmOverloads constructor(
 
         // ── 值强制转换 ──
 
-        @JvmStatic
         fun coerceFloatValue(value: Any?): Float? {
             return when (value) {
                 is Number -> value.toFloat()
@@ -419,7 +415,6 @@ class ModulePreferencesUtils @JvmOverloads constructor(
             }
         }
 
-        @JvmStatic
         fun coerceIntegerValue(value: Any?): Int? {
             return when (value) {
                 is Number -> {
@@ -437,7 +432,6 @@ class ModulePreferencesUtils @JvmOverloads constructor(
             }
         }
 
-        @JvmStatic
         fun coerceBooleanValue(value: Any?): Boolean? {
             return when (value) {
                 is Boolean -> value
@@ -457,7 +451,6 @@ class ModulePreferencesUtils @JvmOverloads constructor(
             }
         }
 
-        @JvmStatic
         fun coerceStringValue(value: Any?): String? = value?.toString()
     }
 }

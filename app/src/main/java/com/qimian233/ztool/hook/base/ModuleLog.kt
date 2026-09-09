@@ -19,12 +19,9 @@ import io.github.libxposed.api.XposedInterface
  * [error] 和 [fatal] 携带 [Throwable] 时，行为与旧版 `logError` 一致：
  * [DEBUG] 开启时输出最多 10 行堆栈，关闭时仅输出首行。
  *
- * Companion 中保留全局 [DEBUG] 开关、[refreshDebugLoggingEnabled] 和
- * 向后兼容的静态方法 [logStatic] / [logErrorStatic]。
+ * Companion 中保留全局 [DEBUG] 开关与 [refreshDebugLoggingEnabled]。
  */
-class ModuleLog
-@JvmOverloads
-constructor(
+class ModuleLog(
     private val moduleName: String,
     @Volatile var xposed: XposedInterface? = null
 ) {
@@ -59,7 +56,6 @@ constructor(
      * @param msg 错误描述
      * @param t   可选 [Throwable]；提供时附加堆栈（受 [DEBUG] 控制截断长度）
      */
-    @JvmOverloads
     fun error(msg: String, t: Throwable? = null) {
         val body = if (t != null) formatWithStack(msg, t) else "[$moduleName] $msg"
         xposed?.log(6, TAG, body)
@@ -71,7 +67,6 @@ constructor(
      * @param msg 错误描述
      * @param t   可选 [Throwable]
      */
-    @JvmOverloads
     fun fatal(msg: String, t: Throwable? = null) {
         val body = if (t != null) formatWithStack(msg, t) else "[$moduleName] $msg"
         xposed?.log(7, TAG, body)
@@ -98,7 +93,7 @@ constructor(
         return sb.toString()
     }
 
-    // ── companion：全局状态 + 向后兼容静态方法 ──────────────────
+    // ── companion：全局状态 ────────────────────────────────────
 
     companion object {
         private const val TAG = "ZToolXposedModule"
@@ -106,7 +101,6 @@ constructor(
         private const val DEBUG_REFRESH_INTERVAL_MS = 1000L
 
         /** 详细日志开关。 */
-        @JvmField
         @Volatile
         var DEBUG: Boolean = false
         @Volatile
@@ -116,7 +110,6 @@ constructor(
          * 从远程配置刷新 [DEBUG] 开关。
          * 调用频率受 `DEBUG_REFRESH_INTERVAL_MS` 限制。
          */
-        @JvmStatic
         fun refreshDebugLoggingEnabled() {
             val now = System.currentTimeMillis()
             if (now - lastDebugRefreshTime < DEBUG_REFRESH_INTERVAL_MS) return
@@ -136,37 +129,6 @@ constructor(
             } catch (_: Throwable) {
                 false
             }
-        }
-
-        // ── 向后兼容静态方法（供 BaseHookModule 废弃的 log/logError 委托使用）──
-
-        /** @suppress 向后兼容，新代码请使用实例 [ModuleLog.info]。 */
-        @JvmStatic
-        fun logStatic(xposed: XposedInterface?, moduleName: String, msg: String) {
-            xposed?.log(4, TAG, "[$moduleName] $msg")
-        }
-
-        /** @suppress 向后兼容，新代码请使用实例 [ModuleLog.error]。 */
-        @JvmStatic
-        fun logErrorStatic(
-            xposed: XposedInterface?,
-            moduleName: String,
-            msg: String,
-            t: Throwable?
-        ) {
-            refreshDebugLoggingEnabled()
-            val sb = StringBuilder("[$moduleName] $msg\n")
-            val lines = Log.getStackTraceString(t).split("\n")
-            if (DEBUG) {
-                val max = minOf(lines.size, 10)
-                for (i in 0 until max) {
-                    if (i > 0) sb.append("\n")
-                    sb.append(lines[i])
-                }
-            } else if (lines.isNotEmpty()) {
-                sb.append(lines[0]).append("\n")
-            }
-            xposed?.log(6, TAG, sb.toString())
         }
     }
 }
