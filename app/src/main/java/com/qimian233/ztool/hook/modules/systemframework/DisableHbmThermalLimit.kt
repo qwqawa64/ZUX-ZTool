@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
+import android.annotation.SuppressLint
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.SystemHookModule
@@ -23,6 +24,7 @@ class DisableHbmThermalLimit : SystemHookModule() {
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_SERVER.packageName)
 
+    @SuppressLint("PrivateApi")
     override fun handleSystemServerStarting(param: SystemServerStartingParam) {
         val classLoader = param.classLoader
         try {
