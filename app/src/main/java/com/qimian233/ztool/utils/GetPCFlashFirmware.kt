@@ -41,7 +41,7 @@ class GetPCFlashFirmware {
             Log.d(TAG, "获取到的MTM参数：$mtm")
 
             val packageInfo = getDownloadPackageInfo(mtm)
-            if (packageInfo != null && packageInfo.isNotEmpty()) {
+            if (!packageInfo.isNullOrEmpty()) {
                 packageInfo
             } else {
                 Log.w(TAG, "错误: 空下载链接")
@@ -80,10 +80,9 @@ class GetPCFlashFirmware {
          */
         private fun getDownloadPackageInfo(mtm: String): Array<String?>? {
             return try {
-                val urlStr = "https://ptstpd.lenovo.com.cn/home/ConfigurationQuery/getPadFlashingMachine"
-                val jsonBody = "{\"mtm\":\"" + mtm + "\"}"
+                val jsonBody = "{\"mtm\":\"$mtm\"}"
 
-                val response = sendPostRequest(urlStr, jsonBody)
+                val response = sendPostRequest(jsonBody)
                 arrayOf(
                     extractEverything(response, "download_url"), // Download URL
                     "FC(fv:SknR", // Password, found in official tool
@@ -113,8 +112,8 @@ class GetPCFlashFirmware {
         /**
          * 发送POST请求
          */
-        private fun sendPostRequest(urlStr: String, jsonBody: String): String {
-            val url = URL(urlStr)
+        private fun sendPostRequest(jsonBody: String): String {
+            val url = URL("https://ptstpd.lenovo.com.cn/home/ConfigurationQuery/getPadFlashingMachine")
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.setRequestProperty("Content-Type", "application/json")
