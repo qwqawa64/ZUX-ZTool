@@ -22,7 +22,6 @@ import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.Objects
 
 @SuppressLint("PrivateApi", "DiscouragedApi")
 class AppInfoHeaderDetailsHook : AppHookModule() {
@@ -96,7 +95,7 @@ class AppInfoHeaderDetailsHook : AppHookModule() {
 
                 val originalSummary = summaryView.text
                 val displayText = mergeSummary(originalSummary, appInfo)
-                summaryView.setSingleLine(false)
+                summaryView.isSingleLine = false
                 summaryView.maxLines = Integer.MAX_VALUE
                 summaryView.text = displayText
                 summaryView.setOnLongClickListener { v ->
@@ -190,10 +189,10 @@ class AppInfoHeaderDetailsHook : AppHookModule() {
 
             val label = getApplicationLabel(pm, source!!)
             if (!TextUtils.isEmpty(label)) {
-                return label.toString() + " (" + source + ")"
+                return "$label ($source)"
             }
             return source
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             systemLanguage = Locale.getDefault().language
             return getDisplayString(5)
         }
@@ -231,6 +230,6 @@ class AppInfoHeaderDetailsHook : AppHookModule() {
         private const val CONTROLLER_CLASS =
             "com.android.settings.applications.appinfo.AppHeaderViewPreferenceController"
         private const val APP_ENTRY_CLASS =
-            "com.android.settingslib.applications.ApplicationsState\$AppEntry"
+            $$"com.android.settingslib.applications.ApplicationsState$AppEntry"
     }
 }
