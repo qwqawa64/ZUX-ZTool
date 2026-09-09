@@ -24,14 +24,6 @@ class AgreementRepository(context: Context) {
         }
     }
 
-    fun hasAcceptedAgreement(): Boolean {
-        return compareAgreementVersion(getAcceptedAgreementVersion(), currentAgreementVersionValue) >= 0
-    }
-
-    fun needsAgreementAcceptance(): Boolean {
-        return !hasAcceptedAgreement()
-    }
-
     fun markAgreementAccepted(version: String = currentAgreementVersionValue) {
         agreementFile.parentFile?.mkdirs()
         agreementFile.writeText("$STATE_PREFIX$version")
@@ -67,26 +59,6 @@ class AgreementRepository(context: Context) {
         val legacyPrefs = appContext.getSharedPreferences(LEGACY_PREF_NAME, Context.MODE_PRIVATE)
         if (!legacyPrefs.contains(LEGACY_FIRST_LAUNCH_KEY)) return null
         return !legacyPrefs.getBoolean(LEGACY_FIRST_LAUNCH_KEY, true)
-    }
-
-    private fun compareAgreementVersion(left: String?, right: String): Int {
-        if (left == null) return -1
-        val leftParts = versionParts(left)
-        val rightParts = versionParts(right)
-        val maxSize = maxOf(leftParts.size, rightParts.size)
-        for (index in 0 until maxSize) {
-            val leftPart = leftParts.getOrElse(index) { 0 }
-            val rightPart = rightParts.getOrElse(index) { 0 }
-            if (leftPart != rightPart) {
-                return leftPart.compareTo(rightPart)
-            }
-        }
-        return 0
-    }
-
-    private fun versionParts(version: String): List<Int> {
-        return version.split('.')
-            .map { part -> part.toIntOrNull() ?: 0 }
     }
 
     private fun parseAgreementVersion(markdown: String): String {
