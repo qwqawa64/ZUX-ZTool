@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui.wallpaper
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.media.MediaCodec
 import android.media.MediaExtractor
@@ -34,12 +35,13 @@ import java.io.File
  * getModuleName() 返回 PreferenceKeys.DESKTOP_LIVE_WALLPAPER.name，
  * 由前端开关控制启用。
  */
+@SuppressLint("PrivateApi")
 class DesktopLiveWallpaperHook : AppHookModule() {
 
     companion object {
         private val SYSTEMUI_PKG = ScopeKeys.SYSTEM_UI.packageName
         private const val ENGINE_CLASS =
-            "com.android.systemui.wallpapers.ImageWallpaper\$CanvasEngine"
+            $$"com.android.systemui.wallpapers.ImageWallpaper$CanvasEngine"
         private const val CUSTOM_VIDEO_DIR = "/Download/ZTool"
         private const val VIDEO_PORTRAIT = "wallpaper_portrait.mp4"
         private const val VIDEO_LAND = "wallpaper_land.mp4"
@@ -257,7 +259,7 @@ class DesktopLiveWallpaperHook : AppHookModule() {
             reportedShown = false
 
             decodeThread = Thread({
-                decodeLoop(trackIndex, engine)
+                decodeLoop(engine)
             }, "DesktopLiveWallpaper-Decode").also { it.start() }
 
             logger.info("DesktopLiveWallpaper: playback started ${w}x${h}")
@@ -320,7 +322,7 @@ class DesktopLiveWallpaperHook : AppHookModule() {
 
     // ── 解码循环（在专用线程上运行） ──────────────────────────
 
-    private fun decodeLoop(trackIndex: Int, engine: Any) {
+    private fun decodeLoop(engine: Any) {
         val extractor = extractor ?: return
         val codec = codec ?: return
         val bufInfo = MediaCodec.BufferInfo()
@@ -399,7 +401,7 @@ class DesktopLiveWallpaperHook : AppHookModule() {
                     outIdx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> { /* ignore */ }
                 }
             }
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
             // 正常的停止信号
         } catch (t: Throwable) {
             if (running) logger.error("DesktopLiveWallpaper: decode error", t)
