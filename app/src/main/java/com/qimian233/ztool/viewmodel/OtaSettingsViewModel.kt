@@ -119,19 +119,22 @@ class OtaSettingsViewModel(
         }
 
         _uiState.value = _uiState.value.copy(isFetchingFirmware = true)
-        repository.fetchFirmware(sn) { result ->
-            when (result) {
-                is FirmwareFetchResult.Failure -> {
-                    _uiState.value = _uiState.value.copy(
-                        isFetchingFirmware = false,
-                        errorDialogMessage = result.message
-                    )
-                }
-                is FirmwareFetchResult.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isFetchingFirmware = false,
-                        firmwareResult = result.firmware
-                    )
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = repository.fetchFirmware(sn)
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is FirmwareFetchResult.Failure -> {
+                        _uiState.value = _uiState.value.copy(
+                            isFetchingFirmware = false,
+                            errorDialogMessage = result.message
+                        )
+                    }
+                    is FirmwareFetchResult.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            isFetchingFirmware = false,
+                            firmwareResult = result.firmware
+                        )
+                    }
                 }
             }
         }

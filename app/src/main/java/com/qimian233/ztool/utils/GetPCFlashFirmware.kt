@@ -1,10 +1,11 @@
 package com.qimian233.ztool.utils
 
-import android.os.AsyncTask
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -13,55 +14,43 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
-@Suppress("DEPRECATION")
+/**
+ * 查询联想PC刷机固件信息。
+ *
+ * 网络请求全部运行在 [Dispatchers.IO] 上，调用方需在协程中调用 [queryFirmware]。
+ */
 class GetPCFlashFirmware {
 
-    // 异步查询固件信息
-    fun queryFirmwareAsync(sn: String, listener: OnFirmwareQueryListener) {
-        QueryFirmwareTask(listener).execute(sn)
-    }
+    /**
+     * 查询固件信息，返回六元素数组（下载链接、密码、平台、刷机方式、首次上传时间、最后更新时间），
+     * 失败时返回 null。
+     */
+    suspend fun queryFirmware(sn: String): Array<String?>? = withContext(Dispatchers.IO) {
+        if (sn.isEmpty()) {
+            Log.w(TAG, "错误: 请提供设备序列号作为参数")
+            return@withContext null
+        }
+        Log.d(TAG, "获取到序列号: $sn")
 
-    // 异步任务类
-    private class QueryFirmwareTask(val listener: OnFirmwareQueryListener) :
-        AsyncTask<String, Void, Array<String?>?>() {
-
-        override fun doInBackground(vararg params: String): Array<String?>? {
-            val sn = params[0]
-            if (sn.isEmpty()) {
-                Log.w(TAG, "错误: 请提供设备序列号作为参数")
-                return null
+        try {
+            val mtm = getMTM(sn)
+            if (mtm.isNullOrEmpty()) {
+                Log.w(TAG, "错误: 无法获取MTM参数")
+                return@withContext null
             }
-            Log.d(TAG, "获取到序列号: $sn")
+            Log.d(TAG, "获取到的MTM参数：$mtm")
 
-            return try {
-                val mtm = getMTM(sn)
-                if (mtm.isNullOrEmpty()) {
-                    Log.w(TAG, "错误: 无法获取MTM参数")
-                    return null
-                }
-                Log.d(TAG, "获取到的MTM参数：$mtm")
-
-                val packageInfo = getDownloadPackageInfo(mtm)
-                if (packageInfo != null && packageInfo.isNotEmpty()) {
-                    packageInfo
-                } else {
-                    Log.w(TAG, "错误: 空下载链接")
-                    null
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "查询固件时发生异常", e)
+            val packageInfo = getDownloadPackageInfo(mtm)
+            if (packageInfo != null && packageInfo.isNotEmpty()) {
+                packageInfo
+            } else {
+                Log.w(TAG, "错误: 空下载链接")
                 null
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "查询固件时发生异常", e)
+            null
         }
-
-        override fun onPostExecute(result: Array<String?>?) {
-            listener.onFirmwareQueryResult(result)
-        }
-    }
-
-    // 回调接口
-    fun interface OnFirmwareQueryListener {
-        fun onFirmwareQueryResult(result: Array<String?>?)
     }
 
     companion object {

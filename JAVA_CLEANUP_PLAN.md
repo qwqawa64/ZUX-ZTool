@@ -84,6 +84,10 @@ unchanged after conversion. No Kotlin code constructs `ShellResult` / `ConfigFil
   faithful to Java's null-able elements, 2 safe-call fixes in `OtaSettingsRepository`)
   **+ magicwindowsearch models** (`PackageInfo`/`ActivityPair` data classes) +
   **deleted dead `PermissionChecker`.** Commits `1b4c835b`, `163463f8`.
+  *Follow-up (2026-09-09, user requested): the `AsyncTask` in `GetPCFlashFirmware` was
+  later replaced with a `suspend fun queryFirmware(sn)` on `Dispatchers.IO`; the listener
+  was dropped and `OtaSettingsRepository.fetchFirmware` / `OtaSettingsViewModel` migrated
+  to the suspend + `viewModelScope.launch` pattern.*
 - [x] **Batch 5 — services + tests.** `LogCollectorService` (class name kept — Manifest
   contract), `LogServiceManager` (`object`, `ServiceStatusListener` interface —
   `MainActivity` implements it unchanged), both example tests. Verified with

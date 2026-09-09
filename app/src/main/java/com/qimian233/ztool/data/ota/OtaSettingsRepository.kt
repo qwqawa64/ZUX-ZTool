@@ -95,28 +95,23 @@ class OtaSettingsRepository(
         return otaInfo.toOtaInfoResult()
     }
 
-    fun fetchFirmware(sn: String, callback: (FirmwareFetchResult) -> Unit) {
-        GetPCFlashFirmware().queryFirmwareAsync(sn) { firmwareInfo ->
-            if (firmwareInfo != null && firmwareInfo.size >= 6) {
-                callback(
-                    FirmwareFetchResult.Success(
-                        FirmwareResult(
-                            downloadUrl = firmwareInfo[0].orEmpty(),
-                            password = firmwareInfo[1].orEmpty(),
-                            platform = firmwareInfo[2].orEmpty(),
-                            method = firmwareInfo[3].orEmpty(),
-                            firstUploadTime = formatTimestamp(firmwareInfo[4]?.toLongOrNull() ?: 0L),
-                            lastUpdateTime = formatTimestamp(firmwareInfo[5]?.toLongOrNull() ?: 0L)
-                        )
-                    )
+    suspend fun fetchFirmware(sn: String): FirmwareFetchResult {
+        val firmwareInfo = GetPCFlashFirmware().queryFirmware(sn)
+        return if (firmwareInfo != null && firmwareInfo.size >= 6) {
+            FirmwareFetchResult.Success(
+                FirmwareResult(
+                    downloadUrl = firmwareInfo[0].orEmpty(),
+                    password = firmwareInfo[1].orEmpty(),
+                    platform = firmwareInfo[2].orEmpty(),
+                    method = firmwareInfo[3].orEmpty(),
+                    firstUploadTime = formatTimestamp(firmwareInfo[4]?.toLongOrNull() ?: 0L),
+                    lastUpdateTime = formatTimestamp(firmwareInfo[5]?.toLongOrNull() ?: 0L)
                 )
-            } else {
-                callback(
-                    FirmwareFetchResult.Failure(
-                        context.getString(R.string.system_update_pc_flash_firmware_fetch_failed_message)
-                    )
-                )
-            }
+            )
+        } else {
+            FirmwareFetchResult.Failure(
+                context.getString(R.string.system_update_pc_flash_firmware_fetch_failed_message)
+            )
         }
     }
 
