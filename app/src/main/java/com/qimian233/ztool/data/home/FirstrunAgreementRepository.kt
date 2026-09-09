@@ -2,7 +2,6 @@ package com.qimian233.ztool.data.home
 
 import android.app.AppOpsManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.provider.Settings
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.ModuleActivationProbe
