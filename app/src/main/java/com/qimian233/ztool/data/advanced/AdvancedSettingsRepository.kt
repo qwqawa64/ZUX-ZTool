@@ -43,6 +43,10 @@ class AdvancedSettingsRepository(
         onProgress: (target: HookedTarget, result: HotReloadResult) -> Unit,
         onComplete: (succeededCount: Int, failedCount: Int, unsupportedCount: Int, diedCount: Int, details: List<HotReloadDetail>) -> Unit
     ) {
+        if (XposedServiceBridge.getApiVersion() < 102) {
+            Log.e(TAG, "Low API version, unable to perform hot-reload")
+            return
+        }
         val targets = getRunningTargets()
         if (targets.isEmpty()) {
             onComplete(0, 0, 0, 0, emptyList())
