@@ -8,6 +8,7 @@ import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import androidx.core.content.edit
+import kotlin.enums.enumEntries
 
 class ThemePreferencesRepository(
     context: Context
@@ -130,7 +131,7 @@ class ThemePreferencesRepository(
     }
 
     private fun legacyPalette(value: String?): MaterialPalette {
-        return enumValues<MaterialPalette>().firstOrNull { it.name == value } ?: MaterialPalette.TonalSpot
+        return enumEntries<MaterialPalette>().firstOrNull { it.name == value } ?: MaterialPalette.TonalSpot
     }
 
     companion object {
