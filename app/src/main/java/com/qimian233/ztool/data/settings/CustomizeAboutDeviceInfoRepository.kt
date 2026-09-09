@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Environment
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys
@@ -71,7 +72,7 @@ class CustomizeAboutDeviceInfoRepository(
     }
 
     companion object {
-        private const val TARGET_IMAGE_PATH = "/sdcard/Download/ZTool/device_info.jpg"
+        private var TARGET_IMAGE_PATH = Environment.getExternalStorageDirectory().path + "/Download/ZTool/device_info.jpg"
         private val KEY_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO.name
         private val KEY_MODEL_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_MODEL_ENABLED.name
         private val KEY_CPU_ENABLED = PreferenceKeys.ABOUT_DEVICE_INFO_CPU_ENABLED.name
