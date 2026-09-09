@@ -5,13 +5,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.R
+import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.advanced.AdvancedSettingsRepository
 import com.qimian233.ztool.data.advanced.HotReloadDetail
 import com.qimian233.ztool.data.advanced.PersistentResetDetail
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexProgress
 import io.github.libxposed.service.HookedTarget
-import io.github.libxposed.service.HotReloadResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,7 +78,10 @@ class AdvancedSettingsViewModel(
             hotReloadInProgress = true,
             hotReloadDetails = emptyList()
         )
-
+        if (XposedServiceBridge.getApiVersion() < 102) {
+            Log.e(TAG, "Low API version, unable to perform hot reload!")
+            return
+        }
         repository.performHotReloadAll(
             onProgress = { target, result ->
                 Log.d(TAG, "热重载: ${target.processName} -> ${result.status()} ${result.message() ?: ""}")
