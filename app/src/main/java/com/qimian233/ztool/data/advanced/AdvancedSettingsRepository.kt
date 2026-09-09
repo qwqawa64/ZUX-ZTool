@@ -1,5 +1,6 @@
 package com.qimian233.ztool.data.advanced
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -204,6 +205,7 @@ class AdvancedSettingsRepository(
      * - RELATIVE_APP_WHITE_LIST = 0x40000000
      * 仅清除白名单位，不动 state 列（用户手动设置的自启开关）。
      */
+    @SuppressLint("SdCardPath")
     private fun resetAutorun(): ResetOutcome {
         val whitelistMask = 0x20000000 or 0x40000000 // 1610612736
         val dbPaths = listOf(
