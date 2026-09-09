@@ -80,7 +80,7 @@ class LockScreenSettingsRepository(
         )
         return ShellActionResult(
             success = result.isSuccess,
-            error = result.error.orEmpty(),
+            error = result.error,
             exitCode = result.exitCode
         )
     }
