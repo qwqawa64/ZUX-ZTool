@@ -25,6 +25,10 @@ import java.util.Collections
  *    活性实现是 Legacy 版（判定读 LegacyMediaDataFilterImpl.userEntries），
  *    Interactor 集群疑似遗留，两个实现类都 hook 以覆盖任意 Dagger 绑定关系；
  *    QQS 宿主（showsOnlyActiveMedia=true）对 active=false 的占位条目必须依赖强制 true。
+ *    锁屏宿主（location 2）豁免：占位条目 active=false 本就点不亮锁屏
+ *    （showsOnlyActiveMedia=true 只认活跃媒体），pin 锁屏只有副作用——真机 366 实证
+ *    锁屏时钟会被切成"有媒体"的小型样式。豁免实现：updateViewVisibility 的
+ *    before/finally 里按 location 置 ThreadLocal，pin hooker 见该标记时放行原方法。
  * 2. 数据层占位：向数据总线 LegacyMediaDataManagerImpl.onMediaDataLoaded(String,String,MediaData)
  *    （两版同签名）注入合成 MediaData，解决"判定通过但 carousel 无条目 →
  *    MeasurementOutput=0 → hostView 0 高塌缩"（media-tile/媒体磁贴分析报告.md 三、四轮）。
@@ -112,7 +116,15 @@ class AlwaysDisplayMediaTile : AppHookModule() {
                 for (method in clazz.declaredMethods) {
                     if (method.name == methodName && method.parameterTypes.isEmpty()) {
                         try {
-                            hookWithId(method, "pin_media_tile_${alias}_$methodName") { _ -> true }
+                            // 锁屏豁免：updateViewVisibility 在调用 hasXxx 前置标记，
+                            // 该次调用若来自锁屏宿主（location 2）则放行原方法，
+                            // 避免锁屏 state.visible 被 pin 点亮（时钟变小样式副作用）
+                            hookWithId(method, "pin_media_tile_${alias}_$methodName") { chain ->
+                                if (keyguardCall.get() == true) {
+                                    return@hookWithId chain.proceed()
+                                }
+                                true
+                            }
                             hooked = true
                             logger.info("Media tile pinned via $alias.$methodName")
                         } catch (e: Throwable) {
@@ -248,8 +260,9 @@ class AlwaysDisplayMediaTile : AppHookModule() {
     }
 
     /**
-     * 冷启动引导：宿主 attach/可见性变化必经此方法，此时 carousel 建卡 listener
-     * 已随 MediaCarouselController 构造注册，"空则注入"必然走完建卡链。
+     * 宿主引导 + 锁屏豁免标记：updateViewVisibility before 时按 location 置
+     * ThreadLocal（pin hooker 据此放行锁屏那次判定），finally 清除；
+     * after 触发"空则注入"（此时 carousel 建卡 listener 已注册，注入必达建卡链）。
      */
     private fun installHostBootstrap(loader: ClassLoader) {
         try {
@@ -257,11 +270,19 @@ class AlwaysDisplayMediaTile : AppHookModule() {
             for (method in hostClass.declaredMethods) {
                 if (method.name == "updateViewVisibility" && method.parameterTypes.isEmpty()) {
                     hookWithId(method, "media_host_visibility_bootstrap") { chain ->
-                        chain.proceed()
+                        val isKeyguard = runCatching {
+                            val location = findField(chain.thisObject?.javaClass, LOCATION_FIELD)
+                                .getInt(chain.thisObject)
+                            location == KEYGUARD_HOST_LOCATION
+                        }.getOrDefault(false)
+                        keyguardCall.set(isKeyguard)
                         try {
-                            postMain { ensurePlaceholder() }
-                        } catch (e: Throwable) {
-                            logger.error("Media bootstrap failed", e)
+                            chain.proceed()
+                            if (!isKeyguard) {
+                                postMain { ensurePlaceholder() }
+                            }
+                        } finally {
+                            keyguardCall.set(false)
                         }
                     }
                 }
@@ -421,18 +442,24 @@ class AlwaysDisplayMediaTile : AppHookModule() {
     }
 
     /**
-     * 构造占位 MediaData。全参构造器 Java 层为 28 参、末参 Double（分析报告的"30 参"
-     * 是 smali 寄存器计数，long 占 2 位）；另有 29 参掩码版，必须按末参类型区分。
+     * 构造占位 MediaData。两版均有 28 参全参构造器（分析报告的"30 参"是 smali
+     * 寄存器计数）与 28 参掩码版，唯一可靠区分是末参类型：全参版是装箱
+     * java.lang.Double，掩码版是原始 int（Kotlin 的 Double::class.java 是原始
+     * double.class，必须写 java.lang.Double::class.java）。掩码版末参位置实际是
+     * 恢复进度 Double + int 掩码，共 29 寄存器位——真机日志确认两构造器均为 28 参。
      * 字段取值对齐系统 LOADING/smartspace 恢复卡先例（全 null 组合为常态渲染路径）。
      */
     private fun buildPlaceholderMediaData(context: Context): Any? {
         return try {
             val modelClass = context.classLoader.loadClass(MEDIA_DATA_MODEL)
             val ctor = modelClass.constructors.firstOrNull {
-                it.parameterTypes.size == 28 && it.parameterTypes.last() == Double::class.java
+                it.parameterTypes.size == 28 &&
+                    it.parameterTypes.last() == java.lang.Double::class.java
             } ?: run {
-                val sizes = modelClass.constructors.joinToString { "${it.parameterTypes.size}" }
-                logger.warn("MediaData full constructor not found (available: $sizes)")
+                val shapes = modelClass.constructors.joinToString { c ->
+                    "${c.parameterTypes.size}:last=${c.parameterTypes.last().name}"
+                }
+                logger.warn("MediaData full constructor not found (available: $shapes)")
                 return null
             }
             val emptyList = Collections.emptyList<Any>()
@@ -635,7 +662,7 @@ class AlwaysDisplayMediaTile : AppHookModule() {
 
     private companion object {
         // 构建标识：用于在宿主日志中确认实际加载的代码版本
-        const val BUILD_TAG = "crashfix-20260911"
+        const val BUILD_TAG = "keyguardskip-20260911"
         const val MEDIA_CAROUSEL_INTERACTOR =
             "com.android.systemui.media.controls.domain.pipeline.interactor.MediaCarouselInteractor"
         const val LEGACY_MEDIA_DATA_MANAGER_IMPL =
@@ -660,6 +687,8 @@ class AlwaysDisplayMediaTile : AppHookModule() {
         const val USER_ID_FIELD = "userId"
         const val MEDIA_HOST_FIELD = "mediaHost"
         const val HOST_VIEW_FIELD = "hostView"
+        const val LOCATION_FIELD = "location"
+        const val KEYGUARD_HOST_LOCATION = 2
 
         val ALWAYS_VISIBLE_METHODS = arrayOf(
             "hasActiveMediaOrRecommendation",
@@ -681,6 +710,9 @@ class AlwaysDisplayMediaTile : AppHookModule() {
         val mainHandler = Handler(Looper.getMainLooper())
         val piidActiveStates = mutableMapOf<Int, Boolean>()
         val latestAudioEventTimeByUid = mutableMapOf<Int, Long>()
+
+        // 锁屏豁免标记：updateViewVisibility before 置位，pin hooker 据此放行
+        val keyguardCall = ThreadLocal<Boolean>()
 
         // 注入/撤除方法在 hooker 回调外缓存（安装时解析）
         var managerLoadMethod: Method? = null
