@@ -9,6 +9,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.os.SystemClock
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -33,6 +35,11 @@ import java.util.Collections
  * 4. 366 联想将内部监听链拆为 LegacyMediaDataFilterImpl（String 键 userEntries /
  *    allEntries），占位撤除与移除观察优先走它；354 回退 MediaDataFilterImpl +
  *    MediaFilterRepository._selectedUserEntries（AOSP 集群在 354 是活链路）。
+ * 5. 崩溃防护（真机 366 实证）：无媒体设备上锁屏宿主的 hostView 因
+ *    UniqueObjectHostView.addView 的"0 宽跳过挂载"分支拿不到 LayoutParams，
+ *    pin 使 KeyguardMediaController 在 state.visible=true 时写
+ *    layoutParams.height 直接 NPE 崩溃循环。hook KeyguardMediaController.reattachHostView
+ *    补齐 LayoutParams 根治。
  */
 class AlwaysDisplayMediaTile : AppHookModule() {
 
@@ -43,12 +50,52 @@ class AlwaysDisplayMediaTile : AppHookModule() {
     override fun handleLoadPackage(param: PackageLoadedParam) {
         // 构建标识：确认宿主进程实际加载的代码版本（排查"更新后行为未变"类问题）
         logger.info("AlwaysDisplayMediaTile loaded, build=$BUILD_TAG")
-        installPinHooks(param)
+        installKeyguardLayoutParamsGuard(param.defaultClassLoader)
+        installPinHooks(param.defaultClassLoader)
         installDataLayerHooks(param)
     }
 
-    private fun installPinHooks(param: PackageLoadedParam) {
-        val loader = param.defaultClassLoader
+    /**
+     * 崩溃防护：KeyguardMediaController.reattachHostView 走 UniqueObjectHostView.addView
+     * 的跳过分支时 hostView 不会被真正挂载、LayoutParams 保持 null，随后
+     * attachSinglePaneContainer / 可见性监听器在 state.visible=true 时写该字段即 NPE。
+     * after-hook 里补一份默认 LayoutParams（宽 MATCH_PARENT / 高 WRAP_CONTENT，
+     * 与崩溃点想写的值一致），对未 attach 的 View 仅赋值无副作用。
+     */
+    private fun installKeyguardLayoutParamsGuard(loader: ClassLoader) {
+        try {
+            val controllerClass = loader.loadClass(KEYGUARD_MEDIA_CONTROLLER)
+            val reattach = controllerClass.getDeclaredMethod("reattachHostView")
+            hookWithId(reattach, "media_keyguard_layout_guard") { chain ->
+                chain.proceed()
+                try {
+                    chain.thisObject?.let { controller ->
+                        val host = runCatching {
+                            findField(controller.javaClass, MEDIA_HOST_FIELD).get(controller)
+                        }.getOrNull() ?: return@let
+                        val hostView = runCatching {
+                            findField(host.javaClass, HOST_VIEW_FIELD).get(host) as? ViewGroup
+                        }.getOrNull() ?: return@let
+                        if (hostView.layoutParams == null) {
+                            hostView.layoutParams = FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT
+                            )
+                            logger.info("Keyguard media hostView layoutParams healed")
+                        }
+                    }
+                } catch (e: Throwable) {
+                    logger.error("Keyguard layout guard failed", e)
+                }
+            }
+        } catch (e: ClassNotFoundException) {
+            logger.info("KeyguardMediaController not present on this firmware, guard skipped")
+        } catch (e: Throwable) {
+            logger.error("Failed to install keyguard layout guard", e)
+        }
+    }
+
+    private fun installPinHooks(loader: ClassLoader) {
         val pinTargets = listOf(
             "interactor" to MEDIA_CAROUSEL_INTERACTOR,
             "legacy" to LEGACY_MEDIA_DATA_MANAGER_IMPL
@@ -374,17 +421,20 @@ class AlwaysDisplayMediaTile : AppHookModule() {
     }
 
     /**
-     * 构造占位 MediaData：30 参构造器两版逐字符一致（见媒体磁贴分析报告第五轮）。
+     * 构造占位 MediaData。全参构造器 Java 层为 28 参、末参 Double（分析报告的"30 参"
+     * 是 smali 寄存器计数，long 占 2 位）；另有 29 参掩码版，必须按末参类型区分。
      * 字段取值对齐系统 LOADING/smartspace 恢复卡先例（全 null 组合为常态渲染路径）。
      */
     private fun buildPlaceholderMediaData(context: Context): Any? {
         return try {
             val modelClass = context.classLoader.loadClass(MEDIA_DATA_MODEL)
-            val ctor = modelClass.constructors.firstOrNull { it.parameterTypes.size == 30 }
-                ?: run {
-                    logger.warn("MediaData 30-arg constructor not found")
-                    return null
-                }
+            val ctor = modelClass.constructors.firstOrNull {
+                it.parameterTypes.size == 28 && it.parameterTypes.last() == Double::class.java
+            } ?: run {
+                val sizes = modelClass.constructors.joinToString { "${it.parameterTypes.size}" }
+                logger.warn("MediaData full constructor not found (available: $sizes)")
+                return null
+            }
             val emptyList = Collections.emptyList<Any>()
             val now = System.currentTimeMillis()
             val audio = latestAudioApp
@@ -585,7 +635,7 @@ class AlwaysDisplayMediaTile : AppHookModule() {
 
     private companion object {
         // 构建标识：用于在宿主日志中确认实际加载的代码版本
-        const val BUILD_TAG = "datasync-20260911"
+        const val BUILD_TAG = "crashfix-20260911"
         const val MEDIA_CAROUSEL_INTERACTOR =
             "com.android.systemui.media.controls.domain.pipeline.interactor.MediaCarouselInteractor"
         const val LEGACY_MEDIA_DATA_MANAGER_IMPL =
@@ -598,6 +648,8 @@ class AlwaysDisplayMediaTile : AppHookModule() {
             "com.android.systemui.media.controls.shared.model.MediaData"
         const val MEDIA_HOST =
             "com.android.systemui.media.controls.ui.view.MediaHost"
+        const val KEYGUARD_MEDIA_CONTROLLER =
+            "com.android.systemui.media.controls.ui.controller.KeyguardMediaController"
         const val INSTANCE_ID_CLASS = "com.android.internal.logging.InstanceId"
         const val PLACEHOLDER_KEY = "ztool_media_placeholder"
         const val CONTEXT_FIELD = "context"
@@ -606,6 +658,8 @@ class AlwaysDisplayMediaTile : AppHookModule() {
         const val FILTER_REPOSITORY_FIELD = "mediaFilterRepository"
         const val SELECTED_ENTRIES_FIELD = "_selectedUserEntries"
         const val USER_ID_FIELD = "userId"
+        const val MEDIA_HOST_FIELD = "mediaHost"
+        const val HOST_VIEW_FIELD = "hostView"
 
         val ALWAYS_VISIBLE_METHODS = arrayOf(
             "hasActiveMediaOrRecommendation",
