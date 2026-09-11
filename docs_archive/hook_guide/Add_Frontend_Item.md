@@ -1,6 +1,6 @@
 # 新 Hook 前端接入指南
 
-> 本文面向**应用侧 Compose 设置页**的配置接入。后端 Hook 实现请阅读 **[Add_New_Hook_Module.md](./Add_New_Hook_Module.md)**；偏好键集中管理请阅读根目录 **[Add_New_Preference_Key_zh-CN.md](../../Add_New_Preference_Key_zh-CN.md)**。
+> 本文面向**应用侧 Compose 设置页**的配置接入。后端 Hook 实现请阅读 **[Add_New_Hook_Module.md](./Add_New_Hook_Module.md)**；偏好键集中管理请阅读根目录 **[Add_New_Preference_Key_zh-CN.md](../preference_key/Add_New_Preference_Key_zh-CN.md)**。
 >
 > 偏好键管理已集中化：所有偏好键必须先在 `PreferenceKeys.kt` 中注册，然后通过 `PreferenceKeys.CONSTANT_NAME.name` 引用；作用域包名统一由 `ScopeKeys` 管理，通过 `ScopeKeys.CONSTANT.packageName` 引用。手写键名/包名字符串不再推荐。
 
