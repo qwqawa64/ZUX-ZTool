@@ -3,7 +3,6 @@ package com.qimian233.ztool.hook.modules.systemui.qs
 import android.content.ComponentName
 import android.content.Context
 import android.media.session.MediaSessionManager
-import android.media.session.PlaybackState
 import android.os.UserHandle
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -154,9 +153,10 @@ class MediaOutputDialogCenterHook : AppHookModule() {
     }
 
     /**
-     * 查询当前活跃（正在播放）的媒体会话包名。getActiveSessionsForUser 是 hidden API
-     * （SDK 公开层无此方法，SystemUI 内部即用此全量查询，特权进程内可用），故反射调用；
-     * 取 playbackState 为 PLAYING 的首个会话（系统列表按媒体按钮会话优先排序）。
+     * 查询最近活跃的媒体会话包名。getActiveSessionsForUser 是 hidden API
+     * （SDK 公开层无此方法，SystemUI 内部即用此全量查询，特权进程内可用），故反射调用。
+     * 不过滤播放态：与正常路径语义一致——媒体卡片在暂停态同样显示并可点出弹窗，
+     * 仅取系统列表首个会话（列表按媒体按钮会话优先排序）。
      *
      * @param manager MediaOutputDialogManager 实例（借其 context 获取服务）
      */
@@ -176,9 +176,7 @@ class MediaOutputDialogCenterHook : AppHookModule() {
             }
             @Suppress("UNCHECKED_CAST")
             val sessions = method.invoke(sm, null, current) as List<android.media.session.MediaController>
-            sessions.firstOrNull { controller ->
-                controller.playbackState?.state == PlaybackState.STATE_PLAYING
-            }?.packageName
+            sessions.firstOrNull()?.packageName
         } catch (t: Throwable) {
             logger.warn("findActiveMediaPackage failed: ${t.message}")
             null
