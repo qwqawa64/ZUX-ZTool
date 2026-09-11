@@ -24,15 +24,17 @@ import java.util.Collections
  *    hasXxxOrRecommendation() 无参方法返回 true。366 上 MediaDataManager 接口的
  *    活性实现是 Legacy 版（判定读 LegacyMediaDataFilterImpl.userEntries），
  *    Interactor 集群疑似遗留，两个实现类都 hook 以覆盖任意 Dagger 绑定关系；
- *    QQS 宿主（showsOnlyActiveMedia=true）对 active=false 的占位条目必须依赖强制 true。
- *    锁屏宿主（location 2）豁免：占位条目 active=false 本就点不亮锁屏
- *    （showsOnlyActiveMedia=true 只认活跃媒体），pin 锁屏只有副作用——真机 366 实证
- *    锁屏时钟会被切成"有媒体"的小型样式。豁免实现：updateViewVisibility 的
- *    before/finally 里按 location 置 ThreadLocal，pin hooker 见该标记时放行原方法。
+ *    QQS/锁屏宿主（showsOnlyActiveMedia=true）只有强制 true 才会常驻。
+ *    锁屏 NPE 崩溃已由 KeyguardMediaController.reattachHostView 的 LayoutParams
+ *    防护根治（无媒体设备上 hostView 走 0 宽跳过挂载分支、LayoutParams 为 null）。
  * 2. 数据层占位：向数据总线 LegacyMediaDataManagerImpl.onMediaDataLoaded(String,String,MediaData)
  *    （两版同签名）注入合成 MediaData，解决"判定通过但 carousel 无条目 →
  *    MeasurementOutput=0 → hostView 0 高塌缩"（media-tile/媒体磁贴分析报告.md 三、四轮）。
  *    总线开头有 mediaEntries.containsKey 门控，新 key 必须先反射 seed 进 mediaEntries。
+ *    占位条目 active=true：锁屏宿主只认活跃媒体（KeyguardMediaController 构造时
+ *    setShowsOnlyActiveMedia(true)），active=false 时锁屏不会出现占位卡；
+ *    代价是 addOrUpdatePlayer 会立即 reorderAllPlayers（把占位卡排到最前），
+ *    单卡场景无感知。
  * 3. 冷启动引导：恢复出厂/从未播放媒体的设备上总线永远无事件，hook 三个 Dagger 单例
  *    构造器捕获实例，并由 MediaHost.updateViewVisibility() 兜底触发"空则注入"
  *    （宿主 attach 时 MediaCarouselController 已构造并注册建卡 listener，注入必达）。
@@ -116,15 +118,7 @@ class AlwaysDisplayMediaTile : AppHookModule() {
                 for (method in clazz.declaredMethods) {
                     if (method.name == methodName && method.parameterTypes.isEmpty()) {
                         try {
-                            // 锁屏豁免：updateViewVisibility 在调用 hasXxx 前置标记，
-                            // 该次调用若来自锁屏宿主（location 2）则放行原方法，
-                            // 避免锁屏 state.visible 被 pin 点亮（时钟变小样式副作用）
-                            hookWithId(method, "pin_media_tile_${alias}_$methodName") { chain ->
-                                if (keyguardCall.get() == true) {
-                                    return@hookWithId chain.proceed()
-                                }
-                                true
-                            }
+                            hookWithId(method, "pin_media_tile_${alias}_$methodName") { _ -> true }
                             hooked = true
                             logger.info("Media tile pinned via $alias.$methodName")
                         } catch (e: Throwable) {
@@ -260,9 +254,8 @@ class AlwaysDisplayMediaTile : AppHookModule() {
     }
 
     /**
-     * 宿主引导 + 锁屏豁免标记：updateViewVisibility before 时按 location 置
-     * ThreadLocal（pin hooker 据此放行锁屏那次判定），finally 清除；
-     * after 触发"空则注入"（此时 carousel 建卡 listener 已注册，注入必达建卡链）。
+     * 宿主引导：updateViewVisibility after 触发"空则注入"（此时 carousel 建卡
+     * listener 已注册，注入必达建卡链）。
      */
     private fun installHostBootstrap(loader: ClassLoader) {
         try {
@@ -270,19 +263,11 @@ class AlwaysDisplayMediaTile : AppHookModule() {
             for (method in hostClass.declaredMethods) {
                 if (method.name == "updateViewVisibility" && method.parameterTypes.isEmpty()) {
                     hookWithId(method, "media_host_visibility_bootstrap") { chain ->
-                        val isKeyguard = runCatching {
-                            val location = findField(chain.thisObject?.javaClass, LOCATION_FIELD)
-                                .getInt(chain.thisObject)
-                            location == KEYGUARD_HOST_LOCATION
-                        }.getOrDefault(false)
-                        keyguardCall.set(isKeyguard)
+                        chain.proceed()
                         try {
-                            chain.proceed()
-                            if (!isKeyguard) {
-                                postMain { ensurePlaceholder() }
-                            }
-                        } finally {
-                            keyguardCall.set(false)
+                            postMain { ensurePlaceholder() }
+                        } catch (e: Throwable) {
+                            logger.error("Media bootstrap failed", e)
                         }
                     }
                 }
@@ -485,7 +470,7 @@ class AlwaysDisplayMediaTile : AppHookModule() {
                 null,                                             // 12 token
                 audio?.launchIntent,                              // 13 clickIntent
                 null,                                             // 14 device
-                false,                                            // 15 active
+                true,                                             // 15 active（锁屏宿主只认活跃媒体）
                 null,                                             // 16 resumeAction
                 0,                                                // 17 playbackLocation
                 true,                                             // 18 resumption
@@ -662,7 +647,7 @@ class AlwaysDisplayMediaTile : AppHookModule() {
 
     private companion object {
         // 构建标识：用于在宿主日志中确认实际加载的代码版本
-        const val BUILD_TAG = "keyguardskip-20260911"
+        const val BUILD_TAG = "keyguardpin-20260911"
         const val MEDIA_CAROUSEL_INTERACTOR =
             "com.android.systemui.media.controls.domain.pipeline.interactor.MediaCarouselInteractor"
         const val LEGACY_MEDIA_DATA_MANAGER_IMPL =
@@ -687,8 +672,6 @@ class AlwaysDisplayMediaTile : AppHookModule() {
         const val USER_ID_FIELD = "userId"
         const val MEDIA_HOST_FIELD = "mediaHost"
         const val HOST_VIEW_FIELD = "hostView"
-        const val LOCATION_FIELD = "location"
-        const val KEYGUARD_HOST_LOCATION = 2
 
         val ALWAYS_VISIBLE_METHODS = arrayOf(
             "hasActiveMediaOrRecommendation",
@@ -710,9 +693,6 @@ class AlwaysDisplayMediaTile : AppHookModule() {
         val mainHandler = Handler(Looper.getMainLooper())
         val piidActiveStates = mutableMapOf<Int, Boolean>()
         val latestAudioEventTimeByUid = mutableMapOf<Int, Long>()
-
-        // 锁屏豁免标记：updateViewVisibility before 置位，pin hooker 据此放行
-        val keyguardCall = ThreadLocal<Boolean>()
 
         // 注入/撤除方法在 hooker 回调外缓存（安装时解析）
         var managerLoadMethod: Method? = null
