@@ -9,7 +9,7 @@ import java.lang.reflect.Method
 /**
  * 跳过 ZUI 关联启动许可检查，始终允许关联启动。
  *
- * Hook [com.android.server.ZuiSecurityService.ZuiSecurityServiceBinder.getRelativeAppStatus]
+ * Hook com.android.server.ZuiSecurityService.ZuiSecurityServiceBinder.getRelativeAppStatus
  * 使其始终返回 1（已允许）。
  */
 @SuppressLint("PrivateApi")

@@ -25,7 +25,7 @@ class DisableAllVirusScans : AppHookModule() {
         hookDbManager(classLoader)
         disableVirusPopup(classLoader)
         blockIconNumChange(classLoader)
-        blockDynamicIconSettings(classLoader)
+        blockDynamicIconSettings()
         forceActiveViewNormalIcon(classLoader)
         disableAutoScan(classLoader)
     }
@@ -119,7 +119,7 @@ class DisableAllVirusScans : AppHookModule() {
         }
     }
 
-    private fun blockDynamicIconSettings(classLoader: ClassLoader) {
+    private fun blockDynamicIconSettings() {
         hookSystemPutInt()
         hookSystemGetInt()
     }

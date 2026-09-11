@@ -55,7 +55,7 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
      * Check whether the current call stack comes from the app drawer UI
      * (all apps list or prediction row). The no-label logic is applied
      * only when this returns true; any other caller (desktop, folder,
-     * popups...) keeps the original label behaviour.
+     * popups...) keeps the original label behavior.
      */
     private fun isFromDrawerPath(): Boolean {
         return Thread.currentThread().stackTrace.any { frame ->

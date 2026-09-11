@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.view.isVisible
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -110,10 +111,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
     private fun attachMemoryView(recentsView: View) {
         try {
-            val dragLayer = getDragLayer(recentsView)
-            if (dragLayer == null) {
-                return
-            }
+            val dragLayer = getDragLayer(recentsView) ?: return
 
             var memoryView = findMemoryView(dragLayer)
             if (memoryView == null) {
@@ -133,10 +131,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
     private fun detachMemoryView(recentsView: View) {
         try {
-            val dragLayer = getDragLayer(recentsView)
-            if (dragLayer == null) {
-                return
-            }
+            val dragLayer = getDragLayer(recentsView) ?: return
 
             val memoryView = findMemoryView(dragLayer)
             if (memoryView != null) {
@@ -153,7 +148,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
     private fun createMemoryView(context: Context): TextView {
         val textView = TextView(context)
-        textView.setTag(MEMORY_VIEW_TAG)
+        textView.tag = MEMORY_VIEW_TAG
         textView.setTextColor(Color.argb(0xd9, 0xff, 0xff, 0xff))
         textView.alpha = 0.8f
         textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
@@ -241,7 +236,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
     private fun updateMemoryViewVisibility(recentsView: View, memoryView: TextView) {
         val overviewEnabled = java.lang.Boolean.TRUE == overviewEnabledStates[recentsView]
-        val visible = overviewEnabled && recentsView.visibility == View.VISIBLE
+        val visible = overviewEnabled && recentsView.isVisible
         memoryView.visibility = if (visible) View.VISIBLE else View.GONE
         if (visible) {
             refreshMemoryText(memoryView)
@@ -265,7 +260,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
         }
         updateRunnables[memoryView] = updater
 
-        if (memoryView.visibility == View.VISIBLE) {
+        if (memoryView.isVisible) {
             memoryView.postDelayed(updater, REFRESH_INTERVAL_MS)
         }
     }

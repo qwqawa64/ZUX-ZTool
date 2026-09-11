@@ -78,7 +78,7 @@ class BigFolderAlignHook : AppHookModule() {
     private lateinit var pbIsUpdate: Method
 
     // ActivityContext / DeviceProfile / InvariantDeviceProfile
-    private lateinit var actxGetDeviceProfile: Method
+    private lateinit var activityContextGetDeviceProfile: Method
     private lateinit var dpInv: Field
     private lateinit var invNumColumns: Field
     private lateinit var invNumRows: Field
@@ -144,7 +144,7 @@ class BigFolderAlignHook : AppHookModule() {
     private fun resolveCoreRefs(classLoader: ClassLoader): Boolean {
         return try {
             val pb = classLoader.loadClass("com.android.launcher3.folder.PreviewBackground")
-            val actx = classLoader.loadClass("com.android.launcher3.views.ActivityContext")
+            val activityContextClass = classLoader.loadClass("com.android.launcher3.views.ActivityContext")
             pbSpanX = findField(pb, "spanX")
             pbSpanY = findField(pb, "spanY")
             pbWidth = findField(pb, "o")     // 混淆短名: 背景宽
@@ -153,17 +153,17 @@ class BigFolderAlignHook : AppHookModule() {
             pbPreviewSizeY = findField(pb, "previewSizeY")
             pbSetup = findMethod(
                 pb, "setup",
-                Context::class.java, actx, View::class.java,
+                Context::class.java, activityContextClass, View::class.java,
                 Int::class.javaPrimitiveType, Int::class.javaPrimitiveType,
                 Int::class.javaPrimitiveType, Int::class.javaPrimitiveType
             )
             pbComputeWh = findMethod(
                 pb, "computeBigFolderAvaliableWh",
-                actx, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, IntArray::class.java
+                activityContextClass, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, IntArray::class.java
             )
-            pbIsUpdate = findMethod(pb, "isUpdatePreviewSize", actx)
+            pbIsUpdate = findMethod(pb, "isUpdatePreviewSize", activityContextClass)
 
-            actxGetDeviceProfile = findMethod(actx, "getDeviceProfile")
+            activityContextGetDeviceProfile = findMethod(activityContextClass, "getDeviceProfile")
 
             val dp = classLoader.loadClass("com.android.launcher3.DeviceProfile")
             dpInv = findField(dp, "inv")
@@ -286,7 +286,7 @@ class BigFolderAlignHook : AppHookModule() {
         // 与宿主 BigFolderConfig.isBigFolder 同语义
         if (spanX <= 1 && spanY <= 1) return
 
-        val dp = actxGetDeviceProfile.invoke(activityContext) ?: return
+        val dp = activityContextGetDeviceProfile.invoke(activityContext) ?: return
         val metrics = readGridMetrics(dp) ?: return
         // 供无 context 参数的静态方法 Hook（间距重算）使用
         cachedCellWidth = metrics.cellWidth
@@ -539,7 +539,7 @@ class BigFolderAlignHook : AppHookModule() {
                 val spanY = fiSpanY.getInt(info)
                 val activityContext = fiActivityContext.get(icon)
                     ?: return@hookWithId chain.proceed()
-                val dp = actxGetDeviceProfile.invoke(activityContext)
+                val dp = activityContextGetDeviceProfile.invoke(activityContext)
                     ?: return@hookWithId chain.proceed()
                 val iconSizePx = dpIconSize.getInt(dp)
                 val drawablePadding = dpIconDrawablePadding.getInt(dp)
@@ -578,7 +578,7 @@ class BigFolderAlignHook : AppHookModule() {
                 val args = chain.args
                 val wh = args[3] as IntArray
                 val holder = args[0] ?: return@hookWithId null
-                val dp = actxGetDeviceProfile.invoke(holder) ?: return@hookWithId null
+                val dp = activityContextGetDeviceProfile.invoke(holder) ?: return@hookWithId null
                 val metrics = readGridMetrics(dp) ?: return@hookWithId null
                 val spanX = args[1] as Int
                 if (spanX > 1) {

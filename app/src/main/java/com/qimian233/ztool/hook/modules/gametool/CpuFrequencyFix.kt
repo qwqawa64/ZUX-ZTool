@@ -62,7 +62,7 @@ class CpuFrequencyFix : AppHookModule() {
             val curFreqPath = "/sys/devices/system/cpu/cpu$lastCoreIndex/cpufreq/scaling_cur_freq"
             val freqStr = readSystemFile(curFreqPath)
 
-            if (freqStr != null && freqStr.isNotEmpty()) {
+            if (!freqStr.isNullOrEmpty()) {
                 val freq = freqStr.trim().toInt()
                 logger.debug("CpuFrequencyFix: Current freq from core $lastCoreIndex: $freq")
                 return freq
@@ -93,7 +93,7 @@ class CpuFrequencyFix : AppHookModule() {
             val maxFreqPath = "/sys/devices/system/cpu/cpu$lastCoreIndex/cpufreq/scaling_max_freq"
             val freqStr = readSystemFile(maxFreqPath)
 
-            if (freqStr != null && freqStr.isNotEmpty()) {
+            if (!freqStr.isNullOrEmpty()) {
                 val freq = freqStr.trim().toInt()
                 logger.debug("CpuFrequencyFix: Max freq from core $lastCoreIndex: $freq")
                 return freq
@@ -126,8 +126,8 @@ class CpuFrequencyFix : AppHookModule() {
                 try {
                     val num1 = f1.name.substring(3).toInt()
                     val num2 = f2.name.substring(3).toInt()
-                    Integer.compare(num2, num1) // 降序
-                } catch (e: NumberFormatException) {
+                    num2.compareTo(num1) // 降序
+                } catch (_: NumberFormatException) {
                     0
                 }
             }
@@ -150,7 +150,7 @@ class CpuFrequencyFix : AppHookModule() {
         try {
             // 尝试读取cpu0的当前频率
             val curFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
-            if (curFreqStr != null && curFreqStr.isNotEmpty()) {
+            if (!curFreqStr.isNullOrEmpty()) {
                 val freq = curFreqStr.trim().toInt()
                 logger.info("CpuFrequencyFix: Fallback current freq: $freq")
                 return freq
@@ -158,7 +158,7 @@ class CpuFrequencyFix : AppHookModule() {
 
             // 尝试读取cpuinfo_cur_freq
             val infoCurFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq")
-            if (infoCurFreqStr != null && infoCurFreqStr.isNotEmpty()) {
+            if (!infoCurFreqStr.isNullOrEmpty()) {
                 val freq = infoCurFreqStr.trim().toInt()
                 logger.info("CpuFrequencyFix: Fallback cpuinfo current freq: $freq")
                 return freq
@@ -178,7 +178,7 @@ class CpuFrequencyFix : AppHookModule() {
         try {
             // 尝试读取cpu0的最大频率
             val maxFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq")
-            if (maxFreqStr != null && maxFreqStr.isNotEmpty()) {
+            if (!maxFreqStr.isNullOrEmpty()) {
                 val freq = maxFreqStr.trim().toInt()
                 logger.debug("CpuFrequencyFix: Fallback max freq: $freq")
                 return freq
@@ -186,7 +186,7 @@ class CpuFrequencyFix : AppHookModule() {
 
             // 尝试读取cpuinfo_max_freq
             val infoMaxFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
-            if (infoMaxFreqStr != null && infoMaxFreqStr.isNotEmpty()) {
+            if (!infoMaxFreqStr.isNullOrEmpty()) {
                 val freq = infoMaxFreqStr.trim().toInt()
                 logger.debug("CpuFrequencyFix: Fallback cpuinfo max freq: $freq")
                 return freq

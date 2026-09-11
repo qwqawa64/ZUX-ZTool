@@ -176,7 +176,7 @@ class DisableForceStop : AppHookModule() {
                                 protectedCount++
                                 logger.trace("Android 16: Whitelist APP detected when performing batch kill: $pkgName")
                             }
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             // 如果无法获取包名，跳过
                         }
                     }
@@ -209,20 +209,19 @@ class DisableForceStop : AppHookModule() {
                         val tasks = tasksField.get(thisObject)
 
                         if (tasks is ArrayList<*>) {
-                            val taskList = tasks
-                            for (task in taskList) {
+                            for (task in tasks) {
                                 try {
                                     val pkgName = getPackageNameFromTask(task)
                                     if (pkgName != null && isProtectedPackage(pkgName)) {
                                         logger.trace("Android 16: Whitelist app detected in async task, count: $pkgName, blocking async task")
                                         return@hookWithId null
                                     }
-                                } catch (e: Exception) {
+                                } catch (_: Exception) {
                                     // 跳过无法识别的任务
                                 }
                             }
                         }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         // 如果无法检查，默认阻止
                         logger.warn("Android 16: Unable to check async task, blocking it by default")
                         return@hookWithId null
@@ -267,7 +266,7 @@ class DisableForceStop : AppHookModule() {
             // Hook ActivityManagerWrapper类的方法
             val amwclass = try {
                 classLoader.loadClass("com.android.systemui.shared.system.ActivityManagerWrapper")
-            } catch (e: ClassNotFoundException) {
+            } catch (_: ClassNotFoundException) {
                 null
             }
 
@@ -288,7 +287,7 @@ class DisableForceStop : AppHookModule() {
                                 if (pkgName != null && isProtectedPackage(pkgName)) {
                                     protectedCount++
                                 }
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 // 跳过无法识别的任务
                             }
                         }
@@ -341,7 +340,7 @@ class DisableForceStop : AppHookModule() {
             for (className in potentialClasses) {
                 val targetClass = try {
                     classLoader.loadClass(className)
-                } catch (e: ClassNotFoundException) {
+                } catch (_: ClassNotFoundException) {
                     null
                 }
                 if (targetClass != null) {
@@ -349,7 +348,7 @@ class DisableForceStop : AppHookModule() {
                     // 可以根据需要添加具体的Hook逻辑
                 }
             }
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             // 忽略错误，这些是可选的Hook点
             logger.info("Android 16 extra hook points detection completed.")
         }
@@ -387,7 +386,7 @@ class DisableForceStop : AppHookModule() {
                 if (packageNameFieldVal is String) {
                     return packageNameFieldVal
                 }
-            } catch (e: NoSuchFieldException) {
+            } catch (_: NoSuchFieldException) {
                 // 字段可能不存在，继续尝试其他方法
             }
 
@@ -405,7 +404,7 @@ class DisableForceStop : AppHookModule() {
                         return packageNameObj
                     }
                 }
-            } catch (e: NoSuchFieldException) {
+            } catch (_: NoSuchFieldException) {
                 // 字段可能不存在
             }
 
@@ -422,10 +421,10 @@ class DisableForceStop : AppHookModule() {
                         return packageNameObj
                     }
                 }
-            } catch (e: NoSuchFieldException) {
+            } catch (_: NoSuchFieldException) {
                 // 字段可能不存在
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // 所有方法都失败，返回null
         }
 
@@ -458,7 +457,7 @@ class DisableForceStop : AppHookModule() {
         // 先尝试常见混淆模式: $a, $b, $c, $d, $e
         for (suffix in 'a'..'e') {
             try {
-                val cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities" + "$" + suffix)
+                val cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities$$suffix")
                 // 验证：该内部类应有 doInBackground 方法
                 try {
                     cls.getDeclaredMethod("doInBackground", arrayOf<Void>().javaClass)
@@ -472,7 +471,7 @@ class DisableForceStop : AppHookModule() {
         // 再尝试数字后缀: $1, $2, $3, $4, $5
         for (i in 1..5) {
             try {
-                val cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities" + "$" + i)
+                val cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities$$i")
                 try {
                     cls.getDeclaredMethod("doInBackground", arrayOf<Void>().javaClass)
                     logger.info("Found inner class: ${cls.name}")

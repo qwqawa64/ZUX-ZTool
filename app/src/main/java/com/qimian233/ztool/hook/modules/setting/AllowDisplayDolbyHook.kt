@@ -32,8 +32,7 @@ class AllowDisplayDolbyHook : AppHookModule() {
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
-        val packageName = param.packageName
-        when (packageName) {
+        when (param.packageName) {
             ScopeKeys.SETTINGS.packageName -> hookSettingsPackage(classLoader)
             ScopeKeys.SYSTEM_UI.packageName -> hookSystemUIPackage(classLoader)
         }
