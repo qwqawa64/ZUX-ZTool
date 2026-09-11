@@ -145,6 +145,12 @@ Core files:
 - `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`: **single source of truth for all scope package names** — every package LSPosed may inject into (`Scope(packageName, HowToRestart)`), plus its preferred restart method. Hooks, `ScopeUtils`, and frontend entry points must reference `ScopeKeys` instead of hardcoding package name strings. See "Scope Management" below.
 - `app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write utility; uses `PreferenceKeys` list-based matching for backup/restore type inference.
 
+**libxposed Hook design patterns**: This project uses the libxposed API, NOT the legacy Rovo89 Xposed API — the two are almost entirely different syntactically. An agent unfamiliar with Hook development here should read the guide below instead of scanning hook sources; it defines the project's canonical Hook patterns (base-class choice, required method trio, ClassLoader acquisition, `findField`/`findMethod`, `hookWithId` with per-scope unique IDs, Chain SAM syntax, remote preferences reads, and the DexKit offline-index anti-obfuscation rule):
+
+```text
+docs_archive/hook_guide/libxposed_guide_ztool_ver.md
+```
+
 ### Offline DexKit Index (DexIndex)
 
 DexKit lookups must NOT run inside `handleLoadPackage` (they break LSPosed hot reload —
@@ -218,6 +224,7 @@ The durable rules are:
 
 To add a new Hook implementation on the backend:
 
+0. If you are not yet familiar with this project's libxposed Hook patterns (base-class choice, the required method trio, `findField`/`findMethod`, `hookWithId`, Chain SAM), read `docs_archive/hook_guide/libxposed_guide_ztool_ver.md` first before writing any Hook code.
 1. Create a Hook class that extends `AppHookModule` for non-system-framework-hook, and extend `SystemHookModule` for system-framework-hook. All new Hooks must be written in **Kotlin** (`.kt`). Java is only permitted for emergency fixes to existing Java infrastructure.
 2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `data/keys/ScopeKeys.kt` first (see "Scope Management"), and add it to `scope.list`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
 3. Read Hook settings using `PreferenceKeys` constants (see `Add_New_Preference_Key_zh-CN.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
