@@ -877,5 +877,8 @@
     <string name="ztool_batch_uninstall_dispatch_failed" tools:ignore="UnusedResources">无法打开 ZTool 执行卸载</string>
     <!-- Hook 侧读取（BatchUninstall）；经 getIdentifier 按名加载，勿改名勿删 -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">卸载应用</string>
+    <string name="tile_media_output_label">媒体输出</string>
+    <string name="system_ui_media_output_dialog_center_title">媒体输出弹窗居中</string>
+    <string name="system_ui_media_output_dialog_center_summary">修正从"媒体输出"磁贴拉起的输出切换弹窗贴屏幕左缘的问题，需重启 SystemUI 生效</string>
     <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">所选中内容没有可卸载的应用</string>
 </resources>

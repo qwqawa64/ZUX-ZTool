@@ -69,9 +69,9 @@ import com.qimian233.ztool.hook.modules.systemui.misc.ForceImmersiveMode
 import com.qimian233.ztool.hook.modules.systemui.misc.GuestModeController
 import com.qimian233.ztool.hook.modules.systemui.misc.NoChargeAnimation
 import com.qimian233.ztool.hook.modules.systemui.misc.NotificationCenterTransparency
-import com.qimian233.ztool.hook.modules.systemui.qs.AlwaysDisplayMediaTile
 import com.qimian233.ztool.hook.modules.systemui.qs.BrightnessSliderPercentageHook
 import com.qimian233.ztool.hook.modules.systemui.qs.ControlCenterNoTileLabelsHook
+import com.qimian233.ztool.hook.modules.systemui.qs.MediaOutputDialogCenterHook
 import com.qimian233.ztool.hook.modules.systemui.qs.CustomQsColor
 import com.qimian233.ztool.hook.modules.systemui.qs.CustomQsRoundCorner
 import com.qimian233.ztool.hook.modules.systemui.qs.QsPanelWidthHook
@@ -160,7 +160,7 @@ object HookManager {
         registerHookModule(SliderStyleHook())
         registerHookModule(CustomChargeAnimation())
         registerHookModule(DisableBiometricErrorVibration())
-        registerHookModule(AlwaysDisplayMediaTile())
+        registerHookModule(MediaOutputDialogCenterHook())
 
         // ── Desktop Live Wallpaper PoC (test_hook) ──
         registerHookModule(DesktopLiveWallpaperHook())

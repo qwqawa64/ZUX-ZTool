@@ -46,6 +46,17 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
+        <service
+            android:name=".service.MediaOutputTileService"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@drawable/ic_media_output_tile"
+            android:label="@string/tile_media_output_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         <receiver
             android:name=".dexindex.base.DexIndexReceiver"
             android:enabled="true"

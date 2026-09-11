@@ -143,6 +143,7 @@ fun ControlCenterSettingsRoute(
         onCustomSecondLabelActiveColorTextChanged = viewModel::setCustomSecondLabelActiveColorText,
         onCustomSecondLabelActiveColorEditingFinished = viewModel::finishCustomSecondLabelActiveColorEditing,
         onNoTileLabelsChanged = viewModel::setNoTileLabels,
+        onMediaOutputDialogCenterChanged = viewModel::setMediaOutputDialogCenter,
         onCustomQsColorSwitchChanged = viewModel::setCustomQsColorSwitch,
         onNotificationCenterBlurEnabledChanged = viewModel::setNotificationCenterBlurEnabled,
         onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent,
@@ -238,6 +239,7 @@ private fun ControlCenterSettingsScreen(
     onCustomSecondLabelActiveColorTextChanged: (String) -> Unit,
     onCustomSecondLabelActiveColorEditingFinished: () -> Unit,
     onNoTileLabelsChanged: (Boolean) -> Unit,
+    onMediaOutputDialogCenterChanged: (Boolean) -> Unit,
     onCustomQsColorSwitchChanged: (Boolean) -> Unit,
     onNotificationCenterBlurEnabledChanged: (Boolean) -> Unit,
     onNotificationCenterBlurPercentChanged: (Int) -> Unit,
@@ -313,6 +315,7 @@ private fun ControlCenterSettingsScreen(
                         onCustomSecondLabelActiveColorTextChanged = onCustomSecondLabelActiveColorTextChanged,
                         onCustomSecondLabelActiveColorEditingFinished = onCustomSecondLabelActiveColorEditingFinished,
                         onNoTileLabelsChanged = onNoTileLabelsChanged,
+                        onMediaOutputDialogCenterChanged = onMediaOutputDialogCenterChanged,
                         onCustomQsColorSwitchChanged = onCustomQsColorSwitchChanged,
                         onNotificationCenterBlurEnabledChanged = onNotificationCenterBlurEnabledChanged,
                         onNotificationCenterBlurPercentChanged = onNotificationCenterBlurPercentChanged,
@@ -361,6 +364,7 @@ private fun controlCenterSettingsSections(
     onCustomSecondLabelActiveColorTextChanged: (String) -> Unit,
     onCustomSecondLabelActiveColorEditingFinished: () -> Unit,
     onNoTileLabelsChanged: (Boolean) -> Unit,
+    onMediaOutputDialogCenterChanged: (Boolean) -> Unit,
     onCustomQsColorSwitchChanged: (Boolean) -> Unit,
     onNotificationCenterBlurEnabledChanged: (Boolean) -> Unit,
     onNotificationCenterBlurPercentChanged: (Int) -> Unit,
@@ -563,6 +567,14 @@ private fun controlCenterSettingsSections(
                             summary = stringResource(R.string.system_ui_control_center_no_tile_labels_summary),
                             checked = state.noTileLabels,
                             onCheckedChange = onNoTileLabelsChanged
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_media_output_dialog_center_title),
+                            summary = stringResource(R.string.system_ui_media_output_dialog_center_summary),
+                            checked = state.mediaOutputDialogCenter,
+                            onCheckedChange = onMediaOutputDialogCenterChanged
                         )
                     )
                 }

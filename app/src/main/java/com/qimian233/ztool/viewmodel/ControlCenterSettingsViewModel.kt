@@ -154,6 +154,11 @@ class ControlCenterSettingsViewModel(
         repository.saveNoTileLabels(enabled)
     }
 
+    fun setMediaOutputDialogCenter(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(mediaOutputDialogCenter = enabled)
+        repository.saveMediaOutputDialogCenter(enabled)
+    }
+
     fun setCustomQsActiveColorText(value: String) {
         _uiState.value = _uiState.value.copy(customQsActiveColorText = value.sanitizeArgbColorText())
     }
@@ -355,6 +360,7 @@ data class ControlCenterSettingsUiState(
     val customLabelColor: Boolean = false,
     val customSecondLabelColor: Boolean = false,
     val noTileLabels: Boolean = false,
+    val mediaOutputDialogCenter: Boolean = false,
     val customQsActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_QS_ACTIVE_COLOR,
     val customLabelActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_LABEL_ACTIVE_COLOR,
     val customSecondLabelActiveColor: Int = ControlCenterSettingsRepository.DEFAULT_SECOND_LABEL_ACTIVE_COLOR,

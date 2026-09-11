@@ -40,6 +40,7 @@ class ControlCenterSettingsRepository(
             customLabelColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_LABEL_COLOR, false),
             customSecondLabelColor = prefsUtils.loadBooleanSetting(KEY_CUSTOM_SECOND_LABEL_COLOR, false),
             noTileLabels = prefsUtils.loadBooleanSetting(KEY_NO_TILE_LABELS, false),
+            mediaOutputDialogCenter = prefsUtils.loadBooleanSetting(KEY_MEDIA_OUTPUT_DIALOG_CENTER, false),
             customQsActiveColor = prefsUtils.loadIntegerSetting(KEY_CUSTOM_QS_ACTIVE_COLOR_VAL, DEFAULT_QS_ACTIVE_COLOR),
             customLabelActiveColor = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL, DEFAULT_LABEL_ACTIVE_COLOR),
             customSecondLabelActiveColor = prefsUtils.loadIntegerSetting(
@@ -146,6 +147,10 @@ class ControlCenterSettingsRepository(
 
     fun saveNoTileLabels(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_NO_TILE_LABELS, enabled)
+    }
+
+    fun saveMediaOutputDialogCenter(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_MEDIA_OUTPUT_DIALOG_CENTER, enabled)
     }
 
     fun saveCustomQsActiveColor(color: Int) {
@@ -267,6 +272,7 @@ class ControlCenterSettingsRepository(
         private val KEY_CUSTOM_LABEL_COLOR = PreferenceKeys.CUSTOM_LABEL_COLOR.name
         private val KEY_CUSTOM_SECOND_LABEL_COLOR = PreferenceKeys.CUSTOM_SECOND_LABEL_COLOR.name
         private val KEY_NO_TILE_LABELS = PreferenceKeys.CONTROL_CENTER_NO_TILE_LABELS.name
+        private val KEY_MEDIA_OUTPUT_DIALOG_CENTER = PreferenceKeys.MEDIA_OUTPUT_DIALOG_CENTER.name
         private val KEY_CUSTOM_QS_ACTIVE_COLOR_VAL = PreferenceKeys.CUSTOM_QS_ACTIVE_COLOR_VAL.name
         private val KEY_CUSTOM_LABEL_ACTIVE_COLOR_VAL = PreferenceKeys.CUSTOM_LABEL_ACTIVE_COLOR_VAL.name
         private val KEY_CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL = PreferenceKeys.CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL.name

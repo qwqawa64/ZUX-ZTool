@@ -826,5 +826,8 @@
     <string name="ztool_batch_uninstall_dispatch_failed" tools:ignore="UnusedResources">Failed to open ZTool for uninstall</string>
     <!-- Read by the hook side (BatchUninstall) -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">Uninstall</string>
+    <string name="tile_media_output_label">Media output</string>
+    <string name="system_ui_media_output_dialog_center_title">Center media output dialog</string>
+    <string name="system_ui_media_output_dialog_center_summary">Fixes the output switcher dialog launched from the Media output tile sticking to the left edge of the screen. Requires a SystemUI restart</string>
     <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">No uninstallable apps in the selection</string>
 </resources>
