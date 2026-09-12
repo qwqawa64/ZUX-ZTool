@@ -109,14 +109,15 @@ def main():
         if not pkg:
             continue
         activities = []
-        fullscreen = []
         if p.get("supportFullSize") == "true":
-            fullscreen = ["*"]  # package-level; cannot name activities here
+            # Package-level flag with no activity names; the shipped config
+            # never uses wildcards in forceFullscreenPages, so leave empty.
+            pass
         entries[pkg] = OrderedDict([
             ("name", pkg),
             ("mainPage", ""),
             ("activityPairs", []),
-            ("forceFullscreenPages", fullscreen),
+            ("forceFullscreenPages", []),
             ("transActivities", []),
             ("leftTransActivities", []),
             ("showEmbeddingDivider", p.get("isShowDivider", "false")),
@@ -127,8 +128,8 @@ def main():
         ])
         status = "converted"
         note = []
-        if fullscreen:
-            note.append("supportFullSize mapped to package-level wildcard")
+        if p.get("supportFullSize") == "true":
+            note.append("supportFullSize dropped: no equivalent per-activity list")
         record(pkg, "embedded_rules_list.xml", status, "; ".join(note))
 
     # 2) autoui_list.xml -- activityRule -> activityPairs.
@@ -144,7 +145,6 @@ def main():
         known = {pair["from"] for pair in e["activityPairs"]}
         known |= {a for a in activities if a}
         # Replace wildcard placeholders from step 1 with real activities.
-        e["forceFullscreenPages"] = [a for a in e["forceFullscreenPages"] if a != "*"]
         e["activityPairs"] = [{"from": a, "to": "*"} for a in sorted(known)]
         if not e["mainPage"]:
             e["mainPage"] = guess_main_page(sorted(known))
@@ -164,8 +164,8 @@ def main():
             record(pkg, "embedded_setting_config.xml", "converted",
                    "duplicate of earlier source; skipped")
             continue
-            entries[pkg] = OrderedDict([("name", pkg), ("mainPage", ""),
-                                        ("activityPairs", [])], **DEFAULTS)
+        entries[pkg] = OrderedDict([("name", pkg), ("mainPage", ""),
+                                    ("activityPairs", [])], **DEFAULTS)
         record(pkg, "embedded_setting_config.xml", "lossy",
                "no activity names available; skeleton only")
 
