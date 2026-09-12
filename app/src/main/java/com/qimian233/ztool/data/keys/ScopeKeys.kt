@@ -29,5 +29,5 @@ object ScopeKeys {
     val WALLPAPER_SETTINGS = Scope("com.zui.wallpapersetting", HowToRestart.AmStop)
     val LAUNCHER = Scope("com.zui.launcher", HowToRestart.AmStop)
     val MOBILE_DESKTOP = Scope("com.motorola.mobiledesktop", HowToRestart.AmStop)
-    val ZUI_PERFORMANCE = Scope("com.zui.pp", HowToRestart.AmStop)
+    val ZUI_PERFORMANCE = Scope("com.zui.pp", HowToRestart.KillAll)
 }
