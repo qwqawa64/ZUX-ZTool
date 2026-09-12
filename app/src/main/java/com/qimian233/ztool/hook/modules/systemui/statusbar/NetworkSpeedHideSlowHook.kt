@@ -124,11 +124,11 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
     }
 
     /**
-     * 主线程周期监测:慢速状态翻转时,对所有存活的 NetworkSpeedView 调用其自身的
+     * 主线程周期监测:慢速状态翻转时,对所有存活的 NetworkSpeedView 调用一次其自身的
      * `updateNetworkSpeedViewStatus()`。该方法内部重新读取(已被伪装的)设置值并按
      * 原生逻辑 setVisibility / 增停刷新循环,本 Hook 不直接操作视图。
-     * 每个周期都重新调用而不是只在翻转时调用,因为原生隐藏路径会 removeMessages(10)
-     * 停掉刷新循环,只有本监测能持续重评估,网速恢复后才能重新显示。
+     * 隐藏路径会 removeMessages(10) 停掉刷新循环,靠本监测在恢复翻转时再次触发,
+     * 网速即可重新显示;监测之外的原生循环不受干扰,保证网速数值正常刷新。
      */
     private fun startWatcher() {
         mainHandler.postDelayed(object : Runnable {
@@ -141,20 +141,25 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
                             "NetworkSpeedView slow state -> " +
                                 if (slow) "slow (hide)" else "fast (show)"
                         )
-                    }
-                    val method = updateStatusMethod ?: return
-                    synchronized(viewRefs) {
-                        val it = viewRefs.iterator()
-                        while (it.hasNext()) {
-                            val view = it.next().get()
-                            if (view == null) {
-                                it.remove()
-                                continue
-                            }
-                            try {
-                                method.invoke(view)
-                            } catch (_: Throwable) {
-                                // 单个实例刷新失败不影响其它实例
+                        // 只在状态翻转时触发一次原生刷新。若每周期都调用,
+                        // updateNetworkSpeedViewStatus 会 removeMessages(10) 不断清掉
+                        // 原生 3 秒测量窗口并重置流量基线,导致网速恒显示 0.00K/s。
+                        val method = updateStatusMethod
+                        if (method != null) {
+                            synchronized(viewRefs) {
+                                val it = viewRefs.iterator()
+                                while (it.hasNext()) {
+                                    val view = it.next().get()
+                                    if (view == null) {
+                                        it.remove()
+                                        continue
+                                    }
+                                    try {
+                                        method.invoke(view)
+                                    } catch (_: Throwable) {
+                                        // 单个实例刷新失败不影响其它实例
+                                    }
+                                }
                             }
                         }
                     }
