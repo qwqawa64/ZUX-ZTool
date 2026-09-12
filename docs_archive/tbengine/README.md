@@ -110,9 +110,8 @@ Hook 拦截点为 `SwfABInstalling.doMyPrimaryJob()`（tbengine worker 线程，
 - 签名块固定 267B：`0a8802 128002 <256B RSA-2048 签名> 1d00010000`，metadata 与 payload 签名同构。
 - 哈希约定（实测）：`METADATA_HASH` = SHA256(**header+manifest**)（注意含 24B 头部）；
   `FILE_HASH` = SHA256(整个 payload.bin)；metadata 签名覆盖 header+manifest；
-  **payload 签名仅覆盖数据段**（metadata 前缀之后到尾部签名块之前——真机日志证实
-  engine 以 `metadata_size(含 metadata 签名) + signatures_offset` 定位尾部签名块，
-  且 payload 哈希从该前缀之后起算）。
+  **payload 签名覆盖 metadata 签名块 + 数据段**（从 24+manifest 之后到尾部签名块之前，
+  不含 header/manifest——干净环境实测数据段摘要不匹配后确认）。
 - 数据段原样保留 ⇒ manifest 与 signatures_offset/size 不变，重签只替换两个 256B 签名值，重签后 payload.bin 总长不变。
 
 ### 5.3 密钥与数据流

@@ -340,9 +340,10 @@ class SignTbEngineLocalOta : AppHookModule() {
                 }
 
                 // 3. 流式写出新 payload.bin：header + manifest + metadata签名 + 数据段 + payload签名
-                // payload 签名覆盖范围 = 仅数据段（从 metadata 前缀之后到尾部签名块之前），
-                // 由真机日志证实：engine 以 metadata_size(含 metadata 签名) + signatures_offset
-                // 定位尾部签名块，且只对数据段做哈希比对。
+                // payload 签名覆盖范围 = metadata 签名块 + 数据段（从 24+manifest 之后到尾部
+                // 签名块之前），不含 header/manifest——真机实验证实：干净环境下数据段摘要
+                // 不匹配，而 AOSP DeltaPerformer 的 payload_hash_calculator_ 从
+                // metadata_size(=24+manifest) 之后开始累计字节。
                 val payloadHashBeforeSig = MessageDigest.getInstance("SHA-256")
                 val crc32 = CRC32()
                 var written = 0L
@@ -350,6 +351,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                     out.write(newHeader); written += newHeader.size
                     out.write(newManifest); written += newManifest.size
                     out.write(newMetadataSig); written += newMetadataSig.size
+                    payloadHashBeforeSig.update(newMetadataSig)
                     crc32.update(newHeader)
                     crc32.update(newManifest)
                     crc32.update(newMetadataSig)
@@ -375,7 +377,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                     // 追加 payload 签名块
                     val payloadDigest = payloadHashBeforeSig.digest()
                     logger.info(
-                        "Signing payload digest (data section only): " +
+                        "Signing payload digest (metadata signature + data section): " +
                                 payloadDigest.joinToString("") { "%02x".format(it) }
                     )
                     val payloadSig = buildSigBlob(signDigest(privateKey, payloadDigest))
