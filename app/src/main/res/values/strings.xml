@@ -140,6 +140,9 @@
     <string name="tb_engine_cert_missing">签名证书尚未生成，请先开关任意设置后重试</string>
     <string name="tb_engine_cert_module_build_failed">证书模块打包失败：%1$s</string>
     <string name="tb_engine_cert_module_install_failed">证书模块安装失败：%1$s</string>
+    <string name="tb_engine_cert_module_required_title">需要安装证书信任模块</string>
+    <string name="tb_engine_cert_module_required_message">本地安装包重签依赖 OTA 证书信任模块：系统更新引擎只验证 otacerts.zip 中证书签名的包。是否现在生成并安装该模块？安装完成后需重启设备生效。</string>
+    <string name="tb_engine_cert_module_required_install">安装</string>
     <string name="page_features_app_list_permission_warning">无法读取已安装的应用，请检查是否已授权本应用读取应用列表，然后重启 APP 。</string>
     <string name="page_features_all_filtered_warning">全部应用包都被过滤！</string>
     <!--日志页资源值-->

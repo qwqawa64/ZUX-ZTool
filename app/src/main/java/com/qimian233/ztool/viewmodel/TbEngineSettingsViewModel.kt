@@ -67,8 +67,38 @@ class TbEngineSettingsViewModel(
     }
 
     fun setSignLocalOta(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(signLocalOta = enabled)
-        repository.saveSignLocalOta(enabled)
+        if (!enabled) {
+            _uiState.value = _uiState.value.copy(signLocalOta = false)
+            repository.saveSignLocalOta(false)
+            return
+        }
+        // 开启前强制检查证书信任模块；未安装则弹窗确认安装
+        viewModelScope.launch(Dispatchers.IO) {
+            val installed = repository.isOtaCertModuleInstalled()
+            withContext(Dispatchers.Main) {
+                if (installed) {
+                    _uiState.value = _uiState.value.copy(signLocalOta = true)
+                    repository.saveSignLocalOta(true)
+                } else {
+                    _uiState.value = _uiState.value.copy(showCertModuleDialog = true)
+                }
+            }
+        }
+    }
+
+    /** 用户在证书模块确认弹窗中选择"安装"：安装成功后自动开启重签开关。 */
+    fun confirmInstallCertModule() {
+        _uiState.value = _uiState.value.copy(showCertModuleDialog = false)
+        installOtaCertModule { error ->
+            if (error == null) {
+                _uiState.value = _uiState.value.copy(signLocalOta = true)
+                repository.saveSignLocalOta(true)
+            }
+        }
+    }
+
+    fun dismissCertModuleDialog() {
+        _uiState.value = _uiState.value.copy(showCertModuleDialog = false)
     }
 
     fun setCustomVersion(value: String) {
@@ -142,7 +172,8 @@ data class TbEngineSettingsUiState(
     val errorDialogMessage: String? = null,
     val showRestartDialog: Boolean = false,
     val isInstallingCertModule: Boolean = false,
-    val otaCertInstalled: Boolean = false
+    val otaCertInstalled: Boolean = false,
+    val showCertModuleDialog: Boolean = false
 )
 
 sealed interface TbEngineRestartResult {

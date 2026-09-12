@@ -145,6 +145,27 @@ fun TbEngineSettingsRoute(
             }
         )
     }
+
+    if (uiState.showCertModuleDialog) {
+        ZToolDialog(
+            onDismissRequest = viewModel::dismissCertModuleDialog,
+            title = { Text(stringResource(R.string.tb_engine_cert_module_required_title)) },
+            text = { Text(stringResource(R.string.tb_engine_cert_module_required_message)) },
+            confirmButton = {
+                ZToolTextButton(
+                    onClick = viewModel::confirmInstallCertModule,
+                    text = stringResource(R.string.tb_engine_cert_module_required_install)
+                )
+            },
+            dismissButton = {
+                ZToolTextButton(
+                    onClick = viewModel::dismissCertModuleDialog,
+                    text = stringResource(R.string.common_cancel),
+                    isPrimary = false
+                )
+            }
+        )
+    }
 }
 
 private class TbEngineSettingsViewModelFactory(

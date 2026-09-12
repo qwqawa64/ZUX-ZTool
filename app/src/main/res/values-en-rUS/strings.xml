@@ -129,6 +129,9 @@
     <string name="tb_engine_cert_missing">Signing certificate not generated yet; toggle any setting first and retry</string>
     <string name="tb_engine_cert_module_build_failed">Failed to build certificate module: %1$s</string>
     <string name="tb_engine_cert_module_install_failed">Failed to install certificate module: %1$s</string>
+    <string name="tb_engine_cert_module_required_title">Certificate trust module required</string>
+    <string name="tb_engine_cert_module_required_message">Local OTA re-signing depends on the OTA certificate trust module: the update engine only accepts packages signed by a certificate in otacerts.zip. Install it now? A reboot is required afterwards for it to take effect.</string>
+    <string name="tb_engine_cert_module_required_install">Install</string>
     <string name="page_features_app_list_permission_warning">Unable to get all installed APPs. Please, check the permission of querying APP list and restart ZTool to fix this problem.</string>
     <string name="page_features_all_filtered_warning">All applications are filtered!</string>
     <string name="page_home_config_upgraded_tip_message">The current version changed the configuration file format.\nRestart the system to keep configuration reading and writing working correctly.</string>

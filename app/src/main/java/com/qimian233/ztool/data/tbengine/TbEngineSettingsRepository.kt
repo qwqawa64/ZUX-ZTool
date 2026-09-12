@@ -99,6 +99,16 @@ class TbEngineSettingsRepository(
         prefsUtils.loadStringSetting(KEY_OTA_CERT, "").isNotEmpty()
 
     /**
+     * 检查 OTA 证书信任模块是否已安装（Magisk/KSU 模块目录存在且含 module.prop）。
+     */
+    fun isOtaCertModuleInstalled(): Boolean {
+        val result = shellExecutor.executeRootCommand(
+            "test -f /data/adb/modules/$MODULE_ID/module.prop && echo present", 10
+        )
+        return result.isSuccess && result.output.contains("present")
+    }
+
+    /**
      * 生成并安装 OTA 证书信任模块：
      * 1. root 读取设备原 /system/etc/security/otacerts.zip；
      * 2. 追加 ZTool 自签证书（保留 OEM 证书，叠加信任）；
@@ -345,6 +355,7 @@ class TbEngineSettingsRepository(
     companion object {
         private const val TAG = "TbEngineSettings"
         private const val ZTOOL_CERT_ENTRY_NAME = "ztool_ota.x509.pem"
+        const val MODULE_ID = "ztool_ota_cert"
         private val KEY_CUSTOM_OTA_PARAMETERS = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
         private val KEY_OTA_PRIVATE_KEY = PreferenceKeys.TB_ENGINE_OTA_PRIVATE_KEY.name
         private val KEY_OTA_PUBLIC_KEY = PreferenceKeys.TB_ENGINE_OTA_PUBLIC_KEY.name
