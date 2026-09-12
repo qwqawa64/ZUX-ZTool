@@ -36,6 +36,10 @@ import com.qimian233.ztool.hook.modules.packageinstaller.SkipInstallWarnPage
 import com.qimian233.ztool.hook.modules.safecenter.DisableAllVirusScans
 import com.qimian233.ztool.hook.modules.safecenter.EnableAutorunByDefault
 import com.qimian233.ztool.hook.modules.setting.AllowDisplayDolbyHook
+import com.qimian233.ztool.hook.modules.tbengine.DisableTbEngineAppUpdate
+import com.qimian233.ztool.hook.modules.tbengine.DisableTbEngineAutoDownload
+import com.qimian233.ztool.hook.modules.tbengine.DisableTbEngineAutoInstall
+import com.qimian233.ztool.hook.modules.tbengine.DisableTbEnginePush
 import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook
 import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo
 import com.qimian233.ztool.hook.modules.setting.HideOtaUpdateHint
@@ -232,6 +236,12 @@ object HookManager {
         registerHookModule(AutoAcceptFileTransferHook())
         registerHookModule(BypassShareWarningHook())
         registerHookModule(DisableNearbyShareAutoOffHook())
+
+        // ── TB Engine (target: com.lenovo.tbengine, UDS 实时连接引擎) ──
+        registerHookModule(DisableTbEngineAutoDownload())
+        registerHookModule(DisableTbEngineAutoInstall())
+        registerHookModule(DisableTbEngineAppUpdate())
+        registerHookModule(DisableTbEnginePush())
 
         // 注入 XposedInterface
         for (module in hookModules) {

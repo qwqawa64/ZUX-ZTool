@@ -119,6 +119,19 @@
     <string name="system_framework_app_description">配置屏幕方向、安全策略及AI全局输入设置</string>
     <string name="safe_center_app_name">安全中心</string>
     <string name="safe_center_app_description">存储选择，安全扫描设置，app自启</string>
+    <string name="tb_engine_app_name">UDS 实时连接引擎</string>
+    <string name="tb_engine_app_description">更新引擎自动下载、自动安装、预装应用更新与推送设置</string>
+    <string name="tb_engine_setting_title">更新引擎行为</string>
+    <string name="tb_engine_disable_auto_download_title">禁用固件自动下载</string>
+    <string name="tb_engine_disable_auto_download_summary">阻止引擎在发现新版本后自动下载固件包，不影响手动下载</string>
+    <string name="tb_engine_disable_auto_install_title">禁用自动安装</string>
+    <string name="tb_engine_disable_auto_install_summary">阻止 A/B 无缝后台安装与重启进 Recovery 安装（开启后手动确认的重启安装也会被拦截）</string>
+    <string name="tb_engine_disable_app_update_title">禁用预装应用自动更新</string>
+    <string name="tb_engine_disable_app_update_summary">阻止引擎自动下载并安装预装应用与数据包更新，不影响用户手动确认</string>
+    <string name="tb_engine_disable_push_title">禁用 UPS 推送</string>
+    <string name="tb_engine_disable_push_summary">阻止引擎向联想推送服务注册设备和接收更新推送</string>
+    <string name="tb_engine_notice_title">生效说明</string>
+    <string name="tb_engine_notice_summary">以上开关修改后需重启 com.lenovo.tbengine 引擎进程生效（persistent 应用被停止后系统会自动重新拉起）。请先在 LSPosed 中为 ZTool 勾选 com.lenovo.tbengine 作用域。开关仅在自动路径生效，用户手动触发的更新操作不会被拦截（禁用自动安装除外）。</string>
     <string name="page_features_app_list_permission_warning">无法读取已安装的应用，请检查是否已授权本应用读取应用列表，然后重启 APP 。</string>
     <string name="page_features_all_filtered_warning">全部应用包都被过滤！</string>
     <!--日志页资源值-->

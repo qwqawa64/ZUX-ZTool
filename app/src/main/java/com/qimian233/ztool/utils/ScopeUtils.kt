@@ -56,6 +56,7 @@ object ScopeUtils {
             FeatureDestination.MobileDesktop -> listOf(
                 ScopeKeys.MOBILE_DESKTOP,
             )
+            FeatureDestination.TbEngine -> listOf(ScopeKeys.TB_ENGINE)
         }
     }
 

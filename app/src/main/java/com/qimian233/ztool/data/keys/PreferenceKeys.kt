@@ -156,6 +156,12 @@ object PreferenceKeys {
     val BLOCK_OTA_INSTALL_DIALOG = BoolKey("block_ota_install_dialog", false)
     val HIDE_OTA_NOTIFICATIONS = BoolKey("hide_ota_notifications", false)
 
+    // ── TB Engine (UDS 实时连接引擎 com.lenovo.tbengine) ──
+    val DISABLE_TB_ENGINE_AUTO_DOWNLOAD = BoolKey("disable_tbengine_auto_download", false)
+    val DISABLE_TB_ENGINE_AUTO_INSTALL = BoolKey("disable_tbengine_auto_install", false)
+    val DISABLE_TB_ENGINE_APP_UPDATE = BoolKey("disable_tbengine_app_update", false)
+    val DISABLE_TB_ENGINE_PUSH = BoolKey("disable_tbengine_push", false)
+
     // ── Wallpaper ──
     val CHARGE_ANIMATION_FIX = BoolKey("charge_animation_fix", false)
     val DESKTOP_LIVE_WALLPAPER = BoolKey("desktop_live_wallpaper", false)
@@ -284,6 +290,8 @@ object PreferenceKeys {
         MISTAKE_TOUCH_WHITE_LIST,
         DISABLE_OTA_CHECK, CUSTOM_OTA_PARAMETERS, NO_AUTO_OTA_INSTALL,
         BLOCK_OTA_INSTALL_DIALOG, HIDE_OTA_NOTIFICATIONS,
+        DISABLE_TB_ENGINE_AUTO_DOWNLOAD, DISABLE_TB_ENGINE_AUTO_INSTALL,
+        DISABLE_TB_ENGINE_APP_UPDATE, DISABLE_TB_ENGINE_PUSH,
         CHARGE_ANIMATION_FIX, DOCUMENTS_UI_BYPASS,
         DESKTOP_LIVE_WALLPAPER,
         DISABLE_ALL_VIRUS_SCANS, DEFAULT_ENABLE_AUTORUN,
