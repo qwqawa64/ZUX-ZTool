@@ -128,8 +128,6 @@
     <string name="zui_pp_block_power_policy_summary">阻止性能服务从云端拉取并应用省电策略（PolicySyncCmp），仅保留设备内置策略</string>
     <string name="zui_pp_block_game_policy_title">屏蔽游戏策略 OTA 下发</string>
     <string name="zui_pp_block_game_policy_summary">阻止性能服务接收 UDS 引擎推送的游戏/性能策略包（gamepolicy.zip），保留系统内置策略</string>
-    <string name="zui_pp_hint_title">说明</string>
-    <string name="zui_pp_hint_content">以上开关需要将 ZUI 性能服务（com.zui.pp）加入 LSPosed 作用域；修改后点击右下角按钮重启目标应用生效。屏蔽策略可能影响温控与游戏场景的云端调优。</string>
     <string name="tb_engine_setting_title">更新引擎行为</string>
     <string name="tb_engine_disable_auto_download_title">禁用固件自动下载</string>
     <string name="tb_engine_disable_auto_download_summary">阻止引擎在发现新版本后自动下载固件包，不影响手动下载</string>

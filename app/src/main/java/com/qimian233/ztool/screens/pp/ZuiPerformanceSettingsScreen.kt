@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -199,23 +198,6 @@ private fun zuiPerformanceSettingsSections(
                     summary = stringResource(R.string.zui_pp_block_game_policy_summary),
                     checked = state.blockGamePolicyUpdate,
                     onCheckedChange = onBlockGamePolicyUpdateChanged
-                )
-            )
-        ),
-        SettingSection(
-            title = stringResource(R.string.zui_pp_hint_title),
-            items = listOf(
-                SettingItem.Custom(
-                    content = {
-                        androidx.compose.material3.Text(
-                            text = stringResource(R.string.zui_pp_hint_content),
-                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                    }
                 )
             )
         )
