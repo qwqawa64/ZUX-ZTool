@@ -491,13 +491,12 @@
     <string name="system_ui_lock_screen_yi_yan_tile">锁屏一言</string>
     <string name="system_ui_lock_screen_yi_yan_switch_title">随机锁屏签名</string>
     <string name="system_ui_lock_screen_yi_yan_summary">在锁屏页面显示从网络获取的随机文本，设置后请重启系统</string>
-        <string name="system_ui_animation_charge_anim_title">充电动画</string>
     <string name="system_ui_animation_charge_anim_duration_title">自定义充电动画时长</string>
     <string name="system_ui_animation_charge_anim_duration_summary">修改锁屏充电动画的播放时长，需重启系统界面生效</string>
     <string name="system_ui_animation_charge_anim_duration_slider_title">动画时长</string>
     <string name="system_ui_animation_charge_anim_duration_slider_summary">控制充电动画超时结束的时间</string>
     <string name="system_ui_animation_charge_anim_duration_value">%.1f 秒</string>
-<string name="system_ui_lock_screen_charge_watts_title">显示充电功率</string>
+    <string name="system_ui_lock_screen_charge_watts_title">显示充电功率</string>
     <string name="system_ui_lock_screen_charge_watts_enable_title">充电功率显示类型</string>
     <string name="system_ui_lock_screen_charge_watts_summary">充电时在锁屏及AOD界面显示当前握手协议功率或实际瓦数，使用实际瓦数请授予 “系统界面” Root权限</string>
     <string name="system_ui_lock_screen_root_permission_required_message">要使用实际充电功率功能，请在Root管理器中为“系统界面”授予Root权限！</string>
@@ -751,7 +750,6 @@
     <string name="launcher_clean_search">净化全局搜索</string>
     <string name="launcher_remove_search_recommend">移除搜索栏的搜索推荐</string>
     <string name="launcher_remove_hot_word_view">移除热门搜索卡片</string>
-    <string name="launcher_recent_task">最近任务</string>
     <string name="launcher_show_ram_info">显示内存信息</string>
     <string name="launcher_show_ram_info_summary">内存信息不能完全反映设备真实安装的物理内存量</string>
     <string name="system_update_hide_ota_update_hint">隐藏设置内的新版本提示红点</string>
