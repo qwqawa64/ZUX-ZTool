@@ -283,6 +283,9 @@ class SignTbEngineLocalOta : AppHookModule() {
                     payloadHashBeforeSig.update(header)
                     payloadHashBeforeSig.update(manifest)
                     payloadHashBeforeSig.update(newMetadataSig)
+                    crc32.update(header)
+                    crc32.update(manifest)
+                    crc32.update(newMetadataSig)
 
                     // 数据段：从 metaSize 起复制 dataLength 字节，跳过原 payload 签名块
                     var skipped = 0L
