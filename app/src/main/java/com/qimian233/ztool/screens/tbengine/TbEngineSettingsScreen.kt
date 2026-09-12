@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -14,7 +13,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -234,23 +232,6 @@ private fun tbEngineSettingsSections(
                     summary = stringResource(R.string.tb_engine_disable_push_summary),
                     checked = state.disablePush,
                     onCheckedChange = onDisablePushChanged
-                )
-            )
-        ),
-        SettingSection(
-            title = stringResource(R.string.tb_engine_notice_title),
-            items = listOf(
-                SettingItem.Custom(
-                    content = {
-                        Text(
-                            text = stringResource(R.string.tb_engine_notice_summary),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 16.dp)
-                        )
-                    }
                 )
             )
         )
