@@ -280,6 +280,16 @@ class SignTbEngineLocalOta : AppHookModule() {
                                 "(anti-rollback clamp)"
                     )
                     newManifest = rewriteManifestField(manifest, FIELD_MAX_TIMESTAMP, futureTimestamp)
+                }
+                // 2a-2. 逐分区版本钳制：联想 hardware_android.cc 比较
+                // PartitionUpdate.new_partition_version（构建时间戳字符串）与设备当前分区版本，
+                // 第三方旧包同样会被 kPayloadTimestampError(51) 拒绝。
+                val clampedManifest = clampPartitionVersions(newManifest, futureTimestamp)
+                if (!clampedManifest.contentEquals(newManifest)) {
+                    logger.info("Partition version timestamps clamped to $futureTimestamp")
+                    newManifest = clampedManifest
+                }
+                if (!newManifest.contentEquals(manifest)) {
                     // header 内的 manifest_size 需同步补写
                     newHeader = header.copyOf().also {
                         putBeLong(it, 12, newManifest.size.toLong())
@@ -618,6 +628,105 @@ class SignTbEngineLocalOta : AppHookModule() {
         for (i in 0 until 8) {
             buf[offset + i] = (value ushr ((7 - i) * 8)).toByte()
         }
+    }
+
+    /**
+     * 钳制各 PartitionUpdate 子消息内的时间戳版本字符串。
+     * 版本字段由第三方打包工具写入（字段号随打包器版本浮动），因此按内容识别：
+     * 分区子消息顶层中 9-11 位纯数字字符串且数值小于 [futureTimestamp] 的字段，
+     * 统一改写为 futureTimestamp 的十进制字符串。操作数等二进制字段不受影响。
+     */
+    private fun clampPartitionVersions(manifest: ByteArray, futureTimestamp: Long): ByteArray {
+        val out = ByteArrayOutputStream(manifest.size + 64)
+        var i = 0
+        while (i < manifest.size) {
+            val keyStart = i
+            val (key, afterKey) = readVarint(manifest, i)
+            val fieldNum = key ushr 3
+            val wireType = (key and 0x7).toInt()
+            i = afterKey
+            when (wireType) {
+                0 -> {
+                    val (_, afterValue) = readVarint(manifest, i)
+                    out.write(manifest, keyStart, afterValue - keyStart)
+                    i = afterValue
+                }
+                2 -> {
+                    val (len, afterLen) = readVarint(manifest, i)
+                    val end = afterLen + len.toInt()
+                    val content = manifest.copyOfRange(afterLen, end)
+                    val rewritten = if (fieldNum == 13L) {
+                        clampTimestampStrings(content, futureTimestamp)
+                    } else {
+                        content
+                    }
+                    out.write(manifest, keyStart, afterLen - keyStart)
+                    out.write(encodeVarint(rewritten.size.toLong()))
+                    out.write(rewritten)
+                    i = end
+                }
+                5 -> {
+                    out.write(manifest, keyStart, i + 4 - keyStart)
+                    i += 4
+                }
+                1 -> {
+                    out.write(manifest, keyStart, i + 8 - keyStart)
+                    i += 8
+                }
+                else -> {
+                    logger.error("Unexpected wire type $wireType during partition clamp")
+                    return manifest
+                }
+            }
+        }
+        return out.toByteArray()
+    }
+
+    /** 在一段 protobuf 消息内把形如时间戳的纯数字字符串字段钳制为 futureTimestamp。 */
+    private fun clampTimestampStrings(message: ByteArray, futureTimestamp: Long): ByteArray {
+        val out = ByteArrayOutputStream(message.size + 16)
+        var i = 0
+        var changed = false
+        while (i < message.size) {
+            val keyStart = i
+            val (key, afterKey) = readVarint(message, i)
+            val wireType = (key and 0x7).toInt()
+            i = afterKey
+            when (wireType) {
+                0 -> {
+                    val (_, afterValue) = readVarint(message, i)
+                    out.write(message, keyStart, afterValue - keyStart)
+                    i = afterValue
+                }
+                2 -> {
+                    val (len, afterLen) = readVarint(message, i)
+                    val end = afterLen + len.toInt()
+                    val content = message.copyOfRange(afterLen, end)
+                    val asText = content.toString(Charsets.US_ASCII)
+                    val numeric = asText.length in 9..11 && asText.all { it.isDigit() }
+                    if (numeric && asText.toLong() < futureTimestamp) {
+                        val newText = futureTimestamp.toString().toByteArray(Charsets.US_ASCII)
+                        out.write(message, keyStart, afterLen - keyStart)
+                        out.write(encodeVarint(newText.size.toLong()))
+                        out.write(newText)
+                        changed = true
+                    } else {
+                        out.write(message, keyStart, end - keyStart)
+                    }
+                    i = end
+                }
+                5 -> {
+                    out.write(message, keyStart, i + 4 - keyStart)
+                    i += 4
+                }
+                1 -> {
+                    out.write(message, keyStart, i + 8 - keyStart)
+                    i += 8
+                }
+                else -> return message
+            }
+        }
+        return if (changed) out.toByteArray() else message
     }
 
     private fun readFully(input: InputStream, count: Int): ByteArray {
