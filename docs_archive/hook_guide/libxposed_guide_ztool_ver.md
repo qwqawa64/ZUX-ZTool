@@ -122,7 +122,7 @@ hookWithId(method1, "id1", SAM) // 和已有 ID 重复，框架将不知道如�
 Chain 函数式接口用于编写 Hook 流程，这是 libxposed 和 Rovo89 Xposed 最大的区别。本项目使用的 hookWithId 又导致
 
 ### 替换 beforeHookedMethod, afterHookedMethod 以及 replaceHookedMethod
-我们使用的 Chain SAM 有些许区别。下面的示例直接写 Chain SAM, 也就是你需要填入 hookWithId() 的最后一个参数：
+我们使用的 Chain SAM 有些许区别。下面的示例直接写 Chain SAM, 也就是你需要填入 hookWithId() 的最后一个参数，当然也可以用 DSL 风格写法，将最后一个参数放在圆括号外面：
 ```kotlin
 // replace beforeHookedMethod:
 { chain -> 
@@ -205,6 +205,23 @@ Chain 函数式接口用于编写 Hook 流程，这是 libxposed 和 Rovo89 Xpos
 > 参数：thisObject — 新 this 指针；args — 新参数
 > 返回：下一个拦截器或原始可执行文件的结果（void 返回 null）
 > 抛出：Throwable — 如果任何拦截器或原始可执行文件抛出异常`
+
+### 关于 Chain SAM 的约定
+1. 尽可能不要将 Chain 内的拦截逻辑写进外部函数，尤其是逻辑小于 100 行的简单业务。例如下面这样是不推荐的：
+  ```kotlin
+  override fun handleLoadPackage(param: PackageLoadedParam) {
+    // locate the method instance as myMethod...
+    hookWithId(myMethod, "hook1") { chain ->
+      myImplementation()
+    }
+  }
+  
+  private fun myImplementation() {
+    return null // 逻辑极度简单，不应该拆成独立方法
+  }
+  ```
+2. 在 hoodWithId 的 Chain SAM 中，Chain 参数不需要签名
+3. 如果你需要将 Chain 拆进独立方法，显然需要提供方法参数签名：`chain: XposedInterface.Chain`
 
 ## 日志系统
 参见 [migrate_and_use_new_logging_system.md](../new_log_system/migrate_and_use_new_logging_system.md) 了解日志系统用法和等级划分。
