@@ -3,7 +3,9 @@ package com.qimian233.ztool.screens.tbengine
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -13,6 +15,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,11 +34,13 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.tbengine.TbEngineSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.viewmodel.TbEngineSettingsUiState
 import com.qimian233.ztool.viewmodel.TbEngineSettingsViewModel
@@ -57,9 +62,10 @@ fun TbEngineSettingsRoute(
             )
         )[TbEngineSettingsViewModel::class.java]
     }
+    val unknownText = stringResource(R.string.common_unknown)
 
     LaunchedEffect(viewModel) {
-        viewModel.loadSettings()
+        viewModel.initialize(unknownText)
     }
 
     val uiState by viewModel.uiState.collectAsState()
@@ -72,6 +78,8 @@ fun TbEngineSettingsRoute(
         onDisableAutoInstallChanged = viewModel::setDisableAutoInstall,
         onDisableAppUpdateChanged = viewModel::setDisableAppUpdate,
         onDisablePushChanged = viewModel::setDisablePush,
+        onCustomVersionChanged = viewModel::setCustomVersion,
+        onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
         onRestartScope = viewModel::showRestartDialog
     )
 
@@ -148,6 +156,8 @@ private fun TbEngineSettingsScreen(
     onDisableAutoInstallChanged: (Boolean) -> Unit,
     onDisableAppUpdateChanged: (Boolean) -> Unit,
     onDisablePushChanged: (Boolean) -> Unit,
+    onCustomVersionChanged: (String) -> Unit,
+    onCustomDeviceIdChanged: (String) -> Unit,
     onRestartScope: () -> Unit
 ) {
     ZToolScaffold(
@@ -188,7 +198,9 @@ private fun TbEngineSettingsScreen(
                         onDisableAutoDownloadChanged = onDisableAutoDownloadChanged,
                         onDisableAutoInstallChanged = onDisableAutoInstallChanged,
                         onDisableAppUpdateChanged = onDisableAppUpdateChanged,
-                        onDisablePushChanged = onDisablePushChanged
+                        onDisablePushChanged = onDisablePushChanged,
+                        onCustomVersionChanged = onCustomVersionChanged,
+                        onCustomDeviceIdChanged = onCustomDeviceIdChanged
                     ),
                     bottomPadding = 88.dp
                 )
@@ -203,7 +215,9 @@ private fun tbEngineSettingsSections(
     onDisableAutoDownloadChanged: (Boolean) -> Unit,
     onDisableAutoInstallChanged: (Boolean) -> Unit,
     onDisableAppUpdateChanged: (Boolean) -> Unit,
-    onDisablePushChanged: (Boolean) -> Unit
+    onDisablePushChanged: (Boolean) -> Unit,
+    onCustomVersionChanged: (String) -> Unit,
+    onCustomDeviceIdChanged: (String) -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -234,6 +248,63 @@ private fun tbEngineSettingsSections(
                     onCheckedChange = onDisablePushChanged
                 )
             )
+        ),
+        SettingSection(
+            title = stringResource(R.string.system_update_custom_params_title),
+            items = listOf(
+                SettingItem.Custom(
+                    content = {
+                        TbEngineCustomParamsContent(
+                            state = state,
+                            onCustomVersionChanged = onCustomVersionChanged,
+                            onCustomDeviceIdChanged = onCustomDeviceIdChanged
+                        )
+                    }
+                )
+            )
         )
     )
+}
+
+@Composable
+private fun TbEngineCustomParamsContent(
+    state: TbEngineSettingsUiState,
+    onCustomVersionChanged: (String) -> Unit,
+    onCustomDeviceIdChanged: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.system_update_custom_params_desc),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        ZToolTextInputRow(
+            value = state.customVersion,
+            onValueChange = onCustomVersionChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            label = stringResource(R.string.system_update_current_version_fmt, state.currentVersion),
+            singleLine = true,
+            horizontalPadding = 0.dp
+        )
+        ZToolTextInputRow(
+            value = state.customDeviceId,
+            onValueChange = onCustomDeviceIdChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            label = stringResource(R.string.system_update_current_sn_fmt, state.currentSn),
+            singleLine = true,
+            horizontalPadding = 0.dp
+        )
+    }
 }

@@ -108,8 +108,6 @@ fun OtaSettingsRoute(
         onFetchFirmware = {
             viewModel.fetchFirmware(snDefaultHint)
         },
-        onCustomVersionChanged = viewModel::setCustomVersion,
-        onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
         onCopyDownloadLink = {
             copyToClipboard(it)
             Toast.makeText(context, R.string.system_update_download_link_copied, Toast.LENGTH_SHORT).show()
@@ -172,8 +170,6 @@ private fun OtaSettingsScreen(
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
-    onCustomVersionChanged: (String) -> Unit,
-    onCustomDeviceIdChanged: (String) -> Unit,
     onCopyDownloadLink: (String) -> Unit,
     onCopyChangelog: (String) -> Unit,
     onCopyPassword: (String) -> Unit,
@@ -219,8 +215,6 @@ private fun OtaSettingsScreen(
                         onFetchOtaInfo = onFetchOtaInfo,
                         onFirmwareSnChanged = onFirmwareSnChanged,
                         onFetchFirmware = onFetchFirmware,
-                        onCustomVersionChanged = onCustomVersionChanged,
-                        onCustomDeviceIdChanged = onCustomDeviceIdChanged,
                         onCopyDownloadLink = onCopyDownloadLink,
                         onCopyChangelog = onCopyChangelog,
                         onCopyPassword = onCopyPassword,
@@ -246,8 +240,6 @@ private fun otaSettingsSections(
     onFetchOtaInfo: () -> Unit,
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit,
-    onCustomVersionChanged: (String) -> Unit,
-    onCustomDeviceIdChanged: (String) -> Unit,
     onCopyDownloadLink: (String) -> Unit,
     onCopyChangelog: (String) -> Unit,
     onCopyPassword: (String) -> Unit
@@ -282,20 +274,6 @@ private fun otaSettingsSections(
                     summary = stringResource(R.string.system_update_disable_ota_notification_and_red_dot_summary),
                     checked = state.disableOtaNotificationAndRedDot,
                     onCheckedChange = onDisableOtaNotificationAndRedDot
-                )
-            )
-        ),
-        SettingSection(
-            title = stringResource(R.string.system_update_custom_params_title),
-            items = listOf(
-                SettingItem.Custom(
-                    content = {
-                        OtaCustomParamsContent(
-                            state = state,
-                            onCustomVersionChanged = onCustomVersionChanged,
-                            onCustomDeviceIdChanged = onCustomDeviceIdChanged
-                        )
-                    }
                 )
             )
         ),
@@ -562,49 +540,6 @@ private fun FirmwareContent(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun OtaCustomParamsContent(
-    state: OtaSettingsUiState,
-    onCustomVersionChanged: (String) -> Unit,
-    onCustomDeviceIdChanged: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.system_update_custom_params_desc),
-                style = MaterialTheme.typography.titleMedium,
-                color = LocalZToolColorScheme.current.onSurface
-            )
-        }
-        ZToolTextInputRow(
-            value = state.customVersion,
-            onValueChange = onCustomVersionChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            label = stringResource(R.string.system_update_current_version_fmt, state.currentVersion),
-            singleLine = true,
-            horizontalPadding = 0.dp
-        )
-        ZToolTextInputRow(
-            value = state.customDeviceId,
-            onValueChange = onCustomDeviceIdChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            label = stringResource(R.string.system_update_current_sn_fmt, state.currentSn),
-            singleLine = true,
-            horizontalPadding = 0.dp
-        )
     }
 }
 

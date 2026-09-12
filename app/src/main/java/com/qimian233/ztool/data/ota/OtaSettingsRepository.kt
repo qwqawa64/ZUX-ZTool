@@ -33,10 +33,6 @@ class OtaSettingsRepository(
 ) {
     private val prefsUtils = ModulePreferencesUtils(context)
 
-    fun ensureCustomOtaParametersEnabled() {
-        prefsUtils.saveBooleanSetting(KEY_CUSTOM_OTA_PARAMETERS, true)
-    }
-
     fun loadState(): OtaSettingsUiState {
         return OtaSettingsUiState(
             disableOtaCheck = prefsUtils.loadBooleanSetting(KEY_DISABLE_OTA_CHECK, false),
@@ -44,8 +40,6 @@ class OtaSettingsRepository(
             noAutoOtaInstall = prefsUtils.loadBooleanSetting(KEY_DISABLE_NIGHT_AUTO_INSTALL, false),
             blockOtaInstallDialog = prefsUtils.loadBooleanSetting(KEY_BLOCK_OTA_INSTALL_DIALOG, false),
             disableOtaNotificationAndRedDot = prefsUtils.loadBooleanSetting(KEY_BLOCK_OTA_NOTIFICATION_AND_RED_DOT, false),
-            customVersion = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_VERSION, ""),
-            customDeviceId = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_DEVICE_ID, ""),
             currentVersion = context.getString(R.string.system_update_loading_ellipsis),
             currentSn = context.getString(R.string.system_update_loading_ellipsis)
         )
@@ -53,14 +47,6 @@ class OtaSettingsRepository(
 
     fun saveDisableOtaCheck(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISABLE_OTA_CHECK, enabled)
-    }
-
-    fun saveCustomVersion(value: String) {
-        prefsUtils.saveStringSetting(KEY_CUSTOM_OTA_TARGET_VERSION, value)
-    }
-
-    fun saveCustomDeviceId(value: String) {
-        prefsUtils.saveStringSetting(KEY_CUSTOM_OTA_TARGET_DEVICE_ID, value)
     }
 
     fun saveHideOtaUpdateHint(enabled: Boolean) {
@@ -271,10 +257,7 @@ class OtaSettingsRepository(
         private const val OTA_INFO_FILE_PATH =
             "/data_mirror/data_ce/null/0/com.lenovo.tbengine/shared_prefs/lenovo_row_ota_package_info.xml"
 
-        private val KEY_CUSTOM_OTA_PARAMETERS = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
         private val KEY_DISABLE_OTA_CHECK = PreferenceKeys.DISABLE_OTA_CHECK.name
-        private val KEY_CUSTOM_OTA_TARGET_VERSION = PreferenceKeys.CUSTOM_OTA_TARGET_VERSION_NAME.name
-        private val KEY_CUSTOM_OTA_TARGET_DEVICE_ID = PreferenceKeys.CUSTOM_OTA_TARGET_DEVICE_ID.name
         private val KEY_HIDE_OTA_UPDATE_HINT = PreferenceKeys.HIDE_OTA_UPDATE_HINT.name
         private val KEY_DISABLE_NIGHT_AUTO_INSTALL = PreferenceKeys.NO_AUTO_OTA_INSTALL.name
         private val KEY_BLOCK_OTA_INSTALL_DIALOG = PreferenceKeys.BLOCK_OTA_INSTALL_DIALOG.name

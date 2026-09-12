@@ -20,7 +20,6 @@ class OtaSettingsViewModel(
     val uiState: StateFlow<OtaSettingsUiState> = _uiState.asStateFlow()
 
     fun initialize(unknownText: String) {
-        repository.ensureCustomOtaParametersEnabled()
         loadSettings()
         loadCurrentDeviceInfo(unknownText)
     }
@@ -64,16 +63,6 @@ class OtaSettingsViewModel(
 
     fun setFirmwareSnInput(value: String) {
         _uiState.value = _uiState.value.copy(firmwareSnInput = value)
-    }
-
-    fun setCustomVersion(value: String) {
-        _uiState.value = _uiState.value.copy(customVersion = value)
-        repository.saveCustomVersion(value)
-    }
-
-    fun setCustomDeviceId(value: String) {
-        _uiState.value = _uiState.value.copy(customDeviceId = value)
-        repository.saveCustomDeviceId(value)
     }
 
     fun setHideOtaUpdate(enabled: Boolean) {
@@ -191,8 +180,6 @@ data class FirmwareResult(
 
 data class OtaSettingsUiState(
     val disableOtaCheck: Boolean = false,
-    val customVersion: String = "",
-    val customDeviceId: String = "",
     val currentVersion: String = "",
     val currentSn: String = "",
     val firmwareSnInput: String = "",

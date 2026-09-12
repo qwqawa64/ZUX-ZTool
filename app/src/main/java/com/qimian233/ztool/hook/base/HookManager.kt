@@ -25,7 +25,7 @@ import com.qimian233.ztool.hook.modules.mobiledesktop.DisableNearbyShareAutoOffH
 import com.qimian233.ztool.hook.modules.ota.BlockOtaInstallDialog
 import com.qimian233.ztool.hook.modules.ota.DisableOtaCheck
 import com.qimian233.ztool.hook.modules.ota.HideOtaNotifications
-import com.qimian233.ztool.hook.modules.ota.LenovoOTAHook
+import com.qimian233.ztool.hook.modules.tbengine.LenovoOTAHook
 import com.qimian233.ztool.hook.modules.ota.NoAutoOtaInstall
 import com.qimian233.ztool.hook.modules.packageinstaller.DisableInstallerAdvertisement
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan
