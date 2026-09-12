@@ -6,6 +6,7 @@ import java.lang.reflect.Executable
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedInterface.ExceptionMode
 import io.github.libxposed.api.XposedInterface.Hooker
 import io.github.libxposed.api.XposedModuleInterface
 
@@ -148,10 +149,81 @@ abstract class BaseHookModule {
             id: String,
             hooker: Hooker
     ): XposedInterface.HookHandle {
+        return hookWithId(target, id, hooker, XposedInterface.PRIORITY_DEFAULT, ExceptionMode.DEFAULT)
+    }
+
+    /**
+     * Hook with a stable id and an explicit execution priority.
+     * <p>
+     * 等价于 {@code xposed.hook(target).setId(id).setPriority(priority).intercept(hooker)}，
+     * 异常处理模式为 [ExceptionMode.DEFAULT]。
+     * </p>
+     *
+     * @param target the method or constructor to hook
+     * @param id     a stable, module-unique identifier for the hook
+     * @param hooker the interception callback
+     * @param priority 执行优先级，取值范围为 [Int.MIN_VALUE] 到 [Int.MAX_VALUE]，
+     *                 值越大越优先执行；默认值为 [XposedInterface.PRIORITY_DEFAULT]（50）。
+     *                 用于处置多个 Hook 注册到同一个方法时的竞争，详见完整重载的 KDoc。
+     * @return the hook handle
+     * @see hookWithId
+     */
+    protected open fun hookWithId(target: Executable,
+                                  id: String,
+                                  hooker: Hooker,
+                                  priority: Int
+    ): XposedInterface.HookHandle {
+        return hookWithId(target, id, hooker, priority, ExceptionMode.DEFAULT)
+    }
+
+    /**
+     * Hook with a stable id, an explicit execution priority and an exception handling mode.
+     * Equivalent to {@code xposed.hook(target).setId(id).setPriority(priority)
+     * .setExceptionMode(exceptionMode).intercept(hooker)}.
+     * <p>
+     * During hot reload, a new hook registered with the same id on the same executable
+     * will atomically replace the old hook in the framework, eliminating the hook vacuum
+     * window.
+     * </p>
+     * <h3>priority 与多 Hook 竞争</h3>
+     * <p>
+     * 当多个 Hook（本模块或其它模块）注册到同一个方法时，框架按 priority 从高到低依次调用，
+     * 形成一条拦截链：priority 最高的 Hook 最先执行，它调用 {@code chain.proceed()} 后
+     * 轮到下一个 Hook，最后执行原方法。因此可用 priority 决定同一方法上多个 Hook 的
+     * 执行顺序，避免相互覆盖或竞争。参考值：[XposedInterface.PRIORITY_LOWEST]
+     * （{@link Integer#MIN_VALUE}，链末尾）、[XposedInterface.PRIORITY_DEFAULT]（50）、
+     * [XposedInterface.PRIORITY_HIGHEST]（{@link Integer#MAX_VALUE}，链开头）。
+     * </p>
+     *
+     * @param target the method or constructor to hook
+     * @param id     a stable, module-unique identifier for the hook
+     * @param hooker the interception callback
+     * @param priority 执行优先级，取值范围为 [Int.MIN_VALUE] 到 [Int.MAX_VALUE]，
+     *                 值越大越优先执行；默认值为 [XposedInterface.PRIORITY_DEFAULT]（50）。
+     * @param exceptionMode LSPosed 对 Hooker 抛出异常的处理模式：
+     * <ul>
+     *   <li>[ExceptionMode.DEFAULT] — 遵循 module.prop 中配置的全局异常模式；
+     *       若未配置则默认为 [ExceptionMode.PROTECTIVE]。</li>
+     *   <li>[ExceptionMode.PROTECTIVE] — 捕获并记录 Hooker 抛出的任何异常，然后调用继续
+     *       （如同没有 Hook 一样）。推荐用于大多数情况，可防止因 Hook 错误导致的崩溃。
+     *       如果异常在 {@code proceed()} 之前抛出，框架会跳过当前 Hook 继续链；
+     *       如果在 {@code proceed()} 之后抛出，框架将返回已继续的值/异常。
+     *       {@code proceed()} 抛出的异常始终会传播。</li>
+     *   <li>[ExceptionMode.PASSTHROUGH] — Hooker 抛出的任何异常都将正常传播给调用者。
+     *       推荐用于调试，帮助发现和修复 Hook 中的错误。</li>
+     * </ul>
+     * @return the hook handle
+     */
+    protected open fun hookWithId(target: Executable,
+                                  id: String,
+                                  hooker: Hooker,
+                                  priority: Int,
+                                  exceptionMode: ExceptionMode
+    ): XposedInterface.HookHandle {
         return if (xposed.apiVersion >= 102) {
-            xposed.hook(target).setId(id).intercept(hooker)
+            xposed.hook(target).setId(id).setPriority(priority).setExceptionMode(exceptionMode).intercept(hooker)
         } else {
-            xposed.hook(target).intercept(hooker)
+            xposed.hook(target).setPriority(priority).setExceptionMode(exceptionMode).intercept(hooker)
         }
     }
 

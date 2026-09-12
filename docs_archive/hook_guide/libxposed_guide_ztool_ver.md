@@ -87,15 +87,18 @@ numRowsField.set(thisObject, CUSTOM_ROWS)
 请使用 `BaseHookModule` 提供的帮助方法 `hookWithId()`:
 
 ```kotlin
+// 完整签名（priority 和 exceptionMode 均有默认行为，可按需省略）
 fun hookWithId(
-            target: Executable, // 方法实例，通过上一节中的帮助方法找到
-            id: String,         // 提供一个 ID 用于原子化替换 Hook
-            hooker: Hooker      // libxposed Chain SAM, 详见下一节
+            target: Executable,     // 方法实例，通过上一节中的帮助方法找到
+            id: String,             // 提供一个 ID 用于原子化替换 Hook
+            hooker: Hooker,         // libxposed Chain SAM, 详见下一节
+            priority: Int = PRIORITY_DEFAULT,                  // 执行优先级，默认 50
+            exceptionMode: ExceptionMode = ExceptionMode.DEFAULT // 异常处理模式，默认遵循全局配置
     ): XposedInterface.HookHandle {
         return if (xposed.apiVersion >= 102) {
-          xposed.hook(target).setId(id).intercept(hooker)
+          xposed.hook(target).setId(id).setPriority(priority).setExceptionMode(exceptionMode).intercept(hooker)
         } else {
-          xposed.hook(target).intercept(hooker)
+          xposed.hook(target).setPriority(priority).setExceptionMode(exceptionMode).intercept(hooker)
         }
     }
 ```
@@ -111,12 +114,42 @@ hookWithId(method2, "id2", SAM)
 // In com.android.systemui scope
 hookWithId(method1, "id1", SAM)
 ```
-- 以下 ID 声明不合法：
+- 以下写法需要注意：在同一个作用域、同一个方法上使用重复 ID 时，新 Hook 会**原子替换**旧 Hook
+（旧 HookHandle 立即失效，正在执行的调用不受影响）。这是热重载替换机制的预期行为；但如果这是
+无意的重复注册，第二次调用会悄悄覆盖第一次的 Hook，属于编码错误：
 ```kotlin
 // In com.android.settings scope
 hookWithId(method1, "id1", SAM)
-hookWithId(method1, "id1", SAM) // 和已有 ID 重复，框架将不知道如何原子替换 Hook
+hookWithId(method1, "id1", SAM) // 原子替换上一个 "id1" Hook，通常是无意的重复注册
 ```
+
+### priority：多 Hook 竞争的处置机制
+
+当多个 Hook（无论是本模块注册多次，还是其它 Xposed 模块）注册到**同一个方法**时，框架会按
+priority 从高到低把它们串成一条拦截链：priority 最高的 Hook 最先执行，它调用 `chain.proceed()`
+后轮到 priority 次高的 Hook，最后执行原方法；每个 Hook 拿到的返回值都是 `proceed()` 的结果，
+因此前序 Hook 可以修改参数、修改返回值或完全短路原方法。
+
+- 取值范围：`Int.MIN_VALUE`（`PRIORITY_LOWEST`，链末尾）到 `Int.MAX_VALUE`（`PRIORITY_HIGHEST`，
+  链开头）；默认值 `PRIORITY_DEFAULT` 为 50。
+- 当你的 Hook 需要确保先于/后于同一方法上的其它 Hook 执行时（例如先于某个会短路方法的 Hook），
+  显式设置 priority 来避免竞争，而不是依赖默认值。
+- Hook 链是快照式的：替换或新增 Hook 不影响正在执行中的调用。
+
+### exceptionMode：异常处理模式
+
+`exceptionMode` 决定 LSPosed 框架如何处理 Hooker 抛出的异常：
+
+- `DEFAULT` — 遵循 module.prop 中配置的全局异常模式。若未配置则默认为 `PROTECTIVE`。
+- `PROTECTIVE` — 捕获并记录 Hooker 抛出的任何异常，然后调用继续（如同没有 Hook 一样）。
+  推荐用于大多数情况，可防止因 Hook 错误导致的崩溃。如果异常在 `proceed()` 之前抛出，
+  框架会跳过当前 Hook 继续链；如果在 `proceed()` 之后抛出，框架将返回已继续的值/异常。
+  `proceed()` 抛出的异常始终会传播。
+- `PASSTHROUGH` — Hooker 抛出的任何异常都将正常传播给调用者。推荐用于调试，
+  帮助发现和修复 Hook 中的错误。
+
+默认值 `ExceptionMode.DEFAULT` 对绝大多数 Hook 已经足够；仅在调试某个反复出错的 Hook 时
+临时切换到 `PASSTHROUGH`。
 
 ## libxposed Chain SAM
 Chain 函数式接口用于编写 Hook 流程，这是 libxposed 和 Rovo89 Xposed 最大的区别。本项目使用的 hookWithId 又导致
