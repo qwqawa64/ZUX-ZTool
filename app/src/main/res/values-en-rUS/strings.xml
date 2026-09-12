@@ -416,7 +416,13 @@
     <string name="system_ui_lock_screen_yi_yan_tile">Lock screen quote</string>
     <string name="system_ui_lock_screen_yi_yan_switch_title">Random lock screen signature</string>
     <string name="system_ui_lock_screen_yi_yan_summary">Show random text fetched from the network on the lock screen. Reboot to take effect.</string>
-    <string name="system_ui_lock_screen_charge_watts_title">Show charging power</string>
+        <string name="system_ui_lock_screen_charge_anim_title">Charging animation</string>
+    <string name="system_ui_lock_screen_charge_anim_duration_title">Custom charging animation duration</string>
+    <string name="system_ui_lock_screen_charge_anim_duration_summary">Change how long the lock screen charging animation plays. Requires a SystemUI restart</string>
+    <string name="system_ui_lock_screen_charge_anim_duration_slider_title">Animation duration</string>
+    <string name="system_ui_lock_screen_charge_anim_duration_slider_summary">Controls the timeout that ends the charging animation</string>
+    <string name="system_ui_lock_screen_charge_anim_duration_value">%.1f s</string>
+<string name="system_ui_lock_screen_charge_watts_title">Show charging power</string>
     <string name="system_ui_lock_screen_charge_watts_enable_title">Charging power display type</string>
     <string name="system_ui_lock_screen_charge_watts_summary">Show current negotiated protocol power or actual wattage on the lock screen and AOD while charging. Grant Root permission to "SystemUI" to use actual wattage.</string>
     <string name="system_ui_lock_screen_root_permission_required_message">To use actual charging power, grant Root permission to "SystemUI" in your Root manager.</string>

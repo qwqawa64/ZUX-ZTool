@@ -94,6 +94,8 @@ fun LockScreenSettingsRoute(
         onShowIndicatorChanged = viewModel::setShowIndicator,
         onCustomFormatEnabledChanged = viewModel::setCustomFormatEnabled,
         onCustomFormatChanged = viewModel::setCustomFormat,
+        onChargeAnimDurationEnabledChanged = viewModel::setChargeAnimDurationEnabled,
+        onChargeAnimDurationMsChanged = viewModel::setChargeAnimDurationMs,
         onTestApi = {
             viewModel.testApiConnection {
                 Toast.makeText(context, R.string.system_ui_lock_screen_please_input_api_address, Toast.LENGTH_SHORT).show()
@@ -173,6 +175,8 @@ private fun LockScreenSettingsScreen(
     onShowIndicatorChanged: (Boolean) -> Unit,
     onCustomFormatEnabledChanged: (Boolean) -> Unit,
     onCustomFormatChanged: (String) -> Unit,
+    onChargeAnimDurationEnabledChanged: (Boolean) -> Unit,
+    onChargeAnimDurationMsChanged: (Int) -> Unit,
     onRestartScope: () -> Unit,
 ) {
     ZToolScaffold(
@@ -228,6 +232,8 @@ private fun LockScreenSettingsScreen(
                         onShowIndicatorChanged = onShowIndicatorChanged,
                         onCustomFormatEnabledChanged = onCustomFormatEnabledChanged,
                         onCustomFormatChanged = onCustomFormatChanged,
+                        onChargeAnimDurationEnabledChanged = onChargeAnimDurationEnabledChanged,
+                        onChargeAnimDurationMsChanged = onChargeAnimDurationMsChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -254,6 +260,8 @@ private fun lockScreenSettingsSections(
     onShowIndicatorChanged: (Boolean) -> Unit,
     onCustomFormatEnabledChanged: (Boolean) -> Unit,
     onCustomFormatChanged: (String) -> Unit,
+    onChargeAnimDurationEnabledChanged: (Boolean) -> Unit,
+    onChargeAnimDurationMsChanged: (Int) -> Unit,
 ): List<SettingSection> {
     val yiYanItems = buildList {
         add(
@@ -396,6 +404,33 @@ private fun lockScreenSettingsSections(
         }
     }
 
+    val chargeAnimItems = buildList {
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.system_ui_lock_screen_charge_anim_duration_title),
+                summary = stringResource(R.string.system_ui_lock_screen_charge_anim_duration_summary),
+                checked = state.chargeAnimDurationEnabled,
+                onCheckedChange = onChargeAnimDurationEnabledChanged
+            )
+        )
+        if (state.chargeAnimDurationEnabled) {
+            add(
+                SettingItem.Slider(
+                    title = stringResource(R.string.system_ui_lock_screen_charge_anim_duration_slider_title),
+                    summary = stringResource(R.string.system_ui_lock_screen_charge_anim_duration_slider_summary),
+                    value = state.chargeAnimDurationMs.toFloat(),
+                    valueText = stringResource(
+                        R.string.system_ui_lock_screen_charge_anim_duration_value,
+                        state.chargeAnimDurationMs / 1000f
+                    ),
+                    valueRange = 1000f..15000f,
+                    steps = 27,
+                    onValueChange = { onChargeAnimDurationMsChanged((it / 500).toInt() * 500) }
+                )
+            )
+        }
+    }
+
     return listOf(
         SettingSection(
             title = stringResource(R.string.system_ui_lock_screen_yi_yan_tile),
@@ -408,6 +443,10 @@ private fun lockScreenSettingsSections(
         SettingSection(
             title = stringResource(R.string.system_ui_lock_screen_charge_watts_title),
             items = chargeWattsItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.system_ui_lock_screen_charge_anim_title),
+            items = chargeAnimItems
         )
     )
 }

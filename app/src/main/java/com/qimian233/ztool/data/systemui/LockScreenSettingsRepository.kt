@@ -48,6 +48,10 @@ class LockScreenSettingsRepository(
             showIndicator = prefsUtils.loadBooleanSetting(KEY_RW_SHOW_INDICATOR, true),
             customFormatEnabled = prefsUtils.loadBooleanSetting(KEY_RW_CUSTOM_FORMAT_ENABLED, false),
             customFormat = prefsUtils.loadStringSetting(KEY_RW_CUSTOM_FORMAT, ""),
+            chargeAnimDurationEnabled = prefsUtils.loadBooleanSetting(KEY_CHARGE_ANIM_DURATION, false),
+            chargeAnimDurationMs = prefsUtils.loadIntegerSetting(
+                KEY_CHARGE_ANIM_DURATION_MS, DEFAULT_CHARGE_ANIM_DURATION_MS
+            ),
         )
     }
 
@@ -116,6 +120,15 @@ class LockScreenSettingsRepository(
     fun saveShowIndicator(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_INDICATOR, enabled)
     fun saveCustomFormatEnabled(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_CUSTOM_FORMAT_ENABLED, enabled)
     fun saveCustomFormat(value: String) = prefsUtils.saveStringSetting(KEY_RW_CUSTOM_FORMAT, value.trim())
+
+    fun saveChargeAnimDurationEnabled(enabled: Boolean) =
+        prefsUtils.saveBooleanSetting(KEY_CHARGE_ANIM_DURATION, enabled)
+
+    fun saveChargeAnimDurationMs(durationMs: Int) =
+        prefsUtils.saveIntegerSetting(
+            KEY_CHARGE_ANIM_DURATION_MS,
+            durationMs.coerceIn(CHARGE_ANIM_DURATION_MIN_MS, CHARGE_ANIM_DURATION_MAX_MS)
+        )
 
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
@@ -248,5 +261,11 @@ class LockScreenSettingsRepository(
         private val KEY_RW_SHOW_INDICATOR = PreferenceKeys.SYSTEMUI_REALWATTS_SHOW_INDICATOR.name
         private val KEY_RW_CUSTOM_FORMAT_ENABLED = PreferenceKeys.SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED.name
         private val KEY_RW_CUSTOM_FORMAT = PreferenceKeys.SYSTEMUI_REALWATTS_CUSTOM_FORMAT.name
+        private val KEY_CHARGE_ANIM_DURATION = PreferenceKeys.CHARGE_ANIMATION_DURATION.name
+        private val KEY_CHARGE_ANIM_DURATION_MS = PreferenceKeys.CHARGE_ANIMATION_DURATION_MS.name
+
+        const val DEFAULT_CHARGE_ANIM_DURATION_MS = 3500
+        const val CHARGE_ANIM_DURATION_MIN_MS = 1000
+        const val CHARGE_ANIM_DURATION_MAX_MS = 15000
     }
 }

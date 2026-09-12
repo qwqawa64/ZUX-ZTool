@@ -58,6 +58,7 @@ import com.qimian233.ztool.hook.modules.systemframework.KeepRotation
 import com.qimian233.ztool.hook.modules.systemframework.OwnerInfoSystemHook
 import com.qimian233.ztool.hook.modules.systemframework.NoMorePasswordPer24H
 import com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory as SystemSplitScreenMandatory
+import com.qimian233.ztool.hook.modules.systemui.keyguard.ChargeAnimationDurationHook
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceLenovoAOD
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceNativeAod
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIChargeWattsHook
@@ -148,6 +149,7 @@ object HookManager {
         registerHookModule(NetworkSpeedHideSlowHook())
         registerHookModule(SystemUIBatteryHook())
         registerHookModule(ForceImmersiveMode())
+        registerHookModule(ChargeAnimationDurationHook())
         registerHookModule(ForceLenovoAOD())
         registerHookModule(ForceNativeAod())
         registerHookModule(CustomQsRoundCorner())

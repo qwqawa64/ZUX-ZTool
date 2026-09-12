@@ -59,6 +59,7 @@ object PreferenceKeys {
     val EXPAND_QS_PANEL_PORTRAIT = BoolKey("expand_qs_panel_portrait", false)
     val CUSTOMIZE_SLIDER_STYLE = BoolKey("customize_slider_style", false)
     val CUSTOM_CHARGE_ANIMATION = BoolKey("custom_charge_animation", false)
+    val CHARGE_ANIMATION_DURATION = BoolKey("charge_animation_duration", false)
     val FORCE_NATIVE_AOD = BoolKey("ForceNativeAOD", false)
     val DISABLE_BIOMETRIC_ERROR_VIBRATION = BoolKey("disable_biometric_error_vibration", false)
 
@@ -197,6 +198,7 @@ object PreferenceKeys {
     val SCREEN_ON_OFF_ANIMATION_MS = IntKey("screen_on_off_animation_ms", 400)
     val QS_PANEL_WIDTH_PERCENT = IntKey("qs_panel_width_percent", 80)
     val QS_TILE_COLUMNS = IntKey("qs_tile_columns", 7)
+    val CHARGE_ANIMATION_DURATION_MS = IntKey("charge_animation_duration_ms", 3500)
 
     // ═══════════════════════════════════════════════════════════
     // Float 键
@@ -249,7 +251,8 @@ object PreferenceKeys {
         FORCE_IMMERSIVE_MODE, FORCE_LENOVO_AOD, QS_ROUND_CORNER,
         BRIGHTNESS_SLIDER_PERCENTAGE, VOLUME_SLIDER_PERCENTAGE, QS_COLOR,
         NOTIFICATION_CENTER_BLUR, GUEST_MODE_CONTROLLER, EXPAND_QS_PANEL_PORTRAIT,
-        CUSTOMIZE_SLIDER_STYLE, CUSTOM_CHARGE_ANIMATION, FORCE_NATIVE_AOD,
+        CUSTOMIZE_SLIDER_STYLE, CUSTOM_CHARGE_ANIMATION, CHARGE_ANIMATION_DURATION,
+        FORCE_NATIVE_AOD,
         DISABLE_BIOMETRIC_ERROR_VIBRATION,
         CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE_ENABLED, CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING_ENABLED,
         CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR_ENABLED, CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD,
@@ -302,7 +305,8 @@ object PreferenceKeys {
         CUSTOM_SECOND_LABEL_ACTIVE_COLOR_VAL,
         NOTIFICATION_CENTER_BLUR_PERCENT,
         SCREEN_ON_OFF_ANIMATION_MS,
-        QS_PANEL_WIDTH_PERCENT, QS_TILE_COLUMNS
+        QS_PANEL_WIDTH_PERCENT, QS_TILE_COLUMNS,
+        CHARGE_ANIMATION_DURATION_MS
     )
 
     val floatKeys: List<FloatKey> = listOf(
