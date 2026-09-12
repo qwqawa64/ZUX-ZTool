@@ -284,7 +284,7 @@ private fun DynamicScheme.toMaterial3ColorScheme(darkTheme: Boolean): ColorSchem
 }
 
 /** Pure-black surface treatment for AMOLED panels; accent roles stay untouched. */
-private fun ColorScheme.withAmoledBlackSurfaces(): ColorScheme {
+internal fun ColorScheme.withAmoledBlackSurfaces(): ColorScheme {
     val black = Color.Black
     val lowSurface = Color(0xFF050505)
     val highSurface = Color(0xFF0A0A0A)

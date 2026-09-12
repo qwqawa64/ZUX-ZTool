@@ -4,6 +4,9 @@ import android.content.res.Configuration
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -96,12 +99,33 @@ fun ZToolTheme(
         null
     }
 
+    val isMiuixStyle = effectiveSettings.frontendStyle == FrontendStyle.Miuix
+
+    // Circuit breaker: when dynamic color is off and the Miuix front end is active,
+    // the externally derived palette is bypassed entirely — the shared scheme that
+    // every component (cards, settings rows, scaffold, dialogs) reads is rebuilt
+    // from Miuix's built-in default palette instead of the seed-derived scheme.
+    val miuixBreakerActive = isMiuixStyle && !effectiveSettings.dynamicColorEnabled
     val colorScheme = remember(effectiveSettings, effectiveDarkTheme, systemSeed) {
-        buildZToolColorScheme(
-            settings = effectiveSettings,
-            darkTheme = effectiveDarkTheme,
-            systemSeed = systemSeed
-        )
+        if (miuixBreakerActive) {
+            val miuixDefault = if (effectiveDarkTheme) {
+                miuixDarkColorScheme()
+            } else {
+                miuixLightColorScheme()
+            }
+            val m3Scheme = miuixDefault.toMaterialColorScheme(darkTheme = effectiveDarkTheme)
+            if (effectiveDarkTheme && effectiveSettings.amoledBlackEnabled) {
+                m3Scheme.withAmoledBlackSurfaces()
+            } else {
+                m3Scheme
+            }
+        } else {
+            buildZToolColorScheme(
+                settings = effectiveSettings,
+                darkTheme = effectiveDarkTheme,
+                systemSeed = systemSeed
+            )
+        }
     }
 
     val themeSpec = ZToolThemeSpec(
@@ -109,7 +133,6 @@ fun ZToolTheme(
         dynamicColorEnabled = effectiveSettings.dynamicColorEnabled,
         manualColorEnabled = effectiveSettings.manualColorEnabled
     )
-    val isMiuixStyle = effectiveSettings.frontendStyle == FrontendStyle.Miuix
     val movableContent = remember(content) { movableContentOf(content) }
 
     // One pipeline for both front ends: Material3 owns the derived scheme, Miuix
@@ -152,6 +175,94 @@ fun ZToolTheme(
         LocalEnableFloatingBottomBarBlur provides effectiveSettings.enableFloatingBottomBarBlur,
         content = themedContent
     )
+}
+
+/**
+ * Inverse of [ColorScheme.toMiuixColors]: rebuilds a Material3 [ColorScheme] from a
+ * Miuix palette. Used by the circuit-breaker path so shared components consume the
+ * Miuix built-in default palette when dynamic color is disabled. Roles the Miuix
+ * palette does not carry are filled with their closest neighbours.
+ */
+private fun Colors.toMaterialColorScheme(darkTheme: Boolean): ColorScheme {
+    return if (darkTheme) {
+        darkColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            primaryContainer = primaryContainer,
+            onPrimaryContainer = onPrimaryContainer,
+            inversePrimary = onPrimary,
+            secondary = secondary,
+            onSecondary = onSecondary,
+            secondaryContainer = secondaryContainer,
+            onSecondaryContainer = onSecondaryContainer,
+            tertiary = tertiaryContainer,
+            onTertiary = onTertiaryContainer,
+            tertiaryContainer = tertiaryContainer,
+            onTertiaryContainer = onTertiaryContainer,
+            background = background,
+            onBackground = onBackground,
+            surface = surface,
+            onSurface = onSurface,
+            surfaceVariant = surfaceVariant,
+            onSurfaceVariant = onSurfaceContainer,
+            surfaceDim = surface,
+            surfaceBright = surfaceContainer,
+            surfaceContainerLowest = background,
+            surfaceContainerLow = surfaceContainer,
+            surfaceContainer = surfaceContainer,
+            surfaceContainerHigh = surfaceContainerHigh,
+            surfaceContainerHighest = surfaceContainerHighest,
+            surfaceTint = primary,
+            inverseSurface = onSurface,
+            inverseOnSurface = surface,
+            outline = outline,
+            outlineVariant = dividerLine,
+            scrim = Color.Black,
+            error = error,
+            onError = onError,
+            errorContainer = errorContainer,
+            onErrorContainer = onErrorContainer
+        )
+    } else {
+        lightColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            primaryContainer = primaryContainer,
+            onPrimaryContainer = onPrimaryContainer,
+            inversePrimary = onPrimary,
+            secondary = secondary,
+            onSecondary = onSecondary,
+            secondaryContainer = secondaryContainer,
+            onSecondaryContainer = onSecondaryContainer,
+            tertiary = tertiaryContainer,
+            onTertiary = onTertiaryContainer,
+            tertiaryContainer = tertiaryContainer,
+            onTertiaryContainer = onTertiaryContainer,
+            background = background,
+            onBackground = onBackground,
+            surface = surface,
+            onSurface = onSurface,
+            surfaceVariant = surfaceVariant,
+            onSurfaceVariant = onSurfaceContainer,
+            surfaceDim = surface,
+            surfaceBright = surfaceContainer,
+            surfaceContainerLowest = background,
+            surfaceContainerLow = surfaceContainer,
+            surfaceContainer = surfaceContainer,
+            surfaceContainerHigh = surfaceContainerHigh,
+            surfaceContainerHighest = surfaceContainerHighest,
+            surfaceTint = primary,
+            inverseSurface = onSurface,
+            inverseOnSurface = surface,
+            outline = outline,
+            outlineVariant = dividerLine,
+            scrim = Color.Black,
+            error = error,
+            onError = onError,
+            errorContainer = errorContainer,
+            onErrorContainer = onErrorContainer
+        )
+    }
 }
 
 private fun ColorScheme.toMiuixColors(darkTheme: Boolean): Colors {
