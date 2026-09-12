@@ -569,15 +569,15 @@ private fun controlCenterSettingsSections(
                             onCheckedChange = onNoTileLabelsChanged
                         )
                     )
-                    add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.system_ui_media_output_dialog_center_title),
-                            summary = stringResource(R.string.system_ui_media_output_dialog_center_summary),
-                            checked = state.mediaOutputDialogCenter,
-                            onCheckedChange = onMediaOutputDialogCenterChanged
-                        )
-                    )
                 }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_media_output_dialog_center_title),
+                        summary = stringResource(R.string.system_ui_media_output_dialog_center_summary),
+                        checked = state.mediaOutputDialogCenter,
+                        onCheckedChange = onMediaOutputDialogCenterChanged
+                    )
+                )
             }
         ),
         SettingSection(
@@ -883,7 +883,6 @@ private fun SliderSettingRow(
             value = value,
             valueText = valueLabel,
             onValueChange = onValueChanged,
-            enabled = enabled,
             valueRange = valueRange,
             steps = steps,
             horizontalPadding = 0.dp,
