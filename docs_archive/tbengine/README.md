@@ -108,10 +108,12 @@ Hook 拦截点为 `SwfABInstalling.doMyPrimaryJob()`（tbengine worker 线程，
 - 布局：`[24B header CrAU][manifest][metadata 签名 267B][数据段][payload 签名 267B @文件末尾]`；
   manifest field4 `signatures_offset`/field5 `signatures_size` 是**相对数据段起点**的偏移。
 - 签名块固定 267B：`0a8802 128002 <256B RSA-2048 签名> 1d00010000`，metadata 与 payload 签名同构。
-- 哈希约定（实测）：`METADATA_HASH` = SHA256(**header+manifest**)（注意含 24B 头部）；
+- 哈希约定（实测 + AOSP 源码交叉验证）：`METADATA_HASH` = SHA256(**header+manifest**)；
   `FILE_HASH` = SHA256(整个 payload.bin)；metadata 签名覆盖 header+manifest；
-  **payload 签名覆盖 metadata 签名块 + 数据段**（从 24+manifest 之后到尾部签名块之前，
-  不含 header/manifest——干净环境实测数据段摘要不匹配后确认）。
+  **payload 签名覆盖 header+manifest+数据段**——AOSP DeltaPerformer 的
+  `signed_hash_calculator_` 连续累计 header+manifest（metadata 签名验证）与数据段，
+  唯一排除的是中间的 metadata 签名块（DiscardBuffer(false, metadata_size_) 截断）
+  和尾部签名块自身（DiscardBuffer(true, 0)）。
 - 数据段原样保留 ⇒ manifest 与 signatures_offset/size 不变，重签只替换两个 256B 签名值，重签后 payload.bin 总长不变。
 
 ### 5.3 密钥与数据流
