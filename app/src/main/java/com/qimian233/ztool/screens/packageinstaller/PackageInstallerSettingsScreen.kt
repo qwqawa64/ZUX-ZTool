@@ -180,50 +180,59 @@ internal fun packageInstallerSettingsSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
-            title = stringResource(R.string.common_sec_title_function),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.package_installer_disable_scan_apk_title),
-                    summary = stringResource(R.string.package_installer_disable_scan_apk_summary),
-                    checked = state.disableScanApk,
-                    onCheckedChange = onDisableScanApkChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.package_installer_only_allow_title),
-                    summary = stringResource(R.string.package_installer_only_allow_summary),
-                    checked = state.alwaysAllowPermission,
-                    onCheckedChange = onAlwaysAllowPermissionChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.package_installer_skip_warn_page_title),
-                    summary = stringResource(R.string.package_installer_skip_warn_page_summary),
-                    checked = state.skipWarnPage,
-                    onCheckedChange = onSkipWarnPageChanged
-                )
-            )
-        ),
-        SettingSection(
             title = stringResource(R.string.package_installer_fun_title_function),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.package_installer_disable_installer_ad_title),
-                    summary = stringResource(R.string.package_installer_disable_installer_ad_summary),
-                    checked = state.disableInstallerAd,
-                    onCheckedChange = onDisableInstallerAdChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.package_installer_enable_row_style_title),
-                    summary = stringResource(R.string.package_installer_enable_row_style_summary),
-                    checked = state.packageInstallerStyleHook,
-                    onCheckedChange = onPackageInstallerStyleHookChanged
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.package_installer_disable_delete_package_title),
-                    summary = stringResource(R.string.package_installer_disable_delete_package_summary),
-                    checked = state.disableDeletePackage,
-                    onCheckedChange = onDisableDeletePackageChanged
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.package_installer_enable_row_style_title),
+                        summary = stringResource(R.string.package_installer_enable_row_style_summary),
+                        checked = state.packageInstallerStyleHook,
+                        onCheckedChange = onPackageInstallerStyleHookChanged
+                    )
                 )
-            )
+                if (!state.packageInstallerStyleHook) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.package_installer_disable_installer_ad_title),
+                            summary = stringResource(R.string.package_installer_disable_installer_ad_summary),
+                            checked = state.disableInstallerAd,
+                            onCheckedChange = onDisableInstallerAdChanged
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.package_installer_disable_delete_package_title),
+                            summary = stringResource(R.string.package_installer_disable_delete_package_summary),
+                            checked = state.disableDeletePackage,
+                            onCheckedChange = onDisableDeletePackageChanged
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.package_installer_disable_scan_apk_title),
+                            summary = stringResource(R.string.package_installer_disable_scan_apk_summary),
+                            checked = state.disableScanApk,
+                            onCheckedChange = onDisableScanApkChanged
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.package_installer_only_allow_title),
+                            summary = stringResource(R.string.package_installer_only_allow_summary),
+                            checked = state.alwaysAllowPermission,
+                            onCheckedChange = onAlwaysAllowPermissionChanged
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.package_installer_skip_warn_page_title),
+                            summary = stringResource(R.string.package_installer_skip_warn_page_summary),
+                            checked = state.skipWarnPage,
+                            onCheckedChange = onSkipWarnPageChanged
+                        )
+                    )
+                }
+            }
         )
     )
 }
