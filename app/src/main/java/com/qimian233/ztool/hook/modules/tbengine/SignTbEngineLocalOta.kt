@@ -63,6 +63,9 @@ class SignTbEngineLocalOta : AppHookModule() {
         private const val PUBLIC_KEY_PROPERTY = "public_key"
         private const val PUBLIC_KEY_PEM_PATH = "/data/ota_package/ztool_ota_pub.pem"
         private const val RSA_KEY_BITS = 2048
+        private const val FIELD_MAX_TIMESTAMP = 14L
+        // 防回滚钳制的提前量：now + 5 年
+        private const val FUTURE_TIMESTAMP_MARGIN_SECONDS = 5L * 365 * 24 * 60 * 60
     }
 
     @Throws(Throwable::class)
@@ -263,16 +266,36 @@ class SignTbEngineLocalOta : AppHookModule() {
                 // 数据段 = metadata 前缀之后到 payload 签名块之前，原样保留
                 val dataLength = sigOffset // 相对数据段起点，即数据段长度
 
-                // 2. metadata 签名 = RSA_sign(SHA256(header + manifest))
+                // 2a. 改写 manifest 的 max_timestamp（field 14）以通过防回滚检查：
+                // update_engine 比较 manifest.max_timestamp 与 ro.build.date.utc，
+                // 第三方旧包会被 kPayloadTimestampError(51) 拒绝。我们作为签名者，
+                // 在签名前把时间戳钳制到未来值；其它字段原字节保留。
+                val futureTimestamp = System.currentTimeMillis() / 1000 + FUTURE_TIMESTAMP_MARGIN_SECONDS
+                val maxTimestamp = findManifestField(manifest, FIELD_MAX_TIMESTAMP)
+                var newManifest = manifest
+                var newHeader = header
+                if (maxTimestamp != null && maxTimestamp < futureTimestamp) {
+                    logger.info(
+                        "Bumping manifest max_timestamp $maxTimestamp -> $futureTimestamp " +
+                                "(anti-rollback clamp)"
+                    )
+                    newManifest = rewriteManifestField(manifest, FIELD_MAX_TIMESTAMP, futureTimestamp)
+                    // header 内的 manifest_size 需同步补写
+                    newHeader = header.copyOf().also {
+                        putBeLong(it, 12, newManifest.size.toLong())
+                    }
+                }
+
+                // 2b. metadata 签名 = RSA_sign(SHA256(newHeader + newManifest))
                 // 注意：SHA256withRSA 会自行哈希输入，这里直接喂原始数据，
                 // 禁止传入预计算摘要（会造成双重哈希）
                 val metadataDigest = MessageDigest.getInstance("SHA-256")
-                    .digest(concat(header, manifest))
+                    .digest(concat(newHeader, newManifest))
                 logger.info(
                     "Signing metadata digest: " +
                             metadataDigest.joinToString("") { "%02x".format(it) }
                 )
-                val newMetadataSig = buildSigBlob(signData(privateKey, concat(header, manifest)))
+                val newMetadataSig = buildSigBlob(signData(privateKey, concat(newHeader, newManifest)))
                 if (newMetadataSig.size != SIG_BLOB_SIZE) {
                     logger.error("Unexpected metadata sig blob size ${newMetadataSig.size}")
                     return false
@@ -283,14 +306,14 @@ class SignTbEngineLocalOta : AppHookModule() {
                 val crc32 = CRC32()
                 var written = 0L
                 FileOutputStream(tmpPayload).use { out ->
-                    out.write(header); written += header.size
-                    out.write(manifest); written += manifest.size
+                    out.write(newHeader); written += newHeader.size
+                    out.write(newManifest); written += newManifest.size
                     out.write(newMetadataSig); written += newMetadataSig.size
-                    payloadHashBeforeSig.update(header)
-                    payloadHashBeforeSig.update(manifest)
+                    payloadHashBeforeSig.update(newHeader)
+                    payloadHashBeforeSig.update(newManifest)
                     payloadHashBeforeSig.update(newMetadataSig)
-                    crc32.update(header)
-                    crc32.update(manifest)
+                    crc32.update(newHeader)
+                    crc32.update(newManifest)
                     crc32.update(newMetadataSig)
 
                     // 数据段：从 metaSize 起复制 dataLength 字节，跳过原 payload 签名块
@@ -333,13 +356,13 @@ class SignTbEngineLocalOta : AppHookModule() {
                 // 4. 更新 payload_properties.txt
                 val fileHash = sha256Of(tmpPayload)
                 val metadataHash = MessageDigest.getInstance("SHA-256")
-                    .digest(concat(header, manifest))
+                    .digest(concat(newHeader, newManifest))
                 val newProps = if (propsEntry != null) {
                     val old = zf.getInputStream(propsEntry).bufferedReader().readText()
                     updateProperties(
                         old,
                         fileHash to written,
-                        metadataHash to (24L + manifestSize)
+                        metadataHash to (24L + newManifest.size)
                     )
                 } else {
                     null
@@ -485,11 +508,11 @@ class SignTbEngineLocalOta : AppHookModule() {
     /**
      * 解析 manifest 顶层 protobuf，返回指定 field 的 varint 值（找不到返回 null）。
      */
-    private fun findManifestField(manifest: ByteArray, target: Int): Long? {
+    private fun findManifestField(manifest: ByteArray, target: Long): Long? {
         var i = 0
         while (i < manifest.size) {
             val (key, next) = readVarint(manifest, i)
-            val field = (key ushr 3).toInt()
+            val field = key ushr 3
             val wireType = (key and 0x7).toInt()
             i = next
             when (wireType) {
@@ -523,6 +546,78 @@ class SignTbEngineLocalOta : AppHookModule() {
             shift += 7
         }
         return result to i
+    }
+
+    /**
+     * 重写 manifest 顶层指定 varint 字段（protobuf 标准编码），其它字段原字节保留。
+     * 未找到目标字段时在末尾追加。
+     */
+    private fun rewriteManifestField(manifest: ByteArray, field: Long, value: Long): ByteArray {
+        val out = ByteArrayOutputStream(manifest.size + 16)
+        var i = 0
+        var replaced = false
+        while (i < manifest.size) {
+            val keyStart = i
+            val (key, afterKey) = readVarint(manifest, i)
+            val fieldNum = key ushr 3
+            val wireType = (key and 0x7).toInt()
+            i = afterKey
+            when (wireType) {
+                0 -> {
+                    val (_, afterValue) = readVarint(manifest, i)
+                    if (fieldNum == field) {
+                        out.write(encodeVarint((field shl 3))) // wireType 0
+                        out.write(encodeVarint(value))
+                        replaced = true
+                    } else {
+                        out.write(manifest, keyStart, afterValue - keyStart)
+                    }
+                    i = afterValue
+                }
+                2 -> {
+                    val (len, afterLen) = readVarint(manifest, i)
+                    val end = afterLen + len.toInt()
+                    out.write(manifest, keyStart, end - keyStart)
+                    i = end
+                }
+                5 -> {
+                    out.write(manifest, keyStart, i + 4 - keyStart)
+                    i += 4
+                }
+                1 -> {
+                    out.write(manifest, keyStart, i + 8 - keyStart)
+                    i += 8
+                }
+                else -> {
+                    logger.error("Unexpected wire type $wireType at $keyStart during manifest rewrite")
+                    return manifest
+                }
+            }
+        }
+        if (!replaced) {
+            out.write(encodeVarint((field shl 3)))
+            out.write(encodeVarint(value))
+        }
+        return out.toByteArray()
+    }
+
+    private fun encodeVarint(value: Long): ByteArray {
+        var v = value
+        val out = ByteArrayOutputStream()
+        while (true) {
+            if (v and 0x7fL.inv() == 0L) {
+                out.write(v.toInt())
+                return out.toByteArray()
+            }
+            out.write(((v and 0x7f) or 0x80).toInt())
+            v = v ushr 7
+        }
+    }
+
+    private fun putBeLong(buf: ByteArray, offset: Int, value: Long) {
+        for (i in 0 until 8) {
+            buf[offset + i] = (value ushr ((7 - i) * 8)).toByte()
+        }
     }
 
     private fun readFully(input: InputStream, count: Int): ByteArray {
