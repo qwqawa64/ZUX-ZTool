@@ -192,14 +192,22 @@ class TbEngineSettingsRepository(
                         zos.closeEntry()
                     }
                 }
+                // otacerts.zip 条目为 PEM 编码（与 OEM 条目一致），update_engine 按 PEM 解析
+                val pem = buildString {
+                    append("-----BEGIN CERTIFICATE-----\n")
+                    android.util.Base64.encodeToString(certDer, android.util.Base64.NO_WRAP)
+                        .chunked(64)
+                        .forEach { append(it).append('\n') }
+                    append("-----END CERTIFICATE-----\n")
+                }.toByteArray(Charsets.UTF_8)
                 val ne = java.util.zip.ZipEntry("ztool_ota.x509.pem").apply {
                     method = java.util.zip.ZipEntry.STORED
-                    size = certDer.size.toLong()
-                    crc = java.util.zip.CRC32().apply { update(certDer) }.value
+                    size = pem.size.toLong()
+                    crc = java.util.zip.CRC32().apply { update(pem) }.value
                     time = System.currentTimeMillis()
                 }
                 zos.putNextEntry(ne)
-                zos.write(certDer)
+                zos.write(pem)
                 zos.closeEntry()
             } finally {
                 source?.close()
