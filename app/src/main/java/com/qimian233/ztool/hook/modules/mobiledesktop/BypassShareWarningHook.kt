@@ -85,7 +85,7 @@ class BypassShareWarningHook : AppHookModule() {
 
             // p() 方法名来自离线索引 — 无参 void + 引用 file_share_expose_title 字段
             val finalPMethodName = module?.get(DexIndexConstants.Keys.DIALOG_METHOD)
-                ?.takeIf { !it.isJsonNull }?.asString ?: "p" // 默认回退
+                ?.takeIf { !it.isJsonNull }?.asString ?: "t" // 默认回退（当前版本）
             logger.debug("target method name of \"createAndStartExposureWarnDialog\": $finalPMethodName")
 
             val pMethod = actionNoticeClass.getDeclaredMethod(finalPMethodName)

@@ -18,7 +18,9 @@ import java.lang.reflect.Method
  * </p>
  * <p>
  * 目标类/字段/方法名通过 DexKit 离线索引（MobileDesktopDexIndexer）预计算，
- * 索引缺失时回退硬编码名称（c/d/b 及继承链签名查找）。
+ * 索引缺失时回退硬编码名称（当前版本为 a/d/b：ViewModel 字段 a、accepted
+ * boolean 字段 d、用户决策 LiveData 字段 b，b 的 postValue(true) 即通知栏
+ * "接受"按钮的写入路径）。
  * </p>
  */
 class AutoAcceptFileTransferHook : AppHookModule() {
@@ -151,7 +153,7 @@ class AutoAcceptFileTransferHook : AppHookModule() {
     companion object {
         private const val TARGET_CLASS =
             "com.motorola.mobiledesktop.files.pc2phone.FileConnectionConfirmActivity"
-        private const val FALLBACK_VM_FIELD = "c"
+        private const val FALLBACK_VM_FIELD = "a"
         private const val FALLBACK_ACCEPTED_FIELD = "d"
         private const val FALLBACK_LIVE_DATA_FIELD = "b"
     }
