@@ -264,9 +264,15 @@ class SignTbEngineLocalOta : AppHookModule() {
                 val dataLength = sigOffset // 相对数据段起点，即数据段长度
 
                 // 2. metadata 签名 = RSA_sign(SHA256(header + manifest))
+                // 注意：SHA256withRSA 会自行哈希输入，这里直接喂原始数据，
+                // 禁止传入预计算摘要（会造成双重哈希）
                 val metadataDigest = MessageDigest.getInstance("SHA-256")
                     .digest(concat(header, manifest))
-                val newMetadataSig = buildSigBlob(sign(privateKey, metadataDigest))
+                logger.info(
+                    "Signing metadata digest: " +
+                            metadataDigest.joinToString("") { "%02x".format(it) }
+                )
+                val newMetadataSig = buildSigBlob(signData(privateKey, concat(header, manifest)))
                 if (newMetadataSig.size != SIG_BLOB_SIZE) {
                     logger.error("Unexpected metadata sig blob size ${newMetadataSig.size}")
                     return false
@@ -306,7 +312,12 @@ class SignTbEngineLocalOta : AppHookModule() {
                         skipped += chunk
                     }
                     // 追加 payload 签名块
-                    val payloadSig = buildSigBlob(sign(privateKey, payloadHashBeforeSig.digest()))
+                    val payloadDigest = payloadHashBeforeSig.digest()
+                    logger.info(
+                        "Signing payload digest (pre-signature blob): " +
+                                payloadDigest.joinToString("") { "%02x".format(it) }
+                    )
+                    val payloadSig = buildSigBlob(signDigest(privateKey, payloadDigest))
                     if (payloadSig.size != SIG_BLOB_SIZE) {
                         logger.error("Unexpected payload sig blob size ${payloadSig.size}")
                         return false
@@ -442,12 +453,34 @@ class SignTbEngineLocalOta : AppHookModule() {
         }
     }
 
-    private fun sign(privateKey: PrivateKey, digest: ByteArray): ByteArray =
+    /**
+     * 对原始数据做 RSA-SHA256 签名（Signature 自行哈希，数据必须是未哈希原文）。
+     * 仅适合小数据（metadata 场景为 header+manifest，约 437KB）。
+     */
+    private fun signData(privateKey: PrivateKey, data: ByteArray): ByteArray =
         Signature.getInstance("SHA256withRSA").run {
             initSign(privateKey)
-            update(digest)
+            update(data)
             sign()
         }
+
+    /**
+     * 对预计算摘要做签名：NONEwithRSA + 手工 DigestInfo(SHA-256)。
+     * 用于大数据场景（payload 数据段无法二次读取时复用流式哈希结果）。
+     * DigestInfo 前缀 = SEQUENCE{SEQ{OID 2.16.840.1.101.3.4.2.1, NULL}, OCTET(32)}。
+     */
+    private fun signDigest(privateKey: PrivateKey, digest: ByteArray): ByteArray {
+        require(digest.size == 32) { "Expected SHA-256 digest" }
+        val digestInfo = byteArrayOf(
+            0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60.toByte(), 0x86.toByte(),
+            0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
+        ) + digest
+        return Signature.getInstance("NONEwithRSA").run {
+            initSign(privateKey)
+            update(digestInfo)
+            sign()
+        }
+    }
 
     /**
      * 解析 manifest 顶层 protobuf，返回指定 field 的 varint 值（找不到返回 null）。
