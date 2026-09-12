@@ -63,6 +63,7 @@ class SignTbEngineLocalOta : AppHookModule() {
         private const val PUBLIC_KEY_PROPERTY = "public_key"
         private const val PUBLIC_KEY_PEM_PATH = "/data/ota_package/ztool_ota_pub.pem"
         private const val RSA_KEY_BITS = 2048
+        private const val ENGINE_COPY_PATH = "/data/ota_package/local_lenovoota.zip"
         private const val FIELD_MAX_TIMESTAMP = 14L
         // 防回滚钳制的提前量：now + 5 年
         private const val FUTURE_TIMESTAMP_MARGIN_SECONDS = 5L * 365 * 24 * 60 * 60
@@ -148,9 +149,36 @@ class SignTbEngineLocalOta : AppHookModule() {
         ensurePublicKeyPem()
         val signed = signOtaZip(localZip)
         if (signed) {
+            refreshEngineCopy(localZip)
             logger.info("OTA package signed, original flow will continue with the signed package")
         } else {
             logger.warn("Signing not performed; original package will be used as-is")
+        }
+    }
+
+    /**
+     * 把新签的 zip 同步覆写到引擎的安装副本 /data/ota_package/local_lenovoota.zip。
+     * 原逻辑只在引擎包信息缺失时才从 sdcard 重新复制；多次重试后包信息可能仍指向
+     * 旧签名轮次的副本，导致引擎校验的哈希与我们刚签的内容不一致。这里无条件刷新，
+     * 保证引擎读到的一定是本次签名产物（原逻辑随后可能重复复制，内容相同，无害）。
+     */
+    private fun refreshEngineCopy(signedZip: File) {
+        try {
+            val target = File(ENGINE_COPY_PATH)
+            if (!target.parentFile.exists()) {
+                logger.debug("Engine ota_package dir missing; original flow will copy the package")
+                return
+            }
+            FileInputStream(signedZip).use { input ->
+                FileOutputStream(target).use { output ->
+                    input.copyTo(output, 1 shl 20)
+                }
+            }
+            target.setReadable(true, false)
+            target.setWritable(true, false)
+            logger.info("Engine copy refreshed: $ENGINE_COPY_PATH (${target.length()} bytes)")
+        } catch (t: Throwable) {
+            logger.error("Failed to refresh engine copy", t)
         }
     }
 
