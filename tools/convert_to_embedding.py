@@ -147,7 +147,11 @@ def main():
         # Replace wildcard placeholders from step 1 with real activities.
         e["activityPairs"] = [{"from": a, "to": "*"} for a in sorted(known)]
         if not e["mainPage"]:
-            e["mainPage"] = guess_main_page(sorted(known))
+            sorted_known = sorted(known)
+            # Fall back to the first known activity when no Main/Home/Launcher
+            # style name is available, so entries stay usable.
+            e["mainPage"] = guess_main_page(sorted_known) or (
+                sorted_known[0] if sorted_known else "")
         if wildcard:
             record(pkg, "autoui_list.xml", "lossy",
                    "wildcard activityRule (mode info dropped); activity list unknown")
