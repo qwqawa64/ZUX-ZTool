@@ -92,13 +92,17 @@ class TbEngineSettingsViewModel(
     }
 
     /** 用户在证书模块确认弹窗中选择"安装"：安装成功后自动开启重签开关。 */
-    fun confirmInstallCertModule() {
-        _uiState.value = _uiState.value.copy(showCertModuleDialog = false)
+    fun confirmInstallCertModule(onResult: (String?) -> Unit) {
+        _uiState.value = _uiState.value.copy(
+            showCertModuleDialog = false,
+            isInstallingCertModule = true
+        )
         installOtaCertModule { error ->
             if (error == null) {
                 _uiState.value = _uiState.value.copy(signLocalOta = true)
                 repository.saveSignLocalOta(true)
             }
+            onResult(error)
         }
     }
 
