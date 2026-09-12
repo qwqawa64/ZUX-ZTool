@@ -136,6 +136,7 @@ fun TbEngineSettingsRoute(
     }
 
     if (uiState.showCertModuleDialog) {
+        val certInstallSuccessString = stringResource(R.string.tb_engine_cert_module_success)
         ZToolDialog(
             onDismissRequest = viewModel::dismissCertModuleDialog,
             title = { Text(stringResource(R.string.tb_engine_cert_module_required_title)) },
@@ -146,7 +147,7 @@ fun TbEngineSettingsRoute(
                         viewModel.confirmInstallCertModule { error ->
                             Toast.makeText(
                                 context,
-                                error ?: context.getString(R.string.tb_engine_cert_module_success),
+                                error ?: certInstallSuccessString,
                                 Toast.LENGTH_LONG
                             ).show()
                         }
