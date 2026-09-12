@@ -171,13 +171,18 @@ class TbEngineSettingsRepository(
         }
     }
 
-    /** 原 otacerts 条目全保留，追加 ZTool 证书（STORED DER 条目）。 */
+    /** 原 otacerts 条目全保留，追加 ZTool 证书（STORED PEM 条目）。 */
     private fun mergeOtacerts(original: File, target: File, certDer: ByteArray) {
         java.util.zip.ZipOutputStream(java.io.FileOutputStream(target)).use { zos ->
             val source = if (original.length() > 0) java.util.zip.ZipFile(original) else null
             try {
                 if (source != null) {
                     for (entry in source.entries()) {
+                        // 上一版 ZTool 证书模块覆盖了系统 otacerts.zip 时，
+                        // 读到的源文件里已含旧 ZTool 条目，跳过避免重复条目名
+                        if (entry.name == ZTOOL_CERT_ENTRY_NAME) {
+                            continue
+                        }
                         val bytes = source.getInputStream(entry).readBytes()
                         val ne = java.util.zip.ZipEntry(entry.name).apply {
                             method = entry.method
@@ -200,7 +205,7 @@ class TbEngineSettingsRepository(
                         .forEach { append(it).append('\n') }
                     append("-----END CERTIFICATE-----\n")
                 }.toByteArray(Charsets.UTF_8)
-                val ne = java.util.zip.ZipEntry("ztool_ota.x509.pem").apply {
+                val ne = java.util.zip.ZipEntry(ZTOOL_CERT_ENTRY_NAME).apply {
                     method = java.util.zip.ZipEntry.STORED
                     size = pem.size.toLong()
                     crc = java.util.zip.CRC32().apply { update(pem) }.value
@@ -339,6 +344,7 @@ class TbEngineSettingsRepository(
 
     companion object {
         private const val TAG = "TbEngineSettings"
+        private const val ZTOOL_CERT_ENTRY_NAME = "ztool_ota.x509.pem"
         private val KEY_CUSTOM_OTA_PARAMETERS = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
         private val KEY_OTA_PRIVATE_KEY = PreferenceKeys.TB_ENGINE_OTA_PRIVATE_KEY.name
         private val KEY_OTA_PUBLIC_KEY = PreferenceKeys.TB_ENGINE_OTA_PUBLIC_KEY.name
