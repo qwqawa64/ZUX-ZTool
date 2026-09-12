@@ -114,6 +114,15 @@ fun ZToolTheme(
 
     // One pipeline for both front ends: Material3 owns the derived scheme, Miuix
     // components receive the same scheme mapped onto Miuix color roles.
+    // Circuit breaker: when dynamic color is disabled, Miuix stops consuming the
+    // externally derived palette and falls back to its built-in default palette.
+    val miuixColors = if (effectiveSettings.dynamicColorEnabled) {
+        colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme)
+    } else if (effectiveDarkTheme) {
+        miuixDarkColorScheme()
+    } else {
+        miuixLightColorScheme()
+    }
     val themedContent: @Composable () -> Unit = {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -121,7 +130,7 @@ fun ZToolTheme(
         ) {
             CompositionLocalProvider(LocalZToolColorScheme provides colorScheme) {
                 MiuixTheme(
-                    colors = colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme),
+                    colors = miuixColors,
                     content = {
                         if (isMiuixStyle) {
                             top.yukonga.miuix.kmp.basic.Scaffold { _ ->
