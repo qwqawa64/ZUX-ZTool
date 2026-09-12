@@ -660,7 +660,8 @@ class SignTbEngineLocalOta : AppHookModule() {
                     } else {
                         content
                     }
-                    out.write(manifest, keyStart, afterLen - keyStart)
+                    // 只写 tag（key），长度按新内容重新编码
+                    out.write(manifest, keyStart, afterKey - keyStart)
                     out.write(encodeVarint(rewritten.size.toLong()))
                     out.write(rewritten)
                     i = end
@@ -706,7 +707,8 @@ class SignTbEngineLocalOta : AppHookModule() {
                     val numeric = asText.length in 9..11 && asText.all { it.isDigit() }
                     if (numeric && asText.toLong() < futureTimestamp) {
                         val newText = futureTimestamp.toString().toByteArray(Charsets.US_ASCII)
-                        out.write(message, keyStart, afterLen - keyStart)
+                        // 只写 tag（key），长度按新内容重新编码
+                        out.write(message, keyStart, afterKey - keyStart)
                         out.write(encodeVarint(newText.size.toLong()))
                         out.write(newText)
                         changed = true
