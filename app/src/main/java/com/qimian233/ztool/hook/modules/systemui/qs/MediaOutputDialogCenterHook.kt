@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
-import android.content.ComponentName
+import android.annotation.SuppressLint
 import android.content.Context
 import android.media.session.MediaSessionManager
 import android.os.UserHandle
@@ -33,6 +33,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
  *   SystemUI 持 MODIFY_AUDIO_ROUTING 特权，可全量查询活跃会话（与其自身 start()
  *   回退逻辑同源）。查不到会话时保持原参数（空态弹窗）。
  */
+@SuppressLint("PrivateApi")
 class MediaOutputDialogCenterHook : AppHookModule() {
 
     // 线程内标志：仅主线程调用栈内可见，避免任何跨线程同步
@@ -68,7 +69,7 @@ class MediaOutputDialogCenterHook : AppHookModule() {
             val receiverClass = classLoader.loadClass(RECEIVER_CLASS)
             val onReceive = findMethod(
                 receiverClass, "onReceive",
-                android.content.Context::class.java, android.content.Intent::class.java
+                Context::class.java, android.content.Intent::class.java
             )
             hookWithId(onReceive, "media_output_dialog_receiver") { chain ->
                 launchViaTileBroadcast.set(true)
@@ -94,7 +95,9 @@ class MediaOutputDialogCenterHook : AppHookModule() {
             val dialogClass = classLoader.loadClass(BASE_DIALOG_CLASS)
             val getGravity = findMethod(dialogClass, "getGravity")
             hookWithId(getGravity, "media_output_dialog_gravity") { chain ->
-                if (launchViaTileBroadcast.get()) {
+                val isLaunchViaTile: Boolean =
+                    launchViaTileBroadcast.get() ?: return@hookWithId chain.proceed()
+                if (isLaunchViaTile) {
                     android.view.Gravity.CENTER
                 } else {
                     chain.proceed()
@@ -129,10 +132,8 @@ class MediaOutputDialogCenterHook : AppHookModule() {
                 if (args[0] != null) {
                     return@hookWithId chain.proceed()
                 }
-                val pkg = findActiveMediaPackage(chain.getThisObject())
-                if (pkg == null) {
-                    return@hookWithId chain.proceed()
-                }
+                val pkg =
+                    findActiveMediaPackage(chain.thisObject) ?: return@hookWithId chain.proceed()
                 logger.debug("Inject active media package: $pkg")
                 chain.proceed(
                     arrayOf(
@@ -191,6 +192,6 @@ class MediaOutputDialogCenterHook : AppHookModule() {
         const val MANAGER_CLASS =
             "com.android.systemui.media.dialog.MediaOutputDialogManager"
         const val CONTROLLER_CLASS =
-            "com.android.systemui.animation.DialogTransitionAnimator\$Controller"
+            $$"com.android.systemui.animation.DialogTransitionAnimator$Controller"
     }
 }
