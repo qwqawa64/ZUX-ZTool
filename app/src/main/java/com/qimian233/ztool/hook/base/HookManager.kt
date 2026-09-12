@@ -28,6 +28,8 @@ import com.qimian233.ztool.hook.modules.ota.HideOtaNotifications
 import com.qimian233.ztool.hook.modules.tbengine.LenovoOTAHook
 import com.qimian233.ztool.hook.modules.ota.NoAutoOtaInstall
 import com.qimian233.ztool.hook.modules.packageinstaller.DisableInstallerAdvertisement
+import com.qimian233.ztool.hook.modules.pp.BlockGamePolicyUpdate
+import com.qimian233.ztool.hook.modules.pp.BlockPowerPolicySync
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerHookScan
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerNoDeleteModule
 import com.qimian233.ztool.hook.modules.packageinstaller.PackageInstallerPermissionHook
@@ -246,6 +248,10 @@ object HookManager {
         registerHookModule(DisableTbEnginePush())
         registerHookModule(DisableTbEngineReporting())
         registerHookModule(SignTbEngineLocalOta())
+
+        // ── ZUI 性能服务 (target: com.zui.pp) ──
+        registerHookModule(BlockPowerPolicySync())
+        registerHookModule(BlockGamePolicyUpdate())
 
         // 注入 XposedInterface
         for (module in hookModules) {

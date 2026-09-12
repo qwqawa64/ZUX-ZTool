@@ -26,6 +26,7 @@ import com.qimian233.ztool.screens.mobiledesktop.MobileDesktopSettingsRoute
 import com.qimian233.ztool.screens.ota.OtaSettingsRoute
 import com.qimian233.ztool.screens.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.screens.safecenter.SafeCenterSettingsRoute
+import com.qimian233.ztool.screens.pp.ZuiPerformanceSettingsRoute
 import com.qimian233.ztool.screens.tbengine.TbEngineSettingsRoute
 import com.qimian233.ztool.screens.ztoolsettings.SettingsMainRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRoute
@@ -532,6 +533,25 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
+            route = FeatureDestination.ZuiPerformance.route,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            ZuiPerformanceSettingsRoute(
+                title = stringResource(R.string.zui_pp_app_name),
+                packageName = ScopeKeys.ZUI_PERFORMANCE.packageName,
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
             route = FeatureDestination.Framework.route,
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -692,6 +712,7 @@ private fun navigationRouteIndex(route: String?): Int {
         FeatureDestination.Framework.route -> 2
         FeatureDestination.SafeCenter.route -> 2
         FeatureDestination.TbEngine.route -> 2
+        FeatureDestination.ZuiPerformance.route -> 2
         MainRoute.Settings.name -> 3
         HiddenRoute.SETTINGS_THEME -> 4
         HiddenRoute.SETTINGS_ABOUT -> 4

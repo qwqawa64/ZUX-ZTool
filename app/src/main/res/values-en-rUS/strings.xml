@@ -110,6 +110,15 @@
     <string name="safe_center_app_description">Allow selection Internal Storage, disable safe scan and manage APP auto start.</string>
     <string name="tb_engine_app_name">UDS Realtime Connection Engine</string>
     <string name="tb_engine_app_description">Auto download, auto install, pre-installed app updates and push settings</string>
+    <string name="zui_pp_app_name">ZUI Performance Service</string>
+    <string name="zui_pp_app_description">Block cloud-synced power policies and game policy OTA delivery</string>
+    <string name="zui_pp_setting_title">Cloud Policy Blocking</string>
+    <string name="zui_pp_block_power_policy_title">Block power policy cloud sync</string>
+    <string name="zui_pp_block_power_policy_summary">Prevent the performance service from fetching and applying power policies from the cloud (PolicySyncCmp); built-in device policies are kept</string>
+    <string name="zui_pp_block_game_policy_title">Block game policy OTA delivery</string>
+    <string name="zui_pp_block_game_policy_summary">Prevent the performance service from receiving game/performance policy packages (gamepolicy.zip) pushed by the UDS engine; built-in policies are kept</string>
+    <string name="zui_pp_hint_title">Note</string>
+    <string name="zui_pp_hint_content">These switches require adding ZUI Performance Service (com.zui.pp) to the LSPosed scope; tap the bottom-right button to restart the target app after changing them. Blocking policies may affect cloud-tuned thermal and gaming behavior.</string>
     <string name="tb_engine_setting_title">Update Engine Behavior</string>
     <string name="tb_engine_disable_auto_download_title">Disable automatic firmware download</string>
     <string name="tb_engine_disable_auto_download_summary">Stop the engine from downloading firmware packages automatically; manual download is unaffected</string>

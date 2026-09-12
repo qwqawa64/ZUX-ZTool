@@ -12,7 +12,6 @@ enum class HowToRestart {
  * 
  * 可以改良一下，再描述一个优先推荐的重启作用域方式
  * 
- * 性能服务之类的到时候也加上，要记得在这里添加作用域 key 了。
  */
 object ScopeKeys { 
     val SETTINGS = Scope("com.android.settings", HowToRestart.AmStop)
@@ -30,4 +29,5 @@ object ScopeKeys {
     val WALLPAPER_SETTINGS = Scope("com.zui.wallpapersetting", HowToRestart.AmStop)
     val LAUNCHER = Scope("com.zui.launcher", HowToRestart.AmStop)
     val MOBILE_DESKTOP = Scope("com.motorola.mobiledesktop", HowToRestart.AmStop)
+    val ZUI_PERFORMANCE = Scope("com.zui.pp", HowToRestart.AmStop)
 }

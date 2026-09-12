@@ -121,6 +121,15 @@
     <string name="safe_center_app_description">存储选择，安全扫描设置，app自启</string>
     <string name="tb_engine_app_name">UDS 实时连接引擎</string>
     <string name="tb_engine_app_description">更新引擎自动下载、自动安装、预装应用更新与推送设置</string>
+    <string name="zui_pp_app_name">ZUI 性能服务</string>
+    <string name="zui_pp_app_description">省电策略云端同步与游戏策略 OTA 下发的屏蔽设置</string>
+    <string name="zui_pp_setting_title">云端策略屏蔽</string>
+    <string name="zui_pp_block_power_policy_title">屏蔽省电策略云端同步</string>
+    <string name="zui_pp_block_power_policy_summary">阻止性能服务从云端拉取并应用省电策略（PolicySyncCmp），仅保留设备内置策略</string>
+    <string name="zui_pp_block_game_policy_title">屏蔽游戏策略 OTA 下发</string>
+    <string name="zui_pp_block_game_policy_summary">阻止性能服务接收 UDS 引擎推送的游戏/性能策略包（gamepolicy.zip），保留系统内置策略</string>
+    <string name="zui_pp_hint_title">说明</string>
+    <string name="zui_pp_hint_content">以上开关需要将 ZUI 性能服务（com.zui.pp）加入 LSPosed 作用域；修改后点击右下角按钮重启目标应用生效。屏蔽策略可能影响温控与游戏场景的云端调优。</string>
     <string name="tb_engine_setting_title">更新引擎行为</string>
     <string name="tb_engine_disable_auto_download_title">禁用固件自动下载</string>
     <string name="tb_engine_disable_auto_download_summary">阻止引擎在发现新版本后自动下载固件包，不影响手动下载</string>

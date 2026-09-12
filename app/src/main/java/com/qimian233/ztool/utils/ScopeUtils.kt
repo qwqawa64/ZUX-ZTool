@@ -57,6 +57,7 @@ object ScopeUtils {
                 ScopeKeys.MOBILE_DESKTOP,
             )
             FeatureDestination.TbEngine -> listOf(ScopeKeys.TB_ENGINE)
+            FeatureDestination.ZuiPerformance -> listOf(ScopeKeys.ZUI_PERFORMANCE)
         }
     }
 

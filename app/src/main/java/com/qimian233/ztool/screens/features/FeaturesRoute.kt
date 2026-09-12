@@ -68,7 +68,8 @@ enum class FeatureDestination(
     MobileDesktop("feature/mobile-desktop"),
     Framework("feature/framework"),
     SafeCenter("feature/safe-center"),
-    TbEngine("feature/tb-engine")
+    TbEngine("feature/tb-engine"),
+    ZuiPerformance("feature/zui-performance")
 }
 
 @Composable
@@ -255,6 +256,14 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 packageName = ScopeKeys.TB_ENGINE.packageName,
                 destination = FeatureDestination.TbEngine,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.TbEngine)
+            ),
+            featureItem(
+                context = context,
+                nameRes = R.string.zui_pp_app_name,
+                descriptionRes = R.string.zui_pp_app_description,
+                packageName = ScopeKeys.ZUI_PERFORMANCE.packageName,
+                destination = FeatureDestination.ZuiPerformance,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.ZuiPerformance)
             )
         )
     }

@@ -164,6 +164,10 @@ object PreferenceKeys {
     val DISABLE_TB_ENGINE_REPORTING = BoolKey("disable_tbengine_reporting", false)
     val SIGN_TB_ENGINE_LOCAL_OTA = BoolKey("sign_tbengine_local_ota", false)
 
+    // ── ZUI 性能服务 (com.zui.pp) ──
+    val PP_BLOCK_POWER_POLICY_SYNC = BoolKey("pp_block_power_policy_sync", false)
+    val PP_BLOCK_GAME_POLICY_UPDATE = BoolKey("pp_block_game_policy_update", false)
+
     // ── Wallpaper ──
     val CHARGE_ANIMATION_FIX = BoolKey("charge_animation_fix", false)
     val DESKTOP_LIVE_WALLPAPER = BoolKey("desktop_live_wallpaper", false)
@@ -298,6 +302,7 @@ object PreferenceKeys {
         DISABLE_TB_ENGINE_AUTO_DOWNLOAD, DISABLE_TB_ENGINE_AUTO_INSTALL,
         DISABLE_TB_ENGINE_APP_UPDATE, DISABLE_TB_ENGINE_PUSH,
         DISABLE_TB_ENGINE_REPORTING, SIGN_TB_ENGINE_LOCAL_OTA,
+        PP_BLOCK_POWER_POLICY_SYNC, PP_BLOCK_GAME_POLICY_UPDATE,
         CHARGE_ANIMATION_FIX, DOCUMENTS_UI_BYPASS,
         DESKTOP_LIVE_WALLPAPER,
         DISABLE_ALL_VIRUS_SCANS, DEFAULT_ENABLE_AUTORUN,
