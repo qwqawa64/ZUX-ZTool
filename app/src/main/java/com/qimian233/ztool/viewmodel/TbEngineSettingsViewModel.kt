@@ -19,6 +19,7 @@ class TbEngineSettingsViewModel(
 
     fun initialize(unknownText: String) {
         repository.ensureCustomOtaParametersEnabled()
+        repository.ensureOtaSigningKeys()
         loadSettings()
         loadCurrentDeviceInfo(unknownText)
     }

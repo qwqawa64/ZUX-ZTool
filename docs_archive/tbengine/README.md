@@ -84,7 +84,50 @@ tbengine 是一个状态机驱动的后台引擎（`MainService` 内两条工作
 - `app/src/main/java/com/qimian233/ztool/data/tbengine/TbEngineSettingsRepository.kt`（新增）
 - `app/src/main/res/values/strings.xml`、`app/src/main/res/values-en/strings.xml`
 
-## 5. 未实现项（后续迭代）
+## 5. 本地 OTA 重签（SignTbEngineLocalOta）
+
+### 5.1 触发链路（com.lenovo.ota UI → tbengine）
+
+```
+UI 菜单 memu_localInstall → MainActivity.checkLocalOtaPackageFile()
+  检查 /sdcard/ota.zip → ServiceController.startABLocalInstalling()
+  → 写 otaPackageBrief/PackageVerified=true
+  → 广播 "com.lenovo.ota.ab.installing"（显式发给 tbengine/NotificationReceiver，
+    权限 lenovo.permission.udsengine.exported）
+tbengine: NotificationReceiver → MessengerService → ServiceController.startABInstalling
+  → SwfABInstalling.doMyPrimaryJob()：/sdcard/ota.zip → /data/ota_package/local_lenovoota.zip
+    → PayloadSpecs.forNonStreaming → UpdateEngine.applyPayload
+```
+
+Hook 拦截点为 `SwfABInstalling.doMyPrimaryJob()`（tbengine worker 线程，阻塞无 ANR）；
+另 hook `android.os.UpdateEngine.applyPayload` 注入 `public_key` 属性（AOSP key rotation 通道），
+公钥 PEM 写至 `/data/ota_package/ztool_ota_pub.pem`。
+
+### 5.2 payload 格式（实测 TB710FU OTA_414_479774.zip，AOSP v2）
+
+- 布局：`[24B header CrAU][manifest][metadata 签名 267B][数据段][payload 签名 267B @文件末尾]`；
+  manifest field4 `signatures_offset`/field5 `signatures_size` 是**相对数据段起点**的偏移。
+- 签名块固定 267B：`0a8802 128002 <256B RSA-2048 签名> 1d00010000`，metadata 与 payload 签名同构。
+- 哈希约定（实测）：`METADATA_HASH` = SHA256(**header+manifest**)（注意含 24B 头部）；
+  `FILE_HASH` = SHA256(整个 payload.bin)；payload 签名覆盖 header+manifest+metadata签名+数据段（去掉尾部签名块）。
+- 数据段原样保留 ⇒ manifest 与 signatures_offset/size 不变，重签只替换两个 256B 签名值，重签后 payload.bin 总长不变。
+
+### 5.3 密钥与数据流
+
+- RSA-2048 密钥对由 `TbEngineSettingsRepository.ensureOtaSigningKeys()` 首次打开 TB Engine 页时生成，
+  PKCS#8/X509 Base64 存于 `xposed_module_config`（`tbengine_ota_private_key` / `tbengine_ota_public_key`），
+  Hook 侧经 remotePreferences 读取；私钥不出设备。
+- 重签时 zip 内 `payload.bin` / `payload_properties.txt` 保持 STORED（`forNonStreaming` 依赖偏移），
+  properties 的 FILE_HASH/FILE_SIZE/METADATA_HASH/METADATA_SIZE 同步更新。
+- 磁盘开销约 2 倍包体积临时空间；签名耗时主要是全量 SHA256。
+
+### 5.4 待真机验证
+
+- ZUI 的 update_engine 是否接受 `public_key` 属性（AOSP 默认支持，联想可能 patch）。
+- payload 签名的覆盖范围是按 AOSP `delta_performer` 的"去尾部签名块后全量"实现，若真机报
+  signature mismatch，需对照设备 update_engine 版本核对哈希边界。
+
+## 6. 未实现项（后续迭代）
 
 - **payload 签名检查绕过**：tbengine 自身只做 MD5 校验，payload 签名校验在 update_engine（native）与
   `RecoverySystem.verifyPackage`（framework）内，需要 system-framework 级 hook，且缺少"喂入第三方包"的入口，暂缓。

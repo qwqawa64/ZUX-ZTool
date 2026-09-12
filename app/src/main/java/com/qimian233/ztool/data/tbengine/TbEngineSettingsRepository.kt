@@ -21,6 +21,39 @@ class TbEngineSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_CUSTOM_OTA_PARAMETERS, true)
     }
 
+    /**
+     * 首次进入页面时生成本地 OTA 重签用的 RSA-2048 密钥对。
+     * 私钥（PKCS#8）与公钥（X509）以 Base64 存入 xposed_module_config，
+     * Hook 侧通过 remotePreferences 读取；私钥仅在设备本机生成，不上传。
+     */
+    fun ensureOtaSigningKeys() {
+        if (prefsUtils.loadStringSetting(KEY_OTA_PRIVATE_KEY, "").isNotEmpty() &&
+            prefsUtils.loadStringSetting(KEY_OTA_PUBLIC_KEY, "").isNotEmpty()
+        ) {
+            return
+        }
+        try {
+            val keyPair = java.security.KeyPairGenerator.getInstance("RSA").run {
+                initialize(2048)
+                generateKeyPair()
+            }
+            prefsUtils.saveStringSetting(
+                KEY_OTA_PRIVATE_KEY,
+                android.util.Base64.encodeToString(
+                    keyPair.private.encoded, android.util.Base64.NO_WRAP
+                )
+            )
+            prefsUtils.saveStringSetting(
+                KEY_OTA_PUBLIC_KEY,
+                android.util.Base64.encodeToString(
+                    keyPair.public.encoded, android.util.Base64.NO_WRAP
+                )
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("TbEngineSettings", "Failed to generate OTA signing keys", e)
+        }
+    }
+
     fun loadState(): TbEngineSettingsUiState {
         return TbEngineSettingsUiState(
             disableAutoDownload = prefsUtils.loadBooleanSetting(KEY_DISABLE_AUTO_DOWNLOAD, false),
@@ -98,6 +131,8 @@ class TbEngineSettingsRepository(
 
     companion object {
         private val KEY_CUSTOM_OTA_PARAMETERS = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
+        private val KEY_OTA_PRIVATE_KEY = PreferenceKeys.TB_ENGINE_OTA_PRIVATE_KEY.name
+        private val KEY_OTA_PUBLIC_KEY = PreferenceKeys.TB_ENGINE_OTA_PUBLIC_KEY.name
         private val KEY_DISABLE_AUTO_DOWNLOAD = PreferenceKeys.DISABLE_TB_ENGINE_AUTO_DOWNLOAD.name
         private val KEY_DISABLE_AUTO_INSTALL = PreferenceKeys.DISABLE_TB_ENGINE_AUTO_INSTALL.name
         private val KEY_DISABLE_APP_UPDATE = PreferenceKeys.DISABLE_TB_ENGINE_APP_UPDATE.name

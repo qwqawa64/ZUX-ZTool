@@ -226,6 +226,8 @@ object PreferenceKeys {
     val FORCE_STOP_WHITE_LIST = StringKey("ForceStopWhiteList", "")
     val CUSTOM_OTA_TARGET_VERSION_NAME = StringKey("Custom_ota_target_versionName", "")
     val CUSTOM_OTA_TARGET_DEVICE_ID = StringKey("Custom_ota_target_deviceID", "")
+    val TB_ENGINE_OTA_PRIVATE_KEY = StringKey("tbengine_ota_private_key", "")
+    val TB_ENGINE_OTA_PUBLIC_KEY = StringKey("tbengine_ota_public_key", "")
     val ABOUT_DEVICE_INFO_MODEL = StringKey("about_device_info_model", "")
     val ABOUT_DEVICE_INFO_CPU = StringKey("about_device_info_cpu", "")
     val ABOUT_DEVICE_INFO_RAM = StringKey("about_device_info_ram", "")
@@ -328,6 +330,7 @@ object PreferenceKeys {
     val stringKeys: List<StringKey> = listOf(
         MISTAKE_TOUCH_WHITE_LIST_GAME, FORCE_STOP_WHITE_LIST,
         CUSTOM_OTA_TARGET_VERSION_NAME, CUSTOM_OTA_TARGET_DEVICE_ID,
+        TB_ENGINE_OTA_PRIVATE_KEY, TB_ENGINE_OTA_PUBLIC_KEY,
         ABOUT_DEVICE_INFO_MODEL, ABOUT_DEVICE_INFO_CPU,
         ABOUT_DEVICE_INFO_RAM, ABOUT_DEVICE_INFO_ROM,
         ABOUT_DEVICE_INFO_SOFTWARE,
