@@ -27,6 +27,7 @@ class TbEngineSettingsRepository(
             disableAutoInstall = prefsUtils.loadBooleanSetting(KEY_DISABLE_AUTO_INSTALL, false),
             disableAppUpdate = prefsUtils.loadBooleanSetting(KEY_DISABLE_APP_UPDATE, false),
             disablePush = prefsUtils.loadBooleanSetting(KEY_DISABLE_PUSH, false),
+            signLocalOta = prefsUtils.loadBooleanSetting(KEY_SIGN_LOCAL_OTA, false),
             customVersion = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_VERSION, ""),
             customDeviceId = prefsUtils.loadStringSetting(KEY_CUSTOM_OTA_TARGET_DEVICE_ID, ""),
             currentVersion = context.getString(R.string.system_update_loading_ellipsis),
@@ -48,6 +49,10 @@ class TbEngineSettingsRepository(
 
     fun saveDisablePush(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISABLE_PUSH, enabled)
+    }
+
+    fun saveSignLocalOta(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_SIGN_LOCAL_OTA, enabled)
     }
 
     fun saveCustomVersion(value: String) {
@@ -97,6 +102,7 @@ class TbEngineSettingsRepository(
         private val KEY_DISABLE_AUTO_INSTALL = PreferenceKeys.DISABLE_TB_ENGINE_AUTO_INSTALL.name
         private val KEY_DISABLE_APP_UPDATE = PreferenceKeys.DISABLE_TB_ENGINE_APP_UPDATE.name
         private val KEY_DISABLE_PUSH = PreferenceKeys.DISABLE_TB_ENGINE_PUSH.name
+        private val KEY_SIGN_LOCAL_OTA = PreferenceKeys.SIGN_TB_ENGINE_LOCAL_OTA.name
         private val KEY_CUSTOM_OTA_TARGET_VERSION = PreferenceKeys.CUSTOM_OTA_TARGET_VERSION_NAME.name
         private val KEY_CUSTOM_OTA_TARGET_DEVICE_ID = PreferenceKeys.CUSTOM_OTA_TARGET_DEVICE_ID.name
     }

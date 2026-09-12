@@ -161,6 +161,7 @@ object PreferenceKeys {
     val DISABLE_TB_ENGINE_AUTO_INSTALL = BoolKey("disable_tbengine_auto_install", false)
     val DISABLE_TB_ENGINE_APP_UPDATE = BoolKey("disable_tbengine_app_update", false)
     val DISABLE_TB_ENGINE_PUSH = BoolKey("disable_tbengine_push", false)
+    val SIGN_TB_ENGINE_LOCAL_OTA = BoolKey("sign_tbengine_local_ota", false)
 
     // ── Wallpaper ──
     val CHARGE_ANIMATION_FIX = BoolKey("charge_animation_fix", false)
@@ -292,6 +293,7 @@ object PreferenceKeys {
         BLOCK_OTA_INSTALL_DIALOG, HIDE_OTA_NOTIFICATIONS,
         DISABLE_TB_ENGINE_AUTO_DOWNLOAD, DISABLE_TB_ENGINE_AUTO_INSTALL,
         DISABLE_TB_ENGINE_APP_UPDATE, DISABLE_TB_ENGINE_PUSH,
+        SIGN_TB_ENGINE_LOCAL_OTA,
         CHARGE_ANIMATION_FIX, DOCUMENTS_UI_BYPASS,
         DESKTOP_LIVE_WALLPAPER,
         DISABLE_ALL_VIRUS_SCANS, DEFAULT_ENABLE_AUTORUN,

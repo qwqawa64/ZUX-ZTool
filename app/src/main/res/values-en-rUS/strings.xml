@@ -119,6 +119,8 @@
     <string name="tb_engine_disable_app_update_summary">Stop the engine from automatically downloading and installing pre-installed app and data package updates</string>
     <string name="tb_engine_disable_push_title">Disable UPS push</string>
     <string name="tb_engine_disable_push_summary">Stop the engine from registering with the Lenovo push service and receiving update pushes</string>
+    <string name="tb_engine_sign_local_ota_title">Re-sign local OTA package (experimental)</string>
+    <string name="tb_engine_sign_local_ota_summary">When installing /sdcard/ota.zip via System Update, re-sign the payload with the ZTool key pair before handing it to the update engine (signing algorithm not implemented yet; logging only)</string>
     <string name="page_features_app_list_permission_warning">Unable to get all installed APPs. Please, check the permission of querying APP list and restart ZTool to fix this problem.</string>
     <string name="page_features_all_filtered_warning">All applications are filtered!</string>
     <string name="page_home_config_upgraded_tip_message">The current version changed the configuration file format.\nRestart the system to keep configuration reading and writing working correctly.</string>

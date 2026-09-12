@@ -130,6 +130,8 @@
     <string name="tb_engine_disable_app_update_summary">阻止引擎自动下载并安装预装应用与数据包更新，不影响用户手动确认</string>
     <string name="tb_engine_disable_push_title">禁用 UPS 推送</string>
     <string name="tb_engine_disable_push_summary">阻止引擎向联想推送服务注册设备和接收更新推送</string>
+    <string name="tb_engine_sign_local_ota_title">本地安装包重签（实验性）</string>
+    <string name="tb_engine_sign_local_ota_summary">在系统更新 APP 本地安装 /sdcard/ota.zip 时，先用 ZTool 密钥对重签 payload 再交给更新引擎（签名算法尚未实现，当前仅记录日志）</string>
     <string name="page_features_app_list_permission_warning">无法读取已安装的应用，请检查是否已授权本应用读取应用列表，然后重启 APP 。</string>
     <string name="page_features_all_filtered_warning">全部应用包都被过滤！</string>
     <!--日志页资源值-->

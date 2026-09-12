@@ -65,6 +65,11 @@ class TbEngineSettingsViewModel(
         repository.saveDisablePush(enabled)
     }
 
+    fun setSignLocalOta(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(signLocalOta = enabled)
+        repository.saveSignLocalOta(enabled)
+    }
+
     fun setCustomVersion(value: String) {
         _uiState.value = _uiState.value.copy(customVersion = value)
         repository.saveCustomVersion(value)
@@ -109,6 +114,7 @@ data class TbEngineSettingsUiState(
     val disableAutoInstall: Boolean = false,
     val disableAppUpdate: Boolean = false,
     val disablePush: Boolean = false,
+    val signLocalOta: Boolean = false,
     val customVersion: String = "",
     val customDeviceId: String = "",
     val currentVersion: String = "",
