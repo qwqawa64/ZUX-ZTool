@@ -19,7 +19,7 @@ object ScopeKeys {
     val PERMISSION_CONTROLLER = Scope("com.android.permissioncontroller", HowToRestart.AmStop)
     val ZUI_SAFE_CENTER = Scope("com.zui.safecenter", HowToRestart.AmStop)
     val OTA = Scope("com.lenovo.ota", HowToRestart.AmStop)
-    val TB_ENGINE = Scope("com.lenovo.tbengine", HowToRestart.AmStop)
+    val TB_ENGINE = Scope("com.lenovo.tbengine", HowToRestart.KillAll)
     val LENOVO_SAFE_CENTER = Scope("com.lenovo.safecenter", HowToRestart.AmStop)
     val DOCUMENTS_UI = Scope("com.android.documentsui", HowToRestart.AmStop)
     val ANDROID_SYSTEM = Scope("android", HowToRestart.Reboot)
