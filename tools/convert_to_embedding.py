@@ -84,7 +84,15 @@ def main():
     os.makedirs(OUT, exist_ok=True)
 
     with open(EXISTING_CONFIG, encoding="utf-8") as f:
-        existing_names = {p["name"] for p in json.load(f)["packages"]}
+        existing = json.load(f)
+    # Accept both the wrapped config {packages: [...]} and a bare entry list.
+    if isinstance(existing, dict) and "packages" in existing:
+        existing_names = {p["name"] for p in existing["packages"]}
+    elif isinstance(existing, list):
+        existing_names = {p["name"] for p in existing if isinstance(p, dict)}
+    else:
+        raise SystemExit(f"unexpected root structure in {EXISTING_CONFIG}; "
+                         "refusing to dedupe against garbage input")
 
     entries = OrderedDict()   # pkg -> entry dict
     notes = OrderedDict()     # pkg -> [status, source, note]
