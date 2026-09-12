@@ -17,6 +17,10 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
             noChargeAnimation = prefsUtils.loadBooleanSetting(KEY_NO_CHARGE_ANIM, false),
             chargeAnimationFix = prefsUtils.loadBooleanSetting(KEY_CHARGE_ANIM_FIX, false),
             customChargeAnimation = prefsUtils.loadBooleanSetting(KEY_CUSTOM_CHARGE_ANIM, false),
+            chargeAnimDurationEnabled = prefsUtils.loadBooleanSetting(KEY_CHARGE_ANIM_DURATION, false),
+            chargeAnimDurationMs = prefsUtils.loadIntegerSetting(
+                KEY_CHARGE_ANIM_DURATION_MS, DEFAULT_CHARGE_ANIM_DURATION_MS
+            ),
             desktopLiveWallpaper = prefsUtils.loadBooleanSetting(KEY_DESKTOP_LIVE_WP, false),
             wallpaperScaleMode = prefsUtils.loadStringSetting(
                 KEY_WP_SCALE_MODE, PreferenceKeys.DESKTOP_LIVE_WALLPAPER_SCALE_MODE.default
@@ -27,6 +31,14 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
     fun saveNoChargeAnimation(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_NO_CHARGE_ANIM, enabled)
     fun saveChargeAnimationFix(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_CHARGE_ANIM_FIX, enabled)
     fun saveCustomChargeAnimation(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_CUSTOM_CHARGE_ANIM, enabled)
+    fun saveChargeAnimDurationEnabled(enabled: Boolean) =
+        prefsUtils.saveBooleanSetting(KEY_CHARGE_ANIM_DURATION, enabled)
+
+    fun saveChargeAnimDurationMs(durationMs: Int) =
+        prefsUtils.saveIntegerSetting(
+            KEY_CHARGE_ANIM_DURATION_MS,
+            durationMs.coerceIn(CHARGE_ANIM_DURATION_MIN_MS, CHARGE_ANIM_DURATION_MAX_MS)
+        )
     fun saveDesktopLiveWallpaper(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_DESKTOP_LIVE_WP, enabled)
     fun saveWallpaperScaleMode(mode: String) = prefsUtils.saveStringSetting(KEY_WP_SCALE_MODE, mode)
 
@@ -63,6 +75,12 @@ class AnimationWallpaperSettingsRepository(private val context: Context) {
         private val KEY_NO_CHARGE_ANIM = PreferenceKeys.NO_CHARGE_ANIMATION.name
         private val KEY_CHARGE_ANIM_FIX = PreferenceKeys.CHARGE_ANIMATION_FIX.name
         private val KEY_CUSTOM_CHARGE_ANIM = PreferenceKeys.CUSTOM_CHARGE_ANIMATION.name
+        private val KEY_CHARGE_ANIM_DURATION = PreferenceKeys.CHARGE_ANIMATION_DURATION.name
+        private val KEY_CHARGE_ANIM_DURATION_MS = PreferenceKeys.CHARGE_ANIMATION_DURATION_MS.name
+
+        const val DEFAULT_CHARGE_ANIM_DURATION_MS = 3500
+        const val CHARGE_ANIM_DURATION_MIN_MS = 1000
+        const val CHARGE_ANIM_DURATION_MAX_MS = 15000
         private val KEY_DESKTOP_LIVE_WP = PreferenceKeys.DESKTOP_LIVE_WALLPAPER.name
         private val KEY_WP_SCALE_MODE = PreferenceKeys.DESKTOP_LIVE_WALLPAPER_SCALE_MODE.name
     }
@@ -72,6 +90,8 @@ data class AnimationWallpaperSettingsUiState(
     val noChargeAnimation: Boolean = false,
     val chargeAnimationFix: Boolean = false,
     val customChargeAnimation: Boolean = false,
+    val chargeAnimDurationEnabled: Boolean = false,
+    val chargeAnimDurationMs: Int = 3500,
     val desktopLiveWallpaper: Boolean = false,
     val wallpaperScaleMode: String = "fit",
     val isRestartProcessing: Boolean = false,

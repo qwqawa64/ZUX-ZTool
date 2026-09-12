@@ -47,6 +47,16 @@ class AnimationWallpaperSettingsViewModel(
         repository.saveCustomChargeAnimation(enabled)
     }
 
+    fun setChargeAnimDurationEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(chargeAnimDurationEnabled = enabled)
+        repository.saveChargeAnimDurationEnabled(enabled)
+    }
+
+    fun setChargeAnimDurationMs(durationMs: Int) {
+        _uiState.value = _uiState.value.copy(chargeAnimDurationMs = durationMs)
+        repository.saveChargeAnimDurationMs(durationMs)
+    }
+
     fun setDesktopLiveWallpaper(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(desktopLiveWallpaper = enabled)
         repository.saveDesktopLiveWallpaper(enabled)

@@ -112,16 +112,6 @@ class LockScreenSettingsViewModel(
         repository.saveCustomFormat(value)
     }
 
-    fun setChargeAnimDurationEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(chargeAnimDurationEnabled = enabled)
-        repository.saveChargeAnimDurationEnabled(enabled)
-    }
-
-    fun setChargeAnimDurationMs(durationMs: Int) {
-        _uiState.value = _uiState.value.copy(chargeAnimDurationMs = durationMs)
-        repository.saveChargeAnimDurationMs(durationMs)
-    }
-
     fun dismissRootPermissionDialog() {
         _uiState.value = _uiState.value.copy(showRootPermissionDialog = false)
     }
@@ -217,7 +207,5 @@ data class LockScreenSettingsUiState(
     val customFormatEnabled: Boolean = false,
     val customFormat: String = "",
     val isRestartProcessing: Boolean = false,
-    val showRestartDialog: Boolean = false,
-    val chargeAnimDurationEnabled: Boolean = false,
-    val chargeAnimDurationMs: Int = 3500
+    val showRestartDialog: Boolean = false
 )

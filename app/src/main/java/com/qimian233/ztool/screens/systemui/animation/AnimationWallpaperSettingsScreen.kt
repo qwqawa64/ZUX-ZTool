@@ -145,6 +145,8 @@ fun AnimationWallpaperSettingsRoute(
         onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
         onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
         onCustomChargeAnimationChanged = viewModel::setCustomChargeAnimation,
+        onChargeAnimDurationEnabledChanged = viewModel::setChargeAnimDurationEnabled,
+        onChargeAnimDurationMsChanged = viewModel::setChargeAnimDurationMs,
         onDesktopLiveWallpaperChanged = viewModel::setDesktopLiveWallpaper,
         onWallpaperScaleModeChanged = viewModel::setWallpaperScaleMode,
         onRestartScope = viewModel::showRestartDialog,
@@ -191,6 +193,8 @@ private fun AnimationWallpaperSettingsScreen(
     onNoChargeAnimationChanged: (Boolean) -> Unit,
     onChargeAnimationFixChanged: (Boolean) -> Unit,
     onCustomChargeAnimationChanged: (Boolean) -> Unit,
+    onChargeAnimDurationEnabledChanged: (Boolean) -> Unit,
+    onChargeAnimDurationMsChanged: (Int) -> Unit,
     onDesktopLiveWallpaperChanged: (Boolean) -> Unit,
     onWallpaperScaleModeChanged: (String) -> Unit,
     onRestartScope: () -> Unit,
@@ -240,6 +244,8 @@ private fun AnimationWallpaperSettingsScreen(
                         onNoChargeAnimationChanged = onNoChargeAnimationChanged,
                         onChargeAnimationFixChanged = onChargeAnimationFixChanged,
                         onCustomChargeAnimationChanged = onCustomChargeAnimationChanged,
+                        onChargeAnimDurationEnabledChanged = onChargeAnimDurationEnabledChanged,
+                        onChargeAnimDurationMsChanged = onChargeAnimDurationMsChanged,
                         onDesktopLiveWallpaperChanged = onDesktopLiveWallpaperChanged,
                         onWallpaperScaleModeChanged = onWallpaperScaleModeChanged,
                         onSelectPortraitVideo = onSelectPortraitVideo,
@@ -260,6 +266,8 @@ private fun animationWallpaperSettingsSections(
     onNoChargeAnimationChanged: (Boolean) -> Unit,
     onChargeAnimationFixChanged: (Boolean) -> Unit,
     onCustomChargeAnimationChanged: (Boolean) -> Unit,
+    onChargeAnimDurationEnabledChanged: (Boolean) -> Unit,
+    onChargeAnimDurationMsChanged: (Int) -> Unit,
     onDesktopLiveWallpaperChanged: (Boolean) -> Unit,
     onWallpaperScaleModeChanged: (String) -> Unit,
     onSelectPortraitVideo: () -> Unit,
@@ -316,6 +324,30 @@ private fun animationWallpaperSettingsSections(
                             tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
                     }
+                )
+            )
+        }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.system_ui_animation_charge_anim_duration_title),
+                summary = stringResource(R.string.system_ui_animation_charge_anim_duration_summary),
+                checked = state.chargeAnimDurationEnabled,
+                onCheckedChange = onChargeAnimDurationEnabledChanged
+            )
+        )
+        if (state.chargeAnimDurationEnabled) {
+            add(
+                SettingItem.Slider(
+                    title = stringResource(R.string.system_ui_animation_charge_anim_duration_slider_title),
+                    summary = stringResource(R.string.system_ui_animation_charge_anim_duration_slider_summary),
+                    value = state.chargeAnimDurationMs.toFloat(),
+                    valueText = stringResource(
+                        R.string.system_ui_animation_charge_anim_duration_value,
+                        state.chargeAnimDurationMs / 1000f
+                    ),
+                    valueRange = 1000f..15000f,
+                    steps = 27,
+                    onValueChange = { onChargeAnimDurationMsChanged((it / 500).toInt() * 500) }
                 )
             )
         }
