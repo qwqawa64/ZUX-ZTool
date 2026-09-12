@@ -80,6 +80,7 @@ fun TbEngineSettingsRoute(
         onDisableAutoInstallChanged = viewModel::setDisableAutoInstall,
         onDisableAppUpdateChanged = viewModel::setDisableAppUpdate,
         onDisablePushChanged = viewModel::setDisablePush,
+        onDisableReportingChanged = viewModel::setDisableReporting,
         onSignLocalOtaChanged = viewModel::setSignLocalOta,
         onCustomVersionChanged = viewModel::setCustomVersion,
         onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
@@ -189,6 +190,7 @@ private fun TbEngineSettingsScreen(
     onDisableAutoInstallChanged: (Boolean) -> Unit,
     onDisableAppUpdateChanged: (Boolean) -> Unit,
     onDisablePushChanged: (Boolean) -> Unit,
+    onDisableReportingChanged: (Boolean) -> Unit,
     onSignLocalOtaChanged: (Boolean) -> Unit,
     onCustomVersionChanged: (String) -> Unit,
     onCustomDeviceIdChanged: (String) -> Unit,
@@ -234,6 +236,7 @@ private fun TbEngineSettingsScreen(
                         onDisableAutoInstallChanged = onDisableAutoInstallChanged,
                         onDisableAppUpdateChanged = onDisableAppUpdateChanged,
                         onDisablePushChanged = onDisablePushChanged,
+                        onDisableReportingChanged = onDisableReportingChanged,
                         onSignLocalOtaChanged = onSignLocalOtaChanged,
                         onCustomVersionChanged = onCustomVersionChanged,
                         onCustomDeviceIdChanged = onCustomDeviceIdChanged,
@@ -253,6 +256,7 @@ private fun tbEngineSettingsSections(
     onDisableAutoInstallChanged: (Boolean) -> Unit,
     onDisableAppUpdateChanged: (Boolean) -> Unit,
     onDisablePushChanged: (Boolean) -> Unit,
+    onDisableReportingChanged: (Boolean) -> Unit,
     onSignLocalOtaChanged: (Boolean) -> Unit,
     onCustomVersionChanged: (String) -> Unit,
     onCustomDeviceIdChanged: (String) -> Unit,
@@ -285,6 +289,12 @@ private fun tbEngineSettingsSections(
                     summary = stringResource(R.string.tb_engine_disable_push_summary),
                     checked = state.disablePush,
                     onCheckedChange = onDisablePushChanged
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.tb_engine_disable_reporting_title),
+                    summary = stringResource(R.string.tb_engine_disable_reporting_summary),
+                    checked = state.disableReporting,
+                    onCheckedChange = onDisableReportingChanged
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.tb_engine_sign_local_ota_title),

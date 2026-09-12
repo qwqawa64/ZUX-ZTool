@@ -40,6 +40,7 @@ import com.qimian233.ztool.hook.modules.tbengine.DisableTbEngineAppUpdate
 import com.qimian233.ztool.hook.modules.tbengine.DisableTbEngineAutoDownload
 import com.qimian233.ztool.hook.modules.tbengine.DisableTbEngineAutoInstall
 import com.qimian233.ztool.hook.modules.tbengine.DisableTbEnginePush
+import com.qimian233.ztool.hook.modules.tbengine.DisableTbEngineReporting
 import com.qimian233.ztool.hook.modules.tbengine.SignTbEngineLocalOta
 import com.qimian233.ztool.hook.modules.setting.AppInfoHeaderDetailsHook
 import com.qimian233.ztool.hook.modules.setting.CustomizeAboutDeviceInfo
@@ -243,6 +244,7 @@ object HookManager {
         registerHookModule(DisableTbEngineAutoInstall())
         registerHookModule(DisableTbEngineAppUpdate())
         registerHookModule(DisableTbEnginePush())
+        registerHookModule(DisableTbEngineReporting())
         registerHookModule(SignTbEngineLocalOta())
 
         // 注入 XposedInterface

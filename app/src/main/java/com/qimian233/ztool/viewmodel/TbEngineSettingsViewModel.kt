@@ -66,6 +66,11 @@ class TbEngineSettingsViewModel(
         repository.saveDisablePush(enabled)
     }
 
+    fun setDisableReporting(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableReporting = enabled)
+        repository.saveDisableReporting(enabled)
+    }
+
     fun setSignLocalOta(enabled: Boolean) {
         if (!enabled) {
             _uiState.value = _uiState.value.copy(signLocalOta = false)
@@ -164,6 +169,7 @@ data class TbEngineSettingsUiState(
     val disableAutoInstall: Boolean = false,
     val disableAppUpdate: Boolean = false,
     val disablePush: Boolean = false,
+    val disableReporting: Boolean = false,
     val signLocalOta: Boolean = false,
     val customVersion: String = "",
     val customDeviceId: String = "",
