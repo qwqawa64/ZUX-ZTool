@@ -131,7 +131,15 @@
     <string name="tb_engine_disable_push_title">禁用 UPS 推送</string>
     <string name="tb_engine_disable_push_summary">阻止引擎向联想推送服务注册设备和接收更新推送</string>
     <string name="tb_engine_sign_local_ota_title">本地安装包重签（实验性）</string>
-    <string name="tb_engine_sign_local_ota_summary">在系统更新 APP 本地安装 /sdcard/ota.zip 时，先用 ZTool 密钥对重签 payload 再交给更新引擎（签名算法尚未实现，当前仅记录日志）</string>
+    <string name="tb_engine_sign_local_ota_summary">在系统更新 APP 本地安装 /sdcard/ota.zip 时，先用 ZTool 密钥对重签 payload 再交给更新引擎；需配合下方证书信任模块使用，且引擎内不能残留旧包信息</string>
+    <string name="tb_engine_cert_module_title">OTA 证书信任模块</string>
+    <string name="tb_engine_cert_module_summary">将 ZTool 本地签名证书追加到系统 otacerts.zip（通过 root 模块 systemless 覆盖，原厂证书保留）。安装后需重启，之后经 ZTool 重签的本地 OTA 包即可通过更新引擎验签。注意：KernelSU 环境需要已支持模块挂载系统分区的元模块实现，否则覆盖不会生效。</string>
+    <string name="tb_engine_cert_module_button">生成并安装</string>
+    <string name="tb_engine_cert_module_installing">正在安装…</string>
+    <string name="tb_engine_cert_module_success">证书信任模块安装成功，重启后生效</string>
+    <string name="tb_engine_cert_missing">签名证书尚未生成，请先开关任意设置后重试</string>
+    <string name="tb_engine_cert_module_build_failed">证书模块打包失败：%1$s</string>
+    <string name="tb_engine_cert_module_install_failed">证书模块安装失败：%1$s</string>
     <string name="page_features_app_list_permission_warning">无法读取已安装的应用，请检查是否已授权本应用读取应用列表，然后重启 APP 。</string>
     <string name="page_features_all_filtered_warning">全部应用包都被过滤！</string>
     <!--日志页资源值-->

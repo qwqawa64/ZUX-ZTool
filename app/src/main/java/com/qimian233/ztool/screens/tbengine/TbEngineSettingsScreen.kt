@@ -4,8 +4,10 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -81,6 +83,15 @@ fun TbEngineSettingsRoute(
         onSignLocalOtaChanged = viewModel::setSignLocalOta,
         onCustomVersionChanged = viewModel::setCustomVersion,
         onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
+        onInstallOtaCert = {
+            viewModel.installOtaCertModule { error ->
+                Toast.makeText(
+                    context,
+                    error ?: context.getString(R.string.tb_engine_cert_module_success),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        },
         onRestartScope = viewModel::showRestartDialog
     )
 
@@ -160,6 +171,7 @@ private fun TbEngineSettingsScreen(
     onSignLocalOtaChanged: (Boolean) -> Unit,
     onCustomVersionChanged: (String) -> Unit,
     onCustomDeviceIdChanged: (String) -> Unit,
+    onInstallOtaCert: () -> Unit,
     onRestartScope: () -> Unit
 ) {
     ZToolScaffold(
@@ -203,7 +215,8 @@ private fun TbEngineSettingsScreen(
                         onDisablePushChanged = onDisablePushChanged,
                         onSignLocalOtaChanged = onSignLocalOtaChanged,
                         onCustomVersionChanged = onCustomVersionChanged,
-                        onCustomDeviceIdChanged = onCustomDeviceIdChanged
+                        onCustomDeviceIdChanged = onCustomDeviceIdChanged,
+                        onInstallOtaCert = onInstallOtaCert
                     ),
                     bottomPadding = 88.dp
                 )
@@ -221,7 +234,8 @@ private fun tbEngineSettingsSections(
     onDisablePushChanged: (Boolean) -> Unit,
     onSignLocalOtaChanged: (Boolean) -> Unit,
     onCustomVersionChanged: (String) -> Unit,
-    onCustomDeviceIdChanged: (String) -> Unit
+    onCustomDeviceIdChanged: (String) -> Unit,
+    onInstallOtaCert: () -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -272,8 +286,57 @@ private fun tbEngineSettingsSections(
                     }
                 )
             )
+        ),
+        SettingSection(
+            title = stringResource(R.string.tb_engine_cert_module_title),
+            items = listOf(
+                SettingItem.Custom(
+                    content = {
+                        TbEngineCertModuleContent(
+                            isInstalling = state.isInstallingCertModule,
+                            onInstall = onInstallOtaCert
+                        )
+                    }
+                )
+            )
         )
     )
+}
+
+@Composable
+private fun TbEngineCertModuleContent(
+    isInstalling: Boolean,
+    onInstall: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.tb_engine_cert_module_summary),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ZToolButton(
+                onClick = onInstall,
+                enabled = !isInstalling
+            ) {
+                Text(
+                    if (isInstalling) {
+                        stringResource(R.string.tb_engine_cert_module_installing)
+                    } else {
+                        stringResource(R.string.tb_engine_cert_module_button)
+                    }
+                )
+            }
+        }
+    }
 }
 
 @Composable

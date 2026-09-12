@@ -81,6 +81,25 @@ class TbEngineSettingsViewModel(
         repository.saveCustomDeviceId(value)
     }
 
+    /** 生成并安装 otacerts 信任模块，onResult 参数为失败原因（null = 成功）。 */
+    fun installOtaCertModule(onResult: (String?) -> Unit) {
+        _uiState.value = _uiState.value.copy(isInstallingCertModule = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            val error = repository.installOtaCertModule()
+            withContext(Dispatchers.Main) {
+                _uiState.value = _uiState.value.copy(
+                    isInstallingCertModule = false,
+                    otaCertInstalled = error == null
+                )
+                onResult(error)
+            }
+        }
+    }
+
+    fun setOtaCertInstalled() {
+        _uiState.value = _uiState.value.copy(otaCertInstalled = repository.hasOtaCertificate())
+    }
+
     fun dismissErrorDialog() {
         _uiState.value = _uiState.value.copy(errorDialogMessage = null)
     }
@@ -121,7 +140,9 @@ data class TbEngineSettingsUiState(
     val currentVersion: String = "",
     val currentSn: String = "",
     val errorDialogMessage: String? = null,
-    val showRestartDialog: Boolean = false
+    val showRestartDialog: Boolean = false,
+    val isInstallingCertModule: Boolean = false,
+    val otaCertInstalled: Boolean = false
 )
 
 sealed interface TbEngineRestartResult {

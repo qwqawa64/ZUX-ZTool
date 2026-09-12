@@ -121,11 +121,30 @@ Hook 拦截点为 `SwfABInstalling.doMyPrimaryJob()`（tbengine worker 线程，
   properties 的 FILE_HASH/FILE_SIZE/METADATA_HASH/METADATA_SIZE 同步更新。
 - 磁盘开销约 2 倍包体积临时空间；签名耗时主要是全量 SHA256。
 
-### 5.4 待真机验证
+### 5.4 真机验证结论（TB710FU，2026-09-12）
 
-- ZUI 的 update_engine 是否接受 `public_key` 属性（AOSP 默认支持，联想可能 patch）。
-- payload 签名的覆盖范围是按 AOSP `delta_performer` 的"去尾部签名块后全量"实现，若真机报
-  signature mismatch，需对照设备 update_engine 版本核对哈希边界。
+- **签名数学验证通过**：update_engine 报出的 metadata 期望哈希与设备端实测
+  `SHA256(payload blob 前 437820 字节)`（= header+manifest）完全一致，
+  证明 metadata 哈希覆盖范围与签名算法（RSA-2048 PKCS#1 v1.5 / SHA-256）正确。
+- **`public_key` 属性无效**：ZUI 的 update_engine 验签走
+  `/system/etc/security/otacerts.zip` 证书路径（日志 `Verifying using certificates:`），
+  注入的 `public_key` 属性被忽略。已实证的失败链：注入属性 → 引擎用 OEM 证书解签 → mismatch (26)。
+
+### 5.5 信任链方案：otacerts 证书追加模块（已实现）
+
+- ZTool 应用侧 `OtaCertBuilder`（纯 Java 手写 DER，无 BouncyCastle）用现有 RSA-2048
+  密钥对生成自签名 X.509 v3 证书（CN=ZTool OTA Local Signing，有效期 20 年），
+  生成后经 `CertificateFactory` 回读校验；DER 存 `tbengine_ota_cert` 偏好。
+- `TbEngineSettingsRepository.installOtaCertModule()`：
+  1. root `cat` 读取设备原 `/system/etc/security/otacerts.zip`；
+  2. 追加 ZTool 证书条目 `ztool_ota.x509.pem`（STORED，OEM 证书保留，叠加信任）；
+  3. 生成 Magisk/KSU 格式模块 zip（`system/etc/security/otacerts.zip` 覆盖 +
+     `module.prop` + `customize.sh`）；
+  4. `magisk --install-module` 安装，失败回退 `ksud module install`。
+- **KernelSU 用户提醒**（已写入前端文案）：需要已实现元模块挂载支持的环境，
+  否则 systemless 覆盖不会生效。
+- 安装后重启，本地安装 ZTool 重签包即可通过 update_engine 验签（签名算法与
+  otacerts 证书验签路径兼容，签名代码无需改动）。
 
 ## 6. 未实现项（后续迭代）
 
