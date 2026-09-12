@@ -373,7 +373,7 @@
     <string name="package_installer_only_allow_summary">Always allow permissions required by apps during installation.</string>
     <string name="package_installer_skip_warn_page_title">Skip unlisted app warning page</string>
     <string name="package_installer_skip_warn_page_summary">Automatically skip the warning page saying the app has not passed Lenovo terminal quality and security review.</string>
-    <string name="package_installer_fun_title_function">Features</string>
+    <string name="package_installer_fun_title_function">Installer features</string>
     <string name="package_installer_disable_installer_ad_title">Remove ads</string>
     <string name="package_installer_disable_installer_ad_summary">Do not show ads on the installation completion screen.</string>
     <string name="package_installer_enable_row_style_title">Use native installer</string>

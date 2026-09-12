@@ -413,7 +413,7 @@
     <string name="package_installer_only_allow_summary">安装应用时，总是允许安装应用所需的权限</string>
     <string name="package_installer_skip_warn_page_title">跳过未上架警告页</string>
     <string name="package_installer_skip_warn_page_summary">自动跳过\"此应用未经《联想终端质量检测和安全审查标准》审核\"警告页面的信息</string>
-    <string name="package_installer_fun_title_function">功能</string>
+    <string name="package_installer_fun_title_function">安装器功能</string>
     <string name="package_installer_disable_installer_ad_title">去广告</string>
     <string name="package_installer_disable_installer_ad_summary">安装完成后的界面不再显示广告</string>
     <string name="package_installer_enable_row_style_title">启用原生安装器</string>
