@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.tbengine
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Environment
 import android.util.Base64
@@ -46,11 +47,12 @@ import java.util.zip.ZipOutputStream
  * doMyPrimaryJob 跑在 tbengine 的 worker 线程上，阻塞签名不会引发 ANR。
  * 磁盘开销：重签需要约 2 倍包体积的临时空间（新 payload.bin + 新 zip）。
  */
+@SuppressLint("PrivateApi")
 class SignTbEngineLocalOta : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.SIGN_TB_ENGINE_LOCAL_OTA.name
 
-    override fun getTargetPackages(): Array<out String?>? = arrayOf(ScopeKeys.TB_ENGINE.packageName)
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.TB_ENGINE.packageName)
 
     companion object {
         private const val PAYLOAD_ENTRY = "payload.bin"
@@ -62,7 +64,6 @@ class SignTbEngineLocalOta : AppHookModule() {
         private val SIG_BLOB_TAIL = byteArrayOf(0x1d, 0x00, 0x01, 0x00, 0x00)
         private const val PUBLIC_KEY_PROPERTY = "public_key"
         private const val PUBLIC_KEY_PEM_PATH = "/data/ota_package/ztool_ota_pub.pem"
-        private const val RSA_KEY_BITS = 2048
         private const val FIELD_MAX_TIMESTAMP = 14L
         // 防回滚钳制的提前量：now + 5 年
         private const val FUTURE_TIMESTAMP_MARGIN_SECONDS = 5L * 365 * 24 * 60 * 60
@@ -83,7 +84,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                     try {
                         val context = extractContext(chain.thisObject)
                         if (context != null) {
-                            interceptLocalInstall(context)
+                            interceptLocalInstall()
                         } else {
                             logger.warn("Unable to resolve Context from SwfABInstalling instance")
                         }
@@ -138,7 +139,7 @@ class SignTbEngineLocalOta : AppHookModule() {
         }
     }
 
-    private fun interceptLocalInstall(context: Context) {
+    private fun interceptLocalInstall() {
         val localZip = File(Environment.getExternalStorageDirectory(), "ota.zip")
             .takeIf { it.exists() } ?: run {
             logger.debug("No /sdcard/ota.zip found; not a local install flow")
@@ -180,6 +181,7 @@ class SignTbEngineLocalOta : AppHookModule() {
     /**
      * 把 X509 公钥写成 PEM 供 update_engine 读取（update_engine 是 root，可读该路径）。
      */
+    @SuppressLint("SetWorldReadable")
     private fun ensurePublicKeyPem() {
         try {
             val b64 = remotePreferences.getString(
@@ -243,7 +245,6 @@ class SignTbEngineLocalOta : AppHookModule() {
                 val manifestSize = readBeLong(header, 12)
                 val metadataSigSize = readBeInt(header, 20)
                 val manifest = readFully(src, manifestSize.toInt())
-                val originalMetadataSig = readFully(src, metadataSigSize.toInt())
                 val metaSize = 24L + manifestSize + metadataSigSize
                 val sigOffset = findManifestField(manifest, 4)
                     ?: run { logger.warn("Manifest lacks signatures_offset"); return false }
@@ -401,7 +402,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                                 val ne = ZipEntry(PROPERTY_ENTRY).apply {
                                     method = ZipEntry.STORED
                                     size = bytes.size.toLong()
-                                    crc = java.util.zip.CRC32().apply { update(bytes) }.value
+                                    crc = CRC32().apply { update(bytes) }.value
                                     time = entry.time
                                 }
                                 zos.putNextEntry(ne)
@@ -414,7 +415,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                                     method = entry.method
                                     if (entry.method == ZipEntry.STORED) {
                                         size = bytes.size.toLong()
-                                        crc = java.util.zip.CRC32().apply { update(bytes) }.value
+                                        crc = CRC32().apply { update(bytes) }.value
                                     }
                                     time = entry.time
                                 }
@@ -473,7 +474,7 @@ class SignTbEngineLocalOta : AppHookModule() {
     }
 
     private fun base64(bytes: ByteArray): String =
-        android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+        Base64.encodeToString(bytes, Base64.NO_WRAP)
 
     /**
      * 构造 267 字节签名块：0a8802 128002 <256B 签名> 1d00010000
