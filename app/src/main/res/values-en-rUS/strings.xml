@@ -122,7 +122,7 @@
     <string name="tb_engine_disable_reporting_title">Disable data reporting</string>
     <string name="tb_engine_disable_reporting_summary">Stop the engine from reporting update analytics to the Lenovo UE platform, push message feedback, and device registration info</string>
     <string name="tb_engine_sign_local_ota_title">Re-sign local OTA package (experimental)</string>
-    <string name="tb_engine_sign_local_ota_summary">When installing /sdcard/ota.zip via System Update, re-sign the payload with the ZTool key pair before handing it to the update engine; requires the certificate trust module below, and no stale package info inside the engine</string>
+    <string name="tb_engine_sign_local_ota_summary">Allow installing OTA packages without Lenovo signing. Keep it in mind that a factory reset will be automatically triggered when SPL downgrade is detected.</string>
     <string name="tb_engine_cert_module_success">Certificate trust module installed; reboot to take effect</string>
     <string name="tb_engine_cert_missing">Signing certificate not generated yet; toggle any setting first and retry</string>
     <string name="tb_engine_cert_module_build_failed">Failed to build certificate module: %1$s</string>
