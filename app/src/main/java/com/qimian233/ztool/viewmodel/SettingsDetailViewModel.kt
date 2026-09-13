@@ -91,6 +91,11 @@ class SettingsDetailViewModel(
         repository.saveAppDetails(enabled)
     }
 
+    fun setAppIconUnmask(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(appIconUnmask = enabled)
+        repository.saveAppIconUnmask(enabled)
+    }
+
     fun setAboutDeviceInfoEnabled(enabled: Boolean) {
         aboutDeviceInfoRepository.setEnabled(enabled)
         _uiState.value = _uiState.value.copy(
@@ -361,6 +366,7 @@ data class SettingsDetailUiState(
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val showRestartDialog: Boolean = false,
     val appDetail: Boolean = false,
+    val appIconUnmask: Boolean = false,
     val allowAddingLanguages: Boolean = false,
     val aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState = com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState(),
 )

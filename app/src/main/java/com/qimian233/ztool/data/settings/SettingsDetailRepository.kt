@@ -38,6 +38,7 @@ class SettingsDetailRepository(
             allowDisableDolby = prefsUtils.loadBooleanSetting(KEY_ALLOW_DISPLAY_DOLBY, false),
             allowNativePermissionController = prefsUtils.loadBooleanSetting(KEY_PERMISSION_CONTROLLER_HOOK, false),
             appDetail = prefsUtils.loadBooleanSetting(KEY_APP_DETAILS, false),
+            appIconUnmask = prefsUtils.loadBooleanSetting(KEY_SETTINGS_APP_ICON_UNMASK, false),
             showZuiForceConfig = Build.VERSION.SDK_INT >= 36,
             allowAddingLanguages = prefsUtils.loadBooleanSetting(KEY_ALLOW_ADDING_LANGUAGE, false)
         )
@@ -67,6 +68,10 @@ class SettingsDetailRepository(
 
     fun saveAppDetails(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_APP_DETAILS, enabled)
+    }
+
+    fun saveAppIconUnmask(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_SETTINGS_APP_ICON_UNMASK, enabled)
     }
 
     fun saveAllowAddingLanguages(enabled: Boolean) {
@@ -236,6 +241,7 @@ class SettingsDetailRepository(
         private val KEY_ALLOW_DISPLAY_DOLBY = PreferenceKeys.ALLOW_DISPLAY_DOLBY.name
         private val KEY_PERMISSION_CONTROLLER_HOOK = PreferenceKeys.PERMISSION_CONTROLLER_HOOK.name
         private val KEY_APP_DETAILS = PreferenceKeys.APP_DETAILS.name
+        private val KEY_SETTINGS_APP_ICON_UNMASK = PreferenceKeys.SETTINGS_APP_ICON_UNMASK.name
         private val KEY_ALLOW_ADDING_LANGUAGE = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
     }
 }

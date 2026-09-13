@@ -749,6 +749,8 @@
     <string name="page_settings_enable_floating_bottom_bar_blur_title">液态玻璃底栏</string>
     <string name="page_settings_enable_floating_bottom_bar_blur_summary">使用 iOS 风格的模糊、透射等视觉效果</string>
     <string name="settings_app_details_completion">补全应用信息</string>
+    <string name="settings_app_icon_unmask_title">去除应用图标蒙版</string>
+    <string name="settings_app_icon_unmask_summary">应用列表等页面中第三方图标包图标不再被系统形状二次裁切。重启设定后生效</string>
     <string name="settings_app_details_completion_summary">为设置的应用页面补全应用包名、SDK信息、安装和更新信息以及安装来源</string>
     <string name="settings_about_device_info_title">关于设备信息</string>
     <string name="settings_about_device_info_master">启用修改</string>

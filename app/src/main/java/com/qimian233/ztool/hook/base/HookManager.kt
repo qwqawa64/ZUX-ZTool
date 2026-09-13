@@ -53,6 +53,7 @@ import com.qimian233.ztool.hook.modules.setting.LocaleListEditorHook
 import com.qimian233.ztool.hook.modules.setting.OneVisionCompletion
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoSettingsHook
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook
+import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskProbe
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
@@ -192,7 +193,8 @@ object HookManager {
         registerHookModule(ZToolSettingsEntryHook())
         registerHookModule(HideOtaUpdateHint())
         registerHookModule(LocaleListEditorHook()) // test_hook: 拦截 LenovoUtils 区域判断
-        // registerHookModule(SettingsAppIconUnmaskProbe()) // hook_test: 停用——launcher 探针期间保持关闭
+        // registerHookModule(SettingsAppIconUnmaskProbe()) // hook_test: 已由正式 Hook 接替
+        registerHookModule(SettingsAppIconUnmaskHook()) // 设定应用图标去蒙版
 
         // ── PackageInstaller (target: com.android.packageinstaller) ──
         registerHookModule(PackageInstallerHookScan())

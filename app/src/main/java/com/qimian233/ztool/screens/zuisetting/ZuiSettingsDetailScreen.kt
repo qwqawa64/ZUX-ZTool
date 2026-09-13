@@ -598,6 +598,7 @@ fun SettingsDetailRoute(
         onAllowNativePermissionControllerChanged = viewModel::setAllowNativePermissionController,
         onAllowDisableDolbyChanged = viewModel::setAllowDisableDolby,
         onAppDetailsChanged = viewModel::setAppDetails,
+        onAppIconUnmaskChanged = viewModel::setAppIconUnmask,
         aboutDeviceInfoState = uiState.aboutDeviceInfoState,
         onAboutDeviceInfoEnabledChanged = viewModel::setAboutDeviceInfoEnabled,
         onAboutDeviceInfoModelEnabledChanged = viewModel::setAboutDeviceInfoModelEnabled,
@@ -687,6 +688,7 @@ private fun SettingsDetailScreen(
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
     onAppDetailsChanged: (Boolean) -> Unit,
+    onAppIconUnmaskChanged: (Boolean) -> Unit,
     aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState,
     onAboutDeviceInfoEnabledChanged: (Boolean) -> Unit,
     onAboutDeviceInfoModelEnabledChanged: (Boolean) -> Unit,
@@ -762,6 +764,7 @@ private fun SettingsDetailScreen(
                         onAllowNativePermissionControllerChanged = onAllowNativePermissionControllerChanged,
                         onAllowDisableDolbyChanged = onAllowDisableDolbyChanged,
                         onAppDetailsChanged = onAppDetailsChanged,
+                        onAppIconUnmaskChanged = onAppIconUnmaskChanged,
                         aboutDeviceInfoState = aboutDeviceInfoState,
                         onAboutDeviceInfoEnabledChanged = onAboutDeviceInfoEnabledChanged,
                         onAboutDeviceInfoModelEnabledChanged = onAboutDeviceInfoModelEnabledChanged,
@@ -801,6 +804,7 @@ private fun settingsDetailSections(
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
     onAppDetailsChanged: (Boolean) -> Unit,
+    onAppIconUnmaskChanged: (Boolean) -> Unit,
     aboutDeviceInfoState: com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoState,
     onAboutDeviceInfoEnabledChanged: (Boolean) -> Unit,
     onAboutDeviceInfoModelEnabledChanged: (Boolean) -> Unit,
@@ -1065,6 +1069,12 @@ private fun settingsDetailSections(
                         summary = stringResource(R.string.settings_app_details_completion_summary),
                         checked = state.appDetail,
                         onCheckedChange = onAppDetailsChanged
+                    ),
+                    SettingItem.Switch(
+                        title = stringResource(R.string.settings_app_icon_unmask_title),
+                        summary = stringResource(R.string.settings_app_icon_unmask_summary),
+                        checked = state.appIconUnmask,
+                        onCheckedChange = onAppIconUnmaskChanged
                     ),
                 )
             )

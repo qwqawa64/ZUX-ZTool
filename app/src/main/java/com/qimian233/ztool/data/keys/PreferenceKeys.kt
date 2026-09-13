@@ -100,6 +100,7 @@ object PreferenceKeys {
     val AUTO_OWNER_INFO = BoolKey("auto_owner_info", false)
     val SPLIT_SCREEN_MANDATORY = BoolKey("Split_Screen_mandatory", false)
     val APP_DETAILS = BoolKey("app_details", false)
+    val SETTINGS_APP_ICON_UNMASK = BoolKey("settings_app_icon_unmask", false)
     val ABOUT_DEVICE_INFO = BoolKey("about_device_info", false)
     val ZTOOL_SETTINGS_ENTRY = BoolKey("ztool_settings_entry", false)
     val HIDE_OTA_UPDATE_HINT = BoolKey("hide_ota_update_hint", false)

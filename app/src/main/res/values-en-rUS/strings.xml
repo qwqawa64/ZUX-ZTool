@@ -685,6 +685,8 @@
     </string-array>
     <string name="page_settings_enable_floating_bottom_bar_blur_summary">Enable blurring and other advanced visual effects</string>
     <string name="settings_app_details_completion">Detailed APP information</string>
+    <string name="settings_app_icon_unmask_title">Remove app icon mask</string>
+    <string name="settings_app_icon_unmask_summary">Third-party icon pack icons in the app list are no longer re-cropped by the system shape. Takes effect after restarting Settings</string>
     <string name="settings_app_details_completion_summary">Add packagename, SDK info, installation, update and install source info to APP detail page</string>
     <string name="settings_about_device_info_image_saved">Saved device illustration</string>
     <string name="settings_about_device_info_image_save_failed">Failed to save device illustration</string>
