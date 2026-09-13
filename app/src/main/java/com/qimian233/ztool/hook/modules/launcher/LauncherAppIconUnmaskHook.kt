@@ -18,7 +18,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * 仅当输入是 AdaptiveIconDrawable 且输出是纯 BitmapInfo（非 Extender 子类、
  * 非时钟动态图标）时重建；传统图标保持系统 legacy 垫底逻辑不动。
  *
- * 已知取舍：重建后的图标不带 themed（monochrome）位图与阴影层。
+ * 已知取舍：重建后的图标不带阴影层；monochrome（themed）位图通过
+ * IconThemeController.createThemedBitmap 用原始 AdaptiveIcon 重建。
  *
  * getModuleName() 返回 "hook_test"，无前端开关即可启用；后续转正式功能时
  * 替换为 PreferenceKeys 键名并补前端开关。
@@ -120,7 +121,46 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         bitmapInfoClass.getField("creationFlags").setInt(
             newInfo, bitmapInfoClass.getField("creationFlags").getInt(result)
         )
+        restoreThemedBitmap(cl, factory, input, newInfo, bitmapInfoClass)
         return Pair(newInfo, size)
+    }
+
+    /**
+     * 用原始 AdaptiveIcon 通过 IconThemeController 重建 monochrome（themed）位图，
+     * 对齐系统 createBadgedIconBitmapZui 内的同名调用。任何一步不可用都静默跳过。
+     */
+    private fun restoreThemedBitmap(
+        cl: ClassLoader,
+        factory: Any,
+        input: AdaptiveIconDrawable,
+        newInfo: Any,
+        bitmapInfoClass: Class<*>
+    ) {
+        try {
+            val providerClass = cl.loadClass("com.android.launcher3.icons.IconProvider")
+            val atLeastT = providerClass.getField("ATLEAST_T").getBoolean(null)
+            if (!atLeastT) {
+                return
+            }
+            val controller = factory.javaClass
+                .getMethod("getThemeController").invoke(factory) ?: return
+            val sourceHintClass = try {
+                cl.loadClass("com.android.launcher3.icons.SourceHint")
+            } catch (_: ClassNotFoundException) {
+                return
+            }
+            val create: Method = controller.javaClass.getMethod(
+                "createThemedBitmap",
+                AdaptiveIconDrawable::class.java, bitmapInfoClass,
+                factory.javaClass, sourceHintClass
+            )
+            val themed = create.invoke(controller, input, newInfo, factory, null) ?: return
+            bitmapInfoClass
+                .getMethod("setThemedBitmap", themed.javaClass)
+                .invoke(newInfo, themed)
+        } catch (t: Throwable) {
+            logger.debug("[unmask] themed bitmap restore skipped: " + t.message)
+        }
     }
 
     companion object {
