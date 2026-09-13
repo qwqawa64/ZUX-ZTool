@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
+import com.qimian233.ztool.ui.components.normalizeArgbColorTextOrNull
+import com.qimian233.ztool.ui.components.sanitizeArgbColorText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +25,7 @@ class LockScreenSettingsViewModel(
 
     private fun loadInitialState(): LockScreenSettingsUiState {
         try {
-            return repository.loadState()
+            return repository.loadState().withClockColorText()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load lock screen settings", e)
         }
@@ -154,6 +156,27 @@ class LockScreenSettingsViewModel(
         _uiState.value = _uiState.value.copy(apiTestResult = null)
     }
 
+    fun setClockColorCustom(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(clockColorCustom = enabled)
+        repository.saveClockColorCustom(enabled)
+    }
+
+    fun setClockColorText(value: String) {
+        _uiState.value = _uiState.value.copy(clockColorText = value.sanitizeArgbColorText())
+    }
+
+    fun finishClockColorEditing() {
+        val current = _uiState.value
+        val normalized = current.clockColorText.normalizeArgbColorTextOrNull()
+            ?: current.clockColor.toArgbText()
+        val color = normalized.toLongOrNull(16)?.toInt() ?: current.clockColor
+        _uiState.value = current.copy(
+            clockColor = color,
+            clockColorText = normalized
+        )
+        repository.saveClockColor(color)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }
@@ -188,6 +211,14 @@ data class ApiTestResult(
     val success: Boolean
 )
 
+private fun LockScreenSettingsUiState.withClockColorText(): LockScreenSettingsUiState {
+    return copy(clockColorText = clockColor.toArgbText())
+}
+
+private fun Int.toArgbText(): String {
+    return "%08X".format(this)
+}
+
 data class LockScreenSettingsUiState(
     val nativeAod: Boolean = false,
     val lenovoAod: Boolean = false,
@@ -206,6 +237,11 @@ data class LockScreenSettingsUiState(
     val showIndicator: Boolean = true,
     val customFormatEnabled: Boolean = false,
     val customFormat: String = "",
+    // 锁屏时钟颜色
+    val clockColorCustom: Boolean = false,
+    val clockColor: Int = 0xFFFFFFFF.toInt(),
+    val clockColorText: String = "FFFFFFFF",
+    val nativeClockColorAvailable: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

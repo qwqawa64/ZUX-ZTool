@@ -468,6 +468,11 @@
     <string name="system_ui_lock_screen_realwatts_custom_format_enabled_summary">Use bash-style string to customize output. This option overrides other switches.</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_label">Customized format</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_hint">Variables available: ${voltage} ${current} ${power} ${temperature} ${ind}\nExample: Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
+    <string name="system_ui_lock_screen_clock_color_section">Lock screen clock color</string>
+    <string name="system_ui_lock_screen_clock_color_title">Custom lock screen clock color</string>
+    <string name="system_ui_lock_screen_clock_color_summary">Customize the color of the lock screen clock and date; restart System UI to apply</string>
+    <string name="system_ui_lock_screen_clock_color_native_summary">ZUXOS 1.5 provides this feature natively; change it in Settings -> Wallpaper &amp; theme style -> Lock screen</string>
+    <string name="system_ui_lock_screen_clock_color_picker_label">Clock color (AARRGGBB)</string>
     <string name="system_ui_lock_screen_api_address_hint">Enter API address</string>
     <string name="system_ui_lock_screen_title_suffix">\ - Lock Screen Settings</string>
     <string name="system_ui_lock_screen_please_input_api_address">Enter API address</string>

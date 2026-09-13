@@ -67,6 +67,7 @@ import com.qimian233.ztool.hook.modules.systemframework.OwnerInfoSystemHook
 import com.qimian233.ztool.hook.modules.systemframework.NoMorePasswordPer24H
 import com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory as SystemSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ChargeAnimationDurationHook
+import com.qimian233.ztool.hook.modules.systemui.keyguard.LockScreenClockColorHook
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceLenovoAOD
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceNativeAod
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIChargeWattsHook
@@ -160,6 +161,7 @@ object HookManager {
         registerHookModule(ChargeAnimationDurationHook())
         registerHookModule(ForceLenovoAOD())
         registerHookModule(ForceNativeAod())
+        registerHookModule(LockScreenClockColorHook())
         registerHookModule(CustomQsRoundCorner())
         registerHookModule(BrightnessSliderPercentageHook())
         registerHookModule(VolumeSliderPercentageHook())

@@ -533,6 +533,11 @@
     <string name="system_ui_lock_screen_realwatts_custom_format_enabled_summary">使用占位符自定义显示文本，开启后子开关将失效</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_label">自定义格式</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_hint">可用占位符：${voltage} ${current} ${power} ${temperature} ${ind}\n示例：Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
+    <string name="system_ui_lock_screen_clock_color_section">锁屏时钟颜色</string>
+    <string name="system_ui_lock_screen_clock_color_title">自定义锁屏时钟颜色</string>
+    <string name="system_ui_lock_screen_clock_color_summary">自定义锁屏时钟与日期的颜色，保存后重启系统界面生效</string>
+    <string name="system_ui_lock_screen_clock_color_native_summary">ZUXOS 1.5 已原生支持此功能，请在 设置 -> 壁纸和主题风格 -> 锁屏 中更改</string>
+    <string name="system_ui_lock_screen_clock_color_picker_label">时钟颜色（AARRGGBB）</string>
     <string name="system_ui_lock_screen_api_address_hint">输入API地址</string>
     <!-- 锁屏设置相关字符串 -->
     <string name="system_ui_lock_screen_title_suffix">\ - 锁屏设置</string>

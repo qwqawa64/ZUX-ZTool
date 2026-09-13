@@ -48,6 +48,9 @@ class LockScreenSettingsRepository(
             showIndicator = prefsUtils.loadBooleanSetting(KEY_RW_SHOW_INDICATOR, true),
             customFormatEnabled = prefsUtils.loadBooleanSetting(KEY_RW_CUSTOM_FORMAT_ENABLED, false),
             customFormat = prefsUtils.loadStringSetting(KEY_RW_CUSTOM_FORMAT, ""),
+            clockColorCustom = prefsUtils.loadBooleanSetting(KEY_CLOCK_COLOR_CUSTOM, false),
+            clockColor = prefsUtils.loadIntegerSetting(KEY_CLOCK_COLOR_VALUE, DEFAULT_CLOCK_COLOR),
+            nativeClockColorAvailable = android.os.Build.VERSION.SDK_INT >= NATIVE_FEATURE_SDK,
         )
     }
 
@@ -116,6 +119,14 @@ class LockScreenSettingsRepository(
     fun saveShowIndicator(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_SHOW_INDICATOR, enabled)
     fun saveCustomFormatEnabled(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_RW_CUSTOM_FORMAT_ENABLED, enabled)
     fun saveCustomFormat(value: String) = prefsUtils.saveStringSetting(KEY_RW_CUSTOM_FORMAT, value.trim())
+
+    fun saveClockColorCustom(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CLOCK_COLOR_CUSTOM, enabled)
+    }
+
+    fun saveClockColor(color: Int) {
+        prefsUtils.saveIntegerSetting(KEY_CLOCK_COLOR_VALUE, color)
+    }
 
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
@@ -248,5 +259,10 @@ class LockScreenSettingsRepository(
         private val KEY_RW_SHOW_INDICATOR = PreferenceKeys.SYSTEMUI_REALWATTS_SHOW_INDICATOR.name
         private val KEY_RW_CUSTOM_FORMAT_ENABLED = PreferenceKeys.SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED.name
         private val KEY_RW_CUSTOM_FORMAT = PreferenceKeys.SYSTEMUI_REALWATTS_CUSTOM_FORMAT.name
+        private val KEY_CLOCK_COLOR_CUSTOM = PreferenceKeys.LOCK_SCREEN_CLOCK_COLOR_CUSTOM.name
+        private val KEY_CLOCK_COLOR_VALUE = PreferenceKeys.LOCK_SCREEN_CLOCK_COLOR_VALUE.name
+
+        const val DEFAULT_CLOCK_COLOR = 0xFFFFFFFF.toInt()
+        const val NATIVE_FEATURE_SDK = 36
     }
 }

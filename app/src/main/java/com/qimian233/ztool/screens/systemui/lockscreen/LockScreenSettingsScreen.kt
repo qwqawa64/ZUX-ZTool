@@ -39,6 +39,7 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
@@ -94,6 +95,9 @@ fun LockScreenSettingsRoute(
         onShowIndicatorChanged = viewModel::setShowIndicator,
         onCustomFormatEnabledChanged = viewModel::setCustomFormatEnabled,
         onCustomFormatChanged = viewModel::setCustomFormat,
+        onClockColorCustomChanged = viewModel::setClockColorCustom,
+        onClockColorTextChanged = viewModel::setClockColorText,
+        onClockColorEditingFinished = viewModel::finishClockColorEditing,
         onTestApi = {
             viewModel.testApiConnection {
                 Toast.makeText(context, R.string.system_ui_lock_screen_please_input_api_address, Toast.LENGTH_SHORT).show()
@@ -173,6 +177,9 @@ private fun LockScreenSettingsScreen(
     onShowIndicatorChanged: (Boolean) -> Unit,
     onCustomFormatEnabledChanged: (Boolean) -> Unit,
     onCustomFormatChanged: (String) -> Unit,
+    onClockColorCustomChanged: (Boolean) -> Unit,
+    onClockColorTextChanged: (String) -> Unit,
+    onClockColorEditingFinished: () -> Unit,
     onRestartScope: () -> Unit,
 ) {
     ZToolScaffold(
@@ -228,6 +235,9 @@ private fun LockScreenSettingsScreen(
                         onShowIndicatorChanged = onShowIndicatorChanged,
                         onCustomFormatEnabledChanged = onCustomFormatEnabledChanged,
                         onCustomFormatChanged = onCustomFormatChanged,
+                        onClockColorCustomChanged = onClockColorCustomChanged,
+                        onClockColorTextChanged = onClockColorTextChanged,
+                        onClockColorEditingFinished = onClockColorEditingFinished,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -254,6 +264,9 @@ private fun lockScreenSettingsSections(
     onShowIndicatorChanged: (Boolean) -> Unit,
     onCustomFormatEnabledChanged: (Boolean) -> Unit,
     onCustomFormatChanged: (String) -> Unit,
+    onClockColorCustomChanged: (Boolean) -> Unit,
+    onClockColorTextChanged: (String) -> Unit,
+    onClockColorEditingFinished: () -> Unit,
 ): List<SettingSection> {
     val yiYanItems = buildList {
         add(
@@ -396,6 +409,46 @@ private fun lockScreenSettingsSections(
         }
     }
 
+    val clockColorItems = buildList {
+        if (state.nativeClockColorAvailable) {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_lock_screen_clock_color_title),
+                    summary = stringResource(R.string.system_ui_lock_screen_clock_color_native_summary),
+                    checked = false,
+                    onCheckedChange = {},
+                    enabled = false
+                )
+            )
+        } else {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_lock_screen_clock_color_title),
+                    summary = stringResource(R.string.system_ui_lock_screen_clock_color_summary),
+                    checked = state.clockColorCustom,
+                    onCheckedChange = onClockColorCustomChanged
+                )
+            )
+            if (state.clockColorCustom) {
+                add(
+                    SettingItem.Custom(
+                        content = {
+                            ZToolArgbColorTextFieldRow(
+                                label = stringResource(R.string.system_ui_lock_screen_clock_color_picker_label),
+                                value = state.clockColorText,
+                                onValueChange = onClockColorTextChanged,
+                                defaultText = "FFFFFFFF",
+                                summary = "#%08X".format(state.clockColor),
+                                errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                onEditingFinished = onClockColorEditingFinished
+                            )
+                        }
+                    )
+                )
+            }
+        }
+    }
+
     return listOf(
         SettingSection(
             title = stringResource(R.string.system_ui_lock_screen_yi_yan_tile),
@@ -408,6 +461,10 @@ private fun lockScreenSettingsSections(
         SettingSection(
             title = stringResource(R.string.system_ui_lock_screen_charge_watts_title),
             items = chargeWattsItems
+        ),
+        SettingSection(
+            title = stringResource(R.string.system_ui_lock_screen_clock_color_section),
+            items = clockColorItems
         )
     )
 }
