@@ -1,6 +1,6 @@
 {
-  "newVersionName": "Beta/260808",
-  "newVersionCode": 1358,
-  "whatNew": "\"Beta/260808\" (c1358)\n动态壁纸（部分视频的渲染比例可能有问题）\n解除国行 ROM 的语言限制\n锁屏功率支持显示拼接的信息：实际电压、电流、充电功率、电池温度等（支持 bash 风格自定义字符串）\n使用 Hook 替代直接跑 Shell 命令的 Native AOD\n关联应用小窗启动\n任务栏关闭最近 APP 显示\n竖屏模式控制中心拓宽\n自动拒绝桌面应用推荐文件夹的用户协议\n关联应用启动不弹窗\n应用更新蓝点移除（从无字模式 Hook 独立出来）\n充电动画自定义\n禁止桌面角标提示版本更新可用\n适配老版本超级互传的跳过警告页面（需要进一步调整）\n部分（你不一定察觉的到的）细节优化",
-  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/20260808-ZTool_Beta"
+  "newVersionName": "Beta/260913",
+  "newVersionCode": 1605,
+  "whatNew": "补全 Credits: 一言支持、GitHub 加速支持\n重置所有受到模块污染的 prop\n网速指示器隐藏慢速\n禁止游戏中降亮度\n集中管理 DexKit 查找的方法名，提供一个列表或者文件来持久化记录\n正方形文件夹\n无字模式，抽屉和桌面各自拦截\n启动器内批量卸载 APP\n屏蔽云控？\n锁屏时钟颜色自定义（ZUXOS 1.5 系统内支持）\n充电动画时长更改\n更新完美横屏适配\n原始设置和桌面图标",
+  "url": "ZTool_Beta_260913_c1605"
 }
