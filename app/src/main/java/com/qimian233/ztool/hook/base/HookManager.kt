@@ -51,6 +51,7 @@ import com.qimian233.ztool.hook.modules.setting.LocaleListEditorHook
 import com.qimian233.ztool.hook.modules.setting.OneVisionCompletion
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoSettingsHook
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook
+import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskProbe
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand
@@ -189,6 +190,7 @@ object HookManager {
         registerHookModule(ZToolSettingsEntryHook())
         registerHookModule(HideOtaUpdateHint())
         registerHookModule(LocaleListEditorHook()) // test_hook: 拦截 LenovoUtils 区域判断
+        registerHookModule(SettingsAppIconUnmaskProbe()) // hook_test: 图标蒙版位置探针
 
         // ── PackageInstaller (target: com.android.packageinstaller) ──
         registerHookModule(PackageInstallerHookScan())
