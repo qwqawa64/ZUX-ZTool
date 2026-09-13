@@ -11,7 +11,7 @@ ui_print "********************************"
 ui_print "ZUXOS 平行视界配置模块安装"
 ui_print "适配策略移植自模块 [HyperOS完美横屏计划] 作者：酷安@做梦书等"
 ui_print "********************************"
-ui_print "- 适配应用数量: 1995"
+ui_print "- 适配应用数量: 3111"
 ui_print "- 目标路径: /data/system/zui/embedding/"
 ui_print "********************************"
 

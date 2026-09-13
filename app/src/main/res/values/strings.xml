@@ -384,7 +384,7 @@
     <string name="settings_embedding_setting_remove_blacklist">去除黑名单限制</string>
     <string name="settings_embedding_setting_remove_blacklist_summary">去除黑名单限制，允许所有应用嵌入</string>
     <string name="settings_role_module_title">一视界拓展模块</string>
-    <string name="settings_role_module_summary">安装一视界拓展KSU/Magisk模块，有关一视界分屏的配置均使用该模块挂载修改，模块初始自带1995个应用适配策略</string>
+    <string name="settings_role_module_summary">安装一视界拓展KSU/Magisk模块，有关一视界分屏的配置均使用该模块挂载修改，模块初始自带3111个应用适配策略</string>
     <string name="settings_custom_landscape_view">启动/关闭适配向导</string>
     <string name="settings_custom_landscape_view_summary">手动为你需要的APP进行平行视窗适配，需要授予最近使用状态及悬浮窗权限，适配策略将通过模块挂载</string>
     <string name="settings_custom_landscape_result_title">手动适配的策略</string>

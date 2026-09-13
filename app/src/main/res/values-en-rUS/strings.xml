@@ -349,7 +349,7 @@
     <string name="settings_embedding_setting_remove_blacklist">Remove blacklist restriction</string>
     <string name="settings_embedding_setting_remove_blacklist_summary">Remove blacklist restrictions and allow all apps to be embedded.</string>
     <string name="settings_role_module_title">Parallel Window extension module</string>
-    <string name="settings_role_module_summary">Install the Parallel Window KSU/Magisk extension module. Parallel Window split-screen configurations are mounted through this module, which initially includes 1995 app adaptation policies.</string>
+    <string name="settings_role_module_summary">Install the Parallel Window KSU/Magisk extension module. Parallel Window split-screen configurations are mounted through this module, which initially includes 3111 app adaptation policies.</string>
     <string name="settings_custom_landscape_view">Launch/close adaptation wizard</string>
     <string name="settings_custom_landscape_view_summary">Manually adapt apps for Parallel Window. Usage Access and overlay permissions are required. Policies will be mounted through the module.</string>
     <string name="settings_custom_landscape_result_title">Manually adapted policies</string>
