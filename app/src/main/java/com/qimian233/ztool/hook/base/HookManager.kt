@@ -18,6 +18,7 @@ import com.qimian233.ztool.hook.modules.launcher.grid.LauncherNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.misc.BatchUninstall
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
+import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskProbe
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
 import com.qimian233.ztool.hook.modules.mobiledesktop.AutoAcceptFileTransferHook
@@ -204,7 +205,8 @@ object HookManager {
         // ── Launcher (target: com.zui.launcher) ──
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
-        registerHookModule(LauncherAppIconUnmaskProbe()) // hook_test: 桌面图标蒙版位置探针
+        // registerHookModule(LauncherAppIconUnmaskProbe()) // hook_test: 探针阶段完成，已由正式 Hook 接替
+        registerHookModule(LauncherAppIconUnmaskHook()) // hook_test: 桌面图标去蒙版，暂无前端开关
         registerHookModule(CustomGridSize())
         registerHookModule(CleanGlobalSearch())
         registerHookModule(DisableDockBar())
