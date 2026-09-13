@@ -506,7 +506,7 @@
     <string name="system_ui_status_bar_syatus_battery_external_title">强制电池外百分比</string>
     <string name="system_ui_status_bar_syatus_battery_external_summary">在电池图标右侧显示剩余的电量，请先关闭系统设置的百分比显示</string>
     <!--系统界面 锁屏页资源值-->
-    <string name="system_ui_lock_screen_yi_yan_tile">锁屏一言</string>
+    <string name="system_ui_lock_screen_widgets_title">锁屏组件</string>
     <string name="system_ui_lock_screen_yi_yan_switch_title">随机锁屏签名</string>
     <string name="system_ui_lock_screen_yi_yan_summary">在锁屏页面显示从网络获取的随机文本，设置后请重启系统</string>
     <string name="system_ui_animation_charge_anim_duration_title">自定义充电动画时长</string>
@@ -533,7 +533,6 @@
     <string name="system_ui_lock_screen_realwatts_custom_format_enabled_summary">使用占位符自定义显示文本，开启后子开关将失效</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_label">自定义格式</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_hint">可用占位符：${voltage} ${current} ${power} ${temperature} ${ind}\n示例：Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
-    <string name="system_ui_lock_screen_clock_color_section">锁屏时钟颜色</string>
     <string name="system_ui_lock_screen_clock_color_title">自定义锁屏时钟颜色</string>
     <string name="system_ui_lock_screen_clock_color_summary">自定义锁屏时钟与日期的颜色，保存后重启系统界面生效</string>
     <string name="system_ui_lock_screen_clock_color_native_summary">ZUXOS 1.5 已原生支持此功能，请在 设置 -> 壁纸和主题风格 -> 锁屏 中更改</string>

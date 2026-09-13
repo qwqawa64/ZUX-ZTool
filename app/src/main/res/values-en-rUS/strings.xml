@@ -442,7 +442,7 @@
     <string name="system_ui_status_bar_battery_title">Battery</string>
     <string name="system_ui_status_bar_syatus_battery_external_title">Force battery percentage outside icon</string>
     <string name="system_ui_status_bar_syatus_battery_external_summary">Show remaining battery percentage to the right of the battery icon. Disable the system percentage display first.</string>
-    <string name="system_ui_lock_screen_yi_yan_tile">Lock screen quote</string>
+    <string name="system_ui_lock_screen_widgets_title">Lockscreen widgets</string>
     <string name="system_ui_lock_screen_yi_yan_switch_title">Random lock screen signature</string>
     <string name="system_ui_lock_screen_yi_yan_summary">Show random text fetched from the network on the lock screen. Reboot to take effect.</string>
     <string name="system_ui_animation_charge_anim_duration_title">Custom charging animation duration</string>
@@ -468,7 +468,6 @@
     <string name="system_ui_lock_screen_realwatts_custom_format_enabled_summary">Use bash-style string to customize output. This option overrides other switches.</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_label">Customized format</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_hint">Variables available: ${voltage} ${current} ${power} ${temperature} ${ind}\nExample: Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
-    <string name="system_ui_lock_screen_clock_color_section">Lock screen clock color</string>
     <string name="system_ui_lock_screen_clock_color_title">Custom lock screen clock color</string>
     <string name="system_ui_lock_screen_clock_color_summary">Customize the color of the lock screen clock and date; restart System UI to apply</string>
     <string name="system_ui_lock_screen_clock_color_native_summary">ZUXOS 1.5 provides this feature natively; change it in Settings -> Wallpaper &amp; theme style -> Lock screen</string>

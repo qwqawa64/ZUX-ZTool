@@ -268,7 +268,7 @@ private fun lockScreenSettingsSections(
     onClockColorTextChanged: (String) -> Unit,
     onClockColorEditingFinished: () -> Unit,
 ): List<SettingSection> {
-    val yiYanItems = buildList {
+    val lockScreenWidgetsItems = buildList {
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_lock_screen_yi_yan_switch_title),
@@ -292,6 +292,43 @@ private fun lockScreenSettingsSections(
                     }
                 )
             )
+        }
+        if (state.nativeClockColorAvailable) {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_lock_screen_clock_color_title),
+                    summary = stringResource(R.string.system_ui_lock_screen_clock_color_native_summary),
+                    checked = false,
+                    onCheckedChange = {},
+                    enabled = false
+                )
+            )
+        } else {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_lock_screen_clock_color_title),
+                    summary = stringResource(R.string.system_ui_lock_screen_clock_color_summary),
+                    checked = state.clockColorCustom,
+                    onCheckedChange = onClockColorCustomChanged
+                )
+            )
+            if (state.clockColorCustom) {
+                add(
+                    SettingItem.Custom(
+                        content = {
+                            ZToolArgbColorTextFieldRow(
+                                label = stringResource(R.string.system_ui_lock_screen_clock_color_picker_label),
+                                value = state.clockColorText,
+                                onValueChange = onClockColorTextChanged,
+                                defaultText = "FFFFFFFF",
+                                summary = "#%08X".format(state.clockColor),
+                                errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                onEditingFinished = onClockColorEditingFinished
+                            )
+                        }
+                    )
+                )
+            }
         }
     }
 
@@ -345,46 +382,48 @@ private fun lockScreenSettingsSections(
         // 当选择"实际功率"时展开子开关
         val isActualWatts = state.chargeWattsOption == stringResource(R.string.system_ui_common_watt_option_actual)
         if (isActualWatts) {
-            add(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_power),
-                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_power_summary),
-                    checked = state.showPower,
-                    onCheckedChange = onShowPowerChanged
+            if (!state.customFormatEnabled) {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_lock_screen_realwatts_show_power),
+                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_power_summary),
+                        checked = state.showPower,
+                        onCheckedChange = onShowPowerChanged
+                    )
                 )
-            )
-            add(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage),
-                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage_summary),
-                    checked = state.showVoltage,
-                    onCheckedChange = onShowVoltageChanged
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage),
+                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage_summary),
+                        checked = state.showVoltage,
+                        onCheckedChange = onShowVoltageChanged
+                    )
                 )
-            )
-            add(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_current),
-                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_current_summary),
-                    checked = state.showCurrent,
-                    onCheckedChange = onShowCurrentChanged
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_lock_screen_realwatts_show_current),
+                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_current_summary),
+                        checked = state.showCurrent,
+                        onCheckedChange = onShowCurrentChanged
+                    )
                 )
-            )
-            add(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature),
-                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature_summary),
-                    checked = state.showTemperature,
-                    onCheckedChange = onShowTemperatureChanged
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature),
+                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature_summary),
+                        checked = state.showTemperature,
+                        onCheckedChange = onShowTemperatureChanged
+                    )
                 )
-            )
-            add(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator),
-                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator_summary),
-                    checked = state.showIndicator,
-                    onCheckedChange = onShowIndicatorChanged
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator),
+                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator_summary),
+                        checked = state.showIndicator,
+                        onCheckedChange = onShowIndicatorChanged
+                    )
                 )
-            )
+            }
             // 高级自定义格式
             add(
                 SettingItem.Switch(
@@ -409,50 +448,10 @@ private fun lockScreenSettingsSections(
         }
     }
 
-    val clockColorItems = buildList {
-        if (state.nativeClockColorAvailable) {
-            add(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_ui_lock_screen_clock_color_title),
-                    summary = stringResource(R.string.system_ui_lock_screen_clock_color_native_summary),
-                    checked = false,
-                    onCheckedChange = {},
-                    enabled = false
-                )
-            )
-        } else {
-            add(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_ui_lock_screen_clock_color_title),
-                    summary = stringResource(R.string.system_ui_lock_screen_clock_color_summary),
-                    checked = state.clockColorCustom,
-                    onCheckedChange = onClockColorCustomChanged
-                )
-            )
-            if (state.clockColorCustom) {
-                add(
-                    SettingItem.Custom(
-                        content = {
-                            ZToolArgbColorTextFieldRow(
-                                label = stringResource(R.string.system_ui_lock_screen_clock_color_picker_label),
-                                value = state.clockColorText,
-                                onValueChange = onClockColorTextChanged,
-                                defaultText = "FFFFFFFF",
-                                summary = "#%08X".format(state.clockColor),
-                                errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                                onEditingFinished = onClockColorEditingFinished
-                            )
-                        }
-                    )
-                )
-            }
-        }
-    }
-
     return listOf(
         SettingSection(
-            title = stringResource(R.string.system_ui_lock_screen_yi_yan_tile),
-            items = yiYanItems
+            title = stringResource(R.string.system_ui_lock_screen_widgets_title),
+            items = lockScreenWidgetsItems
         ),
         SettingSection(
             title = stringResource(R.string.system_ui_lock_screen_aod_title),
@@ -461,10 +460,6 @@ private fun lockScreenSettingsSections(
         SettingSection(
             title = stringResource(R.string.system_ui_lock_screen_charge_watts_title),
             items = chargeWattsItems
-        ),
-        SettingSection(
-            title = stringResource(R.string.system_ui_lock_screen_clock_color_section),
-            items = clockColorItems
         )
     )
 }
