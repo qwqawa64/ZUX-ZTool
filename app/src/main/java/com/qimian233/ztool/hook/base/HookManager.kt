@@ -19,7 +19,6 @@ import com.qimian233.ztool.hook.modules.launcher.misc.BatchUninstall
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
 import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskHook
-import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskProbe
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
 import com.qimian233.ztool.hook.modules.mobiledesktop.AutoAcceptFileTransferHook
 import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook
@@ -54,7 +53,6 @@ import com.qimian233.ztool.hook.modules.setting.OneVisionCompletion
 import com.qimian233.ztool.hook.modules.setting.OwnerInfoSettingsHook
 import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook
 import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskHook
-import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskProbe
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand
@@ -193,7 +191,6 @@ object HookManager {
         registerHookModule(ZToolSettingsEntryHook())
         registerHookModule(HideOtaUpdateHint())
         registerHookModule(LocaleListEditorHook()) // test_hook: 拦截 LenovoUtils 区域判断
-        // registerHookModule(SettingsAppIconUnmaskProbe()) // hook_test: 已由正式 Hook 接替
         registerHookModule(SettingsAppIconUnmaskHook()) // 设定应用图标去蒙版
 
         // ── PackageInstaller (target: com.android.packageinstaller) ──
@@ -207,7 +204,6 @@ object HookManager {
         // ── Launcher (target: com.zui.launcher) ──
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
-        // registerHookModule(LauncherAppIconUnmaskProbe()) // hook_test: 探针阶段完成，已由正式 Hook 接替
         registerHookModule(LauncherAppIconUnmaskHook()) // hook_test: 桌面图标去蒙版，暂无前端开关
         registerHookModule(CustomGridSize())
         registerHookModule(CleanGlobalSearch())
