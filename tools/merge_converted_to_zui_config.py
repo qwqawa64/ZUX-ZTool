@@ -48,6 +48,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--drop-empty", action="store_true",
                     help="skip entries without mainPage and activityPairs")
+    ap.add_argument("--source", default=CONVERTED,
+                    help="entry source: bare array or wrapped config "
+                         "(default: %(default)s)")
+    ap.add_argument("--out", default=OUT,
+                    help="output path (default: %(default)s)")
     args = ap.parse_args()
 
     with open(EXISTING_CONFIG, encoding="utf-8") as f:
@@ -59,11 +64,14 @@ def main():
         raise SystemExit(f"{EXISTING_CONFIG} lacks {missing}; not a wrapped "
                          "ZUI embedding config, aborting")
 
-    with open(CONVERTED, encoding="utf-8") as f:
+    with open(args.source, encoding="utf-8") as f:
         converted = json.load(f)
+    # Accept a bare entry array or a wrapped config with a packages array.
+    if isinstance(converted, dict) and "packages" in converted:
+        converted = converted["packages"]
     if not isinstance(converted, list):
-        raise SystemExit(f"{CONVERTED} is not a bare entry array; "
-                         "run tools/convert_to_embedding.py first")
+        raise SystemExit(f"{args.source} is neither a bare entry array nor a "
+                         "wrapped config")
 
     names = {p["name"] for p in config["packages"]}
     added, replaced, skipped_dup, dropped_empty = 0, 0, 0, 0
@@ -90,7 +98,7 @@ def main():
     config["EmbeddingConfigVersion"] = bump_version(
         config["EmbeddingConfigVersion"])
 
-    with open(OUT, "w", encoding="utf-8") as f:
+    with open(args.out, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
     no_main = sum(1 for p in config["packages"] if not p.get("mainPage"))
@@ -99,7 +107,7 @@ def main():
           f"empty skeletons dropped {dropped_empty})")
     print(f"entries still missing mainPage (need manual fill): {no_main}")
     print(f"EmbeddingConfigVersion -> {config['EmbeddingConfigVersion']}")
-    print("wrote:", OUT)
+    print("wrote:", args.out)
 
 
 if __name__ == "__main__":
