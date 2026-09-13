@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -17,16 +18,14 @@ import java.util.concurrent.atomic.AtomicInteger
  * 切入点：BaseIconFactory#createBadgedIconBitmap(Drawable, IconOptions) after-hook。
  * 仅当输入是 AdaptiveIconDrawable 且输出是纯 BitmapInfo（非 Extender 子类、
  * 非时钟动态图标）时重建；传统图标保持系统 legacy 垫底逻辑不动。
+ * monochrome（themed）位图通过 IconThemeController.createThemedBitmap 用原始
+ * AdaptiveIcon 重建；重建图标不带阴影层。
  *
- * 已知取舍：重建后的图标不带阴影层；monochrome（themed）位图通过
- * IconThemeController.createThemedBitmap 用原始 AdaptiveIcon 重建。
- *
- * getModuleName() 返回 "hook_test"，无前端开关即可启用；后续转正式功能时
- * 替换为 PreferenceKeys 键名并补前端开关。
+ * 生效需重启桌面（AmStop）；图标持久缓存可能需要清一次 Launcher 数据。
  */
 class LauncherAppIconUnmaskHook : AppHookModule() {
 
-    override fun getModuleName(): String = "hook_test"
+    override fun getModuleName(): String = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(TARGET_PACKAGE)
 

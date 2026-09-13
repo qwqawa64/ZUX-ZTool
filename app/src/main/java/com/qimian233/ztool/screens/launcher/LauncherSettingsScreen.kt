@@ -118,7 +118,8 @@ fun LauncherSettingsRoute(
         onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
         onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
         onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
-        onBigFolderAlignChanged = viewModel::setBigFolderAlign
+        onBigFolderAlignChanged = viewModel::setBigFolderAlign,
+        onAppIconUnmaskChanged = viewModel::setAppIconUnmask
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -190,6 +191,7 @@ private fun LauncherSettingsScreen(
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
+    onAppIconUnmaskChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -247,6 +249,7 @@ private fun LauncherSettingsScreen(
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
+                        onAppIconUnmaskChanged = onAppIconUnmaskChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -277,6 +280,7 @@ private fun launcherSettingsSections(
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
+    onAppIconUnmaskChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
 
     val launcherLayoutItems = buildList {
@@ -346,6 +350,14 @@ private fun launcherSettingsSections(
                 summary = stringResource(R.string.launcher_big_folder_align_summary),
                 checked = state.bigFolderAlign,
                 onCheckedChange = onBigFolderAlignChanged
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_app_icon_unmask_title),
+                summary = stringResource(R.string.launcher_app_icon_unmask_summary),
+                checked = state.appIconUnmask,
+                onCheckedChange = onAppIconUnmaskChanged
             )
         )
     }
