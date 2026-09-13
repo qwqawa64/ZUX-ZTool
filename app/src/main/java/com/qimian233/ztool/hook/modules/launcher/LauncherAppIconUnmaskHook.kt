@@ -16,8 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * 重建无形状蒙版、无 IconNormalizer 缩放的位图。
  *
  * 切入点：BaseIconFactory#createBadgedIconBitmap(Drawable, IconOptions) after-hook。
- * 仅当输入是 AdaptiveIconDrawable 且输出是纯 BitmapInfo（非 Extender 子类、
- * 非时钟动态图标）时重建；传统图标保持系统 legacy 垫底逻辑不动。
+ * 仅当输入是 AdaptiveIconDrawable 时重建；传统图标保持系统 legacy 垫底逻辑不动。
+ * 默认豁免动态图标（BitmapInfo.Extender 子类，如时钟 ClockDrawableWrapper），
+ * 因为重建为静态位图会冻结动画；子开关 LAUNCHER_APP_ICON_UNMASK_DYNAMIC 打开时
+ * 一并重建，代价是时钟定格。
  * monochrome（themed）位图通过 IconThemeController.createThemedBitmap 用原始
  * AdaptiveIcon 重建；重建图标不带阴影层。
  *
@@ -27,6 +29,10 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
 
+    /** 子开关：不豁免动态图标。按项目规范在 handleLoadPackage 读取并捕获，不在 lambda 内读远程偏好。 */
+    @Volatile
+    private var includeDynamicIcons = false
+
     override fun getTargetPackages(): Array<String> = arrayOf(TARGET_PACKAGE)
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
@@ -34,6 +40,10 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
             return
         }
         val cl = param.defaultClassLoader
+        includeDynamicIcons = remotePreferences.getBoolean(
+            PreferenceKeys.LAUNCHER_APP_ICON_UNMASK_DYNAMIC.name,
+            PreferenceKeys.LAUNCHER_APP_ICON_UNMASK_DYNAMIC.default
+        )
         try {
             val factoryClass = cl.loadClass("com.android.launcher3.icons.BaseIconFactory")
             val optionsClass =
@@ -84,9 +94,10 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         if (factory == null || result == null) {
             return null
         }
-        // 时钟等动态图标（BitmapInfo.Extender 子类承载额外语义）一律放行
+        // 时钟等动态图标（BitmapInfo.Extender 子类承载额外语义）默认豁免；
+        // 子开关打开时一并重建（动画会被定格为静态位图）
         val bitmapInfoClass = cl.loadClass("com.android.launcher3.icons.BitmapInfo")
-        if (result.javaClass != bitmapInfoClass) {
+        if (!includeDynamicIcons && result.javaClass != bitmapInfoClass) {
             return null
         }
         val size = factory.javaClass

@@ -46,7 +46,8 @@ class LauncherSettingsRepository(
             disableRecentAppDisplay = prefsUtils.loadBooleanSetting(KEY_DISABLE_RECENT_APP_DISPLAY, false),
             launcherBatchUninstall = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_BATCH_UNINSTALL, false),
             bigFolderAlign = prefsUtils.loadBooleanSetting(KEY_BIG_FOLDER_ALIGN, false),
-            appIconUnmask = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK, false)
+            appIconUnmask = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK, false),
+            appIconUnmaskDynamic = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, false)
         )
     }
 
@@ -139,6 +140,10 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK, enabled)
     }
 
+    fun saveAppIconUnmaskDynamic(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, enabled)
+    }
+
     fun saveDisableDockBar(enabled: Boolean): Boolean {
         val previousMoreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false)
         prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, previousMoreBigDock)
@@ -221,6 +226,8 @@ class LauncherSettingsRepository(
         private val KEY_LAUNCHER_BATCH_UNINSTALL = PreferenceKeys.LAUNCHER_BATCH_UNINSTALL.name
         private val KEY_BIG_FOLDER_ALIGN = PreferenceKeys.LAUNCHER_BIG_FOLDER_ALIGN.name
         private val KEY_LAUNCHER_APP_ICON_UNMASK = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
+        private val KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC =
+            PreferenceKeys.LAUNCHER_APP_ICON_UNMASK_DYNAMIC.name
     }
 }
 

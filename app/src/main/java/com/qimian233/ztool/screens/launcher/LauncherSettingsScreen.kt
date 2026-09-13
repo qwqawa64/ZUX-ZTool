@@ -119,7 +119,8 @@ fun LauncherSettingsRoute(
         onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
         onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
         onBigFolderAlignChanged = viewModel::setBigFolderAlign,
-        onAppIconUnmaskChanged = viewModel::setAppIconUnmask
+        onAppIconUnmaskChanged = viewModel::setAppIconUnmask,
+        onAppIconUnmaskDynamicChanged = viewModel::setAppIconUnmaskDynamic
     )
 
     if (uiState.showRestartConfirmDialog) {
@@ -192,6 +193,7 @@ private fun LauncherSettingsScreen(
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
+    onAppIconUnmaskDynamicChanged: (Boolean) -> Unit,
 ) {
     ZToolScaffold(
         topBar = {
@@ -250,6 +252,7 @@ private fun LauncherSettingsScreen(
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
                         onAppIconUnmaskChanged = onAppIconUnmaskChanged,
+                        onAppIconUnmaskDynamicChanged = onAppIconUnmaskDynamicChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -281,6 +284,7 @@ private fun launcherSettingsSections(
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
+    onAppIconUnmaskDynamicChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
 
     val launcherLayoutItems = buildList {
@@ -360,6 +364,16 @@ private fun launcherSettingsSections(
                 onCheckedChange = onAppIconUnmaskChanged
             )
         )
+        if (state.appIconUnmask) {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.launcher_app_icon_unmask_dynamic_title),
+                    summary = stringResource(R.string.launcher_app_icon_unmask_dynamic_summary),
+                    checked = state.appIconUnmaskDynamic,
+                    onCheckedChange = onAppIconUnmaskDynamicChanged
+                )
+            )
+        }
     }
 
     val dockBarLayoutItems = buildList {

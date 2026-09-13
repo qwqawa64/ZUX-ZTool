@@ -132,6 +132,11 @@ class LauncherSettingsViewModel(
         repository.saveAppIconUnmask(enabled)
     }
 
+    fun setAppIconUnmaskDynamic(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(appIconUnmaskDynamic = enabled)
+        repository.saveAppIconUnmaskDynamic(enabled)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
@@ -211,6 +216,7 @@ data class LauncherSettingsUiState(
     val launcherBatchUninstall: Boolean = false,
     val bigFolderAlign: Boolean = false,
     val appIconUnmask: Boolean = false,
+    val appIconUnmaskDynamic: Boolean = false,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size

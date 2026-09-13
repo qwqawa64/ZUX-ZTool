@@ -644,6 +644,8 @@
     <string name="launcher_big_folder_align_summary">让大文件夹样式更接近主流系统</string>
     <string name="launcher_app_icon_unmask_title">去除桌面图标蒙版</string>
     <string name="launcher_app_icon_unmask_summary">第三方图标包图标不再被系统形状二次裁切，显示为原始方形。重启桌面后生效，图标未变化时可清除桌面数据重建缓存</string>
+    <string name="launcher_app_icon_unmask_dynamic_title">包含动态图标</string>
+    <string name="launcher_app_icon_unmask_dynamic_summary">时钟等动态图标也按原始样式显示。注意：重建为静态位图后时钟将定格，不再随时间走动</string>
     <string name="launcher_input_row_number_here">行数</string>
     <string name="launcher_input_column_number_here">列数</string>
     <!--系统框架功能页的资源值-->

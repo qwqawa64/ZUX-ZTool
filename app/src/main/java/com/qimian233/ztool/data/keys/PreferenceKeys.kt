@@ -136,6 +136,7 @@ object PreferenceKeys {
     val LAUNCHER_BATCH_UNINSTALL = BoolKey("launcher_batch_uninstall", false)
     val LAUNCHER_BIG_FOLDER_ALIGN = BoolKey("big_folder_align", false)
     val LAUNCHER_APP_ICON_UNMASK = BoolKey("launcher_app_icon_unmask", false)
+    val LAUNCHER_APP_ICON_UNMASK_DYNAMIC = BoolKey("launcher_app_icon_unmask_dynamic", false)
 
     // Launcher 子功能开关 + 内部键
     val REMOVE_HOT_WORD_VIEW = BoolKey("remove_hot_word_view", false)

@@ -570,6 +570,8 @@
     <string name="launcher_big_folder_align_summary">Make big folders look better.</string>
     <string name="launcher_app_icon_unmask_title">Remove desktop icon mask</string>
     <string name="launcher_app_icon_unmask_summary">Third-party icon pack icons are no longer re-cropped by the system shape and render as original squares. Takes effect after restarting the launcher; clear launcher data to rebuild cached icons if unchanged</string>
+    <string name="launcher_app_icon_unmask_dynamic_title">Include dynamic icons</string>
+    <string name="launcher_app_icon_unmask_dynamic_summary">Also render clock and other dynamic icons in original style. Note: rebuilding them as static bitmaps freezes the clock hands</string>
     <string name="launcher_input_row_number_here">Rows</string>
     <string name="launcher_input_column_number_here">Columns</string>
     <string name="system_framework_ai_input_quick_help_title">Trigger symbol help</string>
