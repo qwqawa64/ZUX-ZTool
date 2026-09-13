@@ -469,7 +469,7 @@
     <string name="system_ui_lock_screen_realwatts_custom_format_label">Customized format</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_hint">Variables available: ${voltage} ${current} ${power} ${temperature} ${ind}\nExample: Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
     <string name="system_ui_lock_screen_clock_color_title">Custom lock screen clock color</string>
-    <string name="system_ui_lock_screen_clock_color_summary">Customize the color of the lock screen clock and date; restart System UI to apply</string>
+    <string name="system_ui_lock_screen_clock_color_summary">Customize the color of the lock screen clock and date</string>
     <string name="system_ui_lock_screen_clock_color_native_summary">ZUXOS 1.5 provides this feature natively; change it in Settings -> Wallpaper &amp; theme style -> Lock screen</string>
     <string name="system_ui_lock_screen_clock_color_picker_label">Clock color (AARRGGBB)</string>
     <string name="system_ui_lock_screen_api_address_hint">Enter API address</string>
@@ -569,7 +569,7 @@
     <string name="launcher_big_folder_align_title">Big folder alignment</string>
     <string name="launcher_big_folder_align_summary">Make big folders look better.</string>
     <string name="launcher_app_icon_unmask_title">Remove desktop icon mask</string>
-    <string name="launcher_app_icon_unmask_summary">Third-party icon pack icons are no longer re-cropped by the system shape and render as original squares. Takes effect after restarting the launcher; clear launcher data to rebuild cached icons if unchanged</string>
+    <string name="launcher_app_icon_unmask_summary">Third-party icon pack icons are no longer re-cropped by the system shape and render as original squares. Clear launcher data to rebuild cached icons if unchanged</string>
     <string name="launcher_app_icon_unmask_dynamic_title">Include dynamic icons</string>
     <string name="launcher_app_icon_unmask_dynamic_summary">Also render clock and other dynamic icons in original style. Note: rebuilding them as static bitmaps freezes the clock hands</string>
     <string name="launcher_input_row_number_here">Rows</string>
@@ -686,7 +686,7 @@
     <string name="page_settings_enable_floating_bottom_bar_blur_summary">Enable blurring and other advanced visual effects</string>
     <string name="settings_app_details_completion">Detailed APP information</string>
     <string name="settings_app_icon_unmask_title">Remove app icon mask</string>
-    <string name="settings_app_icon_unmask_summary">Third-party icon pack icons in the app list are no longer re-cropped by the system shape. Takes effect after restarting Settings</string>
+    <string name="settings_app_icon_unmask_summary">Third-party icon pack icons in the app list are no longer re-cropped by the system shape</string>
     <string name="settings_app_details_completion_summary">Add packagename, SDK info, installation, update and install source info to APP detail page</string>
     <string name="settings_about_device_info_image_saved">Saved device illustration</string>
     <string name="settings_about_device_info_image_save_failed">Failed to save device illustration</string>

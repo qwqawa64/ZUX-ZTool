@@ -534,7 +534,7 @@
     <string name="system_ui_lock_screen_realwatts_custom_format_label">自定义格式</string>
     <string name="system_ui_lock_screen_realwatts_custom_format_hint">可用占位符：${voltage} ${current} ${power} ${temperature} ${ind}\n示例：Charging: ${power}W ${ind}, ${voltage}V/${current}A</string>
     <string name="system_ui_lock_screen_clock_color_title">自定义锁屏时钟颜色</string>
-    <string name="system_ui_lock_screen_clock_color_summary">自定义锁屏时钟与日期的颜色，保存后重启系统界面生效</string>
+    <string name="system_ui_lock_screen_clock_color_summary">自定义锁屏时钟与日期的颜色</string>
     <string name="system_ui_lock_screen_clock_color_native_summary">ZUXOS 1.5 已原生支持此功能，请在 设置 -> 壁纸和主题风格 -> 锁屏 中更改</string>
     <string name="system_ui_lock_screen_clock_color_picker_label">时钟颜色（AARRGGBB）</string>
     <string name="system_ui_lock_screen_api_address_hint">输入API地址</string>
@@ -643,7 +643,7 @@
     <string name="launcher_big_folder_align_title">大文件夹对齐</string>
     <string name="launcher_big_folder_align_summary">让大文件夹样式更接近主流系统</string>
     <string name="launcher_app_icon_unmask_title">去除桌面图标蒙版</string>
-    <string name="launcher_app_icon_unmask_summary">第三方图标包图标不再被系统形状二次裁切，显示为原始方形。重启桌面后生效，图标未变化时可清除桌面数据重建缓存</string>
+    <string name="launcher_app_icon_unmask_summary">第三方图标包图标不再被系统形状二次裁切，显示为原始方形。图标未变化时可清除桌面数据重建缓存</string>
     <string name="launcher_app_icon_unmask_dynamic_title">包含动态图标</string>
     <string name="launcher_app_icon_unmask_dynamic_summary">时钟等动态图标也按原始样式显示。注意：重建为静态位图后时钟将定格，不再随时间走动</string>
     <string name="launcher_input_row_number_here">行数</string>
@@ -750,7 +750,7 @@
     <string name="page_settings_enable_floating_bottom_bar_blur_summary">使用 iOS 风格的模糊、透射等视觉效果</string>
     <string name="settings_app_details_completion">补全应用信息</string>
     <string name="settings_app_icon_unmask_title">去除应用图标蒙版</string>
-    <string name="settings_app_icon_unmask_summary">应用列表等页面中第三方图标包图标不再被系统形状二次裁切。重启设定后生效</string>
+    <string name="settings_app_icon_unmask_summary">应用列表等页面中第三方图标包图标不再被系统形状二次裁切</string>
     <string name="settings_app_details_completion_summary">为设置的应用页面补全应用包名、SDK信息、安装和更新信息以及安装来源</string>
     <string name="settings_about_device_info_title">关于设备信息</string>
     <string name="settings_about_device_info_master">启用修改</string>
