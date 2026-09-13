@@ -19,6 +19,9 @@ object PreferenceKeys {
 
     // Boolean 键（Hook 启用开关 + 子功能开关 + 应用设置）
 
+    // for test hook only
+    val TEST_HOOK = BoolKey("test_hook", false)
+
     // ── 系统框架 ──
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val NO_MORE_PASSWORD_PER_24H = BoolKey("NoMorePasswordPer24H", false)
@@ -314,7 +317,8 @@ object PreferenceKeys {
         YIYAN, IS_SYSTEMUI_PERMISSION_CONFIRMED, IS_CONFIG_UPGRADED,
         SYSTEMUI_REALWATTS_SHOW_VOLTAGE, SYSTEMUI_REALWATTS_SHOW_CURRENT,
         SYSTEMUI_REALWATTS_SHOW_POWER, SYSTEMUI_REALWATTS_SHOW_TEMPERATURE,
-        SYSTEMUI_REALWATTS_SHOW_INDICATOR, SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED
+        SYSTEMUI_REALWATTS_SHOW_INDICATOR, SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED,
+        TEST_HOOK
     )
 
     val intKeys: List<IntKey> = listOf(

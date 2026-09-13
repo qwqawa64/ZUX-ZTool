@@ -33,6 +33,10 @@ Hook 类要实现三个方法：
   override fun getModuleName(): String = Preferencekeys.KEY_VAL_NAME.name
   ```
   关于偏好键的注册方式，请参考 [Add_New_Preference_Key_zh-CN.md](../preference_key/Add_New_Preference_Key_zh-CN.md) 。
+  > [!tip]
+  > 如果你需要临时测试一个 Hook 在本项目基础设施下的工作效果，可以返回模块名为 `PreferenceKey.TEST_HOOK.name`，基类会自动放行这个 Hook，无需提前修改 UI 层。
+  >
+  > 注意所有正式 Hook 严禁使用这个键名。
 - `getTargetPackages(): Array<String>`, 用于返回模块作用的宿主包名，可同时作用于多个宿主。这个标识符需要在 
 `ScopeKeys.kt` 提前注册。同样，不能硬编码字符串作为返回值：
   ```kotlin
