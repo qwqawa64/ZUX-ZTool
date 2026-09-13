@@ -158,8 +158,11 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
                 baseFactoryClass, sourceHintClass
             )
             val themed = create.invoke(controller, input, newInfo, factory, null) ?: return
+            // setThemedBitmap 声明参数是父类 ThemedBitmap，运行时实例是其子类
+            // （如 MonoThemedBitmap），getMethod 精确匹配必须用声明类型
+            val themedBitmapClass = cl.loadClass("com.android.launcher3.icons.ThemedBitmap")
             bitmapInfoClass
-                .getMethod("setThemedBitmap", themed.javaClass)
+                .getMethod("setThemedBitmap", themedBitmapClass)
                 .invoke(newInfo, themed)
         } catch (t: Throwable) {
             logger.debug("[unmask] themed bitmap restore skipped: " + t.message)
