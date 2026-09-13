@@ -149,10 +149,13 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
             } catch (_: ClassNotFoundException) {
                 return
             }
+            // 注意：createThemedBitmap 声明的参数类型是 BaseIconFactory，
+            // 运行时实例是子类 LauncherIcons，getMethod 精确匹配必须用声明类型
+            val baseFactoryClass = cl.loadClass("com.android.launcher3.icons.BaseIconFactory")
             val create: Method = controller.javaClass.getMethod(
                 "createThemedBitmap",
                 AdaptiveIconDrawable::class.java, bitmapInfoClass,
-                factory.javaClass, sourceHintClass
+                baseFactoryClass, sourceHintClass
             )
             val themed = create.invoke(controller, input, newInfo, factory, null) ?: return
             bitmapInfoClass
