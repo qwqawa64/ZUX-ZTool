@@ -18,6 +18,7 @@ import com.qimian233.ztool.hook.modules.launcher.grid.LauncherNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.misc.BatchUninstall
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
+import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskProbe
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
 import com.qimian233.ztool.hook.modules.mobiledesktop.AutoAcceptFileTransferHook
 import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook
@@ -190,7 +191,7 @@ object HookManager {
         registerHookModule(ZToolSettingsEntryHook())
         registerHookModule(HideOtaUpdateHint())
         registerHookModule(LocaleListEditorHook()) // test_hook: 拦截 LenovoUtils 区域判断
-        registerHookModule(SettingsAppIconUnmaskProbe()) // hook_test: 图标蒙版位置探针
+        // registerHookModule(SettingsAppIconUnmaskProbe()) // hook_test: 停用——launcher 探针期间保持关闭
 
         // ── PackageInstaller (target: com.android.packageinstaller) ──
         registerHookModule(PackageInstallerHookScan())
@@ -203,6 +204,7 @@ object HookManager {
         // ── Launcher (target: com.zui.launcher) ──
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
+        registerHookModule(LauncherAppIconUnmaskProbe()) // hook_test: 桌面图标蒙版位置探针
         registerHookModule(CustomGridSize())
         registerHookModule(CleanGlobalSearch())
         registerHookModule(DisableDockBar())
