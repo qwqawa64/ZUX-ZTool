@@ -102,6 +102,51 @@ class FrameworkSettingsViewModel(
         repository.saveDisableHbmThermalLimit(enabled)
     }
 
+    fun setPkgMgrAllowDowngrade(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrAllowDowngrade = enabled)
+        repository.savePkgMgrAllowDowngrade(enabled)
+    }
+
+    fun setPkgMgrBypassVerification(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrBypassVerification = enabled)
+        repository.savePkgMgrBypassVerification(enabled)
+    }
+
+    fun setPkgMgrDisableVerificationAgent(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrDisableVerificationAgent = enabled)
+        repository.savePkgMgrDisableVerificationAgent(enabled)
+    }
+
+    fun setPkgMgrBypassDigest(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrBypassDigest = enabled)
+        repository.savePkgMgrBypassDigest(enabled)
+    }
+
+    fun setPkgMgrUsePreviousSignatures(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrUsePreviousSignatures = enabled)
+        repository.savePkgMgrUsePreviousSignatures(enabled)
+    }
+
+    fun setPkgMgrBypassExactSigMatch(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrBypassExactSigMatch = enabled)
+        repository.savePkgMgrBypassExactSigMatch(enabled)
+    }
+
+    fun setPkgMgrBypassSharedUser(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrBypassSharedUser = enabled)
+        repository.savePkgMgrBypassSharedUser(enabled)
+    }
+
+    fun setPkgMgrAllowHiddenApisSystemApps(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrAllowHiddenApisSystemApps = enabled)
+        repository.savePkgMgrAllowHiddenApisSystemApps(enabled)
+    }
+
+    fun setPkgMgrBypassArscRestriction(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(pkgMgrBypassArscRestriction = enabled)
+        repository.savePkgMgrBypassArscRestriction(enabled)
+    }
+
     fun showAiInputInfoDialog() {
         _uiState.value = _uiState.value.copy(showAiInputInfoDialog = true)
     }
@@ -151,4 +196,13 @@ data class FrameworkSettingsUiState(
     val allowRelativeAppLaunch: Boolean = false,
     val forceRelativeAppFreeform: Boolean = false,
     val disableHbmThermalLimit: Boolean = false,
+    val pkgMgrAllowDowngrade: Boolean = false,
+    val pkgMgrBypassVerification: Boolean = false,
+    val pkgMgrDisableVerificationAgent: Boolean = false,
+    val pkgMgrBypassDigest: Boolean = false,
+    val pkgMgrUsePreviousSignatures: Boolean = false,
+    val pkgMgrBypassExactSigMatch: Boolean = false,
+    val pkgMgrBypassSharedUser: Boolean = false,
+    val pkgMgrAllowHiddenApisSystemApps: Boolean = false,
+    val pkgMgrBypassArscRestriction: Boolean = false,
 )

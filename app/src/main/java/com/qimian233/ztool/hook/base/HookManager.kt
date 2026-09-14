@@ -67,6 +67,14 @@ import com.qimian233.ztool.hook.modules.systemframework.ForceScreenOnOffAnimatio
 import com.qimian233.ztool.hook.modules.systemframework.KeepRotation
 import com.qimian233.ztool.hook.modules.systemframework.OwnerInfoSystemHook
 import com.qimian233.ztool.hook.modules.systemframework.NoMorePasswordPer24H
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerArscBypassHook
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerDigestBypassHook
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerDowngradeHook
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerExactSigMatchBypassHook
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerHiddenApiHook
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerSharedUserBypassHook
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerSignatureBypassHook
+import com.qimian233.ztool.hook.modules.systemframework.PackageManagerVerificationAgentHook
 import com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory as SystemSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ChargeAnimationDurationHook
 import com.qimian233.ztool.hook.modules.systemui.keyguard.LockScreenClockColorHook
@@ -143,6 +151,16 @@ object HookManager {
         registerHookModule(ForceRelativeAppFreeform())
         registerHookModule(DisableHbmThermalLimit())
         registerHookModule(SystemSplitScreenMandatory()) // 看看 setting 包的注册模块你就知道这一行为什么要这么写了
+
+        // ── 系统框架 · 包管理服务（安装限制绕过功能组） ──
+        registerHookModule(PackageManagerDowngradeHook())
+        registerHookModule(PackageManagerSignatureBypassHook())
+        registerHookModule(PackageManagerVerificationAgentHook())
+        registerHookModule(PackageManagerDigestBypassHook())
+        registerHookModule(PackageManagerExactSigMatchBypassHook())
+        registerHookModule(PackageManagerSharedUserBypassHook())
+        registerHookModule(PackageManagerHiddenApiHook())
+        registerHookModule(PackageManagerArscBypassHook())
 
         // ── SystemUI (target: com.android.systemui) ──
         registerHookModule(StatusBarClockSecondsHook())

@@ -96,7 +96,16 @@ fun FrameworkSettingsRoute(
         onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
         onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
         onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
-        onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit
+        onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
+        onPkgMgrAllowDowngradeChanged = viewModel::setPkgMgrAllowDowngrade,
+        onPkgMgrBypassVerificationChanged = viewModel::setPkgMgrBypassVerification,
+        onPkgMgrDisableVerificationAgentChanged = viewModel::setPkgMgrDisableVerificationAgent,
+        onPkgMgrBypassDigestChanged = viewModel::setPkgMgrBypassDigest,
+        onPkgMgrUsePreviousSignaturesChanged = viewModel::setPkgMgrUsePreviousSignatures,
+        onPkgMgrBypassExactSigMatchChanged = viewModel::setPkgMgrBypassExactSigMatch,
+        onPkgMgrBypassSharedUserChanged = viewModel::setPkgMgrBypassSharedUser,
+        onPkgMgrAllowHiddenApisSystemAppsChanged = viewModel::setPkgMgrAllowHiddenApisSystemApps,
+        onPkgMgrBypassArscRestrictionChanged = viewModel::setPkgMgrBypassArscRestriction
     )
 
     if (uiState.showAiInputInfoDialog) {
@@ -150,6 +159,15 @@ private fun FrameworkSettingsScreen(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
+    onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
+    onPkgMgrBypassVerificationChanged: (Boolean) -> Unit,
+    onPkgMgrDisableVerificationAgentChanged: (Boolean) -> Unit,
+    onPkgMgrBypassDigestChanged: (Boolean) -> Unit,
+    onPkgMgrUsePreviousSignaturesChanged: (Boolean) -> Unit,
+    onPkgMgrBypassExactSigMatchChanged: (Boolean) -> Unit,
+    onPkgMgrBypassSharedUserChanged: (Boolean) -> Unit,
+    onPkgMgrAllowHiddenApisSystemAppsChanged: (Boolean) -> Unit,
+    onPkgMgrBypassArscRestrictionChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit,
 ) {
@@ -203,6 +221,15 @@ private fun FrameworkSettingsScreen(
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
                         onDisableHbmThermalLimitChanged = onDisableHbmThermalLimitChanged,
+                        onPkgMgrAllowDowngradeChanged = onPkgMgrAllowDowngradeChanged,
+                        onPkgMgrBypassVerificationChanged = onPkgMgrBypassVerificationChanged,
+                        onPkgMgrDisableVerificationAgentChanged = onPkgMgrDisableVerificationAgentChanged,
+                        onPkgMgrBypassDigestChanged = onPkgMgrBypassDigestChanged,
+                        onPkgMgrUsePreviousSignaturesChanged = onPkgMgrUsePreviousSignaturesChanged,
+                        onPkgMgrBypassExactSigMatchChanged = onPkgMgrBypassExactSigMatchChanged,
+                        onPkgMgrBypassSharedUserChanged = onPkgMgrBypassSharedUserChanged,
+                        onPkgMgrAllowHiddenApisSystemAppsChanged = onPkgMgrAllowHiddenApisSystemAppsChanged,
+                        onPkgMgrBypassArscRestrictionChanged = onPkgMgrBypassArscRestrictionChanged,
                     ),
                     bottomPadding = 96.dp
                 )
@@ -225,6 +252,15 @@ private fun frameworkSettingsSections(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
+    onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
+    onPkgMgrBypassVerificationChanged: (Boolean) -> Unit,
+    onPkgMgrDisableVerificationAgentChanged: (Boolean) -> Unit,
+    onPkgMgrBypassDigestChanged: (Boolean) -> Unit,
+    onPkgMgrUsePreviousSignaturesChanged: (Boolean) -> Unit,
+    onPkgMgrBypassExactSigMatchChanged: (Boolean) -> Unit,
+    onPkgMgrBypassSharedUserChanged: (Boolean) -> Unit,
+    onPkgMgrAllowHiddenApisSystemAppsChanged: (Boolean) -> Unit,
+    onPkgMgrBypassArscRestrictionChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
 ): List<SettingSection> {
@@ -295,6 +331,85 @@ private fun frameworkSettingsSections(
                     onCheckedChange = onAllowUntrustedTouch
                 ),
             )
+        ),
+        SettingSection(
+            title = stringResource(R.string.system_framework_pkgmgr_section_title),
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_allow_downgrade_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_allow_downgrade_summary),
+                        checked = state.pkgMgrAllowDowngrade,
+                        onCheckedChange = onPkgMgrAllowDowngradeChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_bypass_verification_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_bypass_verification_summary),
+                        checked = state.pkgMgrBypassVerification,
+                        onCheckedChange = onPkgMgrBypassVerificationChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_disable_verification_agent_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_disable_verification_agent_summary),
+                        checked = state.pkgMgrDisableVerificationAgent,
+                        onCheckedChange = onPkgMgrDisableVerificationAgentChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_bypass_digest_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_bypass_digest_summary),
+                        checked = state.pkgMgrBypassDigest,
+                        onCheckedChange = onPkgMgrBypassDigestChanged
+                    )
+                )
+                if (state.pkgMgrBypassDigest) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_framework_pkgmgr_use_previous_signatures_title),
+                            summary = stringResource(R.string.system_framework_pkgmgr_use_previous_signatures_summary),
+                            checked = state.pkgMgrUsePreviousSignatures,
+                            onCheckedChange = onPkgMgrUsePreviousSignaturesChanged
+                        )
+                    )
+                }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_bypass_exact_sig_match_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_bypass_exact_sig_match_summary),
+                        checked = state.pkgMgrBypassExactSigMatch,
+                        onCheckedChange = onPkgMgrBypassExactSigMatchChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_bypass_shared_user_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_bypass_shared_user_summary),
+                        checked = state.pkgMgrBypassSharedUser,
+                        onCheckedChange = onPkgMgrBypassSharedUserChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_allow_hidden_apis_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_allow_hidden_apis_summary),
+                        checked = state.pkgMgrAllowHiddenApisSystemApps,
+                        onCheckedChange = onPkgMgrAllowHiddenApisSystemAppsChanged
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pkgmgr_bypass_arsc_title),
+                        summary = stringResource(R.string.system_framework_pkgmgr_bypass_arsc_summary),
+                        checked = state.pkgMgrBypassArscRestriction,
+                        onCheckedChange = onPkgMgrBypassArscRestrictionChanged
+                    )
+                )
+            }
         ),
         SettingSection(
             title = stringResource(R.string.system_framework_misc_title),

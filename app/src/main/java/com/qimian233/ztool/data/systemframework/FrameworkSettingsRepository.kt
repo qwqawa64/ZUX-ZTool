@@ -27,6 +27,15 @@ class FrameworkSettingsRepository(
             allowRelativeAppLaunch = prefsUtils.loadBooleanSetting(ALLOW_RELATIVE_APP_LAUNCH, false),
             forceRelativeAppFreeform = prefsUtils.loadBooleanSetting(FORCE_RELATIVE_APP_FREEFORM, false),
             disableHbmThermalLimit = prefsUtils.loadBooleanSetting(KEY_DISABLE_HBM_THERMAL_LIMIT, false),
+            pkgMgrAllowDowngrade = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_ALLOW_DOWNGRADE, false),
+            pkgMgrBypassVerification = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_BYPASS_VERIFICATION, false),
+            pkgMgrDisableVerificationAgent = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_DISABLE_VERIFICATION_AGENT, false),
+            pkgMgrBypassDigest = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_BYPASS_DIGEST, false),
+            pkgMgrUsePreviousSignatures = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_USE_PREVIOUS_SIGNATURES, false),
+            pkgMgrBypassExactSigMatch = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_BYPASS_EXACT_SIG_MATCH, false),
+            pkgMgrBypassSharedUser = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_BYPASS_SHARED_USER, false),
+            pkgMgrAllowHiddenApisSystemApps = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS, false),
+            pkgMgrBypassArscRestriction = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_BYPASS_ARSC_RESTRICTION, false),
             aiInputSigns = aiInputSigns,
             aiInputSignsError = validateAiInputSigns(aiInputSigns),
         )
@@ -83,6 +92,42 @@ class FrameworkSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_DISABLE_HBM_THERMAL_LIMIT, enabled)
     }
 
+    fun savePkgMgrAllowDowngrade(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_ALLOW_DOWNGRADE, enabled)
+    }
+
+    fun savePkgMgrBypassVerification(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_BYPASS_VERIFICATION, enabled)
+    }
+
+    fun savePkgMgrDisableVerificationAgent(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_DISABLE_VERIFICATION_AGENT, enabled)
+    }
+
+    fun savePkgMgrBypassDigest(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_BYPASS_DIGEST, enabled)
+    }
+
+    fun savePkgMgrUsePreviousSignatures(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_USE_PREVIOUS_SIGNATURES, enabled)
+    }
+
+    fun savePkgMgrBypassExactSigMatch(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_BYPASS_EXACT_SIG_MATCH, enabled)
+    }
+
+    fun savePkgMgrBypassSharedUser(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_BYPASS_SHARED_USER, enabled)
+    }
+
+    fun savePkgMgrAllowHiddenApisSystemApps(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS, enabled)
+    }
+
+    fun savePkgMgrBypassArscRestriction(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PKG_MGR_BYPASS_ARSC_RESTRICTION, enabled)
+    }
+
     fun normalizeScreenOnOffAnimationDuration(value: Int): Int {
         val clampedValue = value.coerceIn(
             SCREEN_ON_OFF_ANIMATION_MIN_MS,
@@ -128,6 +173,21 @@ class FrameworkSettingsRepository(
         private val ALLOW_RELATIVE_APP_LAUNCH = PreferenceKeys.ALLOW_RELATIVE_APP_LAUNCH.name
         private val FORCE_RELATIVE_APP_FREEFORM = PreferenceKeys.FORCE_RELATIVE_APP_FREEFORM.name
         private val KEY_DISABLE_HBM_THERMAL_LIMIT = PreferenceKeys.DISABLE_HBM_THERMAL_LIMIT.name
+
+        private val KEY_PKG_MGR_ALLOW_DOWNGRADE = PreferenceKeys.PKG_MGR_ALLOW_DOWNGRADE.name
+        private val KEY_PKG_MGR_BYPASS_VERIFICATION = PreferenceKeys.PKG_MGR_BYPASS_VERIFICATION.name
+        private val KEY_PKG_MGR_DISABLE_VERIFICATION_AGENT =
+            PreferenceKeys.PKG_MGR_DISABLE_VERIFICATION_AGENT.name
+        private val KEY_PKG_MGR_BYPASS_DIGEST = PreferenceKeys.PKG_MGR_BYPASS_DIGEST.name
+        private val KEY_PKG_MGR_USE_PREVIOUS_SIGNATURES =
+            PreferenceKeys.PKG_MGR_USE_PREVIOUS_SIGNATURES.name
+        private val KEY_PKG_MGR_BYPASS_EXACT_SIG_MATCH =
+            PreferenceKeys.PKG_MGR_BYPASS_EXACT_SIG_MATCH.name
+        private val KEY_PKG_MGR_BYPASS_SHARED_USER = PreferenceKeys.PKG_MGR_BYPASS_SHARED_USER.name
+        private val KEY_PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS =
+            PreferenceKeys.PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS.name
+        private val KEY_PKG_MGR_BYPASS_ARSC_RESTRICTION =
+            PreferenceKeys.PKG_MGR_BYPASS_ARSC_RESTRICTION.name
     }
 }
 

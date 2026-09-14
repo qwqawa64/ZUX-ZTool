@@ -34,6 +34,18 @@ object PreferenceKeys {
     val FORCE_RELATIVE_APP_FREEFORM = BoolKey("force_relative_app_freeform", false)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
 
+    // 系统框架 · 包管理服务（安装限制绕过功能组）
+    val PKG_MGR_ALLOW_DOWNGRADE = BoolKey("pkg_mgr_allow_downgrade", false)
+    val PKG_MGR_BYPASS_VERIFICATION = BoolKey("pkg_mgr_bypass_verification", false)
+    val PKG_MGR_DISABLE_VERIFICATION_AGENT = BoolKey("pkg_mgr_disable_verification_agent", false)
+    val PKG_MGR_BYPASS_DIGEST = BoolKey("pkg_mgr_bypass_digest", false)
+    val PKG_MGR_USE_PREVIOUS_SIGNATURES = BoolKey("pkg_mgr_use_previous_signatures", false)
+    val PKG_MGR_BYPASS_EXACT_SIG_MATCH = BoolKey("pkg_mgr_bypass_exact_sig_match", false)
+    val PKG_MGR_BYPASS_SHARED_USER = BoolKey("pkg_mgr_bypass_shared_user", false)
+    val PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS =
+        BoolKey("pkg_mgr_allow_hidden_apis_for_system_apps", false)
+    val PKG_MGR_BYPASS_ARSC_RESTRICTION = BoolKey("pkg_mgr_bypass_arsc_restrictions", false)
+
     // ── SystemUI ──
     val STATUSBAR_DISPLAY_SECONDS = BoolKey("StatusBarDisplay_Seconds", false)
     val CUSTOM_STATUSBAR_CLOCK = BoolKey("Custom_StatusBarClock", false)
@@ -264,6 +276,11 @@ object PreferenceKeys {
         ALLOW_UNTRUSTED_TOUCH, FORCE_SCREEN_ON_OFF_ANIMATION, AI_INPUT_EXPAND,
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         DISABLE_HBM_THERMAL_LIMIT,
+        PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
+        PKG_MGR_DISABLE_VERIFICATION_AGENT, PKG_MGR_BYPASS_DIGEST,
+        PKG_MGR_USE_PREVIOUS_SIGNATURES, PKG_MGR_BYPASS_EXACT_SIG_MATCH,
+        PKG_MGR_BYPASS_SHARED_USER, PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS,
+        PKG_MGR_BYPASS_ARSC_RESTRICTION,
         STATUSBAR_DISPLAY_SECONDS, CUSTOM_STATUSBAR_CLOCK, SYSTEMUI_CHARGE_WATTS,
         SYSTEMUI_REAL_WATTS, NOTIFICATION_ICON_LIMIT, CUSTOM_CONTROL_CENTER_DATE,
         CONTROL_CENTER_NO_TILE_LABELS, NO_CHARGE_ANIMATION, NATIVE_NOTIFICATION_ICON,

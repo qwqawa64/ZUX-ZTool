@@ -677,6 +677,26 @@
     <string name="system_framework_restart_system_title">重启系统</string>
     <string name="system_framework_restart_system_message">更改涉及系统框架，需要重启系统以应用更改。</string>
     <string name="system_framework_disable_hbm_thermal_limit_title">禁用高温降低亮度</string>
+    <!--系统框架 · 包管理服务-->
+    <string name="system_framework_pkgmgr_section_title">包管理服务</string>
+    <string name="system_framework_pkgmgr_allow_downgrade_title">允许降级安装</string>
+    <string name="system_framework_pkgmgr_allow_downgrade_summary">跳过 versionCode 比较，允许安装版本号低于已装版本的 APK，重启系统后生效</string>
+    <string name="system_framework_pkgmgr_bypass_verification_title">绕过签名校验</string>
+    <string name="system_framework_pkgmgr_bypass_verification_summary">跳过安装时的签名与摘要校验，允许安装签名不符或被修改的 APK，重启系统后生效</string>
+    <string name="system_framework_pkgmgr_disable_verification_agent_title">关闭安装校验代理</string>
+    <string name="system_framework_pkgmgr_disable_verification_agent_summary">安装时不再向校验代理发送验证请求，重启系统后生效</string>
+    <string name="system_framework_pkgmgr_bypass_digest_title">绕过签名身份校验</string>
+    <string name="system_framework_pkgmgr_bypass_digest_summary">忽略升级时的签名证书变化，允许使用不同签名覆盖安装，重启系统后生效</string>
+    <string name="system_framework_pkgmgr_use_previous_signatures_title">沿用已安装应用签名</string>
+    <string name="system_framework_pkgmgr_use_previous_signatures_summary">签名权限判定沿用已安装版本的签名记录，需先开启绕过签名身份校验</string>
+    <string name="system_framework_pkgmgr_bypass_exact_sig_match_title">绕过精确签名比对</string>
+    <string name="system_framework_pkgmgr_bypass_exact_sig_match_summary">视为与已安装版本签名完全一致，重启系统后生效</string>
+    <string name="system_framework_pkgmgr_bypass_shared_user_title">绕过 sharedUserId 签名限制</string>
+    <string name="system_framework_pkgmgr_bypass_shared_user_summary">允许签名不同的应用加入同一 sharedUserId，需与绕过签名身份校验同时开启，重启系统后生效</string>
+    <string name="system_framework_pkgmgr_allow_hidden_apis_title">系统应用允许隐藏 API</string>
+    <string name="system_framework_pkgmgr_allow_hidden_apis_summary">非平台签名的系统应用也放行隐藏 API 访问，重启系统后生效</string>
+    <string name="system_framework_pkgmgr_bypass_arsc_title">绕过 resources.arsc 限制</string>
+    <string name="system_framework_pkgmgr_bypass_arsc_summary">允许安装 resources.arsc 未满足未压缩与对齐要求的 APK，重启系统后生效</string>
     <!--安全中心功能页的资源值-->
     <string name="safe_center_bypass_docements_ui">允许选择用户根目录</string>
     <string name="safe_center_bypass_docements_ui_summary">解决无法使用此文件夹，允许在/storage/emulated/0/等受限目录进行选择操作</string>

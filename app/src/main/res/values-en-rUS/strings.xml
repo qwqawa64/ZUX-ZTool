@@ -602,6 +602,26 @@
     <string name="system_framework_restart_system_title">Restart system</string>
     <string name="system_framework_restart_system_message">This change affects the system framework. Restart the system to apply it.</string>
     <string name="system_framework_disable_hbm_thermal_limit_title">Disable brightness reduction at high temperature</string>
+    <!-- Framework · Package manager service -->
+    <string name="system_framework_pkgmgr_section_title">Package manager service</string>
+    <string name="system_framework_pkgmgr_allow_downgrade_title">Allow downgrade installs</string>
+    <string name="system_framework_pkgmgr_allow_downgrade_summary">Skip the versionCode check and allow installing APKs with a lower versionCode than the installed one. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_verification_title">Bypass signature verification</string>
+    <string name="system_framework_pkgmgr_bypass_verification_summary">Skip signature and digest checks during installation and allow installing modified APKs. Reboot required.</string>
+    <string name="system_framework_pkgmgr_disable_verification_agent_title">Disable install verification agent</string>
+    <string name="system_framework_pkgmgr_disable_verification_agent_summary">No longer send verification requests to verification agents during installation. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_digest_title">Bypass signing identity checks</string>
+    <string name="system_framework_pkgmgr_bypass_digest_summary">Ignore signing certificate changes on upgrade and allow installing with a different signature. Reboot required.</string>
+    <string name="system_framework_pkgmgr_use_previous_signatures_title">Reuse installed app signatures</string>
+    <string name="system_framework_pkgmgr_use_previous_signatures_summary">Reuse the installed version\'s signature records for signature permission checks. Requires bypassing signing identity checks first.</string>
+    <string name="system_framework_pkgmgr_bypass_exact_sig_match_title">Bypass exact signature match</string>
+    <string name="system_framework_pkgmgr_bypass_exact_sig_match_summary">Treat signatures as an exact match with the installed version. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_shared_user_title">Bypass sharedUserId signature restriction</string>
+    <string name="system_framework_pkgmgr_bypass_shared_user_summary">Allow apps with different signatures to join the same sharedUserId. Requires bypassing signing identity checks. Reboot required.</string>
+    <string name="system_framework_pkgmgr_allow_hidden_apis_title">Allow hidden APIs for system apps</string>
+    <string name="system_framework_pkgmgr_allow_hidden_apis_summary">Allow hidden API access for system apps not signed with the platform key. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_arsc_title">Bypass resources.arsc restriction</string>
+    <string name="system_framework_pkgmgr_bypass_arsc_summary">Allow installing APKs whose resources.arsc does not meet the uncompressed and alignment requirements. Reboot required.</string>
     <string name="safe_center_bypass_docements_ui">Allow selecting user root directory</string>
     <string name="safe_center_bypass_docements_ui_summary">Fixes "Cannot use this folder" and allows selection operations in restricted directories such as /storage/emulated/0/.</string>
     <string name="safe_center_default_allow_autorun_title">Background behavior management</string>
