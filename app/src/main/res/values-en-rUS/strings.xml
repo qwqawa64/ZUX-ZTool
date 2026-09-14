@@ -604,6 +604,7 @@
     <string name="system_framework_disable_hbm_thermal_limit_title">Disable brightness reduction at high temperature</string>
     <!-- Framework · Package manager service -->
     <string name="system_framework_pkgmgr_section_title">Package manager service</string>
+    <string name="system_framework_pkgmgr_android16_note">Note: the Core Patch feature set is only adapted for Android 16. It may not work or cause unexpected behavior on other system versions.</string>
     <string name="system_framework_pkgmgr_allow_downgrade_title">Allow downgrade installs</string>
     <string name="system_framework_pkgmgr_allow_downgrade_summary">Skip the versionCode check and allow installing APKs with a lower versionCode than the installed one. Reboot required.</string>
     <string name="system_framework_pkgmgr_bypass_verification_title">Bypass signature verification</string>

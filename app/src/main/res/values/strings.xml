@@ -679,6 +679,7 @@
     <string name="system_framework_disable_hbm_thermal_limit_title">禁用高温降低亮度</string>
     <!--系统框架 · 包管理服务-->
     <string name="system_framework_pkgmgr_section_title">包管理服务</string>
+    <string name="system_framework_pkgmgr_android16_note">提示：核心破解功能组仅针对 Android 16 适配，在其他系统版本上可能不生效或引发异常。</string>
     <string name="system_framework_pkgmgr_allow_downgrade_title">允许降级安装</string>
     <string name="system_framework_pkgmgr_allow_downgrade_summary">跳过 versionCode 比较，允许安装版本号低于已装版本的 APK，重启系统后生效</string>
     <string name="system_framework_pkgmgr_bypass_verification_title">绕过签名校验</string>
