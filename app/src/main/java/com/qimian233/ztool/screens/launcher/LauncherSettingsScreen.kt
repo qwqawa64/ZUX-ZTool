@@ -449,6 +449,7 @@ private fun launcherSettingsSections(
         if (state.forceStopMode == ForceStopMode.Whitelist) {
             add(
                 SettingItem.Custom(
+                    key = "launcher_force_stop_whitelist",
                     content = {
                         WhitelistRow(
                             whitelistCount = state.forceStopWhitelistCount,

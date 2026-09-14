@@ -54,7 +54,7 @@ data class SettingSection(
 )
 
 sealed interface SettingItem {
-    val key: String?
+    val key: String
     val enabled: Boolean
 
     data class Switch(
@@ -64,7 +64,7 @@ sealed interface SettingItem {
         val summary: String? = null,
         val icon: ImageVector? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class Checkbox(
@@ -74,7 +74,7 @@ sealed interface SettingItem {
         val summary: String? = null,
         val icon: ImageVector? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class Entry(
@@ -85,7 +85,7 @@ sealed interface SettingItem {
         val leadingContent: (@Composable RowScope.() -> Unit)? = null,
         val trailingContent: (@Composable RowScope.() -> Unit)? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class Dropdown<T>(
@@ -96,7 +96,7 @@ sealed interface SettingItem {
         val onOptionSelected: (T) -> Unit,
         val icon: ImageVector? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class Slider(
@@ -110,7 +110,7 @@ sealed interface SettingItem {
         val onValueChangeFinished: (() -> Unit)? = null,
         val icon: ImageVector? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class TextInput(
@@ -123,7 +123,7 @@ sealed interface SettingItem {
         val singleLine: Boolean = true,
         val icon: ImageVector? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class ColorPreview(
@@ -133,7 +133,7 @@ sealed interface SettingItem {
         val summary: String? = null,
         val icon: ImageVector? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class Action(
@@ -144,13 +144,13 @@ sealed interface SettingItem {
         val leadingContent: (@Composable RowScope.() -> Unit)? = null,
         val trailingContent: (@Composable RowScope.() -> Unit)? = null,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 
     data class Custom(
         val content: @Composable () -> Unit,
         override val enabled: Boolean = true,
-        override val key: String? = null
+        override val key: String
     ) : SettingItem
 }
 

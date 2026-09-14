@@ -360,28 +360,85 @@ private fun statusBarSettingsSections(
                         CustomClockConfig(
                             clockFormat = state.clockFormat,
                             clockPreview = state.clockPreview,
-                            textSizeEnabled = state.textSizeEnabled,
-                            textSize = state.textSize,
-                            letterSpacingEnabled = state.letterSpacingEnabled,
-                            letterSpacing = state.letterSpacing,
-                            textColorEnabled = state.textColorEnabled,
-                            textColor = state.textColor,
-                            textColorText = state.textColorText,
-                            textBold = state.textBold,
                             onClockFormatChanged = onClockFormatChanged,
-                            onSaveClockFormat = onSaveClockFormat,
-                            onTextSizeEnabledChanged = onTextSizeEnabledChanged,
-                            onTextSizeChanged = onTextSizeChanged,
-                            onLetterSpacingEnabledChanged = onLetterSpacingEnabledChanged,
-                            onLetterSpacingChanged = onLetterSpacingChanged,
-                            onTextColorEnabledChanged = onTextColorEnabledChanged,
-                            onClockTextColorChanged = onClockTextColorChanged,
-                            onClockTextColorEditingFinished = onClockTextColorEditingFinished,
-                            onTextBoldChanged = onTextBoldChanged
+                            onSaveClockFormat = onSaveClockFormat
                         )
                     }
                 },
                 key = "status_bar_custom_clock"
+            )
+        )
+        add(
+            SettingItem.Custom(
+                key = "status_bar_clock_text_size",
+                content = {
+                    SliderSettingRow(
+                        title = stringResource(R.string.system_ui_status_bar_text_size_title),
+                        valueLabel = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
+                        enabled = state.textSizeEnabled,
+                        value = state.textSize,
+                        valueRange = 10f..30f,
+                        steps = 39,
+                        onEnabledChanged = onTextSizeEnabledChanged,
+                        onValueChanged = onTextSizeChanged
+                    )
+                }
+            )
+        )
+        add(
+            SettingItem.Custom(
+                key = "status_bar_clock_letter_spacing",
+                content = {
+                    SliderSettingRow(
+                        title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),
+                        valueLabel = "%.1f".format(state.letterSpacing),
+                        enabled = state.letterSpacingEnabled,
+                        value = state.letterSpacing,
+                        valueRange = 0f..2f,
+                        steps = 19,
+                        onEnabledChanged = onLetterSpacingEnabledChanged,
+                        onValueChanged = onLetterSpacingChanged
+                    )
+                }
+            )
+        )
+        add(
+            SettingItem.Custom(
+                key = "status_bar_clock_text_color",
+                content = {
+                    ZToolSwitchRow(
+                        title = stringResource(R.string.system_ui_status_bar_text_color_title),
+                        summary = "#%08X".format(state.textColor),
+                        checked = state.textColorEnabled,
+                        onCheckedChange = onTextColorEnabledChanged,
+                        padding = 0.dp
+                    )
+                    if (state.textColorEnabled) {
+                        ZToolArgbColorTextFieldRow(
+                            label = stringResource(R.string.system_ui_common_select_font_color_title),
+                            value = state.textColorText,
+                            onValueChange = onClockTextColorChanged,
+                            defaultText = "FFFFFFFF",
+                            summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
+                            errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                            onEditingFinished = onClockTextColorEditingFinished
+                        )
+                    }
+                }
+            )
+        )
+        add(
+            SettingItem.Custom(
+                key = "status_bar_clock_text_bold",
+                content = {
+                    ZToolSwitchRow(
+                        title = stringResource(R.string.system_ui_status_bar_text_bold_title),
+                        summary = null,
+                        checked = state.textBold,
+                        onCheckedChange = onTextBoldChanged,
+                        padding = 0.dp
+                    )
+                }
             )
         )
     }
@@ -522,24 +579,8 @@ private fun statusBarSettingsSections(
 private fun CustomClockConfig(
     clockFormat: String,
     clockPreview: String,
-    textSizeEnabled: Boolean,
-    textSize: Float,
-    letterSpacingEnabled: Boolean,
-    letterSpacing: Float,
-    textColorEnabled: Boolean,
-    textColor: Int,
-    textColorText: String,
-    textBold: Boolean,
     onClockFormatChanged: (String) -> Unit,
-    onSaveClockFormat: () -> Unit,
-    onTextSizeEnabledChanged: (Boolean) -> Unit,
-    onTextSizeChanged: (Float) -> Unit,
-    onLetterSpacingEnabledChanged: (Boolean) -> Unit,
-    onLetterSpacingChanged: (Float) -> Unit,
-    onTextColorEnabledChanged: (Boolean) -> Unit,
-    onClockTextColorChanged: (String) -> Unit,
-    onClockTextColorEditingFinished: () -> Unit,
-    onTextBoldChanged: (Boolean) -> Unit
+    onSaveClockFormat: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -565,52 +606,6 @@ private fun CustomClockConfig(
             style = MaterialTheme.typography.bodyMedium,
             color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
-        )
-
-        SliderSettingRow(
-            title = stringResource(R.string.system_ui_status_bar_text_size_title),
-            valueLabel = stringResource(R.string.system_ui_common_sp_unit, textSize),
-            enabled = textSizeEnabled,
-            value = textSize,
-            valueRange = 10f..30f,
-            steps = 39,
-            onEnabledChanged = onTextSizeEnabledChanged,
-            onValueChanged = onTextSizeChanged
-        )
-        SliderSettingRow(
-            title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),
-            valueLabel = "%.1f".format(letterSpacing),
-            enabled = letterSpacingEnabled,
-            value = letterSpacing,
-            valueRange = 0f..2f,
-            steps = 19,
-            onEnabledChanged = onLetterSpacingEnabledChanged,
-            onValueChanged = onLetterSpacingChanged
-        )
-        ZToolSwitchRow(
-            title = stringResource(R.string.system_ui_status_bar_text_color_title),
-            summary = "#%08X".format(textColor),
-            checked = textColorEnabled,
-            onCheckedChange = onTextColorEnabledChanged,
-            padding = 0.dp
-        )
-        if (textColorEnabled) {
-            ZToolArgbColorTextFieldRow(
-                label = stringResource(R.string.system_ui_common_select_font_color_title),
-                value = textColorText,
-                onValueChange = onClockTextColorChanged,
-                defaultText = "FFFFFFFF",
-                summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
-                errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                onEditingFinished = onClockTextColorEditingFinished
-            )
-        }
-        ZToolSwitchRow(
-            title = stringResource(R.string.system_ui_status_bar_text_bold_title),
-            summary = null,
-            checked = textBold,
-            onCheckedChange = onTextBoldChanged,
-            padding = 0.dp
         )
     }
 }

@@ -480,6 +480,7 @@ private fun controlCenterSettingsSections(
                 if (state.sliderStyleForcedByQsPanel) {
                     add(
                         SettingItem.Custom(
+                            key = "deco_control_center_slider_style_forced_note",
                             content = {
                                 Text(
                                     text = stringResource(R.string.system_ui_control_center_slider_style_forced_by_qs_panel),
@@ -618,28 +619,95 @@ private fun controlCenterSettingsSections(
         ),
         SettingSection(
             title = stringResource(R.string.system_ui_control_center_controller_date),
-            items = listOf(
-                SettingItem.Custom(
-                    content = {
-                        CustomDateSettingsContent(
-                            state = state,
-                            onCustomDateChanged = onCustomDateChanged,
-                            onDateFormatChanged = onDateFormatChanged,
-                            onSaveDateFormat = onSaveDateFormat,
-                            onShowFormatHelp = onShowFormatHelp,
-                            onTextSizeEnabledChanged = onTextSizeEnabledChanged,
-                            onTextSizeChanged = onTextSizeChanged,
-                            onLetterSpacingEnabledChanged = onLetterSpacingEnabledChanged,
-                            onLetterSpacingChanged = onLetterSpacingChanged,
-                            onTextColorEnabledChanged = onTextColorEnabledChanged,
-                            onTextBoldChanged = onTextBoldChanged,
-                            onFinishControlCenterClockTextColorEditing = onFinishControlCenterClockTextColorEditing,
-                            onControlCenterClockColorChange = onControlCenterClockColorChange
-                        )
-                    },
-                    key = "control_center_custom_date_setting"
+            items = buildList {
+                add(
+                    SettingItem.Custom(
+                        content = {
+                            CustomDateSettingsContent(
+                                state = state,
+                                onCustomDateChanged = onCustomDateChanged,
+                                onDateFormatChanged = onDateFormatChanged,
+                                onSaveDateFormat = onSaveDateFormat,
+                                onShowFormatHelp = onShowFormatHelp
+                            )
+                        },
+                        key = "control_center_custom_date_setting"
+                    )
                 )
-            )
+                add(
+                    SettingItem.Custom(
+                        key = "control_center_custom_clock_text_size",
+                        content = {
+                            SliderSettingRow(
+                                title = stringResource(R.string.system_ui_control_center_custom_clock_text_size_title),
+                                valueLabel = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
+                                enabled = state.textSizeEnabled,
+                                value = state.textSize,
+                                valueRange = 10f..30f,
+                                steps = 39,
+                                onEnabledChanged = onTextSizeEnabledChanged,
+                                onValueChanged = onTextSizeChanged
+                            )
+                        }
+                    )
+                )
+                add(
+                    SettingItem.Custom(
+                        key = "control_center_custom_clock_letter_spacing",
+                        content = {
+                            SliderSettingRow(
+                                title = stringResource(R.string.system_ui_control_center_custom_clock_letter_spacing_title),
+                                valueLabel = "%.1f".format(state.letterSpacing),
+                                enabled = state.letterSpacingEnabled,
+                                value = state.letterSpacing,
+                                valueRange = 0f..2f,
+                                steps = 19,
+                                onEnabledChanged = onLetterSpacingEnabledChanged,
+                                onValueChanged = onLetterSpacingChanged
+                            )
+                        }
+                    )
+                )
+                add(
+                    SettingItem.Custom(
+                        key = "control_center_custom_clock_text_color",
+                        content = {
+                            ZToolSwitchRow(
+                                title = stringResource(R.string.system_ui_control_center_custom_clock_text_color_title),
+                                summary = "#%08X".format(state.controlCenterTextColor),
+                                checked = state.controlCenterTextColorEnabled,
+                                onCheckedChange = onTextColorEnabledChanged,
+                                padding = 0.dp
+                            )
+                            if (state.controlCenterTextColorEnabled) {
+                                ZToolArgbColorTextFieldRow(
+                                    label = stringResource(R.string.system_ui_common_select_font_color_title),
+                                    value = state.controlCenterTextColorText,
+                                    onValueChange = onControlCenterClockColorChange,
+                                    defaultText = "FFFFFFFF",
+                                    summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
+                                    errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                    onEditingFinished = onFinishControlCenterClockTextColorEditing
+                                )
+                            }
+                        }
+                    )
+                )
+                add(
+                    SettingItem.Custom(
+                        key = "control_center_custom_clock_text_bold",
+                        content = {
+                            ZToolSwitchRow(
+                                title = stringResource(R.string.system_ui_control_center_custom_clock_text_bold_title),
+                                summary = stringResource(R.string.system_ui_control_center_use_bold_date),
+                                checked = state.textBold,
+                                onCheckedChange = onTextBoldChanged,
+                                padding = 0.dp
+                            )
+                        }
+                    )
+                )
+            }
         ),
         SettingSection(
                 title = stringResource(R.string.system_ui_control_center_expand_qs_panel_portrait_title),
@@ -752,15 +820,7 @@ private fun CustomDateSettingsContent(
     onCustomDateChanged: (Boolean) -> Unit,
     onDateFormatChanged: (String) -> Unit,
     onSaveDateFormat: () -> Unit,
-    onShowFormatHelp: () -> Unit,
-    onTextSizeEnabledChanged: (Boolean) -> Unit,
-    onTextSizeChanged: (Float) -> Unit,
-    onLetterSpacingEnabledChanged: (Boolean) -> Unit,
-    onLetterSpacingChanged: (Float) -> Unit,
-    onTextColorEnabledChanged: (Boolean) -> Unit,
-    onControlCenterClockColorChange: (String) -> Unit,
-    onFinishControlCenterClockTextColorEditing: () -> Unit,
-    onTextBoldChanged: (Boolean) -> Unit
+    onShowFormatHelp: () -> Unit
 ) {
     ZToolSwitchRow(
         title = stringResource(R.string.system_ui_control_center_custom_date_setting_title),
@@ -783,23 +843,8 @@ private fun CustomDateSettingsContent(
             state = state,
             dateFormat = state.dateFormat,
             datePreview = state.datePreview,
-            textSizeEnabled = state.textSizeEnabled,
-            textSize = state.textSize,
-            letterSpacingEnabled = state.letterSpacingEnabled,
-            letterSpacing = state.letterSpacing,
-            textColorEnabled = state.controlCenterTextColorEnabled,
-            textColor = state.controlCenterTextColor,
-            textBold = state.textBold,
             onDateFormatChanged = onDateFormatChanged,
-            onSaveDateFormat = onSaveDateFormat,
-            onTextSizeEnabledChanged = onTextSizeEnabledChanged,
-            onTextSizeChanged = onTextSizeChanged,
-            onLetterSpacingEnabledChanged = onLetterSpacingEnabledChanged,
-            onLetterSpacingChanged = onLetterSpacingChanged,
-            onTextColorEnabledChanged = onTextColorEnabledChanged,
-            onControlCenterClockColorChange = onControlCenterClockColorChange,
-            onFinishControlCenterClockTextColorEditing = onFinishControlCenterClockTextColorEditing,
-            onTextBoldChanged = onTextBoldChanged
+            onSaveDateFormat = onSaveDateFormat
         )
     }
 }
@@ -809,23 +854,8 @@ private fun CustomDateConfig(
     state: ControlCenterSettingsUiState,
     dateFormat: String,
     datePreview: String,
-    textSizeEnabled: Boolean,
-    textSize: Float,
-    letterSpacingEnabled: Boolean,
-    letterSpacing: Float,
-    textColorEnabled: Boolean,
-    textColor: Int,
-    textBold: Boolean,
     onDateFormatChanged: (String) -> Unit,
-    onSaveDateFormat: () -> Unit,
-    onTextSizeEnabledChanged: (Boolean) -> Unit,
-    onTextSizeChanged: (Float) -> Unit,
-    onLetterSpacingEnabledChanged: (Boolean) -> Unit,
-    onLetterSpacingChanged: (Float) -> Unit,
-    onTextColorEnabledChanged: (Boolean) -> Unit,
-    onControlCenterClockColorChange: (String) -> Unit,
-    onFinishControlCenterClockTextColorEditing: () -> Unit,
-    onTextBoldChanged: (Boolean) -> Unit
+    onSaveDateFormat: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -851,52 +881,6 @@ private fun CustomDateConfig(
             style = MaterialTheme.typography.bodyMedium,
             color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
-        )
-
-        SliderSettingRow(
-            title = stringResource(R.string.system_ui_control_center_custom_clock_text_size_title),
-            valueLabel = stringResource(R.string.system_ui_common_sp_unit, textSize),
-            enabled = textSizeEnabled,
-            value = textSize,
-            valueRange = 10f..30f,
-            steps = 39,
-            onEnabledChanged = onTextSizeEnabledChanged,
-            onValueChanged = onTextSizeChanged
-        )
-        SliderSettingRow(
-            title = stringResource(R.string.system_ui_control_center_custom_clock_letter_spacing_title),
-            valueLabel = "%.1f".format(letterSpacing),
-            enabled = letterSpacingEnabled,
-            value = letterSpacing,
-            valueRange = 0f..2f,
-            steps = 19,
-            onEnabledChanged = onLetterSpacingEnabledChanged,
-            onValueChanged = onLetterSpacingChanged
-        )
-        ZToolSwitchRow(
-            title = stringResource(R.string.system_ui_control_center_custom_clock_text_color_title),
-            summary = "#%08X".format(textColor),
-            checked = textColorEnabled,
-            onCheckedChange = onTextColorEnabledChanged,
-            padding = 0.dp
-        )
-        if (textColorEnabled) {
-            ZToolArgbColorTextFieldRow(
-                label = stringResource(R.string.system_ui_common_select_font_color_title),
-                value = state.controlCenterTextColorText,
-                onValueChange = onControlCenterClockColorChange,
-                defaultText = "FFFFFFFF",
-                summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
-                errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                onEditingFinished = onFinishControlCenterClockTextColorEditing
-            )
-        }
-        ZToolSwitchRow(
-            title = stringResource(R.string.system_ui_control_center_custom_clock_text_bold_title),
-            summary = stringResource(R.string.system_ui_control_center_use_bold_date),
-            checked = textBold,
-            onCheckedChange = onTextBoldChanged,
-            padding = 0.dp
         )
     }
 }

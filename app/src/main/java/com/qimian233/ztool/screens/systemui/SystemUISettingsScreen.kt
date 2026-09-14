@@ -228,7 +228,7 @@ private fun systemUiNavigationItem(
     title: String,
     summary: String,
     onClick: () -> Unit,
-    key: String? = null
+    key: String
 ): SettingItem {
     return SettingItem.Entry(
         title = title,

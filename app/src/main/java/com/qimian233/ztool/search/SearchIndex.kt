@@ -1427,5 +1427,6 @@ object SearchIndex {
         // Let the highlight controller resolve parent fallbacks without a hard
         // dependency from ui/components on the search package.
         SearchHighlightIndexBridge.parentKeyOf = { id -> byId(id)?.parentKey }
+        SearchHighlightIndexBridge.routeOfId = { id -> byId(id)?.route }
     }
 }

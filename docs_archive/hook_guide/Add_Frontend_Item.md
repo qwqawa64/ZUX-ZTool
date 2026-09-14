@@ -133,9 +133,21 @@ SettingItem.Switch(
     title = stringResource(R.string.new_hook_title),
     summary = stringResource(R.string.new_hook_summary),
     checked = state.newHookEnabled,
-    onCheckedChange = onNewHookEnabledChanged
+    onCheckedChange = onNewHookEnabledChanged,
+    key = "new_hook"
 )
 ```
+
+`key` 是 `SettingItem` 的**必填参数**，用于搜索落地高亮与索引对账：
+
+- 新增的可见条目必须同时在 `search/SearchIndex.kt` 注册一个 `SearchEntry`，
+  其 `id` 与这里的 `key` 使用**完全相同的字符串**（通常直接复用
+  `PreferenceKeys` 常量名，如 `new_hook`）。
+- 纯装饰/说明行（不参与搜索）用 `deco_` 前缀；运行时动态生成的明细行用
+  `dyn_` 前缀，二者在 debug 索引对账（`SearchIndexAudit`）中豁免。
+- debug 构建下对账会在页面组合后检查"索引有但屏幕没渲染 / 屏幕渲染了但
+  索引没有"两类漂移并打 `Log.w`（tag `SearchIndexAudit`），新增条目时请
+  留意 Logcat 输出。
 
 页面函数参数也需要把事件一路传进来：
 

@@ -178,6 +178,7 @@ dependencies {
     implementation(libs.libxposed.service)
     implementation(libs.commonmark)
     implementation(libs.lunar)
+    implementation(libs.tinypinyin)
     implementation(libs.hiddenapibypass)
     implementation(libs.gson)
     implementation(libs.dexkit)

@@ -41,6 +41,8 @@ const val HighlightAwaitRowTimeoutMillis = 1200L
 const val HighlightAwaitParentTimeoutMillis = 400L
 /** One pulse cycle (fade in + fade out); the timeline runs two cycles, 1.2s total. */
 const val HighlightPulseCycleMillis = 600
+/** Grace before running the debug index audit, so conditional rows have composed. */
+const val AUDIT_DELAY_MILLIS = 2000L
 
 /**
  * Row bounds (in root coordinates) keyed by [SettingItem.key]; the scroll container
@@ -73,6 +75,9 @@ class HighlightAnchorRegistry {
     fun clearRow(key: String) {
         rowBounds.remove(key)
     }
+
+    /** Keys of all rows currently registered (used by the debug index audit). */
+    fun snapshotKeys(): Set<String> = rowBounds.keys.toSet()
 
     fun offsetFor(key: String): Int? {
         val bounds = rowBounds[key] ?: return null
@@ -129,6 +134,20 @@ fun HighlightController(
     content: @Composable () -> Unit
 ) {
     var activeId by remember { mutableStateOf<String?>(null) }
+
+    // Debug-only index audit: once rows have composed, compare rendered keys against
+    // the static index. No target needed; release builds short-circuit to a no-op.
+    val auditedRoute = highlightTargetId?.let { id ->
+        SearchHighlightIndexBridge.routeOfId(id)?.substringBefore('?')
+    }
+    if (com.qimian233.ztool.BuildConfig.DEBUG) {
+        LaunchedEffect(auditedRoute, registry) {
+            if (registry != null && auditedRoute != null) {
+                delay(AUDIT_DELAY_MILLIS)
+                com.qimian233.ztool.search.SearchIndexAudit.auditRoute(auditedRoute, registry)
+            }
+        }
+    }
 
     LaunchedEffect(highlightTargetId, registry) {
         val target = highlightTargetId ?: return@LaunchedEffect
@@ -252,4 +271,8 @@ private fun androidx.compose.ui.graphics.Outline.getOutlinePath(): androidx.comp
 object SearchHighlightIndexBridge {
     @Volatile
     var parentKeyOf: (String) -> String? = { null }
+
+    /** Route a target id belongs to, so the debug audit knows which screen it is on. */
+    @Volatile
+    var routeOfId: (String) -> String? = { null }
 }

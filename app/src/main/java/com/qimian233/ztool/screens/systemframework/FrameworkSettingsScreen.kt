@@ -365,6 +365,7 @@ private fun frameworkSettingsSections(
             items = buildList {
                 add(
                     SettingItem.Custom(
+                        key = "deco_framework_android16_note",
                         content = { PkgMgrAndroid16Note() }
                     )
                 )

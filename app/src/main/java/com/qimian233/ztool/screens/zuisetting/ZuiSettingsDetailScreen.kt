@@ -894,6 +894,7 @@ private fun settingsDetailSections(
                     title = stringResource(R.string.settings_zui_force_config_title),
                     items = listOf(
                         SettingItem.Custom(
+                            key = "deco_settings_zui_force_config_summary",
                             content = {
                                 Text(
                                     text = stringResource(R.string.settings_zui_force_config_summary),
@@ -993,6 +994,7 @@ private fun settingsDetailSections(
                         )
                         if (aboutDeviceInfoState.modelEnabled) {
                             add(SettingItem.TextInput(
+                                key = "settings_detail_about_device_info_model_input",
                                 label = stringResource(R.string.settings_about_device_info_model_label),
                                 value = aboutDeviceInfoState.model,
                                 onValueChange = onAboutDeviceInfoModelChanged
@@ -1008,6 +1010,7 @@ private fun settingsDetailSections(
                         )
                         if (aboutDeviceInfoState.cpuEnabled) {
                             add(SettingItem.TextInput(
+                                key = "settings_detail_about_device_info_cpu_input",
                                 label = stringResource(R.string.settings_about_device_info_cpu_label),
                                 value = aboutDeviceInfoState.cpu,
                                 onValueChange = onAboutDeviceInfoCpuChanged
@@ -1023,6 +1026,7 @@ private fun settingsDetailSections(
                         )
                         if (aboutDeviceInfoState.ramEnabled) {
                             add(SettingItem.TextInput(
+                                key = "settings_detail_about_device_info_ram_input",
                                 label = stringResource(R.string.settings_about_device_info_ram_label),
                                 value = aboutDeviceInfoState.ram,
                                 onValueChange = onAboutDeviceInfoRamChanged
@@ -1038,6 +1042,7 @@ private fun settingsDetailSections(
                         )
                         if (aboutDeviceInfoState.romEnabled) {
                             add(SettingItem.TextInput(
+                                key = "settings_detail_about_device_info_rom_input",
                                 label = stringResource(R.string.settings_about_device_info_rom_label),
                                 value = aboutDeviceInfoState.rom,
                                 onValueChange = onAboutDeviceInfoRomChanged
@@ -1053,6 +1058,7 @@ private fun settingsDetailSections(
                         )
                         if (aboutDeviceInfoState.softwareEnabled) {
                             add(SettingItem.TextInput(
+                                key = "settings_detail_about_device_info_software_input",
                                 label = stringResource(R.string.settings_about_device_info_software_label),
                                 value = aboutDeviceInfoState.software,
                                 onValueChange = onAboutDeviceInfoSoftwareChanged
@@ -1132,7 +1138,7 @@ private fun settingsDetailActionItem(
     summary: String,
     onClick: () -> Unit,
     icon: (@Composable () -> Unit)? = null,
-    key: String? = null
+    key: String
 ): SettingItem {
     return SettingItem.Action(
         key = key,

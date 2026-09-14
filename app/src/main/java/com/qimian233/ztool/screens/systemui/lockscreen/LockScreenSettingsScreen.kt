@@ -300,6 +300,7 @@ private fun lockScreenSettingsSections(
         if (state.yiYanEnabled) {
             add(
                 SettingItem.Custom(
+                    key = "lock_screen_yi_yan_config",
                     content = {
                         YiYanConfigFields(
                             apiAddress = state.apiAddress,
@@ -337,6 +338,7 @@ private fun lockScreenSettingsSections(
             if (state.clockColorCustom) {
                 add(
                     SettingItem.Custom(
+                        key = "lock_screen_clock_color_picker",
                         content = {
                             ZToolArgbColorTextFieldRow(
                                 label = stringResource(R.string.system_ui_lock_screen_clock_color_picker_label),
@@ -468,6 +470,7 @@ private fun lockScreenSettingsSections(
             if (state.customFormatEnabled) {
                 add(
                     SettingItem.Custom(
+                        key = "lock_screen_realwatts_custom_format_input",
                         content = {
                             CustomFormatInput(
                                 value = state.customFormat,

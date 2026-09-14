@@ -16,6 +16,7 @@ materialColorUtilities = "4.1.1"
 libxposedApi = "102.0.0"
 commonmark = "0.24.0"
 lunar = "1.7.5"
+tinypinyin = "2.0.3"
 hiddenApiBypass = "4.3"
 gson = "2.10.1"
 dexkit = "2.0.6"
@@ -42,6 +43,7 @@ material-color-utilities = { group = "com.materialkolor", name = "material-color
 miuix-blur = { group = "top.yukonga.miuix.kmp", name = "miuix-blur-android", version.ref = "miuix-blur" }
 commonmark = { group = "org.commonmark", name = "commonmark", version.ref = "commonmark" }
 lunar = { group = "cn.6tail", name = "lunar", version.ref = "lunar" }
+tinypinyin = { group = "com.github.promeg", name = "tinypinyin", version.ref = "tinypinyin" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenApiBypass" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 dexkit = { group = "org.luckypray", name = "dexkit", version.ref = "dexkit" }
