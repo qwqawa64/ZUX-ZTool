@@ -375,7 +375,7 @@ private fun statusBarSettingsSections(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp)
+                            .padding(horizontal = 24.dp)
                     ) {
                         SliderSettingRow(
                             title = stringResource(R.string.system_ui_status_bar_text_size_title),
@@ -398,7 +398,7 @@ private fun statusBarSettingsSections(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp)
+                            .padding(horizontal = 24.dp)
                     ) {
                         SliderSettingRow(
                             title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),

@@ -641,7 +641,7 @@ private fun controlCenterSettingsSections(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                                    .padding(horizontal = 24.dp)
                             ) {
                                 SliderSettingRow(
                                     title = stringResource(R.string.system_ui_control_center_custom_clock_text_size_title),
@@ -664,7 +664,7 @@ private fun controlCenterSettingsSections(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                                    .padding(horizontal = 24.dp)
                             ) {
                                 SliderSettingRow(
                                     title = stringResource(R.string.system_ui_control_center_custom_clock_letter_spacing_title),
