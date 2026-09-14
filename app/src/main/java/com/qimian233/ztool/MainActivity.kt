@@ -133,17 +133,20 @@ class MainActivity : ComponentActivity(),
                         null
                     }
                 ) {
-                    val currentAgreementMode = agreementDisplayMode
-                    if (currentAgreementMode == null) {
-                        MainTabletShell(
-                            environmentReady = isEnvironmentReady,
-                            selectedRoute = currentRoute,
-                            themeSettings = themeSettings,
-                            onDestinationSelected = ::navigateFromRail,
-                            onEnvironmentStateChanged = ::onEnvironmentStateChanged,
-                            onRouteChanged = ::setCurrentRouteFromHost
-                        )
-                    } else {
+                    // The main shell stays composed at all times; the Firstrun
+                    // flow overlays it instead of replacing it, so the NavHost
+                    // and its back stack survive OOBE replay and the user lands
+                    // back on whatever screen they came from (e.g. the advanced
+                    // settings route when opened from the developer entry).
+                    MainTabletShell(
+                        environmentReady = isEnvironmentReady,
+                        selectedRoute = currentRoute,
+                        themeSettings = themeSettings,
+                        onDestinationSelected = ::navigateFromRail,
+                        onEnvironmentStateChanged = ::onEnvironmentStateChanged,
+                        onRouteChanged = ::setCurrentRouteFromHost
+                    )
+                    agreementDisplayMode?.let { currentAgreementMode ->
                         FirstrunAgreementRoute(
                             agreementDisplayMode = currentAgreementMode,
                             playIntroReveal = firstrunIntroRevealPending,

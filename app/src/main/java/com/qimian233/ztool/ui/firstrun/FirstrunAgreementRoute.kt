@@ -269,7 +269,7 @@ private fun SplashPage(
             initialValue = 0f,
             targetValue = 1.5f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
+                animation = tween(durationMillis = 3000, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Reverse
             ),
             label = "splash_hint_letter_spacing"
