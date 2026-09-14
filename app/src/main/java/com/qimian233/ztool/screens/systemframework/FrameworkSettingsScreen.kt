@@ -3,7 +3,6 @@ package com.qimian233.ztool.screens.systemframework
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -449,25 +448,12 @@ private fun frameworkSettingsSections(
 
 @Composable
 private fun PkgMgrAndroid16Note() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Info,
-            contentDescription = null,
-            tint = LocalZToolColorScheme.current.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp)
-        )
-        Text(
-            text = stringResource(R.string.system_framework_pkgmgr_android16_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = LocalZToolColorScheme.current.onSurfaceVariant,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
+    Text(
+        text = stringResource(R.string.system_framework_pkgmgr_android16_note),
+        style = MaterialTheme.typography.bodySmall,
+        color = LocalZToolColorScheme.current.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+    )
 }
 
 @Composable
