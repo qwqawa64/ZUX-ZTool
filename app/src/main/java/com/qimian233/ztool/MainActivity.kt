@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity(),
     private var currentRoute by mutableStateOf(MainRoute.Home)
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
     private var agreementDisplayMode by mutableStateOf<AgreementDisplayMode?>(null)
+    private var firstrunIntroRevealPending by mutableStateOf(false)
     private var lastClickTime = 0L
     private var unregisterThemeSettingsObserver: (() -> Unit)? = null
     private val agreementRepository by lazy { AgreementRepository(this) }
@@ -107,6 +108,9 @@ class MainActivity : ComponentActivity(),
         if (agreementDisplayMode == null) {
             agreementDisplayMode = resolveAgreementDisplayMode()
         }
+        // Cold start straight into Firstrun: seed the reveal provider with a
+        // full-screen cover so the intro can uncover the welcome page.
+        firstrunIntroRevealPending = savedInstanceState == null && agreementDisplayMode != null
 
         val themeRepository = ThemePreferencesRepository(applicationContext)
         themeSettings = themeRepository.loadSettings()
@@ -121,7 +125,13 @@ class MainActivity : ComponentActivity(),
 
         setContent {
             ZToolTheme(settings = themeSettings) {
-                com.qimian233.ztool.ui.theme.ThemeRevealProvider {
+                com.qimian233.ztool.ui.theme.ThemeRevealProvider(
+                    initialCoverColor = if (firstrunIntroRevealPending) {
+                        LocalZToolColorScheme.current.background
+                    } else {
+                        null
+                    }
+                ) {
                     val currentAgreementMode = agreementDisplayMode
                     if (currentAgreementMode == null) {
                         MainTabletShell(
@@ -135,6 +145,8 @@ class MainActivity : ComponentActivity(),
                     } else {
                         FirstrunAgreementRoute(
                             agreementDisplayMode = currentAgreementMode,
+                            playIntroReveal = firstrunIntroRevealPending,
+                            onIntroRevealPlayed = { firstrunIntroRevealPending = false },
                             onAgreementAccepted = {
                                 agreementDisplayMode = null
                             },

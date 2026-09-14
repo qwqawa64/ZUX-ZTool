@@ -2,10 +2,12 @@ package com.qimian233.ztool.screens.ztoolsettings.advanced
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -31,6 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -52,6 +57,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalThemeRevealController
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.AdvancedSettingsUiState
 import com.qimian233.ztool.viewmodel.AdvancedSettingsViewModel
@@ -223,6 +229,8 @@ private fun advancedSettingsSections(
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
+    val revealController = LocalThemeRevealController.current
+    var firstrunRowAnchor by remember { mutableStateOf(Offset.Zero) }
 
     return listOf(
         SettingSection(
@@ -294,8 +302,22 @@ private fun advancedSettingsSections(
                     key = "open_firstrun",
                     title = stringResource(R.string.page_settings_advanced_open_firstrun_title),
                     summary = stringResource(R.string.page_settings_advanced_open_firstrun_summary),
-                    onClick = onOpenFirstrun,
-                    icon = Icons.Rounded.RocketLaunch
+                    onClick = {
+                        revealController.triggerReveal(
+                            onAction = onOpenFirstrun,
+                            anchor = firstrunRowAnchor
+                        )
+                    },
+                    icon = Icons.Rounded.RocketLaunch,
+                    trailingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(1.dp)
+                                .onGloballyPositioned { coordinates ->
+                                    firstrunRowAnchor = coordinates.positionInRoot()
+                                }
+                        )
+                    }
                 )
             )
         )

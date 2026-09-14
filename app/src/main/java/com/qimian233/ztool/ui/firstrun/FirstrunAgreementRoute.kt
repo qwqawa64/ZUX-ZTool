@@ -8,6 +8,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -18,7 +20,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,11 +54,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -78,15 +86,19 @@ import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalThemeRevealController
 import com.qimian233.ztool.viewmodel.FirstrunAgreementViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun FirstrunAgreementRoute(
     agreementDisplayMode: AgreementDisplayMode = AgreementDisplayMode.FirstRun,
+    playIntroReveal: Boolean = false,
+    onIntroRevealPlayed: () -> Unit = {},
     onAgreementAccepted: () -> Unit,
     onAgreementDeclined: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as ComponentActivity
+    val view = LocalView.current
     val viewModel = remember {
             ViewModelProvider(
                 activity,
@@ -101,8 +113,12 @@ fun FirstrunAgreementRoute(
     val agreementPageScrollState = rememberScrollState()
     val permissionPageScrollState = rememberScrollState()
     val revealController = LocalThemeRevealController.current
+    val introCoverColor = LocalZToolColorScheme.current.background
     val gate = remember { ScrollToBottomAgreementGate() }
     val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Splash) }
+    // True while a page change is driven by a reveal — the pages swap instantly
+    // under the snapshot so the expanding circle fully owns the transition.
+    var revealNavigation by remember { mutableStateOf(false) }
 
     val usageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -115,6 +131,18 @@ fun FirstrunAgreementRoute(
         if (currentPageState.value == FirstrunPage.Permissions) {
             viewModel.refreshChecks()
         }
+    }
+
+    LaunchedEffect(playIntroReveal) {
+        if (!playIntroReveal) return@LaunchedEffect
+        // Give the system launch mask a moment to settle, then uncover the
+        // welcome page with a circle growing from the bottom-center.
+        delay(300)
+        revealController.triggerCoverReveal(
+            anchor = Offset(view.width / 2f, view.height.toFloat()),
+            coverColor = introCoverColor
+        )
+        onIntroRevealPlayed()
     }
 
     DisposableEffect(agreementReadScrollState.value, agreementReadScrollState.maxValue) {
@@ -139,30 +167,39 @@ fun FirstrunAgreementRoute(
                 targetState = currentPageState.value,
                 label = "firstrun_pages",
                 transitionSpec = {
-                    val forward = targetState.pageOrder() > initialState.pageOrder()
-                    val enterDirection = if (forward) {
-                        AnimatedContentTransitionScope.SlideDirection.Left
+                    if (revealNavigation) {
+                        EnterTransition.None togetherWith ExitTransition.None
                     } else {
-                        AnimatedContentTransitionScope.SlideDirection.Right
+                        val forward = targetState.pageOrder() > initialState.pageOrder()
+                        val enterDirection = if (forward) {
+                            AnimatedContentTransitionScope.SlideDirection.Left
+                        } else {
+                            AnimatedContentTransitionScope.SlideDirection.Right
+                        }
+                        val exitDirection = if (forward) {
+                            AnimatedContentTransitionScope.SlideDirection.Left
+                        } else {
+                            AnimatedContentTransitionScope.SlideDirection.Right
+                        }
+                        slideIntoContainer(
+                            towards = enterDirection,
+                            animationSpec = tween(FirstrunPageTransitionMillis)
+                        ) togetherWith slideOutOfContainer(
+                            towards = exitDirection,
+                            animationSpec = tween(FirstrunPageTransitionMillis)
+                        )
                     }
-                    val exitDirection = if (forward) {
-                        AnimatedContentTransitionScope.SlideDirection.Left
-                    } else {
-                        AnimatedContentTransitionScope.SlideDirection.Right
-                    }
-                    slideIntoContainer(
-                        towards = enterDirection,
-                        animationSpec = tween(FirstrunPageTransitionMillis)
-                    ) togetherWith slideOutOfContainer(
-                        towards = exitDirection,
-                        animationSpec = tween(FirstrunPageTransitionMillis)
-                    )
                 }
             ) { page ->
                 when (page) {
                     FirstrunPage.Splash -> SplashPage(
-                        onStart = {
-                            currentPageState.value = FirstrunPage.Agreement
+                        onStart = { tapAnchor ->
+                            revealNavigation = true
+                            revealController.triggerReveal(
+                                onAction = { currentPageState.value = FirstrunPage.Agreement },
+                                onAnimationEnd = { revealNavigation = false },
+                                anchor = tapAnchor
+                            )
                         }
                     )
                     FirstrunPage.Agreement -> AgreementPage(
@@ -171,9 +208,14 @@ fun FirstrunAgreementRoute(
                         pageScrollState = agreementPageScrollState,
                         readScrollState = agreementReadScrollState,
                         firstPageReady = gate.satisfied,
-                        onNext = {
+                        onNext = { tapAnchor ->
                             viewModel.acceptAgreement()
-                            currentPageState.value = FirstrunPage.Permissions
+                            revealNavigation = true
+                            revealController.triggerReveal(
+                                onAction = { currentPageState.value = FirstrunPage.Permissions },
+                                onAnimationEnd = { revealNavigation = false },
+                                anchor = tapAnchor
+                            )
                         },
                         onDisagree = {
                             viewModel.declineAgreement()
@@ -198,9 +240,14 @@ fun FirstrunAgreementRoute(
                                 )
                             )
                         },
-                        onAgree = {
+                        onAgree = { tapAnchor ->
                             viewModel.acceptAgreement()
-                            revealController.triggerReveal(onAction = onAgreementAccepted)
+                            revealNavigation = true
+                            revealController.triggerReveal(
+                                onAction = onAgreementAccepted,
+                                onAnimationEnd = { revealNavigation = false },
+                                anchor = tapAnchor
+                            )
                         },
                         onBack = {
                             currentPageState.value = FirstrunPage.Agreement
@@ -214,7 +261,7 @@ fun FirstrunAgreementRoute(
 
 @Composable
 private fun SplashPage(
-    onStart: () -> Unit
+    onStart: (Offset) -> Unit
 ) {
     val hintLetterSpacing by rememberInfiniteTransition(label = "splash_hint_breathing")
         .animateFloat(
@@ -226,14 +273,14 @@ private fun SplashPage(
             ),
             label = "splash_hint_letter_spacing"
         )
+    var pageOrigin by remember { mutableStateOf(Offset.Zero) }
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onStart
-            )
+            .onGloballyPositioned { pageOrigin = it.positionInRoot() }
+            .pointerInput(Unit) {
+                detectTapGestures { offset -> onStart(pageOrigin + offset) }
+            }
             .padding(20.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -279,7 +326,7 @@ private fun AgreementPage(
     pageScrollState: ScrollState,
     readScrollState: ScrollState,
     firstPageReady: Boolean,
-    onNext: () -> Unit,
+    onNext: (Offset) -> Unit,
     onDisagree: () -> Unit
 ) {
     Box(
@@ -348,7 +395,7 @@ private fun PermissionPage(
     onRequestPackages: () -> Unit,
     onRequestUsage: () -> Unit,
     onRequestOverlay: () -> Unit,
-    onAgree: () -> Unit,
+    onAgree: (Offset) -> Unit,
     onBack: () -> Unit
 ) {
     Box(
@@ -556,10 +603,11 @@ private fun BottomActionBar(
     modifier: Modifier = Modifier,
     nextText: String,
     nextEnabled: Boolean,
-    onNext: () -> Unit,
+    onNext: (Offset) -> Unit,
     onDisagree: () -> Unit,
     negativeText: String = stringResource(R.string.page_firstrun_agreement_dismiss)
 ) {
+    var nextButtonCenter by remember { mutableStateOf(Offset.Zero) }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -574,9 +622,14 @@ private fun BottomActionBar(
             modifier = Modifier.weight(1f)
         )
         ZToolButton(
-            onClick = onNext,
+            onClick = { onNext(nextButtonCenter) },
             enabled = nextEnabled,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .onGloballyPositioned { coordinates ->
+                    nextButtonCenter = coordinates.positionInRoot() +
+                            Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+                }
         ) {
             Text(nextText)
         }
