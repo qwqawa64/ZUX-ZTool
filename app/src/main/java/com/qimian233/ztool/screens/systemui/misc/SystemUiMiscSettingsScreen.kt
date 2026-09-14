@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.systemui.misc
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -43,7 +46,8 @@ import com.qimian233.ztool.viewmodel.SystemUiMiscSettingsViewModel
 @Composable
 fun SystemUiMiscSettingsRoute(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -63,14 +67,26 @@ fun SystemUiMiscSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    SystemUiMiscSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onGuestModeChanged = viewModel::setGuestModeController,
-        onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
-        onRestartScope = viewModel::showRestartDialog,
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        SystemUiMiscSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onGuestModeChanged = viewModel::setGuestModeController,
+            onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
+            onRestartScope = viewModel::showRestartDialog,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartDialog) {
         val restartFailString = stringResource(R.string.common_restart_fail)
@@ -109,6 +125,8 @@ private fun SystemUiMiscSettingsScreen(
     onGuestModeChanged: (Boolean) -> Unit,
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -142,7 +160,7 @@ private fun SystemUiMiscSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -151,7 +169,8 @@ private fun SystemUiMiscSettingsScreen(
                         onGuestModeChanged = onGuestModeChanged,
                         onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -172,12 +191,14 @@ private fun systemUiMiscSettingsSections(
                     title = stringResource(R.string.system_ui_misc_disable_guest_user_enable_title),
                     summary = stringResource(R.string.system_ui_misc_disable_guest_user_enable_summary),
                     checked = state.guestModeController,
-                    onCheckedChange = onGuestModeChanged
+                    onCheckedChange = onGuestModeChanged,
+                    key = "system_ui_misc_disable_guest_user"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_ui_misc_disable_biometric_error_vibration_title),
                     checked = state.disableBiometricErrorVibration,
-                    onCheckedChange = onDisableBiometricErrorVibrationChanged
+                    onCheckedChange = onDisableBiometricErrorVibrationChanged,
+                    key = "system_ui_misc_disable_biometric_error_vibration"
                 )
             )
         )

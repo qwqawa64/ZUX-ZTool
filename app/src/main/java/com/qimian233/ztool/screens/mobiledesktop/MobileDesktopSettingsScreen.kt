@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.mobiledesktop
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,8 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.mobiledesktop.MobileDesktopRestartResult
 import com.qimian233.ztool.data.mobiledesktop.MobileDesktopSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -45,7 +48,8 @@ import com.qimian233.ztool.viewmodel.MobileDesktopSettingsViewModel
 fun MobileDesktopSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -64,16 +68,27 @@ fun MobileDesktopSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    MobileDesktopSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onRestart = viewModel::showRestartConfirmDialog,
-        onSkipExposeChanged = viewModel::setSkipExposeWarn,
-        onAutoAcceptFileTransferChanged = viewModel::setAutoAcceptFileTransfer,
-        onDisableNearbyShareAutoShutdownChanged = viewModel::setDisableNearbyShareAutoShutdown
-    )
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        MobileDesktopSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onRestart = viewModel::showRestartConfirmDialog,
+            onSkipExposeChanged = viewModel::setSkipExposeWarn,
+            onAutoAcceptFileTransferChanged = viewModel::setAutoAcceptFileTransfer,
+            onDisableNearbyShareAutoShutdownChanged = viewModel::setDisableNearbyShareAutoShutdown,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartConfirmDialog) {
         val restartWarnString = stringResource(R.string.common_restart_fail)
@@ -120,7 +135,9 @@ private fun MobileDesktopSettingsScreen(
     onAutoAcceptFileTransferChanged: (Boolean) -> Unit,
     onDisableNearbyShareAutoShutdownChanged: (Boolean) -> Unit,
     onBack: () -> Unit,
-    onRestart: () -> Unit
+    onRestart: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -154,7 +171,7 @@ private fun MobileDesktopSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -166,23 +183,27 @@ private fun MobileDesktopSettingsScreen(
                                     checked = state.skipExposeWarn,
                                     onCheckedChange = onSkipExposeChanged,
                                     title = stringResource(R.string.mobile_desktop_skip_nearby_exposure_warn),
-                                    summary = stringResource(R.string.mobile_desktop_skip_nearby_exposure_warn_summary)
+                                    summary = stringResource(R.string.mobile_desktop_skip_nearby_exposure_warn_summary),
+                                    key = "mobile_desktop_skip_nearby_exposure_warn"
                                 ),
                                 SettingItem.Switch(
                                     checked = state.autoAcceptFileTransfer,
                                     onCheckedChange = onAutoAcceptFileTransferChanged,
                                     title = stringResource(R.string.mobile_desktop_auto_accept_file_transfer),
-                                    summary = stringResource(R.string.mobile_desktop_auto_accept_file_transfer_summary)
+                                    summary = stringResource(R.string.mobile_desktop_auto_accept_file_transfer_summary),
+                                    key = "mobile_desktop_auto_accept_file_transfer"
                                 ),
                                 SettingItem.Switch(
                                     checked = state.disableNearbyShareAutoShutdown,
                                     onCheckedChange = onDisableNearbyShareAutoShutdownChanged,
-                                    title = stringResource(R.string.mobile_desktop_disable_nearby_share_auto_shutdown_title)
+                                    title = stringResource(R.string.mobile_desktop_disable_nearby_share_auto_shutdown_title),
+                                    key = "mobile_desktop_disable_nearby_share_auto_shutdown"
                                 )
                             )
                         )
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }

@@ -3,6 +3,7 @@ package com.qimian233.ztool.screens.ota
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.ota.OtaSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolButton
@@ -61,7 +64,8 @@ import com.qimian233.ztool.viewmodel.OtaSettingsViewModel
 fun OtaSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -91,37 +95,48 @@ fun OtaSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    OtaSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
-        onHideOtaUpdateHintChanged = viewModel::setHideOtaUpdate,
-        onDisableOtaAutoInstallChanged = viewModel::setDisableAutoOtaInstall,
-        onBlockOtaInstallDialogChanged = viewModel::setBlockOtaInstallDialog,
-        onDisableOtaNotificationAndRedDot = viewModel::setDisableOtaNotificationAndRedDot,
-        onFetchOtaInfo = {
-            viewModel.fetchOtaInfo(otaInfoFetchFailed)
-        },
-        onFirmwareSnChanged = viewModel::setFirmwareSnInput,
-        onFetchFirmware = {
-            viewModel.fetchFirmware(snDefaultHint)
-        },
-        onCopyDownloadLink = {
-            copyToClipboard(it)
-            Toast.makeText(context, R.string.system_update_download_link_copied, Toast.LENGTH_SHORT).show()
-        },
-        onCopyChangelog = {
-            copyToClipboard(it)
-            Toast.makeText(context, R.string.system_update_changelog_copied, Toast.LENGTH_SHORT).show()
-        },
-        onCopyPassword = {
-            copyToClipboard(it)
-            Toast.makeText(context, R.string.system_update_password_copied, Toast.LENGTH_SHORT).show()
-        },
-        onRestartScope = viewModel::showRestartDialog
-    )
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        OtaSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onDisableOtaCheckChanged = viewModel::setDisableOtaCheck,
+            onHideOtaUpdateHintChanged = viewModel::setHideOtaUpdate,
+            onDisableOtaAutoInstallChanged = viewModel::setDisableAutoOtaInstall,
+            onBlockOtaInstallDialogChanged = viewModel::setBlockOtaInstallDialog,
+            onDisableOtaNotificationAndRedDot = viewModel::setDisableOtaNotificationAndRedDot,
+            onFetchOtaInfo = {
+                viewModel.fetchOtaInfo(otaInfoFetchFailed)
+            },
+            onFirmwareSnChanged = viewModel::setFirmwareSnInput,
+            onFetchFirmware = {
+                viewModel.fetchFirmware(snDefaultHint)
+            },
+            onCopyDownloadLink = {
+                copyToClipboard(it)
+                Toast.makeText(context, R.string.system_update_download_link_copied, Toast.LENGTH_SHORT).show()
+            },
+            onCopyChangelog = {
+                copyToClipboard(it)
+                Toast.makeText(context, R.string.system_update_changelog_copied, Toast.LENGTH_SHORT).show()
+            },
+            onCopyPassword = {
+                copyToClipboard(it)
+                Toast.makeText(context, R.string.system_update_password_copied, Toast.LENGTH_SHORT).show()
+            },
+            onRestartScope = viewModel::showRestartDialog,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     uiState.errorDialogMessage?.let { message ->
         ErrorDialog(
@@ -173,7 +188,9 @@ private fun OtaSettingsScreen(
     onCopyDownloadLink: (String) -> Unit,
     onCopyChangelog: (String) -> Unit,
     onCopyPassword: (String) -> Unit,
-    onRestartScope: () -> Unit
+    onRestartScope: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -204,7 +221,7 @@ private fun OtaSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -222,7 +239,8 @@ private fun OtaSettingsScreen(
                         onBlockOtaInstallDialogChanged = onBlockOtaInstallDialogChanged,
                         onDisableOtaNotificationAndRedDot = onDisableOtaNotificationAndRedDot
                     ),
-                    bottomPadding = 88.dp
+                    bottomPadding = 88.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -252,28 +270,33 @@ private fun otaSettingsSections(
                     title = stringResource(R.string.system_update_ota_disable_title),
                     summary = stringResource(R.string.system_update_ota_disable_summary),
                     checked = state.disableOtaCheck,
-                    onCheckedChange = onDisableOtaCheckChanged
+                    onCheckedChange = onDisableOtaCheckChanged,
+                    key = "ota_disable_update"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_update_disable_ota_auto_install_title),
                     checked = state.noAutoOtaInstall,
-                    onCheckedChange = onDisableOtaAutoInstallChanged
+                    onCheckedChange = onDisableOtaAutoInstallChanged,
+                    key = "ota_disable_auto_install"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_update_block_ota_install_dialog_title),
                     checked = state.blockOtaInstallDialog,
-                    onCheckedChange = onBlockOtaInstallDialogChanged
+                    onCheckedChange = onBlockOtaInstallDialogChanged,
+                    key = "ota_block_install_dialog"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_update_hide_ota_update_hint),
                     checked = state.hideOtaUpdateHint,
-                    onCheckedChange = onHideOtaUpdateHintChanged
+                    onCheckedChange = onHideOtaUpdateHintChanged,
+                    key = "ota_hide_update_hint"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_update_disable_ota_notification_and_red_dot_title),
                     summary = stringResource(R.string.system_update_disable_ota_notification_and_red_dot_summary),
                     checked = state.disableOtaNotificationAndRedDot,
-                    onCheckedChange = onDisableOtaNotificationAndRedDot
+                    onCheckedChange = onDisableOtaNotificationAndRedDot,
+                    key = "ota_disable_notification_and_red_dot"
                 )
             )
         ),
@@ -289,7 +312,8 @@ private fun otaSettingsSections(
                             onCopyDownloadLink = onCopyDownloadLink,
                             onCopyChangelog = onCopyChangelog
                         )
-                    }
+                    },
+                    key = "ota_info_fetch"
                 )
             )
         ),
@@ -308,7 +332,8 @@ private fun otaSettingsSections(
                             onCopyDownloadLink = onCopyDownloadLink,
                             onCopyPassword = onCopyPassword
                         )
-                    }
+                    },
+                    key = "ota_pc_flash_firmware_fetch"
                 )
             )
         ),

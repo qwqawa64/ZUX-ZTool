@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.launcher
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,8 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.launcher.LauncherRestartResult
 import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -57,7 +60,8 @@ import com.qimian233.ztool.viewmodel.LauncherSettingsViewModel
 fun LauncherSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -77,51 +81,62 @@ fun LauncherSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
     val forceStopTitleString = stringResource(R.string.launcher_force_stop_title)
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    LauncherSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onRestart = viewModel::showRestartConfirmDialog,
-        onForceStopModeChanged = viewModel::setForceStopMode,
-        onSelectForceStopWhitelist = {
-            val activity = context as? android.app.Activity
-            if (activity != null) {
-                AppChooserDialog.show(
-                    activity,
-                    viewModel.loadUserInstalledPackageNames(),
-                    uiState.forceStopWhitelist,
-                    forceStopTitleString,
-                    object : AppChooserDialog.AppSelectionCallback {
-                        override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
-                            viewModel.setForceStopWhitelist(selectedApps.map { it.packageName })
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        LauncherSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onRestart = viewModel::showRestartConfirmDialog,
+            onForceStopModeChanged = viewModel::setForceStopMode,
+            onSelectForceStopWhitelist = {
+                val activity = context as? android.app.Activity
+                if (activity != null) {
+                    AppChooserDialog.show(
+                        activity,
+                        viewModel.loadUserInstalledPackageNames(),
+                        uiState.forceStopWhitelist,
+                        forceStopTitleString,
+                        object : AppChooserDialog.AppSelectionCallback {
+                            override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
+                                viewModel.setForceStopWhitelist(selectedApps.map { it.packageName })
+                            }
+
+                            override fun onCancel() = Unit
                         }
-
-                        override fun onCancel() = Unit
-                    }
-                )
-            }
-        },
-        onMoreBigDockChanged = viewModel::setMoreBigDock,
-        onCustomGridSizeChanged = viewModel::setCustomGridSize,
-        onCustomGridRowChanged = viewModel::setCustomGridRow,
-        onCustomGridColumnChanged = viewModel::setCustomGridColumn,
-        onCleanSearchChanged = viewModel::setCleanSearch,
-        onRemoveSearchRecommendationChanged = viewModel::setRemoveSearchRecommend,
-        onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView,
-        onShowRamInfoChanged = viewModel::setShowRamInfo,
-        onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
-        onDisableDockBarChanged = viewModel::setDisableDockBar,
-        onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode,
-        onLauncherDrawerNoLabelModeChanged = viewModel::setLauncherDrawerNoLabelMode,
-        onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
-        onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
-        onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
-        onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
-        onBigFolderAlignChanged = viewModel::setBigFolderAlign,
-        onAppIconUnmaskChanged = viewModel::setAppIconUnmask,
-        onAppIconUnmaskDynamicChanged = viewModel::setAppIconUnmaskDynamic
-    )
+                    )
+                }
+            },
+            onMoreBigDockChanged = viewModel::setMoreBigDock,
+            onCustomGridSizeChanged = viewModel::setCustomGridSize,
+            onCustomGridRowChanged = viewModel::setCustomGridRow,
+            onCustomGridColumnChanged = viewModel::setCustomGridColumn,
+            onCleanSearchChanged = viewModel::setCleanSearch,
+            onRemoveSearchRecommendationChanged = viewModel::setRemoveSearchRecommend,
+            onRemoveHotWordViewChanged = viewModel::setRemoveHotWordView,
+            onShowRamInfoChanged = viewModel::setShowRamInfo,
+            onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
+            onDisableDockBarChanged = viewModel::setDisableDockBar,
+            onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode,
+            onLauncherDrawerNoLabelModeChanged = viewModel::setLauncherDrawerNoLabelMode,
+            onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
+            onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
+            onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
+            onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
+            onBigFolderAlignChanged = viewModel::setBigFolderAlign,
+            onAppIconUnmaskChanged = viewModel::setAppIconUnmask,
+            onAppIconUnmaskDynamicChanged = viewModel::setAppIconUnmaskDynamic,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartConfirmDialog) {
         RestartConfirmDialog(
@@ -194,6 +209,8 @@ private fun LauncherSettingsScreen(
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
     onAppIconUnmaskDynamicChanged: (Boolean) -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry,
 ) {
     ZToolScaffold(
         topBar = {
@@ -226,7 +243,7 @@ private fun LauncherSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -254,7 +271,8 @@ private fun LauncherSettingsScreen(
                         onAppIconUnmaskChanged = onAppIconUnmaskChanged,
                         onAppIconUnmaskDynamicChanged = onAppIconUnmaskDynamicChanged,
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -292,28 +310,32 @@ private fun launcherSettingsSections(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_launcher_no_label_mode_title),
                 checked = state.noLabelMode,
-                onCheckedChange = onLauncherNoLabelModeChanged
+                onCheckedChange = onLauncherNoLabelModeChanged,
+                key = "launcher_no_label_mode"
             )
         )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_launcher_drawer_no_label_mode_title),
                 checked = state.drawerNoLabelMode,
-                onCheckedChange = onLauncherDrawerNoLabelModeChanged
+                onCheckedChange = onLauncherDrawerNoLabelModeChanged,
+                key = "launcher_drawer_no_label_mode"
             )
         )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_launcher_hide_blue_point_title),
                 checked = state.hideBluePoint,
-                onCheckedChange = onLauncherHideBluePointChanged
+                onCheckedChange = onLauncherHideBluePointChanged,
+                key = "launcher_hide_blue_point"
             )
         )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_cloud_folder_auto_dismiss_title),
                 checked = state.cloudFolderDismiss,
-                onCheckedChange = onCloudFolderDismissChanged
+                onCheckedChange = onCloudFolderDismissChanged,
+                key = "launcher_cloud_folder_auto_dismiss"
             )
         )
         add(
@@ -321,7 +343,8 @@ private fun launcherSettingsSections(
                 title = stringResource(R.string.launcher_custom_grid_title),
                 summary = stringResource(R.string.launcher_custom_grid_summary),
                 checked = state.customGridSize,
-                onCheckedChange = onCustomGridSizeChanged
+                onCheckedChange = onCustomGridSizeChanged,
+                key = "launcher_custom_grid"
             )
         )
         if (state.customGridSize) {
@@ -333,7 +356,8 @@ private fun launcherSettingsSections(
                             value = state.customGridRow,
                             onValueChanged = onCustomGridRowChanged
                         )
-                    }
+                    },
+                    key = "launcher_custom_grid_row"
                 )
             )
             add(
@@ -344,7 +368,8 @@ private fun launcherSettingsSections(
                             value = state.customGridColumn,
                             onValueChanged = onCustomGridColumnChanged
                         )
-                    }
+                    },
+                    key = "launcher_custom_grid_column"
                 )
             )
         }
@@ -353,7 +378,8 @@ private fun launcherSettingsSections(
                 title = stringResource(R.string.launcher_big_folder_align_title),
                 summary = stringResource(R.string.launcher_big_folder_align_summary),
                 checked = state.bigFolderAlign,
-                onCheckedChange = onBigFolderAlignChanged
+                onCheckedChange = onBigFolderAlignChanged,
+                key = "launcher_big_folder_align"
             )
         )
         add(
@@ -361,7 +387,8 @@ private fun launcherSettingsSections(
                 title = stringResource(R.string.launcher_app_icon_unmask_title),
                 summary = stringResource(R.string.launcher_app_icon_unmask_summary),
                 checked = state.appIconUnmask,
-                onCheckedChange = onAppIconUnmaskChanged
+                onCheckedChange = onAppIconUnmaskChanged,
+                key = "launcher_app_icon_unmask"
             )
         )
         if (state.appIconUnmask) {
@@ -370,7 +397,8 @@ private fun launcherSettingsSections(
                     title = stringResource(R.string.launcher_app_icon_unmask_dynamic_title),
                     summary = stringResource(R.string.launcher_app_icon_unmask_dynamic_summary),
                     checked = state.appIconUnmaskDynamic,
-                    onCheckedChange = onAppIconUnmaskDynamicChanged
+                    onCheckedChange = onAppIconUnmaskDynamicChanged,
+                    key = "launcher_app_icon_unmask_dynamic"
                 )
             )
         }
@@ -381,7 +409,8 @@ private fun launcherSettingsSections(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_disable_recent_app_display),
                 checked = state.disableRecentAppDisplay,
-                onCheckedChange = onDisableRecentAppDisplayChanged
+                onCheckedChange = onDisableRecentAppDisplayChanged,
+                key = "launcher_disable_recent_app_display"
             )
         )
         if (!state.disableDockBar) {
@@ -389,7 +418,8 @@ private fun launcherSettingsSections(
                 SettingItem.Switch(
                     title = stringResource(R.string.launcher_larger_dock_title),
                     checked = state.moreBigDock,
-                    onCheckedChange = onMoreBigDockChanged
+                    onCheckedChange = onMoreBigDockChanged,
+                    key = "launcher_larger_dock"
                 )
             )
         }
@@ -398,7 +428,8 @@ private fun launcherSettingsSections(
                 title = stringResource(R.string.launcher_disable_dock_bar_title),
                 summary = stringResource(R.string.launcher_disable_dock_bar_summary),
                 checked = state.disableDockBar,
-                onCheckedChange = onDisableDockBarChanged
+                onCheckedChange = onDisableDockBarChanged,
+                key = "launcher_disable_dock_bar"
             )
         )
     }
@@ -411,7 +442,8 @@ private fun launcherSettingsSections(
                         selectedMode = state.forceStopMode,
                         onModeChanged = onForceStopModeChanged
                     )
-                }
+                },
+                key = "launcher_force_stop_mode"
             )
         )
         if (state.forceStopMode == ForceStopMode.Whitelist) {
@@ -431,7 +463,8 @@ private fun launcherSettingsSections(
                 title = stringResource(R.string.launcher_show_ram_info),
                 summary = stringResource(R.string.launcher_show_ram_info_summary),
                 checked = state.showRamInfo,
-                onCheckedChange = onShowRamInfoChanged
+                onCheckedChange = onShowRamInfoChanged,
+                key = "launcher_show_ram_info"
             )
         )
         if (state.showRamInfo) {
@@ -440,7 +473,8 @@ private fun launcherSettingsSections(
                     title = stringResource(R.string.launcher_beautify_ram_info),
                     summary = stringResource(R.string.launcher_beautify_ram_info_summary),
                     checked = state.beautifyRamInfo,
-                    onCheckedChange = onBeautifyRamInfoChanged
+                    onCheckedChange = onBeautifyRamInfoChanged,
+                    key = "launcher_beautify_ram_info"
                 )
             )
         }
@@ -448,14 +482,16 @@ private fun launcherSettingsSections(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_launcher_batch_uninstall),
                 checked = state.launcherBatchUninstall,
-                onCheckedChange = onLauncherBatchUninstallChanged
+                onCheckedChange = onLauncherBatchUninstallChanged,
+                key = "launcher_batch_uninstall"
             )
         )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_clean_search),
                 checked = state.cleanGlobalSearch,
-                onCheckedChange = onCleanSearchChanged
+                onCheckedChange = onCleanSearchChanged,
+                key = "launcher_clean_search"
             )
         )
         if (state.cleanGlobalSearch) {
@@ -463,14 +499,16 @@ private fun launcherSettingsSections(
                 SettingItem.Switch(
                     title = stringResource(R.string.launcher_remove_search_recommend),
                     checked = state.removeSearchRecommend,
-                    onCheckedChange = onRemoveSearchRecommendationChanged
+                    onCheckedChange = onRemoveSearchRecommendationChanged,
+                    key = "launcher_remove_search_recommend"
                 )
             )
             add(
                 SettingItem.Switch(
                     title = stringResource(R.string.launcher_remove_hot_word_view),
                     checked = state.removeHotWordView,
-                    onCheckedChange = onRemoveHotWordViewChanged
+                    onCheckedChange = onRemoveHotWordViewChanged,
+                    key = "launcher_remove_hot_word_view"
                 )
             )
         }

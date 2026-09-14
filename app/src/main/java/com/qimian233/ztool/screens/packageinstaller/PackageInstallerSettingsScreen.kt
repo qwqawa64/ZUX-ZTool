@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.packageinstaller
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.packageinstaller.PackageInstallerSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -44,7 +47,8 @@ import com.qimian233.ztool.viewmodel.PackageInstallerSettingsViewModel
 fun PackageInstallerSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -63,19 +67,30 @@ fun PackageInstallerSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    PackageInstallerSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onRestart = viewModel::showRestartConfirmDialog,
-        onDisableScanApkChanged = viewModel::setDisableScanApk,
-        onAlwaysAllowPermissionChanged = viewModel::setAlwaysAllowPermission,
-        onSkipWarnPageChanged = viewModel::setSkipWarnPage,
-        onDisableInstallerAdChanged = viewModel::setDisableInstallerAd,
-        onPackageInstallerStyleHookChanged = viewModel::setPackageInstallerStyleHook,
-        onDisableDeletePackageChanged = viewModel::setDisableDeletePackage
-    )
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        PackageInstallerSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onRestart = viewModel::showRestartConfirmDialog,
+            onDisableScanApkChanged = viewModel::setDisableScanApk,
+            onAlwaysAllowPermissionChanged = viewModel::setAlwaysAllowPermission,
+            onSkipWarnPageChanged = viewModel::setSkipWarnPage,
+            onDisableInstallerAdChanged = viewModel::setDisableInstallerAd,
+            onPackageInstallerStyleHookChanged = viewModel::setPackageInstallerStyleHook,
+            onDisableDeletePackageChanged = viewModel::setDisableDeletePackage,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartConfirmDialog) {
         RestartConfirmDialog(
@@ -115,7 +130,9 @@ internal fun PackageInstallerSettingsScreen(
     onSkipWarnPageChanged: (Boolean) -> Unit,
     onDisableInstallerAdChanged: (Boolean) -> Unit,
     onPackageInstallerStyleHookChanged: (Boolean) -> Unit,
-    onDisableDeletePackageChanged: (Boolean) -> Unit
+    onDisableDeletePackageChanged: (Boolean) -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -148,7 +165,7 @@ internal fun PackageInstallerSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -161,7 +178,8 @@ internal fun PackageInstallerSettingsScreen(
                         onPackageInstallerStyleHookChanged = onPackageInstallerStyleHookChanged,
                         onDisableDeletePackageChanged = onDisableDeletePackageChanged
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -187,7 +205,8 @@ internal fun packageInstallerSettingsSections(
                         title = stringResource(R.string.package_installer_enable_row_style_title),
                         summary = stringResource(R.string.package_installer_enable_row_style_summary),
                         checked = state.packageInstallerStyleHook,
-                        onCheckedChange = onPackageInstallerStyleHookChanged
+                        onCheckedChange = onPackageInstallerStyleHookChanged,
+                        key = "package_installer_enable_row_style"
                     )
                 )
                 if (!state.packageInstallerStyleHook) {
@@ -196,7 +215,8 @@ internal fun packageInstallerSettingsSections(
                             title = stringResource(R.string.package_installer_disable_installer_ad_title),
                             summary = stringResource(R.string.package_installer_disable_installer_ad_summary),
                             checked = state.disableInstallerAd,
-                            onCheckedChange = onDisableInstallerAdChanged
+                            onCheckedChange = onDisableInstallerAdChanged,
+                            key = "package_installer_disable_installer_ad"
                         )
                     )
                     add(
@@ -204,7 +224,8 @@ internal fun packageInstallerSettingsSections(
                             title = stringResource(R.string.package_installer_disable_delete_package_title),
                             summary = stringResource(R.string.package_installer_disable_delete_package_summary),
                             checked = state.disableDeletePackage,
-                            onCheckedChange = onDisableDeletePackageChanged
+                            onCheckedChange = onDisableDeletePackageChanged,
+                            key = "package_installer_disable_delete_package"
                         )
                     )
                     add(
@@ -212,7 +233,8 @@ internal fun packageInstallerSettingsSections(
                             title = stringResource(R.string.package_installer_disable_scan_apk_title),
                             summary = stringResource(R.string.package_installer_disable_scan_apk_summary),
                             checked = state.disableScanApk,
-                            onCheckedChange = onDisableScanApkChanged
+                            onCheckedChange = onDisableScanApkChanged,
+                            key = "package_installer_disable_scan_apk"
                         )
                     )
                     add(
@@ -220,7 +242,8 @@ internal fun packageInstallerSettingsSections(
                             title = stringResource(R.string.package_installer_only_allow_title),
                             summary = stringResource(R.string.package_installer_only_allow_summary),
                             checked = state.alwaysAllowPermission,
-                            onCheckedChange = onAlwaysAllowPermissionChanged
+                            onCheckedChange = onAlwaysAllowPermissionChanged,
+                            key = "package_installer_only_allow"
                         )
                     )
                     add(
@@ -228,7 +251,8 @@ internal fun packageInstallerSettingsSections(
                             title = stringResource(R.string.package_installer_skip_warn_page_title),
                             summary = stringResource(R.string.package_installer_skip_warn_page_summary),
                             checked = state.skipWarnPage,
-                            onCheckedChange = onSkipWarnPageChanged
+                            onCheckedChange = onSkipWarnPageChanged,
+                            key = "package_installer_skip_warn_page"
                         )
                     )
                 }

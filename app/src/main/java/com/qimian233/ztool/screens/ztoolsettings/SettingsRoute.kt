@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -54,6 +55,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -72,7 +75,8 @@ fun SettingsMainRoute(
     onOpenThemeSettings: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenAdvanced: () -> Unit,
-    onOpenSearch: () -> Unit = {}
+    onOpenSearch: () -> Unit = {},
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val activity = context as MainActivity
@@ -149,29 +153,41 @@ fun SettingsMainRoute(
     val deleteLogsSuccessStr = stringResource(R.string.page_settings_delete_logs_success)
     val deleteLogsFailedStr = stringResource(R.string.page_settings_delete_logs_failed)
 
-    SettingsRoute(
-        state = uiState,
-        onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
-        onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-        onRestoreDefault = { showRestoreConfirmDialog = true },
-        onOpenThemeSettings = {
-            showRestoreConfirmDialog = false
-            onOpenThemeSettings()
-        },
-        onOpenLanguageSettings = { openAppLanguageSettings(context) },
-        onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
-        onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
-        onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
-        onAbout = {
-            showRestoreConfirmDialog = false
-            onOpenAbout()
-        },
-        onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
-        onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
-        onOpenAdvanced = onOpenAdvanced,
-        onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled,
-        onOpenSearch = onOpenSearch
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        SettingsRoute(
+            state = uiState,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry,
+            onBackup = { backupLauncher.launch(viewModel.backupFileName()) },
+            onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
+            onRestoreDefault = { showRestoreConfirmDialog = true },
+            onOpenThemeSettings = {
+                showRestoreConfirmDialog = false
+                onOpenThemeSettings()
+            },
+            onOpenLanguageSettings = { openAppLanguageSettings(context) },
+            onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+            onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
+            onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
+            onAbout = {
+                showRestoreConfirmDialog = false
+                onOpenAbout()
+            },
+            onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
+            onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
+            onOpenAdvanced = onOpenAdvanced,
+            onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled,
+            onOpenSearch = onOpenSearch
+        )
+    }
 
     SettingsDialogs(
         showRestoreConfirmDialog = showRestoreConfirmDialog,
@@ -272,6 +288,8 @@ private class SettingsViewModelFactory(
 @Composable
 private fun SettingsRoute(
     state: SettingsUiState,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry,
     onBackup: () -> Unit,
     onRestore: () -> Unit,
     onRestoreDefault: () -> Unit,
@@ -312,10 +330,11 @@ private fun SettingsRoute(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
+                    highlightRegistry = highlightRegistry,
                     sections = settingsSections(
                         state = state,
                         onBackup = onBackup,
@@ -361,7 +380,7 @@ private fun settingsSections(
             title = stringResource(R.string.page_settings_backup_and_restore),
             items = listOf(
                 SettingItem.Action(
-                    key = "backup_config",
+                    key = "app_settings_backup_config",
                     title = stringResource(R.string.page_settings_backup_config_to_file),
                     onClick = onBackup,
                     icon = Icons.Rounded.Backup,
@@ -374,7 +393,7 @@ private fun settingsSections(
                     }
                 ),
                 SettingItem.Action(
-                    key = "restore_config",
+                    key = "app_settings_restore_config",
                     title = stringResource(R.string.page_settings_restore_config_from_file),
                     onClick = onRestore,
                     icon = Icons.Rounded.RestorePage,
@@ -387,7 +406,7 @@ private fun settingsSections(
                     }
                 ),
                 SettingItem.Action(
-                    key = "restore_default",
+                    key = "app_settings_restore_default",
                     title = stringResource(R.string.page_settings_restore_default_config),
                     onClick = onRestoreDefault,
                     icon = Icons.Rounded.SettingsBackupRestore,
@@ -405,7 +424,7 @@ private fun settingsSections(
             title = stringResource(R.string.page_settings_more_settings),
             items = listOf(
                 SettingItem.Switch(
-                    key = "display_entry_in_settings",
+                    key = "app_settings_display_entry_in_settings",
                     title = stringResource(R.string.page_settings_display_entry_in_settings),
                     summary = stringResource(R.string.page_settings_display_entry_in_settings_summary),
                     checked = state.isEntryDisplayedInSettings,
@@ -413,7 +432,7 @@ private fun settingsSections(
                     icon = Icons.AutoMirrored.Rounded.OpenInNew
                 ),
                 SettingItem.Switch(
-                    key = "enable_homepage_yiyan",
+                    key = "app_settings_enable_home_page_yiyan",
                     title = stringResource(R.string.page_settings_enable_home_page_yiyan),
                     summary = stringResource(R.string.page_settings_enable_home_page_yiyan_summary),
                     checked = state.isHomepageYiyanEnabled,
@@ -421,7 +440,7 @@ private fun settingsSections(
                     icon = Icons.AutoMirrored.Filled.Notes
                 ),
                 SettingItem.Switch(
-                    key = "auto_check_update",
+                    key = "app_settings_auto_check_update",
                     title = stringResource(R.string.page_settings_auto_check_update_title),
                     checked = state.isAutoCheckUpdateEnabled,
                     onCheckedChange = onAutoCheckUpdateChanged,
@@ -433,7 +452,7 @@ private fun settingsSections(
             title = stringResource(R.string.page_settings_log_settings_title),
             items = listOf(
                 SettingItem.Switch(
-                    key = "enable_detailed_logging",
+                    key = "app_settings_enable_detailed_logging",
                     title = stringResource(R.string.page_settings_enable_detailed_logging),
                     summary = stringResource(R.string.page_settings_enable_detailed_logging_description),
                     checked = state.isDetailedLoggingEnabled,
@@ -441,7 +460,7 @@ private fun settingsSections(
                     icon = Icons.AutoMirrored.Rounded.Article
                 ),
                 SettingItem.Action(
-                    key = "export_logs",
+                    key = "app_settings_export_logs",
                     title = stringResource(R.string.page_settings_export_logs),
                     onClick = onExportLogs,
                     icon = Icons.Rounded.Save,
@@ -454,7 +473,7 @@ private fun settingsSections(
                     }
                 ),
                 SettingItem.Action(
-                    key = "delete_all_logs",
+                    key = "app_settings_delete_all_logs",
                     title = stringResource(R.string.page_settings_delete_all_logs),
                     summary = stringResource(R.string.page_settings_delete_all_logs_summary),
                     onClick = onDeleteAllLogs,
@@ -472,7 +491,7 @@ private fun settingsSections(
         SettingSection(
             items = listOf(
                 SettingItem.Action(
-                    key = "open_theme_settings",
+                    key = "app_settings_ui_theme",
                     title = stringResource(R.string.page_settings_app_ui_theme_settings),
                     onClick = onOpenThemeSettings,
                     icon = Icons.Rounded.Palette,
@@ -485,7 +504,7 @@ private fun settingsSections(
                     }
                 ),
                 SettingItem.Action(
-                    key = "open_language_settings",
+                    key = "app_settings_language",
                     title = stringResource(R.string.page_settings_app_language_settings),
                     onClick = onOpenLanguageSettings,
                     icon = Icons.Rounded.Language,
@@ -498,7 +517,7 @@ private fun settingsSections(
                     }
                 ),
                 SettingItem.Action(
-                    key = "open_advanced_settings",
+                    key = "app_settings_advanced",
                     title = stringResource(R.string.page_settings_advanced_title),
                     onClick = onOpenAdvanced,
                     icon = Icons.Rounded.Build,
@@ -515,7 +534,7 @@ private fun settingsSections(
         SettingSection(
             items = listOf(
                 SettingItem.Action(
-                    key = "show_about",
+                    key = "app_settings_about",
                     title = stringResource(R.string.page_settings_show_about_page),
                     onClick = onAbout,
                     icon = Icons.Rounded.Info,

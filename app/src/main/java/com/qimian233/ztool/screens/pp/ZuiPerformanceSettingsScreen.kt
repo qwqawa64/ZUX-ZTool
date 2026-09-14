@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.pp
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.pp.ZuiPerformanceSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -44,7 +47,8 @@ import com.qimian233.ztool.viewmodel.ZuiPerformanceSettingsViewModel
 fun ZuiPerformanceSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -63,15 +67,26 @@ fun ZuiPerformanceSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    ZuiPerformanceSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onBlockPowerPolicySyncChanged = viewModel::setBlockPowerPolicySync,
-        onBlockGamePolicyUpdateChanged = viewModel::setBlockGamePolicyUpdate,
-        onRestartScope = viewModel::showRestartDialog
-    )
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        ZuiPerformanceSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onBlockPowerPolicySyncChanged = viewModel::setBlockPowerPolicySync,
+            onBlockGamePolicyUpdateChanged = viewModel::setBlockGamePolicyUpdate,
+            onRestartScope = viewModel::showRestartDialog,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartDialog) {
         ZToolDialog(
@@ -130,7 +145,9 @@ private fun ZuiPerformanceSettingsScreen(
     onBack: () -> Unit,
     onBlockPowerPolicySyncChanged: (Boolean) -> Unit,
     onBlockGamePolicyUpdateChanged: (Boolean) -> Unit,
-    onRestartScope: () -> Unit
+    onRestartScope: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -161,7 +178,7 @@ private fun ZuiPerformanceSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -170,7 +187,8 @@ private fun ZuiPerformanceSettingsScreen(
                         onBlockPowerPolicySyncChanged = onBlockPowerPolicySyncChanged,
                         onBlockGamePolicyUpdateChanged = onBlockGamePolicyUpdateChanged
                     ),
-                    bottomPadding = 88.dp
+                    bottomPadding = 88.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -191,13 +209,15 @@ private fun zuiPerformanceSettingsSections(
                     title = stringResource(R.string.zui_pp_block_power_policy_title),
                     summary = stringResource(R.string.zui_pp_block_power_policy_summary),
                     checked = state.blockPowerPolicySync,
-                    onCheckedChange = onBlockPowerPolicySyncChanged
+                    onCheckedChange = onBlockPowerPolicySyncChanged,
+                    key = "zui_pp_block_power_policy"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.zui_pp_block_game_policy_title),
                     summary = stringResource(R.string.zui_pp_block_game_policy_summary),
                     checked = state.blockGamePolicyUpdate,
-                    onCheckedChange = onBlockGamePolicyUpdateChanged
+                    onCheckedChange = onBlockGamePolicyUpdateChanged,
+                    key = "zui_pp_block_game_policy"
                 )
             )
         )

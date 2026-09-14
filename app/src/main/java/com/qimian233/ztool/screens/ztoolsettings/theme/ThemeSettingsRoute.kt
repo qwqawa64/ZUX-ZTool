@@ -1,5 +1,6 @@
 package com.qimian233.ztool.screens.ztoolsettings.theme
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,6 +38,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
 import com.qimian233.ztool.screens.ztoolsettings.rememberSettingsViewModel
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
@@ -54,7 +58,8 @@ import com.qimian233.ztool.viewmodel.SettingsUiState
 
 @Composable
 fun ThemeSettingsRoute(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val activity = context as MainActivity
@@ -76,29 +81,41 @@ fun ThemeSettingsRoute(
 
     val revealController = LocalThemeRevealController.current
 
-    ThemeSettingsScreen(
-        state = uiState,
-        onBack = onBack,
-        onFrontendStyleChanged = { newStyle ->
-            if (newStyle != uiState.themeSettings.frontendStyle) {
-                revealController.triggerReveal(onAction = { viewModel.setFrontendStyle(newStyle) })
-            }
-        },
-        onThemeModeChanged = viewModel::setThemeMode,
-        onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
-        onMaterialPaletteChanged = viewModel::setMaterialPalette,
-        onDynamicColorChanged = viewModel::setDynamicColorEnabled,
-        onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
-        onPredictiveBackGestureChanged = viewModel::setPredictiveBackGestureEnabled,
-        onEnableFloatingBottomBarChanged = viewModel::setEnableFloatingBottomBar,
-        onEnableFloatingBottomBarBlurChanged = viewModel::setEnableFloatingBottomBarBlur,
-        onManualColorChanged = viewModel::setManualColorEnabled,
-        onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
-        onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
-        modifier = Modifier
-            .fillMaxSize()
-            .clipToBounds()
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        ThemeSettingsScreen(
+            state = uiState,
+            onBack = onBack,
+            onFrontendStyleChanged = { newStyle ->
+                if (newStyle != uiState.themeSettings.frontendStyle) {
+                    revealController.triggerReveal(onAction = { viewModel.setFrontendStyle(newStyle) })
+                }
+            },
+            onThemeModeChanged = viewModel::setThemeMode,
+            onMaterialColorSpecChanged = viewModel::setMaterialColorSpec,
+            onMaterialPaletteChanged = viewModel::setMaterialPalette,
+            onDynamicColorChanged = viewModel::setDynamicColorEnabled,
+            onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
+            onPredictiveBackGestureChanged = viewModel::setPredictiveBackGestureEnabled,
+            onEnableFloatingBottomBarChanged = viewModel::setEnableFloatingBottomBar,
+            onEnableFloatingBottomBarBlurChanged = viewModel::setEnableFloatingBottomBarBlur,
+            onManualColorChanged = viewModel::setManualColorEnabled,
+            onManualSeedColorTextChanged = viewModel::setManualSeedColorText,
+            onManualSeedColorEditingFinished = viewModel::finishManualSeedColorEditing,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry,
+            modifier = Modifier
+                .fillMaxSize()
+                .clipToBounds()
+        )
+    }
 
 }
 
@@ -118,6 +135,8 @@ private fun ThemeSettingsScreen(
     onManualColorChanged: (Boolean) -> Unit,
     onManualSeedColorTextChanged: (String) -> Unit,
     onManualSeedColorEditingFinished: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry,
     modifier: Modifier = Modifier
 ) {
     ZToolScaffold(
@@ -142,10 +161,11 @@ private fun ThemeSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
+                    highlightRegistry = highlightRegistry,
                     sections = themeSettingsSections(
                         settings = state.themeSettings,
                         manualSeedColorText = state.manualSeedColorText,
@@ -271,7 +291,7 @@ private fun themeSettingsSections(
             items = buildList {
                 add(
                     SettingItem.Dropdown(
-                        key = "frontend_style",
+                        key = "theme_frontend_style",
                         label = stringResource(R.string.page_settings_frontend_style_title),
                         value = frontendStyleOptions.first { it.value == settings.frontendStyle }.label,
                         options = frontendStyleOptions,
@@ -282,7 +302,7 @@ private fun themeSettingsSections(
                 )
                 add(
                     SettingItem.Dropdown(
-                        key = "theme_mode",
+                        key = "theme_theme_mode",
                         label = stringResource(R.string.page_settings_theme_mode_title),
                         value = themeModeOptions.first { it.value == settings.themeMode }.label,
                         options = themeModeOptions,
@@ -293,7 +313,7 @@ private fun themeSettingsSections(
                 )
                 add(
                     SettingItem.Dropdown(
-                        key = "material_color_spec",
+                        key = "theme_material_color_spec",
                         label = stringResource(R.string.page_settings_material_color_spec_title),
                         value = colorSpecOptions.first { it.value == settings.materialColorSpec }.label,
                         options = colorSpecOptions,
@@ -304,7 +324,7 @@ private fun themeSettingsSections(
                 )
                 add(
                     SettingItem.Dropdown(
-                        key = "material_palette_mode",
+                        key = "theme_material_palette_mode",
                         label = stringResource(R.string.page_settings_material_palette_mode_title),
                         value = selectedPaletteLabel,
                         options = paletteOptions,
@@ -315,7 +335,7 @@ private fun themeSettingsSections(
                 )
                 add(
                     SettingItem.Switch(
-                        key = "predictive_back_gesture",
+                        key = "theme_predictive_back_gesture",
                         title = stringResource(R.string.page_settings_predictive_back_gesture_title),
                         summary = stringResource(R.string.page_settings_predictive_back_gesture_summary),
                         checked = settings.predictiveBackGestureEnabled,
@@ -326,7 +346,7 @@ private fun themeSettingsSections(
                 if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
                     add(
                         SettingItem.Switch(
-                            key = "amoled_black",
+                            key = "theme_amoled_black",
                             title = stringResource(R.string.page_settings_amoled_black_title),
                             summary = stringResource(R.string.page_settings_amoled_black_summary),
                             checked = settings.amoledBlackEnabled,
@@ -337,7 +357,7 @@ private fun themeSettingsSections(
                 }
                 add(
                     SettingItem.Switch(
-                        key = "dynamic_color",
+                        key = "theme_dynamic_color",
                         title = stringResource(R.string.page_settings_dynamic_color_title),
                         summary = stringResource(R.string.page_settings_dynamic_color_summary),
                         checked = settings.dynamicColorEnabled,
@@ -348,7 +368,7 @@ private fun themeSettingsSections(
                 )
                 add(
                     SettingItem.Switch(
-                        key = "manual_color",
+                        key = "theme_manual_color",
                         title = stringResource(R.string.page_settings_manual_color_title),
                         summary = stringResource(R.string.page_settings_manual_color_summary),
                         checked = settings.manualColorEnabled,
@@ -359,7 +379,7 @@ private fun themeSettingsSections(
                 if (settings.manualColorEnabled) {
                     add(
                         SettingItem.Custom(
-                            key = "manual_seed_color",
+                            key = "theme_manual_seed_color",
                             content = {
                                 ManualSeedColorRow(
                                     color = settings.manualSeedColor,
@@ -377,7 +397,7 @@ private fun themeSettingsSections(
                 if (settings.frontendStyle == FrontendStyle.Miuix) {
                     add(
                         SettingItem.Switch(
-                            key = "enable_floating_bottom_bar",
+                            key = "theme_enable_floating_bottom_bar",
                             title = stringResource(R.string.page_settings_enable_floating_bottom_bar_title),
                             summary = stringResource(R.string.page_settings_enable_floating_bottom_bar_summary),
                             checked = settings.enableFloatingBottomBar,
@@ -388,7 +408,7 @@ private fun themeSettingsSections(
                     if (settings.enableFloatingBottomBar) {
                         add(
                             SettingItem.Switch(
-                                key = "enable_floating_bottom_bar_blur",
+                                key = "theme_floating_bottom_bar_blur",
                                 title = stringResource(R.string.page_settings_enable_floating_bottom_bar_blur_title),
                                 summary = stringResource(R.string.page_settings_enable_floating_bottom_bar_blur_summary),
                                 checked = settings.enableFloatingBottomBarBlur,

@@ -6,6 +6,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +45,8 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.systemui.ControlCenterSettingsRepository
 import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
@@ -81,7 +84,8 @@ private fun snapToAccuratePercent(value: Float): Int {
 @Composable
 fun ControlCenterSettingsRoute(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -114,48 +118,60 @@ fun ControlCenterSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    ControlCenterSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onCustomDateChanged = viewModel::setCustomDate,
-        onDateFormatChanged = viewModel::setDateFormat,
-        onSaveDateFormat = viewModel::saveDateFormat,
-        onShowFormatHelp = viewModel::showFormatHelpDialog,
-        onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
-        onTextSizeChanged = viewModel::setTextSize,
-        onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
-        onLetterSpacingChanged = viewModel::setLetterSpacing,
-        onTextColorEnabledChanged = viewModel::setTextColorEnabled,
-        onControlCenterClockColorChange = viewModel::setControlCenterClockColorText,
-        onFinishControlCenterClockTextColorEditing = viewModel::finishControlCenterClockColorEditing,
-        onTextBoldChanged = viewModel::setTextBold,
-        onQsRoundCornerChanged = viewModel::setQsRoundCorner,
-        onQsHeadUpRoundCornerRadiusChanged = viewModel::setQsHeadUpRoundCornerRadius,
-        onQsTileRoundCornerRadiusChanged = viewModel::setQsTileRoundCornerRadius,
-        onCustomQsColorChanged = viewModel::setCustomQsColor,
-        onCustomQsActiveColorTextChanged = viewModel::setCustomQsActiveColorText,
-        onCustomQsActiveColorEditingFinished = viewModel::finishCustomQsActiveColorEditing,
-        onCustomLabelColorChanged = viewModel::setCustomLabelColor,
-        onCustomLabelActiveColorTextChanged = viewModel::setCustomLabelActiveColorText,
-        onCustomLabelActiveColorEditingFinished = viewModel::finishCustomLabelActiveColorEditing,
-        onCustomSecondLabelColorChanged = viewModel::setCustomSecondLabelColor,
-        onCustomSecondLabelActiveColorTextChanged = viewModel::setCustomSecondLabelActiveColorText,
-        onCustomSecondLabelActiveColorEditingFinished = viewModel::finishCustomSecondLabelActiveColorEditing,
-        onNoTileLabelsChanged = viewModel::setNoTileLabels,
-        onMediaOutputDialogCenterChanged = viewModel::setMediaOutputDialogCenter,
-        onCustomQsColorSwitchChanged = viewModel::setCustomQsColorSwitch,
-        onNotificationCenterBlurEnabledChanged = viewModel::setNotificationCenterBlurEnabled,
-        onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent,
-        onBrightnessSliderPercentageChanged = viewModel::setBrightnessSliderPercentageEnabled,
-        onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled,
-        onExpandQsPanelPortraitChanged = viewModel::setExpandQsPanelPortrait,
-        onQsPanelWidthPercentChanged = viewModel::setQsPanelWidthPercent,
-        onQsTileColumnsChanged = viewModel::setQsTileColumns,
-        onCustomizeSliderStyleChanged = viewModel::setCustomizeSliderStyle,
-        onSliderStyleValueChanged = viewModel::setSliderStyleValue,
-        onRestartScope = viewModel::showRestartDialog,
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        ControlCenterSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onCustomDateChanged = viewModel::setCustomDate,
+            onDateFormatChanged = viewModel::setDateFormat,
+            onSaveDateFormat = viewModel::saveDateFormat,
+            onShowFormatHelp = viewModel::showFormatHelpDialog,
+            onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
+            onTextSizeChanged = viewModel::setTextSize,
+            onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
+            onLetterSpacingChanged = viewModel::setLetterSpacing,
+            onTextColorEnabledChanged = viewModel::setTextColorEnabled,
+            onControlCenterClockColorChange = viewModel::setControlCenterClockColorText,
+            onFinishControlCenterClockTextColorEditing = viewModel::finishControlCenterClockColorEditing,
+            onTextBoldChanged = viewModel::setTextBold,
+            onQsRoundCornerChanged = viewModel::setQsRoundCorner,
+            onQsHeadUpRoundCornerRadiusChanged = viewModel::setQsHeadUpRoundCornerRadius,
+            onQsTileRoundCornerRadiusChanged = viewModel::setQsTileRoundCornerRadius,
+            onCustomQsColorChanged = viewModel::setCustomQsColor,
+            onCustomQsActiveColorTextChanged = viewModel::setCustomQsActiveColorText,
+            onCustomQsActiveColorEditingFinished = viewModel::finishCustomQsActiveColorEditing,
+            onCustomLabelColorChanged = viewModel::setCustomLabelColor,
+            onCustomLabelActiveColorTextChanged = viewModel::setCustomLabelActiveColorText,
+            onCustomLabelActiveColorEditingFinished = viewModel::finishCustomLabelActiveColorEditing,
+            onCustomSecondLabelColorChanged = viewModel::setCustomSecondLabelColor,
+            onCustomSecondLabelActiveColorTextChanged = viewModel::setCustomSecondLabelActiveColorText,
+            onCustomSecondLabelActiveColorEditingFinished = viewModel::finishCustomSecondLabelActiveColorEditing,
+            onNoTileLabelsChanged = viewModel::setNoTileLabels,
+            onMediaOutputDialogCenterChanged = viewModel::setMediaOutputDialogCenter,
+            onCustomQsColorSwitchChanged = viewModel::setCustomQsColorSwitch,
+            onNotificationCenterBlurEnabledChanged = viewModel::setNotificationCenterBlurEnabled,
+            onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent,
+            onBrightnessSliderPercentageChanged = viewModel::setBrightnessSliderPercentageEnabled,
+            onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled,
+            onExpandQsPanelPortraitChanged = viewModel::setExpandQsPanelPortrait,
+            onQsPanelWidthPercentChanged = viewModel::setQsPanelWidthPercent,
+            onQsTileColumnsChanged = viewModel::setQsTileColumns,
+            onCustomizeSliderStyleChanged = viewModel::setCustomizeSliderStyle,
+            onSliderStyleValueChanged = viewModel::setSliderStyleValue,
+            onRestartScope = viewModel::showRestartDialog,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showFormatHelpDialog) {
         FormatHelpDialog(
@@ -253,6 +269,8 @@ private fun ControlCenterSettingsScreen(
     onCustomizeSliderStyleChanged: (Boolean) -> Unit,
     onSliderStyleValueChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -286,7 +304,7 @@ private fun ControlCenterSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -329,7 +347,8 @@ private fun ControlCenterSettingsScreen(
                         onCustomizeSliderStyleChanged = onCustomizeSliderStyleChanged,
                         onSliderStyleValueChanged = onSliderStyleValueChanged,
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -385,7 +404,8 @@ private fun controlCenterSettingsSections(
                         title = stringResource(R.string.system_ui_control_center_notification_center_blur_title),
                         summary = stringResource(R.string.system_ui_control_center_notification_center_blur_summary),
                         checked = state.notificationCenterBlurEnabled,
-                        onCheckedChange = onNotificationCenterBlurEnabledChanged
+                        onCheckedChange = onNotificationCenterBlurEnabledChanged,
+                        key = "control_center_notification_blur"
                     )
                 )
                 if (state.notificationCenterBlurEnabled) {
@@ -400,7 +420,8 @@ private fun controlCenterSettingsSections(
                             ),
                             valueRange = 0f..100f,
                             steps = 19,
-                            onValueChange = { onNotificationCenterBlurPercentChanged(snapToAccuratePercent(it)) }
+                            onValueChange = { onNotificationCenterBlurPercentChanged(snapToAccuratePercent(it)) },
+                            key = "control_center_notification_blur_strength"
                         )
                     )
                 }
@@ -415,6 +436,7 @@ private fun controlCenterSettingsSections(
                         summary = stringResource(R.string.system_ui_control_center_custom_control_center_tile_radius_summary),
                         checked = state.qsRoundCorner,
                         onCheckedChange = onQsRoundCornerChanged,
+                        key = "control_center_custom_tile_radius"
                     )
                 )
                 add(
@@ -425,21 +447,24 @@ private fun controlCenterSettingsSections(
                                 onQsHeadUpRoundCornerRadiusChanged = onQsHeadUpRoundCornerRadiusChanged,
                                 onQsTileRoundCornerRadiusChanged = onQsTileRoundCornerRadiusChanged
                             )
-                        }
+                        },
+                        key = "control_center_head_up_corner_radius"
                     )
                 )
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_show_brightness_slider_percentage),
                         checked = state.brightnessSliderPercentageEnabled,
-                        onCheckedChange = onBrightnessSliderPercentageChanged
+                        onCheckedChange = onBrightnessSliderPercentageChanged,
+                        key = "control_center_brightness_slider_percentage"
                     )
                 )
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_show_volume_slider_percentage),
                         checked = state.volumeSliderPercentageEnabled,
-                        onCheckedChange = onVolumeSliderPercentageChanged
+                        onCheckedChange = onVolumeSliderPercentageChanged,
+                        key = "control_center_volume_slider_percentage"
                     )
                 )
                 add(
@@ -448,7 +473,8 @@ private fun controlCenterSettingsSections(
                         summary = stringResource(R.string.system_ui_control_center_customize_slider_style_summary),
                         checked = state.customizeSliderStyle,
                         onCheckedChange = onCustomizeSliderStyleChanged,
-                        enabled = !state.sliderStyleForcedByQsPanel
+                        enabled = !state.sliderStyleForcedByQsPanel,
+                        key = "control_center_customize_slider_style"
                     )
                 )
                 if (state.sliderStyleForcedByQsPanel) {
@@ -474,7 +500,8 @@ private fun controlCenterSettingsSections(
                                     enabled = !state.sliderStyleForcedByQsPanel,
                                     onDirectionChanged = onSliderStyleValueChanged
                                 )
-                            }
+                            },
+                            key = "control_center_slider_style_direction"
                         )
                     )
                 }
@@ -482,7 +509,8 @@ private fun controlCenterSettingsSections(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_custom_qs_color_general_switch),
                         checked = state.customQsColorGeneralSwitch,
-                        onCheckedChange = onCustomQsColorSwitchChanged
+                        onCheckedChange = onCustomQsColorSwitchChanged,
+                        key = "control_center_custom_qs_color_general"
                     )
                 )
                 if (state.customQsColorGeneralSwitch) {
@@ -491,7 +519,8 @@ private fun controlCenterSettingsSections(
                             title = stringResource(R.string.system_ui_control_center_custom_qs_color_title),
                             summary = stringResource(R.string.system_ui_control_center_custom_qs_color_summary),
                             checked = state.customQsColor,
-                            onCheckedChange = onCustomQsColorChanged
+                            onCheckedChange = onCustomQsColorChanged,
+                            key = "control_center_custom_qs_color"
                         )
                     )
                     if (state.customQsColor) {
@@ -507,7 +536,8 @@ private fun controlCenterSettingsSections(
                                         errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
                                         onEditingFinished = onCustomQsActiveColorEditingFinished
                                     )
-                                }
+                                },
+                                key = "control_center_custom_qs_active_color"
                             )
                         )
                     }
@@ -516,7 +546,8 @@ private fun controlCenterSettingsSections(
                             title = stringResource(R.string.system_ui_control_center_custom_label_color_title),
                             summary = stringResource(R.string.system_ui_control_center_custom_label_color_summary),
                             checked = state.customLabelColor,
-                            onCheckedChange = onCustomLabelColorChanged
+                            onCheckedChange = onCustomLabelColorChanged,
+                            key = "control_center_custom_label_color"
                         )
                     )
                     if (state.customLabelColor) {
@@ -532,7 +563,8 @@ private fun controlCenterSettingsSections(
                                         errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
                                         onEditingFinished = onCustomLabelActiveColorEditingFinished
                                     )
-                                }
+                                },
+                                key = "control_center_custom_label_active_color"
                             )
                         )
                     }
@@ -541,7 +573,8 @@ private fun controlCenterSettingsSections(
                             title = stringResource(R.string.system_ui_control_center_custom_second_label_color_title),
                             summary = stringResource(R.string.system_ui_control_center_custom_second_label_color_summary),
                             checked = state.customSecondLabelColor,
-                            onCheckedChange = onCustomSecondLabelColorChanged
+                            onCheckedChange = onCustomSecondLabelColorChanged,
+                            key = "control_center_custom_second_label_color"
                         )
                     )
                     if (state.customSecondLabelColor) {
@@ -557,7 +590,8 @@ private fun controlCenterSettingsSections(
                                         errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
                                         onEditingFinished = onCustomSecondLabelActiveColorEditingFinished
                                     )
-                                }
+                                },
+                                key = "control_center_custom_second_label_active_color"
                             )
                         )
                     }
@@ -566,7 +600,8 @@ private fun controlCenterSettingsSections(
                             title = stringResource(R.string.system_ui_control_center_no_tile_labels_title),
                             summary = stringResource(R.string.system_ui_control_center_no_tile_labels_summary),
                             checked = state.noTileLabels,
-                            onCheckedChange = onNoTileLabelsChanged
+                            onCheckedChange = onNoTileLabelsChanged,
+                            key = "control_center_no_tile_labels"
                         )
                     )
                 }
@@ -575,7 +610,8 @@ private fun controlCenterSettingsSections(
                         title = stringResource(R.string.system_ui_media_output_dialog_center_title),
                         summary = stringResource(R.string.system_ui_media_output_dialog_center_summary),
                         checked = state.mediaOutputDialogCenter,
-                        onCheckedChange = onMediaOutputDialogCenterChanged
+                        onCheckedChange = onMediaOutputDialogCenterChanged,
+                        key = "control_center_media_output_dialog_center"
                     )
                 )
             }
@@ -600,7 +636,8 @@ private fun controlCenterSettingsSections(
                             onFinishControlCenterClockTextColorEditing = onFinishControlCenterClockTextColorEditing,
                             onControlCenterClockColorChange = onControlCenterClockColorChange
                         )
-                    }
+                    },
+                    key = "control_center_custom_date_setting"
                 )
             )
         ),
@@ -612,7 +649,8 @@ private fun controlCenterSettingsSections(
                             title = stringResource(R.string.system_ui_control_center_expand_qs_panel_portrait_title),
                             summary = stringResource(R.string.system_ui_control_center_expand_qs_panel_portrait_summary),
                             checked = state.expandQsPanelPortrait,
-                            onCheckedChange = onExpandQsPanelPortraitChanged
+                            onCheckedChange = onExpandQsPanelPortraitChanged,
+                            key = "control_center_expand_qs_panel_portrait"
                         )
                     )
                     if (state.expandQsPanelPortrait) {
@@ -627,7 +665,8 @@ private fun controlCenterSettingsSections(
                                 ),
                                 valueRange = 0f..100f,
                                 steps = 19,
-                                onValueChange = { onQsPanelWidthPercentChanged(snapToAccuratePercent(it)) }
+                                onValueChange = { onQsPanelWidthPercentChanged(snapToAccuratePercent(it)) },
+                                key = "control_center_panel_width_percent"
                             )
                         )
                         add(
@@ -638,7 +677,8 @@ private fun controlCenterSettingsSections(
                                 valueText = state.qsTileColumns.toString(),
                                 valueRange = 0f..10f,
                                 steps = 9,
-                                onValueChange = { onQsTileColumnsChanged(it.toInt()) }
+                                onValueChange = { onQsTileColumnsChanged(it.toInt()) },
+                                key = "control_center_tile_columns"
                             )
                         )
                     }

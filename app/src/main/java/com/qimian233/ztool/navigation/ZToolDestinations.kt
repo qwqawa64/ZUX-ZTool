@@ -13,8 +13,8 @@ internal enum class MainRoute(
     companion object {
         val entriesInOrder = listOf(Home, Features, Settings)
 
-        fun fromName(name: String): MainRoute? {
-            return entriesInOrder.firstOrNull { it.name == name }
+        fun fromName(name: String?): MainRoute? {
+            return entriesInOrder.firstOrNull { it.name == name?.substringBefore('?') }
         }
     }
 }

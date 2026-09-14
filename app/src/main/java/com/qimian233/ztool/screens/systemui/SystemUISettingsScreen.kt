@@ -191,27 +191,32 @@ private fun systemUiSettingsSections(
                 systemUiNavigationItem(
                     title = stringResource(R.string.system_ui_status_bar_setting_title),
                     summary = stringResource(R.string.system_ui_status_bar_setting_summary),
-                    onClick = onOpenStatusBar
+                    onClick = onOpenStatusBar,
+                    key = "system_ui_hub_status_bar"
                 ),
                 systemUiNavigationItem(
                     title = stringResource(R.string.system_ui_lock_screen_setting_title),
                     summary = stringResource(R.string.system_ui_lock_screen_summary),
-                    onClick = onOpenLockScreen
+                    onClick = onOpenLockScreen,
+                    key = "system_ui_hub_lock_screen"
                 ),
                 systemUiNavigationItem(
                     title = stringResource(R.string.system_ui_control_center_title),
                     summary = stringResource(R.string.system_ui_control_center_summary),
-                    onClick = onOpenControlCenter
+                    onClick = onOpenControlCenter,
+                    key = "system_ui_hub_control_center"
                 ),
                 systemUiNavigationItem(
                     title = "动画与壁纸",
                     summary = "充电动画与桌面动态壁纸设置",
-                    onClick = onOpenAnimationWallpaper
+                    onClick = onOpenAnimationWallpaper,
+                    key = "system_ui_hub_animation_wallpaper"
                 ),
                 systemUiNavigationItem(
                     title = stringResource(R.string.system_ui_common_misc),
                     summary = "访客模式、生物识别震动等杂项设置",
-                    onClick = onOpenMisc
+                    onClick = onOpenMisc,
+                    key = "system_ui_hub_misc"
                 )
             )
         ),
@@ -222,7 +227,8 @@ private fun systemUiSettingsSections(
 private fun systemUiNavigationItem(
     title: String,
     summary: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    key: String? = null
 ): SettingItem {
     return SettingItem.Entry(
         title = title,
@@ -237,7 +243,8 @@ private fun systemUiNavigationItem(
                     tint = LocalZToolColorScheme.current.primary
                 )
             }
-        }
+        },
+        key = key
     )
 }
 

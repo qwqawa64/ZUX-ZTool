@@ -2,6 +2,7 @@ package com.qimian233.ztool.screens.ztoolsettings.advanced
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,6 +50,8 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexRegistry
 import com.qimian233.ztool.ui.components.DexIndexProgressDialog
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -68,7 +71,8 @@ import java.util.Locale
 
 @Composable
 fun SettingsAdvancedRoute(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -141,18 +145,30 @@ fun SettingsAdvancedRoute(
         }
     }
 
-    SettingsAdvancedScreen(
-        state = uiState,
-        onBack = onBack,
-        hotReloadResultSummary = hotReloadResultSummary,
-        resetResultSummary = resetResultSummary,
-        dexIndexInProgress = dexIndexState.refreshing,
-        dexIndexSummary = dexIndexSummary,
-        onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
-        onResetClick = { viewModel.showResetConfirmDialog() },
-        onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
-        onOpenFirstrun = { activity.reopenFirstrun() }
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        SettingsAdvancedScreen(
+            state = uiState,
+            onBack = onBack,
+            hotReloadResultSummary = hotReloadResultSummary,
+            resetResultSummary = resetResultSummary,
+            dexIndexInProgress = dexIndexState.refreshing,
+            dexIndexSummary = dexIndexSummary,
+            onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
+            onResetClick = { viewModel.showResetConfirmDialog() },
+            onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
+            onOpenFirstrun = { activity.reopenFirstrun() },
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 }
 
 @Composable
@@ -166,7 +182,9 @@ private fun SettingsAdvancedScreen(
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
     onRefreshDexIndex: () -> Unit,
-    onOpenFirstrun: () -> Unit
+    onOpenFirstrun: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -193,10 +211,11 @@ private fun SettingsAdvancedScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
+                    highlightRegistry = highlightRegistry,
                     sections = advancedSettingsSections(
                         state = state,
                         hotReloadResultSummary = hotReloadResultSummary,
@@ -236,7 +255,7 @@ private fun advancedSettingsSections(
         SettingSection(
             items = listOf(
                 SettingItem.Action(
-                    key = "refresh_dex_index",
+                    key = "advanced_refresh_dex_index",
                     title = stringResource(R.string.page_settings_refresh_dex_index),
                     summary = dexIndexSummary,
                     onClick = onRefreshDexIndex,
@@ -254,7 +273,7 @@ private fun advancedSettingsSections(
                     } else null
                 ),
                 SettingItem.Action(
-                    key = "reset_persistent_values",
+                    key = "advanced_reset_persistent_values",
                     title = stringResource(R.string.page_settings_advanced_reset_title),
                     summary = buildResetSummary(
                         inProgress = state.resetInProgress,
@@ -275,7 +294,7 @@ private fun advancedSettingsSections(
                     } else null
                 ),
                 SettingItem.Action(
-                    key = "hot_reload_all",
+                    key = "advanced_hot_reload",
                     title = stringResource(R.string.page_settings_advanced_hot_reload_title),
                     summary = buildHotReloadSummary(
                         hotReloadSupported = hotReloadSupported,
@@ -299,7 +318,7 @@ private fun advancedSettingsSections(
                     } else null
                 ),
                 SettingItem.Action(
-                    key = "open_firstrun",
+                    key = "advanced_open_firstrun",
                     title = stringResource(R.string.page_settings_advanced_open_firstrun_title),
                     summary = stringResource(R.string.page_settings_advanced_open_firstrun_summary),
                     onClick = {

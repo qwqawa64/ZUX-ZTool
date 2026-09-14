@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +63,8 @@ import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.screens.safecenter.RestartConfirmDialog
 import com.qimian233.ztool.screens.zuisetting.floatingwindow.FloatingWindow
 import com.qimian233.ztool.ui.components.DIALOG_BUTTON_VERTICAL_ARRANGEMENT
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolCheckbox
@@ -93,7 +96,8 @@ fun SettingsDetailRoute(
     title: String,
     packageName: String,
     onBack: () -> Unit,
-    onOpenStrategySearch: () -> Unit
+    onOpenStrategySearch: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val activity = context as? android.app.Activity
@@ -563,11 +567,22 @@ fun SettingsDetailRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    SettingsDetailScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onRemoveBlacklistChanged = viewModel::setRemoveBlacklist,
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        SettingsDetailScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry,
+            onRemoveBlacklistChanged = viewModel::setRemoveBlacklist,
         onModuleEnabledChanged = ::handleModuleSwitch,
         onStartFloatingWindow = ::startFloatingWindow,
         onOpenConfigSelection = {
@@ -615,7 +630,8 @@ fun SettingsDetailRoute(
         onAboutDeviceInfoHeaderSelected = { aboutDeviceInfoImageLauncher.launch(arrayOf("image/*")) },
         onAllowAddingLanguageChanged = viewModel::setAllowAddingLanguage,
         onRestartScope = viewModel::showRestartDialog,
-    )
+        )
+    }
 
     if (uiState.showRestartDialog) {
         RestartConfirmDialog(
@@ -674,6 +690,8 @@ private fun SettingsDetailScreen(
     title: String,
     state: SettingsDetailUiState,
     onBack: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry,
     onRemoveBlacklistChanged: (Boolean) -> Unit,
     onModuleEnabledChanged: (Boolean) -> Unit,
     onStartFloatingWindow: () -> Unit,
@@ -743,11 +761,12 @@ private fun SettingsDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
                     .padding(bottom = 88.dp)
             ) {
                 ZToolSettingsList(
+                    highlightRegistry = highlightRegistry,
                     sections = settingsDetailSections(
                         state = state,
                         onRemoveBlacklistChanged = onRemoveBlacklistChanged,
@@ -827,18 +846,21 @@ private fun settingsDetailSections(
                 title = stringResource(R.string.settings_embedding_setting_title),
                 items = listOf(
                     SettingItem.Switch(
+                        key = "settings_detail_remove_blacklist",
                         title = stringResource(R.string.settings_embedding_setting_remove_blacklist),
                         summary = stringResource(R.string.settings_embedding_setting_remove_blacklist_summary),
                         checked = state.removeBlacklist,
                         onCheckedChange = onRemoveBlacklistChanged
                     ),
                     SettingItem.Switch(
+                        key = "settings_detail_role_module",
                         title = stringResource(R.string.settings_role_module_title),
                         summary = stringResource(R.string.settings_role_module_summary),
                         checked = state.moduleEnabled,
                         onCheckedChange = onModuleEnabledChanged
                     ),
                     settingsDetailActionItem(
+                        key = "settings_detail_custom_landscape_view",
                         title = stringResource(R.string.settings_custom_landscape_view),
                         summary = stringResource(R.string.settings_custom_landscape_view_summary),
                         onClick = onStartFloatingWindow,
@@ -851,11 +873,13 @@ private fun settingsDetailSections(
                         }
                     ),
                     settingsDetailActionItem(
+                        key = "settings_detail_custom_landscape_result",
                         title = stringResource(R.string.settings_custom_landscape_result_title),
                         summary = stringResource(R.string.settings_custom_landscape_result_summary),
                         onClick = onOpenConfigSelection
                     ),
                     settingsDetailActionItem(
+                        key = "settings_detail_yi_shi_jie_rules",
                         title = stringResource(R.string.settings_yi_shi_jie_rules),
                         summary = stringResource(R.string.settings_yi_shi_jie_rules_summary),
                         onClick = onOpenStrategySearch
@@ -880,16 +904,19 @@ private fun settingsDetailSections(
                             }
                         ),
                         settingsDetailActionItem(
+                            key = "settings_detail_zui_force_split",
                             title = stringResource(R.string.settings_zui_force_split_title),
                             summary = stringResource(R.string.settings_zui_force_split_summary),
                             onClick = onZuiForceSplit
                         ),
                         settingsDetailActionItem(
+                            key = "settings_detail_zui_force_freeform",
                             title = stringResource(R.string.settings_zui_force_freeform_title),
                             summary = stringResource(R.string.settings_zui_force_freeform_summary),
                             onClick = onZuiForceFreeform
                         ),
                         settingsDetailActionItem(
+                            key = "settings_detail_zui_force_fixed",
                             title = stringResource(R.string.settings_zui_force_fixed_title),
                             summary = stringResource(R.string.settings_zui_force_fixed_summary),
                             onClick = onZuiForceFixed
@@ -903,12 +930,14 @@ private fun settingsDetailSections(
                     title = stringResource(R.string.settings_embedding_title),
                     items = listOf(
                         SettingItem.Switch(
+                            key = "settings_detail_float_app_mandatory",
                             title = stringResource(R.string.settings_float_app_mandatory),
                             summary = stringResource(R.string.settings_float_app_mandatory_summary),
                             checked = state.floatMandatory,
                             onCheckedChange = onFloatMandatoryChanged
                         ),
                         SettingItem.Switch(
+                            key = "settings_detail_split_screen_mandatory",
                             title = stringResource(R.string.settings_split_screen_mandatory_title),
                             summary = stringResource(R.string.settings_split_screen_mandatory_summary),
                             checked = state.splitScreenMandatory,
@@ -924,6 +953,7 @@ private fun settingsDetailSections(
                 title = stringResource(R.string.settings_font_settings_title),
                 items = listOf(
                     settingsDetailActionItem(
+                        key = "settings_detail_import_font",
                         title = stringResource(R.string.settings_import_font_title),
                         summary = stringResource(R.string.settings_import_font_summary),
                         onClick = onImportFont,
@@ -945,6 +975,7 @@ private fun settingsDetailSections(
                 items = buildList {
                     add(
                         SettingItem.Switch(
+                            key = "settings_detail_about_device_info_master",
                             title = stringResource(R.string.settings_about_device_info_master),
                             summary = stringResource(R.string.settings_about_device_info_master_summary),
                             checked = aboutDeviceInfoState.enabled,
@@ -954,6 +985,7 @@ private fun settingsDetailSections(
                     if (aboutDeviceInfoState.enabled) {
                         add(
                             SettingItem.Switch(
+                                key = "settings_detail_about_device_info_model",
                                 title = stringResource(R.string.settings_about_device_info_model_title),
                                 checked = aboutDeviceInfoState.modelEnabled,
                                 onCheckedChange = onAboutDeviceInfoModelEnabledChanged
@@ -968,6 +1000,7 @@ private fun settingsDetailSections(
                         }
                         add(
                             SettingItem.Switch(
+                                key = "settings_detail_about_device_info_cpu",
                                 title = stringResource(R.string.settings_about_device_info_cpu_title),
                                 checked = aboutDeviceInfoState.cpuEnabled,
                                 onCheckedChange = onAboutDeviceInfoCpuEnabledChanged
@@ -982,6 +1015,7 @@ private fun settingsDetailSections(
                         }
                         add(
                             SettingItem.Switch(
+                                key = "settings_detail_about_device_info_ram",
                                 title = stringResource(R.string.settings_about_device_info_ram_title),
                                 checked = aboutDeviceInfoState.ramEnabled,
                                 onCheckedChange = onAboutDeviceInfoRamEnabledChanged
@@ -996,6 +1030,7 @@ private fun settingsDetailSections(
                         }
                         add(
                             SettingItem.Switch(
+                                key = "settings_detail_about_device_info_rom",
                                 title = stringResource(R.string.settings_about_device_info_rom_title),
                                 checked = aboutDeviceInfoState.romEnabled,
                                 onCheckedChange = onAboutDeviceInfoRomEnabledChanged
@@ -1010,6 +1045,7 @@ private fun settingsDetailSections(
                         }
                         add(
                             SettingItem.Switch(
+                                key = "settings_detail_about_device_info_software",
                                 title = stringResource(R.string.settings_about_device_info_software_title),
                                 checked = aboutDeviceInfoState.softwareEnabled,
                                 onCheckedChange = onAboutDeviceInfoSoftwareEnabledChanged
@@ -1024,6 +1060,7 @@ private fun settingsDetailSections(
                         }
                         add(
                             SettingItem.Switch(
+                                key = "settings_detail_about_device_info_header",
                                 title = stringResource(R.string.settings_about_device_info_header_title),
                                 checked = aboutDeviceInfoState.headerEnabled,
                                 onCheckedChange = onAboutDeviceInfoHeaderEnabledChanged
@@ -1032,6 +1069,7 @@ private fun settingsDetailSections(
                         if (aboutDeviceInfoState.headerEnabled) {
                             add(
                                 settingsDetailActionItem(
+                                    key = "settings_detail_about_device_info_header_action",
                                     title = stringResource(R.string.settings_about_device_info_header_action),
                                     summary = stringResource(R.string.settings_about_device_info_header_action_summary),
                                     onClick = { onAboutDeviceInfoHeaderSelected(Uri.EMPTY) }
@@ -1048,29 +1086,34 @@ private fun settingsDetailSections(
                 title = stringResource(R.string.settings_misc),
                 items = listOf(
                     SettingItem.Switch(
+                        key = "settings_detail_native_permission_controller",
                         title = stringResource(R.string.settings_native_permission_controller_enable_title),
                         summary = stringResource(R.string.settings_native_permission_controller_enable_summary),
                         checked = state.allowNativePermissionController,
                         onCheckedChange = onAllowNativePermissionControllerChanged
                     ),
                     SettingItem.Switch(
+                        key = "settings_detail_allow_adding_language",
                         title = stringResource(R.string.settings_allow_adding_language),
                         checked = state.allowAddingLanguages,
                         onCheckedChange = onAllowAddingLanguageChanged
                     ),
                     SettingItem.Switch(
+                        key = "settings_detail_allow_disable_dolby",
                         title = stringResource(R.string.settings_allow_disable_dolby),
                         summary = stringResource(R.string.settings_allow_disable_dolby_summary),
                         checked = state.allowDisableDolby,
                         onCheckedChange = onAllowDisableDolbyChanged
                     ),
                     SettingItem.Switch(
+                        key = "settings_detail_app_details_completion",
                         title = stringResource(R.string.settings_app_details_completion),
                         summary = stringResource(R.string.settings_app_details_completion_summary),
                         checked = state.appDetail,
                         onCheckedChange = onAppDetailsChanged
                     ),
                     SettingItem.Switch(
+                        key = "settings_detail_app_icon_unmask",
                         title = stringResource(R.string.settings_app_icon_unmask_title),
                         summary = stringResource(R.string.settings_app_icon_unmask_summary),
                         checked = state.appIconUnmask,
@@ -1088,9 +1131,11 @@ private fun settingsDetailActionItem(
     title: String,
     summary: String,
     onClick: () -> Unit,
-    icon: (@Composable () -> Unit)? = null
+    icon: (@Composable () -> Unit)? = null,
+    key: String? = null
 ): SettingItem {
     return SettingItem.Action(
+        key = key,
         title = title,
         summary = summary,
         onClick = onClick,

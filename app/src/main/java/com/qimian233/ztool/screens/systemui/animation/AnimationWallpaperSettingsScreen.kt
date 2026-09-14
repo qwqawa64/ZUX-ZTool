@@ -3,6 +3,7 @@ package com.qimian233.ztool.screens.systemui.animation
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemui.AnimationWallpaperSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -47,7 +50,8 @@ import com.qimian233.ztool.viewmodel.AnimationWallpaperSettingsViewModel
 @Composable
 fun AnimationWallpaperSettingsRoute(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -138,23 +142,35 @@ fun AnimationWallpaperSettingsRoute(
         }
     }
 
-    AnimationWallpaperSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
-        onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
-        onCustomChargeAnimationChanged = viewModel::setCustomChargeAnimation,
-        onChargeAnimDurationEnabledChanged = viewModel::setChargeAnimDurationEnabled,
-        onChargeAnimDurationMsChanged = viewModel::setChargeAnimDurationMs,
-        onDesktopLiveWallpaperChanged = viewModel::setDesktopLiveWallpaper,
-        onWallpaperScaleModeChanged = viewModel::setWallpaperScaleMode,
-        onRestartScope = viewModel::showRestartDialog,
-        onSelectPortraitVideo = { portraitVideoLauncher.launch(arrayOf("video/*")) },
-        onSelectLandVideo = { landVideoLauncher.launch(arrayOf("video/*")) },
-        onSelectWpPortraitVideo = { wpPortraitLauncher.launch(arrayOf("video/*")) },
-        onSelectWpLandVideo = { wpLandLauncher.launch(arrayOf("video/*")) }
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        AnimationWallpaperSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onNoChargeAnimationChanged = viewModel::setNoChargeAnimation,
+            onChargeAnimationFixChanged = viewModel::setChargeAnimationFix,
+            onCustomChargeAnimationChanged = viewModel::setCustomChargeAnimation,
+            onChargeAnimDurationEnabledChanged = viewModel::setChargeAnimDurationEnabled,
+            onChargeAnimDurationMsChanged = viewModel::setChargeAnimDurationMs,
+            onDesktopLiveWallpaperChanged = viewModel::setDesktopLiveWallpaper,
+            onWallpaperScaleModeChanged = viewModel::setWallpaperScaleMode,
+            onRestartScope = viewModel::showRestartDialog,
+            onSelectPortraitVideo = { portraitVideoLauncher.launch(arrayOf("video/*")) },
+            onSelectLandVideo = { landVideoLauncher.launch(arrayOf("video/*")) },
+            onSelectWpPortraitVideo = { wpPortraitLauncher.launch(arrayOf("video/*")) },
+            onSelectWpLandVideo = { wpLandLauncher.launch(arrayOf("video/*")) },
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartDialog) {
         val restartFailString = stringResource(R.string.common_restart_fail)
@@ -202,6 +218,8 @@ private fun AnimationWallpaperSettingsScreen(
     onSelectLandVideo: () -> Unit,
     onSelectWpPortraitVideo: () -> Unit,
     onSelectWpLandVideo: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -235,7 +253,7 @@ private fun AnimationWallpaperSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -253,7 +271,8 @@ private fun AnimationWallpaperSettingsScreen(
                         onSelectWpPortraitVideo = onSelectWpPortraitVideo,
                         onSelectWpLandVideo = onSelectWpLandVideo,
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -281,7 +300,8 @@ private fun animationWallpaperSettingsSections(
                 title = stringResource(R.string.system_ui_animation_no_charging_animation_enable_title),
                 summary = stringResource(R.string.system_ui_animation_no_charging_animation_enable_summary),
                 checked = state.noChargeAnimation,
-                onCheckedChange = onNoChargeAnimationChanged
+                onCheckedChange = onNoChargeAnimationChanged,
+                key = "animation_no_charging_animation"
             )
         )
         add(
@@ -289,14 +309,16 @@ private fun animationWallpaperSettingsSections(
                 title = stringResource(R.string.system_ui_animation_charge_animation_fix),
                 summary = stringResource(R.string.system_ui_animation_charge_animation_fix_summary),
                 checked = state.chargeAnimationFix,
-                onCheckedChange = onChargeAnimationFixChanged
+                onCheckedChange = onChargeAnimationFixChanged,
+                key = "animation_charge_animation_fix"
             )
         )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_animation_custom_charge_animation_title),
                 checked = state.customChargeAnimation,
-                onCheckedChange = onCustomChargeAnimationChanged
+                onCheckedChange = onCustomChargeAnimationChanged,
+                key = "animation_custom_charge_animation"
             )
         )
         if (state.customChargeAnimation) {
@@ -310,7 +332,8 @@ private fun animationWallpaperSettingsSections(
                             contentDescription = null,
                             tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
-                    }
+                    },
+                    key = "animation_custom_charge_animation_portrait"
                 )
             )
             add(
@@ -323,7 +346,8 @@ private fun animationWallpaperSettingsSections(
                             contentDescription = null,
                             tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
-                    }
+                    },
+                    key = "animation_custom_charge_animation_land"
                 )
             )
         }
@@ -332,7 +356,8 @@ private fun animationWallpaperSettingsSections(
                 title = stringResource(R.string.system_ui_animation_charge_anim_duration_title),
                 summary = stringResource(R.string.system_ui_animation_charge_anim_duration_summary),
                 checked = state.chargeAnimDurationEnabled,
-                onCheckedChange = onChargeAnimDurationEnabledChanged
+                onCheckedChange = onChargeAnimDurationEnabledChanged,
+                key = "animation_charge_anim_duration"
             )
         )
         if (state.chargeAnimDurationEnabled) {
@@ -347,7 +372,8 @@ private fun animationWallpaperSettingsSections(
                     ),
                     valueRange = 1000f..15000f,
                     steps = 27,
-                    onValueChange = { onChargeAnimDurationMsChanged((it / 500).toInt() * 500) }
+                    onValueChange = { onChargeAnimDurationMsChanged((it / 500).toInt() * 500) },
+                    key = "animation_charge_anim_duration_slider"
                 )
             )
         }
@@ -359,7 +385,8 @@ private fun animationWallpaperSettingsSections(
                 title = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_title),
                 summary = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_rotation_warning),
                 checked = state.desktopLiveWallpaper,
-                onCheckedChange = onDesktopLiveWallpaperChanged
+                onCheckedChange = onDesktopLiveWallpaperChanged,
+                key = "animation_desktop_live_wallpaper"
             )
         )
         if (state.desktopLiveWallpaper) {
@@ -367,7 +394,6 @@ private fun animationWallpaperSettingsSections(
             val scaleCoverLabel = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_scale_mode_cover)
             add(
                 SettingItem.Dropdown(
-                    key = "desktop_wallpaper_scale_mode",
                     label = stringResource(R.string.system_ui_animation_desktop_live_wallpaper_scale_mode_title),
                     value = if (state.wallpaperScaleMode == "cover") {
                         scaleCoverLabel
@@ -380,7 +406,8 @@ private fun animationWallpaperSettingsSections(
                         onWallpaperScaleModeChanged(
                             if (selected == scaleCoverLabel) "cover" else "fit"
                         )
-                    }
+                    },
+                    key = "animation_desktop_live_wallpaper_scale_mode"
                 )
             )
             add(
@@ -393,7 +420,8 @@ private fun animationWallpaperSettingsSections(
                             contentDescription = null,
                             tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
-                    }
+                    },
+                    key = "animation_desktop_live_wallpaper_portrait"
                 )
             )
             add(
@@ -406,7 +434,8 @@ private fun animationWallpaperSettingsSections(
                             contentDescription = null,
                             tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
-                    }
+                    },
+                    key = "animation_desktop_live_wallpaper_land"
                 )
             )
         }

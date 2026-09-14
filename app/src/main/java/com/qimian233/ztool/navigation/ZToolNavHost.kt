@@ -43,10 +43,31 @@ import com.qimian233.ztool.screens.systemui.misc.SystemUiMiscSettingsRoute
 import com.qimian233.ztool.screens.systemui.statusbar.StatusBarSettingsRoute
 import com.qimian233.ztool.screens.zuisetting.SettingsDetailRoute
 import com.qimian233.ztool.screens.zuisetting.magicwindowsearch.SearchPageRoute
+import com.qimian233.ztool.search.SearchIndex
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
 
 private const val SettingsNavigationAnimationMillis = 320
+
+/**
+ * Optional query arg carrying a [com.qimian233.ztool.search.SearchEntry] id; screens
+ * scroll to and pulse-highlight the matching row after landing.
+ */
+private const val TargetArg = "target"
+
+/** Route pattern accepting the optional highlight target. */
+private fun routeWithTarget(base: String) = "$base?$TargetArg={$TargetArg}"
+
+private val highlightTargetArguments = listOf(
+    androidx.navigation.navArgument(TargetArg) {
+        type = androidx.navigation.NavType.StringType
+        nullable = true
+        defaultValue = null
+    }
+)
+
+internal fun NavBackStackEntry.highlightTarget(): String? =
+    arguments?.getString(TargetArg)
 
 @Composable
 internal fun MainRouteNavHost(
@@ -178,21 +199,23 @@ internal fun MainRouteNavHost(
 
     val mainNavGraph: androidx.navigation.NavGraphBuilder.() -> Unit = {
         composable(
-            route = MainRoute.Home.name,
+            route = routeWithTarget(MainRoute.Home.name),
             enterTransition = mainRouteEnter,
             exitTransition = mainRouteExit,
             popEnterTransition = mainRoutePopEnter,
-            popExitTransition = mainRoutePopExit
-        ) {
+            popExitTransition = mainRoutePopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             HomeMainRoute(onEnvironmentStateChanged = onEnvironmentStateChanged)
         }
         composable(
-            route = MainRoute.Features.name,
+            route = routeWithTarget(MainRoute.Features.name),
             enterTransition = mainRouteEnter,
             exitTransition = mainRouteExit,
             popEnterTransition = mainRoutePopEnter,
-            popExitTransition = mainRoutePopExit
-        ) {
+            popExitTransition = mainRoutePopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             FeaturesMainRoute(
                 onFeatureDestinationSelected = { destination ->
                     navController.navigate(destination.route) {
@@ -207,12 +230,13 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
-            route = MainRoute.Settings.name,
+            route = routeWithTarget(MainRoute.Settings.name),
             enterTransition = mainRouteEnter,
             exitTransition = mainRouteExit,
             popEnterTransition = mainRoutePopEnter,
-            popExitTransition = mainRoutePopExit
-        ) {
+            popExitTransition = mainRoutePopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SettingsMainRoute(
                 onOpenThemeSettings = {
                     navController.navigate(HiddenRoute.SETTINGS_THEME) {
@@ -233,16 +257,18 @@ internal fun MainRouteNavHost(
                     navController.navigate(HiddenRoute.SEARCH) {
                         launchSingleTop = true
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = HiddenRoute.SETTINGS_THEME,
+            route = routeWithTarget(HiddenRoute.SETTINGS_THEME),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             ThemeSettingsRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -250,16 +276,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = SettingsAboutRouteName,
+            route = routeWithTarget(SettingsAboutRouteName),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SettingsAboutRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -271,12 +299,13 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
-            route = HiddenRoute.SETTINGS_ADVANCED,
+            route = routeWithTarget(HiddenRoute.SETTINGS_ADVANCED),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SettingsAdvancedRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -284,16 +313,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = HiddenRoute.SEARCH,
+            route = routeWithTarget(HiddenRoute.SEARCH),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SearchMainRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -321,7 +352,9 @@ internal fun MainRouteNavHost(
                         // returns to the originating tab, not back into search.
                         // Popping after navigating would also pop the freshly
                         // pushed destination, since it sits above Search.
-                        navController.navigate(entry.route) {
+                        navController.navigate(
+                            SearchIndex.targetRoute(entry)
+                        ) {
                             launchSingleTop = true
                             popUpTo(HiddenRoute.SEARCH) { inclusive = true }
                         }
@@ -330,12 +363,13 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
-            route = FeatureDestination.PackageInstaller.route,
+            route = routeWithTarget(FeatureDestination.PackageInstaller.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             PackageInstallerSettingsRoute(
                 title = stringResource(R.string.package_installer_app_name),
                 packageName = ScopeKeys.PACKAGE_INSTALLER.packageName,
@@ -345,16 +379,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.SettingsDetail.route,
+            route = routeWithTarget(FeatureDestination.SettingsDetail.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SettingsDetailRoute(
                 title = stringResource(R.string.settings_app_name),
                 packageName = ScopeKeys.SETTINGS.packageName,
@@ -369,16 +405,18 @@ internal fun MainRouteNavHost(
                     navController.navigate(HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH) {
                         launchSingleTop = true
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH,
+            route = routeWithTarget(HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SearchPageRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
@@ -390,12 +428,13 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
-            route = FeatureDestination.GameTool.route,
+            route = routeWithTarget(FeatureDestination.GameTool.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             GameToolSettingsRoute(
                 title = stringResource(R.string.game_tool_app_name),
                 packageName = ScopeKeys.GAME_SERVICE.packageName,
@@ -405,16 +444,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.SystemUi.route,
+            route = routeWithTarget(FeatureDestination.SystemUi.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SystemUiSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name),
                 packageName = ScopeKeys.SYSTEM_UI.packageName,
@@ -453,12 +494,13 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
-            route = HiddenRoute.SYSTEM_UI_STATUS_BAR,
+            route = routeWithTarget(HiddenRoute.SYSTEM_UI_STATUS_BAR),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             StatusBarSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
                         stringResource(R.string.system_ui_status_bar_title_suffix),
@@ -468,16 +510,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = HiddenRoute.SYSTEM_UI_LOCK_SCREEN,
+            route = routeWithTarget(HiddenRoute.SYSTEM_UI_LOCK_SCREEN),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             LockScreenSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
                         stringResource(R.string.system_ui_lock_screen_title_suffix),
@@ -487,16 +531,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = HiddenRoute.SYSTEM_UI_CONTROL_CENTER,
+            route = routeWithTarget(HiddenRoute.SYSTEM_UI_CONTROL_CENTER),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             ControlCenterSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
                         stringResource(R.string.system_ui_control_center_title_suffix),
@@ -506,16 +552,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = HiddenRoute.SYSTEM_UI_ANIMATION_WALLPAPER,
+            route = routeWithTarget(HiddenRoute.SYSTEM_UI_ANIMATION_WALLPAPER),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             AnimationWallpaperSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
                         " — 动画与壁纸",
@@ -525,16 +573,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = HiddenRoute.SYSTEM_UI_MISC,
+            route = routeWithTarget(HiddenRoute.SYSTEM_UI_MISC),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SystemUiMiscSettingsRoute(
                 title = stringResource(R.string.system_ui_app_name) +
                         " — " + stringResource(R.string.system_ui_common_misc),
@@ -544,16 +594,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.Ota.route,
+            route = routeWithTarget(FeatureDestination.Ota.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             OtaSettingsRoute(
                 title = stringResource(R.string.system_update_app_name),
                 packageName = ScopeKeys.OTA.packageName,
@@ -563,16 +615,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.TbEngine.route,
+            route = routeWithTarget(FeatureDestination.TbEngine.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             TbEngineSettingsRoute(
                 title = stringResource(R.string.tb_engine_app_name),
                 packageName = ScopeKeys.TB_ENGINE.packageName,
@@ -582,16 +636,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.ZuiPerformance.route,
+            route = routeWithTarget(FeatureDestination.ZuiPerformance.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             ZuiPerformanceSettingsRoute(
                 title = stringResource(R.string.zui_pp_app_name),
                 packageName = ScopeKeys.ZUI_PERFORMANCE.packageName,
@@ -601,16 +657,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.Framework.route,
+            route = routeWithTarget(FeatureDestination.Framework.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             FrameworkSettingsRoute(
                 title = stringResource(R.string.system_framework_app_name),
                 onBack = {
@@ -619,16 +677,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.Launcher.route,
+            route = routeWithTarget(FeatureDestination.Launcher.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             LauncherSettingsRoute(
                 title = stringResource(R.string.launcher_app_name),
                 packageName = ScopeKeys.LAUNCHER.packageName,
@@ -638,16 +698,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.MobileDesktop.route,
+            route = routeWithTarget(FeatureDestination.MobileDesktop.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             MobileDesktopSettingsRoute(
                 title = stringResource(R.string.mobile_desktop_app_name),
                 packageName = ScopeKeys.MOBILE_DESKTOP.packageName,
@@ -657,16 +719,18 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(
-            route = FeatureDestination.SafeCenter.route,
+            route = routeWithTarget(FeatureDestination.SafeCenter.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
             popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit
-        ) {
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
             SafeCenterSettingsRoute(
                 title = stringResource(R.string.safe_center_app_name),
                 packageName = ScopeKeys.ZUI_SAFE_CENTER.packageName,
@@ -676,7 +740,8 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
     }
@@ -750,7 +815,10 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.isNavigateBetweenM
     return targetIndex != initialIndex && targetIndex != -1 && initialIndex != -1
 }
 
-private fun mainRouteIndex(route: String?): Int {
+private fun mainRouteIndex(rawRoute: String?): Int {
+    // Routes may carry the optional ?target= highlight arg; depth order cares
+    // about the path only.
+    val route = rawRoute?.substringBefore('?')
     if (route == null) return -1
     return when {
         route == MainRoute.Home.name -> 0
@@ -760,7 +828,9 @@ private fun mainRouteIndex(route: String?): Int {
     }
 }
 
-private fun navigationRouteIndex(route: String?): Int {
+private fun navigationRouteIndex(rawRoute: String?): Int {
+    // Strip the optional ?target= highlight arg before depth lookup.
+    val route = rawRoute?.substringBefore('?') ?: return -1
     return when (route) {
         MainRoute.Home.name -> 0
         MainRoute.Features.name -> 1

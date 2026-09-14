@@ -3,6 +3,7 @@ package com.qimian233.ztool.screens.systemui.statusbar
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,8 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.systemui.StatusBarSettingsRepository
 import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
@@ -64,7 +67,8 @@ import java.util.Locale
 @Composable
 fun StatusBarSettingsRoute(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -97,39 +101,51 @@ fun StatusBarSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    StatusBarSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onDisplaySecondsChanged = viewModel::setDisplaySeconds,
-        onCustomClockChanged = viewModel::setCustomClock,
-        onClockFormatChanged = viewModel::setClockFormat,
-        onSaveClockFormat = viewModel::saveClockFormat,
-        onShowFormatHelp = viewModel::showFormatHelpDialog,
-        onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
-        onTextSizeChanged = viewModel::setTextSize,
-        onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
-        onLetterSpacingChanged = viewModel::setLetterSpacing,
-        onTextColorEnabledChanged = viewModel::setTextColorEnabled,
-        onClockTextColorChanged = viewModel::setTextColorText,
-        onClockTextColorEditingFinished = viewModel::finishTextColorEditing,
-        onTextBoldChanged = viewModel::setTextBold,
-        onNotificationIconLimitChanged = { option ->
-            if (!viewModel.setNotificationIconLimit(option)) {
-                Toast.makeText(context, R.string.system_ui_status_bar_save_failed_message, Toast.LENGTH_SHORT).show()
-            }
-        },
-        onNativeNotificationIconChanged = viewModel::setNativeNotificationIcon,
-        onNetworkSpeedSizeChanged = viewModel::setNetworkSpeedSize,
-        onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
-        onNetworkSpeedRefreshEnabledChanged = viewModel::setNetworkSpeedRefreshEnabled,
-        onNetworkSpeedRefreshIntervalChanged = viewModel::setNetworkSpeedRefreshInterval,
-        onNetworkSpeedHideSlowChanged = viewModel::setNetworkSpeedHideSlow,
-        onNetworkSpeedHideThresholdChanged = viewModel::setNetworkSpeedHideThreshold,
-        onNetworkSpeedHideBothChanged = viewModel::setNetworkSpeedHideBoth,
-        onBatteryExternalChanged = viewModel::setBatteryExternal,
-        onRestartScope = viewModel::showRestartDialog,
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        StatusBarSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onDisplaySecondsChanged = viewModel::setDisplaySeconds,
+            onCustomClockChanged = viewModel::setCustomClock,
+            onClockFormatChanged = viewModel::setClockFormat,
+            onSaveClockFormat = viewModel::saveClockFormat,
+            onShowFormatHelp = viewModel::showFormatHelpDialog,
+            onTextSizeEnabledChanged = viewModel::setTextSizeEnabled,
+            onTextSizeChanged = viewModel::setTextSize,
+            onLetterSpacingEnabledChanged = viewModel::setLetterSpacingEnabled,
+            onLetterSpacingChanged = viewModel::setLetterSpacing,
+            onTextColorEnabledChanged = viewModel::setTextColorEnabled,
+            onClockTextColorChanged = viewModel::setTextColorText,
+            onClockTextColorEditingFinished = viewModel::finishTextColorEditing,
+            onTextBoldChanged = viewModel::setTextBold,
+            onNotificationIconLimitChanged = { option ->
+                if (!viewModel.setNotificationIconLimit(option)) {
+                    Toast.makeText(context, R.string.system_ui_status_bar_save_failed_message, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onNativeNotificationIconChanged = viewModel::setNativeNotificationIcon,
+            onNetworkSpeedSizeChanged = viewModel::setNetworkSpeedSize,
+            onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
+            onNetworkSpeedRefreshEnabledChanged = viewModel::setNetworkSpeedRefreshEnabled,
+            onNetworkSpeedRefreshIntervalChanged = viewModel::setNetworkSpeedRefreshInterval,
+            onNetworkSpeedHideSlowChanged = viewModel::setNetworkSpeedHideSlow,
+            onNetworkSpeedHideThresholdChanged = viewModel::setNetworkSpeedHideThreshold,
+            onNetworkSpeedHideBothChanged = viewModel::setNetworkSpeedHideBoth,
+            onBatteryExternalChanged = viewModel::setBatteryExternal,
+            onRestartScope = viewModel::showRestartDialog,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartDialog) {
         val restartFailString = stringResource(R.string.common_restart_fail)
@@ -211,6 +227,8 @@ private fun StatusBarSettingsScreen(
     onNetworkSpeedHideBothChanged: (Boolean) -> Unit,
     onBatteryExternalChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -244,7 +262,7 @@ private fun StatusBarSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -274,7 +292,8 @@ private fun StatusBarSettingsScreen(
                         onNetworkSpeedHideBothChanged = onNetworkSpeedHideBothChanged,
                         onBatteryExternalChanged = onBatteryExternalChanged
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -314,7 +333,8 @@ private fun statusBarSettingsSections(
                 title = stringResource(R.string.system_ui_status_bar_display_seconds_title),
                 summary = stringResource(R.string.system_ui_status_bar_display_seconds_summary),
                 checked = state.displaySeconds,
-                onCheckedChange = onDisplaySecondsChanged
+                onCheckedChange = onDisplaySecondsChanged,
+                key = "status_bar_display_seconds"
             )
         )
         add(
@@ -360,7 +380,8 @@ private fun statusBarSettingsSections(
                             onTextBoldChanged = onTextBoldChanged
                         )
                     }
-                }
+                },
+                key = "status_bar_custom_clock"
             )
         )
     }
@@ -383,13 +404,15 @@ private fun statusBarSettingsSections(
                             optionLabel = { it },
                             onOptionSelected = onNotificationIconLimitChanged
                         )
-                    }
+                    },
+                    key = "status_bar_notification_icon_limit"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_ui_status_bar_notification_icon_native_title),
                     summary = stringResource(R.string.system_ui_status_bar_notification_icon_native_summary),
                     checked = state.nativeNotificationIcon,
-                    onCheckedChange = onNativeNotificationIconChanged
+                    onCheckedChange = onNativeNotificationIconChanged,
+                    key = "status_bar_notification_icon_native"
                 )
             )
         ),
@@ -401,7 +424,8 @@ private fun statusBarSettingsSections(
                         title = stringResource(R.string.system_ui_status_bar_network_size_title),
                         summary = stringResource(R.string.system_ui_status_bar_network_size_summary),
                         checked = state.networkSpeedSize,
-                        onCheckedChange = onNetworkSpeedSizeChanged
+                        onCheckedChange = onNetworkSpeedSizeChanged,
+                        key = "status_bar_network_size"
                     )
                 )
                 add(
@@ -409,7 +433,8 @@ private fun statusBarSettingsSections(
                         title = stringResource(R.string.system_ui_status_bar_network_size_double_layer),
                         summary = stringResource(R.string.system_ui_status_bar_network_size_double_layer_summary),
                         checked = state.networkSpeedDoubleLayer,
-                        onCheckedChange = onNetworkSpeedDoubleLayerChanged
+                        onCheckedChange = onNetworkSpeedDoubleLayerChanged,
+                        key = "status_bar_network_size_double_layer"
                     )
                 )
                 add(
@@ -417,7 +442,8 @@ private fun statusBarSettingsSections(
                         title = stringResource(R.string.system_ui_status_bar_network_refresh_title),
                         summary = stringResource(R.string.system_ui_status_bar_network_refresh_summary),
                         checked = state.networkSpeedRefreshEnabled,
-                        onCheckedChange = onNetworkSpeedRefreshEnabledChanged
+                        onCheckedChange = onNetworkSpeedRefreshEnabledChanged,
+                        key = "status_bar_network_refresh"
                     )
                 )
                 if (state.networkSpeedRefreshEnabled) {
@@ -434,7 +460,8 @@ private fun statusBarSettingsSections(
                                     horizontalPadding = 24.dp,
                                     modifier = Modifier.padding(horizontal = 0.dp)
                                 )
-                            }
+                            },
+                            key = "status_bar_network_refresh_interval"
                         )
                     )
                 }
@@ -443,7 +470,8 @@ private fun statusBarSettingsSections(
                         title = stringResource(R.string.system_ui_status_bar_network_hide_slow_title),
                         summary = stringResource(R.string.system_ui_status_bar_network_hide_slow_summary),
                         checked = state.networkSpeedHideSlow,
-                        onCheckedChange = onNetworkSpeedHideSlowChanged
+                        onCheckedChange = onNetworkSpeedHideSlowChanged,
+                        key = "status_bar_network_hide_slow"
                     )
                 )
                 if (state.networkSpeedHideSlow) {
@@ -460,7 +488,8 @@ private fun statusBarSettingsSections(
                                     horizontalPadding = 24.dp,
                                     modifier = Modifier.padding(horizontal = 0.dp)
                                 )
-                            }
+                            },
+                            key = "status_bar_network_hide_threshold"
                         )
                     )
                     add(
@@ -468,7 +497,8 @@ private fun statusBarSettingsSections(
                             title = stringResource(R.string.system_ui_status_bar_network_hide_both_title),
                             summary = stringResource(R.string.system_ui_status_bar_network_hide_both_summary),
                             checked = state.networkSpeedHideBoth,
-                            onCheckedChange = onNetworkSpeedHideBothChanged
+                            onCheckedChange = onNetworkSpeedHideBothChanged,
+                            key = "status_bar_network_hide_both"
                         )
                     )
                 }
@@ -481,7 +511,8 @@ private fun statusBarSettingsSections(
                     title = stringResource(R.string.system_ui_status_bar_syatus_battery_external_title),
                     summary = stringResource(R.string.system_ui_status_bar_syatus_battery_external_summary),
                     checked = state.batteryExternal,
-                    onCheckedChange = onBatteryExternalChanged
+                    onCheckedChange = onBatteryExternalChanged,
+                    key = "status_bar_battery_external"
                 )
             )
         )

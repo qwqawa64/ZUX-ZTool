@@ -7,6 +7,7 @@ import com.qimian233.ztool.navigation.HiddenRoute
 import com.qimian233.ztool.navigation.MainRoute
 import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRouteName
+import com.qimian233.ztool.ui.components.SearchHighlightIndexBridge
 
 /**
  * How the [SearchEntry.parentTitleRes] gate is satisfied on the target screen.
@@ -31,7 +32,9 @@ data class SearchEntry(
     /** Hide the entry when this package is not installed. Null = always visible. */
     val requiresPackage: String? = null,
     /** Title of the switch this row depends on, for the "requires …" annotation. */
-    @param:StringRes val parentTitleRes: Int? = null,
+    @StringRes val parentTitleRes: Int? = null,
+    /** SearchEntry id of that parent switch; drives the highlight fallback. */
+    val parentKey: String? = null,
     val parentMode: SearchParentMode = SearchParentMode.REQUIRE_ON,
     /** Free-form visibility note (e.g. style-gated theme rows). */
     @param:StringRes val conditionNoteRes: Int? = null,
@@ -60,6 +63,7 @@ object SearchIndex {
             @StringRes titleRes: Int,
             @StringRes summaryRes: Int? = null,
             @StringRes parentTitleRes: Int? = null,
+            parentKey: String? = null,
             parentMode: SearchParentMode = SearchParentMode.REQUIRE_ON,
             @StringRes conditionNoteRes: Int? = null,
             keywords: List<String> = emptyList()
@@ -71,6 +75,7 @@ object SearchIndex {
             keywords = keywords,
             requiresPackage = requiresPackage,
             parentTitleRes = parentTitleRes,
+            parentKey = parentKey,
             parentMode = parentMode,
             conditionNoteRes = conditionNoteRes,
             isFeatureCard = false,
@@ -355,22 +360,26 @@ object SearchIndex {
         systemUiStatusBar.item(
             id = "status_bar_clock_text_size",
             titleRes = R.string.system_ui_status_bar_text_size_title,
-            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title
+            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title,
+            parentKey = "status_bar_custom_clock"
         ),
         systemUiStatusBar.item(
             id = "status_bar_clock_letter_spacing",
             titleRes = R.string.system_ui_status_bar_letter_spacing_title,
-            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title
+            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title,
+            parentKey = "status_bar_custom_clock"
         ),
         systemUiStatusBar.item(
             id = "status_bar_clock_text_color",
             titleRes = R.string.system_ui_status_bar_text_color_title,
-            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title
+            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title,
+            parentKey = "status_bar_custom_clock"
         ),
         systemUiStatusBar.item(
             id = "status_bar_clock_text_bold",
             titleRes = R.string.system_ui_status_bar_text_bold_title,
-            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title
+            parentTitleRes = R.string.system_ui_status_bar_custom_clock_title,
+            parentKey = "status_bar_custom_clock"
         ),
         systemUiStatusBar.item(
             id = "status_bar_notification_icon_limit",
@@ -400,7 +409,8 @@ object SearchIndex {
         systemUiStatusBar.item(
             id = "status_bar_network_refresh_interval",
             titleRes = R.string.system_ui_status_bar_network_refresh_interval_title,
-            parentTitleRes = R.string.system_ui_status_bar_network_refresh_title
+            parentTitleRes = R.string.system_ui_status_bar_network_refresh_title,
+            parentKey = "status_bar_network_refresh"
         ),
         systemUiStatusBar.item(
             id = "status_bar_network_hide_slow",
@@ -410,13 +420,15 @@ object SearchIndex {
         systemUiStatusBar.item(
             id = "status_bar_network_hide_threshold",
             titleRes = R.string.system_ui_status_bar_network_hide_threshold_title,
-            parentTitleRes = R.string.system_ui_status_bar_network_hide_slow_title
+            parentTitleRes = R.string.system_ui_status_bar_network_hide_slow_title,
+            parentKey = "status_bar_network_hide_slow"
         ),
         systemUiStatusBar.item(
             id = "status_bar_network_hide_both",
             titleRes = R.string.system_ui_status_bar_network_hide_both_title,
             summaryRes = R.string.system_ui_status_bar_network_hide_both_summary,
-            parentTitleRes = R.string.system_ui_status_bar_network_hide_slow_title
+            parentTitleRes = R.string.system_ui_status_bar_network_hide_slow_title,
+            parentKey = "status_bar_network_hide_slow"
         ),
         systemUiStatusBar.item(
             id = "status_bar_battery_external",
@@ -448,7 +460,8 @@ object SearchIndex {
             id = "lock_screen_aod_lenovo_activity",
             titleRes = R.string.system_ui_lock_screen_aod_lenovo_activity_title,
             summaryRes = R.string.system_ui_lock_screen_aod_lenovo_activity_summary,
-            parentTitleRes = R.string.system_ui_lock_screen_aod_lenovo_enable_title
+            parentTitleRes = R.string.system_ui_lock_screen_aod_lenovo_enable_title,
+            parentKey = "lock_screen_aod_lenovo"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_charge_watts",
@@ -459,37 +472,43 @@ object SearchIndex {
             id = "lock_screen_realwatts_show_power",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_power,
             summaryRes = R.string.system_ui_lock_screen_realwatts_show_power_summary,
-            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title
+            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
+            parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_voltage",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_voltage,
             summaryRes = R.string.system_ui_lock_screen_realwatts_show_voltage_summary,
-            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title
+            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
+            parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_current",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_current,
             summaryRes = R.string.system_ui_lock_screen_realwatts_show_current_summary,
-            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title
+            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
+            parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_temperature",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_temperature,
             summaryRes = R.string.system_ui_lock_screen_realwatts_show_temperature_summary,
-            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title
+            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
+            parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_indicator",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_indicator,
             summaryRes = R.string.system_ui_lock_screen_realwatts_show_indicator_summary,
-            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title
+            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
+            parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_custom_format",
             titleRes = R.string.system_ui_lock_screen_realwatts_custom_format_enabled,
             summaryRes = R.string.system_ui_lock_screen_realwatts_custom_format_enabled_summary,
-            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title
+            parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
+            parentKey = "lock_screen_charge_watts"
         ),
 
         // ── Control center ──
@@ -502,7 +521,8 @@ object SearchIndex {
             id = "control_center_notification_blur_strength",
             titleRes = R.string.system_ui_control_center_notification_center_blur_strength_title,
             summaryRes = R.string.system_ui_control_center_notification_center_blur_strength_summary,
-            parentTitleRes = R.string.system_ui_control_center_notification_center_blur_title
+            parentTitleRes = R.string.system_ui_control_center_notification_center_blur_title,
+            parentKey = "control_center_notification_blur"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_tile_radius",
@@ -512,12 +532,14 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_head_up_corner_radius",
             titleRes = R.string.system_ui_control_center_head_up_corner_radius,
-            parentTitleRes = R.string.system_ui_control_center_custom_control_center_tile_radius
+            parentTitleRes = R.string.system_ui_control_center_custom_control_center_tile_radius,
+            parentKey = "control_center_custom_tile_radius"
         ),
         systemUiControlCenter.item(
             id = "control_center_normal_tile_corner_radius",
             titleRes = R.string.system_ui_control_center_normal_tile_corner_radius,
-            parentTitleRes = R.string.system_ui_control_center_custom_control_center_tile_radius
+            parentTitleRes = R.string.system_ui_control_center_custom_control_center_tile_radius,
+            parentKey = "control_center_custom_tile_radius"
         ),
         systemUiControlCenter.item(
             id = "control_center_brightness_slider_percentage",
@@ -535,7 +557,8 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_slider_style_direction",
             titleRes = R.string.system_ui_control_center_slider_style_direction_title,
-            parentTitleRes = R.string.system_ui_control_center_customize_slider_style_title
+            parentTitleRes = R.string.system_ui_control_center_customize_slider_style_title,
+            parentKey = "control_center_customize_slider_style"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_qs_color_general",
@@ -545,40 +568,47 @@ object SearchIndex {
             id = "control_center_custom_qs_color",
             titleRes = R.string.system_ui_control_center_custom_qs_color_title,
             summaryRes = R.string.system_ui_control_center_custom_qs_color_summary,
-            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch
+            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
+            parentKey = "control_center_custom_qs_color_general"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_qs_active_color",
             titleRes = R.string.system_ui_control_center_custom_qs_active_color_title,
-            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_title
+            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_title,
+            parentKey = "control_center_custom_qs_color"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_label_color",
             titleRes = R.string.system_ui_control_center_custom_label_color_title,
             summaryRes = R.string.system_ui_control_center_custom_label_color_summary,
-            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch
+            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
+            parentKey = "control_center_custom_qs_color_general"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_label_active_color",
             titleRes = R.string.system_ui_control_center_custom_label_active_color_title,
-            parentTitleRes = R.string.system_ui_control_center_custom_label_color_title
+            parentTitleRes = R.string.system_ui_control_center_custom_label_color_title,
+            parentKey = "control_center_custom_label_color"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_second_label_color",
             titleRes = R.string.system_ui_control_center_custom_second_label_color_title,
             summaryRes = R.string.system_ui_control_center_custom_second_label_color_summary,
-            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch
+            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
+            parentKey = "control_center_custom_qs_color_general"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_second_label_active_color",
             titleRes = R.string.system_ui_control_center_custom_second_label_active_color_title,
-            parentTitleRes = R.string.system_ui_control_center_custom_second_label_color_title
+            parentTitleRes = R.string.system_ui_control_center_custom_second_label_color_title,
+            parentKey = "control_center_custom_second_label_color"
         ),
         systemUiControlCenter.item(
             id = "control_center_no_tile_labels",
             titleRes = R.string.system_ui_control_center_no_tile_labels_title,
             summaryRes = R.string.system_ui_control_center_no_tile_labels_summary,
-            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch
+            parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
+            parentKey = "control_center_custom_qs_color_general"
         ),
         systemUiControlCenter.item(
             id = "control_center_media_output_dialog_center",
@@ -593,23 +623,27 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_custom_clock_text_size",
             titleRes = R.string.system_ui_control_center_custom_clock_text_size_title,
-            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title
+            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title,
+            parentKey = "control_center_custom_date_setting"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_clock_letter_spacing",
             titleRes = R.string.system_ui_control_center_custom_clock_letter_spacing_title,
-            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title
+            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title,
+            parentKey = "control_center_custom_date_setting"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_clock_text_color",
             titleRes = R.string.system_ui_control_center_custom_clock_text_color_title,
-            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title
+            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title,
+            parentKey = "control_center_custom_date_setting"
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_clock_text_bold",
             titleRes = R.string.system_ui_control_center_custom_clock_text_bold_title,
             summaryRes = R.string.system_ui_control_center_use_bold_date,
-            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title
+            parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title,
+            parentKey = "control_center_custom_date_setting"
         ),
         systemUiControlCenter.item(
             id = "control_center_expand_qs_panel_portrait",
@@ -620,13 +654,15 @@ object SearchIndex {
             id = "control_center_panel_width_percent",
             titleRes = R.string.system_ui_control_center_panel_width_percent_title,
             summaryRes = R.string.system_ui_control_center_panel_width_percent_summary,
-            parentTitleRes = R.string.system_ui_control_center_expand_qs_panel_portrait_title
+            parentTitleRes = R.string.system_ui_control_center_expand_qs_panel_portrait_title,
+            parentKey = "control_center_expand_qs_panel_portrait"
         ),
         systemUiControlCenter.item(
             id = "control_center_tile_columns",
             titleRes = R.string.system_ui_control_center_tile_columns_title,
             summaryRes = R.string.system_ui_control_center_tile_columns_summary,
-            parentTitleRes = R.string.system_ui_control_center_expand_qs_panel_portrait_title
+            parentTitleRes = R.string.system_ui_control_center_expand_qs_panel_portrait_title,
+            parentKey = "control_center_expand_qs_panel_portrait"
         ),
 
         // ── Animation & wallpaper ──
@@ -647,12 +683,14 @@ object SearchIndex {
         systemUiAnimationWallpaper.item(
             id = "animation_custom_charge_animation_portrait",
             titleRes = R.string.system_ui_animation_custom_charge_animation_portrait_action_title,
-            parentTitleRes = R.string.system_ui_animation_custom_charge_animation_title
+            parentTitleRes = R.string.system_ui_animation_custom_charge_animation_title,
+            parentKey = "animation_custom_charge_animation"
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_custom_charge_animation_land",
             titleRes = R.string.system_ui_animation_custom_charge_animation_land_action_title,
-            parentTitleRes = R.string.system_ui_animation_custom_charge_animation_title
+            parentTitleRes = R.string.system_ui_animation_custom_charge_animation_title,
+            parentKey = "animation_custom_charge_animation"
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_charge_anim_duration",
@@ -663,7 +701,8 @@ object SearchIndex {
             id = "animation_charge_anim_duration_slider",
             titleRes = R.string.system_ui_animation_charge_anim_duration_slider_title,
             summaryRes = R.string.system_ui_animation_charge_anim_duration_slider_summary,
-            parentTitleRes = R.string.system_ui_animation_charge_anim_duration_title
+            parentTitleRes = R.string.system_ui_animation_charge_anim_duration_title,
+            parentKey = "animation_charge_anim_duration"
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_desktop_live_wallpaper",
@@ -672,17 +711,20 @@ object SearchIndex {
         systemUiAnimationWallpaper.item(
             id = "animation_desktop_live_wallpaper_scale_mode",
             titleRes = R.string.system_ui_animation_desktop_live_wallpaper_scale_mode_title,
-            parentTitleRes = R.string.system_ui_animation_desktop_live_wallpaper_title
+            parentTitleRes = R.string.system_ui_animation_desktop_live_wallpaper_title,
+            parentKey = "animation_desktop_live_wallpaper"
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_desktop_live_wallpaper_portrait",
             titleRes = R.string.system_ui_animation_desktop_live_wallpaper_select_portrait,
-            parentTitleRes = R.string.system_ui_animation_desktop_live_wallpaper_title
+            parentTitleRes = R.string.system_ui_animation_desktop_live_wallpaper_title,
+            parentKey = "animation_desktop_live_wallpaper"
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_desktop_live_wallpaper_land",
             titleRes = R.string.system_ui_animation_desktop_live_wallpaper_select_land,
-            parentTitleRes = R.string.system_ui_animation_desktop_live_wallpaper_title
+            parentTitleRes = R.string.system_ui_animation_desktop_live_wallpaper_title,
+            parentKey = "animation_desktop_live_wallpaper"
         ),
 
         // ── SystemUI misc ──
@@ -714,7 +756,8 @@ object SearchIndex {
         framework.item(
             id = "framework_screen_on_off_animation_duration",
             titleRes = R.string.system_framework_screen_on_off_animation_duration,
-            parentTitleRes = R.string.system_framework_force_on_off_animation
+            parentTitleRes = R.string.system_framework_force_on_off_animation,
+            parentKey = "framework_force_on_off_animation"
         ),
         framework.item(
             id = "framework_disable_zui_applist",
@@ -758,7 +801,8 @@ object SearchIndex {
             id = "framework_pkgmgr_use_previous_signatures",
             titleRes = R.string.system_framework_pkgmgr_use_previous_signatures_title,
             summaryRes = R.string.system_framework_pkgmgr_use_previous_signatures_summary,
-            parentTitleRes = R.string.system_framework_pkgmgr_bypass_digest_title
+            parentTitleRes = R.string.system_framework_pkgmgr_bypass_digest_title,
+            parentKey = "framework_pkgmgr_bypass_digest"
         ),
         framework.item(
             id = "framework_pkgmgr_bypass_exact_sig_match",
@@ -859,38 +903,45 @@ object SearchIndex {
         settingsDetail.item(
             id = "settings_detail_about_device_info_model",
             titleRes = R.string.settings_about_device_info_model_title,
-            parentTitleRes = R.string.settings_about_device_info_master
+            parentTitleRes = R.string.settings_about_device_info_master,
+            parentKey = "settings_detail_about_device_info_master"
         ),
         settingsDetail.item(
             id = "settings_detail_about_device_info_cpu",
             titleRes = R.string.settings_about_device_info_cpu_title,
-            parentTitleRes = R.string.settings_about_device_info_master
+            parentTitleRes = R.string.settings_about_device_info_master,
+            parentKey = "settings_detail_about_device_info_master"
         ),
         settingsDetail.item(
             id = "settings_detail_about_device_info_ram",
             titleRes = R.string.settings_about_device_info_ram_title,
-            parentTitleRes = R.string.settings_about_device_info_master
+            parentTitleRes = R.string.settings_about_device_info_master,
+            parentKey = "settings_detail_about_device_info_master"
         ),
         settingsDetail.item(
             id = "settings_detail_about_device_info_rom",
             titleRes = R.string.settings_about_device_info_rom_title,
-            parentTitleRes = R.string.settings_about_device_info_master
+            parentTitleRes = R.string.settings_about_device_info_master,
+            parentKey = "settings_detail_about_device_info_master"
         ),
         settingsDetail.item(
             id = "settings_detail_about_device_info_software",
             titleRes = R.string.settings_about_device_info_software_title,
-            parentTitleRes = R.string.settings_about_device_info_master
+            parentTitleRes = R.string.settings_about_device_info_master,
+            parentKey = "settings_detail_about_device_info_master"
         ),
         settingsDetail.item(
             id = "settings_detail_about_device_info_header",
             titleRes = R.string.settings_about_device_info_header_title,
-            parentTitleRes = R.string.settings_about_device_info_master
+            parentTitleRes = R.string.settings_about_device_info_master,
+            parentKey = "settings_detail_about_device_info_master"
         ),
         settingsDetail.item(
             id = "settings_detail_about_device_info_header_action",
             titleRes = R.string.settings_about_device_info_header_action,
             summaryRes = R.string.settings_about_device_info_header_action_summary,
-            parentTitleRes = R.string.settings_about_device_info_header_title
+            parentTitleRes = R.string.settings_about_device_info_header_title,
+            parentKey = "settings_detail_about_device_info_header"
         ),
         settingsDetail.item(
             id = "settings_detail_native_permission_controller",
@@ -946,7 +997,8 @@ object SearchIndex {
         gameTool.item(
             id = "game_tool_whitelist_config",
             titleRes = R.string.game_tool_whitelist_config_title,
-            parentTitleRes = R.string.game_tool_auto_open_prevent_touch_title
+            parentTitleRes = R.string.game_tool_auto_open_prevent_touch_title,
+            parentKey = "game_tool_auto_open_prevent_touch"
         ),
 
         // ── OTA ──
@@ -1028,6 +1080,7 @@ object SearchIndex {
             titleRes = R.string.package_installer_disable_installer_ad_title,
             summaryRes = R.string.package_installer_disable_installer_ad_summary,
             parentTitleRes = R.string.package_installer_enable_row_style_title,
+            parentKey = "package_installer_enable_row_style",
             parentMode = SearchParentMode.REQUIRE_OFF
         ),
         packageInstaller.item(
@@ -1035,6 +1088,7 @@ object SearchIndex {
             titleRes = R.string.package_installer_disable_delete_package_title,
             summaryRes = R.string.package_installer_disable_delete_package_summary,
             parentTitleRes = R.string.package_installer_enable_row_style_title,
+            parentKey = "package_installer_enable_row_style",
             parentMode = SearchParentMode.REQUIRE_OFF
         ),
         packageInstaller.item(
@@ -1042,6 +1096,7 @@ object SearchIndex {
             titleRes = R.string.package_installer_disable_scan_apk_title,
             summaryRes = R.string.package_installer_disable_scan_apk_summary,
             parentTitleRes = R.string.package_installer_enable_row_style_title,
+            parentKey = "package_installer_enable_row_style",
             parentMode = SearchParentMode.REQUIRE_OFF
         ),
         packageInstaller.item(
@@ -1049,6 +1104,7 @@ object SearchIndex {
             titleRes = R.string.package_installer_only_allow_title,
             summaryRes = R.string.package_installer_only_allow_summary,
             parentTitleRes = R.string.package_installer_enable_row_style_title,
+            parentKey = "package_installer_enable_row_style",
             parentMode = SearchParentMode.REQUIRE_OFF
         ),
         packageInstaller.item(
@@ -1056,6 +1112,7 @@ object SearchIndex {
             titleRes = R.string.package_installer_skip_warn_page_title,
             summaryRes = R.string.package_installer_skip_warn_page_summary,
             parentTitleRes = R.string.package_installer_enable_row_style_title,
+            parentKey = "package_installer_enable_row_style",
             parentMode = SearchParentMode.REQUIRE_OFF
         ),
 
@@ -1084,12 +1141,14 @@ object SearchIndex {
         launcher.item(
             id = "launcher_custom_grid_row",
             titleRes = R.string.launcher_input_row_number_here,
-            parentTitleRes = R.string.launcher_custom_grid_title
+            parentTitleRes = R.string.launcher_custom_grid_title,
+            parentKey = "launcher_custom_grid"
         ),
         launcher.item(
             id = "launcher_custom_grid_column",
             titleRes = R.string.launcher_input_column_number_here,
-            parentTitleRes = R.string.launcher_custom_grid_title
+            parentTitleRes = R.string.launcher_custom_grid_title,
+            parentKey = "launcher_custom_grid"
         ),
         launcher.item(
             id = "launcher_big_folder_align",
@@ -1105,7 +1164,8 @@ object SearchIndex {
             id = "launcher_app_icon_unmask_dynamic",
             titleRes = R.string.launcher_app_icon_unmask_dynamic_title,
             summaryRes = R.string.launcher_app_icon_unmask_dynamic_summary,
-            parentTitleRes = R.string.launcher_app_icon_unmask_title
+            parentTitleRes = R.string.launcher_app_icon_unmask_title,
+            parentKey = "launcher_app_icon_unmask"
         ),
         launcher.item(
             id = "launcher_disable_recent_app_display",
@@ -1115,6 +1175,7 @@ object SearchIndex {
             id = "launcher_larger_dock",
             titleRes = R.string.launcher_larger_dock_title,
             parentTitleRes = R.string.launcher_disable_dock_bar_title,
+            parentKey = "launcher_disable_dock_bar",
             parentMode = SearchParentMode.REQUIRE_OFF
         ),
         launcher.item(
@@ -1136,7 +1197,8 @@ object SearchIndex {
             id = "launcher_beautify_ram_info",
             titleRes = R.string.launcher_beautify_ram_info,
             summaryRes = R.string.launcher_beautify_ram_info_summary,
-            parentTitleRes = R.string.launcher_show_ram_info
+            parentTitleRes = R.string.launcher_show_ram_info,
+            parentKey = "launcher_show_ram_info"
         ),
         launcher.item(
             id = "launcher_batch_uninstall",
@@ -1149,12 +1211,14 @@ object SearchIndex {
         launcher.item(
             id = "launcher_remove_search_recommend",
             titleRes = R.string.launcher_remove_search_recommend,
-            parentTitleRes = R.string.launcher_clean_search
+            parentTitleRes = R.string.launcher_clean_search,
+            parentKey = "launcher_clean_search"
         ),
         launcher.item(
             id = "launcher_remove_hot_word_view",
             titleRes = R.string.launcher_remove_hot_word_view,
-            parentTitleRes = R.string.launcher_clean_search
+            parentTitleRes = R.string.launcher_clean_search,
+            parentKey = "launcher_clean_search"
         ),
 
         // ── Mobile desktop ──
@@ -1302,7 +1366,8 @@ object SearchIndex {
             id = "theme_manual_seed_color",
             titleRes = R.string.page_settings_manual_seed_color_title,
             summaryRes = R.string.page_settings_manual_seed_color_summary,
-            parentTitleRes = R.string.page_settings_manual_color_title
+            parentTitleRes = R.string.page_settings_manual_color_title,
+            parentKey = "theme_manual_color"
         ),
         themeSettings.item(
             id = "theme_enable_floating_bottom_bar",
@@ -1314,7 +1379,8 @@ object SearchIndex {
             id = "theme_floating_bottom_bar_blur",
             titleRes = R.string.page_settings_enable_floating_bottom_bar_blur_title,
             summaryRes = R.string.page_settings_enable_floating_bottom_bar_blur_summary,
-            parentTitleRes = R.string.page_settings_enable_floating_bottom_bar_title
+            parentTitleRes = R.string.page_settings_enable_floating_bottom_bar_title,
+            parentKey = "theme_enable_floating_bottom_bar"
         ),
 
         // ── Advanced settings ──
@@ -1342,4 +1408,24 @@ object SearchIndex {
             titleRes = R.string.page_settings_about_ztool_title
         )
     )
+
+    private val byIdMap: Map<String, SearchEntry> by lazy { all.associateBy { it.id } }
+
+    fun byId(id: String): SearchEntry? = byIdMap[id]
+
+    /**
+     * Navigation route for a search result: the entry's destination with its id
+     * attached as the optional highlight target. Feature cards navigate bare (cards
+     * are not rows and never highlight).
+     */
+    fun targetRoute(entry: SearchEntry): String {
+        if (entry.isFeatureCard) return entry.route
+        return "${entry.route}?target=${java.net.URLEncoder.encode(entry.id, "UTF-8")}"
+    }
+
+    init {
+        // Let the highlight controller resolve parent fallbacks without a hard
+        // dependency from ui/components on the search package.
+        SearchHighlightIndexBridge.parentKeyOf = { id -> byId(id)?.parentKey }
+    }
 }

@@ -159,18 +159,24 @@ fun ZToolSettingsList(
     sections: List<SettingSection>,
     modifier: Modifier = Modifier,
     sectionSpacing: Dp = 16.dp,
-    bottomPadding: Dp = 0.dp
+    bottomPadding: Dp = 0.dp,
+    highlightRegistry: HighlightAnchorRegistry? = null
 ) {
-    ZToolSettingsNavigationEventProvider {
-        Column(
-            modifier = modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(sectionSpacing)
-        ) {
-            sections.forEach { section ->
-                ZToolSettingsSection(section = section)
-            }
-            if (bottomPadding > 0.dp) {
-                Spacer(modifier = Modifier.height(bottomPadding))
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalHighlightRegistry provides highlightRegistry
+    ) {
+        ZToolSettingsNavigationEventProvider {
+            Column(
+                modifier = modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(sectionSpacing)
+            ) {
+                HighlightContainerMarker(registry = highlightRegistry)
+                sections.forEach { section ->
+                    ZToolSettingsSection(section = section)
+                }
+                if (bottomPadding > 0.dp) {
+                    Spacer(modifier = Modifier.height(bottomPadding))
+                }
             }
         }
     }
@@ -228,7 +234,9 @@ fun ZToolSettingsSection(
                     if (index > 0) {
                         ZToolSettingsDivider()
                     }
-                    ZToolSettingItem(item = item)
+                    HighlightableSettingRow(highlightKey = item.key) {
+                        ZToolSettingItem(item = item)
+                    }
                 }
             }
         }
@@ -310,23 +318,33 @@ fun ExpressiveSectionItems(
         verticalArrangement = Arrangement.spacedBy(if (isMiuix) 0.dp else itemSpacing)
     ) {
         items.forEachIndexed { index, item ->
+            val shape = if (isMiuix) {
+                null
+            } else {
+                shapeForIndex?.invoke(index, items.size)
+                    ?: expressiveSettingsItemShape(index = index, count = items.size)
+            }
             val rowModifier = if (isMiuix) {
                 Modifier.fillMaxWidth()
             } else {
-                val shape = shapeForIndex?.invoke(index, items.size)
-                    ?: expressiveSettingsItemShape(index = index, count = items.size)
                 Modifier
                     .fillMaxWidth()
-                    .clip(shape)
+                    .clip(shape!!)
                     .background(
                         color = itemColor,
                         shape = shape
                     )
             }
-            ZToolSettingItem(
-                item = item,
-                modifier = rowModifier
-            )
+            HighlightableSettingRow(
+                highlightKey = item.key,
+                modifier = rowModifier,
+                shape = shape
+            ) {
+                ZToolSettingItem(
+                    item = item,
+                    modifier = Modifier
+                )
+            }
         }
     }
 }

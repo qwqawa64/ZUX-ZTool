@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.tbengine
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +33,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.tbengine.TbEngineSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -48,7 +51,8 @@ import com.qimian233.ztool.viewmodel.TbEngineSettingsViewModel
 fun TbEngineSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -68,21 +72,32 @@ fun TbEngineSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    TbEngineSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onDisableAutoDownloadChanged = viewModel::setDisableAutoDownload,
-        onDisableAutoInstallChanged = viewModel::setDisableAutoInstall,
-        onDisableAppUpdateChanged = viewModel::setDisableAppUpdate,
-        onDisablePushChanged = viewModel::setDisablePush,
-        onDisableReportingChanged = viewModel::setDisableReporting,
-        onSignLocalOtaChanged = viewModel::setSignLocalOta,
-        onCustomVersionChanged = viewModel::setCustomVersion,
-        onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
-        onRestartScope = viewModel::showRestartDialog
-    )
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        TbEngineSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onDisableAutoDownloadChanged = viewModel::setDisableAutoDownload,
+            onDisableAutoInstallChanged = viewModel::setDisableAutoInstall,
+            onDisableAppUpdateChanged = viewModel::setDisableAppUpdate,
+            onDisablePushChanged = viewModel::setDisablePush,
+            onDisableReportingChanged = viewModel::setDisableReporting,
+            onSignLocalOtaChanged = viewModel::setSignLocalOta,
+            onCustomVersionChanged = viewModel::setCustomVersion,
+            onCustomDeviceIdChanged = viewModel::setCustomDeviceId,
+            onRestartScope = viewModel::showRestartDialog,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     uiState.errorDialogMessage?.let { message ->
         ZToolDialog(
@@ -191,7 +206,9 @@ private fun TbEngineSettingsScreen(
     onSignLocalOtaChanged: (Boolean) -> Unit,
     onCustomVersionChanged: (String) -> Unit,
     onCustomDeviceIdChanged: (String) -> Unit,
-    onRestartScope: () -> Unit
+    onRestartScope: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -222,7 +239,7 @@ private fun TbEngineSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -237,7 +254,8 @@ private fun TbEngineSettingsScreen(
                         onCustomVersionChanged = onCustomVersionChanged,
                         onCustomDeviceIdChanged = onCustomDeviceIdChanged
                     ),
-                    bottomPadding = 88.dp
+                    bottomPadding = 88.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -264,37 +282,43 @@ private fun tbEngineSettingsSections(
                     title = stringResource(R.string.tb_engine_disable_auto_download_title),
                     summary = stringResource(R.string.tb_engine_disable_auto_download_summary),
                     checked = state.disableAutoDownload,
-                    onCheckedChange = onDisableAutoDownloadChanged
+                    onCheckedChange = onDisableAutoDownloadChanged,
+                    key = "tb_engine_disable_auto_download"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.tb_engine_disable_auto_install_title),
                     summary = stringResource(R.string.tb_engine_disable_auto_install_summary),
                     checked = state.disableAutoInstall,
-                    onCheckedChange = onDisableAutoInstallChanged
+                    onCheckedChange = onDisableAutoInstallChanged,
+                    key = "tb_engine_disable_auto_install"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.tb_engine_disable_app_update_title),
                     summary = stringResource(R.string.tb_engine_disable_app_update_summary),
                     checked = state.disableAppUpdate,
-                    onCheckedChange = onDisableAppUpdateChanged
+                    onCheckedChange = onDisableAppUpdateChanged,
+                    key = "tb_engine_disable_app_update"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.tb_engine_disable_push_title),
                     summary = stringResource(R.string.tb_engine_disable_push_summary),
                     checked = state.disablePush,
-                    onCheckedChange = onDisablePushChanged
+                    onCheckedChange = onDisablePushChanged,
+                    key = "tb_engine_disable_push"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.tb_engine_disable_reporting_title),
                     summary = stringResource(R.string.tb_engine_disable_reporting_summary),
                     checked = state.disableReporting,
-                    onCheckedChange = onDisableReportingChanged
+                    onCheckedChange = onDisableReportingChanged,
+                    key = "tb_engine_disable_reporting"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.tb_engine_sign_local_ota_title),
                     summary = stringResource(R.string.tb_engine_sign_local_ota_summary),
                     checked = state.signLocalOta,
-                    onCheckedChange = onSignLocalOtaChanged
+                    onCheckedChange = onSignLocalOtaChanged,
+                    key = "tb_engine_sign_local_ota"
                 )
             )
         ),
@@ -308,7 +332,8 @@ private fun tbEngineSettingsSections(
                             onCustomVersionChanged = onCustomVersionChanged,
                             onCustomDeviceIdChanged = onCustomDeviceIdChanged
                         )
-                    }
+                    },
+                    key = "tb_engine_custom_params"
                 )
             )
         )

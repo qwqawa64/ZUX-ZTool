@@ -315,7 +315,8 @@ private fun MainTabletShell(
 
     LaunchedEffect(environmentReady, selectedRoute) {
         val targetRoute = if (environmentReady) selectedRoute else MainRoute.Home
-        if (navController.currentDestination?.route != targetRoute.name) {
+        // Routes may carry the optional ?target= highlight arg; compare paths only.
+        if (navController.currentDestination?.route?.substringBefore('?') != targetRoute.name) {
             navController.navigate(targetRoute.name) {
                 launchSingleTop = true
                 restoreState = true

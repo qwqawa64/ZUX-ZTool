@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -37,6 +38,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.gametool.GameToolSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -55,7 +58,8 @@ import com.qimian233.ztool.viewmodel.MistakeTouchMode
 fun GameToolSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -75,36 +79,47 @@ fun GameToolSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
     val selectGameString = stringResource(R.string.game_tool_select_game)
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    GameToolSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onRestart = viewModel::showRestartConfirmDialog,
-        onDisableGameAudioChanged = viewModel::setDisableGameAudio,
-        onDisguiseDeviceChanged = viewModel::setDisguiseDevice,
-        onFixCpuFrequencyChanged = viewModel::setFixCpuFrequency,
-        onFixSocTemperatureChanged = viewModel::setFixSocTemperature,
-        onMistakeTouchModeChanged = viewModel::setMistakeTouchMode,
-        onSelectWhitelist = {
-            val activity = context as? android.app.Activity
-            if (activity != null) {
-                AppChooserDialog.show(
-                    activity,
-                    viewModel.loadManagedGamePackages(),
-                    uiState.targetGamePackages,
-                    selectGameString,
-                    object : AppChooserDialog.AppSelectionCallback {
-                        override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
-                            viewModel.setWhitelistPackages(selectedApps.map { it.packageName })
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        GameToolSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onRestart = viewModel::showRestartConfirmDialog,
+            onDisableGameAudioChanged = viewModel::setDisableGameAudio,
+            onDisguiseDeviceChanged = viewModel::setDisguiseDevice,
+            onFixCpuFrequencyChanged = viewModel::setFixCpuFrequency,
+            onFixSocTemperatureChanged = viewModel::setFixSocTemperature,
+            onMistakeTouchModeChanged = viewModel::setMistakeTouchMode,
+            onSelectWhitelist = {
+                val activity = context as? android.app.Activity
+                if (activity != null) {
+                    AppChooserDialog.show(
+                        activity,
+                        viewModel.loadManagedGamePackages(),
+                        uiState.targetGamePackages,
+                        selectGameString,
+                        object : AppChooserDialog.AppSelectionCallback {
+                            override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
+                                viewModel.setWhitelistPackages(selectedApps.map { it.packageName })
+                            }
+
+                            override fun onCancel() = Unit
                         }
-
-                        override fun onCancel() = Unit
-                    }
-                )
-            }
-        }
-    )
+                    )
+                }
+            },
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartConfirmDialog) {
         RestartConfirmDialog(
@@ -144,7 +159,9 @@ private fun GameToolSettingsScreen(
     onFixCpuFrequencyChanged: (Boolean) -> Unit,
     onFixSocTemperatureChanged: (Boolean) -> Unit,
     onMistakeTouchModeChanged: (MistakeTouchMode) -> Unit,
-    onSelectWhitelist: () -> Unit
+    onSelectWhitelist: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -177,7 +194,7 @@ private fun GameToolSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -190,7 +207,8 @@ private fun GameToolSettingsScreen(
                         onMistakeTouchModeChanged = onMistakeTouchModeChanged,
                         onSelectWhitelist = onSelectWhitelist
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -213,7 +231,8 @@ private fun gameToolSettingsSections(
                 title = stringResource(R.string.game_tool_device_model_disguise),
                 summary = stringResource(R.string.game_tool_device_model_disguise_summary),
                 checked = state.disguiseDevice,
-                onCheckedChange = onDisguiseDeviceChanged
+                onCheckedChange = onDisguiseDeviceChanged,
+                key = "game_tool_device_model_disguise"
             )
         )
         add(
@@ -221,7 +240,8 @@ private fun gameToolSettingsSections(
                 title = stringResource(R.string.game_tool_f_ix_cpu_frequency),
                 summary = stringResource(R.string.game_tool_f_ix_cpu_frequency_summary),
                 checked = state.fixCpuFrequency,
-                onCheckedChange = onFixCpuFrequencyChanged
+                onCheckedChange = onFixCpuFrequencyChanged,
+                key = "game_tool_fix_cpu_frequency"
             )
         )
         add(
@@ -229,7 +249,8 @@ private fun gameToolSettingsSections(
                 title = stringResource(R.string.game_tool_fix_soc_temp),
                 summary = stringResource(R.string.game_tool_fix_soc_temp_summary),
                 checked = state.fixSocTemperature,
-                onCheckedChange = onFixSocTemperatureChanged
+                onCheckedChange = onFixSocTemperatureChanged,
+                key = "game_tool_fix_soc_temp"
             )
         )
         add(
@@ -239,7 +260,8 @@ private fun gameToolSettingsSections(
                         selectedMode = state.mistakeTouchMode,
                         onModeChanged = onMistakeTouchModeChanged
                     )
-                }
+                },
+                key = "game_tool_auto_open_prevent_touch"
             )
         )
         if (state.mistakeTouchMode == MistakeTouchMode.Whitelist) {
@@ -250,7 +272,8 @@ private fun gameToolSettingsSections(
                             whitelistCount = state.whitelistCount,
                             onClick = onSelectWhitelist
                         )
-                    }
+                    },
+                    key = "game_tool_whitelist_config"
                 )
             )
         }
@@ -264,7 +287,8 @@ private fun gameToolSettingsSections(
                     title = stringResource(R.string.game_tool_game_audio_title),
                     summary = stringResource(R.string.game_tool_game_audio_summary),
                     checked = state.disableGameAudio,
-                    onCheckedChange = onDisableGameAudioChanged
+                    onCheckedChange = onDisableGameAudioChanged,
+                    key = "game_tool_game_audio"
                 )
             )
         ),

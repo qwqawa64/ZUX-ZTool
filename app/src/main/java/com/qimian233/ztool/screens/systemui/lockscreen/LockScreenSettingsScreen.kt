@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.systemui.lockscreen
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,8 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.systemui.LockScreenSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
@@ -57,7 +60,8 @@ import com.qimian233.ztool.viewmodel.LockScreenSettingsViewModel
 @Composable
 fun LockScreenSettingsRoute(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -77,34 +81,46 @@ fun LockScreenSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    LockScreenSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onYiYanChanged = viewModel::setYiYanEnabled,
-        onNativeAodChanged = viewModel::setNativeAodEnabled,
-        onLenovoAodChanged = viewModel::setLenovoAodEnabled,
-        onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
-        onApiAddressChanged = viewModel::setApiAddress,
-        onRegexChanged = viewModel::setRegex,
-        onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
-        onShowVoltageChanged = viewModel::setShowVoltage,
-        onShowCurrentChanged = viewModel::setShowCurrent,
-        onShowPowerChanged = viewModel::setShowPower,
-        onShowTemperatureChanged = viewModel::setShowTemperature,
-        onShowIndicatorChanged = viewModel::setShowIndicator,
-        onCustomFormatEnabledChanged = viewModel::setCustomFormatEnabled,
-        onCustomFormatChanged = viewModel::setCustomFormat,
-        onClockColorCustomChanged = viewModel::setClockColorCustom,
-        onClockColorTextChanged = viewModel::setClockColorText,
-        onClockColorEditingFinished = viewModel::finishClockColorEditing,
-        onTestApi = {
-            viewModel.testApiConnection {
-                Toast.makeText(context, R.string.system_ui_lock_screen_please_input_api_address, Toast.LENGTH_SHORT).show()
-            }
-        },
-        onRestartScope = viewModel::showRestartDialog,
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        LockScreenSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onYiYanChanged = viewModel::setYiYanEnabled,
+            onNativeAodChanged = viewModel::setNativeAodEnabled,
+            onLenovoAodChanged = viewModel::setLenovoAodEnabled,
+            onOpenLenovoAodSettings = viewModel::openLenovoAodSettings,
+            onApiAddressChanged = viewModel::setApiAddress,
+            onRegexChanged = viewModel::setRegex,
+            onChargeWattsOptionChanged = viewModel::setChargeWattsOption,
+            onShowVoltageChanged = viewModel::setShowVoltage,
+            onShowCurrentChanged = viewModel::setShowCurrent,
+            onShowPowerChanged = viewModel::setShowPower,
+            onShowTemperatureChanged = viewModel::setShowTemperature,
+            onShowIndicatorChanged = viewModel::setShowIndicator,
+            onCustomFormatEnabledChanged = viewModel::setCustomFormatEnabled,
+            onCustomFormatChanged = viewModel::setCustomFormat,
+            onClockColorCustomChanged = viewModel::setClockColorCustom,
+            onClockColorTextChanged = viewModel::setClockColorText,
+            onClockColorEditingFinished = viewModel::finishClockColorEditing,
+            onTestApi = {
+                viewModel.testApiConnection {
+                    Toast.makeText(context, R.string.system_ui_lock_screen_please_input_api_address, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onRestartScope = viewModel::showRestartDialog,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartDialog) {
         val restartFailString = stringResource(R.string.common_restart_fail)
@@ -181,6 +197,8 @@ private fun LockScreenSettingsScreen(
     onClockColorTextChanged: (String) -> Unit,
     onClockColorEditingFinished: () -> Unit,
     onRestartScope: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -214,7 +232,7 @@ private fun LockScreenSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -239,7 +257,8 @@ private fun LockScreenSettingsScreen(
                         onClockColorTextChanged = onClockColorTextChanged,
                         onClockColorEditingFinished = onClockColorEditingFinished,
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -274,7 +293,8 @@ private fun lockScreenSettingsSections(
                 title = stringResource(R.string.system_ui_lock_screen_yi_yan_switch_title),
                 summary = stringResource(R.string.system_ui_lock_screen_yi_yan_summary),
                 checked = state.yiYanEnabled,
-                onCheckedChange = onYiYanChanged
+                onCheckedChange = onYiYanChanged,
+                key = "lock_screen_yi_yan"
             )
         )
         if (state.yiYanEnabled) {
@@ -300,7 +320,8 @@ private fun lockScreenSettingsSections(
                     summary = stringResource(R.string.system_ui_lock_screen_clock_color_native_summary),
                     checked = false,
                     onCheckedChange = {},
-                    enabled = false
+                    enabled = false,
+                    key = "lock_screen_clock_color"
                 )
             )
         } else {
@@ -309,7 +330,8 @@ private fun lockScreenSettingsSections(
                     title = stringResource(R.string.system_ui_lock_screen_clock_color_title),
                     summary = stringResource(R.string.system_ui_lock_screen_clock_color_summary),
                     checked = state.clockColorCustom,
-                    onCheckedChange = onClockColorCustomChanged
+                    onCheckedChange = onClockColorCustomChanged,
+                    key = "lock_screen_clock_color"
                 )
             )
             if (state.clockColorCustom) {
@@ -338,7 +360,8 @@ private fun lockScreenSettingsSections(
                 title = stringResource(R.string.system_ui_lock_screen_aod_native_enable_title),
                 summary = stringResource(R.string.system_ui_lock_screen_aod_native_enable_summary),
                 checked = state.nativeAod,
-                onCheckedChange = onNativeAodChanged
+                onCheckedChange = onNativeAodChanged,
+                key = "lock_screen_aod_native"
             )
         )
         add(
@@ -346,7 +369,8 @@ private fun lockScreenSettingsSections(
                 title = stringResource(R.string.system_ui_lock_screen_aod_lenovo_enable_title),
                 summary = stringResource(R.string.system_ui_lock_screen_aod_lenovo_enable_summary),
                 checked = state.lenovoAod,
-                onCheckedChange = onLenovoAodChanged
+                onCheckedChange = onLenovoAodChanged,
+                key = "lock_screen_aod_lenovo"
             )
         )
         if (state.lenovoAod) {
@@ -361,7 +385,8 @@ private fun lockScreenSettingsSections(
                             contentDescription = null,
                             tint = LocalZToolColorScheme.current.onSurfaceVariant
                         )
-                    }
+                    },
+                    key = "lock_screen_aod_lenovo_activity"
                 )
             )
         }
@@ -375,7 +400,8 @@ private fun lockScreenSettingsSections(
                         state = state,
                         onChargeWattsOptionChanged = onChargeWattsOptionChanged,
                     )
-                }
+                },
+                key = "lock_screen_charge_watts"
             )
         )
 
@@ -388,7 +414,8 @@ private fun lockScreenSettingsSections(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_power),
                         summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_power_summary),
                         checked = state.showPower,
-                        onCheckedChange = onShowPowerChanged
+                        onCheckedChange = onShowPowerChanged,
+                        key = "lock_screen_realwatts_show_power"
                     )
                 )
                 add(
@@ -396,7 +423,8 @@ private fun lockScreenSettingsSections(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage),
                         summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage_summary),
                         checked = state.showVoltage,
-                        onCheckedChange = onShowVoltageChanged
+                        onCheckedChange = onShowVoltageChanged,
+                        key = "lock_screen_realwatts_show_voltage"
                     )
                 )
                 add(
@@ -404,7 +432,8 @@ private fun lockScreenSettingsSections(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_current),
                         summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_current_summary),
                         checked = state.showCurrent,
-                        onCheckedChange = onShowCurrentChanged
+                        onCheckedChange = onShowCurrentChanged,
+                        key = "lock_screen_realwatts_show_current"
                     )
                 )
                 add(
@@ -412,7 +441,8 @@ private fun lockScreenSettingsSections(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature),
                         summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_temperature_summary),
                         checked = state.showTemperature,
-                        onCheckedChange = onShowTemperatureChanged
+                        onCheckedChange = onShowTemperatureChanged,
+                        key = "lock_screen_realwatts_show_temperature"
                     )
                 )
                 add(
@@ -420,7 +450,8 @@ private fun lockScreenSettingsSections(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator),
                         summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator_summary),
                         checked = state.showIndicator,
-                        onCheckedChange = onShowIndicatorChanged
+                        onCheckedChange = onShowIndicatorChanged,
+                        key = "lock_screen_realwatts_show_indicator"
                     )
                 )
             }
@@ -430,7 +461,8 @@ private fun lockScreenSettingsSections(
                     title = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_enabled),
                     summary = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_enabled_summary),
                     checked = state.customFormatEnabled,
-                    onCheckedChange = onCustomFormatEnabledChanged
+                    onCheckedChange = onCustomFormatEnabledChanged,
+                    key = "lock_screen_realwatts_custom_format"
                 )
             )
             if (state.customFormatEnabled) {

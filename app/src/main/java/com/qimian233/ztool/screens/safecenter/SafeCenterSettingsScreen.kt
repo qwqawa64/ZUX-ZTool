@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.safecenter
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,8 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.safecenter.SafeCenterRestartResult
 import com.qimian233.ztool.data.safecenter.SafeCenterSettingsRepository
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -45,7 +48,8 @@ import com.qimian233.ztool.viewmodel.SafeCenterSettingsViewModel
 fun SafeCenterSettingsRoute(
     title: String,
     packageName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -64,16 +68,27 @@ fun SafeCenterSettingsRoute(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
-    SafeCenterSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onRestart = viewModel::showRestartConfirmDialog,
-        onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
-        onDisableAllVirusScanChanged = viewModel::setDisableAllVirusScan,
-        onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass
-    )
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        SafeCenterSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onRestart = viewModel::showRestartConfirmDialog,
+            onDefaultEnableAutorunChanged = viewModel::setDefaultEnableAutorun,
+            onDisableAllVirusScanChanged = viewModel::setDisableAllVirusScan,
+            onDocumentsUiBypassChanged = viewModel::setDocumentsUiBypass,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showRestartConfirmDialog) {
         val restartFailPrefixString = stringResource(R.string.common_restart_fail_prefix)
@@ -126,7 +141,9 @@ internal fun SafeCenterSettingsScreen(
     onRestart: () -> Unit,
     onDefaultEnableAutorunChanged: (Boolean) -> Unit,
     onDisableAllVirusScanChanged: (Boolean) -> Unit,
-    onDocumentsUiBypassChanged: (Boolean) -> Unit
+    onDocumentsUiBypassChanged: (Boolean) -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -159,7 +176,7 @@ internal fun SafeCenterSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -169,7 +186,8 @@ internal fun SafeCenterSettingsScreen(
                         onDisableAllVirusScanChanged = onDisableAllVirusScanChanged,
                         onDocumentsUiBypassChanged = onDocumentsUiBypassChanged
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -191,7 +209,8 @@ internal fun safeCenterSettingsSections(
                     title = stringResource(R.string.safe_center_default_allow_autorun_enable_title),
                     summary = stringResource(R.string.safe_center_default_allow_autorun_enable_summary),
                     checked = state.defaultEnableAutorun,
-                    onCheckedChange = onDefaultEnableAutorunChanged
+                    onCheckedChange = onDefaultEnableAutorunChanged,
+                    key = "safe_center_default_allow_autorun"
                 ),
             )
         ),
@@ -202,13 +221,15 @@ internal fun safeCenterSettingsSections(
                     title = stringResource(R.string.safe_center_disable_all_virus_scan),
                     summary = stringResource(R.string.safe_center_disable_all_virus_scan_summary),
                     checked = state.disableAllVirusScan,
-                    onCheckedChange = onDisableAllVirusScanChanged
+                    onCheckedChange = onDisableAllVirusScanChanged,
+                    key = "safe_center_disable_all_virus_scan"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.safe_center_bypass_docements_ui),
                     summary = stringResource(R.string.safe_center_bypass_docements_ui_summary),
                     checked = state.documentsUiBypass,
-                    onCheckedChange = onDocumentsUiBypassChanged
+                    onCheckedChange = onDocumentsUiBypassChanged,
+                    key = "safe_center_bypass_documents_ui"
                 )
             )
         )

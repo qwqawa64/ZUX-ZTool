@@ -1,6 +1,7 @@
 package com.qimian233.ztool.screens.systemframework
 
 import android.widget.Toast
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,8 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
 import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -60,7 +63,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun FrameworkSettingsRoute(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
@@ -80,34 +84,46 @@ fun FrameworkSettingsRoute(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    FrameworkSettingsScreen(
-        title = title,
-        state = uiState,
-        onBack = onBack,
-        onRestart = viewModel::showRestartConfirmDialog,
-        onKeepRotationChanged = viewModel::setKeepRotation,
-        onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
-        onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
-        onForceOnOffAnimationChanged = viewModel::setForceOnOffAnimation,
-        onForceOnOffAnimationDurationChanged = viewModel::setOnOffScreenAnimationDuration,
-        onAiInputExpandChanged = viewModel::setAiInputExpand,
-        onAiInputSignsChanged = viewModel::setAiInputSigns,
-        onShowAiInputInfo = viewModel::showAiInputInfoDialog,
-        onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
-        onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
-        onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
-        onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
-        onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
-        onPkgMgrAllowDowngradeChanged = viewModel::setPkgMgrAllowDowngrade,
-        onPkgMgrBypassVerificationChanged = viewModel::setPkgMgrBypassVerification,
-        onPkgMgrDisableVerificationAgentChanged = viewModel::setPkgMgrDisableVerificationAgent,
-        onPkgMgrBypassDigestChanged = viewModel::setPkgMgrBypassDigest,
-        onPkgMgrUsePreviousSignaturesChanged = viewModel::setPkgMgrUsePreviousSignatures,
-        onPkgMgrBypassExactSigMatchChanged = viewModel::setPkgMgrBypassExactSigMatch,
-        onPkgMgrBypassSharedUserChanged = viewModel::setPkgMgrBypassSharedUser,
-        onPkgMgrAllowHiddenApisSystemAppsChanged = viewModel::setPkgMgrAllowHiddenApisSystemApps,
-        onPkgMgrBypassArscRestrictionChanged = viewModel::setPkgMgrBypassArscRestriction
-    )
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
+
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        FrameworkSettingsScreen(
+            title = title,
+            state = uiState,
+            onBack = onBack,
+            onRestart = viewModel::showRestartConfirmDialog,
+            onKeepRotationChanged = viewModel::setKeepRotation,
+            onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
+            onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
+            onForceOnOffAnimationChanged = viewModel::setForceOnOffAnimation,
+            onForceOnOffAnimationDurationChanged = viewModel::setOnOffScreenAnimationDuration,
+            onAiInputExpandChanged = viewModel::setAiInputExpand,
+            onAiInputSignsChanged = viewModel::setAiInputSigns,
+            onShowAiInputInfo = viewModel::showAiInputInfoDialog,
+            onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
+            onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
+            onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
+            onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
+            onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
+            onPkgMgrAllowDowngradeChanged = viewModel::setPkgMgrAllowDowngrade,
+            onPkgMgrBypassVerificationChanged = viewModel::setPkgMgrBypassVerification,
+            onPkgMgrDisableVerificationAgentChanged = viewModel::setPkgMgrDisableVerificationAgent,
+            onPkgMgrBypassDigestChanged = viewModel::setPkgMgrBypassDigest,
+            onPkgMgrUsePreviousSignaturesChanged = viewModel::setPkgMgrUsePreviousSignatures,
+            onPkgMgrBypassExactSigMatchChanged = viewModel::setPkgMgrBypassExactSigMatch,
+            onPkgMgrBypassSharedUserChanged = viewModel::setPkgMgrBypassSharedUser,
+            onPkgMgrAllowHiddenApisSystemAppsChanged = viewModel::setPkgMgrAllowHiddenApisSystemApps,
+            onPkgMgrBypassArscRestrictionChanged = viewModel::setPkgMgrBypassArscRestriction,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry
+        )
+    }
 
     if (uiState.showAiInputInfoDialog) {
         AiInputInfoDialog(
@@ -171,6 +187,8 @@ private fun FrameworkSettingsScreen(
     onPkgMgrBypassArscRestrictionChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit,
+    scrollState: ScrollState,
+    highlightRegistry: HighlightAnchorRegistry
 ) {
     ZToolScaffold(
         topBar = {
@@ -203,7 +221,7 @@ private fun FrameworkSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
@@ -232,7 +250,8 @@ private fun FrameworkSettingsScreen(
                         onPkgMgrAllowHiddenApisSystemAppsChanged = onPkgMgrAllowHiddenApisSystemAppsChanged,
                         onPkgMgrBypassArscRestrictionChanged = onPkgMgrBypassArscRestrictionChanged,
                     ),
-                    bottomPadding = 96.dp
+                    bottomPadding = 96.dp,
+                    highlightRegistry = highlightRegistry
                 )
             }
         }
@@ -274,14 +293,16 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_keep_rotation_enable_title),
                         summary = stringResource(R.string.system_framework_keep_rotation_enable_summary),
                         checked = state.keepRotation,
-                        onCheckedChange = onKeepRotationChanged
+                        onCheckedChange = onKeepRotationChanged,
+                        key = "framework_keep_rotation"
                     )
                 )
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_framework_disable_hbm_thermal_limit_title),
                         checked = state.disableHbmThermalLimit,
-                        onCheckedChange = onDisableHbmThermalLimitChanged
+                        onCheckedChange = onDisableHbmThermalLimitChanged,
+                        key = "framework_disable_hbm_thermal_limit"
                     )
                 )
                 add(
@@ -289,7 +310,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_force_on_off_animation),
                         summary = stringResource(R.string.system_framework_force_on_off_animation_summary),
                         checked = state.forceOnOffAnimation,
-                        onCheckedChange = onForceOnOffAnimationChanged
+                        onCheckedChange = onForceOnOffAnimationChanged,
+                        key = "framework_force_on_off_animation"
                     )
                 )
                 if (state.forceOnOffAnimation) {
@@ -300,7 +322,8 @@ private fun frameworkSettingsSections(
                                     state = state,
                                     onForceOnOffAnimationDurationChanged = onForceOnOffAnimationDurationChanged
                                 )
-                            }
+                            },
+                            key = "framework_screen_on_off_animation_duration"
                         )
                     )
                 }
@@ -313,23 +336,27 @@ private fun frameworkSettingsSections(
                     title = stringResource(R.string.system_framework_disable_zui_applist_enable_title),
                     summary = stringResource(R.string.system_framework_disable_zui_applist_enable_summary),
                     checked = state.allowGetPackages,
-                    onCheckedChange = onAllowGetPackagesChanged
+                    onCheckedChange = onAllowGetPackagesChanged,
+                    key = "framework_disable_zui_applist"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_allow_relative_app_launch_title),
                     checked = state.allowRelativeAppLaunch,
-                    onCheckedChange = onAllowRelativeAppLaunchChanged
+                    onCheckedChange = onAllowRelativeAppLaunchChanged,
+                    key = "framework_allow_relative_app_launch"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_no_password_per_24h),
                     summary = stringResource(R.string.system_framework_no_password_per_24h_summary),
                     checked = state.noPasswordPer24H,
-                    onCheckedChange = onNoPasswordPer24H
+                    onCheckedChange = onNoPasswordPer24H,
+                    key = "framework_no_password_per_24h"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_allow_untrusted_touch),
                     checked = state.allowUntrustedTouch,
-                    onCheckedChange = onAllowUntrustedTouch
+                    onCheckedChange = onAllowUntrustedTouch,
+                    key = "framework_allow_untrusted_touch"
                 ),
             )
         ),
@@ -346,7 +373,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_allow_downgrade_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_allow_downgrade_summary),
                         checked = state.pkgMgrAllowDowngrade,
-                        onCheckedChange = onPkgMgrAllowDowngradeChanged
+                        onCheckedChange = onPkgMgrAllowDowngradeChanged,
+                        key = "framework_pkgmgr_allow_downgrade"
                     )
                 )
                 add(
@@ -354,7 +382,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_bypass_verification_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_bypass_verification_summary),
                         checked = state.pkgMgrBypassVerification,
-                        onCheckedChange = onPkgMgrBypassVerificationChanged
+                        onCheckedChange = onPkgMgrBypassVerificationChanged,
+                        key = "framework_pkgmgr_bypass_verification"
                     )
                 )
                 add(
@@ -362,7 +391,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_disable_verification_agent_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_disable_verification_agent_summary),
                         checked = state.pkgMgrDisableVerificationAgent,
-                        onCheckedChange = onPkgMgrDisableVerificationAgentChanged
+                        onCheckedChange = onPkgMgrDisableVerificationAgentChanged,
+                        key = "framework_pkgmgr_disable_verification_agent"
                     )
                 )
                 add(
@@ -370,7 +400,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_bypass_digest_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_bypass_digest_summary),
                         checked = state.pkgMgrBypassDigest,
-                        onCheckedChange = onPkgMgrBypassDigestChanged
+                        onCheckedChange = onPkgMgrBypassDigestChanged,
+                        key = "framework_pkgmgr_bypass_digest"
                     )
                 )
                 if (state.pkgMgrBypassDigest) {
@@ -379,7 +410,8 @@ private fun frameworkSettingsSections(
                             title = stringResource(R.string.system_framework_pkgmgr_use_previous_signatures_title),
                             summary = stringResource(R.string.system_framework_pkgmgr_use_previous_signatures_summary),
                             checked = state.pkgMgrUsePreviousSignatures,
-                            onCheckedChange = onPkgMgrUsePreviousSignaturesChanged
+                            onCheckedChange = onPkgMgrUsePreviousSignaturesChanged,
+                            key = "framework_pkgmgr_use_previous_signatures"
                         )
                     )
                 }
@@ -388,7 +420,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_bypass_exact_sig_match_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_bypass_exact_sig_match_summary),
                         checked = state.pkgMgrBypassExactSigMatch,
-                        onCheckedChange = onPkgMgrBypassExactSigMatchChanged
+                        onCheckedChange = onPkgMgrBypassExactSigMatchChanged,
+                        key = "framework_pkgmgr_bypass_exact_sig_match"
                     )
                 )
                 add(
@@ -396,7 +429,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_bypass_shared_user_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_bypass_shared_user_summary),
                         checked = state.pkgMgrBypassSharedUser,
-                        onCheckedChange = onPkgMgrBypassSharedUserChanged
+                        onCheckedChange = onPkgMgrBypassSharedUserChanged,
+                        key = "framework_pkgmgr_bypass_shared_user"
                     )
                 )
                 add(
@@ -404,7 +438,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_allow_hidden_apis_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_allow_hidden_apis_summary),
                         checked = state.pkgMgrAllowHiddenApisSystemApps,
-                        onCheckedChange = onPkgMgrAllowHiddenApisSystemAppsChanged
+                        onCheckedChange = onPkgMgrAllowHiddenApisSystemAppsChanged,
+                        key = "framework_pkgmgr_allow_hidden_apis"
                     )
                 )
                 add(
@@ -412,7 +447,8 @@ private fun frameworkSettingsSections(
                         title = stringResource(R.string.system_framework_pkgmgr_bypass_arsc_title),
                         summary = stringResource(R.string.system_framework_pkgmgr_bypass_arsc_summary),
                         checked = state.pkgMgrBypassArscRestriction,
-                        onCheckedChange = onPkgMgrBypassArscRestrictionChanged
+                        onCheckedChange = onPkgMgrBypassArscRestrictionChanged,
+                        key = "framework_pkgmgr_bypass_arsc"
                     )
                 )
             }
@@ -423,13 +459,15 @@ private fun frameworkSettingsSections(
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_force_relative_app_freeform_title),
                     checked = state.forceRelativeAppFreeform,
-                    onCheckedChange = onForceRelativeAppFreeformChanged
+                    onCheckedChange = onForceRelativeAppFreeformChanged,
+                    key = "framework_force_relative_app_freeform"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_disable_flag_secure_title),
                     summary = stringResource(R.string.system_framework_disable_flag_secure_summary),
                     checked = state.disableFlagSecure,
-                    onCheckedChange = onDisableFlagSecureChanged
+                    onCheckedChange = onDisableFlagSecureChanged,
+                    key = "framework_disable_flag_secure"
                 ),
                 SettingItem.Custom(
                     content = {
@@ -439,7 +477,8 @@ private fun frameworkSettingsSections(
                             onAiInputSignsChanged = onAiInputSignsChanged,
                             onShowAiInputInfo = onShowAiInputInfo
                         )
-                    }
+                    },
+                    key = "framework_ai_input_expand"
                 )
             )
         )
