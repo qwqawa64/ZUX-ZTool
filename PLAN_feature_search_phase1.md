@@ -98,31 +98,31 @@ companion field `featureDestination: FeatureDestination?` (add it to `SearchEntr
 Screen-by-screen checklist for index coverage (tick while implementing, keep in this
 file; source = the `grep -c SettingItem` census done in the analysis round):
 
-- [ ] FeaturesRoute: 11 cards (`SettingsDetail`, `GameTool`, `Ota`, `PackageInstaller`,
+- [x] FeaturesRoute: 11 cards (`SettingsDetail`, `GameTool`, `Ota`, `PackageInstaller`,
       `SystemUi`, `Launcher`, `MobileDesktop`, `Framework`, `SafeCenter`, `TbEngine`,
       `ZuiPerformance`) — `isFeatureCard = true`, `requiresPackage` = card packageName
       (Framework card: always visible, no package gate)
-- [ ] ZuiSettingsDetailScreen: 22 items (incl. Magic-Window search entry row)
-- [ ] FrameworkSettingsScreen: 18
-- [ ] LauncherSettingsScreen: 17
-- [ ] ControlCenterSettingsScreen: 15
-- [ ] SettingsRoute: 13
-- [ ] LockScreenSettingsScreen: 12
-- [ ] AnimationWallpaperSettingsScreen: 11
-- [ ] ThemeSettingsRoute: 10
-- [ ] StatusBarSettingsScreen: 8
-- [ ] SettingsAdvancedRoute: 7
-- [ ] PackageInstallerSettingsScreen: 6
-- [ ] OtaSettingsScreen: 5
-- [ ] GameToolSettingsScreen: 4
-- [ ] SafeCenterSettingsScreen: 3
-- [ ] MobileDesktopSettingsScreen: 3
-- [ ] SystemUiSettingsScreen (hub): 1 (the hub is one card grid; index the 5 sub-screen
+- [x] ZuiSettingsDetailScreen: 22 items (incl. Magic-Window search entry row)
+- [x] FrameworkSettingsScreen: 18
+- [x] LauncherSettingsScreen: 17
+- [x] ControlCenterSettingsScreen: 15
+- [x] SettingsRoute: 13
+- [x] LockScreenSettingsScreen: 12
+- [x] AnimationWallpaperSettingsScreen: 11
+- [x] ThemeSettingsRoute: 10
+- [x] StatusBarSettingsScreen: 8
+- [x] SettingsAdvancedRoute: 7
+- [x] PackageInstallerSettingsScreen: 6
+- [x] OtaSettingsScreen: 5
+- [x] GameToolSettingsScreen: 4
+- [x] SafeCenterSettingsScreen: 3
+- [x] MobileDesktopSettingsScreen: 3
+- [x] SystemUiSettingsScreen (hub): 1 (the hub is one card grid; index the 5 sub-screen
       entry rows instead — they are `SettingItem.Entry`s)
-- [ ] TbEngineSettingsScreen: 6
-- [ ] ZuiPerformanceSettingsScreen: 2
-- [ ] SystemUiMiscSettingsScreen: 2
-- [ ] SettingsAboutRoute: index as 1 entry (screen-level, no SettingItems)
+- [x] TbEngineSettingsScreen: 6
+- [x] ZuiPerformanceSettingsScreen: 2
+- [x] SystemUiMiscSettingsScreen: 2
+- [x] SettingsAboutRoute: index as 1 entry (screen-level, no SettingItems)
 
 Conditional children (keep in index + `parentTitleRes` annotation) — known groups from
 the analysis round: Launcher custom-grid sliders (2), app-icon-unmask dynamic (1),

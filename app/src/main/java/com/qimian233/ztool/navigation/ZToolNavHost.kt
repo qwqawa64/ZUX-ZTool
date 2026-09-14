@@ -113,7 +113,7 @@ internal fun MainRouteNavHost(
     val horizontalEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? =
         {
             slideIntoContainer(
-                if (isForwardNavigation()) {
+                if (isForwardPush()) {
                     AnimatedContentTransitionScope.SlideDirection.Left
                 } else {
                     AnimatedContentTransitionScope.SlideDirection.Right
@@ -123,7 +123,7 @@ internal fun MainRouteNavHost(
         }
     val horizontalExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
         slideOutOfContainer(
-            if (isForwardNavigation()) {
+            if (isForwardPush()) {
                 AnimatedContentTransitionScope.SlideDirection.Left
             } else {
                 AnimatedContentTransitionScope.SlideDirection.Right
@@ -305,7 +305,8 @@ internal fun MainRouteNavHost(
                 onOpenEntry = { entry ->
                     if (entry.isFeatureCard && entry.featureDestination != null) {
                         // Two-step so the back stack reads Features › detail,
-                        // matching how the user would have browsed there.
+                        // matching how the user would have browsed there. The
+                        // popUpTo also removes Search from the stack.
                         navController.navigate(MainRoute.Features.name) {
                             launchSingleTop = true
                             popUpTo(navController.graph.startDestinationId) {
@@ -316,13 +317,15 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     } else {
+                        // popUpTo removes Search so system back from the target
+                        // returns to the originating tab, not back into search.
+                        // Popping after navigating would also pop the freshly
+                        // pushed destination, since it sits above Search.
                         navController.navigate(entry.route) {
                             launchSingleTop = true
+                            popUpTo(HiddenRoute.SEARCH) { inclusive = true }
                         }
                     }
-                    // System back from the target returns to the originating tab,
-                    // not back into search.
-                    navController.popBackStack(HiddenRoute.SEARCH, inclusive = true)
                 }
             )
         }
@@ -706,6 +709,21 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardNavigatio
             navigationRouteIndex(initialState.destination.route)
 }
 
+/**
+ * Direction for PUSH transitions (enter/exit). Identical to [isForwardNavigation]
+ * except that anything pushing to or from the search page slides forward: search is
+ * opened as a child action of whichever tab launched it, and opening a result target
+ * must keep reading as a forward step, not a back step.
+ */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardPush(): Boolean {
+    if (targetState.destination.route == HiddenRoute.SEARCH ||
+        initialState.destination.route == HiddenRoute.SEARCH
+    ) {
+        return true
+    }
+    return isForwardNavigation()
+}
+
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeSlideDirection(
     mainForwardDirection: AnimatedContentTransitionScope.SlideDirection,
     mainBackwardDirection: AnimatedContentTransitionScope.SlideDirection,
@@ -746,6 +764,10 @@ private fun navigationRouteIndex(route: String?): Int {
     return when (route) {
         MainRoute.Home.name -> 0
         MainRoute.Features.name -> 1
+        // Search sits at the top of the depth order so every POP transition to or
+        // from it slides backward. Push direction involving search is handled by
+        // isForwardPush(), which always slides forward.
+        HiddenRoute.SEARCH -> 10
         FeatureDestination.SettingsDetail.route -> 2
         FeatureDestination.GameTool.route -> 2
         FeatureDestination.Ota.route -> 2
