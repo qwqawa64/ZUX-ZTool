@@ -246,6 +246,12 @@ private fun SplashPage(
                 color = LocalZToolColorScheme.current.onSurfaceVariant,
                 fontFamily = FontFamily.Monospace
             )
+            Spacer(modifier = Modifier.height(48.dp))
+            Text(
+                text = stringResource(R.string.page_firstrun_splash_tap_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = LocalZToolColorScheme.current.onSurfaceVariant
+            )
         }
     }
 }
