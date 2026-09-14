@@ -85,6 +85,7 @@ import com.qimian233.ztool.ui.components.ZToolMarkdownText
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalThemeRevealController
+import com.qimian233.ztool.ui.theme.ztoolRevealCoverColor
 import com.qimian233.ztool.viewmodel.FirstrunAgreementViewModel
 import kotlinx.coroutines.delay
 
@@ -113,7 +114,7 @@ fun FirstrunAgreementRoute(
     val agreementPageScrollState = rememberScrollState()
     val permissionPageScrollState = rememberScrollState()
     val revealController = LocalThemeRevealController.current
-    val introCoverColor = LocalZToolColorScheme.current.background
+    val introCoverColor = ztoolRevealCoverColor()
     val gate = remember { ScrollToBottomAgreementGate() }
     val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Splash) }
     // True while a page change is driven by a reveal — the pages swap instantly

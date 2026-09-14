@@ -61,6 +61,15 @@ tailrec fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
+/**
+ * Opaque cover color for cover reveals: black blended with the current
+ * primary color, matching the ambient shadow tint of snapshot reveals and
+ * guaranteeing a visible ripple edge against the page background.
+ */
+@Composable
+fun ztoolRevealCoverColor(): Color =
+    lerp(Color.Black, LocalZToolColorScheme.current.primary, 0.50f)
+
 @Composable
 fun ThemeRevealProvider(
     initialCoverColor: Color? = null,

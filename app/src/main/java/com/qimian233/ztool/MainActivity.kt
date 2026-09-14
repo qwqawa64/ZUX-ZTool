@@ -64,6 +64,7 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
+import com.qimian233.ztool.ui.theme.ztoolRevealCoverColor
 import com.qimian233.ztool.utils.ConfigUpgrade
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -127,7 +128,7 @@ class MainActivity : ComponentActivity(),
             ZToolTheme(settings = themeSettings) {
                 com.qimian233.ztool.ui.theme.ThemeRevealProvider(
                     initialCoverColor = if (firstrunIntroRevealPending) {
-                        LocalZToolColorScheme.current.background
+                        ztoolRevealCoverColor()
                     } else {
                         null
                     }
