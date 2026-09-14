@@ -638,16 +638,22 @@ private fun controlCenterSettingsSections(
                     SettingItem.Custom(
                         key = "control_center_custom_clock_text_size",
                         content = {
-                            SliderSettingRow(
-                                title = stringResource(R.string.system_ui_control_center_custom_clock_text_size_title),
-                                valueLabel = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
-                                enabled = state.textSizeEnabled,
-                                value = state.textSize,
-                                valueRange = 10f..30f,
-                                steps = 39,
-                                onEnabledChanged = onTextSizeEnabledChanged,
-                                onValueChanged = onTextSizeChanged
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                            ) {
+                                SliderSettingRow(
+                                    title = stringResource(R.string.system_ui_control_center_custom_clock_text_size_title),
+                                    valueLabel = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
+                                    enabled = state.textSizeEnabled,
+                                    value = state.textSize,
+                                    valueRange = 10f..30f,
+                                    steps = 39,
+                                    onEnabledChanged = onTextSizeEnabledChanged,
+                                    onValueChanged = onTextSizeChanged
+                                )
+                            }
                         }
                     )
                 )
@@ -655,16 +661,22 @@ private fun controlCenterSettingsSections(
                     SettingItem.Custom(
                         key = "control_center_custom_clock_letter_spacing",
                         content = {
-                            SliderSettingRow(
-                                title = stringResource(R.string.system_ui_control_center_custom_clock_letter_spacing_title),
-                                valueLabel = "%.1f".format(state.letterSpacing),
-                                enabled = state.letterSpacingEnabled,
-                                value = state.letterSpacing,
-                                valueRange = 0f..2f,
-                                steps = 19,
-                                onEnabledChanged = onLetterSpacingEnabledChanged,
-                                onValueChanged = onLetterSpacingChanged
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                            ) {
+                                SliderSettingRow(
+                                    title = stringResource(R.string.system_ui_control_center_custom_clock_letter_spacing_title),
+                                    valueLabel = "%.1f".format(state.letterSpacing),
+                                    enabled = state.letterSpacingEnabled,
+                                    value = state.letterSpacing,
+                                    valueRange = 0f..2f,
+                                    steps = 19,
+                                    onEnabledChanged = onLetterSpacingEnabledChanged,
+                                    onValueChanged = onLetterSpacingChanged
+                                )
+                            }
                         }
                     )
                 )
@@ -676,8 +688,7 @@ private fun controlCenterSettingsSections(
                                 title = stringResource(R.string.system_ui_control_center_custom_clock_text_color_title),
                                 summary = "#%08X".format(state.controlCenterTextColor),
                                 checked = state.controlCenterTextColorEnabled,
-                                onCheckedChange = onTextColorEnabledChanged,
-                                padding = 0.dp
+                                onCheckedChange = onTextColorEnabledChanged
                             )
                             if (state.controlCenterTextColorEnabled) {
                                 ZToolArgbColorTextFieldRow(
@@ -701,8 +712,7 @@ private fun controlCenterSettingsSections(
                                 title = stringResource(R.string.system_ui_control_center_custom_clock_text_bold_title),
                                 summary = stringResource(R.string.system_ui_control_center_use_bold_date),
                                 checked = state.textBold,
-                                onCheckedChange = onTextBoldChanged,
-                                padding = 0.dp
+                                onCheckedChange = onTextBoldChanged
                             )
                         }
                     )

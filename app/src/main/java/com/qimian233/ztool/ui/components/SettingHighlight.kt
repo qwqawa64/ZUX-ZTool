@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
@@ -53,22 +54,15 @@ const val AUDIT_DELAY_MILLIS = 2000L
 class HighlightAnchorRegistry {
 
     private val rowBounds = ConcurrentHashMap<String, androidx.compose.ui.geometry.Rect>()
-    private var containerTopInRoot: Float = 0f
-    private val waiters = ConcurrentHashMap<String, MutableList<CompletableDeferred<Int>>>()
+    private val waiters = ConcurrentHashMap<String, MutableList<CompletableDeferred<Unit>>>()
     private val mutex = Mutex()
-
-    /** Called once by the settings-list content column. */
-    fun reportContainer(topInRoot: Float) {
-        containerTopInRoot = topInRoot
-    }
 
     fun reportRow(key: String, boundsInRoot: androidx.compose.ui.geometry.Rect) {
         rowBounds[key] = boundsInRoot
-        val offset = offsetFor(key)
-        if (offset != null) {
-            synchronized(waiters) {
-                waiters.remove(key)?.forEach { it.complete(offset) }
-            }
+        synchronized(waiters) {
+            // Offset is resolved by the controller at consumption time (late
+            // binding), so waiters only need to know the row EXISTS.
+            waiters.remove(key)?.forEach { it.complete(Unit) }
         }
     }
 
@@ -79,21 +73,51 @@ class HighlightAnchorRegistry {
     /** Keys of all rows currently registered (used by the debug index audit). */
     fun snapshotKeys(): Set<String> = rowBounds.keys.toSet()
 
+    /**
+     * Scroll offset that brings the row to the top of the content column, resolved
+     * from CURRENT bounds. Returns null while either the row or the container has
+     * not reported yet — never a stale/wrong-signed value.
+     */
     fun offsetFor(key: String): Int? {
         val bounds = rowBounds[key] ?: return null
-        // Root coordinate of the row's top minus the container's top equals the
-        // scroll offset that brings the row to the top of the content column.
-        return (bounds.top - containerTopInRoot).roundToInt()
+        val containerTop = containerTopInRoot ?: return null
+        return (bounds.top - containerTop).roundToInt()
     }
 
+    /**
+     * Suspends until the row has reported its bounds, then returns the offset
+     * resolved at that moment. If the row is not visible (conditional child behind
+     * an OFF parent switch) it never reports and this returns null on timeout.
+     */
     suspend fun await(key: String, timeoutMillis: Long): Int? {
-        offsetFor(key)?.let { return it }
-        val deferred = CompletableDeferred<Int>()
+        if (rowBounds.containsKey(key)) {
+            // Re-read on next frame so freshly composed rows have valid bounds.
+            withFrameNanos { }
+            return offsetFor(key)
+        }
+        val deferred = CompletableDeferred<Unit>()
         mutex.withLock {
-            offsetFor(key)?.let { return it }
+            if (rowBounds.containsKey(key)) {
+                withFrameNanos { }
+                return offsetFor(key)
+            }
             waiters.getOrPut(key) { mutableListOf() }.add(deferred)
         }
-        return withTimeoutOrNull(timeoutMillis) { deferred.await() }
+        val arrived = withTimeoutOrNull(timeoutMillis) {
+            deferred.await()
+            true
+        } ?: return null
+        if (!arrived) return null
+        // Bounds from the reporting frame may predate final layout; settle one frame.
+        withFrameNanos { }
+        return offsetFor(key)
+    }
+
+    private var containerTopInRoot: Float? = null
+
+    /** Called once by the settings-list content column. */
+    fun reportContainer(topInRoot: Float) {
+        containerTopInRoot = topInRoot
     }
 }
 
@@ -171,6 +195,12 @@ fun HighlightController(
 
         if (offset != null) {
             scrollState.animateScrollTo(offset.coerceAtLeast(0))
+            // Layout settled after the first scroll (rows above may have reported
+            // while off-screen); correct once so the row sits in view on long pages.
+            val refined = registry.offsetFor(key)
+            if (refined != null && refined != offset) {
+                scrollState.animateScrollTo(refined.coerceAtLeast(0))
+            }
             activeId = key
             delay(HighlightPulseCycleMillis * 2L)
             activeId = null
