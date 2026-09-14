@@ -896,4 +896,17 @@
     <string name="system_ui_media_output_dialog_center_title">Center media output dialog</string>
     <string name="system_ui_media_output_dialog_center_summary">Fixes the output switcher dialog launched from the Media output tile sticking to the left edge of the screen. Requires a SystemUI restart</string>
     <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">No uninstallable apps in the selection</string>
+    <string name="system_ui_animation_wallpaper_title_suffix">\ - Animation &amp; wallpaper</string>
+    <string name="system_ui_animation_wallpaper_setting_title">Animation &amp; wallpaper</string>
+    <string name="system_ui_animation_wallpaper_setting_summary">Charging animation and desktop live wallpaper settings</string>
+    <string name="system_ui_misc_setting_summary">Guest mode, biometric error vibration and other misc settings</string>
+    <string name="search_title">Search</string>
+    <string name="search_hint">Search features &amp; settings</string>
+    <string name="search_no_results">No matching results</string>
+    <string name="search_empty_hint">Type keywords to find features and settings in this app</string>
+    <string name="search_group_feature_cards">Feature cards</string>
+    <string name="search_requires_parent_switch">Requires "%1$s" enabled</string>
+    <string name="search_requires_parent_switch_off">Requires "%1$s" disabled</string>
+    <string name="search_condition_m3_expressive_only">Only visible in Material 3 Expressive style</string>
+    <string name="search_condition_miuix_only">Only visible in Miuix style</string>
 </resources>

@@ -26,8 +26,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,7 +76,8 @@ enum class FeatureDestination(
 
 @Composable
 fun FeaturesMainRoute(
-    onFeatureDestinationSelected: (FeatureDestination) -> Unit = {}
+    onFeatureDestinationSelected: (FeatureDestination) -> Unit = {},
+    onOpenSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val allItems = rememberFeatureItems(context)
@@ -155,7 +158,8 @@ fun FeaturesMainRoute(
             } else {
                 scopeRequestItem = item
             }
-        }
+        },
+        onOpenSearch = onOpenSearch
     )
 }
 
@@ -317,13 +321,22 @@ private fun rememberInstalledPackages(context: Context): Set<String> {
 private fun FeaturesRoute(
     items: List<FeatureItem>,
     warningMessageRes: Int?,
-    onFeatureClick: (FeatureItem) -> Unit
+    onFeatureClick: (FeatureItem) -> Unit,
+    onOpenSearch: () -> Unit
 ) {
     ZToolScaffold(
         topBar = {
             ZToolTopAppBar(
                 title = stringResource(R.string.page_features_title),
-                addNavIcon = false
+                addNavIcon = false,
+                actions = {
+                    IconButton(onClick = onOpenSearch) {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = stringResource(R.string.search_title)
+                        )
+                    }
+                }
             )
         }
     ) { innerPadding ->

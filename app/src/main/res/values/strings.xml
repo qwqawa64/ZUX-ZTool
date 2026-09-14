@@ -947,4 +947,17 @@
     <string name="system_ui_media_output_dialog_center_title">媒体输出弹窗居中</string>
     <string name="system_ui_media_output_dialog_center_summary">修正从"媒体输出"磁贴拉起的输出切换弹窗贴屏幕左缘的问题，需重启 SystemUI 生效</string>
     <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">所选中内容没有可卸载的应用</string>
+    <string name="system_ui_animation_wallpaper_title_suffix">\ - 动画与壁纸</string>
+    <string name="system_ui_animation_wallpaper_setting_title">动画与壁纸</string>
+    <string name="system_ui_animation_wallpaper_setting_summary">充电动画与桌面动态壁纸设置</string>
+    <string name="system_ui_misc_setting_summary">访客模式、生物识别震动等杂项设置</string>
+    <string name="search_title">搜索</string>
+    <string name="search_hint">搜索功能与设置</string>
+    <string name="search_no_results">没有匹配的结果</string>
+    <string name="search_empty_hint">输入关键词以查找本应用的功能与设置项</string>
+    <string name="search_group_feature_cards">功能入口</string>
+    <string name="search_requires_parent_switch">需先开启「%1$s」</string>
+    <string name="search_requires_parent_switch_off">需先关闭「%1$s」</string>
+    <string name="search_condition_m3_expressive_only">仅 Material 3 Expressive 风格下可见</string>
+    <string name="search_condition_miuix_only">仅 Miuix 风格下可见</string>
 </resources>

@@ -27,6 +27,7 @@ import com.qimian233.ztool.screens.ota.OtaSettingsRoute
 import com.qimian233.ztool.screens.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.screens.safecenter.SafeCenterSettingsRoute
 import com.qimian233.ztool.screens.pp.ZuiPerformanceSettingsRoute
+import com.qimian233.ztool.screens.search.SearchMainRoute
 import com.qimian233.ztool.screens.tbengine.TbEngineSettingsRoute
 import com.qimian233.ztool.screens.ztoolsettings.SettingsMainRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRoute
@@ -197,6 +198,11 @@ internal fun MainRouteNavHost(
                     navController.navigate(destination.route) {
                         launchSingleTop = true
                     }
+                },
+                onOpenSearch = {
+                    navController.navigate(HiddenRoute.SEARCH) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -220,6 +226,11 @@ internal fun MainRouteNavHost(
                 },
                 onOpenAdvanced = {
                     navController.navigate(HiddenRoute.SETTINGS_ADVANCED) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenSearch = {
+                    navController.navigate(HiddenRoute.SEARCH) {
                         launchSingleTop = true
                     }
                 }
@@ -273,6 +284,45 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
+                }
+            )
+        }
+        composable(
+            route = HiddenRoute.SEARCH,
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit
+        ) {
+            SearchMainRoute(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                onOpenEntry = { entry ->
+                    if (entry.isFeatureCard && entry.featureDestination != null) {
+                        // Two-step so the back stack reads Features › detail,
+                        // matching how the user would have browsed there.
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                        }
+                        navController.navigate(entry.featureDestination.route) {
+                            launchSingleTop = true
+                        }
+                    } else {
+                        navController.navigate(entry.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                    // System back from the target returns to the originating tab,
+                    // not back into search.
+                    navController.popBackStack(HiddenRoute.SEARCH, inclusive = true)
                 }
             )
         }

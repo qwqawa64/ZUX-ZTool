@@ -28,9 +28,11 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
 import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -69,7 +71,8 @@ import com.qimian233.ztool.viewmodel.SettingsViewModel
 fun SettingsMainRoute(
     onOpenThemeSettings: () -> Unit,
     onOpenAbout: () -> Unit,
-    onOpenAdvanced: () -> Unit
+    onOpenAdvanced: () -> Unit,
+    onOpenSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val activity = context as MainActivity
@@ -166,7 +169,8 @@ fun SettingsMainRoute(
         onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
         onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
         onOpenAdvanced = onOpenAdvanced,
-        onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled
+        onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled,
+        onOpenSearch = onOpenSearch
     )
 
     SettingsDialogs(
@@ -280,13 +284,22 @@ private fun SettingsRoute(
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
     onOpenAdvanced: () -> Unit,
-    onAutoCheckUpdateChanged: (Boolean) -> Unit
+    onAutoCheckUpdateChanged: (Boolean) -> Unit,
+    onOpenSearch: () -> Unit
 ) {
     ZToolScaffold (
         topBar = {
             ZToolTopAppBar(
                 title = stringResource(R.string.page_settings_title),
-                addNavIcon = false
+                addNavIcon = false,
+                actions = {
+                    IconButton(onClick = onOpenSearch) {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = stringResource(R.string.search_title)
+                        )
+                    }
+                }
             )
         }
     ) { innerPadding ->
