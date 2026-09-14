@@ -216,10 +216,10 @@ fun HighlightableSettingRow(
                 }
             }
             .drawWithContent {
-                drawContent()
+                // Pulse renders BEHIND the row content so text stays readable.
                 if (pulseAlpha > 0f) {
                     val corner = CornerRadius(12.dp.toPx(), 12.dp.toPx())
-                    val color = pulseColor.copy(alpha = pulseAlpha * 0.9f)
+                    val color = pulseColor.copy(alpha = pulseAlpha * 0.7f)
                     when (shape) {
                         null -> drawRoundRect(
                             color = color,
@@ -231,6 +231,7 @@ fun HighlightableSettingRow(
                         )
                     }
                 }
+                drawContent()
             }
     ) {
         content()

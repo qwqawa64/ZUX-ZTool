@@ -333,7 +333,8 @@ private fun FeaturesRoute(
                     IconButton(onClick = onOpenSearch) {
                         Icon(
                             imageVector = Icons.Rounded.Search,
-                            contentDescription = stringResource(R.string.search_title)
+                            contentDescription = stringResource(R.string.search_title),
+                            tint = LocalZToolColorScheme.current.onSurface
                         )
                     }
                 }
