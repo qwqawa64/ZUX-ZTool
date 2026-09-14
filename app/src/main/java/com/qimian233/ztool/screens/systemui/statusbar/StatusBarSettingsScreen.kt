@@ -369,51 +369,53 @@ private fun statusBarSettingsSections(
             )
         )
         add(
-            SettingItem.Custom(
-                key = "status_bar_clock_text_size",
-                content = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                    ) {
-                        SliderSettingRow(
-                            title = stringResource(R.string.system_ui_status_bar_text_size_title),
-                            valueLabel = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
-                            enabled = state.textSizeEnabled,
+            SettingItem.Switch(
+                title = stringResource(R.string.system_ui_status_bar_text_size_title),
+                checked = state.textSizeEnabled,
+                onCheckedChange = onTextSizeEnabledChanged,
+                key = "status_bar_clock_text_size"
+            )
+        )
+        if (state.textSizeEnabled) {
+            add(
+                SettingItem.Custom(
+                    key = "dyn_status_bar_clock_text_size_slider",
+                    content = {
+                        ClockFormatSlider(
                             value = state.textSize,
+                            valueText = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
                             valueRange = 10f..30f,
                             steps = 39,
-                            onEnabledChanged = onTextSizeEnabledChanged,
                             onValueChanged = onTextSizeChanged
                         )
                     }
-                }
+                )
+            )
+        }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),
+                checked = state.letterSpacingEnabled,
+                onCheckedChange = onLetterSpacingEnabledChanged,
+                key = "status_bar_clock_letter_spacing"
             )
         )
-        add(
-            SettingItem.Custom(
-                key = "status_bar_clock_letter_spacing",
-                content = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                    ) {
-                        SliderSettingRow(
-                            title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),
-                            valueLabel = "%.1f".format(state.letterSpacing),
-                            enabled = state.letterSpacingEnabled,
+        if (state.letterSpacingEnabled) {
+            add(
+                SettingItem.Custom(
+                    key = "dyn_status_bar_clock_letter_spacing_slider",
+                    content = {
+                        ClockFormatSlider(
                             value = state.letterSpacing,
+                            valueText = "%.1f".format(state.letterSpacing),
                             valueRange = 0f..2f,
                             steps = 19,
-                            onEnabledChanged = onLetterSpacingEnabledChanged,
                             onValueChanged = onLetterSpacingChanged
                         )
                     }
-                }
+                )
             )
-        )
+        }
         add(
             SettingItem.Custom(
                 key = "status_bar_clock_text_color",
@@ -621,34 +623,24 @@ private fun CustomClockConfig(
 }
 
 @Composable
-private fun SliderSettingRow(
-    title: String,
-    valueLabel: String,
-    enabled: Boolean,
+/**
+ * Slider-only body for the clock format sub-rows; the enabling switch is a separate
+ * SettingItem.Switch so the row heights stay under the shared funnel's control.
+ */
+private fun ClockFormatSlider(
     value: Float,
+    valueText: String,
     valueRange: ClosedFloatingPointRange<Float>,
     steps: Int,
-    onEnabledChanged: (Boolean) -> Unit,
     onValueChanged: (Float) -> Unit
 ) {
-    ZToolSwitchRow(
-        title = title,
-        checked = enabled,
-        onCheckedChange = onEnabledChanged,
-        padding = 0.dp
+    ZToolSliderRow(
+        value = value,
+        valueText = valueText,
+        onValueChange = onValueChanged,
+        valueRange = valueRange,
+        steps = steps
     )
-    if (enabled) {
-        ZToolSliderRow(
-            value = value,
-            valueText = valueLabel,
-            onValueChange = onValueChanged,
-            valueRange = valueRange,
-            steps = steps,
-            modifier = Modifier.padding(horizontal = 0.dp),
-            horizontalPadding = 0.dp,
-            verticalPadding = 0.dp
-        )
-    }
 }
 
 @Composable
