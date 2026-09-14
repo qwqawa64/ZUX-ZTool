@@ -39,8 +39,8 @@ import kotlin.math.roundToInt
 const val HighlightAwaitRowTimeoutMillis = 1200L
 /** Extra grace when falling back to the parent key. */
 const val HighlightAwaitParentTimeoutMillis = 400L
-/** One pulse cycle (fade in + hold + fade out); the timeline runs two cycles. */
-const val HighlightPulseCycleMillis = 1200
+/** One pulse cycle (fade in + fade out); the timeline runs two cycles, 1.2s total. */
+const val HighlightPulseCycleMillis = 600
 
 /**
  * Row bounds (in root coordinates) keyed by [SettingItem.key]; the scroll container
@@ -219,7 +219,7 @@ fun HighlightableSettingRow(
                 // Pulse renders BEHIND the row content so text stays readable.
                 if (pulseAlpha > 0f) {
                     val corner = CornerRadius(12.dp.toPx(), 12.dp.toPx())
-                    val color = pulseColor.copy(alpha = pulseAlpha * 0.7f)
+                    val color = pulseColor.copy(alpha = pulseAlpha * 0.5f)
                     when (shape) {
                         null -> drawRoundRect(
                             color = color,
