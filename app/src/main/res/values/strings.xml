@@ -27,7 +27,6 @@
     <string name="page_firstrun_agreement_dismiss">不同意并退出</string>
     <string name="page_firstrun_agreement_screen_title">首次运行说明</string>
     <string name="page_firstrun_agreement_screen_subtitle">首先，请仔细阅读用户协议</string>
-    <string name="page_firstrun_start">开始</string>
     <string name="page_firstrun_permissions_title">权限配置</string>
     <string name="page_firstrun_permissions_subtitle">授权后方可使用模块功能</string>
     <string name="page_firstrun_permissions_check_title">权限检查与处理</string>

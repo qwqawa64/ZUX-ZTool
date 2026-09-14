@@ -26,7 +26,6 @@
     <string name="page_firstrun_agreement_dismiss">I disagree, exit</string>
     <string name="page_firstrun_agreement_screen_title">First-run notice</string>
     <string name="page_firstrun_agreement_screen_subtitle">First, please read this user agreement carefully</string>
-    <string name="page_firstrun_start">Start</string>
     <string name="page_firstrun_permissions_title">Permission setup</string>
     <string name="page_firstrun_permissions_subtitle">The module could not work properly without these permissions</string>
     <string name="page_firstrun_permissions_check_title">Permission checks and actions</string>

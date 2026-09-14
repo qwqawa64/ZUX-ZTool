@@ -13,6 +13,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -213,11 +214,16 @@ private fun SplashPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onStart
+            )
             .padding(20.dp),
-        contentAlignment = Alignment.BottomCenter
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 200.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -240,15 +246,6 @@ private fun SplashPage(
                 color = LocalZToolColorScheme.current.onSurfaceVariant,
                 fontFamily = FontFamily.Monospace
             )
-        }
-
-        ZToolButton(
-            onClick = onStart,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-        ) {
-            Text(stringResource(R.string.page_firstrun_start))
         }
     }
 }
