@@ -8,6 +8,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
@@ -211,6 +216,16 @@ fun FirstrunAgreementRoute(
 private fun SplashPage(
     onStart: () -> Unit
 ) {
+    val hintLetterSpacing by rememberInfiniteTransition(label = "splash_hint_breathing")
+        .animateFloat(
+            initialValue = 0f,
+            targetValue = 1.5f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "splash_hint_letter_spacing"
+        )
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -250,7 +265,8 @@ private fun SplashPage(
             Text(
                 text = stringResource(R.string.page_firstrun_splash_tap_hint),
                 style = MaterialTheme.typography.bodyMedium,
-                color = LocalZToolColorScheme.current.onSurfaceVariant
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
+                letterSpacing = hintLetterSpacing.sp
             )
         }
     }
