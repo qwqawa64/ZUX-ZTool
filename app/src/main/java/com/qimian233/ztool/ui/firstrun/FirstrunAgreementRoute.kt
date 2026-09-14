@@ -12,7 +12,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -44,7 +42,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -74,7 +71,6 @@ import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalThemeRevealController
 import com.qimian233.ztool.viewmodel.FirstrunAgreementViewModel
-import kotlinx.coroutines.delay
 
 @Composable
 fun FirstrunAgreementRoute(
@@ -100,7 +96,6 @@ fun FirstrunAgreementRoute(
     val revealController = LocalThemeRevealController.current
     val gate = remember { ScrollToBottomAgreementGate() }
     val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Splash) }
-    val countdownSecondsState = rememberSaveable { mutableIntStateOf(30) }
 
     val usageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -112,15 +107,6 @@ fun FirstrunAgreementRoute(
     LaunchedEffect(currentPageState.value) {
         if (currentPageState.value == FirstrunPage.Permissions) {
             viewModel.refreshChecks()
-        }
-    }
-
-    LaunchedEffect(currentPageState.value) {
-        if (currentPageState.value != FirstrunPage.Agreement) return@LaunchedEffect
-        countdownSecondsState.intValue = 30
-        while (countdownSecondsState.intValue > 0 && currentPageState.value == FirstrunPage.Agreement) {
-            delay(1000)
-            countdownSecondsState.intValue -= 1
         }
     }
 
@@ -174,9 +160,11 @@ fun FirstrunAgreementRoute(
                         markdownText = uiState.agreementMarkdown,
                         pageScrollState = agreementPageScrollState,
                         readScrollState = agreementReadScrollState,
-                        firstPageReady = gate.satisfied && countdownSecondsState.intValue == 0,
-                        countdownSeconds = countdownSecondsState.intValue,
-                        onNext = { currentPageState.value = FirstrunPage.Permissions },
+                        firstPageReady = gate.satisfied,
+                        onNext = {
+                            viewModel.acceptAgreement()
+                            currentPageState.value = FirstrunPage.Permissions
+                        },
                         onDisagree = {
                             viewModel.declineAgreement()
                             onAgreementDeclined()
@@ -268,7 +256,6 @@ private fun AgreementPage(
     pageScrollState: ScrollState,
     readScrollState: ScrollState,
     firstPageReady: Boolean,
-    countdownSeconds: Int,
     onNext: () -> Unit,
     onDisagree: () -> Unit
 ) {
@@ -285,56 +272,42 @@ private fun AgreementPage(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             if (showHeader) {
-                HeaderCard(
+                PageHeader(
                     title = stringResource(R.string.page_firstrun_agreement_screen_title),
                     subtitle = stringResource(R.string.page_firstrun_agreement_screen_subtitle)
                 )
             }
 
+            Text(
+                text = stringResource(R.string.page_firstrun_agreement_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
             ZToolCard(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = LocalZToolColorScheme.current.surfaceContainerHigh
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = stringResource(R.string.page_firstrun_agreement_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                        .verticalScroll(readScrollState)
+                        .padding(16.dp)
+                ) {
+                    ZToolMarkdownText(
+                        markdown = markdownText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LocalZToolColorScheme.current.onSurfaceVariant,
+                        fontSize = 18.sp
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(400.dp)
-                            .background(
-                                color = LocalZToolColorScheme.current.surfaceContainerHighest,
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .verticalScroll(readScrollState)
-                            .padding(16.dp)
-                    ) {
-                        ZToolMarkdownText(
-                            markdown = markdownText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = LocalZToolColorScheme.current.onSurfaceVariant,
-                            fontSize = 18.sp
-                        )
-                    }
                 }
             }
         }
 
         BottomActionBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            nextText = if (countdownSeconds > 0) {
-                stringResource(
-                    R.string.page_firstrun_customized_confirm_with_countdown,
-                    stringResource(R.string.page_firstrun_next_step),
-                    countdownSeconds
-                )
-            } else {
-                stringResource(R.string.page_firstrun_next_step)
-            },
+            nextText = stringResource(R.string.page_firstrun_next_step),
             nextEnabled = firstPageReady,
             onNext = onNext,
             onDisagree = onDisagree
@@ -367,32 +340,25 @@ private fun PermissionPage(
                 .padding(bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            HeaderCard(
+            PageHeader(
                 title = stringResource(R.string.page_firstrun_permissions_title),
                 subtitle = stringResource(R.string.page_firstrun_permissions_subtitle)
             )
 
-            ZToolCard(
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = LocalZToolColorScheme.current.surfaceContainerHigh
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = stringResource(R.string.page_firstrun_permissions_check_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ActionRow(
-                        state = state,
-                        onRequestRoot = onRequestRoot,
-                        onCheckModule = onCheckModule,
-                        onRequestPackages = onRequestPackages,
-                        onRequestUsage = onRequestUsage,
-                        onRequestOverlay = onRequestOverlay
-                    )
-                }
-            }
+            Text(
+                text = stringResource(R.string.page_firstrun_permissions_check_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            ActionRow(
+                state = state,
+                onRequestRoot = onRequestRoot,
+                onCheckModule = onCheckModule,
+                onRequestPackages = onRequestPackages,
+                onRequestUsage = onRequestUsage,
+                onRequestOverlay = onRequestOverlay
+            )
 
             StatusBanner(
                 text = if (allGranted) {
@@ -438,28 +404,22 @@ private fun StatusBanner(
 }
 
 @Composable
-private fun HeaderCard(
+private fun PageHeader(
     title: String,
     subtitle: String
 ) {
-    ZToolCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = LocalZToolColorScheme.current.primaryContainer
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = LocalZToolColorScheme.current.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalZToolColorScheme.current.onPrimaryContainer
-            )
-        }
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = LocalZToolColorScheme.current.onSurfaceVariant
+        )
     }
 }
 

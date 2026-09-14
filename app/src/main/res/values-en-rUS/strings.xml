@@ -795,6 +795,8 @@
     <string name="page_settings_auto_check_update_title">Check Updates Automatically</string>
     <string name="page_settings_advanced_info_title">System Info</string>
     <string name="page_settings_advanced_api_version">libxposed API version</string>
+    <string name="page_settings_advanced_open_firstrun_title">Open first-run wizard</string>
+    <string name="page_settings_advanced_open_firstrun_summary">Re-enter the first-run onboarding (OOBE) for development and testing</string>
     <string name="launcher_launcher_no_label_mode_title">Launcher No-label Mode</string>
     <string name="launcher_launcher_drawer_no_label_mode_title">Drawer No-label Mode</string>
     <string name="launcher_launcher_hide_blue_point_title">Hide app update blue dot</string>

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
+import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -143,7 +144,8 @@ fun SettingsAdvancedRoute(
         dexIndexSummary = dexIndexSummary,
         onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
         onResetClick = { viewModel.showResetConfirmDialog() },
-        onRefreshDexIndex = { viewModel.refreshDexIndex(context) }
+        onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
+        onOpenFirstrun = { activity.reopenFirstrun() }
     )
 }
 
@@ -157,7 +159,8 @@ private fun SettingsAdvancedScreen(
     dexIndexSummary: String,
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
-    onRefreshDexIndex: () -> Unit
+    onRefreshDexIndex: () -> Unit,
+    onOpenFirstrun: () -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -196,7 +199,8 @@ private fun SettingsAdvancedScreen(
                         onResetClick = onResetClick,
                         dexIndexInProgress = dexIndexInProgress,
                         dexIndexSummary = dexIndexSummary,
-                        onRefreshDexIndex = onRefreshDexIndex
+                        onRefreshDexIndex = onRefreshDexIndex,
+                        onOpenFirstrun = onOpenFirstrun
                     ),
                     bottomPadding = 32.dp
                 )
@@ -214,7 +218,8 @@ private fun advancedSettingsSections(
     onResetClick: () -> Unit,
     dexIndexInProgress: Boolean,
     dexIndexSummary: String,
-    onRefreshDexIndex: () -> Unit
+    onRefreshDexIndex: () -> Unit,
+    onOpenFirstrun: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -284,6 +289,13 @@ private fun advancedSettingsSections(
                             )
                         }
                     } else null
+                ),
+                SettingItem.Action(
+                    key = "open_firstrun",
+                    title = stringResource(R.string.page_settings_advanced_open_firstrun_title),
+                    summary = stringResource(R.string.page_settings_advanced_open_firstrun_summary),
+                    onClick = onOpenFirstrun,
+                    icon = Icons.Rounded.RocketLaunch
                 )
             )
         )

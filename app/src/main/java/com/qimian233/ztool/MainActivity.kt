@@ -181,6 +181,14 @@ class MainActivity : ComponentActivity(),
         }
     }
 
+    /**
+     * Re-enter the first-run (OOBE) flow, e.g. from the advanced settings
+     * developer entry. The existing agreement acceptance state is kept as-is.
+     */
+    fun reopenFirstrun() {
+        agreementDisplayMode = AgreementDisplayMode.FirstRun
+    }
+
     override fun onServiceStarted() {
     }
 
