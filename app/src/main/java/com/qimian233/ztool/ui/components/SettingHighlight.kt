@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -44,6 +45,10 @@ const val HighlightAwaitParentTimeoutMillis = 400L
 const val HighlightPulseCycleMillis = 600
 /** Grace before running the debug index audit, so conditional rows have composed. */
 const val AUDIT_DELAY_MILLIS = 2000L
+/** Post-scroll stabilization window for uiState/size-animation shifts. */
+const val SCROLL_STABILIZE_TIMEOUT_MILLIS = 800L
+/** Poll interval while stabilizing the scroll offset. */
+const val SCROLL_STABILIZE_POLL_MILLIS = 64L
 
 /**
  * Row bounds (in root coordinates) keyed by [SettingItem.key]; the scroll container
@@ -53,71 +58,91 @@ const val AUDIT_DELAY_MILLIS = 2000L
  */
 class HighlightAnchorRegistry {
 
-    private val rowBounds = ConcurrentHashMap<String, androidx.compose.ui.geometry.Rect>()
+    /**
+     * Live per-node coordinates. A LayoutCoordinates instance keeps updating itself
+     * every frame, so offsets resolved at consumption time are always current —
+     * immune to uiState-driven expansion shifts between report and consume.
+     */
+    private val rows = ConcurrentHashMap<String, androidx.compose.ui.layout.LayoutCoordinates>()
+    @Volatile
+    private var containerCoords: androidx.compose.ui.layout.LayoutCoordinates? = null
+    private val containerWaiters = mutableListOf<CompletableDeferred<Unit>>()
     private val waiters = ConcurrentHashMap<String, MutableList<CompletableDeferred<Unit>>>()
     private val mutex = Mutex()
 
-    fun reportRow(key: String, boundsInRoot: androidx.compose.ui.geometry.Rect) {
-        rowBounds[key] = boundsInRoot
-        synchronized(waiters) {
-            // Offset is resolved by the controller at consumption time (late
-            // binding), so waiters only need to know the row EXISTS.
-            waiters.remove(key)?.forEach { it.complete(Unit) }
+    fun reportRow(key: String, coordinates: androidx.compose.ui.layout.LayoutCoordinates) {
+        val firstReport = rows.put(key, coordinates) == null
+        if (firstReport) {
+            synchronized(waiters) {
+                waiters.remove(key)?.forEach { it.complete(Unit) }
+            }
         }
     }
 
     fun clearRow(key: String) {
-        rowBounds.remove(key)
+        rows.remove(key)
+    }
+
+    /** Called once by the settings-list content column. */
+    fun reportContainer(coordinates: androidx.compose.ui.layout.LayoutCoordinates) {
+        if (containerCoords == null) {
+            containerCoords = coordinates
+            synchronized(containerWaiters) {
+                containerWaiters.forEach { it.complete(Unit) }
+                containerWaiters.clear()
+            }
+        }
     }
 
     /** Keys of all rows currently registered (used by the debug index audit). */
-    fun snapshotKeys(): Set<String> = rowBounds.keys.toSet()
+    fun snapshotKeys(): Set<String> = rows.keys.toSet()
 
     /**
      * Scroll offset that brings the row to the top of the content column, resolved
-     * from CURRENT bounds. Returns null while either the row or the container has
-     * not reported yet — never a stale/wrong-signed value.
+     * from LIVE coordinates read right now. Returns null while the row or the
+     * container is absent or detached — never a stale/wrong-signed value. Detached
+     * rows (conditional child collapsed after composing) are dropped on sight.
      */
     fun offsetFor(key: String): Int? {
-        val bounds = rowBounds[key] ?: return null
-        val containerTop = containerTopInRoot ?: return null
-        return (bounds.top - containerTop).roundToInt()
+        val container = containerCoords?.takeIf { it.isAttached } ?: return null
+        val row = rows[key]?.takeIf { it.isAttached } ?: run {
+            rows.remove(key)
+            return null
+        }
+        return (row.positionInRoot().y - container.positionInRoot().y).roundToInt()
     }
 
     /**
-     * Suspends until the row has reported its bounds, then returns the offset
-     * resolved at that moment. If the row is not visible (conditional child behind
-     * an OFF parent switch) it never reports and this returns null on timeout.
+     * Suspends until both the container and the row have live coordinates, then
+     * returns the offset. A row that never composes (conditional child behind an
+     * OFF parent switch) times out to null — driving the parent fallback.
      */
     suspend fun await(key: String, timeoutMillis: Long): Int? {
-        if (rowBounds.containsKey(key)) {
-            // Re-read on next frame so freshly composed rows have valid bounds.
-            withFrameNanos { }
-            return offsetFor(key)
-        }
-        val deferred = CompletableDeferred<Unit>()
-        mutex.withLock {
-            if (rowBounds.containsKey(key)) {
-                withFrameNanos { }
-                return offsetFor(key)
+        if (containerCoords == null) {
+            val containerDeferred = CompletableDeferred<Unit>()
+            synchronized(containerWaiters) {
+                if (containerCoords == null) containerWaiters.add(containerDeferred)
+                else containerDeferred.complete(Unit)
             }
-            waiters.getOrPut(key) { mutableListOf() }.add(deferred)
+            if (withTimeoutOrNull(timeoutMillis) { containerDeferred.await() } == null) {
+                return null
+            }
         }
-        val arrived = withTimeoutOrNull(timeoutMillis) {
-            deferred.await()
-            true
-        } ?: return null
-        if (!arrived) return null
-        // Bounds from the reporting frame may predate final layout; settle one frame.
+        if (!rows.containsKey(key)) {
+            val deferred = CompletableDeferred<Unit>()
+            mutex.withLock {
+                if (!rows.containsKey(key)) {
+                    waiters.getOrPut(key) { mutableListOf() }.add(deferred)
+                }
+            }
+            if (withTimeoutOrNull(timeoutMillis) { deferred.await() } == null) {
+                return null
+            }
+        }
+        // The reporting frame may predate final layout; settle one frame, then read
+        // the live coordinates.
         withFrameNanos { }
         return offsetFor(key)
-    }
-
-    private var containerTopInRoot: Float? = null
-
-    /** Called once by the settings-list content column. */
-    fun reportContainer(topInRoot: Float) {
-        containerTopInRoot = topInRoot
     }
 }
 
@@ -137,7 +162,7 @@ fun HighlightContainerMarker(registry: HighlightAnchorRegistry?) {
     androidx.compose.foundation.layout.Box(
         modifier = Modifier
             .onGloballyPositioned { coords ->
-                registry.reportContainer(coords.positionInRoot().y)
+                registry.reportContainer(coords)
             }
     )
 }
@@ -195,11 +220,22 @@ fun HighlightController(
 
         if (offset != null) {
             scrollState.animateScrollTo(offset.coerceAtLeast(0))
-            // Layout settled after the first scroll (rows above may have reported
-            // while off-screen); correct once so the row sits in view on long pages.
-            val refined = registry.offsetFor(key)
-            if (refined != null && refined != offset) {
-                scrollState.animateScrollTo(refined.coerceAtLeast(0))
+            // uiState loads and animateContentSize keep shifting rows right after
+            // landing; keep correcting until the target's live offset holds steady
+            // for two polls (bounded), then pulse.
+            var last = offset
+            var stable = 0
+            val stabilizeDeadline = System.currentTimeMillis() + SCROLL_STABILIZE_TIMEOUT_MILLIS
+            while (stable < 2 && System.currentTimeMillis() < stabilizeDeadline) {
+                delay(SCROLL_STABILIZE_POLL_MILLIS)
+                val fresh = registry.offsetFor(key) ?: break
+                if (fresh != last) {
+                    last = fresh
+                    stable = 0
+                    scrollState.animateScrollTo(fresh.coerceAtLeast(0))
+                } else {
+                    stable++
+                }
             }
             activeId = key
             delay(HighlightPulseCycleMillis * 2L)
@@ -257,11 +293,17 @@ fun HighlightableSettingRow(
         Color.Transparent
     }
 
+    if (highlightKey != null && registry != null) {
+        DisposableEffect(highlightKey, registry) {
+            onDispose { registry.clearRow(highlightKey) }
+        }
+    }
+
     androidx.compose.foundation.layout.Box(
         modifier = modifier
             .onGloballyPositioned { coords ->
                 if (highlightKey != null && registry != null) {
-                    registry.reportRow(highlightKey, coords.boundsInRoot())
+                    registry.reportRow(highlightKey, coords)
                 }
             }
             .drawWithContent {
