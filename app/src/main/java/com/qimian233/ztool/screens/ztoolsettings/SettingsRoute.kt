@@ -11,7 +11,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -75,7 +78,7 @@ fun SettingsMainRoute(
     onOpenThemeSettings: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenAdvanced: () -> Unit,
-    onOpenSearch: () -> Unit = {},
+    onOpenSearchResult: (String) -> Unit = {},
     targetId: String? = null
 ) {
     val context = LocalContext.current
@@ -86,6 +89,7 @@ fun SettingsMainRoute(
     var showRestoreConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteLogsConfirmDialog by rememberSaveable { mutableStateOf(false) }
     val defaultConfigRestoredStr = stringResource(R.string.page_settings_default_config_restored)
+    var searchExpanded by remember { mutableStateOf(false) }
     
     val backupSuccessStr = stringResource(R.string.page_settings_config_backup_success)
     val restoreSuccessStr = stringResource(R.string.page_settings_config_restore_success)
@@ -185,7 +189,15 @@ fun SettingsMainRoute(
             onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
             onOpenAdvanced = onOpenAdvanced,
             onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled,
-            onOpenSearch = onOpenSearch
+            searchExpanded = searchExpanded,
+            onSearchExpandedChange = { searchExpanded = it },
+            onOpenEntry = { entry ->
+                searchExpanded = false
+                val route = com.qimian233.ztool.search.SearchIndex.byId(entry.id)?.let {
+                    com.qimian233.ztool.search.SearchIndex.targetRoute(it)
+                } ?: return@SettingsRoute
+                onOpenSearchResult(route)
+            }
         )
     }
 
@@ -303,7 +315,9 @@ private fun SettingsRoute(
     onDeleteAllLogs: () -> Unit,
     onOpenAdvanced: () -> Unit,
     onAutoCheckUpdateChanged: (Boolean) -> Unit,
-    onOpenSearch: () -> Unit
+    searchExpanded: Boolean,
+    onSearchExpandedChange: (Boolean) -> Unit,
+    onOpenEntry: (com.qimian233.ztool.search.SearchEntry) -> Unit
 ) {
     ZToolScaffold (
         topBar = {
@@ -311,7 +325,7 @@ private fun SettingsRoute(
                 title = stringResource(R.string.page_settings_title),
                 addNavIcon = false,
                 actions = {
-                    IconButton(onClick = onOpenSearch) {
+                    IconButton(onClick = { onSearchExpandedChange(!searchExpanded) }) {
                         Icon(
                             imageVector = Icons.Rounded.Search,
                             contentDescription = stringResource(R.string.search_title),
@@ -334,6 +348,13 @@ private fun SettingsRoute(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
+                com.qimian233.ztool.screens.search.FeatureSearchBar(
+                    expanded = searchExpanded,
+                    onExpandedChange = onSearchExpandedChange,
+                    onOpenEntry = onOpenEntry,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
                 ZToolSettingsList(
                     highlightRegistry = highlightRegistry,
                     sections = settingsSections(

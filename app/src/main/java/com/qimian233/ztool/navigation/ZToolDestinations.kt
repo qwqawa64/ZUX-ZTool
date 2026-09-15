@@ -29,5 +29,4 @@ internal object HiddenRoute {
     const val SYSTEM_UI_ANIMATION_WALLPAPER = "feature/system-ui/animation-wallpaper"
     const val SYSTEM_UI_MISC = "feature/system-ui/misc"
     const val SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH = "feature/settings-detail/magic-window-search"
-    const val SEARCH = "search"
 }

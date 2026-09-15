@@ -27,7 +27,6 @@ import com.qimian233.ztool.screens.ota.OtaSettingsRoute
 import com.qimian233.ztool.screens.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.screens.safecenter.SafeCenterSettingsRoute
 import com.qimian233.ztool.screens.pp.ZuiPerformanceSettingsRoute
-import com.qimian233.ztool.screens.search.SearchMainRoute
 import com.qimian233.ztool.screens.tbengine.TbEngineSettingsRoute
 import com.qimian233.ztool.screens.ztoolsettings.SettingsMainRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRoute
@@ -134,7 +133,7 @@ internal fun MainRouteNavHost(
     val horizontalEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition? =
         {
             slideIntoContainer(
-                if (isForwardPush()) {
+                if (isForwardNavigation()) {
                     AnimatedContentTransitionScope.SlideDirection.Left
                 } else {
                     AnimatedContentTransitionScope.SlideDirection.Right
@@ -144,7 +143,7 @@ internal fun MainRouteNavHost(
         }
     val horizontalExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition? = {
         slideOutOfContainer(
-            if (isForwardPush()) {
+            if (isForwardNavigation()) {
                 AnimatedContentTransitionScope.SlideDirection.Left
             } else {
                 AnimatedContentTransitionScope.SlideDirection.Right
@@ -221,11 +220,6 @@ internal fun MainRouteNavHost(
                     navController.navigate(destination.route) {
                         launchSingleTop = true
                     }
-                },
-                onOpenSearch = {
-                    navController.navigate(HiddenRoute.SEARCH) {
-                        launchSingleTop = true
-                    }
                 }
             )
         }
@@ -253,8 +247,8 @@ internal fun MainRouteNavHost(
                         launchSingleTop = true
                     }
                 },
-                onOpenSearch = {
-                    navController.navigate(HiddenRoute.SEARCH) {
+                onOpenSearchResult = { route ->
+                    navController.navigate(route) {
                         launchSingleTop = true
                     }
                 },
@@ -315,51 +309,6 @@ internal fun MainRouteNavHost(
                     }
                 },
                 targetId = backStackEntry.highlightTarget(),
-            )
-        }
-        composable(
-            route = routeWithTarget(HiddenRoute.SEARCH),
-            enterTransition = horizontalEnter,
-            exitTransition = horizontalExit,
-            popEnterTransition = horizontalPopEnter,
-            popExitTransition = horizontalPopExit,
-            arguments = highlightTargetArguments
-        ) { backStackEntry ->
-            SearchMainRoute(
-                onBack = {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(MainRoute.Features.name) {
-                            launchSingleTop = true
-                        }
-                    }
-                },
-                onOpenEntry = { entry ->
-                    if (entry.isFeatureCard && entry.featureDestination != null) {
-                        // Two-step so the back stack reads Features › detail,
-                        // matching how the user would have browsed there. The
-                        // popUpTo also removes Search from the stack.
-                        navController.navigate(MainRoute.Features.name) {
-                            launchSingleTop = true
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
-                            }
-                        }
-                        navController.navigate(entry.featureDestination.route) {
-                            launchSingleTop = true
-                        }
-                    } else {
-                        // popUpTo removes Search so system back from the target
-                        // returns to the originating tab, not back into search.
-                        // Popping after navigating would also pop the freshly
-                        // pushed destination, since it sits above Search.
-                        navController.navigate(
-                            SearchIndex.targetRoute(entry)
-                        ) {
-                            launchSingleTop = true
-                            popUpTo(HiddenRoute.SEARCH) { inclusive = true }
-                        }
-                    }
-                }
             )
         }
         composable(
@@ -774,21 +723,6 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardNavigatio
             navigationRouteIndex(initialState.destination.route)
 }
 
-/**
- * Direction for PUSH transitions (enter/exit). Identical to [isForwardNavigation]
- * except that anything pushing to or from the search page slides forward: search is
- * opened as a child action of whichever tab launched it, and opening a result target
- * must keep reading as a forward step, not a back step.
- */
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.isForwardPush(): Boolean {
-    if (targetState.destination.route == HiddenRoute.SEARCH ||
-        initialState.destination.route == HiddenRoute.SEARCH
-    ) {
-        return true
-    }
-    return isForwardNavigation()
-}
-
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeSlideDirection(
     mainForwardDirection: AnimatedContentTransitionScope.SlideDirection,
     mainBackwardDirection: AnimatedContentTransitionScope.SlideDirection,
@@ -834,10 +768,6 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
     return when (route) {
         MainRoute.Home.name -> 0
         MainRoute.Features.name -> 1
-        // Search sits at the top of the depth order so every POP transition to or
-        // from it slides backward. Push direction involving search is handled by
-        // isForwardPush(), which always slides forward.
-        HiddenRoute.SEARCH -> 10
         FeatureDestination.SettingsDetail.route -> 2
         FeatureDestination.GameTool.route -> 2
         FeatureDestination.Ota.route -> 2

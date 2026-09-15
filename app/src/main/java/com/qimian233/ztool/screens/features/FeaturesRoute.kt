@@ -87,6 +87,9 @@ fun FeaturesMainRoute(
     // "system" is the LSPosed system-server scope entry — not a real installed package
     val systemScopePackages = setOf(ScopeKeys.SYSTEM_SERVER.packageName)
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
+    // Docked search expands in place; onOpenSearch is still honored (kept for the
+    // route-level contract) by collapsing again if the host forces a navigation.
+    var searchExpanded by remember { mutableStateOf(false) }
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
         val scopedItems = allItems.map { item ->
@@ -154,12 +157,18 @@ fun FeaturesMainRoute(
         warningMessageRes = warningMessageRes,
         onFeatureClick = { item ->
             if (item.inScope) {
+                searchExpanded = false
                 onFeatureDestinationSelected(item.destination)
             } else {
                 scopeRequestItem = item
             }
         },
-        onOpenSearch = onOpenSearch
+        searchExpanded = searchExpanded,
+        onSearchExpandedChange = { searchExpanded = it },
+        onOpenEntry = { entry ->
+            searchExpanded = false
+            onFeatureDestinationSelected(entry.featureDestination ?: return@FeaturesRoute)
+        }
     )
 }
 
@@ -322,7 +331,9 @@ private fun FeaturesRoute(
     items: List<FeatureItem>,
     warningMessageRes: Int?,
     onFeatureClick: (FeatureItem) -> Unit,
-    onOpenSearch: () -> Unit
+    searchExpanded: Boolean,
+    onSearchExpandedChange: (Boolean) -> Unit,
+    onOpenEntry: (com.qimian233.ztool.search.SearchEntry) -> Unit
 ) {
     ZToolScaffold(
         topBar = {
@@ -330,7 +341,7 @@ private fun FeaturesRoute(
                 title = stringResource(R.string.page_features_title),
                 addNavIcon = false,
                 actions = {
-                    IconButton(onClick = onOpenSearch) {
+                    IconButton(onClick = { onSearchExpandedChange(!searchExpanded) }) {
                         Icon(
                             imageVector = Icons.Rounded.Search,
                             contentDescription = stringResource(R.string.search_title),
@@ -354,6 +365,12 @@ private fun FeaturesRoute(
                     .widthIn(max = 1280.dp)
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
+                com.qimian233.ztool.screens.search.FeatureSearchBar(
+                    expanded = searchExpanded,
+                    onExpandedChange = onSearchExpandedChange,
+                    onOpenEntry = onOpenEntry,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(24.dp))
                 if (warningMessageRes != null) {
                     FeatureWarningCard(message = stringResource(warningMessageRes))
