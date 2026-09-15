@@ -10,6 +10,7 @@ import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
  * AssetManager.containsAllocatedTable 恒返 false，
  * 允许 targetSdk R+ 且 resources.arsc 未按未压缩对齐要求打包的 APK 安装与加载。
  */
+@SuppressLint("BlockedPrivateApi")
 class PackageManagerArscBypassHook : SystemHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.PKG_MGR_BYPASS_ARSC_RESTRICTION.name
