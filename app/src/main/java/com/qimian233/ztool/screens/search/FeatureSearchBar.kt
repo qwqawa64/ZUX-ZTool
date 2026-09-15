@@ -3,6 +3,8 @@ package com.qimian233.ztool.screens.search
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Search
@@ -25,12 +28,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -53,9 +59,9 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
  * frontend styles render their own search bar (material3 DockedSearchBar vs Miuix
  * SearchBar) above the same grouped result list, backed by one [SearchViewModel].
  *
- * The bar stays hidden until [visible]; the host top-bar search icon toggles it.
- * While visible, a scrim dims everything behind the search controls and tapping it
- * collapses the search. [visible] must be reset by the host when navigating away.
+ * The whole control is absent until [visible], then animates in and grabs input
+ * focus; when collapsed again it animates out. The host top-bar search icon toggles
+ * visibility, and a scrim dims the page while the search is up.
  */
 @Composable
 fun FeatureSearchBar(
@@ -84,25 +90,39 @@ fun FeatureSearchBar(
     }
     val uiState by viewModel.uiState.collectAsState()
 
-    when (LocalZToolThemeSpec.current.style) {
-        FrontendStyle.Miuix -> MiuixFeatureSearchBar(
-            visible = visible,
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
-            uiState = uiState,
-            onQueryChanged = viewModel::setQuery,
-            onOpenEntry = onOpenEntry,
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + slideInVertically { -it / 4 },
+        exit = fadeOut() + slideOutVertically { -it / 4 }
+    ) {
+        val focusRequester = remember { FocusRequester() }
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+        Column(
             modifier = modifier
-        )
-        FrontendStyle.Material3Expressive -> Material3FeatureSearchBar(
-            visible = visible,
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
-            uiState = uiState,
-            onQueryChanged = viewModel::setQuery,
-            onOpenEntry = onOpenEntry,
-            modifier = modifier
-        )
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+        ) {
+            when (LocalZToolThemeSpec.current.style) {
+                FrontendStyle.Miuix -> MiuixFeatureSearchBar(
+                    expanded = expanded,
+                    onExpandedChange = onExpandedChange,
+                    uiState = uiState,
+                    onQueryChanged = viewModel::setQuery,
+                    onOpenEntry = onOpenEntry,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                FrontendStyle.Material3Expressive -> Material3FeatureSearchBar(
+                    expanded = expanded,
+                    onExpandedChange = onExpandedChange,
+                    uiState = uiState,
+                    onQueryChanged = viewModel::setQuery,
+                    onOpenEntry = onOpenEntry,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 
@@ -138,7 +158,6 @@ fun SearchScrim(
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun Material3FeatureSearchBar(
-    visible: Boolean,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     uiState: SearchUiState,
@@ -146,7 +165,6 @@ private fun Material3FeatureSearchBar(
     onOpenEntry: (SearchEntry) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (!visible) return
     androidx.compose.material3.DockedSearchBar(
         query = uiState.query,
         onQueryChange = onQueryChanged,
@@ -167,7 +185,6 @@ private fun Material3FeatureSearchBar(
 
 @Composable
 private fun MiuixFeatureSearchBar(
-    visible: Boolean,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     uiState: SearchUiState,
@@ -175,7 +192,6 @@ private fun MiuixFeatureSearchBar(
     onOpenEntry: (SearchEntry) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (!visible) return
     val colorScheme = LocalZToolColorScheme.current
     top.yukonga.miuix.kmp.basic.SearchBar(
         inputField = {
@@ -192,13 +208,14 @@ private fun MiuixFeatureSearchBar(
         onExpandedChange = onExpandedChange,
         modifier = modifier,
         content = {
-            // Distinct result surface so the expanded area reads as an overlay, not
-            // as page content.
+            // Distinct result surface, inset 8dp per side (16dp narrower than the
+            // input field) so it reads as an overlay card, not page content.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
                     .padding(top = 8.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(colorScheme.surfaceContainer)
                     .padding(vertical = 4.dp)
             ) {

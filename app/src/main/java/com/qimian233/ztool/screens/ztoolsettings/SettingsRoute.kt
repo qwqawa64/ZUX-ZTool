@@ -202,10 +202,11 @@ fun SettingsMainRoute(
             },
             onSearchExpandedChange = { expanded ->
                 searchExpanded = expanded
-                if (expanded) searchVisible = true
+                searchVisible = expanded
             },
             onOpenEntry = { entry ->
                 searchExpanded = false
+                searchVisible = false
                 val route = com.qimian233.ztool.search.SearchIndex.byId(entry.id)?.let {
                     com.qimian233.ztool.search.SearchIndex.targetRoute(it)
                 } ?: return@SettingsRoute

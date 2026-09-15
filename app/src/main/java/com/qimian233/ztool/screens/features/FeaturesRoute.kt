@@ -159,6 +159,7 @@ fun FeaturesMainRoute(
         onFeatureClick = { item ->
             if (item.inScope) {
                 searchExpanded = false
+                searchVisible = false
                 onFeatureDestinationSelected(item.destination)
             } else {
                 scopeRequestItem = item
@@ -176,10 +177,11 @@ fun FeaturesMainRoute(
         },
         onSearchExpandedChange = { expanded ->
             searchExpanded = expanded
-            if (expanded) searchVisible = true
+            searchVisible = expanded
         },
         onOpenEntry = { entry ->
             searchExpanded = false
+            searchVisible = false
             val destination = entry.featureDestination
             if (destination != null) {
                 onFeatureDestinationSelected(destination)
