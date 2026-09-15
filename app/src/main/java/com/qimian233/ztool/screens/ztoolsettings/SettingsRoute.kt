@@ -89,6 +89,7 @@ fun SettingsMainRoute(
     var showRestoreConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteLogsConfirmDialog by rememberSaveable { mutableStateOf(false) }
     val defaultConfigRestoredStr = stringResource(R.string.page_settings_default_config_restored)
+    var searchVisible by remember { mutableStateOf(false) }
     var searchExpanded by remember { mutableStateOf(false) }
     
     val backupSuccessStr = stringResource(R.string.page_settings_config_backup_success)
@@ -189,8 +190,20 @@ fun SettingsMainRoute(
             onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
             onOpenAdvanced = onOpenAdvanced,
             onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled,
+            searchVisible = searchVisible,
             searchExpanded = searchExpanded,
-            onSearchExpandedChange = { searchExpanded = it },
+            onSearchToggle = {
+                searchVisible = true
+                searchExpanded = !searchExpanded
+            },
+            onSearchDismiss = {
+                searchExpanded = false
+                searchVisible = false
+            },
+            onSearchExpandedChange = { expanded ->
+                searchExpanded = expanded
+                if (expanded) searchVisible = true
+            },
             onOpenEntry = { entry ->
                 searchExpanded = false
                 val route = com.qimian233.ztool.search.SearchIndex.byId(entry.id)?.let {
@@ -315,17 +328,26 @@ private fun SettingsRoute(
     onDeleteAllLogs: () -> Unit,
     onOpenAdvanced: () -> Unit,
     onAutoCheckUpdateChanged: (Boolean) -> Unit,
+    searchVisible: Boolean,
     searchExpanded: Boolean,
+    onSearchToggle: () -> Unit,
+    onSearchDismiss: () -> Unit,
     onSearchExpandedChange: (Boolean) -> Unit,
     onOpenEntry: (com.qimian233.ztool.search.SearchEntry) -> Unit
 ) {
-    ZToolScaffold (
-        topBar = {
-            ZToolTopAppBar(
-                title = stringResource(R.string.page_settings_title),
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+        com.qimian233.ztool.screens.search.SearchScrim(
+            visible = searchVisible && searchExpanded,
+            onDismiss = onSearchDismiss,
+            modifier = Modifier.fillMaxSize()
+        )
+        ZToolScaffold (
+            topBar = {
+                ZToolTopAppBar(
+                    title = stringResource(R.string.page_settings_title),
                 addNavIcon = false,
                 actions = {
-                    IconButton(onClick = { onSearchExpandedChange(!searchExpanded) }) {
+                    IconButton(onClick = onSearchToggle) {
                         Icon(
                             imageVector = Icons.Rounded.Search,
                             contentDescription = stringResource(R.string.search_title),
@@ -349,6 +371,7 @@ private fun SettingsRoute(
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 com.qimian233.ztool.screens.search.FeatureSearchBar(
+                    visible = searchVisible,
                     expanded = searchExpanded,
                     onExpandedChange = onSearchExpandedChange,
                     onOpenEntry = onOpenEntry,
@@ -377,6 +400,7 @@ private fun SettingsRoute(
                 )
             }
         }
+    }
     }
 }
 

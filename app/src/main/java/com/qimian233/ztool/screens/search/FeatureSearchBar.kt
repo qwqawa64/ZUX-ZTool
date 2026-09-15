@@ -1,11 +1,17 @@
 package com.qimian233.ztool.screens.search
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -24,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,9 +52,14 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
  * Docked, in-place feature search shared by the Features and Settings tabs. Both
  * frontend styles render their own search bar (material3 DockedSearchBar vs Miuix
  * SearchBar) above the same grouped result list, backed by one [SearchViewModel].
+ *
+ * The bar stays hidden until [visible]; the host top-bar search icon toggles it.
+ * While visible, a scrim dims everything behind the search controls and tapping it
+ * collapses the search. [visible] must be reset by the host when navigating away.
  */
 @Composable
 fun FeatureSearchBar(
+    visible: Boolean,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onOpenEntry: (SearchEntry) -> Unit,
@@ -73,6 +86,7 @@ fun FeatureSearchBar(
 
     when (LocalZToolThemeSpec.current.style) {
         FrontendStyle.Miuix -> MiuixFeatureSearchBar(
+            visible = visible,
             expanded = expanded,
             onExpandedChange = onExpandedChange,
             uiState = uiState,
@@ -81,6 +95,7 @@ fun FeatureSearchBar(
             modifier = modifier
         )
         FrontendStyle.Material3Expressive -> Material3FeatureSearchBar(
+            visible = visible,
             expanded = expanded,
             onExpandedChange = onExpandedChange,
             uiState = uiState,
@@ -91,9 +106,39 @@ fun FeatureSearchBar(
     }
 }
 
+/**
+ * Full-page scrim shown while the docked search is up: dims everything behind the
+ * search controls and collapses the search on tap. Place it in a Box overlay that
+ * covers the whole screen, UNDER the search bar's own layer.
+ */
+@Composable
+fun SearchScrim(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.45f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                ) { onDismiss() }
+        )
+    }
+}
+
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun Material3FeatureSearchBar(
+    visible: Boolean,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     uiState: SearchUiState,
@@ -101,6 +146,7 @@ private fun Material3FeatureSearchBar(
     onOpenEntry: (SearchEntry) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (!visible) return
     androidx.compose.material3.DockedSearchBar(
         query = uiState.query,
         onQueryChange = onQueryChanged,
@@ -121,6 +167,7 @@ private fun Material3FeatureSearchBar(
 
 @Composable
 private fun MiuixFeatureSearchBar(
+    visible: Boolean,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     uiState: SearchUiState,
@@ -128,6 +175,8 @@ private fun MiuixFeatureSearchBar(
     onOpenEntry: (SearchEntry) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (!visible) return
+    val colorScheme = LocalZToolColorScheme.current
     top.yukonga.miuix.kmp.basic.SearchBar(
         inputField = {
             top.yukonga.miuix.kmp.basic.InputField(
@@ -142,7 +191,20 @@ private fun MiuixFeatureSearchBar(
         expanded = expanded,
         onExpandedChange = onExpandedChange,
         modifier = modifier,
-        content = { resultsContent(uiState, onOpenEntry) }
+        content = {
+            // Distinct result surface so the expanded area reads as an overlay, not
+            // as page content.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .background(colorScheme.surfaceContainer)
+                    .padding(vertical = 4.dp)
+            ) {
+                resultsContent(uiState, onOpenEntry)
+            }
+        }
     )
 }
 

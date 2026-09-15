@@ -220,6 +220,11 @@ internal fun MainRouteNavHost(
                     navController.navigate(destination.route) {
                         launchSingleTop = true
                     }
+                },
+                onOpenSearchResult = { route ->
+                    navController.navigate(route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }

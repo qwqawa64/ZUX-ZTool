@@ -77,7 +77,7 @@ enum class FeatureDestination(
 @Composable
 fun FeaturesMainRoute(
     onFeatureDestinationSelected: (FeatureDestination) -> Unit = {},
-    onOpenSearch: () -> Unit = {}
+    onOpenSearchResult: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val allItems = rememberFeatureItems(context)
@@ -87,8 +87,9 @@ fun FeaturesMainRoute(
     // "system" is the LSPosed system-server scope entry — not a real installed package
     val systemScopePackages = setOf(ScopeKeys.SYSTEM_SERVER.packageName)
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
-    // Docked search expands in place; onOpenSearch is still honored (kept for the
-    // route-level contract) by collapsing again if the host forces a navigation.
+    // Docked search: hidden until the top-bar icon summons it; the icon toggles
+    // both visibility and the expanded state.
+    var searchVisible by remember { mutableStateOf(false) }
     var searchExpanded by remember { mutableStateOf(false) }
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
@@ -163,11 +164,28 @@ fun FeaturesMainRoute(
                 scopeRequestItem = item
             }
         },
+        searchVisible = searchVisible,
         searchExpanded = searchExpanded,
-        onSearchExpandedChange = { searchExpanded = it },
+        onSearchToggle = {
+            searchVisible = true
+            searchExpanded = !searchExpanded
+        },
+        onSearchDismiss = {
+            searchExpanded = false
+            searchVisible = false
+        },
+        onSearchExpandedChange = { expanded ->
+            searchExpanded = expanded
+            if (expanded) searchVisible = true
+        },
         onOpenEntry = { entry ->
             searchExpanded = false
-            onFeatureDestinationSelected(entry.featureDestination ?: return@FeaturesRoute)
+            val destination = entry.featureDestination
+            if (destination != null) {
+                onFeatureDestinationSelected(destination)
+            } else {
+                onOpenSearchResult(com.qimian233.ztool.search.SearchIndex.targetRoute(entry))
+            }
         }
     )
 }
@@ -331,17 +349,26 @@ private fun FeaturesRoute(
     items: List<FeatureItem>,
     warningMessageRes: Int?,
     onFeatureClick: (FeatureItem) -> Unit,
+    searchVisible: Boolean,
     searchExpanded: Boolean,
+    onSearchToggle: () -> Unit,
+    onSearchDismiss: () -> Unit,
     onSearchExpandedChange: (Boolean) -> Unit,
     onOpenEntry: (com.qimian233.ztool.search.SearchEntry) -> Unit
 ) {
-    ZToolScaffold(
-        topBar = {
-            ZToolTopAppBar(
-                title = stringResource(R.string.page_features_title),
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+        com.qimian233.ztool.screens.search.SearchScrim(
+            visible = searchVisible && searchExpanded,
+            onDismiss = onSearchDismiss,
+            modifier = Modifier.fillMaxSize()
+        )
+        ZToolScaffold(
+            topBar = {
+                ZToolTopAppBar(
+                    title = stringResource(R.string.page_features_title),
                 addNavIcon = false,
                 actions = {
-                    IconButton(onClick = { onSearchExpandedChange(!searchExpanded) }) {
+                    IconButton(onClick = onSearchToggle) {
                         Icon(
                             imageVector = Icons.Rounded.Search,
                             contentDescription = stringResource(R.string.search_title),
@@ -366,6 +393,7 @@ private fun FeaturesRoute(
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
                 com.qimian233.ztool.screens.search.FeatureSearchBar(
+                    visible = searchVisible,
                     expanded = searchExpanded,
                     onExpandedChange = onSearchExpandedChange,
                     onOpenEntry = onOpenEntry,
@@ -394,6 +422,7 @@ private fun FeaturesRoute(
                 }
             }
         }
+    }
     }
 }
 
