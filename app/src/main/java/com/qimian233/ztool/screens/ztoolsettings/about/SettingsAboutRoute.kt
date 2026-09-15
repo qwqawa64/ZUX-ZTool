@@ -101,9 +101,10 @@ fun SettingsAboutRoute(
             )
         },
         onOpenUdl = { openExternalLink(context, "https://github.com/uuuddddl") },
-        onCheckUpdate = homeViewModel::checkAppUpdate,
+        onCheckUpdate = { homeViewModel.checkAppUpdate(force = true) },
         isCheckingUpdate = homeState.isCheckingAppUpdate,
         updateCheckCompleted = homeState.updateCheckCompleted,
+        updateCheckError = homeState.updateCheckError,
         updateInfo = homeState.updateInfo,
         onOpenUpdate = { url -> openExternalLink(context, url) }
     )
@@ -122,6 +123,7 @@ private fun SettingsAboutScreen(
     onCheckUpdate: () -> Unit,
     isCheckingUpdate: Boolean,
     updateCheckCompleted: Boolean,
+    updateCheckError: String?,
     updateInfo: UpdateInfo?,
     onOpenUpdate: (String) -> Unit,
     onOpenUdl: () -> Unit
@@ -142,6 +144,10 @@ private fun SettingsAboutScreen(
             R.string.page_settings_update_available_version_format,
             updateInfo.versionName,
             updateInfo.versionCode
+        )
+        updateCheckError != null -> stringResource(
+            R.string.page_settings_about_app_update_failed_summary,
+            updateCheckError
         )
         updateCheckCompleted -> stringResource(R.string.page_settings_about_app_update_latest_summary)
         else -> stringResource(R.string.page_settings_about_app_update_placeholder_summary)

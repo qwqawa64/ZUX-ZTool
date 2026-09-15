@@ -126,8 +126,9 @@ class HomeRepository(
 
     fun checkConfigUpgrade(): Boolean = ConfigUpgrade.configUpgrader(context)
 
-    fun checkAppUpdate(): UpdateInfo? {
+    fun checkAppUpdate(): UpdateCheckResult {
         val currentVersionCode = getCurrentVersionCode()
+        var lastError: Exception? = null
         for (url in UPDATE_URL) {
             Log.i(TAG, "Fetching update information via url: $url")
             try {
@@ -139,7 +140,8 @@ class HomeRepository(
                 connection.connectTimeout = 5000
                 connection.readTimeout = 5000
 
-                if (connection.responseCode == 200) {
+                val responseCode = connection.responseCode
+                if (responseCode == 200) {
 
                     val json = getJsonObject(connection)
                     val newVersionCode = json.getInt("newVersionCode")
@@ -150,21 +152,32 @@ class HomeRepository(
                     if (newVersionCode <= currentVersionCode || newVersionCode == ignoredVersion) {
                         Log.w(TAG, "Current version is the latest, no need to update.")
                         Log.w(TAG, "New version code: $newVersionCode, current version code: $currentVersionCode, ignored version: $ignoredVersion")
-                        return null
+                        return UpdateCheckResult.Success(null)
                     }
 
-                    return UpdateInfo(
-                        versionName = json.getString("newVersionName"),
-                        versionCode = newVersionCode,
-                        changelog = json.getString("whatNew"),
-                        downloadUrl = json.getString("url")
+                    return UpdateCheckResult.Success(
+                        UpdateInfo(
+                            versionName = json.getString("newVersionName"),
+                            versionCode = newVersionCode,
+                            changelog = json.getString("whatNew"),
+                            downloadUrl = json.getString("url")
+                        )
                     )
+                } else {
+                    Log.e(TAG, "Update info request returned HTTP $responseCode via url: $url")
+                    lastError = IOException("HTTP $responseCode")
                 }
             } catch (th : Exception) {
+                lastError = th
                 Log.e(TAG, "Failed to fetch update info: ${th.message}")
             }
         }
-        return null
+        return UpdateCheckResult.Failure(describeUpdateCheckError(lastError))
+    }
+
+    private fun describeUpdateCheckError(error: Exception?): String {
+        if (error == null) return context.getString(R.string.common_unknown)
+        return error.message?.takeIf { it.isNotBlank() } ?: error.javaClass.simpleName
     }
 
     fun ignoreUpdate(versionCode: Int) {
@@ -356,3 +369,9 @@ data class RebootResult(
     val success: Boolean,
     val error: String
 )
+
+/** 更新检测结果：成功（可能无更新）或失败（附带原因）。 */
+sealed class UpdateCheckResult {
+    data class Success(val updateInfo: UpdateInfo?) : UpdateCheckResult()
+    data class Failure(val reason: String) : UpdateCheckResult()
+}

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ZToolApplication
 import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.data.home.UpdateCheckResult
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexProgress
 import com.qimian233.ztool.dexindex.base.DexIndexRegistry
@@ -258,26 +259,42 @@ class HomeViewModel(
         }.start()
     }
 
-    fun checkAppUpdate() {
+    fun checkAppUpdate(force: Boolean = false) {
         if (isCheckingAppUpdate.getAndSet(true)) {
             Log.d(TAG, "App update check already running, skipping")
+            return
+        }
+
+        // 复用会话内检测结果：已检测到更新时不再重复请求，手动刷新可强制重检
+        if (!force && _uiState.value.updateInfo != null) {
+            Log.d(TAG, "Update already detected in this session, skipping re-check")
+            isCheckingAppUpdate.set(false)
             return
         }
 
         _uiState.value = _uiState.value.copy(isCheckingAppUpdate = true)
         Thread {
             try {
-                val updateInfo = repository.checkAppUpdate()
-                _uiState.value = _uiState.value.copy(
-                    isCheckingAppUpdate = false,
-                    updateCheckCompleted = true,
-                    updateInfo = updateInfo
-                )
+                val result = repository.checkAppUpdate()
+                when (result) {
+                    is UpdateCheckResult.Success -> _uiState.value = _uiState.value.copy(
+                        isCheckingAppUpdate = false,
+                        updateCheckCompleted = true,
+                        updateCheckError = null,
+                        updateInfo = result.updateInfo
+                    )
+                    is UpdateCheckResult.Failure -> _uiState.value = _uiState.value.copy(
+                        isCheckingAppUpdate = false,
+                        updateCheckCompleted = true,
+                        updateCheckError = result.reason
+                    )
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "App update check failed", e)
                 _uiState.value = _uiState.value.copy(
                     isCheckingAppUpdate = false,
-                    updateCheckCompleted = true
+                    updateCheckCompleted = true,
+                    updateCheckError = e.message ?: e.javaClass.simpleName
                 )
             } finally {
                 isCheckingAppUpdate.set(false)
@@ -306,6 +323,7 @@ data class HomeUiState(
     val romRegion: String = "",
     val isCheckingAppUpdate: Boolean = false,
     val updateCheckCompleted: Boolean = false,
+    val updateCheckError: String? = null,
     val updateInfo: UpdateInfo? = null,
     val configUpgradeDialogVisible: Boolean = false,
     val rebootConfirmation: RebootTarget? = null
