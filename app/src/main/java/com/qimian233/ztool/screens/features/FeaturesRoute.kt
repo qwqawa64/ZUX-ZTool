@@ -29,7 +29,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -87,9 +86,8 @@ fun FeaturesMainRoute(
     // "system" is the LSPosed system-server scope entry — not a real installed package
     val systemScopePackages = setOf(ScopeKeys.SYSTEM_SERVER.packageName)
     var scopeRequestItem by remember { mutableStateOf<FeatureItem?>(null) }
-    // Docked search: hidden until the top-bar icon summons it; the icon toggles
-    // both visibility and the expanded state.
-    var searchVisible by remember { mutableStateOf(false) }
+    // Docked search is permanently docked under the top bar; only the expanded
+    // result state toggles.
     var searchExpanded by remember { mutableStateOf(false) }
 
     val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
@@ -159,29 +157,17 @@ fun FeaturesMainRoute(
         onFeatureClick = { item ->
             if (item.inScope) {
                 searchExpanded = false
-                searchVisible = false
                 onFeatureDestinationSelected(item.destination)
             } else {
                 scopeRequestItem = item
             }
         },
-        searchVisible = searchVisible,
         searchExpanded = searchExpanded,
-        onSearchToggle = {
-            searchVisible = true
-            searchExpanded = !searchExpanded
-        },
-        onSearchDismiss = {
-            searchExpanded = false
-            searchVisible = false
-        },
         onSearchExpandedChange = { expanded ->
             searchExpanded = expanded
-            searchVisible = expanded
         },
         onOpenEntry = { entry ->
             searchExpanded = false
-            searchVisible = false
             val destination = entry.featureDestination
             if (destination != null) {
                 onFeatureDestinationSelected(destination)
@@ -351,33 +337,21 @@ private fun FeaturesRoute(
     items: List<FeatureItem>,
     warningMessageRes: Int?,
     onFeatureClick: (FeatureItem) -> Unit,
-    searchVisible: Boolean,
     searchExpanded: Boolean,
-    onSearchToggle: () -> Unit,
-    onSearchDismiss: () -> Unit,
     onSearchExpandedChange: (Boolean) -> Unit,
     onOpenEntry: (com.qimian233.ztool.search.SearchEntry) -> Unit
 ) {
     androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
         com.qimian233.ztool.screens.search.SearchScrim(
-            visible = searchVisible && searchExpanded,
-            onDismiss = onSearchDismiss,
+            visible = searchExpanded,
+            onDismiss = { onSearchExpandedChange(false) },
             modifier = Modifier.fillMaxSize()
         )
         ZToolScaffold(
             topBar = {
                 ZToolTopAppBar(
                     title = stringResource(R.string.page_features_title),
-                addNavIcon = false,
-                actions = {
-                    IconButton(onClick = onSearchToggle) {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = stringResource(R.string.search_title),
-                            tint = LocalZToolColorScheme.current.onSurface
-                        )
-                    }
-                }
+                addNavIcon = false
             )
         }
     ) { innerPadding ->
@@ -395,7 +369,7 @@ private fun FeaturesRoute(
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
                 com.qimian233.ztool.screens.search.FeatureSearchBar(
-                    visible = searchVisible,
+                    visible = true,
                     expanded = searchExpanded,
                     onExpandedChange = onSearchExpandedChange,
                     onOpenEntry = onOpenEntry,
