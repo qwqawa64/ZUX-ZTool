@@ -446,13 +446,16 @@ private fun ModuleStatusCard(
     }
 
     val statusText = when {
-        bothActive -> {
-            val version = state.moduleVersion.ifBlank { stringResource(R.string.common_loading) }
-            "${stringResource(R.string.page_home_module_active)}${formatModuleVersionSuffix(version)}"
-        }
+        bothActive -> stringResource(R.string.page_home_module_active)
         state.isModuleActive -> stringResource(R.string.page_home_no_root_permission)
         state.isRootAvailable -> stringResource(R.string.page_home_module_inactive)
         else -> stringResource(R.string.page_home_no_root_and_module_inactive)
+    }
+
+    val summaryText = if (bothActive) {
+        state.moduleVersion.ifBlank { stringResource(R.string.common_loading) }
+    } else {
+        null
     }
 
     val icon = when {
@@ -464,6 +467,7 @@ private fun ModuleStatusCard(
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 4.dp)
             .then(
                 if (!bothActive) Modifier.clickable { onRefreshEnvironment() }
                 else Modifier
@@ -471,7 +475,7 @@ private fun ModuleStatusCard(
         containerColor = containerColor,
         defaultElevation = 1.dp
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -479,10 +483,18 @@ private fun ModuleStatusCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = statusText,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = contentColor
                     )
+                    if (summaryText != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = summaryText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = contentColor.copy(alpha = 0.8f)
+                        )
+                    }
                     if (!bothActive) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -510,23 +522,6 @@ private fun ModuleStatusCard(
             }
         }
     }
-}
-
-/**
- * Merges the raw module version ("Beta/260916 (1649)") into the status line as a
- * parenthesized suffix: "（Beta/260916, 1649）". Unparseable versions keep the raw text.
- */
-private fun formatModuleVersionSuffix(rawVersion: String): String {
-    if (rawVersion.isBlank()) return ""
-    val match = Regex("^(.*?)\\s*\\((\\d+)\\)$").find(rawVersion.trim())
-    val inner = if (match != null) {
-        val name = match.groupValues[1].trim()
-        val code = match.groupValues[2]
-        if (name.isEmpty()) code else "$name, $code"
-    } else {
-        rawVersion.trim()
-    }
-    return "（$inner）"
 }
 
 private data class SystemInfoRow(
