@@ -82,6 +82,7 @@ fun SystemUiMiscSettingsRoute(
             onBack = onBack,
             onGuestModeChanged = viewModel::setGuestModeController,
             onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
+            onBypassFaceAuthTimeoutChanged = viewModel::setBypassFaceAuthTimeout,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -124,6 +125,7 @@ private fun SystemUiMiscSettingsScreen(
     onBack: () -> Unit,
     onGuestModeChanged: (Boolean) -> Unit,
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
+    onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -168,6 +170,7 @@ private fun SystemUiMiscSettingsScreen(
                         state = state,
                         onGuestModeChanged = onGuestModeChanged,
                         onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
+                        onBypassFaceAuthTimeoutChanged = onBypassFaceAuthTimeoutChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -182,6 +185,7 @@ private fun systemUiMiscSettingsSections(
     state: SystemUiMiscSettingsUiState,
     onGuestModeChanged: (Boolean) -> Unit,
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
+    onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -199,6 +203,13 @@ private fun systemUiMiscSettingsSections(
                     checked = state.disableBiometricErrorVibration,
                     onCheckedChange = onDisableBiometricErrorVibrationChanged,
                     key = "system_ui_misc_disable_biometric_error_vibration"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_misc_bypass_face_auth_timeout_title),
+                    summary = stringResource(R.string.system_ui_misc_bypass_face_auth_timeout_summary),
+                    checked = state.bypassFaceAuthTimeout,
+                    onCheckedChange = onBypassFaceAuthTimeoutChanged,
+                    key = "system_ui_misc_bypass_face_auth_timeout"
                 )
             )
         )

@@ -410,6 +410,8 @@
     <string name="system_ui_misc_disable_guest_user_enable_title">Prevent automatic guest user creation</string>
     <string name="system_ui_misc_disable_guest_user_enable_summary">Only allow guest user creation when multi-user is enabled.</string>
     <string name="system_ui_misc_disable_biometric_error_vibration_title">Disable haptics of biometric auth failure</string>
+    <string name="system_ui_misc_bypass_face_auth_timeout_title">Skip face unlock timeout restriction</string>
+    <string name="system_ui_misc_bypass_face_auth_timeout_summary">Remove 4-hour face unlock timeout gate that requires password/pattern re-verification</string>
     <string name="system_ui_status_bar_clock_settings_title">Status bar clock settings</string>
     <string name="system_ui_status_bar_display_seconds_title">Show seconds</string>
     <string name="system_ui_status_bar_display_seconds_summary">Show seconds in the status bar clock.</string>

@@ -737,6 +737,11 @@ object SearchIndex {
             id = "system_ui_misc_disable_biometric_error_vibration",
             titleRes = R.string.system_ui_misc_disable_biometric_error_vibration_title
         ),
+        systemUiMisc.item(
+            id = "system_ui_misc_bypass_face_auth_timeout",
+            titleRes = R.string.system_ui_misc_bypass_face_auth_timeout_title,
+            summaryRes = R.string.system_ui_misc_bypass_face_auth_timeout_summary
+        ),
 
         // ── System framework ──
         framework.item(

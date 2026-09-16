@@ -41,6 +41,11 @@ class SystemUiMiscSettingsViewModel(
         repository.saveDisableBiometricErrorVibration(enabled)
     }
 
+    fun setBypassFaceAuthTimeout(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(bypassFaceAuthTimeout = enabled)
+        repository.saveBypassFaceAuthTimeout(enabled)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }
