@@ -73,6 +73,7 @@
     <string name="page_home_current_slot">当前槽位</string>
     <string name="page_home_rom_region">ROM地区</string>
     <string name="page_home_place_holder_unknown">未知</string>
+    <string name="page_home_info_copied_to_clipboard">已复制到剪贴板</string>
     <string name="page_home_title">主页</string>
     <string name="page_home_environment_state">状态</string>
     <string name="page_home_module_active">模块已激活</string>

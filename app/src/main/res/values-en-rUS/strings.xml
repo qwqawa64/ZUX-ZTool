@@ -68,6 +68,7 @@
     <string name="page_home_current_slot">"Active Slot: "</string>
     <string name="page_home_rom_region">"ROM Region: "</string>
     <string name="page_home_place_holder_unknown">Unknown</string>
+    <string name="page_home_info_copied_to_clipboard">Copied to clipboard</string>
     <string name="page_home_title">Homepage</string>
     <string name="page_home_environment_state">State</string>
     <string name="page_home_module_active">Module Activated</string>

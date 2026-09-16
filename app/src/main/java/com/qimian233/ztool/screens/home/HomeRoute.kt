@@ -1,5 +1,7 @@
 package com.qimian233.ztool.screens.home
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -25,9 +27,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.DeveloperBoard
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.DropdownMenu
@@ -47,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -519,16 +530,6 @@ private fun ModuleStatusCard(
                         value = state.moduleVersion.ifBlank { stringResource(R.string.common_loading) },
                         colorOnContainer = contentColor
                     )
-                    InfoBlock(
-                        label = stringResource(R.string.page_home_root),
-                        value = state.rootSource.ifBlank { stringResource(R.string.common_loading) },
-                        colorOnContainer = contentColor
-                    )
-                    InfoBlock(
-                        label = stringResource(R.string.page_home_framework),
-                        value = state.frameworkVersion.ifBlank { stringResource(R.string.common_loading) },
-                        colorOnContainer = contentColor
-                    )
                 }
             }
         }
@@ -558,58 +559,91 @@ private fun InfoBlock(
     }
 }
 
+private data class SystemInfoRow(
+    val key: String,
+    val title: String,
+    val value: String,
+    val icon: ImageVector
+)
+
 @Composable
 private fun SystemInfoCard(state: HomeUiState) {
+    val context = LocalContext.current
     val unknownText = stringResource(R.string.page_home_place_holder_unknown)
+    val copiedText = stringResource(R.string.page_home_info_copied_to_clipboard)
+
+    fun copyInfoToClipboard(label: String, value: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText(label, value))
+        Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+    }
+
+    val infoRows = listOf(
+        SystemInfoRow(
+            key = "home_device_code_name",
+            title = stringResource(R.string.page_home_device_code_name),
+            value = state.deviceModel,
+            icon = Icons.Rounded.PhoneAndroid
+        ),
+        SystemInfoRow(
+            key = "home_android_version",
+            title = stringResource(R.string.page_home_android_version),
+            value = state.androidVersion,
+            icon = Icons.Rounded.Android
+        ),
+        SystemInfoRow(
+            key = "home_build_version",
+            title = stringResource(R.string.page_home_build_version),
+            value = state.buildVersion,
+            icon = Icons.Rounded.Memory
+        ),
+        SystemInfoRow(
+            key = "home_kernel_version",
+            title = stringResource(R.string.page_home_kernel_version),
+            value = state.kernelVersion,
+            icon = Icons.Rounded.DeveloperBoard
+        ),
+        SystemInfoRow(
+            key = "home_current_slot",
+            title = stringResource(R.string.page_home_current_slot),
+            value = state.currentSlot,
+            icon = Icons.Rounded.SwapHoriz
+        ),
+        SystemInfoRow(
+            key = "home_rom_region",
+            title = stringResource(R.string.page_home_rom_region),
+            value = state.romRegion,
+            icon = Icons.Rounded.Public
+        ),
+        SystemInfoRow(
+            key = "home_root_source",
+            title = stringResource(R.string.page_home_root),
+            value = state.rootSource,
+            icon = Icons.Rounded.Security
+        ),
+        SystemInfoRow(
+            key = "home_framework_info",
+            title = stringResource(R.string.page_home_framework),
+            value = state.frameworkVersion,
+            icon = Icons.Rounded.Extension
+        )
+    )
 
     ZToolSettingsList(
         sections = listOf(
             SettingSection(
                 title = stringResource(R.string.page_home_device_info),
-                items = listOf(
+                items = infoRows.map { row ->
+                    val summary = row.value.ifBlank { unknownText }
                     SettingItem.Action(
-                        key = "home_device_code_name",
-                        title = stringResource(R.string.page_home_device_code_name),
-                        summary = state.deviceModel.ifBlank { unknownText },
+                        key = row.key,
+                        title = row.title,
+                        summary = summary,
+                        icon = row.icon,
                         onClick = {},
-                        enabled = false
-                    ),
-                    SettingItem.Action(
-                        key = "home_android_version",
-                        title = stringResource(R.string.page_home_android_version),
-                        summary = state.androidVersion.ifBlank { unknownText },
-                        onClick = {},
-                        enabled = false
-                    ),
-                    SettingItem.Action(
-                        key = "home_build_version",
-                        title = stringResource(R.string.page_home_build_version),
-                        summary = state.buildVersion.ifBlank { unknownText },
-                        onClick = {},
-                        enabled = false
-                    ),
-                    SettingItem.Action(
-                        key = "home_kernel_version",
-                        title = stringResource(R.string.page_home_kernel_version),
-                        summary = state.kernelVersion.ifBlank { unknownText },
-                        onClick = {},
-                        enabled = false
-                    ),
-                    SettingItem.Action(
-                        key = "home_current_slot",
-                        title = stringResource(R.string.page_home_current_slot),
-                        summary = state.currentSlot.ifBlank { unknownText },
-                        onClick = {},
-                        enabled = false
-                    ),
-                    SettingItem.Action(
-                        key = "home_rom_region",
-                        title = stringResource(R.string.page_home_rom_region),
-                        summary = state.romRegion.ifBlank { unknownText },
-                        onClick = {},
-                        enabled = false
+                        onLongClick = { copyInfoToClipboard(row.title, summary) }
                     )
-                )
+                }
             )
         )
     )

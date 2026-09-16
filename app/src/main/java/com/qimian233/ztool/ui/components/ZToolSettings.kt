@@ -8,6 +8,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -54,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextOverflow
@@ -85,6 +89,20 @@ private fun trailingControlMinimumInteractiveSize(horizontalPadding: Dp): Dp {
         .coerceAtLeast(0.dp)
 }
 
+/**
+ * Long-press detection layered on top of a component that owns its own [Modifier.clickable]
+ * (e.g. Miuix BasicComponent): tap gestures are forwarded untouched, only long presses are
+ * consumed here.
+ */
+private fun Modifier.longPressGesture(
+    enabled: Boolean,
+    onLongClick: (() -> Unit)?
+): Modifier = pointerInput(enabled, onLongClick) {
+    if (!enabled || onLongClick == null) return@pointerInput
+    detectTapGestures(onLongPress = { onLongClick() })
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ZListItem(
     title: String,
@@ -92,12 +110,16 @@ fun ZListItem(
     summary: String? = null,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     leadingContent: @Composable (RowScope.() -> Unit)? = null,
     trailingContent: @Composable (RowScope.() -> Unit)? = null
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixBasicComponent(
-            modifier = modifier,
+            modifier = modifier.longPressGesture(
+                enabled = enabled,
+                onLongClick = onLongClick
+            ),
             title = title,
             summary = summary,
             startAction = leadingContent?.let {
@@ -120,8 +142,12 @@ fun ZListItem(
             .fillMaxWidth()
             .heightIn(min = if (summary == null) 56.dp else 72.dp)
             .then(
-                if (onClick != null) {
-                    Modifier.clickable(enabled = enabled) { onClick() }
+                if (onClick != null || onLongClick != null) {
+                    Modifier.combinedClickable(
+                        enabled = enabled,
+                        onClick = onClick ?: {},
+                        onLongClick = onLongClick
+                    )
                 } else {
                     Modifier
                 }

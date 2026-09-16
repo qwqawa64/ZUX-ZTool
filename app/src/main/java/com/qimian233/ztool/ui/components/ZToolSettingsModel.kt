@@ -143,6 +143,7 @@ sealed interface SettingItem {
         val icon: ImageVector? = null,
         val leadingContent: (@Composable RowScope.() -> Unit)? = null,
         val trailingContent: (@Composable RowScope.() -> Unit)? = null,
+        val onLongClick: (() -> Unit)? = null,
         override val enabled: Boolean = true,
         override val key: String
     ) : SettingItem
@@ -466,6 +467,7 @@ fun ZToolSettingItem(
                 summary = item.summary,
                 enabled = item.enabled,
                 onClick = item.onClick,
+                onLongClick = item.onLongClick,
                 leadingContent = item.leadingContent ?: item.icon?.let { icon ->
                     { ZToolSettingLeadingIcon(icon = icon, enabled = item.enabled) }
                 },
