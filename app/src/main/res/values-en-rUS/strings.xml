@@ -918,4 +918,7 @@
     <string name="search_requires_parent_switch_off">Requires "%1$s" disabled</string>
     <string name="search_condition_m3_expressive_only">Only visible in Material 3 Expressive style</string>
     <string name="search_condition_miuix_only">Only visible in Miuix style</string>
+    <string name="about_dev_qimian233">Qimian233</string>
+    <string name="about_dev_wasd_destroy">WASDDestroy</string>
+    <string name="about_dev_uuuddddl">uuuddddl</string>
 </resources>

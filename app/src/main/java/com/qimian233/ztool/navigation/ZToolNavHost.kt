@@ -294,7 +294,8 @@ internal fun MainRouteNavHost(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                targetId = backStackEntry.highlightTarget(),
             )
         }
         composable(

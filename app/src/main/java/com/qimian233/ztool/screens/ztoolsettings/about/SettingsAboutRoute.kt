@@ -44,6 +44,10 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.HomeRepository
 import com.qimian233.ztool.screens.home.HomeViewModelFactory
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
+import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
+import com.qimian233.ztool.ui.components.HighlightContainerMarker
+import com.qimian233.ztool.ui.components.HighlightController
+import com.qimian233.ztool.ui.components.HighlightableSettingRow
 import com.qimian233.ztool.ui.components.ZListItem
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolPageSurface
@@ -57,7 +61,8 @@ import com.qimian233.ztool.viewmodel.UpdateInfo
 
 @Composable
 fun SettingsAboutRoute(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    targetId: String? = null
 ) {
     val context = LocalContext.current
     val activity = context as MainActivity
@@ -72,19 +77,29 @@ fun SettingsAboutRoute(
         )[HomeViewModel::class.java]
     }
     val homeState by homeViewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val highlightRegistry = remember { HighlightAnchorRegistry() }
 
     LaunchedEffect(Unit) {
         homeViewModel.checkAppUpdate()
     }
 
-    SettingsAboutScreen(
-        onBack = onBack,
-        onOpenGithub = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool") },
-        onOpenUnfuckZUI = { openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI") },
-        onOpenZuxOsPlus = { openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos") },
-        onOpenGitHubAccelerationSite = { openExternalLink(context, "https://gh.absinthe.life/") },
-        onOpenHitokotoSite = { openExternalLink(context, "https://docs.xygeng.cn/") },
-        onOpenQimian233 = {
+    HighlightController(
+        highlightTargetId = targetId,
+        scrollState = scrollState,
+        registry = highlightRegistry,
+        onConsumed = { }
+    ) {
+        SettingsAboutScreen(
+            onBack = onBack,
+            scrollState = scrollState,
+            highlightRegistry = highlightRegistry,
+            onOpenGithub = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool") },
+            onOpenUnfuckZUI = { openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI") },
+            onOpenZuxOsPlus = { openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos") },
+            onOpenGitHubAccelerationSite = { openExternalLink(context, "https://gh.absinthe.life/") },
+            onOpenHitokotoSite = { openExternalLink(context, "https://docs.xygeng.cn/") },
+            onOpenQimian233 = {
             openExternalLink(
                 context,
                 "http://www.coolapk.com/u/10099756",
@@ -92,7 +107,7 @@ fun SettingsAboutRoute(
                 "com.coolapk.market"
             )
         },
-        onOpenWasdDestroy = {
+            onOpenWasdDestroy = {
             openExternalLink(
                 context,
                 "http://www.coolapk.com/u/18634835",
@@ -100,18 +115,21 @@ fun SettingsAboutRoute(
                 "com.coolapk.market"
             )
         },
-        onOpenUdl = { openExternalLink(context, "https://github.com/uuuddddl") },
-        onCheckUpdate = { homeViewModel.checkAppUpdate(force = true) },
-        isCheckingUpdate = homeState.isCheckingAppUpdate,
-        updateCheckCompleted = homeState.updateCheckCompleted,
-        updateCheckError = homeState.updateCheckError,
-        updateInfo = homeState.updateInfo,
-        onOpenUpdate = { url -> openExternalLink(context, url) }
-    )
+            onOpenUdl = { openExternalLink(context, "https://github.com/uuuddddl") },
+            onCheckUpdate = { homeViewModel.checkAppUpdate(force = true) },
+            isCheckingUpdate = homeState.isCheckingAppUpdate,
+            updateCheckCompleted = homeState.updateCheckCompleted,
+            updateCheckError = homeState.updateCheckError,
+            updateInfo = homeState.updateInfo,
+            onOpenUpdate = { url -> openExternalLink(context, url) }
+        )
+    }
 }
 
 @Composable
 private fun SettingsAboutScreen(
+    scrollState: androidx.compose.foundation.ScrollState,
+    highlightRegistry: HighlightAnchorRegistry,
     onBack: () -> Unit,
     onOpenGithub: () -> Unit,
     onOpenUnfuckZUI: () -> Unit,
@@ -185,29 +203,33 @@ private fun SettingsAboutScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .widthIn(max = 960.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
+                HighlightContainerMarker(registry = highlightRegistry)
                 Spacer(modifier = Modifier.height(24.dp))
                 AboutHeaderCard(versionName, commitCount, commitHash)
                 Spacer(modifier = Modifier.height(16.dp))
                 AboutSectionCard(stringResource(R.string.page_settings_about_developers_title), 3) { getModifier ->
                     AboutActionRow(
-                        title = "Qimian233",
+                        title = stringResource(R.string.about_dev_qimian233),
                         summary = stringResource(R.string.page_settings_about_qimian233_summary),
                         onClick = onOpenQimian233,
+                        highlightKey = "about_dev_qimian233",
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
-                        title = "WASDDestroy",
+                        title = stringResource(R.string.about_dev_wasd_destroy),
                         summary = stringResource(R.string.page_settings_about_wasd_destroy_summary),
                         onClick = onOpenWasdDestroy,
+                        highlightKey = "about_dev_wasd_destroy",
                         modifier = getModifier(1)
                     )
                     AboutActionRow(
-                        title = "uuuddddl",
+                        title = stringResource(R.string.about_dev_uuuddddl),
                         summary = stringResource(R.string.page_settings_about_uuuddddl),
                         onClick = onOpenUdl,
+                        highlightKey = "about_dev_uuuddddl",
                         modifier = getModifier(2)
                     )
                 }
@@ -217,24 +239,28 @@ private fun SettingsAboutScreen(
                         title = stringResource(R.string.page_settings_credits_unfuck_zui),
                         summary = stringResource(R.string.page_settings_about_unfuckzui_summary),
                         onClick = onOpenUnfuckZUI,
+                        highlightKey = "about_credit_unfuck_zui",
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_credits_zuxos_plus),
                         summary = stringResource(R.string.page_settings_about_zuxos_plus_summary),
                         onClick = onOpenZuxOsPlus,
+                        highlightKey = "about_credit_zuxos_plus",
                         modifier = getModifier(1),
                     )
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_credits_github_acceleration),
                         summary = stringResource(R.string.page_settings_credits_github_acceleration_site),
                         onClick = onOpenGitHubAccelerationSite,
+                        highlightKey = "about_credit_github_acceleration",
                         modifier = getModifier(2)
                     )
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_credits_hitokoto_support),
                         summary = stringResource(R.string.page_settings_credits_hitokoto_support_site),
                         onClick = onOpenHitokotoSite,
+                        highlightKey = "about_credit_hitokoto",
                         modifier = getModifier(3)
                     )
                 }
@@ -244,6 +270,7 @@ private fun SettingsAboutScreen(
                         title = stringResource(R.string.page_settings_about_view_source_title),
                         summary = null,
                         onClick = onOpenGithub,
+                        highlightKey = "about_view_source",
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
@@ -260,6 +287,7 @@ private fun SettingsAboutScreen(
                         title = stringResource(R.string.page_settings_about_app_update_title),
                         summary = updateSummary,
                         onClick = updateRowClick,
+                        highlightKey = "about_check_update",
                         modifier = getModifier(0),
                         showTrailingArrow = true
                     )
@@ -386,23 +414,26 @@ private fun AboutActionRow(
     summary: String?,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    showTrailingArrow: Boolean = true
+    showTrailingArrow: Boolean = true,
+    highlightKey: String? = null
 ) {
-    ZListItem(
-        title = title,
-        summary = summary,
-        onClick = onClick,
-        modifier = modifier,
-        trailingContent = if (showTrailingArrow) {
-            {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                    contentDescription = null,
-                    tint = LocalZToolColorScheme.current.onSurfaceVariant
-                )
-            }
-        } else null
-    )
+    HighlightableSettingRow(highlightKey = highlightKey, modifier = modifier) {
+        ZListItem(
+            title = title,
+            summary = summary,
+            onClick = onClick,
+            modifier = Modifier,
+            trailingContent = if (showTrailingArrow) {
+                {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                        contentDescription = null,
+                        tint = LocalZToolColorScheme.current.onSurfaceVariant
+                    )
+                }
+            } else null
+        )
+    }
 }
 
 

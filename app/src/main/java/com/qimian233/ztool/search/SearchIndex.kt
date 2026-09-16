@@ -1407,10 +1407,50 @@ object SearchIndex {
             summaryRes = R.string.page_settings_advanced_open_firstrun_summary
         ),
 
-        // ── About ──
+        // ── About (rows registered individually; see SettingsAboutRoute) ──
         aboutScreen.item(
-            id = "about_page",
-            titleRes = R.string.page_settings_about_ztool_title
+            id = "about_dev_qimian233",
+            titleRes = R.string.about_dev_qimian233,
+            summaryRes = R.string.page_settings_about_qimian233_summary
+        ),
+        aboutScreen.item(
+            id = "about_dev_wasd_destroy",
+            titleRes = R.string.about_dev_wasd_destroy,
+            summaryRes = R.string.page_settings_about_wasd_destroy_summary
+        ),
+        aboutScreen.item(
+            id = "about_dev_uuuddddl",
+            titleRes = R.string.about_dev_uuuddddl,
+            summaryRes = R.string.page_settings_about_uuuddddl
+        ),
+        aboutScreen.item(
+            id = "about_credit_unfuck_zui",
+            titleRes = R.string.page_settings_credits_unfuck_zui,
+            summaryRes = R.string.page_settings_about_unfuckzui_summary
+        ),
+        aboutScreen.item(
+            id = "about_credit_zuxos_plus",
+            titleRes = R.string.page_settings_credits_zuxos_plus,
+            summaryRes = R.string.page_settings_about_zuxos_plus_summary
+        ),
+        aboutScreen.item(
+            id = "about_credit_github_acceleration",
+            titleRes = R.string.page_settings_credits_github_acceleration,
+            summaryRes = R.string.page_settings_credits_github_acceleration_site
+        ),
+        aboutScreen.item(
+            id = "about_credit_hitokoto",
+            titleRes = R.string.page_settings_credits_hitokoto_support,
+            summaryRes = R.string.page_settings_credits_hitokoto_support_site
+        ),
+        aboutScreen.item(
+            id = "about_view_source",
+            titleRes = R.string.page_settings_about_view_source_title
+        ),
+        aboutScreen.item(
+            id = "about_check_update",
+            titleRes = R.string.page_settings_about_app_update_title,
+            summaryRes = R.string.page_settings_about_app_update_placeholder_summary
         )
     )
 

@@ -969,4 +969,7 @@
     <string name="search_requires_parent_switch_off">需先关闭「%1$s」</string>
     <string name="search_condition_m3_expressive_only">仅 Material 3 Expressive 风格下可见</string>
     <string name="search_condition_miuix_only">仅 Miuix 风格下可见</string>
+    <string name="about_dev_qimian233">Qimian233</string>
+    <string name="about_dev_wasd_destroy">WASDDestroy</string>
+    <string name="about_dev_uuuddddl">uuuddddl</string>
 </resources>
