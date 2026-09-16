@@ -774,11 +774,6 @@ object SearchIndex {
             titleRes = R.string.system_framework_allow_relative_app_launch_title
         ),
         framework.item(
-            id = "framework_no_password_per_24h",
-            titleRes = R.string.system_framework_no_password_per_24h,
-            summaryRes = R.string.system_framework_no_password_per_24h_summary
-        ),
-        framework.item(
             id = "framework_allow_untrusted_touch",
             titleRes = R.string.system_framework_allow_untrusted_touch
         ),

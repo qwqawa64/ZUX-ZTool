@@ -28,8 +28,7 @@ import io.github.libxposed.api.XposedModuleInterface
  *
  * 明确不处理：
  * - mFaceDetectNum >= 3（单次亮屏内检测重试上限）与超时门禁无关；
- * - system_server 侧 72h 强验证（LockSettingsStrongAuth），由
- *   NoMorePasswordPer24H 单独负责；
+ * - system_server 侧 72h 强验证（LockSettingsStrongAuth）不属于本 Hook 范围；
  * - 设备锁定（isUserLockout，多次输错触发）属安全机制，不属于超时门禁。
  */
 @SuppressLint("PrivateApi")

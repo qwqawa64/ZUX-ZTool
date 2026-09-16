@@ -24,7 +24,6 @@ object PreferenceKeys {
 
     // ── 系统框架 ──
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
-    val NO_MORE_PASSWORD_PER_24H = BoolKey("NoMorePasswordPer24H", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
     val ALLOW_UNTRUSTED_TOUCH = BoolKey("allow_untrusted_touch", false)
     val FORCE_SCREEN_ON_OFF_ANIMATION = BoolKey("force_screen_on_off_animation", false)
@@ -273,7 +272,7 @@ object PreferenceKeys {
     // 以及 Hook 侧循环匹配使用
 
     val booleanKeys: List<BoolKey> = listOf(
-        DISABLE_FLAG_SECURE, NO_MORE_PASSWORD_PER_24H, ALLOW_GET_PACKAGES,
+        DISABLE_FLAG_SECURE, ALLOW_GET_PACKAGES,
         ALLOW_UNTRUSTED_TOUCH, FORCE_SCREEN_ON_OFF_ANIMATION, AI_INPUT_EXPAND,
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         DISABLE_HBM_THERMAL_LIMIT,

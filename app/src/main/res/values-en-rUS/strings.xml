@@ -767,8 +767,6 @@
     <string name="settings_about_device_info_ram_title">Modify RAM info</string>
     <string name="settings_about_device_info_rom_label">ROM info</string>
     <string name="settings_about_device_info_rom_title">Modify ROM info</string>
-    <string name="system_framework_no_password_per_24h">No password per 24h</string>
-    <string name="system_framework_no_password_per_24h_summary">Won\'t work when interval between password use is longer than 1 month</string>
     <string name="system_framework_allow_untrusted_touch">Allow untrusted touch</string>
     <string name="page_firstrun_splash_welcome_text">Welcome to ZTool</string>
     <string name="page_firstrun_splash_tap_hint">Tap anywhere to start setup</string>

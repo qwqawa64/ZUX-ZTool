@@ -106,7 +106,6 @@ fun FrameworkSettingsRoute(
             onAiInputExpandChanged = viewModel::setAiInputExpand,
             onAiInputSignsChanged = viewModel::setAiInputSigns,
             onShowAiInputInfo = viewModel::showAiInputInfoDialog,
-            onNoPasswordPer24H = viewModel::setNoPasswordPer24H,
             onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
             onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
             onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
@@ -169,7 +168,6 @@ private fun FrameworkSettingsScreen(
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
-    onNoPasswordPer24H: (Boolean) -> Unit,
     onAllowUntrustedTouch: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
@@ -235,7 +233,6 @@ private fun FrameworkSettingsScreen(
                         onAiInputExpandChanged = onAiInputExpandChanged,
                         onAiInputSignsChanged = onAiInputSignsChanged,
                         onShowAiInputInfo = onShowAiInputInfo,
-                        onNoPasswordPer24H = onNoPasswordPer24H,
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
@@ -265,7 +262,6 @@ private fun frameworkSettingsSections(
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
-    onNoPasswordPer24H: (Boolean) -> Unit,
     onAllowUntrustedTouch: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
@@ -344,13 +340,6 @@ private fun frameworkSettingsSections(
                     checked = state.allowRelativeAppLaunch,
                     onCheckedChange = onAllowRelativeAppLaunchChanged,
                     key = "framework_allow_relative_app_launch"
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_no_password_per_24h),
-                    summary = stringResource(R.string.system_framework_no_password_per_24h_summary),
-                    checked = state.noPasswordPer24H,
-                    onCheckedChange = onNoPasswordPer24H,
-                    key = "framework_no_password_per_24h"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_allow_untrusted_touch),

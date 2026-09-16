@@ -22,7 +22,6 @@ class FrameworkSettingsRepository(
             forceOnOffAnimationDuration = normalizeScreenOnOffAnimationDuration(
                 prefsUtils.loadIntegerSetting(KEY_SCREEN_ON_OFF_ANIMATION_DURATION, 400)
             ),
-            noPasswordPer24H = prefsUtils.loadBooleanSetting(NO_PASSWORD_PER_24H, false),
             allowUntrustedTouch = prefsUtils.loadBooleanSetting(ALLOW_UNTRUSTED_TOUCH, false),
             allowRelativeAppLaunch = prefsUtils.loadBooleanSetting(ALLOW_RELATIVE_APP_LAUNCH, false),
             forceRelativeAppFreeform = prefsUtils.loadBooleanSetting(FORCE_RELATIVE_APP_FREEFORM, false),
@@ -70,10 +69,6 @@ class FrameworkSettingsRepository(
             KEY_SCREEN_ON_OFF_ANIMATION_DURATION,
             normalizeScreenOnOffAnimationDuration(value)
         )
-    }
-
-    fun saveNoPasswordPer24H(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(NO_PASSWORD_PER_24H, enabled)
     }
 
     fun saveAllowUntrustedTouch(enabled: Boolean) {
@@ -168,7 +163,6 @@ class FrameworkSettingsRepository(
         private const val SCREEN_ON_OFF_ANIMATION_MIN_MS = 0
         private const val SCREEN_ON_OFF_ANIMATION_MAX_MS = 1000
         private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
-        private val NO_PASSWORD_PER_24H = PreferenceKeys.NO_MORE_PASSWORD_PER_24H.name
         private val ALLOW_UNTRUSTED_TOUCH = PreferenceKeys.ALLOW_UNTRUSTED_TOUCH.name
         private val ALLOW_RELATIVE_APP_LAUNCH = PreferenceKeys.ALLOW_RELATIVE_APP_LAUNCH.name
         private val FORCE_RELATIVE_APP_FREEFORM = PreferenceKeys.FORCE_RELATIVE_APP_FREEFORM.name

@@ -66,7 +66,6 @@ import com.qimian233.ztool.hook.modules.systemframework.ForceRelativeAppFreeform
 import com.qimian233.ztool.hook.modules.systemframework.ForceScreenOnOffAnimation
 import com.qimian233.ztool.hook.modules.systemframework.KeepRotation
 import com.qimian233.ztool.hook.modules.systemframework.OwnerInfoSystemHook
-import com.qimian233.ztool.hook.modules.systemframework.NoMorePasswordPer24H
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerArscBypassHook
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerDigestBypassHook
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerDowngradeHook
@@ -142,7 +141,6 @@ object HookManager {
     private fun registerAllModules(xposed: XposedInterface) {
         // ── 系统框架 (target: system — 由 onSystemServerStarting 调度) ──
         registerHookModule(DisableFlagSecure())
-        registerHookModule(NoMorePasswordPer24H())
         registerHookModule(AllowGetPackages())
         registerHookModule(AllowUntrustedTouch())
         registerHookModule(ForceScreenOnOffAnimation())

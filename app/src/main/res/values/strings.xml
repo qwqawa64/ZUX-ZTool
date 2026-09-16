@@ -841,8 +841,6 @@
     <string name="system_ui_control_center_notification_center_blur_strength_title">模糊强度</string>
     <string name="system_ui_control_center_notification_center_blur_strength_summary">按系统原始模糊强度缩放</string>
     <string name="system_ui_control_center_percent_unit">%d%%</string>
-    <string name="system_framework_no_password_per_24h">禁用每 24 小时验证一次锁屏密码</string>
-    <string name="system_framework_no_password_per_24h_summary">测试功能，可能并没有效果</string>
     <string name="system_framework_allow_untrusted_touch">允许不受信任的触摸</string>
     <string name="page_settings_auto_check_update_title">自动检查更新</string>
     <string name="common_splash_logo_description" translatable="false">ZTool Logo</string>
