@@ -620,7 +620,6 @@ private fun SystemInfoCard(state: HomeUiState) {
     ZToolSettingsList(
         sections = listOf(
             SettingSection(
-                title = stringResource(R.string.page_home_device_info),
                 items = infoRows.map { row ->
                     SettingItem.Action(
                         key = row.key,

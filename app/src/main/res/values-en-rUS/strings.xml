@@ -59,7 +59,6 @@
     <string name="page_home_update_button_update">Upgrade now</string>
     <string name="page_home_update_button_ignore">Skip this version</string>
     <string name="page_home_update_ignore_toast">Turn off update notice until next new version</string>
-    <string name="page_home_device_info">Device Info</string>
     <string name="page_home_device_code_name">Project Code</string>
     <string name="page_home_android_version">Android</string>
     <string name="page_home_build_version">Build</string>

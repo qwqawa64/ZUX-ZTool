@@ -64,7 +64,6 @@
     <string name="page_home_update_ignore_toast">已忽略此版本，将不再提醒</string>
     <string name="page_settings_app_name" translatable="false">ZTool</string>
     <string name="page_home_build_code" translatable="false">%s (Build %d)</string>
-    <string name="page_home_device_info">设备信息</string>
     <string name="page_home_device_code_name">设备代号</string>
     <string name="page_home_android_version">Android版本</string>
     <string name="page_home_build_version">构建版本</string>
