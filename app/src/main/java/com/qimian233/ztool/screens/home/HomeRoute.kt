@@ -470,9 +470,10 @@ private fun ModuleStatusCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
             .then(
                 if (!bothActive) Modifier.clickable { onRefreshEnvironment() }
-                else Modifier
+                else Modifier.clickable(onClick = {})
             ),
         containerColor = containerColor,
         defaultElevation = 1.dp
