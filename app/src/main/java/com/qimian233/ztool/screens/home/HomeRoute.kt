@@ -467,7 +467,7 @@ private fun ModuleStatusCard(
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp)
+            .padding(horizontal = 8.dp)
             .then(
                 if (!bothActive) Modifier.clickable { onRefreshEnvironment() }
                 else Modifier
