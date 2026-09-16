@@ -99,7 +99,6 @@ fun SettingsAboutRoute(
             onOpenUnfuckZUI = { openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI") },
             onOpenZuxOsPlus = { openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos") },
             onOpenGitHubAccelerationSite = { openExternalLink(context, "https://gh.absinthe.life/") },
-            onOpenHitokotoSite = { openExternalLink(context, "https://docs.xygeng.cn/") },
             onOpenQimian233 = {
             openExternalLink(
                 context,
@@ -137,7 +136,6 @@ private fun SettingsAboutScreen(
     onOpenUnfuckZUI: () -> Unit,
     onOpenZuxOsPlus: () -> Unit,
     onOpenGitHubAccelerationSite: () -> Unit,
-    onOpenHitokotoSite: () -> Unit,
     onOpenQimian233: () -> Unit,
     onOpenWasdDestroy: () -> Unit,
     onCheckUpdate: () -> Unit,
@@ -236,7 +234,7 @@ private fun SettingsAboutScreen(
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.page_settings_about_acknowledgements_title), 4) { getModifier ->
+                AboutSectionCard(stringResource(R.string.page_settings_about_acknowledgements_title), 3) { getModifier ->
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_credits_unfuck_zui),
                         summary = stringResource(R.string.page_settings_about_unfuckzui_summary),
@@ -257,13 +255,6 @@ private fun SettingsAboutScreen(
                         onClick = onOpenGitHubAccelerationSite,
                         highlightKey = "about_credit_github_acceleration",
                         modifier = getModifier(2)
-                    )
-                    AboutActionRow(
-                        title = stringResource(R.string.page_settings_credits_hitokoto_support),
-                        summary = stringResource(R.string.page_settings_credits_hitokoto_support_site),
-                        onClick = onOpenHitokotoSite,
-                        highlightKey = "about_credit_hitokoto",
-                        modifier = getModifier(3)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))

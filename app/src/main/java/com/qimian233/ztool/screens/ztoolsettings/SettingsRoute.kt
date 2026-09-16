@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -181,7 +180,6 @@ fun SettingsMainRoute(
             onOpenLanguageSettings = { openAppLanguageSettings(context) },
             onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
             onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
-            onHomepageYiyanChanged = viewModel::setHomepageYiyanEnabled,
             onAbout = {
                 showRestoreConfirmDialog = false
                 onOpenAbout()
@@ -312,7 +310,6 @@ private fun SettingsRoute(
     onOpenLanguageSettings: () -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
-    onHomepageYiyanChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
@@ -367,7 +364,6 @@ private fun SettingsRoute(
                         onOpenLanguageSettings = onOpenLanguageSettings,
                         onEntryDisplayChanged = onEntryDisplayChanged,
                         onDetailedLoggingChanged = onDetailedLoggingChanged,
-                        onHomepageYiyanChanged = onHomepageYiyanChanged,
                         onAbout = onAbout,
                         onExportLogs = onExportLogs,
                         onDeleteAllLogs = onDeleteAllLogs,
@@ -392,7 +388,6 @@ private fun settingsSections(
     onOpenLanguageSettings: () -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
-    onHomepageYiyanChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
@@ -454,14 +449,6 @@ private fun settingsSections(
                     checked = state.isEntryDisplayedInSettings,
                     onCheckedChange = onEntryDisplayChanged,
                     icon = Icons.AutoMirrored.Rounded.OpenInNew
-                ),
-                SettingItem.Switch(
-                    key = "app_settings_enable_home_page_yiyan",
-                    title = stringResource(R.string.page_settings_enable_home_page_yiyan),
-                    summary = stringResource(R.string.page_settings_enable_home_page_yiyan_summary),
-                    checked = state.isHomepageYiyanEnabled,
-                    onCheckedChange = onHomepageYiyanChanged,
-                    icon = Icons.AutoMirrored.Filled.Notes
                 ),
                 SettingItem.Switch(
                     key = "app_settings_auto_check_update",

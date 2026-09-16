@@ -130,22 +130,19 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     isCheckingEnvironment = false,
                     isModuleActive = status.moduleActive,
-                    isRootAvailable = status.rootAvailable,
-                    hintText = status.hintText
+                    isRootAvailable = status.rootAvailable
                 )
 
                 if (status.moduleActive && status.rootAvailable) {
                     updateModuleStatusAsync()
                     updateSystemInfoAsync()
-                    updateHomepageHint()
                     checkConfigUpgrade()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Environment check failed", e)
                 _uiState.value = _uiState.value.copy(
                     isCheckingEnvironment = false,
-                    isRootAvailable = false,
-                    hintText = ""
+                    isRootAvailable = false
                 )
             } finally {
                 isCheckingEnvironment.set(false)
@@ -233,20 +230,6 @@ class HomeViewModel(
         }.start()
     }
 
-    private fun updateHomepageHint() {
-        _uiState.value = _uiState.value.copy(hintText = repository.environmentReadyHint())
-        Thread {
-            try {
-                val hint = repository.loadHomepageHint()
-                if (hint != null && _uiState.value.environmentReady) {
-                    _uiState.value = _uiState.value.copy(hintText = hint)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Homepage hint fetch failed: ${e.message}")
-            }
-        }.start()
-    }
-
     private fun checkConfigUpgrade() {
         Thread {
             try {
@@ -311,7 +294,6 @@ data class HomeUiState(
     val isCheckingEnvironment: Boolean = true,    val isModuleActive: Boolean = false,
     val isRootAvailable: Boolean = false,
     val isZuxOsDevice: Boolean = true,
-    val hintText: String = "",
     val moduleVersion: String = "",
     val rootSource: String = "",
     val frameworkVersion: String = "",

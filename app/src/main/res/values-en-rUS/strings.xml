@@ -70,7 +70,6 @@
     <string name="page_home_place_holder_unknown">Unknown</string>
     <string name="page_home_title">Homepage</string>
     <string name="page_home_environment_state">State</string>
-    <string name="page_home_environment_ready">Environment Ready</string>
     <string name="page_home_module_active">Module Activated</string>
     <string name="page_home_module_inactive">Module not activated</string>
     <string name="page_home_no_root_permission">No Root permission</string>
@@ -168,8 +167,6 @@
     <string name="page_settings_restore_config_from_file">Restore configuration from file</string>
     <string name="page_settings_restore_default_config">Restore default configuration</string>
     <string name="page_settings_more_settings">More settings</string>
-    <string name="page_settings_enable_home_page_yiyan">Random quote</string>
-    <string name="page_settings_enable_home_page_yiyan_summary">Show a random quote fetched from network at the home page.</string>
     <string name="common_open_web_link_failed">Unable to open link</string>
     <string name="page_settings_show_about_page">About ZTool</string>
     <string name="page_settings_config_backup_success">Configuration backed up</string>
@@ -888,8 +885,6 @@
     <string name="system_ui_animation_desktop_live_wallpaper_scale_mode_cover">Fill Screen (Crop)</string>
     <string name="page_settings_credits_github_acceleration">GitHub Mirror</string>
     <string name="page_settings_credits_github_acceleration_site">https://gh.absinthe.life/ delivers fast download and update check service for PRC region</string>
-    <string name="page_settings_credits_hitokoto_support">Hitokoto Support</string>
-    <string name="page_settings_credits_hitokoto_support_site">https://docs.xygeng.cn/ provides random words shown in home page</string>
     <!-- Desktop multi-select batch uninstall -->
     <string name="launcher_launcher_batch_uninstall">Batch uninstall from desktop multi-select</string>
     <string name="page_uninstall_title">Batch Uninstall</string>

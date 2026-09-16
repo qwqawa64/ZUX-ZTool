@@ -28,7 +28,6 @@ class SettingsRepository(
         return SettingsUiState(
             isDetailedLoggingEnabled = prefsUtils.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
             isEntryDisplayedInSettings = prefsUtils.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
-            isHomepageYiyanEnabled = prefsUtils.loadBooleanSetting(KEY_HOMEPAGE_YIYAN, true),
             versionName = getVersionName(),
             commitCount = BuildConfig.GIT_COMMIT_COUNT,
             commitHash = BuildConfig.GIT_COMMIT_HASH,
@@ -64,10 +63,6 @@ class SettingsRepository(
 
     fun setEntryInSettingsEnabled(isEnabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, isEnabled)
-    }
-
-    fun setHomepageYiyanEnabled(isEnabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_HOMEPAGE_YIYAN, isEnabled)
     }
 
     fun setAutoCheckUpdateEnabled(enabled: Boolean) {
@@ -154,7 +149,6 @@ class SettingsRepository(
     companion object {
         private const val TAG = "SettingsRepository"
         private val KEY_DETAILED_LOGGING = PreferenceKeys.IS_DETAILED_LOGGING.name
-        private val KEY_HOMEPAGE_YIYAN = PreferenceKeys.ENABLE_HOMEPAGE_YIYAN.name
         private val KEY_DISPLAY_ENTRY_IN_SETTINGS = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
         private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name
     }

@@ -51,7 +51,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -315,16 +314,6 @@ private fun HomeScreen(
                 if (state.environmentReady) {
                     Spacer(modifier = Modifier.height(16.dp))
                     SystemInfoCard(state)
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = state.hintText.ifBlank { stringResource(R.string.common_loading) },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalZToolColorScheme.current.onSurfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        textAlign = TextAlign.Center
-                    )
                 }
 
                 Spacer(modifier = Modifier.padding(48.dp))

@@ -40,8 +40,7 @@ class HomeRepository(
         val rootAvailable = shellExecutor.checkRootAccess().isSuccess
         return EnvironmentStatus(
             moduleActive = moduleActive,
-            rootAvailable = rootAvailable,
-            hintText = ""
+            rootAvailable = rootAvailable
         )
     }
 
@@ -95,33 +94,9 @@ class HomeRepository(
 
     fun shouldRefreshSystemInfo(): Boolean = isSystemInfoCacheExpired()
 
-    fun environmentReadyHint(): String = context.getString(R.string.page_home_environment_ready)
-
     fun isAutoCheckUpdateEnabled(): Boolean {
         return ModulePreferencesUtils(context)
             .loadBooleanSetting(PreferenceKeys.AUTO_CHECK_UPDATE.name, true)
-    }
-
-    fun loadHomepageHint(): String? {
-        val enableYiyan = ModulePreferencesUtils(context)
-            .loadBooleanSetting(PreferenceKeys.ENABLE_HOMEPAGE_YIYAN.name, true)
-        if (!enableYiyan) return null
-
-        val connection = URL(HOMEPAGE_HINT_URL).openConnection() as HttpURLConnection
-        connection.requestMethod = "GET"
-        connection.connectTimeout = 5000
-        connection.readTimeout = 5000
-
-        if (connection.responseCode != 200) return null
-        val jsonResponse = getJsonObject(connection)
-        if (jsonResponse.getInt("code") != 200) return null
-
-        val data = jsonResponse.getJSONObject("data")
-        return context.getString(
-            R.string.page_home_homepage_yiyan,
-            data.getString("content"),
-            data.getString("origin")
-        )
     }
 
     fun checkConfigUpgrade(): Boolean = ConfigUpgrade.configUpgrader(context)
@@ -322,7 +297,6 @@ class HomeRepository(
             "https://raw.githubusercontent.com/qwqawa64/ZUX-ZTool/refs/heads/master/UpdateCheck.json",
             "https://gh.absinthe.life/github.com/qwqawa64/ZUX-ZTool/blob/master/UpdateCheck.json"
         )
-        private const val HOMEPAGE_HINT_URL = "https://api.xygeng.cn/one"
         private const val PREF_NAME_UPDATE = "update_prefs"
         private const val KEY_IGNORE_VERSION = "ignore_version_code"
         private const val SYSTEM_INFO_CACHE_DURATION = 60_000L
@@ -345,8 +319,7 @@ class HomeRepository(
 
 data class EnvironmentStatus(
     val moduleActive: Boolean,
-    val rootAvailable: Boolean,
-    val hintText: String
+    val rootAvailable: Boolean
 )
 
 data class ModuleStatus(

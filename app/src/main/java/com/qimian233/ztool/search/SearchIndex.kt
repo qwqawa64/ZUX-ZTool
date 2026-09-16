@@ -1285,11 +1285,6 @@ object SearchIndex {
             summaryRes = R.string.page_settings_display_entry_in_settings_summary
         ),
         appSettings.item(
-            id = "app_settings_enable_home_page_yiyan",
-            titleRes = R.string.page_settings_enable_home_page_yiyan,
-            summaryRes = R.string.page_settings_enable_home_page_yiyan_summary
-        ),
-        appSettings.item(
             id = "app_settings_auto_check_update",
             titleRes = R.string.page_settings_auto_check_update_title
         ),
@@ -1437,11 +1432,6 @@ object SearchIndex {
             id = "about_credit_github_acceleration",
             titleRes = R.string.page_settings_credits_github_acceleration,
             summaryRes = R.string.page_settings_credits_github_acceleration_site
-        ),
-        aboutScreen.item(
-            id = "about_credit_hitokoto",
-            titleRes = R.string.page_settings_credits_hitokoto_support,
-            summaryRes = R.string.page_settings_credits_hitokoto_support_site
         ),
         aboutScreen.item(
             id = "about_view_source",
