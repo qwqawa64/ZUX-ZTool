@@ -260,8 +260,9 @@ object PreferenceKeys {
     val ABOUT_DEVICE_INFO_SOFTWARE = StringKey("about_device_info_software", "")
     val AI_INPUT_EXPAND_SIGNS = StringKey("AI_INPUT_EXPAND_SIGNS", "")
     val CUSTOM_CONTROL_CENTER_DATE_FORMAT = StringKey("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE")
-    val API_URL = StringKey("API_URL", "")
-    val REGULAR = StringKey("Regular", "")
+    // 锁屏一言默认拉取 xygeng 一言 API；正则提取响应中的 content 字段值
+    val API_URL = StringKey("API_URL", "https://api.xygeng.cn/one")
+    val REGULAR = StringKey("Regular", "\"content\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"")
     val CUSTOM_STATUSBAR_CLOCK_FORMAT = StringKey("Custom_StatusBarClockFormat", "")
     val CHARGE_WATTS_SELECTED_OPTION = StringKey("charge_watts_selected_option", "")
     val SYSTEMUI_REALWATTS_CUSTOM_FORMAT = StringKey("systemui_realwatts_custom_format", "")

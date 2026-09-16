@@ -49,8 +49,8 @@ class OwnerInfoUpdater(
                         apiUrl = "https://$apiUrl"
                     }
                 } else {
-                    logger.warn("API_URL配置为空，使用默认值")
-                    apiUrl = "https://api.example.com" // 设置一个默认URL
+                    // 未配置时回退到默认一言 API
+                    apiUrl = PreferenceKeys.API_URL.default
                 }
                 val content = fetchContentFromAPI()
                 if (content != cachedContent) {
@@ -117,12 +117,10 @@ class OwnerInfoUpdater(
 
     private fun parseContentFromJson(jsonString: String): String {
         return try {
-            // 使用正则表达式匹配content字段，处理转义字符
+            // 使用正则表达式匹配content字段，处理转义字符；未配置时回退默认表达式
             val regular = getString(PreferenceKeys.REGULAR.name)
+                .ifEmpty { PreferenceKeys.REGULAR.default }
             // 增加对表达式为空的保护：如果正则表达式为null或空，则跳过匹配
-            if (regular.isEmpty()) {
-                return jsonString
-            }
             val pattern = Pattern.compile(regular)
             val matcher = pattern.matcher(jsonString)
 
