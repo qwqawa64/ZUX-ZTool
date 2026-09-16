@@ -34,7 +34,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -64,6 +63,8 @@ import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.HomeRepository
 import com.qimian233.ztool.ui.components.DexIndexProgressDialog
+import com.qimian233.ztool.ui.components.SettingItem
+import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -71,9 +72,9 @@ import com.qimian233.ztool.ui.components.ZToolFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsDivider
+import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.HomeUiState
@@ -559,86 +560,59 @@ private fun InfoBlock(
 
 @Composable
 private fun SystemInfoCard(state: HomeUiState) {
-    val themeSpec = LocalZToolThemeSpec.current
-    val isMiuix = themeSpec.style == FrontendStyle.Miuix
-    val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
-    val containerColor = if (isMiuix) {
-        if (isDark) LocalZToolColorScheme.current.surfaceContainer else Color.White
-    } else {
-        LocalZToolColorScheme.current.surfaceContainerHigh
-    }
+    val unknownText = stringResource(R.string.page_home_place_holder_unknown)
 
-    ZToolCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = containerColor
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = stringResource(R.string.page_home_device_info),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = LocalZToolColorScheme.current.onSurfaceVariant
+    ZToolSettingsList(
+        sections = listOf(
+            SettingSection(
+                title = stringResource(R.string.page_home_device_info),
+                items = listOf(
+                    SettingItem.Action(
+                        key = "home_device_code_name",
+                        title = stringResource(R.string.page_home_device_code_name),
+                        summary = state.deviceModel.ifBlank { unknownText },
+                        onClick = {},
+                        enabled = false
+                    ),
+                    SettingItem.Action(
+                        key = "home_android_version",
+                        title = stringResource(R.string.page_home_android_version),
+                        summary = state.androidVersion.ifBlank { unknownText },
+                        onClick = {},
+                        enabled = false
+                    ),
+                    SettingItem.Action(
+                        key = "home_build_version",
+                        title = stringResource(R.string.page_home_build_version),
+                        summary = state.buildVersion.ifBlank { unknownText },
+                        onClick = {},
+                        enabled = false
+                    ),
+                    SettingItem.Action(
+                        key = "home_kernel_version",
+                        title = stringResource(R.string.page_home_kernel_version),
+                        summary = state.kernelVersion.ifBlank { unknownText },
+                        onClick = {},
+                        enabled = false
+                    ),
+                    SettingItem.Action(
+                        key = "home_current_slot",
+                        title = stringResource(R.string.page_home_current_slot),
+                        summary = state.currentSlot.ifBlank { unknownText },
+                        onClick = {},
+                        enabled = false
+                    ),
+                    SettingItem.Action(
+                        key = "home_rom_region",
+                        title = stringResource(R.string.page_home_rom_region),
+                        summary = state.romRegion.ifBlank { unknownText },
+                        onClick = {},
+                        enabled = false
+                    )
+                )
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                DeviceInfoItem(stringResource(R.string.page_home_device_code_name), state.deviceModel)
-                DeviceInfoItem(stringResource(R.string.page_home_android_version), state.androidVersion)
-                DeviceInfoItem(stringResource(R.string.page_home_build_version), state.buildVersion)
-                DeviceInfoItem(stringResource(R.string.page_home_kernel_version), state.kernelVersion)
-            }
-            Spacer(modifier = Modifier.height(18.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                SuggestionChip(
-                    onClick = {},
-                    label = {
-                        Text(stringResource(R.string.page_home_current_slot) + state.currentSlot.ifBlank { stringResource(
-                            R.string.common_unknown) })
-                    }
-                )
-                SuggestionChip(
-                    onClick = {},
-                    label = {
-                        Text(stringResource(R.string.page_home_rom_region) + state.romRegion.ifBlank { stringResource(
-                            R.string.common_unknown) })
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DeviceInfoItem(
-    label: String,
-    value: String
-) {
-    val themeSpec = LocalZToolThemeSpec.current
-    val isMiuix = themeSpec.style == FrontendStyle.Miuix
-    val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
-    val valueColor = if (isMiuix && isDark) Color.White else Color.Unspecified
-    
-    Column(modifier = Modifier.widthIn(min = 220.dp, max = 420.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = LocalZToolColorScheme.current.onSurfaceVariant
         )
-        Text(
-            text = value.ifBlank { stringResource(R.string.page_home_place_holder_unknown) },
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = valueColor,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+    )
 }
 
 
