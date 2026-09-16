@@ -196,6 +196,8 @@
     <string name="page_settings_about_app_update_latest_summary">当前已是最新版本</string>
     <string name="page_settings_about_app_update_failed_summary">检查失败：%1$s，点击重试</string>
     <string name="page_settings_about_view_source_title">在 GitHub 查看源码</string>
+    <string name="page_settings_about_view_issues_title">在 GitHub 反馈问题</string>
+    <string name="page_settings_about_view_issues_summary">提交 Bug 报告或功能建议</string>
     <string name="page_settings_about_license_title">许可证信息</string>
     <string name="page_settings_about_license_summary">本项目遵守 Apache 2.0 协议发布</string>
     <string name="page_settings_about_qimian233_summary">项目发起人、Hook、用户界面</string>

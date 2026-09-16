@@ -783,6 +783,8 @@
     <string name="page_settings_about_app_update_latest_summary">You are using the latest version</string>
     <string name="page_settings_about_app_update_failed_summary">Check failed: %1$s, tap to retry</string>
     <string name="page_settings_about_view_source_title">Review source code on our GitHub</string>
+    <string name="page_settings_about_view_issues_title">Report issues on our GitHub</string>
+    <string name="page_settings_about_view_issues_summary">Submit bug reports or feature requests</string>
     <string name="page_settings_about_license_title">License Information</string>
     <string name="page_settings_about_license_summary">This project is released under Apache License 2.0</string>
     <string name="page_settings_about_open_source_title">Open-Source Information</string>

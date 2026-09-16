@@ -95,6 +95,7 @@ fun SettingsAboutRoute(
             scrollState = scrollState,
             highlightRegistry = highlightRegistry,
             onOpenGithub = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool") },
+            onOpenGithubIssues = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool/issues") },
             onOpenUnfuckZUI = { openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI") },
             onOpenZuxOsPlus = { openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos") },
             onOpenGitHubAccelerationSite = { openExternalLink(context, "https://gh.absinthe.life/") },
@@ -132,6 +133,7 @@ private fun SettingsAboutScreen(
     highlightRegistry: HighlightAnchorRegistry,
     onBack: () -> Unit,
     onOpenGithub: () -> Unit,
+    onOpenGithubIssues: () -> Unit,
     onOpenUnfuckZUI: () -> Unit,
     onOpenZuxOsPlus: () -> Unit,
     onOpenGitHubAccelerationSite: () -> Unit,
@@ -265,7 +267,7 @@ private fun SettingsAboutScreen(
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.page_settings_about_open_source_title), 2) { getModifier ->
+                AboutSectionCard(stringResource(R.string.page_settings_about_open_source_title), 3) { getModifier ->
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_about_view_source_title),
                         summary = null,
@@ -274,10 +276,17 @@ private fun SettingsAboutScreen(
                         modifier = getModifier(0)
                     )
                     AboutActionRow(
+                        title = stringResource(R.string.page_settings_about_view_issues_title),
+                        summary = stringResource(R.string.page_settings_about_view_issues_summary),
+                        onClick = onOpenGithubIssues,
+                        highlightKey = "about_view_issues",
+                        modifier = getModifier(1)
+                    )
+                    AboutActionRow(
                         title = stringResource(R.string.page_settings_about_license_title),
                         summary = stringResource(R.string.page_settings_about_license_summary),
                         onClick = {},
-                        modifier = getModifier(1),
+                        modifier = getModifier(2),
                         showTrailingArrow = false
                     )
                 }

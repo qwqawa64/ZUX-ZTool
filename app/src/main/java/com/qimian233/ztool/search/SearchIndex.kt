@@ -1448,6 +1448,11 @@ object SearchIndex {
             titleRes = R.string.page_settings_about_view_source_title
         ),
         aboutScreen.item(
+            id = "about_view_issues",
+            titleRes = R.string.page_settings_about_view_issues_title,
+            summaryRes = R.string.page_settings_about_view_issues_summary
+        ),
+        aboutScreen.item(
             id = "about_check_update",
             titleRes = R.string.page_settings_about_app_update_title,
             summaryRes = R.string.page_settings_about_app_update_placeholder_summary
