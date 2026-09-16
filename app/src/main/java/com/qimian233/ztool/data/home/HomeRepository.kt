@@ -205,7 +205,7 @@ class HomeRepository(
             "${packageInfo.versionName} ($versionCode)"
         } catch (e: PackageManager.NameNotFoundException) {
             Log.e(TAG, "Failed to get module version: ${e.message}")
-            context.getString(R.string.page_home_module_version_unknown)
+            ""
         }
     }
 

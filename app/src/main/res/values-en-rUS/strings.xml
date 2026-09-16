@@ -16,7 +16,6 @@
     <string name="common_no_tip_next_time">You will not see this content next time</string>
     <string name="common_loading_user_app">Loading user apps…</string>
     <string name="common_unknown">Unknown</string>
-    <string name="page_home_version">Module version</string>
     <string name="page_home_root">Root source</string>
     <string name="page_home_framework">Framework info</string>
     <string name="settings_misc">Misc</string>
@@ -68,15 +67,12 @@
     <string name="page_home_current_slot">"Active Slot: "</string>
     <string name="page_home_rom_region">"ROM Region: "</string>
     <string name="page_home_place_holder_unknown">Unknown</string>
-    <string name="page_home_info_copied_to_clipboard">Copied to clipboard</string>
     <string name="page_home_title">Homepage</string>
-    <string name="page_home_environment_state">State</string>
     <string name="page_home_module_active">Module Activated</string>
     <string name="page_home_module_inactive">Module not activated</string>
     <string name="page_home_no_root_permission">No Root permission</string>
     <string name="page_home_no_root_and_module_inactive">No Root permission, Module not activated</string>
     <string name="page_home_environment_tap_to_refresh">Tap card to refresh status</string>
-    <string name="page_home_module_version_unknown">Module version: unknown</string>
     <string name="page_home_magisk_su_format">Magisk (%s)</string>
     <string name="page_home_kernelsu_format">KernelSU (%s)</string>
     <string name="page_home_apatch_format">APatch (%s)</string>

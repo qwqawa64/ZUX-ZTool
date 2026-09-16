@@ -1,7 +1,5 @@
 package com.qimian233.ztool.screens.home
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -11,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -82,7 +79,6 @@ import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
-import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
@@ -450,7 +446,10 @@ private fun ModuleStatusCard(
     }
 
     val statusText = when {
-        bothActive -> stringResource(R.string.page_home_module_active)
+        bothActive -> {
+            val version = state.moduleVersion.ifBlank { stringResource(R.string.common_loading) }
+            "${stringResource(R.string.page_home_module_active)}${formatModuleVersionSuffix(version)}"
+        }
         state.isModuleActive -> stringResource(R.string.page_home_no_root_permission)
         state.isRootAvailable -> stringResource(R.string.page_home_module_inactive)
         else -> stringResource(R.string.page_home_no_root_and_module_inactive)
@@ -461,7 +460,7 @@ private fun ModuleStatusCard(
         anyActive -> Icons.Rounded.Warning
         else -> Icons.Rounded.Cancel
     }
-    
+
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -478,11 +477,6 @@ private fun ModuleStatusCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.page_home_environment_state),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = contentColor.copy(alpha = 0.8f)
-                    )
                     Text(
                         text = statusText,
                         style = MaterialTheme.typography.headlineSmall,
@@ -514,49 +508,25 @@ private fun ModuleStatusCard(
                     modifier = Modifier.size(32.dp)
                 )
             }
-            if (state.isModuleActive && state.isRootAvailable) {
-                ZToolSettingsDivider(
-                    modifier = Modifier.padding(vertical = 16.dp),
-                    color = contentColor.copy(alpha = 0.2f),
-                    addDefaultPadding = false
-                )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    InfoBlock(
-                        label = stringResource(R.string.page_home_version),
-                        value = state.moduleVersion.ifBlank { stringResource(R.string.common_loading) },
-                        colorOnContainer = contentColor
-                    )
-                }
-            }
         }
     }
 }
 
-@Composable
-private fun InfoBlock(
-    label: String,
-    value: String,
-    colorOnContainer: Color
-) {
-    Column(modifier = Modifier.widthIn(min = 180.dp, max = 320.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = colorOnContainer.copy(alpha = 0.7f)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = colorOnContainer,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
+/**
+ * Merges the raw module version ("Beta/260916 (1649)") into the status line as a
+ * parenthesized suffix: "（Beta/260916, 1649）". Unparseable versions keep the raw text.
+ */
+private fun formatModuleVersionSuffix(rawVersion: String): String {
+    if (rawVersion.isBlank()) return ""
+    val match = Regex("^(.*?)\\s*\\((\\d+)\\)$").find(rawVersion.trim())
+    val inner = if (match != null) {
+        val name = match.groupValues[1].trim()
+        val code = match.groupValues[2]
+        if (name.isEmpty()) code else "$name, $code"
+    } else {
+        rawVersion.trim()
     }
+    return "（$inner）"
 }
 
 private data class SystemInfoRow(
@@ -568,15 +538,7 @@ private data class SystemInfoRow(
 
 @Composable
 private fun SystemInfoCard(state: HomeUiState) {
-    val context = LocalContext.current
     val unknownText = stringResource(R.string.page_home_place_holder_unknown)
-    val copiedText = stringResource(R.string.page_home_info_copied_to_clipboard)
-
-    fun copyInfoToClipboard(label: String, value: String) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText(label, value))
-        Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
-    }
 
     val infoRows = listOf(
         SystemInfoRow(
@@ -634,14 +596,12 @@ private fun SystemInfoCard(state: HomeUiState) {
             SettingSection(
                 title = stringResource(R.string.page_home_device_info),
                 items = infoRows.map { row ->
-                    val summary = row.value.ifBlank { unknownText }
                     SettingItem.Action(
                         key = row.key,
                         title = row.title,
-                        summary = summary,
+                        summary = row.value.ifBlank { unknownText },
                         icon = row.icon,
-                        onClick = {},
-                        onLongClick = { copyInfoToClipboard(row.title, summary) }
+                        onClick = {}
                     )
                 }
             )

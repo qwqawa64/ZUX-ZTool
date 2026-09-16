@@ -16,7 +16,6 @@
     <string name="common_no_tip_next_time">下次将不再提示此内容</string>
     <string name="common_loading_user_app">加载用户应用列表…</string>
     <string name="common_unknown">未知</string>
-    <string name="page_home_version">模块版本</string>
     <string name="page_home_root">Root 来源</string>
     <string name="page_home_framework">框架信息</string>
     <string name="settings_misc">杂项</string>
@@ -73,15 +72,12 @@
     <string name="page_home_current_slot">当前槽位</string>
     <string name="page_home_rom_region">ROM地区</string>
     <string name="page_home_place_holder_unknown">未知</string>
-    <string name="page_home_info_copied_to_clipboard">已复制到剪贴板</string>
     <string name="page_home_title">主页</string>
-    <string name="page_home_environment_state">状态</string>
     <string name="page_home_module_active">模块已激活</string>
     <string name="page_home_module_inactive">模块未激活</string>
     <string name="page_home_no_root_permission">缺少 Root 权限</string>
     <string name="page_home_no_root_and_module_inactive">缺少 Root 权限，模块未激活</string>
     <string name="page_home_environment_tap_to_refresh">点按卡片刷新状态</string>
-    <string name="page_home_module_version_unknown">模块版本: 未知</string>
     <string name="page_home_magisk_su_format">Magisk (%s)</string>
     <string name="page_home_kernelsu_format">KernelSU (%s)</string>
     <string name="page_home_apatch_format">APatch (%s)</string>
