@@ -199,7 +199,8 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     moduleVersion = status.moduleVersion,
                     rootSource = status.rootSource,
-                    frameworkVersion = status.frameworkVersion
+                    frameworkVersion = status.frameworkVersion,
+                    apiVersion = status.apiVersion
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Module status update failed", e)
@@ -303,6 +304,7 @@ data class HomeUiState(
     val kernelVersion: String = "",
     val currentSlot: String = "",
     val romRegion: String = "",
+    val apiVersion: Int = 0,
     val isCheckingAppUpdate: Boolean = false,
     val updateCheckCompleted: Boolean = false,
     val updateCheckError: String? = null,

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -481,12 +483,21 @@ private fun ModuleStatusCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = statusText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = contentColor
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = statusText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = contentColor
+                        )
+                        if (state.apiVersion > 0) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ApiVersionBadge(
+                                apiVersion = state.apiVersion,
+                                colorOnContainer = contentColor
+                            )
+                        }
+                    }
                     if (summaryText != null) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -530,6 +541,26 @@ private data class SystemInfoRow(
     val value: String,
     val icon: ImageVector
 )
+
+@Composable
+private fun ApiVersionBadge(
+    apiVersion: Int,
+    colorOnContainer: Color
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(colorOnContainer.copy(alpha = 0.15f))
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.page_home_api_badge_format, apiVersion),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = colorOnContainer
+        )
+    }
+}
 
 @Composable
 private fun SystemInfoCard(state: HomeUiState) {

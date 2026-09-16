@@ -85,6 +85,7 @@
     <string name="mobile_desktop_super_connect_scope_title">超级互联</string>
     <string name="page_home_unknown_root_available">未知 Root 实现</string>
     <string name="page_home_lsposed_standard_format" translatable="false">%1$s %2$s (%3$d), API %4$d</string>
+    <string name="page_home_api_badge_format" translatable="false">API %d</string>
     <string name="page_home_unknown_framework">未知框架</string>
     <string name="page_home_android_version_prefix" translatable="false">Android %s</string>
     <string name="page_home_config_upgraded_tip_title">注意：配置更新</string>

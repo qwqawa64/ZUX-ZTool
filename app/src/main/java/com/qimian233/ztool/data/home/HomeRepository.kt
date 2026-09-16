@@ -55,7 +55,8 @@ class HomeRepository(
         return ModuleStatus(
             moduleVersion = version,
             rootSource = cachedRootSource,
-            frameworkVersion = cachedFrameworkVersion
+            frameworkVersion = cachedFrameworkVersion,
+            apiVersion = XposedServiceBridge.getApiVersion()
         )
     }
 
@@ -325,7 +326,8 @@ data class EnvironmentStatus(
 data class ModuleStatus(
     val moduleVersion: String,
     val rootSource: String,
-    val frameworkVersion: String
+    val frameworkVersion: String,
+    val apiVersion: Int
 )
 
 data class SystemInfo(
