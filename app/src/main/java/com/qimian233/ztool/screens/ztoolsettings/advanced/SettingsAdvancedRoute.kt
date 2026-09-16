@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Build
+import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.RocketLaunch
@@ -107,6 +108,33 @@ fun SettingsAdvancedRoute(
     val hotReloadStartingString = stringResource(R.string.page_settings_advanced_hot_reload_starting)
     val resetResultSummary = buildResetResultSummary(uiState, context)
     val resetStartingString = stringResource(R.string.page_settings_advanced_reset_starting)
+    val deleteOtaPackageStartingString = stringResource(R.string.page_settings_advanced_delete_ota_package_in_progress)
+
+    if (uiState.showDeleteOtaPackageDialog) {
+        DeleteOtaPackageConfirmDialog(
+            onConfirm = {
+                viewModel.performDeleteOtaPackage()
+                Toast.makeText(context, deleteOtaPackageStartingString, Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = viewModel::dismissDeleteOtaPackageDialog
+        )
+    }
+
+    // 删除系统更新包：完成后 Toast 结果（SUCCEEDED / NOT_EXIST / FAILED）
+    LaunchedEffect(uiState.deleteOtaPackageStatus) {
+        uiState.deleteOtaPackageStatus?.let { status ->
+            val message = when (status) {
+                "SUCCEEDED" -> context.getString(R.string.page_settings_advanced_delete_ota_package_result_success)
+                "NOT_EXIST" -> context.getString(R.string.page_settings_advanced_delete_ota_package_result_not_exist)
+                else -> context.getString(
+                    R.string.page_settings_advanced_delete_ota_package_result_failed,
+                    uiState.deleteOtaPackageMessage ?: ""
+                )
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            viewModel.consumeDeleteOtaPackageResult()
+        }
+    }
 
     // ── DexKit 索引 ────────────────────────────────────────────────
     var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
@@ -163,6 +191,7 @@ fun SettingsAdvancedRoute(
             dexIndexSummary = dexIndexSummary,
             onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
             onResetClick = { viewModel.showResetConfirmDialog() },
+            onDeleteOtaPackageClick = { viewModel.showDeleteOtaPackageConfirmDialog() },
             onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
             onOpenFirstrun = { activity.reopenFirstrun() },
             scrollState = scrollState,
@@ -181,6 +210,7 @@ private fun SettingsAdvancedScreen(
     dexIndexSummary: String,
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
+    onDeleteOtaPackageClick: () -> Unit,
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
     scrollState: ScrollState,
@@ -222,6 +252,7 @@ private fun SettingsAdvancedScreen(
                         resetResultSummary = resetResultSummary,
                         onHotReloadClick = onHotReloadClick,
                         onResetClick = onResetClick,
+                        onDeleteOtaPackageClick = onDeleteOtaPackageClick,
                         dexIndexInProgress = dexIndexInProgress,
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = onRefreshDexIndex,
@@ -241,6 +272,7 @@ private fun advancedSettingsSections(
     resetResultSummary: String?,
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
+    onDeleteOtaPackageClick: () -> Unit,
     dexIndexInProgress: Boolean,
     dexIndexSummary: String,
     onRefreshDexIndex: () -> Unit,
@@ -283,6 +315,26 @@ private fun advancedSettingsSections(
                     enabled = !state.resetInProgress,
                     icon = if (state.resetInProgress) null else Icons.Rounded.Restore,
                     trailingContent = if (state.resetInProgress) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .padding(0.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else null
+                ),
+                SettingItem.Action(
+                    key = "advanced_delete_ota_package",
+                    title = stringResource(R.string.page_settings_advanced_delete_ota_package_title),
+                    summary = buildDeleteOtaPackageSummary(
+                        inProgress = state.deleteOtaPackageInProgress
+                    ),
+                    onClick = onDeleteOtaPackageClick,
+                    enabled = !state.deleteOtaPackageInProgress,
+                    icon = if (state.deleteOtaPackageInProgress) null else Icons.Rounded.DeleteForever,
+                    trailingContent = if (state.deleteOtaPackageInProgress) {
                         {
                             CircularProgressIndicator(
                                 modifier = Modifier
@@ -515,6 +567,15 @@ private fun buildResetResultSummary(
 }
 
 @Composable
+private fun buildDeleteOtaPackageSummary(
+    inProgress: Boolean
+): String {
+    val deleteOtaPackageInProgressString = stringResource(R.string.page_settings_advanced_delete_ota_package_in_progress)
+    val deleteOtaPackageDefaultSummary = stringResource(R.string.page_settings_advanced_delete_ota_package_summary)
+    return if (inProgress) deleteOtaPackageInProgressString else deleteOtaPackageDefaultSummary
+}
+
+@Composable
 private fun ResetConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
@@ -524,6 +585,33 @@ private fun ResetConfirmDialog(
         title = { Text(stringResource(R.string.page_settings_advanced_reset_confirm_title)) },
         text = {
             Text(stringResource(R.string.page_settings_advanced_reset_confirm_message))
+        },
+        confirmButton = {
+            ZToolTextButton(
+                onClick = onConfirm,
+                text = stringResource(R.string.common_confirm)
+            )
+        },
+        dismissButton = {
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.common_cancel),
+                isPrimary = false
+            )
+        }
+    )
+}
+
+@Composable
+private fun DeleteOtaPackageConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.page_settings_advanced_delete_ota_package_confirm_title)) },
+        text = {
+            Text(stringResource(R.string.page_settings_advanced_delete_ota_package_confirm_message))
         },
         confirmButton = {
             ZToolTextButton(

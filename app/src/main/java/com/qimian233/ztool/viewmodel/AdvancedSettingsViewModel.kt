@@ -51,7 +51,11 @@ class AdvancedSettingsViewModel(
                 resetDetails = _uiState.value.resetDetails,
                 resetResultSucceeded = _uiState.value.resetResultSucceeded,
                 resetResultFailed = _uiState.value.resetResultFailed,
-                resetResultUnsupported = _uiState.value.resetResultUnsupported
+                resetResultUnsupported = _uiState.value.resetResultUnsupported,
+                showDeleteOtaPackageDialog = _uiState.value.showDeleteOtaPackageDialog,
+                deleteOtaPackageInProgress = _uiState.value.deleteOtaPackageInProgress,
+                deleteOtaPackageStatus = _uiState.value.deleteOtaPackageStatus,
+                deleteOtaPackageMessage = _uiState.value.deleteOtaPackageMessage
             )
         }
     }
@@ -70,6 +74,36 @@ class AdvancedSettingsViewModel(
 
     fun dismissResetDialog() {
         _uiState.value = _uiState.value.copy(showResetDialog = false)
+    }
+
+    fun showDeleteOtaPackageConfirmDialog() {
+        _uiState.value = _uiState.value.copy(showDeleteOtaPackageDialog = true)
+    }
+
+    fun dismissDeleteOtaPackageDialog() {
+        _uiState.value = _uiState.value.copy(showDeleteOtaPackageDialog = false)
+    }
+
+    fun performDeleteOtaPackage() {
+        _uiState.value = _uiState.value.copy(
+            showDeleteOtaPackageDialog = false,
+            deleteOtaPackageInProgress = true
+        )
+        repository.deleteOtaPackage { status, message ->
+            Log.i(TAG, "删除 /data/ota_package: [$status] $message")
+            _uiState.value = _uiState.value.copy(
+                deleteOtaPackageInProgress = false,
+                deleteOtaPackageStatus = status,
+                deleteOtaPackageMessage = message
+            )
+        }
+    }
+
+    fun consumeDeleteOtaPackageResult() {
+        _uiState.value = _uiState.value.copy(
+            deleteOtaPackageStatus = null,
+            deleteOtaPackageMessage = null
+        )
     }
 
     fun performHotReload() {
@@ -179,7 +213,11 @@ data class AdvancedSettingsUiState(
     val resetDetails: List<PersistentResetDetail> = emptyList(),
     val resetResultSucceeded: Int = 0,
     val resetResultFailed: Int = 0,
-    val resetResultUnsupported: Int = 0
+    val resetResultUnsupported: Int = 0,
+    val showDeleteOtaPackageDialog: Boolean = false,
+    val deleteOtaPackageInProgress: Boolean = false,
+    val deleteOtaPackageStatus: String? = null,
+    val deleteOtaPackageMessage: String? = null
 )
 
 /** DexKit 索引进度与结果（设置页手动刷新路径）。 */

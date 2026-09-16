@@ -819,6 +819,14 @@
     <string name="page_settings_advanced_api_version">libxposed API version</string>
     <string name="page_settings_advanced_open_firstrun_title">Open first-run wizard</string>
     <string name="page_settings_advanced_open_firstrun_summary">Re-enter the first-run onboarding (OOBE) for development and testing</string>
+    <string name="page_settings_advanced_delete_ota_package_title">Delete system update package</string>
+    <string name="page_settings_advanced_delete_ota_package_summary">Delete update packages automatically downloaded by the UDS Realtime Connection Engine to /data/ota_package</string>
+    <string name="page_settings_advanced_delete_ota_package_confirm_title">Delete system update package?</string>
+    <string name="page_settings_advanced_delete_ota_package_confirm_message">This will remove everything under /data/ota_package, including update packages automatically downloaded by the UDS Realtime Connection Engine.\n\nRoot access is required. This operation cannot be undone.</string>
+    <string name="page_settings_advanced_delete_ota_package_in_progress">Deleting…</string>
+    <string name="page_settings_advanced_delete_ota_package_result_success">Deleted /data/ota_package</string>
+    <string name="page_settings_advanced_delete_ota_package_result_not_exist">/data/ota_package does not exist, nothing to delete</string>
+    <string name="page_settings_advanced_delete_ota_package_result_failed">Deletion failed: %s</string>
     <string name="launcher_launcher_no_label_mode_title">Launcher No-label Mode</string>
     <string name="launcher_launcher_drawer_no_label_mode_title">Drawer No-label Mode</string>
     <string name="launcher_launcher_hide_blue_point_title">Hide app update blue dot</string>

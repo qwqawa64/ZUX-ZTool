@@ -900,6 +900,14 @@
     <string name="page_settings_advanced_api_version">libxposed API 版本</string>
     <string name="page_settings_advanced_open_firstrun_title">打开首次运行向导</string>
     <string name="page_settings_advanced_open_firstrun_summary">重新进入首次运行引导（OOBE），用于开发调试</string>
+    <string name="page_settings_advanced_delete_ota_package_title">删除系统更新包</string>
+    <string name="page_settings_advanced_delete_ota_package_summary">删除 UDS 实时连接引擎自动下载到 /data/ota_package 的更新包</string>
+    <string name="page_settings_advanced_delete_ota_package_confirm_title">删除系统更新包？</string>
+    <string name="page_settings_advanced_delete_ota_package_confirm_message">将删除 /data/ota_package 目录下的全部内容，包括 UDS 实时连接引擎自动下载的更新包。\n\n需要 Root 权限，此操作不可撤销。</string>
+    <string name="page_settings_advanced_delete_ota_package_in_progress">正在删除…</string>
+    <string name="page_settings_advanced_delete_ota_package_result_success">已删除 /data/ota_package</string>
+    <string name="page_settings_advanced_delete_ota_package_result_not_exist">/data/ota_package 不存在，无需删除</string>
+    <string name="page_settings_advanced_delete_ota_package_result_failed">删除失败：%s</string>
     <string name="launcher_launcher_no_label_mode_title">桌面无字模式</string>
     <string name="launcher_launcher_drawer_no_label_mode_title">抽屉无字模式</string>
     <string name="launcher_launcher_hide_blue_point_title">隐藏应用更新蓝点提示</string>

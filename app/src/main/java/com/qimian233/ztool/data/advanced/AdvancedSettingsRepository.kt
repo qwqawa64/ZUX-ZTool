@@ -275,6 +275,34 @@ class AdvancedSettingsRepository(
         }
     }
 
+    /**
+     * 通过 root shell 删除 /data/ota_package 目录及其下全部内容。
+     * UDS 实时连接引擎（com.lenovo.tbengine）会把自动下载的更新包落在该目录。
+     *
+     * @param onComplete 回调（调用方线程），参数为 (status, message)
+     */
+    fun deleteOtaPackage(
+        onComplete: (status: String, message: String) -> Unit
+    ) {
+        val exists = shellExecutor.executeRootCommand("ls -d $OTA_PACKAGE_DIR")
+        if (!exists.isSuccess || exists.output.trim().isEmpty()) {
+            onComplete(STATUS_NOT_EXIST, "$OTA_PACKAGE_DIR 不存在")
+            return
+        }
+        val result = shellExecutor.executeRootCommand("rm -rf $OTA_PACKAGE_DIR", DELETE_TIMEOUT_SECONDS)
+        if (result.isSuccess) {
+            // 复核目录确已消失，避免把 rm 的静默失败当成功
+            val verify = shellExecutor.executeRootCommand("ls -d $OTA_PACKAGE_DIR")
+            if (verify.isSuccess && verify.output.trim().isNotEmpty()) {
+                onComplete(STATUS_FAILED, "删除后 /data/ota_package 仍存在：${result.error.ifEmpty { "未知原因" }}")
+            } else {
+                onComplete(STATUS_SUCCESS, "已删除 $OTA_PACKAGE_DIR")
+            }
+        } else {
+            onComplete(STATUS_FAILED, "删除失败：${result.error}")
+        }
+    }
+
     private data class ResetOutcome(val success: Boolean, val message: String)
 
     companion object {
@@ -282,6 +310,12 @@ class AdvancedSettingsRepository(
         private const val KEY_RESET_AOD = "doze_always_on"
         private const val KEY_RESET_AUTORUN = "autorun"
         private const val KEY_RESET_MISTOUCH = "mistouch"
+        private const val OTA_PACKAGE_DIR = "/data/ota_package"
+        private const val DELETE_TIMEOUT_SECONDS = 120
+
+        const val STATUS_SUCCESS = "SUCCEEDED"
+        const val STATUS_NOT_EXIST = "NOT_EXIST"
+        const val STATUS_FAILED = "FAILED"
     }
 }
 

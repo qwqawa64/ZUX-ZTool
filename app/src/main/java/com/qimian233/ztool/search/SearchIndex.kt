@@ -1393,6 +1393,11 @@ object SearchIndex {
             titleRes = R.string.page_settings_advanced_reset_title
         ),
         advancedSettings.item(
+            id = "advanced_delete_ota_package",
+            titleRes = R.string.page_settings_advanced_delete_ota_package_title,
+            summaryRes = R.string.page_settings_advanced_delete_ota_package_summary
+        ),
+        advancedSettings.item(
             id = "advanced_hot_reload",
             titleRes = R.string.page_settings_advanced_hot_reload_title
         ),
