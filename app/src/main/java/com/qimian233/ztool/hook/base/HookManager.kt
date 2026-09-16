@@ -82,6 +82,7 @@ import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceLenovoAOD
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceNativeAod
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIChargeWattsHook
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIRealWatts
+import com.qimian233.ztool.hook.modules.systemui.keyguard.TestBiometricTimeoutBypass
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomChargeAnimation
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomControlCenterDate
 import com.qimian233.ztool.hook.modules.systemui.misc.DisableBiometricErrorVibration
@@ -181,6 +182,7 @@ object HookManager {
         registerHookModule(ChargeAnimationDurationHook())
         registerHookModule(ForceLenovoAOD())
         registerHookModule(ForceNativeAod())
+        registerHookModule(TestBiometricTimeoutBypass())
         registerHookModule(LockScreenClockColorHook())
         registerHookModule(CustomQsRoundCorner())
         registerHookModule(BrightnessSliderPercentageHook())
