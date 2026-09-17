@@ -191,14 +191,9 @@ class ControlCenterSettingsViewModel(
         repository.saveVolumeSliderPercentageEnabled(enabled)
     }
 
-    fun setBrightnessSliderLongPressEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(brightnessSliderLongPressEnabled = enabled)
-        repository.saveBrightnessSliderLongPressEnabled(enabled)
-    }
-
-    fun setVolumeSliderLongPressEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(volumeSliderLongPressEnabled = enabled)
-        repository.saveVolumeSliderLongPressEnabled(enabled)
+    fun setControlCenterLongPressEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(controlCenterLongPressEnabled = enabled)
+        repository.saveControlCenterLongPressEnabled(enabled)
     }
 
     fun setExpandQsPanelPortrait(enabled: Boolean) {
@@ -381,8 +376,7 @@ data class ControlCenterSettingsUiState(
     val notificationCenterBlurEnabled: Boolean = false,
     val notificationCenterBlurPercent: Int = ControlCenterSettingsRepository.DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT,
     val volumeSliderPercentageEnabled: Boolean = false,
-    val brightnessSliderLongPressEnabled: Boolean = false,
-    val volumeSliderLongPressEnabled: Boolean = false,
+    val controlCenterLongPressEnabled: Boolean = false,
     val brightnessSliderPercentageEnabled: Boolean = false,
     val expandQsPanelPortrait: Boolean = false,
     val qsPanelWidthPercent: Int = ControlCenterSettingsRepository.DEFAULT_QS_PANEL_WIDTH_PERCENT,

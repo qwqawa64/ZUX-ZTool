@@ -1,0 +1,228 @@
+package com.qimian233.ztool.hook.modules.systemui.qs
+
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.animation.DecelerateInterpolator
+import android.view.animation.OvershootInterpolator
+import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.hook.base.AppHookModule
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import java.lang.reflect.Method
+import java.util.WeakHashMap
+
+/**
+ * Unified long-press animation for control-center components, gated by the
+ * single [PreferenceKeys.CONTROL_CENTER_LONG_PRESS] switch.
+ *
+ * Tiles (QSTileViewImpl, both large and small): the tile's own long-click
+ * listener routes to its native target — DetailAdapter dialogs for Bluetooth
+ * / WiFi and longClickIntent settings pages for others — but the squish
+ * animation never plays on this ROM. Hook onTouchEvent with a hand-rolled
+ * press detector: DOWN plays the squish-in and schedules the trigger;
+ * MOVE beyond slop or UP/CANCEL reverses it. The trigger calls
+ * View.performLongClick(), so the tile's own routing (dialog vs settings)
+ * is preserved unchanged.
+ *
+ * Sliders (ToggleSliderView brightness / volume): the same detector drives
+ * the squish animation; on trigger the brightness slider opens
+ * openBrightnessDetail() and the volume slider opens the media/ringer volume
+ * panel (see VolumeSliderLongPressHook for the dialog construction — it stays
+ * there to keep dialog state local; only the detector is shared here).
+ *
+ * Trigger timing follows the system configuration via
+ * ViewConfiguration.scaledLongPressTimeout.
+ */
+class ControlCenterLongPressHook : AppHookModule() {
+
+    private val pressStates = WeakHashMap<View, PressState>()
+
+    override fun getModuleName(): String = PreferenceKeys.CONTROL_CENTER_LONG_PRESS.name
+
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
+
+    override fun handleLoadPackage(param: PackageLoadedParam) {
+        val classLoader = param.defaultClassLoader
+        hookTileTouchEvent(classLoader)
+        hookToggleSliderTouchEvent(classLoader)
+    }
+
+    /**
+     * Tiles: QSTileViewImpl.onTouchEvent already forwards to
+     * super.onTouchEvent, so an after-hook sees every event and a
+     * performLongClick() from our detector routes through the tile's own
+     * OnLongClickListener.
+     */
+    private fun hookTileTouchEvent(classLoader: ClassLoader) {
+        try {
+            val onTouchEvent: Method = classLoader
+                .loadClass(QS_TILE_VIEW_CLASS)
+                .getDeclaredMethod("onTouchEvent", MotionEvent::class.java)
+            hookWithId(
+                onTouchEvent,
+                "tile_touch_long_press",
+                { chain ->
+                    val result = chain.proceed()
+                    trackPress(chain.thisObject as View, chain.args[0] as MotionEvent) { v ->
+                        v.performLongClick()
+                    }
+                    result
+                },
+                XposedInterface.PRIORITY_LOWEST
+            )
+        } catch (t: Throwable) {
+            logger.error("Failed to hook QSTileViewImpl.onTouchEvent", t)
+        }
+    }
+
+    /**
+     * Sliders: SeekBarNps bypasses View.onTouchEvent when max >= 100, so
+     * hook ToggleSeekBar.onTouchEvent directly (same rationale as the
+     * brightness hook). Trigger invokes openBrightnessDetail on the
+     * enclosing ToggleSliderView.
+     */
+    private fun hookToggleSliderTouchEvent(classLoader: ClassLoader) {
+        try {
+            val onTouchEvent: Method = classLoader
+                .loadClass(TOGGLE_SEEK_BAR_CLASS)
+                .getDeclaredMethod("onTouchEvent", MotionEvent::class.java)
+            hookWithId(
+                onTouchEvent,
+                "slider_touch_long_press",
+                { chain ->
+                    val result = chain.proceed()
+                    trackPress(chain.thisObject as View, chain.args[0] as MotionEvent) { v ->
+                        val host = findToggleSliderView(v)
+                        if (host != null) {
+                            openBrightnessDetail(host)
+                        }
+                    }
+                    result
+                },
+                XposedInterface.PRIORITY_LOWEST
+            )
+        } catch (t: Throwable) {
+            logger.error("Failed to hook ToggleSeekBar.onTouchEvent", t)
+        }
+    }
+
+    private fun trackPress(view: View, event: MotionEvent, onTrigger: (View) -> Unit) {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                val state = obtainState(view)
+                state.downX = event.rawX
+                state.downY = event.rawY
+                state.triggered = false
+                state.squished = true
+                view.animate()
+                    .scaleX(SQUISH_SCALE_X)
+                    .scaleY(SQUISH_SCALE_Y)
+                    .setDuration(SQUISH_DURATION_MS)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                cancelTrigger(view)
+                val runnable = Runnable {
+                    state.triggered = true
+                    view.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(SQUISH_RELEASE_DURATION_MS)
+                        .setInterpolator(OvershootInterpolator(SQUISH_OVERSHOOT))
+                        .start()
+                    onTrigger(view)
+                }
+                state.runnable = runnable
+                view.postDelayed(runnable, longPressTimeout)
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                val state = pressStates[view] ?: return
+                if (state.triggered) return
+                val dx = event.rawX - state.downX
+                val dy = event.rawY - state.downY
+                if (dx * dx + dy * dy > state.touchSlopSquared) {
+                    releaseSquish(view, state)
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                val state = pressStates[view] ?: return
+                if (!state.triggered) {
+                    releaseSquish(view, state)
+                }
+            }
+        }
+    }
+
+    private fun releaseSquish(view: View, state: PressState) {
+        cancelTrigger(view)
+        view.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(SQUISH_RELEASE_DURATION_MS)
+            .setInterpolator(OvershootInterpolator(SQUISH_OVERSHOOT))
+            .start()
+    }
+
+    private fun cancelTrigger(view: View) {
+        val state = pressStates[view] ?: return
+        state.runnable?.let { view.removeCallbacks(it) }
+        state.runnable = null
+    }
+
+    private fun obtainState(view: View): PressState {
+        val config = ViewConfiguration.get(view.context)
+        return pressStates[view] ?: PressState(config.scaledTouchSlop.toFloat()).also { pressStates[view] = it }
+    }
+
+    private val longPressTimeout: Long
+        get() = try {
+            ViewConfiguration.getLongPressTimeout().toLong()
+        } catch (_: Throwable) {
+            500L
+        }
+
+    private fun findToggleSliderView(view: View): Any? {
+        var current: View = view
+        for (i in 0 until 6) {
+            current = current.parent as? View ?: return null
+            if (current.javaClass.name == TOGGLE_SLIDER_VIEW_CLASS) return current
+        }
+        return null
+    }
+
+    private fun openBrightnessDetail(sliderView: Any) {
+        try {
+            val method: Method = sliderView.javaClass.getDeclaredMethod("openBrightnessDetail")
+            method.isAccessible = true
+            method.invoke(sliderView)
+        } catch (t: Throwable) {
+            logger.error("Failed to open brightness detail", t)
+        }
+    }
+
+    private class PressState(slop: Float) {
+        val touchSlopSquared: Float = slop * slop
+        var downX: Float = 0f
+        var downY: Float = 0f
+        var triggered: Boolean = false
+        var squished: Boolean = false
+        var runnable: Runnable? = null
+    }
+
+    private companion object {
+        const val QS_TILE_VIEW_CLASS = "com.android.systemui.qs.tileimpl.QSTileViewImpl"
+        const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
+        const val TOGGLE_SEEK_BAR_CLASS =
+            "com.android.systemui.settings.brightness.ToggleSeekBar"
+        const val SQUISH_SCALE_X = 0.94f
+        const val SQUISH_SCALE_Y = 0.90f
+        const val SQUISH_DURATION_MS = 120L
+        const val SQUISH_RELEASE_DURATION_MS = 180L
+        const val SQUISH_OVERSHOOT = 1.2f
+    }
+}
