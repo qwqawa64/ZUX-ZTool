@@ -179,12 +179,17 @@ class SliderLongPressTestHook : AppHookModule() {
         if (current != null && current.isShowing) {
             current.dismiss()
             volumeDialogRef = null
-            setShadeContentAlpha(1f)
             return
         }
         try {
             val dialog = buildBrightnessStyleVolumeDialog(anchor.context)
             volumeDialogRef = WeakReference(dialog)
+            // Restore the shade content on every dismissal path (toggle,
+            // outside touch, back key), not just the manual toggle above.
+            dialog.setOnDismissListener {
+                volumeDialogRef = null
+                setShadeContentAlpha(1f)
+            }
             dialog.show()
             setShadeContentAlpha(0f)
         } catch (t: Throwable) {
@@ -469,10 +474,10 @@ class SliderLongPressTestHook : AppHookModule() {
             val pkg = context.packageName
             val iconViewId = res.getIdentifier("brightness_seekBar_start", "id", pkg)
             val iconView = if (iconViewId != 0) {
-                root.findViewById(iconViewId)
+                root.findViewById(iconViewId) as? android.widget.ImageView
             } else {
                 null
-            } as? android.widget.ImageView ?: return
+            } ?: return
             val volumeIconId = res.getIdentifier(VOLUME_ICON_DRAWABLE, "drawable", pkg)
             if (volumeIconId != 0) {
                 iconView.setImageResource(volumeIconId)
