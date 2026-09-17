@@ -55,6 +55,15 @@ class ControlCenterLongPressHook : AppHookModule() {
      * super.onTouchEvent, so an after-hook sees every event and a
      * performLongClick() from our detector routes through the tile's own
      * OnLongClickListener.
+     *
+     * Two tile-specific behaviors on top of the shared detector:
+     *  - Large tiles (detail indicator present) open the DetailAdapter dialog
+     *    by simulating a click on the indicator, because the tile's own
+     *    long-press routes to a Settings page instead of the dialog.
+     *  - After the long-press trigger the gesture is consumed: an
+     *    UP that arrives after the trigger is blocked from the original
+     *    method, so tiles without a long-press handler (flashlight) do not
+     *    additionally fire the click toggle.
      */
     private fun hookTileTouchEvent(classLoader: ClassLoader) {
         try {
@@ -65,9 +74,35 @@ class ControlCenterLongPressHook : AppHookModule() {
                 onTouchEvent,
                 "tile_touch_long_press",
                 { chain ->
+                    val view = chain.thisObject as View
+                    val event = chain.args[0] as MotionEvent
+                    if (event.actionMasked == MotionEvent.ACTION_UP ||
+                        event.actionMasked == MotionEvent.ACTION_CANCEL
+                    ) {
+                        val state = pressStates[view]
+                        if (state?.triggered == true) {
+                            // Gesture already handled by the long-press
+                            // trigger; swallow the trailing UP so the tile's
+                            // click toggle does not fire on top of it.
+                            cleanupState(view)
+                            return@hookWithId true
+                        }
+                        if (state?.squished == true) {
+                            releaseSquish(view, state)
+                        }
+                        chain.proceed()
+                        null
+                    }
                     val result = chain.proceed()
-                    trackPress(chain.thisObject as View, chain.args[0] as MotionEvent) { v ->
-                        v.performLongClick()
+                    trackPress(view, event) { v ->
+                        val indicator = findDetailIndicator(v)
+                        if (indicator != null) {
+                            // Large tile: open the DetailAdapter dialog via
+                            // its own indicator button.
+                            indicator.performClick()
+                        } else {
+                            v.performLongClick()
+                        }
                     }
                     result
                 },
@@ -76,6 +111,24 @@ class ControlCenterLongPressHook : AppHookModule() {
         } catch (t: Throwable) {
             logger.error("Failed to hook QSTileViewImpl.onTouchEvent", t)
         }
+    }
+
+    /**
+     * The large-tile detail indicator (right-bottom ImageButton) — its click
+     * opens the tile's DetailAdapter dialog. Tiles without one return null.
+     */
+    private fun findDetailIndicator(view: View): View? {
+        return try {
+            val field = view.javaClass.getDeclaredField(DETAIL_INDICATOR_FIELD)
+            field.isAccessible = true
+            (field.get(view) as? View)?.takeIf { it.visibility == View.VISIBLE && it.width > 0 }
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun cleanupState(view: View) {
+        pressStates.remove(view)
     }
 
     /**
@@ -219,6 +272,7 @@ class ControlCenterLongPressHook : AppHookModule() {
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
         const val TOGGLE_SEEK_BAR_CLASS =
             "com.android.systemui.settings.brightness.ToggleSeekBar"
+        const val DETAIL_INDICATOR_FIELD = "detailIndicatorView"
         const val SQUISH_SCALE_X = 0.94f
         const val SQUISH_SCALE_Y = 0.90f
         const val SQUISH_DURATION_MS = 120L
