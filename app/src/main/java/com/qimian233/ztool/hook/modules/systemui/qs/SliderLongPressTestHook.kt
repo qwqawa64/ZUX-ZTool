@@ -215,7 +215,16 @@ class SliderLongPressTestHook : AppHookModule() {
         dialog.window?.let { window ->
             try {
                 val attrs = window.attributes
-                attrs.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                // TYPE_VOLUME_OVERLAY (hidden constant) is the layer the native
+                // volume panel uses, ranking above the notification shade so
+                // the dialog is interactive while the control center is open.
+                attrs.type = try {
+                    WindowManager.LayoutParams::class.java
+                        .getField("TYPE_VOLUME_OVERLAY")
+                        .getInt(null)
+                } catch (_: Throwable) {
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                }
                 attrs.layoutInDisplayCutoutMode = 3
                 attrs.title = VOLUME_WINDOW_TITLE
                 window.attributes = attrs
@@ -273,7 +282,7 @@ class SliderLongPressTestHook : AppHookModule() {
         val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
+            gravity = android.view.Gravity.CENTER
             setPadding(dp(context, 8), dp(context, 4), dp(context, 8), dp(context, 12))
         }
 
@@ -290,8 +299,27 @@ class SliderLongPressTestHook : AppHookModule() {
             ).apply { bottomMargin = dp(context, 12) }
         )
 
-        container.addView(buildStreamRow(context, audio, AudioManager.STREAM_MUSIC, MEDIA_LABEL))
-        container.addView(buildStreamRow(context, audio, AudioManager.STREAM_RING, RINGER_LABEL))
+        // The two vertical slider groups sit side by side at the same height,
+        // mirroring the reference panel's vertical-slider arrangement.
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
+        }
+        row.addView(
+            buildStreamRow(context, audio, AudioManager.STREAM_MUSIC, MEDIA_LABEL),
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        )
+        row.addView(
+            buildStreamRow(context, audio, AudioManager.STREAM_RING, RINGER_LABEL),
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        )
+        container.addView(
+            row,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
         return container
     }
 
@@ -359,7 +387,7 @@ class SliderLongPressTestHook : AppHookModule() {
                     android.view.Gravity.CENTER
                 )
             )
-            root.rotation = 90f
+            root.rotation = -90f
             return frame
         }
         return SeekBar(context).apply {
