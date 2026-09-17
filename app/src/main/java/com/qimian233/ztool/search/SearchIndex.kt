@@ -562,6 +562,16 @@ object SearchIndex {
             titleRes = R.string.system_ui_control_center_show_volume_slider_percentage
         ),
         systemUiControlCenter.item(
+            id = "control_center_brightness_slider_long_press",
+            titleRes = R.string.system_ui_control_center_brightness_slider_long_press,
+            summaryRes = R.string.system_ui_control_center_slider_long_press_summary
+        ),
+        systemUiControlCenter.item(
+            id = "control_center_volume_slider_long_press",
+            titleRes = R.string.system_ui_control_center_volume_slider_long_press,
+            summaryRes = R.string.system_ui_control_center_slider_long_press_summary
+        ),
+        systemUiControlCenter.item(
             id = "control_center_customize_slider_style",
             titleRes = R.string.system_ui_control_center_customize_slider_style_title,
             summaryRes = R.string.system_ui_control_center_customize_slider_style_summary

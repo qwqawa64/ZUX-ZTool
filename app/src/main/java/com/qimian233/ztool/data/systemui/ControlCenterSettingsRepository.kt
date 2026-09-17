@@ -55,6 +55,8 @@ class ControlCenterSettingsRepository(
             ).coerceIn(NOTIFICATION_CENTER_BLUR_MIN_PERCENT, NOTIFICATION_CENTER_BLUR_MAX_PERCENT),
             brightnessSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, false),
             volumeSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, false),
+            brightnessSliderLongPressEnabled = prefsUtils.loadBooleanSetting(KEY_BRIGHTNESS_SLIDER_LONG_PRESS, false),
+            volumeSliderLongPressEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_LONG_PRESS, false),
             expandQsPanelPortrait = prefsUtils.loadBooleanSetting(KEY_EXPAND_QS_PANEL_PORTRAIT, false),
             qsPanelWidthPercent = prefsUtils.loadIntegerSetting(KEY_QS_PANEL_WIDTH_PERCENT, DEFAULT_QS_PANEL_WIDTH_PERCENT),
             qsTileColumns = prefsUtils.loadIntegerSetting(KEY_QS_TILE_COLUMNS, DEFAULT_QS_TILE_COLUMNS),
@@ -184,6 +186,14 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, enabled)
     }
 
+    fun saveBrightnessSliderLongPressEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_BRIGHTNESS_SLIDER_LONG_PRESS, enabled)
+    }
+
+    fun saveVolumeSliderLongPressEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_VOLUME_SLIDER_LONG_PRESS, enabled)
+    }
+
     fun saveBrightnessSliderPercentageEnabled(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, enabled)
     }
@@ -281,6 +291,8 @@ class ControlCenterSettingsRepository(
         private val KEY_NOTIFICATION_CENTER_BLUR_PERCENT = PreferenceKeys.NOTIFICATION_CENTER_BLUR_PERCENT.name
         private val KEY_VOLUME_SLIDER_PERCENTAGE = PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name
         private val KEY_BRIGHTNESS_SLIDER_PERCENTAGE = PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name
+        private val KEY_BRIGHTNESS_SLIDER_LONG_PRESS = PreferenceKeys.BRIGHTNESS_SLIDER_LONG_PRESS.name
+        private val KEY_VOLUME_SLIDER_LONG_PRESS = PreferenceKeys.VOLUME_SLIDER_LONG_PRESS.name
         private val KEY_EXPAND_QS_PANEL_PORTRAIT = PreferenceKeys.EXPAND_QS_PANEL_PORTRAIT.name
         private val KEY_QS_PANEL_WIDTH_PERCENT = PreferenceKeys.QS_PANEL_WIDTH_PERCENT.name
         private val KEY_QS_TILE_COLUMNS = PreferenceKeys.QS_TILE_COLUMNS.name

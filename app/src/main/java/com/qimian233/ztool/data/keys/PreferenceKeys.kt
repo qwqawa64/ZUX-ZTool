@@ -65,6 +65,8 @@ object PreferenceKeys {
     val QS_ROUND_CORNER = BoolKey("qs_round_corner", false)
     val BRIGHTNESS_SLIDER_PERCENTAGE = BoolKey("brightness_slider_percentage", false)
     val VOLUME_SLIDER_PERCENTAGE = BoolKey("volume_slider_percentage", false)
+    val BRIGHTNESS_SLIDER_LONG_PRESS = BoolKey("brightness_slider_long_press", false)
+    val VOLUME_SLIDER_LONG_PRESS = BoolKey("volume_slider_long_press", false)
     val QS_COLOR = BoolKey("qs_color", false)
     val NOTIFICATION_CENTER_BLUR = BoolKey("notification_center_blur", false)
     val GUEST_MODE_CONTROLLER = BoolKey("guest_mode_controller", false)
@@ -279,7 +281,8 @@ object PreferenceKeys {
         CUSTOM_NETWORK_SPEED_REFRESH_INTERVAL, SYSTEMUI_NETWORK_SPEED_HIDE_SLOW,
         SYSTEMUI_NETWORK_SPEED_HIDE_BOTH, SYSTEMUI_BATTERY_PERCENTAGE,
         FORCE_IMMERSIVE_MODE, FORCE_LENOVO_AOD, QS_ROUND_CORNER,
-        BRIGHTNESS_SLIDER_PERCENTAGE, VOLUME_SLIDER_PERCENTAGE, QS_COLOR,
+        BRIGHTNESS_SLIDER_PERCENTAGE, VOLUME_SLIDER_PERCENTAGE,
+        BRIGHTNESS_SLIDER_LONG_PRESS, VOLUME_SLIDER_LONG_PRESS, QS_COLOR,
         NOTIFICATION_CENTER_BLUR, GUEST_MODE_CONTROLLER, EXPAND_QS_PANEL_PORTRAIT,
         CUSTOMIZE_SLIDER_STYLE, CUSTOM_CHARGE_ANIMATION, CHARGE_ANIMATION_DURATION,
         FORCE_NATIVE_AOD, LOCK_SCREEN_CLOCK_COLOR_CUSTOM,

@@ -18,6 +18,7 @@ import android.view.animation.OvershootInterpolator
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedInterface
@@ -27,49 +28,36 @@ import java.lang.reflect.Method
 import java.util.WeakHashMap
 
 /**
- * Test hook: long-press feedback for the control-center volume / brightness sliders.
- *
- * A long press (finger held still for LONG_PRESS_TIMEOUT_MS) plays a scale-down
- * "held" animation, vibrates, then opens the matching dialog: a volume dialog
- * built exactly like BrightnessDetailDialogController.BrightnessDetailDialog —
- * same theme (Theme_SystemUI_Dialog_GlobalActionsLite), same
- * brightness_detail_dialog layout root, same window parameters — with the
- * brightness content swapped for media + ringer volume rows carried by the ZUI
- * BrightnessSliderView widget. Dragging beyond the touch slop cancels the timer
- * and bounces the scale back, so normal slider dragging is unaffected.
- *
- * Touch listener wrapping is installed in an after-hook of updateVolumeSlider()
- * / updateBrightnessSlider() with PRIORITY_HIGHEST: after-hook bodies unwind in
- * ascending priority order, so the highest-priority body runs last and this
- * hook is guaranteed to be the final writer of OnTouchListener (last writer
- * wins), outliving any listener work done by lower-priority hooks on the same
- * method.
+ * Long press on the control-center volume slider opens a media/ringer volume
+ * panel styled after the ZUI brightness detail dialog: the same theme
+ * (Theme.SystemUI.Dialog.GlobalActionsLite), a right-docked vertical panel
+ * with no surface of its own so the shade blur shows through, and ZUI
+ * BrightnessSliderView sliders rotated vertical. Repeated long press toggles
+ * the panel; the shade content is faded out while it shows and restored on
+ * every dismissal path.
  */
 @SuppressLint("PrivateApi", "ClickableViewAccessibility")
-class SliderLongPressTestHook : AppHookModule() {
+class VolumeSliderLongPressHook : AppHookModule() {
+
+    override fun getModuleName(): String = PreferenceKeys.VOLUME_SLIDER_LONG_PRESS.name
+
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pressStates = WeakHashMap<View, PressState>()
     private var volumeDialogRef: WeakReference<Dialog>? = null
     private var notificationPanelRef: WeakReference<Any>? = null
 
-    override fun getModuleName(): String = TEST_MODULE_NAME
-
-    override fun getTargetPackages(): Array<String> = arrayOf(SYSTEM_UI_PACKAGE)
-
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
         hookNotificationPanelCapture(classLoader)
         hookVolumeSliderLongPress(classLoader)
-        hookBrightnessSliderLongPress(classLoader)
-        logger.info("Slider long press test hook installed")
     }
 
     /**
-     * Captures the NotificationPanelViewController singleton. It implements
-     * DialogBehindAlphaListener; calling setDialogBehindAlpha(0) hides the
-     * shade's notification and QS content behind the volume panel, matching
-     * how the brightness detail panel clears the control center.
+     * Captures the NotificationPanelViewController singleton. Its
+     * setDialogBehindAlpha(0/1) hides the shade's notification and QS content
+     * while the volume panel is open, matching the brightness detail panel.
      */
     private fun hookNotificationPanelCapture(classLoader: ClassLoader) {
         try {
@@ -82,7 +70,7 @@ class SliderLongPressTestHook : AppHookModule() {
                 }
             }
         } catch (t: Throwable) {
-            logger.warn("Failed to hook NotificationPanelViewController constructor: $t")
+            logger.error("Failed to hook NotificationPanelViewController constructor", t)
         }
     }
 
@@ -96,7 +84,7 @@ class SliderLongPressTestHook : AppHookModule() {
             method.isAccessible = true
             method.invoke(panel, alpha)
         } catch (t: Throwable) {
-            logger.warn("Failed to set shade behind alpha: $t")
+            logger.error("Failed to set shade behind alpha", t)
         }
     }
 
@@ -119,100 +107,8 @@ class SliderLongPressTestHook : AppHookModule() {
         }
     }
 
-    private fun hookBrightnessSliderLongPress(classLoader: ClassLoader) {
-        // SeekBarNps.onTouchEvent bypasses View.onTouchEvent entirely when
-        // max >= 100 (the brightness slider always is), so neither the
-        // framework long click nor any touch-listener wrapper is reliable.
-        // Hook ToggleSeekBar.onTouchEvent itself: every touch event flows
-        // through this method, and an after-hook with PRIORITY_LOWEST runs
-        // immediately after the method body with no listener churn to fight.
-        try {
-            val toggleSeekBarClass = classLoader.loadClass(TOGGLE_SEEK_BAR_CLASS)
-            val onTouchEvent: Method = toggleSeekBarClass.getDeclaredMethod(
-                "onTouchEvent",
-                MotionEvent::class.java
-            )
-            hookWithId(
-                onTouchEvent,
-                "brightness_touch_long_press",
-                { chain ->
-                    val result = chain.proceed()
-                    try {
-                        val seekBar = chain.thisObject as View
-                        val event = chain.args[0] as MotionEvent
-                        when (event.actionMasked) {
-                            MotionEvent.ACTION_DOWN -> {
-                                val state = obtainState(seekBar)
-                                state.downX = event.rawX
-                                state.downY = event.rawY
-                                state.triggered = false
-                                scheduleLongPress(seekBar) {
-                                    runBrightnessDetail(getToggleSliderView(seekBar) ?: seekBar)
-                                }
-                                playPressAnimation(seekBar)
-                            }
 
-                            MotionEvent.ACTION_MOVE -> {
-                                val state = pressStates[seekBar]
-                                if (state != null && !state.triggered) {
-                                    val dx = event.rawX - state.downX
-                                    val dy = event.rawY - state.downY
-                                    if (dx * dx + dy * dy > state.touchSlopSquared) {
-                                        cancelLongPress(seekBar)
-                                        playReleaseAnimation(seekBar)
-                                    }
-                                }
-                            }
 
-                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                                cancelLongPress(seekBar)
-                                playReleaseAnimation(seekBar)
-                            }
-                        }
-                    } catch (t: Throwable) {
-                        logger.warn("Brightness long-press tracking failed: $t")
-                    }
-                    result
-                },
-                XposedInterface.PRIORITY_LOWEST
-            )
-        } catch (t: Throwable) {
-            logger.warn("Failed to hook ToggleSeekBar.onTouchEvent: $t")
-        }
-        // Keep the updateBrightnessSlider after-hook so the sliderView reference
-        // mapping stays fresh for openBrightnessDetail calls.
-        try {
-            val updateBrightnessMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
-                .getDeclaredMethod("updateBrightnessSlider")
-            hookWithId(
-                updateBrightnessMethod,
-                "brightness_slider_long_press",
-                { chain ->
-                    val result = chain.proceed()
-                    brightnessSliderViewRef = java.lang.ref.WeakReference(chain.thisObject)
-                    result
-                },
-                XposedInterface.PRIORITY_HIGHEST
-            )
-        } catch (t: Throwable) {
-            logger.warn("Failed to hook updateBrightnessSlider for long press: $t")
-        }
-    }
-
-    private var brightnessSliderViewRef: java.lang.ref.WeakReference<Any>? = null
-
-    /**
-     * Walks up from the touched SeekBar to its ToggleSliderView host so
-     * openBrightnessDetail can be invoked on the right instance.
-     */
-    private fun getToggleSliderView(view: View): Any? {
-        var current: Any = view
-        for (i in 0 until 6) {
-            current = (current as View).parent ?: return null
-            if (current.javaClass.name == TOGGLE_SLIDER_VIEW_CLASS) return current
-        }
-        return null
-    }
 
     private fun attachVolumeLongPress(sliderView: Any) {
         try {
@@ -819,15 +715,6 @@ class SliderLongPressTestHook : AppHookModule() {
         return (value * context.resources.displayMetrics.density).toInt()
     }
 
-    private fun runBrightnessDetail(sliderView: Any) {
-        try {
-            val method: Method = sliderView.javaClass.getDeclaredMethod("openBrightnessDetail")
-            method.isAccessible = true
-            method.invoke(sliderView)
-        } catch (t: Throwable) {
-            logger.warn("Failed to open brightness detail: $t")
-        }
-    }
 
     private class PressState(val touchSlopSquared: Float) {
         var downX: Float = 0f
@@ -838,14 +725,10 @@ class SliderLongPressTestHook : AppHookModule() {
 
     companion object {
         private val SYSTEM_UI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
-        private const val TEST_MODULE_NAME = "hook_test"
         private const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
-        private const val TOGGLE_SEEK_BAR_CLASS =
-            "com.android.systemui.settings.brightness.ToggleSeekBar"
         private const val VOLUME_TOUCH_LISTENER_CLASS =
             "com.android.systemui.settings.ToggleSliderView\$\$ExternalSyntheticLambda0"
         private const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
-        private const val BRIGHTNESS_SLIDER_FIELD = "mBrightnessSlider"
         // Style resource names are dotted in the resource table; R.style fields
         // merely replace the dots with underscores.
         private const val BRIGHTNESS_DIALOG_THEME = "Theme.SystemUI.Dialog.GlobalActionsLite"
