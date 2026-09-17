@@ -57,6 +57,9 @@ class HomeViewModel(
     fun start() {
         if (started) return
         started = true
+        _uiState.value = _uiState.value.copy(
+            isNonZuxOsWarningDismissed = repository.isNonZuxOsWarningDismissed()
+        )
         checkEnvironment()
         if (repository.isAutoCheckUpdateEnabled()) {
             checkAppUpdate()
@@ -163,6 +166,11 @@ class HomeViewModel(
     fun ignoreUpdate(versionCode: Int) {
         repository.ignoreUpdate(versionCode)
         _uiState.value = _uiState.value.copy(updateInfo = null)
+    }
+
+    fun dismissNonZuxOsWarning() {
+        repository.dismissNonZuxOsWarning()
+        _uiState.value = _uiState.value.copy(isNonZuxOsWarningDismissed = true)
     }
 
     fun showRebootConfirmation(target: RebootTarget) {
@@ -295,6 +303,7 @@ data class HomeUiState(
     val isCheckingEnvironment: Boolean = true,    val isModuleActive: Boolean = false,
     val isRootAvailable: Boolean = false,
     val isZuxOsDevice: Boolean = true,
+    val isNonZuxOsWarningDismissed: Boolean = false,
     val moduleVersion: String = "",
     val rootSource: String = "",
     val frameworkVersion: String = "",

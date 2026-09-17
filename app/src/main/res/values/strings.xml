@@ -845,6 +845,7 @@
     <string name="page_firstrun_splash_welcome_text">欢迎使用 ZTool</string>
     <string name="page_firstrun_splash_tap_hint">点按任意位置开始设置</string>
     <string name="page_home_non_zuxos_warn">当前设备运行的系统很可能不是 ZUXOS/ZUI ，无法保证 Hook 正确执行!</string>
+    <string name="page_home_non_zuxos_dismiss">不再提示</string>
     <string name="page_settings_display_entry_in_settings">在设置中显示入口</string>
     <string name="page_settings_display_entry_in_settings_summary">需要重启系统设置 APP</string>
     <string name="system_ui_control_center_show_brightness_slider_percentage">显示亮度滑动条百分比</string>

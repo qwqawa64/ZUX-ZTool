@@ -154,6 +154,7 @@ fun HomeMainRoute(
             viewModel.ignoreUpdate(it)
             Toast.makeText(context, R.string.page_home_update_ignore_toast, Toast.LENGTH_SHORT).show()
         },
+        onDismissNonZuxOsWarning = viewModel::dismissNonZuxOsWarning,
         onOpenUpdate = { url ->
             openUpdateUrl(context, url)
         },
@@ -235,6 +236,7 @@ private fun HomeScreen(
     onRestartTargetSelected: (RebootTarget) -> Unit,
     onToggleUpdateExpanded: () -> Unit,
     onIgnoreUpdate: (Int) -> Unit,
+    onDismissNonZuxOsWarning: () -> Unit,
     onOpenUpdate: (String) -> Unit,
     onRefreshEnvironment: () -> Unit
 ) {
@@ -300,8 +302,8 @@ private fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                if (!state.isZuxOsDevice) {
-                    NonZuxOsCard()
+                if (!state.isZuxOsDevice && !state.isNonZuxOsWarningDismissed) {
+                    NonZuxOsCard(onDismiss = onDismissNonZuxOsWarning)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
@@ -333,29 +335,37 @@ private fun HomeScreen(
 }
 
 @Composable
-private fun NonZuxOsCard() {
+private fun NonZuxOsCard(onDismiss: () -> Unit) {
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = LocalZToolColorScheme.current.errorContainer
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Warning,
-                contentDescription = null,
-                tint = LocalZToolColorScheme.current.onErrorContainer
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = stringResource(R.string.page_home_non_zuxos_warn),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = LocalZToolColorScheme.current.onErrorContainer
-            )
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.Warning,
+                    contentDescription = null,
+                    tint = LocalZToolColorScheme.current.onErrorContainer
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = stringResource(R.string.page_home_non_zuxos_warn),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = LocalZToolColorScheme.current.onErrorContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                ZToolTextButton(
+                    onClick = onDismiss,
+                    text = stringResource(R.string.page_home_non_zuxos_dismiss),
+                    isPrimary = false
+                )
+            }
         }
     }
 }

@@ -767,6 +767,7 @@
     <string name="page_firstrun_splash_welcome_text">Welcome to ZTool</string>
     <string name="page_firstrun_splash_tap_hint">Tap anywhere to start setup</string>
     <string name="page_home_non_zuxos_warn">Non-ZUXOS/ZUI device detected, hooks may not function normally!</string>
+    <string name="page_home_non_zuxos_dismiss">Don\'t show again</string>
     <string name="page_settings_display_entry_in_settings">Display module entrance in settings</string>
     <string name="page_settings_display_entry_in_settings_summary">A restart of settings APP is required</string>
     <string name="system_ui_control_center_show_brightness_slider_percentage">Show brightness slider percentage</string>

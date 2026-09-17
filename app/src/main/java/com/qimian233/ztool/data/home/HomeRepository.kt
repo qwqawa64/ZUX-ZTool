@@ -77,7 +77,7 @@ class HomeRepository(
             cachedRomRegion = getRomRegion()
         }
         if (isSystemInfoCacheExpired()) {
-            cachedIsZuxOsDevice = Build.DISPLAY.contains("ZUXOS") || Build.DISPLAY.contains("ZUI")
+            cachedIsZuxOsDevice = isZuxOsBuild(Build.DISPLAY)
         }
 
         lastSystemInfoUpdate = System.currentTimeMillis()
@@ -94,6 +94,16 @@ class HomeRepository(
     }
 
     fun shouldRefreshSystemInfo(): Boolean = isSystemInfoCacheExpired()
+
+    fun isNonZuxOsWarningDismissed(): Boolean {
+        return context.getSharedPreferences(PREF_NAME_HOME_UI, Context.MODE_PRIVATE)
+            .getBoolean(KEY_NON_ZUXOS_WARNING_DISMISSED, false)
+    }
+
+    fun dismissNonZuxOsWarning() {
+        context.getSharedPreferences(PREF_NAME_HOME_UI, Context.MODE_PRIVATE)
+            .edit { putBoolean(KEY_NON_ZUXOS_WARNING_DISMISSED, true) }
+    }
 
     fun isAutoCheckUpdateEnabled(): Boolean {
         return ModulePreferencesUtils(context)
@@ -300,7 +310,30 @@ class HomeRepository(
         )
         private const val PREF_NAME_UPDATE = "update_prefs"
         private const val KEY_IGNORE_VERSION = "ignore_version_code"
+        private const val PREF_NAME_HOME_UI = "home_ui_prefs"
+        private const val KEY_NON_ZUXOS_WARNING_DISMISSED = "non_zuxos_warning_dismissed"
         private const val SYSTEM_INFO_CACHE_DURATION = 60_000L
+
+        /** 构建标记中任一分组包含即认定是正确 ROM 的标识（转小写后比对）。 */
+        private val ROM_IDENTIFIERS = listOf("zui", "zuxos", "helloui")
+
+        /** TB 机型前缀：TB + 3 位数字 + 可选 2 位字母，如 TB710FU / TB324ZC / TB710。 */
+        private val TB_MODEL_PREFIX = Regex("^tb\\d{3}([a-z]{2})?$")
+
+        /**
+         * 判断构建标记是否来自 ZUXOS/ZUI 系 ROM。
+         * 按下划线拆分后逐条目转小写、去空格，先匹配 ROM 标识（zui/zuxos/helloui）；
+         * 全部未命中时，若首个分组是联想 TB 机型代号（TB710FU、TB324ZC、TB710 等），
+         * 也视为正确设备。
+         */
+        fun isZuxOsBuild(buildDisplay: String): Boolean {
+            val entries = buildDisplay.split("_").map { it.lowercase().replace(" ", "") }
+            val foundIdentifier = entries.any { entry -> ROM_IDENTIFIERS.any { entry.contains(it) } }
+            if (foundIdentifier) return true
+
+            val firstEntry = entries.firstOrNull() ?: return false
+            return TB_MODEL_PREFIX.matches(firstEntry)
+        }
 
         @Throws(IOException::class, JSONException::class)
         private fun getJsonObject(connection: HttpURLConnection): JSONObject {
