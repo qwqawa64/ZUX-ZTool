@@ -51,6 +51,7 @@ class SliderLongPressTestHook : AppHookModule() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pressStates = WeakHashMap<View, PressState>()
     private var volumeDialogRef: WeakReference<Dialog>? = null
+    private var notificationPanelRef: WeakReference<Any>? = null
 
     override fun getModuleName(): String = TEST_MODULE_NAME
 
@@ -58,9 +59,45 @@ class SliderLongPressTestHook : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
+        hookNotificationPanelCapture(classLoader)
         hookVolumeSliderLongPress(classLoader)
         hookBrightnessSliderLongPress(classLoader)
         logger.info("Slider long press test hook installed")
+    }
+
+    /**
+     * Captures the NotificationPanelViewController singleton. It implements
+     * DialogBehindAlphaListener; calling setDialogBehindAlpha(0) hides the
+     * shade's notification and QS content behind the volume panel, matching
+     * how the brightness detail panel clears the control center.
+     */
+    private fun hookNotificationPanelCapture(classLoader: ClassLoader) {
+        try {
+            val panelClass = classLoader.loadClass(NOTIFICATION_PANEL_CONTROLLER_CLASS)
+            for (ctor in panelClass.declaredConstructors) {
+                hookWithId(ctor, "notification_panel_capture") { chain ->
+                    val result = chain.proceed()
+                    notificationPanelRef = WeakReference(chain.thisObject)
+                    result
+                }
+            }
+        } catch (t: Throwable) {
+            logger.warn("Failed to hook NotificationPanelViewController constructor: $t")
+        }
+    }
+
+    private fun setShadeContentAlpha(alpha: Float) {
+        val panel = notificationPanelRef?.get() ?: return
+        try {
+            val method: Method = panel.javaClass.getDeclaredMethod(
+                "setDialogBehindAlpha",
+                Float::class.javaPrimitiveType
+            )
+            method.isAccessible = true
+            method.invoke(panel, alpha)
+        } catch (t: Throwable) {
+            logger.warn("Failed to set shade behind alpha: $t")
+        }
     }
 
     private fun hookVolumeSliderLongPress(classLoader: ClassLoader) {
@@ -134,18 +171,22 @@ class SliderLongPressTestHook : AppHookModule() {
     /**
      * Toggles the volume dialog. Repeated long presses dismiss it, mirroring
      * BrightnessDetailDialogController.showOrHideDialog's toggle semantics.
+     * The shade's notification/QS content is faded out while the dialog shows
+     * and restored when it is dismissed.
      */
     private fun showVolumeDetailDialog(anchor: View) {
         val current = volumeDialogRef?.get()
         if (current != null && current.isShowing) {
             current.dismiss()
             volumeDialogRef = null
+            setShadeContentAlpha(1f)
             return
         }
         try {
             val dialog = buildBrightnessStyleVolumeDialog(anchor.context)
             volumeDialogRef = WeakReference(dialog)
             dialog.show()
+            setShadeContentAlpha(0f)
         } catch (t: Throwable) {
             logger.error("Failed to show volume detail dialog: $t", t)
         }
@@ -172,7 +213,9 @@ class SliderLongPressTestHook : AppHookModule() {
         }
 
         // Reference proportions on a 3200x2000 landscape screen: panel
-        // 1005x1600 with 200px top/bottom insets, docked to the right edge.
+        // 1005x1600 with 200px top/bottom insets; the reference panel's right
+        // edge sits ~297px (9.3%) in from the screen edge on a 3200x2000
+        // display.
         val metrics = res.displayMetrics
         val panelWidth = res.getDimensionPixelSize(
             res.getIdentifier("brightness_bar_width_detail", "dimen", pkg)
@@ -202,7 +245,9 @@ class SliderLongPressTestHook : AppHookModule() {
                 panelWidth,
                 panelHeight,
                 android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
-            )
+            ).apply {
+                marginEnd = (metrics.widthPixels * 297 / 3200)
+            }
         )
         dialog.setContentView(
             root,
@@ -260,6 +305,7 @@ class SliderLongPressTestHook : AppHookModule() {
             text = VOLUME_DIALOG_TITLE
             textSize = 16f
             isSingleLine = true
+            setTextColor(android.graphics.Color.WHITE)
         }
         container.addView(
             title,
@@ -309,6 +355,9 @@ class SliderLongPressTestHook : AppHookModule() {
             text = label
             textSize = 14f
             isSingleLine = true
+            // Enabled-state QS text is plain white on the blurred surface; the
+            // widget default follows the disabled QS tint and is unreadable.
+            setTextColor(android.graphics.Color.WHITE)
         }
         row.addView(
             labelView,
@@ -344,6 +393,7 @@ class SliderLongPressTestHook : AppHookModule() {
         if (zuiSlider != null) {
             val (seekBar, root) = zuiSlider
             configureVolumeSeekBar(seekBar, audio, stream)
+            replaceBrightnessIconWithVolumeIcon(context, root)
             // Wrap the bar in a fixed-size frame holding the post-rotation
             // (vertical) footprint; the bar itself lays out with swapped
             // dimensions and rotates 90° around its center, exactly how the
@@ -406,6 +456,31 @@ class SliderLongPressTestHook : AppHookModule() {
             }
         }
         return null
+    }
+
+    /**
+     * The ZUI slider layout embeds a brightness icon
+     * (brightness_seekBar_start); swap in the control-center volume icon so
+     * the row reads as a volume control.
+     */
+    private fun replaceBrightnessIconWithVolumeIcon(context: Context, root: View) {
+        try {
+            val res = context.resources
+            val pkg = context.packageName
+            val iconViewId = res.getIdentifier("brightness_seekBar_start", "id", pkg)
+            val iconView = if (iconViewId != 0) {
+                root.findViewById(iconViewId)
+            } else {
+                null
+            } as? android.widget.ImageView ?: return
+            val volumeIconId = res.getIdentifier(VOLUME_ICON_DRAWABLE, "drawable", pkg)
+            if (volumeIconId != 0) {
+                iconView.setImageResource(volumeIconId)
+            }
+            iconView.clearColorFilter()
+        } catch (t: Throwable) {
+            logger.warn("Failed to swap in volume icon: $t")
+        }
     }
 
     private fun configureVolumeSeekBar(
@@ -655,14 +730,18 @@ class SliderLongPressTestHook : AppHookModule() {
         private const val BRIGHTNESS_DIALOG_THEME = "Theme.SystemUI.Dialog.GlobalActionsLite"
         private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
         // Vertical slider footprint measured from the reference dump
-        // (203x650 px on a 3200x2000 screen at ~420dpi ≈ 96x154 dp).
-        private const val VERTICAL_SLIDER_WIDTH_DP = 96
-        private const val VERTICAL_SLIDER_HEIGHT_DP = 154
+        // (203x650 px on a 3200x2000 screen at ~420dpi ≈ 96x154 dp), scaled
+        // up ~1.5x per the size feedback.
+        private const val VERTICAL_SLIDER_WIDTH_DP = 144
+        private const val VERTICAL_SLIDER_HEIGHT_DP = 230
+        private const val VOLUME_ICON_DRAWABLE = "volume_no_poercing"
         private const val SLIDER_DRAWABLE = "brightness_progress_selector_keyboard"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
         private const val SLIDER_HEIGHT_DIMEN = "brightness_bar_height"
         private const val VOLUME_DIALOG_TITLE = "音量"
         private const val VOLUME_WINDOW_TITLE = "ZToolVolumeDetailDialog"
+        private const val NOTIFICATION_PANEL_CONTROLLER_CLASS =
+            "com.android.systemui.shade.NotificationPanelViewController"
         private const val MEDIA_LABEL = "媒体音量"
         private const val RINGER_LABEL = "铃声音量"
         private const val LONG_PRESS_TIMEOUT_MS = 500L
