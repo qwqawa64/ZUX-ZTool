@@ -38,6 +38,8 @@ class SystemUIRealWatts : AppHookModule() {
 
     private var lastUpdate: Long = 0
     private var suAvailable: Boolean? = null
+    private var javaIoDisabled = false
+    private var suDisabled = false
 
     override fun getModuleName(): String = PreferenceKeys.SYSTEMUI_REAL_WATTS.name
 
@@ -96,16 +98,22 @@ class SystemUIRealWatts : AppHookModule() {
         }
     }
 
-    /** Read charging data: Java IO first, fallback to su on failure. */
+    /** Read charging data: Java IO first, fallback to su on failure. Channels are disabled permanently once they fail. */
     private fun readChargingData(): ChargingData? {
-        readChargingDataViaFileIO()?.let { return it }
-
-        logger.warn("Java IO sysfs read failed, falling back to su mode")
-        if (!isSuAvailable()) {
-            logger.warn("su unavailable, cannot fall back")
-            return null
+        if (!javaIoDisabled) {
+            readChargingDataViaFileIO()?.let { return it }
+            javaIoDisabled = true
+            logger.warn("Java IO sysfs read failed, disabling this channel and falling back to su mode")
         }
-        return readChargingDataViaSu()
+
+        if (!suDisabled && isSuAvailable()) {
+            return readChargingDataViaSu()
+        }
+        if (!suDisabled) {
+            suDisabled = true
+            logger.warn("su unavailable, disabling this channel")
+        }
+        return null
     }
 
     private fun readChargingDataViaFileIO(): ChargingData? {
