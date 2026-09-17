@@ -1,19 +1,18 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
-import android.content.Intent
-import android.graphics.drawable.ClipDrawable
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.view.HapticFeedbackConstants
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.LinearLayout
@@ -23,28 +22,21 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
-import java.lang.reflect.Constructor
-import java.lang.reflect.InvocationHandler
+import java.lang.ref.WeakReference
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 import java.util.WeakHashMap
 
 /**
  * Test hook: long-press feedback for the control-center volume / brightness sliders.
  *
  * A long press (finger held still for LONG_PRESS_TIMEOUT_MS) plays a scale-down
- * "held" animation, vibrates, then opens the matching dialog: a ZUI QS detail
- * dialog carrying a custom DetailAdapter (media + ringer volume rows) for the
- * volume slider, and ToggleSliderView.openBrightnessDetail() for the brightness
- * slider. Dragging beyond the touch slop cancels the timer and bounces the scale
- * back, so normal slider dragging is unaffected.
- *
- * The QSDetailDialogController singleton is captured once via a constructor
- * after-hook at SystemUI startup; the DetailAdapter is implemented through a
- * java.lang.reflect.Proxy because SystemUI classes are not available at compile
- * time. Delegating the dialog presentation to QSDetailDialogController keeps the
- * ZUI styling, window layering, and show/hide transition identical to the
- * brightness detail dialog.
+ * "held" animation, vibrates, then opens the matching dialog: a volume dialog
+ * built exactly like BrightnessDetailDialogController.BrightnessDetailDialog —
+ * same theme (Theme_SystemUI_Dialog_GlobalActionsLite), same
+ * brightness_detail_dialog layout root, same window parameters — with the
+ * brightness content swapped for media + ringer volume rows carried by the ZUI
+ * BrightnessSliderView widget. Dragging beyond the touch slop cancels the timer
+ * and bounces the scale back, so normal slider dragging is unaffected.
  *
  * Touch listener wrapping is installed in an after-hook of updateVolumeSlider()
  * / updateBrightnessSlider() with PRIORITY_HIGHEST: after-hook bodies unwind in
@@ -58,8 +50,7 @@ class SliderLongPressTestHook : AppHookModule() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pressStates = WeakHashMap<View, PressState>()
-    private var qsDetailControllerRef: java.lang.ref.WeakReference<Any>? = null
-    private var detailAdapterProxy: Any? = null
+    private var volumeDialogRef: WeakReference<Dialog>? = null
 
     override fun getModuleName(): String = TEST_MODULE_NAME
 
@@ -67,29 +58,9 @@ class SliderLongPressTestHook : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
-        hookQsDetailDialogControllerCapture(classLoader)
         hookVolumeSliderLongPress(classLoader)
         hookBrightnessSliderLongPress(classLoader)
         logger.info("Slider long press test hook installed")
-    }
-
-    /**
-     * Captures the QSDetailDialogController singleton at Dagger construction so
-     * the volume long press can reuse the ZUI QS detail dialog presentation.
-     */
-    private fun hookQsDetailDialogControllerCapture(classLoader: ClassLoader) {
-        try {
-            val controllerClass = classLoader.loadClass(QS_DETAIL_DIALOG_CONTROLLER_CLASS)
-            for (ctor: Constructor<*> in controllerClass.declaredConstructors) {
-                hookWithId(ctor, "qs_detail_dialog_capture") { chain ->
-                    val result = chain.proceed()
-                    qsDetailControllerRef = java.lang.ref.WeakReference(chain.thisObject)
-                    result
-                }
-            }
-        } catch (t: Throwable) {
-            logger.warn("Failed to hook QSDetailDialogController constructor: $t")
-        }
     }
 
     private fun hookVolumeSliderLongPress(classLoader: ClassLoader) {
@@ -139,7 +110,9 @@ class SliderLongPressTestHook : AppHookModule() {
             // be read, rebuild a fresh instance of the system lambda instead.
             val delegate = readOnTouchListener(slider)
                 ?: loadSystemVolumeTouchListener(sliderView.javaClass, sliderView)
-            attachLongPress(slider, delegate) { showVolumeDetailDialog(slider) }
+            attachLongPress(slider, delegate) {
+                runOnUiThread(slider) { showVolumeDetailDialog(slider) }
+            }
         } catch (t: Throwable) {
             logger.warn("Failed to attach volume long press: $t")
         }
@@ -158,79 +131,89 @@ class SliderLongPressTestHook : AppHookModule() {
         }
     }
 
+    /**
+     * Toggles the volume dialog. Repeated long presses dismiss it, mirroring
+     * BrightnessDetailDialogController.showOrHideDialog's toggle semantics.
+     */
     private fun showVolumeDetailDialog(anchor: View) {
-        val controller = qsDetailControllerRef?.get()
-        if (controller == null) {
-            logger.warn("QSDetailDialogController not captured yet")
+        val current = volumeDialogRef?.get()
+        if (current != null && current.isShowing) {
+            current.dismiss()
+            volumeDialogRef = null
             return
         }
         try {
-            val adapterClass = Class.forName(DETAIL_ADAPTER_CLASS, true, anchor.context.classLoader)
-            val adapter = obtainDetailAdapter(anchor.context)
-            logger.debug("volume detail: controller=${controller.javaClass.name}, " +
-                "adapterClass=$adapterClass, adapterInterfaces=${adapter.javaClass.interfaces.contentToString()}")
-            // Pass a null anchor: showOrHideDialog launches a DialogTransitionAnimator
-            // from the anchor View and requires it to implement LaunchableView, which
-            // the stock SeekBar does not. With a null anchor the dialog falls back to
-            // a plain show() — same styling and window layering, no launch transition.
-            val showOrHide: Method = controller.javaClass.getMethod(
-                "showOrHideDialog",
-                View::class.java,
-                adapterClass
-            )
-            logger.debug("volume detail: resolved $showOrHide, invoking on $controller")
-            showOrHide.invoke(controller, null, adapter)
-            logger.debug("volume detail: showOrHideDialog returned normally")
+            val dialog = buildBrightnessStyleVolumeDialog(anchor.context)
+            volumeDialogRef = WeakReference(dialog)
+            dialog.show()
         } catch (t: Throwable) {
-            // InvocationTargetException wraps the real failure thrown inside
-            // QSDetailDialogController; unwrap so the log shows the root cause.
-            val cause = (t as? java.lang.reflect.InvocationTargetException)?.targetException ?: t
-            logger.error("Failed to show volume detail dialog: $cause", cause)
+            logger.error("Failed to show volume detail dialog: $t", t)
         }
     }
 
     /**
-     * Builds (once) a dynamic proxy implementing the SystemUI DetailAdapter
-     * interface. The detail view carries media and ringer volume rows.
+     * Mirrors BrightnessDetailDialogController.BrightnessDetailDialog: the same
+     * dialog theme, the same brightness_detail_dialog layout root (so the
+     * rounded background and insets behave identically), and the same window
+     * parameters (title, cutout mode, FLAG_LAYOUT_IN_SCREEN, zero dim). The
+     * brightness-specific children of brightness_detail_container are replaced
+     * with the volume rows; the brightness dialog's 90-degree rotation is not
+     * applied so the volume bars stay horizontal.
      */
-    private fun obtainDetailAdapter(context: Context): Any {
-        detailAdapterProxy?.let { return it }
-        val adapterInterface = Class.forName(DETAIL_ADAPTER_CLASS, true, context.classLoader)
-        val handler = InvocationHandler { proxy, method, args ->
-            when (method.name) {
-                "createDetailView" -> {
-                    @Suppress("UNCHECKED_CAST")
-                    createVolumeDetailView(
-                        args[0] as Context,
-                        args[2] as ViewGroup
-                    )
-                }
+    private fun buildBrightnessStyleVolumeDialog(context: Context): Dialog {
+        val res = context.resources
+        val pkg = context.packageName
+        val themeId = res.getIdentifier(BRIGHTNESS_DIALOG_THEME, "style", pkg)
+        val dialog = if (themeId != 0) Dialog(context, themeId) else Dialog(context)
 
-                "getMetricsCategory" -> VOLUME_DETAIL_METRICS_CATEGORY
-                "getSettingsIntent" -> null
-                "getTitle" -> VOLUME_DIALOG_TITLE
-                "getToggleState" -> java.lang.Boolean.FALSE
-                "setToggleState" -> Unit
-                "getToggleEnabled" -> java.lang.Boolean.FALSE
-                "setDetailListening" -> Unit
-                else -> defaultProxyReturn(method)
+        val layoutId = res.getIdentifier(BRIGHTNESS_DETAIL_LAYOUT, "layout", pkg)
+        val containerId = res.getIdentifier(BRIGHTNESS_DETAIL_CONTAINER, "id", pkg)
+        var contentHost: ViewGroup? = null
+        if (layoutId != 0) {
+            try {
+                val root = LayoutInflater.from(context).inflate(layoutId, null)
+                val container = if (containerId != 0) {
+                    root.findViewById(containerId) as? ViewGroup
+                } else {
+                    null
+                }
+                if (container != null) {
+                    container.removeAllViews()
+                    container.addView(
+                        createVolumeDetailView(context, container),
+                        ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                    )
+                    dialog.setContentView(root)
+                    contentHost = container
+                }
+            } catch (t: Throwable) {
+                logger.warn("Failed to reuse brightness detail layout: $t")
             }
         }
-        val proxy = Proxy.newProxyInstance(
-            adapterInterface.classLoader,
-            arrayOf(adapterInterface),
-            handler
-        )
-        detailAdapterProxy = proxy
-        return proxy
-    }
-
-    private fun defaultProxyReturn(method: Method): Any? {
-        return when (method.returnType) {
-            Boolean::class.javaPrimitiveType -> java.lang.Boolean.FALSE
-            Int::class.javaPrimitiveType -> 0
-            else -> null
+        if (contentHost == null) {
+            dialog.setContentView(
+                createVolumeDetailView(context, android.widget.FrameLayout(context))
+            )
         }
+
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.window?.let { window ->
+            try {
+                val attrs = window.attributes
+                attrs.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                attrs.layoutInDisplayCutoutMode = 3
+                attrs.title = VOLUME_WINDOW_TITLE
+                window.attributes = attrs
+                window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+                window.setDimAmount(0f)
+            } catch (t: Throwable) {
+                logger.warn("Failed to apply dialog window params: $t")
+            }
+        }
+        return dialog
     }
 
     /**
@@ -247,6 +230,7 @@ class SliderLongPressTestHook : AppHookModule() {
         val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(dp(context, 8), dp(context, 4), dp(context, 8), dp(context, 12))
         }
 
@@ -331,15 +315,21 @@ class SliderLongPressTestHook : AppHookModule() {
             val res = context.resources
             val pkg = context.packageName
             val layoutId = res.getIdentifier(ZUI_BRIGHTNESS_SLIDER_LAYOUT, "layout", pkg)
-            if (layoutId == 0) return null
-            val root = android.view.LayoutInflater.from(context).inflate(layoutId, null)
+            if (layoutId == 0) {
+                logger.warn("ZUI brightness slider layout not found, using fallback slider")
+                return null
+            }
+            val root = LayoutInflater.from(context).inflate(layoutId, null)
             val sliderId = res.getIdentifier("slider", "id", pkg)
             val seekBar = if (sliderId != 0) {
                 root.findViewById(sliderId) as? SeekBar
             } else {
                 findFirstSeekBar(root)
             }
-            if (seekBar == null) return null
+            if (seekBar == null) {
+                logger.warn("ZUI brightness slider layout has no SeekBar, using fallback")
+                return null
+            }
             seekBar to root
         } catch (t: Throwable) {
             logger.warn("Failed to inflate ZUI brightness slider layout: $t")
@@ -386,10 +376,9 @@ class SliderLongPressTestHook : AppHookModule() {
     }
 
     /**
-     * Applies the control-center slider appearance: the same progress selector
-     * drawable used by ToggleSliderView plus the corner radius refreshSeekBar
-     * stamps onto its background/progress layers. Falls back silently to the
-     * platform style when the SystemUI resources are not resolvable.
+     * Applies the control-center slider appearance to the fallback SeekBar: the
+     * same progress selector drawable used by ToggleSliderView plus the corner
+     * radius refreshSeekBar stamps onto its background/progress layers.
      */
     private fun SeekBar.applyZuiSliderStyle(context: Context) {
         try {
@@ -402,19 +391,23 @@ class SliderLongPressTestHook : AppHookModule() {
             val cornerRadius = res.getDimension(
                 res.getIdentifier(SLIDER_CORNER_DIMEN, "dimen", pkg)
             )
-            val layerDrawable = progressDrawable as? LayerDrawable ?: return
+            val layerDrawable = progressDrawable as? android.graphics.drawable.LayerDrawable
+                ?: return
             layerDrawable.findDrawableByLayerId(android.R.id.background)?.let {
-                (it as? GradientDrawable)?.cornerRadius = cornerRadius
+                (it as? android.graphics.drawable.GradientDrawable)?.cornerRadius = cornerRadius
             }
             val progressLayer = layerDrawable.findDrawableByLayerId(android.R.id.progress)
             if (progressLayer is android.graphics.drawable.StateListDrawable) {
                 for (i in 0 until progressLayer.stateCount) {
-                    val clip = progressLayer.getStateDrawable(i) as? ClipDrawable ?: continue
-                    (clip.drawable as? GradientDrawable)?.cornerRadius = cornerRadius
+                    val clip = progressLayer.getStateDrawable(i)
+                        as? android.graphics.drawable.ClipDrawable ?: continue
+                    (clip.drawable as? android.graphics.drawable.GradientDrawable)
+                        ?.cornerRadius = cornerRadius
                 }
             } else {
-                (progressLayer as? ClipDrawable)?.drawable?.let {
-                    (it as? GradientDrawable)?.cornerRadius = cornerRadius
+                (progressLayer as? android.graphics.drawable.ClipDrawable)?.drawable?.let {
+                    (it as? android.graphics.drawable.GradientDrawable)?.cornerRadius =
+                        cornerRadius
                 }
             }
             val barHeight = res.getDimensionPixelSize(
@@ -592,19 +585,19 @@ class SliderLongPressTestHook : AppHookModule() {
         private const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
         private const val VOLUME_TOUCH_LISTENER_CLASS =
             "com.android.systemui.settings.ToggleSliderView\$\$ExternalSyntheticLambda0"
-        private const val QS_DETAIL_DIALOG_CONTROLLER_CLASS =
-            "com.android.systemui.qs.tiles.dialog.QSDetailDialogController"
-        private const val DETAIL_ADAPTER_CLASS = "com.android.systemui.qs.DetailAdapter"
         private const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
         private const val BRIGHTNESS_SLIDER_FIELD = "mBrightnessSlider"
+        private const val BRIGHTNESS_DIALOG_THEME = "Theme_SystemUI_Dialog_GlobalActionsLite"
+        private const val BRIGHTNESS_DETAIL_LAYOUT = "brightness_detail_dialog"
+        private const val BRIGHTNESS_DETAIL_CONTAINER = "brightness_detail_container"
+        private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
         private const val SLIDER_DRAWABLE = "brightness_progress_selector"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
         private const val SLIDER_HEIGHT_DIMEN = "brightness_bar_height"
-        private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
         private const val VOLUME_DIALOG_TITLE = "音量"
+        private const val VOLUME_WINDOW_TITLE = "ZToolVolumeDetailDialog"
         private const val MEDIA_LABEL = "媒体音量"
         private const val RINGER_LABEL = "铃声音量"
-        private const val VOLUME_DETAIL_METRICS_CATEGORY = 9128
         private const val LONG_PRESS_TIMEOUT_MS = 500L
         private const val PRESS_SCALE = 0.96f
         private const val PRESS_DURATION_MS = 120L
