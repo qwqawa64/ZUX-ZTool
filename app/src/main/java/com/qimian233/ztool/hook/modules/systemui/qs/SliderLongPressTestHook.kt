@@ -482,6 +482,9 @@ class SliderLongPressTestHook : AppHookModule() {
             if (volumeIconId != 0) {
                 iconView.setImageResource(volumeIconId)
             }
+            // The volume glyph points sideways for a horizontal bar; rotate it
+            // clockwise so it points up along the vertical slider.
+            iconView.rotation = 90f
             iconView.clearColorFilter()
         } catch (t: Throwable) {
             logger.warn("Failed to swap in volume icon: $t")
@@ -736,8 +739,8 @@ class SliderLongPressTestHook : AppHookModule() {
         private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
         // Vertical slider footprint measured from the reference dump
         // (203x650 px on a 3200x2000 screen at ~420dpi ≈ 96x154 dp), scaled
-        // up ~1.5x per the size feedback.
-        private const val VERTICAL_SLIDER_WIDTH_DP = 144
+        // up ~1.5x per the size feedback, then widened again.
+        private const val VERTICAL_SLIDER_WIDTH_DP = 180
         private const val VERTICAL_SLIDER_HEIGHT_DP = 230
         private const val VOLUME_ICON_DRAWABLE = "volume_no_poercing"
         private const val SLIDER_DRAWABLE = "brightness_progress_selector_keyboard"
