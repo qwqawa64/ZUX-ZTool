@@ -278,12 +278,20 @@ class SliderLongPressTestHook : AppHookModule() {
             return
         }
         try {
-            val showH: Method = dialog.javaClass.getDeclaredMethod(
-                "showH",
-                Int::class.javaPrimitiveType
-            )
+            // R8 compiles the private showH(int) into a Nest accessor static
+            // method (…$$Nest$mshowH(VolumeDialogImpl, int)); match either form.
+            val showH = dialog.javaClass.declaredMethods.firstOrNull {
+                it.name == "showH" || it.name.endsWith("\$\$Nest\$mshowH")
+            } ?: run {
+                logger.warn("showH method not found on VolumeDialogImpl")
+                return
+            }
             showH.isAccessible = true
-            showH.invoke(dialog, SHOW_REASON_VOLUME_CHANGED)
+            if (java.lang.reflect.Modifier.isStatic(showH.modifiers)) {
+                showH.invoke(null, dialog, SHOW_REASON_VOLUME_CHANGED)
+            } else {
+                showH.invoke(dialog, SHOW_REASON_VOLUME_CHANGED)
+            }
         } catch (t: Throwable) {
             logger.warn("Failed to open volume dialog: $t")
         }
