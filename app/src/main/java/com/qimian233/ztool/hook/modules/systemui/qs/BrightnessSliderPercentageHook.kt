@@ -14,6 +14,7 @@ import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import io.github.libxposed.api.XposedInterface
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -52,7 +53,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
                     Boolean::class.javaPrimitiveType,
                     Boolean::class.javaPrimitiveType
                 )
-            hookWithId(onChangedMethod, "on_changed") { chain ->
+            hookWithId(onChangedMethod, "on_changed", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 refreshBrightnessFromController(chain.thisObject, chain.args[0] as Int)
                 result
@@ -64,7 +65,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
             val setValueMethod: Method = classLoader
                 .loadClass("com.android.systemui.settings.brightness.BrightnessSliderController")
                 .getDeclaredMethod("setValue", Int::class.javaPrimitiveType)
-            hookWithId(setValueMethod, "set_value") { chain ->
+            hookWithId(setValueMethod, "set_value", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 val sliderController = chain.thisObject
                 val scCls = sliderController.javaClass
@@ -88,7 +89,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
         try {
             val ctor: Constructor<*> = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredConstructor(Context::class.java, AttributeSet::class.java, Int::class.javaPrimitiveType)
-            hookWithId(ctor, "ctor") { chain ->
+            hookWithId(ctor, "ctor", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 chain.proceed()
                 attachSliderLabel(chain.thisObject)
                 null
@@ -99,7 +100,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
         try {
             val updateBrightnessMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("updateBrightnessSlider")
-            hookWithId(updateBrightnessMethod, "update_brightness") { chain ->
+            hookWithId(updateBrightnessMethod, "update_brightness", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 attachSliderLabel(chain.thisObject)
                 refreshBrightnessLabel(chain.thisObject)
@@ -111,7 +112,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
         try {
             val refreshSeekBarMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("refreshSeekBar", ProgressBar::class.java)
-            hookWithId(refreshSeekBarMethod, "refresh_seek_bar") { chain ->
+            hookWithId(refreshSeekBarMethod, "refresh_seek_bar", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 val sliderView = chain.thisObject
                 val progressBar = chain.args[0] as ProgressBar
@@ -128,7 +129,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
         try {
             val setProgressMethod: Method =
                 SeekBar::class.java.getDeclaredMethod("setProgress", Int::class.javaPrimitiveType)
-            hookWithId(setProgressMethod, "set_progress") { chain ->
+            hookWithId(setProgressMethod, "set_progress", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 val seekBar = chain.thisObject as SeekBar
                 val sliderView = findToggleSliderView(seekBar) ?: return@hookWithId result

@@ -14,6 +14,7 @@ import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import io.github.libxposed.api.XposedInterface
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -46,7 +47,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         try {
             val updateMusicSliderMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("updateMusicSlider")
-            hookWithId(updateMusicSliderMethod, "update_music_slider") { chain ->
+            hookWithId(updateMusicSliderMethod, "update_music_slider", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 refreshVolumeFromToggleSlider(chain.thisObject)
                 result
@@ -57,7 +58,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         try {
             val registerVolumeObserverMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("registerVolumeObserver")
-            hookWithId(registerVolumeObserverMethod, "register_volume_observer") { chain ->
+            hookWithId(registerVolumeObserverMethod, "register_volume_observer", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 refreshVolumeFromToggleSlider(chain.thisObject)
                 result
@@ -70,7 +71,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         try {
             val ctor: Constructor<*> = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredConstructor(Context::class.java, AttributeSet::class.java, Int::class.javaPrimitiveType)
-            hookWithId(ctor, "ctor") { chain ->
+            hookWithId(ctor, "ctor", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 chain.proceed()
                 attachSliderLabel(chain.thisObject)
                 null
@@ -81,7 +82,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         try {
             val updateVolumeSliderMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("updateVolumeSlider")
-            hookWithId(updateVolumeSliderMethod, "update_volume_slider") { chain ->
+            hookWithId(updateVolumeSliderMethod, "update_volume_slider", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 attachSliderLabel(chain.thisObject)
                 refreshVolumeLabel(chain.thisObject)
@@ -93,7 +94,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         try {
             val setVolumeProgressMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("setVolumeProgress", Int::class.javaPrimitiveType)
-            hookWithId(setVolumeProgressMethod, "set_volume_progress") { chain ->
+            hookWithId(setVolumeProgressMethod, "set_volume_progress", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 refreshVolumeLabel(chain.thisObject)
                 result
@@ -104,7 +105,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         try {
             val refreshSeekBarMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("refreshSeekBar", ProgressBar::class.java)
-            hookWithId(refreshSeekBarMethod, "refresh_seek_bar") { chain ->
+            hookWithId(refreshSeekBarMethod, "refresh_seek_bar", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 val sliderView = chain.thisObject
                 val progressBar = chain.args[0] as ProgressBar
@@ -127,7 +128,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
                     Int::class.javaPrimitiveType,
                     Boolean::class.javaPrimitiveType
                 )
-            hookWithId(onProgressChangedMethod, "on_progress_changed") { chain ->
+            hookWithId(onProgressChangedMethod, "on_progress_changed", priority = XposedInterface.PRIORITY_LOWEST) { chain ->
                 val result = chain.proceed()
                 val seekBar = chain.args[0] as SeekBar
                 val sliderView = findToggleSliderView(seekBar)
