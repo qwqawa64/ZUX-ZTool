@@ -169,13 +169,17 @@ class SliderLongPressTestHook : AppHookModule() {
             val adapter = obtainDetailAdapter(anchor.context)
             logger.debug("volume detail: controller=${controller.javaClass.name}, " +
                 "adapterClass=$adapterClass, adapterInterfaces=${adapter.javaClass.interfaces.contentToString()}")
+            // Pass a null anchor: showOrHideDialog launches a DialogTransitionAnimator
+            // from the anchor View and requires it to implement LaunchableView, which
+            // the stock SeekBar does not. With a null anchor the dialog falls back to
+            // a plain show() — same styling and window layering, no launch transition.
             val showOrHide: Method = controller.javaClass.getMethod(
                 "showOrHideDialog",
                 View::class.java,
                 adapterClass
             )
             logger.debug("volume detail: resolved $showOrHide, invoking on $controller")
-            showOrHide.invoke(controller, anchor, adapter)
+            showOrHide.invoke(controller, null, adapter)
             logger.debug("volume detail: showOrHideDialog returned normally")
         } catch (t: Throwable) {
             // InvocationTargetException wraps the real failure thrown inside
