@@ -448,7 +448,9 @@ class SliderLongPressTestHook : AppHookModule() {
                 maxHeight = barHeight
             }
             splitTrack = false
-            thumbOffset = 0
+            // The ZUI keyboard slider variant ships with thumb=@null; match it
+            // so the bar renders as a plain rounded track.
+            thumb = null
         } catch (t: Throwable) {
             logger.warn("Failed to apply ZUI slider style: $t")
         }
@@ -617,9 +619,11 @@ class SliderLongPressTestHook : AppHookModule() {
             "com.android.systemui.settings.ToggleSliderView\$\$ExternalSyntheticLambda0"
         private const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
         private const val BRIGHTNESS_SLIDER_FIELD = "mBrightnessSlider"
-        private const val BRIGHTNESS_DIALOG_THEME = "Theme_SystemUI_Dialog_GlobalActionsLite"
+        // Style resource names are dotted in the resource table; R.style fields
+        // merely replace the dots with underscores.
+        private const val BRIGHTNESS_DIALOG_THEME = "Theme.SystemUI.Dialog.GlobalActionsLite"
         private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
-        private const val SLIDER_DRAWABLE = "brightness_progress_selector"
+        private const val SLIDER_DRAWABLE = "brightness_progress_selector_keyboard"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
         private const val SLIDER_HEIGHT_DIMEN = "brightness_bar_height"
         private const val VOLUME_DIALOG_TITLE = "音量"
