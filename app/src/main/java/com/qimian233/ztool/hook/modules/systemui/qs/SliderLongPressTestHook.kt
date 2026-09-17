@@ -234,10 +234,14 @@ class SliderLongPressTestHook : AppHookModule() {
     }
 
     /**
-     * Builds the dialog content: a title plus one slider row per stream. The
-     * SeekBars reuse the control-center slider drawable
-     * (brightness_progress_selector) with the same corner rounding
-     * ToggleSliderView.refreshSeekBar applies, so they render in ZUI style.
+     * Builds the dialog content: a title plus one slider row per stream. Each
+     * slider reuses the ZUI BrightnessSliderView control (the same slider
+     * widget the brightness detail dialog shows, inflated from
+     * quick_settings_brightness_dialog_zui). The rotation the brightness
+     * dialog applies to make it vertical is deliberately omitted so the
+     * volume bars stay horizontal. Falls back to a platform SeekBar styled
+     * with the control-center slider drawable when the ZUI layout is
+     * unavailable.
      */
     private fun createVolumeDetailView(context: Context, parent: ViewGroup): View {
         val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -287,35 +291,98 @@ class SliderLongPressTestHook : AppHookModule() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { rightMargin = dp(context, 16) }
         )
-        val seekBar = SeekBar(context).apply {
-            max = audio.getStreamMaxVolume(stream)
-            progress = audio.getStreamVolume(stream)
-            applyZuiSliderStyle(context)
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    bar: SeekBar,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    if (fromUser) {
-                        try {
-                            audio.setStreamVolume(stream, progress, 0)
-                        } catch (t: Throwable) {
-                            logger.warn("Failed to set stream volume: $t")
-                        }
-                    }
-                }
-
-                override fun onStartTrackingTouch(bar: SeekBar) = Unit
-
-                override fun onStopTrackingTouch(bar: SeekBar) = Unit
-            })
-        }
         row.addView(
-            seekBar,
+            buildStreamSlider(context, audio, stream),
             LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         )
         return row
+    }
+
+    /**
+     * Builds one stream slider. Prefers inflating the ZUI BrightnessSliderView
+     * layout (identical widget to the brightness detail dialog slider) and
+     * driving its inner R.id.slider SeekBar; falls back to a styled platform
+     * SeekBar when the ZUI resources cannot be resolved.
+     */
+    private fun buildStreamSlider(
+        context: Context,
+        audio: AudioManager,
+        stream: Int
+    ): View {
+        val zuiSlider = inflateZuiBrightnessSlider(context)
+        if (zuiSlider != null) {
+            val (seekBar, root) = zuiSlider
+            configureVolumeSeekBar(seekBar, audio, stream)
+            return root
+        }
+        return SeekBar(context).apply {
+            applyZuiSliderStyle(context)
+            configureVolumeSeekBar(this, audio, stream)
+        }
+    }
+
+    /**
+     * Inflates quick_settings_brightness_dialog_zui (the brightness detail
+     * slider widget) and returns its inner R.id.slider SeekBar together with
+     * the inflated root, or null when the resources are unavailable.
+     */
+    private fun inflateZuiBrightnessSlider(context: Context): Pair<SeekBar, View>? {
+        return try {
+            val res = context.resources
+            val pkg = context.packageName
+            val layoutId = res.getIdentifier(ZUI_BRIGHTNESS_SLIDER_LAYOUT, "layout", pkg)
+            if (layoutId == 0) return null
+            val root = android.view.LayoutInflater.from(context).inflate(layoutId, null)
+            val sliderId = res.getIdentifier("slider", "id", pkg)
+            val seekBar = if (sliderId != 0) {
+                root.findViewById(sliderId) as? SeekBar
+            } else {
+                findFirstSeekBar(root)
+            }
+            if (seekBar == null) return null
+            seekBar to root
+        } catch (t: Throwable) {
+            logger.warn("Failed to inflate ZUI brightness slider layout: $t")
+            null
+        }
+    }
+
+    private fun findFirstSeekBar(root: View): SeekBar? {
+        if (root is SeekBar) return root
+        if (root is ViewGroup) {
+            for (i in 0 until root.childCount) {
+                findFirstSeekBar(root.getChildAt(i))?.let { return it }
+            }
+        }
+        return null
+    }
+
+    private fun configureVolumeSeekBar(
+        seekBar: SeekBar,
+        audio: AudioManager,
+        stream: Int
+    ) {
+        seekBar.max = audio.getStreamMaxVolume(stream)
+        seekBar.progress = audio.getStreamVolume(stream)
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(
+                bar: SeekBar,
+                progress: Int,
+                fromUser: Boolean
+            ) {
+                if (fromUser) {
+                    try {
+                        audio.setStreamVolume(stream, progress, 0)
+                    } catch (t: Throwable) {
+                        logger.warn("Failed to set stream volume: $t")
+                    }
+                }
+            }
+
+            override fun onStartTrackingTouch(bar: SeekBar) = Unit
+
+            override fun onStopTrackingTouch(bar: SeekBar) = Unit
+        })
     }
 
     /**
@@ -533,6 +600,7 @@ class SliderLongPressTestHook : AppHookModule() {
         private const val SLIDER_DRAWABLE = "brightness_progress_selector"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
         private const val SLIDER_HEIGHT_DIMEN = "brightness_bar_height"
+        private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
         private const val VOLUME_DIALOG_TITLE = "音量"
         private const val MEDIA_LABEL = "媒体音量"
         private const val RINGER_LABEL = "铃声音量"
