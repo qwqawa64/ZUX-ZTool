@@ -185,15 +185,43 @@ class SliderLongPressTestHook : AppHookModule() {
             val dialog = buildBrightnessStyleVolumeDialog(anchor.context)
             volumeDialogRef = WeakReference(dialog)
             // Restore the shade content on every dismissal path (toggle,
-            // outside touch, back key), not just the manual toggle above.
+            // outside touch, back key). The dismiss callback runs on the UI
+            // thread; guard it so a failure there can never crash SystemUI
+            // or leave the dialog state inconsistent.
             dialog.setOnDismissListener {
-                volumeDialogRef = null
-                setShadeContentAlpha(1f)
+                try {
+                    volumeDialogRef = null
+                    setShadeContentAlpha(1f)
+                } catch (t: Throwable) {
+                    logger.warn("Dismiss restore failed: $t")
+                }
+            }
+            dialog.setOnCancelListener {
+                // Back key goes through cancel(); DialogInterface dismisses
+                // after cancel, but restore here as well to be safe.
+                try {
+                    setShadeContentAlpha(1f)
+                } catch (t: Throwable) {
+                    logger.warn("Cancel restore failed: $t")
+                }
             }
             dialog.show()
             setShadeContentAlpha(0f)
+            // Safety net: if the dialog is force-removed (screen off/on, shade
+            // collapse) without a dismiss callback, restore the shade content
+            // so the control center is never stuck hidden.
+            anchor.postDelayed({
+                val ref = volumeDialogRef?.get()
+                if (ref == null || !ref.isShowing) {
+                    if (volumeDialogRef?.get() != null) volumeDialogRef = null
+                    setShadeContentAlpha(1f)
+                }
+            }, STUCK_RESTORE_DELAY_MS)
         } catch (t: Throwable) {
             logger.error("Failed to show volume detail dialog: $t", t)
+            // Never leave the shade hidden when the dialog failed to come up.
+            setShadeContentAlpha(1f)
+            volumeDialogRef = null
         }
     }
 
@@ -407,6 +435,14 @@ class SliderLongPressTestHook : AppHookModule() {
             val (seekBar, root) = zuiSlider
             configureVolumeSeekBar(seekBar, audio, stream)
             replaceBrightnessIconWithVolumeIcon(context, root)
+            // The XML height (@dimen/brightness_mirror_height) is a mirror-mode
+            // hint that shrinks the track drawable when inflated standalone.
+            // Force the bar to fill the frame's pre-rotation width so the
+            // track spans the full rotated footprint like the reference.
+            val barLen = dp(context, VERTICAL_SLIDER_HEIGHT_DP)
+            val barThick = dp(context, VERTICAL_SLIDER_WIDTH_DP)
+            seekBar.minHeight = barLen
+            seekBar.maxHeight = barLen
             // Wrap the bar in a fixed-size frame holding the post-rotation
             // (vertical) footprint; the bar itself lays out with swapped
             // dimensions and rotates 90° around its center, exactly how the
@@ -415,8 +451,8 @@ class SliderLongPressTestHook : AppHookModule() {
             frame.addView(
                 root,
                 android.widget.FrameLayout.LayoutParams(
-                    dp(context, VERTICAL_SLIDER_HEIGHT_DP),
-                    dp(context, VERTICAL_SLIDER_WIDTH_DP),
+                    barLen,
+                    barThick,
                     android.view.Gravity.CENTER
                 )
             )
@@ -761,6 +797,7 @@ class SliderLongPressTestHook : AppHookModule() {
         private const val MEDIA_LABEL = "媒体音量"
         private const val RINGER_LABEL = "铃声音量"
         private const val LONG_PRESS_TIMEOUT_MS = 500L
+        private const val STUCK_RESTORE_DELAY_MS = 3000L
         private const val PRESS_SCALE = 0.96f
         private const val PRESS_DURATION_MS = 120L
         private const val RELEASE_DURATION_MS = 180L
