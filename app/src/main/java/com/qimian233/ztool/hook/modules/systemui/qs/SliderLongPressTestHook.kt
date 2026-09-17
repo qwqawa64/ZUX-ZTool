@@ -265,6 +265,14 @@ class SliderLongPressTestHook : AppHookModule() {
         dialog.setCanceledOnTouchOutside(true)
         dialog.window?.let { window ->
             try {
+                // The GlobalActionsLite theme sizes the dialog window to its
+                // content, which compressed the fullscreen root and shifted
+                // the panel left. Force the window to fill the screen so the
+                // FrameLayout gravity/margins apply against real screen edges.
+                window.setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
                 val attrs = window.attributes
                 // TYPE_VOLUME_OVERLAY (hidden constant) is the layer the native
                 // volume panel uses, ranking above the notification shade so
@@ -737,11 +745,11 @@ class SliderLongPressTestHook : AppHookModule() {
         // merely replace the dots with underscores.
         private const val BRIGHTNESS_DIALOG_THEME = "Theme.SystemUI.Dialog.GlobalActionsLite"
         private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
-        // Vertical slider footprint measured from the reference dump
-        // (203x650 px on a 3200x2000 screen at ~420dpi ≈ 96x154 dp), scaled
-        // up ~1.5x per the size feedback, then widened again.
-        private const val VERTICAL_SLIDER_WIDTH_DP = 180
-        private const val VERTICAL_SLIDER_HEIGHT_DP = 230
+        // Vertical slider footprint measured from the reference dump: the
+        // SeekBar bounds are 203x650 px on a 3200x2000 screen at ~420dpi,
+        // i.e. 87x277 dp.
+        private const val VERTICAL_SLIDER_WIDTH_DP = 87
+        private const val VERTICAL_SLIDER_HEIGHT_DP = 277
         private const val VOLUME_ICON_DRAWABLE = "volume_no_poercing"
         private const val SLIDER_DRAWABLE = "brightness_progress_selector_keyboard"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
