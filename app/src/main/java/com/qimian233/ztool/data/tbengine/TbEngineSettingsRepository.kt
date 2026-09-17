@@ -277,7 +277,6 @@ class TbEngineSettingsRepository(
         }
     }
 
-
     fun loadState(): TbEngineSettingsUiState {
         return TbEngineSettingsUiState(
             disableAutoDownload = prefsUtils.loadBooleanSetting(KEY_DISABLE_AUTO_DOWNLOAD, false),

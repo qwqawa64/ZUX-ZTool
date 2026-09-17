@@ -75,8 +75,6 @@ object DexIndexManager {
     /** Directory holding index files: the Remote Files root is the module filesDir and does not support subdirectories, so files go at the root. */
     fun indexDir(context: Context): File = context.filesDir
 
-    // ── Internal implementation ─────────────────────────────────────
-
     /**
      * Runs a batch of indexers serially and reports scope-level progress.
      * [DexIndexProgress.running] is reset in finally regardless of outcome.

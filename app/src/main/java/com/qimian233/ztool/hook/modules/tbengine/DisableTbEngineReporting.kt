@@ -12,11 +12,9 @@ import io.github.libxposed.api.XposedModuleInterface
  * (com.lenovo.tbengine).
  *
  * Covers three reporting channels (choke points):
- * 1. UE big-data analytics events (PromptUtils.sendData / AvatarPlugin "big data"):
- *    ContentResolver.insert into URIs under content://com.lenovo.ue.device.provider
- *    (ZUN101/102/103, B104/B111/B112/B401/B403, ZUN401-405, ZWN103, etc.)
- * 2. UPS push receipts (obfuscated class a.a.a.b.b / "ReportUtil"):
- *    ContentResolver.insert into content://my.upsreport/upsreport
+ * 1. UE big-data analytics events: ContentResolver.insert into URIs under
+ *    content://com.lenovo.ue.device.provider
+ * 2. UPS push receipts: ContentResolver.insert into content://my.upsreport/upsreport
  * 3. Push registration reporting (UpsApp.registToken): device model + SN hash +
  *    token POSTed to tb-zui.lenovo.com/engine/push-message/register.
  *    Independent of the "disable UPS push" toggle — with only this toggle on,

@@ -8,15 +8,9 @@ import android.service.quicksettings.TileService
  * dialog (the MediaOutputDialog shown from the "Output switch" entry on the media card).
  *
  * Implementation relies purely on standard Android behavior, no hooks:
- * 1. Registered as a standard TileService; the user drags it in manually via the
- *    control center tile editor.
- * 2. On tap, sends an explicit broadcast to SystemUI's MediaOutputDialogReceiver
- *    (verified on real devices that this receiver is reachable by third-party apps);
- *    the system-side MediaOutputDialogManager.createAndShow(null, ...) renders the
- *    dialog, which also displays correctly in the empty state (no media session).
- *
- * onClick is invoked on the main thread and the broadcast is fire-and-forget,
- * so no extra threading is needed.
+ * registered as a standard TileService; on tap, sends an explicit broadcast to
+ * SystemUI's MediaOutputDialogReceiver, which renders the dialog (also correct in
+ * the empty state with no media session).
  */
 class MediaOutputTileService : TileService() {
 

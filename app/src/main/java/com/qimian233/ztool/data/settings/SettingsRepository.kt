@@ -69,7 +69,6 @@ class SettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_AUTO_CHECK_UPDATE, enabled)
     }
 
-
     fun setFrontendStyle(style: FrontendStyle) {
         themePreferences.saveFrontendStyle(style)
     }

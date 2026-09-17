@@ -55,8 +55,6 @@ class HookInit : XposedModule() {
         HookManager.handleSystemServerStarting(param)
     }
 
-    // ── Hot reload support ─────────────────────────────────────
-
     override fun onHotReloading(param: XposedModuleInterface.HotReloadingParam): Boolean {
         // Hot reload creates a new generation of module code (new classloader);
         // HookManager's static fields are not shared across generations.

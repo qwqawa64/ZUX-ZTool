@@ -15,9 +15,7 @@ import org.luckypray.dexkit.result.MethodData
  * mobiledesktop scope (com.motorola.mobiledesktop) offline indexer.
  *
  * Migrated as-is from the DexKit queries of these Hooks:
- * - BypassShareWarningHook (dialog method, tile refresh method; the legacy
- *   manager class vanished with the new obfuscation, the enabled path now uses
- *   the MotoDiscoveryManager hardcoded inside the Hook)
+ * - BypassShareWarningHook (dialog method, tile refresh method)
  * - DisableNearbyShareAutoOffHook (obfuscated FileUnionSwitchManager class /
  *   method, anchored on the log string "startCountDown()" for deobfuscation)
  * - AutoAcceptFileTransferHook (ViewModel field, boolean field, LiveData field,
@@ -45,8 +43,6 @@ class MobileDesktopDexIndexer : DexIndexer {
         )
         return modules
     }
-
-    // ── BypassShareWarningHook ──────────────────────────────────────
 
     private fun indexBypassShareWarning(bridge: DexKitBridge): JsonObject {
         val out = JsonObject()
@@ -102,8 +98,6 @@ class MobileDesktopDexIndexer : DexIndexer {
         }
     }
 
-    // ── DisableNearbyShareAutoOffHook ───────────────────────────────
-
     /**
      * FileUnionSwitchManager (obfuscated to com.motorola.motoaccount.sdk.se.c in
      * newer versions): its startCountDown method is the only no-arg void method
@@ -135,8 +129,6 @@ class MobileDesktopDexIndexer : DexIndexer {
         }
         return out
     }
-
-    // ── AutoAcceptFileTransferHook ──────────────────────────────────
 
     /**
      * Chained 4-query: find the ViewModel field in the Activity → find the

@@ -136,7 +136,6 @@ fun SettingsAdvancedRoute(
         }
     }
 
-    // ── DexKit index ────────────────────────────────────────────────
     var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
 
     if (uiState.showHotReloadDialog) {

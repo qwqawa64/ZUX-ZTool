@@ -16,7 +16,6 @@ class ForceLenovoAOD : AppHookModule() {
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
-
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader

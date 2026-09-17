@@ -24,7 +24,6 @@ class DisableGameAudio : SystemHookModule() {
         hookAudioManager(classLoader)
     }
 
-
     /**
      * Method 1: hook SystemProperties.set directly
      * Intercepts all writes to sys.audio.game_name

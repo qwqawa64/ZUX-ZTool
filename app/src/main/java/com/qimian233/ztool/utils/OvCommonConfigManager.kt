@@ -169,8 +169,6 @@ class OvCommonConfigManager {
         }
     }
 
-    // --- Business logic helpers ---
-
     // Get the list of package names that have a given feature enabled
     fun getPackagesForMode(map: Map<String, AppConfig>, mode: Int): List<String> {
         val list = ArrayList<String>()

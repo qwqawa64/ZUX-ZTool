@@ -154,8 +154,6 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         }
     }
 
-    // ── Surface ready ──────────────────────────────────────────
-
     private fun onSurfaceReady(engine: Any) {
         stopPlayback()
 
@@ -222,8 +220,6 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         val path = "$baseDir/$fileName"
         return if (File(path).exists()) path else null
     }
-
-    // ── Playback control ──────────────────────────────────────
 
     private fun startPlayback(engine: Any, videoPath: String) {
         try {
@@ -326,8 +322,6 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         extractor = null
     }
 
-    // ── Decode loop (runs on a dedicated thread) ──────────────
-
     private fun decodeLoop(engine: Any) {
         val extractor = extractor ?: return
         val codec = codec ?: return
@@ -414,8 +408,6 @@ class DesktopLiveWallpaperHook : AppHookModule() {
         }
     }
 
-    // ── Orientation switch ────────────────────────────────────
-
     /**
      * Unified entry point for orientation/display changes (shared by onDisplayChanged /
      * onConfigurationChanged / onSurfaceChanged): re-detect the orientation and select
@@ -486,8 +478,6 @@ class DesktopLiveWallpaperHook : AppHookModule() {
             logger.error("DesktopLiveWallpaper: redrawStaticWallpaper failed", t)
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────
 
     private fun reportEngineShown(engine: Any) {
         try {

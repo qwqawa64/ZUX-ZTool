@@ -13,30 +13,24 @@ import java.lang.reflect.Method
  *
  * Companion module of [LauncherNoLabelMode], but with an inverted gate:
  * labels are hidden ONLY when the hooked call originates from the drawer
- * UI, i.e. the call stack contains frames from
+ * UI, i.e. the call stack contains frames from the all-apps list or the
+ * prediction row (com.android.launcher3.allapps / appprediction).
  *
- * - com.android.launcher3.allapps        (all-apps list)
- * - com.android.launcher3.appprediction  (prediction row)
- *
- * Hook points are the same as [LauncherNoLabelMode]:
- * - BubbleTextView: drawer icons for non-ZUI apps
- * - ActiveIconView: drawer icons for ZUI system apps
- *   (Calendar, SafeCenter, Lenovo Switch, etc.)
+ * Hook points are the same as [LauncherNoLabelMode]: BubbleTextView for
+ * non-ZUI apps and ActiveIconView for ZUI system apps.
  *
  * Additionally, drawer ActiveIconView labels are force-hidden at
- * onAttachedToWindow and applyFrom* bind time. The drawer never calls
- * setTextVisibility/setTextAlpha on ActiveIconView — their only callers
- * live in the desktop/folder/taskbar/popup paths — so the visibility-call
- * hooks above never fire on the drawer path and freshly inflated icons
- * (PredictionRowView.l / BaseAllAppsAdapter.onCreateViewHolder) keep their
- * labels. The attach/bind hooks gate on the parent container
- * (AllAppsRecyclerView / PredictionRowView), so desktop, taskbar and
- * folder icons remain handled by the visibility-call hooks only.
+ * onAttachedToWindow and applyFrom* bind time: the drawer never calls
+ * setTextVisibility/setTextAlpha on ActiveIconView, so the visibility-call
+ * hooks never fire on the drawer path and freshly inflated icons would
+ * otherwise keep their labels. The attach/bind hooks gate on the parent
+ * drawer containers, so desktop, taskbar and folder icons remain handled
+ * by the visibility-call hooks only.
  *
  * The two modules can coexist: LauncherNoLabelMode skips drawer callers
- * while this module only handles drawer callers, so they never fight
- * over the same icon. Hook ids are prefixed with "drawer_" because both
- * modules hook the same executables and ids must stay unique per hook.
+ * while this module only handles drawer callers. Hook ids are prefixed
+ * with "drawer_" because both modules hook the same executables and ids
+ * must stay unique per hook.
  */
 @SuppressLint("PrivateApi")
 class LauncherDrawerNoLabelMode : AppHookModule() {
@@ -178,13 +172,12 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
      * moments the drawer owns:
      *
      * - onAttachedToWindow: the parent is only known here for freshly
-     *   created icons (PredictionRowView.l / BaseAllAppsAdapter.onCreateViewHolder);
+     *   created icons;
      * - applyFrom* rebinds: notifyDataSetChanged rebinds already-attached
      *   views without re-attaching them, which the attach hook cannot see.
      *
-     * Both hooks gate on the parent container (AllAppsRecyclerView /
-     * PredictionRowView — the same containers ActiveIconView.I() checks for
-     * the drawer), so desktop, taskbar and folder icons are untouched.
+     * Both hooks gate on the parent drawer container, so desktop, taskbar
+     * and folder icons are untouched.
      */
     fun installActiveIconViewDrawerLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
         try {

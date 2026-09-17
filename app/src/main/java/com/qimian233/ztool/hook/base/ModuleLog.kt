@@ -26,8 +26,6 @@ class ModuleLog(
     @Volatile var xposed: XposedInterface? = null
 ) {
 
-    // ── Instance log methods ──────────────────────────────────
-
     /** VERBOSE — always emitted, for lowest-priority diagnostics. */
     fun trace(msg: String) {
         xposed?.log(2, TAG, "[$moduleName] $msg")
@@ -75,8 +73,6 @@ class ModuleLog(
     /** Whether debug logging is currently on (convenience query of [DEBUG]). */
     fun isDebugEnabled(): Boolean = DEBUG
 
-    // ── Internal helpers ──────────────────────────────────────
-
     private fun formatWithStack(msg: String, t: Throwable): String {
         refreshDebugLoggingEnabled()
         val sb = StringBuilder("[$moduleName] $msg\n")
@@ -92,8 +88,6 @@ class ModuleLog(
         }
         return sb.toString()
     }
-
-    // ── companion: global state ───────────────────────────────
 
     companion object {
         private const val TAG = "ZToolXposedModule"

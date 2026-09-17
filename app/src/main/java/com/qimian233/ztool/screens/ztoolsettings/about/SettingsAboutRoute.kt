@@ -436,7 +436,6 @@ private fun AboutActionRow(
     }
 }
 
-
 internal fun openExternalLink(
     context: Context,
     link: String,

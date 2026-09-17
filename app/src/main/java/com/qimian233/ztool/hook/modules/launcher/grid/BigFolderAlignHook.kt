@@ -17,45 +17,22 @@ import kotlin.math.roundToInt
 /**
  * Big folder icon and background geometric alignment (com.zui.launcher).
  *
- * Problems fixed:
- * - Background: PreviewBackground draws the background as "nominal cell width x span
- *   - widgetPadding.left*2", which is never reconciled with the icon-system inset of
- *   neighboring icons; it is too wide horizontally, and vertical/graphic edges are
- *   misaligned as well.
- * - Child grid: the BigFolderConfig style sheet is tuned for stock row/column counts;
- *   after changing them, the stock gaps are too large and icons hug the edges.
- * - Label: FolderIcon.z() derives topMargin from the nominal cell width, deviating
- *   from neighboring labels.
+ * Fixes three stock misbehaviors: the folder background is drawn wider than the
+ * icon grid, child icons hug the edges when custom row/column counts are used,
+ * and the folder label deviates from neighboring labels.
  *
- * Final rewrite logic (quantities in the formulas come from measurements derived in
- * [readGridMetrics]):
- * 1. Tail of PreviewBackground.setup (big folder branch):
- *    width = spanX*cellWidth + (spanX-1)*gapX - 2*iconInset, offsetX = iconInset;
- *    offsetY = rowInset + artInset, previewSizeY = (spanY-1)*rowPitch + rowInset + iconSize
- *    - artInset -- so the background top/bottom edges align with the graphic edges of
- *    the top/bottom icon rows.
- *    rowInset = (cellHeight - cellHeightPx)/2 (cellYPaddingPx is measured uninitialized and unusable);
- *    artInset = iconSize * [ART_INSET_RATIO] (transparent margin around the artwork inside the icon box).
+ * Hook strategy:
+ * 1. Tail of PreviewBackground.setup (big folder branch): rewrite the background
+ *    geometry so its edges align with the top/bottom icon rows ([readGridMetrics]
+ *    supplies the measured grid quantities; [ART_INSET_RATIO] models the transparent
+ *    margin around the icon artwork).
  * 2. computeBigFolderAvaliableWh width sync; isUpdatePreviewSize is read-only telemetry.
- * 3. getBigFolderIconChildCount: (2,2) -> CHILD_COLS per row x CHILD_ROWS rows;
- *    other spanY==2 spans with stock rows == 2 -> rows become 3, columns follow stock;
- *    the stock grid is learned from calls with array arguments (some calls pass a null
- *    array and consult the cache); spanX==1 narrow capsules are not rewritten.
- * 4. getBigFolderIconHGap/VGap: big folder spans are recomputed as
- *    (bg*GRID_OCCUPANCY - n*childSize)/(n-1), with
- *    childSize = folderIconSizePx * CHILD_ICON_SCALE (measured 158*0.8235≈130).
- * 5. Tail of ClippedFolderIconLayoutRule.c uniformly goes through the rule's own
- *    getOffsetX/getOffsetY generic grid (the phone branch was hardcoded 2-column
- *    positioning, mismatching the style sheet column count).
- * 6. FolderIcon.z fully replaced: big folder label topMargin = (spanY-1)*rowPitch +
- *    rowInset + iconSize + drawablePadding, same height as last-row neighbor labels;
- *    the small folder branch replicates the stock formula.
- *
- * Host obfuscated short-name mapping (JADX shows fXXXXa etc. due to root package
- * conflicts):
- * - PreviewBackground: o=background width, p=offsetX, q=offsetY; spanX/spanY/previewSizeY keep original names
- * - ClippedFolderIconLayoutRule: b=background width, i=background height, d=icon size, j=columns, g=rows
- * - FolderIcon: b=ActivityContext
+ * 3. getBigFolderIconChildCount: rewrite the child grid, learned from calls with
+ *    array arguments; spanX==1 narrow capsules are not rewritten.
+ * 4. getBigFolderIconHGap/VGap: recompute gaps from the background width and
+ *    [CHILD_ICON_SCALE].
+ * 5. Tail of ClippedFolderIconLayoutRule.c: route through the rule's own generic grid.
+ * 6. FolderIcon.z fully replaced: derive the label topMargin from the same metrics.
  *
  * All reflection handles are resolved at install time (when a group such as
  * [resolveCoreRefs] fails, only the corresponding hooks are skipped); runtime only
@@ -71,8 +48,6 @@ class BigFolderAlignHook : AppHookModule() {
 
     /** Horizontal alignment target: true = small folder background circle (folderIconSizePx), false = app icon (iconSizePx). */
     private val alignToSmallFolder = true
-
-    // ── Reflection handles resolved at install time (when a group fails, its hooks are skipped) ──
 
     private var coreReady = false
     private var ruleReady = false
@@ -150,8 +125,6 @@ class BigFolderAlignHook : AppHookModule() {
         hookIsUpdatePreviewSize()
         hookDeviceProfileTelemetry()
     }
-
-    // ── Install-time reflection resolution ──
 
     /** Core group: PreviewBackground / ActivityContext / DeviceProfile / InvariantDeviceProfile. */
     private fun resolveCoreRefs(classLoader: ClassLoader): Boolean {
@@ -277,8 +250,6 @@ class BigFolderAlignHook : AppHookModule() {
         }
     }
 
-    // ── Hook 1: background geometry rewrite at the tail of setup ──
-
     private fun hookSetupGeometry() {
         hookWithId(pbSetup, "big_folder_align_setup") { chain ->
             chain.proceed()
@@ -355,8 +326,6 @@ class BigFolderAlignHook : AppHookModule() {
         )
     }
 
-    // ── Grid metrics ──
-
     private class GridMetrics(
         val gapX: Int,
         val gapY: Int,
@@ -415,8 +384,6 @@ class BigFolderAlignHook : AppHookModule() {
             null
         }
     }
-
-    // ── Hook 2: child grid and gaps ──
 
     /** Style sheet convergence rewrite: one rewrite makes layout/preview count/click hit-testing/drop capacity all take effect. */
     private fun hookChildCountRewrite() {
@@ -540,8 +507,6 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked getBigFolderIconHGap/VGap")
     }
 
-    // ── Hook 3: label aligned with neighbor labels (full replacement of FolderIcon.z()) ──
-
     private fun hookFolderLabel() {
         val labelField = folderLabel ?: return
         hookWithId(fiZ, "big_folder_align_label") { chain ->
@@ -583,8 +548,6 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked FolderIcon.z (label alignment)")
     }
 
-    // ── Hook 4: computeBigFolderAvaliableWh width sync ──
-
     private fun hookAvailableWh() {
         hookWithId(pbComputeWh, "big_folder_align_available_wh") { chain ->
             chain.proceed()
@@ -609,8 +572,6 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked computeBigFolderAvaliableWh")
     }
 
-    // ── Hook 5: isUpdatePreviewSize read-only telemetry ──
-
     private fun hookIsUpdatePreviewSize() {
         hookWithId(pbIsUpdate, "big_folder_align_is_update") { chain ->
             val result = chain.proceed()
@@ -626,8 +587,6 @@ class BigFolderAlignHook : AppHookModule() {
         }
         logger.debug("hooked isUpdatePreviewSize")
     }
-
-    // ── Hook 6: DeviceProfile.updateIconSize read-only telemetry ──
 
     private fun hookDeviceProfileTelemetry() {
         hookWithId(dpUpdateIconSize, "big_folder_align_dp_log") { chain ->

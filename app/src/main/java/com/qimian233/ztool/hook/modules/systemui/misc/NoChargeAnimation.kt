@@ -42,7 +42,6 @@ class NoChargeAnimation : AppHookModule() {
             )
             if (handlerFieldName == null) handlerFieldName = "H" // default fallback
 
-
             logger.debug("Using handler field name: $handlerFieldName")
             val handlerField = controllerClass.getDeclaredField(handlerFieldName)
             handlerField.isAccessible = true

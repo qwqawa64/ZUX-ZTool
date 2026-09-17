@@ -25,15 +25,11 @@ class AdvancedSettingsRepository(
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    // ---- Queries ----
-
     /** Get the API version, or 0 when not activated */
     fun getApiVersion(): Int = XposedServiceBridge.getApiVersion()
 
     /** Get the list of running hook targets */
     fun getRunningTargets(): List<HookedTarget> = XposedServiceBridge.getRunningTargets()
-
-    // ---- Hot reload ----
 
     /**
      * Hot-reload all running targets not in the RELOADING state.
@@ -133,8 +129,6 @@ class AdvancedSettingsRepository(
             }
         }
     }
-
-    // ---- Persistent value reset ----
 
     /**
      * Reset all persistent values modified by this app's hooks, executing item by item and aggregating results.

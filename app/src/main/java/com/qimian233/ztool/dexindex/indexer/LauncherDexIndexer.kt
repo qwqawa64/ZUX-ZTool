@@ -30,8 +30,6 @@ class LauncherDexIndexer : DexIndexer {
         return modules
     }
 
-    // ── CleanGlobalSearch ───────────────────────────────────────────
-
     private fun indexCleanGlobalSearch(bridge: DexKitBridge): JsonObject {
         val out = JsonObject()
         // No-arg void method (HotWordView init); original discoverInitMethods took the first match
@@ -77,8 +75,6 @@ class LauncherDexIndexer : DexIndexer {
         return out
     }
 
-    // ── DisableForceStop ────────────────────────────────────────────
-
     private fun indexDisableForceStop(bridge: DexKitBridge): JsonObject {
         val out = JsonObject()
         // (Context, String, int) → void, declared in OverviewUtilities, skip removeAppProcess
@@ -105,8 +101,6 @@ class LauncherDexIndexer : DexIndexer {
         }
         return out
     }
-
-    // ── ZuiLauncherHotseatHook ──────────────────────────────────────
 
     private fun indexZuiLauncherHotseat(bridge: DexKitBridge): JsonObject {
         val out = JsonObject()

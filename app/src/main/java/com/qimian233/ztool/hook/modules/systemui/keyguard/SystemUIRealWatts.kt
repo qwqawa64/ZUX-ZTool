@@ -26,7 +26,6 @@ import java.text.DecimalFormat
 @SuppressLint("PrivateApi")
 class SystemUIRealWatts : AppHookModule() {
 
-    // ── sysfs paths ──
     private companion object {
         const val TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController"
         const val CURRENT_NOW_PATH = "/sys/class/power_supply/battery/current_now"
@@ -37,7 +36,6 @@ class SystemUIRealWatts : AppHookModule() {
         val POWER_FORMAT = DecimalFormat("0.00")
     }
 
-    // ── mutable state ──
     private var lastUpdate: Long = 0
     private var suAvailable: Boolean? = null
 

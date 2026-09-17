@@ -16,12 +16,9 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
  * larger and the unit part is smaller.
  *
  * Detection: hooks [TextView.setText] and uses [Class.isInstance] to check whether the
- * caller is a com.android.systemui.zui.NetworkSpeedView instance. Confirmed via Jadx
- * decompilation, all setText(...) call sites inside that class (direct calls from
- * updateNetworkSpeedViewStatus, internal Handler what==1/what==10 branches) are used
- * only for network speed text, so identifying by call source is more precise and
- * reliable than the previous approach of matching "K/s"/"M/s" string suffixes, and is
- * unaffected by system text format changes.
+ * caller is a com.android.systemui.zui.NetworkSpeedView instance. All setText call
+ * sites inside that class are used only for network speed text, so identifying by
+ * call source is more reliable than matching "K/s"/"M/s" string suffixes.
  */
 @SuppressLint("PrivateApi")
 class SystemUINetworkSpeedSizeHook : AppHookModule() {

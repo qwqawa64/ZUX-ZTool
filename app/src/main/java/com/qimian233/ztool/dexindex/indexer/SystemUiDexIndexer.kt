@@ -33,8 +33,6 @@ class SystemUiDexIndexer : DexIndexer {
         return modules
     }
 
-    // ── NoChargeAnimation ───────────────────────────────────────────
-
     private fun indexNoChargeAnimation(bridge: DexKitBridge): JsonObject {
         val out = JsonObject()
         try {
@@ -82,8 +80,6 @@ class SystemUiDexIndexer : DexIndexer {
         }
         return out
     }
-
-    // ── SystemUINetworkSpeeddoublelayerHook ─────────────────────────
 
     private fun indexNetworkSpeedDoublelayer(bridge: DexKitBridge): JsonObject {
         val out = JsonObject()

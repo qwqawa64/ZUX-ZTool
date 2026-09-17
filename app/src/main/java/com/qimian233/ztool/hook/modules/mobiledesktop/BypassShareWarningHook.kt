@@ -36,7 +36,6 @@ class BypassShareWarningHook : AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── Read obfuscated class/method names from the offline index ────────
         val module = DexIndexStore.lookup(xposed, ScopeKeys.MOBILE_DESKTOP.packageName)
             ?.getAsJsonObject(DexIndexConstants.ModuleKeys.BYPASS_SHARE_WARNING)
 
@@ -50,7 +49,6 @@ class BypassShareWarningHook : AppHookModule() {
             ?.takeIf { !it.isJsonNull }?.asString ?: "b"
 
         try {
-            // ── Hook 1: tile click ───────────────────────────────────
             val baseFileUnionTileClass = classLoader.loadClass(TARGET_CLASS)
             val onClickMethod = baseFileUnionTileClass.getDeclaredMethod("onClick")
             hookWithId(onClickMethod, "on_click") { chain ->
@@ -81,7 +79,6 @@ class BypassShareWarningHook : AppHookModule() {
         }
 
         try {
-            // ── Hook 2: generic dialog scenario ─────────────────────────
             val actionNoticeClass = classLoader.loadClass(DIALOG_CLASS)
 
             // The p() method name comes from the offline index — no-arg void + references the file_share_expose_title field
@@ -161,7 +158,6 @@ class BypassShareWarningHook : AppHookModule() {
         //   New:    q.l(context).B(true)             (MotoDiscoveryManager)
         //   Fallback: write SharedPreferences directly
         try {
-            // ── Strategy 1: legacy manager class ──────────────────────────
             try {
                 val mc = classLoader.loadClass(managerClass)
                 val lMethod = mc.getDeclaredMethod(factoryMethod, Context::class.java)
@@ -175,7 +171,6 @@ class BypassShareWarningHook : AppHookModule() {
                     logger.debug("enabled via legacy manager: $managerClass.$factoryMethod/$setMethod")
                 }
             } catch (_: ReflectiveOperationException) {
-                // ── Strategy 2: newer MotoDiscoveryManager ───────────────
                 logger.warn("legacy manager not found, trying MotoDiscoveryManager")
                 val qClass = classLoader.loadClass("com.motorola.motoaccount.sdk.gf.q")
                 val lMethod = qClass.getDeclaredMethod("l", Context::class.java)
@@ -186,13 +181,11 @@ class BypassShareWarningHook : AppHookModule() {
                 logger.debug("enabled via MotoDiscoveryManager.q.l().B(true)")
             }
 
-            // ── Fallback: write both SharedPreferences directly ───────────────
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit { putBoolean(PREF_KEY1, true) }
             context.getSharedPreferences("sp_file_ble", Context.MODE_PRIVATE)
                 .edit { putBoolean("nearby_send_files", true) }
 
-            // ── Refresh the tile via its b() method (resolved in handleLoadPackage) ────
             val bMethod = findMethod(tile!!.javaClass, tileRefreshMethod)
             bMethod.isAccessible = true
             bMethod.invoke(tile)

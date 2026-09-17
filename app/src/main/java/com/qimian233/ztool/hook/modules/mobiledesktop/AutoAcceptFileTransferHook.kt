@@ -21,9 +21,7 @@ import java.lang.reflect.Method
  * <p>
  * Target class/field/method names are pre-computed via the DexKit offline
  * index (MobileDesktopDexIndexer); if the index is missing, hardcoded names
- * are used as fallback (a/d/b in the current version: ViewModel field a,
- * accepted boolean field d, user-decision LiveData field b — postValue(true)
- * on b is the write path of the notification "accept" button).
+ * for the current version are used as fallback.
  * </p>
  */
 class AutoAcceptFileTransferHook : AppHookModule() {
@@ -35,7 +33,6 @@ class AutoAcceptFileTransferHook : AppHookModule() {
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── Read obfuscated class/field/method names from the offline index (in handleLoadPackage; no IO inside lambdas) ──
         val vmFieldName = DexIndexStore.string(
             xposed, ScopeKeys.MOBILE_DESKTOP.packageName,
             DexIndexConstants.ModuleKeys.AUTO_ACCEPT_FILE_TRANSFER,

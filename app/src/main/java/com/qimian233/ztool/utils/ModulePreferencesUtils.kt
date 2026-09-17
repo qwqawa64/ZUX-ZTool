@@ -406,8 +406,6 @@ class ModulePreferencesUtils(
             return processedMap
         }
 
-        // ── Value coercion helpers ──
-
         fun coerceFloatValue(value: Any?): Float? {
             return when (value) {
                 is Number -> value.toFloat()

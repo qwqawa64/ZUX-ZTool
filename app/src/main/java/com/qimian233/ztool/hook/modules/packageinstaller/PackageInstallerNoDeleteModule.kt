@@ -47,7 +47,6 @@ class PackageInstallerNoDeleteModule : AppHookModule() {
                 "com.android.packageinstaller.InstallSuccessExtra"
             )
 
-            // --- Hook 1: initView() — initial setup + UI fix ---
             val initView = installSuccessExtraClass.getDeclaredMethod("initView")
             val mDeleteApkField = installSuccessExtraClass.getDeclaredField("mDeleteApk")
             mDeleteApkField.isAccessible = true
@@ -105,7 +104,6 @@ class PackageInstallerNoDeleteModule : AppHookModule() {
 
             logger.info("Successfully hooked InstallSuccessExtra.initView()")
 
-            // --- Hook 2: clearCachedApkIfNeededAndFinish() — safety net ---
             // Called after the delete thread finishes, or from onStop.
             // Ensures mDeleteApk = false again as multi-layer protection.
             try {

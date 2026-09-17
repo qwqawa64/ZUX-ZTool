@@ -12,22 +12,18 @@ import java.lang.reflect.Method
 /**
  * Unmask the Settings (com.android.settings) app icons.
  *
- * Mask location (confirmed via probe + decompilation): the app list icon convergence point
- * settingslib.Utils#getBadgedIcon(Context, ApplicationInfo) passes icons through the
- * Launcher3 icon factory (BaseIconFactory) packaged inside the Settings APK, flattening
- * them into FastBitmapDrawable (shape mask + IconNormalizer scaling), which crops
- * third-party icon pack content a second time.
+ * The app list icon pipeline routes through settingslib.Utils#getBadgedIcon, whose
+ * Launcher3 icon factory flattens icons into FastBitmapDrawable (shape mask +
+ * IconNormalizer scaling), cropping third-party icon pack content a second time.
  *
  * Handling: in the after-hook, if the return value is a FastBitmapDrawable, replace it
  * with the target package's raw resource icon loaded directly via
- * getResourcesForApplication(info) + info.icon, bypassing the PM icon pipeline; keep
- * the original value if the raw resource is missing. Results are cached per pkg#uid to
- * avoid repeated resource loading. Both AdaptiveIconDrawable and legacy PNG raw forms
- * are scaled by the list container itself.
+ * getResourcesForApplication(info) + info.icon; keep the original value if the raw
+ * resource is missing. Results are cached per pkg#uid.
  *
- * Known limitation: some pages go through the com.android.settings.Utils#getBadgedIcon(IconDrawableFactory,...)
- * bypass (e.g. the app info header) and are not covered by this hook point. Takes effect
- * after restarting Settings (AmStop).
+ * Known limitation: pages going through the com.android.settings.Utils#getBadgedIcon
+ * overload (e.g. the app info header) are not covered. Takes effect after restarting
+ * Settings.
  */
 class SettingsAppIconUnmaskHook : AppHookModule() {
 

@@ -20,23 +20,13 @@ import java.lang.reflect.Method
  * reads of `network_realtime_speed_state`. When slow, the return value is faked as 0
  * (disabled); SystemUI's own original logic hides the network speed indicator upon
  * reading 0; when speed recovers, the original value is passed through and the speed
- * indicator shows again. This hook does not directly manipulate any views (View/TextView).
+ * indicator shows again. This hook does not directly manipulate any views.
  *
- * All read points of this key confirmed by decompilation (com.android.systemui):
- * - `NetworkSpeedView.isIconVisible()`: called by StatusIconContainer onMeasure/onLayout;
- *   when false, the container skips measuring/laying out (but does not hide the view itself).
- * - `NetworkSpeedView.updateNetworkSpeedViewStatus()`: reads 0 -> setVisibility(GONE)
- *   and stops the refresh loop - this is the only path that truly hides the view.
- * - `ZuiPhoneStatusBarPolicy.updateNetworkSpeed()`: reads 0 -> removes the network
- *   speed slot from StatusBarIconController.
- *
- * Key constraint: the latter two are event-driven (attach / connection change / user
- * switch / ContentObserver of real setting changes) and are not called again while slow;
- * while isIconVisible's measure skip only releases the placeholder without hiding the
- * view, causing text and wireless icon overlap. Therefore this hook additionally runs
- * periodic monitoring: when the slow state flips, it reflectively invokes the view's
- * own `updateNetworkSpeedViewStatus()`, letting SystemUI's original code perform the
- * hide/show (the setting value read is already faked by this hook).
+ * Key constraint: SystemUI only re-evaluates the setting on events (attach /
+ * connection change / user switch), so this hook additionally runs periodic
+ * monitoring: when the slow state flips, it reflectively invokes the view's own
+ * `updateNetworkSpeedViewStatus()`, letting SystemUI's original code perform the
+ * hide/show.
  *
  * Speed detection: self-computed via differencing between two [android.net.TrafficStats]
  * samples; the threshold unit is KB/s (consistent with the frontend setting); sampling

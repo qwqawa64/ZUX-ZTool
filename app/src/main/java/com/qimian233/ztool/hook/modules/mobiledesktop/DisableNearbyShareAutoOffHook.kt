@@ -10,12 +10,10 @@ import io.github.libxposed.api.XposedModuleInterface
  * Test Hook — disables the 10-minute auto-off countdown of nearby sharing
  * in Super Interconnect (FileUnion).
  *
- * Mechanism: startCountDown of FileUnionSwitchManager (obfuscated as
- * `com.motorola.motoaccount.sdk.se.c` in the current version) sends a
- * delayed message (what=1, delay=600000ms=10min) after nearby sharing is
- * enabled; when the handler receives it, it calls `MotoDiscoveryManager.B(false)`
- * to turn nearby sharing off. This Hook replaces startCountDown with a
- * no-op to prevent the countdown from starting.
+ * Mechanism: startCountDown of FileUnionSwitchManager sends a
+ * delayed 10-minute message after nearby sharing is enabled; when the handler
+ * receives it, it turns nearby sharing off. This Hook replaces startCountDown
+ * with a no-op to prevent the countdown from starting.
  *
  * The target method is obfuscated; it is located by the DexIndexer via the
  * log string "startCountDown()", falling back to the class/method names
@@ -37,7 +35,6 @@ class DisableNearbyShareAutoOffHook : AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── Read obfuscated class/method names from the offline index ─────
         val module = DexIndexStore.lookup(xposed, ScopeKeys.MOBILE_DESKTOP.packageName)
             ?.getAsJsonObject(DexIndexConstants.ModuleKeys.DISABLE_NEARBY_SHARE_COUNTDOWN)
         val targetClassName = module?.get(DexIndexConstants.Keys.TARGET_CLASS)
@@ -45,7 +42,6 @@ class DisableNearbyShareAutoOffHook : AppHookModule() {
         val targetMethodName = module?.get(DexIndexConstants.Keys.TARGET_METHOD)
             ?.takeIf { !it.isJsonNull }?.asString ?: FALLBACK_METHOD
 
-        // ── Install the hook ─────────────────────────────────────────────
         try {
             val targetClass = classLoader.loadClass(targetClassName)
 

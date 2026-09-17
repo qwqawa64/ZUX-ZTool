@@ -45,7 +45,6 @@ class QsPanelWidthHook : AppHookModule() {
             .coerceIn(0, 10)
         val targetWidthRatio = widthPercent / 100f
 
-        // ── Core: hook qs_frame's onMeasure ──
         // Narrow qs_frame (QSContainerImpl's parent container) and center it,
         // so all descendant controls' layout bounds naturally match the visuals,
         // preserving native touch behavior.
@@ -113,7 +112,6 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked FrameLayout.onMeasure for qs_frame")
 
-        // ── Hook FrameLayout.onLayout: stretch SeekBar ──
         var cachedVolumeRowSliderFrameId = -1
         val onLayoutMethod = findMethod(
             FrameLayout::class.java,
@@ -160,7 +158,6 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked FrameLayout.onLayout for SeekBar stretch")
 
-        // ── Hook PagedTileLayout.onMeasure: tile column count ──
         val pagedTileLayoutClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.PagedTileLayout")
         val tileLayoutClass = param.defaultClassLoader
@@ -198,7 +195,6 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked PagedTileLayout.onMeasure for tile columns")
 
-        // ── Hook QQSSideLabelTileLayout.onMeasure: QQS tile column count ──
         val qqsTileLayoutClass = param.defaultClassLoader
             .loadClass($$"com.android.systemui.qs.QuickQSPanel$QQSSideLabelTileLayout")
         val qqsMeasureMethod = findMethod(
@@ -236,7 +232,6 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
 
-        // ── Hook QuickQSPanelController.onConfigurationChanged: restore mMaxTiles after theme switch ──
         // QuickQSPanelController.onConfigurationChanged() reads the default value from resources,
         // resets mMaxTiles, and immediately calls setTiles() to truncate the tile list. This hook
         // re-applies the custom value and refreshes after the original method runs.

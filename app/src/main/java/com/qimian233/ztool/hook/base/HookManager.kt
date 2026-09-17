@@ -140,7 +140,6 @@ object HookManager {
      * Shared by [initialize] and [reinitializeForHotReload].
      */
     private fun registerAllModules(xposed: XposedInterface) {
-        // ── System framework (target: system — dispatched by onSystemServerStarting) ──
         registerHookModule(DisableFlagSecure())
         registerHookModule(AllowGetPackages())
         registerHookModule(AllowUntrustedTouch())
@@ -152,7 +151,6 @@ object HookManager {
         registerHookModule(DisableHbmThermalLimit())
         registerHookModule(SystemSplitScreenMandatory()) // See the setting-package registration below for why this line is written this way
 
-        // ── System framework · package manager service (install restriction bypass feature group) ──
         registerHookModule(PackageManagerDowngradeHook())
         registerHookModule(PackageManagerSignatureBypassHook())
         registerHookModule(PackageManagerVerificationAgentHook())
@@ -162,7 +160,6 @@ object HookManager {
         registerHookModule(PackageManagerHiddenApiHook())
         registerHookModule(PackageManagerArscBypassHook())
 
-        // ── SystemUI (target: com.android.systemui) ──
         registerHookModule(StatusBarClockSecondsHook())
         registerHookModule(CustomStatusBarClock())
         registerHookModule(SystemUIChargeWattsHook())
@@ -195,10 +192,8 @@ object HookManager {
         registerHookModule(DisableBiometricErrorVibration())
         registerHookModule(MediaOutputDialogCenterHook())
 
-        // ── Desktop Live Wallpaper PoC (test_hook) ──
         registerHookModule(DesktopLiveWallpaperHook())
 
-        // ── Settings (target: com.android.settings) ──
         registerHookModule(OneVisionCompletion())
         registerHookModule(AllowDisplayDolbyHook())
         registerHookModule(PermissionControllerHook())
@@ -212,7 +207,6 @@ object HookManager {
         registerHookModule(LocaleListEditorHook()) // test_hook: intercept LenovoUtils locale detection
         registerHookModule(SettingsAppIconUnmaskHook()) // Settings app icon unmasking
 
-        // ── PackageInstaller (target: com.android.packageinstaller) ──
         registerHookModule(PackageInstallerHookScan())
         registerHookModule(PackageInstallerPermissionHook())
         registerHookModule(SkipInstallWarnPage())
@@ -220,7 +214,6 @@ object HookManager {
         registerHookModule(PackageInstallerStyleHook())
         registerHookModule(PackageInstallerNoDeleteModule())
 
-        // ── Launcher (target: com.zui.launcher) ──
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
         registerHookModule(LauncherAppIconUnmaskHook()) // hook_test: launcher icon unmasking, no frontend switch yet
@@ -236,7 +229,6 @@ object HookManager {
         registerHookModule(DisableRecentAppsDisplay())
         registerHookModule(BatchUninstall())
 
-        // ── GameTool (target: com.zui.game.service) ──
         registerHookModule(AutoMistakeTouchHook())
         registerHookModule(DisableGameAudio())
         registerHookModule(DisableGameAudioApp())
@@ -244,29 +236,23 @@ object HookManager {
         registerHookModule(CpuFrequencyFix())
         registerHookModule(SocTemperatureFix())
 
-        // ── OTA (target: com.lenovo.ota) ──
         registerHookModule(DisableOtaCheck())
         registerHookModule(LenovoOTAHook())
         registerHookModule(NoAutoOtaInstall())
         registerHookModule(BlockOtaInstallDialog())
         registerHookModule(HideOtaNotifications())
 
-        // ── Wallpaper (target: com.zui.wallpapersetting) ──
         registerHookModule(ChargeAnimationFixModule())
 
-        // ── DocumentsUI (target: com.android.documentsui) ──
         registerHookModule(DocumentsUIBypass())
 
-        // ── SafeCenter (target: com.zui.safecenter) ──
         registerHookModule(DisableAllVirusScans())
         registerHookModule(EnableAutorunByDefault())
 
-        // ── MobileDesktop (target: com.motorola.mobiledesktop) ──
         registerHookModule(AutoAcceptFileTransferHook())
         registerHookModule(BypassShareWarningHook())
         registerHookModule(DisableNearbyShareAutoOffHook())
 
-        // ── TB Engine (target: com.lenovo.tbengine, UDS real-time connection engine) ──
         registerHookModule(DisableTbEngineAutoDownload())
         registerHookModule(DisableTbEngineAutoInstall())
         registerHookModule(DisableTbEngineAppUpdate())
@@ -274,7 +260,6 @@ object HookManager {
         registerHookModule(DisableTbEngineReporting())
         registerHookModule(SignTbEngineLocalOta())
 
-        // ── ZUI performance service (target: com.zui.pp) ──
         registerHookModule(BlockPowerPolicySync())
         registerHookModule(BlockGamePolicyUpdate())
 
@@ -305,8 +290,6 @@ object HookManager {
             module.safeHandleSystemServerStarting(param)
         }
     }
-
-    // ── Hot reload support ─────────────────────────────────────
 
     /**
      * Returns the saved package-load lifecycle params (passed from old code to new code on hot reload).

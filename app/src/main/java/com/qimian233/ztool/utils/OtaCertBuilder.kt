@@ -79,8 +79,6 @@ object OtaCertBuilder {
             .generatePublic(X509EncodedKeySpec(cert.publicKey.encoded))
     }
 
-    // ── TBSCertificate ─────────────────────────────────────────────
-
     private fun buildTbsCertificate(
         serialNumber: ByteArray,
         subjectPublicKeyInfo: ByteArray,
@@ -110,8 +108,6 @@ object OtaCertBuilder {
         val cn = derSequence(derOid(hexToBytes(OID_COMMON_NAME)), derUtf8("ZTool OTA Local Signing"))
         return derSequence(derSet(cn))
     }
-
-    // ── DER basic encoding ─────────────────────────────────────────
 
     private fun derSequence(vararg parts: ByteArray): ByteArray =
         derWrap(0x30, parts.reduce { acc, bytes -> acc + bytes })

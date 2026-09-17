@@ -144,8 +144,6 @@ class BatchUninstall : AppHookModule() {
         }
     }
 
-    // ── Button injection ────────────────────────────────────────
-
     private fun installButton(panel: ViewGroup) {
         if (panel.findViewWithTag<View>(BUTTON_TAG) != null) return
         val context = panel.context
@@ -322,9 +320,9 @@ class BatchUninstall : AppHookModule() {
      *
      * bottom_panel is a custom ViewGroup (child LayoutParams is a private type,
      * cannot be positioned by rules/anchors), so a type-agnostic translation
-     * approach is used: read both views' current layout centers and set each
-     * translationX to 1600±(panel width*0.086) (±275px on the test device,
-     * matching the half-slot distance of the three-slot layout). translationX
+     * approach is used: read both views' current layout centers and offset each
+     * translationX by a fixed fraction of the panel width, matching the half-slot
+     * distance of the three-slot layout. translationX
      * does not interfere with the translationY driven by enter/exit animations;
      * the unselected state resets container offsets.
      */
@@ -444,8 +442,6 @@ class BatchUninstall : AppHookModule() {
             logger.warn("BatchUninstall: failed to adjust constraint params: " + t.message)
         }
     }
-
-    // ── Click dispatch ──────────────────────────────────────────
 
     /** An uninstall candidate: app label for display + package name for execution. */
     private data class UninstallCandidate(val label: String, val packageName: String)
@@ -734,8 +730,6 @@ class BatchUninstall : AppHookModule() {
             false
         }
     }
-
-    // ── Module resources (reuses RecentTaskMemoryViewHook's i18n approach) ──
 
     private fun moduleString(hostContext: Context, resourceName: String, fallback: String): String {
         return try {

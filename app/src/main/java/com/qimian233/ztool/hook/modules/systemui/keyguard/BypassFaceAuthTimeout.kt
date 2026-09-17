@@ -9,30 +9,19 @@ import io.github.libxposed.api.XposedModuleInterface
 /**
  * Bypass all "shorter than 72h" face authentication timeout gates inside SystemUI.
  *
- * Background (based on reverse engineering of com.android.systemui):
- * ZUI customizations add two timeout checks in ZuiFaceAuthDelegate.checkAndStartFaceDetecting
- * that do not exist in AOSP. When triggered, they set KeyguardFaceUnlockManager.mSecurityTime = true
- * (a sticky flag, only cleared by setLastPassTimestamp after a successful PIN/pattern/fingerprint
- * verification), and set the face detection state to 20 (FACE_DETECT_DISABLE), forcing a
- * fallback to PIN/pattern verification:
- * - 4h/12h gate: (mScreenTurnedOff ? secureTime : mWakeSecureTime)
- *   >= 14400000ms (4h); 43200000ms (12h) when faceunlock_bcr_timeout_extended_on is enabled
- * - 24h fallback: (mScreenTurnedOff ? mAdditionSecureTime : mWakeSecureTime)
- *   >= 86400000ms (24h since last successful authentication)
+ * Background: ZUI adds 4h/12h/24h timeout checks in
+ * ZuiFaceAuthDelegate.checkAndStartFaceDetecting that force a fallback to
+ * PIN/pattern verification and set a sticky KeyguardFaceUnlockManager.mSecurityTime
+ * flag on trigger.
  *
  * Implementation: single-point hook on checkAndStartFaceDetecting(boolean):
- * - Before the call: zero out the three time bases (currentTimeOn = now, secureTime = 0,
- *   mAdditionSecureTime = 0), so both timeout comparisons are always false and the state
- *   machine naturally enters the normal face detection branch;
- * - After the call: force-clear the sticky mSecurityTime flag, as a fallback for cases
- *   where it was set before the hook was enabled and for residue read by the Bouncer
- *   message area (ZuiBouncerKeyguardMessageAreaDelegate).
+ * - Before the call: zero out the three time bases, so both timeout comparisons are
+ *   always false and the state machine enters the normal face detection branch;
+ * - After the call: force-clear the sticky mSecurityTime flag.
  *
- * Explicitly not handled:
- * - mFaceDetectNum >= 3 (per-wake-up detection retry limit) is unrelated to the timeout gates;
- * - 72h strong verification on the system_server side (LockSettingsStrongAuth) is out of scope;
- * - Device lockout (isUserLockout, triggered by repeated wrong attempts) is a security
- *   mechanism, not a timeout gate.
+ * Explicitly not handled: per-wake-up retry limits, 72h strong verification on the
+ * system_server side (LockSettingsStrongAuth), and device lockout after repeated
+ * wrong attempts.
  */
 @SuppressLint("PrivateApi")
 class BypassFaceAuthTimeout : AppHookModule() {

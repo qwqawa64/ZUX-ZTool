@@ -646,7 +646,6 @@ private fun SystemInfoCard(state: HomeUiState) {
     )
 }
 
-
 @Composable
 private fun ConfigUpgradeDialog(
     onRestart: () -> Unit,

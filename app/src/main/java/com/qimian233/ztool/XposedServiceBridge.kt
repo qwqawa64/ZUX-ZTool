@@ -21,8 +21,6 @@ object XposedServiceBridge {
     var currentService: XposedService? = null
         internal set
 
-    // ---- Basic queries ----
-
     /** Get the raw service instance, or null when not activated */
     fun getService(): XposedService? = currentService
 
@@ -41,8 +39,6 @@ object XposedServiceBridge {
     /** Get the framework property flags, or 0 when not activated */
     fun getFrameworkProperties(): Long = currentService?.frameworkProperties ?: 0L
 
-    // ---- Scope ----
-
     /** Get the current scope package name list, or an empty list when not activated */
     fun getScope(): List<String> = currentService?.scope ?: emptyList()
 
@@ -59,8 +55,6 @@ object XposedServiceBridge {
         currentService?.removeScope(packages)
     }
 
-    // ---- Running targets ----
-
     /** Get the list of currently running hook targets, or an empty list when not activated */
     fun getRunningTargets(): List<HookedTarget> {
         if (getApiVersion() >= 102) {
@@ -68,8 +62,6 @@ object XposedServiceBridge {
         }
         return emptyList()
     }
-
-    // ---- Hot reload ----
 
     /** Hot-reload the module, no-op when not activated */
     fun hotReloadModule(
@@ -81,8 +73,6 @@ object XposedServiceBridge {
             currentService?.hotReloadModule(target, extras, callback)
         }
     }
-
-    // ---- Remote files/preferences ----
 
     /** Get remote SharedPreferences, or null when not activated */
     fun getRemotePreferences(name: String): SharedPreferences? =

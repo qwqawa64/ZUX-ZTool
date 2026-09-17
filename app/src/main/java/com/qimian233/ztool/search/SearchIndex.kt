@@ -319,7 +319,6 @@ object SearchIndex {
     )
 
     val all: List<SearchEntry> = featureCards + listOf(
-        // ── SystemUI hub sub-screen entries ──
         systemUiHub.item(
             id = "system_ui_hub_status_bar",
             titleRes = R.string.system_ui_status_bar_setting_title,
@@ -346,7 +345,6 @@ object SearchIndex {
             summaryRes = R.string.system_ui_misc_setting_summary
         ),
 
-        // ── Status bar ──
         systemUiStatusBar.item(
             id = "status_bar_display_seconds",
             titleRes = R.string.system_ui_status_bar_display_seconds_title,
@@ -436,7 +434,6 @@ object SearchIndex {
             summaryRes = R.string.system_ui_status_bar_syatus_battery_external_summary
         ),
 
-        // ── Lock screen ──
         systemUiLockScreen.item(
             id = "lock_screen_yi_yan",
             titleRes = R.string.system_ui_lock_screen_yi_yan_switch_title,
@@ -511,7 +508,6 @@ object SearchIndex {
             parentKey = "lock_screen_charge_watts"
         ),
 
-        // ── Control center ──
         systemUiControlCenter.item(
             id = "control_center_notification_blur",
             titleRes = R.string.system_ui_control_center_notification_center_blur_title,
@@ -665,7 +661,6 @@ object SearchIndex {
             parentKey = "control_center_expand_qs_panel_portrait"
         ),
 
-        // ── Animation & wallpaper ──
         systemUiAnimationWallpaper.item(
             id = "animation_no_charging_animation",
             titleRes = R.string.system_ui_animation_no_charging_animation_enable_title,
@@ -727,7 +722,6 @@ object SearchIndex {
             parentKey = "animation_desktop_live_wallpaper"
         ),
 
-        // ── SystemUI misc ──
         systemUiMisc.item(
             id = "system_ui_misc_disable_guest_user",
             titleRes = R.string.system_ui_misc_disable_guest_user_enable_title,
@@ -743,7 +737,6 @@ object SearchIndex {
             summaryRes = R.string.system_ui_misc_bypass_face_auth_timeout_summary
         ),
 
-        // ── System framework ──
         framework.item(
             id = "framework_keep_rotation",
             titleRes = R.string.system_framework_keep_rotation_enable_title,
@@ -839,7 +832,6 @@ object SearchIndex {
             summaryRes = R.string.system_framework_ai_input_expand_summary
         ),
 
-        // ── ZUI settings detail (com.android.settings) ──
         settingsDetail.item(
             id = "settings_detail_remove_blacklist",
             titleRes = R.string.settings_embedding_setting_remove_blacklist,
@@ -968,7 +960,6 @@ object SearchIndex {
             summaryRes = R.string.settings_app_icon_unmask_summary
         ),
 
-        // ── Game tool ──
         gameTool.item(
             id = "game_tool_game_audio",
             titleRes = R.string.game_tool_game_audio_title,
@@ -1001,7 +992,6 @@ object SearchIndex {
             parentKey = "game_tool_auto_open_prevent_touch"
         ),
 
-        // ── OTA ──
         ota.item(
             id = "ota_disable_update",
             titleRes = R.string.system_update_ota_disable_title,
@@ -1033,7 +1023,6 @@ object SearchIndex {
             titleRes = R.string.system_update_pc_flash_firmware_fetch_title
         ),
 
-        // ── TbEngine ──
         tbEngine.item(
             id = "tb_engine_disable_auto_download",
             titleRes = R.string.tb_engine_disable_auto_download_title,
@@ -1069,7 +1058,6 @@ object SearchIndex {
             titleRes = R.string.system_update_custom_params_title
         ),
 
-        // ── Package installer (rows visible when the row-style hook is OFF) ──
         packageInstaller.item(
             id = "package_installer_enable_row_style",
             titleRes = R.string.package_installer_enable_row_style_title,
@@ -1116,7 +1104,6 @@ object SearchIndex {
             parentMode = SearchParentMode.REQUIRE_OFF
         ),
 
-        // ── Launcher ──
         launcher.item(
             id = "launcher_no_label_mode",
             titleRes = R.string.launcher_launcher_no_label_mode_title
@@ -1221,7 +1208,6 @@ object SearchIndex {
             parentKey = "launcher_clean_search"
         ),
 
-        // ── Mobile desktop ──
         mobileDesktop.item(
             id = "mobile_desktop_skip_nearby_exposure_warn",
             titleRes = R.string.mobile_desktop_skip_nearby_exposure_warn,
@@ -1237,7 +1223,6 @@ object SearchIndex {
             titleRes = R.string.mobile_desktop_disable_nearby_share_auto_shutdown_title
         ),
 
-        // ── Safe center ──
         safeCenter.item(
             id = "safe_center_default_allow_autorun",
             titleRes = R.string.safe_center_default_allow_autorun_enable_title,
@@ -1254,7 +1239,6 @@ object SearchIndex {
             summaryRes = R.string.safe_center_bypass_docements_ui_summary
         ),
 
-        // ── ZUI performance ──
         zuiPerformance.item(
             id = "zui_pp_block_power_policy",
             titleRes = R.string.zui_pp_block_power_policy_title,
@@ -1266,7 +1250,6 @@ object SearchIndex {
             summaryRes = R.string.zui_pp_block_game_policy_summary
         ),
 
-        // ── App settings (main) ──
         appSettings.item(
             id = "app_settings_backup_config",
             titleRes = R.string.page_settings_backup_config_to_file
@@ -1319,7 +1302,6 @@ object SearchIndex {
             titleRes = R.string.page_settings_show_about_page
         ),
 
-        // ── Theme settings ──
         themeSettings.item(
             id = "theme_frontend_style",
             titleRes = R.string.page_settings_frontend_style_title
@@ -1378,7 +1360,6 @@ object SearchIndex {
             parentKey = "theme_enable_floating_bottom_bar"
         ),
 
-        // ── Advanced settings ──
         advancedSettings.item(
             id = "advanced_refresh_dex_index",
             titleRes = R.string.page_settings_refresh_dex_index
@@ -1402,7 +1383,6 @@ object SearchIndex {
             summaryRes = R.string.page_settings_advanced_open_firstrun_summary
         ),
 
-        // ── About (rows registered individually; see SettingsAboutRoute) ──
         aboutScreen.item(
             id = "about_dev_qimian233",
             titleRes = R.string.about_dev_qimian233,

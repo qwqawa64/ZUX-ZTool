@@ -23,7 +23,6 @@ object DexIndexConstants {
      */
     const val SCHEMA_VERSION = 2
 
-    // ── JSON structure keys ───────────────────────────────────────
     const val JSON_SCHEMA_VERSION = "schemaVersion"
     const val JSON_GENERATED_AT = "generatedAt"
     const val JSON_APK = "apk"

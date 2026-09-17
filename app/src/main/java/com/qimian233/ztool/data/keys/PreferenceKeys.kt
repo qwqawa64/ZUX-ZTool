@@ -22,7 +22,6 @@ object PreferenceKeys {
     // for test hook only
     val TEST_HOOK = BoolKey("test_hook", false)
 
-    // ── System framework ──
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
     val ALLOW_UNTRUSTED_TOUCH = BoolKey("allow_untrusted_touch", false)
@@ -45,7 +44,6 @@ object PreferenceKeys {
         BoolKey("pkg_mgr_allow_hidden_apis_for_system_apps", false)
     val PKG_MGR_BYPASS_ARSC_RESTRICTION = BoolKey("pkg_mgr_bypass_arsc_restrictions", false)
 
-    // ── SystemUI ──
     val STATUSBAR_DISPLAY_SECONDS = BoolKey("StatusBarDisplay_Seconds", false)
     val CUSTOM_STATUSBAR_CLOCK = BoolKey("Custom_StatusBarClock", false)
     val SYSTEMUI_CHARGE_WATTS = BoolKey("systemui_charge_watts", false)
@@ -105,7 +103,6 @@ object PreferenceKeys {
     val SYSTEMUI_REALWATTS_SHOW_INDICATOR = BoolKey("systemui_realwatts_show_indicator", true)
     val SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED = BoolKey("systemui_realwatts_custom_format_enabled", false)
 
-    // ── Settings ──
     val REMOVE_BLACKLIST = BoolKey("remove_blacklist", false)
     val ALLOW_DISPLAY_DOLBY = BoolKey("allow_display_dolby", false)
     val PERMISSION_CONTROLLER_HOOK = BoolKey("PermissionControllerHook", false)
@@ -126,7 +123,6 @@ object PreferenceKeys {
     val ABOUT_DEVICE_INFO_SOFTWARE_ENABLED = BoolKey("about_device_info_software_enabled", false)
     val ABOUT_DEVICE_INFO_HEADER_ENABLED = BoolKey("about_device_info_header_enabled", false)
 
-    // ── PackageInstaller ──
     val DISABLE_SCAN_APK = BoolKey("disable_scanAPK", false)
     val ALWAYS_ALLOW_PERMISSION = BoolKey("Always_AllowPermission", false)
     val SKIP_WARN_PAGE = BoolKey("Skip_WarnPage", false)
@@ -134,7 +130,6 @@ object PreferenceKeys {
     val PACKAGE_INSTALLER_STYLE_HOOK = BoolKey("packageInstallerStyle_hook", false)
     val PACKAGE_INSTALLER_DISABLE_DELETE = BoolKey("package_installer_disable_delete", false)
 
-    // ── Launcher ──
     val DISABLE_FORCE_STOP = BoolKey("disable_force_stop", false)
     val ZUI_LAUNCHER_HOTSEAT = BoolKey("zui_launcher_hotseat", false)
     val CUSTOM_GRID_SIZE = BoolKey("CustomGridSize", false)
@@ -159,7 +154,6 @@ object PreferenceKeys {
     val ZUI_LAUNCHER_HOTSEAT_BACKUP = BoolKey("zui_launcher_hotseat_backup", false)
     val DISABLE_DOCK_WARNING_CONFIRMED = BoolKey("disable_dock_warning_confirmed", false)
 
-    // ── GameTool ──
     val AUTO_MISTAKE_TOUCH = BoolKey("auto_mistake_touch", false)
     val DISABLE_GAME_AUDIO = BoolKey("disable_GameAudio", false)
     val DISABLE_GAME_AUDIO_APP = BoolKey("disable_GameAudio_app", false)
@@ -168,14 +162,12 @@ object PreferenceKeys {
     val FIX_SOC_TEMP = BoolKey("Fix_SocTemp", false)
     val MISTAKE_TOUCH_WHITE_LIST = BoolKey("MistakeTouchWhiteList", false)
 
-    // ── OTA ──
     val DISABLE_OTA_CHECK = BoolKey("disable_OtaCheck", false)
     val CUSTOM_OTA_PARAMETERS = BoolKey("custom_ota_parameters", false)
     val NO_AUTO_OTA_INSTALL = BoolKey("no_auto_ota_install", false)
     val BLOCK_OTA_INSTALL_DIALOG = BoolKey("block_ota_install_dialog", false)
     val HIDE_OTA_NOTIFICATIONS = BoolKey("hide_ota_notifications", false)
 
-    // ── TB Engine (UDS real-time connection engine com.lenovo.tbengine) ──
     val DISABLE_TB_ENGINE_AUTO_DOWNLOAD = BoolKey("disable_tbengine_auto_download", false)
     val DISABLE_TB_ENGINE_AUTO_INSTALL = BoolKey("disable_tbengine_auto_install", false)
     val DISABLE_TB_ENGINE_APP_UPDATE = BoolKey("disable_tbengine_app_update", false)
@@ -183,27 +175,21 @@ object PreferenceKeys {
     val DISABLE_TB_ENGINE_REPORTING = BoolKey("disable_tbengine_reporting", false)
     val SIGN_TB_ENGINE_LOCAL_OTA = BoolKey("sign_tbengine_local_ota", false)
 
-    // ── ZUI performance service (com.zui.pp) ──
     val PP_BLOCK_POWER_POLICY_SYNC = BoolKey("pp_block_power_policy_sync", false)
     val PP_BLOCK_GAME_POLICY_UPDATE = BoolKey("pp_block_game_policy_update", false)
 
-    // ── Wallpaper ──
     val CHARGE_ANIMATION_FIX = BoolKey("charge_animation_fix", false)
     val DESKTOP_LIVE_WALLPAPER = BoolKey("desktop_live_wallpaper", false)
 
-    // ── DocumentsUI ──
     val DOCUMENTS_UI_BYPASS = BoolKey("documents_ui_bypass", false)
 
-    // ── SafeCenter ──
     val DISABLE_ALL_VIRUS_SCANS = BoolKey("disable_all_virus_scans", false)
     val DEFAULT_ENABLE_AUTORUN = BoolKey("default_enable_autorun", false)
 
-    // ── MobileDesktop ──
     val AUTO_ACCEPT_FILE_TRANSFER = BoolKey("auto_accept_file_transfer", false)
     val BYPASS_SHARE_WARNING = BoolKey("bypass_share_warning", false)
     val DISABLE_NEARBY_SHARE_COUNTDOWN = BoolKey("disable_nearby_share_countdown", false)
 
-    // ── App settings / misc ──
     val IS_DETAILED_LOGGING = BoolKey("isDetailedLogging", false)
     val AUTO_CHECK_UPDATE = BoolKey("auto_check_update", true)
     val YIYAN = BoolKey("YiYan", false)

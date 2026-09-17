@@ -14,31 +14,18 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
  * MediaOutputDialog is launched from the "media output" tile - the window sticks
  * to the left screen edge and the theme color is always the default yellow.
  *
- * Root cause (verified on ZUXOS 1.5.04.495 + confirmed via decompilation):
- * 1. Left-sticking: MediaOutputBaseDialog.getGravity() hardcodes 19
- *    (LEFT|CENTER_VERTICAL). The normal path (media card output chip) goes through
- *    DialogTransitionAnimator.show() inside a fullscreen transparent shell, where
- *    gravity only affects alignment within the shell; the tile path (broadcast ->
- *    createAndShow(null,...)) has no anchor Controller and uses a plain
- *    dialog.show(), so the 1180-wide window with LEFT gravity lands directly on screen.
- * 2. Yellow theme: when createAndShow's packageName is null, MediaSwitchingController.start()
- *    skips MediaController binding, getHeaderIcon() is always null, and the
- *    WallpaperColors.fromBitmap dynamic color chain in refresh() never starts,
- *    falling back to the default legacy color scheme. The receiver's
- *    LAUNCH_MEDIA_OUTPUT_DIALOG branch proves that as long as a package name is
- *    passed (createAndShow(pkg,false,null,true,...), verified on device), the theme
- *    color resolves correctly from the album art, and the gravity hook also works.
+ * Root cause: the tile path launches the dialog with a null package name, so
+ * getGravity() keeps its hardcoded LEFT gravity and the dynamic-color chain never
+ * starts (no MediaController binding means no album art), falling back to the
+ * default legacy color scheme.
  *
  * Fix (three hooks, controlled by a single module switch):
  * - onReceive: set an intra-thread flag during LAUNCH_SYSTEM_MEDIA_OUTPUT_DIALOG
  *   (used by the gravity hook);
- * - getGravity: return 17 (CENTER) when the flag is set;
- * - createAndShow: when pkg == null, query the current active media session, inject
- *   the package name and set includePlaybackAndAppMetadata to true, making the tile
- *   path equivalent to "the full path with a package name".
- *   SystemUI holds the MODIFY_AUDIO_ROUTING privileged permission and can query all
- *   active sessions (same as its own start() fallback logic). If no session is
- *   found, keep the original arguments (empty-state dialog).
+ * - getGravity: return CENTER when the flag is set;
+ * - createAndShow: when pkg == null, query the current active media session and
+ *   inject the package name; if no session is found, keep the original arguments
+ *   (empty-state dialog).
  */
 @SuppressLint("PrivateApi")
 class MediaOutputDialogCenterHook : AppHookModule() {
