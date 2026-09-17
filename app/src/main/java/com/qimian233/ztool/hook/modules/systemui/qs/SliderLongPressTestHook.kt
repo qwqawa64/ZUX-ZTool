@@ -282,6 +282,10 @@ class SliderLongPressTestHook : AppHookModule() {
                 marginEnd = (metrics.widthPixels * 297 / 3200)
             }
         )
+        // The fullscreen window leaves no "outside" for the dialog's
+        // canceledOnTouchOutside to detect, so dismiss on any tap that lands
+        // on the root itself (the panel consumes its own touches).
+        root.setOnClickListener { dialog.dismiss() }
         dialog.setContentView(
             root,
             ViewGroup.LayoutParams(
@@ -781,11 +785,9 @@ class SliderLongPressTestHook : AppHookModule() {
         // merely replace the dots with underscores.
         private const val BRIGHTNESS_DIALOG_THEME = "Theme.SystemUI.Dialog.GlobalActionsLite"
         private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
-        // Vertical slider footprint measured from the reference dump: the
-        // SeekBar bounds are 203x650 px on a 3200x2000 screen at ~420dpi,
-        // i.e. 87x277 dp.
-        private const val VERTICAL_SLIDER_WIDTH_DP = 87
-        private const val VERTICAL_SLIDER_HEIGHT_DP = 277
+        // Brute-force test values to verify layout changes propagate at all.
+        private const val VERTICAL_SLIDER_WIDTH_DP = 128
+        private const val VERTICAL_SLIDER_HEIGHT_DP = 256
         private const val VOLUME_ICON_DRAWABLE = "volume_no_poercing"
         private const val SLIDER_DRAWABLE = "brightness_progress_selector_keyboard"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
