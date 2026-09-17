@@ -195,6 +195,16 @@ object SearchIndex {
             isFeatureCard = true,
             featureDestination = FeatureDestination.ZuiPerformance,
             groupTitleRes = R.string.search_group_feature_cards
+        ),
+        SearchEntry(
+            id = "feature_card_sogou_ime",
+            route = FeatureDestination.SogouIme.route,
+            titleRes = R.string.sogou_ime_app_name,
+            summaryRes = R.string.sogou_ime_app_description,
+            requiresPackage = ScopeKeys.SOGOU_OEM_IME.packageName,
+            isFeatureCard = true,
+            featureDestination = FeatureDestination.SogouIme,
+            groupTitleRes = R.string.search_group_feature_cards
         )
     )
 
@@ -296,6 +306,12 @@ object SearchIndex {
         route = FeatureDestination.ZuiPerformance.route,
         groupTitleRes = R.string.zui_pp_app_name,
         requiresPackage = ScopeKeys.ZUI_PERFORMANCE.packageName
+    )
+
+    private val sogouIme = Screen(
+        route = FeatureDestination.SogouIme.route,
+        groupTitleRes = R.string.sogou_ime_app_name,
+        requiresPackage = ScopeKeys.SOGOU_OEM_IME.packageName
     )
 
     private val appSettings = Screen(
@@ -831,11 +847,6 @@ object SearchIndex {
             titleRes = R.string.system_framework_ai_input_expand_title,
             summaryRes = R.string.system_framework_ai_input_expand_summary
         ),
-        framework.item(
-            id = "framework_half_width_punct",
-            titleRes = R.string.system_framework_half_width_punct_title,
-            summaryRes = R.string.system_framework_half_width_punct_summary
-        ),
 
         settingsDetail.item(
             id = "settings_detail_remove_blacklist",
@@ -1253,6 +1264,12 @@ object SearchIndex {
             id = "zui_pp_block_game_policy",
             titleRes = R.string.zui_pp_block_game_policy_title,
             summaryRes = R.string.zui_pp_block_game_policy_summary
+        ),
+
+        sogouIme.item(
+            id = "sogou_ime_half_width_punct",
+            titleRes = R.string.system_framework_half_width_punct_title,
+            summaryRes = R.string.system_framework_half_width_punct_summary
         ),
 
         appSettings.item(

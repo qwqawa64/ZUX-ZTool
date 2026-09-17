@@ -106,8 +106,6 @@ fun FrameworkSettingsRoute(
             onAiInputExpandChanged = viewModel::setAiInputExpand,
             onAiInputSignsChanged = viewModel::setAiInputSigns,
             onShowAiInputInfo = viewModel::showAiInputInfoDialog,
-            onHalfWidthPunctChanged = viewModel::setHalfWidthPunct,
-            onHalfWidthPunctSignsChanged = viewModel::setHalfWidthPunctSigns,
             onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
             onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
             onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
@@ -187,8 +185,6 @@ private fun FrameworkSettingsScreen(
     onPkgMgrBypassArscRestrictionChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit,
-    onHalfWidthPunctChanged: (Boolean) -> Unit,
-    onHalfWidthPunctSignsChanged: (String) -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
 ) {
@@ -237,8 +233,6 @@ private fun FrameworkSettingsScreen(
                         onAiInputExpandChanged = onAiInputExpandChanged,
                         onAiInputSignsChanged = onAiInputSignsChanged,
                         onShowAiInputInfo = onShowAiInputInfo,
-                        onHalfWidthPunctChanged = onHalfWidthPunctChanged,
-                        onHalfWidthPunctSignsChanged = onHalfWidthPunctSignsChanged,
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
@@ -284,9 +278,7 @@ private fun frameworkSettingsSections(
     onPkgMgrAllowHiddenApisSystemAppsChanged: (Boolean) -> Unit,
     onPkgMgrBypassArscRestrictionChanged: (Boolean) -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
-    onShowAiInputInfo: () -> Unit,
-    onHalfWidthPunctChanged: (Boolean) -> Unit,
-    onHalfWidthPunctSignsChanged: (String) -> Unit
+    onShowAiInputInfo: () -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -477,16 +469,6 @@ private fun frameworkSettingsSections(
                         )
                     },
                     key = "framework_ai_input_expand"
-                ),
-                SettingItem.Custom(
-                    content = {
-                        HalfWidthPunctSettingsContent(
-                            state = state,
-                            onHalfWidthPunctChanged = onHalfWidthPunctChanged,
-                            onHalfWidthPunctSignsChanged = onHalfWidthPunctSignsChanged
-                        )
-                    },
-                    key = "framework_half_width_punct"
                 )
             )
         )
@@ -568,33 +550,6 @@ private fun AiInputSettingsContent(
             label = stringResource(R.string.system_framework_custom_detector_hint),
             isError = state.aiInputSignsError != null,
             supportingText = state.aiInputSignsError,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-        )
-    }
-}
-
-@Composable
-private fun HalfWidthPunctSettingsContent(
-    state: FrameworkSettingsUiState,
-    onHalfWidthPunctChanged: (Boolean) -> Unit,
-    onHalfWidthPunctSignsChanged: (String) -> Unit
-) {
-    ZToolSwitchRow(
-        title = stringResource(R.string.system_framework_half_width_punct_title),
-        summary = stringResource(R.string.system_framework_half_width_punct_summary),
-        checked = state.halfWidthPunct,
-        onCheckedChange = onHalfWidthPunctChanged
-    )
-    if (state.halfWidthPunct) {
-        ZToolOutlinedTextField(
-            value = state.halfWidthPunctSigns,
-            onValueChange = onHalfWidthPunctSignsChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            label = stringResource(R.string.system_framework_half_width_punct_hint),
-            supportingText = stringResource(R.string.system_framework_half_width_punct_supporting),
-            singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
     }

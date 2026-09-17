@@ -60,6 +60,7 @@ object ScopeUtils {
             )
             FeatureDestination.TbEngine -> listOf(ScopeKeys.TB_ENGINE)
             FeatureDestination.ZuiPerformance -> listOf(ScopeKeys.ZUI_PERFORMANCE)
+            FeatureDestination.SogouIme -> listOf(ScopeKeys.SOGOU_OEM_IME)
         }
     }
 

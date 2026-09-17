@@ -26,6 +26,7 @@ import com.qimian233.ztool.screens.mobiledesktop.MobileDesktopSettingsRoute
 import com.qimian233.ztool.screens.ota.OtaSettingsRoute
 import com.qimian233.ztool.screens.packageinstaller.PackageInstallerSettingsRoute
 import com.qimian233.ztool.screens.safecenter.SafeCenterSettingsRoute
+import com.qimian233.ztool.screens.sogouime.SogouImeSettingsRoute
 import com.qimian233.ztool.screens.pp.ZuiPerformanceSettingsRoute
 import com.qimian233.ztool.screens.tbengine.TbEngineSettingsRoute
 import com.qimian233.ztool.screens.ztoolsettings.SettingsMainRoute
@@ -617,6 +618,27 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
+            route = routeWithTarget(FeatureDestination.SogouIme.route),
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
+            SogouImeSettingsRoute(
+                title = stringResource(R.string.sogou_ime_app_name),
+                packageName = ScopeKeys.SOGOU_OEM_IME.packageName,
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                targetId = backStackEntry.highlightTarget(),
+            )
+        }
+        composable(
             route = routeWithTarget(FeatureDestination.Framework.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -791,6 +813,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         FeatureDestination.SafeCenter.route -> 2
         FeatureDestination.TbEngine.route -> 2
         FeatureDestination.ZuiPerformance.route -> 2
+        FeatureDestination.SogouIme.route -> 2
         MainRoute.Settings.name -> 3
         HiddenRoute.SETTINGS_THEME -> 4
         HiddenRoute.SETTINGS_ABOUT -> 4

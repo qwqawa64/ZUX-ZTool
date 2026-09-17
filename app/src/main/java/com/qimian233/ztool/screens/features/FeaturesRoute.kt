@@ -70,7 +70,8 @@ enum class FeatureDestination(
     Framework("feature/framework"),
     SafeCenter("feature/safe-center"),
     TbEngine("feature/tb-engine"),
-    ZuiPerformance("feature/zui-performance")
+    ZuiPerformance("feature/zui-performance"),
+    SogouIme("feature/sogou-ime")
 }
 
 @Composable
@@ -283,6 +284,14 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 packageName = ScopeKeys.ZUI_PERFORMANCE.packageName,
                 destination = FeatureDestination.ZuiPerformance,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.ZuiPerformance)
+            ),
+            featureItem(
+                context = context,
+                nameRes = R.string.sogou_ime_app_name,
+                descriptionRes = R.string.sogou_ime_app_description,
+                packageName = ScopeKeys.SOGOU_OEM_IME.packageName,
+                destination = FeatureDestination.SogouIme,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SogouIme)
             )
         )
     }
