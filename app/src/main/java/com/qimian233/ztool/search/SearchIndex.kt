@@ -831,6 +831,11 @@ object SearchIndex {
             titleRes = R.string.system_framework_ai_input_expand_title,
             summaryRes = R.string.system_framework_ai_input_expand_summary
         ),
+        framework.item(
+            id = "framework_half_width_punct",
+            titleRes = R.string.system_framework_half_width_punct_title,
+            summaryRes = R.string.system_framework_half_width_punct_summary
+        ),
 
         settingsDetail.item(
             id = "settings_detail_remove_blacklist",

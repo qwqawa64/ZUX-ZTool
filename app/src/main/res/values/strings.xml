@@ -664,6 +664,10 @@
     <string name="system_framework_misc_title">杂项</string>
     <string name="system_framework_ai_input_expand_title">自定义唤起符</string>
     <string name="system_framework_ai_input_expand_summary">尝试强制启用AI全局输入，自定义AI触发符号，官方默认为全/半角的“&amp;&amp;”</string>
+    <string name="system_framework_half_width_punct_title">强制半角符号输出</string>
+    <string name="system_framework_half_width_punct_summary">中文模式下，列表中的符号强制以半角上屏（需重启输入法生效）。默认 #*-+=，与 PC 输入法惯例一致；纯中文标点（。，《》等）不受影响。</string>
+    <string name="system_framework_half_width_punct_hint">需要半角输出的符号列表</string>
+    <string name="system_framework_half_width_punct_supporting">全角/半角等价，配对符号自动成对生效。例：#*-+=</string>
     <string name="system_framework_screen_and_display_title">屏幕与显示</string>
     <string name="system_framework_keep_rotation_enable_title">保持屏幕方向为竖屏</string>
     <string name="system_framework_keep_rotation_enable_summary">将默认屏幕方向由横屏改为竖屏</string>

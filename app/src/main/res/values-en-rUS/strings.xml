@@ -586,6 +586,10 @@
     <string name="system_framework_misc_title">Misc</string>
     <string name="system_framework_ai_input_expand_title">Custom trigger symbols</string>
     <string name="system_framework_ai_input_expand_summary">Try to force-enable AI global input and customize AI trigger symbols. The official default is full-width/half-width "&amp;&amp;".</string>
+    <string name="system_framework_half_width_punct_title">Force half-width symbol output</string>
+    <string name="system_framework_half_width_punct_summary">In Chinese mode, symbols in the list are always committed half-width (IME restart required). Defaults to #*-+=, matching PC IME conventions; pure CJK punctuation (。，《》 etc.) is unaffected.</string>
+    <string name="system_framework_half_width_punct_hint">Symbols to force half-width</string>
+    <string name="system_framework_half_width_punct_supporting">Full/half-width are equivalent; bracket pairs apply as a pair. Example: #*-+=</string>
     <string name="system_framework_screen_and_display_title">Screen and Display</string>
     <string name="system_framework_keep_rotation_enable_title">Keep screen orientation portrait</string>
     <string name="system_framework_keep_rotation_enable_summary">Change the default screen orientation from landscape to portrait.</string>

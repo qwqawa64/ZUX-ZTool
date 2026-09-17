@@ -31,4 +31,5 @@ object ScopeKeys {
     val LAUNCHER = Scope("com.zui.launcher", HowToRestart.AmStop)
     val MOBILE_DESKTOP = Scope("com.motorola.mobiledesktop", HowToRestart.AmStop)
     val ZUI_PERFORMANCE = Scope("com.zui.pp", HowToRestart.KillAll)
+    val SOGOU_OEM_IME = Scope("com.sohu.inputmethod.sogou.oem", HowToRestart.KillAll)
 }

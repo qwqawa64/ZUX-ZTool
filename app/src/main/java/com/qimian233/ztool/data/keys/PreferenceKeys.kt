@@ -191,6 +191,7 @@ object PreferenceKeys {
     val DISABLE_NEARBY_SHARE_COUNTDOWN = BoolKey("disable_nearby_share_countdown", false)
 
     val IS_DETAILED_LOGGING = BoolKey("isDetailedLogging", false)
+    val HALF_WIDTH_PUNCT = BoolKey("half_width_punct", false)
     val AUTO_CHECK_UPDATE = BoolKey("auto_check_update", true)
     val YIYAN = BoolKey("YiYan", false)
     val IS_SYSTEMUI_PERMISSION_CONFIRMED = BoolKey("isSystemUIPermissionConfirmed", false)
@@ -245,6 +246,9 @@ object PreferenceKeys {
     val ABOUT_DEVICE_INFO_ROM = StringKey("about_device_info_rom", "")
     val ABOUT_DEVICE_INFO_SOFTWARE = StringKey("about_device_info_software", "")
     val AI_INPUT_EXPAND_SIGNS = StringKey("AI_INPUT_EXPAND_SIGNS", "")
+    // Forced half-width punctuation list; canonical ASCII forms, parsed with
+    // fullwidth/halfwidth normalization and auto pairing on the hook side
+    val HALF_WIDTH_PUNCT_SIGNS = StringKey("half_width_punct_signs", "#*-+=")
     val CUSTOM_CONTROL_CENTER_DATE_FORMAT = StringKey("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE")
     // Default lock-screen quote fetches the xygeng quote API; regex extracts the "content" field from the response
     val API_URL = StringKey("API_URL", "https://api.xygeng.cn/one")
@@ -321,6 +325,7 @@ object PreferenceKeys {
         DISABLE_NEARBY_SHARE_COUNTDOWN,
         IS_DETAILED_LOGGING, AUTO_CHECK_UPDATE,
         YIYAN, IS_SYSTEMUI_PERMISSION_CONFIRMED, IS_CONFIG_UPGRADED,
+        HALF_WIDTH_PUNCT,
         SYSTEMUI_REALWATTS_SHOW_VOLTAGE, SYSTEMUI_REALWATTS_SHOW_CURRENT,
         SYSTEMUI_REALWATTS_SHOW_POWER, SYSTEMUI_REALWATTS_SHOW_TEMPERATURE,
         SYSTEMUI_REALWATTS_SHOW_INDICATOR, SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED,
@@ -354,6 +359,7 @@ object PreferenceKeys {
         ABOUT_DEVICE_INFO_RAM, ABOUT_DEVICE_INFO_ROM,
         ABOUT_DEVICE_INFO_SOFTWARE,
         AI_INPUT_EXPAND_SIGNS,
+        HALF_WIDTH_PUNCT_SIGNS,
         CUSTOM_CONTROL_CENTER_DATE_FORMAT,
         API_URL, REGULAR,
         CUSTOM_STATUSBAR_CLOCK_FORMAT,

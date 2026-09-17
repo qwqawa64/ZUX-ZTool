@@ -55,6 +55,7 @@ import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook
 import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
+import com.qimian233.ztool.hook.modules.sogouime.HalfWidthPunctHook
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand
 import com.qimian233.ztool.hook.modules.systemframework.AllowGetPackages
 import com.qimian233.ztool.hook.modules.systemframework.AllowRelativeAppLaunch
@@ -145,6 +146,7 @@ object HookManager {
         registerHookModule(AllowUntrustedTouch())
         registerHookModule(ForceScreenOnOffAnimation())
         registerHookModule(AiInputExpand())
+        registerHookModule(HalfWidthPunctHook())
         registerHookModule(KeepRotation())
         registerHookModule(AllowRelativeAppLaunch())
         registerHookModule(ForceRelativeAppFreeform())
