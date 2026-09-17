@@ -155,10 +155,10 @@ class SliderLongPressTestHook : AppHookModule() {
      * Reproduces the BrightnessDetailDialog geometry measured from the live
      * reference dump: a fullscreen transparent window whose visible part is a
      * vertical panel docked to the right edge (80% of screen height, width
-     * equal to the QS frame column). The brightness layout root is not reused
-     * because its container sizing is driven by ConstraintSet logic that only
-     * runs inside BrightnessDetailDialog; the panel here is laid out directly.
-     * The volume bars stay horizontal inside the vertical panel.
+     * ~31% of screen width per the reference bounds [1898,200][2903,1800] on a
+     * 3200x2000 screen). Panel color follows the theme's floating background.
+     * Volume bars reuse the ZUI rotation trick: the BrightnessSliderView bar
+     * is rotated 90 degrees into a vertical slider, matching the reference.
      */
     private fun buildBrightnessStyleVolumeDialog(context: Context): Dialog {
         val res = context.resources
@@ -171,19 +171,20 @@ class SliderLongPressTestHook : AppHookModule() {
             Dialog(context)
         }
 
-        val metrics = context.resources.displayMetrics
+        // Reference proportions on a 3200x2000 landscape screen: panel
+        // 1005x1600 with 200px top/bottom insets and ~102px end margin.
+        val metrics = res.displayMetrics
         val panelWidth = res.getDimensionPixelSize(
             res.getIdentifier("brightness_bar_width_detail", "dimen", pkg)
-        ).takeIf { it > 0 } ?: (metrics.widthPixels / 3)
+        ).takeIf { it >= metrics.widthPixels / 4 }
+            ?: (metrics.widthPixels * 1005 / 3200)
         val panelHeight = (metrics.heightPixels * 0.8f).toInt()
-
-        val panelBackground = buildPanelBackground(context)
 
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(dp(context, 24), dp(context, 24), dp(context, 24), dp(context, 24))
-            background = panelBackground
+            background = buildPanelBackground(context)
         }
         panel.addView(
             createVolumeDetailView(context, panel),
@@ -200,7 +201,7 @@ class SliderLongPressTestHook : AppHookModule() {
                 panelWidth,
                 panelHeight,
                 android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
-            ).apply { marginEnd = dp(context, 16) }
+            ).apply { marginEnd = dp(context, 32) }
         )
         dialog.setContentView(
             root,
@@ -228,8 +229,8 @@ class SliderLongPressTestHook : AppHookModule() {
     }
 
     /**
-     * Rounded translucent panel background approximating the brightness detail
-     * panel surface, using the SystemUI QS panel corner radius.
+     * Panel surface color from the theme's floating background so dark mode is
+     * honored; falls back to translucent white when the attr is unavailable.
      */
     private fun buildPanelBackground(context: Context): android.graphics.drawable.Drawable {
         val radius = try {
@@ -239,10 +240,22 @@ class SliderLongPressTestHook : AppHookModule() {
         } catch (_: Throwable) {
             dp(context, 16).toFloat()
         }
+        val color = try {
+            val typed = context.theme.obtainStyledAttributes(
+                intArrayOf(android.R.attr.colorBackgroundFloating)
+            )
+            try {
+                typed.getColor(0, 0xE6FFFFFF.toInt())
+            } finally {
+                typed.recycle()
+            }
+        } catch (_: Throwable) {
+            0xE6FFFFFF.toInt()
+        }
         return android.graphics.drawable.GradientDrawable().apply {
             shape = android.graphics.drawable.GradientDrawable.RECTANGLE
             cornerRadius = radius
-            setColor(0xE6FFFFFF.toInt())
+            setColor(color)
         }
     }
 
@@ -288,10 +301,11 @@ class SliderLongPressTestHook : AppHookModule() {
         stream: Int,
         label: String
     ): View {
+        // Vertical layout like the reference: label on top, vertical slider below.
         val row = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
-            setPadding(0, dp(context, 8), 0, dp(context, 8))
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+            setPadding(0, dp(context, 12), 0, dp(context, 12))
         }
         val labelView = TextView(context).apply {
             text = label
@@ -303,11 +317,14 @@ class SliderLongPressTestHook : AppHookModule() {
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { rightMargin = dp(context, 16) }
+            ).apply { bottomMargin = dp(context, 12) }
         )
         row.addView(
             buildStreamSlider(context, audio, stream),
-            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            LinearLayout.LayoutParams(
+                dp(context, VERTICAL_SLIDER_WIDTH_DP),
+                dp(context, VERTICAL_SLIDER_HEIGHT_DP)
+            ).apply { gravity = android.view.Gravity.CENTER_HORIZONTAL }
         )
         return row
     }
@@ -315,8 +332,10 @@ class SliderLongPressTestHook : AppHookModule() {
     /**
      * Builds one stream slider. Prefers inflating the ZUI BrightnessSliderView
      * layout (identical widget to the brightness detail dialog slider) and
-     * driving its inner R.id.slider SeekBar; falls back to a styled platform
-     * SeekBar when the ZUI resources cannot be resolved.
+     * driving its inner R.id.slider SeekBar; the bar is rotated 90 degrees the
+     * same way the brightness detail dialog turns it into a vertical slider.
+     * Falls back to a styled platform SeekBar when the ZUI resources cannot be
+     * resolved.
      */
     private fun buildStreamSlider(
         context: Context,
@@ -327,7 +346,21 @@ class SliderLongPressTestHook : AppHookModule() {
         if (zuiSlider != null) {
             val (seekBar, root) = zuiSlider
             configureVolumeSeekBar(seekBar, audio, stream)
-            return root
+            // Wrap the bar in a fixed-size frame holding the post-rotation
+            // (vertical) footprint; the bar itself lays out with swapped
+            // dimensions and rotates 90° around its center, exactly how the
+            // brightness detail dialog turns the horizontal bar vertical.
+            val frame = android.widget.FrameLayout(context)
+            frame.addView(
+                root,
+                android.widget.FrameLayout.LayoutParams(
+                    dp(context, VERTICAL_SLIDER_HEIGHT_DP),
+                    dp(context, VERTICAL_SLIDER_WIDTH_DP),
+                    android.view.Gravity.CENTER
+                )
+            )
+            root.rotation = 90f
+            return frame
         }
         return SeekBar(context).apply {
             applyZuiSliderStyle(context)
@@ -623,6 +656,10 @@ class SliderLongPressTestHook : AppHookModule() {
         // merely replace the dots with underscores.
         private const val BRIGHTNESS_DIALOG_THEME = "Theme.SystemUI.Dialog.GlobalActionsLite"
         private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
+        // Vertical slider footprint measured from the reference dump
+        // (203x650 px on a 3200x2000 screen at ~420dpi ≈ 96x154 dp).
+        private const val VERTICAL_SLIDER_WIDTH_DP = 96
+        private const val VERTICAL_SLIDER_HEIGHT_DP = 154
         private const val SLIDER_DRAWABLE = "brightness_progress_selector_keyboard"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
         private const val SLIDER_HEIGHT_DIMEN = "brightness_bar_height"
