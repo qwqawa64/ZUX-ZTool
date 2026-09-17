@@ -159,9 +159,21 @@ class SliderLongPressTestHook : AppHookModule() {
         try {
             val slider = sliderView.javaClass
                 .getDeclaredField(BRIGHTNESS_SLIDER_FIELD).get(sliderView) as SeekBar
-            val delegate = readOnTouchListener(slider)
-            attachLongPress(slider, delegate) {
-                runOnUiThread(slider) { runBrightnessDetail(sliderView) }
+            // ToggleSeekBar's own touch handling (SeekBarNps) consumes
+            // ACTION_DOWN and returns true, and onStateChanged can reinstall
+            // its gate listener over any wrapper we set — so the wrapped
+            // OnTouchListener approach never fires here. Use the framework's
+            // long-click machinery instead: it runs inside
+            // View.onTouchEvent, which SeekBarNps defers to via
+            // super.onTouchEvent, and survives listener churn because
+            // OnLongClickListener is not touched by onStateChanged.
+            slider.isLongClickable = true
+            slider.setOnLongClickListener { view ->
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                playPressAnimation(view)
+                runOnUiThread(view) { runBrightnessDetail(sliderView) }
+                playReleaseAnimation(view)
+                true
             }
         } catch (t: Throwable) {
             logger.warn("Failed to attach brightness long press: $t")
