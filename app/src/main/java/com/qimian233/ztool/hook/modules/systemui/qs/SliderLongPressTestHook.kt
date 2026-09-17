@@ -172,7 +172,7 @@ class SliderLongPressTestHook : AppHookModule() {
         }
 
         // Reference proportions on a 3200x2000 landscape screen: panel
-        // 1005x1600 with 200px top/bottom insets and ~102px end margin.
+        // 1005x1600 with 200px top/bottom insets, docked to the right edge.
         val metrics = res.displayMetrics
         val panelWidth = res.getDimensionPixelSize(
             res.getIdentifier("brightness_bar_width_detail", "dimen", pkg)
@@ -180,11 +180,12 @@ class SliderLongPressTestHook : AppHookModule() {
             ?: (metrics.widthPixels * 1005 / 3200)
         val panelHeight = (metrics.heightPixels * 0.8f).toInt()
 
+        // No own background: the panel is transparent so the control center's
+        // blur background shows through, exactly like the brightness panel.
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(dp(context, 24), dp(context, 24), dp(context, 24), dp(context, 24))
-            background = buildPanelBackground(context)
         }
         panel.addView(
             createVolumeDetailView(context, panel),
@@ -201,7 +202,7 @@ class SliderLongPressTestHook : AppHookModule() {
                 panelWidth,
                 panelHeight,
                 android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
-            ).apply { marginEnd = dp(context, 32) }
+            )
         )
         dialog.setContentView(
             root,
@@ -235,37 +236,6 @@ class SliderLongPressTestHook : AppHookModule() {
             }
         }
         return dialog
-    }
-
-    /**
-     * Panel surface color from the theme's floating background so dark mode is
-     * honored; falls back to translucent white when the attr is unavailable.
-     */
-    private fun buildPanelBackground(context: Context): android.graphics.drawable.Drawable {
-        val radius = try {
-            context.resources.getDimension(
-                context.resources.getIdentifier(SLIDER_CORNER_DIMEN, "dimen", context.packageName)
-            )
-        } catch (_: Throwable) {
-            dp(context, 16).toFloat()
-        }
-        val color = try {
-            val typed = context.theme.obtainStyledAttributes(
-                intArrayOf(android.R.attr.colorBackgroundFloating)
-            )
-            try {
-                typed.getColor(0, 0xE6FFFFFF.toInt())
-            } finally {
-                typed.recycle()
-            }
-        } catch (_: Throwable) {
-            0xE6FFFFFF.toInt()
-        }
-        return android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-            cornerRadius = radius
-            setColor(color)
-        }
     }
 
     /**
