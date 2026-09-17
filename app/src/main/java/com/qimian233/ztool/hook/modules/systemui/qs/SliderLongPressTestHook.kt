@@ -120,6 +120,67 @@ class SliderLongPressTestHook : AppHookModule() {
     }
 
     private fun hookBrightnessSliderLongPress(classLoader: ClassLoader) {
+        // SeekBarNps.onTouchEvent bypasses View.onTouchEvent entirely when
+        // max >= 100 (the brightness slider always is), so neither the
+        // framework long click nor any touch-listener wrapper is reliable.
+        // Hook ToggleSeekBar.onTouchEvent itself: every touch event flows
+        // through this method, and an after-hook with PRIORITY_LOWEST runs
+        // immediately after the method body with no listener churn to fight.
+        try {
+            val toggleSeekBarClass = classLoader.loadClass(TOGGLE_SEEK_BAR_CLASS)
+            val onTouchEvent: Method = toggleSeekBarClass.getDeclaredMethod(
+                "onTouchEvent",
+                MotionEvent::class.java
+            )
+            hookWithId(
+                onTouchEvent,
+                "brightness_touch_long_press",
+                { chain ->
+                    val result = chain.proceed()
+                    try {
+                        val seekBar = chain.thisObject as View
+                        val event = chain.args[0] as MotionEvent
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_DOWN -> {
+                                val state = obtainState(seekBar)
+                                state.downX = event.rawX
+                                state.downY = event.rawY
+                                state.triggered = false
+                                scheduleLongPress(seekBar) {
+                                    runBrightnessDetail(getToggleSliderView(seekBar) ?: seekBar)
+                                }
+                                playPressAnimation(seekBar)
+                            }
+
+                            MotionEvent.ACTION_MOVE -> {
+                                val state = pressStates[seekBar]
+                                if (state != null && !state.triggered) {
+                                    val dx = event.rawX - state.downX
+                                    val dy = event.rawY - state.downY
+                                    if (dx * dx + dy * dy > state.touchSlopSquared) {
+                                        cancelLongPress(seekBar)
+                                        playReleaseAnimation(seekBar)
+                                    }
+                                }
+                            }
+
+                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                cancelLongPress(seekBar)
+                                playReleaseAnimation(seekBar)
+                            }
+                        }
+                    } catch (t: Throwable) {
+                        logger.warn("Brightness long-press tracking failed: $t")
+                    }
+                    result
+                },
+                XposedInterface.PRIORITY_LOWEST
+            )
+        } catch (t: Throwable) {
+            logger.warn("Failed to hook ToggleSeekBar.onTouchEvent: $t")
+        }
+        // Keep the updateBrightnessSlider after-hook so the sliderView reference
+        // mapping stays fresh for openBrightnessDetail calls.
         try {
             val updateBrightnessMethod: Method = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
                 .getDeclaredMethod("updateBrightnessSlider")
@@ -128,7 +189,7 @@ class SliderLongPressTestHook : AppHookModule() {
                 "brightness_slider_long_press",
                 { chain ->
                     val result = chain.proceed()
-                    attachBrightnessLongPress(chain.thisObject)
+                    brightnessSliderViewRef = java.lang.ref.WeakReference(chain.thisObject)
                     result
                 },
                 XposedInterface.PRIORITY_HIGHEST
@@ -136,6 +197,21 @@ class SliderLongPressTestHook : AppHookModule() {
         } catch (t: Throwable) {
             logger.warn("Failed to hook updateBrightnessSlider for long press: $t")
         }
+    }
+
+    private var brightnessSliderViewRef: java.lang.ref.WeakReference<Any>? = null
+
+    /**
+     * Walks up from the touched SeekBar to its ToggleSliderView host so
+     * openBrightnessDetail can be invoked on the right instance.
+     */
+    private fun getToggleSliderView(view: View): Any? {
+        var current: Any = view
+        for (i in 0 until 6) {
+            current = (current as View).parent ?: return null
+            if (current.javaClass.name == TOGGLE_SLIDER_VIEW_CLASS) return current
+        }
+        return null
     }
 
     private fun attachVolumeLongPress(sliderView: Any) {
@@ -152,31 +228,6 @@ class SliderLongPressTestHook : AppHookModule() {
             }
         } catch (t: Throwable) {
             logger.warn("Failed to attach volume long press: $t")
-        }
-    }
-
-    private fun attachBrightnessLongPress(sliderView: Any) {
-        try {
-            val slider = sliderView.javaClass
-                .getDeclaredField(BRIGHTNESS_SLIDER_FIELD).get(sliderView) as SeekBar
-            // ToggleSeekBar's own touch handling (SeekBarNps) consumes
-            // ACTION_DOWN and returns true, and onStateChanged can reinstall
-            // its gate listener over any wrapper we set — so the wrapped
-            // OnTouchListener approach never fires here. Use the framework's
-            // long-click machinery instead: it runs inside
-            // View.onTouchEvent, which SeekBarNps defers to via
-            // super.onTouchEvent, and survives listener churn because
-            // OnLongClickListener is not touched by onStateChanged.
-            slider.isLongClickable = true
-            slider.setOnLongClickListener { view ->
-                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                playPressAnimation(view)
-                runOnUiThread(view) { runBrightnessDetail(sliderView) }
-                playReleaseAnimation(view)
-                true
-            }
-        } catch (t: Throwable) {
-            logger.warn("Failed to attach brightness long press: $t")
         }
     }
 
@@ -789,6 +840,8 @@ class SliderLongPressTestHook : AppHookModule() {
         private val SYSTEM_UI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
         private const val TEST_MODULE_NAME = "hook_test"
         private const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
+        private const val TOGGLE_SEEK_BAR_CLASS =
+            "com.android.systemui.settings.brightness.ToggleSeekBar"
         private const val VOLUME_TOUCH_LISTENER_CLASS =
             "com.android.systemui.settings.ToggleSliderView\$\$ExternalSyntheticLambda0"
         private const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
