@@ -165,15 +165,23 @@ class SliderLongPressTestHook : AppHookModule() {
             return
         }
         try {
+            val adapterClass = Class.forName(DETAIL_ADAPTER_CLASS, true, anchor.context.classLoader)
             val adapter = obtainDetailAdapter(anchor.context)
+            logger.debug("volume detail: controller=${controller.javaClass.name}, " +
+                "adapterClass=$adapterClass, adapterInterfaces=${adapter.javaClass.interfaces.contentToString()}")
             val showOrHide: Method = controller.javaClass.getMethod(
                 "showOrHideDialog",
                 View::class.java,
-                Class.forName(DETAIL_ADAPTER_CLASS, true, anchor.context.classLoader)
+                adapterClass
             )
+            logger.debug("volume detail: resolved $showOrHide, invoking on $controller")
             showOrHide.invoke(controller, anchor, adapter)
+            logger.debug("volume detail: showOrHideDialog returned normally")
         } catch (t: Throwable) {
-            logger.warn("Failed to show volume detail dialog: $t")
+            // InvocationTargetException wraps the real failure thrown inside
+            // QSDetailDialogController; unwrap so the log shows the root cause.
+            val cause = (t as? java.lang.reflect.InvocationTargetException)?.targetException ?: t
+            logger.error("Failed to show volume detail dialog: $cause", cause)
         }
     }
 
