@@ -40,6 +40,11 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     private val pressStates = WeakHashMap<View, PressState>()
 
+    // True while one of our gestures is active: blocks the native
+    // QSLongPressEffect pipeline's delayed qsTile.longClick() for this gesture.
+    @Volatile
+    private var suppressNativeLongClick = false
+
     override fun getModuleName(): String = PreferenceKeys.CONTROL_CENTER_LONG_PRESS.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
@@ -48,6 +53,7 @@ class ControlCenterLongPressHook : AppHookModule() {
         val classLoader = param.defaultClassLoader
         hookTileTouchEvent(classLoader)
         hookToggleSliderTouchEvent(classLoader)
+        hookNativeLongClickSuppression(classLoader)
     }
 
     /**
@@ -100,9 +106,12 @@ class ControlCenterLongPressHook : AppHookModule() {
                             // Large tile: open the DetailAdapter dialog via
                             // its own indicator button.
                             indicator.performClick()
-                        } else {
+                        } else if (hasOnLongClickListener(v)) {
                             v.performLongClick()
                         }
+                        // Tiles without a long-press handler do nothing:
+                        // View.performLongClick would otherwise fall back to
+                        // performClick and toggle the tile.
                     }
                     result
                 },
@@ -129,6 +138,52 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     private fun cleanupState(view: View) {
         pressStates.remove(view)
+    }
+
+    /**
+     * True when the view has its own OnLongClickListener. Without it,
+     * View.performLongClick falls back to performClick, which would toggle
+     * tiles that have no long-press behavior.
+     */
+    private fun hasOnLongClickListener(view: View): Boolean {
+        return try {
+            val listenerInfoField = View::class.java.getDeclaredField("mListenerInfo")
+            listenerInfoField.isAccessible = true
+            val listenerInfo = listenerInfoField.get(view) ?: return false
+            val listenerField = listenerInfo.javaClass.getDeclaredField("mOnLongClickListener")
+            listenerField.isAccessible = true
+            listenerField.get(listenerInfo) != null
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    /**
+     * Blocks the native QSLongPressEffect pipeline's qsTile.longClick() while
+     * one of our gestures is in flight: the pipeline posts its own delayed
+     * task on ACTION_DOWN that would otherwise fire the tile's long-press
+     * action a second time (dialog + settings page on large tiles).
+     */
+    private fun hookNativeLongClickSuppression(classLoader: ClassLoader) {
+        try {
+            val longClick: Method = classLoader
+                .loadClass(QS_TILE_IMPL_CLASS)
+                .getDeclaredMethod("longClick", Class.forName(EXPANDABLE_CLASS))
+            hookWithId(
+                longClick,
+                "tile_native_long_click_suppress",
+                { chain ->
+                    if (suppressNativeLongClick) {
+                        null
+                    } else {
+                        chain.proceed()
+                    }
+                },
+                XposedInterface.PRIORITY_HIGHEST
+            )
+        } catch (t: Throwable) {
+            logger.error("Failed to hook QSTileImpl.longClick", t)
+        }
     }
 
     /**
@@ -165,6 +220,9 @@ class ControlCenterLongPressHook : AppHookModule() {
     private fun trackPress(view: View, event: MotionEvent, onTrigger: (View) -> Unit) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                // Our gesture owns this touch from now on: any native
+                // qsTile.longClick() firing during it is suppressed.
+                suppressNativeLongClick = true
                 val state = obtainState(view)
                 state.downX = event.rawX
                 state.downY = event.rawY
@@ -198,11 +256,13 @@ class ControlCenterLongPressHook : AppHookModule() {
                 val dx = event.rawX - state.downX
                 val dy = event.rawY - state.downY
                 if (dx * dx + dy * dy > state.touchSlopSquared) {
+                    suppressNativeLongClick = false
                     releaseSquish(view, state)
                 }
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                suppressNativeLongClick = false
                 val state = pressStates[view] ?: return
                 if (!state.triggered) {
                     releaseSquish(view, state)
@@ -269,6 +329,8 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     private companion object {
         const val QS_TILE_VIEW_CLASS = "com.android.systemui.qs.tileimpl.QSTileViewImpl"
+        const val QS_TILE_IMPL_CLASS = "com.android.systemui.qs.tileimpl.QSTileImpl"
+        const val EXPANDABLE_CLASS = "com.android.systemui.animation.Expandable"
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
         const val TOGGLE_SEEK_BAR_CLASS =
             "com.android.systemui.settings.brightness.ToggleSeekBar"
