@@ -13,35 +13,35 @@ import java.io.StringWriter
 
 class OvCommonConfigManager {
 
-    // 对应 <user_persist> 的配置模型
+    // Config model corresponding to <user_persist>
     class AppConfig {
         var overrideSplitSupport: Boolean? = null     // overrideSplitSupport
         var overrideFreeformSupport: Boolean? = null  // overrideFreeformSupport
         var overrideFreeformDragMode: Int? = null     // overrideFreeformDragMode (1=Free, 0=Fixed)
 
-        // 判断是否所有配置都为空（如果是，则需要删除该条目）
+        // Whether all config fields are empty (if so, the entry should be deleted)
         fun isEmpty(): Boolean {
             return overrideSplitSupport == null && overrideFreeformSupport == null && overrideFreeformDragMode == null
         }
     }
 
-    // 加载配置：System -> Cache -> Map
+    // Load config: System -> Cache -> Map
     fun loadConfig(context: Context): MutableMap<String, AppConfig> {
         val configMap = HashMap<String, AppConfig>()
         val executor = EnhancedShellExecutor.getInstance()
         val tempFile = File(context.cacheDir, TEMP_FILE_NAME)
 
-        // 1. 尝试将系统文件复制到缓存
-        // 如果文件不存在，直接返回空 Map
+        // 1. Try to copy the system file to the cache
+        // If the file does not exist, return an empty Map directly
         val checkRes = executor.executeRootCommand("ls " + SYSTEM_FILE_PATH)
         if (!checkRes.isSuccess) {
-            return configMap // 文件不存在，返回空
+            return configMap // file missing, return empty
         }
 
         executor.executeRootCommand("cp " + SYSTEM_FILE_PATH + " " + tempFile.absolutePath)
-        executor.executeRootCommand("chmod 644 " + tempFile.absolutePath) // 确保 App 可读
+        executor.executeRootCommand("chmod 644 " + tempFile.absolutePath) // make sure the app can read it
 
-        // 2. 解析 XML
+        // 2. Parse the XML
         if (tempFile.exists()) {
             try {
                 FileInputStream(tempFile).use { fis ->
@@ -93,20 +93,20 @@ class OvCommonConfigManager {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // 解析失败视为文件损坏或空，返回部分或空数据
+                // Treat parse failure as a corrupted or empty file; return partial or empty data
             }
             tempFile.delete()
         }
         return configMap
     }
 
-    // 保存配置：Map -> XML -> Cache -> System
+    // Save config: Map -> XML -> Cache -> System
     fun saveConfig(context: Context, configMap: MutableMap<String, AppConfig>): String {
         val tempFile = File(context.cacheDir, TEMP_FILE_NAME)
         val executor = EnhancedShellExecutor.getInstance()
 
         return try {
-            // 1. 构建 XML 字符串
+            // 1. Build the XML string
             val serializer = Xml.newSerializer()
             val writer = StringWriter()
             serializer.setOutput(writer)
@@ -115,7 +115,7 @@ class OvCommonConfigManager {
             serializer.startTag(null, "configs")
 
             for ((pkg, cfg) in configMap) {
-                if (cfg.isEmpty()) continue // 跳过空配置
+                if (cfg.isEmpty()) continue // skip empty configs
 
                 serializer.text("\n  ")
                 serializer.startTag(null, "config")
@@ -143,19 +143,19 @@ class OvCommonConfigManager {
             serializer.endTag(null, "configs")
             serializer.endDocument()
 
-            // 2. 写入临时文件
+            // 2. Write the temp file
             FileUtils.writeStringToFile(tempFile, writer.toString())
 
-            // 3. 移动回系统目录并设置权限
-            // 注意：/data/system/zui/ 可能需要 mkdir，虽然通常它是存在的
+            // 3. Move back to the system directory and set permissions
+            // Note: /data/system/zui/ may need mkdir, although it usually exists
             val cmd = "mkdir -p /data/system/zui/ && " +
                     "cp " + tempFile.absolutePath + " " + SYSTEM_FILE_PATH + " && " +
-                    "chown 1000:1000 " + SYSTEM_FILE_PATH + " && " + // 关键：system 用户组
-                    "chmod 660 " + SYSTEM_FILE_PATH // 关键：读写权限
+                    "chown 1000:1000 " + SYSTEM_FILE_PATH + " && " + // critical: system user group
+                    "chmod 660 " + SYSTEM_FILE_PATH // critical: read/write permissions
 
             val result = executor.executeRootCommand(cmd)
 
-            // 清理
+            // Cleanup
             tempFile.delete()
 
             if (result.isSuccess) {
@@ -169,9 +169,9 @@ class OvCommonConfigManager {
         }
     }
 
-    // --- 业务逻辑辅助方法 ---
+    // --- Business logic helpers ---
 
-    // 获取当前开启了某项功能的包名列表
+    // Get the list of package names that have a given feature enabled
     fun getPackagesForMode(map: Map<String, AppConfig>, mode: Int): List<String> {
         val list = ArrayList<String>()
         for ((pkg, cfg) in map) {
@@ -191,18 +191,18 @@ class OvCommonConfigManager {
         return list
     }
 
-    // 更新配置逻辑：根据用户选择的列表，更新 Map
+    // Update config logic: update the Map according to the user's selected list
     fun updateConfigForMode(map: MutableMap<String, AppConfig>, selectedPackages: List<String>, mode: Int) {
-        // 1. 遍历现有的 Map，清理掉该模式下不再选中的包
-        // 注意：为了避免并发修改异常，先收集要修改的 Key
+        // 1. Iterate the existing Map and clear packages no longer selected for this mode.
+        // Note: collect keys to modify first to avoid concurrent modification exceptions.
         for ((pkg, cfg) in map) {
-            // 如果该包不在新选中的列表中，且当前配置了该模式，则移除该配置
+            // If the package is not in the newly selected list and currently has this mode configured, remove that config
             if (!selectedPackages.contains(pkg)) {
                 removeModeFromConfig(cfg, mode)
             }
         }
 
-        // 2. 遍历选中的包，添加/更新配置
+        // 2. Iterate the selected packages and add/update their configs
         for (pkg in selectedPackages) {
             val cfg = map.getOrPut(pkg) { AppConfig() }
             addModeToConfig(cfg, mode)
@@ -213,14 +213,14 @@ class OvCommonConfigManager {
         when (mode) {
             MODE_SPLIT_SCREEN -> cfg.overrideSplitSupport = null
             MODE_FREEFORM_FREE -> {
-                // 如果当前是自由模式，才移除。防止误伤固定模式
+                // Only remove if currently in free mode; avoid touching fixed mode
                 if (cfg.overrideFreeformSupport == true && cfg.overrideFreeformDragMode == 1) {
                     cfg.overrideFreeformSupport = null
                     cfg.overrideFreeformDragMode = null
                 }
             }
             MODE_FREEFORM_FIXED -> {
-                // 如果当前是固定模式，才移除
+                // Only remove if currently in fixed mode
                 if (cfg.overrideFreeformSupport == true && cfg.overrideFreeformDragMode == 0) {
                     cfg.overrideFreeformSupport = null
                     cfg.overrideFreeformDragMode = null
@@ -247,9 +247,9 @@ class OvCommonConfigManager {
         private const val SYSTEM_FILE_PATH = "/data/system/zui/ov_common_persist_user_0.xml"
         private const val TEMP_FILE_NAME = "ov_config_temp.xml"
 
-        // 模式定义
+        // Mode definitions
         const val MODE_SPLIT_SCREEN = 1
-        const val MODE_FREEFORM_FREE = 2   // 自由小窗 (DragMode=1)
-        const val MODE_FREEFORM_FIXED = 3  // 固定比例小窗 (DragMode=0)
+        const val MODE_FREEFORM_FREE = 2   // free-form free window (DragMode=1)
+        const val MODE_FREEFORM_FIXED = 3  // fixed-ratio free window (DragMode=0)
     }
 }

@@ -20,8 +20,9 @@ import java.lang.reflect.Method
 import java.util.Date
 
 /**
- * 自定义状态栏时钟Hook模块
- * 修改SystemUI状态栏时钟显示格式和样式，支持自定义时间格式、字体大小、字间距、颜色和粗体
+ * Custom status bar clock hook module.
+ * Modifies SystemUI status bar clock display format and style; supports custom time
+ * format, font size, letter spacing, color, and bold.
  */
 @SuppressLint("PrivateApi")
 class CustomStatusBarClock : AppHookModule() {
@@ -40,23 +41,23 @@ class CustomStatusBarClock : AppHookModule() {
 
     private fun hookSystemUIClock(classLoader: ClassLoader) {
         try {
-            // Hook Clock 类的 getSmallTime 方法
+            // Hook the Clock class's getSmallTime method
             val getSmallTimeMethod: Method =
                 classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("getSmallTime")
             hookWithId(getSmallTimeMethod, "get_small_time") { chain ->
                 try {
-                    // 检查模块是否启用
+                    // Check whether the module is enabled
                     if (!isEnabled()) {
                         return@hookWithId chain.proceed()
                     }
 
-                    // 获取自定义格式的时间
+                    // Get the custom formatted time
                     val customTime = getCustomTimeFormat()
 
-                    // 应用所有样式到文本
+                    // Apply all styles to the text
                     val styledText = applyAllStyles(customTime)
 
-                    // 返回新的值
+                    // Return the new value
                     logger.debug("Successfully customized status bar clock: $customTime")
                     return@hookWithId styledText
                 } catch (e: Exception) {
@@ -65,28 +66,28 @@ class CustomStatusBarClock : AppHookModule() {
                 }
             }
 
-            // Hook updateClock 方法，确保内容描述和样式正确应用
+            // Hook the updateClock method to ensure content description and style are applied correctly
             val updateClockMethod: Method =
                 classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("updateClock")
             hookWithId(updateClockMethod, "update_clock") { chain ->
                 val result = chain.proceed()
                 try {
-                    // 检查模块是否启用
+                    // Check whether the module is enabled
                     if (!isEnabled()) {
                         return@hookWithId result
                     }
 
                     val clockInstance = chain.thisObject
 
-                    // 获取自定义时间
+                    // Get the custom time
                     val customTime = getCustomTimeFormat()
 
-                    // 设置内容描述（无障碍功能使用）
-                    // 使用 getMethod 而非 getDeclaredMethod，因为 setContentDescription 继承自 View
+                    // Set the content description (used by accessibility)
+                    // Use getMethod instead of getDeclaredMethod because setContentDescription is inherited from View
                     clockInstance.javaClass.getMethod("setContentDescription", CharSequence::class.java)
                         .invoke(clockInstance, customTime)
 
-                    // 应用直接样式（备用方案）
+                    // Apply direct styles (fallback approach)
                     applyDirectStyles(clockInstance)
 
                     logger.debug("Updated clock content description: $customTime")
@@ -96,7 +97,7 @@ class CustomStatusBarClock : AppHookModule() {
                 result
             }
 
-            // 额外 Hook：在视图初始化时应用样式
+            // Extra hook: apply styles when the view is initialized
             val onFinishInflateMethod: Method =
                 classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("onFinishInflate")
             hookWithId(onFinishInflateMethod, "on_finish_inflate") { chain ->
@@ -121,8 +122,8 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 自定义时间格式方法
-     * 使用新的格式化工具支持农历、节气等
+     * Custom time format method.
+     * Uses the new formatter utility supporting lunar calendar, solar terms, etc.
      */
     private fun getCustomTimeFormat(): String {
         return try {
@@ -130,33 +131,33 @@ class CustomStatusBarClock : AppHookModule() {
             CustomDateFormatter.format(format, Date())
         } catch (e: Exception) {
             logger.error("Error in custom time formatting", e)
-            // 出错时返回默认时间格式
+            // Return the default time format on error
             CustomDateFormatter.format("HH:mm", Date())
         }
     }
 
     /**
-     * 应用所有样式到文本（主要方法）
+     * Apply all styles to the text (main method)
      */
     private fun applyAllStyles(text: String): CharSequence {
         val styledText = SpannableString(text)
 
-        // 1. 应用字体大小（仅在开关开启时应用）
+        // 1. Apply font size (only when the switch is on)
         if (isTextSizeEnabled()) {
             applyTextSize(styledText, text)
         }
 
-        // 2. 应用字间距（仅在开关开启时应用）
+        // 2. Apply letter spacing (only when the switch is on)
         if (isLetterSpacingEnabled()) {
             applyLetterSpacing(styledText, text)
         }
 
-        // 3. 应用字体颜色（仅在开关开启时应用）
+        // 3. Apply font color (only when the switch is on)
         if (isTextColorEnabled()) {
             applyTextColor(styledText, text)
         }
 
-        // 4. 应用字体样式（粗体等，仅在开关开启时应用）
+        // 4. Apply font style (bold etc., only when the switch is on)
         if (isTextBoldEnabled()) {
             applyTextStyle(styledText, text)
         }
@@ -165,7 +166,7 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 应用字体大小
+     * Apply font size
      */
     private fun applyTextSize(styledText: SpannableString, text: String) {
         try {
@@ -184,12 +185,12 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 应用字间距（兼容性方案）
+     * Apply letter spacing (compatibility approach)
      */
     private fun applyLetterSpacing(styledText: SpannableString, text: String) {
         try {
             val letterSpacing = getLetterSpacing()
-            // 使用 ScaleXSpan 模拟字间距
+            // Use ScaleXSpan to simulate letter spacing
             if (letterSpacing > 0) {
                 styledText.setSpan(
                     ScaleXSpan(1.0f + letterSpacing * 0.1f),
@@ -202,7 +203,7 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 应用字体颜色
+     * Apply font color
      */
     private fun applyTextColor(styledText: SpannableString, text: String) {
         try {
@@ -217,7 +218,7 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 应用字体样式
+     * Apply font style
      */
     private fun applyTextStyle(styledText: SpannableString, text: String) {
         try {
@@ -234,32 +235,32 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 直接设置样式（备用方案）
+     * Set styles directly (fallback approach)
      */
     private fun applyDirectStyles(clockInstance: Any) {
         try {
             val cl = clockInstance.javaClass
 
-            // 尝试设置字间距（仅在开关开启时应用）
+            // Try to set letter spacing (only when the switch is on)
             if (isLetterSpacingEnabled()) {
                 val letterSpacing = getLetterSpacing()
                 try {
                     cl.getDeclaredMethod("setLetterSpacing", Float::class.javaPrimitiveType)
                         .invoke(clockInstance, letterSpacing)
                 } catch (_: NoSuchMethodError) {
-                    // 如果 setLetterSpacing 不存在，使用备选方案
+                    // If setLetterSpacing does not exist, use the alternative approach
                     applyAlternativeLetterSpacing(clockInstance)
                 }
             }
 
-            // 设置文本颜色（仅在开关开启时应用）
+            // Set the text color (only when the switch is on)
             if (isTextColorEnabled()) {
                 val textColor = getTextColor()
                 cl.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType)
                     .invoke(clockInstance, textColor)
             }
 
-            // 设置字体样式（仅在开关开启时应用）
+            // Set the font style (only when the switch is on)
             if (isTextBoldEnabled()) {
                 val isBold = isTextBold()
                 if (isBold) {
@@ -276,18 +277,18 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 备选字间距方案
+     * Alternative letter spacing approach
      */
     private fun applyAlternativeLetterSpacing(clockInstance: Any) {
         try {
             val cl = clockInstance.javaClass
             val letterSpacing = getLetterSpacing()
-            // 方法1：通过设置文本缩放来模拟字间距
+            // Method 1: simulate letter spacing via text scaling
             val scaleX = 1.0f + letterSpacing * 0.1f
             cl.getDeclaredMethod("setScaleX", Float::class.javaPrimitiveType)
                 .invoke(clockInstance, scaleX)
 
-            // 方法2：通过设置左右边距来增加间距
+            // Method 2: add spacing via left/right padding
             val paddingLeft = (letterSpacing * 10).toInt()
             val paddingRight = (letterSpacing * 10).toInt()
             cl.getDeclaredMethod("setPadding", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
@@ -298,7 +299,7 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 从SharedPreferences获取配置值的方法
+     * Read a config value from SharedPreferences
      */
     private val prefs: SharedPreferences
         get() = xposed.getRemotePreferences(PREFS_NAME)
@@ -308,77 +309,77 @@ class CustomStatusBarClock : AppHookModule() {
     }
 
     /**
-     * 获取字体大小配置
+     * Get font size config
      */
     private fun getTextSize(): Float {
-        return getCustomClockFloat(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE.name, 16.0f) // 默认16sp
+        return getCustomClockFloat(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE.name, 16.0f) // default 16sp
     }
 
     /**
-     * 获取字间距配置
+     * Get letter spacing config
      */
     private fun getLetterSpacing(): Float {
-        return getCustomClockFloat(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING.name, 0.1f) // 默认0.1
+        return getCustomClockFloat(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING.name, 0.1f) // default 0.1
     }
 
     /**
-     * 获取字体颜色配置
+     * Get font color config
      */
     private fun getTextColor(): Int {
-        return getCustomClockInt() // 默认白色
+        return getCustomClockInt() // default white
     }
 
     /**
-     * 获取粗体配置
+     * Get bold config
      */
     private fun isTextBold(): Boolean {
-        return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD.name) // 默认非粗体
+        return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD.name) // default not bold
     }
 
     /**
-     * 检查字体大小是否启用
+     * Check whether font size is enabled
      */
     private fun isTextSizeEnabled(): Boolean {
         return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE_ENABLED.name)
     }
 
     /**
-     * 检查字间距是否启用
+     * Check whether letter spacing is enabled
      */
     private fun isLetterSpacingEnabled(): Boolean {
         return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING_ENABLED.name)
     }
 
     /**
-     * 检查字体颜色是否启用
+     * Check whether font color is enabled
      */
     private fun isTextColorEnabled(): Boolean {
         return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR_ENABLED.name)
     }
 
     /**
-     * 检查粗体是否启用
+     * Check whether bold is enabled
      */
     private fun isTextBoldEnabled(): Boolean {
         return getCustomClockBoolean(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD.name)
     }
 
     /**
-     * 辅助方法：读取整型配置
+     * Helper: read an integer config
      */
     private fun getCustomClockInt(): Int {
         return prefs.getInt(PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR.name, -1)
     }
 
     /**
-     * 辅助方法：读取浮点型配置
+     * Helper: read a float config
      */
     private fun getCustomClockFloat(key: String, defaultValue: Float): Float {
         return prefs.getFloat(key, defaultValue)
     }
 
     /**
-     * 辅助方法：读取布尔型配置
+     * Helper: read a boolean config
      */
     private fun getCustomClockBoolean(key: String): Boolean {
         return prefs.getBoolean(key, false)

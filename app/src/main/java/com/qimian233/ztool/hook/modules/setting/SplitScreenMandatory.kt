@@ -6,10 +6,10 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * Split Screen强制分屏功能Hook模块（设置端）
+ * Forced Split Screen hook module (Settings side)
  *
- * 与 systemframework.SplitScreenMandatory 共享同一偏好键名 [Split_Screen_mandatory]，
- * 确保两端同时启用/禁用。
+ * Shares the same preference key name [Split_Screen_mandatory] with
+ * systemframework.SplitScreenMandatory, ensuring both sides are enabled/disabled together.
  */
 @SuppressLint("PrivateApi")
 class SplitScreenMandatory : AppHookModule() {
@@ -18,6 +18,6 @@ class SplitScreenMandatory : AppHookModule() {
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SETTINGS.packageName)
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
-        // 设置端 Hook 逻辑（当前无额外 hook，保留用于未来扩展）
+        // Settings-side hook logic (no additional hooks currently; kept for future extension)
     }
 }

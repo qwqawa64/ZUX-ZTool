@@ -8,8 +8,8 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 
 /**
- * SystemUI充电瓦数显示Hook模块
- * 在锁屏充电提示中添加实时充电功率显示
+ * SystemUI charging wattage display hook module.
+ * Adds a real-time charging power display to the lock screen charging indication.
  */
 @SuppressLint("PrivateApi")
 class SystemUIChargeWattsHook : AppHookModule() {
@@ -25,45 +25,45 @@ class SystemUIChargeWattsHook : AppHookModule() {
 
     private fun hookKeyguardIndicationController(classLoader: ClassLoader) {
         try {
-            // Hook computePowerIndication方法来添加充电瓦数显示
+            // Hook computePowerIndication to add the charging wattage display
             val computeMethod = classLoader.loadClass(TARGET_CLASS)
                 .getDeclaredMethod("computePowerIndication")
             hookWithId(computeMethod, "compute") { chain ->
                 try {
-                    // 获取原始返回的充电提示文本
+                    // Get the original charging indication text
                     val result = chain.proceed()
                     val originalText = result as String
 
-                    // 获取KeyguardIndicationController实例
+                    // Get the KeyguardIndicationController instance
                     val controller = chain.thisObject
                     val cl: Class<*> = controller.javaClass
 
-                    // 获取充电状态相关字段
+                    // Get charging-state related fields
                     val isPluggedIn = cl.getDeclaredField("mPowerPluggedIn").getBoolean(controller)
                     val chargingWattage = cl.getDeclaredField("mChargingWattage").getInt(controller)
                     val chargingSpeed = cl.getDeclaredField("mChargingSpeed").getInt(controller)
 
-                    // 只在充电状态下显示瓦数，且瓦数大于0
+                    // Only show wattage while charging and when wattage is greater than 0
                     if (isPluggedIn && chargingWattage > 0) {
-                        // 尝试多种单位转换
+                        // Try multiple unit conversions
                         val watts = calculateActualWatts(chargingWattage)
 
                         if (watts > 0) {
-                            // 使用换行符 \n 追加功率信息
+                            // Append power info using newline \n
                             val newText = originalText + "\n" + formatWattage(watts, chargingSpeed)
-                            logger.debug("成功添加充电瓦数显示: " + watts + "W, speed=" + chargingSpeed)
+                            logger.debug("Charging wattage display added: " + watts + "W, speed=" + chargingSpeed)
                             return@hookWithId newText
                         }
                     }
                     return@hookWithId result
                 } catch (t: Throwable) {
-                    logger.error("computePowerIndication hook回调异常", t)
+                    logger.error("computePowerIndication hook callback error", t)
                     return@hookWithId chain.proceed()
                 }
             }
 
-            // 额外Hook电池状态更新方法，确保能获取到最新的充电数据
-            // onRefreshBatteryInfo 在新版 SystemUI 中位于内部类 BaseKeyguardCallback 中
+            // Additionally hook the battery status update method to get the latest charging data
+            // onRefreshBatteryInfo lives in the inner class BaseKeyguardCallback on newer SystemUI versions
             var refreshMethod: Method? = null
             try {
                 val callbackClass = classLoader.loadClass(
@@ -83,15 +83,15 @@ class SystemUIChargeWattsHook : AppHookModule() {
                 hookWithId(refreshMethod, "final_refresh") { chain ->
                     try {
                         val result = chain.proceed()
-                        // 这个方法会在电池状态更新时调用，我们可以在这里获取最新的充电数据
+                        // This method is called on battery status updates, so we can get the latest charging data here
                         val batteryStatus = chain.args[0]
                         if (batteryStatus != null) {
                             try {
-                                // 尝试从BatteryStatus对象获取充电功率
+                                // Try to get the charging power from the BatteryStatus object
                                 val maxChargingWattage = batteryStatus.javaClass
                                     .getDeclaredField("maxChargingWattage").getInt(batteryStatus)
-                                // BaseKeyguardCallback 是 KeyguardIndicationController 的非静态内部类
-                                // 通过 this$0 获取外部类实例
+                                // BaseKeyguardCallback is a non-static inner class of KeyguardIndicationController;
+                                // get the outer class instance via this$0
                                 val callback = chain.thisObject
                                 val outerField = callback.javaClass
                                     .getDeclaredField("this$0")
@@ -99,19 +99,19 @@ class SystemUIChargeWattsHook : AppHookModule() {
                                 val controller = outerField.get(callback)
                                 val cl: Class<*> = controller!!.javaClass
 
-                                // 记录调试信息
+                                // Log debug info
                                 logger.debug(
-                                    "BatteryStatus更新 - maxChargingWattage: " + maxChargingWattage +
+                                    "BatteryStatus update - maxChargingWattage: " + maxChargingWattage +
                                             ", mChargingWattage: " + cl.getDeclaredField("mChargingWattage")
                                         .getInt(controller)
                                 )
                             } catch (t: Throwable) {
-                                logger.error("读取BatteryStatus失败", t)
+                                logger.error("Failed to read BatteryStatus", t)
                             }
                         }
                         return@hookWithId result
                     } catch (t: Throwable) {
-                        logger.error("onRefreshBatteryInfo hook回调异常", t)
+                        logger.error("onRefreshBatteryInfo hook callback error", t)
                         return@hookWithId chain.proceed()
                     }
                 }
@@ -119,54 +119,54 @@ class SystemUIChargeWattsHook : AppHookModule() {
                 logger.warn("Cannot find onRefreshBatteryInfo, skipping this hook")
             }
 
-            logger.info("成功Hook KeyguardIndicationController")
+            logger.info("Successfully hooked KeyguardIndicationController")
         } catch (t: Throwable) {
-            logger.error("Hook KeyguardIndicationController失败", t)
+            logger.error("Failed to hook KeyguardIndicationController", t)
         }
     }
 
     /**
-     * 尝试多种方式计算实际瓦数
+     * Try multiple ways to calculate the actual wattage
      */
     private fun calculateActualWatts(rawWattage: Int): Int {
-        // 情况1：如果值在合理范围内（1-150W），直接使用
+        // Case 1: value in a plausible range (1-150W), use directly
         if (rawWattage in 1..150000) {
-            // 可能是毫瓦单位，转换为瓦
+            // Likely in milliwatts, convert to watts
             return rawWattage / 1000
         }
 
-        // 情况2：如果值很大，可能是微瓦单位
+        // Case 2: very large value, likely in microwatts
         if (rawWattage in 150001..150000000) {
             return rawWattage / 1000000
         }
 
-        // 情况3：如果值异常大，尝试除以10000（某些设备的特殊单位）
+        // Case 3: abnormally large value, try dividing by 10000 (device-specific unit)
         if (rawWattage > 1000000) {
             return rawWattage / 10000
         }
 
-        // 无法确定单位，返回0表示不显示
-        logger.warn("无法识别的瓦数单位: $rawWattage")
+        // Unknown unit, return 0 to hide the display
+        logger.warn("Unrecognized wattage unit: $rawWattage")
         return 0
     }
 
     /**
-     * 格式化充电瓦数显示：显示"<功率>W <闪电符号>"
-     * 根据 mChargingSpeed 字段判断充电速度等级并附加闪电符号
-     * @param watts 充电功率（瓦）
-     * @param chargingSpeed 充电速度等级：1=慢速, 2=快速, 3=极速
+     * Format the charging wattage display: "<power>W <lightning symbols>"
+     * Appends lightning symbols based on the mChargingSpeed level.
+     * @param watts charging power (watts)
+     * @param chargingSpeed charging speed level: 1=slow, 2=fast, 3=turbo
      */
     private fun formatWattage(watts: Int, chargingSpeed: Int): String {
         if (watts <= 0) return ""
 
-        // 基础字符串："[功率]W"
+        // Base string: "[power]W"
         val base = watts.toString() + "W"
 
-        // 根据充电速度等级附加闪电符号
+        // Append lightning symbols based on the charging speed level
         return when (chargingSpeed) {
-            3 -> "$base⚡⚡" // 极速充电
-            2 -> "$base⚡" // 快速充电
-            1 -> base // 慢速充电，无闪电符号
+            3 -> "$base⚡⚡" // Turbo charging
+            2 -> "$base⚡" // Fast charging
+            1 -> base // Slow charging, no lightning symbol
             else -> base
         }
     }

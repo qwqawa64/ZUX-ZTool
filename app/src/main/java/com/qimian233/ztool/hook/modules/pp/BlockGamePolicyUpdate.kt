@@ -6,12 +6,16 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 屏蔽 ZUI 性能服务 (com.zui.pp) 游戏/性能策略的云端 OTA 应用。
+ * Blocks cloud-side OTA application of game/performance policies in the ZUI
+ * performance service (com.zui.pp).
  *
- * WhatsNewBroadcastReceiver 接收 com.lenovo.tbengine (UDS 引擎) 推送的
- * android.action.targetcomponent.performance.dataupdate 广播，从 ContentProvider
- * 拉取 gamepolicy.zip，解压后按版本号覆盖 PerformanceConfig / GamePolicyConfig。
- * 吞掉 onReceive 后云端下发的策略包不再落盘，保留 system/etc 下的系统内置策略。
+ * WhatsNewBroadcastReceiver receives the
+ * android.action.targetcomponent.performance.dataupdate broadcast pushed by
+ * com.lenovo.tbengine (UDS engine), pulls gamepolicy.zip from a
+ * ContentProvider, unpacks it, and overwrites PerformanceConfig /
+ * GamePolicyConfig by version number. Swallowing onReceive prevents
+ * cloud-delivered policy packages from being written to disk, keeping the
+ * built-in policies under system/etc.
  */
 class BlockGamePolicyUpdate : AppHookModule() {
 
@@ -35,7 +39,7 @@ class BlockGamePolicyUpdate : AppHookModule() {
             )
             hookWithId(onReceive, "pp_game_policy_broadcast") { _ ->
                 logger.debug("Blocked WhatsNewBroadcastReceiver.onReceive (game policy OTA).")
-                // no-op：不接收云端策略包
+                // no-op: do not receive the cloud policy package
             }
             logger.info("Hooked WhatsNewBroadcastReceiver.onReceive")
         } catch (t: Throwable) {

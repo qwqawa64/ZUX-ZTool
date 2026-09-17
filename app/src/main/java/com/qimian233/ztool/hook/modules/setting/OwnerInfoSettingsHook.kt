@@ -13,11 +13,11 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
- * 锁屏OwnerInfo自动更新Hook模块（Settings 进程侧）。
+ * Lock screen OwnerInfo auto-update hook module (Settings process side).
  * <p>
- * 由 [OwnerInfoHook] 拆分而来：仅处理 com.android.settings 进程，
- * 在 Settings 页面恢复 / Activity 恢复时注册屏幕状态广播接收器。
- * 核心更新逻辑见 [OwnerInfoUpdater]。
+ * Split from [OwnerInfoHook]: handles only the com.android.settings process,
+ * registering a screen-state broadcast receiver when Settings pages / activities resume.
+ * Core update logic lives in [OwnerInfoUpdater].
  * </p>
  */
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
@@ -39,9 +39,9 @@ class OwnerInfoSettingsHook : AppHookModule() {
     }
 
     private fun hookSettingsPackage(classLoader: ClassLoader) {
-        logger.info("开始Hook Settings包")
+        logger.info("Hooking Settings package")
 
-        // Hook点1: 在Settings的SecuritySettings中注册
+        // Hook point 1: register in Settings SecuritySettings
         try {
             val onResumeMethod: Method = classLoader
                 .loadClass("com.android.settings.SecuritySettings")
@@ -52,12 +52,12 @@ class OwnerInfoSettingsHook : AppHookModule() {
                 registerScreenReceiver(chain.thisObject, classLoader)
                 result
             }
-            logger.info("成功Hook SecuritySettings.onResume")
+            logger.info("Successfully hooked SecuritySettings.onResume")
         } catch (e: Throwable) {
-            logger.error("Hook SecuritySettings失败", e)
+            logger.error("Failed to hook SecuritySettings", e)
         }
 
-        // Hook点2: ActivityThread中注册屏幕状态监听器
+        // Hook point 2: register screen state listener in ActivityThread
         try {
             val activityThreadClass = classLoader.loadClass("android.app.ActivityThread")
             val activityRecordClass =
@@ -81,9 +81,9 @@ class OwnerInfoSettingsHook : AppHookModule() {
                 }
                 result
             }
-            logger.info("成功Hook ActivityThread.performResumeActivity")
+            logger.info("Successfully hooked ActivityThread.performResumeActivity")
         } catch (e: Throwable) {
-            logger.error("Hook ActivityThread.performResumeActivity失败", e)
+            logger.error("Failed to hook ActivityThread.performResumeActivity", e)
         }
     }
 
@@ -97,7 +97,7 @@ class OwnerInfoSettingsHook : AppHookModule() {
             if (contextObj is Context) {
                 context = contextObj
             } else {
-                // 尝试通过反射获取Context
+                // Try to obtain the Context via reflection
                 val getContextMethod: Method = contextObj!!.javaClass.getDeclaredMethod("getContext")
                 context = getContextMethod.invoke(contextObj) as Context
             }
@@ -106,12 +106,12 @@ class OwnerInfoSettingsHook : AppHookModule() {
             mScreenReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent) {
                     val action = intent.action
-                    logger.debug("收到广播: $action")
+                    logger.debug("Received broadcast: $action")
 
                     if (Intent.ACTION_SCREEN_ON == action ||
                         Intent.ACTION_USER_PRESENT == action
                     ) {
-                        // 屏幕亮起或用户解锁时更新OwnerInfo
+                        // Update OwnerInfo when the screen turns on or the user unlocks
                         updater.updateOwnerInfo(context, classLoader)
                     }
                 }
@@ -124,10 +124,10 @@ class OwnerInfoSettingsHook : AppHookModule() {
             context.registerReceiver(mScreenReceiver, filter)
             mIsReceiverRegistered = true
             logger.debug("Successfully registered screen state broadcast receiver")
-            // 立即更新一次
+            // Update immediately once
             updater.updateOwnerInfo(context, classLoader)
         } catch (e: Throwable) {
-            logger.error("注册广播接收器失败", e)
+            logger.error("Failed to register broadcast receiver", e)
         }
     }
 }

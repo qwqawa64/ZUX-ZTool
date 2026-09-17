@@ -14,14 +14,14 @@ import java.lang.reflect.Method
 import java.util.ArrayList
 
 /**
- * ZUI Launcher后台管理优化Hook模块
- * 防止划掉后台卡片时杀死应用的后台服务
- * 智能适配Android 16+和Android 15-版本
- * 支持白名单机制，只保护指定应用
+ * ZUI Launcher background management optimization hook module.
+ * Prevents killing apps' background services when swiping away recents cards.
+ * Adapts to Android 16+ and Android 15- versions.
+ * Supports a whitelist mechanism that protects only specified apps.
  */
 class DisableForceStop : AppHookModule() {
 
-    // 白名单应用包名集合
+    // Whitelist package name set
     private var whiteList: Array<String> = arrayOf()
 
     override fun getModuleName(): String = PreferenceKeys.DISABLE_FORCE_STOP.name
@@ -31,14 +31,14 @@ class DisableForceStop : AppHookModule() {
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
         val packageName = param.packageName
-        // 获取当前Android SDK版本
+        // Get the current Android SDK version
         val sdkVersion = getSDKVersion()
         whiteList = getWhiteListPackages()
         logger.trace("Current Android SDK: $sdkVersion, target package name: $packageName")
         logger.trace("White list enabled, app in whitelist: ${whiteList.size}")
 
-        // 根据Android版本选择Hook策略
-        if (sdkVersion >= 36) { // 包括Android 16
+        // Choose the hook strategy by Android version
+        if (sdkVersion >= 36) { // Includes Android 16
             hookForAndroid16Plus(classLoader, packageName)
         } else {
             hookForAndroid15Minus(classLoader, packageName)
@@ -46,8 +46,7 @@ class DisableForceStop : AppHookModule() {
     }
 
     /**
-     * Android 16+版本的Hook策略
-     * 针对ZUI Launcher桌面大改后的新架构
+     * Android 16+ hook strategy targeting the reworked ZUI Launcher architecture.
      */
     private fun hookForAndroid16Plus(classLoader: ClassLoader, packageName: String) {
         try {
@@ -62,7 +61,7 @@ class DisableForceStop : AppHookModule() {
         }
     }
 
-    // 检查是否启用白名单保护
+    // Check whether whitelist protection is enabled
     private fun isWhiteListEnabled(): Boolean {
         return try {
             remotePreferences.getBoolean(PreferenceKeys.FORCE_STOP_WHITE_LIST_ENABLE.name, false)
@@ -71,7 +70,7 @@ class DisableForceStop : AppHookModule() {
         }
     }
 
-    // 获取白名单中的应用包名
+    // Get whitelisted package names
     private fun getWhiteListPackages(): Array<String> {
         val value = try {
             remotePreferences.getString(PreferenceKeys.FORCE_STOP_WHITE_LIST.name, "")
@@ -82,9 +81,9 @@ class DisableForceStop : AppHookModule() {
         return value.split(",").toTypedArray()
     }
 
-    // 检查指定包名是否在白名单中
+    // Check whether the given package name is whitelisted
     private fun isProtectedPackage(packageName: String): Boolean {
-        if (!isWhiteListEnabled()) return true // 白名单未启用，保护所有应用
+        if (!isWhiteListEnabled()) return true // Whitelist disabled, protect all apps
         for (pkg in whiteList) {
             if (pkg == packageName) {
                 return true
@@ -94,8 +93,7 @@ class DisableForceStop : AppHookModule() {
     }
 
     /**
-     * Android 15及以下版本的Hook策略
-     * 针对传统Launcher架构
+     * Android 15- hook strategy for the legacy launcher architecture.
      */
     private fun hookForAndroid15Minus(classLoader: ClassLoader, packageName: String) {
         try {
@@ -109,33 +107,33 @@ class DisableForceStop : AppHookModule() {
     }
 
     /**
-     * Android 16+ ZUI Launcher专用Hook（带白名单机制）
+     * Android 16+ ZUI Launcher hook (with whitelist mechanism).
      */
     private fun hookZuiLauncherAndroid16(classLoader: ClassLoader) {
         try {
             val overviewUtilitiesClass = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities")
 
-            // Hook removeAppProcess方法 - 主要的进程杀死入口
+            // Hook the removeAppProcess method - the main process-kill entry point
             val removeAppProcessMethod: Method = overviewUtilitiesClass.getDeclaredMethod(
                 "removeAppProcess", Context::class.java, Int::class.javaPrimitiveType, String::class.java, Int::class.javaPrimitiveType
             )
             hookWithId(removeAppProcessMethod, "remove_app_process_1") { chain ->
-                val pkgName = chain.args[2] as String // 注意：参数索引修正
+                val pkgName = chain.args[2] as String // Note: corrected argument index
                 val uid = chain.args[3] as Int
 
-                // 检查是否在白名单中
+                // Check whitelist membership
                 if (isProtectedPackage(pkgName)) {
-                    // 在白名单中，阻止杀死操作
+                    // In whitelist, block the kill operation
                     logger.trace("Android 16: Avoid killing app in whitelist: $pkgName (UID: $uid)")
                     return@hookWithId null
                 }
 
-                // 不在白名单中，允许执行原方法
+                // Not in whitelist, allow the original method to execute
                 logger.trace("Android 16: Allow killing app: $pkgName")
                 chain.proceed()
             }
 
-            // Hook c方法 - 强制杀死进程的辅助方法（DEXKit 动态查找）
+            // Hook the c method - forced-kill helper method (found dynamically via DexKit)
             val cMethodName = findCMethodName()
             val cMethod: Method = overviewUtilitiesClass.getDeclaredMethod(
                 cMethodName, Context::class.java, String::class.java, Int::class.javaPrimitiveType
@@ -144,19 +142,19 @@ class DisableForceStop : AppHookModule() {
                 val pkgName = chain.args[1] as String
                 val uid = chain.args[2] as Int
 
-                // 检查是否在白名单中
+                // Check whitelist membership
                 if (isProtectedPackage(pkgName)) {
-                    // 在白名单中，阻止强制杀死
+                    // In whitelist, block the forced kill
                     logger.trace("Android 16: Blocked forced killing app in whitelist: $pkgName (UID: $uid)")
                     return@hookWithId null
                 }
 
-                // 不在白名单中，允许执行原方法
+                // Not in whitelist, allow the original method to execute
                 logger.trace("Android 16: Allow forced killing app: $pkgName")
                 chain.proceed()
             }
 
-            // Hook removeAllRunningAppProcesses方法 - 批量清理入口
+            // Hook the removeAllRunningAppProcesses method - batch cleanup entry point
             val removeAllMethod: Method = overviewUtilitiesClass.getDeclaredMethod(
                 "removeAllRunningAppProcesses", Context::class.java, ArrayList::class.java, Boolean::class.javaPrimitiveType
             )
@@ -167,34 +165,34 @@ class DisableForceStop : AppHookModule() {
                     val totalTasks = tasks.size
                     var protectedCount = 0
 
-                    // 记录白名单应用
+                    // Track whitelisted apps
                     for (task in tasks) {
                         try {
-                            // 尝试获取任务对应的包名
+                            // Try to get the task's package name
                             val pkgName = getPackageNameFromTask(task)
                             if (pkgName != null && isProtectedPackage(pkgName)) {
                                 protectedCount++
                                 logger.trace("Android 16: Whitelist APP detected when performing batch kill: $pkgName")
                             }
                         } catch (_: Exception) {
-                            // 如果无法获取包名，跳过
+                            // If the package name cannot be obtained, skip
                         }
                     }
 
                     if (protectedCount > 0) {
-                        // 如果包含白名单应用，阻止整个批量清理操作
-                        logger.trace("Android 16: $protectedCount included in batch kill list, blocking kill operation")
+                        // If whitelisted apps are included, block the entire batch cleanup operation
+                        logger.trace("Android 16: Blocking kill operation, $protectedCount whitelisted app(s) in batch kill list")
                         return@hookWithId null
                     }
 
-                    // 不包含白名单应用，允许执行批量清理
+                    // No whitelisted apps included, allow the batch cleanup
                     logger.trace("Android 16: $totalTasks APP(s) are allowed to be killed.")
                 }
 
                 chain.proceed()
             }
 
-            // Hook AsyncTask子类的doInBackground方法 - 异步清理逻辑
+            // Hook the AsyncTask subclass's doInBackground method - async cleanup logic
             val asyncTaskClass = findInnerClass(classLoader)
 
             if (asyncTaskClass != null) {
@@ -202,7 +200,7 @@ class DisableForceStop : AppHookModule() {
                     asyncTaskClass.getDeclaredMethod("doInBackground", arrayOf<Void>().javaClass)
                 hookWithId(doInBackgroundMethod, "do_in_background") { chain ->
                     try {
-                        // 尝试获取任务列表
+                        // Try to get the task list
                         val thisObject = chain.thisObject
                         val tasksField: Field = thisObject.javaClass.getDeclaredField("tasks")
                         tasksField.isAccessible = true
@@ -217,23 +215,23 @@ class DisableForceStop : AppHookModule() {
                                         return@hookWithId null
                                     }
                                 } catch (_: Exception) {
-                                    // 跳过无法识别的任务
+                                    // Skip unrecognized tasks
                                 }
                             }
                         }
                     } catch (_: Exception) {
-                        // 如果无法检查，默认阻止
+                        // If the check cannot be performed, block by default
                         logger.warn("Android 16: Unable to check async task, blocking it by default")
                         return@hookWithId null
                     }
 
-                    // 不包含白名单应用，允许执行
+                    // No whitelisted apps included, allow execution
                     logger.trace("Android 16: Allowed to perform async kill")
                     chain.proceed()
                 }
             }
 
-            // 尝试Hook Android 16可能新增的方法
+            // Try hooking methods Android 16 may have added
             hookAdditionalAndroid16Methods(classLoader)
 
             logger.info("Hook for Android 16+ ZUI Launcher successfully applied.")
@@ -243,12 +241,12 @@ class DisableForceStop : AppHookModule() {
     }
 
     /**
-     * Android 16+ 基础Launcher Hook
+     * Android 16+ base Launcher hook.
      */
     private fun hookBaseLauncherAndroid16() {
         try {
-            // Android 16上基础Launcher可能的Hook点
-            // 这里可以根据需要添加对com.android.launcher3的特定Hook
+            // Possible hook points on the base Launcher for Android 16.
+            // Specific hooks for com.android.launcher3 can be added here as needed.
             logger.warn("Android 16 logic not implemented yet!")
         } catch (t: Throwable) {
             logger.error("Android 16+: failed to hook basic Launcher", t)
@@ -256,14 +254,14 @@ class DisableForceStop : AppHookModule() {
     }
 
     /**
-     * Android 15及以下版本的通用Hook策略（带白名单机制）
+     * Android 16- hook strategy with whitelist mechanism.
      */
     @SuppressLint("PrivateApi")
     private fun hookLegacyLauncher(classLoader: ClassLoader) {
         try {
             logger.info("Start hooking legacy Launcher with whitelist enabled.")
 
-            // Hook ActivityManagerWrapper类的方法
+            // Hook ActivityManagerWrapper methods
             val amwclass = try {
                 classLoader.loadClass("com.android.systemui.shared.system.ActivityManagerWrapper")
             } catch (_: ClassNotFoundException) {
@@ -271,7 +269,7 @@ class DisableForceStop : AppHookModule() {
             }
 
             if (amwclass != null) {
-                logger.info("找到ActivityManagerWrapper类，开始Hook...")
+                logger.info("Found ActivityManagerWrapper class, starting hook...")
 
                 val removeAllMethod: Method = amwclass.getDeclaredMethod(
                     "removeAllRunningAppProcesses", Context::class.java, ArrayList::class.java
@@ -288,12 +286,12 @@ class DisableForceStop : AppHookModule() {
                                     protectedCount++
                                 }
                             } catch (_: Exception) {
-                                // 跳过无法识别的任务
+                                // Skip unrecognized tasks
                             }
                         }
 
                         if (protectedCount > 0) {
-                            logger.trace("传统架构: 批量清理包含 $protectedCount 个白名单应用，阻止清理")
+                            logger.trace("Legacy architecture: batch kill includes $protectedCount whitelisted app(s), blocking kill")
                             return@hookWithId null
                         }
                     }
@@ -308,17 +306,17 @@ class DisableForceStop : AppHookModule() {
                     val pkgName = chain.args[2] as String
 
                     if (isProtectedPackage(pkgName)) {
-                        logger.trace("传统架构: 阻止杀死白名单应用: $pkgName")
+                        logger.trace("Legacy architecture: blocked killing whitelisted app: $pkgName")
                         return@hookWithId null
                     }
 
                     chain.proceed()
                 }
 
-                logger.info("ActivityManagerWrapper Hook完成 [OK]，白名单机制生效")
+                logger.info("ActivityManagerWrapper hook completed [OK], whitelist mechanism active")
             } else {
-                logger.warn("未找到ActivityManagerWrapper类，尝试其他Hook点...")
-                // 可以添加备用的Hook点
+                logger.warn("ActivityManagerWrapper class not found, trying other hook points...")
+                // Alternative hook points can be added here
             }
         } catch (e: Exception) {
             logger.error("Failed to hook legacy launcher", e)
@@ -326,11 +324,11 @@ class DisableForceStop : AppHookModule() {
     }
 
     /**
-     * Android 16可能新增的Hook点
+     * Additional possible Android 16 hook points.
      */
     private fun hookAdditionalAndroid16Methods(classLoader: ClassLoader) {
         try {
-            // 尝试Hook Android 16可能新增的任务管理相关方法
+            // Try hooking task-management methods Android 16 may have added
             val potentialClasses = arrayOf(
                 "com.zui.launcher.taskbar.TaskbarManager",
                 "com.zui.launcher.recents.RecentsModel",
@@ -345,19 +343,19 @@ class DisableForceStop : AppHookModule() {
                 }
                 if (targetClass != null) {
                     logger.debug("Android 16 new class: $className")
-                    // 可以根据需要添加具体的Hook逻辑
+                    // Specific hook logic can be added as needed
                 }
             }
         } catch (_: Throwable) {
-            // 忽略错误，这些是可选的Hook点
+            // Ignore errors; these are optional hook points
             logger.info("Android 16 extra hook points detection completed.")
         }
     }
 
     /**
-     * 从任务对象中提取包名
-     * @param task 任务对象
-     * @return 包名，如果无法提取则返回null
+     * Extract the package name from a task object.
+     * @param task task object
+     * @return package name, or null when it cannot be extracted
      */
     private fun getPackageNameFromTask(task: Any?): String? {
         if (task == null) {
@@ -365,7 +363,7 @@ class DisableForceStop : AppHookModule() {
         }
 
         try {
-            // 方法1：尝试通过ComponentName获取包名
+            // Method 1: try getting the package name via ComponentName
             val componentNameField: Field = task.javaClass.getDeclaredField("componentName")
             componentNameField.isAccessible = true
             val componentName = componentNameField.get(task)
@@ -378,7 +376,7 @@ class DisableForceStop : AppHookModule() {
                 }
             }
 
-            // 方法2：尝试直接获取packageName字段
+            // Method 2: try getting the packageName field directly
             try {
                 val packageNameField: Field = task.javaClass.getDeclaredField("packageName")
                 packageNameField.isAccessible = true
@@ -387,10 +385,10 @@ class DisableForceStop : AppHookModule() {
                     return packageNameFieldVal
                 }
             } catch (_: NoSuchFieldException) {
-                // 字段可能不存在，继续尝试其他方法
+                // The field may not exist; try other methods
             }
 
-            // 方法3：尝试通过BaseActivityInfo获取包名
+            // Method 3: try getting the package name via BaseActivityInfo
             try {
                 val baseActivityInfoField: Field = task.javaClass.getDeclaredField("baseActivityInfo")
                 baseActivityInfoField.isAccessible = true
@@ -405,10 +403,10 @@ class DisableForceStop : AppHookModule() {
                     }
                 }
             } catch (_: NoSuchFieldException) {
-                // 字段可能不存在
+                // The field may not exist
             }
 
-            // 方法4：尝试通过taskDescription获取包名
+            // Method 4: try getting the package name via taskDescription
             try {
                 val taskDescriptionField: Field = task.javaClass.getDeclaredField("taskDescription")
                 taskDescriptionField.isAccessible = true
@@ -422,18 +420,19 @@ class DisableForceStop : AppHookModule() {
                     }
                 }
             } catch (_: NoSuchFieldException) {
-                // 字段可能不存在
+                // The field may not exist
             }
         } catch (_: Exception) {
-            // 所有方法都失败，返回null
+            // All methods failed, return null
         }
 
         return null
     }
 
     /**
-     * 从离线索引读取 OverviewUtilities 中签名 (Context, String, int)→void 的混淆方法名。
-     * 索引缺失/失败时回退硬编码 "c"。
+     * Read from the offline index the obfuscated method name in OverviewUtilities
+     * with signature (Context, String, int)→void. Falls back to the hardcoded "c"
+     * when the index is missing or the lookup fails.
      */
     private fun findCMethodName(): String {
         val name = DexIndexStore.string(
@@ -446,19 +445,20 @@ class DisableForceStop : AppHookModule() {
             logger.info("Loaded force-stop method from dex index: $name")
             return name
         }
-        return "c" // 回退硬编码
+        return "c" // Hardcoded fallback
     }
 
     /**
-     * 通过反射查找内部类（处理混淆后的内部类名）。
-     * 遍历可能的内部类名（$1-$5, $a-$e）直到找到有 doInBackground 方法的类。
+     * Find inner classes via reflection (handling obfuscated inner class names).
+     * Iterates possible inner class names ($1-$5, $a-$e) until a class with a
+     * doInBackground method is found.
      */
     private fun findInnerClass(classLoader: ClassLoader): Class<*>? {
-        // 先尝试常见混淆模式: $a, $b, $c, $d, $e
+        // Try common obfuscation patterns first: $a, $b, $c, $d, $e
         for (suffix in 'a'..'e') {
             try {
                 val cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities$$suffix")
-                // 验证：该内部类应有 doInBackground 方法
+                // Validation: the inner class should have a doInBackground method
                 try {
                     cls.getDeclaredMethod("doInBackground", arrayOf<Void>().javaClass)
                     logger.info("Found inner class: ${cls.name}")
@@ -468,7 +468,7 @@ class DisableForceStop : AppHookModule() {
             } catch (_: ClassNotFoundException) {
             }
         }
-        // 再尝试数字后缀: $1, $2, $3, $4, $5
+        // Then try numeric suffixes: $1, $2, $3, $4, $5
         for (i in 1..5) {
             try {
                 val cls = classLoader.loadClass("com.zui.launcher.util.OverviewUtilities$$i")
@@ -485,14 +485,14 @@ class DisableForceStop : AppHookModule() {
     }
 
     /**
-     * 获取当前Android SDK版本
+     * Get the current Android SDK version.
      */
     private fun getSDKVersion(): Int {
         return try {
             Build.VERSION.SDK_INT
         } catch (t: Throwable) {
             logger.error("Failed to fetch SDK level, use default.", t)
-            Build.VERSION_CODES.BASE // 返回最低版本
+            Build.VERSION_CODES.BASE // Lowest version
         }
     }
 }

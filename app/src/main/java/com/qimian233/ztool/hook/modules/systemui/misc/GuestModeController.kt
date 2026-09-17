@@ -9,9 +9,9 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 访客模式控制Hook模块
- * 修复系统UI中自动创建访客用户的逻辑
- * 当用户切换器被禁用时，阻止自动添加访客用户
+ * Guest mode control hook module.
+ * Fixes the auto guest user creation logic in SystemUI.
+ * Prevents automatically adding a guest user when the user switcher is disabled.
  */
 class GuestModeController : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.GUEST_MODE_CONTROLLER.name
@@ -29,28 +29,28 @@ class GuestModeController : AppHookModule() {
                 .loadClass("com.android.systemui.user.domain.interactor.GuestUserInteractor")
                 .getDeclaredMethod("isDeviceAllowedToAddGuest")
             hookWithId(isAllowedMethod, "is_allowed") { chain ->
-                // 获取应用上下文
+                // Get the application context
                 val context = chain.thisObject.javaClass
                     .getDeclaredField("applicationContext").get(chain.thisObject) as Context?
 
-                // 检查用户切换器是否启用
+                // Check whether the user switcher is enabled
                 val userSwitcherEnabled = Settings.Global.getInt(
                     context!!.contentResolver,
                     "user_switcher_enabled",
                     0
                 )
 
-                // 如果用户切换器被禁用，则不允许添加访客
+                // If the user switcher is disabled, do not allow adding a guest
                 if (userSwitcherEnabled == 0) {
-                    logger.debug("阻止自动添加访客用户 - 用户切换器已禁用")
+                    logger.debug("Blocked automatic guest user addition - user switcher disabled")
                     return@hookWithId false
                 }
                 chain.proceed()
             }
 
-            logger.info("成功Hook访客用户交互器")
+            logger.info("Successfully hooked GuestUserInteractor")
         } catch (t: Throwable) {
-            logger.error("Hook访客用户交互器失败", t)
+            logger.error("Failed to hook GuestUserInteractor", t)
         }
     }
 }

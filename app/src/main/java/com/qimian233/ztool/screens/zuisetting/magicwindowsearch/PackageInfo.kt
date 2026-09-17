@@ -7,7 +7,7 @@ class PackageInfo @Throws(JSONException::class) constructor(jsonObject: JSONObje
     val name: String = jsonObject.optString("name", "")
     val mainPage: String = jsonObject.optString("mainPage", "")
 
-    // 解析activityPairs
+    // Parse activityPairs
     val activityPairs: List<ActivityPair> = buildList {
         if (jsonObject.has("activityPairs")) {
             val pairsArray = jsonObject.getJSONArray("activityPairs")
@@ -18,7 +18,7 @@ class PackageInfo @Throws(JSONException::class) constructor(jsonObject: JSONObje
         }
     }
 
-    // 解析forceFullscreenPages
+    // Parse forceFullscreenPages
     val forceFullscreenPages: List<String> = buildList {
         if (jsonObject.has("forceFullscreenPages")) {
             val fullscreenArray = jsonObject.getJSONArray("forceFullscreenPages")
@@ -28,7 +28,7 @@ class PackageInfo @Throws(JSONException::class) constructor(jsonObject: JSONObje
         }
     }
 
-    // 解析transActivities
+    // Parse transActivities
     val transActivities: List<String> = buildList {
         if (jsonObject.has("transActivities")) {
             val transArray = jsonObject.getJSONArray("transActivities")
@@ -38,7 +38,7 @@ class PackageInfo @Throws(JSONException::class) constructor(jsonObject: JSONObje
         }
     }
 
-    // 解析leftTransActivities
+    // Parse leftTransActivities
     val leftTransActivities: List<String> = buildList {
         if (jsonObject.has("leftTransActivities")) {
             val leftTransArray = jsonObject.getJSONArray("leftTransActivities")
@@ -48,7 +48,7 @@ class PackageInfo @Throws(JSONException::class) constructor(jsonObject: JSONObje
         }
     }
 
-    // 解析其他字符串字段
+    // Parse other string fields
     val showEmbeddingDivider: String = jsonObject.optString("showEmbeddingDivider", "未设置")
     val skipLetterboxDisplayInfo: String = jsonObject.optString("skipLetterboxDisplayInfo", "未设置")
     val skipMultiWindowMode: String = jsonObject.optString("skipMultiWindowMode", "未设置")

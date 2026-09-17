@@ -7,13 +7,18 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 禁用 UDS 实时连接引擎 (com.lenovo.tbengine) 的自动安装行为：
- * - A/B 无缝更新：拦截 ServiceController.startABInstalling（校验通过后的自动后台安装）；
- * - A-only / Recovery：拦截 RecoverySystem.installPackage（重启进 Recovery 安装的总闸）；
- * - 夜间自动安装策略位：强制 OtaPolicy.mSettingNormalAutoInstall 为 false。
+ * Disables automatic installation in the UDS real-time connection engine
+ * (com.lenovo.tbengine):
+ * - A/B seamless update: intercept ServiceController.startABInstalling
+ *   (automatic background install after verification passes);
+ * - A-only / Recovery: intercept RecoverySystem.installPackage (the master
+ *   switch for rebooting into Recovery to install);
+ * - Nightly auto-install policy bit: force OtaPolicy.mSettingNormalAutoInstall
+ *   to false.
  *
- * 注意：RecoverySystem.installPackage 同为用户手动确认重启的入口，开关开启后
- * 用户手动确认重启安装也不会执行。
+ * Note: RecoverySystem.installPackage is also the entry point for the user's
+ * manual confirmation reboot; once this toggle is enabled, a manually
+ * confirmed reboot-install will not execute either.
  */
 class DisableTbEngineAutoInstall : AppHookModule() {
 
@@ -36,7 +41,7 @@ class DisableTbEngineAutoInstall : AppHookModule() {
             )
             hookWithId(startABInstalling, "tbengine_auto_install_ab") { _ ->
                 logger.debug("Blocked automatic A/B seamless install trigger.")
-                // no-op：吞掉自动进入 AB 安装
+                // no-op: swallow automatic A/B install entry
             }
         } catch (t: Throwable) {
             logger.error("Failed to hook ServiceController.startABInstalling", t)
@@ -52,7 +57,7 @@ class DisableTbEngineAutoInstall : AppHookModule() {
             )
             hookWithId(installPackage, "tbengine_auto_install_recovery") { _ ->
                 logger.debug("Blocked reboot-to-recovery install.")
-                // no-op：吞掉重启进 Recovery 的安装
+                // no-op: swallow reboot-to-recovery install
             }
         } catch (t: Throwable) {
             logger.error("Failed to hook RecoverySystem.installPackage", t)

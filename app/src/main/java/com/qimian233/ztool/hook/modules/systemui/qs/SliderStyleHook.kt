@@ -8,11 +8,17 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 设置控制中心 Slider 的样式。
- * 联想在 ToggleSliderView 中展平 Slider 视图并决定使用竖直或者水平的 Slider 。具体由字段 mFromType 决定，
- * 设定为 2，使用水平 Slider，适合大屏设备；设定为 3 ，使用竖直 Slider，适合小屏设备。
- * 系统还会检查屏幕短边的 dp 数，如果短边尺寸小于 720dp，说明 systemui 在小屏幕设备上运行，会强制设定 mFromType 为 3，反之设定为 2.
- * 因此总共需要 2 个 hook，第一个在方法执行前改变字段值，第二个拦截构造方法中调用的 android.view.WindowMetrics.getBounds，返回一个显然是大屏幕/小屏幕设备的 Rect 值。
+ * Set the style of the control center Slider.
+ * Lenovo's ToggleSliderView flattens the Slider view and decides whether to use a
+ * vertical or horizontal Slider, controlled by the field mFromType: set to 2 to use
+ * a horizontal Slider (suitable for large-screen devices); set to 3 to use a vertical
+ * Slider (suitable for small-screen devices).
+ * The system also checks the dp size of the screen's short edge: if it is smaller than
+ * 720dp, SystemUI is running on a small-screen device and mFromType is forced to 3,
+ * otherwise it is set to 2.
+ * Therefore two hooks are needed: the first changes the field value before the method
+ * runs; the second intercepts android.view.WindowMetrics.getBounds called in the
+ * constructor and returns a Rect that clearly corresponds to a large/small-screen device.
  */
 class SliderStyleHook: AppHookModule() {
 

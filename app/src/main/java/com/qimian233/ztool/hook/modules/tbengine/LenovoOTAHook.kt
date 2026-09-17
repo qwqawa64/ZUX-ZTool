@@ -7,9 +7,10 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.util.Properties
 
 /**
- * Lenovo OTA 参数修改模块
- * 功能：拦截OTA请求，修改 curfirmwarever 和 deviceid
- * 修改原则：仅在配置值有效（非空）时才修改，否则保持原厂逻辑
+ * Lenovo OTA parameter modification module
+ * Function: intercepts OTA requests and modifies curfirmwarever and deviceid
+ * Modification rule: only modify when the configured value is valid (non-empty),
+ * otherwise keep the stock behavior
  */
 class LenovoOTAHook : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.CUSTOM_OTA_PARAMETERS.name
@@ -32,7 +33,7 @@ class LenovoOTAHook : AppHookModule() {
 
             val targetMethod = findMethod(serverApiClass, "geServerResponseOrThrowError",
                 String::class.java,  // str
-                Properties::class.java,  // properties (目标修改对象)
+                Properties::class.java,  // properties (the target object to modify)
                 String::class.java // str2 (URL)
             )
 
@@ -40,11 +41,11 @@ class LenovoOTAHook : AppHookModule() {
                 val properties = chain.args[1] as Properties
                 val url = chain.args[2] as String?
 
-                // 仅拦截包含 "upgrade" 的请求
+                // Only intercept requests containing "upgrade"
                 if (url != null && url.contains("upgrade")) {
                     var modified = false
 
-                    // 1. 处理 firmware 版本
+                    // 1. Handle firmware version
                     val targetVer = try {
                         remotePreferences.getString(
                             PreferenceKeys.CUSTOM_OTA_TARGET_VERSION_NAME.name,
@@ -53,14 +54,14 @@ class LenovoOTAHook : AppHookModule() {
                     } catch (_: Throwable) {
                         ""
                     }
-                    // 只有当 targetVer 不为 null 且去除空格后不为空时才修改
+                    // Only modify when targetVer is non-null and non-blank after trimming
                     if (isConfigValid(targetVer)) {
                         properties["curfirmwarever"] = targetVer!!.trim { it <= ' ' }
                         logger.debug("Modified curfirmwarever: $targetVer")
                         modified = true
                     }
 
-                    // 2. 处理 deviceid
+                    // 2. Handle deviceid
                     val targetId = try {
                         remotePreferences.getString(
                             PreferenceKeys.CUSTOM_OTA_TARGET_DEVICE_ID.name,
@@ -69,7 +70,7 @@ class LenovoOTAHook : AppHookModule() {
                     } catch (_: Throwable) {
                         ""
                     }
-                    // 同上
+                    // Same as above
                     if (isConfigValid(targetId)) {
                         properties["deviceid"] = targetId!!.trim { it <= ' ' }
                         logger.debug("Modified deviceid: $targetId")
@@ -88,9 +89,9 @@ class LenovoOTAHook : AppHookModule() {
     }
 
     /**
-     * 辅助方法：检查配置字符串是否有效
-     * @param value 从配置读取的字符串
-     * @return 如果不为null且长度大于0，则返回true
+     * Helper: check whether a config string is valid
+     * @param value the string read from config
+     * @return true if non-null and length > 0
      */
     private fun isConfigValid(value: String?): Boolean {
         return value != null && !value.trim { it <= ' ' }.isEmpty()

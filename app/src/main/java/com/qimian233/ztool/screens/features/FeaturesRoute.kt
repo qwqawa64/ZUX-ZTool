@@ -108,7 +108,7 @@ fun FeaturesMainRoute(
         }
     }
 
-    // 作用域申请对话框
+    // Scope request dialog
     scopeRequestItem?.let { item ->
         ZToolDialog(
             onDismissRequest = { scopeRequestItem = null },

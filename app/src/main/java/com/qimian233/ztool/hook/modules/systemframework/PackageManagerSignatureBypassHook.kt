@@ -10,14 +10,15 @@ import java.util.jar.Attributes
 import java.util.zip.ZipEntry
 
 /**
- * 绕过安装时的签名校验链：
- * - services 层：verifySignatures 直接返回 false、assertMinSignatureSchemeIsValid 短路
- * - framework 层：ApkSignatureVerifier V1 失败恢复、最低签名方案要求归零、
- *   ApkSigningBlockUtils verity 完整性短路
- * - libcore 层：StrictJarVerifier 的 JAR 摘要与证书回滚保护、MessageDigest.isEqual
+ * Bypasses the install-time signature verification chain:
+ * - services layer: verifySignatures returns false directly, assertMinSignatureSchemeIsValid short-circuits
+ * - framework layer: ApkSignatureVerifier V1 failure recovery, minimum signature scheme
+ *   requirement zeroed, ApkSigningBlockUtils verity integrity short-circuited
+ * - libcore layer: StrictJarVerifier JAR digests and certificate rollback protection, MessageDigest.isEqual
  *
- * V1 校验失败后伪造签名：开启摘要绕过时优先从 APK 自身提取证书，
- * 提取不出再回退到占位签名。
+ * Forges signatures after V1 verification fails: when the digest bypass is enabled,
+ * certificates are extracted from the APK itself first, falling back to a placeholder
+ * signature if extraction fails.
  */
 class PackageManagerSignatureBypassHook : SystemHookModule() {
 
@@ -50,7 +51,7 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
                 logger.warn("deoptimize verifySignatures failed")
             }
             hookWithId(verifySignatures, "pkgmgr_verify_signatures") { _ ->
-                // 原方法返回 boolean，短路即视为"无需比对"
+                // The original method returns boolean; short-circuiting means "no comparison needed"
                 false
             }
             logger.info("Hooked PackageManagerServiceUtils.verifySignatures")
@@ -77,7 +78,7 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
                 it.name == "parseVerityDigestAndVerifySourceLength"
             }
             hookWithId(parseVerity, "pkgmgr_parse_verity_digest") { chain ->
-                // 伪装 verity 摘要校验通过：直接返回前 32 字节作为摘要
+                // Fake verity digest verification passing: return the first 32 bytes directly as the digest
                 (chain.getArg(0) as ByteArray).copyOfRange(0, 32)
             }
             val verifyIntegrity = utilsClass.declaredMethods.first {
@@ -130,7 +131,7 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
                 ByteArray::class.java, ByteArray::class.java
             )
             hookWithId(isEqual, "pkgmgr_message_digest_is_equal") { _ ->
-                // 注意：该键开启后 system_server 内所有摘要比较恒等，属预期行为
+                // Note: once this key is enabled, all digest comparisons inside system_server return equal; this is expected
                 true
             }
             logger.info("Hooked MessageDigest.isEqual")
@@ -235,7 +236,7 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
         isError: java.lang.reflect.Method,
         getResult: java.lang.reflect.Method
     ): Array<Signature> {
-        // 从 APK 自身解析 V1 证书（不验证，仅提取），失败时回退占位签名
+        // Parse V1 certificates from the APK itself (no validation, extraction only); fall back to the placeholder signature on failure
         if (digestEnabled) {
             var jarFile: Any? = null
             try {
@@ -263,8 +264,8 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
     companion object {
         private const val INSTALL_PARSE_FAILED_NO_CERTIFICATES = -103
 
-        // 占位签名（非真实证书）：V1 失败且无法从 APK 提取证书时，
-        // 给签名相关逻辑一个可比较的稳定值
+        // Placeholder signature (not a real certificate): when V1 fails and no certificate
+        // can be extracted from the APK, gives signature-related logic a stable comparable value
         private const val FALLBACK_SIGNATURE_HEX =
             "5a5558544f4f4c5a5558544f4f4c5a5558544f4f4c5a5558544f4f4c" +
                 "5a5558544f4f4c5a5558544f4f4c5a5558544f4f4c5a5558544f4f4c" +

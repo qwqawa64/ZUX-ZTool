@@ -11,16 +11,19 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
- * 自动接受超级互联 PC→手机 文件互传确认弹窗。
+ * Auto-accepts the PC→phone file transfer confirmation dialog of Super
+ * Interconnect (FileUnion).
  * <p>
- * 在 FileConnectionConfirmActivity.onCreate 完成后直接通过 ViewModel
- * 触发接受逻辑，实现弹窗出现即自动确认，无需用户手动点击。
+ * After FileConnectionConfirmActivity.onCreate completes, the accept logic is
+ * triggered directly through the ViewModel, so the dialog is auto-confirmed as
+ * soon as it appears, without requiring the user to tap manually.
  * </p>
  * <p>
- * 目标类/字段/方法名通过 DexKit 离线索引（MobileDesktopDexIndexer）预计算，
- * 索引缺失时回退硬编码名称（当前版本为 a/d/b：ViewModel 字段 a、accepted
- * boolean 字段 d、用户决策 LiveData 字段 b，b 的 postValue(true) 即通知栏
- * "接受"按钮的写入路径）。
+ * Target class/field/method names are pre-computed via the DexKit offline
+ * index (MobileDesktopDexIndexer); if the index is missing, hardcoded names
+ * are used as fallback (a/d/b in the current version: ViewModel field a,
+ * accepted boolean field d, user-decision LiveData field b — postValue(true)
+ * on b is the write path of the notification "accept" button).
  * </p>
  */
 class AutoAcceptFileTransferHook : AppHookModule() {
@@ -32,7 +35,7 @@ class AutoAcceptFileTransferHook : AppHookModule() {
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── 从离线索引读取混淆类名/字段名/方法名（handleLoadPackage 阶段，勿在 lambda 内做 IO） ──
+        // ── Read obfuscated class/field/method names from the offline index (in handleLoadPackage; no IO inside lambdas) ──
         val vmFieldName = DexIndexStore.string(
             xposed, ScopeKeys.MOBILE_DESKTOP.packageName,
             DexIndexConstants.ModuleKeys.AUTO_ACCEPT_FILE_TRANSFER,
@@ -60,7 +63,7 @@ class AutoAcceptFileTransferHook : AppHookModule() {
             val vmField = try {
                 activityClass.getDeclaredField(vmFieldName)
             } catch (_: NoSuchFieldException) {
-                // 用回退名称 "c" 再试
+                // Retry with fallback name "c"
                 activityClass.getDeclaredField(FALLBACK_VM_FIELD)
             }
             vmField.isAccessible = true
@@ -129,9 +132,10 @@ class AutoAcceptFileTransferHook : AppHookModule() {
     }
 
     /**
-     * 在 LiveData/MutableLiveData 类层次中按参数签名查找更新方法。
-     * 混淆后 setValue → l, postValue → i，二者签名均为 (Object)void。
-     * 仅作为离线索引缺失时的回退（索引期已用 DexKit 预计算）。
+     * Finds an update method by parameter signature in the LiveData/MutableLiveData
+     * class hierarchy. After obfuscation setValue → l and postValue → i; both have
+     * the signature (Object)void. Used only as a fallback when the offline index is
+     * missing (values are pre-computed with DexKit at index time).
      */
     private fun findLiveDataUpdateMethod(cls: Class<*>): Method? {
         var current: Class<*>? = cls

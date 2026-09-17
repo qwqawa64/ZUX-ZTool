@@ -193,7 +193,7 @@ class ControlCenterSettingsViewModel(
 
     fun setExpandQsPanelPortrait(enabled: Boolean) {
         repository.saveExpandQsPanelPortrait(enabled)
-        // 需重新加载状态以反映 sliderStyleForcedByQsPanel 等联动字段
+        // Reload the state to reflect coupled fields such as sliderStyleForcedByQsPanel
         _uiState.value = loadInitialState()
     }
 

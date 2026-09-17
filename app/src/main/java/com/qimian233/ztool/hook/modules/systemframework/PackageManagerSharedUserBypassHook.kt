@@ -10,13 +10,15 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
- * 绕过 sharedUserId 签名一致性限制（需同时开启摘要绕过）：
- * - 放开 ReconcilePackageUtils.ALLOW_NON_PRELOADS_SYSTEM_SHAREDUIDS
- * - SharedUserSetting 增删成员时以首个成员签名为基准合并谱系，
- *   避免 sharedUser 聚合签名因成员更换而失配
+ * Bypasses the sharedUserId signature consistency restriction (requires the digest bypass to be enabled):
+ * - Relaxes ReconcilePackageUtils.ALLOW_NON_PRELOADS_SYSTEM_SHAREDUIDS
+ * - When SharedUserSetting members are added/removed, merges lineages based on the
+ *   first member's signatures, avoiding sharedUser aggregate signature mismatch
+ *   caused by member changes
  *
- * 能力位比对必须走原始方法（ORIGIN invoker）：
- * 本功能组的摘要绕过会把普通调用变成恒真，导致合并判断失效。
+ * Capability flag comparison must use the original method (ORIGIN invoker):
+ * the digest bypass in this feature group turns ordinary calls into always-true,
+ * which would break the merge decision.
  */
 class PackageManagerSharedUserBypassHook : SystemHookModule() {
 
@@ -140,7 +142,7 @@ class PackageManagerSharedUserBypassHook : SystemHookModule() {
         }
         try {
             if (uidFlagsField.getInt(sharedUser) and ApplicationInfo.FLAG_SYSTEM != 0) {
-                // 系统应用 sharedUser 签名不动
+                // Leave system app sharedUser signatures untouched
                 chain.proceed()
                 return
             }
@@ -168,13 +170,13 @@ class PackageManagerSharedUserBypassHook : SystemHookModule() {
                 if (member === chain.getArg(0)) {
                     memberChanged = true
                     if (!targetParticipatesInMerge) {
-                        // 移除成员：移除者不参与合并
+                        // Removing a member: the remover does not participate in the merge
                         continue
                     }
                 }
                 val memberSig = signingDetailsField.get(signaturesOnPackage.get(member))
                     ?: continue
-                // 已存在可用签名关系时保持现状
+                // Keep the status quo when a usable signature relation already exists
                 val forward = originCheckCapability.invoke(memberSig, sharedUserSig, 0) as Boolean
                 val backward = originCheckCapability.invoke(sharedUserSig, memberSig, 0) as Boolean
                 if (forward || backward) {
@@ -203,9 +205,9 @@ class PackageManagerSharedUserBypassHook : SystemHookModule() {
 }
 
 /**
- * ART 静态 final 基础类型字段补丁：反射 Field.set 对 static final 字段会被
- * 拒绝，这里借 Unsafe 定位 java.lang.reflect.Field 内缓存的 ART 字段偏移，
- * 直接写入字段槽位。
+ * ART static final primitive field patcher: reflection Field.set is rejected for
+ * static final fields, so this uses Unsafe to locate the cached ART field offset
+ * inside java.lang.reflect.Field and writes the field slot directly.
  */
 private object ArtStaticFieldPatcher {
     private val unsafeClass = Class.forName("sun.misc.Unsafe")
@@ -244,7 +246,7 @@ private object ArtStaticFieldPatcher {
             return objectFieldOffset.invoke(unsafe, offsetField) as Long
         } catch (_: NoSuchFieldException) {
         }
-        // 回退：借 Point.x 探测 Field 对象内缓存 ART 偏移的位置
+        // Fallback: probe the cached ART offset position inside the Field object using Point.x
         val pointClass = Class.forName("android.graphics.Point")
         val probeField = pointClass.getDeclaredField("x").apply { isAccessible = true }
         val probe = probeField.getInt(pointClass.getDeclaredConstructor().newInstance())

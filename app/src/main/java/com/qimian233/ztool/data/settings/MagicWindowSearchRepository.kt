@@ -85,7 +85,7 @@ class MagicWindowSearchRepository(
             process.waitFor()
             result.toString()
         } catch (e: Exception) {
-            Log.e(TAG, "读取模块配置失败", e)
+            Log.e(TAG, "Failed to read module config", e)
             null
         } finally {
             process?.destroy()

@@ -15,13 +15,14 @@ import java.security.interfaces.RSAPublicKey
 import java.util.Calendar
 
 /**
- * 纯 Java（无 BouncyCastle）构造自签名 X.509 v3 证书，供本地 OTA 重签的
- * otacerts.zip 信任链使用。
+ * Pure Java (no BouncyCastle) construction of a self-signed X.509 v3 certificate,
+ * used for the otacerts.zip trust chain of local OTA re-signing.
  *
- * 仅支持 RSA 密钥 + SHA256withRSA（与 update_engine payload_verifier 的
- * otacerts 验签路径一致）。证书只在本机生成与使用，CN 标记为 ZTool。
+ * Only RSA keys + SHA256withRSA are supported (matching the otacerts verification
+ * path of update_engine's payload_verifier). The certificate is generated and used
+ * locally only, with CN set to ZTool.
  *
- * DER 结构遵循 RFC 5280：
+ * DER structure follows RFC 5280:
  * Certificate ::= SEQUENCE { tbsCertificate, signatureAlgorithm, signatureValue }
  */
 object OtaCertBuilder {
@@ -31,8 +32,9 @@ object OtaCertBuilder {
     private const val VALIDITY_YEARS = 20
 
     /**
-     * 用现有 RSA 密钥对生成自签名证书，返回 X.509 DER 编码。
-     * 公钥的 SubjectPublicKeyInfo 直接复用 [publicKey].encoded，不做二次编码。
+     * Build a self-signed certificate from an existing RSA key pair, returning the
+     * X.509 DER encoding. The public key's SubjectPublicKeyInfo reuses
+     * [publicKey].encoded directly, without re-encoding.
      */
     fun buildSelfSignedCertificate(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
         require(publicKey is RSAPublicKey) { "Only RSA keys are supported" }
@@ -57,26 +59,27 @@ object OtaCertBuilder {
     }
 
     /**
-     * 校验生成的证书可以被 Android 的 CertificateFactory 解析，
-     * 返回解析后的 X509Certificate（失败抛 CertificateException）。
+     * Verify that the generated certificate can be parsed by Android's
+     * CertificateFactory, returning the parsed X509Certificate
+     * (throws CertificateException on failure).
      */
     @Throws(CertificateException::class)
     fun toX509Certificate(der: ByteArray): X509Certificate {
         val cert = CertificateFactory.getInstance("X.509")
             .generateCertificate(der.inputStream()) as X509Certificate
-        // 主动触发解析，尽早发现 DER 构造错误
+        // Force parsing early to surface DER construction errors as soon as possible
         cert.checkValidity()
         return cert
     }
 
-    /** 由 X.509 DER 解出公钥（用于反向校验证书与密钥对匹配）。 */
+    /** Extract the public key from X.509 DER (used to verify the cert matches the key pair). */
     fun publicKeyFromCertificate(der: ByteArray): PublicKey {
         val cert = toX509Certificate(der)
         return KeyFactory.getInstance("RSA")
             .generatePublic(X509EncodedKeySpec(cert.publicKey.encoded))
     }
 
-    // ── TBSCertificate ──────────────────────────────────────────────
+    // ── TBSCertificate ─────────────────────────────────────────────
 
     private fun buildTbsCertificate(
         serialNumber: ByteArray,
@@ -93,8 +96,8 @@ object OtaCertBuilder {
             algId,
             name, // issuer
             derSequence(derUtcTime(notBefore), derUtcTime(notAfter)),
-            name, // subject（自签，issuer == subject）
-            subjectPublicKeyInfo // 已是合法 DER，原样嵌入
+            name, // subject (self-signed, issuer == subject)
+            subjectPublicKeyInfo // already valid DER, embedded as-is
         )
     }
 
@@ -108,7 +111,7 @@ object OtaCertBuilder {
         return derSequence(derSet(cn))
     }
 
-    // ── DER 基础编码 ─────────────────────────────────────────────────
+    // ── DER basic encoding ─────────────────────────────────────────
 
     private fun derSequence(vararg parts: ByteArray): ByteArray =
         derWrap(0x30, parts.reduce { acc, bytes -> acc + bytes })
@@ -124,8 +127,8 @@ object OtaCertBuilder {
         derWrap(0x0c, text.toByteArray(Charsets.UTF_8))
 
     private fun derUtcTime(calendar: Calendar): ByteArray {
-        // UTCTime 只支持到 2049；2049 年后的 notAfter 需换 GeneralizedTime，
-        // notAfter = now + 20 年，若越界则钳制到 2049-12-31。
+        // UTCTime only supports years up to 2049; a notAfter beyond 2049 would need
+        // GeneralizedTime. With notAfter = now + 20 years, clamp to 2049-12-31 if out of range.
         var year = calendar.get(Calendar.YEAR)
         if (year > 2049) {
             calendar.set(2049, Calendar.DECEMBER, 31, 23, 59, 59)
@@ -172,9 +175,9 @@ object OtaCertBuilder {
     private fun randomSerial(): ByteArray {
         val serial = ByteArray(8)
         SecureRandom().nextBytes(serial)
-        // 保证正整数：最高位清零
+        // Guarantee a positive integer: clear the highest bit
         serial[0] = (serial[0].toInt() and 0x7f).toByte()
-        // 避免全 0
+        // Avoid all-zero serials
         if (serial.all { it == 0.toByte() }) serial[7] = 1
         return serial
     }

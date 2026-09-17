@@ -6,12 +6,14 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 屏蔽 ZUI 性能服务 (com.zui.pp) 省电策略的云端同步与应用。
+ * Blocks cloud-side synchronization and application of power-saving policies in
+ * the ZUI performance service (com.zui.pp).
  *
- * PolicySyncCmp.checkPolicySync 会把缓存的云端策略 (policy_sync_cmp_data) 载入
- * mCloudPolicy 并由 PolicyParser 应用；syncFromCloud 则通过 XUICloudApi 向云端
- * 拉取新版本策略。两者均吞掉后仅保留 assets 内置的本地策略兜底，
- * 本地白名单初始化 (initWhiteList) 不受影响。
+ * PolicySyncCmp.checkPolicySync loads the cached cloud policy
+ * (policy_sync_cmp_data) into mCloudPolicy and applies it via PolicyParser;
+ * syncFromCloud pulls new policy versions from the cloud via XUICloudApi.
+ * Swallowing both keeps only the local policies bundled in assets as fallback;
+ * the local whitelist initialization (initWhiteList) is unaffected.
  */
 class BlockPowerPolicySync : AppHookModule() {
 
@@ -30,7 +32,7 @@ class BlockPowerPolicySync : AppHookModule() {
             val checkPolicySync = findMethod(policySyncCmpClass, "checkPolicySync")
             hookWithId(checkPolicySync, "pp_power_policy_check_sync") { _ ->
                 logger.debug("Blocked PolicySyncCmp.checkPolicySync (cloud policy load).")
-                // no-op：不把缓存的云端策略载入内存
+                // no-op: do not load the cached cloud policy into memory
             }
             logger.info("Hooked PolicySyncCmp.checkPolicySync")
         } catch (t: Throwable) {
@@ -50,7 +52,7 @@ class BlockPowerPolicySync : AppHookModule() {
             )
             hookWithId(syncFromCloud, "pp_power_policy_sync_from_cloud") { _ ->
                 logger.debug("Blocked PolicySyncCmp.syncFromCloud.")
-                // no-op：不再向云端请求省电策略更新
+                // no-op: no longer request power policy updates from the cloud
             }
             logger.info("Hooked PolicySyncCmp.syncFromCloud")
         } catch (t: Throwable) {

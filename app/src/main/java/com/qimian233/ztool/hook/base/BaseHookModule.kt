@@ -11,33 +11,35 @@ import io.github.libxposed.api.XposedInterface.Hooker
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * Hook 模块基类（libxposed 版，Kotlin）。
+ * Hook module base class (libxposed version, Kotlin).
  * <p>
- * 所有 Hook 模块继承此类。通过 [xposed] 字段访问 libxposed API：
- * [XposedInterface.hook]、[XposedInterface.log]、[XposedInterface.getRemotePreferences] 等。
+ * All Hook modules extend this class. Access the libxposed API through the
+ * [xposed] field: [XposedInterface.hook], [XposedInterface.log],
+ * [XposedInterface.getRemotePreferences], etc.
  * <p>
- * 日志关注点已拆分至 [ModuleLog]（Log4j 风格六级别 API），
- * 反射辅助已拆分至 [HookReflectionHelper]。
+ * Logging concerns are split into [ModuleLog] (Log4j-style six-level API),
+ * and reflection helpers are split into [HookReflectionHelper].
  * </p>
  *
- * <h3>子类约定</h3>
+ * <h3>Subclass conventions</h3>
  * <ul>
- *   <li>[xposed] / [logger] 均为普通 Kotlin 属性，子类直接访问。</li>
- *   <li>[handleLoadPackage] / [handleSystemServerStarting] 带 [@Throws](Throwable::class)，
- *       在 JVM 方法签名中保留 throws 声明，作为错误契约文档。</li>
+ *   <li>[xposed] / [logger] are plain Kotlin properties, accessed directly by subclasses.</li>
+ *   <li>[handleLoadPackage] / [handleSystemServerStarting] carry
+ *       [@Throws](Throwable::class), keeping the throws declaration in the JVM
+ *       method signature as an error-contract document.</li>
  * </ul>
  */
 abstract class BaseHookModule {
 
     /**
-     * libxposed XposedInterface 实例，由 [setXposedInterface] 注入。
+     * libxposed XposedInterface instance, injected by [setXposedInterface].
      */
     protected lateinit var xposed: XposedInterface
 
     /**
-     * Log4j 风格日志器（Kotlin 实现，六级别：trace/debug/info/warn/error/fatal）。
-     * <p>在 [setXposedInterface] 中初始化为真实值；此处占位初始化保证字段非空。</p>
-     * 用法示例：{@code logger.info("Hook installed"); logger.debug("detail: " + data);}
+     * Log4j-style logger (Kotlin implementation, six levels: trace/debug/info/warn/error/fatal).
+     * <p>Initialized to a real value in [setXposedInterface]; this placeholder initialization keeps the field non-null.</p>
+     * Usage example: {@code logger.info("Hook installed"); logger.debug("detail: " + data);}
      */
     protected var logger: ModuleLog = ModuleLog("", null)
 
@@ -46,9 +48,9 @@ abstract class BaseHookModule {
     abstract fun getTargetPackages(): Array<out String?>?
 
     /**
-     * 执行 Hook 操作（默认 no-op）。
-     * <p>App 类 Hook 模块应继承 [AppHookModule] 以获得 IDE 自动补全；
-     * 系统框架 Hook 模块应继承 [SystemHookModule]。</p>
+     * Performs Hook operations (default no-op).
+     * <p>App-class Hook modules should extend [AppHookModule] for IDE autocompletion;
+     * system framework Hook modules should extend [SystemHookModule].</p>
      */
     @Throws(Throwable::class)
     open fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
@@ -56,7 +58,7 @@ abstract class BaseHookModule {
     }
 
     /**
-     * 注入 XposedInterface 并初始化日志器。
+     * Injects the XposedInterface and initializes the logger.
      */
     open fun setXposedInterface(xposed: XposedInterface) {
         this.xposed = xposed
@@ -87,8 +89,8 @@ abstract class BaseHookModule {
     }
 
     /**
-     * 系统服务器回调（默认 no-op）。
-     * <p>系统框架 Hook 模块应继承 [SystemHookModule] 以获得 IDE 自动补全。</p>
+     * System server callback (default no-op).
+     * <p>System framework Hook modules should extend [SystemHookModule] for IDE autocompletion.</p>
      */
     @Throws(Throwable::class)
     open fun handleSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
@@ -240,7 +242,7 @@ abstract class BaseHookModule {
      * XposedHelpers-style field finder. Delegates to [HookReflectionHelper.findField].
      * <p>
      * Always ensure you have filters to avoid unexpected field hits.
-     * <p>带 [@Throws](NoSuchFieldException::class) 以保留 Java checked 异常契约。</p>
+     * <p>Carries [@Throws](NoSuchFieldException::class) to preserve the Java checked-exception contract.</p>
      */
     @Throws(NoSuchFieldException::class)
     protected open fun findField(startClass: Class<*>?, name: String): Field =
@@ -251,8 +253,9 @@ abstract class BaseHookModule {
      * <p>
      * Always ensure you have filters to avoid unexpected method hits.
      * <p>
-     * 参数类型允许可空（如 {@code Int::class.javaPrimitiveType}），与历史 Java 平台类型签名兼容。
-     * 带 [@Throws](NoSuchMethodException::class) 以保留 Java checked 异常契约。
+     * Parameter types may be nullable (e.g. {@code Int::class.javaPrimitiveType}),
+     * compatible with the historical Java platform-type signatures.
+     * Carries [@Throws](NoSuchMethodException::class) to preserve the Java checked-exception contract.
      */
     @Throws(NoSuchMethodException::class)
     protected open fun findMethod(
@@ -262,8 +265,8 @@ abstract class BaseHookModule {
     ): Method = HookReflectionHelper.findMethod(startClass, name, *parameterTypes)
 
     /**
-     * 远程配置读取入口（Kotlin 属性形式，Java 侧通过 {@code getRemotePreferences()} 调用）。
-     * 等价于 {@code xposed.getRemotePreferences("xposed_module_config")}。
+     * Remote preferences access entry (Kotlin property form; Java callers use {@code getRemotePreferences()}).
+     * Equivalent to {@code xposed.getRemotePreferences("xposed_module_config")}.
      */
     open val remotePreferences: SharedPreferences
         get() = xposed.getRemotePreferences(PREFS_NAME)
@@ -272,15 +275,15 @@ abstract class BaseHookModule {
         private const val TAG = "ZToolXposedModule"
 
         /**
-         * 详细日志开关（向后兼容字段，实际状态由 [ModuleLog.DEBUG] 管理）。
+         * Detailed logging switch (backward-compatible field; the actual state is managed by [ModuleLog.DEBUG]).
          * @see refreshDebugLoggingEnabled
          */
         @Volatile
         var DEBUG: Boolean = false
 
         /**
-         * 刷新详细日志开关。
-         * <p>委托给 [ModuleLog.refreshDebugLoggingEnabled]，并将结果同步到 [DEBUG] 字段。</p>
+         * Refreshes the detailed logging switch.
+         * <p>Delegates to [ModuleLog.refreshDebugLoggingEnabled] and syncs the result to the [DEBUG] field.</p>
          */
         fun refreshDebugLoggingEnabled() {
             ModuleLog.refreshDebugLoggingEnabled()
@@ -289,7 +292,7 @@ abstract class BaseHookModule {
     }
 
     /**
-     * 模块配置 SharedPreferences 文件名（Kotlin 子类按继承属性访问）。
+     * Module configuration SharedPreferences file name (Kotlin subclasses access it as an inherited property).
      */
     @Suppress("PropertyName")
     protected val PREFS_NAME: String = "xposed_module_config"

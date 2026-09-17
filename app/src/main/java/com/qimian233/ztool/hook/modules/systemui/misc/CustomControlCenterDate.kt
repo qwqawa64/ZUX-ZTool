@@ -21,9 +21,10 @@ import java.lang.reflect.Method
 import java.util.Date
 
 /**
- * 精确控制中心日期Hook模块
- * 基于VariableDateView和VariableDateViewController的精确Hook
- * 支持自定义日期格式（包括农历、节气等）、字体样式、颜色等完整配置
+ * Control center date precision hook module.
+ * Precise hooks based on VariableDateView and VariableDateViewController.
+ * Supports custom date formats (including lunar calendar, solar terms, etc.),
+ * font style, color, and other full configuration.
  */
 @SuppressLint("PrivateApi")
 class CustomControlCenterDate : AppHookModule() {
@@ -39,24 +40,25 @@ class CustomControlCenterDate : AppHookModule() {
         }
 
         try {
-            // 方法1: Hook VariableDateView的setText方法（最精确）
+            // Method 1: Hook VariableDateView's setText method (most precise)
             hookVariableDateViewSetText(classLoader)
 
-            // 方法2: Hook VariableDateViewController的updateClock方法
+            // Method 2: Hook VariableDateViewController's updateClock method
             hookVariableDateViewController(classLoader)
 
-            // 方法3: Hook TextView的onAttachedToWindow方法（确保初始样式正确）
+            // Method 3: Hook TextView's onAttachedToWindow method (ensure initial style is correct)
             hookTextViewAttach()
 
-            logger.info("控制中心日期Hook模块初始化成功")
+            logger.info("Control center date hook module initialized successfully")
         } catch (t: Throwable) {
-            logger.error("控制中心日期Hook模块初始化失败", t)
+            logger.error("Failed to initialize control center date hook module", t)
         }
     }
 
     /**
-     * 方法1: 直接Hook VariableDateView的setText方法
-     * 这是最精确的方法，每次文本更新时都会应用样式和自定义格式
+     * Method 1: Hook VariableDateView's setText method directly.
+     * This is the most precise approach; style and custom format are applied
+     * on every text update.
      */
     private fun hookVariableDateViewSetText(classLoader: ClassLoader) {
         try {
@@ -68,31 +70,31 @@ class CustomControlCenterDate : AppHookModule() {
                     if (!isEnabled()) return@hookWithId chain.proceed()
                     if (!isTargetVariableDateView(chain.thisObject)) return@hookWithId chain.proceed()
 
-                    // 使用自定义格式化器生成新的日期文本
+                    // Generate new date text using the custom formatter
                     val styledText = createStyledCustomDateText()
-                    logger.debug("VariableDateView文本替换成功: $styledText")
+                    logger.debug("VariableDateView text replaced: $styledText")
                     return@hookWithId chain.proceed(arrayOf(styledText))
                 } catch (e: Exception) {
-                    logger.error("VariableDateView文本替换失败", e)
+                    logger.error("Failed to replace VariableDateView text", e)
                 }
                 chain.proceed()
             }
 
-            logger.info("VariableDateView.setText Hook成功")
+            logger.info("VariableDateView.setText hook applied")
         } catch (_: Throwable) {
-            logger.warn("VariableDateView.setText Hook失败（可能是类不存在）")
+            logger.warn("VariableDateView.setText hook failed (class may not exist)")
         }
     }
 
     /**
-     * 方法2: Hook VariableDateViewController的updateClock方法
-     * 在日期更新时应用样式和自定义格式
+     * Method 2: Hook VariableDateViewController's updateClock method.
+     * Applies style and custom format on date updates.
      */
     private fun hookVariableDateViewController(classLoader: ClassLoader) {
         try {
             val controllerClass = classLoader.loadClass(VARIABLE_DATE_CONTROLLER_CLASS)
 
-            // Hook access$updateClock静态方法
+            // Hook the access$updateClock static method
             val accessMethod: Method =
                 controllerClass.getDeclaredMethod($$"access$updateClock", controllerClass)
             hookWithId(accessMethod, "access") { chain ->
@@ -100,24 +102,24 @@ class CustomControlCenterDate : AppHookModule() {
                 try {
                     val dateView = getValidatedVariableDateView(chain.args[0])
                     if (dateView != null && applyCustomDateToValidatedView(dateView)) {
-                        // 直接设置自定义格式化的日期文本
-                        logger.debug("VariableDateViewController日期更新成功")
+                        // Set the custom-formatted date text directly
+                        logger.debug("VariableDateViewController date updated")
                     }
                 } catch (e: Exception) {
-                    logger.error("VariableDateViewController日期更新失败", e)
+                    logger.error("VariableDateViewController date update failed", e)
                 }
                 result
             }
 
-            logger.info("VariableDateViewController Hook成功")
+            logger.info("VariableDateViewController hook applied")
         } catch (_: Throwable) {
-            logger.warn("VariableDateViewController Hook失败（可能是类不存在）")
+            logger.warn("VariableDateViewController hook failed (class may not exist)")
         }
     }
 
     /**
-     * 方法3: Hook TextView的onAttachedToWindow方法
-     * 在视图附加到窗口时应用样式（确保初始样式正确）
+     * Method 3: Hook TextView's onAttachedToWindow method.
+     * Applies style when the view attaches to the window (ensure initial style is correct).
      */
     private fun hookTextViewAttach() {
         try {
@@ -129,19 +131,19 @@ class CustomControlCenterDate : AppHookModule() {
                     val textView = chain.thisObject
                     val className = textView.javaClass.name
 
-                    // 只处理控制中心 VariableDateView 实例
+                    // Only handle control center VariableDateView instances
                     if (VARIABLE_DATE_VIEW_CLASS == className
                         && applyCustomDateToValidatedView(textView)
                     ) {
-                        logger.debug("VariableDateView初始样式应用成功")
+                        logger.debug("VariableDateView initial style applied")
                     }
                 } catch (e: Exception) {
-                    logger.error("TextView初始样式应用失败", e)
+                    logger.error("Failed to apply TextView initial style", e)
                 }
                 result
             }
         } catch (_: Throwable) {
-            logger.warn("TextView.onAttachedToWindow Hook失败")
+            logger.warn("TextView.onAttachedToWindow hook failed")
         }
     }
 
@@ -210,42 +212,42 @@ class CustomControlCenterDate : AppHookModule() {
     }
 
     /**
-     * 获取自定义格式化的日期
+     * Get the custom formatted date
      */
     private fun getCustomFormattedDate(): String {
         return try {
             val format = getCustomDateFormat()
-            logger.debug("读取到的配置：$format")
+            logger.debug("Loaded format config: $format")
             CustomDateFormatter.format(format, Date())
         } catch (e: Exception) {
-            logger.error("自定义日期格式化失败", e)
-            // 出错时返回默认格式
+            logger.error("Custom date formatting failed", e)
+            // Return the default format on error
             CustomDateFormatter.format("yyyy年MM月dd日 EEEE", Date())
         }
     }
 
     /**
-     * 应用所有样式到文本
+     * Apply all styles to the text
      */
     private fun applyAllStyles(text: String): CharSequence {
         val styledText = SpannableString(text)
 
-        // 1. 应用字体大小
+        // 1. Apply font size
         if (isTextSizeEnabled()) {
             applyTextSize(styledText, text)
         }
 
-        // 2. 应用字间距
+        // 2. Apply letter spacing
         if (isLetterSpacingEnabled()) {
             applyLetterSpacing(styledText, text)
         }
 
-        // 3. 应用字体颜色
+        // 3. Apply font color
         if (isTextColorEnabled()) {
             applyTextColor(styledText, text)
         }
 
-        // 4. 应用字体样式
+        // 4. Apply font style
         if (isTextBoldEnabled()) {
             applyTextStyle(styledText, text)
         }
@@ -254,7 +256,7 @@ class CustomControlCenterDate : AppHookModule() {
     }
 
     /**
-     * 应用字体大小
+     * Apply font size
      */
     private fun applyTextSize(styledText: SpannableString, text: String) {
         try {
@@ -268,12 +270,12 @@ class CustomControlCenterDate : AppHookModule() {
                 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         } catch (e: Exception) {
-            logger.error("字体大小应用失败", e)
+            logger.error("Failed to apply font size", e)
         }
     }
 
     /**
-     * 应用字间距
+     * Apply letter spacing
      */
     private fun applyLetterSpacing(styledText: SpannableString, text: String) {
         try {
@@ -285,12 +287,12 @@ class CustomControlCenterDate : AppHookModule() {
                 )
             }
         } catch (e: Exception) {
-            logger.error("字间距应用失败", e)
+            logger.error("Failed to apply letter spacing", e)
         }
     }
 
     /**
-     * 应用字体颜色
+     * Apply font color
      */
     private fun applyTextColor(styledText: SpannableString, text: String) {
         try {
@@ -300,12 +302,12 @@ class CustomControlCenterDate : AppHookModule() {
                 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         } catch (e: Exception) {
-            logger.error("字体颜色应用失败", e)
+            logger.error("Failed to apply font color", e)
         }
     }
 
     /**
-     * 应用字体样式
+     * Apply font style
      */
     private fun applyTextStyle(styledText: SpannableString, text: String) {
         try {
@@ -317,109 +319,109 @@ class CustomControlCenterDate : AppHookModule() {
                 )
             }
         } catch (e: Exception) {
-            logger.error("字体样式应用失败", e)
+            logger.error("Failed to apply font style", e)
         }
     }
 
     /**
-     * 获取自定义日期格式
+     * Get the custom date format
      */
     private fun getCustomDateFormat(): String {
         return try {
             val format = getCustomDateSetting()
-            logger.debug("初次读取到的配置：$format")
+            logger.debug("Initial format config: $format")
             format
         } catch (e: Exception) {
-            logger.error("日期格式获取失败", e)
+            logger.error("Failed to get date format", e)
             "yyyy年MM月dd日 EEEE"
         }
     }
 
     /**
-     * 获取SharedPreferences
+     * Get SharedPreferences
      */
     private val prefs: SharedPreferences
         get() = xposed.getRemotePreferences(PREFS_NAME)
 
     /**
-     * 从SharedPreferences获取配置值的方法
+     * Read a config value from SharedPreferences
      */
     private fun getCustomDateSetting(): String {
         return prefs.getString(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_FORMAT.name, "yyyy年MM月dd日 EEEE")!!
     }
 
     /**
-     * 获取字体大小配置
+     * Get font size config
      */
     private fun getTextSize(): Float {
         return getCustomDateFloat(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE.name, 16.0f)
     }
 
     /**
-     * 获取字间距配置
+     * Get letter spacing config
      */
     private fun getLetterSpacing(): Float {
         return getCustomDateFloat(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING.name, 0.1f)
     }
 
     /**
-     * 获取字体颜色配置
+     * Get font color config
      */
     private fun getTextColor(): Int {
         return getCustomDateInt()
     }
 
     /**
-     * 获取粗体配置
+     * Get bold config
      */
     private fun isTextBold(): Boolean {
         return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_BOLD.name)
     }
 
     /**
-     * 检查字体大小是否启用
+     * Check whether font size is enabled
      */
     private fun isTextSizeEnabled(): Boolean {
         return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE_ENABLED.name)
     }
 
     /**
-     * 检查字间距是否启用
+     * Check whether letter spacing is enabled
      */
     private fun isLetterSpacingEnabled(): Boolean {
         return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING_ENABLED.name)
     }
 
     /**
-     * 检查字体颜色是否启用
+     * Check whether font color is enabled
      */
     private fun isTextColorEnabled(): Boolean {
         return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR_ENABLED.name)
     }
 
     /**
-     * 检查粗体是否启用
+     * Check whether bold is enabled
      */
     private fun isTextBoldEnabled(): Boolean {
         return getCustomDateBoolean(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_BOLD.name)
     }
 
     /**
-     * 辅助方法：读取整型配置
+     * Helper: read an integer config
      */
     private fun getCustomDateInt(): Int {
         return prefs.getInt(PreferenceKeys.CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR.name, -1)
     }
 
     /**
-     * 辅助方法：读取浮点型配置
+     * Helper: read a float config
      */
     private fun getCustomDateFloat(key: String, defaultValue: Float): Float {
         return prefs.getFloat(key, defaultValue)
     }
 
     /**
-     * 辅助方法：读取布尔型配置
+     * Helper: read a boolean config
      */
     private fun getCustomDateBoolean(key: String): Boolean {
         return prefs.getBoolean(key, false)

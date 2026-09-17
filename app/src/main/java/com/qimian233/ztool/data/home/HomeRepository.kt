@@ -314,17 +314,17 @@ class HomeRepository(
         private const val KEY_NON_ZUXOS_WARNING_DISMISSED = "non_zuxos_warning_dismissed"
         private const val SYSTEM_INFO_CACHE_DURATION = 60_000L
 
-        /** 构建标记中任一分组包含即认定是正确 ROM 的标识（转小写后比对）。 */
+        /** Identifiers recognized (after lowercasing) as a correct ROM if contained in any build-mark group. */
         private val ROM_IDENTIFIERS = listOf("zui", "zuxos", "helloui")
 
-        /** TB 机型前缀：TB + 3 位数字 + 可选 2 位字母，如 TB710FU / TB324ZC / TB710。 */
+        /** TB model prefix: TB + 3 digits + optional 2 letters, e.g. TB710FU / TB324ZC / TB710. */
         private val TB_MODEL_PREFIX = Regex("^tb\\d{3}([a-z]{2})?$")
 
         /**
-         * 判断构建标记是否来自 ZUXOS/ZUI 系 ROM。
-         * 按下划线拆分后逐条目转小写、去空格，先匹配 ROM 标识（zui/zuxos/helloui）；
-         * 全部未命中时，若首个分组是联想 TB 机型代号（TB710FU、TB324ZC、TB710 等），
-         * 也视为正确设备。
+         * Judge whether the build marks come from a ZUXOS/ZUI-family ROM.
+         * Splits by underscore, lowercases and strips spaces per entry, then matches ROM
+         * identifiers (zui/zuxos/helloui) first; if none match, the build is still treated as
+         * a correct device when the first group is a Lenovo TB model code (TB710FU, TB324ZC, TB710, etc.).
          */
         fun isZuxOsBuild(buildDisplay: String): Boolean {
             val entries = buildDisplay.split("_").map { it.lowercase().replace(" ", "") }
@@ -378,7 +378,7 @@ data class RebootResult(
     val error: String
 )
 
-/** 更新检测结果：成功（可能无更新）或失败（附带原因）。 */
+/** Update check result: success (possibly no update) or failure (with a reason). */
 sealed class UpdateCheckResult {
     data class Success(val updateInfo: UpdateInfo?) : UpdateCheckResult()
     data class Failure(val reason: String) : UpdateCheckResult()

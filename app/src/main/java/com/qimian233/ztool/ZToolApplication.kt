@@ -9,15 +9,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * 自定义 Application 类。
+ * Custom Application class.
  * <p>
- * 借鉴 HyperCeiler 的模式：Application 自身实现 [XposedServiceHelper.OnServiceListener]，
- * 在 [attachBaseContext] 中注册监听器（早于 onCreate），
- * 最大程度缩短 binder 到达与 listener 注册之间的窗口。
+ * Follows the HyperCeiler pattern: the Application itself implements
+ * [XposedServiceHelper.OnServiceListener] and registers the listener in
+ * [attachBaseContext] (earlier than onCreate), minimizing the window between
+ * binder arrival and listener registration.
  * </p>
  * <p>
- * 同时暴露 [isModuleActivatedFlow]（[StateFlow]），
- * 让 UI 层可以<b>热更新</b>模块激活状态，无需轮询。
+ * Also exposes [isModuleActivatedFlow] (a [StateFlow]) so the UI layer can
+ * <b>hot-update</b> the module activation state without polling.
  * </p>
  */
 class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
@@ -27,24 +28,25 @@ class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
 
         private val _isModuleActivated = MutableStateFlow(false)
 
-        /** 模块激活状态的热更新流，UI 层可 collect 以实时响应状态变化 */
+        /** Hot-update flow of the module activation state; the UI layer can collect it to react to changes in real time */
         val isModuleActivatedFlow: StateFlow<Boolean> = _isModuleActivated.asStateFlow()
 
-        /** 模块是否已激活，由 onServiceBind/onServiceDied 维护（即时查询） */
+        /** Whether the module is activated, maintained by onServiceBind/onServiceDied (instant query) */
         @Volatile
         var isModuleActivated: Boolean = false
             private set
     }
 
-    // 离线 DexKit 索引的触发已迁移至主页进入判定（HomeViewModel.checkDexIndexOnEntry）：
-    // - Firstrun（无索引文件）：后台全量索引，进入主页后 Toast 结果；
-    // - 非 Firstrun 但缓存过期/损坏：前台进度 Dialog 刷新。
-    // 故 Application 启动阶段不再自动扫描。
+    // Offline DexKit indexing triggers have been migrated to the home page entry check
+    // (HomeViewModel.checkDexIndexOnEntry):
+    // - Firstrun (no index file): full background indexing, with a Toast of the result after entering home;
+    // - Non-Firstrun but stale/corrupted cache: foreground progress Dialog refresh.
+    // Therefore the Application startup phase no longer scans automatically.
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
-        // 在最早的时机注册监听器，比 onCreate() 更早，
-        // 减少 binder 被缓存后再排空时 linkToDeath 失败的竞态
+        // Register the listener as early as possible, earlier than onCreate(),
+        // to reduce the race where linkToDeath fails when a cached binder is drained later
         XposedServiceHelper.registerListener(this)
     }
 

@@ -24,9 +24,10 @@ class TbEngineSettingsRepository(
     }
 
     /**
-     * 首次进入页面时生成本地 OTA 重签用的 RSA-2048 密钥对。
-     * 私钥（PKCS#8）与公钥（X509）以 Base64 存入 xposed_module_config，
-     * Hook 侧通过 remotePreferences 读取；私钥仅在设备本机生成，不上传。
+     * Generate the RSA-2048 key pair for local OTA re-signing when the page is first entered.
+     * The private key (PKCS#8) and public key (X509) are stored Base64-encoded in
+     * xposed_module_config; the hook side reads them via remotePreferences.
+     * The private key is generated only on the local device and never uploaded.
      */
     fun ensureOtaSigningKeys() {
         if (prefsUtils.loadStringSetting(KEY_OTA_PRIVATE_KEY, "").isNotEmpty() &&
@@ -59,9 +60,9 @@ class TbEngineSettingsRepository(
     }
 
     /**
-     * 基于已有密钥对生成自签名 X.509 证书（otacerts.zip 信任链用）。
-     * 证书 DER 以 Base64 存入偏好；生成后立即用 CertificateFactory 回读校验，
-     * 保证 DER 构造正确。
+     * Generate a self-signed X.509 certificate from the existing key pair (for the otacerts.zip trust chain).
+     * The certificate DER is stored Base64-encoded in preferences; after generation it is immediately
+     * read back and verified with CertificateFactory to ensure the DER construction is correct.
      */
     private fun ensureOtaCertificate() {
         if (prefsUtils.loadStringSetting(KEY_OTA_CERT, "").isNotEmpty()) return
@@ -84,7 +85,7 @@ class TbEngineSettingsRepository(
                 )
             )
             val cert = OtaCertBuilder.buildSelfSignedCertificate(private, public)
-            OtaCertBuilder.toX509Certificate(cert) // 回读校验，失败则抛异常不落盘
+            OtaCertBuilder.toX509Certificate(cert) // Read back for verification; throw and skip persisting on failure
             prefsUtils.saveStringSetting(
                 KEY_OTA_CERT,
                 android.util.Base64.encodeToString(cert, android.util.Base64.NO_WRAP)
@@ -94,12 +95,12 @@ class TbEngineSettingsRepository(
         }
     }
 
-    /** 当前设备上是否已具备证书与密钥（决定前端按钮可用性）。 */
+    /** Whether the certificate and keys are already present on the device (controls frontend button availability). */
     fun hasOtaCertificate(): Boolean =
         prefsUtils.loadStringSetting(KEY_OTA_CERT, "").isNotEmpty()
 
     /**
-     * 检查 OTA 证书信任模块是否已安装（Magisk/KSU 模块目录存在且含 module.prop）。
+     * Check whether the OTA certificate trust module is installed (Magisk/KSU module directory exists and contains module.prop).
      */
     fun isOtaCertModuleInstalled(): Boolean {
         val result = shellExecutor.executeRootCommand(
@@ -109,12 +110,12 @@ class TbEngineSettingsRepository(
     }
 
     /**
-     * 生成并安装 OTA 证书信任模块：
-     * 1. root 读取设备原 /system/etc/security/otacerts.zip；
-     * 2. 追加 ZTool 自签证书（保留 OEM 证书，叠加信任）；
-     * 3. 打包 Magisk/KSU 格式模块（systemless 覆盖 otacerts.zip）；
-     * 4. 优先 magisk --install-module 安装，失败回退 ksud module install。
-     * 返回 null 表示成功，否则为失败原因。
+     * Generate and install the OTA certificate trust module:
+     * 1. Read the device's original /system/etc/security/otacerts.zip as root;
+     * 2. Append the ZTool self-signed certificate (OEM certificates are preserved, adding trust on top);
+     * 3. Package as a Magisk/KSU-format module (systemless overlay of otacerts.zip);
+     * 4. Prefer `magisk --install-module`, falling back to `ksud module install` on failure.
+     * Returns null on success, otherwise the failure reason.
      */
     fun installOtaCertModule(): String? {
         val certB64 = prefsUtils.loadStringSetting(KEY_OTA_CERT, "")
@@ -132,7 +133,7 @@ class TbEngineSettingsRepository(
             return context.getString(R.string.tb_engine_cert_module_build_failed, e.message)
         }
 
-        // 优先 Magisk，失败回退 KernelSU（ksud）
+        // Prefer Magisk, fall back to KernelSU (ksud) on failure
         val magiskResult = shellExecutor.executeRootCommand(
             "magisk --install-module \"${moduleZip.absolutePath}\"", 120
         )
@@ -153,8 +154,8 @@ class TbEngineSettingsRepository(
     }
 
     /**
-     * 生成模块 zip：读取设备原 otacerts.zip（root cat），追加 ZTool 证书条目，
-     * 放入模块的 system/etc/security/otacerts.zip。
+     * Build the module zip: read the device's original otacerts.zip (root cat), append the ZTool
+     * certificate entry, and place it at system/etc/security/otacerts.zip inside the module.
      */
     private fun buildOtaCertModuleZip(certDer: ByteArray): File {
         val original = File.createTempFile("otacerts_orig", ".zip", context.cacheDir)
@@ -181,15 +182,15 @@ class TbEngineSettingsRepository(
         }
     }
 
-    /** 原 otacerts 条目全保留，追加 ZTool 证书（STORED PEM 条目）。 */
+    /** All original otacerts entries are preserved; the ZTool certificate is appended (STORED PEM entry). */
     private fun mergeOtacerts(original: File, target: File, certDer: ByteArray) {
         java.util.zip.ZipOutputStream(java.io.FileOutputStream(target)).use { zos ->
             val source = if (original.length() > 0) java.util.zip.ZipFile(original) else null
             try {
                 if (source != null) {
                     for (entry in source.entries()) {
-                        // 上一版 ZTool 证书模块覆盖了系统 otacerts.zip 时，
-                        // 读到的源文件里已含旧 ZTool 条目，跳过避免重复条目名
+                        // When a previous ZTool certificate module overwrote the system otacerts.zip,
+                        // the read source already contains the old ZTool entry; skip it to avoid duplicate entry names
                         if (entry.name == ZTOOL_CERT_ENTRY_NAME) {
                             continue
                         }
@@ -207,7 +208,7 @@ class TbEngineSettingsRepository(
                         zos.closeEntry()
                     }
                 }
-                // otacerts.zip 条目为 PEM 编码（与 OEM 条目一致），update_engine 按 PEM 解析
+                // otacerts.zip entries are PEM-encoded (matching OEM entries); update_engine parses PEM
                 val pem = buildString {
                     append("-----BEGIN CERTIFICATE-----\n")
                     android.util.Base64.encodeToString(certDer, android.util.Base64.NO_WRAP)
@@ -263,7 +264,7 @@ class TbEngineSettingsRepository(
                 val entry = java.util.zip.ZipEntry(entryName).apply {
                     time = file.lastModified()
                     if (entryName.endsWith(".zip")) {
-                        // 内嵌 zip 无需再压缩
+                        // Embedded zips need no further compression
                         method = java.util.zip.ZipEntry.STORED
                         size = bytes.size.toLong()
                         crc = java.util.zip.CRC32().apply { update(bytes) }.value

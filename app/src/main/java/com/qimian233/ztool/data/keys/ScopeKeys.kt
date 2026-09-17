@@ -8,10 +8,11 @@ enum class HowToRestart {
     Reboot
 }
 /**
- * 存储作用域包名的字符串变量。减少错误和重复输入，让 IDE 自动补全搞定一切。
- * 
- * 可以改良一下，再描述一个优先推荐的重启作用域方式
- * 
+ * String variables storing scope package names. Reduces errors and duplicated input,
+ * and lets IDE auto-completion handle everything.
+ *
+ * Could be improved further by also describing the preferred way to restart each scope.
+ *
  */
 object ScopeKeys { 
     val SETTINGS = Scope("com.android.settings", HowToRestart.AmStop)

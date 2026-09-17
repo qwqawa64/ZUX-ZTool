@@ -10,16 +10,17 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.io.File
 
 /**
- * 自定义充电动画 Hook。
+ * Custom charge animation hook.
  *
- * 拦截 [android.widget.VideoView.setVideoURI] 调用，
- * 当调用方为 ChargingVideoView 时，将内置资源 URI 替换为外部存储的自定义视频文件。
+ * Intercepts [android.widget.VideoView.setVideoURI] calls and, when the caller is
+ * ChargingVideoView, replaces the built-in resource URI with a custom video file
+ * from external storage.
  *
- * 视频文件路径：
- *   /sdcard/Download/ZTool/charging_animation_portrait.mp4  (竖屏)
- *   /sdcard/Download/ZTool/charging_animation_land.mp4       (横屏)
+ * Video file paths:
+ *   /sdcard/Download/ZTool/charging_animation_portrait.mp4  (portrait)
+ *   /sdcard/Download/ZTool/charging_animation_land.mp4      (landscape)
  *
- * 方向判断与原始 ChargingStyleDefault.getRawId() 一致：
+ * Orientation detection matches the original ChargingStyleDefault.getRawId():
  *   Configuration.ORIENTATION_LANDSCAPE == 2
  */
 class CustomChargeAnimation : AppHookModule() {
@@ -44,9 +45,9 @@ class CustomChargeAnimation : AppHookModule() {
         try {
             val videoViewClass = param.defaultClassLoader.loadClass("android.widget.VideoView")
 
-            // 必须 Hook 两参数版本 setVideoURI(Uri, Map)，因为单参数版本内部
-            // 调用 this.setVideoURI(uri, null) 使用的是局部变量 uri，
-            // 修改 args[0] 不会影响局部变量。
+            // Must hook the two-argument setVideoURI(Uri, Map) version: the single-argument
+            // version internally calls this.setVideoURI(uri, null) using its local uri
+            // variable, so modifying args[0] would not affect that local variable.
             val setVideoURIMethod = videoViewClass.getDeclaredMethod(
                 "setVideoURI",
                 Uri::class.java,
@@ -72,7 +73,8 @@ class CustomChargeAnimation : AppHookModule() {
                         val customUri = Uri.fromFile(file)
                         logger.debug("CustomChargeAnimation: redirecting " +
                             "original=$originalUri -> $filePath")
-                        // 构建新 args 显式传入 proceed，避免原地修改被忽略
+                        // Build new args and pass them explicitly to proceed, since in-place
+                        // modification of chain.args may be ignored
                         val newArgs = chain.args.toMutableList()
                         newArgs[0] = customUri
                         chain.proceed(newArgs.toTypedArray())

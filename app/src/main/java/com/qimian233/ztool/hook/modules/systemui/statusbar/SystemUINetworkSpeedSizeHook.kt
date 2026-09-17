@@ -11,14 +11,17 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 系统UI网速显示样式Hook模块
- * 修改系统状态栏中的网速显示，使数字部分更大、单位部分更小
+ * SystemUI network speed display style hook module.
+ * Modifies the network speed display in the system status bar so the number part is
+ * larger and the unit part is smaller.
  *
- * 识别方式：hook [TextView.setText] 后通过 [Class.isInstance] 判断调用者是否为
- * com.android.systemui.zui.NetworkSpeedView 实例。根据 Jadx 反编译确认，该类内部
- * 所有 setText(...) 调用点（updateNetworkSpeedViewStatus 的直接调用、内部 Handler
- * what==1/what==10 分支）均只用于显示网速文本，因此按调用来源识别比原先匹配
- * "K/s"/"M/s" 等字符串后缀的方式更精确可靠，且不受系统文本格式变化影响。
+ * Detection: hooks [TextView.setText] and uses [Class.isInstance] to check whether the
+ * caller is a com.android.systemui.zui.NetworkSpeedView instance. Confirmed via Jadx
+ * decompilation, all setText(...) call sites inside that class (direct calls from
+ * updateNetworkSpeedViewStatus, internal Handler what==1/what==10 branches) are used
+ * only for network speed text, so identifying by call source is more precise and
+ * reliable than the previous approach of matching "K/s"/"M/s" string suffixes, and is
+ * unaffected by system text format changes.
  */
 @SuppressLint("PrivateApi")
 class SystemUINetworkSpeedSizeHook : AppHookModule() {
@@ -33,51 +36,52 @@ class SystemUINetworkSpeedSizeHook : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         try {
-            logger.info("开始Hook系统UI网速显示")
+            logger.info("Hooking SystemUI network speed display")
 
-            // 加载 NetworkSpeedView 类，用于在回调中判断调用者类型
+            // Load the NetworkSpeedView class for caller type checks in the callback
             val networkSpeedViewClass =
                 param.defaultClassLoader.loadClass(NETWORK_SPEED_VIEW_CLASS)
 
-            // 使用 beforeHookedMethod避免递归调用
+            // Use the hook callback to avoid recursive calls
             val setTextMethod =
                 TextView::class.java.getDeclaredMethod("setText", CharSequence::class.java)
             hookWithId(setTextMethod, "set_text") { chain ->
                 try {
-                    // 仅处理 NetworkSpeedView 实例的文本，不影响状态栏中其他 TextView
+                    // Only handle NetworkSpeedView instance text, not other status bar TextViews
                     if (networkSpeedViewClass.isInstance(chain.thisObject)) {
                         val text = chain.args[0] as CharSequence
                         if (isNetworkSpeedText(text)) {
                             val styledText = createStyledSpeedText(text.toString())
-                            logger.debug("成功修改网速显示样式")
+                            logger.debug("Successfully modified network speed display style")
                             return@hookWithId chain.proceed(arrayOf<Any>(styledText))
                         }
                     }
                 } catch (_: Throwable) {
-                    // 忽略处理过程中的异常
+                    // Ignore exceptions during processing
                 }
                 chain.proceed()
             }
 
-            logger.info("系统UI网速显示Hook成功")
+            logger.info("SystemUI network speed display hooks applied")
         } catch (e: Throwable) {
-            logger.error("系统UI网速显示Hook失败", e)
+            logger.error("Failed to hook SystemUI network speed display", e)
         }
     }
 
     /**
-     * 检查是否为网速文本。
-     * NetworkSpeedView 的 setText 内容恒为 "数字\n单位" 两行格式（如 "12.3\nK/s"）。
-     * 调用来源已限定为 NetworkSpeedView，这里仅保留换行符这一格式前提，
-     * 不再依赖具体单位后缀匹配。
+     * Check whether this is network speed text.
+     * NetworkSpeedView's setText content is always the two-line "number\nunit" format
+     * (e.g. "12.3\nK/s"). The call source is already restricted to NetworkSpeedView,
+     * so only the newline format requirement is checked here; no dependency on
+     * specific unit suffix matching.
      */
     private fun isNetworkSpeedText(text: CharSequence?): Boolean {
         return text != null && text.contains("\n")
     }
 
     /**
-     * 创建带样式的网速文本
-     * 数字部分1.3倍大小，单位部分0.9倍大小
+     * Create styled network speed text.
+     * Number part at 1.3x size, unit part at 0.9x size.
      */
     private fun createStyledSpeedText(originalText: String): CharSequence {
         if (!originalText.contains("\n")) {
@@ -94,13 +98,13 @@ class SystemUINetworkSpeedSizeHook : AppHookModule() {
 
         val spannableString = SpannableString(numberPart + "\n" + unitPart)
 
-        // 设置数字部分相对大小为1.3倍（更大）
+        // Set the number part relative size to 1.3x (larger)
         spannableString.setSpan(
             RelativeSizeSpan(1.3f),
             0, numberPart.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
 
-        // 设置单位部分相对大小为0.9倍（更小）
+        // Set the unit part relative size to 0.9x (smaller)
         spannableString.setSpan(
             RelativeSizeSpan(0.9f),
             numberPart.length + 1, spannableString.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE

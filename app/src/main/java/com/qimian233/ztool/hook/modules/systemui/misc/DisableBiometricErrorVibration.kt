@@ -7,11 +7,11 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 关闭生物识别失败震动 Hook。
+ * Disable biometric error vibration hook.
  *
- * 拦截 VibratorHelper.performHapticFeedback(View, int)，
- * 当 hapticFeedbackConstant == 10005（生物识别错误震动）时跳过原始调用，
- * 从而关闭面容/指纹识别失败时的震动反馈。
+ * Intercepts VibratorHelper.performHapticFeedback(View, int) and skips the original
+ * call when hapticFeedbackConstant == 10005 (biometric error vibration), thereby
+ * disabling the vibration feedback on face/fingerprint authentication failure.
  */
 @SuppressLint("PrivateApi")
 class DisableBiometricErrorVibration : AppHookModule() {

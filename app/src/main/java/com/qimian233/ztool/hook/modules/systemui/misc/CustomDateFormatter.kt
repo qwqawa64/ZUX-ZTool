@@ -9,45 +9,45 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 /**
- * 自定义日期格式化工具类
- * 支持农历、节气、时辰、时间段等特殊格式
+ * Custom date formatter utility.
+ * Supports special formats such as lunar calendar, solar terms, Chinese hours, and time periods.
  */
 object CustomDateFormatter {
 
     private const val TAG = "CustomDateFormatter"
 
-    // 时辰对照表
+    // Chinese traditional hour (shichen) lookup table
     private val CHINESE_HOURS = arrayOf(
         "子时", "丑时", "寅时", "卯时", "辰时", "巳时",
         "午时", "未时", "申时", "酉时", "戌时", "亥时"
     )
 
-    // 自定义格式模式映射
+    // Custom format pattern mapping
     private val CUSTOM_PATTERNS = mapOf(
-        "N" to "lunar",           // 农历日期
-        "J" to "solarTerm",       // 节气
-        "T" to "chineseHour",     // 时辰
-        "C" to "constellation",   // 星座
-        "A" to "animal",          // 生肖
-        "W" to "week",            // 星期
-        "a" to "timePeriod"       // 时间段
+        "N" to "lunar",           // lunar date
+        "J" to "solarTerm",       // solar term
+        "T" to "chineseHour",     // Chinese hour (shichen)
+        "C" to "constellation",   // constellation
+        "A" to "animal",          // zodiac animal
+        "W" to "week",            // week
+        "a" to "timePeriod"       // time period
     )
 
     /**
-     * 格式化日期，支持自定义农历、节气等格式
+     * Format the date, supporting custom lunar calendar, solar term, etc. formats.
      *
-     * @param pattern 格式模式，支持以下自定义占位符：
-     *                N - 农历日期（如：腊月廿三）
-     *                J - 节气（如：立春）
-     *                T - 时辰（如：子时）
-     *                C - 星座（如：水瓶座）
-     *                A - 生肖（如：龙）
-     *                W - 星期（如：星期一）
-     *                a - 时间段（如：凌晨、上午、中午、下午、晚上）
-     *                同时支持标准的SimpleDateFormat格式
+     * @param pattern format pattern; supports the following custom placeholders:
+     *                N - lunar date (e.g.: 腊月廿三)
+     *                J - solar term (e.g.: 立春)
+     *                T - Chinese hour (e.g.: 子时)
+     *                C - constellation (e.g.: 水瓶座)
+     *                A - zodiac animal (e.g.: 龙)
+     *                W - week (e.g.: 星期一)
+     *                a - time period (e.g.: 凌晨、上午、中午、下午、晚上)
+     *                Standard SimpleDateFormat patterns are also supported.
      *
-     * @param date 要格式化的日期
-     * @return 格式化后的字符串
+     * @param date the date to format
+     * @return the formatted string
      */
     fun format(pattern: String?, date: Date?): String {
         if (pattern == null || date == null) {
@@ -55,28 +55,28 @@ object CustomDateFormatter {
         }
 
         return try {
-            // 处理自定义格式
+            // Process custom patterns
             var result = processCustomPatterns(pattern, date)
 
-            // 处理标准的SimpleDateFormat格式
+            // Process standard SimpleDateFormat patterns
             result = processStandardPatterns(result, date)
 
             result
         } catch (e: Exception) {
             Log.e(TAG, "Error formatting date: " + e.message, e)
-            // 出错时返回默认格式
+            // Return the default format on error
             SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
         }
     }
 
     /**
-     * 处理自定义模式（农历、节气、时辰等）
+     * Process custom patterns (lunar calendar, solar terms, Chinese hours, etc.)
      */
     private fun processCustomPatterns(pattern: String, date: Date): String {
         var result = pattern
         val lunar = Lunar.fromDate(date)
 
-        // 逐个处理自定义占位符
+        // Process custom placeholders one by one
         for ((placeholder, type) in CUSTOM_PATTERNS) {
             if (result.contains(placeholder)) {
                 val replacement = getCustomReplacement(type, lunar, date)
@@ -88,25 +88,25 @@ object CustomDateFormatter {
     }
 
     /**
-     * 处理标准SimpleDateFormat格式
+     * Process standard SimpleDateFormat patterns
      */
     private fun processStandardPatterns(pattern: String, date: Date): String {
-        // 如果已经没有自定义占位符，直接格式化
+        // If no custom placeholders remain, format directly
         if (!containsCustomPatterns(pattern)) {
             return SimpleDateFormat(pattern, Locale.getDefault()).format(date)
         }
 
-        // 使用正则表达式匹配并替换标准格式部分
+        // Match and replace standard format segments using regex
         val result = StringBuilder()
         val stdPattern = Pattern.compile("([^a-zA-Z]|^)([yMdHhmsSEDFwWkKzZ]+)([^a-zA-Z]|$)")
         val matcher = stdPattern.matcher(pattern)
 
         var lastEnd = 0
         while (matcher.find()) {
-            // 添加非格式部分
+            // Append non-format segments
             result.append(pattern, lastEnd, matcher.start(2))
 
-            // 格式化标准部分
+            // Format the standard segment
             val stdFormat = matcher.group(2)
             val formatted = SimpleDateFormat(stdFormat, Locale.getDefault()).format(date)
             result.append(formatted)
@@ -114,14 +114,14 @@ object CustomDateFormatter {
             lastEnd = matcher.end(2)
         }
 
-        // 添加剩余部分
+        // Append the remaining part
         result.append(pattern.substring(lastEnd))
 
         return result.toString()
     }
 
     /**
-     * 获取自定义占位符的替换内容
+     * Get the replacement content for a custom placeholder
      */
     private fun getCustomReplacement(type: String, lunar: Lunar, date: Date): String {
         return when (type) {
@@ -137,11 +137,11 @@ object CustomDateFormatter {
     }
 
     /**
-     * 获取农历日期
+     * Get the lunar date
      */
     private fun getLunarDate(lunar: Lunar): String {
         return try {
-            // 格式：腊月廿三
+            // Format: 腊月廿三
             lunar.monthInChinese + "月" + lunar.dayInChinese
         } catch (e: Exception) {
             Log.e(TAG, "Error getting lunar date", e)
@@ -150,7 +150,7 @@ object CustomDateFormatter {
     }
 
     /**
-     * 获取节气
+     * Get the solar term
      */
     private fun getSolarTerm(lunar: Lunar): String {
         return try {
@@ -163,14 +163,14 @@ object CustomDateFormatter {
     }
 
     /**
-     * 获取时辰
+     * Get the Chinese hour (shichen)
      */
     private fun getChineseHour(date: Date): String {
         return try {
             val hourFormat = SimpleDateFormat("HH", Locale.getDefault())
             val hour = hourFormat.format(date).toInt()
 
-            // 计算时辰（每2小时一个时辰）
+            // Compute the shichen (one shichen per 2 hours)
             val hourIndex = (hour + 1) / 2 % 12
             CHINESE_HOURS[hourIndex]
         } catch (e: Exception) {
@@ -180,7 +180,7 @@ object CustomDateFormatter {
     }
 
     /**
-     * 获取星座
+     * Get the constellation
      */
     private fun getConstellation(lunar: Lunar): String {
         return try {
@@ -196,7 +196,7 @@ object CustomDateFormatter {
     }
 
     /**
-     * 根据公历日期获取星座
+     * Get the constellation from a Gregorian date
      */
     private fun getConstellationBySolarDate(month: Int, day: Int): String {
         if (month == 1 && day >= 20 || month == 2 && day <= 18) return "水瓶座"
@@ -215,13 +215,13 @@ object CustomDateFormatter {
     }
 
     /**
-     * 获取中文星期
+     * Get the Chinese week name
      */
     private fun getChineseWeek(date: Date): String {
         return try {
             val weekFormat = SimpleDateFormat("E", Locale.CHINA)
             val week = weekFormat.format(date)
-            week.replace("星期", "周") // 统一格式为"周一"
+            week.replace("星期", "周") // Normalize to "周一" style
         } catch (e: Exception) {
             Log.e(TAG, "Error getting Chinese week", e)
             ""
@@ -229,7 +229,7 @@ object CustomDateFormatter {
     }
 
     /**
-     * 获取当前时间段（凌晨、上午、下午等）
+     * Get the current time period (early morning, morning, afternoon, etc.)
      */
     private fun getTimePeriod(date: Date): String {
         return try {
@@ -252,7 +252,7 @@ object CustomDateFormatter {
     }
 
     /**
-     * 检查是否包含自定义模式
+     * Check whether the pattern contains custom patterns
      */
     private fun containsCustomPatterns(pattern: String): Boolean {
         for (placeholder in CUSTOM_PATTERNS.keys) {

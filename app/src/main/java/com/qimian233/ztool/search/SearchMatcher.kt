@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Whitespace-token AND matcher. Every query token must hit the entry's title,
  * summary, keywords or pinyin fields; the returned score encodes where the strongest
  * hit was found (title-prefix > title-substring > summary > keyword > pinyin-full >
- * pinyin-initials). Chinese titles gain pinyin matches ("ztl" → 状态栏) via
+ * pinyin-initials). Chinese titles gain pinyin matches ("ztl" -> status bar) via
  * TinyPinyin; ASCII-only titles are skipped cheaply.
  */
 object SearchMatcher {

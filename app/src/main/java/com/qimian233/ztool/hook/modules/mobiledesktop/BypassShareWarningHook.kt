@@ -10,10 +10,11 @@ import io.github.libxposed.api.XposedModuleInterface
 import androidx.core.content.edit
 
 /**
- * 绕过超级互联分享警告弹窗的 Hook。
+ * Hook to bypass the share warning dialog of Super Interconnect (FileUnion).
  *
- * 使用 DEXKit 通过方法签名（参数类型+返回类型）动态匹配混淆后的方法名，
- * 不再依赖硬编码的单字母名称。
+ * Uses DexKit to dynamically match the obfuscated method names by method
+ * signature (parameter types + return type) instead of relying on hardcoded
+ * single-letter names.
  */
 class BypassShareWarningHook : AppHookModule() {
 
@@ -35,7 +36,7 @@ class BypassShareWarningHook : AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // ── 从离线索引读取混淆类名/方法名 ────────────────────────────
+        // ── Read obfuscated class/method names from the offline index ────────
         val module = DexIndexStore.lookup(xposed, ScopeKeys.MOBILE_DESKTOP.packageName)
             ?.getAsJsonObject(DexIndexConstants.ModuleKeys.BYPASS_SHARE_WARNING)
 
@@ -49,7 +50,7 @@ class BypassShareWarningHook : AppHookModule() {
             ?.takeIf { !it.isJsonNull }?.asString ?: "b"
 
         try {
-            // ── Hook 1: 磁贴点击 ───────────────────────────────────
+            // ── Hook 1: tile click ───────────────────────────────────
             val baseFileUnionTileClass = classLoader.loadClass(TARGET_CLASS)
             val onClickMethod = baseFileUnionTileClass.getDeclaredMethod("onClick")
             hookWithId(onClickMethod, "on_click") { chain ->
@@ -80,12 +81,12 @@ class BypassShareWarningHook : AppHookModule() {
         }
 
         try {
-            // ── Hook 2: 通用弹窗场景 ─────────────────────────────────
+            // ── Hook 2: generic dialog scenario ─────────────────────────
             val actionNoticeClass = classLoader.loadClass(DIALOG_CLASS)
 
-            // p() 方法名来自离线索引 — 无参 void + 引用 file_share_expose_title 字段
+            // The p() method name comes from the offline index — no-arg void + references the file_share_expose_title field
             val finalPMethodName = module?.get(DexIndexConstants.Keys.DIALOG_METHOD)
-                ?.takeIf { !it.isJsonNull }?.asString ?: "t" // 默认回退（当前版本）
+                ?.takeIf { !it.isJsonNull }?.asString ?: "t" // default fallback (current version)
             logger.debug("target method name of \"createAndStartExposureWarnDialog\": $finalPMethodName")
 
             val pMethod = actionNoticeClass.getDeclaredMethod(finalPMethodName)
@@ -93,7 +94,7 @@ class BypassShareWarningHook : AppHookModule() {
                 val myObject = chain.thisObject
                 val context = getContext(myObject)
 
-                // 尝试新版 MotoDiscoveryManager 启用
+                // Try enabling via the newer MotoDiscoveryManager
                 try {
                     val qClass = classLoader.loadClass("com.motorola.motoaccount.sdk.gf.q")
                     val lMethod = qClass.getDeclaredMethod("l", Context::class.java)
@@ -103,7 +104,7 @@ class BypassShareWarningHook : AppHookModule() {
                         .invoke(qInstance, true)
                     logger.debug("dialog hook: enabled via MotoDiscoveryManager")
                 } catch (_: ReflectiveOperationException) {
-                    // 回退旧版 manager
+                    // Fall back to the legacy manager
                     val managerClass = classLoader.loadClass(managerClassName)
                     val lMethod =
                         managerClass.getDeclaredMethod(managerFactoryMethodName, Context::class.java)
@@ -155,12 +156,12 @@ class BypassShareWarningHook : AppHookModule() {
         setMethod: String,
         tileRefreshMethod: String
     ) {
-        // 尝试多种策略启用以兼容新旧版本：
-        //   旧版: managerClass.l(context).z(true)  (c0)
-        //   新版: q.l(context).B(true)              (MotoDiscoveryManager)
-        //   兜底: 直接写 SharedPreferences
+        // Try multiple enable strategies to support both old and new versions:
+        //   Legacy: managerClass.l(context).z(true)  (c0)
+        //   New:    q.l(context).B(true)             (MotoDiscoveryManager)
+        //   Fallback: write SharedPreferences directly
         try {
-            // ── 策略 1：旧版 manager class ──────────────────────────
+            // ── Strategy 1: legacy manager class ──────────────────────────
             try {
                 val mc = classLoader.loadClass(managerClass)
                 val lMethod = mc.getDeclaredMethod(factoryMethod, Context::class.java)
@@ -174,7 +175,7 @@ class BypassShareWarningHook : AppHookModule() {
                     logger.debug("enabled via legacy manager: $managerClass.$factoryMethod/$setMethod")
                 }
             } catch (_: ReflectiveOperationException) {
-                // ── 策略 2：新版 MotoDiscoveryManager ───────────────
+                // ── Strategy 2: newer MotoDiscoveryManager ───────────────
                 logger.warn("legacy manager not found, trying MotoDiscoveryManager")
                 val qClass = classLoader.loadClass("com.motorola.motoaccount.sdk.gf.q")
                 val lMethod = qClass.getDeclaredMethod("l", Context::class.java)
@@ -185,13 +186,13 @@ class BypassShareWarningHook : AppHookModule() {
                 logger.debug("enabled via MotoDiscoveryManager.q.l().B(true)")
             }
 
-            // ── 兜底：直接写两个 SharedPreferences ───────────────────
+            // ── Fallback: write both SharedPreferences directly ───────────────
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit { putBoolean(PREF_KEY1, true) }
             context.getSharedPreferences("sp_file_ble", Context.MODE_PRIVATE)
                 .edit { putBoolean("nearby_send_files", true) }
 
-            // ── 刷新磁贴的 b() 方法（handleLoadPackage 阶段已解析）────
+            // ── Refresh the tile via its b() method (resolved in handleLoadPackage) ────
             val bMethod = findMethod(tile!!.javaClass, tileRefreshMethod)
             bMethod.isAccessible = true
             bMethod.invoke(tile)

@@ -8,8 +8,8 @@ import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 import java.lang.reflect.Constructor
 
 /**
- * 强制启用 DisplayPowerController 的屏幕开/关 Color Fade 动画，
- * 并通过偏好设置 [PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS] 自定义动画时长。
+ * Forces DisplayPowerController's screen on/off Color Fade animation to be enabled,
+ * with a customizable animation duration via [PreferenceKeys.SCREEN_ON_OFF_ANIMATION_MS].
  */
 @SuppressLint("PrivateApi")
 class ForceScreenOnOffAnimation : SystemHookModule() {

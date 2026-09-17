@@ -1,12 +1,12 @@
 package com.qimian233.ztool.data.keys
 
 /**
- * 所有 xposed_module_config 偏好键的单一可信源。
+ * Single source of truth for all xposed_module_config preference keys.
  *
- * 每个键按数据类型分类，同时作为具名常量暴露，供 Repository、Hook、以及
- * ModulePreferencesUtils 的备份/恢复类型推断使用。
+ * Keys are grouped by data type and also exposed as named constants, for use by
+ * Repositories, hooks, and ModulePreferencesUtils backup/restore type inference.
  *
- * 用法示例：
+ * Usage examples:
  * - Kotlin:  PreferenceKeys.DISABLE_FORCE_STOP.name
  * - Java:    PreferenceKeys.DISABLE_FORCE_STOP.getName()
  */
@@ -17,12 +17,12 @@ data class StringKey(val name: String, val default: String)
 
 object PreferenceKeys {
 
-    // Boolean 键（Hook 启用开关 + 子功能开关 + 应用设置）
+    // Boolean keys (hook enable switches + sub-feature switches + app settings)
 
     // for test hook only
     val TEST_HOOK = BoolKey("test_hook", false)
 
-    // ── 系统框架 ──
+    // ── System framework ──
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
     val ALLOW_UNTRUSTED_TOUCH = BoolKey("allow_untrusted_touch", false)
@@ -33,7 +33,7 @@ object PreferenceKeys {
     val FORCE_RELATIVE_APP_FREEFORM = BoolKey("force_relative_app_freeform", false)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
 
-    // 系统框架 · 包管理服务（安装限制绕过功能组）
+    // System framework · package manager service (install restriction bypass group)
     val PKG_MGR_ALLOW_DOWNGRADE = BoolKey("pkg_mgr_allow_downgrade", false)
     val PKG_MGR_BYPASS_VERIFICATION = BoolKey("pkg_mgr_bypass_verification", false)
     val PKG_MGR_DISABLE_VERIFICATION_AGENT = BoolKey("pkg_mgr_disable_verification_agent", false)
@@ -79,7 +79,7 @@ object PreferenceKeys {
     val DISABLE_BIOMETRIC_ERROR_VIBRATION = BoolKey("disable_biometric_error_vibration", false)
     val BYPASS_FACE_AUTH_TIMEOUT = BoolKey("bypass_face_auth_timeout", false)
 
-    // SystemUI 子功能开关
+    // SystemUI sub-feature switches
     val CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE_ENABLED = BoolKey("Custom_StatusBarClockTextSizeEnabled", false)
     val CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING_ENABLED = BoolKey("Custom_StatusBarClockLetterSpacingEnabled", false)
     val CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR_ENABLED = BoolKey("Custom_StatusBarClockTextColorEnabled", false)
@@ -93,11 +93,11 @@ object PreferenceKeys {
     val CUSTOM_SECOND_LABEL_COLOR = BoolKey("custom_second_label_color", false)
     val CUSTOMIZE_SLIDER_STYLE_VALUE = BoolKey("customize_slider_style_value", false)
 
-    // SystemUI 内部备份键
+    // SystemUI internal backup keys
     val CUSTOMIZE_SLIDER_STYLE_PREVIOUS = BoolKey("customize_slider_style_previous", false)
     val CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE = BoolKey("customize_slider_style_previous_value", false)
 
-    // SystemUI RealWatts 子功能开关
+    // SystemUI RealWatts sub-feature switches
     val SYSTEMUI_REALWATTS_SHOW_VOLTAGE = BoolKey("systemui_realwatts_show_voltage", false)
     val SYSTEMUI_REALWATTS_SHOW_CURRENT = BoolKey("systemui_realwatts_show_current", false)
     val SYSTEMUI_REALWATTS_SHOW_POWER = BoolKey("systemui_realwatts_show_power", true)
@@ -118,7 +118,7 @@ object PreferenceKeys {
     val HIDE_OTA_UPDATE_HINT = BoolKey("hide_ota_update_hint", false)
     val ALLOW_ADD_LANGUAGE = BoolKey("allow_add_language", false)
 
-    // Settings 子功能开关
+    // Settings sub-feature switches
     val ABOUT_DEVICE_INFO_MODEL_ENABLED = BoolKey("about_device_info_model_enabled", false)
     val ABOUT_DEVICE_INFO_CPU_ENABLED = BoolKey("about_device_info_cpu_enabled", false)
     val ABOUT_DEVICE_INFO_RAM_ENABLED = BoolKey("about_device_info_ram_enabled", false)
@@ -151,7 +151,7 @@ object PreferenceKeys {
     val LAUNCHER_APP_ICON_UNMASK = BoolKey("launcher_app_icon_unmask", false)
     val LAUNCHER_APP_ICON_UNMASK_DYNAMIC = BoolKey("launcher_app_icon_unmask_dynamic", false)
 
-    // Launcher 子功能开关 + 内部键
+    // Launcher sub-feature switches + internal keys
     val REMOVE_HOT_WORD_VIEW = BoolKey("remove_hot_word_view", false)
     val REMOVE_SEARCH_RECOMMEND = BoolKey("remove_search_recommend", false)
     val BEAUTIFY_RAM_INFO = BoolKey("beautify_ram_info", false)
@@ -175,7 +175,7 @@ object PreferenceKeys {
     val BLOCK_OTA_INSTALL_DIALOG = BoolKey("block_ota_install_dialog", false)
     val HIDE_OTA_NOTIFICATIONS = BoolKey("hide_ota_notifications", false)
 
-    // ── TB Engine (UDS 实时连接引擎 com.lenovo.tbengine) ──
+    // ── TB Engine (UDS real-time connection engine com.lenovo.tbengine) ──
     val DISABLE_TB_ENGINE_AUTO_DOWNLOAD = BoolKey("disable_tbengine_auto_download", false)
     val DISABLE_TB_ENGINE_AUTO_INSTALL = BoolKey("disable_tbengine_auto_install", false)
     val DISABLE_TB_ENGINE_APP_UPDATE = BoolKey("disable_tbengine_app_update", false)
@@ -183,7 +183,7 @@ object PreferenceKeys {
     val DISABLE_TB_ENGINE_REPORTING = BoolKey("disable_tbengine_reporting", false)
     val SIGN_TB_ENGINE_LOCAL_OTA = BoolKey("sign_tbengine_local_ota", false)
 
-    // ── ZUI 性能服务 (com.zui.pp) ──
+    // ── ZUI performance service (com.zui.pp) ──
     val PP_BLOCK_POWER_POLICY_SYNC = BoolKey("pp_block_power_policy_sync", false)
     val PP_BLOCK_GAME_POLICY_UPDATE = BoolKey("pp_block_game_policy_update", false)
 
@@ -203,7 +203,7 @@ object PreferenceKeys {
     val BYPASS_SHARE_WARNING = BoolKey("bypass_share_warning", false)
     val DISABLE_NEARBY_SHARE_COUNTDOWN = BoolKey("disable_nearby_share_countdown", false)
 
-    // ── 应用设置 / 杂项 ──
+    // ── App settings / misc ──
     val IS_DETAILED_LOGGING = BoolKey("isDetailedLogging", false)
     val AUTO_CHECK_UPDATE = BoolKey("auto_check_update", true)
     val YIYAN = BoolKey("YiYan", false)
@@ -211,7 +211,7 @@ object PreferenceKeys {
     val IS_CONFIG_UPGRADED = BoolKey("isConfigUpgraded", false)
 
     // ═══════════════════════════════════════════════════════════
-    // Int 键
+    // Int keys
     // ═══════════════════════════════════════════════════════════
 
     val CUSTOM_LAUNCHER_ROW = IntKey("CustomLauncherRow", 4)
@@ -232,7 +232,7 @@ object PreferenceKeys {
     val LOCK_SCREEN_CLOCK_COLOR_VALUE = IntKey("lock_screen_clock_color_value", 0xFFFFFFFF.toInt())
 
     // ═══════════════════════════════════════════════════════════
-    // Float 键
+    // Float keys
     // ═══════════════════════════════════════════════════════════
 
     val CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE = FloatKey("Custom_StatusBarClockTextSize", 16.0f)
@@ -243,7 +243,7 @@ object PreferenceKeys {
     val CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING = FloatKey("Custom_ControlCenterDateLetterSpacing", 0.1f)
 
     // ═══════════════════════════════════════════════════════════
-    // String 键
+    // String keys
     // ═══════════════════════════════════════════════════════════
 
     val MISTAKE_TOUCH_WHITE_LIST_GAME = StringKey("MistakeTouchWhiteListGame", "")
@@ -260,7 +260,7 @@ object PreferenceKeys {
     val ABOUT_DEVICE_INFO_SOFTWARE = StringKey("about_device_info_software", "")
     val AI_INPUT_EXPAND_SIGNS = StringKey("AI_INPUT_EXPAND_SIGNS", "")
     val CUSTOM_CONTROL_CENTER_DATE_FORMAT = StringKey("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE")
-    // 锁屏一言默认拉取 xygeng 一言 API；正则提取响应中的 content 字段值
+    // Default lock-screen quote fetches the xygeng quote API; regex extracts the "content" field from the response
     val API_URL = StringKey("API_URL", "https://api.xygeng.cn/one")
     val REGULAR = StringKey("Regular", "\"content\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"")
     val CUSTOM_STATUSBAR_CLOCK_FORMAT = StringKey("Custom_StatusBarClockFormat", "")
@@ -268,8 +268,8 @@ object PreferenceKeys {
     val SYSTEMUI_REALWATTS_CUSTOM_FORMAT = StringKey("systemui_realwatts_custom_format", "")
     val DESKTOP_LIVE_WALLPAPER_SCALE_MODE = StringKey("desktop_live_wallpaper_scale_mode", "fit")
 
-    // 按类型分组的列表 —— 供 ModulePreferencesUtils 备份/恢复
-    // 以及 Hook 侧循环匹配使用
+    // Lists grouped by type — used by ModulePreferencesUtils backup/restore
+    // and by hook-side loop matching
 
     val booleanKeys: List<BoolKey> = listOf(
         DISABLE_FLAG_SECURE, ALLOW_GET_PACKAGES,
@@ -376,15 +376,15 @@ object PreferenceKeys {
         DESKTOP_LIVE_WALLPAPER_SCALE_MODE
     )
 
-    // 查找辅助方法
+    // Lookup helpers
 
     fun isBooleanKey(name: String): Boolean = booleanKeys.any { it.name == name }
     fun isIntKey(name: String): Boolean = intKeys.any { it.name == name }
     fun isFloatKey(name: String): Boolean = floatKeys.any { it.name == name }
 
     /**
-     * 根据键名查找对应的类型化键对象。
-     * 找不到则返回 null。
+     * Find the typed key object matching the given key name.
+     * Returns null if not found.
      */
     @Suppress("unused")
     fun findBooleanKey(name: String): BoolKey? = booleanKeys.find { it.name == name }

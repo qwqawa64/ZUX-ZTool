@@ -12,19 +12,21 @@ import java.io.IOException
 import java.text.DecimalFormat
 
 /**
- * SystemUI 充电瓦数显示 Hook 模块。
+ * SystemUI charging wattage display hook module.
  *
- * 在锁屏充电提示中追加实时充电信息（功率、电压、电流、温度）。
+ * Appends real-time charging info (power, voltage, current, temperature) to the
+ * lock screen charging indication.
  *
- * 读取策略：优先使用 Java IO 直接读取 sysfs（SystemUI 以 system uid 运行，
- * 通常有权限），失败时自动 fallback 到 su 命令。
+ * Read strategy: prefer direct Java IO reads of sysfs (SystemUI runs as system uid
+ * and usually has permission); automatically falls back to the su command on failure.
  *
- * 显示格式可通过前端子开关或高级自定义格式（占位符替换，零 shell 风险）配置。
+ * The display format is configurable via frontend sub-switches or an advanced custom
+ * format (placeholder replacement, zero shell risk).
  */
 @SuppressLint("PrivateApi")
 class SystemUIRealWatts : AppHookModule() {
 
-    // ── sysfs 路径 ──
+    // ── sysfs paths ──
     private companion object {
         const val TARGET_CLASS = "com.android.systemui.statusbar.KeyguardIndicationController"
         const val CURRENT_NOW_PATH = "/sys/class/power_supply/battery/current_now"
@@ -35,7 +37,7 @@ class SystemUIRealWatts : AppHookModule() {
         val POWER_FORMAT = DecimalFormat("0.00")
     }
 
-    // ── 可变状态 ──
+    // ── mutable state ──
     private var lastUpdate: Long = 0
     private var suAvailable: Boolean? = null
 
@@ -74,35 +76,35 @@ class SystemUIRealWatts : AppHookModule() {
                         val prefs = xposed.getRemotePreferences(PREFS_NAME)
                         val displayText = buildDisplayText(chargingData, prefs)
                         if (displayText.isEmpty()) {
-                            logger.warn("未能检测到充电功率")
+                            logger.warn("No charging power detected")
                             return@runCatching "$originalText\n --W"
                         }
                         lastUpdate = System.currentTimeMillis()
-                        logger.debug("成功添加充电显示: $displayText")
+                        logger.debug("Charging display added: $displayText")
                         originalText + "\n" + displayText
                     } else {
-                        logger.warn("未能检测到充电功率")
+                        logger.warn("No charging power detected")
                         "$originalText\n --W"
                     }
                 }.getOrElse { t ->
-                    logger.error("computePowerIndication hook 回调异常", t)
+                    logger.error("computePowerIndication hook callback error", t)
                     chain.proceed()
                 }
             }
 
-            logger.info("成功 Hook KeyguardIndicationController")
+            logger.info("Successfully hooked KeyguardIndicationController")
         } catch (t: Throwable) {
-            logger.error("Hook KeyguardIndicationController 失败", t)
+            logger.error("Failed to hook KeyguardIndicationController", t)
         }
     }
 
-    /** 读取充电数据：Java IO 优先，失败时 fallback 到 su。 */
+    /** Read charging data: Java IO first, fallback to su on failure. */
     private fun readChargingData(): ChargingData? {
         readChargingDataViaFileIO()?.let { return it }
 
-        logger.warn("Java IO 读取 sysfs 失败，尝试 fallback 到 su 模式")
+        logger.warn("Java IO sysfs read failed, falling back to su mode")
         if (!isSuAvailable()) {
-            logger.warn("su 不可用，无法 fallback")
+            logger.warn("su unavailable, cannot fall back")
             return null
         }
         return readChargingDataViaSu()
@@ -116,12 +118,12 @@ class SystemUIRealWatts : AppHookModule() {
             val tempStr = readSysfs(TEMP_PATH)
 
             if (currentStr.isNullOrEmpty() || voltageStr.isNullOrEmpty()) {
-                logger.warn("Java IO 读取 sysfs 无有效数据 - 电流: $currentStr, 电压: $voltageStr")
+                logger.warn("Java IO sysfs read returned no valid data - current: $currentStr, voltage: $voltageStr")
                 return null
             }
             buildChargingData(status, currentStr, voltageStr, tempStr, "Java IO")
         } catch (e: Exception) {
-            logger.error("Java IO 读取充电数据异常", e)
+            logger.error("Java IO charging data read error", e)
             null
         }
     }
@@ -134,12 +136,12 @@ class SystemUIRealWatts : AppHookModule() {
             val tempStr = executeRootCommand("cat $TEMP_PATH")
 
             if (currentStr.isNullOrEmpty() || voltageStr.isNullOrEmpty()) {
-                logger.warn("su 读取失败 - 电流: $currentStr, 电压: $voltageStr")
+                logger.warn("su read failed - current: $currentStr, voltage: $voltageStr")
                 return null
             }
             buildChargingData(status, currentStr, voltageStr, tempStr, "su")
         } catch (e: Exception) {
-            logger.error("su 读取充电数据异常", e)
+            logger.error("su charging data read error", e)
             null
         }
     }
@@ -160,13 +162,13 @@ class SystemUIRealWatts : AppHookModule() {
         val voltageV = voltageMicroV / 1_000_000.0
         val power = kotlin.math.abs(currentA * voltageV)
 
-        // 温度：sysfs 单位为 0.1°C
+        // Temperature: sysfs unit is 0.1°C
         var temperature = -273.0
         if (!tempStr.isNullOrEmpty()) {
             try {
                 temperature = tempStr.trim().toLong() / 10.0
             } catch (_: NumberFormatException) {
-                logger.warn("温度值解析失败: $tempStr")
+                logger.warn("Failed to parse temperature value: $tempStr")
             }
         }
 
@@ -179,11 +181,11 @@ class SystemUIRealWatts : AppHookModule() {
         )
 
         logger.debug(
-            "$source 读取实时充电数据 - 状态: $status, " +
-                "电流: $currentA" + "A ($currentMicroA" + "μA), " +
-                "电压: $voltageV" + "V ($voltageMicroV" + "μV), " +
-                "温度: ${if (temperature > -200) "${temperature.toInt()}°C" else "N/A"}, " +
-                "功率: ${POWER_FORMAT.format(power)}W"
+            "$source read real-time charging data - status: $status, " +
+                "current: $currentA" + "A ($currentMicroA" + "μA), " +
+                "voltage: $voltageV" + "V ($voltageMicroV" + "μV), " +
+                "temperature: ${if (temperature > -200) "${temperature.toInt()}°C" else "N/A"}, " +
+                "power: ${POWER_FORMAT.format(power)}W"
         )
 
         return data
@@ -193,7 +195,7 @@ class SystemUIRealWatts : AppHookModule() {
         return try {
             BufferedReader(FileReader(path)).use { it.readLine() }
         } catch (e: IOException) {
-            logger.warn("Java IO 读取 $path 失败: ${e.message}")
+            logger.warn("Java IO read of $path failed: ${e.message}")
             null
         }
     }
@@ -206,10 +208,10 @@ class SystemUIRealWatts : AppHookModule() {
             process.waitFor()
             val available = !result.isNullOrEmpty()
             suAvailable = available
-            logger.debug("su 可用性检测: $available")
+            logger.debug("su availability check: $available")
             available
         } catch (e: Exception) {
-            logger.warn("su 可用性检测异常: ${e.message}")
+            logger.warn("su availability check error: ${e.message}")
             suAvailable = false
             false
         }
@@ -221,13 +223,13 @@ class SystemUIRealWatts : AppHookModule() {
             val output = process.inputStream.bufferedReader().use { it.readText().trim() }
             val exitCode = process.waitFor()
             if (exitCode != 0) {
-                logger.warn("su 命令执行失败，退出码: $exitCode, 命令: $command")
+                logger.warn("su command failed, exit code: $exitCode, command: $command")
                 return null
             }
-            logger.debug("su 命令执行成功: $command -> $output")
+            logger.debug("su command succeeded: $command -> $output")
             output
         } catch (e: Exception) {
-            logger.error("执行 su 命令失败: $command", e)
+            logger.error("Failed to execute su command: $command", e)
             null
         }
     }
@@ -266,11 +268,11 @@ class SystemUIRealWatts : AppHookModule() {
         }
     }
 
-    /** 高级自定义格式：Java 侧 String.replace，零 shell 风险。 */
+    /** Advanced custom format: Java-side String.replace, zero shell risk. */
     private fun buildCustomFormat(data: ChargingData, prefs: SharedPreferences): String {
         val format = prefs.getString(PreferenceKeys.SYSTEMUI_REALWATTS_CUSTOM_FORMAT.name, "")
         if (format.isNullOrBlank()) {
-            logger.warn("自定义格式为空，回退到默认格式")
+            logger.warn("Custom format is empty, falling back to default format")
             return buildDefaultFormat(data, prefs)
         }
 
@@ -293,9 +295,9 @@ class SystemUIRealWatts : AppHookModule() {
 
     private data class ChargingData(
         val isCharging: Boolean,
-        val current: Int,       // 毫安
-        val voltage: Float,     // 伏特
-        val power: Double,      // 瓦特
-        val temperature: Double // 摄氏度，-273 表示无效
+        val current: Int,       // milliamps
+        val voltage: Float,     // volts
+        val power: Double,      // watts
+        val temperature: Double // celsius, -273 means invalid
     )
 }

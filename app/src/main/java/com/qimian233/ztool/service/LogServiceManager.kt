@@ -7,7 +7,7 @@ import android.os.Looper
 import android.util.Log
 
 /**
- * 日志服务管理器（无需Root权限，采集应用自身日志）
+ * Log service manager (no root required; collects the app's own logs)
  */
 object LogServiceManager {
     private const val TAG = "LogServiceManager"
@@ -33,7 +33,7 @@ object LogServiceManager {
     }
 
     /**
-     * 启动日志采集服务
+     * Start the log collection service
      */
     fun startLogService(context: Context) {
         startLogService(context.applicationContext, false)
@@ -50,7 +50,7 @@ object LogServiceManager {
 
             resetRestartAttempts(appContext)
 
-            Log.d(TAG, "日志服务启动成功")
+            Log.d(TAG, "log service started")
 
             statusListener?.let { listener ->
                 Handler(Looper.getMainLooper()).post { listener.onServiceStarted() }
@@ -58,7 +58,7 @@ object LogServiceManager {
 
             true
         } catch (e: Exception) {
-            Log.e(TAG, "启动日志服务失败", e)
+            Log.e(TAG, "failed to start log service", e)
 
             if (isRestart) {
                 handleRestartFailure(context)
@@ -69,7 +69,7 @@ object LogServiceManager {
     }
 
     /**
-     * 停止日志采集服务
+     * Stop the log collection service
      */
     fun stopLogService(context: Context) {
         val appContext = context.applicationContext
@@ -78,34 +78,34 @@ object LogServiceManager {
             appContext.stopService(intent)
             resetRestartAttempts(appContext)
 
-            Log.d(TAG, "日志服务停止成功")
+            Log.d(TAG, "log service stopped")
 
             statusListener?.let { listener ->
                 Handler(Looper.getMainLooper()).post { listener.onServiceStopped() }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "停止日志服务失败", e)
+            Log.e(TAG, "failed to stop log service", e)
         }
     }
 
     /**
-     * 重启服务（如果之前是启用的）
+     * Restart the service (if it was previously enabled)
      */
     fun restartServiceIfNeeded(context: Context) {
         val appContext = context.applicationContext
         val attempts = getRestartAttempts(appContext)
 
         if (attempts < MAX_RESTART_ATTEMPTS) {
-            Log.d(TAG, "自动重启日志服务 (尝试次数: $attempts)")
+            Log.d(TAG, "auto-restarting log service (attempt: $attempts)")
 
             Handler(Looper.getMainLooper()).postDelayed({
                 val success = startLogService(appContext, true)
                 if (!success) {
-                    Log.w(TAG, "服务重启失败")
+                    Log.w(TAG, "service restart failed")
                 }
             }, 3000)
         } else {
-            Log.w(TAG, "已达到最大重启尝试次数，停止自动重启")
+            Log.w(TAG, "max restart attempts reached, stopping auto-restart")
             resetRestartAttempts(appContext)
 
             statusListener?.let { listener ->
@@ -116,10 +116,10 @@ object LogServiceManager {
 
     private fun handleRestartFailure(context: Context) {
         val attempts = incrementRestartAttempts(context)
-        Log.w(TAG, "服务重启失败，当前尝试次数: $attempts")
+        Log.w(TAG, "service restart failed, current attempt count: $attempts")
 
         if (attempts >= MAX_RESTART_ATTEMPTS) {
-            Log.e(TAG, "达到最大重启尝试次数，服务将不会自动重启")
+            Log.e(TAG, "max restart attempts reached, service will not auto-restart")
             resetRestartAttempts(context)
 
             statusListener?.let { listener ->

@@ -45,7 +45,7 @@ class CleanGlobalSearch : AppHookModule() {
 
             val module = idx?.getAsJsonObject(DexIndexConstants.ModuleKeys.CLEAN_GLOBAL_SEARCH)
 
-            // 候选列表：离线索引结果优先，缺失时回退硬编码（原 discoverInitMethods 语义）
+            // Candidate list: offline index result first, fall back to hardcoded names when missing (original discoverInitMethods semantics)
             val methodNames = listOfNotNull(
                 module?.get(DexIndexConstants.Keys.HOTWORD_INIT_METHOD)
                     ?.takeIf { !it.isJsonNull }?.asString,

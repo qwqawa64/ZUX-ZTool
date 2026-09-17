@@ -229,7 +229,7 @@ data class LockScreenSettingsUiState(
     val isTestingApi: Boolean = false,
     val showRootPermissionDialog: Boolean = false,
     val apiTestResult: ApiTestResult? = null,
-    // RealWatts 子开关
+    // RealWatts sub-switches
     val showVoltage: Boolean = false,
     val showCurrent: Boolean = false,
     val showPower: Boolean = true,
@@ -237,7 +237,7 @@ data class LockScreenSettingsUiState(
     val showIndicator: Boolean = true,
     val customFormatEnabled: Boolean = false,
     val customFormat: String = "",
-    // 锁屏时钟颜色
+    // Lock screen clock color
     val clockColorCustom: Boolean = false,
     val clockColor: Int = 0xFFFFFFFF.toInt(),
     val clockColorText: String = "FFFFFFFF",

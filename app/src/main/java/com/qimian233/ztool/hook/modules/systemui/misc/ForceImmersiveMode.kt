@@ -7,13 +7,14 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
 /**
- * 强制沉浸式模式 Hook。
+ * Force immersive mode hook.
  *
- * 通过拦截 SystemUI CommandQueue 中控制系统栏可见性的方法，
- * 强制所有应用使用沉浸式模式（状态栏/导航栏隐藏，可滑动唤出）。
+ * Intercepts SystemUI CommandQueue methods controlling system bar visibility to
+ * force immersive mode in all apps (status/navigation bars hidden, swipeable).
  *
- * 现代 Android (13+) 主要通过 onSystemBarAttributesChanged 的
- * requestedVisibleTypes 参数控制栏的可见性。setWindowState 作为旧路径兜底。
+ * Modern Android (13+) primarily controls bar visibility through the
+ * requestedVisibleTypes parameter of onSystemBarAttributesChanged.
+ * setWindowState serves as a fallback for the legacy path.
  */
 @SuppressLint("PrivateApi")
 class ForceImmersiveMode : AppHookModule() {
@@ -40,32 +41,32 @@ class ForceImmersiveMode : AppHookModule() {
     }
 
     /**
-     * 主 Hook：拦截 onSystemBarAttributesChanged，
-     * 将 requestedVisibleTypes 强制设为 0，使状态栏和导航栏均隐藏。
+     * Main hook: intercept onSystemBarAttributesChanged and force requestedVisibleTypes
+     * to 0 so both status bar and navigation bar are hidden.
      *
-     * 方法签名（8 个参数）：
+     * Method signature (8 parameters):
      *   onSystemBarAttributesChanged(
      *     int displayId,             // args[0]
      *     int appearance,            // args[1]
      *     AppearanceRegion[] regions,// args[2]
      *     boolean imeManaged,        // args[3]
      *     int behavior,              // args[4]
-     *     int requestedVisibleTypes, // args[5] ← 核心：0=隐藏所有栏
+     *     int requestedVisibleTypes, // args[5] <- core: 0 = hide all bars
      *     String packageName,        // args[6]
      *     LetterboxDetails[] details // args[7]
      *   )
      */
     private fun hookSystemBarAttributes(commandQueueClass: Class<*>) {
         try {
-            // onSystemBarAttributesChanged 使用了内部 Android 类型参数
-            // (AppearanceRegion[], LetterboxDetails[])，无法直接引用。
-            // 通过名称 + 参数个数定位目标方法。
+            // onSystemBarAttributesChanged takes internal Android types as parameters
+            // (AppearanceRegion[], LetterboxDetails[]) and cannot be referenced directly.
+            // Locate the target method by name + parameter count.
             val targetMethod: Method = commandQueueClass.declaredMethods
                 .first { it.name == "onSystemBarAttributesChanged" && it.parameterTypes.size == 8 }
 
             hookWithId(targetMethod, "target") {  chain ->
                 val args = chain.args.toMutableList()
-                // args[5] = requestedVisibleTypes; 设为 0 隐藏状态栏+导航栏
+                // args[5] = requestedVisibleTypes; set to 0 to hide status bar + navigation bar
                 val current = args[5] as Int
                 if (current != 0) {
                     args[5] = 0
@@ -82,8 +83,8 @@ class ForceImmersiveMode : AppHookModule() {
     }
 
     /**
-     * 兜底 Hook：拦截旧版 setWindowState(int, int, int)，
-     * 将 state=0（显示）改写为 state=2（沉浸式隐藏）。
+     * Fallback hook: intercept the legacy setWindowState(int, int, int) and rewrite
+     * state=0 (showing) to state=2 (immersive hidden).
      */
     private fun hookSetWindowState(commandQueueClass: Class<*>) {
         try {

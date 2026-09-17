@@ -407,7 +407,7 @@ private fun lockScreenSettingsSections(
             )
         )
 
-        // 当选择"实际功率"时展开子开关
+        // Expand sub-switches when "actual power" is selected
         val isActualWatts = state.chargeWattsOption == stringResource(R.string.system_ui_common_watt_option_actual)
         if (isActualWatts) {
             if (!state.customFormatEnabled) {
@@ -457,7 +457,7 @@ private fun lockScreenSettingsSections(
                     )
                 )
             }
-            // 高级自定义格式
+            // Advanced custom format
             add(
                 SettingItem.Switch(
                     title = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_enabled),

@@ -7,16 +7,17 @@ import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 /**
- * 禁用 ZUI 高温降低亮度（HBM 高亮模式热保护）。
+ * Disables the ZUI high-temperature brightness reduction (HBM high brightness mode thermal protection).
  *
- * ZuiDisplayService（services.jar）在 hbm 温度传感器（type==SKIN, name=="hbm"）
- * 达到 quitTemperature 阈值时会关闭高亮模式（HBM），把屏幕亮度限制在普通亮度
- * 上限以下（setHbmBrightness / setHbmLux 中的温度判定）。
+ * ZuiDisplayService (services.jar) turns off HBM when the hbm temperature sensor
+ * (type==SKIN, name=="hbm") reaches the quitTemperature threshold, limiting screen
+ * brightness below the normal cap (temperature check inside setHbmBrightness / setHbmLux).
  *
- * 本 Hook 将 ZuiDisplayService.pullTemperatureLocked() 的返回值固定为 0（视为
- * 低温），使温度判定恒不触发，高温下依然允许进入 HBM 高亮模式。
+ * This hook pins ZuiDisplayService.pullTemperatureLocked() to return 0 (treated as
+ * low temperature) so the temperature check never triggers, allowing HBM even at
+ * high temperatures.
  *
- * 生效方式：重启系统（system_server 进程）。
+ * Takes effect after a system reboot (system_server process).
  */
 class DisableHbmThermalLimit : SystemHookModule() {
 
@@ -33,7 +34,7 @@ class DisableHbmThermalLimit : SystemHookModule() {
                 classLoader.loadClass("com.android.server.display.ZuiDisplayService"),
                 "pullTemperatureLocked"
             )
-            // 固定返回 0（0.0°C），绕过 quitTemperature 高温判定
+            // Pin the return value to 0 (0.0°C) to bypass the quitTemperature check
             hookWithId(method, "disable_hbm_thermal_limit") { 0 }
             logger.info("Hooked ZuiDisplayService.pullTemperatureLocked [OK]")
         } catch (t: Throwable) {

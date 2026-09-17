@@ -7,7 +7,7 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 强制启用原生 AOSP AOD（Always-On Display），忽略电池省电模式限制。
+ * Force-enable native AOSP AOD (Always-On Display), ignoring battery saver restrictions.
  */
 @SuppressLint("PrivateApi")
 class ForceNativeAod : AppHookModule() {
@@ -24,9 +24,9 @@ class ForceNativeAod : AppHookModule() {
     }
 
     /**
-     * Hook `DozeParameters.getAlwaysOn()`，始终返回 true，
-     * 确保 `updateControlScreenOff()` 中正确设置
-     * `PowerManager.setDozeAfterScreenOff(false)`。
+     * Hook `DozeParameters.getAlwaysOn()` to always return true,
+     * ensuring `PowerManager.setDozeAfterScreenOff(false)` is set
+     * correctly in `updateControlScreenOff()`.
      */
     private fun hookGetAlwaysOn(classLoader: ClassLoader) {
         try {
@@ -43,14 +43,15 @@ class ForceNativeAod : AppHookModule() {
     }
 
     /**
-     * Hook `AmbientDisplayConfiguration.alwaysOnEnabled(int)`，始终返回 true。
-     * 
-     * 
-     * 该方法是 `DozeSuppressor` 决定状态机走向（DOZE vs DOZE_AOD）
-     * 以及 `DozeSensors` 传感器注册策略的核心判断点，
-     * 直接读取 `Settings.Secure.doze_always_on`。
-     * 因为不再通过 shell 写入该值，必须用 Hook 覆盖。
-     * 
+     * Hook `AmbientDisplayConfiguration.alwaysOnEnabled(int)` to always return true.
+     *
+     *
+     * This method is the core decision point for `DozeSuppressor` state machine
+     * transitions (DOZE vs DOZE_AOD) and the `DozeSensors` sensor registration
+     * strategy; it reads `Settings.Secure.doze_always_on` directly.
+     * Since this module no longer writes that value via shell, it must be
+     * overridden with a hook.
+     *
      */
     @SuppressLint("BlockedPrivateApi")
     private fun hookAlwaysOnEnabled() {

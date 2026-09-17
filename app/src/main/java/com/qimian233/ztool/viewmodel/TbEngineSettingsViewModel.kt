@@ -77,7 +77,7 @@ class TbEngineSettingsViewModel(
             repository.saveSignLocalOta(false)
             return
         }
-        // 开启前强制检查证书信任模块；未安装则弹窗确认安装
+        // Force-check the certificate trust module before enabling; if not installed, show the install confirmation dialog
         viewModelScope.launch(Dispatchers.IO) {
             val installed = repository.isOtaCertModuleInstalled()
             withContext(Dispatchers.Main) {
@@ -91,7 +91,7 @@ class TbEngineSettingsViewModel(
         }
     }
 
-    /** 用户在证书模块确认弹窗中选择"安装"：安装成功后自动开启重签开关。 */
+    /** User chose "Install" in the certificate module confirmation dialog: auto-enable the re-signing switch after a successful install. */
     fun confirmInstallCertModule(onResult: (String?) -> Unit) {
         _uiState.value = _uiState.value.copy(
             showCertModuleDialog = false,
@@ -120,7 +120,7 @@ class TbEngineSettingsViewModel(
         repository.saveCustomDeviceId(value)
     }
 
-    /** 生成并安装 otacerts 信任模块，onResult 参数为失败原因（null = 成功）。 */
+    /** Generate and install the otacerts trust module; onResult receives the failure reason (null = success). */
     fun installOtaCertModule(onResult: (String?) -> Unit) {
         _uiState.value = _uiState.value.copy(isInstallingCertModule = true)
         viewModelScope.launch(Dispatchers.IO) {

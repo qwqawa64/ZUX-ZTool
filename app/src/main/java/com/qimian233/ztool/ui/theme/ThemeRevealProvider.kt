@@ -135,7 +135,7 @@ fun ThemeRevealProvider(
                                         snapshot = bitmap.asImageBitmap()
                                         onAction()
 
-                                        // 为了让主题颜色更加明显，初始透明度可以稍微提高到 0.45
+                                        // Raise the initial alpha slightly (0.45) to make the theme color more prominent.
                                         darkOverlayAlpha.snapTo(0.45f)
 
                                         launch {
@@ -204,18 +204,18 @@ fun ThemeRevealProvider(
 
     CompositionLocalProvider(LocalThemeRevealController provides controller) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // 最底层：真实的内容UI层
+            // Bottom layer: the real content UI
             content()
 
             val image = snapshot
             val cover = maskColor
             if (image != null || cover != null) {
                 if (image != null && darkOverlayAlpha.value > 0f) {
-                    // ====== 有色环境阴影 ======
-                    // 1. 获取刚刚切换后的新主题的强调色
+                    // ====== Tinted ambient shadow ======
+                    // 1. Take the accent color of the newly applied theme
                     val primaryColor = LocalZToolColorScheme.current.primary
 
-                    // 2. 将纯黑与强调色混合
+                    // 2. Blend pure black with the accent color
                     val shadowTint = lerp(Color.Black, primaryColor, 0.50f)
 
                     Box(
@@ -225,7 +225,7 @@ fun ThemeRevealProvider(
                     )
                 }
 
-                // 顶层：旧界面的截图，或纯色启动遮罩，由扩张的圆孔抠开
+                // Top layer: screenshot of the old UI, or solid launch mask, cut open by the expanding circle
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawContext.canvas.saveLayer(
                         androidx.compose.ui.geometry.Rect(Offset.Zero, size),

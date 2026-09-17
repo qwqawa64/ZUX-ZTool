@@ -7,8 +7,8 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 禁用APK扫描Hook模块
- * 拦截PackageInstaller的扫描流程，直接返回安全结果
+ * Hook module to disable APK scanning.
+ * Intercepts the PackageInstaller scan flow and returns a safe result directly.
  */
 @SuppressLint("PrivateApi")
 class PackageInstallerHookScan : AppHookModule() {
@@ -22,30 +22,30 @@ class PackageInstallerHookScan : AppHookModule() {
     }
 
     private fun hookPackageInstaller(classLoader: ClassLoader) {
-        logger.info("开始Hook PackageInstaller扫描功能...")
+        logger.info("Starting to hook PackageInstaller scan functionality...")
 
-        // 方法1：直接跳过扫描，立即返回安全结果
+        // Method 1: skip the scan directly, returning a safe result immediately
         hookScanMethods(classLoader)
 
-        // 方法2：拦截扫描结果处理
+        // Method 2: intercept scan result handling
         hookResultMethods(classLoader)
 
-        // 方法3：跳过扫描服务绑定
+        // Method 3: skip scan service binding
         hookServiceMethods(classLoader)
 
-        logger.info("PackageInstaller扫描功能Hook完成")
+        logger.info("PackageInstaller scan hook setup complete")
     }
 
     private fun hookScanMethods(classLoader: ClassLoader) {
         try {
-            // 拦截 startScanApps 方法，直接返回不执行扫描
+            // Intercept startScanApps so it returns without performing the scan
             val activityExtraClass = classLoader.loadClass(
                 "com.android.packageinstaller.PackageInstallerActivityExtra"
             )
             val startScanApps = activityExtraClass.getDeclaredMethod("startScanApps")
             hookWithId(startScanApps, "start_scan_apps") { chain ->
-                logger.debug("拦截startScanApps，跳过扫描流程")
-                // 立即发送扫描完成的消息
+                logger.debug("Intercepted startScanApps, skipping scan flow")
+                // Send the scan-finished message immediately
                 val activity = chain.thisObject
                 val mHanderField = activity.javaClass.getDeclaredField("mHander")
                 mHanderField.isAccessible = true
@@ -56,19 +56,19 @@ class PackageInstallerHookScan : AppHookModule() {
                         Int::class.javaPrimitiveType
                     )
                         .invoke(handler, 2) // SCAN_APP_OK = 2
-                    logger.debug("发送SCAN_APP_OK消息")
+                    logger.debug("Sent SCAN_APP_OK message")
                 }
 
-                null // 直接返回，不执行扫描
+                null // Return directly without scanning
             }
         } catch (t: Throwable) {
-            logger.error("Hook startScanApps失败", t)
+            logger.error("Failed to hook startScanApps", t)
         }
     }
 
     private fun hookResultMethods(classLoader: ClassLoader) {
         try {
-            // 拦截 showResultIfFinish 方法，强制显示安装界面
+            // Intercept showResultIfFinish to force-show the install UI
             val activityExtraClass = classLoader.loadClass(
                 "com.android.packageinstaller.PackageInstallerActivityExtra"
             )
@@ -77,10 +77,10 @@ class PackageInstallerHookScan : AppHookModule() {
                 showResultIfFinish,
                 "show_result_if_finish"
             ) { chain ->
-                logger.debug("拦截showResultIfFinish")
+                logger.debug("Intercepted showResultIfFinish")
                 val activity = chain.thisObject
 
-                // 强制设置扫描结果为安全
+                // Force the scan result to "safe"
                 val mScanAppResultField = activity.javaClass.getDeclaredField("mScanAppResult")
                 mScanAppResultField.isAccessible = true
                 mScanAppResultField.setInt(activity, 2) // SCAN_APP_OK
@@ -94,17 +94,17 @@ class PackageInstallerHookScan : AppHookModule() {
                 isScanBeginField.isAccessible = true
                 isScanBeginField.setBoolean(activity, true)
 
-                logger.debug("强制设置扫描结果为安全状态")
+                logger.debug("Forced scan result to safe state")
                 chain.proceed()
             }
         } catch (t: Throwable) {
-            logger.error("Hook showResultIfFinish失败", t)
+            logger.error("Failed to hook showResultIfFinish", t)
         }
     }
 
     private fun hookServiceMethods(classLoader: ClassLoader) {
         try {
-            // 拦截 bindSafeService 方法，跳过服务绑定
+            // Intercept bindSafeService to skip service binding
             val activityExtraClass = classLoader.loadClass(
                 "com.android.packageinstaller.PackageInstallerActivityExtra"
             )
@@ -113,10 +113,10 @@ class PackageInstallerHookScan : AppHookModule() {
                 bindSafeService,
                 "bind_safe_service"
             ) { chain ->
-                logger.debug("拦截bindSafeService，跳过服务绑定")
+                logger.debug("Intercepted bindSafeService, skipping service binding")
                 val activity = chain.thisObject
 
-                // 设置已绑定状态，避免重试
+                // Mark as bound to avoid retries
                 val isBindField = activity.javaClass.getDeclaredField("isBind")
                 isBindField.isAccessible = true
                 isBindField.setBoolean(activity, true)
@@ -125,7 +125,7 @@ class PackageInstallerHookScan : AppHookModule() {
                 isConnectField.isAccessible = true
                 isConnectField.setBoolean(activity, true)
 
-                // 立即发送扫描开始消息
+                // Send the scan-begin message immediately
                 val mHanderField = activity.javaClass.getDeclaredField("mHander")
                 mHanderField.isAccessible = true
                 val handler = mHanderField.get(activity)
@@ -135,13 +135,13 @@ class PackageInstallerHookScan : AppHookModule() {
                         Int::class.javaPrimitiveType
                     )
                         .invoke(handler, 1) // SCAN_APP_BEGIN
-                    logger.debug("发送SCAN_APP_BEGIN消息")
+                    logger.debug("Sent SCAN_APP_BEGIN message")
                 }
 
-                null // 跳过实际绑定
+                null // Skip the actual binding
             }
         } catch (t: Throwable) {
-            logger.error("Hook bindSafeService失败", t)
+            logger.error("Failed to hook bindSafeService", t)
         }
     }
 

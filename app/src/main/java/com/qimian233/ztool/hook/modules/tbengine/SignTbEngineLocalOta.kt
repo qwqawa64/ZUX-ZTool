@@ -24,28 +24,34 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
 /**
- * 本地 OTA 包重签 Hook。
+ * Local OTA package re-signing hook.
  *
- * 用户流程：第三方 ota.zip 放在 /sdcard → 系统更新 APP"本地安装"→
- * UI 发送 "com.lenovo.ota.ab.installing" 广播到 tbengine 的 NotificationReceiver
- * → SwfABInstalling.doMyPrimaryJob() 把 /sdcard/ota.zip 复制到
- * /data/ota_package/local_lenovoota.zip 并交给 update_engine。
+ * User flow: a third-party ota.zip is placed on /sdcard → the system update app
+ * "local install" → the UI sends the "com.lenovo.ota.ab.installing" broadcast to
+ * tbengine's NotificationReceiver → SwfABInstalling.doMyPrimaryJob() copies
+ * /sdcard/ota.zip to /data/ota_package/local_lenovoota.zip and hands it to
+ * update_engine.
  *
- * 本 Hook 拦截 doMyPrimaryJob()：在复制发生前用 ZTool 密钥对（应用侧生成，
- * 经 xposed_module_config 下发）重签 payload，然后 chain.proceed() 放行原逻辑；
- * 同时 hook UpdateEngine.applyPayload 注入 "public_key" 属性，让 update_engine
- * 用 ZTool 公钥验证（AOSP kPublicKeyPropertyName，key rotation 通道）。
+ * This hook intercepts doMyPrimaryJob(): before the copy happens, it re-signs the
+ * payload with the ZTool key pair (generated app-side and delivered via
+ * xposed_module_config), then chain.proceed() lets the original logic continue;
+ * it also hooks UpdateEngine.applyPayload to inject the "public_key" property so
+ * update_engine verifies with the ZTool public key (AOSP kPublicKeyPropertyName,
+ * key rotation channel).
  *
- * payload 格式（实测 TB710FU OTA_414_479774.zip，AOSP version 2）：
- * [24B header(CrAU)][manifest][metadata 签名 267B][数据段][payload 签名 267B(文件末尾)]
- * - metadata 签名 = RSA2048-SHA256(header+manifest)，manifest 的
- *   signatures_offset(field4)/signatures_size(field5) 是相对数据段起点的偏移；
- * - payload 签名 = RSA2048-SHA256(header+manifest+metadata签名+数据段)；
- * - 签名块结构固定 267B：0a8802 128002 <256B> 1d00010000。
- * 数据段原样保留 ⇒ manifest 与 signatures_offset/size 均不变，只替换两个签名块。
+ * Payload format (measured from TB710FU OTA_414_479774.zip, AOSP version 2):
+ * [24B header(CrAU)][manifest][metadata signature 267B][data section][payload signature 267B (end of file)]
+ * - metadata signature = RSA2048-SHA256(header+manifest); the manifest's
+ *   signatures_offset(field4)/signatures_size(field5) are offsets relative to the
+ *   start of the data section;
+ * - payload signature = RSA2048-SHA256(header+manifest+metadata signature+data section);
+ * - the signature block structure is fixed at 267B: 0a8802 128002 <256B> 1d00010000.
+ * The data section is kept as-is ⇒ manifest and signatures_offset/size stay
+ * unchanged; only the two signature blocks are replaced.
  *
- * doMyPrimaryJob 跑在 tbengine 的 worker 线程上，阻塞签名不会引发 ANR。
- * 磁盘开销：重签需要约 2 倍包体积的临时空间（新 payload.bin + 新 zip）。
+ * doMyPrimaryJob runs on tbengine's worker thread, so blocking signing will not
+ * cause an ANR. Disk cost: re-signing needs roughly 2x the package size of
+ * temporary space (new payload.bin + new zip).
  */
 @SuppressLint("PrivateApi")
 class SignTbEngineLocalOta : AppHookModule() {
@@ -65,7 +71,7 @@ class SignTbEngineLocalOta : AppHookModule() {
         private const val PUBLIC_KEY_PROPERTY = "public_key"
         private const val PUBLIC_KEY_PEM_PATH = "/data/ota_package/ztool_ota_pub.pem"
         private const val FIELD_MAX_TIMESTAMP = 14L
-        // 防回滚钳制的提前量：now + 5 年
+        // Anti-rollback clamp margin: now + 5 years
         private const val FUTURE_TIMESTAMP_MARGIN_SECONDS = 5L * 365 * 24 * 60 * 60
     }
 
@@ -73,7 +79,7 @@ class SignTbEngineLocalOta : AppHookModule() {
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
 
-        // 1. 拦截本地安装工作流：复制前重签
+        // 1. Intercept the local install workflow: re-sign before the copy
         try {
             val swfAbInstallingClass = classLoader.loadClass(
                 "com.lenovo.tbengine.core.services.SwfABInstalling"
@@ -89,7 +95,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                             logger.warn("Unable to resolve Context from SwfABInstalling instance")
                         }
                     } catch (t: Throwable) {
-                        // 绝不能向宿主抛异常：tbengine 有 crash 自熔断保护
+                        // Never throw into the host: tbengine has a crash-based self-fuse
                         logger.error("Local OTA sign interception failed", t)
                     }
                 }
@@ -100,7 +106,7 @@ class SignTbEngineLocalOta : AppHookModule() {
             logger.error("Failed to hook SwfABInstalling.doMyPrimaryJob", t)
         }
 
-        // 2. UpdateEngine.applyPayload 注入 public_key 属性
+        // 2. UpdateEngine.applyPayload: inject the public_key property
         try {
             val updateEngineClass = classLoader.loadClass("android.os.UpdateEngine")
             val applyPayload = findMethod(
@@ -126,7 +132,7 @@ class SignTbEngineLocalOta : AppHookModule() {
     }
 
     /**
-     * 从 SwfBase 继承链上提取 MainService（Context）。
+     * Extracts the MainService (Context) from the SwfBase inheritance chain.
      */
     private fun extractContext(thisObject: Any?): Context? {
         if (thisObject == null) return null
@@ -155,11 +161,12 @@ class SignTbEngineLocalOta : AppHookModule() {
         }
     }
 
-    // ── 密钥 ────────────────────────────────────────────────────────
+    // ── Keys ────────────────────────────────────────────────────────
 
     /**
-     * 从 xposed_module_config 读取应用侧生成的 PKCS#8 私钥。
-     * 密钥由 TbEngineSettingsRepository.ensureOtaSigningKeys() 首次打开页面时生成。
+     * Reads the app-side generated PKCS#8 private key from xposed_module_config.
+     * The key is generated by TbEngineSettingsRepository.ensureOtaSigningKeys()
+     * the first time the page is opened.
      */
     private fun loadSigningKey(): PrivateKey? {
         val b64 = remotePreferences.getString(
@@ -179,7 +186,8 @@ class SignTbEngineLocalOta : AppHookModule() {
     }
 
     /**
-     * 把 X509 公钥写成 PEM 供 update_engine 读取（update_engine 是 root，可读该路径）。
+     * Writes the X509 public key as PEM for update_engine to read (update_engine
+     * runs as root and can read that path).
      */
     @SuppressLint("SetWorldReadable")
     private fun ensurePublicKeyPem() {
@@ -214,12 +222,14 @@ class SignTbEngineLocalOta : AppHookModule() {
         }
     }
 
-    // ── 重签 ────────────────────────────────────────────────────────
+    // ── Re-signing ──────────────────────────────────────────────────
 
     /**
-     * 原地重签 /sdcard/ota.zip：生成新 payload.bin（替换两个签名块，数据段不动）
-     * 与更新哈希后的 payload_properties.txt，重建 zip 后原子替换原文件。
-     * 返回 true 表示签名完成。
+     * Re-signs /sdcard/ota.zip in place: generates a new payload.bin (replacing
+     * the two signature blocks, data section untouched) and an updated
+     * payload_properties.txt with new hashes, rebuilds the zip, then atomically
+     * replaces the original file.
+     * Returns true when signing completed.
      */
     private fun signOtaZip(zipFile: File): Boolean {
         val privateKey = loadSigningKey() ?: return false
@@ -236,7 +246,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                 val originalSize = payloadEntry.size
                 val src = zf.getInputStream(payloadEntry)
 
-                // 1. 读头部 / manifest / 原 metadata 签名块
+                // 1. Read header / manifest / original metadata signature block
                 val header = readFully(src, 24)
                 if (!header.copyOfRange(0, 4).contentEquals(PAYLOAD_MAGIC.toByteArray())) {
                     logger.warn("Unrecognized payload magic: ${header.copyOfRange(0, 4).decodeToString()}")
@@ -264,13 +274,16 @@ class SignTbEngineLocalOta : AppHookModule() {
                     )
                     return false
                 }
-                // 数据段 = metadata 前缀之后到 payload 签名块之前，原样保留
-                val dataLength = sigOffset // 相对数据段起点，即数据段长度
+                // Data section = from after the metadata prefix to before the payload
+                // signature block, kept as-is
+                val dataLength = sigOffset // relative to the data section start, i.e. the data section length
 
-                // 2a. 改写 manifest 的 max_timestamp（field 14）以通过防回滚检查：
-                // update_engine 比较 manifest.max_timestamp 与 ro.build.date.utc，
-                // 第三方旧包会被 kPayloadTimestampError(51) 拒绝。我们作为签名者，
-                // 在签名前把时间戳钳制到未来值；其它字段原字节保留。
+                // 2a. Rewrite the manifest's max_timestamp (field 14) to pass the
+                // anti-rollback check: update_engine compares manifest.max_timestamp
+                // with ro.build.date.utc, and stale third-party packages are rejected
+                // with kPayloadTimestampError(51). As the signer, we clamp the
+                // timestamp to a future value before signing; other fields keep
+                // their original bytes.
                 val futureTimestamp = System.currentTimeMillis() / 1000 + FUTURE_TIMESTAMP_MARGIN_SECONDS
                 val maxTimestamp = findManifestField(manifest, FIELD_MAX_TIMESTAMP)
                 var newManifest = manifest
@@ -282,24 +295,27 @@ class SignTbEngineLocalOta : AppHookModule() {
                     )
                     newManifest = rewriteManifestField(manifest, FIELD_MAX_TIMESTAMP, futureTimestamp)
                 }
-                // 2a-2. 逐分区版本钳制：联想 hardware_android.cc 比较
-                // PartitionUpdate.new_partition_version（构建时间戳字符串）与设备当前分区版本，
-                // 第三方旧包同样会被 kPayloadTimestampError(51) 拒绝。
+                // 2a-2. Per-partition version clamping: Lenovo's hardware_android.cc
+                // compares PartitionUpdate.new_partition_version (a build timestamp
+                // string) with the device's current partition version; stale
+                // third-party packages are likewise rejected with
+                // kPayloadTimestampError(51).
                 val clampedManifest = clampPartitionVersions(newManifest, futureTimestamp)
                 if (!clampedManifest.contentEquals(newManifest)) {
                     logger.info("Partition version timestamps clamped to $futureTimestamp")
                     newManifest = clampedManifest
                 }
                 if (!newManifest.contentEquals(manifest)) {
-                    // header 内的 manifest_size 需同步补写
+                    // The manifest_size inside the header must be rewritten in sync
                     newHeader = header.copyOf().also {
                         putBeLong(it, 12, newManifest.size.toLong())
                     }
                 }
 
-                // 2b. metadata 签名 = RSA_sign(SHA256(newHeader + newManifest))
-                // 注意：SHA256withRSA 会自行哈希输入，这里直接喂原始数据，
-                // 禁止传入预计算摘要（会造成双重哈希）
+                // 2b. metadata signature = RSA_sign(SHA256(newHeader + newManifest))
+                // Note: SHA256withRSA hashes the input itself, so feed it the raw
+                // data directly. Never pass a pre-computed digest (would cause
+                // double hashing).
                 val metadataDigest = MessageDigest.getInstance("SHA-256")
                     .digest(concat(newHeader, newManifest))
                 logger.info(
@@ -312,11 +328,15 @@ class SignTbEngineLocalOta : AppHookModule() {
                     return false
                 }
 
-                // 3. 流式写出新 payload.bin：header + manifest + metadata签名 + 数据段 + payload签名
-                // payload 签名覆盖范围 = header + manifest + 数据段（AOSP DeltaPerformer 的
-                // signed_hash_calculator_ 连续累计 header+manifest（metadata 签名验证用）与
-                // 数据段，唯一排除的是尾部签名块自身和中间的 metadata 签名块——后者在
-                // DiscardBuffer(false, metadata_size_) 时按 metadata_size_ 截断不进哈希）。
+                // 3. Stream out the new payload.bin: header + manifest + metadata
+                // signature + data section + payload signature.
+                // Payload signature coverage = header + manifest + data section
+                // (AOSP DeltaPerformer's signed_hash_calculator_ continuously
+                // accumulates header+manifest (used for metadata signature
+                // verification) and the data section; the only exclusions are the
+                // trailing signature block itself and the middle metadata signature
+                // block — the latter is truncated at metadata_size_ by
+                // DiscardBuffer(false, metadata_size_) and does not enter the hash).
                 val payloadHashBeforeSig = MessageDigest.getInstance("SHA-256")
                 val crc32 = CRC32()
                 var written = 0L
@@ -330,7 +350,8 @@ class SignTbEngineLocalOta : AppHookModule() {
                     crc32.update(newManifest)
                     crc32.update(newMetadataSig)
 
-                    // 数据段：从 metaSize 起复制 dataLength 字节，跳过原 payload 签名块
+                    // Data section: copy dataLength bytes from metaSize, skipping the
+                    // original payload signature block
                     var skipped = 0L
                     val buffer = ByteArray(1 shl 20)
                     while (skipped < dataLength) {
@@ -348,7 +369,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                         written += chunk
                         skipped += chunk
                     }
-                    // 追加 payload 签名块
+                    // Append the payload signature block
                     val payloadDigest = payloadHashBeforeSig.digest()
                     logger.info(
                         "Signing payload digest (header+manifest+data, excl. metadata sig): " +
@@ -367,7 +388,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                     "New payload.bin staged: $written bytes (original $originalSize), crc=${crc32.value}"
                 )
 
-                // 4. 更新 payload_properties.txt
+                // 4. Update payload_properties.txt
                 val fileHash = sha256Of(tmpPayload)
                 val metadataHash = MessageDigest.getInstance("SHA-256")
                     .digest(concat(newHeader, newManifest))
@@ -382,7 +403,8 @@ class SignTbEngineLocalOta : AppHookModule() {
                     null
                 }
 
-                // 5. 重建 zip（payload.bin/payload_properties.txt 保持 STORED，其余条目原样）
+                // 5. Rebuild the zip (payload.bin/payload_properties.txt stay STORED,
+                // other entries keep their original method)
                 ZipOutputStream(FileOutputStream(tmpZip)).use { zos ->
                     for (entry in zf.entries()) {
                         when (entry.name) {
@@ -477,7 +499,7 @@ class SignTbEngineLocalOta : AppHookModule() {
         Base64.encodeToString(bytes, Base64.NO_WRAP)
 
     /**
-     * 构造 267 字节签名块：0a8802 128002 <256B 签名> 1d00010000
+     * Builds the 267-byte signature block: 0a8802 128002 <256B signature> 1d00010000
      */
     private fun buildSigBlob(signature: ByteArray): ByteArray {
         require(signature.size == 256) { "RSA-2048 signature must be 256 bytes" }
@@ -491,8 +513,9 @@ class SignTbEngineLocalOta : AppHookModule() {
     }
 
     /**
-     * 对原始数据做 RSA-SHA256 签名（Signature 自行哈希，数据必须是未哈希原文）。
-     * 仅适合小数据（metadata 场景为 header+manifest，约 437KB）。
+     * RSA-SHA256 signs raw data (Signature hashes it itself; the data must be
+     * the un-hashed original).
+     * Only suitable for small data (the metadata case is header+manifest, ~437KB).
      */
     private fun signData(privateKey: PrivateKey, data: ByteArray): ByteArray =
         Signature.getInstance("SHA256withRSA").run {
@@ -502,9 +525,10 @@ class SignTbEngineLocalOta : AppHookModule() {
         }
 
     /**
-     * 对预计算摘要做签名：NONEwithRSA + 手工 DigestInfo(SHA-256)。
-     * 用于大数据场景（payload 数据段无法二次读取时复用流式哈希结果）。
-     * DigestInfo 前缀 = SEQUENCE{SEQ{OID 2.16.840.1.101.3.4.2.1, NULL}, OCTET(32)}。
+     * Signs a pre-computed digest: NONEwithRSA + manual DigestInfo(SHA-256).
+     * Used for large data (reuses the streamed hash result when the payload data
+     * section cannot be read a second time).
+     * DigestInfo prefix = SEQUENCE{SEQ{OID 2.16.840.1.101.3.4.2.1, NULL}, OCTET(32)}.
      */
     private fun signDigest(privateKey: PrivateKey, digest: ByteArray): ByteArray {
         require(digest.size == 32) { "Expected SHA-256 digest" }
@@ -520,7 +544,8 @@ class SignTbEngineLocalOta : AppHookModule() {
     }
 
     /**
-     * 解析 manifest 顶层 protobuf，返回指定 field 的 varint 值（找不到返回 null）。
+     * Parses the manifest top-level protobuf and returns the varint value of the
+     * specified field (null if not found).
      */
     private fun findManifestField(manifest: ByteArray, target: Long): Long? {
         var i = 0
@@ -563,8 +588,9 @@ class SignTbEngineLocalOta : AppHookModule() {
     }
 
     /**
-     * 重写 manifest 顶层指定 varint 字段（protobuf 标准编码），其它字段原字节保留。
-     * 未找到目标字段时在末尾追加。
+     * Rewrites the specified top-level varint field of the manifest (standard
+     * protobuf encoding); other fields keep their original bytes.
+     * Appends at the end when the target field is not found.
      */
     private fun rewriteManifestField(manifest: ByteArray, field: Long, value: Long): ByteArray {
         val out = ByteArrayOutputStream(manifest.size + 16)
@@ -635,10 +661,13 @@ class SignTbEngineLocalOta : AppHookModule() {
     }
 
     /**
-     * 钳制各 PartitionUpdate 子消息内的时间戳版本字符串。
-     * 版本字段由第三方打包工具写入（字段号随打包器版本浮动），因此按内容识别：
-     * 分区子消息顶层中 9-11 位纯数字字符串且数值小于 [futureTimestamp] 的字段，
-     * 统一改写为 futureTimestamp 的十进制字符串。操作数等二进制字段不受影响。
+     * Clamps the timestamp version strings inside each PartitionUpdate sub-message.
+     * The version field is written by third-party packing tools (field number
+     * varies with packer version), so it is identified by content: fields at the
+     * top level of a partition sub-message whose value is a 9-11 digit pure
+     * numeric string numerically smaller than [futureTimestamp] are uniformly
+     * rewritten to the decimal string of futureTimestamp. Operands and other
+     * binary fields are unaffected.
      */
     private fun clampPartitionVersions(manifest: ByteArray, futureTimestamp: Long): ByteArray {
         val out = ByteArrayOutputStream(manifest.size + 64)
@@ -664,7 +693,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                     } else {
                         content
                     }
-                    // 只写 tag（key），长度按新内容重新编码
+                    // Write only the tag (key); re-encode the length for the new content
                     out.write(manifest, keyStart, afterKey - keyStart)
                     out.write(encodeVarint(rewritten.size.toLong()))
                     out.write(rewritten)
@@ -687,7 +716,7 @@ class SignTbEngineLocalOta : AppHookModule() {
         return out.toByteArray()
     }
 
-    /** 在一段 protobuf 消息内把形如时间戳的纯数字字符串字段钳制为 futureTimestamp。 */
+    /** Clamps pure-numeric timestamp-like string fields to futureTimestamp inside a protobuf message. */
     private fun clampTimestampStrings(message: ByteArray, futureTimestamp: Long): ByteArray {
         val out = ByteArrayOutputStream(message.size + 16)
         var i = 0
@@ -711,7 +740,7 @@ class SignTbEngineLocalOta : AppHookModule() {
                     val numeric = asText.length in 9..11 && asText.all { it.isDigit() }
                     if (numeric && asText.toLong() < futureTimestamp) {
                         val newText = futureTimestamp.toString().toByteArray(Charsets.US_ASCII)
-                        // 只写 tag（key），长度按新内容重新编码
+                        // Write only the tag (key); re-encode the length for the new content
                         out.write(message, keyStart, afterKey - keyStart)
                         out.write(encodeVarint(newText.size.toLong()))
                         out.write(newText)

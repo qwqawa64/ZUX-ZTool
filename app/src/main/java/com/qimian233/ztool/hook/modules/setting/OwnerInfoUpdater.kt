@@ -18,11 +18,12 @@ import java.net.URL
 import java.util.regex.Pattern
 
 /**
- * 锁屏 OwnerInfo 更新核心逻辑（OwnerInfoHook 拆分后的共享类）。
+ * Lock screen OwnerInfo update core logic (shared class split from OwnerInfoHook).
  * <p>
- * 由 [OwnerInfoSettingsHook] 与 OwnerInfoSystemHook 双侧共用：从 API 拉取
- * 每日一言并写入锁屏 OwnerInfo。构造注入 [xposed] 与 [logger]，两侧 Hook
- * 在各自回调阶段各建实例。
+ * Used by both [OwnerInfoSettingsHook] and OwnerInfoSystemHook: fetches the daily
+ * quote from the API and writes it to the lock screen OwnerInfo. [xposed] and
+ * [logger] are constructor-injected; each side builds its own instance in its
+ * own callback phase.
  * </p>
  */
 @SuppressLint("DiscouragedPrivateApi", "PrivateApi")
@@ -35,13 +36,13 @@ class OwnerInfoUpdater(
     private var cachedContent = ""
 
     /**
-     * 更新 OwnerInfo（启动新线程获取 API 数据，避免阻塞调用线程）。
+     * Updates OwnerInfo (starts a new thread to fetch API data, avoiding blocking the calling thread).
      */
     fun updateOwnerInfo(context: Any?, classLoader: ClassLoader) {
         Thread {
             try {
                 apiUrl = getString(PreferenceKeys.API_URL.name)
-                // 处理可能的URL协议保存问题，这里添加补全协议的逻辑
+                // Handle possible URL protocol saving issues by completing the protocol here
                 if (apiUrl != null && apiUrl!!.isNotEmpty()) {
                     if (!apiUrl!!.startsWith("http://") && !apiUrl!!.startsWith("https://") &&
                         !apiUrl!!.startsWith("Https://") && !apiUrl!!.startsWith("Http://")
@@ -49,19 +50,19 @@ class OwnerInfoUpdater(
                         apiUrl = "https://$apiUrl"
                     }
                 } else {
-                    // 未配置时回退到默认一言 API
+                    // Fall back to the default quote API when not configured
                     apiUrl = PreferenceKeys.API_URL.default
                 }
                 val content = fetchContentFromAPI()
                 if (content != cachedContent) {
                     cachedContent = content
-                    logger.debug("从API获取新内容: $content")
+                    logger.debug("New content fetched from API: $content")
                     setOwnerInfoContent(content, context, classLoader)
                 } else {
-                    logger.debug("内容未变化，跳过更新")
+                    logger.debug("Content unchanged, skipping update")
                 }
             } catch (e: Exception) {
-                logger.error("updateOwnerInfo线程出错", e)
+                logger.error("Error in updateOwnerInfo thread", e)
             }
         }.start()
     }
@@ -77,7 +78,7 @@ class OwnerInfoUpdater(
             connection.setRequestProperty("User-Agent", "OwnerInfoHook/1.0")
 
             val responseCode = connection.responseCode
-            logger.debug("API响应码: $responseCode")
+            logger.debug("API response code: $responseCode")
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 val inputStream: InputStream = connection.inputStream
@@ -90,11 +91,11 @@ class OwnerInfoUpdater(
                 }
 
                 val rawResponse = response.toString()
-                logger.debug("API原始响应: $rawResponse") // 记录原始响应用于调试
+                logger.debug("Raw API response: $rawResponse") // Log raw response for debugging
 
                 return parseContentFromJson(rawResponse)
             } else {
-                // 读取错误流获取更多信息
+                // Read the error stream for more details
                 val errorStream = connection.errorStream
                 if (errorStream != null) {
                     val reader = BufferedReader(InputStreamReader(errorStream))
@@ -103,12 +104,12 @@ class OwnerInfoUpdater(
                     while (reader.readLine().also { line = it } != null) {
                         errorResponse.append(line)
                     }
-                    logger.debug("API错误响应: $errorResponse")
+                    logger.debug("API error response: $errorResponse")
                 }
-                logger.debug("HTTP错误响应: $responseCode")
+                logger.debug("HTTP error response: $responseCode")
             }
         } catch (e: Exception) {
-            logger.error("获取API数据时出错", e)
+            logger.error("Error fetching API data", e)
         } finally {
             connection?.disconnect()
         }
@@ -117,16 +118,16 @@ class OwnerInfoUpdater(
 
     private fun parseContentFromJson(jsonString: String): String {
         return try {
-            // 使用正则表达式匹配content字段，处理转义字符；未配置时回退默认表达式
+            // Regex to match the content field, handling escape characters; fall back to the default pattern if not configured
             val regular = getString(PreferenceKeys.REGULAR.name)
                 .ifEmpty { PreferenceKeys.REGULAR.default }
-            // 增加对表达式为空的保护：如果正则表达式为null或空，则跳过匹配
+            // Guard against an empty expression: skip matching if the regex is null or empty
             val pattern = Pattern.compile(regular)
             val matcher = pattern.matcher(jsonString)
 
             if (matcher.find()) {
                 var content = matcher.group(1) ?: return jsonString
-                // 处理转义字符（如\"转换为"）
+                // Handle escape characters (e.g. \" converted to ")
                 content = content
                     .replace("\\\"", "\"")
                     .replace("\\\\", "\\")
@@ -138,45 +139,45 @@ class OwnerInfoUpdater(
                     .replace("\\t", "\t")
                 content
             } else {
-                logger.warn("JSON中未找到content字段")
+                logger.warn("content field not found in JSON")
                 jsonString
             }
         } catch (e: Exception) {
-            logger.error("解析JSON时出错", e)
+            logger.error("Error parsing JSON", e)
             jsonString
         }
     }
 
     /**
-     * 设置 OwnerInfo 内容（确保在主线程执行设置操作）。
+     * Sets the OwnerInfo content (ensures the write runs on the main thread).
      */
     private fun setOwnerInfoContent(content: String, context: Any?, classLoader: ClassLoader) {
         try {
             val mainHandler = Handler(Looper.getMainLooper())
             mainHandler.post {
                 try {
-                    logger.debug("设置OwnerInfo内容: $content")
+                    logger.debug("Setting OwnerInfo content: $content")
 
-                    // 方法1: 通过LockPatternUtils
+                    // Method 1: via LockPatternUtils
                     try {
                         val lockPatternUtils = getObject(context, classLoader)
 
-                        // 先启用OwnerInfo
+                        // Enable OwnerInfo first
                         val setEnabled: Method = lockPatternUtils.javaClass
                             .getDeclaredMethod("setOwnerInfoEnabled", Boolean::class.javaPrimitiveType, Int::class.javaPrimitiveType)
                         setEnabled.invoke(lockPatternUtils, true, 0)
-                        // 设置OwnerInfo内容
+                        // Set OwnerInfo content
                         val setOwnerInfo: Method = lockPatternUtils.javaClass
                             .getDeclaredMethod("setOwnerInfo", String::class.java, Int::class.javaPrimitiveType)
                         setOwnerInfo.invoke(lockPatternUtils, content, 0)
 
-                        logger.debug("通过LockPatternUtils成功更新OwnerInfo")
+                        logger.debug("OwnerInfo updated successfully via LockPatternUtils")
                         return@post
                     } catch (t: Throwable) {
-                        logger.error("通过LockPatternUtils更新失败", t)
+                        logger.error("Failed to update via LockPatternUtils", t)
                     }
 
-                    // 方法2: 通过ILockSettings服务
+                    // Method 2: via the ILockSettings service
                     try {
                         val serviceManagerClass = classLoader.loadClass("android.os.ServiceManager")
                         val getServiceMethod: Method =
@@ -184,14 +185,14 @@ class OwnerInfoUpdater(
                         val lockSettingsService = getServiceMethod.invoke(null, "lock_settings")
 
                         if (lockSettingsService != null) {
-                            // 启用OwnerInfo
+                            // Enable OwnerInfo
                             val setBooleanMethod: Method = lockSettingsService.javaClass
                                 .getDeclaredMethod("setBoolean", String::class.java, Boolean::class.javaPrimitiveType, Int::class.javaPrimitiveType)
                             setBooleanMethod.invoke(
                                 lockSettingsService,
                                 "lock_screen_owner_info_enabled", true, 0
                             )
-                            // 设置内容
+                            // Set content
                             val setStringMethod: Method = lockSettingsService.javaClass
                                 .getDeclaredMethod("setString", String::class.java, String::class.java, Int::class.javaPrimitiveType)
                             setStringMethod.invoke(
@@ -199,14 +200,14 @@ class OwnerInfoUpdater(
                                 "lock_screen_owner_info", content, 0
                             )
 
-                            logger.debug("通过ILockSettings成功更新OwnerInfo")
+                            logger.debug("OwnerInfo updated successfully via ILockSettings")
                             return@post
                         }
                     } catch (t: Throwable) {
-                        logger.error("通过ILockSettings更新失败", t)
+                        logger.error("Failed to update via ILockSettings", t)
                     }
 
-                    // 方法3: 直接调用SettingsProvider（备用方法）
+                    // Method 3: call SettingsProvider directly (fallback)
                     try {
                         if (context is Context) {
                             Settings.Secure.putString(
@@ -217,17 +218,17 @@ class OwnerInfoUpdater(
                                 context.contentResolver,
                                 "lock_screen_owner_info", content
                             )
-                            logger.debug("通过SettingsProvider成功更新OwnerInfo")
+                            logger.debug("OwnerInfo updated successfully via SettingsProvider")
                         }
                     } catch (t: Throwable) {
-                        logger.error("通过SettingsProvider更新失败", t)
+                        logger.error("Failed to update via SettingsProvider", t)
                     }
                 } catch (t: Throwable) {
-                    logger.error("设置OwnerInfo内容失败", t)
+                    logger.error("Failed to set OwnerInfo content", t)
                 }
             }
         } catch (t: Throwable) {
-            logger.error("提交到主Handler失败", t)
+            logger.error("Failed to post to main Handler", t)
         }
     }
 
@@ -239,11 +240,11 @@ class OwnerInfoUpdater(
 
             val lockPatternUtils: Any
             if (context is Context) {
-                // 从Context创建LockPatternUtils实例
+                // Create a LockPatternUtils instance from the Context
                 val ctor: Constructor<*> = lockPatternUtilsClass.getDeclaredConstructor(Context::class.java)
                 lockPatternUtils = ctor.newInstance(context)
             } else {
-                // 使用默认构造函数
+                // Use the default constructor
                 val ctor: Constructor<*> = lockPatternUtilsClass.getDeclaredConstructor()
                 lockPatternUtils = ctor.newInstance()
             }

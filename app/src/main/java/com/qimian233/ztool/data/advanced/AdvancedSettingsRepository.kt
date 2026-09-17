@@ -13,9 +13,10 @@ import io.github.libxposed.service.XposedService
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * 高级选项仓库。
+ * Advanced options repository.
  * <p>
- * 封装模块热重载等开发者功能，处理线程切换与结果汇总。
+ * Encapsulates developer features such as module hot reload,
+ * handling thread switching and result aggregation.
  * </p>
  */
 class AdvancedSettingsRepository(
@@ -24,21 +25,21 @@ class AdvancedSettingsRepository(
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    // ---- 查询 ----
+    // ---- Queries ----
 
-    /** 获取 API 版本，未激活时返回 0 */
+    /** Get the API version, or 0 when not activated */
     fun getApiVersion(): Int = XposedServiceBridge.getApiVersion()
 
-    /** 获取运行中的 Hook 目标列表 */
+    /** Get the list of running hook targets */
     fun getRunningTargets(): List<HookedTarget> = XposedServiceBridge.getRunningTargets()
 
-    // ---- 热重载 ----
+    // ---- Hot reload ----
 
     /**
-     * 对当前所有非 RELOADING 状态的运行目标执行热重载。
+     * Hot-reload all running targets not in the RELOADING state.
      *
-     * @param onProgress 每个目标完成后回调（主线程），参数为 (processName, status, message)
-     * @param onComplete 全部完成后回调（主线程），参数为 (succeeded, failed, unsupported, died)
+     * @param onProgress callback after each target completes (main thread), params: (processName, status, message)
+     * @param onComplete callback after all targets complete (main thread), params: (succeeded, failed, unsupported, died)
      */
     fun performHotReloadAll(
         onProgress: (target: HookedTarget, result: HotReloadResult) -> Unit,
@@ -79,19 +80,19 @@ class AdvancedSettingsRepository(
 
                     when (status) {
                         HotReloadResult.Status.SUCCEEDED -> {
-                            Log.d(TAG, "热重载成功: $processName")
+                            Log.d(TAG, "Hot reload succeeded: $processName")
                             succeeded.incrementAndGet()
                         }
                         HotReloadResult.Status.FAILED -> {
-                            Log.w(TAG, "热重载失败: $processName — $message")
+                            Log.w(TAG, "Hot reload failed: $processName — $message")
                             failed.incrementAndGet()
                         }
                         HotReloadResult.Status.UNSUPPORTED -> {
-                            Log.w(TAG, "热重载不支持: $processName — $message")
+                            Log.w(TAG, "Hot reload unsupported: $processName — $message")
                             unsupported.incrementAndGet()
                         }
                         HotReloadResult.Status.PROCESS_DIED -> {
-                            Log.w(TAG, "目标进程已退出: $processName — $message")
+                            Log.w(TAG, "Target process died: $processName — $message")
                             died.incrementAndGet()
                         }
                         HotReloadResult.Status.IN_PROGRESS -> { return }
@@ -117,7 +118,7 @@ class AdvancedSettingsRepository(
             try {
                 XposedServiceBridge.hotReloadModule(target, Bundle(), callback)
             } catch (e: Exception) {
-                Log.e(TAG, "发起热重载异常: ${target.processName}", e)
+                Log.e(TAG, "Exception while starting hot reload: ${target.processName}", e)
                 failed.incrementAndGet()
                 val detail = HotReloadDetail(target.processName, "FAILED", e.message ?: "unknown")
                 details.add(detail)
@@ -133,17 +134,17 @@ class AdvancedSettingsRepository(
         }
     }
 
-    // ---- 持久化值重置 ----
+    // ---- Persistent value reset ----
 
     /**
-     * 重置所有被本应用 Hook 修改过的持久化值，逐项执行并汇总结果。
+     * Reset all persistent values modified by this app's hooks, executing item by item and aggregating results.
      *
-     * 当前支持：
-     * - doze_always_on：清除旧版本通过 `settings put secure doze_always_on 1` 写入的残留。
-     * - autorun：清除安全中心 AutoRunManager 表 attr 列中被 Hook 写入的白名单位。
-     * - mistouch：清除游戏中心防误触持久化（Settings.Global.key_game_assistant_prevent_misoperation）。
+     * Currently supported:
+     * - doze_always_on: clears residue written by older versions via `settings put secure doze_always_on 1`.
+     * - autorun: clears whitelist bits written by hooks in the attr column of the SafeCenter AutoRunManager table.
+     * - mistouch: clears the Game Center mistouch-prevention persistence (Settings.Global.key_game_assistant_prevent_misoperation).
      *
-     * @param onComplete 全部项执行完成后回调（调用方线程），参数为 (succeeded, failed, unsupported, details)
+     * @param onComplete callback after all items complete (caller thread), params: (succeeded, failed, unsupported, details)
      */
     fun resetPersistentValues(
         onComplete: (succeeded: Int, failed: Int, unsupported: Int, details: List<PersistentResetDetail>) -> Unit
@@ -153,21 +154,21 @@ class AdvancedSettingsRepository(
         var failed = 0
         val unsupported = 0
 
-        // 1. 原生 AOD 开关（旧版 shell 写入的残留值）
+        // 1. Native AOD switch (residue written by older shell versions)
         val aod = resetDozeAlwaysOn()
         if (aod.success) succeeded++ else failed++
         details += PersistentResetDetail(
             KEY_RESET_AOD, if (aod.success) "SUCCEEDED" else "FAILED", aod.message
         )
 
-        // 2. 应用自启动状态（安全中心 AutoRunManager.attr 白名单位）
+        // 2. App autorun state (SafeCenter AutoRunManager.attr whitelist bits)
         val autorun = resetAutorun()
         if (autorun.success) succeeded++ else failed++
         details += PersistentResetDetail(
             KEY_RESET_AUTORUN, if (autorun.success) "SUCCEEDED" else "FAILED", autorun.message
         )
 
-        // 3. 游戏防误触状态（游戏中心 SettingsValueUtilKt → Settings.Global）
+        // 3. Game mistouch-prevention state (Game Center SettingsValueUtilKt → Settings.Global)
         val mistouch = resetMistakeTouch()
         if (mistouch.success) succeeded++ else failed++
         details += PersistentResetDetail(
@@ -178,8 +179,8 @@ class AdvancedSettingsRepository(
     }
 
     /**
-     * 清除旧版本通过 `settings put secure doze_always_on 1` 写入的残留值。
-     * 现在原生 AOD 由 Hook（ForceNativeAod）接管，删除残留让系统恢复默认。
+     * Clear residue values written by older versions via `settings put secure doze_always_on 1`.
+     * Native AOD is now handled by a hook (ForceNativeAod); deleting the residue lets the system restore its default.
      */
     private fun resetDozeAlwaysOn(): ResetOutcome {
         val current = shellExecutor.executeRootCommand("settings get secure doze_always_on")
@@ -198,12 +199,12 @@ class AdvancedSettingsRepository(
     }
 
     /**
-     * 清除安全中心 AutoRunManager 表中被 EnableAutorunByDefault Hook 写入的白名单位。
-     * 数据库：com.zui.safecenter / com.lenovo.safecenter 的 databases/perf_leemcenter.db，
-     * 表 AutoRunManager 的 attr 列。位掩码：
+     * Clear whitelist bits written by the EnableAutorunByDefault hook in the SafeCenter AutoRunManager table.
+     * Database: databases/perf_leemcenter.db of com.zui.safecenter / com.lenovo.safecenter,
+     * attr column of the AutoRunManager table. Bitmask:
      * - USER_WHITE_LIST_APP = 0x20000000
      * - RELATIVE_APP_WHITE_LIST = 0x40000000
-     * 仅清除白名单位，不动 state 列（用户手动设置的自启开关）。
+     * Only whitelist bits are cleared; the state column (user-toggled autorun switches) is untouched.
      */
     @SuppressLint("SdCardPath")
     private fun resetAutorun(): ResetOutcome {
@@ -214,10 +215,10 @@ class AdvancedSettingsRepository(
         )
         var cleared = false
         for (dbPath in dbPaths) {
-            // 库不存在则跳过（可能为另一包变体或无残留）
+            // Skip if the database does not exist (may be the other package variant or no residue)
             val exists = shellExecutor.executeRootCommand("ls $dbPath")
             if (!exists.isSuccess) continue
-            // 表可能未创建（从未打开自启管理），先确认表存在，避免误报 sqlite3 不可用
+            // The table may not exist (autorun manager never opened); verify the table first to avoid false sqlite3-unavailable reports
             val tableCheck = shellExecutor.executeRootCommand(
                 "sqlite3 \"$dbPath\" \"SELECT name FROM sqlite_master WHERE type='table' AND name='AutoRunManager';\""
             )
@@ -225,7 +226,7 @@ class AdvancedSettingsRepository(
                 return ResetOutcome(false, "清除自启动白名单失败：sqlite3 不可用或数据库无法访问")
             }
             if (tableCheck.output.trim().isEmpty()) continue
-            // 预检残留计数
+            // Pre-check residue count
             val count = shellExecutor.executeRootCommand(
                 "sqlite3 \"$dbPath\" \"SELECT count(*) FROM AutoRunManager WHERE (attr & $whitelistMask) != 0;\""
             )
@@ -233,7 +234,7 @@ class AdvancedSettingsRepository(
                 return ResetOutcome(false, "清除自启动白名单失败：${count.error}")
             }
             if (count.output.trim() == "0") continue
-            // 清除白名单位（保留 stubborn / relative 等其他位）
+            // Clear the whitelist bits (keep other bits such as stubborn / relative)
             val update = shellExecutor.executeRootCommand(
                 "sqlite3 \"$dbPath\" \"UPDATE AutoRunManager SET attr = attr & ~$whitelistMask;\""
             )
@@ -250,10 +251,10 @@ class AdvancedSettingsRepository(
     }
 
     /**
-     * 清除游戏中心防误触持久化值。
-     * 写入方为 `com.zui.util.SettingsValueUtilKt.setPreventMisoperation`，
-     * 最终落到 `Settings.Global.key_game_assistant_prevent_misoperation`。
-     * AutoMistakeTouchHook 仅拦截内存态写入，删除残留让系统恢复默认。
+     * Clear the Game Center mistouch-prevention persisted value.
+     * Writer: `com.zui.util.SettingsValueUtilKt.setPreventMisoperation`,
+     * ultimately landing in `Settings.Global.key_game_assistant_prevent_misoperation`.
+     * AutoMistakeTouchHook only intercepts in-memory writes; deleting the residue lets the system restore its default.
      */
     private fun resetMistakeTouch(): ResetOutcome {
         val current = shellExecutor.executeRootCommand(
@@ -276,10 +277,10 @@ class AdvancedSettingsRepository(
     }
 
     /**
-     * 通过 root shell 删除 /data/ota_package 目录及其下全部内容。
-     * UDS 实时连接引擎（com.lenovo.tbengine）会把自动下载的更新包落在该目录。
+     * Delete /data/ota_package and everything inside it via root shell.
+     * The UDS real-time connection engine (com.lenovo.tbengine) drops automatically downloaded update packages there.
      *
-     * @param onComplete 回调（调用方线程），参数为 (status, message)
+     * @param onComplete callback (caller thread), params: (status, message)
      */
     fun deleteOtaPackage(
         onComplete: (status: String, message: String) -> Unit
@@ -291,7 +292,7 @@ class AdvancedSettingsRepository(
         }
         val result = shellExecutor.executeRootCommand("rm -rf $OTA_PACKAGE_DIR", DELETE_TIMEOUT_SECONDS)
         if (result.isSuccess) {
-            // 复核目录确已消失，避免把 rm 的静默失败当成功
+            // Verify the directory is really gone, so a silent rm failure is not treated as success
             val verify = shellExecutor.executeRootCommand("ls -d $OTA_PACKAGE_DIR")
             if (verify.isSuccess && verify.output.trim().isNotEmpty()) {
                 onComplete(STATUS_FAILED, "删除后 /data/ota_package 仍存在：${result.error.ifEmpty { "未知原因" }}")
@@ -320,7 +321,7 @@ class AdvancedSettingsRepository(
 }
 
 /**
- * 单次热重载操作的结果详情，供 UI 展示。
+ * Detail of a single hot reload operation, for UI display.
  */
 data class HotReloadDetail(
     val processName: String,
@@ -329,7 +330,7 @@ data class HotReloadDetail(
 )
 
 /**
- * 单次持久化值重置的结果详情，供 UI 展示。
+ * Detail of a single persistent value reset, for UI display.
  */
 data class PersistentResetDetail(
     val key: String,

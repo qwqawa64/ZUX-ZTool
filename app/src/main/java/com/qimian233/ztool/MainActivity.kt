@@ -163,7 +163,7 @@ class MainActivity : ComponentActivity(),
 
         LogServiceManager.restartServiceIfNeeded(this)
 
-        // 启动时清理超量日志 + 同步 LSPosed 日志
+        // Clean up excess logs at startup + sync LSPosed logs
         val settingsRepo = SettingsRepository(applicationContext)
         settingsRepo.cleanupAppLogsIfNeeded()
         settingsRepo.syncLsposedLogs()

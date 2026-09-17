@@ -14,47 +14,51 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
 /**
- * 状态栏网速指示器"隐藏慢速"Hook。
+ * Status bar network speed indicator "hide slow" hook.
  *
- * 实现方式:拦截 [Settings.System.getInt] / [Settings.System.getIntForUser] 对
- * `network_realtime_speed_state` 的读取。慢速时把返回值伪装成 0(关闭),
- * SystemUI 自身的原始逻辑读到 0 后会自行隐藏网速指示器;速度恢复后放行原始值,
- * 网速重新显示。本 Hook 不直接干预任何视图(View/TextView)处理。
+ * Implementation: intercepts [Settings.System.getInt] / [Settings.System.getIntForUser]
+ * reads of `network_realtime_speed_state`. When slow, the return value is faked as 0
+ * (disabled); SystemUI's own original logic hides the network speed indicator upon
+ * reading 0; when speed recovers, the original value is passed through and the speed
+ * indicator shows again. This hook does not directly manipulate any views (View/TextView).
  *
- * 反编译(com.android.systemui)确认该键的全部读取点:
- * - `NetworkSpeedView.isIconVisible()`:StatusIconContainer onMeasure/onLayout 调用,
- *   false 时容器跳过测量/排列(但不隐藏视图本身)。
- * - `NetworkSpeedView.updateNetworkSpeedViewStatus()`:读 0 时 setVisibility(GONE)
- *   并停掉刷新循环——这是唯一真正隐藏视图的路径。
- * - `ZuiPhoneStatusBarPolicy.updateNetworkSpeed()`:读 0 时从 StatusBarIconController
- *   移除网速 slot。
+ * All read points of this key confirmed by decompilation (com.android.systemui):
+ * - `NetworkSpeedView.isIconVisible()`: called by StatusIconContainer onMeasure/onLayout;
+ *   when false, the container skips measuring/laying out (but does not hide the view itself).
+ * - `NetworkSpeedView.updateNetworkSpeedViewStatus()`: reads 0 -> setVisibility(GONE)
+ *   and stops the refresh loop - this is the only path that truly hides the view.
+ * - `ZuiPhoneStatusBarPolicy.updateNetworkSpeed()`: reads 0 -> removes the network
+ *   speed slot from StatusBarIconController.
  *
- * 关键约束:后两者是事件驱动(attach / 连接变化 / 用户切换 / 真实设置变更的
- * ContentObserver),慢速期间不会被再次调用;而 isIconVisible 的 measure 跳过
- * 只释放占位不隐藏视图,导致文字与无线图标重叠。因此本 Hook 额外做周期监测:
- * 慢速状态翻转时,反射调用视图自身的 `updateNetworkSpeedViewStatus()`,
- * 让 SystemUI 原始代码完成隐藏/显示(读到的设置值已被本 Hook 伪装)。
+ * Key constraint: the latter two are event-driven (attach / connection change / user
+ * switch / ContentObserver of real setting changes) and are not called again while slow;
+ * while isIconVisible's measure skip only releases the placeholder without hiding the
+ * view, causing text and wireless icon overlap. Therefore this hook additionally runs
+ * periodic monitoring: when the slow state flips, it reflectively invokes the view's
+ * own `updateNetworkSpeedViewStatus()`, letting SystemUI's original code perform the
+ * hide/show (the setting value read is already faked by this hook).
  *
- * 速度判定:用 [android.net.TrafficStats] 两次采样间的差分自行计算,
- * 阈值单位为 KB/s(与前端设置一致),采样按最小间隔节流。
+ * Speed detection: self-computed via differencing between two [android.net.TrafficStats]
+ * samples; the threshold unit is KB/s (consistent with the frontend setting); sampling
+ * is throttled by a minimum interval.
  */
 @SuppressLint("PrivateApi")
 class NetworkSpeedHideSlowHook : AppHookModule() {
 
     companion object {
-        /** SystemUI 判定网速指示器是否显示的系统设置键 */
+        /** System setting key SystemUI uses to decide network speed indicator visibility */
         private const val NETWORK_SPEED_STATE_KEY = "network_realtime_speed_state"
         private const val NETWORK_SPEED_VIEW_CLASS = "com.android.systemui.zui.NetworkSpeedView"
         private const val KB = 1024L
 
-        /** TrafficStats 采样最小间隔(ms),间隔内沿用上一次判定 */
+        /** TrafficStats minimum sampling interval (ms); the previous decision is reused within it */
         private const val SAMPLE_INTERVAL_MS = 1000L
 
-        /** 慢速状态周期监测间隔(ms),与原生刷新循环 3s 对齐 */
+        /** Slow-state periodic monitoring interval (ms), aligned with the native 3s refresh loop */
         private const val WATCH_INTERVAL_MS = 3000L
     }
 
-    /** 全局共享的流量基线 / 慢速判定状态 */
+    /** Globally shared traffic baseline / slow-state decision state */
     private class SpeedState {
         var lastRxBytes = 0L
         var lastTxBytes = 0L
@@ -74,12 +78,12 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         try {
-            logger.info("开始Hook系统UI网速隐藏慢速")
+            logger.info("Hooking SystemUI network speed hide-slow")
 
             val networkSpeedViewClass = param.defaultClassLoader.loadClass(NETWORK_SPEED_VIEW_CLASS)
             updateStatusMethod = networkSpeedViewClass.getDeclaredMethod("updateNetworkSpeedViewStatus")
 
-            // 拦截 Settings.System.getInt / getIntForUser 全部重载
+            // Intercept all overloads of Settings.System.getInt / getIntForUser
             val resolver = android.content.ContentResolver::class.java
             val int1 = arrayOf(resolver, String::class.java)
             val int2 = arrayOf(resolver, String::class.java, Int::class.javaPrimitiveType)
@@ -94,7 +98,7 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
             hookWithId(Settings.System::class.java.getDeclaredMethod("getIntForUser", *int3),
                 "hide_slow_get_int_for_user_def") { chain -> interceptRead(chain) }
 
-            // 收集存活的 NetworkSpeedView 实例,供周期监测触发原生刷新
+            // Collect live NetworkSpeedView instances for periodic watcher-triggered native refresh
             for (ctor in networkSpeedViewClass.declaredConstructors) {
                 hookWithId(ctor as Constructor<*>, "hide_slow_ctor_${ctor.parameterTypes.size}") { chain ->
                     chain.proceed()
@@ -103,16 +107,17 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
             }
 
             startWatcher()
-            logger.info("系统UI网速隐藏慢速Hook成功")
+            logger.info("SystemUI network speed hide-slow hooks applied")
         } catch (e: Throwable) {
-            logger.error("系统UI网速隐藏慢速Hook失败", e)
+            logger.error("Failed to hook SystemUI network speed hide-slow", e)
         }
     }
 
     /**
-     * 统一拦截逻辑:目标键为 network_realtime_speed_state 且当前处于慢速时,
-     * 返回 0(表示用户在系统设置中关闭了网速),让 SystemUI 原始逻辑自行隐藏;
-     * 其余情况放行原始读取结果。
+     * Unified interception logic: when the target key is network_realtime_speed_state and
+     * the device is currently slow, return 0 (as if the user disabled network speed in
+     * system settings) so SystemUI's original logic hides it on its own; otherwise pass
+     * through the original read result.
      */
     private fun interceptRead(chain: XposedInterface.Chain): Any {
         val key = chain.args.getOrNull(1) as? String
@@ -124,11 +129,15 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
     }
 
     /**
-     * 主线程周期监测:慢速状态翻转时,对所有存活的 NetworkSpeedView 调用一次其自身的
-     * `updateNetworkSpeedViewStatus()`。该方法内部重新读取(已被伪装的)设置值并按
-     * 原生逻辑 setVisibility / 增停刷新循环,本 Hook 不直接操作视图。
-     * 隐藏路径会 removeMessages(10) 停掉刷新循环,靠本监测在恢复翻转时再次触发,
-     * 网速即可重新显示;监测之外的原生循环不受干扰,保证网速数值正常刷新。
+     * Main-thread periodic monitoring: when the slow state flips, call each live
+     * NetworkSpeedView's own `updateNetworkSpeedViewStatus()` once. That method
+     * re-reads the (already faked) setting value and performs setVisibility /
+     * starts-stops the refresh loop per native logic; this hook does not touch
+     * views directly.
+     * The hide path calls removeMessages(10) to stop the refresh loop; this monitoring
+     * triggers again when the state flips back so the speed indicator shows again.
+     * The native loop outside this monitoring is not disturbed, keeping the speed
+     * value refreshing normally.
      */
     private fun startWatcher() {
         mainHandler.postDelayed(object : Runnable {
@@ -141,9 +150,10 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
                             "NetworkSpeedView slow state -> " +
                                 if (slow) "slow (hide)" else "fast (show)"
                         )
-                        // 只在状态翻转时触发一次原生刷新。若每周期都调用,
-                        // updateNetworkSpeedViewStatus 会 removeMessages(10) 不断清掉
-                        // 原生 3 秒测量窗口并重置流量基线,导致网速恒显示 0.00K/s。
+                        // Only trigger one native refresh on state flip. Calling it every cycle
+                        // would have updateNetworkSpeedViewStatus repeatedly call removeMessages(10),
+                        // clearing the native 3s measurement window and resetting the traffic
+                        // baseline, causing the speed to always show 0.00K/s.
                         val method = updateStatusMethod
                         if (method != null) {
                             synchronized(viewRefs) {
@@ -157,14 +167,14 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
                                     try {
                                         method.invoke(view)
                                     } catch (_: Throwable) {
-                                        // 单个实例刷新失败不影响其它实例
+                                        // A single instance refresh failure does not affect other instances
                                     }
                                 }
                             }
                         }
                     }
                 } catch (e: Throwable) {
-                    logger.error("系统UI网速隐藏慢速周期刷新失败", e)
+                    logger.error("Network speed hide-slow periodic refresh failed", e)
                 } finally {
                     mainHandler.postDelayed(this, WATCH_INTERVAL_MS)
                 }
@@ -173,9 +183,11 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
     }
 
     /**
-     * 计算两次采样间的下行/上行速度并返回"当前是否处于慢速(应隐藏)"。
-     * 阈值单位:KB/s(与前端设置一致),内部换算为 B/s 比较。
-     * 采样间隔内沿用上次判定,避免高频 Settings 读取造成短差分误判。
+     * Compute the downlink/uplink speed between two samples and return "currently slow
+     * (should hide)". Threshold unit: KB/s (consistent with the frontend setting),
+     * internally converted to B/s for comparison. The previous decision is reused within
+     * the sampling interval to avoid short-differencing misjudgment from high-frequency
+     * Settings reads.
      */
     private fun shouldHide(): Boolean {
         val now = System.currentTimeMillis()
@@ -187,7 +199,7 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
         val txBytes = getTotalTxBytes()
 
         if (state.lastUpdateTime == 0L) {
-            // 首次采样,无基线,记录数据并保持显示
+            // First sample, no baseline; record data and keep showing
             state.lastRxBytes = rxBytes
             state.lastTxBytes = txBytes
             state.lastUpdateTime = now

@@ -15,39 +15,52 @@ import java.lang.reflect.Method
 import kotlin.math.roundToInt
 
 /**
- * 大文件夹图标与背景几何对齐（com.zui.launcher）。
+ * Big folder icon and background geometric alignment (com.zui.launcher).
  *
- * 修的问题：
- * - 背景: PreviewBackground 按"名义格宽 x span - widgetPadding.left*2"画背景, 与邻居
- *   图标的图标体系内缩互不换算, 横向偏宽, 垂直/图形边缘也不对齐。
- * - 子网格: BigFolderConfig 样式表按 stock 行列数调校, 改变行列数后 stock 间距过大致图标贴边。
- * - 标签: FolderIcon.z() 按名义格宽推导 topMargin, 与邻居标签存在偏差。
+ * Problems fixed:
+ * - Background: PreviewBackground draws the background as "nominal cell width x span
+ *   - widgetPadding.left*2", which is never reconciled with the icon-system inset of
+ *   neighboring icons; it is too wide horizontally, and vertical/graphic edges are
+ *   misaligned as well.
+ * - Child grid: the BigFolderConfig style sheet is tuned for stock row/column counts;
+ *   after changing them, the stock gaps are too large and icons hug the edges.
+ * - Label: FolderIcon.z() derives topMargin from the nominal cell width, deviating
+ *   from neighboring labels.
  *
- * 最终改写逻辑（公式中的量来自 [readGridMetrics] 的实测派生）：
- * 1. PreviewBackground.setup 尾部（大文件夹分支）:
- *    宽 = spanX*cellWidth + (spanX-1)*gapX - 2*图标内缩, offsetX = 图标内缩;
- *    offsetY = rowInset + artInset, previewSizeY = (spanY-1)*行距 + rowInset + iconSize
- *    - artInset —— 背景上下边对齐上/下排图标的图形边缘。
- *    rowInset = (cellHeight - cellHeightPx)/2（cellYPaddingPx 实测未初始化, 不可用）;
- *    artInset = iconSize * [ART_INSET_RATIO]（图标盒内图形的透明边距）。
- * 2. computeBigFolderAvaliableWh 宽度同步; isUpdatePreviewSize 只读观测。
- * 3. getBigFolderIconChildCount: (2,2) → 每行 CHILD_COLS 个 x CHILD_ROWS 行;
- *    其它 spanY==2 且 stock 行数为 2 → 行数改 3、列数沿用 stock; stock 网格从带数组
- *    参数的调用学习（部分调用传 null 数组时查缓存）; spanX==1 窄胶囊不改写。
- * 4. getBigFolderIconHGap/VGap: 大文件夹 span 按 (bg*GRID_OCCUPANCY - n*childSize)/(n-1)
- *    重算, childSize = folderIconSizePx * CHILD_ICON_SCALE（实测 158*0.8235≈130）。
- * 5. ClippedFolderIconLayoutRule.c 尾部统一走 rule 自身 getOffsetX/getOffsetY 通用网格
- *    （手机分支原为硬编码 2 列定位, 与样式表列数不匹配）。
- * 6. FolderIcon.z 整体替换: 大文件夹标签 topMargin = (spanY-1)*行距 + rowInset + iconSize
- *    + drawablePadding, 与最后一行邻居标签同高; 小文件夹分支复刻 stock 公式。
+ * Final rewrite logic (quantities in the formulas come from measurements derived in
+ * [readGridMetrics]):
+ * 1. Tail of PreviewBackground.setup (big folder branch):
+ *    width = spanX*cellWidth + (spanX-1)*gapX - 2*iconInset, offsetX = iconInset;
+ *    offsetY = rowInset + artInset, previewSizeY = (spanY-1)*rowPitch + rowInset + iconSize
+ *    - artInset -- so the background top/bottom edges align with the graphic edges of
+ *    the top/bottom icon rows.
+ *    rowInset = (cellHeight - cellHeightPx)/2 (cellYPaddingPx is measured uninitialized and unusable);
+ *    artInset = iconSize * [ART_INSET_RATIO] (transparent margin around the artwork inside the icon box).
+ * 2. computeBigFolderAvaliableWh width sync; isUpdatePreviewSize is read-only telemetry.
+ * 3. getBigFolderIconChildCount: (2,2) -> CHILD_COLS per row x CHILD_ROWS rows;
+ *    other spanY==2 spans with stock rows == 2 -> rows become 3, columns follow stock;
+ *    the stock grid is learned from calls with array arguments (some calls pass a null
+ *    array and consult the cache); spanX==1 narrow capsules are not rewritten.
+ * 4. getBigFolderIconHGap/VGap: big folder spans are recomputed as
+ *    (bg*GRID_OCCUPANCY - n*childSize)/(n-1), with
+ *    childSize = folderIconSizePx * CHILD_ICON_SCALE (measured 158*0.8235≈130).
+ * 5. Tail of ClippedFolderIconLayoutRule.c uniformly goes through the rule's own
+ *    getOffsetX/getOffsetY generic grid (the phone branch was hardcoded 2-column
+ *    positioning, mismatching the style sheet column count).
+ * 6. FolderIcon.z fully replaced: big folder label topMargin = (spanY-1)*rowPitch +
+ *    rowInset + iconSize + drawablePadding, same height as last-row neighbor labels;
+ *    the small folder branch replicates the stock formula.
  *
- * 宿主混淆短名映射（JADX 因与根包名冲突显示为 fXXXXa 等）：
- * - PreviewBackground: o=背景宽, p=offsetX, q=offsetY; spanX/spanY/previewSizeY 为原名
- * - ClippedFolderIconLayoutRule: b=背景宽, i=背景高, d=图标尺寸, j=列数, g=行数
+ * Host obfuscated short-name mapping (JADX shows fXXXXa etc. due to root package
+ * conflicts):
+ * - PreviewBackground: o=background width, p=offsetX, q=offsetY; spanX/spanY/previewSizeY keep original names
+ * - ClippedFolderIconLayoutRule: b=background width, i=background height, d=icon size, j=columns, g=rows
  * - FolderIcon: b=ActivityContext
  *
- * 全部反射句柄在安装期解析（[resolveCoreRefs] 等分组失败时仅跳过对应 Hook）,
- * 运行期只做字段/方法调用; 遥测日志统一走 debug, 开启详细日志才输出。
+ * All reflection handles are resolved at install time (when a group such as
+ * [resolveCoreRefs] fails, only the corresponding hooks are skipped); runtime only
+ * performs field/method calls; telemetry logs go through debug and are emitted only
+ * when detailed logging is enabled.
  */
 @SuppressLint("PrivateApi")
 class BigFolderAlignHook : AppHookModule() {
@@ -56,17 +69,17 @@ class BigFolderAlignHook : AppHookModule() {
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
-    /** 水平对齐目标：true = 小文件夹背景圆(folderIconSizePx), false = 应用图标(iconSizePx)。 */
+    /** Horizontal alignment target: true = small folder background circle (folderIconSizePx), false = app icon (iconSizePx). */
     private val alignToSmallFolder = true
 
-    // ── 安装期解析的反射句柄（分组失败时对应 Hook 跳过） ──
+    // ── Reflection handles resolved at install time (when a group fails, its hooks are skipped) ──
 
     private var coreReady = false
     private var ruleReady = false
     private var bfcReady = false
     private var folderIconReady = false
 
-    // PreviewBackground: o=背景宽 p=offsetX q=offsetY
+    // PreviewBackground: o=bg width p=offsetX q=offsetY
     private lateinit var pbWidth: Field
     private lateinit var pbOffsetX: Field
     private lateinit var pbOffsetY: Field
@@ -100,7 +113,7 @@ class BigFolderAlignHook : AppHookModule() {
     private lateinit var bfcGetHGap: Method
     private lateinit var bfcGetVGap: Method
 
-    // ClippedFolderIconLayoutRule: b=背景宽 i=背景高 d=图标尺寸 j=列数 g=行数
+    // ClippedFolderIconLayoutRule: b=bg width i=bg height d=icon size j=columns g=rows
     private lateinit var ruleCols: Field
     private lateinit var ruleRows: Field
     private lateinit var ruleIconSize: Field
@@ -111,7 +124,7 @@ class BigFolderAlignHook : AppHookModule() {
     private lateinit var ruleGetOffsetY: Method
     private lateinit var ruleScaleForItem: Method
 
-    // FolderIcon: b=ActivityContext; 标签字段名漂移, 候选名+类型扫描解析
+    // FolderIcon: b=ActivityContext; label field name drifts, resolved by candidate name + type scan
     private var folderLabel: Field? = null
     private lateinit var fiActivityContext: Field
     private lateinit var fiInfo: Field
@@ -138,18 +151,18 @@ class BigFolderAlignHook : AppHookModule() {
         hookDeviceProfileTelemetry()
     }
 
-    // ── 安装期反射解析 ──
+    // ── Install-time reflection resolution ──
 
-    /** 核心组: PreviewBackground / ActivityContext / DeviceProfile / InvariantDeviceProfile。 */
+    /** Core group: PreviewBackground / ActivityContext / DeviceProfile / InvariantDeviceProfile. */
     private fun resolveCoreRefs(classLoader: ClassLoader): Boolean {
         return try {
             val pb = classLoader.loadClass("com.android.launcher3.folder.PreviewBackground")
             val activityContextClass = classLoader.loadClass("com.android.launcher3.views.ActivityContext")
             pbSpanX = findField(pb, "spanX")
             pbSpanY = findField(pb, "spanY")
-            pbWidth = findField(pb, "o")     // 混淆短名: 背景宽
-            pbOffsetX = findField(pb, "p")   // 混淆短名: offsetX
-            pbOffsetY = findField(pb, "q")   // 混淆短名: offsetY
+            pbWidth = findField(pb, "o")     // obfuscated short name: bg width
+            pbOffsetX = findField(pb, "p")   // obfuscated short name: offsetX
+            pbOffsetY = findField(pb, "q")   // obfuscated short name: offsetY
             pbPreviewSizeY = findField(pb, "previewSizeY")
             pbSetup = findMethod(
                 pb, "setup",
@@ -188,15 +201,15 @@ class BigFolderAlignHook : AppHookModule() {
         }
     }
 
-    /** 规则组: ClippedFolderIconLayoutRule（子图标网格定位）。 */
+    /** Rule group: ClippedFolderIconLayoutRule (child icon grid positioning). */
     private fun resolveRuleRefs(classLoader: ClassLoader): Boolean {
         return try {
             val rule = classLoader.loadClass("com.android.launcher3.folder.ClippedFolderIconLayoutRule")
-            ruleCols = findField(rule, "j")          // 混淆短名: 列数
-            ruleRows = findField(rule, "g")          // 混淆短名: 行数
-            ruleIconSize = findField(rule, "d")      // 混淆短名: 图标尺寸
-            ruleBgWidth = findField(rule, "b")       // 混淆短名: 背景宽
-            ruleBgHeight = findField(rule, "i")      // 混淆短名: 背景高
+            ruleCols = findField(rule, "j")          // obfuscated short name: columns
+            ruleRows = findField(rule, "g")          // obfuscated short name: rows
+            ruleIconSize = findField(rule, "d")      // obfuscated short name: icon size
+            ruleBgWidth = findField(rule, "b")       // obfuscated short name: bg width
+            ruleBgHeight = findField(rule, "i")      // obfuscated short name: bg height
             val i = Int::class.javaPrimitiveType
             val f = Float::class.javaPrimitiveType
             ruleC = findMethod(
@@ -213,7 +226,7 @@ class BigFolderAlignHook : AppHookModule() {
         }
     }
 
-    /** 样式表组: BigFolderConfig（子网格/间距汇聚点）。 */
+    /** Style sheet group: BigFolderConfig (child grid/gap convergence point). */
     private fun resolveBfcRefs(classLoader: ClassLoader): Boolean {
         return try {
             val bfc = classLoader.loadClass("com.zui.launcher.folder.bigfolder.BigFolderConfig")
@@ -231,11 +244,11 @@ class BigFolderAlignHook : AppHookModule() {
         }
     }
 
-    /** FolderIcon 组: 标签字段按候选名解析, 失败时按 BubbleTextView 类型兜底扫描。 */
+    /** FolderIcon group: label field resolved by candidate names, falling back to a BubbleTextView type scan. */
     private fun resolveFolderIconRefs(classLoader: ClassLoader): Boolean {
         return try {
             val fi = classLoader.loadClass("com.android.launcher3.folder.FolderIcon")
-            fiActivityContext = findField(fi, "b")   // 混淆短名: ActivityContext
+            fiActivityContext = findField(fi, "b")   // obfuscated short name: ActivityContext
             fiInfo = findField(fi, "mInfo")
             fiSpanX = findField(fiInfo.type, "spanX")
             fiSpanY = findField(fiInfo.type, "spanY")
@@ -264,7 +277,7 @@ class BigFolderAlignHook : AppHookModule() {
         }
     }
 
-    // ── Hook 1: setup 尾部背景几何改写 ──
+    // ── Hook 1: background geometry rewrite at the tail of setup ──
 
     private fun hookSetupGeometry() {
         hookWithId(pbSetup, "big_folder_align_setup") { chain ->
@@ -283,12 +296,12 @@ class BigFolderAlignHook : AppHookModule() {
         if (!coreReady || activityContext == null) return
         val spanX = pbSpanX.getInt(pb)
         val spanY = pbSpanY.getInt(pb)
-        // 与宿主 BigFolderConfig.isBigFolder 同语义
+        // Same semantics as the host BigFolderConfig.isBigFolder
         if (spanX <= 1 && spanY <= 1) return
 
         val dp = activityContextGetDeviceProfile.invoke(activityContext) ?: return
         val metrics = readGridMetrics(dp) ?: return
-        // 供无 context 参数的静态方法 Hook（间距重算）使用
+        // Used by static method hooks without a context parameter (gap recomputation)
         cachedCellWidth = metrics.cellWidth
         cachedCellPitch = metrics.cellHeight + metrics.gapY
         cachedRowInset = metrics.rowInset
@@ -302,7 +315,7 @@ class BigFolderAlignHook : AppHookModule() {
         pbWidth.setInt(pb, newWidth)
         pbOffsetX.setInt(pb, inset)
 
-        // 背景上下边对齐上/下排图标的图形边缘（图形盒内透明边距 artInset）
+        // Background top/bottom edges align with the graphic edges of the top/bottom icon rows (artInset = transparent margin inside the art box)
         val artInset = (metrics.iconSizePx * ART_INSET_RATIO).roundToInt()
         val newOffsetY = metrics.rowInset + artInset
         val newPreviewSizeY = (spanY - 1) * (metrics.cellHeight + metrics.gapY) +
@@ -314,7 +327,7 @@ class BigFolderAlignHook : AppHookModule() {
             pbPreviewSizeY.setInt(pb, newPreviewSizeY)
         }
 
-        // 观测: 标签 topMargin 与 FolderIcon 自身 paddingTop（标签视觉位置 = 两者之和）
+        // Telemetry: label topMargin vs FolderIcon's own paddingTop (visual label position = their sum)
         var labelTopMargin = -1
         var iconPaddingTop = -1
         try {
@@ -342,7 +355,7 @@ class BigFolderAlignHook : AppHookModule() {
         )
     }
 
-    // ── 网格度量 ──
+    // ── Grid metrics ──
 
     private class GridMetrics(
         val gapX: Int,
@@ -370,7 +383,7 @@ class BigFolderAlignHook : AppHookModule() {
             val widgetPadding = dpWidgetPadding.get(dp) as Rect
             val iconSizePx = dpIconSize.getInt(dp)
             val folderIconSizePx = dpFolderIconSize.getInt(dp)
-            // cellHeightPx = 行内容高（图标+间距+文字）, 实测 260 而行距 348
+            // cellHeightPx = row content height (icon + gap + text), measured 260 while row pitch is 348
             val cellHeightPx = dpCellHeight.getInt(dp)
 
             val gridWidth = (dpGetCellLayoutWidth.invoke(dp) as Int) - 2 * padding.left
@@ -380,7 +393,7 @@ class BigFolderAlignHook : AppHookModule() {
             val gridHeight = (dpGetCellLayoutHeight.invoke(dp) as Int) - padding.top - padding.bottom
             val gapY = borderSpace.y
             val cellHeight = (gridHeight - (rows - 1) * gapY) / rows
-            // 图标在行内的真实垂直内缩, 与宿主公式 max(0,(C-cellHeightPx)/2) 同源
+            // Real vertical inset of the icon within its row, same origin as the host formula max(0,(C-cellHeightPx)/2)
             val rowInset = maxOf(0, (cellHeight - cellHeightPx) / 2)
             GridMetrics(
                 gapX = gapX,
@@ -403,9 +416,9 @@ class BigFolderAlignHook : AppHookModule() {
         }
     }
 
-    // ── Hook 2: 子网格与间距 ──
+    // ── Hook 2: child grid and gaps ──
 
-    /** 样式表汇聚点改写：一处改写, 布局/预览数量/点击命中/投放容量全链路生效。 */
+    /** Style sheet convergence rewrite: one rewrite makes layout/preview count/click hit-testing/drop capacity all take effect. */
     private fun hookChildCountRewrite() {
         hookWithId(bfcGetChildCount, "big_folder_align_child_count") { chain ->
             val result = chain.proceed()
@@ -447,7 +460,7 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked getBigFolderIconChildCount")
     }
 
-    /** c() 手机分支为硬编码 2 列定位, 统一改写为 rule 自身 getOffsetX/getOffsetY 通用网格。 */
+    /** The c() phone branch is hardcoded 2-column positioning; uniformly rewritten to the rule's own getOffsetX/getOffsetY generic grid. */
     private fun hookChildGridRule() {
         hookWithId(ruleC, "big_folder_align_child_grid") { chain ->
             chain.proceed()
@@ -456,7 +469,7 @@ class BigFolderAlignHook : AppHookModule() {
                 val index = args[0] as Int
                 val spanX = args[3] as Int
                 val spanY = args[4] as Int
-                // ENTER/EXIT(-2/-3) 走动画专用路径, 非大文件夹不动
+                // ENTER/EXIT(-2/-3) go through the animation-specific path; leave non-big-folders untouched
                 if (index < 0 || (spanX <= 1 && spanY <= 1)) return@hookWithId null
                 val rule = chain.thisObject
                 val cols = ruleCols.getInt(rule)
@@ -483,9 +496,10 @@ class BigFolderAlignHook : AppHookModule() {
     }
 
     /**
-     * stock 间距按 stock 网格调校, 改变行列数后占比过大。对所有大文件夹 span
-     * （spanX>1 || spanY>1）按 背景尺寸 x GRID_OCCUPANCY 重算, 只会缩小间距（下限 0）;
-     * 居中布局把省出的空间变成外围边距。网格取 改写网格 ?: stock 网格。
+     * Stock gaps are tuned for the stock grid and become oversized after row/column
+     * changes. For all big folder spans (spanX>1 || spanY>1) recomputed as
+     * background size x GRID_OCCUPANCY; only shrinks gaps (floor 0); the centered
+     * layout turns the freed space into outer margins. Grid = rewritten grid ?: stock grid.
      */
     private fun hookFolderGaps() {
         for ((method, isH) in listOf(bfcGetHGap to true, bfcGetVGap to false)) {
@@ -526,7 +540,7 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked getBigFolderIconHGap/VGap")
     }
 
-    // ── Hook 3: 标签与邻居标签同高（整体替换 FolderIcon.z()） ──
+    // ── Hook 3: label aligned with neighbor labels (full replacement of FolderIcon.z()) ──
 
     private fun hookFolderLabel() {
         val labelField = folderLabel ?: return
@@ -545,7 +559,7 @@ class BigFolderAlignHook : AppHookModule() {
                 val drawablePadding = dpIconDrawablePadding.getInt(dp)
                 val topMargin: Int
                 if (spanX <= 1 && spanY <= 1) {
-                    // 小文件夹分支: 复刻 stock z() 公式
+                    // Small folder branch: replicate the stock z() formula
                     topMargin = iconSizePx + drawablePadding
                 } else {
                     val metrics = readGridMetrics(dp)
@@ -560,7 +574,7 @@ class BigFolderAlignHook : AppHookModule() {
                     label.requestLayout()
                     logger.debug("label topMargin -> $topMargin (span=${spanX}x${spanY})")
                 }
-                null // 已完整替代宿主 z(); 反射失败时走 catch 回退 stock
+                null // Fully replaces the host z(); on reflection failure the catch falls back to stock
             } catch (t: Throwable) {
                 logger.error("label align failed, fallback to stock z()", t)
                 chain.proceed()
@@ -569,7 +583,7 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked FolderIcon.z (label alignment)")
     }
 
-    // ── Hook 4: computeBigFolderAvaliableWh 宽度同步 ──
+    // ── Hook 4: computeBigFolderAvaliableWh width sync ──
 
     private fun hookAvailableWh() {
         hookWithId(pbComputeWh, "big_folder_align_available_wh") { chain ->
@@ -595,7 +609,7 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked computeBigFolderAvaliableWh")
     }
 
-    // ── Hook 5: isUpdatePreviewSize 只读观测 ──
+    // ── Hook 5: isUpdatePreviewSize read-only telemetry ──
 
     private fun hookIsUpdatePreviewSize() {
         hookWithId(pbIsUpdate, "big_folder_align_is_update") { chain ->
@@ -613,7 +627,7 @@ class BigFolderAlignHook : AppHookModule() {
         logger.debug("hooked isUpdatePreviewSize")
     }
 
-    // ── Hook 6: DeviceProfile.updateIconSize 只读遥测 ──
+    // ── Hook 6: DeviceProfile.updateIconSize read-only telemetry ──
 
     private fun hookDeviceProfileTelemetry() {
         hookWithId(dpUpdateIconSize, "big_folder_align_dp_log") { chain ->
@@ -643,32 +657,33 @@ class BigFolderAlignHook : AppHookModule() {
     }
 
     companion object {
-        /** 2x2 大文件夹子图标网格 = 每行 CHILD_COLS 个 x CHILD_ROWS 行(3x3=9)。 */
+        /** 2x2 big folder child icon grid = CHILD_COLS per row x CHILD_ROWS rows (3x3=9). */
         private const val TARGET_SPAN_X = 2
         private const val TARGET_SPAN_Y = 2
         private const val CHILD_COLS = 3
         private const val CHILD_ROWS = 3
 
         /**
-         * 子网格占背景尺寸的目标占比, 间距按 (bg*占比 - n*childSize)/(n-1) 重算;
-         * 占比越小间距越小、外围边距越大（居中布局自动分配）。
+         * Target ratio of the child grid over the background size; gaps recomputed as
+         * (bg*ratio - n*childSize)/(n-1); a smaller ratio means smaller gaps and larger
+         * outer margins (assigned automatically by the centered layout).
          */
         private const val GRID_OCCUPANCY = 0.4f
 
-        /** 图标盒内图形的透明边距比例（实测 190px 盒约 21px, 图形约 0.78x 盒子）。 */
+        /** Transparent margin ratio around the artwork inside the icon box (measured ~21px in a 190px box, artwork ≈ 0.78x of the box). */
         private const val ART_INSET_RATIO = 0.11f
 
-        /** 一次性日志去重（childCount/gap 调用非常频繁, 每个 key 只记一次）。 */
+        /** One-shot log dedup (childCount/gap calls are very frequent; each key is logged once). */
         private val loggedSpans: MutableSet<String> =
             java.util.Collections.newSetFromMap(java.util.concurrent.ConcurrentHashMap())
 
-        /** 学习到的 stock 子网格（span -> [cols, rows]）, 供 out=null 的调用查表。 */
+        /** Learned stock child grids (span -> [cols, rows]), consulted by calls with out=null. */
         private val stockGrids = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
 
-        /** 已改写子网格的 span -> [cols, rows], 间距重算以它优先。 */
+        /** Spans with rewritten child grids (span -> [cols, rows]); gap recomputation prefers them. */
         private val rewrittenGrids = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
 
-        /** 间距重算用的网格度量缓存（applyAlignedGeometry 每次 setup 刷新, 静态 Hook 读取）。 */
+        /** Grid metric cache for gap recomputation (refreshed by every applyAlignedGeometry setup, read by static hooks). */
         @Volatile var cachedCellWidth = 0
         @Volatile var cachedCellPitch = 0
         @Volatile var cachedRowInset = 0

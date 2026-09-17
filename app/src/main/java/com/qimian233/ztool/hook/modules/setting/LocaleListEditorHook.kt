@@ -6,16 +6,18 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 测试 Hook：拦截 LenovoUtils 区域判断方法，仅在 LocaleListEditor 调用场景生效。
+ * Test hook: intercepts LenovoUtils locale detection methods, effective only when
+ * called from the LocaleListEditor scenario.
  *
- * 当调用来自 com.android.settings.localepicker.LocaleListEditor 时：
- * - com.lenovo.common.utils.LenovoUtils.isRowVersion 返回 true
- * - com.lenovo.common.utils.LenovoUtils.isPrcVersion 返回 false
+ * When the call originates from com.android.settings.localepicker.LocaleListEditor:
+ * - com.lenovo.common.utils.LenovoUtils.isRowVersion returns true
+ * - com.lenovo.common.utils.LenovoUtils.isPrcVersion returns false
  *
- * 其他调用场景走原始逻辑，避免对 Settings 其他页面产生副作用。
- * 通过调用栈检查精确命中目标，语言页面使用频率极低，开销可忽略。
+ * All other call sites run the original logic to avoid side effects on other
+ * Settings pages. The target is precisely matched via call stack inspection;
+ * the language page is rarely used, so the overhead is negligible.
  *
- * 模块名使用 "test_hook" 自动启用，无需前端开关。
+ * The module name "test_hook" auto-enables it without a frontend switch.
  */
 class LocaleListEditorHook : AppHookModule() {
 

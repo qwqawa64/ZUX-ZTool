@@ -181,7 +181,7 @@ private fun SearchCard(
                     text = stringResource(R.string.settings_find_rules),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = LocalZToolColorScheme.current.onSurface // 临时修复，不要扩散这里的模式
+                    color = LocalZToolColorScheme.current.onSurface // temporary fix, do not spread this pattern
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

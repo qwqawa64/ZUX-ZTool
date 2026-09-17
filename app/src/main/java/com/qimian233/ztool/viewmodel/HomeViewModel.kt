@@ -35,10 +35,10 @@ class HomeViewModel(
     val dexIndexState: StateFlow<DexIndexUiState> = _dexIndexState.asStateFlow()
 
     init {
-        // 热更新：监听模块激活状态变化，实时刷新 UI
+        // Hot update: observe module activation state changes and refresh the UI in real time
         viewModelScope.launch {
             ZToolApplication.isModuleActivatedFlow.collect { activated ->
-                if (!started) return@collect  // start() 尚未调用，由其自行检查
+                if (!started) return@collect  // start() not yet called; start() checks on its own
                 val current = _uiState.value.isModuleActive
                 if (activated != current) {
                     checkEnvironment()
@@ -46,7 +46,7 @@ class HomeViewModel(
             }
         }
 
-        // DexKit 索引进度热更新，供进度 Dialog 实时展示
+        // DexKit index progress hot-updates, shown in real time by the progress Dialog
         viewModelScope.launch {
             DexIndexManager.progress.collect { p ->
                 _dexIndexState.value = _dexIndexState.value.copy(progress = p)
@@ -67,9 +67,9 @@ class HomeViewModel(
     }
 
     /**
-     * 进入主页时判定 DexKit 索引是否需要生成/刷新：
-     * - Firstrun（无任何索引文件）：后台全量索引，完成后 Toast 结果；
-     * - 非 Firstrun 但有 scope 过期/损坏：前台进度 Dialog 刷新，完成后 Toast 结果。
+     * Decide whether the DexKit index needs to be generated/refreshed when entering the home page:
+     * - Firstrun (no index files at all): full background indexing, Toast the result when done;
+     * - Non-Firstrun but some scopes are stale/corrupted: foreground progress Dialog refresh, Toast the result when done.
      */
     fun checkDexIndexOnEntry(context: Context) {
         if (isDexIndexTaskRunning.get()) return
@@ -78,10 +78,10 @@ class HomeViewModel(
             DexIndexManager.lastIndexedAt(context, it.scopePackage) > 0L
         }
         val needRefresh = if (anyIndexed) {
-            // 非 Firstrun：有缓存但指纹/schema 过期或文件损坏
+            // Non-Firstrun: cache exists but fingerprint/schema is stale or the file is corrupted
             DexIndexRegistry.indexers.any { DexIndexManager.needsReindex(context, it.scopePackage) }
         } else {
-            true // Firstrun：索引文件完全不存在
+            true // Firstrun: index files do not exist at all
         }
         if (needRefresh) {
             startDexIndexTask(context, foreground = anyIndexed)
@@ -257,7 +257,7 @@ class HomeViewModel(
             return
         }
 
-        // 复用会话内检测结果：已检测到更新时不再重复请求，手动刷新可强制重检
+        // Reuse the in-session check result: do not re-request when an update was already detected; manual refresh can force a re-check
         if (!force && _uiState.value.updateInfo != null) {
             Log.d(TAG, "Update already detected in this session, skipping re-check")
             isCheckingAppUpdate.set(false)
@@ -325,7 +325,7 @@ data class HomeUiState(
         get() = isModuleActive && isRootAvailable
 }
 
-/** DexKit 索引进度与结果（主页路径）。 */
+/** DexKit index progress and result (home page path). */
 data class DexIndexUiState(
     val refreshing: Boolean = false,
     val progress: DexIndexProgress = DexIndexProgress(),

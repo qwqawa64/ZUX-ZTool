@@ -28,7 +28,7 @@ class AdvancedSettingsViewModel(
     val dexIndexState: StateFlow<DexIndexRefreshUiState> = _dexIndexState.asStateFlow()
 
     init {
-        // DexKit 索引进度热更新，供进度 Dialog 实时展示
+        // DexKit index progress hot-updates, shown in real time by the progress Dialog
         viewModelScope.launch {
             DexIndexManager.progress.collect { p ->
                 _dexIndexState.value = _dexIndexState.value.copy(progress = p)
@@ -90,7 +90,7 @@ class AdvancedSettingsViewModel(
             deleteOtaPackageInProgress = true
         )
         repository.deleteOtaPackage { status, message ->
-            Log.i(TAG, "删除 /data/ota_package: [$status] $message")
+            Log.i(TAG, "Delete /data/ota_package: [$status] $message")
             _uiState.value = _uiState.value.copy(
                 deleteOtaPackageInProgress = false,
                 deleteOtaPackageStatus = status,
@@ -118,10 +118,10 @@ class AdvancedSettingsViewModel(
         }
         repository.performHotReloadAll(
             onProgress = { target, result ->
-                Log.d(TAG, "热重载: ${target.processName} -> ${result.status()} ${result.message() ?: ""}")
+                Log.d(TAG, "Hot reload: ${target.processName} -> ${result.status()} ${result.message() ?: ""}")
             },
             onComplete = { succeeded, failed, unsupported, died, details ->
-                Log.d(TAG, "热重载完成: 成功=$succeeded, 失败=$failed, 不支持=$unsupported, 进程已死=$died")
+                Log.d(TAG, "Hot reload finished: succeeded=$succeeded, failed=$failed, unsupported=$unsupported, processDied=$died")
                 for (d in details) {
                     if (d.status != "SUCCEEDED") {
                         Log.w(TAG, "  [${d.status}] ${d.processName}: ${d.message}")
@@ -148,7 +148,7 @@ class AdvancedSettingsViewModel(
 
         repository.resetPersistentValues(
             onComplete = { succeeded, failed, unsupported, details ->
-                Log.d(TAG, "重置持久化值完成: 成功=$succeeded, 失败=$failed, 不支持=$unsupported")
+                Log.d(TAG, "Persistent value reset finished: succeeded=$succeeded, failed=$failed, unsupported=$unsupported")
                 for (d in details) {
                     if (d.status != "SUCCEEDED") {
                         Log.w(TAG, "  [${d.status}] ${d.key}: ${d.message}")
@@ -165,7 +165,7 @@ class AdvancedSettingsViewModel(
         )
     }
 
-    /** 手动刷新 DexKit 索引：前台进度 Dialog + 完成后 Toast 结果。 */
+    /** Manually refresh the DexKit index: foreground progress Dialog + Toast of the result on completion. */
     fun refreshDexIndex(context: Context) {
         if (_dexIndexState.value.refreshing) return
         viewModelScope.launch(Dispatchers.Default) {
@@ -220,7 +220,7 @@ data class AdvancedSettingsUiState(
     val deleteOtaPackageMessage: String? = null
 )
 
-/** DexKit 索引进度与结果（设置页手动刷新路径）。 */
+/** DexKit index progress and result (settings-page manual refresh path). */
 data class DexIndexRefreshUiState(
     val refreshing: Boolean = false,
     val progress: DexIndexProgress = DexIndexProgress(),

@@ -13,11 +13,11 @@ import org.luckypray.dexkit.query.matchers.FieldMatcher
 import org.luckypray.dexkit.query.matchers.FieldsMatcher
 
 /**
- * systemui 作用域（com.android.systemui）离线索引器。
+ * systemui scope (com.android.systemui) offline indexer.
  *
- * 原样迁移自以下 Hook 的 DexKit 查询：
- * - NoChargeAnimation（ChargingAnimationController 的 Handler 字段名）
- * - SystemUINetworkSpeeddoublelayerHook（NetworkSpeedView 的 Handler 内部类名）
+ * Migrated as-is from the DexKit queries of these Hooks:
+ * - NoChargeAnimation (Handler field name of ChargingAnimationController)
+ * - SystemUINetworkSpeeddoublelayerHook (Handler inner class name of NetworkSpeedView)
  */
 class SystemUiDexIndexer : DexIndexer {
 
@@ -53,7 +53,7 @@ class SystemUiDexIndexer : DexIndexer {
 
             if (classData != null) {
                 val fields = classData.fields
-                // 1) 优先 Handler 类型字段（含 $ 内部类形态）
+                // 1) Prefer Handler-type fields (including $ inner-class forms)
                 var handlerFieldName: String? = null
                 for (fd in fields) {
                     val ft = fd.typeName
@@ -62,7 +62,7 @@ class SystemUiDexIndexer : DexIndexer {
                         break
                     }
                 }
-                // 2) 回退：第一个非 java./android. 的非基本类型字段
+                // 2) Fallback: first non-primitive field whose type is not java./android.
                 if (handlerFieldName == null) {
                     for (fd in fields) {
                         val ft = fd.typeName
@@ -87,7 +87,7 @@ class SystemUiDexIndexer : DexIndexer {
 
     private fun indexNetworkSpeedDoublelayer(bridge: DexKitBridge): JsonObject {
         val out = JsonObject()
-        // superClass = Handler 且名字以 NetworkSpeedView$ 开头的内部类
+        // Inner class with superClass = Handler whose name starts with NetworkSpeedView$
         try {
             val matches = bridge.findClass(
                 FindClass.create()

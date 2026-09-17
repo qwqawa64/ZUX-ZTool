@@ -21,13 +21,14 @@ import java.util.Locale
 import java.util.WeakHashMap
 
 /**
- * SystemUI网络速度显示Hook模块
- * 功能：在状态栏显示实时上下行网络速度，支持自定义文本大小和显示格式
+ * SystemUI network speed display hook module.
+ * Function: shows real-time uplink/downlink network speed in the status bar; supports
+ * custom text size and display format.
  */
 @SuppressLint("PrivateApi")
 class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
 
-    // 存储每个实例的上次流量数据
+    // Store the last traffic data per instance
     private val lastRxBytesMap = WeakHashMap<Any, Long>()
     private val lastTxBytesMap = WeakHashMap<Any, Long>()
     private val lastUpdateTimeMap = WeakHashMap<Any, Long>()
@@ -48,7 +49,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
         try {
             logger.info("Starting to hook SystemUI NetworkSpeedView")
 
-            // Hook NetworkSpeedView 构造方法
+            // Hook the NetworkSpeedView constructor
             val ctor: Constructor<*> = classLoader.loadClass(NETWORK_SPEED_VIEW_CLASS)
                 .getDeclaredConstructor(
                     Context::class.java,
@@ -61,7 +62,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
                 null
             }
 
-            // Hook Handler 的 handleMessage 方法
+            // Hook the Handler's handleMessage method
             hookNetworkSpeedHandler(classLoader)
 
             logger.info("Successfully hooked NetworkSpeedView")
@@ -73,22 +74,22 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
     private fun initNetworkSpeedView(networkSpeedView: Any) {
         try {
             val cl = networkSpeedView.javaClass
-            // 获取初始流量数据
+            // Get the initial traffic data
             val initialRxBytes = getTotalRxBytes()
             val initialTxBytes = getTotalTxBytes()
 
-            // 存储初始数据
+            // Store the initial data
             lastRxBytesMap[networkSpeedView] = initialRxBytes
             lastTxBytesMap[networkSpeedView] = initialTxBytes
             lastUpdateTimeMap[networkSpeedView] = System.currentTimeMillis()
 
-            // 调整文本大小
+            // Adjust the text size
             try {
-                // 获取当前文本大小并增加
+                // Get the current text size and increase it
                 val getTextSizeMethod: Method = findMethod(cl, "getTextSize")
                 val textSizeResult = getTextSizeMethod.invoke(networkSpeedView)
                 val currentTextSize = textSizeResult as? Float ?: 8.0f
-                val newTextSize = currentTextSize * 1.1f // 增加10%
+                val newTextSize = currentTextSize * 1.1f // +10%
 
                 val setTextSizeMethod: Method =
                     findMethod(cl, "setTextSize", Int::class.javaPrimitiveType, Float::class.javaPrimitiveType)
@@ -109,7 +110,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
 
     private fun hookNetworkSpeedHandler(classLoader: ClassLoader) {
         try {
-            // 通过 DEXKit 查找 NetworkSpeedView 的内部 Handler 类（替代硬编码 $3）
+            // Find NetworkSpeedView's inner Handler class via DEXKit (replacing hardcoded $3)
             val handlerClass = findHandlerInnerClass(classLoader)
             val handleMessageMethod: Method =
                 handlerClass.getDeclaredMethod("handleMessage", Message::class.java)
@@ -121,16 +122,16 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
                 val networkSpeedView = this0Field.get(handler)
                     ?: return@hookWithId chain.proceed()
 
-                // 获取消息对象
+                // Get the message object
                 val message = chain.args[0]
                 val what = message.javaClass.getDeclaredField("what").getInt(message)
 
-                if (what == 10) { // 更新速度的消息
+                if (what == 10) { // speed update message
                     handleSpeedUpdate(networkSpeedView, handler)
-                    return@hookWithId null // 阻止原始处理
-                } else if (what == 1) { // 格式化显示的消息
+                    return@hookWithId null // block the original handling
+                } else if (what == 1) { // format/display message
                     handleSpeedDisplay(networkSpeedView, message)
-                    return@hookWithId null // 阻止原始处理
+                    return@hookWithId null // block the original handling
                 }
                 chain.proceed()
             }
@@ -142,10 +143,10 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
     private fun handleSpeedUpdate(networkSpeedView: Any, handler: Any) {
         try {
             val handlerCls = handler.javaClass
-            // 移除之前的消息
+            // Remove the previous message
             findMethod(handlerCls, "removeMessages", Int::class.javaPrimitiveType).invoke(handler, 10)
 
-            // 检查是否应该显示网速
+            // Check whether the network speed should be shown
             val isIconVisibleResult = networkSpeedView.javaClass
                 .getDeclaredMethod("isIconVisible").invoke(networkSpeedView)
             val shouldShow = java.lang.Boolean.TRUE == isIconVisibleResult
@@ -154,30 +155,30 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
                 return
             }
 
-            // 获取当前流量统计
+            // Get the current traffic stats
             val currentRxBytes = getTotalRxBytes()
             val currentTxBytes = getTotalTxBytes()
             val currentTime = System.currentTimeMillis()
 
-            // 获取上次的数据
+            // Get the previous data
             val lastRxBytes = lastRxBytesMap[networkSpeedView]
             val lastTxBytes = lastTxBytesMap[networkSpeedView]
             val lastUpdateTime = lastUpdateTimeMap[networkSpeedView]
 
             if (lastRxBytes == null || lastTxBytes == null || lastUpdateTime == null) {
-                // 第一次更新，只记录数据不计算速度
+                // First update, record data without computing speed
                 lastRxBytesMap[networkSpeedView] = currentRxBytes
                 lastTxBytesMap[networkSpeedView] = currentTxBytes
                 lastUpdateTimeMap[networkSpeedView] = currentTime
             } else {
-                // 计算时间差（秒）
+                // Compute the time difference (seconds)
                 val timeDiff = (currentTime - lastUpdateTime) / 1000
                 if (timeDiff > 0) {
-                    // 计算上下行速度（字节/秒）
+                    // Compute uplink/downlink speed (bytes/second)
                     val downSpeed = (currentRxBytes - lastRxBytes) / timeDiff
                     val upSpeed = (currentTxBytes - lastTxBytes) / timeDiff
 
-                    // 记录调试信息
+                    // Log debug info
                     logger.debug(
                         String.format(
                             Locale.US,
@@ -186,7 +187,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
                         )
                     )
 
-                    // 发送显示消息
+                    // Send the display message
                     val message = findMethod(handlerCls, "obtainMessage").invoke(handler)
                     if (message != null) {
                         val msgCls = message.javaClass
@@ -196,7 +197,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
                             .invoke(handler, message)
                     }
 
-                    // 更新数据
+                    // Update the data
                     lastRxBytesMap[networkSpeedView] = currentRxBytes
                     lastTxBytesMap[networkSpeedView] = currentTxBytes
                     lastUpdateTimeMap[networkSpeedView] = currentTime
@@ -205,7 +206,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
 
             val refreshInterval = (xposed.getRemotePreferences(PREFS_NAME)
                 .getFloat("systemui_network_speed_refresh_interval", 3.0f) * 1000.0).toLong()
-            // 安排下一次更新
+            // Schedule the next update
             findMethod(handlerCls, "sendEmptyMessageDelayed", Int::class.javaPrimitiveType, Long::class.javaPrimitiveType)
                 .invoke(handler, 10, refreshInterval)
         } catch (t: Throwable) {
@@ -222,15 +223,15 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
             val downSpeed = speeds[0]
             val upSpeed = speeds[1]
 
-            // 格式化上下行速度
+            // Format uplink/downlink speed
             val downText = formatSpeed(downSpeed)
             val upText = formatSpeed(upSpeed)
 
-            // 创建带有HTML格式的双层显示文本，调整字体大小
+            // Create the double-layer display text with HTML formatting, adjusting font size
             val displayText = "<font size='5'><b>▴ " + upText + "</b></font><br/>" +
                 "<font size='5'><b>▾ " + downText + "</b></font>"
 
-            // 使用HTML格式设置文本
+            // Set the text using HTML formatting
             findMethod(networkSpeedView.javaClass, "setText", CharSequence::class.java)
                 .invoke(networkSpeedView, Html.fromHtml(displayText, Html.FROM_HTML_MODE_LEGACY))
         } catch (t: Throwable) {
@@ -260,7 +261,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
             unit = "B/s"
         }
 
-        // 根据速度值选择合适的精度
+        // Choose precision based on the speed value
         val formatPattern = if (speed >= 100) {
             "0"
         } else if (speed >= 10) {
@@ -296,11 +297,11 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
     }
 
     /**
-     * 通过反射查找 NetworkSpeedView 的内部 Handler 子类。
-     * 遍历可能的内部类索引，替代硬编码的 $3。
+     * Find NetworkSpeedView's inner Handler subclass via reflection.
+     * Iterates possible inner class indexes, replacing the hardcoded $3.
      */
     private fun findHandlerInnerClass(classLoader: ClassLoader): Class<*> {
-        // 先尝试离线索引中的 Handler 子类
+        // First try the Handler subclass from the offline index
         val indexed = DexIndexStore.string(
             xposed, SYSTEMUI_PACKAGE,
             DexIndexConstants.ModuleKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER,
@@ -314,11 +315,11 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
             } catch (_: ClassNotFoundException) {
             }
         }
-        // 回退：遍历常见内部类索引
+        // Fallback: iterate common inner class indexes
         for (i in 1..10) {
             try {
                 val cls = classLoader.loadClass(NETWORK_SPEED_VIEW_CLASS + "$" + i)
-                // 验证是 Handler 子类（有 handleMessage 方法）
+                // Verify it is a Handler subclass (has the handleMessage method)
                 try {
                     cls.getDeclaredMethod("handleMessage", Message::class.java)
                     logger.debug("Found Handler inner class at index $i")

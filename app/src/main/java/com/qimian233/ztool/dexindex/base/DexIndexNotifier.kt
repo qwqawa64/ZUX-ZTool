@@ -12,15 +12,18 @@ import androidx.core.app.NotificationCompat
 import com.qimian233.ztool.R
 
 /**
- * 离线索引扫描的结果通知（兜底）。
+ * Fallback result notification for offline index scans.
  *
- * 前台场景的进度反馈由 UI 进度 Dialog 承担（见 DexIndexProgressDialog），
- * 本对象仅在扫描结束后发送结果通知并数秒后自动消失；例如 DexIndexReceiver
- * 在模块更新时后台触发索引、APP 未在前台运行的场景仍可向有通知权限的用户
- * 反馈结果。
+ * Progress feedback for the foreground scenario is handled by the UI progress
+ * dialog (see DexIndexProgressDialog); this object only posts a result
+ * notification after the scan finishes and auto-dismisses after a few seconds.
+ * For example, when DexIndexReceiver triggers indexing in the background on
+ * module update while the app is not in the foreground, users with notification
+ * permission still get feedback.
  *
- * 注意：Android 13+ 需要运行时授权 `POST_NOTIFICATIONS`，未授权时静默跳过通知
- * （扫描本身不受影响，前台 UI 仍会 Toast 结果）。
+ * Note: Android 13+ requires the runtime `POST_NOTIFICATIONS` permission; when
+ * not granted, notifications are silently skipped (the scan itself is not
+ * affected, and the foreground UI still toasts the result).
  */
 object DexIndexNotifier {
 
@@ -29,7 +32,7 @@ object DexIndexNotifier {
     private const val NOTIFICATION_ID = 0xD11
     private const val AUTO_CANCEL_DELAY_MS = 3_000L
 
-    /** 扫描结束：更新为结果通知，数秒后自动取消。 */
+    /** Scan finished: update to a result notification and auto-cancel after a few seconds. */
     fun finish(context: Context, results: Map<String, Boolean>) {
         if (!canNotify(context)) return
         try {
@@ -50,7 +53,7 @@ object DexIndexNotifier {
                 .build()
             val nm = notificationManager(context) ?: return
             nm.notify(NOTIFICATION_ID, notification)
-            // 结果通知短暂展示后自动清除
+            // Auto-clear the result notification shortly after it is shown
             Thread {
                 try {
                     Thread.sleep(AUTO_CANCEL_DELAY_MS)
@@ -78,7 +81,7 @@ object DexIndexNotifier {
         nm.createNotificationChannel(channel)
     }
 
-    /** Android 13+ 需要运行时授权；未授权时静默跳过通知。 */
+    /** Android 13+ requires runtime permission; silently skip notifications when not granted. */
     private fun canNotify(context: Context): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==

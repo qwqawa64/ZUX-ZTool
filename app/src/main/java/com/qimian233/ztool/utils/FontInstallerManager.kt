@@ -16,7 +16,7 @@ import java.util.Random
 
 class FontInstallerManager {
 
-    // 复制 Uri 到临时文件
+    // Copy a Uri to a temp file
     @Throws(Exception::class)
     fun copyFontToTemp(context: Context, uri: Uri): File {
         val tempDir = File(context.filesDir, TEMP_FONT_DIR)
@@ -37,30 +37,30 @@ class FontInstallerManager {
         return tempFile
     }
 
-    // 执行安装流程
+    // Run the install flow
     @Throws(Exception::class)
     fun installFont(context: Context, fontFile: File, fontName: String, fontDesc: String) {
         val folderName = generateRandomFolderName()
         val targetFolderPath = FONT_BASE_PATH + "/" + folderName
         val executor = EnhancedShellExecutor.getInstance()
 
-        // 1. 创建目标目录
+        // 1. Create the target directory
         executor.executeRootCommand("mkdir -p " + targetFolderPath)
 
-        // 2. 复制字体文件
+        // 2. Copy the font file
         copyFileWithRoot(executor, fontFile.absolutePath, targetFolderPath + "/font.ttf")
 
-        // 3. 创建 XML
+        // 3. Create the XML
         val xmlContent = generateFontXml(context, fontName, fontDesc)
         createXmlFileWithRoot(context, executor, targetFolderPath + "/font.xml", xmlContent)
 
-        // 4. 生成预览图
+        // 4. Generate preview images
         generatePreviewImages(context, executor, targetFolderPath, fontFile.absolutePath, fontName)
 
-        // 5. 设置权限
+        // 5. Set permissions
         setFolderPermissions(executor, targetFolderPath)
 
-        // 清理
+        // Cleanup
         FileUtils.deleteRecursive(File(context.filesDir, TEMP_FONT_DIR))
     }
 
@@ -81,7 +81,7 @@ class FontInstallerManager {
     }
 
     private fun setFolderPermissions(executor: EnhancedShellExecutor, folderPath: String) {
-        // 获取参考权限
+        // Read reference permissions
         val res = executor.executeRootCommand("ls -ld " + FONT_BASE_PATH)
         if (!res.isSuccess) return
 
@@ -95,7 +95,7 @@ class FontInstallerManager {
         }
     }
 
-    // 位图生成逻辑保持不变，但作为工具方法
+    // Bitmap generation logic kept unchanged, exposed as a utility method
     private fun generateFontPreviewBitmap(typeface: Typeface, text: String, width: Int, height: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -108,13 +108,15 @@ class FontInstallerManager {
         paint.textAlign = Paint.Align.CENTER
 
         val lines = text.split("\n".toRegex())
-        // 简化计算逻辑，复用你原有的 calculateOptimalTextSize 方法（此处省略具体实现，保持原样即可）
-        // 在实际整合时，把 SettingsDetailActivity 里的 calculateOptimalTextSize 移到这里
-        val textSize = 40f // 示例值，实际应调用 calculateOptimalTextSize
+        // Simplified calculation logic; reuses the original calculateOptimalTextSize method
+        // (implementation omitted; keep as-is). When integrating for real, move
+        // calculateOptimalTextSize from SettingsDetailActivity into here.
+        val textSize = 40f // placeholder value; should call calculateOptimalTextSize
         paint.textSize = textSize
 
-        // ... (原有的绘制逻辑) ...
-        // 为节省篇幅，假设此处直接绘制。实际使用时请将原 Activity 中的完整绘制代码复制过来。
+        // ... (original drawing logic) ...
+        // For brevity, assume the drawing happens here directly. Copy the full drawing
+        // code from the original Activity when actually using this.
         val startY = height / 2f
         for (i in lines.indices) {
             canvas.drawText(lines[i], width / 2f, startY + i * 50, paint)

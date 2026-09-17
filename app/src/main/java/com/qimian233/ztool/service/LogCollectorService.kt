@@ -25,7 +25,7 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * 应用自身日志采集服务（无需Root权限，通过 PID 过滤 logcat）
+ * App log collection service (no root required; filters logcat by PID)
  */
 class LogCollectorService : Service() {
     private var logcatProcess: Process? = null
@@ -40,7 +40,7 @@ class LogCollectorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "服务 onCreate() 开始")
+        Log.d(TAG, "service onCreate() start")
 
         mainHandler = Handler(Looper.getMainLooper())
         notificationManager = getSystemService(NotificationManager::class.java)
@@ -48,48 +48,48 @@ class LogCollectorService : Service() {
         createNotificationChannel()
         startForegroundImmediately()
 
-        Log.d(TAG, "服务 onCreate() 完成")
+        Log.d(TAG, "service onCreate() done")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "服务 onStartCommand() 开始")
+        Log.d(TAG, "service onStartCommand() start")
 
         intent?.let {
             isRestartMode = it.getBooleanExtra("is_restart", false)
         }
 
         if (isRestartMode) {
-            Log.d(TAG, "服务重启模式启动")
+            Log.d(TAG, "started in service restart mode")
         }
 
         if (!isForeground) {
-            Log.w(TAG, "前台服务未启动，立即启动")
+            Log.w(TAG, "foreground service not started, starting now")
             startForegroundImmediately()
         }
 
         if (!isRunning.get()) {
             isRunning.set(true)
             mainHandler?.postDelayed({
-                Log.d(TAG, "开始启动日志收集")
+                Log.d(TAG, "starting log collection")
                 startLogCollection()
             }, 100)
         } else {
-            Log.d(TAG, "服务已在运行中")
+            Log.d(TAG, "service already running")
         }
 
-        Log.d(TAG, "服务 onStartCommand() 完成")
+        Log.d(TAG, "service onStartCommand() done")
         return START_STICKY
     }
 
     override fun onDestroy() {
-        Log.d(TAG, "服务 onDestroy() 开始")
+        Log.d(TAG, "service onDestroy() start")
         stopLogCollection()
-        Log.d(TAG, "日志采集服务已停止")
+        Log.d(TAG, "log collection service stopped")
         super.onDestroy()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        Log.d(TAG, "应用任务被移除，但服务继续运行")
+        Log.d(TAG, "app task removed, service keeps running")
         super.onTaskRemoved(rootIntent)
     }
 
@@ -98,23 +98,23 @@ class LogCollectorService : Service() {
     }
 
     private fun startForegroundImmediately() {
-        Log.d(TAG, "开始启动前台服务")
+        Log.d(TAG, "starting foreground service")
 
         try {
             val notification = createSimpleNotification()
             if (notification != null) {
                 startForeground(NOTIFICATION_ID, notification)
                 isForeground = true
-                Log.d(TAG, "前台服务启动成功")
+                Log.d(TAG, "foreground service started")
             } else {
-                Log.e(TAG, "创建通知失败，无法启动前台服务")
+                Log.e(TAG, "failed to create notification, cannot start foreground service")
                 startFallbackForeground()
             }
         } catch (e: SecurityException) {
-            Log.e(TAG, "启动前台服务权限异常", e)
+            Log.e(TAG, "security exception starting foreground service", e)
             startFallbackForeground()
         } catch (e: Exception) {
-            Log.e(TAG, "启动前台服务失败", e)
+            Log.e(TAG, "failed to start foreground service", e)
             startFallbackForeground()
         }
     }
@@ -130,7 +130,7 @@ class LogCollectorService : Service() {
                 .setOnlyAlertOnce(true)
                 .build()
         } catch (e: Exception) {
-            Log.e(TAG, "创建简单通知失败", e)
+            Log.e(TAG, "failed to create simple notification", e)
             null
         }
     }
@@ -146,9 +146,9 @@ class LogCollectorService : Service() {
                 .build()
             startForeground(NOTIFICATION_ID, notification)
             isForeground = true
-            Log.d(TAG, "备用前台服务启动成功")
+            Log.d(TAG, "fallback foreground service started")
         } catch (e: Exception) {
-            Log.e(TAG, "备用前台服务也启动失败", e)
+            Log.e(TAG, "fallback foreground service also failed to start", e)
         }
     }
 
@@ -166,12 +166,12 @@ class LogCollectorService : Service() {
             val manager = notificationManager
             if (manager != null) {
                 manager.createNotificationChannel(channel)
-                Log.d(TAG, "通知渠道创建成功")
+                Log.d(TAG, "notification channel created")
             } else {
-                Log.e(TAG, "NotificationManager 为 null")
+                Log.e(TAG, "NotificationManager is null")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "创建通知渠道失败", e)
+            Log.e(TAG, "failed to create notification channel", e)
         }
     }
 
@@ -189,16 +189,16 @@ class LogCollectorService : Service() {
     }
 
     private fun startLogCollection() {
-        Log.d(TAG, "准备启动日志收集")
+        Log.d(TAG, "preparing to start log collection")
 
         val existingThread = logcatThread
         if (existingThread != null && existingThread.isAlive) {
-            Log.d(TAG, "停止现有日志收集线程")
+            Log.d(TAG, "stopping existing log collection thread")
             existingThread.interrupt()
             try {
                 existingThread.join(1000)
             } catch (e: InterruptedException) {
-                Log.w(TAG, "等待旧线程结束被中断", e)
+                Log.w(TAG, "interrupted while waiting for old thread to finish", e)
             }
         }
 
@@ -208,11 +208,11 @@ class LogCollectorService : Service() {
         logcatThread = collectorThread
         collectorThread.start()
 
-        Log.d(TAG, "日志收集线程已启动")
+        Log.d(TAG, "log collection thread started")
     }
 
     private fun stopLogCollection() {
-        Log.d(TAG, "开始停止日志收集")
+        Log.d(TAG, "stopping log collection")
         isRunning.set(false)
 
         val thread = logcatThread
@@ -221,7 +221,7 @@ class LogCollectorService : Service() {
             try {
                 thread.join(2000)
             } catch (e: InterruptedException) {
-                Log.w(TAG, "等待日志线程结束被中断", e)
+                Log.w(TAG, "interrupted while waiting for log thread to finish", e)
             }
         }
 
@@ -230,7 +230,7 @@ class LogCollectorService : Service() {
             try {
                 process.destroy()
             } catch (e: Exception) {
-                Log.e(TAG, "停止logcat进程失败", e)
+                Log.e(TAG, "failed to stop logcat process", e)
             }
             logcatProcess = null
         }
@@ -241,13 +241,13 @@ class LogCollectorService : Service() {
             try {
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 isForeground = false
-                Log.d(TAG, "前台服务已停止")
+                Log.d(TAG, "foreground service stopped")
             } catch (e: Exception) {
-                Log.e(TAG, "停止前台服务失败", e)
+                Log.e(TAG, "failed to stop foreground service", e)
             }
         }
 
-        Log.d(TAG, "日志收集已完全停止")
+        Log.d(TAG, "log collection fully stopped")
     }
 
     private fun buildLogcatCommand(): List<String> {
@@ -257,24 +257,24 @@ class LogCollectorService : Service() {
         command.add("time")
         command.add("--pid=" + android.os.Process.myPid())
         command.add("*:V")
-        Log.d(TAG, "Logcat命令: $command")
+        Log.d(TAG, "logcat command: $command")
         return command
     }
 
     private inner class LogCollectorRunnable : Runnable {
         override fun run() {
-            Log.d(TAG, "日志收集线程启动")
+            Log.d(TAG, "log collection thread running")
 
             try {
                 val logDir = File(filesDir, LOG_DIR)
                 val appLogDir = File(logDir, APP_LOG_SUBDIR)
                 if (!appLogDir.exists() && !appLogDir.mkdirs()) {
-                    Log.e(TAG, "无法创建日志目录: " + appLogDir.absolutePath)
+                    Log.e(TAG, "cannot create log dir: " + appLogDir.absolutePath)
                     return
                 }
 
                 val command = buildLogcatCommand()
-                Log.d(TAG, "执行logcat命令: $command")
+                Log.d(TAG, "running logcat command: $command")
 
                 val processBuilder = ProcessBuilder(command)
                 processBuilder.redirectErrorStream(true)
@@ -287,7 +287,7 @@ class LogCollectorService : Service() {
                 currentFile = logFile
                 currentWriter = BufferedWriter(FileWriter(logFile, true))
 
-                Log.d(TAG, "开始写入日志文件: " + logFile.absolutePath)
+                Log.d(TAG, "writing to log file: " + logFile.absolutePath)
 
                 var line: String?
                 var lineCount = 0
@@ -301,14 +301,14 @@ class LogCollectorService : Service() {
                         if (currentTime - lastFileCheckTime > fileCheckInterval) {
                             val checkedFile = currentFile
                             if (checkedFile != null && !checkedFile.exists()) {
-                                Log.w(TAG, "当前日志文件已被删除，重新创建新文件")
+                                Log.w(TAG, "current log file was deleted, recreating")
 
                                 closeCurrentWriter()
                                 val recreatedFile = createNewLogFile(appLogDir)
                                 currentFile = recreatedFile
                                 currentWriter = BufferedWriter(FileWriter(recreatedFile, true))
 
-                                Log.d(TAG, "已创建新日志文件: " + recreatedFile.absolutePath)
+                                Log.d(TAG, "created new log file: " + recreatedFile.absolutePath)
                             }
                             lastFileCheckTime = currentTime
                         }
@@ -319,7 +319,7 @@ class LogCollectorService : Service() {
 
                             val activeFile = currentFile
                             if (currentWriter == null || (activeFile != null && !activeFile.exists())) {
-                                Log.w(TAG, "日志文件状态异常，重新初始化")
+                                Log.w(TAG, "log file state abnormal, reinitializing")
                                 closeCurrentWriter()
                                 val recreatedFile = createNewLogFile(appLogDir)
                                 currentFile = recreatedFile
@@ -336,7 +336,7 @@ class LogCollectorService : Service() {
                                             e.message!!.contains("No such file") ||
                                             e.message!!.contains("Stream closed"))
                                 ) {
-                                    Log.w(TAG, "写入日志失败，文件可能被删除，重新创建: " + e.message)
+                                    Log.w(TAG, "log write failed, file may have been deleted, recreating: " + e.message)
                                     closeCurrentWriter()
                                     val recreatedFile = createNewLogFile(appLogDir)
                                     currentFile = recreatedFile
@@ -353,32 +353,32 @@ class LogCollectorService : Service() {
                             lineCount++
 
                             if (lineCount % 100 == 0 || (currentTime - lastStatusLogTime) > 30000) {
-                                Log.d(TAG, "已采集 $lineCount 行日志")
+                                Log.d(TAG, "collected $lineCount lines")
                                 lastStatusLogTime = currentTime
                             }
 
                             val sizedFile = currentFile
                             if (sizedFile != null && sizedFile.length() >= MAX_FILE_SIZE) {
-                                Log.d(TAG, "日志文件达到大小限制，开始轮转")
+                                Log.d(TAG, "log file reached size limit, rotating")
                                 rotateLogFile(appLogDir)
                             }
                         } else {
-                            Log.d(TAG, "Logcat 流已结束")
+                            Log.d(TAG, "logcat stream ended")
                             break
                         }
                     } catch (e: IOException) {
                         if (isRunning.get()) {
-                            Log.e(TAG, "读取日志流失败", e)
+                            Log.e(TAG, "failed to read log stream", e)
                         }
                         break
                     }
                 }
 
-                Log.d(TAG, "日志采集完成，共采集 $lineCount 行日志")
+                Log.d(TAG, "collection finished, $lineCount lines collected")
             } catch (e: IOException) {
-                Log.e(TAG, "启动日志采集失败", e)
+                Log.e(TAG, "failed to start log collection", e)
             } finally {
-                Log.d(TAG, "日志采集线程结束")
+                Log.d(TAG, "log collection thread ended")
                 closeCurrentWriter()
                 logcatProcess?.destroy()
             }
@@ -396,7 +396,7 @@ class LogCollectorService : Service() {
             .format(Date())
         val fileName = FILE_PREFIX + timestamp + FILE_SUFFIX
         val newFile = File(logDir, fileName)
-        Log.d(TAG, "创建新日志文件: " + newFile.absolutePath)
+        Log.d(TAG, "created new log file: " + newFile.absolutePath)
         return newFile
     }
 
@@ -407,9 +407,9 @@ class LogCollectorService : Service() {
         currentFile = newFile
         try {
             currentWriter = BufferedWriter(FileWriter(newFile, true))
-            Log.d(TAG, "日志文件轮转完成")
+            Log.d(TAG, "log file rotation done")
         } catch (e: IOException) {
-            Log.e(TAG, "创建新日志文件失败", e)
+            Log.e(TAG, "failed to create new log file", e)
             return
         }
 
@@ -427,9 +427,9 @@ class LogCollectorService : Service() {
             val filesToDelete = logFiles.size - MAX_FILES
             for (i in 0 until filesToDelete) {
                 if (logFiles[i].delete()) {
-                    Log.d(TAG, "删除旧日志文件: " + logFiles[i].name)
+                    Log.d(TAG, "deleted old log file: " + logFiles[i].name)
                 } else {
-                    Log.w(TAG, "删除旧日志文件失败: " + logFiles[i].name)
+                    Log.w(TAG, "failed to delete old log file: " + logFiles[i].name)
                 }
             }
         }
@@ -440,9 +440,9 @@ class LogCollectorService : Service() {
         if (writer != null) {
             try {
                 writer.close()
-                Log.d(TAG, "日志写入器已关闭")
+                Log.d(TAG, "log writer closed")
             } catch (e: IOException) {
-                Log.e(TAG, "关闭日志写入器失败", e)
+                Log.e(TAG, "failed to close log writer", e)
             }
             currentWriter = null
         }
@@ -452,7 +452,7 @@ class LogCollectorService : Service() {
         private const val TAG = "LogCollectorService"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "log_collector_channel"
-        private const val CHANNEL_NAME = "日志采集服务"
+        private const val CHANNEL_NAME = "日志采集服务" // functional: notification channel name (user-facing)
 
         private const val MAX_FILE_SIZE = 1024L * 1024L // 1MB
         private const val MAX_FILES = 20

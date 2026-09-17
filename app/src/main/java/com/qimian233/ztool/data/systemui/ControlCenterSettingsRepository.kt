@@ -190,16 +190,16 @@ class ControlCenterSettingsRepository(
 
     fun saveExpandQsPanelPortrait(enabled: Boolean) {
         if (enabled) {
-            // 备份当前的 slider style 偏好
+            // Back up the current slider style preferences
             val currentStyle = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, false)
             val currentValue = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_VALUE, false)
             prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS, currentStyle)
             prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE, currentValue)
-            // 强制启用 SliderStyleHook 并设为水平
+            // Force-enable SliderStyleHook and set it to horizontal
             prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, true)
             prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_VALUE, false)
         } else {
-            // 还原之前的 slider style 偏好
+            // Restore the previous slider style preferences
             val previousStyle = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS, false)
             val previousValue = prefsUtils.loadBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE_PREVIOUS_VALUE, false)
             prefsUtils.saveBooleanSetting(KEY_CUSTOMIZE_SLIDER_STYLE, previousStyle)

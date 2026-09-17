@@ -7,9 +7,9 @@ import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 /**
- * 允许系统应用使用隐藏 API：
- * ApplicationInfo.isPackageWhitelistedForHiddenApis 对系统/
- * 更新系统应用恒真，即使其签名并非平台签名。
+ * Allows system apps to use hidden APIs:
+ * ApplicationInfo.isPackageWhitelistedForHiddenApis always returns true for system /
+ * updated system apps, even when their signature is not the platform signature.
  */
 class PackageManagerHiddenApiHook : SystemHookModule() {
 

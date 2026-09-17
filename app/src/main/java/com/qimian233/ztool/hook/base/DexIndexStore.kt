@@ -8,25 +8,26 @@ import io.github.libxposed.api.XposedInterface
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Hook 侧离线索引读取器（在目标进程内运行）。
+ * Hook-side offline index reader (runs in the target process).
  *
- * 通过 libxposed Remote Files（[XposedInterface.openRemoteFile]）读取模块私有
- * `filesDir` 根目录下的 `<scopePackage>.json`，框架以特权代读，无需 chmod。
+ * Reads `<scopePackage>.json` from the root of the module's private `filesDir`
+ * via libxposed Remote Files ([XposedInterface.openRemoteFile]); the framework
+ * reads it with privileges, no chmod needed.
  *
- * 使用约定：
- * - 在 XposedInterface.PackageLoadedParam 回调（非 hook lambda）阶段调用；
- * - 读取失败（老框架/未索引/文件缺失）返回 null，调用方回退硬编码；
- * - 结果按进程缓存，每进程只读一次。
+ * Usage conventions:
+ * - Call during the XposedInterface.PackageLoadedParam callback (not inside hook lambdas);
+ * - Returns null on read failure (old framework / not indexed / file missing); callers fall back to hardcoded values;
+ * - Results are cached per process, read once per process.
  */
 object DexIndexStore {
 
-    /** 读取失败的哨兵（ConcurrentHashMap 不允许 null 值，用单例空对象表示"已尝试但失败"）。 */
+    /** Sentinel for failed reads (ConcurrentHashMap forbids null values; a singleton empty object means "attempted but failed"). */
     private val MISSING = JsonObject()
 
     private val cache = ConcurrentHashMap<String, JsonObject>()
 
     /**
-     * 取某作用域的整个索引 JSON（含 modules 分组），失败返回 null。
+     * Returns the whole index JSON for a scope (including the modules grouping), or null on failure.
      */
     fun lookup(xposed: XposedInterface, scopePackage: String): JsonObject? {
         val cached = cache[scopePackage]
@@ -48,7 +49,7 @@ object DexIndexStore {
     }
 
     /**
-     * 取某模块的某个字段值。任何失败/缺失返回 null。
+     * Returns a module's field value. Returns null on any failure/missing entry.
      */
     fun string(
         xposed: XposedInterface,

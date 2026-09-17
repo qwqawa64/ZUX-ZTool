@@ -10,9 +10,9 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 
 /**
- * SystemUI通知图标限制Hook模块
- * 功能：修改状态栏通知图标的最大显示数量限制
- * 支持Android 12+的SystemUI架构
+ * SystemUI notification icon limit hook module.
+ * Function: modifies the maximum display count limit for status bar notification icons.
+ * Supports the Android 12+ SystemUI architecture.
  */
 @SuppressLint("PrivateApi")
 class NotificationIconHook : AppHookModule() {
@@ -34,21 +34,21 @@ class NotificationIconHook : AppHookModule() {
     }
 
     private fun hookSystemUIIconLimit(classLoader: ClassLoader) {
-        logger.info("开始 Hook SystemUI 通知图标限制，设置最大图标数: $newMaxIcons")
+        logger.info("Hooking SystemUI notification icon limit, max icons: $newMaxIcons")
 
         try {
-            // Hook 1: 修改资源获取的最大图标数量
+            // Hook 1: modify the max icon count obtained from resources
 //            hookResourceInteger(classLoader);
 
-            // Hook 2: 修改 NotificationIconContainerStatusBarViewModel 的 maxIcons 字段
+            // Hook 2: modify the maxIcons field of NotificationIconContainerStatusBarViewModel
             hookViewModelConstructor(classLoader)
 
-            // Hook 3: 修改 NotificationIconsViewData 构造函数，应用数量限制
+            // Hook 3: modify the NotificationIconsViewData constructor to apply the count limit
             hookViewDataConstructor(classLoader)
 
-            logger.info("SystemUI 通知图标限制Hook设置完成")
+            logger.info("SystemUI notification icon limit hooks installed")
         } catch (e: Throwable) {
-            logger.error("SystemUI Hook过程中发生错误", e)
+            logger.error("Error during SystemUI hook", e)
         }
     }
 
@@ -75,16 +75,16 @@ class NotificationIconHook : AppHookModule() {
                     val myField: Field = chain.thisObject.javaClass.getDeclaredField("maxIcons")
                     myField.isAccessible = true
                     myField.setInt(chain.thisObject, newMaxIcons)
-                    logger.debug("成功修改 ViewModel maxIcons 为 $newMaxIcons")
+                    logger.debug("Successfully set ViewModel maxIcons to $newMaxIcons")
                 } catch (e: Exception) {
-                    logger.error("修改 ViewModel maxIcons 字段失败", e)
+                    logger.error("Failed to modify ViewModel maxIcons field", e)
                 }
                 null
             }
 
-            logger.info("ViewModel构造函数Hook设置成功")
+            logger.info("ViewModel constructor hook applied")
         } catch (e: Throwable) {
-            logger.warn("找不到 ViewModel 类，可能系统版本不兼容: " + e.message)
+            logger.warn("ViewModel class not found, system version may be incompatible: " + e.message)
         }
     }
 
@@ -102,32 +102,32 @@ class NotificationIconHook : AppHookModule() {
 
             hookWithId(ctor, "ctor_2") { chain ->
                 try {
-                    // 获取图标列表
+                    // Get the icon list
                     val iconList = chain.args[0]
                     val listSize = getListSize(iconList)
 
-                    // 使用NEW_MAX_ICONS作为限制，但不超过实际图标数量
+                    // Use NEW_MAX_ICONS as the limit, but not exceeding the actual icon count
                     val effectiveLimit = minOf(newMaxIcons, listSize)
                     val currentLimit = chain.args[1] as Int
 
-                    // 只有当当前限制不等于我们设置的有效限制时才修改
+                    // Only modify when the current limit differs from our effective limit
                     if (currentLimit != effectiveLimit) {
-                        logger.debug("修改图标限制 $currentLimit -> $effectiveLimit (图标总数: $listSize)")
+                        logger.debug("Icon limit changed $currentLimit -> $effectiveLimit (total icons: $listSize)")
                         return@hookWithId chain.proceed(arrayOf(iconList, effectiveLimit, chain.args[2]))
                     }
                 } catch (e: Exception) {
-                    logger.error("ViewData Hook过程中发生错误", e)
+                    logger.error("Error during ViewData hook", e)
                 }
                 chain.proceed()
             }
 
-            logger.info("ViewData构造函数Hook设置成功")
+            logger.info("ViewData constructor hook applied")
         } catch (e: Throwable) {
-            logger.warn("找不到 ViewData 类，可能系统版本不兼容: " + e.message)
+            logger.warn("ViewData class not found, system version may be incompatible: " + e.message)
         }
     }
 
-    // 辅助方法：获取列表大小
+    // Helper: get the list size
     private fun getListSize(list: Any?): Int {
         return try {
             list!!.javaClass.getDeclaredMethod("size").invoke(list) as Int

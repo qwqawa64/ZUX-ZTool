@@ -19,8 +19,8 @@ import java.lang.reflect.Method
 import java.util.Locale
 
 /**
- * 系统UI电池百分比Hook模块
- * 功能：强制显示电池百分比，调整布局位置和字体大小
+ * SystemUI battery percentage hook module.
+ * Function: force-shows the battery percentage, adjusts layout position and font size.
  */
 @SuppressLint("PrivateApi", "DiscouragedApi")
 class SystemUIBatteryHook : AppHookModule() {
@@ -39,12 +39,12 @@ class SystemUIBatteryHook : AppHookModule() {
 
     private fun hookSystemUIBattery(classLoader: ClassLoader) {
         try {
-            // Hook BatteryMeterView 类
+            // Hook the BatteryMeterView class
             val batteryMeterViewClass = classLoader.loadClass(
                 "com.android.systemui.battery.BatteryMeterView"
             )
 
-            // Hook 构造函数，在视图创建时修改布局
+            // Hook the constructor to modify the layout when the view is created
             val ctor: Constructor<*> = batteryMeterViewClass.getDeclaredConstructor(
                 Context::class.java,
                 AttributeSet::class.java,
@@ -56,7 +56,7 @@ class SystemUIBatteryHook : AppHookModule() {
                 null
             }
 
-            // Hook updateShowPercent 方法
+            // Hook the updateShowPercent method
             val updateShowPercentMethod: Method =
                 batteryMeterViewClass.getDeclaredMethod("updateShowPercent")
             hookWithId(updateShowPercentMethod, "update_show_percent") { chain ->
@@ -65,7 +65,7 @@ class SystemUIBatteryHook : AppHookModule() {
                 result
             }
 
-            // Hook updatePercentText 方法
+            // Hook the updatePercentText method
             val updatePercentTextMethod: Method =
                 batteryMeterViewClass.getDeclaredMethod("updatePercentText")
             hookWithId(updatePercentTextMethod, "update_percent_text") { chain ->
@@ -74,7 +74,7 @@ class SystemUIBatteryHook : AppHookModule() {
                 result
             }
 
-            // Hook scaleBatteryMeterViews 方法，调整字体大小
+            // Hook the scaleBatteryMeterViews method to adjust font size
             val scaleMethod: Method = batteryMeterViewClass.getDeclaredMethod("scaleBatteryMeterViews")
             hookWithId(scaleMethod, "scale") { chain ->
                 val result = chain.proceed()
@@ -82,9 +82,9 @@ class SystemUIBatteryHook : AppHookModule() {
                 result
             }
 
-            logger.info("SystemUI电池百分比Hook模块加载成功")
+            logger.info("SystemUI battery percentage hook module loaded successfully")
         } catch (t: Throwable) {
-            logger.error("SystemUI电池百分比Hook模块加载失败", t)
+            logger.error("Failed to load SystemUI battery percentage hook module", t)
         }
     }
 
@@ -92,35 +92,35 @@ class SystemUIBatteryHook : AppHookModule() {
         try {
             val cl = batteryMeterView.javaClass
 
-            // 获取关键的视图组件
+            // Get the key view components
             val container = cl.getDeclaredField("mBatteryPercentViewContainer")
                 .get(batteryMeterView) as FrameLayout
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
 
-            // 将百分比文本从 FrameLayout 中移除
+            // Remove the percentage text from the FrameLayout
             container.removeView(percentView)
 
-            // 获取 LinearLayout 参数
+            // Get LinearLayout layout params
             val layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
 
-            // 设置左边距，让百分比显示在电池图标右侧
+            // Set the start margin so the percentage shows to the right of the battery icon
             val marginStart = getDimenValue(batteryMeterView)
             layoutParams.setMargins(marginStart, 0, 0, 0)
 
-            // 将百分比文本直接添加到 BatteryMeterView (LinearLayout) 中
+            // Add the percentage text directly to BatteryMeterView (LinearLayout)
             val batteryView = batteryMeterView as LinearLayout
-            batteryView.addView(percentView, 1, layoutParams) // 添加到索引1的位置（电池图标后面）
+            batteryView.addView(percentView, 1, layoutParams) // insert at index 1 (after the battery icon)
 
-            // 调整字体大小
+            // Adjust font size
             adjustTextSize(batteryMeterView)
 
-            logger.debug("电池布局修改完成")
+            logger.debug("Battery layout modification complete")
         } catch (t: Throwable) {
-            logger.error("电池布局修改失败", t)
+            logger.error("Failed to modify battery layout", t)
         }
     }
 
@@ -130,25 +130,25 @@ class SystemUIBatteryHook : AppHookModule() {
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
 
-            // 获取原始字体大小
+            // Get the original font size
             val originalSize = getOriginalTextSize(batteryMeterView)
 
-            // 设置更大的字体大小（增加3sp）
+            // Set a larger font size (+3sp)
             val newSize = originalSize + 3
             percentView.setTextSize(TypedValue.COMPLEX_UNIT_SP, newSize)
 
-            // 可选：设置粗体让文字更清晰
+            // Optional: set bold for clearer text
             percentView.setTypeface(percentView.typeface, Typeface.BOLD)
 
-            logger.debug("电池百分比字体大小调整为 ${newSize}sp")
+            logger.debug("Battery percentage font size adjusted to ${newSize}sp")
         } catch (t: Throwable) {
-            logger.error("调整电池百分比字体大小失败", t)
+            logger.error("Failed to adjust battery percentage font size", t)
         }
     }
 
     private fun getOriginalTextSize(batteryMeterView: Any): Float {
         try {
-            // 获取系统默认的电池文字大小
+            // Get the system default battery text size
             val context = getContext(batteryMeterView)
             if (context == null) return 13.0f
             val originalSizeRes = context.resources.getIdentifier(
@@ -157,17 +157,17 @@ class SystemUIBatteryHook : AppHookModule() {
 
             if (originalSizeRes != 0) {
                 val sizeInPixels = context.resources.getDimension(originalSizeRes)
-                // 将像素转换为sp
+                // Convert pixels to sp
                 val oneSpInPx = TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_SP, 1f, context.resources.displayMetrics
                 )
                 return sizeInPixels / oneSpInPx
             }
         } catch (t: Throwable) {
-            logger.warn("获取原始电池字体大小失败，使用默认值")
+            logger.warn("Failed to get the original battery font size, using default")
         }
 
-        // 默认值：12sp
+        // Default value: 12sp
         return 12f
     }
 
@@ -177,15 +177,15 @@ class SystemUIBatteryHook : AppHookModule() {
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
 
-            // 强制显示百分比视图，无论系统设置如何
+            // Force-show the percentage view regardless of system settings
             if (percentView.visibility != View.VISIBLE) {
                 percentView.visibility = View.VISIBLE
             }
 
-            // 更新百分比文本
+            // Update the percentage text
             updatePercentageText(batteryMeterView)
         } catch (t: Throwable) {
-            logger.error("强制显示电池百分比失败", t)
+            logger.error("Failed to force-show battery percentage", t)
         }
     }
 
@@ -195,13 +195,13 @@ class SystemUIBatteryHook : AppHookModule() {
             val percentView = cl.getDeclaredField("mBatteryPercentView")
                 .get(batteryMeterView) as TextView
 
-            // 获取当前电量级别
+            // Get the current battery level
             val level = cl.getDeclaredField("mLevel").getInt(batteryMeterView)
 
-            // 设置百分比文本
+            // Set the percentage text
             percentView.text = String.format(Locale.US, "%d%%", level)
 
-            // 更新内容描述（辅助功能）
+            // Update the content description (accessibility)
             val ctx = getContext(batteryMeterView)
             if (ctx == null) return
 
@@ -219,11 +219,11 @@ class SystemUIBatteryHook : AppHookModule() {
                 batteryMeterView.contentDescription = description
             }
         } catch (t: Throwable) {
-            logger.error("更新电池百分比文本失败", t)
+            logger.error("Failed to update battery percentage text", t)
         }
     }
 
-    // 工具方法：获取维度值
+    // Utility: get a dimension value
     private fun getDimenValue(batteryMeterView: Any): Int {
         return try {
             val context = getContext(batteryMeterView)
@@ -233,11 +233,11 @@ class SystemUIBatteryHook : AppHookModule() {
             )
             context.resources.getDimensionPixelOffset(resId)
         } catch (t: Throwable) {
-            8 // 默认值
+            8 // default value
         }
     }
 
-    // 工具方法：获取资源ID
+    // Utility: get a resource ID
     private fun getResourceId(batteryMeterView: Any, resourceName: String): Int {
         return try {
             val context = getContext(batteryMeterView)
@@ -250,7 +250,7 @@ class SystemUIBatteryHook : AppHookModule() {
         }
     }
 
-    // 工具方法：获取Context
+    // Utility: get the Context
     private fun getContext(batteryMeterView: Any): Context? {
         return try {
             batteryMeterView.javaClass

@@ -11,11 +11,11 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
- * 强制关联启动时以小窗（freeform）模式打开目标 Activity。
+ * Forces relative app launches to open the target Activity in freeform (small window) mode.
  *
- * Hook com.android.server.wm.ZuiWmAutoRunManager.isAllowRelativeStart，
- * 当判定为跨 APP 关联启动时，注入 WINDOWING_MODE_FREEFORM=5 到
- * Bundle options 和 SafeActivityOptions 中。
+ * Hooks com.android.server.wm.ZuiWmAutoRunManager.isAllowRelativeStart; when a
+ * cross-app relative launch is detected, injects WINDOWING_MODE_FREEFORM=5 into
+ * the Bundle options and SafeActivityOptions.
  */
 @SuppressLint("PrivateApi")
 class ForceRelativeAppFreeform: SystemHookModule() {
@@ -27,7 +27,7 @@ class ForceRelativeAppFreeform: SystemHookModule() {
         private const val WINDOWING_MODE_FREEFORM = 5
         private const val KEY_LAUNCH_WINDOWING_MODE = "android.activity.windowingMode"
 
-        // 默认启动器包名缓存
+        // Default launcher package name cache
         @Volatile private var launcherPkgs: Set<String>? = null
         @Volatile private var launcherCacheExpire: Long = 0L
         private const val LAUNCHER_CACHE_TTL = 60_000L
@@ -97,12 +97,12 @@ class ForceRelativeAppFreeform: SystemHookModule() {
         hookWithId(isAllowRelativeStartMethod, "relative_app_force_freeform") { chain ->
             val callingPackage = chain.getArg(1) as String?
             val intent = chain.getArg(3) as Intent?
-            // 优先使用 component.packageName（目标 Activity 真实归属包名），
-            // 而非 intent.package（可能被 SDK 设为调用方自身包名）
+            // Prefer component.packageName (the real owning package of the target Activity)
+            // over intent.package (which the SDK may set to the caller's own package)
             val targetPackage = intent?.component?.packageName ?: intent?.getPackage()
 
-            // 仅在跨 APP 关联启动时注入 freeform
-            // 排除：同包名自启动、启动器
+            // Inject freeform only for cross-app relative launches
+            // Excluded: same-package self launches and launchers
             val launchers = resolveLauncherPackages(chain.thisObject)
             val isRelativeLaunch = callingPackage != null
                 && callingPackage != targetPackage

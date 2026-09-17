@@ -196,7 +196,7 @@ class DisableAllVirusScans : AppHookModule() {
                 "LocalOverallScanVirus", Context::class.java
             )
             hookWithId(localOverallScanVirusMethod, "local_overall_scan_virus") {
-                // 直接返回null，阻止自动扫描执行
+                // Return null directly to block the auto scan from executing
                 logger.debug("Auto virus scan blocked at entry point")
                 null
             }

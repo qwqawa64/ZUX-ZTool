@@ -10,33 +10,40 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 媒体输出弹窗居中 + 主题色修复：修正从"媒体输出"磁贴拉起 MediaOutputDialog 时
- * 窗口贴屏幕左缘、主题色恒为默认黄色的两个问题。
+ * Media output dialog centering + theme color fix: fixes two problems when
+ * MediaOutputDialog is launched from the "media output" tile - the window sticks
+ * to the left screen edge and the theme color is always the default yellow.
  *
- * 根因（ZUXOS 1.5.04.495 实测 + 反编译证实）：
- * 1. 贴左：MediaOutputBaseDialog.getGravity() 硬编码返回 19（LEFT|CENTER_VERTICAL）。
- *    正常路径（媒体卡片输出 chip）经 DialogTransitionAnimator.show() 装进全屏透明壳，
- *    gravity 只影响壳内对齐；磁贴路径（广播 → createAndShow(null,...)）没有锚点
- *    Controller，走普通 dialog.show()，1180 宽的窗口带 LEFT gravity 直接落屏。
- * 2. 黄色主题：createAndShow 的 packageName 为 null 时，MediaSwitchingController.start()
- *    跳过 MediaController 绑定，getHeaderIcon() 恒 null，refresh() 的
- *    WallpaperColors.fromBitmap 动态配色链不启动，落到默认 legacy 配色。
- *    而 receiver 的 LAUNCH_MEDIA_OUTPUT_DIALOG 分支证明：只要带包名
- *    （createAndShow(pkg,false,null,true,...)，真机已验证），主题色即随封面正确解析，
- *    且 gravity hook 同样生效。
+ * Root cause (verified on ZUXOS 1.5.04.495 + confirmed via decompilation):
+ * 1. Left-sticking: MediaOutputBaseDialog.getGravity() hardcodes 19
+ *    (LEFT|CENTER_VERTICAL). The normal path (media card output chip) goes through
+ *    DialogTransitionAnimator.show() inside a fullscreen transparent shell, where
+ *    gravity only affects alignment within the shell; the tile path (broadcast ->
+ *    createAndShow(null,...)) has no anchor Controller and uses a plain
+ *    dialog.show(), so the 1180-wide window with LEFT gravity lands directly on screen.
+ * 2. Yellow theme: when createAndShow's packageName is null, MediaSwitchingController.start()
+ *    skips MediaController binding, getHeaderIcon() is always null, and the
+ *    WallpaperColors.fromBitmap dynamic color chain in refresh() never starts,
+ *    falling back to the default legacy color scheme. The receiver's
+ *    LAUNCH_MEDIA_OUTPUT_DIALOG branch proves that as long as a package name is
+ *    passed (createAndShow(pkg,false,null,true,...), verified on device), the theme
+ *    color resolves correctly from the album art, and the gravity hook also works.
  *
- * 修法（三个 hook，模块开关统一控制）：
- * - onReceive：LAUNCH_SYSTEM_MEDIA_OUTPUT_DIALOG 期间置线程内标志（gravity 用）；
- * - getGravity：标志置位时返回 17（CENTER）；
- * - createAndShow：pkg == null 时查询当前活跃媒体会话，注入包名并将
- *   includePlaybackAndAppMetadata 置 true，使磁贴路径等价于"带包名的完整链路"。
- *   SystemUI 持 MODIFY_AUDIO_ROUTING 特权，可全量查询活跃会话（与其自身 start()
- *   回退逻辑同源）。查不到会话时保持原参数（空态弹窗）。
+ * Fix (three hooks, controlled by a single module switch):
+ * - onReceive: set an intra-thread flag during LAUNCH_SYSTEM_MEDIA_OUTPUT_DIALOG
+ *   (used by the gravity hook);
+ * - getGravity: return 17 (CENTER) when the flag is set;
+ * - createAndShow: when pkg == null, query the current active media session, inject
+ *   the package name and set includePlaybackAndAppMetadata to true, making the tile
+ *   path equivalent to "the full path with a package name".
+ *   SystemUI holds the MODIFY_AUDIO_ROUTING privileged permission and can query all
+ *   active sessions (same as its own start() fallback logic). If no session is
+ *   found, keep the original arguments (empty-state dialog).
  */
 @SuppressLint("PrivateApi")
 class MediaOutputDialogCenterHook : AppHookModule() {
 
-    // 线程内标志：仅主线程调用栈内可见，避免任何跨线程同步
+    // Intra-thread flag: only visible within the main-thread call stack, avoiding any cross-thread synchronization
     private val launchViaTileBroadcast = ThreadLocal.withInitial { false }
 
     override fun getModuleName(): String = PreferenceKeys.MEDIA_OUTPUT_DIALOG_CENTER.name
@@ -61,8 +68,8 @@ class MediaOutputDialogCenterHook : AppHookModule() {
     }
 
     /**
-     * 在 onReceive 前后维护标志。onReceive 是 BroadcastReceiver 的标准覆写方法，
-     * 签名跨版本稳定；MediaOutputDialogReceiver 未被混淆。
+     * Maintain the flag around onReceive. onReceive is the standard BroadcastReceiver
+     * override with a stable signature across versions; MediaOutputDialogReceiver is not obfuscated.
      */
     private fun hookReceiver(classLoader: ClassLoader): Boolean {
         return try {
@@ -87,8 +94,8 @@ class MediaOutputDialogCenterHook : AppHookModule() {
     }
 
     /**
-     * 覆写 gravity。getGravity() 是 SystemUIDialog 的 virtual 方法且被
-     * MediaOutputBaseDialog final 覆写，按显式签名在子类上查找。
+     * Override gravity. getGravity() is a virtual method of SystemUIDialog that is
+     * final-overridden by MediaOutputBaseDialog; look it up on the subclass by explicit signature.
      */
     private fun hookGetGravity(classLoader: ClassLoader): Boolean {
         return try {
@@ -111,9 +118,11 @@ class MediaOutputDialogCenterHook : AppHookModule() {
     }
 
     /**
-     * 磁贴路径升级：createAndShow(pkg, ...) 的 pkg 为 null 时，查活跃媒体会话补包名，
-     * 并开启 includePlaybackAndAppMetadata（args[3]）以走完整元数据链路。
-     * 正常路径（chip 点击自带包名）与空态（无活跃会话）均保持原参数。
+     * Tile path upgrade: when createAndShow(pkg, ...)'s pkg is null, query the active
+     * media session to fill in the package name, and enable includePlaybackAndAppMetadata
+     * (args[3]) to use the full metadata path.
+     * The normal path (chip click carries its own package name) and the empty state
+     * (no active session) keep the original arguments.
      */
     private fun hookCreateAndShow(classLoader: ClassLoader): Boolean {
         return try {
@@ -140,7 +149,7 @@ class MediaOutputDialogCenterHook : AppHookModule() {
                         pkg,
                         args[1],
                         args[2],
-                        true,   // includePlaybackAndAppMetadata：启用封面配色与播放元数据
+                        true,   // includePlaybackAndAppMetadata: enable album-art coloring and playback metadata
                         args[4],
                         args[5]
                     )
@@ -154,12 +163,15 @@ class MediaOutputDialogCenterHook : AppHookModule() {
     }
 
     /**
-     * 查询最近活跃的媒体会话包名。getActiveSessionsForUser 是 hidden API
-     * （SDK 公开层无此方法，SystemUI 内部即用此全量查询，特权进程内可用），故反射调用。
-     * 不过滤播放态：与正常路径语义一致——媒体卡片在暂停态同样显示并可点出弹窗，
-     * 仅取系统列表首个会话（列表按媒体按钮会话优先排序）。
+     * Query the package name of the most recently active media session.
+     * getActiveSessionsForUser is a hidden API (not in the public SDK layer; SystemUI
+     * itself uses it for full queries, available within the privileged process), so it
+     * is invoked via reflection.
+     * No filtering by playback state: consistent with the normal path semantics - the
+     * media card is shown and can open the dialog even when paused; simply take the
+     * first session from the system list (list is sorted with media-button sessions first).
      *
-     * @param manager MediaOutputDialogManager 实例（借其 context 获取服务）
+     * @param manager MediaOutputDialogManager instance (its context is used to get the service)
      */
     private fun findActiveMediaPackage(manager: Any?): String? {
         if (manager == null) return null
@@ -168,7 +180,7 @@ class MediaOutputDialogCenterHook : AppHookModule() {
             val context = contextField.get(manager) as Context
             val sm = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
             val current = android.os.Process.myUserHandle()
-            // hidden API：getActiveSessionsForUser(ComponentName, UserHandle)
+            // hidden API: getActiveSessionsForUser(ComponentName, UserHandle)
             val method = MediaSessionManager::class.java.methods.firstOrNull {
                 it.name == "getActiveSessionsForUser"
             } ?: run {

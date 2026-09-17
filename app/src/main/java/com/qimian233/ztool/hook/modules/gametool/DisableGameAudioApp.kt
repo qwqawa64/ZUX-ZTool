@@ -9,8 +9,9 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 禁用游戏音频优化Hook模块（App层）
- * 在应用进程中拦截游戏音频属性设置，防止游戏模式干扰音频体验
+ * Game audio optimization disable hook module (app side).
+ * Intercepts game audio property setting in the app process to prevent
+ * game mode from interfering with the audio experience.
  */
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
 class DisableGameAudioApp : AppHookModule() {
@@ -26,18 +27,18 @@ class DisableGameAudioApp : AppHookModule() {
     }
 
     /**
-     * 针对特定游戏的Hook
+     * Hook for specific game apps.
      */
     private fun hookGameApp(classLoader: ClassLoader, packageName: String?) {
         try {
             logger.info("Hooking game app: $packageName")
 
-            // 在游戏启动时主动清除游戏音频属性
+            // Proactively clear game audio properties when a game starts
             val activityClass = classLoader.loadClass("android.app.Activity")
             val onCreateMethod = activityClass.getDeclaredMethod("onCreate", Bundle::class.java)
             hookWithId(onCreateMethod, "on_create") { chain ->
                 chain.proceed()
-                // 清除游戏音频属性
+                // Clear game audio properties
                 clearGameAudioProperties()
                 logger.debug("Cleared game audio properties in $packageName")
                 null
@@ -48,11 +49,11 @@ class DisableGameAudioApp : AppHookModule() {
     }
 
     /**
-     * 主动清除游戏音频属性
+     * Proactively clear game audio properties.
      */
     private fun clearGameAudioProperties() {
         try {
-            // 使用反射调用 SystemProperties.set 来清除属性
+            // Use reflection to call SystemProperties.set to clear the property
             @SuppressLint("PrivateApi") val systemPropertiesClass =
                 Class.forName("android.os.SystemProperties")
             val setMethod =

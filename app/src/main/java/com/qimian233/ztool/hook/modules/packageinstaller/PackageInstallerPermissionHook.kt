@@ -13,8 +13,8 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
 /**
- * 包安装器权限管理Hook模块
- * 强制将权限管理选项设置为"始终允许"，简化用户操作
+ * Hook module for package installer permission management.
+ * Forces the permission management option to "Always allow" to simplify user actions.
  */
 @SuppressLint("PrivateApi")
 class PackageInstallerPermissionHook : AppHookModule() {
@@ -29,16 +29,16 @@ class PackageInstallerPermissionHook : AppHookModule() {
 
     private fun hookPackageInstaller(classLoader: ClassLoader) {
         try {
-            // 方法1：钩住 startCustomInstallConfirm 方法
+            // Method 1: hook startCustomInstallConfirm
             hookStartCustomInstallConfirm(classLoader)
 
-            // 方法2：钩住 PermissionsAdapter 的构造函数
+            // Method 2: hook the PermissionsAdapter constructor
             hookPermissionsAdapterConstructor(classLoader)
 
-            // 方法3：钩住 PermissionsAdapter 的 getCount 方法
+            // Method 3: hook the PermissionsAdapter getCount method
             hookPermissionsAdapterGetCount(classLoader)
 
-            // 方法4：钩住 ListView 的 setAdapter 方法
+            // Method 4: hook ListView setAdapter
             hookListViewSetAdapter()
 
             logger.info("Successfully hooked PackageInstaller permission controls")
@@ -191,7 +191,7 @@ class PackageInstallerPermissionHook : AppHookModule() {
                     return item
                 }
             } catch (_: Exception) {
-                // 忽略错误，继续查找
+                // Ignore errors and keep searching
             }
         }
         return null
@@ -238,7 +238,7 @@ class PackageInstallerPermissionHook : AppHookModule() {
                 }
             }
         } catch (_: Throwable) {
-            // 忽略错误
+            // Ignore errors
         }
     }
 
@@ -258,7 +258,7 @@ class PackageInstallerPermissionHook : AppHookModule() {
 
             setPermissionManageType(activityExtra, classLoader)
         } catch (_: Throwable) {
-            // 忽略所有错误
+            // Ignore all errors
         }
     }
 }

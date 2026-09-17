@@ -8,11 +8,12 @@ import com.qimian233.ztool.data.keys.Scope
 import com.qimian233.ztool.data.keys.ScopeKeys
 
 /**
- * 作用域工具类。
+ * Scope utilities.
  * <p>
- * 集中定义每个功能入口的作用域列表和统一的作用域重启逻辑，
- * 供前端 FeaturesRoute 和各 Repository 共同使用。
- * 所有作用域包名与推荐重启方式均来自 [ScopeKeys]，禁止在此处硬编码包名。
+ * Centrally defines each feature entry's scope list and the unified scope restart
+ * logic, shared by the frontend FeaturesRoute and the repositories.
+ * All scope package names and preferred restart methods come from [ScopeKeys];
+ * hardcoding package names here is forbidden.
  * </p>
  */
 object ScopeUtils {
@@ -20,8 +21,9 @@ object ScopeUtils {
     private const val TAG = "ScopeUtils"
 
     /**
-     * 返回某功能入口涉及的所有作用域（包名 + 推荐重启方式）。
-     * 所有这些包名都必须在 LSPosed 作用域内，该功能的 Hook 才能完整生效。
+     * Returns all scopes (package name + preferred restart method) involved in a
+     * feature entry. All these packages must be inside the LSPosed scope for the
+     * feature's hooks to take full effect.
      */
     fun getScopes(destination: FeatureDestination): List<Scope> {
         return when (destination) {
@@ -62,28 +64,30 @@ object ScopeUtils {
     }
 
     /**
-     * 返回某功能入口涉及的所有作用域包名（含主包名）。
+     * Returns all scope package names (including the primary package) for a feature entry.
      */
     fun getScopePackages(destination: FeatureDestination): List<String> =
         getScopes(destination).map { it.packageName }
 
     /**
-     * 统一的作用域重启结果。
+     * Unified scope restart result.
      */
     sealed interface RestartResult {
-        /** 全部成功 */
+        /** All succeeded */
         data object Success : RestartResult
-        /** 部分成功，[failed] 为失败的包名列表 */
+        /** Partial success; [failed] holds the failed package names */
         data class PartialSuccess(val failed: List<String>) : RestartResult
-        /** 全部失败 */
+        /** All failed */
         data class Failure(val message: String) : RestartResult
     }
 
     /**
-     * 重启一组作用域进程，按每个 Scope 注册的 [HowToRestart] 分发策略：
-     * - [HowToRestart.AmStop]：先尝试 [am force-stop]，失败时回退到 killall；
-     * - [HowToRestart.KillAll]：直接 killall（例如 SystemUI 无法被 force-stop）；
-     * - [HowToRestart.Reboot]：系统框架进程无法按包重启，跳过并提示需要重启系统。
+     * Restarts a group of scope processes, dispatching by each Scope's registered
+     * [HowToRestart] strategy:
+     * - [HowToRestart.AmStop]: try [am force-stop] first, fall back to killall on failure;
+     * - [HowToRestart.KillAll]: killall directly (e.g. SystemUI cannot be force-stopped);
+     * - [HowToRestart.Reboot]: system framework processes cannot be restarted per package;
+     *   skipped with a note that a system reboot is required.
      */
     fun restartScope(
         scopes: List<Scope>,
@@ -104,7 +108,7 @@ object ScopeUtils {
                         Log.d(TAG, "Force stop ${scope.packageName}: success")
                         continue
                     }
-                    // 回退到 killall
+                    // Fall back to killall
                     Log.w(TAG, "am force-stop ${scope.packageName} failed, trying killall")
                     if (!killPackage(scope.packageName, shellExecutor, timeoutSeconds)) {
                         failed.add(scope.packageName)
@@ -116,7 +120,7 @@ object ScopeUtils {
                     }
                 }
                 HowToRestart.Reboot -> {
-                    // 系统框架进程无法通过 force-stop/killall 重启，需要重启系统
+                    // System framework processes cannot be restarted via force-stop/killall; a system reboot is required
                     Log.i(TAG, "${scope.packageName} requires system reboot, skipped")
                 }
             }

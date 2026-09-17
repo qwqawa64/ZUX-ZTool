@@ -120,7 +120,7 @@ fun SettingsAdvancedRoute(
         )
     }
 
-    // 删除系统更新包：完成后 Toast 结果（SUCCEEDED / NOT_EXIST / FAILED）
+    // Delete system update package: show a result Toast when done (SUCCEEDED / NOT_EXIST / FAILED)
     LaunchedEffect(uiState.deleteOtaPackageStatus) {
         uiState.deleteOtaPackageStatus?.let { status ->
             val message = when (status) {
@@ -136,7 +136,7 @@ fun SettingsAdvancedRoute(
         }
     }
 
-    // ── DexKit 索引 ────────────────────────────────────────────────
+    // ── DexKit index ────────────────────────────────────────────────
     var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
 
     if (uiState.showHotReloadDialog) {
@@ -160,7 +160,7 @@ fun SettingsAdvancedRoute(
         )
     }
 
-    // DexKit 手动刷新：前台进度 Dialog + 完成后 Toast 结果
+    // DexKit manual refresh: foreground progress Dialog + result Toast when done
     if (dexIndexState.refreshing) {
         DexIndexProgressDialog(progress = dexIndexState.progress)
     }
@@ -658,7 +658,8 @@ private fun HotReloadConfirmDialog(
 }
 
 /**
- * 汇总 DexKit 索引状态：取各作用域最近一次成功索引时间，格式化为显示文本。
+ * Summarizes the DexKit index state: takes the most recent successful index time
+ * across all scopes and formats it as display text.
  */
 private fun buildDexIndexSummary(context: Context): String {
     val latest = DexIndexRegistry.indexers

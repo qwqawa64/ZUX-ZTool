@@ -7,29 +7,32 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 绕过 SystemUI 内部所有"短于 72h"的人脸识别超时门禁。
+ * Bypass all "shorter than 72h" face authentication timeout gates inside SystemUI.
  *
- * 背景（基于 com.android.systemui 逆向结论）：
- * ZUI 定制在 ZuiFaceAuthDelegate.checkAndStartFaceDetecting 中加入了两道
- * AOSP 不存在的超时判定，命中后置 KeyguardFaceUnlockManager.mSecurityTime = true
- * （粘性标志，直到密码/图案/指纹验证成功才由 setLastPassTimestamp 清除），
- * 并将人脸检测状态置为 20（FACE_DETECT_DISABLE），强制回退到密码/图案验证：
- * - 4h/12h 门禁：(mScreenTurnedOff ? secureTime : mWakeSecureTime)
- *   >= 14400000ms（4h）；开启 faceunlock_bcr_timeout_extended_on 时为 43200000ms（12h）
- * - 24h 兜底：(mScreenTurnedOff ? mAdditionSecureTime : mWakeSecureTime)
- *   >= 86400000ms（距上次成功验证 24h）
+ * Background (based on reverse engineering of com.android.systemui):
+ * ZUI customizations add two timeout checks in ZuiFaceAuthDelegate.checkAndStartFaceDetecting
+ * that do not exist in AOSP. When triggered, they set KeyguardFaceUnlockManager.mSecurityTime = true
+ * (a sticky flag, only cleared by setLastPassTimestamp after a successful PIN/pattern/fingerprint
+ * verification), and set the face detection state to 20 (FACE_DETECT_DISABLE), forcing a
+ * fallback to PIN/pattern verification:
+ * - 4h/12h gate: (mScreenTurnedOff ? secureTime : mWakeSecureTime)
+ *   >= 14400000ms (4h); 43200000ms (12h) when faceunlock_bcr_timeout_extended_on is enabled
+ * - 24h fallback: (mScreenTurnedOff ? mAdditionSecureTime : mWakeSecureTime)
+ *   >= 86400000ms (24h since last successful authentication)
  *
- * 实现方式：单点 Hook checkAndStartFaceDetecting(boolean)：
- * - 进入前：把三个时间基准归零（currentTimeOn = now，secureTime = 0，
- *   mAdditionSecureTime = 0），使两道超时比较恒为 false，状态机自然进入
- *   正常人脸检测分支；
- * - 返回后：强制清除 mSecurityTime 粘性标志，兜底处理 Hook 启用前已置位、
- *   以及 Bouncer 提示区（ZuiBouncerKeyguardMessageAreaDelegate）读取该标志的残留。
+ * Implementation: single-point hook on checkAndStartFaceDetecting(boolean):
+ * - Before the call: zero out the three time bases (currentTimeOn = now, secureTime = 0,
+ *   mAdditionSecureTime = 0), so both timeout comparisons are always false and the state
+ *   machine naturally enters the normal face detection branch;
+ * - After the call: force-clear the sticky mSecurityTime flag, as a fallback for cases
+ *   where it was set before the hook was enabled and for residue read by the Bouncer
+ *   message area (ZuiBouncerKeyguardMessageAreaDelegate).
  *
- * 明确不处理：
- * - mFaceDetectNum >= 3（单次亮屏内检测重试上限）与超时门禁无关；
- * - system_server 侧 72h 强验证（LockSettingsStrongAuth）不属于本 Hook 范围；
- * - 设备锁定（isUserLockout，多次输错触发）属安全机制，不属于超时门禁。
+ * Explicitly not handled:
+ * - mFaceDetectNum >= 3 (per-wake-up detection retry limit) is unrelated to the timeout gates;
+ * - 72h strong verification on the system_server side (LockSettingsStrongAuth) is out of scope;
+ * - Device lockout (isUserLockout, triggered by repeated wrong attempts) is a security
+ *   mechanism, not a timeout gate.
  */
 @SuppressLint("PrivateApi")
 class BypassFaceAuthTimeout : AppHookModule() {
@@ -68,7 +71,7 @@ class BypassFaceAuthTimeout : AppHookModule() {
             hookWithId(checkMethod, HOOK_ID) { chain ->
                 val delegate = chain.thisObject
                 try {
-                    // 4h/12h 与 24h 比较全部基于这三个时间基准，归零后恒不超时
+                    // The 4h/12h and 24h comparisons are all based on these three time bases; zeroing them prevents any timeout
                     currentTimeOnField.setLong(delegate, System.currentTimeMillis())
                     secureTimeField.setLong(delegate, 0L)
                     additionSecureTimeField.setLong(delegate, 0L)
@@ -82,7 +85,7 @@ class BypassFaceAuthTimeout : AppHookModule() {
                 }
                 chain.proceed()
                 try {
-                    // 原方法内部是唯一写 true 的位置，返回后清掉兜底
+                    // The original method body is the only place that writes true; clear it after return as a fallback
                     val manager = faceUnlockManagerField.get(delegate)
                     if (securityTimeField.getBoolean(manager)) {
                         logger.info("Cleared mSecurityTime after checkAndStartFaceDetecting")

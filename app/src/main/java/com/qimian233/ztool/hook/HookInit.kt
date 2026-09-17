@@ -11,10 +11,10 @@ import io.github.libxposed.api.XposedModuleInterface
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 /**
- * ZTool libxposed 模块主入口（Kotlin）。
+ * ZTool libxposed module main entry point (Kotlin).
  * <p>
- * 继承 [XposedModule]（同时也是 [XposedInterface]），
- * 通过生命周期回调分发给各个 Hook 子模块。
+ * Extends [XposedModule] (also an [XposedInterface]) and dispatches to each
+ * Hook submodule via lifecycle callbacks.
  */
 class HookInit : XposedModule() {
 
@@ -35,13 +35,13 @@ class HookInit : XposedModule() {
             try {
                 HiddenApiBypass.addHiddenApiExemptions("")
             } catch (t: Throwable) {
-                log(6, TAG, "HiddenApiBypass 初始化失败", t)
+                log(6, TAG, "HiddenApiBypass initialization failed", t)
             }
         }
 
-        // 将 this 作为 XposedInterface 传给 HookManager
+        // Pass this as the XposedInterface to HookManager
         HookManager.initialize(this)
-        log(4, TAG, "ZTool Hook 模块已加载, 进程: " + param.processName)
+        log(4, TAG, "ZTool Hook module loaded, process: " + param.processName)
     }
 
     override fun onPackageLoaded(param: XposedModuleInterface.PackageLoadedParam) {
@@ -51,16 +51,18 @@ class HookInit : XposedModule() {
     override fun onSystemServerStarting(
         param: XposedModuleInterface.SystemServerStartingParam
     ) {
-        log(4, TAG, "系统服务器启动中，分发系统作用域Hook")
+        log(4, TAG, "System server starting, dispatching system-scope hooks")
         HookManager.handleSystemServerStarting(param)
     }
 
-    // ── 热重载支持 ─────────────────────────────────────────────
+    // ── Hot reload support ─────────────────────────────────────
 
     override fun onHotReloading(param: XposedModuleInterface.HotReloadingParam): Boolean {
-        // 热重载会创建新一代模块代码（新 classloader），HookManager 的静态字段不跨代共享。
-        // 生命周期参数是框架创建的对象（classloader-neutral），必须在旧代码冻结前
-        // 通过 savedInstanceState 显式传递给新代码，供 onHotReloaded 重放 Hook 安装。
+        // Hot reload creates a new generation of module code (new classloader);
+        // HookManager's static fields are not shared across generations.
+        // Lifecycle params are framework-created objects (classloader-neutral) and must be
+        // passed explicitly to the new code via savedInstanceState before the old code is
+        // frozen, so that onHotReloaded can replay hook installation.
         param.setSavedInstanceState(
             arrayOf(
                 HookManager.getSavedPackageParams(),
@@ -69,8 +71,9 @@ class HookInit : XposedModule() {
         )
         log(
             4, TAG,
-            "热重载请求，已保存生命周期参数: " + HookManager.getSavedPackageParams().size
-                    + " 个包, 同意重载"
+            "Hot reload requested, saved lifecycle params: "
+                    + HookManager.getSavedPackageParams().size
+                    + " packages, reload accepted"
         )
         return true
     }
@@ -78,8 +81,8 @@ class HookInit : XposedModule() {
     @Suppress("UNCHECKED_CAST")
     override fun onHotReloaded(param: XposedModuleInterface.HotReloadedParam) {
         instance = this
-        // 恢复旧代码传递过来的生命周期参数（静态字段不跨 classloader 共享，
-        // 否则 replayAllHooks 拿不到任何参数，Hook 将全部丢失）。
+        // Restore the lifecycle params passed by the old code (static fields are not shared
+        // across classloaders, otherwise replayAllHooks would see no params and all hooks would be lost).
         val saved = param.savedInstanceState
         if (saved is Array<*>) {
             val packages = saved.getOrNull(0)
@@ -88,10 +91,10 @@ class HookInit : XposedModule() {
                     as? XposedModuleInterface.SystemServerStartingParam
             HookManager.restoreLifecycleParams(packages, systemServer)
         }
-        log(4, TAG, "热重载完成，重新注册模块并回放 Hook 安装")
+        log(4, TAG, "Hot reload complete, re-registering modules and replaying hook installation")
         HookManager.reinitializeForHotReload(this)
         HookManager.replayAllHooks()
         param.oldHookHandles.forEach(XposedInterface.HookHandle::unhook)
-        log(4, TAG, "热重载清理完成，已卸载旧 Hook: " + param.oldHookHandles.size + " 个")
+        log(4, TAG, "Hot reload cleanup complete, unhooked old hooks: " + param.oldHookHandles.size)
     }
 }

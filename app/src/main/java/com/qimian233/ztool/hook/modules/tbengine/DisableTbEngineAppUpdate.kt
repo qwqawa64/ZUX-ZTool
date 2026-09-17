@@ -7,11 +7,14 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 禁用 UDS 实时连接引擎 (com.lenovo.tbengine) 的预装应用/数据包自动更新。
+ * Disables automatic pre-installed app/data package updates in the UDS
+ * real-time connection engine (com.lenovo.tbengine).
  *
- * AppData 工作流的自动推进（AppDataNewVersionFound）与 Whatsnew 自动确认路径
- * 均收敛到 ServiceController.startOrResumeAppDataDownload(Context)；
- * 用户在联想中心手动确认走 userStartOrResumeAppDataDownload(Context)，保留不动。
+ * Both the AppData workflow auto-advance (AppDataNewVersionFound) and the
+ * Whatsnew auto-confirm path converge on
+ * ServiceController.startOrResumeAppDataDownload(Context);
+ * the user's manual confirmation in Lenovo Center goes through
+ * userStartOrResumeAppDataDownload(Context) and is left untouched.
  */
 class DisableTbEngineAppUpdate : AppHookModule() {
 
@@ -34,7 +37,7 @@ class DisableTbEngineAppUpdate : AppHookModule() {
             )
             hookWithId(startOrResumeAppDataDownload, "tbengine_appdata_auto_download") { _ ->
                 logger.debug("Blocked automatic pre-installed app data update.")
-                // no-op：吞掉预装应用/数据包自动更新
+                // no-op: swallow automatic pre-installed app/data package update
             }
         } catch (t: Throwable) {
             logger.error("Failed to hook ServiceController.startOrResumeAppDataDownload", t)

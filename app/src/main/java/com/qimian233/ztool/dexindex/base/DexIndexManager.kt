@@ -15,25 +15,27 @@ import java.io.File
 import java.security.MessageDigest
 
 /**
- * 离线索引执行器（模块 app 进程内运行）。
+ * Offline index executor (runs in the module app process).
  *
- * 对每个作用域：取目标 apk 路径（含 split）→ 建 DexKitBridge → 跑对应
- * Indexer → 原子写 `files/dex_index/<scopePackage>.json`（含 apk 指纹）。
+ * For each scope: resolve the target apk path (including splits) → build a
+ * DexKitBridge → run the corresponding Indexer → atomically write
+ * `files/dex_index/<scopePackage>.json` (including the apk fingerprint).
  */
 object DexIndexManager {
 
     private const val TAG = "DexIndexManager"
 
-    /** 串行化索引执行，避免 Receiver/启动检查/手动刷新并发写同一文件。 */
+    /** Serializes index execution to avoid concurrent writes to the same file by receiver/startup check/manual refresh. */
     private val lock = Any()
 
-    /** 全局索引进度（scope 级）。所有触发源共享，供 UI 进度 Dialog 展示。 */
+    /** Global index progress (scope level). Shared by all trigger sources for the UI progress dialog. */
     private val _progress = MutableStateFlow(DexIndexProgress())
     val progress: StateFlow<DexIndexProgress> = _progress.asStateFlow()
 
     /**
-     * 全量索引所有作用域。返回 scopePackage → 是否成功。
-     * 扫描期间经 [progress] 上报 scope 级进度，结束后更新结果通知（兜底）。
+     * Index all scopes. Returns scopePackage → success.
+     * Reports scope-level progress via [progress] while scanning, and updates
+     * the result notification (fallback) when finished.
      */
     fun indexAll(context: Context): Map<String, Boolean> {
         var results: Map<String, Boolean> = emptyMap()
@@ -46,8 +48,9 @@ object DexIndexManager {
     }
 
     /**
-     * 该作用域是否需要重新索引：schemaVersion 不匹配（结构升级）、
-     * 现有文件缺失/损坏，或 apk 指纹（路径+更新+签名）变化。
+     * Whether this scope needs reindexing: schemaVersion mismatch (structure
+     * upgrade), missing/corrupt existing file, or apk fingerprint
+     * (path + update time + signature) changed.
      */
     fun needsReindex(context: Context, scopePackage: String): Boolean {
         val schema = readStoredSchemaVersion(context, scopePackage)
@@ -57,7 +60,7 @@ object DexIndexManager {
         return target != current
     }
 
-    /** 最近一次成功索引的时间戳（毫秒），无索引返回 0。 */
+    /** Timestamp (ms) of the last successful index; returns 0 if never indexed. */
     fun lastIndexedAt(context: Context, scopePackage: String): Long {
         return try {
             val file = File(indexDir(context), DexIndexConstants.fileName(scopePackage))
@@ -69,14 +72,14 @@ object DexIndexManager {
         }
     }
 
-    /** 索引文件所在目录：Remote Files 根即模块 filesDir，不支持子目录，故直接放根目录。 */
+    /** Directory holding index files: the Remote Files root is the module filesDir and does not support subdirectories, so files go at the root. */
     fun indexDir(context: Context): File = context.filesDir
 
-    // ── 内部实现 ────────────────────────────────────────────────────
+    // ── Internal implementation ─────────────────────────────────────
 
     /**
-     * 串行执行一批索引器并上报 scope 级进度。
-     * 无论成败都会在 finally 中将 [DexIndexProgress.running] 复位。
+     * Runs a batch of indexers serially and reports scope-level progress.
+     * [DexIndexProgress.running] is reset in finally regardless of outcome.
      */
     private fun runIndexing(context: Context, indexers: List<DexIndexer>): Map<String, Boolean> {
         val total = indexers.size
@@ -120,15 +123,16 @@ object DexIndexManager {
 
     private fun openBridge(context: Context, scopePackage: String): DexKitBridge? {
         return try {
-            // dexkit native 库幂等加载
+            // Idempotent loading of the dexkit native library
             System.loadLibrary("dexkit")
             val ai = context.packageManager.getApplicationInfo(scopePackage, 0)
             val splits = ai.splitSourceDirs ?: emptyArray()
             if (splits.isEmpty()) {
                 DexKitBridge.create(ai.sourceDir)
             } else {
-                // split apk：以 dex 字节数组方式整体加载（create 仅支持单路径或字节数组）。
-                // 注意：整包 readBytes 有内存峰值（OOM 风险），仅 split 场景触发；常规单 base 走上一分支。
+                // Split APK: load everything as dex byte arrays (create only supports a single path or byte arrays).
+                // Note: readBytes on the whole package has a memory spike (OOM risk); only triggered in the split
+                // scenario; the regular single-base case takes the branch above.
                 val apkBytes = (listOf(ai.sourceDir) + splits).map { File(it).readBytes() }
                 DexKitBridge.create(apkBytes.toTypedArray())
             }
@@ -156,7 +160,7 @@ object DexIndexManager {
         }
         root.add(DexIndexConstants.JSON_MODULES, modules)
 
-        // 原子写：先 tmp 后 rename，避免 hook 进程读到半截 JSON
+        // Atomic write: tmp first then rename, so hook processes never read a half-written JSON
         tmp.writeText(root.toString())
         if (!tmp.renameTo(target)) {
             target.writeText(root.toString())
@@ -164,7 +168,7 @@ object DexIndexManager {
         }
     }
 
-    /** 读取现有文件的 schemaVersion，缺失/损坏返回 null。 */
+    /** Reads the stored file's schemaVersion; returns null when missing/corrupt. */
     private fun readStoredSchemaVersion(context: Context, scopePackage: String): Int? {
         return try {
             val file = File(indexDir(context), DexIndexConstants.fileName(scopePackage))
@@ -199,7 +203,7 @@ object DexIndexManager {
             val pi: PackageInfo
             val sigBytes: ByteArray?
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                // API 28+：GET_SIGNING_CERTIFICATES + signingInfo（GET_SIGNATURES 已废弃）
+                // API 28+: GET_SIGNING_CERTIFICATES + signingInfo (GET_SIGNATURES is deprecated)
                 pi = pm.getPackageInfo(scopePackage, PackageManager.GET_SIGNING_CERTIFICATES)
                 sigBytes = pi.signingInfo?.apkContentsSigners?.firstOrNull()?.toByteArray()
             } else {
@@ -229,11 +233,11 @@ object DexIndexManager {
 }
 
 /**
- * DexKit 索引进度（scope 级）。
+ * DexKit index progress (scope level).
  *
- * - [running]：是否有索引任务在执行；
- * - [current]/[total]：当前第几个作用域 / 共几个作用域；
- * - [currentScope]：正在索引的作用域包名。
+ * - [running]: whether an index task is executing;
+ * - [current]/[total]: current scope index / total scopes;
+ * - [currentScope]: package name of the scope currently being indexed.
  */
 data class DexIndexProgress(
     val running: Boolean = false,

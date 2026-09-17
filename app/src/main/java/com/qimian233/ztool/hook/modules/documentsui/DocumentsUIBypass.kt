@@ -9,8 +9,9 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * Android文件选择器(DocumentsUI) 限制解除模块
- * 功能：允许用户在/Android/data等受限目录进行选择操作
+ * Android file picker (DocumentsUI) restriction bypass module.
+ * Function: allows the user to select files in restricted directories
+ * such as /Android/data.
  */
 @SuppressLint("PrivateApi")
 class DocumentsUIBypass : AppHookModule() {
@@ -20,13 +21,13 @@ class DocumentsUIBypass : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
-        logger.debug("开始加载 DocumentsUI 解除限制模块...")
+        logger.debug("Loading DocumentsUI restriction bypass module...")
         hookDocumentInfo(classLoader)
         hookPickFragment(classLoader)
     }
 
     /**
-     * Hook DocumentInfo 类，强制解除目录树选择限制
+     * Hook the DocumentInfo class to force-remove the directory tree selection restriction.
      */
     private fun hookDocumentInfo(classLoader: ClassLoader) {
         val documentInfoClass = "com.android.documentsui.base.DocumentInfo"
@@ -34,7 +35,7 @@ class DocumentsUIBypass : AppHookModule() {
         try {
             val docInfoClass = classLoader.loadClass(documentInfoClass)
 
-            // Hook isBlockedFromTree 方法
+            // Hook the isBlockedFromTree method
             val isBlockedFromTreeMethod = docInfoClass.getDeclaredMethod("isBlockedFromTree")
             hookWithId(
                 isBlockedFromTreeMethod,
@@ -43,26 +44,26 @@ class DocumentsUIBypass : AppHookModule() {
                 chain.proceed()
                 false
             }
-            logger.info("成功 Hook DocumentInfo.isBlockedFromTree")
+            logger.info("Successfully hooked DocumentInfo.isBlockedFromTree")
 
-            // 可选：尝试 Hook isBlocked 方法（部分机型或旧版本存在）
+            // Optional: try hooking the isBlocked method (exists on some devices or older versions)
             try {
                 val isBlockedMethod = docInfoClass.getDeclaredMethod("isBlocked")
                 hookWithId(isBlockedMethod, "is_blocked") { chain ->
                     chain.proceed()
                     false
                 }
-                logger.info("成功 Hook DocumentInfo.isBlocked")
+                logger.info("Successfully hooked DocumentInfo.isBlocked")
             } catch (_: Throwable) {
-                // 方法可能不存在，忽略，不作为主要错误记录
+                // The method may not exist; ignore, not logged as a main error
             }
         } catch (t: Throwable) {
-            logger.error("Hook DocumentInfo 失败", t)
+            logger.error("Failed to hook DocumentInfo", t)
         }
     }
 
     /**
-     * Hook PickFragment 类，强制启用选择按钮并隐藏遮罩层
+     * Hook the PickFragment class to force-enable the pick button and hide the overlay.
      */
     private fun hookPickFragment(classLoader: ClassLoader) {
         val pickFragmentClass = "com.android.documentsui.picker.PickFragment"
@@ -70,13 +71,13 @@ class DocumentsUIBypass : AppHookModule() {
         try {
             val pickFragClass = classLoader.loadClass(pickFragmentClass)
 
-            // Hook updateView 方法，在UI更新后强制修改控件状态
+            // Hook the updateView method to force-modify control states after UI update
             val updateViewMethod = pickFragClass.getDeclaredMethod("updateView")
             hookWithId(updateViewMethod, "update_view") { chain ->
                 val result = chain.proceed()
                 val fragment = chain.thisObject
 
-                // 1. 获取并启用 mPick 按钮
+                // 1. Get and enable the mPick button
                 try {
                     val mPickField = findField(fragment.javaClass, "mPick") // null-safe
                     val mPick = mPickField.get(fragment)
@@ -84,10 +85,10 @@ class DocumentsUIBypass : AppHookModule() {
                         mPick.isEnabled = true
                     }
                 } catch (_: NoSuchFieldError) {
-                    // 忽略字段不存在的情况
+                    // Ignore missing field
                 }
 
-                // 2. 获取并隐藏 mPickOverlay 覆盖层
+                // 2. Get and hide the mPickOverlay overlay
                 try {
                     val mPickOverlayField =
                         findField(fragment.javaClass, "mPickOverlay") // null-safe
@@ -96,13 +97,13 @@ class DocumentsUIBypass : AppHookModule() {
                         mPickOverlay.visibility = View.GONE // View.GONE = 8
                     }
                 } catch (_: NoSuchFieldError) {
-                    // 忽略字段不存在的情况
+                    // Ignore missing field
                 }
                 result
             }
-            logger.info("成功 Hook PickFragment.updateView")
+            logger.info("Successfully hooked PickFragment.updateView")
         } catch (t: Throwable) {
-            logger.error("Hook PickFragment 失败", t)
+            logger.error("Failed to hook PickFragment", t)
         }
     }
 }

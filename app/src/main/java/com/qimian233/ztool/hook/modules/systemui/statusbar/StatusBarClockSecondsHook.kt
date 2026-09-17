@@ -8,8 +8,8 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 
 /**
- * SystemUI状态栏时钟秒显示Hook模块
- * 强制启用系统状态栏时钟的秒显示功能
+ * SystemUI status bar clock seconds display hook module.
+ * Force-enables the seconds display of the system status bar clock.
  */
 @SuppressLint("PrivateApi")
 class StatusBarClockSecondsHook : AppHookModule() {
@@ -28,7 +28,7 @@ class StatusBarClockSecondsHook : AppHookModule() {
 
     private fun hookSystemUIClock(classLoader: ClassLoader) {
         try {
-            // Hook 1: 在 Clock 对象创建时强制启用秒显示
+            // Hook 1: force-enable seconds display when the Clock object is created
             val onAttachedMethod: Method =
                 classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("onAttachedToWindow")
             hookWithId(onAttachedMethod, "on_attached") { chain ->
@@ -43,18 +43,18 @@ class StatusBarClockSecondsHook : AppHookModule() {
         }
 
         try {
-            // Hook 2: 防止系统设置覆盖我们的修改
+            // Hook 2: prevent system settings from overriding our modification
             val onTuningMethod: Method = classLoader.loadClass(CLOCK_CLASS)
                 .getDeclaredMethod("onTuningChanged", String::class.java, String::class.java)
             hookWithId(onTuningMethod, "on_tuning") { chain ->
                 val key = chain.args[0] as String
                 if ("clock_seconds" == key) {
-                    // 强制覆盖设置为开启
+                    // Force the setting to enabled
                     val clockCls = chain.thisObject.javaClass
                     clockCls.getDeclaredField("mShowSeconds").setBoolean(chain.thisObject, true)
-                    // 调用原始方法，但修改第二个参数为 "1"
+                    // Call the original method, but modify the second argument to "1"
                     val result = chain.proceed(arrayOf(key, "1"))
-                    // 确保秒显示更新
+                    // Ensure seconds display is updated
                     clockCls.getDeclaredMethod("updateShowSeconds").invoke(chain.thisObject)
                     result
                 } else {
@@ -68,11 +68,11 @@ class StatusBarClockSecondsHook : AppHookModule() {
         }
 
         try {
-            // Hook 3: 直接修改 updateShowSeconds 方法
+            // Hook 3: directly modify the updateShowSeconds method
             val updateMethod: Method =
                 classLoader.loadClass(CLOCK_CLASS).getDeclaredMethod("updateShowSeconds")
             hookWithId(updateMethod, "update") { chain ->
-                // 强制启用秒显示
+                // Force-enable seconds display
                 chain.thisObject.javaClass.getDeclaredField("mShowSeconds")
                     .setBoolean(chain.thisObject, true)
                 chain.proceed()
@@ -85,15 +85,15 @@ class StatusBarClockSecondsHook : AppHookModule() {
     }
 
     /**
-     * 强制启用时钟秒显示功能
+     * Force-enable the clock seconds display
      */
     private fun forceEnableClockSeconds(clockInstance: Any) {
         try {
             val cl = clockInstance.javaClass
-            // 设置秒显示标志
+            // Set the seconds display flag
             cl.getDeclaredField("mShowSeconds").setBoolean(clockInstance, true)
 
-            // 确保秒更新处理器存在
+            // Ensure the seconds update handler exists
             val handlerField: java.lang.reflect.Field = cl.getDeclaredField("mSecondsHandler")
             handlerField.isAccessible = true
             val secondsHandler = handlerField.get(clockInstance)
@@ -105,7 +105,7 @@ class StatusBarClockSecondsHook : AppHookModule() {
                 handlerField.set(clockInstance, newHandler)
             }
 
-            // 触发秒显示更新
+            // Trigger the seconds display update
             cl.getDeclaredMethod("updateShowSeconds").invoke(clockInstance)
 
             logger.debug("Force enabled clock seconds display")

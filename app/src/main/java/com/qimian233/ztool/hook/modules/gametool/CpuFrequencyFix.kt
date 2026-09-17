@@ -8,9 +8,10 @@ import java.io.File
 import java.lang.reflect.Method
 
 /**
- * CPU频率Hook模块 - 修复游戏服务中的CPU时钟读取
- * 功能：Hook com.zui.game.service.util.HWDataInterface 的CPU频率获取方法
- * 使其始终读取最后一个CPU核心的频率数据
+ * CPU frequency hook module - fixes CPU clock reading in the game service.
+ * Function: hooks the CPU frequency retrieval methods of
+ * com.zui.game.service.util.HWDataInterface so they always read the
+ * frequency data of the last CPU core.
  */
 class CpuFrequencyFix : AppHookModule() {
 
@@ -26,17 +27,17 @@ class CpuFrequencyFix : AppHookModule() {
         try {
             val hwDataClass = classLoader.loadClass("com.zui.game.service.util.HWDataInterface")
 
-            // Hook HWDataInterface 的 getCpuCurFreq() 方法（无参数）
+            // Hook the no-arg getCpuCurFreq() method of HWDataInterface
             val getCpuCurFreqMethod: Method = hwDataClass.getDeclaredMethod("getCpuCurFreq")
             hookWithId(getCpuCurFreqMethod, "get_cpu_cur_freq") { getLastCpuCoreCurrentFreq() }
 
-            // Hook HWDataInterface 的 getCpuCurFreq(int coreIndex) 方法
+            // Hook the getCpuCurFreq(int coreIndex) method of HWDataInterface
             val getCpuCurFreqIndexMethod: Method = hwDataClass.getDeclaredMethod(
                 "getCpuCurFreq", Int::class.javaPrimitiveType
             )
             hookWithId(getCpuCurFreqIndexMethod, "get_cpu_cur_freq_index") { getLastCpuCoreCurrentFreq() }
 
-            // Hook HWDataInterface 的 getCpuMaxFreq() 方法
+            // Hook the getCpuMaxFreq() method of HWDataInterface
             val getCpuMaxFreqMethod: Method = hwDataClass.getDeclaredMethod("getCpuMaxFreq")
             hookWithId(getCpuMaxFreqMethod, "get_cpu_max_freq") { getLastCpuCoreMaxFreq() }
 
@@ -47,18 +48,18 @@ class CpuFrequencyFix : AppHookModule() {
     }
 
     /**
-     * 获取最后一个CPU核心的当前频率
+     * Get the current frequency of the last CPU core.
      */
     private fun getLastCpuCoreCurrentFreq(): Int {
         try {
-            // 获取最后一个CPU核心的索引
+            // Get the last CPU core index
             val lastCoreIndex = getLastCpuCoreIndex()
             if (lastCoreIndex < 0) {
                 logger.warn("CpuFrequencyFix: No CPU cores found, using fallback")
                 return readFallbackCpuFreq()
             }
 
-            // 读取当前频率
+            // Read the current frequency
             val curFreqPath = "/sys/devices/system/cpu/cpu$lastCoreIndex/cpufreq/scaling_cur_freq"
             val freqStr = readSystemFile(curFreqPath)
 
@@ -68,28 +69,28 @@ class CpuFrequencyFix : AppHookModule() {
                 return freq
             }
 
-            // 如果读取失败，尝试备用方法
+            // If reading fails, try the fallback method
             logger.warn("CpuFrequencyFix: Failed to read current freq from core $lastCoreIndex")
             return readFallbackCpuFreq()
         } catch (e: Exception) {
             logger.error("CpuFrequencyFix: Error reading CPU current freq", e)
-            return DEFAULT_CURRENT_FREQ // 默认值 2.0GHz
+            return DEFAULT_CURRENT_FREQ // Default 2.0GHz
         }
     }
 
     /**
-     * 获取最后一个CPU核心的最大频率
+     * Get the max frequency of the last CPU core.
      */
     private fun getLastCpuCoreMaxFreq(): Int {
         try {
-            // 获取最后一个CPU核心的索引
+            // Get the last CPU core index
             val lastCoreIndex = getLastCpuCoreIndex()
             if (lastCoreIndex < 0) {
                 logger.warn("CpuFrequencyFix: No CPU cores found for max freq, using fallback")
                 return readFallbackCpuMaxFreq()
             }
 
-            // 读取最大频率
+            // Read the max frequency
             val maxFreqPath = "/sys/devices/system/cpu/cpu$lastCoreIndex/cpufreq/scaling_max_freq"
             val freqStr = readSystemFile(maxFreqPath)
 
@@ -99,17 +100,17 @@ class CpuFrequencyFix : AppHookModule() {
                 return freq
             }
 
-            // 如果读取失败，尝试备用方法
+            // If reading fails, try the fallback method
             logger.warn("CpuFrequencyFix: Failed to read max freq from core $lastCoreIndex")
             return readFallbackCpuMaxFreq()
         } catch (e: Exception) {
             logger.error("CpuFrequencyFix: Error reading CPU max freq", e)
-            return DEFAULT_MAX_FREQ // 默认值 3.0GHz
+            return DEFAULT_MAX_FREQ // Default 3.0GHz
         }
     }
 
     /**
-     * 获取最后一个CPU核心的索引
+     * Get the index of the last CPU core.
      */
     private fun getLastCpuCoreIndex(): Int {
         try {
@@ -121,18 +122,18 @@ class CpuFrequencyFix : AppHookModule() {
                 return -1
             }
 
-            // 按核心编号降序排序，取最大的（最后一个核心）
+            // Sort by core number in descending order and take the largest (last core)
             cpuFiles.sortWith { f1, f2 ->
                 try {
                     val num1 = f1.name.substring(3).toInt()
                     val num2 = f2.name.substring(3).toInt()
-                    num2.compareTo(num1) // 降序
+                    num2.compareTo(num1) // Descending
                 } catch (_: NumberFormatException) {
                     0
                 }
             }
 
-            // 获取最后一个核心的索引
+            // Get the last core index
             val lastName = cpuFiles[0].name
             val lastIndex = lastName.substring(3).toInt()
             logger.error("CpuFrequencyFix: Last CPU core index: $lastIndex")
@@ -144,11 +145,11 @@ class CpuFrequencyFix : AppHookModule() {
     }
 
     /**
-     * 备用方法：读取CPU当前频率
+     * Fallback: read the current CPU frequency.
      */
     private fun readFallbackCpuFreq(): Int {
         try {
-            // 尝试读取cpu0的当前频率
+            // Try reading cpu0's current frequency
             val curFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
             if (!curFreqStr.isNullOrEmpty()) {
                 val freq = curFreqStr.trim().toInt()
@@ -156,7 +157,7 @@ class CpuFrequencyFix : AppHookModule() {
                 return freq
             }
 
-            // 尝试读取cpuinfo_cur_freq
+            // Try reading cpuinfo_cur_freq
             val infoCurFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq")
             if (!infoCurFreqStr.isNullOrEmpty()) {
                 val freq = infoCurFreqStr.trim().toInt()
@@ -168,15 +169,15 @@ class CpuFrequencyFix : AppHookModule() {
         }
 
         logger.warn("CpuFrequencyFix: Using default current freq: 2000000")
-        return 0 // 默认0GHz
+        return 0 // Default 0GHz
     }
 
     /**
-     * 备用方法：读取CPU最大频率
+     * Fallback: read the CPU max frequency.
      */
     private fun readFallbackCpuMaxFreq(): Int {
         try {
-            // 尝试读取cpu0的最大频率
+            // Try reading cpu0's max frequency
             val maxFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq")
             if (!maxFreqStr.isNullOrEmpty()) {
                 val freq = maxFreqStr.trim().toInt()
@@ -184,7 +185,7 @@ class CpuFrequencyFix : AppHookModule() {
                 return freq
             }
 
-            // 尝试读取cpuinfo_max_freq
+            // Try reading cpuinfo_max_freq
             val infoMaxFreqStr = readSystemFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
             if (!infoMaxFreqStr.isNullOrEmpty()) {
                 val freq = infoMaxFreqStr.trim().toInt()
@@ -196,11 +197,11 @@ class CpuFrequencyFix : AppHookModule() {
         }
 
         logger.warn("CpuFrequencyFix: Using default max freq: 3000000")
-        return 0 // 默认0GHz
+        return 0 // Default 0GHz
     }
 
     /**
-     * 读取系统文件内容
+     * Read the content of a system file.
      */
     private fun readSystemFile(filePath: String): String? {
         val file = File(filePath)
@@ -217,7 +218,7 @@ class CpuFrequencyFix : AppHookModule() {
     }
 
     companion object {
-        private const val DEFAULT_CURRENT_FREQ = 2000000 // 默认值 2.0GHz
-        private const val DEFAULT_MAX_FREQ = 3000000 // 默认值 3.0GHz
+        private const val DEFAULT_CURRENT_FREQ = 2000000 // Default 2.0GHz
+        private const val DEFAULT_MAX_FREQ = 3000000 // Default 3.0GHz
     }
 }

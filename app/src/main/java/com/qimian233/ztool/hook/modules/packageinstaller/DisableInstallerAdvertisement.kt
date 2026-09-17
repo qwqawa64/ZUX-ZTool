@@ -7,8 +7,10 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 禁用PackageInstaller应用安装完成后的推荐广告Hook模块
- * 功能：阻止安装成功页面初始化推荐应用数据，消除广告干扰
+ * Hook module to disable the recommendation ads shown by PackageInstaller
+ * after an installation completes.
+ * Function: prevents the install success page from initializing recommended
+ * app data, eliminating the ad interference.
  */
 @SuppressLint("PrivateApi")
 class DisableInstallerAdvertisement : AppHookModule() {
@@ -23,21 +25,21 @@ class DisableInstallerAdvertisement : AppHookModule() {
                 "com.android.packageinstaller.InstallSuccessExtra"
             )
 
-            // Hook initRecommendAppsData方法，阻止广告数据初始化
+            // Hook initRecommendAppsData to prevent ad data initialization
             val initRecommendAppsData =
                 installSuccessClass.getDeclaredMethod("initRecommendAppsData")
             hookWithId(
                 initRecommendAppsData,
                 "init_recommend_apps_data_1"
             ) {
-                // 直接返回，不执行任何广告初始化逻辑
-                logger.debug("已阻止PackageInstaller广告数据初始化")
+                // Return directly without executing any ad initialization logic
+                logger.debug("Blocked PackageInstaller ad data initialization")
                 null
             }
 
-            logger.info("成功Hook PackageInstaller广告屏蔽模块")
+            logger.info("Successfully hooked PackageInstaller ad blocking module")
         } catch (t: Throwable) {
-            logger.error("Hook PackageInstaller失败", t)
+            logger.error("Failed to hook PackageInstaller", t)
         }
     }
 }

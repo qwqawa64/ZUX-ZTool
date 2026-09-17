@@ -10,12 +10,12 @@ import com.qimian233.ztool.hook.base.DexIndexStore.string
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 移除充电动画 Hook。
- * 
+ * Remove charge animation hook.
  *
- * 使用 DEXKit 通过字段类型而非混淆后的名称（H）定位 Handler 字段，
- * 确保跨版本兼容。
- * 
+ *
+ * Uses DEXKit to locate the Handler field by field type instead of the obfuscated
+ * name (H), ensuring cross-version compatibility.
+ *
  */
 class NoChargeAnimation : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.NO_CHARGE_ANIMATION.name
@@ -34,13 +34,13 @@ class NoChargeAnimation : AppHookModule() {
             logger.info("Hooking ChargingAnimationController...")
             @SuppressLint("PrivateApi") val controllerClass = classLoader.loadClass(TARGET_CLASS)
 
-            // 从离线索引读取 Handler 字段名
+            // Read the Handler field name from the offline index
             var handlerFieldName = string(
                 xposed, SYSTEMUI_PACKAGE,
                 DexIndexConstants.ModuleKeys.NO_CHARGE_ANIMATION,
                 DexIndexConstants.Keys.HANDLER_FIELD_NAME
             )
-            if (handlerFieldName == null) handlerFieldName = "H" // 默认回退
+            if (handlerFieldName == null) handlerFieldName = "H" // default fallback
 
 
             logger.debug("Using handler field name: $handlerFieldName")

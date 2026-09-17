@@ -7,45 +7,46 @@ import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.HookedTarget
 
 /**
- * libxposed 服务桥接。
+ * libxposed service bridge.
  * <p>
- * 持有当前 [XposedService] 实例（由 [ModuleActivationProbe] 在 binder 回调中更新），
- * 并将所有服务方法委托给该实例。若服务未连接则 getter 返回 null/零值，mutation 为 no-op。
+ * Holds the current [XposedService] instance (updated by [ModuleActivationProbe] in binder callbacks)
+ * and delegates all service methods to that instance. If the service is not connected,
+ * the getters return null/zero values and mutations are no-ops.
  * </p>
  */
 object XposedServiceBridge {
 
-    /** 当前服务实例，仅在模块激活时非 null */
+    /** Current service instance, non-null only when the module is activated */
     @Volatile
     var currentService: XposedService? = null
         internal set
 
-    // ---- 基础查询 ----
+    // ---- Basic queries ----
 
-    /** 获取原始服务实例，未激活时返回 null */
+    /** Get the raw service instance, or null when not activated */
     fun getService(): XposedService? = currentService
 
-    /** 获取服务 API 版本，未激活返回 0 */
+    /** Get the service API version, or 0 when not activated */
     fun getApiVersion(): Int = currentService?.apiVersion ?: 0
 
-    /** 获取框架名称，未激活返回 null */
+    /** Get the framework name, or null when not activated */
     fun getFrameworkName(): String? = currentService?.frameworkName
 
-    /** 获取框架版本字符串，未激活返回 null */
+    /** Get the framework version string, or null when not activated */
     fun getFrameworkVersion(): String? = currentService?.frameworkVersion
 
-    /** 获取框架版本号，未激活返回 0 */
+    /** Get the framework version code, or 0 when not activated */
     fun getFrameworkVersionCode(): Long = currentService?.frameworkVersionCode ?: 0L
 
-    /** 获取框架属性标志，未激活返回 0 */
+    /** Get the framework property flags, or 0 when not activated */
     fun getFrameworkProperties(): Long = currentService?.frameworkProperties ?: 0L
 
-    // ---- 作用域 ----
+    // ---- Scope ----
 
-    /** 获取当前作用域包名列表，未激活返回空列表 */
+    /** Get the current scope package name list, or an empty list when not activated */
     fun getScope(): List<String> = currentService?.scope ?: emptyList()
 
-    /** 申请作用域，未激活时为 no-op */
+    /** Request scope, no-op when not activated */
     fun requestScope(
         packages: List<String>,
         listener: XposedService.OnScopeEventListener
@@ -53,14 +54,14 @@ object XposedServiceBridge {
         currentService?.requestScope(packages, listener)
     }
 
-    /** 移除作用域，未激活时为 no-op */
+    /** Remove scope, no-op when not activated */
     fun removeScope(packages: List<String>) {
         currentService?.removeScope(packages)
     }
 
-    // ---- 运行目标 ----
+    // ---- Running targets ----
 
-    /** 获取当前运行中的 Hook 目标列表，未激活返回空列表 */
+    /** Get the list of currently running hook targets, or an empty list when not activated */
     fun getRunningTargets(): List<HookedTarget> {
         if (getApiVersion() >= 102) {
             return currentService?.runningTargets ?: emptyList()
@@ -68,9 +69,9 @@ object XposedServiceBridge {
         return emptyList()
     }
 
-    // ---- 热重载 ----
+    // ---- Hot reload ----
 
-    /** 热重载模块，未激活时为 no-op */
+    /** Hot-reload the module, no-op when not activated */
     fun hotReloadModule(
         target: HookedTarget,
         extras: Bundle,
@@ -81,24 +82,24 @@ object XposedServiceBridge {
         }
     }
 
-    // ---- 远程文件/偏好 ----
+    // ---- Remote files/preferences ----
 
-    /** 获取远程 SharedPreferences，未激活返回 null */
+    /** Get remote SharedPreferences, or null when not activated */
     fun getRemotePreferences(name: String): SharedPreferences? =
         currentService?.getRemotePreferences(name)
 
-    /** 删除远程 SharedPreferences，未激活时为 no-op */
+    /** Delete remote SharedPreferences, no-op when not activated */
     fun deleteRemotePreferences(name: String) {
         currentService?.deleteRemotePreferences(name)
     }
 
-    /** 列出远程文件，未激活返回空数组 */
+    /** List remote files, or an empty array when not activated */
     fun listRemoteFiles(): Array<String> = currentService?.listRemoteFiles() ?: emptyArray()
 
-    /** 打开远程文件，未激活返回 null */
+    /** Open a remote file, or null when not activated */
     fun openRemoteFile(path: String): ParcelFileDescriptor? =
         currentService?.openRemoteFile(path)
 
-    /** 删除远程文件，未激活返回 false */
+    /** Delete a remote file, or false when not activated */
     fun deleteRemoteFile(path: String): Boolean = currentService?.deleteRemoteFile(path) ?: false
 }

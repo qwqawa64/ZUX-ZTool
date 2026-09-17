@@ -5,7 +5,7 @@ import com.qimian233.ztool.dexindex.indexer.MobileDesktopDexIndexer
 import com.qimian233.ztool.dexindex.indexer.SystemUiDexIndexer
 
 /**
- * 全部离线索引器的注册表。新增使用 DexKit 的作用域时在此登记。
+ * Registry of all offline indexers. Register a new DexKit-based scope here.
  */
 object DexIndexRegistry {
 

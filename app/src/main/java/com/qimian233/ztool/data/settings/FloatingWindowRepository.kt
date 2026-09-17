@@ -63,7 +63,7 @@ class FloatingWindowRepository(
             val applicationInfo: ApplicationInfo = packageManager.getApplicationInfo(packageName, 0)
             packageManager.getApplicationLabel(applicationInfo).toString()
         } catch (e: PackageManager.NameNotFoundException) {
-            Log.e(TAG, "获取应用名称失败", e)
+            Log.e(TAG, "Failed to get app name", e)
             null
         }
     }
@@ -106,11 +106,11 @@ class FloatingWindowRepository(
             }
 
             val configJson = config.toString(2)
-            Log.d("EmbeddingConfig", "生成的配置\n$configJson")
+            Log.d("EmbeddingConfig", "Generated config\n$configJson")
             saveBase64StringToFile(configJson, request.appPackage)
             true
         } catch (e: JSONException) {
-            Log.e(TAG, "生成配置失败", e)
+            Log.e(TAG, "Failed to generate config", e)
             false
         }
     }
@@ -148,7 +148,7 @@ class FloatingWindowRepository(
             process.destroy()
             getForegroundActivityByShellAlternative()
         } catch (e: Exception) {
-            Log.e(TAG, "读取前台 Activity 失败", e)
+            Log.e(TAG, "Failed to read foreground activity", e)
             getForegroundActivityByShellAlternative()
         }
     }
@@ -173,7 +173,7 @@ class FloatingWindowRepository(
             process.destroy()
             unknownText
         } catch (e: Exception) {
-            Log.e(TAG, "读取前台 Activity 备用方法失败", e)
+            Log.e(TAG, "Fallback method failed to read foreground activity", e)
             unknownText
         }
     }
@@ -201,7 +201,7 @@ class FloatingWindowRepository(
                 outputStream.write(base64String.toByteArray(Charsets.UTF_8))
             }
         } catch (e: IOException) {
-            Log.e(TAG, "保存配置失败", e)
+            Log.e(TAG, "Failed to save config", e)
         }
     }
 

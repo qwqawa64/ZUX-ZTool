@@ -7,10 +7,10 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
 /**
- * 跳过 ZUI 关联启动许可检查，始终允许关联启动。
+ * Skips the ZUI relative app launch permission check, always allowing relative app launch.
  *
- * Hook com.android.server.ZuiSecurityService.ZuiSecurityServiceBinder.getRelativeAppStatus
- * 使其始终返回 1（已允许）。
+ * Hooks com.android.server.ZuiSecurityService.ZuiSecurityServiceBinder.getRelativeAppStatus
+ * so it always returns 1 (allowed).
  */
 @SuppressLint("PrivateApi")
 class AllowRelativeAppLaunch: SystemHookModule() {

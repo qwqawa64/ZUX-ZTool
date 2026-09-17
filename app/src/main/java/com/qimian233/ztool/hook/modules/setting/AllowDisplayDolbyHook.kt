@@ -17,8 +17,8 @@ import kotlin.Throws
 import kotlin.arrayOf
 
 /**
- * 允许显示杜比音效Hook模块
- * 功能：绕过耳机检测，使杜比音效在非耳机状态下可用
+ * Dolby Atmos display hook module
+ * Bypasses headset detection so Dolby Atmos is available without headphones connected
  */
 @SuppressLint("PrivateApi")
 class AllowDisplayDolbyHook : AppHookModule() {
@@ -39,7 +39,7 @@ class AllowDisplayDolbyHook : AppHookModule() {
     }
 
     /**
-     * Hook设置应用中的杜比音效相关功能
+     * Hook Dolby Atmos related features in the Settings app
      */
     private fun hookSettingsPackage(classLoader: ClassLoader) {
         try {
@@ -51,7 +51,7 @@ class AllowDisplayDolbyHook : AppHookModule() {
                 hookWithId(m, "hook_59") { 1 }
                 logger.info("Successfully hooked Android 13 DolbyAtmosPreferenceFragment.getheadsetStatus")
             } else if (Build.VERSION.SDK_INT == 34) {
-                // Hook 耳机连接状态检测
+                // Hook headset connection state detection
                 val isHeadsetMethod = classLoader
                     .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosFragment")
                     .getDeclaredMethod("isHeadsetConnected")
@@ -60,7 +60,7 @@ class AllowDisplayDolbyHook : AppHookModule() {
                     "is_headset_1"
                 ) { Boolean.TRUE }
 
-                // Hook 初始化视图，清除摘要显示
+                // Hook view initialization and clear summary display
                 val initViewMethod = classLoader
                     .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosFragment")
                     .getDeclaredMethod("initView")
@@ -82,7 +82,7 @@ class AllowDisplayDolbyHook : AppHookModule() {
                 }
                 logger.info("Successfully hooked Android 14 DolbyAtmosFragment methods")
             } else if (Build.VERSION.SDK_INT >= 35) {
-                // Hook 工具类中的耳机连接检测
+                // Hook headset detection in the utility class
                 val isHeadsetMethod = classLoader
                     .loadClass("com.lenovo.settings.sound.dolby.DolbyAtmosUtils")
                     .getDeclaredMethod("isHeadsetConnected", Context::class.java)
@@ -91,7 +91,7 @@ class AllowDisplayDolbyHook : AppHookModule() {
                     "is_headset_2"
                 ) { Boolean.TRUE }
 
-                // Hook 控制器更新状态，清除摘要
+                // Hook controller state update and clear summary
                 val prefClass = classLoader.loadClass("androidx.preference.Preference")
                 val updateStateMethod = classLoader
                     .loadClass("com.lenovo.settings.sound.dolby.DolbySwitchPreferenceController")
@@ -123,11 +123,11 @@ class AllowDisplayDolbyHook : AppHookModule() {
     }
 
     /**
-     * Hook SystemUI中的杜比音效磁贴
+     * Hook the Dolby Atmos tile in SystemUI
      */
     private fun hookSystemUIPackage(classLoader: ClassLoader) {
         try {
-            // Hook QDolbyAtmosTile 耳机检测方法
+            // Hook QDolbyAtmosTile headset detection method
             if (Build.VERSION.SDK_INT <= 34) {
                 val m = classLoader
                     .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosTile")
@@ -142,7 +142,7 @@ class AllowDisplayDolbyHook : AppHookModule() {
                 logger.info("Successfully hooked QDolbyAtmosTile.isHeadSetConnect$2 (SDK > 34)")
             }
 
-            // Hook 详情视图中的耳机检测
+            // Hook headset detection in the detail view
             val detailMethod = classLoader
                 .loadClass("com.android.systemui.qs.tiles.QDolbyAtmosDetailView")
                 .getDeclaredMethod("isHeadSetConnect")

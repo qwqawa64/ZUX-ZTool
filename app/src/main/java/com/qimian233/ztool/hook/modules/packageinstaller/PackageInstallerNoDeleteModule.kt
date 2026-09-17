@@ -11,9 +11,11 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 禁用应用安装后删除APK提示模块
- * 拦截系统包安装器(com.android.packageinstaller)，修改默认的"安装完成后删除安装包"行为
- * 实现首次安装后默认不勾选删除安装包选项，避免误删安装文件
+ * Hook module to disable the "delete APK after install" prompt.
+ * Intercepts the system package installer (com.android.packageinstaller) and
+ * modifies the default "delete APK after installation" behavior: the delete
+ * option is unchecked by default after the first install, avoiding accidental
+ * deletion of the installation file.
  */
 class PackageInstallerNoDeleteModule : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.PACKAGE_INSTALLER_DISABLE_DELETE.name
@@ -27,13 +29,15 @@ class PackageInstallerNoDeleteModule : AppHookModule() {
     }
 
     /**
-     * Hook系统包安装器的核心逻辑
-     * 拦截InstallSuccessExtra类的initView方法，修改默认的删除安装包行为。
-     * 新版 PackageInstaller 将 CheckBox 改为 initView() 中的局部变量，
-     * 且 OnCheckedChangeListener 会直接覆写 mDeleteApk，因此需要：
-     * 1. 强制 mDeleteApk = false
-     * 2. 通过 findViewById 定位 CheckBox 并替换其 listener，防止用户手动勾选后覆盖布尔值
-     * 3. 兜底：Hook clearCachedApkIfNeededAndFinish 再次确保 mDeleteApk = false
+     * Core hook logic for the system package installer.
+     * Intercepts the initView method of InstallSuccessExtra to modify the default
+     * delete-APK behavior. Newer PackageInstaller versions moved the CheckBox into
+     * a local variable of initView(), and its OnCheckedChangeListener directly
+     * overwrites mDeleteApk, therefore:
+     * 1. Force mDeleteApk = false
+     * 2. Locate the CheckBox via findViewById and replace its listener so a manual
+     *    user check cannot override the boolean
+     * 3. Safety net: hook clearCachedApkIfNeededAndFinish to ensure mDeleteApk = false again
      */
     private fun hookPackageInstaller(classLoader: ClassLoader) {
         try {
@@ -43,7 +47,7 @@ class PackageInstallerNoDeleteModule : AppHookModule() {
                 "com.android.packageinstaller.InstallSuccessExtra"
             )
 
-            // --- Hook 1: initView() — 首次设置 + UI 修复 ---
+            // --- Hook 1: initView() — initial setup + UI fix ---
             val initView = installSuccessExtraClass.getDeclaredMethod("initView")
             val mDeleteApkField = installSuccessExtraClass.getDeclaredField("mDeleteApk")
             mDeleteApkField.isAccessible = true
@@ -58,10 +62,11 @@ class PackageInstallerNoDeleteModule : AppHookModule() {
                     val instance = chain.thisObject
                     logger.debug("Inside initView method for package installer")
 
-                    // 强制 mDeleteApk = false（无论是否配置变更）
+                    // Force mDeleteApk = false (regardless of configuration change)
                     mDeleteApkField.setBoolean(instance, false)
 
-                    // 通过 findViewById 定位 CheckBox（新版是局部变量，不能通过字段反射）
+                    // Locate the CheckBox via findViewById (a local variable in newer
+                    // versions, not reachable via field reflection)
                     try {
                         val activity = instance as Activity
                         @SuppressLint("DiscouragedApi") val checkBoxId =
@@ -71,15 +76,15 @@ class PackageInstallerNoDeleteModule : AppHookModule() {
                         if (checkBoxId != 0) {
                             val view = activity.findViewById<View?>(checkBoxId)
                             if (view is CheckBox) {
-                                // 更新 UI 为未勾选状态
+                                // Update the UI to the unchecked state
                                 view.isChecked = false
-                                // 替换监听器：防止用户手动勾选后覆盖 mDeleteApk
+                                // Replace the listener: prevent a manual user check from overwriting mDeleteApk
                                 view.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
                                     try {
                                         mDeleteApkField.setBoolean(instance, false)
                                     } catch (_: Throwable) {
                                     }
-                                    // 永远显示未勾选
+                                    // Always display as unchecked
                                     if (isChecked) {
                                         buttonView!!.isChecked = false
                                     }
@@ -100,9 +105,9 @@ class PackageInstallerNoDeleteModule : AppHookModule() {
 
             logger.info("Successfully hooked InstallSuccessExtra.initView()")
 
-            // --- Hook 2: clearCachedApkIfNeededAndFinish() — 兜底防护 ---
-            // 该方法在删除线程执行完毕后被调用，或在 onStop 中被调用。
-            // 再次确保 mDeleteApk = false，作为多层防护。
+            // --- Hook 2: clearCachedApkIfNeededAndFinish() — safety net ---
+            // Called after the delete thread finishes, or from onStop.
+            // Ensures mDeleteApk = false again as multi-layer protection.
             try {
                 val clearMethod = installSuccessExtraClass.getDeclaredMethod(
                     "clearCachedApkIfNeededAndFinish"

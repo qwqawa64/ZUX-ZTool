@@ -7,9 +7,10 @@ import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 /**
- * 绕过 resources.arsc 存储限制：
- * AssetManager.containsAllocatedTable 恒返 false，
- * 允许 targetSdk R+ 且 resources.arsc 未按未压缩对齐要求打包的 APK 安装与加载。
+ * Bypasses the resources.arsc storage restriction:
+ * AssetManager.containsAllocatedTable always returns false,
+ * allowing installation and loading of APKs with targetSdk R+ whose resources.arsc
+ * is not packaged with the required uncompressed alignment.
  */
 @SuppressLint("BlockedPrivateApi")
 class PackageManagerArscBypassHook : SystemHookModule() {

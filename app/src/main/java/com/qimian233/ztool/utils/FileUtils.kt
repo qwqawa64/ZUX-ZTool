@@ -13,10 +13,10 @@ import java.util.zip.ZipOutputStream
 object FileUtils {
 
     /**
-     * 将多个文件打包为zip
-     * @param files 要打包的文件数组
-     * @param outputZip 输出的zip文件
-     * @return 是否成功
+     * Package multiple files into a zip
+     * @param files files to package
+     * @param outputZip output zip file
+     * @return whether it succeeded
      */
     fun createZipFromFiles(files: Array<File>?, outputZip: File?): Boolean {
         if (files == null || files.isEmpty() || outputZip == null) return false
@@ -49,10 +49,10 @@ object FileUtils {
     }
 
     /**
-     * 将目录打包为zip，保留子目录结构
-     * @param sourceDir 要打包的源目录
-     * @param outputZip 输出的zip文件
-     * @return 是否成功
+     * Package a directory into a zip, preserving the subdirectory structure
+     * @param sourceDir source directory to package
+     * @param outputZip output zip file
+     * @return whether it succeeded
      */
     fun createZipFromDirectory(sourceDir: File?, outputZip: File?): Boolean {
         if (sourceDir == null || !sourceDir.exists() || !sourceDir.isDirectory || outputZip == null) return false
@@ -96,7 +96,7 @@ object FileUtils {
         }
     }
 
-    // 递归删除目录
+    // Recursively delete a directory
     fun deleteRecursive(fileOrDirectory: File?) {
         if (fileOrDirectory == null || !fileOrDirectory.exists()) return
 
@@ -108,7 +108,7 @@ object FileUtils {
         fileOrDirectory.delete()
     }
 
-    // 读取文件内容为字符串
+    // Read file content as a string
     fun readFileContent(file: File): String? {
         return try {
             FileInputStream(file).use { inputStream ->
@@ -121,7 +121,7 @@ object FileUtils {
         }
     }
 
-    // 写入字符串到文件
+    // Write a string to a file
     @Throws(IOException::class)
     fun writeStringToFile(file: File, content: String) {
         FileOutputStream(file).use { fos ->
@@ -129,13 +129,13 @@ object FileUtils {
         }
     }
 
-    // 复制 Assets 到普通目录
+    // Copy assets to a normal directory
     fun copyAssetsToDirectory(context: Context, assetsPath: String, targetDir: File): Boolean {
         val assetManager = context.assets
         return try {
             val files = assetManager.list(assetsPath)
             if (files == null || files.isEmpty()) {
-                // 文件
+                // File
                 assetManager.open(assetsPath).use { input ->
                     FileOutputStream(File(targetDir, File(assetsPath).name)).use { out ->
                         val buffer = ByteArray(1024)
@@ -146,7 +146,7 @@ object FileUtils {
                     }
                 }
             } else {
-                // 目录
+                // Directory
                 if (!targetDir.exists() && !targetDir.mkdirs()) return true
                 for (file in files) {
                     val fullAssetsPath = if (assetsPath.isEmpty()) file else assetsPath + "/" + file

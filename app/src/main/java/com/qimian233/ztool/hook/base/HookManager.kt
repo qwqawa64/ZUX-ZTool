@@ -113,10 +113,11 @@ import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * Hook 模块管理器（libxposed 版，Kotlin）。
+ * Hook module manager (libxposed version, Kotlin).
  * <p>
- * 按进程类型将模块分为 systemServerModules 和 appModules，
- * 由 [com.qimian233.ztool.hook.HookInit] 在对应的生命周期回调中调度。
+ * Modules are split by process type into systemServerModules and appModules,
+ * dispatched by [com.qimian233.ztool.hook.HookInit] in the corresponding
+ * lifecycle callbacks.
  * </p>
  */
 object HookManager {
@@ -124,7 +125,7 @@ object HookManager {
     private val hookModules: MutableList<BaseHookModule> = ArrayList()
     private var initialized = false
 
-    // 热重载：缓存首次加载时的生命周期参数，用于热重载后回放
+    // Hot reload: cache lifecycle params captured on first load, for replay after hot reload
     private val savedPackageParams: MutableList<XposedModuleInterface.PackageLoadedParam> =
             ArrayList()
     private var savedSystemServerParam: XposedModuleInterface.SystemServerStartingParam? = null
@@ -135,11 +136,11 @@ object HookManager {
     }
 
     /**
-     * 注册全部 Hook 模块并注入 XposedInterface。
-     * 由 [initialize] 和 [reinitializeForHotReload] 共用。
+     * Registers all Hook modules and injects the XposedInterface.
+     * Shared by [initialize] and [reinitializeForHotReload].
      */
     private fun registerAllModules(xposed: XposedInterface) {
-        // ── 系统框架 (target: system — 由 onSystemServerStarting 调度) ──
+        // ── System framework (target: system — dispatched by onSystemServerStarting) ──
         registerHookModule(DisableFlagSecure())
         registerHookModule(AllowGetPackages())
         registerHookModule(AllowUntrustedTouch())
@@ -149,9 +150,9 @@ object HookManager {
         registerHookModule(AllowRelativeAppLaunch())
         registerHookModule(ForceRelativeAppFreeform())
         registerHookModule(DisableHbmThermalLimit())
-        registerHookModule(SystemSplitScreenMandatory()) // 看看 setting 包的注册模块你就知道这一行为什么要这么写了
+        registerHookModule(SystemSplitScreenMandatory()) // See the setting-package registration below for why this line is written this way
 
-        // ── 系统框架 · 包管理服务（安装限制绕过功能组） ──
+        // ── System framework · package manager service (install restriction bypass feature group) ──
         registerHookModule(PackageManagerDowngradeHook())
         registerHookModule(PackageManagerSignatureBypassHook())
         registerHookModule(PackageManagerVerificationAgentHook())
@@ -203,13 +204,13 @@ object HookManager {
         registerHookModule(PermissionControllerHook())
         registerHookModule(OwnerInfoSettingsHook())
         registerHookModule(OwnerInfoSystemHook())
-        registerHookModule(SettingSplitScreenMandatory()) // 你别笑，为了防止重名冲突必须用全限定名
+        registerHookModule(SettingSplitScreenMandatory()) // No laughing — the fully qualified name is required to avoid a name clash
         registerHookModule(AppInfoHeaderDetailsHook())
         registerHookModule(CustomizeAboutDeviceInfo())
         registerHookModule(ZToolSettingsEntryHook())
         registerHookModule(HideOtaUpdateHint())
-        registerHookModule(LocaleListEditorHook()) // test_hook: 拦截 LenovoUtils 区域判断
-        registerHookModule(SettingsAppIconUnmaskHook()) // 设定应用图标去蒙版
+        registerHookModule(LocaleListEditorHook()) // test_hook: intercept LenovoUtils locale detection
+        registerHookModule(SettingsAppIconUnmaskHook()) // Settings app icon unmasking
 
         // ── PackageInstaller (target: com.android.packageinstaller) ──
         registerHookModule(PackageInstallerHookScan())
@@ -222,7 +223,7 @@ object HookManager {
         // ── Launcher (target: com.zui.launcher) ──
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
-        registerHookModule(LauncherAppIconUnmaskHook()) // hook_test: 桌面图标去蒙版，暂无前端开关
+        registerHookModule(LauncherAppIconUnmaskHook()) // hook_test: launcher icon unmasking, no frontend switch yet
         registerHookModule(CustomGridSize())
         registerHookModule(CleanGlobalSearch())
         registerHookModule(DisableDockBar())
@@ -231,7 +232,7 @@ object HookManager {
         registerHookModule(LauncherDrawerNoLabelMode())
         registerHookModule(BluePointRemovalHook())
         registerHookModule(DismissCloudFolderConfirmation())
-        registerHookModule(BigFolderAlignHook()) // 大文件夹背景/子网格/标签几何对齐
+        registerHookModule(BigFolderAlignHook()) // Big folder background/sub-grid/label geometry alignment
         registerHookModule(DisableRecentAppsDisplay())
         registerHookModule(BatchUninstall())
 
@@ -265,7 +266,7 @@ object HookManager {
         registerHookModule(BypassShareWarningHook())
         registerHookModule(DisableNearbyShareAutoOffHook())
 
-        // ── TB Engine (target: com.lenovo.tbengine, UDS 实时连接引擎) ──
+        // ── TB Engine (target: com.lenovo.tbengine, UDS real-time connection engine) ──
         registerHookModule(DisableTbEngineAutoDownload())
         registerHookModule(DisableTbEngineAutoInstall())
         registerHookModule(DisableTbEngineAppUpdate())
@@ -273,11 +274,11 @@ object HookManager {
         registerHookModule(DisableTbEngineReporting())
         registerHookModule(SignTbEngineLocalOta())
 
-        // ── ZUI 性能服务 (target: com.zui.pp) ──
+        // ── ZUI performance service (target: com.zui.pp) ──
         registerHookModule(BlockPowerPolicySync())
         registerHookModule(BlockGamePolicyUpdate())
 
-        // 注入 XposedInterface
+        // Inject the XposedInterface
         for (module in hookModules) {
             module.setXposedInterface(xposed)
         }
@@ -305,22 +306,25 @@ object HookManager {
         }
     }
 
-    // ── 热重载支持 ─────────────────────────────────────────────
+    // ── Hot reload support ─────────────────────────────────────
 
     /**
-     * 获取已保存的包加载生命周期参数（热重载时由旧代码传给新代码）。
+     * Returns the saved package-load lifecycle params (passed from old code to new code on hot reload).
      * <p>
-     * 热重载会创建新一代模块代码（新 classloader），静态字段不跨代共享，
-     * 因此这些参数必须由旧代码在 [onHotReloading][XposedModuleInterface.HotReloadingParam] 中通过
-     * [XposedModuleInterface.HotReloadingParam.setSavedInstanceState] 显式传递，
-     * 再由新代码在 [onHotReloaded][XposedModuleInterface.HotReloadedParam] 中经 [restoreLifecycleParams] 恢复。
+     * Hot reload creates a new generation of module code (new classloader);
+     * static fields are not shared across generations, so these params must be
+     * passed explicitly by the old code via
+     * [XposedModuleInterface.HotReloadingParam.setSavedInstanceState] in
+     * [onHotReloading][XposedModuleInterface.HotReloadingParam], then restored
+     * by the new code via [restoreLifecycleParams] in
+     * [onHotReloaded][XposedModuleInterface.HotReloadedParam].
      * </p>
      */
     fun getSavedPackageParams(): List<XposedModuleInterface.PackageLoadedParam> =
             savedPackageParams
 
     /**
-     * 获取已保存的系统服务器启动参数（热重载时由旧代码传给新代码）。
+     * Returns the saved system server start param (passed from old code to new code on hot reload).
      *
      * @see getSavedPackageParams
      */
@@ -328,11 +332,12 @@ object HookManager {
             savedSystemServerParam
 
     /**
-     * 恢复上一代代码传递过来的生命周期参数，供 [replayAllHooks] 重放使用。
+     * Restores the lifecycle params passed from the previous code generation, for use by [replayAllHooks].
      * <p>
-     * 必须在热重载后的 [onHotReloaded][XposedModuleInterface.HotReloadedParam]（新代码）中、
-     * 调用 [replayAllHooks] 之前执行；否则新 classloader 下 [savedPackageParams] /
-     * [savedSystemServerParam] 为空，重放将不会安装任何 Hook。
+     * Must be called in [onHotReloaded][XposedModuleInterface.HotReloadedParam] (new code)
+     * after hot reload, before calling [replayAllHooks]; otherwise under the new
+     * classloader [savedPackageParams] / [savedSystemServerParam] are empty and
+     * the replay will install no hooks.
      * </p>
      */
     fun restoreLifecycleParams(
@@ -347,11 +352,12 @@ object HookManager {
     }
 
     /**
-     * 热重载后重新初始化：清空旧模块列表，用新的 XposedInterface 重新注册全部模块。
+     * Re-initializes after hot reload: clears the old module list and re-registers all modules with the new XposedInterface.
      * <p>
-     * 生命周期参数（[savedPackageParams] / [savedSystemServerParam]）
-     * 由旧代码在 [onHotReloading][XposedModuleInterface.HotReloadingParam] 中经 savedInstanceState 传递，
-     * 新代码需先调用 [restoreLifecycleParams] 恢复，再执行重放。
+     * Lifecycle params ([savedPackageParams] / [savedSystemServerParam]) are
+     * passed by the old code via savedInstanceState in
+     * [onHotReloading][XposedModuleInterface.HotReloadingParam]; the new code
+     * must call [restoreLifecycleParams] first to restore them, then replay.
      * </p>
      */
     fun reinitializeForHotReload(xposed: XposedInterface) {
@@ -360,10 +366,11 @@ object HookManager {
     }
 
     /**
-     * 热重载后回放已保存的生命周期参数，让新模块重新安装 Hook。
+     * Replays the saved lifecycle params after hot reload, letting new modules reinstall their hooks.
      * <p>
-     * 重放前必须先调用 [restoreLifecycleParams] 恢复旧代码传递的参数。
-     * 每个模块调用由 try-catch 包裹，单个模块失败不影响其他模块。
+     * [restoreLifecycleParams] must be called first to restore the params passed
+     * from the old code. Each module call is wrapped in try-catch; a single
+     * module's failure does not affect the others.
      * </p>
      */
     fun replayAllHooks() {

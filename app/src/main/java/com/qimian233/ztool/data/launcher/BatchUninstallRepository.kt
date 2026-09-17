@@ -3,15 +3,15 @@ package com.qimian233.ztool.data.launcher
 import com.qimian233.ztool.EnhancedShellExecutor
 
 /**
- * 批量卸载（桌面多选入口）的执行仓库。
+ * Execution repository for batch uninstall (launcher multi-select entry).
  *
- * 经启动器 Hook 收集到的包名在这里通过 Root shell 执行
- * `pm uninstall --user 0 <pkg>` 静默卸载；启动器收到
- * PACKAGE_REMOVED 广播后会自行清理对应桌面图标。
+ * Package names collected via the launcher hook are silently uninstalled here
+ * through a root shell with `pm uninstall --user 0 <pkg>`; after the launcher
+ * receives the PACKAGE_REMOVED broadcast it cleans up the corresponding desktop icons itself.
  */
 class BatchUninstallRepository {
 
-    /** 诊断用：返回 root 检测结果与原始输出，便于现场排查 KernelSU/Magisk 差异。 */
+    /** Diagnostic: returns the root check result and raw output, useful for troubleshooting KernelSU/Magisk differences on site. */
     fun checkRootAccess(): Pair<Boolean, String> {
         val result = EnhancedShellExecutor.getInstance().checkRootAccess()
         return Pair(
@@ -39,7 +39,7 @@ class BatchUninstallRepository {
     }
 
     companion object {
-        /** 包名白名单字符集，防止拼接 shell 命令时注入。 */
+        /** Package-name whitelist charset, prevents shell command injection when concatenating commands. */
         private val PACKAGE_NAME_REGEX = Regex("[A-Za-z0-9_.]+")
         private const val UNINSTALL_TIMEOUT_SECONDS = 30
     }

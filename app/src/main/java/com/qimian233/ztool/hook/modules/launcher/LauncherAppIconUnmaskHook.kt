@@ -12,24 +12,28 @@ import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * 桌面图标去蒙版：在 Launcher3 图标工厂展平之后，用原始 AdaptiveIconDrawable
- * 重建无形状蒙版、无 IconNormalizer 缩放的位图。
+ * Home screen icon unmask: after the Launcher3 icon factory flattens an icon,
+ * rebuilds a bitmap from the original AdaptiveIconDrawable without shape masking
+ * or IconNormalizer scaling.
  *
- * 切入点：BaseIconFactory#createBadgedIconBitmap(Drawable, IconOptions) after-hook。
- * 仅当输入是 AdaptiveIconDrawable 时重建；传统图标保持系统 legacy 垫底逻辑不动。
- * 默认豁免动态图标（BitmapInfo.Extender 子类，如时钟 ClockDrawableWrapper），
- * 因为重建为静态位图会冻结动画；子开关 LAUNCHER_APP_ICON_UNMASK_DYNAMIC 打开时
- * 一并重建，代价是时钟定格。
- * monochrome（themed）位图通过 IconThemeController.createThemedBitmap 用原始
- * AdaptiveIcon 重建；重建图标不带阴影层。
+ * Entry point: BaseIconFactory#createBadgedIconBitmap(Drawable, IconOptions) after-hook.
+ * Rebuilds only when the input is an AdaptiveIconDrawable; legacy icons keep the
+ * system legacy fallback logic untouched. Dynamic icons (BitmapInfo.Extender
+ * subclasses, e.g. clock ClockDrawableWrapper) are exempted by default because
+ * rebuilding to a static bitmap would freeze the animation; when the sub-switch
+ * LAUNCHER_APP_ICON_UNMASK_DYNAMIC is on they are rebuilt too, at the cost of a
+ * frozen clock. The monochrome (themed) bitmap is rebuilt from the original
+ * AdaptiveIcon via IconThemeController.createThemedBitmap; the rebuilt icon has
+ * no shadow layer.
  *
- * 生效需重启桌面（AmStop）；图标持久缓存可能需要清一次 Launcher 数据。
+ * Requires a launcher restart (AmStop) to take effect; the persistent icon cache
+ * may require clearing Launcher data once.
  */
 class LauncherAppIconUnmaskHook : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
 
-    /** 子开关：不豁免动态图标。按项目规范在 handleLoadPackage 读取并捕获，不在 lambda 内读远程偏好。 */
+    /** Sub-switch: do not exempt dynamic icons. Read in handleLoadPackage per project rules, never inside a lambda. */
     @Volatile
     private var includeDynamicIcons = false
 
@@ -80,10 +84,12 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
     }
 
     /**
-     * 用原始 AdaptiveIcon 的 fg/bg 全出血重画一张无蒙版位图，并按原 result 的
-     * color/flags/creationFlags 重建 BitmapInfo。
+     * Redraws an unmasked bitmap from the original AdaptiveIcon's fg/bg at full
+     * bleed, and rebuilds the BitmapInfo with the original result's
+     * color/flags/creationFlags.
      *
-     * 返回 (新BitmapInfo, 位图边长)；任何条件不满足或失败都返回 null 保持原样。
+     * Returns (new BitmapInfo, bitmap edge length); returns null to keep the
+     * original when any condition is unmet or on failure.
      */
     private fun rebuildUnmasked(
         factory: Any?,
@@ -94,8 +100,9 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         if (factory == null || result == null) {
             return null
         }
-        // 时钟等动态图标（BitmapInfo.Extender 子类承载额外语义）默认豁免；
-        // 子开关打开时一并重建（动画会被定格为静态位图）
+        // Dynamic icons such as clocks (BitmapInfo.Extender subclasses carrying extra
+        // semantics) are exempted by default; when the sub-switch is on they are
+        // rebuilt too (the animation will be frozen to a static bitmap)
         val bitmapInfoClass = cl.loadClass("com.android.launcher3.icons.BitmapInfo")
         if (!includeDynamicIcons && result.javaClass != bitmapInfoClass) {
             return null
@@ -110,8 +117,9 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         val canvas = Canvas(bitmap)
         val bg = input.background
         val fg = input.foreground
-        // 背景全出血铺满；前景按 AdaptiveIcon 官方 108/72 网格比例放大，
-        // 抵消系统 66/72 视觉安全区造成的二次缩小
+        // Background fills the whole canvas at full bleed; the foreground is scaled up
+        // by the official AdaptiveIcon 108/72 grid ratio to offset the extra downscale
+        // caused by the system 66/72 visual safe area
         val bounds = android.graphics.Rect(0, 0, size, size)
         if (bg != null) {
             bg.bounds = bounds
@@ -126,7 +134,7 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         val of: Method = bitmapInfoClass.getDeclaredMethod("of", Bitmap::class.java, Int::class.javaPrimitiveType)
         val color = bitmapInfoClass.getField("color").getInt(result)
         val newInfo = of.invoke(null, bitmap, color)
-        // 保留原 flags/creationFlags（工作资料/克隆角标等语义）
+        // Preserve the original flags/creationFlags (work profile/clone badge semantics)
         bitmapInfoClass.getField("flags").setInt(newInfo, bitmapInfoClass.getField("flags").getInt(result))
         bitmapInfoClass.getField("creationFlags").setInt(
             newInfo, bitmapInfoClass.getField("creationFlags").getInt(result)
@@ -136,8 +144,9 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
     }
 
     /**
-     * 用原始 AdaptiveIcon 通过 IconThemeController 重建 monochrome（themed）位图，
-     * 对齐系统 createBadgedIconBitmapZui 内的同名调用。任何一步不可用都静默跳过。
+     * Rebuilds the monochrome (themed) bitmap from the original AdaptiveIcon via
+     * IconThemeController, matching the same call inside the system
+     * createBadgedIconBitmapZui. Silently skips when any step is unavailable.
      */
     private fun restoreThemedBitmap(
         cl: ClassLoader,
@@ -159,8 +168,9 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
             } catch (_: ClassNotFoundException) {
                 return
             }
-            // 注意：createThemedBitmap 声明的参数类型是 BaseIconFactory，
-            // 运行时实例是子类 LauncherIcons，getMethod 精确匹配必须用声明类型
+            // Note: createThemedBitmap declares the parameter type as BaseIconFactory,
+            // while the runtime instance is the subclass LauncherIcons; getMethod exact
+            // matching must use the declared type
             val baseFactoryClass = cl.loadClass("com.android.launcher3.icons.BaseIconFactory")
             val create: Method = controller.javaClass.getMethod(
                 "createThemedBitmap",
@@ -168,8 +178,9 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
                 baseFactoryClass, sourceHintClass
             )
             val themed = create.invoke(controller, input, newInfo, factory, null) ?: return
-            // setThemedBitmap 声明参数是父类 ThemedBitmap，运行时实例是其子类
-            // （如 MonoThemedBitmap），getMethod 精确匹配必须用声明类型
+            // setThemedBitmap declares the parameter as the parent ThemedBitmap while the
+            // runtime instance is its subclass (e.g. MonoThemedBitmap); getMethod exact
+            // matching must use the declared type
             val themedBitmapClass = cl.loadClass("com.android.launcher3.icons.ThemedBitmap")
             bitmapInfoClass
                 .getMethod("setThemedBitmap", themedBitmapClass)
@@ -182,7 +193,7 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
     companion object {
         private val TARGET_PACKAGE = ScopeKeys.LAUNCHER.packageName
 
-        /** AdaptiveIcon 可视区占比：72dp 网格中 66dp 是系统可视区，全出血用其倒数放大前景。 */
+        /** AdaptiveIcon visible-area ratio: in the 72dp grid, 66dp is the system visible area; full bleed scales the foreground by its inverse. */
         private const val ADAPTIVE_VISIBLE_RATIO = 66f / 72f
 
         private const val LIMIT = 40

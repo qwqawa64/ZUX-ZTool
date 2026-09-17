@@ -55,7 +55,7 @@ class SearchPageViewModel(
                 onEmptyResult()
             }
         } catch (e: JSONException) {
-            Log.e(TAG, "搜索策略失败", e)
+            Log.e(TAG, "Search policy failed", e)
         }
     }
 

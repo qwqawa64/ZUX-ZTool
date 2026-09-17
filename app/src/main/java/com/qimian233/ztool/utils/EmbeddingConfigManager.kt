@@ -14,7 +14,7 @@ import java.util.Locale
 
 class EmbeddingConfigManager {
 
-    // 单条配置文件信息
+    // Single config file entry
     data class ConfigFileInfo(
         val file: File,
         val timestamp: String,
@@ -23,7 +23,7 @@ class EmbeddingConfigManager {
         val configContent: String,
     )
 
-    // 加载配置文件列表
+    // Load the config file list
     fun loadAndValidateConfigFiles(context: Context): List<ConfigFileInfo> {
         val validConfigs = ArrayList<ConfigFileInfo>()
         val configDir = File(context.filesDir, "data/custom_EmbeddingConfig")
@@ -59,7 +59,7 @@ class EmbeddingConfigManager {
 
             val configContent = String(Base64.decode(base64, Base64.DEFAULT), StandardCharsets.UTF_8)
 
-            // 简单验证 JSON
+            // Basic JSON validation
             JSONObject(configContent)
 
             ConfigFileInfo(file, timestamp, packageName, appName, configContent)
@@ -78,7 +78,7 @@ class EmbeddingConfigManager {
         }
     }
 
-    // 核心功能：刷入配置
+    // Core function: flash configs into the module
     @Throws(Exception::class)
     fun flashConfigs(context: Context, configs: List<ConfigFileInfo>) {
         val executor = EnhancedShellExecutor.getInstance()
@@ -86,20 +86,20 @@ class EmbeddingConfigManager {
         val tempDir = File(cacheDir, "module_temp")
         val tempJsonFile = File(tempDir, "embedding_config.json")
 
-        // 1. 准备环境
+        // 1. Prepare the environment
         FileUtils.deleteRecursive(tempDir)
         if (!tempDir.mkdirs()) throw Exception(context.getString(R.string.common_error_create_temp_dir))
 
-        // 2. 复制原配置到临时目录 (Root -> App Cache)
+        // 2. Copy the original config to the temp dir (Root -> App Cache)
         val cpRes = executor.executeRootCommand("cat " + MODULE_CONFIG_FILE + " > " + tempJsonFile.absolutePath)
         if (!cpRes.isSuccess) throw Exception(context.getString(R.string.common_error_copy_original_config))
 
-        // 3. 修改权限以便 App 读取
+        // 3. Change permissions so the app can read it
         val uid = android.os.Process.myUid()
         executor.executeRootCommand("chown " + uid + "." + uid + " " + tempJsonFile.absolutePath)
         executor.executeRootCommand("chmod 644 " + tempJsonFile.absolutePath)
 
-        // 4. 解析 JSON 并合并
+        // 4. Parse the JSON and merge
         val originalContent = FileUtils.readFileContent(tempJsonFile)
             ?: throw Exception(context.getString(R.string.common_error_read_original_config))
 
@@ -111,28 +111,28 @@ class EmbeddingConfigManager {
             val pkgName = newConfig.getString("name")
 
             val mergedPackages = JSONArray()
-            // 过滤掉旧的同名配置
+            // Filter out the old config with the same name
             for (i in 0 until packages.length()) {
                 val p = packages.getJSONObject(i)
                 if (p.getString("name") != pkgName) {
                     mergedPackages.put(p)
                 }
             }
-            // 添加新配置
+            // Add the new config
             mergedPackages.put(newConfig)
             packages = mergedPackages
         }
         rootJson.put("packages", packages)
 
-        // 5. 写回临时文件
+        // 5. Write back to the temp file
         FileUtils.writeStringToFile(tempJsonFile, rootJson.toString(2))
 
-        // 6. 覆盖回系统目录 (Root)
+        // 6. Copy back over the system path (Root)
         val restoreCmd = "cp " + tempJsonFile.absolutePath + " " + MODULE_CONFIG_FILE + " && " +
                 "chmod 644 " + MODULE_CONFIG_FILE
         val restoreRes = executor.executeRootCommand(restoreCmd)
 
-        FileUtils.deleteRecursive(tempDir) // 清理
+        FileUtils.deleteRecursive(tempDir) // cleanup
 
         if (!restoreRes.isSuccess) {
             throw Exception(context.getString(R.string.common_error_update_module_config))

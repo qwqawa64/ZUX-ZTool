@@ -6,11 +6,13 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 禁用 UDS 实时连接引擎 (com.lenovo.tbengine) 的 UPS 推送通道。
+ * Disables the UPS push channel of the UDS real-time connection engine
+ * (com.lenovo.tbengine).
  *
- * 推送初始化入口（MyApplication onCreate / 设备开通完成）均经由
- * PushControls.initPushChannel() 与 registerInitReceiver()，
- * 拦截后不再注册 token，也不再向 push 服务器上报设备信息。
+ * Push initialization entry points (MyApplication onCreate / device activation
+ * completion) all go through PushControls.initPushChannel() and
+ * registerInitReceiver(); after interception no token is registered and no
+ * device info is reported to the push server.
  */
 class DisableTbEnginePush : AppHookModule() {
 
@@ -29,12 +31,12 @@ class DisableTbEnginePush : AppHookModule() {
             val initPushChannel = findMethod(pushControlsClass, "initPushChannel")
             hookWithId(initPushChannel, "tbengine_push_init_channel") { _ ->
                 logger.debug("Blocked UPS push channel initialization.")
-                // no-op：不初始化推送通道
+                // no-op: do not initialize the push channel
             }
             val registerInitReceiver = findMethod(pushControlsClass, "registerInitReceiver")
             hookWithId(registerInitReceiver, "tbengine_push_init_receiver") { _ ->
                 logger.debug("Blocked UPS push init receiver registration.")
-                // no-op：不注册推送初始化接收器
+                // no-op: do not register the push init receiver
             }
         } catch (t: Throwable) {
             logger.error("Failed to hook PushControls", t)

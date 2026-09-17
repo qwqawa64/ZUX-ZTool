@@ -4,22 +4,22 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
- * Hook 反射工具（Kotlin 版）。
+ * Hook reflection utilities (Kotlin version).
  * <p>
- * 提供 XposedHelpers 风格的 [findField] / [findMethod]，沿继承链向上递归查找。
- * 由 [BaseHookModule] 的成员方法委托调用。
+ * Provides XposedHelpers-style [findField] / [findMethod], recursively walking
+ * up the inheritance chain. Invoked via delegation from [BaseHookModule] members.
  * </p>
  */
 object HookReflectionHelper {
 
     /**
-     * 在 [startClass] 及其父类中递归查找指定名称的字段。
-     * <p>找到的字段会自动 [Field.isAccessible] 置为 true。</p>
+     * Recursively finds the field of the given name in [startClass] and its superclasses.
+     * <p>The found field is automatically set accessible via [Field.isAccessible].</p>
      *
-     * @param startClass 起始类
-     * @param name       字段名
-     * @return 可访问的 [Field]
-     * @throws NoSuchFieldException 如果在整个继承链中都未找到
+     * @param startClass starting class
+     * @param name       field name
+     * @return an accessible [Field]
+     * @throws NoSuchFieldException if not found anywhere in the inheritance chain
      */
     @Throws(NoSuchFieldException::class)
     fun findField(startClass: Class<*>?, name: String): Field {
@@ -37,14 +37,14 @@ object HookReflectionHelper {
     }
 
     /**
-     * 在 [startClass] 及其父类中递归查找指定签名的方法。
-     * <p>找到的方法会自动 [Method.isAccessible] 置为 true。</p>
+     * Recursively finds the method of the given signature in [startClass] and its superclasses.
+     * <p>The found method is automatically set accessible via [Method.isAccessible].</p>
      *
-     * @param startClass     起始类
-     * @param name           方法名
-     * @param parameterTypes 参数类型（变长）
-     * @return 可访问的 [Method]
-     * @throws NoSuchMethodException 如果在整个继承链中都未找到
+     * @param startClass     starting class
+     * @param name           method name
+     * @param parameterTypes parameter types (varargs)
+     * @return an accessible [Method]
+     * @throws NoSuchMethodException if not found anywhere in the inheritance chain
      */
     @Throws(NoSuchMethodException::class)
     fun findMethod(startClass: Class<*>?, name: String, vararg parameterTypes: Class<*>?): Method {

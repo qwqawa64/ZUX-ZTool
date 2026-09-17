@@ -87,7 +87,7 @@ class OtaSettingsViewModel(
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "读取OTA信息失败", e)
+                Log.e(TAG, "Failed to read OTA info", e)
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.copy(
                         isFetchingOtaInfo = false,

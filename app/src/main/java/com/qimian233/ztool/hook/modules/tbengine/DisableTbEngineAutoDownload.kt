@@ -6,11 +6,13 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * 禁用 UDS 实时连接引擎 (com.lenovo.tbengine) 的固件包自动下载。
+ * Disables automatic firmware package downloads in the UDS real-time
+ * connection engine (com.lenovo.tbengine).
  *
- * 自动路径收敛在 ServiceController.startOrResumeDownload(Context)，
- * 用户手动下载走 userStartOrResumeDownload(Context)，互不影响。
- * 同时钳制 OtaPolicy 的 Wi-Fi 自动下载策略位，防止其它路径重新打开。
+ * The automatic path converges on ServiceController.startOrResumeDownload(Context);
+ * user-initiated downloads go through userStartOrResumeDownload(Context) and stay
+ * unaffected. Also clamps the OtaPolicy Wi-Fi auto-download policy bit to prevent
+ * other paths from re-enabling it.
  */
 class DisableTbEngineAutoDownload : AppHookModule() {
 
@@ -33,7 +35,7 @@ class DisableTbEngineAutoDownload : AppHookModule() {
             )
             hookWithId(startOrResumeDownload, "tbengine_auto_download_start") { _ ->
                 logger.debug("Blocked automatic OTA download trigger.")
-                // no-op：吞掉自动下载启动
+                // no-op: swallow automatic download start
             }
         } catch (t: Throwable) {
             logger.error("Failed to hook ServiceController.startOrResumeDownload", t)

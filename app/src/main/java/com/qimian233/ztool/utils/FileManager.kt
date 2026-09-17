@@ -14,19 +14,19 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Android API 33+ 文件管理工具类
- * 支持 SAF (Storage Access Framework) 和 MediaStore 方式读写文件
+ * File management utilities for Android API 33+
+ * Supports reading and writing files via SAF (Storage Access Framework) and MediaStore
  */
 object FileManager {
     private const val TAG = "FileManager"
 
     /**
-     * 使用 SAF 导出文件
-     * @param context 上下文
-     * @param uri 目标目录Uri
-     * @param fileName 要保存的文件名
-     * @param sourceFile 要导出的源文件
-     * @return 是否成功
+     * Export a file via SAF
+     * @param context context
+     * @param uri target directory Uri
+     * @param fileName file name to save
+     * @param sourceFile source file to export
+     * @return whether the export succeeded
      */
     fun exportFileWithSAF(context: Context, uri: Uri?, fileName: String, sourceFile: File?): Boolean {
         if (uri == null || sourceFile == null || !sourceFile.exists()) return false
@@ -44,24 +44,24 @@ object FileManager {
                     }
                 }
             }
-            Log.i(TAG, "文件已导出到$uri$fileName")
+            Log.i(TAG, "file exported to $uri$fileName")
             true
         } catch (e: IOException) {
-            Log.e(TAG, "导出文件失败: " + e.message)
+            Log.e(TAG, "failed to export file: " + e.message)
             false
         }
     }
 
     /**
-     * 使用 SAF 创建文件并保存配置
+     * Create a file via SAF and save config content
      */
     fun saveConfigWithSAF(context: Context, uri: Uri?, fileName: String, configContent: String?): Boolean {
         if (uri == null) {
-            Log.e(TAG, "uri为空")
+            Log.e(TAG, "uri is null")
             return false
         }
         if (configContent == null) {
-            Log.e(TAG, "配置内容为空")
+            Log.e(TAG, "config content is null")
             return false
         }
         val resolver = context.contentResolver
@@ -71,21 +71,21 @@ object FileManager {
                 outputStream.use { out ->
                     out.write(configContent.toByteArray(StandardCharsets.UTF_8))
                     out.flush()
-                    Log.i(TAG, "配置已保存到$uri$fileName")
+                    Log.i(TAG, "config saved to $uri$fileName")
                     true
                 }
             } else {
-                Log.e(TAG, "输出流为空")
+                Log.e(TAG, "output stream is null")
                 false
             }
         } catch (e: IOException) {
-            Log.e(TAG, "保存文件失败: " + e.message)
+            Log.e(TAG, "failed to save file: " + e.message)
             false
         }
     }
 
     /**
-     * 使用 SAF 打开并读取文件
+     * Open and read a file via SAF
      */
     fun readConfigWithSAF(context: Context, uri: Uri): String? {
         return try {
@@ -105,13 +105,13 @@ object FileManager {
                 null
             }
         } catch (e: Exception) {
-            Log.e("SAF", "SAF 读取文件失败: " + e.message)
+            Log.e("SAF", "SAF failed to read file: " + e.message)
             null
         }
     }
 
     /**
-     * 生成备份文件名
+     * Generate a backup file name
      */
     fun generateBackupFileName(): String {
         val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())

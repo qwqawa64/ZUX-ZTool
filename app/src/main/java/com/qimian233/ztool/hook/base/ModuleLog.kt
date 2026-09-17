@@ -5,56 +5,56 @@ import com.qimian233.ztool.hook.HookInit
 import io.github.libxposed.api.XposedInterface
 
 /**
- * Hook 模块日志器（Log4j 风格，六级别）。
+ * Hook module logger (Log4j style, six levels).
  *
- * 每个 [BaseHookModule] 子类通过基类的 [logger][BaseHookModule.logger] 字段使用，
- * 采用 Log4j 风格的六级 API：
- * - `trace` → Android VERBOSE (priority 2)，始终输出
- * - `debug` → Android DEBUG (priority 3)，受 [DEBUG] 开关控制
- * - `info`  → Android INFO (priority 4)，始终输出
- * - `warn`  → Android WARN (priority 5)，始终输出
- * - `error` → Android ERROR (priority 6)，始终输出，可选 [Throwable]
- * - `fatal` → Android ASSERT (priority 7)，始终输出，可选 [Throwable]
+ * Each [BaseHookModule] subclass uses this via the base class's
+ * [logger][BaseHookModule.logger] field, with a Log4j-style six-level API:
+ * - `trace` → Android VERBOSE (priority 2), always emitted
+ * - `debug` → Android DEBUG (priority 3), gated by the [DEBUG] switch
+ * - `info`  → Android INFO (priority 4), always emitted
+ * - `warn`  → Android WARN (priority 5), always emitted
+ * - `error` → Android ERROR (priority 6), always emitted, optional [Throwable]
+ * - `fatal` → Android ASSERT (priority 7), always emitted, optional [Throwable]
  *
- * [error] 和 [fatal] 携带 [Throwable] 时，行为与旧版 `logError` 一致：
- * [DEBUG] 开启时输出最多 10 行堆栈，关闭时仅输出首行。
+ * When [error] and [fatal] carry a [Throwable], behavior matches the legacy
+ * `logError`: up to 10 stack lines when [DEBUG] is on, first line only when off.
  *
- * Companion 中保留全局 [DEBUG] 开关与 [refreshDebugLoggingEnabled]。
+ * The global [DEBUG] switch and [refreshDebugLoggingEnabled] are kept in the companion.
  */
 class ModuleLog(
     private val moduleName: String,
     @Volatile var xposed: XposedInterface? = null
 ) {
 
-    // ── 实例日志方法 ──────────────────────────────────────────
+    // ── Instance log methods ──────────────────────────────────
 
-    /** VERBOSE — 始终输出，用于最低优先级的诊断信息。 */
+    /** VERBOSE — always emitted, for lowest-priority diagnostics. */
     fun trace(msg: String) {
         xposed?.log(2, TAG, "[$moduleName] $msg")
     }
 
-    /** DEBUG — 受 [DEBUG] 开关控制，用于详细调试信息。 */
+    /** DEBUG — gated by the [DEBUG] switch, for verbose debugging info. */
     fun debug(msg: String) {
         if (DEBUG) {
             xposed?.log(3, TAG, "[$moduleName] $msg")
         }
     }
 
-    /** INFO — 始终输出，用于常规操作日志。 */
+    /** INFO — always emitted, for routine operational logs. */
     fun info(msg: String) {
         xposed?.log(4, TAG, "[$moduleName] $msg")
     }
 
-    /** WARN — 始终输出，用于警告信息。 */
+    /** WARN — always emitted, for warnings. */
     fun warn(msg: String) {
         xposed?.log(5, TAG, "[$moduleName] $msg")
     }
 
     /**
-     * ERROR — 始终输出，用于错误信息。
+     * ERROR — always emitted, for errors.
      *
-     * @param msg 错误描述
-     * @param t   可选 [Throwable]；提供时附加堆栈（受 [DEBUG] 控制截断长度）
+     * @param msg error description
+     * @param t   optional [Throwable]; when provided, appends the stack (length truncated per [DEBUG])
      */
     fun error(msg: String, t: Throwable? = null) {
         val body = if (t != null) formatWithStack(msg, t) else "[$moduleName] $msg"
@@ -62,20 +62,20 @@ class ModuleLog(
     }
 
     /**
-     * FATAL — 始终输出，用于致命错误。
+     * FATAL — always emitted, for fatal errors.
      *
-     * @param msg 错误描述
-     * @param t   可选 [Throwable]
+     * @param msg error description
+     * @param t   optional [Throwable]
      */
     fun fatal(msg: String, t: Throwable? = null) {
         val body = if (t != null) formatWithStack(msg, t) else "[$moduleName] $msg"
         xposed?.log(7, TAG, body)
     }
 
-    /** 当前 debug 日志是否开启（简便查询 [DEBUG]）。 */
+    /** Whether debug logging is currently on (convenience query of [DEBUG]). */
     fun isDebugEnabled(): Boolean = DEBUG
 
-    // ── 内部工具 ──────────────────────────────────────────────
+    // ── Internal helpers ──────────────────────────────────────
 
     private fun formatWithStack(msg: String, t: Throwable): String {
         refreshDebugLoggingEnabled()
@@ -93,22 +93,22 @@ class ModuleLog(
         return sb.toString()
     }
 
-    // ── companion：全局状态 ────────────────────────────────────
+    // ── companion: global state ───────────────────────────────
 
     companion object {
         private const val TAG = "ZToolXposedModule"
         private const val PREFS_NAME = "xposed_module_config"
         private const val DEBUG_REFRESH_INTERVAL_MS = 1000L
 
-        /** 详细日志开关。 */
+        /** Detailed logging switch. */
         @Volatile
         var DEBUG: Boolean = false
         @Volatile
         private var lastDebugRefreshTime: Long = 0L
 
         /**
-         * 从远程配置刷新 [DEBUG] 开关。
-         * 调用频率受 `DEBUG_REFRESH_INTERVAL_MS` 限制。
+         * Refreshes the [DEBUG] switch from remote preferences.
+         * Call frequency is limited by `DEBUG_REFRESH_INTERVAL_MS`.
          */
         fun refreshDebugLoggingEnabled() {
             val now = System.currentTimeMillis()

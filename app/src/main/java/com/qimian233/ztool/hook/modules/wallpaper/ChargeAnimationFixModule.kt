@@ -6,9 +6,11 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * 充电动画修复模块
- * 修复ZUI系统壁纸设置中的充电动画显示问题，强制显示全部充电动画选项
- * 通过修改Utilities类的关键方法，确保系统使用包含全部充电动画的资源数组
+ * Charge animation fix module.
+ * Fixes the charge animation display issue in the ZUI system wallpaper settings,
+ * forcing all charge animation options to be shown.
+ * By modifying key methods of the Utilities class, ensures the system uses the
+ * resource array containing all charge animations.
  */
 class ChargeAnimationFixModule : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.CHARGE_ANIMATION_FIX.name
@@ -25,29 +27,29 @@ class ChargeAnimationFixModule : AppHookModule() {
     }
 
     /**
-     * Hook Utilities类的关键方法，修复充电动画显示
+     * Hooks key methods of the Utilities class to fix charge animation display.
      */
     private fun hookChargeAnimationUtils(classLoader: ClassLoader) {
         try {
             val utilsClass = classLoader.loadClass(UTILS_CLASS)
 
-            // 修改Utilities.isLegiony()返回true
-            // 原逻辑：(!Utilities.isLegiony() || Utilities.isOversea) ? "chargeStyle_row" : "chargeStyle"
-            // 通过强制isLegiony返回true，确保使用"chargeStyle"数组
+            // Force Utilities.isLegiony() to return true
+            // Original logic: (!Utilities.isLegiony() || Utilities.isOversea) ? "chargeStyle_row" : "chargeStyle"
+            // Forcing isLegiony to return true ensures the "chargeStyle" array is used
             val isLegionyMethod = utilsClass.getDeclaredMethod("isLegiony")
             hookWithId(
                 isLegionyMethod,
                 "is_legiony"
             ) { true }
 
-            // 修改Utilities.isOversea()返回false
+            // Force Utilities.isOversea() to return false
             val isOverseaMethod = utilsClass.getDeclaredMethod("isOversea")
             hookWithId(
                 isOverseaMethod,
                 "is_oversea"
             ) { false }
 
-            // 修复平板设备的充电动画显示问题
+            // Fix charge animation display on tablet devices
             val isPadMethod = utilsClass.getDeclaredMethod("isPad")
             hookWithId(isPadMethod, "is_pad") { false }
 
