@@ -152,52 +152,63 @@ class SliderLongPressTestHook : AppHookModule() {
     }
 
     /**
-     * Mirrors BrightnessDetailDialogController.BrightnessDetailDialog: the same
-     * dialog theme, the same brightness_detail_dialog layout root (so the
-     * rounded background and insets behave identically), and the same window
-     * parameters (title, cutout mode, FLAG_LAYOUT_IN_SCREEN, zero dim). The
-     * brightness-specific children of brightness_detail_container are replaced
-     * with the volume rows; the brightness dialog's 90-degree rotation is not
-     * applied so the volume bars stay horizontal.
+     * Reproduces the BrightnessDetailDialog geometry measured from the live
+     * reference dump: a fullscreen transparent window whose visible part is a
+     * vertical panel docked to the right edge (80% of screen height, width
+     * equal to the QS frame column). The brightness layout root is not reused
+     * because its container sizing is driven by ConstraintSet logic that only
+     * runs inside BrightnessDetailDialog; the panel here is laid out directly.
+     * The volume bars stay horizontal inside the vertical panel.
      */
     private fun buildBrightnessStyleVolumeDialog(context: Context): Dialog {
         val res = context.resources
         val pkg = context.packageName
         val themeId = res.getIdentifier(BRIGHTNESS_DIALOG_THEME, "style", pkg)
-        val dialog = if (themeId != 0) Dialog(context, themeId) else Dialog(context)
+        val dialog = if (themeId != 0) {
+            Dialog(context, themeId)
+        } else {
+            logger.warn("Brightness dialog theme not found, using default theme")
+            Dialog(context)
+        }
 
-        val layoutId = res.getIdentifier(BRIGHTNESS_DETAIL_LAYOUT, "layout", pkg)
-        val containerId = res.getIdentifier(BRIGHTNESS_DETAIL_CONTAINER, "id", pkg)
-        var contentHost: ViewGroup? = null
-        if (layoutId != 0) {
-            try {
-                val root = LayoutInflater.from(context).inflate(layoutId, null)
-                val container = if (containerId != 0) {
-                    root.findViewById(containerId) as? ViewGroup
-                } else {
-                    null
-                }
-                if (container != null) {
-                    container.removeAllViews()
-                    container.addView(
-                        createVolumeDetailView(context, container),
-                        ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                    )
-                    dialog.setContentView(root)
-                    contentHost = container
-                }
-            } catch (t: Throwable) {
-                logger.warn("Failed to reuse brightness detail layout: $t")
-            }
+        val metrics = context.resources.displayMetrics
+        val panelWidth = res.getDimensionPixelSize(
+            res.getIdentifier("brightness_bar_width_detail", "dimen", pkg)
+        ).takeIf { it > 0 } ?: (metrics.widthPixels / 3)
+        val panelHeight = (metrics.heightPixels * 0.8f).toInt()
+
+        val panelBackground = buildPanelBackground(context)
+
+        val panel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(dp(context, 24), dp(context, 24), dp(context, 24), dp(context, 24))
+            background = panelBackground
         }
-        if (contentHost == null) {
-            dialog.setContentView(
-                createVolumeDetailView(context, android.widget.FrameLayout(context))
+        panel.addView(
+            createVolumeDetailView(context, panel),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
-        }
+        )
+
+        val root = android.widget.FrameLayout(context)
+        root.addView(
+            panel,
+            android.widget.FrameLayout.LayoutParams(
+                panelWidth,
+                panelHeight,
+                android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
+            ).apply { marginEnd = dp(context, 16) }
+        )
+        dialog.setContentView(
+            root,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
 
         dialog.setCanceledOnTouchOutside(true)
         dialog.window?.let { window ->
@@ -214,6 +225,25 @@ class SliderLongPressTestHook : AppHookModule() {
             }
         }
         return dialog
+    }
+
+    /**
+     * Rounded translucent panel background approximating the brightness detail
+     * panel surface, using the SystemUI QS panel corner radius.
+     */
+    private fun buildPanelBackground(context: Context): android.graphics.drawable.Drawable {
+        val radius = try {
+            context.resources.getDimension(
+                context.resources.getIdentifier(SLIDER_CORNER_DIMEN, "dimen", context.packageName)
+            )
+        } catch (_: Throwable) {
+            dp(context, 16).toFloat()
+        }
+        return android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = radius
+            setColor(0xE6FFFFFF.toInt())
+        }
     }
 
     /**
@@ -588,8 +618,6 @@ class SliderLongPressTestHook : AppHookModule() {
         private const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
         private const val BRIGHTNESS_SLIDER_FIELD = "mBrightnessSlider"
         private const val BRIGHTNESS_DIALOG_THEME = "Theme_SystemUI_Dialog_GlobalActionsLite"
-        private const val BRIGHTNESS_DETAIL_LAYOUT = "brightness_detail_dialog"
-        private const val BRIGHTNESS_DETAIL_CONTAINER = "brightness_detail_container"
         private const val ZUI_BRIGHTNESS_SLIDER_LAYOUT = "quick_settings_brightness_dialog_zui"
         private const val SLIDER_DRAWABLE = "brightness_progress_selector"
         private const val SLIDER_CORNER_DIMEN = "qs_corner_radius"
