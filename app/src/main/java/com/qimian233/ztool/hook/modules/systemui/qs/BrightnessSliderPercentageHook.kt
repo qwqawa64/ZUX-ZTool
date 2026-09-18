@@ -270,16 +270,23 @@ class BrightnessSliderPercentageHook : AppHookModule() {
             brightnessSlider = sliderView as? SeekBar
                 ?: sliderView.javaClass.getDeclaredField("mBrightnessSlider").get(sliderView) as SeekBar
         } catch (_: Throwable) {
-            return Color.argb(0xff, 0xd8, 0xd8, 0xd8)
+            return BASE_PERCENT_COLOR
         }
+        // Mirror stock updateBrightnessStartImg: progress normalized over (max - min start),
+        // filter only applied at progress >= 0.2 with fMin ramping 0.2 -> 0.4; below that
+        // the base drawable color shows through with no filter.
         val progress = ((brightnessSlider.progress - brightnessSlider.min) * 1.0f) /
                 1.coerceAtLeast(brightnessSlider.max - brightnessSlider.min)
         if (progress < 0.2f) {
-            return Color.argb(0xff, 0xd8, 0xd8, 0xd8)
+            return BASE_PERCENT_COLOR
         }
-        var gray = ((1.0f - ((progress - 0.2f) / 0.2f).coerceAtMost(1.0f)) * 216.0f).toInt()
-        gray = gray.coerceAtLeast(0x80)
-        val alpha = (kotlin.math.floor(progress * 85.0f).toInt() + 170).coerceAtMost(255)
+        val fMin = ((progress - 0.2f) / 0.2f).coerceAtMost(1.0f)
+        return applyStockIconFilter(fMin)
+    }
+
+    private fun applyStockIconFilter(fMin: Float): Int {
+        val gray = ((1.0f - fMin) * 216.0f).toInt()
+        val alpha = (kotlin.math.floor(fMin * 85.0f).toInt() + 170).coerceAtMost(255)
         return Color.argb(alpha, gray, gray, gray)
     }
 
@@ -293,7 +300,7 @@ class BrightnessSliderPercentageHook : AppHookModule() {
     private fun createPercentView(context: Context): TextView {
         val textView = TextView(context)
         textView.tag = SLIDER_PERCENT_TAG
-        textView.setTextColor(Color.argb(0xff, 0xd8, 0xd8, 0xd8))
+        textView.setTextColor(BASE_PERCENT_COLOR)
         textView.setTypeface(Typeface.DEFAULT_BOLD)
         textView.textSize = 13f
         textView.setShadowLayer(2f, 0f, 0f, Color.BLACK)
@@ -491,5 +498,6 @@ class BrightnessSliderPercentageHook : AppHookModule() {
         private const val BRIGHTNESS_ROOT_FIELD = "mBrightnessSliderRoot"
         private const val BRIGHTNESS_ICON_FIELD = "mBrightnessIconMark"
         private const val LABEL_GAP_DP = 2
+        private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
     }
 }

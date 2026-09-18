@@ -281,7 +281,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
     private fun createPercentView(context: Context): TextView {
         val textView = TextView(context)
         textView.tag = SLIDER_PERCENT_TAG
-        textView.setTextColor(Color.argb(0xff, 0xd8, 0xd8, 0xd8))
+        textView.setTextColor(BASE_PERCENT_COLOR)
         textView.setTypeface(Typeface.DEFAULT_BOLD)
         textView.textSize = 13f
         textView.setShadowLayer(2f, 0f, 0f, Color.BLACK)
@@ -467,13 +467,20 @@ class VolumeSliderPercentageHook : AppHookModule() {
     }
 
     private fun resolveVolumePercentColor(seekBarProgress: Int): Int {
-        val progress = (seekBarProgress * 1.0f) / 15000.0f
-        if (progress < 0.2f) {
-            return Color.argb(0xff, 0xd8, 0xd8, 0xd8)
+        // Mirror stock updateVolumeStartImgForAnimationFlag: discrete level = ceil(progress/10000),
+        // filter only applied at level >= 3 with fMin = (level - 2) / 3; below that the base
+        // drawable color shows through with no filter.
+        val level = kotlin.math.ceil((seekBarProgress * 1.0f) / 10000.0f).toInt()
+        if (level < 3) {
+            return BASE_PERCENT_COLOR
         }
-        var gray = ((1.0f - ((progress - 0.2f) / 0.2f).coerceAtMost(1.0f)) * 216.0f).toInt()
-        gray = gray.coerceAtLeast(0x80)
-        val alpha = (kotlin.math.floor(progress * 85.0f).toInt() + 170).coerceAtMost(255)
+        val fMin = ((level - 2) / 3.0f).coerceAtMost(1.0f)
+        return applyStockIconFilter(fMin)
+    }
+
+    private fun applyStockIconFilter(fMin: Float): Int {
+        val gray = ((1.0f - fMin) * 216.0f).toInt()
+        val alpha = (kotlin.math.floor(fMin * 85.0f).toInt() + 170).coerceAtMost(255)
         return Color.argb(alpha, gray, gray, gray)
     }
 
@@ -494,5 +501,6 @@ class VolumeSliderPercentageHook : AppHookModule() {
         private const val VOLUME_ROOT_FIELD = "mVolumeSliderRoot"
         private const val VOLUME_ICON_FIELD = "mMediaVolumeIconMark"
         private const val LABEL_GAP_DP = 2
+        private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
     }
 }
