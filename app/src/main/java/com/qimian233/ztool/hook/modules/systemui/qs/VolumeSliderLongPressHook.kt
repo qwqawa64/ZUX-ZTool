@@ -290,10 +290,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             currentDialog = null
             unregisterPanelObservers()
             restoreNativeAppListCallback()
-            try {
-                context.setTheme(resolveStyleId(context, "Theme_SystemUI") ?: 0)
-            } catch (_: Throwable) {
-            }
         }
         registerPanelObservers(context)
 
@@ -685,9 +681,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         dndTile = buildTile(
             context, classLoader,
             labelResNames = arrayOf("quick_settings_dnd_label", "widget_text_disturb_free"),
-            iconActiveNames = arrayOf(
-                "controlcenter_1_btn_zenmode_on", "controlcenter_1_btn_zenmode_off"
-            ),
+            // Stock DndTile uses zenmode_off for BOTH states; the tile tint
+            // conveys activation, so no separate "on" icon exists.
+            iconActiveNames = arrayOf("controlcenter_1_btn_zenmode_off"),
             iconInactiveNames = arrayOf("controlcenter_1_btn_zenmode_off"),
             isOn = { dndTileOn() },
             onToggle = { toggleDnd() }
@@ -957,8 +953,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // Resource / reflection helpers
     // ------------------------------------------------------------------
 
+    /** Style ids are unresolvable on this ROM; the caller must have a fallback. */
     private fun resolveStyleId(context: Context, vararg names: String): Int? {
-        return resolveResourceId(context, "style", *names)
+        return resolveResourceId(context, "style", *names, warnOnMiss = false)
     }
 
     private fun resolveDrawableId(context: Context, vararg names: String): Int? {
@@ -974,7 +971,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * lookups (R$style etc.) don't work on this ROM: the R inner classes are
      * stripped from the APK dex because AGP inlines the ids at compile time.
      */
-    private fun resolveResourceId(context: Context, type: String, vararg names: String): Int? {
+    private fun resolveResourceId(
+        context: Context,
+        type: String,
+        vararg names: String,
+        warnOnMiss: Boolean = true
+    ): Int? {
         val res = context.resources
         val pkg = context.packageName
         for (name in names) {
@@ -986,7 +988,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 return id
             }
         }
-        logger.warn("volume panel: resolveResourceId($type, ${names.joinToString()}) found nothing")
+        val message = "volume panel: resolveResourceId($type, ${names.joinToString()}) found nothing"
+        if (warnOnMiss) logger.warn(message) else logger.debug(message)
         return null
     }
 
