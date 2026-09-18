@@ -133,6 +133,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private const val APP_SECTION_TAG = "ztool_volume_panel_app_section"
         private const val APP_VOLUME_SETTINGS_KEY = "zui_app_volume"
         private const val MAX_APP_ROWS = 3
+        private const val TILE_LOTTIE_TAG = "ztool_tile_lottie_slowed"
+        private const val TILE_LOTTIE_SPEED = 0.6f
 
         /** Called by [ControlCenterLongPressHook] on the volume slider long press. */
         @JvmStatic
@@ -298,21 +300,27 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        container.addView(
-            buildStreamSliderRow(context, am, AudioManager.STREAM_MUSIC, resolveDrawableId(
+        val sliderRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        sliderRow.addView(
+            buildStreamColumn(context, am, AudioManager.STREAM_MUSIC, resolveDrawableId(
                 context, "ic_volume_media_zui", "ic_volume_media"
-            ))
+            ), 0)
         )
         if (!AudioSystemHelperShim.isSingleVolume(context)) {
-            container.addView(
-                buildStreamSliderRow(context, am, AudioManager.STREAM_RING, resolveDrawableId(
+            sliderRow.addView(
+                buildStreamColumn(context, am, AudioManager.STREAM_RING, resolveDrawableId(
                     context, "ic_volume_ringer_zui", "ic_volume_ringer"
-                ), spacingTopDp = 12)
+                ), 16)
             )
         }
-        container.addView(buildAppSection(context), LinearLayout.LayoutParams(
+        // App columns are appended inline by refreshAppSection().
+        sliderRow.addView(buildAppSection(context))
+        container.addView(sliderRow, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = dp(context, 12) })
+        ))
         container.addView(buildTileRow(context, classLoader), LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = dp(context, 12) })
@@ -347,6 +355,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         dialog.setContentView(root)
         try {
             val window = dialog.window
+            // The framework fallback theme ships an opaque windowBackground;
+            // the shade blur behind the dialog IS the background.
+            window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
             window?.setDimAmount(0f)
             try {
                 window?.attributes?.layoutInDisplayCutoutMode = 3
@@ -448,63 +459,100 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // Stream sliders (media / ring)
     // ------------------------------------------------------------------
 
-    private fun buildStreamSliderRow(
+    /**
+     * Vertical slider column (icon on top, vertical bar, percent below),
+     * matching the control-center vertical slider style. The bar is a
+     * horizontal SeekBar rotated 270deg: the progress-increasing axis points
+     * UP, so dragging up raises the value, dragging down lowers it.
+     */
+    private fun buildSliderColumn(
         context: Context,
-        am: AudioManager,
-        stream: Int,
-        iconRes: Int?,
-        spacingTopDp: Int = 0
+        iconDrawable: android.graphics.drawable.Drawable?,
+        initial: Int,
+        maxValue: Int,
+        onProgress: (Int) -> Unit = {},
+        onStop: (Int) -> Unit = {}
     ): View {
-        val row = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+        val column = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
         }
-        if (iconRes != null) {
-            row.addView(ImageView(context).apply {
-                setImageResource(iconRes)
-                val size = dp(context, 24)
+        if (iconDrawable != null) {
+            column.addView(ImageView(context).apply {
+                setImageDrawable(iconDrawable)
+                val size = dp(context, 22)
                 layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                    marginEnd = dp(context, 12)
-                    topMargin = dp(context, spacingTopDp)
+                    bottomMargin = dp(context, 10)
                 }
             })
         }
         val percentView = TextView(context).apply {
-            textSize = 13f
+            textSize = 12f
             setTextColor(obtainThemeColor(context, android.R.attr.textColorPrimary, Color.GRAY))
-            text = formatPercent(am.getStreamVolume(stream), am.getStreamMaxVolume(stream))
+            text = formatPercent(initial, maxValue)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(context, 10) }
         }
-        val seekBar = SeekBar(context).apply {
-            max = am.getStreamMaxVolume(stream)
-            progress = am.getStreamVolume(stream)
+        val barLength = dp(context, 160)
+        val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
+            .coerceAtLeast(dp(context, 18))
+        val barSlot = FrameLayout(context)
+        barSlot.addView(SeekBar(context).apply {
+            max = maxValue
+            progress = initial
             thumb = null
             progressDrawable = resolveSliderDrawable(context)
-            val barHeight = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
-            minHeight = barHeight
-            maxHeight = barHeight
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            minHeight = barThickness
+            maxHeight = barThickness
+            rotation = 270f
+            layoutParams = FrameLayout.LayoutParams(barLength, barThickness, Gravity.CENTER)
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) {
                     if (!fromUser) return
-                    try {
-                        am.setStreamVolume(stream, progress, 0)
-                    } catch (t: Throwable) {
-                        logger.warn("setStreamVolume($stream) failed: ${t.message}")
-                    }
                     percentView.text = formatPercent(progress, bar.max)
+                    onProgress(progress)
                 }
 
                 override fun onStartTrackingTouch(bar: SeekBar) {}
-                override fun onStopTrackingTouch(bar: SeekBar) {}
+
+                override fun onStopTrackingTouch(bar: SeekBar) {
+                    onStop(bar.progress)
+                }
             })
-        }
-        row.addView(seekBar)
-        row.addView(percentView.apply {
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { marginStart = dp(context, 10) }
         })
-        return row
+        column.addView(barSlot, LinearLayout.LayoutParams(
+            barThickness, barLength
+        ).apply {
+            setMargins(dp(context, 6), 0, dp(context, 6), 0)
+        })
+        column.addView(percentView)
+        return column
+    }
+
+    private fun buildStreamColumn(
+        context: Context,
+        am: AudioManager,
+        stream: Int,
+        iconRes: Int?,
+        marginStartDp: Int = 0
+    ): View {
+        val column = buildSliderColumn(
+            context,
+            iconRes?.let { context.getDrawable(it) },
+            initial = am.getStreamVolume(stream),
+            maxValue = am.getStreamMaxVolume(stream),
+            onProgress = { progress ->
+                try {
+                    am.setStreamVolume(stream, progress, 0)
+                } catch (t: Throwable) {
+                    logger.warn("setStreamVolume($stream) failed: ${t.message}")
+                }
+            }
+        )
+        (column.layoutParams as? LinearLayout.LayoutParams)?.marginStart =
+            dp(context, marginStartDp)
+        return column
     }
 
     /**
@@ -546,12 +594,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 return
             }
             section.visibility = View.VISIBLE
-            val pm = context.packageManager
-            val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             for (entry in entries) {
-                section.addView(buildAppSliderRow(context, pm, am, entry, classLoader))
+                section.addView(buildAppColumn(context, entry))
             }
-            logger.debug("volume panel: app section rows=${entries.size}")
+            logger.debug("volume panel: app section columns=${entries.size}")
         } catch (t: Throwable) {
             logger.error("Failed to refresh app volume section", t)
         }
@@ -599,68 +645,27 @@ class VolumeSliderLongPressHook : AppHookModule() {
         return entries
     }
 
-    private fun buildAppSliderRow(
+    private fun buildAppColumn(
         context: Context,
-        pm: android.content.pm.PackageManager,
-        am: AudioManager,
-        entry: AppVolumeEntry,
-        classLoader: ClassLoader
+        entry: AppVolumeEntry
     ): View {
-        val row = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        row.addView(ImageView(context).apply {
-            val appInfo = appIconInfo(context, entry.uid)
-            if (appInfo != null) {
-                setImageDrawable(appInfo.loadIcon(pm))
-            } else {
-                setImageResource(resolveDrawableId(context, "ic_volume_media_zui") ?: 0)
-            }
-            val size = dp(context, 24)
-            layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                marginEnd = dp(context, 12)
-                topMargin = dp(context, 8)
-            }
-        })
-        val percentView = TextView(context).apply {
-            textSize = 13f
-            setTextColor(obtainThemeColor(context, android.R.attr.textColorPrimary, Color.GRAY))
-            text = "${entry.initialPercent}%"
-        }
-        val seekBar = SeekBar(context).apply {
-            max = 100
-            progress = entry.initialPercent
-            thumb = null
-            progressDrawable = resolveSliderDrawable(context)
-            val barHeight = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
-            minHeight = barHeight
-            maxHeight = barHeight
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) {
-                    if (!fromUser) return
-                    percentView.text = "$progress%"
-                }
-
-                override fun onStartTrackingTouch(bar: SeekBar) {}
-
-                override fun onStopTrackingTouch(bar: SeekBar) {
-                    commitAppVolume(am, context, entry.uid, bar.progress)
-                }
-            })
-        }
-        row.addView(seekBar)
-        row.addView(percentView.apply {
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { marginStart = dp(context, 10) }
-        })
-        return row
+        val icon = appIconInfo(context, entry.uid)
+            ?.let { context.packageManager.getApplicationIcon(it) }
+            ?: resolveDrawableId(context, "ic_volume_media_zui")
+                ?.let { context.getDrawable(it) }
+        val column = buildSliderColumn(
+            context, icon,
+            initial = entry.initialPercent,
+            maxValue = 100,
+            onStop = { progress -> commitAppVolume(context, entry.uid, progress) }
+        )
+        (column.layoutParams as? LinearLayout.LayoutParams)?.marginStart = dp(context, 16)
+        return column
     }
 
     /** Same call path as RelativeVolumeHelper.setRelativeVolumeInternal. */
-    private fun commitAppVolume(am: AudioManager, context: Context, uid: Int, percent: Int) {
+    private fun commitAppVolume(context: Context, uid: Int, percent: Int) {
+        val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val value = percent / 100.0f
         try {
             val setParameters = am.javaClass.getMethod("setParameters", String::class.java)
@@ -842,6 +847,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             fun refresh() {
                 try {
                     handleStateChanged.invoke(tileView, buildState(isOn()))
+                    slowDownTileLottie(tileView)
                 } catch (t: Throwable) {
                     logger.error("tile refresh failed", t)
                 }
@@ -893,6 +899,32 @@ class VolumeSliderLongPressHook : AppHookModule() {
         return null
     }
 
+    /**
+     * Tile state-change animations are Lottie clips played at native speed;
+     * slow them down so the state transition reads longer.
+     */
+    private fun slowDownTileLottie(root: View) {
+        try {
+            val lottieClass = root.context.classLoader
+                .loadClass("com.airbnb.lottie.LottieAnimationView")
+            val setSpeed = lottieClass.getDeclaredMethod("setSpeed", Float::class.javaPrimitiveType)
+            setSpeed.isAccessible = true
+            fun walk(view: View) {
+                if (lottieClass.isInstance(view)) {
+                    if (view.tag != TILE_LOTTIE_TAG) {
+                        setSpeed.invoke(view, TILE_LOTTIE_SPEED)
+                        view.tag = TILE_LOTTIE_TAG
+                    }
+                } else if (view is ViewGroup) {
+                    for (i in 0 until view.childCount) walk(view.getChildAt(i))
+                }
+            }
+            walk(root)
+        } catch (t: Throwable) {
+            logger.debug("volume panel: lottie speed unavailable: ${t.message}")
+        }
+    }
+
     private fun resourceIcon(classLoader: ClassLoader, resId: Int): Any? {
         return try {
             val resourceIconClass = classLoader.loadClass(RESOURCE_ICON_CLASS)
@@ -928,7 +960,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun muteTileOn(): Boolean {
         val am = dialogContext?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-        return amRingerModeInternal(am) != AudioManager.RINGER_MODE_SILENT
+        // Tile ON = muted (mirrors QMuteTile: active state when ringer is
+        // silent), OFF = sound on.
+        return amRingerModeInternal(am) == AudioManager.RINGER_MODE_SILENT
     }
 
     private fun toggleMute() {
