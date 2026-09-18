@@ -261,39 +261,15 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         // Fullscreen transparent root: the control-center blur behind the shade
         // IS the background (BrightnessDetailDialog does the same; dim stays 0).
-        // Tapping anywhere outside the container dismisses — a fullscreen window
-        // has no "outside", so outside-touch dismissal must be handled here.
+        // Tapping anywhere outside the panel dismisses — a fullscreen window has
+        // no "outside", so outside-touch dismissal must be handled here.
+        // Layout mirrors BrightnessDetailDialog: the panel is anchored to the
+        // screen END and vertically centered on the screen's horizontal midline,
+        // extending symmetrically up and down.
         val root = FrameLayout(context).apply {
             setOnClickListener { currentDialog?.dismiss() }
         }
-        // Container aligned to the QS frame: full width minus QS margins,
-        // bottom-anchored above the navigation inset (portrait behaviour of
-        // BrightnessDetailDialog.updateConstraints).
-        val container = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(context, 20), dp(context, 16), dp(context, 20), dp(context, 16))
-        }
-        val qsMarginStart = resolveDimenPx(context, "qs_margin_start", dp(context, 24))
         val qsMarginEnd = resolveDimenPx(context, "qs_margin_end", dp(context, 24))
-        root.addView(container, FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply {
-            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            setMargins(qsMarginStart, 0, qsMarginEnd, 0)
-        })
-        root.setOnApplyWindowInsetsListener { _, insets ->
-            try {
-                (container.layoutParams as? FrameLayout.LayoutParams)?.let { lp ->
-                    val bottom = insets.systemWindowInsetBottom
-                    if (lp.bottomMargin != bottom) {
-                        lp.bottomMargin = bottom
-                        container.layoutParams = lp
-                    }
-                }
-            } catch (_: Throwable) {
-            }
-            insets
-        }
 
         dialogContext = context
         appSection = null
@@ -318,12 +294,24 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         // App columns are appended inline by refreshAppSection().
         sliderRow.addView(buildAppSection(context))
-        container.addView(sliderRow, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        val panel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(context, 16), dp(context, 16), dp(context, 16), dp(context, 16))
+        }
+        panel.addView(sliderRow, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ))
-        container.addView(buildTileRow(context, classLoader), LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = dp(context, 12) })
+        val tileRow = buildTileRow(context, classLoader)
+        panel.addView(tileRow, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = dp(context, 16) })
+        root.addView(panel, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.CENTER_VERTICAL or Gravity.END
+            marginEnd = qsMarginEnd
+        })
         logger.debug(
             "volume panel: content built, tiles(mute/dnd/vibrate)=" +
                 "${muteTile != null}/${dndTile != null}/${vibrateTile != null}"
@@ -494,9 +482,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { topMargin = dp(context, 10) }
         }
-        val barLength = dp(context, 160)
+        val barLength = dp(context, 230)
         val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
-            .coerceAtLeast(dp(context, 18))
+            .coerceAtLeast(dp(context, 28))
         val barSlot = FrameLayout(context)
         barSlot.addView(SeekBar(context).apply {
             max = maxValue
@@ -537,14 +525,19 @@ class VolumeSliderLongPressHook : AppHookModule() {
         iconRes: Int?,
         marginStartDp: Int = 0
     ): View {
+        // The SeekBar uses 100 display steps and maps back to the stream's own
+        // (coarse) volume steps; without the finer display scale dragging feels
+        // like a staircase of a few big jumps.
+        val streamMax = am.getStreamMaxVolume(stream)
         val column = buildSliderColumn(
             context,
             iconRes?.let { context.getDrawable(it) },
-            initial = am.getStreamVolume(stream),
-            maxValue = am.getStreamMaxVolume(stream),
+            initial = Math.round(am.getStreamVolume(stream) * 100f / streamMax),
+            maxValue = 100,
             onProgress = { progress ->
+                val target = Math.round(progress * streamMax / 100f)
                 try {
-                    am.setStreamVolume(stream, progress, 0)
+                    am.setStreamVolume(stream, target, 0)
                 } catch (t: Throwable) {
                     logger.warn("setStreamVolume($stream) failed: ${t.message}")
                 }
