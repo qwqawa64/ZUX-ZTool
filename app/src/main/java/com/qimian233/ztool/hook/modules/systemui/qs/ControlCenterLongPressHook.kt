@@ -372,16 +372,8 @@ class ControlCenterLongPressHook : AppHookModule() {
             ) { chain ->
                 val result = chain.proceed()
                 val view = chain.thisObject as View
-                val event = chain.args[0] as MotionEvent
-                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                    logger.debug(
-                        "slider: NPS DOWN on " + view.javaClass.simpleName +
-                            "@" + Integer.toHexString(System.identityHashCode(view)) +
-                            ", isVolumeSlider=" + isVolumeSliderView(view)
-                    )
-                }
                 if (isVolumeSliderView(view)) {
-                    trackPress(view, event) {
+                    trackPress(view, chain.args[0] as MotionEvent) {
                         logger.debug("slider: volume long press, opening detail panel")
                         VolumeSliderLongPressHook.onVolumeSliderLongPress(view)
                     }

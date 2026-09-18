@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.database.ContentObserver
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
@@ -18,6 +19,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -92,10 +94,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         systemUiClassLoader = param.defaultClassLoader
         hook = this
         hookVolumeDialogImpl()
-        logger.info(
-            "VolumeSliderLongPressHook installed, classLoader=" +
-                (systemUiClassLoader?.javaClass?.name ?: "null")
-        )
+        logger.info("VolumeSliderLongPressHook installed")
     }
 
     // ------------------------------------------------------------------
@@ -180,10 +179,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             hookWithId(init, "volume_dialog_impl_init") { chain ->
                 val result = chain.proceed()
                 volumeDialogImpl = chain.thisObject
-                logger.info(
-                    "volume panel: VolumeDialogImpl captured at init(" +
-                        chain.args.getOrNull(0) + ")"
-                )
+                logger.info("volume panel: VolumeDialogImpl captured at init()")
                 result
             }
             logger.info("volume panel: VolumeDialogImpl init hook installed")
@@ -194,17 +190,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun readDialogAppPackages(): List<Any> {
         val dialog = volumeDialogImpl ?: run {
-            logger.info("volume panel: no VolumeDialogImpl instance captured yet")
+            logger.debug("volume panel: no VolumeDialogImpl instance captured yet")
             return emptyList()
         }
         return try {
             val raw = findField(dialog.javaClass, "appVolumePackgerList").get(dialog) as? List<*>
-            val list = raw?.filterNotNull() ?: emptyList()
-            logger.info(
-                "volume panel: appVolumePackgerList size=" + list.size +
-                    (list.firstOrNull()?.let { " element=" + it.javaClass.name } ?: "")
-            )
-            list
+            raw?.filterNotNull() ?: emptyList()
         } catch (t: Throwable) {
             logger.warn("volume panel: read appVolumePackgerList failed: ${t.message}")
             emptyList()
@@ -226,14 +217,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
             "Theme_SystemUI_Dialog",
             "Theme_SystemUI"
         ) ?: android.R.style.Theme_DeviceDefault_Dialog
-        logger.debug("volume panel: themeRes=0x${Integer.toHexString(themeRes)}")
         val dialogClass = classLoader.loadClass(SYSTEM_UI_DIALOG_CLASS)
         val ctor = dialogClass.getDeclaredConstructor(
             Context::class.java, Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType
         )
         ctor.isAccessible = true
         val dialog = ctor.newInstance(context, themeRes, true) as Dialog
-        logger.debug("volume panel: SystemUIDialog created")
 
         // Fullscreen transparent root: the control-center blur behind the shade
         // IS the background (BrightnessDetailDialog does the same; dim stays 0).
@@ -292,20 +281,19 @@ class VolumeSliderLongPressHook : AppHookModule() {
             gravity = Gravity.CENTER_VERTICAL or Gravity.START
             marginStart = resolvePanelMarginStart(context)
         })
-        logger.debug(
-            "volume panel: content built, tiles(mute/dnd/vibrate)=" +
-                "${muteTile != null}/${dndTile != null}/${vibrateTile != null}"
-        )
 
         behindListener = resolveBehindListener(triggerView)
         dialog.setOnDismissListener {
-            logger.debug("volume panel: dismissed")
             panelShowing = false
             currentDialog = null
             unregisterPanelObservers()
-            // Reveal the control-center widgets the dialog had hidden.
+            // Reveal the control-center widgets the dialog had hidden and
+            // release the view tree so the static hook reference cannot leak it.
             setDialogBehindAlpha(1f)
             behindListener = null
+            brightnessDialogController = null
+            dialogContext = null
+            appSection = null
         }
         registerPanelObservers(context)
 
@@ -323,10 +311,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val window = dialog.window
             // The framework fallback theme ships an opaque windowBackground;
             // the shade blur behind the dialog IS the background.
-            window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window?.setDimAmount(0f)
             try {
-                window?.attributes?.layoutInDisplayCutoutMode = 3
+                window?.attributes?.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             } catch (_: Throwable) {
             }
             window?.setLayout(
@@ -336,13 +325,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
         } catch (t: Throwable) {
             logger.warn("volume panel: window config failed: ${t.message}")
         }
-        logger.debug("volume panel: content view set, shown=${dialog.isShowing}")
         // BrightnessDetailDialog-style entrance: fade the control-center
         // widgets out behind the dialog while the panel fades in.
         panel.alpha = 0f
         panel.animate().alpha(1f).setDuration(250L).start()
         animateDialogBehindAlpha(0f)
-        mainHandler.postDelayed({ dumpPanelDiagnostics(dialog, root) }, 400L)
     }
 
     /**
@@ -388,7 +375,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 val frameX = findMethod(qs.javaClass, "getQsFrameX").invoke(qs) as Float
                 val qsMarginStart = resolveDimenPx(context, "qs_margin_start", dp(context, 24))
                 val margin = frameX.toInt() + qsMarginStart
-                logger.debug("volume panel: qsFrameX margin=$margin")
                 return margin
             } catch (t: Throwable) {
                 logger.debug("volume panel: qsFrameX unavailable: ${t.message}")
@@ -418,34 +404,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             }
         }
         animator.start()
-    }
-
-    private fun dumpPanelDiagnostics(dialog: Dialog, root: ViewGroup) {
-        try {
-            val window = dialog.window
-            val lp = window?.attributes
-            logger.warn(
-                "volume panel: window isShowing=${dialog.isShowing}" +
-                    " type=${lp?.type} w=${lp?.width} h=${lp?.height}" +
-                    " gravity=${lp?.gravity} alpha=${lp?.alpha} dim=${lp?.dimAmount}" +
-                    " token=${window?.attributes?.token != null}"
-            )
-            logger.warn(
-                "volume panel: root ${root.width}x${root.height}" +
-                    " children=${root.childCount} visibility=${root.visibility}" +
-                    " alpha=${root.alpha} attached=${root.isAttachedToWindow}"
-            )
-            for (i in 0 until root.childCount) {
-                val child = root.getChildAt(i)
-                logger.warn(
-                    "volume panel: child[$i] ${child.javaClass.simpleName}" +
-                        " ${child.width}x${child.height} vis=${child.visibility}" +
-                        " alpha=${child.alpha}"
-                )
-            }
-        } catch (t: Throwable) {
-            logger.error("volume panel: diagnostics failed", t)
-        }
     }
 
     // ------------------------------------------------------------------
@@ -537,10 +495,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val column = buildSliderColumn(
             context,
             iconRes?.let { context.getDrawable(it) },
-            initial = Math.round(am.getStreamVolume(stream) * 100f / streamMax),
+            initial = (am.getStreamVolume(stream) * 100f / streamMax).roundToInt(),
             maxValue = 100,
             onProgress = { progress ->
-                val target = Math.round(progress * streamMax / 100f)
+                val target = (progress * streamMax / 100f).roundToInt()
                 try {
                     am.setStreamVolume(stream, target, 0)
                 } catch (t: Throwable) {
@@ -590,14 +548,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val entries = collectAppVolumeEntries(context)
             if (entries.isEmpty()) {
                 section.visibility = View.GONE
-                logger.info("volume panel: app section hidden (no entries)")
+                logger.debug("volume panel: app section hidden (no entries)")
                 return
             }
             section.visibility = View.VISIBLE
             for (entry in entries) {
                 section.addView(buildAppColumn(context, entry))
             }
-            logger.info("volume panel: app section columns=${entries.size}")
+            logger.debug("volume panel: app section columns=${entries.size}")
         } catch (t: Throwable) {
             logger.error("Failed to refresh app volume section", t)
         }
@@ -797,7 +755,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 ?.let { context.getString(it) } ?: ""
 
             fun buildState(on: Boolean): Any {
-                val state = stateClass.newInstance()
+                val state = stateClass.getDeclaredConstructor().newInstance()
                 setField(state, "label", label)
                 setField(state, "contentDescription", label)
                 setField(state, "state", if (on) 2 else 1)
@@ -994,7 +952,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun hasVibrator(context: Context): Boolean {
         return try {
-            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            val vibrator = context.getSystemService(Vibrator::class.java)
             vibrator?.hasVibrator() == true
         } catch (_: Throwable) {
             false
@@ -1071,12 +1029,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val pkg = context.packageName
         for (name in names) {
             val id = res.getIdentifier(name, type, pkg)
-            if (id != 0) {
-                logger.debug(
-                    "volume panel: resolve $type/$name -> 0x" + Integer.toHexString(id)
-                )
-                return id
-            }
+            if (id != 0) return id
         }
         val message = "volume panel: resolveResourceId($type, ${names.joinToString()}) found nothing"
         if (warnOnMiss) logger.warn(message) else logger.debug(message)
@@ -1114,9 +1067,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private object AudioSystemHelperShim {
         fun isSingleVolume(context: Context): Boolean {
             return try {
-                val clazz = Class.forName("android.media.AudioSystem")
-                val method = clazz.getDeclaredMethod("isSingleVolume", Context::class.java)
-                method.isAccessible = true
+                val method = Class.forName("android.media.AudioSystem").methods
+                    .firstOrNull { it.name == "isSingleVolume" } ?: return false
                 method.invoke(null, context) as? Boolean ?: false
             } catch (_: Throwable) {
                 false
