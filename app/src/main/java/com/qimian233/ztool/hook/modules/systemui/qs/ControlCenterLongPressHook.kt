@@ -45,6 +45,13 @@ class ControlCenterLongPressHook : AppHookModule() {
     @Volatile
     private var suppressNativeLongClick = false
 
+    // True from the moment our long-click listener fires until the trailing
+    // UP/CANCEL: the window where ZUI's click() fallback must stay blocked.
+    // Per-gesture flag instead of scanning pressStates — stale released
+    // states from other tile instances poisoned a global scan.
+    @Volatile
+    private var gestureTriggered = false
+
     override fun getModuleName(): String = PreferenceKeys.CONTROL_CENTER_LONG_PRESS.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
@@ -94,9 +101,13 @@ class ControlCenterLongPressHook : AppHookModule() {
                                 (findDetailIndicator(v) != null) +
                                 ", hasOriginal=" + (original != null) +
                                 ", suppress=" + suppressNativeLongClick +
-                                ", gestureEnding=" + anyGestureEnding()
+                                ", gestureEnding=" + gestureEnding()
                         )
                         playReleaseAnimation(v)
+                        // Our own routing below re-enters QSTileImpl.longClick;
+                        // lift the suppression for the duration so we don't
+                        // swallow the very call we just triggered.
+                        gestureTriggered = false
                         val indicator = findDetailIndicator(v)
                         when {
                             indicator != null -> {
@@ -112,6 +123,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                                 logger.debug("tile: no routing target, animation only")
                             }
                         }
+                        gestureTriggered = true
                         true
                     }
                     // Null out the native QSLongPressEffect: its own delayed
@@ -176,6 +188,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                         when (event.actionMasked) {
                             MotionEvent.ACTION_DOWN -> {
                                 suppressNativeLongClick = true
+                                gestureTriggered = false
                                 val state = obtainState(view)
                                 state.downX = event.rawX
                                 state.downY = event.rawY
@@ -183,7 +196,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                                 logger.debug(
                                     "tile: DOWN on " + view.javaClass.simpleName +
                                         "@" + Integer.toHexString(System.identityHashCode(view)) +
-                                        ", suppress=true"
+                                        ", suppress=true, gestureTriggered=false"
                                 )
                                 squishIn(view)
                             }
@@ -208,7 +221,8 @@ class ControlCenterLongPressHook : AppHookModule() {
                                         (if (event.actionMasked == MotionEvent.ACTION_UP) "UP" else "CANCEL") +
                                         " on " + view.javaClass.simpleName +
                                         "@" + Integer.toHexString(System.identityHashCode(view)) +
-                                        ", suppress=false, stateReleased=" + (state?.released ?: "null")
+                                        ", suppress=false, stateReleased=" + (state?.released ?: "null") +
+                                        ", gestureTriggered=" + gestureTriggered
                                 )
                                 if (state != null && !state.released) {
                                     // Long click (if any) fires around this
@@ -282,18 +296,19 @@ class ControlCenterLongPressHook : AppHookModule() {
                     "tile_${name}_suppress_$paramTypeName",
                     { chain ->
                         if (suppressNativeLongClick &&
-                            (!suppressAlways || anyGestureEnding())
+                            (!suppressAlways || gestureEnding())
                         ) {
                             logger.debug(
                                 "tile: suppressed QSTileImpl.$methodName($paramTypeName)" +
                                     ", suppress=" + suppressNativeLongClick +
-                                    ", gestureEnding=" + anyGestureEnding()
+                                    ", gestureEnding=" + gestureEnding()
                             )
                             null
                         } else {
                             logger.debug(
                                 "tile: PASSTHROUGH QSTileImpl.$methodName($paramTypeName)" +
-                                    ", suppress=" + suppressNativeLongClick
+                                    ", suppress=" + suppressNativeLongClick +
+                                    ", gestureEnding=" + gestureEnding()
                             )
                             chain.proceed()
                         }
@@ -305,15 +320,12 @@ class ControlCenterLongPressHook : AppHookModule() {
     }
 
     /**
-     * True while a triggered gesture has not yet seen its trailing UP —
-     * the window where ZUI's listener may fall back to a click.
+     * True from when our listener triggered until the trailing UP/CANCEL:
+     * the window where ZUI's click() fallback must stay blocked. Managed
+     * explicitly by the touch hook (set on trigger-clearing UP, cleared on
+     * the next DOWN) — no cross-gesture state.
      */
-    private fun anyGestureEnding(): Boolean {
-        for (state in pressStates.values) {
-            if (state.released) return true
-        }
-        return false
-    }
+    private fun gestureEnding(): Boolean = gestureTriggered
 
     /**
      * Sliders: SeekBarNps bypasses View.onTouchEvent when max >= 100, so
