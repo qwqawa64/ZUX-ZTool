@@ -83,6 +83,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
     /** NotificationPanelViewController used to fade the shade content out/in. */
     private var behindListener: Any? = null
 
+    /** BrightnessDetailDialogController, source of the QS frame geometry. */
+    private var brightnessDialogController: Any? = null
+
     override fun getModuleName(): String = PreferenceKeys.VOLUME_LONG_PRESS_PANEL.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
@@ -263,13 +266,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // IS the background (BrightnessDetailDialog does the same; dim stays 0).
         // Tapping anywhere outside the panel dismisses — a fullscreen window has
         // no "outside", so outside-touch dismissal must be handled here.
-        // Layout mirrors BrightnessDetailDialog: the panel is anchored to the
-        // screen END and vertically centered on the screen's horizontal midline,
-        // extending symmetrically up and down.
+        // Layout mirrors BrightnessDetailDialog: the panel is anchored at the
+        // QS frame's left edge (left margin = qsFrameX + qsMarginStart) and
+        // vertically centered on the screen's horizontal midline.
         val root = FrameLayout(context).apply {
             setOnClickListener { currentDialog?.dismiss() }
         }
-        val qsMarginEnd = dp(context, 128)
 
         dialogContext = context
         appSection = null
@@ -309,14 +311,17 @@ class VolumeSliderLongPressHook : AppHookModule() {
         root.addView(panel, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply {
-            gravity = Gravity.CENTER_VERTICAL or Gravity.END
-            marginEnd = qsMarginEnd
+            // Native BrightnessDetailDialog placement: left margin =
+            // qsFrameX - leftInset + qsMarginStart (the QS frame's right edge).
+            gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            marginStart = resolvePanelMarginStart(context)
         })
         logger.debug(
             "volume panel: content built, tiles(mute/dnd/vibrate)=" +
                 "${muteTile != null}/${dndTile != null}/${vibrateTile != null}"
         )
 
+        behindListener = resolveBehindListener(triggerView)
         behindListener = resolveBehindListener(triggerView)
         dialog.setOnDismissListener {
             logger.debug("volume panel: dismissed")
@@ -385,11 +390,38 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val controller = host?.let {
                 findField(it.javaClass, "mBrightnessDetailDialogController").get(it)
             } ?: return null
+            brightnessDialogController = controller
             findField(controller.javaClass, "mDialogBehindAlphaListener").get(controller)
         } catch (t: Throwable) {
             logger.debug("volume panel: behind listener unavailable: ${t.message}")
             null
         }
+    }
+
+    /**
+     * Left margin of the panel: the native dialog uses
+     * qsFrameX - leftInset + qsMarginStart (the QS frame's left edge on
+     * split-shade / landscape layouts — measured 759.2dp on the reference
+     * device). Resolve the frame position at runtime from
+     * ShadeController.getQuickSettingsController().getQsFrameX(); fall back to
+     * the measured constant when unavailable.
+     */
+    private fun resolvePanelMarginStart(context: Context): Int {
+        val controller = brightnessDialogController
+        if (controller != null) {
+            try {
+                val shade = findField(controller.javaClass, "mShadeController").get(controller)
+                val qs = findMethod(shade.javaClass, "getQuickSettingsController").invoke(shade)
+                val frameX = findMethod(qs.javaClass, "getQsFrameX").invoke(qs) as Float
+                val qsMarginStart = resolveDimenPx(context, "qs_margin_start", dp(context, 24))
+                val margin = frameX.toInt() + qsMarginStart
+                logger.debug("volume panel: qsFrameX margin=$margin")
+                return margin
+            } catch (t: Throwable) {
+                logger.debug("volume panel: qsFrameX unavailable: ${t.message}")
+            }
+        }
+        return dp(context, 759)
     }
 
     /** Hidden on NotificationPanelViewController: setDialogBehindAlpha(float). */
