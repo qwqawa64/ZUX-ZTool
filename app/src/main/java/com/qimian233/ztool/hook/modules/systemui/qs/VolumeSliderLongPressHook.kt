@@ -1,7 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
-import android.annotation.SuppressLint
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.Dialog
 import android.app.NotificationManager
@@ -9,8 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.database.ContentObserver
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.media.AudioManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Vibrator
@@ -25,9 +25,11 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.core.graphics.drawable.toDrawable
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
+import com.qimian233.ztool.hook.modules.systemui.qs.VolumeSliderLongPressHook.Companion.onVolumeSliderLongPress
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 import java.util.Locale
@@ -67,7 +69,7 @@ import kotlin.math.roundToInt
  * call RelativeVolumeHelper uses — and persisted to Settings.System
  * "zui_app_volume" ("uid/pct;uid/pct") with public Settings APIs.
  */
-@SuppressLint("DiscouragedPrivateApi", "PrivateApi")
+@SuppressLint("DiscouragedPrivateApi", "PrivateApi", "DiscouragedApi")
 class VolumeSliderLongPressHook : AppHookModule() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -102,6 +104,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // ------------------------------------------------------------------
 
     companion object {
+        // The hook instance must outlive individual panels for the shared
+        // detector to reach it; panel view fields are nulled on dismiss.
+        @SuppressLint("StaticFieldLeak")
         @Volatile
         private var hook: VolumeSliderLongPressHook? = null
 
@@ -114,9 +119,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private const val CUSTOMIZE_TILE_VIEW_CLASS =
             "com.android.systemui.qs.customize.CustomizeTileView"
         private const val QS_TILE_STATE_CLASS =
-            "com.android.systemui.plugins.qs.QSTile\$BooleanState"
+            $$"com.android.systemui.plugins.qs.QSTile$BooleanState"
         private const val RESOURCE_ICON_CLASS =
-            "com.android.systemui.qs.tileimpl.QSTileImpl\$ResourceIcon"
+            $$"com.android.systemui.qs.tileimpl.QSTileImpl$ResourceIcon"
         private const val APP_SECTION_TAG = "ztool_volume_panel_app_section"
         private const val APP_VOLUME_SETTINGS_KEY = "zui_app_volume"
         private const val MAX_APP_ROWS = 3
@@ -170,7 +175,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         try {
             val implClass = classLoader.loadClass(VOLUME_DIALOG_IMPL_CLASS)
             val callbackClass = classLoader.loadClass(
-                "com.android.systemui.plugins.VolumeDialog\$Callback"
+                $$"com.android.systemui.plugins.VolumeDialog$Callback"
             )
             val init = implClass.getDeclaredMethod(
                 "init", Int::class.javaPrimitiveType, callbackClass
@@ -211,12 +216,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         classLoader: ClassLoader,
         triggerView: View
     ) {
-        val themeRes = resolveStyleId(
-            context,
-            "Theme_SystemUI_Dialog_GlobalActionsLite",
-            "Theme_SystemUI_Dialog",
-            "Theme_SystemUI"
-        ) ?: android.R.style.Theme_DeviceDefault_Dialog
+        val themeRes = resolveStyleId(context)
+            ?: android.R.style.Theme_DeviceDefault_Dialog
         val dialogClass = classLoader.loadClass(SYSTEM_UI_DIALOG_CLASS)
         val ctor = dialogClass.getDeclaredConstructor(
             Context::class.java, Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType
@@ -311,11 +312,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val window = dialog.window
             // The framework fallback theme ships an opaque windowBackground;
             // the shade blur behind the dialog IS the background.
-            window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             window?.setDimAmount(0f)
             try {
-                window?.attributes?.layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    window?.attributes?.layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
             } catch (_: Throwable) {
             }
             window?.setLayout(
@@ -329,7 +332,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // widgets out behind the dialog while the panel fades in.
         panel.alpha = 0f
         panel.animate().alpha(1f).setDuration(250L).start()
-        animateDialogBehindAlpha(0f)
+        fadeDialogBehindOut()
     }
 
     /**
@@ -394,10 +397,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
     }
 
-    private fun animateDialogBehindAlpha(target: Float) {
+    private fun fadeDialogBehindOut() {
         if (behindListener == null) return
-        val start = if (target == 0f) 1f else 0f
-        val animator = ValueAnimator.ofFloat(start, target).apply {
+        val animator = ValueAnimator.ofFloat(1f, 0f).apply {
             duration = 250L
             addUpdateListener {
                 setDialogBehindAlpha(it.animatedValue as Float)
@@ -439,7 +441,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         val percentView = TextView(context).apply {
             textSize = 12f
-            setTextColor(obtainThemeColor(context, android.R.attr.textColorPrimary, Color.GRAY))
+            setTextColor(obtainThemeColor(context))
             text = formatPercent(initial, maxValue)
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
@@ -656,7 +658,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val serialized = existing.entries.joinToString(";") { (u, p) ->
                 String.format(Locale.US, "%d/%f", u, p)
             }
-            val finalValue = if (serialized.isEmpty()) value else serialized
+            val finalValue = serialized.ifEmpty { value }
             Settings.System.putString(context.contentResolver, APP_VOLUME_SETTINGS_KEY, finalValue)
         } catch (t: Throwable) {
             logger.warn("persist app volume failed: ${t.message}")
@@ -744,7 +746,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             // getDeclaredMethod with the BooleanState subtype fails, so walk
             // the hierarchy and match the single parameter by assignability.
             val handleStateChanged = findTileStateMethod(tileViewClass, classLoader)
-                ?: throw NoSuchMethodException("handleStateChanged(QSTile\$State) not found")
+                ?: throw NoSuchMethodException($$"handleStateChanged(QSTile$State) not found")
             handleStateChanged.isAccessible = true
 
             val stateClass = classLoader.loadClass(QS_TILE_STATE_CLASS)
@@ -803,7 +805,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
      */
     private fun findTileStateMethod(startClass: Class<*>, classLoader: ClassLoader): Method? {
         val stateParam = try {
-            classLoader.loadClass("com.android.systemui.plugins.qs.QSTile\$State")
+            classLoader.loadClass($$"com.android.systemui.plugins.qs.QSTile$State")
         } catch (_: Throwable) {
             null
         }
@@ -1002,8 +1004,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // ------------------------------------------------------------------
 
     /** Style ids are unresolvable on this ROM; the caller must have a fallback. */
-    private fun resolveStyleId(context: Context, vararg names: String): Int? {
-        return resolveResourceId(context, "style", *names, warnOnMiss = false)
+    private fun resolveStyleId(context: Context): Int? {
+        return resolveResourceId(
+            context, "style",
+            "Theme_SystemUI_Dialog_GlobalActionsLite",
+            "Theme_SystemUI_Dialog",
+            "Theme_SystemUI",
+            warnOnMiss = false
+        )
     }
 
     private fun resolveDrawableId(context: Context, vararg names: String): Int? {
@@ -1041,12 +1049,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
         return if (id != null) context.resources.getDimensionPixelSize(id) else fallbackPx
     }
 
-    private fun obtainThemeColor(context: Context, attr: Int, fallback: Int): Int {
+    private fun obtainThemeColor(context: Context): Int {
         return try {
             val value = TypedValue()
-            if (context.theme.resolveAttribute(attr, value, true)) value.data else fallback
+            if (context.theme.resolveAttribute(android.R.attr.textColorPrimary, value, true)) value.data else Color.GRAY
         } catch (_: Throwable) {
-            fallback
+            Color.GRAY
         }
     }
 
