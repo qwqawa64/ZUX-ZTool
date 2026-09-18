@@ -234,7 +234,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun buildAndShowPanel(context: Context, classLoader: ClassLoader) {
         val themeRes = resolveStyleId(
-            classLoader,
+            context,
             "Theme_SystemUI_Dialog_GlobalActionsLite",
             "Theme_SystemUI_Dialog"
         ) ?: 0
@@ -262,13 +262,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         root.addView(
             buildStreamSliderRow(context, am, AudioManager.STREAM_MUSIC, resolveDrawableId(
-                classLoader, "ic_volume_media_zui", "ic_volume_media"
+                context, "ic_volume_media_zui", "ic_volume_media"
             ))
         )
         if (!AudioSystemHelperShim.isSingleVolume(context)) {
             root.addView(
                 buildStreamSliderRow(context, am, AudioManager.STREAM_RING, resolveDrawableId(
-                    classLoader, "ic_volume_ringer_zui", "ic_volume_ringer"
+                    context, "ic_volume_ringer_zui", "ic_volume_ringer"
                 ), spacingTopDp = 12)
             )
         }
@@ -290,7 +290,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             unregisterPanelObservers()
             restoreNativeAppListCallback()
             try {
-                context.setTheme(resolveStyleId(classLoader, "Theme_SystemUI") ?: 0)
+                context.setTheme(resolveStyleId(context, "Theme_SystemUI") ?: 0)
             } catch (_: Throwable) {
             }
         }
@@ -422,7 +422,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * (brightness_progress_selector), giving the panel the control-center look.
      */
     private fun resolveSliderDrawable(context: Context): android.graphics.drawable.Drawable? {
-        val id = resolveDrawableId(systemUiClassLoader, "brightness_progress_selector")
+        val id = resolveDrawableId(context, "brightness_progress_selector")
         return if (id != null) context.getDrawable(id) else null
     }
 
@@ -525,7 +525,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             if (appInfo != null) {
                 setImageDrawable(appInfo.loadIcon(pm))
             } else {
-                setImageResource(resolveDrawableId(classLoader, "ic_volume_media_zui") ?: 0)
+                setImageResource(resolveDrawableId(context, "ic_volume_media_zui") ?: 0)
             }
             val size = dp(context, 24)
             layoutParams = LinearLayout.LayoutParams(size, size).apply {
@@ -729,10 +729,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
             handleStateChanged.isAccessible = true
 
             val stateClass = classLoader.loadClass(QS_TILE_STATE_CLASS)
-            val iconActive = iconActiveNames.firstNotNullOfOrNull { resolveDrawableId(classLoader, it) }
+            val iconActive = iconActiveNames.firstNotNullOfOrNull { resolveDrawableId(context, it) }
             val iconInactive =
-                iconInactiveNames.firstNotNullOfOrNull { resolveDrawableId(classLoader, it) }
-            val label = labelResNames.firstNotNullOfOrNull { resolveStringId(classLoader, it) }
+                iconInactiveNames.firstNotNullOfOrNull { resolveDrawableId(context, it) }
+            val label = labelResNames.firstNotNullOfOrNull { resolveStringId(context, it) }
                 ?.let { context.getString(it) } ?: ""
 
             fun buildState(on: Boolean): Any {
@@ -953,37 +953,33 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // Resource / reflection helpers
     // ------------------------------------------------------------------
 
-    private fun resolveStyleId(classLoader: ClassLoader?, vararg names: String): Int? {
-        return resolveResourceId(classLoader, "style", *names)
+    private fun resolveStyleId(context: Context, vararg names: String): Int? {
+        return resolveResourceId(context, "style", *names)
     }
 
-    private fun resolveDrawableId(classLoader: ClassLoader?, vararg names: String): Int? {
-        return resolveResourceId(classLoader, "drawable", *names)
+    private fun resolveDrawableId(context: Context, vararg names: String): Int? {
+        return resolveResourceId(context, "drawable", *names)
     }
 
-    private fun resolveStringId(classLoader: ClassLoader?, vararg names: String): Int? {
-        return resolveResourceId(classLoader, "string", *names)
+    private fun resolveStringId(context: Context, vararg names: String): Int? {
+        return resolveResourceId(context, "string", *names)
     }
 
-    private fun resolveResourceId(classLoader: ClassLoader?, type: String, vararg names: String): Int? {
-        val cl = classLoader ?: return null
-        for (rClass in arrayOf("com.android.wm.shell.R", "com.android.systemui.R")) {
-            val innerName = "$rClass\$" + type.replaceFirstChar { it.uppercaseChar() }
-            val inner = try {
-                cl.loadClass(innerName)
-            } catch (t: Throwable) {
-                logger.debug("volume panel: resolve $innerName failed to load: ${t.message}")
-                continue
-            }
-            for (name in names) {
-                try {
-                    val field = inner.getDeclaredField(name)
-                    val id = field.getInt(null)
-                    logger.debug("volume panel: resolve $innerName.$name -> 0x${Integer.toHexString(id)}")
-                    return id
-                } catch (_: NoSuchFieldException) {
-                    logger.debug("volume panel: resolve $innerName has no field $name")
-                }
+    /**
+     * Resolves resource ids by name via Resources.getIdentifier. Class-based
+     * lookups (R$style etc.) don't work on this ROM: the R inner classes are
+     * stripped from the APK dex because AGP inlines the ids at compile time.
+     */
+    private fun resolveResourceId(context: Context, type: String, vararg names: String): Int? {
+        val res = context.resources
+        val pkg = context.packageName
+        for (name in names) {
+            val id = res.getIdentifier(name, type, pkg)
+            if (id != 0) {
+                logger.debug(
+                    "volume panel: resolve $type/$name -> 0x" + Integer.toHexString(id)
+                )
+                return id
             }
         }
         logger.warn("volume panel: resolveResourceId($type, ${names.joinToString()}) found nothing")
@@ -991,7 +987,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
     }
 
     private fun resolveDimenPx(context: Context, name: String, fallbackPx: Int): Int {
-        val id = resolveResourceId(systemUiClassLoader, "dimen", name)
+        val id = resolveResourceId(context, "dimen", name)
         return if (id != null) context.resources.getDimensionPixelSize(id) else fallbackPx
     }
 
