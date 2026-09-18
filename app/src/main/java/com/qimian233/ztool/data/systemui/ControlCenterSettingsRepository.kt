@@ -56,6 +56,7 @@ class ControlCenterSettingsRepository(
             brightnessSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, false),
             volumeSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, false),
             controlCenterLongPressEnabled = prefsUtils.loadBooleanSetting(KEY_CONTROL_CENTER_LONG_PRESS, false),
+            volumeLongPressPanelEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_LONG_PRESS_PANEL, false),
             hideDetailIndicatorEnabled = prefsUtils.loadBooleanSetting(KEY_HIDE_DETAIL_INDICATOR, false),
             expandQsPanelPortrait = prefsUtils.loadBooleanSetting(KEY_EXPAND_QS_PANEL_PORTRAIT, false),
             qsPanelWidthPercent = prefsUtils.loadIntegerSetting(KEY_QS_PANEL_WIDTH_PERCENT, DEFAULT_QS_PANEL_WIDTH_PERCENT),
@@ -190,6 +191,10 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_CONTROL_CENTER_LONG_PRESS, enabled)
     }
 
+    fun saveVolumeLongPressPanelEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_VOLUME_LONG_PRESS_PANEL, enabled)
+    }
+
     fun saveHideDetailIndicatorEnabled(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_HIDE_DETAIL_INDICATOR, enabled)
     }
@@ -292,6 +297,7 @@ class ControlCenterSettingsRepository(
         private val KEY_VOLUME_SLIDER_PERCENTAGE = PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name
         private val KEY_BRIGHTNESS_SLIDER_PERCENTAGE = PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name
         private val KEY_CONTROL_CENTER_LONG_PRESS = PreferenceKeys.CONTROL_CENTER_LONG_PRESS.name
+        private val KEY_VOLUME_LONG_PRESS_PANEL = PreferenceKeys.VOLUME_LONG_PRESS_PANEL.name
         private val KEY_HIDE_DETAIL_INDICATOR = PreferenceKeys.HIDE_DETAIL_INDICATOR.name
         private val KEY_EXPAND_QS_PANEL_PORTRAIT = PreferenceKeys.EXPAND_QS_PANEL_PORTRAIT.name
         private val KEY_QS_PANEL_WIDTH_PERCENT = PreferenceKeys.QS_PANEL_WIDTH_PERCENT.name

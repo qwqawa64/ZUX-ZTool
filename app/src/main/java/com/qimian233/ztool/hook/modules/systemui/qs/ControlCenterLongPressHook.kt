@@ -357,8 +357,10 @@ class ControlCenterLongPressHook : AppHookModule() {
             logger.error("Failed to hook ToggleSeekBar.onTouchEvent", t)
         }
         // The QS volume slider is a zui.widget.SeekBarNps, not a
-        // ToggleSeekBar — hook it too, but animation-only: this ROM has no
-        // native volume panel behind a slider long press.
+        // ToggleSeekBar — hook it too. On long press the squish plays here and
+        // the BrightnessDetailDialog-style volume panel is opened by
+        // VolumeSliderLongPressHook (see its class doc for the dialog
+        // construction; it stays there to keep dialog state local).
         try {
             val onTouchEvent: Method = classLoader
                 .loadClass(SEEK_BAR_NPS_CLASS)
@@ -372,7 +374,8 @@ class ControlCenterLongPressHook : AppHookModule() {
                 val view = chain.thisObject as View
                 if (isVolumeSliderView(view)) {
                     trackPress(view, chain.args[0] as MotionEvent) {
-                        logger.debug("slider: volume long press, animation only")
+                        logger.debug("slider: volume long press, opening detail panel")
+                        VolumeSliderLongPressHook.onVolumeSliderLongPress(view)
                     }
                 }
                 result
