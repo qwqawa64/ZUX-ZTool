@@ -300,8 +300,49 @@ class VolumeSliderLongPressHook : AppHookModule() {
         currentDialog = dialog
         ensureAppListProxyRegistered(classLoader)
         mainHandler.post { refreshAppSection() }
+        // Don't trust theme 0 (style lookup may have failed) for window size:
+        // give the window explicit sane geometry.
+        try {
+            val window = dialog.window
+            window?.setGravity(Gravity.CENTER)
+            window?.setLayout(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            window?.setDimAmount(0.6f)
+        } catch (t: Throwable) {
+            logger.warn("volume panel: window config failed: ${t.message}")
+        }
         dialog.show()
         logger.debug("volume panel: shown")
+        root.post { dumpPanelDiagnostics(dialog, root) }
+    }
+
+    private fun dumpPanelDiagnostics(dialog: Dialog, root: ViewGroup) {
+        try {
+            val window = dialog.window
+            val lp = window?.attributes
+            logger.debug(
+                "volume panel: window type=${lp?.type} w=${lp?.width} h=${lp?.height}" +
+                    " gravity=${lp?.gravity} alpha=${lp?.alpha} dim=${lp?.dimAmount}" +
+                    " token=${window?.attributes?.token != null}"
+            )
+            logger.debug(
+                "volume panel: root ${root.width}x${root.height}" +
+                    " children=${root.childCount} visibility=${root.visibility}" +
+                    " alpha=${root.alpha} attached=${root.isAttachedToWindow}"
+            )
+            for (i in 0 until root.childCount) {
+                val child = root.getChildAt(i)
+                logger.debug(
+                    "volume panel: child[$i] ${child.javaClass.simpleName}" +
+                        " ${child.width}x${child.height} vis=${child.visibility}" +
+                        " alpha=${child.alpha}"
+                )
+            }
+        } catch (t: Throwable) {
+            logger.error("volume panel: diagnostics failed", t)
+        }
     }
 
     private fun buildPanelBackground(context: Context): GradientDrawable {
@@ -927,18 +968,25 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private fun resolveResourceId(classLoader: ClassLoader?, type: String, vararg names: String): Int? {
         val cl = classLoader ?: return null
         for (rClass in arrayOf("com.android.wm.shell.R", "com.android.systemui.R")) {
-            try {
-                val inner = cl.loadClass("$rClass\$" + type.replaceFirstChar { it.uppercaseChar() })
-                for (name in names) {
-                    try {
-                        val field = inner.getDeclaredField(name)
-                        return field.getInt(null)
-                    } catch (_: NoSuchFieldException) {
-                    }
+            val innerName = "$rClass\$" + type.replaceFirstChar { it.uppercaseChar() }
+            val inner = try {
+                cl.loadClass(innerName)
+            } catch (t: Throwable) {
+                logger.debug("volume panel: resolve $innerName failed to load: ${t.message}")
+                continue
+            }
+            for (name in names) {
+                try {
+                    val field = inner.getDeclaredField(name)
+                    val id = field.getInt(null)
+                    logger.debug("volume panel: resolve $innerName.$name -> 0x${Integer.toHexString(id)}")
+                    return id
+                } catch (_: NoSuchFieldException) {
+                    logger.debug("volume panel: resolve $innerName has no field $name")
                 }
-            } catch (_: Throwable) {
             }
         }
+        logger.warn("volume panel: resolveResourceId($type, ${names.joinToString()}) found nothing")
         return null
     }
 
