@@ -574,7 +574,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun buildAppSection(context: Context): LinearLayout {
         return LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
+            // App columns stand side by side with the media/ring columns.
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
             tag = APP_SECTION_TAG
         }
     }
