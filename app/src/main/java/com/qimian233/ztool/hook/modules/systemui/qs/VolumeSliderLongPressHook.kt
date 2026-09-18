@@ -680,9 +680,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val tileViewClass = classLoader.loadClass(CUSTOMIZE_TILE_VIEW_CLASS)
             val tileView = tileViewClass.getConstructor(Context::class.java)
                 .newInstance(context) as ViewGroup
-            val handleStateChanged = tileViewClass.getDeclaredMethod(
-                "handleStateChanged", classLoader.loadClass(QS_TILE_STATE_CLASS)
-            )
+            // Declared on an ancestor as handleStateChanged(QSTile$State); a
+            // getDeclaredMethod with the BooleanState subtype fails, so walk
+            // the hierarchy and match the single parameter by assignability.
+            val handleStateChanged = findTileStateMethod(tileViewClass, classLoader)
+                ?: throw NoSuchMethodException("handleStateChanged(QSTile\$State) not found")
             handleStateChanged.isAccessible = true
 
             val stateClass = classLoader.loadClass(QS_TILE_STATE_CLASS)
@@ -732,6 +734,32 @@ class VolumeSliderLongPressHook : AppHookModule() {
             logger.error("Failed to build QS tile view", t)
             null
         }
+    }
+
+    /**
+     * Finds handleStateChanged(QSTile$State) anywhere in the tile view
+     * hierarchy — CustomizeTileView may inherit it rather than declare it.
+     */
+    private fun findTileStateMethod(startClass: Class<*>, classLoader: ClassLoader): Method? {
+        val stateParam = try {
+            classLoader.loadClass("com.android.systemui.plugins.qs.QSTile\$State")
+        } catch (_: Throwable) {
+            null
+        }
+        var clazz: Class<*>? = startClass
+        while (clazz != null) {
+            for (method in clazz.declaredMethods) {
+                if (method.name != "handleStateChanged") continue
+                val params = method.parameterTypes
+                if (params.size == 1 &&
+                    (stateParam == null || stateParam.isAssignableFrom(params[0]) || params[0].isAssignableFrom(stateParam))
+                ) {
+                    return method
+                }
+            }
+            clazz = clazz.superclass
+        }
+        return null
     }
 
     private fun resourceIcon(classLoader: ClassLoader, resId: Int): Any? {
