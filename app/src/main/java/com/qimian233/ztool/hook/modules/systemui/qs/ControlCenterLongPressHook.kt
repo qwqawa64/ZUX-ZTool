@@ -167,6 +167,10 @@ class ControlCenterLongPressHook : AppHookModule() {
                         when (event.actionMasked) {
                             MotionEvent.ACTION_DOWN -> {
                                 suppressNativeLongClick = true
+                                val state = obtainState(view)
+                                state.downX = event.rawX
+                                state.downY = event.rawY
+                                state.released = false
                                 squishIn(view)
                             }
 
@@ -210,10 +214,6 @@ class ControlCenterLongPressHook : AppHookModule() {
         WeakHashMap<View, View.OnLongClickListener?>()
 
     private fun squishIn(view: View) {
-        val state = obtainState(view)
-        state.downX = 0f
-        state.downY = 0f
-        state.released = false
         view.animate()
             .scaleX(SQUISH_SCALE_X)
             .scaleY(SQUISH_SCALE_Y)
