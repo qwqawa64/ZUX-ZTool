@@ -1,11 +1,13 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
+import android.annotation.SuppressLint
 import android.content.pm.Signature
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
-import java.security.cert.Certificate
+import java.lang.reflect.Constructor
+import java.lang.reflect.Method
 import java.util.jar.Attributes
 import java.util.zip.ZipEntry
 
@@ -20,6 +22,7 @@ import java.util.zip.ZipEntry
  * certificates are extracted from the APK itself first, falling back to a placeholder
  * signature if extraction fails.
  */
+@SuppressLint("PrivateApi")
 class PackageManagerSignatureBypassHook : SystemHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.PKG_MGR_BYPASS_VERIFICATION.name
@@ -73,7 +76,6 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
     private fun hookApkSigningBlockUtils(classLoader: ClassLoader) {
         try {
             val utilsClass = classLoader.loadClass("android.util.apk.ApkSigningBlockUtils")
-            val signatureInfoClass = classLoader.loadClass("android.util.apk.SignatureInfo")
             val parseVerity = utilsClass.declaredMethods.first {
                 it.name == "parseVerityDigestAndVerifySourceLength"
             }
@@ -169,10 +171,10 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
                 Int::class.javaPrimitiveType
             ).apply { isAccessible = true }
             val withDigestsClass = classLoader.loadClass(
-                "android.util.apk.ApkSignatureVerifier\$SigningDetailsWithDigests"
+                $$"android.util.apk.ApkSignatureVerifier$SigningDetailsWithDigests"
             )
             val withDigestsCtor = withDigestsClass.getDeclaredConstructor(
-                signingDetailsClass, java.util.Map::class.java
+                signingDetailsClass, Map::class.java
             ).apply { isAccessible = true }
 
             val strictJarFileClass = classLoader.loadClass("android.util.jar.StrictJarFile")
@@ -203,8 +205,8 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
                     val apkPath = chain.getArg(1) as String
                     val signatures = collectRecoverySignatures(
                         digestEnabled, apkPath, chain.getArg(0),
-                        strictJarFileClass, jarFileCtor, findEntry, close,
-                        loadCertificates, convertToSignatures, isError, getResult
+                        jarFileCtor, findEntry, close, loadCertificates,
+                        convertToSignatures, isError, getResult
                     )
                     val signingDetails = signingDetailsCtor.newInstance(signatures, 1)
                     val wrapped = withDigestsCtor.newInstance(signingDetails, null as Any?)
@@ -227,14 +229,13 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
         digestEnabled: Boolean,
         apkPath: String,
         parseInput: Any,
-        strictJarFileClass: Class<*>,
-        jarFileCtor: java.lang.reflect.Constructor<*>,
-        findEntry: java.lang.reflect.Method,
-        close: java.lang.reflect.Method,
-        loadCertificates: java.lang.reflect.Method,
-        convertToSignatures: java.lang.reflect.Method,
-        isError: java.lang.reflect.Method,
-        getResult: java.lang.reflect.Method
+        jarFileCtor: Constructor<*>,
+        findEntry: Method,
+        close: Method,
+        loadCertificates: Method,
+        convertToSignatures: Method,
+        isError: Method,
+        getResult: Method
     ): Array<Signature> {
         // Parse V1 certificates from the APK itself (no validation, extraction only); fall back to the placeholder signature on failure
         if (digestEnabled) {
@@ -245,8 +246,8 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
                 if (manifestEntry != null) {
                     val certsResult = loadCertificates.invoke(null, parseInput, jarFile, manifestEntry)
                     if (certsResult != null && !(isError.invoke(certsResult) as Boolean)) {
-                        val certs = getResult.invoke(certsResult) as? Array<Array<Certificate>>
-                        if (certs != null && certs.isNotEmpty()) {
+                        val certs = getResult.invoke(certsResult) as? Array<*>
+                        if (!certs.isNullOrEmpty()) {
                             @Suppress("UNCHECKED_CAST")
                             return convertToSignatures.invoke(null, certs) as Array<Signature>
                         }

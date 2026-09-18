@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
+import android.annotation.SuppressLint
 import android.content.pm.ApplicationInfo
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -20,6 +21,7 @@ import java.lang.reflect.Method
  * the digest bypass in this feature group turns ordinary calls into always-true,
  * which would break the merge decision.
  */
+@SuppressLint("PrivateApi")
 class PackageManagerSharedUserBypassHook : SystemHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.PKG_MGR_BYPASS_SHARED_USER.name
@@ -166,7 +168,7 @@ class PackageManagerSharedUserBypassHook : SystemHookModule() {
             var memberChanged = false
             var mergedSignatures: Any? = null
             for (index in 0 until size) {
-                var member = valueAt.invoke(storage, index) ?: continue
+                val member = valueAt.invoke(storage, index) ?: continue
                 if (member === chain.getArg(0)) {
                     memberChanged = true
                     if (!targetParticipatesInMerge) {
@@ -209,12 +211,13 @@ class PackageManagerSharedUserBypassHook : SystemHookModule() {
  * static final fields, so this uses Unsafe to locate the cached ART field offset
  * inside java.lang.reflect.Field and writes the field slot directly.
  */
+@SuppressLint("DiscouragedPrivateApi", "SoonBlockedPrivateApi")
 private object ArtStaticFieldPatcher {
     private val unsafeClass = Class.forName("sun.misc.Unsafe")
     private val unsafe: Any = try {
-        unsafeClass.getDeclaredField("theUnsafe").apply { isAccessible = true }.get(null)
+        unsafeClass.getDeclaredField("theUnsafe").apply { isAccessible = true }.get(null)!!
     } catch (_: NoSuchFieldException) {
-        unsafeClass.getDeclaredField("THE_ONE").apply { isAccessible = true }.get(null)
+        unsafeClass.getDeclaredField("THE_ONE").apply { isAccessible = true }.get(null)!!
     }
     private val getInt = unsafeClass.getMethod(
         "getInt", Any::class.java, Long::class.javaPrimitiveType

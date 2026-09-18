@@ -19,7 +19,7 @@ enum class SearchParentMode { REQUIRE_ON, REQUIRE_OFF }
 /**
  * One searchable destination. The id is derived from the title resource name so it
  * stays stable across refactors; routes must be route names already registered in
- * [com.qimian233.ztool.navigation.ZToolNavHost] — phase 1 never creates new
+ * com.qimian233.ztool.navigation.ZToolNavHost — phase 1 never creates new
  * destinations besides the search page itself.
  */
 data class SearchEntry(
@@ -32,7 +32,7 @@ data class SearchEntry(
     /** Hide the entry when this package is not installed. Null = always visible. */
     val requiresPackage: String? = null,
     /** Title of the switch this row depends on, for the "requires …" annotation. */
-    @StringRes val parentTitleRes: Int? = null,
+    @param:StringRes val parentTitleRes: Int? = null,
     /** SearchEntry id of that parent switch; drives the highlight fallback. */
     val parentKey: String? = null,
     val parentMode: SearchParentMode = SearchParentMode.REQUIRE_ON,

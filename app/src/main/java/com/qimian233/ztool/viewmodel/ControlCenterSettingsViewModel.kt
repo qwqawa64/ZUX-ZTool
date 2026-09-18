@@ -399,8 +399,3 @@ data class ControlCenterSettingsUiState(
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )
-
-enum class SliderStyleDirection {
-    Horizontal,
-    Vertical
-}

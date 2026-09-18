@@ -888,7 +888,6 @@ private fun CustomDateSettingsContent(
             )
         }
         CustomDateConfig(
-            state = state,
             dateFormat = state.dateFormat,
             datePreview = state.datePreview,
             onDateFormatChanged = onDateFormatChanged,
@@ -899,7 +898,6 @@ private fun CustomDateSettingsContent(
 
 @Composable
 private fun CustomDateConfig(
-    state: ControlCenterSettingsUiState,
     dateFormat: String,
     datePreview: String,
     onDateFormatChanged: (String) -> Unit,

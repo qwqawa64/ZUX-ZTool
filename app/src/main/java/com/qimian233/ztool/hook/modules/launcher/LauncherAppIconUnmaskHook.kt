@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.AdaptiveIconDrawable
@@ -10,6 +11,7 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicInteger
+import androidx.core.graphics.createBitmap
 
 /**
  * Home screen icon unmask: after the Launcher3 icon factory flattens an icon,
@@ -29,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * Requires a launcher restart (AmStop) to take effect; the persistent icon cache
  * may require clearing Launcher data once.
  */
+@SuppressLint("PrivateApi")
 class LauncherAppIconUnmaskHook : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
@@ -51,7 +54,7 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         try {
             val factoryClass = cl.loadClass("com.android.launcher3.icons.BaseIconFactory")
             val optionsClass =
-                cl.loadClass("com.android.launcher3.icons.BaseIconFactory\$IconOptions")
+                cl.loadClass($$"com.android.launcher3.icons.BaseIconFactory$IconOptions")
             val m: Method = factoryClass.getDeclaredMethod(
                 "createBadgedIconBitmap", Drawable::class.java, optionsClass
             )
@@ -113,7 +116,7 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         if (size <= 0) {
             return null
         }
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(size, size)
         val canvas = Canvas(bitmap)
         val bg = input.background
         val fg = input.foreground
@@ -133,7 +136,7 @@ class LauncherAppIconUnmaskHook : AppHookModule() {
         }
         val of: Method = bitmapInfoClass.getDeclaredMethod("of", Bitmap::class.java, Int::class.javaPrimitiveType)
         val color = bitmapInfoClass.getField("color").getInt(result)
-        val newInfo = of.invoke(null, bitmap, color)
+        val newInfo: Any = of.invoke(null, bitmap, color) ?: return null
         // Preserve the original flags/creationFlags (work profile/clone badge semantics)
         bitmapInfoClass.getField("flags").setInt(newInfo, bitmapInfoClass.getField("flags").getInt(result))
         bitmapInfoClass.getField("creationFlags").setInt(
