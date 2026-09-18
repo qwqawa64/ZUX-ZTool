@@ -94,6 +94,16 @@ class VolumeSliderLongPressHook : AppHookModule() {
         systemUiClassLoader = param.defaultClassLoader
         hook = this
         hookAppListCallbackSlot()
+        // Register permanently from process start: the AudioSystem callback is
+        // push-on-change only, so apps already playing audio when the panel
+        // opens would otherwise never reach our cache. The slot hook re-claims
+        // the slot whenever the native dialog registers later, and our proxy
+        // forwards every push to the native callback.
+        try {
+            ensureAppListProxyRegistered(systemUiClassLoader!!)
+        } catch (t: Throwable) {
+            logger.warn("volume panel: early app-list proxy registration failed: ${t.message}")
+        }
         logger.info(
             "VolumeSliderLongPressHook installed, classLoader=" +
                 (systemUiClassLoader?.javaClass?.name ?: "null")
@@ -189,8 +199,16 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 if (arg != null && arg !== ourAppListProxy) {
                     nativeAppListCallback = arg
                     logger.info(
-                        "volume panel: app-list slot claimed by " + arg.javaClass.name
+                        "volume panel: app-list slot claimed by " + arg.javaClass.name +
+                            ", reclaiming for ztool proxy"
                     )
+                    chain.proceed()
+                    // Take the slot back so pushes keep reaching our cache;
+                    // the native callback is forwarded to by our proxy.
+                    if (ourAppListProxy != null) {
+                        setter.invoke(null, ourAppListProxy)
+                    }
+                    return@hookWithId null
                 }
                 chain.proceed()
             }
@@ -234,6 +252,19 @@ class VolumeSliderLongPressHook : AppHookModule() {
                     )
                 }
                 latestPackages = entries
+                // Keep the native dialog's cache alive: our proxy permanently
+                // owns the slot and forwards every push to the recorded native
+                // callback (itself a proxy created by AudioSystemHelper).
+                val native = nativeAppListCallback
+                if (native != null) {
+                    try {
+                        method.invoke(native, *(args ?: emptyArray<Any>()))
+                    } catch (t: Throwable) {
+                        logger.debug(
+                            "volume panel: native forward failed: ${t.message}"
+                        )
+                    }
+                }
                 mainHandler.post { refreshAppSection() }
             }
             null
@@ -249,14 +280,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
     }
 
     private fun restoreNativeAppListCallback() {
-        val setter = audioSystemSetter ?: return
-        try {
-            val native = nativeAppListCallback
-            setter.invoke(null, native)
-            logger.debug("volume panel: native app-list callback restored=${native != null}")
-        } catch (t: Throwable) {
-            logger.warn("Failed to restore native app-list callback: ${t.message}")
-        }
+        // No-op since the ztool proxy permanently owns the AudioSystem slot and
+        // forwards pushes to the recorded native callback.
     }
 
     // ------------------------------------------------------------------
@@ -349,7 +374,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             panelShowing = false
             currentDialog = null
             unregisterPanelObservers()
-            restoreNativeAppListCallback()
             // Reveal the control-center widgets the dialog had hidden.
             setDialogBehindAlpha(1f)
             behindListener = null
@@ -358,7 +382,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         panelShowing = true
         currentDialog = dialog
-        ensureAppListProxyRegistered(classLoader)
         mainHandler.post { refreshAppSection() }
         dialog.show()
         // AlertDialog.onCreate -> AlertController.installContent() runs inside
