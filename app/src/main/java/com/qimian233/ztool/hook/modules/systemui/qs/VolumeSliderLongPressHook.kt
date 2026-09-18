@@ -269,7 +269,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val root = FrameLayout(context).apply {
             setOnClickListener { currentDialog?.dismiss() }
         }
-        val qsMarginEnd = resolveDimenPx(context, "qs_margin_end", dp(context, 24))
+        val qsMarginEnd = dp(context, 128)
 
         dialogContext = context
         appSection = null
@@ -289,7 +289,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             sliderRow.addView(
                 buildStreamColumn(context, am, AudioManager.STREAM_RING, resolveDrawableId(
                     context, "ic_volume_ringer_zui", "ic_volume_ringer"
-                ), 16)
+                ), 28)
             )
         }
         // App columns are appended inline by refreshAppSection().
@@ -482,7 +482,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { topMargin = dp(context, 10) }
         }
-        val barLength = dp(context, 230)
+        val barLength = dp(context, 260)
         val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
             .coerceAtLeast(dp(context, 28))
         val barSlot = FrameLayout(context)
@@ -652,7 +652,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             maxValue = 100,
             onStop = { progress -> commitAppVolume(context, entry.uid, progress) }
         )
-        (column.layoutParams as? LinearLayout.LayoutParams)?.marginStart = dp(context, 16)
+        (column.layoutParams as? LinearLayout.LayoutParams)?.marginStart = dp(context, 28)
         return column
     }
 
