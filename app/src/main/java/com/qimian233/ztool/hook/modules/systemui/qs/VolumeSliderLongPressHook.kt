@@ -360,9 +360,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         logger.debug("volume panel: content view set, shown=${dialog.isShowing}")
         // BrightnessDetailDialog-style entrance: fade the control-center
-        // widgets out behind the dialog while the container fades in.
-        container.alpha = 0f
-        container.animate().alpha(1f).setDuration(250L).start()
+        // widgets out behind the dialog while the panel fades in.
+        panel.alpha = 0f
+        panel.animate().alpha(1f).setDuration(250L).start()
         animateDialogBehindAlpha(0f)
         mainHandler.postDelayed({ dumpPanelDiagnostics(dialog, root) }, 400L)
     }
