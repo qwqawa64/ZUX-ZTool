@@ -86,8 +86,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         systemUiClassLoader = param.defaultClassLoader
+        hook = this
         hookAppListCallbackSlot()
-        logger.info("VolumeSliderLongPressHook installed")
+        logger.info(
+            "VolumeSliderLongPressHook installed, classLoader=" +
+                (systemUiClassLoader?.javaClass?.name ?: "null")
+        )
     }
 
     // ------------------------------------------------------------------
@@ -133,8 +137,19 @@ class VolumeSliderLongPressHook : AppHookModule() {
     }
 
     private fun handleVolumeLongPress(view: View) {
-        val classLoader = systemUiClassLoader ?: return
-        if (panelShowing) return
+        logger.debug(
+            "volume panel: trigger received, view=" + view.javaClass.simpleName +
+                ", panelShowing=" + panelShowing +
+                ", classLoader=" + (systemUiClassLoader?.javaClass?.name ?: "null")
+        )
+        val classLoader = systemUiClassLoader ?: run {
+            logger.warn("volume panel: no classLoader captured, cannot open panel")
+            return
+        }
+        if (panelShowing) {
+            logger.debug("volume panel: already showing, ignoring trigger")
+            return
+        }
         try {
             buildAndShowPanel(view.context, classLoader)
         } catch (t: Throwable) {
@@ -223,12 +238,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
             "Theme_SystemUI_Dialog_GlobalActionsLite",
             "Theme_SystemUI_Dialog"
         ) ?: 0
+        logger.debug("volume panel: themeRes=$themeRes")
         val dialogClass = classLoader.loadClass(SYSTEM_UI_DIALOG_CLASS)
         val ctor = dialogClass.getDeclaredConstructor(
             Context::class.java, Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType
         )
         ctor.isAccessible = true
         val dialog = ctor.newInstance(context, themeRes, true) as Dialog
+        logger.debug("volume panel: SystemUIDialog created")
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -236,6 +253,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             background = buildPanelBackground(context)
         }
         dialog.setContentView(root)
+        logger.debug("volume panel: content view set")
 
         dialogContext = context
         appSection = null
@@ -260,8 +278,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
         root.addView(buildTileRow(context, classLoader), LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = dp(context, 12) })
+        logger.debug(
+            "volume panel: content built, tiles(mute/dnd/vibrate)=" +
+                "${muteTile != null}/${dndTile != null}/${vibrateTile != null}"
+        )
 
         dialog.setOnDismissListener {
+            logger.debug("volume panel: dismissed")
             panelShowing = false
             currentDialog = null
             unregisterPanelObservers()
