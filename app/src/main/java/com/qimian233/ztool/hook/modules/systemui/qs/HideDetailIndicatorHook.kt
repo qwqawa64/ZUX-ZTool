@@ -17,6 +17,9 @@ import java.lang.reflect.Method
  *   are deliberately NOT covered — their labelDetailIndicatorView participates
  *   in QSAnimator alpha animation and hiding it has no visual benefit.
  * - Brightness slider: ToggleSliderView.mBrightnessDetailIndicator
+ * - Volume slider: ToggleSliderView.mVolumeDetailIndicator (stock GONE; it is
+ *   only ever revealed as a tap entry by VolumeSliderLongPressHook, so hiding
+ *   it here keeps the volume detail panel long-press-only)
  *
  * The tile indicator is (re)shown by loadSideViewDrawableIfNecessary on
  * every state change, so hiding happens AFTER that method runs rather than
@@ -88,6 +91,9 @@ class HideDetailIndicatorHook : AppHookModule() {
      * The brightness slider's indicator is inflated with the layout and never
      * re-shown except in accessibility mode; hide it right after the host is
      * constructed and strip clickability so the reserved tap zone goes away.
+     * The volume indicator is stock-GONE but can be revealed by
+     * VolumeSliderLongPressHook — hide it here too so both sliders stay
+     * consistent under this switch.
      */
     private fun hideBrightnessIndicator(classLoader: ClassLoader) {
         try {
@@ -101,15 +107,20 @@ class HideDetailIndicatorHook : AppHookModule() {
                 chain.proceed()
                 try {
                     val host = chain.thisObject
-                    val view = findField(host.javaClass, BRIGHTNESS_INDICATOR_FIELD)
-                        .get(host) as? ImageView
-                    if (view != null) {
-                        view.visibility = View.GONE
-                        view.isClickable = false
-                        view.isFocusable = false
+                    for (fieldName in INDICATOR_FIELDS) {
+                        try {
+                            val view = findField(host.javaClass, fieldName)
+                                .get(host) as? ImageView
+                            if (view != null) {
+                                view.visibility = View.GONE
+                                view.isClickable = false
+                                view.isFocusable = false
+                            }
+                        } catch (_: Throwable) {
+                        }
                     }
                 } catch (t: Throwable) {
-                    logger.error("Failed to hide brightness detail indicator", t)
+                    logger.error("Failed to hide slider detail indicators", t)
                 }
                 null
             }
@@ -131,7 +142,9 @@ class HideDetailIndicatorHook : AppHookModule() {
         const val QS_TILE_STATE_CLASS = "com.android.systemui.plugins.qs.QSTile\$State"
         const val TILE_INDICATOR_FIELD = "detailIndicatorView"
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
-        const val BRIGHTNESS_INDICATOR_FIELD = "mBrightnessDetailIndicator"
+        val INDICATOR_FIELDS = arrayOf(
+            "mBrightnessDetailIndicator", "mVolumeDetailIndicator"
+        )
 
         /** Marker consumed by ControlCenterLongPressHook.findDetailIndicator. */
         const val DUAL_TARGET_TAG = "ztool_dual_target_indicator"

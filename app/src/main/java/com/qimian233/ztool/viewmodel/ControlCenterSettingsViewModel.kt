@@ -196,9 +196,9 @@ class ControlCenterSettingsViewModel(
         repository.saveControlCenterLongPressEnabled(enabled)
     }
 
-    fun setVolumeLongPressPanelEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(volumeLongPressPanelEnabled = enabled)
-        repository.saveVolumeLongPressPanelEnabled(enabled)
+    fun setVolumeDetailPanelEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(volumeDetailPanelEnabled = enabled)
+        repository.saveVolumeDetailPanelEnabled(enabled)
     }
 
     fun setHideDetailIndicatorEnabled(enabled: Boolean) {
@@ -387,7 +387,7 @@ data class ControlCenterSettingsUiState(
     val notificationCenterBlurPercent: Int = ControlCenterSettingsRepository.DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT,
     val volumeSliderPercentageEnabled: Boolean = false,
     val controlCenterLongPressEnabled: Boolean = false,
-    val volumeLongPressPanelEnabled: Boolean = false,
+    val volumeDetailPanelEnabled: Boolean = false,
     val hideDetailIndicatorEnabled: Boolean = false,
     val brightnessSliderPercentageEnabled: Boolean = false,
     val expandQsPanelPortrait: Boolean = false,

@@ -566,8 +566,8 @@ object SearchIndex {
             titleRes = R.string.system_ui_control_center_long_press_title
         ),
         systemUiControlCenter.item(
-            id = "volume_long_press_panel",
-            titleRes = R.string.system_ui_volume_long_press_panel_title
+            id = "volume_detail_panel",
+            titleRes = R.string.system_ui_volume_detail_panel_title
         ),
         systemUiControlCenter.item(
             id = "control_center_hide_detail_indicator",

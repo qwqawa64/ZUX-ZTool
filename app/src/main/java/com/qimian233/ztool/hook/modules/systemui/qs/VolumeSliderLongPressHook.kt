@@ -41,7 +41,10 @@ import kotlin.math.roundToInt
  * per-app volume sliders and three QS tiles (mute / DND / vibrate).
  *
  * The long-press gesture itself is owned by [ControlCenterLongPressHook]; its
- * volume trigger calls [onVolumeSliderLongPress]. Everything here is reflection:
+ * volume trigger calls [onVolumeSliderLongPress]. The stock (normally GONE)
+ * `volume_detail_indicator` ImageView next to the slider is revealed as a tap
+ * entry point, unless HideDetailIndicatorHook is active (long-press only).
+ * Everything here is reflection:
  * module classes cannot subclass SystemUI classes, and the relevant SystemUI
  * entry points (SystemUIDialog, CustomizeTileView) are only reachable that way.
  *
@@ -88,7 +91,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
     /** BrightnessDetailDialogController, source of the QS frame geometry. */
     private var brightnessDialogController: Any? = null
 
-    override fun getModuleName(): String = PreferenceKeys.VOLUME_LONG_PRESS_PANEL.name
+    override fun getModuleName(): String = PreferenceKeys.VOLUME_DETAIL_PANEL.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
@@ -96,7 +99,53 @@ class VolumeSliderLongPressHook : AppHookModule() {
         systemUiClassLoader = param.defaultClassLoader
         hook = this
         hookVolumeDialogImpl()
+        hookVolumeDetailIndicator(param.defaultClassLoader)
         logger.info("VolumeSliderLongPressHook installed")
+    }
+
+    // ------------------------------------------------------------------
+    // Tap entry point: the stock (permanently GONE) volume detail indicator
+    // ------------------------------------------------------------------
+
+    /**
+     * Reveals the stock `volume_detail_indicator` ImageView inside the volume
+     * slider root — the ROM inflates it but never shows or wires it — and
+     * routes its taps to the panel. Skipped when HideDetailIndicatorHook is
+     * active so the long press stays the only entry; both modules read the
+     * same preference, so hook execution order cannot produce a visible
+     * button under that switch.
+     */
+    private fun hookVolumeDetailIndicator(classLoader: ClassLoader) {
+        if (remotePreferences.getBoolean(PreferenceKeys.HIDE_DETAIL_INDICATOR.name, false)) {
+            logger.info("volume panel: hide_detail_indicator on, detail button not shown")
+            return
+        }
+        try {
+            val ctor = classLoader.loadClass(TOGGLE_SLIDER_VIEW_CLASS)
+                .getDeclaredConstructor(
+                    Context::class.java, android.util.AttributeSet::class.java,
+                    Int::class.javaPrimitiveType
+                )
+            hookWithId(ctor, "volume_detail_indicator_show") { chain ->
+                chain.proceed()
+                try {
+                    val view = findField(chain.thisObject.javaClass, VOLUME_DETAIL_INDICATOR_FIELD)
+                        .get(chain.thisObject) as? ImageView
+                    if (view != null) {
+                        view.visibility = View.VISIBLE
+                        view.isClickable = true
+                        view.isFocusable = true
+                        view.setOnClickListener { onVolumeSliderLongPress(it) }
+                    }
+                } catch (t: Throwable) {
+                    logger.error("Failed to show volume detail indicator", t)
+                }
+                null
+            }
+            logger.info("volume panel: volume detail indicator hook installed")
+        } catch (t: Throwable) {
+            logger.error("Failed to hook ToggleSliderView ctor for detail button", t)
+        }
     }
 
     // ------------------------------------------------------------------
@@ -114,6 +163,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             "com.android.systemui.statusbar.phone.SystemUIDialog"
         private const val TOGGLE_SLIDER_VIEW_CLASS =
             "com.android.systemui.settings.ToggleSliderView"
+        private const val VOLUME_DETAIL_INDICATOR_FIELD = "mVolumeDetailIndicator"
         private const val VOLUME_DIALOG_IMPL_CLASS =
             "com.android.systemui.volume.VolumeDialogImpl"
         private const val CUSTOMIZE_TILE_VIEW_CLASS =
