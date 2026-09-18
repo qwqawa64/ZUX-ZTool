@@ -92,15 +92,24 @@ class ControlCenterLongPressHook : AppHookModule() {
                         logger.debug(
                             "tile: our long click fired, indicator=" +
                                 (findDetailIndicator(v) != null) +
-                                ", hasOriginal=" + (original != null)
+                                ", hasOriginal=" + (original != null) +
+                                ", suppress=" + suppressNativeLongClick +
+                                ", gestureEnding=" + anyGestureEnding()
                         )
                         playReleaseAnimation(v)
                         val indicator = findDetailIndicator(v)
                         when {
-                            indicator != null -> indicator.performClick()
-                            original != null -> original.onLongClick(v)
+                            indicator != null -> {
+                                logger.debug("tile: routing to detailIndicator.performClick()")
+                                indicator.performClick()
+                            }
+                            original != null -> {
+                                logger.debug("tile: routing to original.onLongClick()")
+                                original.onLongClick(v)
+                            }
                             else -> {
                                 // No long-press behavior: animation only.
+                                logger.debug("tile: no routing target, animation only")
                             }
                         }
                         true
@@ -171,6 +180,11 @@ class ControlCenterLongPressHook : AppHookModule() {
                                 state.downX = event.rawX
                                 state.downY = event.rawY
                                 state.released = false
+                                logger.debug(
+                                    "tile: DOWN on " + view.javaClass.simpleName +
+                                        "@" + Integer.toHexString(System.identityHashCode(view)) +
+                                        ", suppress=true"
+                                )
                                 squishIn(view)
                             }
 
@@ -189,6 +203,13 @@ class ControlCenterLongPressHook : AppHookModule() {
                             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                                 suppressNativeLongClick = false
                                 val state = pressStates[view]
+                                logger.debug(
+                                    "tile: " +
+                                        (if (event.actionMasked == MotionEvent.ACTION_UP) "UP" else "CANCEL") +
+                                        " on " + view.javaClass.simpleName +
+                                        "@" + Integer.toHexString(System.identityHashCode(view)) +
+                                        ", suppress=false, stateReleased=" + (state?.released ?: "null")
+                                )
                                 if (state != null && !state.released) {
                                     // Long click (if any) fires around this
                                     // time; release the squish so the action
@@ -254,16 +275,26 @@ class ControlCenterLongPressHook : AppHookModule() {
                 continue
             }
             for (method in candidates) {
+                val methodName = method.name
+                val paramTypeName = method.parameterTypes[0].name
                 hookWithId(
                     method,
-                    "tile_${name}_suppress_" + method.parameterTypes[0].name,
+                    "tile_${name}_suppress_$paramTypeName",
                     { chain ->
                         if (suppressNativeLongClick &&
                             (!suppressAlways || anyGestureEnding())
                         ) {
-                            logger.debug("tile: suppressed QSTileImpl.$name during our gesture")
+                            logger.debug(
+                                "tile: suppressed QSTileImpl.$methodName($paramTypeName)" +
+                                    ", suppress=" + suppressNativeLongClick +
+                                    ", gestureEnding=" + anyGestureEnding()
+                            )
                             null
                         } else {
+                            logger.debug(
+                                "tile: PASSTHROUGH QSTileImpl.$methodName($paramTypeName)" +
+                                    ", suppress=" + suppressNativeLongClick
+                            )
                             chain.proceed()
                         }
                     },
