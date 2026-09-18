@@ -182,66 +182,66 @@ class ControlCenterLongPressHook : AppHookModule() {
             hookWithId(
                 onTouchEvent,
                 "tile_touch_squish",
-                { chain ->
-                    val result = chain.proceed()
-                    try {
-                        val view = chain.thisObject as View
-                        val event = chain.args[0] as MotionEvent
-                        when (event.actionMasked) {
-                            MotionEvent.ACTION_DOWN -> {
-                                suppressNativeLongClick = true
-                                gestureTriggered = false
-                                val state = obtainState(view)
-                                state.downX = event.rawX
-                                state.downY = event.rawY
-                                state.released = false
-                                logger.debug(
-                                    "tile: DOWN on " + view.javaClass.simpleName +
+                XposedInterface.PRIORITY_LOWEST
+            ) { chain ->
+                val result = chain.proceed()
+                try {
+                    val view = chain.thisObject as View
+                    val event = chain.args[0] as MotionEvent
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            suppressNativeLongClick = true
+                            gestureTriggered = false
+                            val state = obtainState(view)
+                            state.downX = event.rawX
+                            state.downY = event.rawY
+                            state.released = false
+                            logger.debug(
+                                "tile: DOWN on " + view.javaClass.simpleName +
                                         "@" + Integer.toHexString(System.identityHashCode(view)) +
                                         ", suppress=true, gestureTriggered=false"
-                                )
-                                squishIn(view)
-                            }
+                            )
+                            squishIn(view)
+                        }
 
-                            MotionEvent.ACTION_MOVE -> {
-                                val state = pressStates[view]
-                                if (state != null && !state.released) {
-                                    val dx = event.rawX - state.downX
-                                    val dy = event.rawY - state.downY
-                                    if (dx * dx + dy * dy > state.touchSlopSquared) {
-                                        state.released = true
-                                        playReleaseAnimation(view)
-                                    }
-                                }
-                            }
-
-                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                                suppressNativeLongClick = false
-                                val state = pressStates[view]
-                                logger.debug(
-                                    "tile: " +
-                                        (if (event.actionMasked == MotionEvent.ACTION_UP) "UP" else "CANCEL") +
-                                        " on " + view.javaClass.simpleName +
-                                        "@" + Integer.toHexString(System.identityHashCode(view)) +
-                                        ", suppress=false, stateReleased=" + (state?.released ?: "null") +
-                                        ", gestureTriggered=" + gestureTriggered
-                                )
-                                if (state != null && !state.released) {
-                                    // Long click (if any) fires around this
-                                    // time; release the squish so the action
-                                    // starts from a settled view.
+                        MotionEvent.ACTION_MOVE -> {
+                            val state = pressStates[view]
+                            if (state != null && !state.released) {
+                                val dx = event.rawX - state.downX
+                                val dy = event.rawY - state.downY
+                                if (dx * dx + dy * dy > state.touchSlopSquared) {
                                     state.released = true
                                     playReleaseAnimation(view)
                                 }
                             }
                         }
-                    } catch (t: Throwable) {
-                        logger.error("Tile squish tracking failed", t)
+
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            suppressNativeLongClick = false
+                            val state = pressStates[view]
+                            logger.debug(
+                                "tile: " +
+                                        (if (event.actionMasked == MotionEvent.ACTION_UP) "UP" else "CANCEL") +
+                                        " on " + view.javaClass.simpleName +
+                                        "@" + Integer.toHexString(System.identityHashCode(view)) +
+                                        ", suppress=false, stateReleased=" + (state?.released
+                                    ?: "null") +
+                                        ", gestureTriggered=" + gestureTriggered
+                            )
+                            if (state != null && !state.released) {
+                                // Long click (if any) fires around this
+                                // time; release the squish so the action
+                                // starts from a settled view.
+                                state.released = true
+                                playReleaseAnimation(view)
+                            }
+                        }
                     }
-                    result
-                },
-                XposedInterface.PRIORITY_LOWEST
-            )
+                } catch (t: Throwable) {
+                    logger.error("Tile squish tracking failed", t)
+                }
+                result
+            }
         } catch (t: Throwable) {
             logger.error("Failed to hook QSTileViewImpl.onTouchEvent", t)
         }
@@ -293,27 +293,26 @@ class ControlCenterLongPressHook : AppHookModule() {
                 hookWithId(
                     method,
                     "tile_${name}_suppress_$paramTypeName",
-                    { chain ->
-                        if (suppressNativeLongClick &&
-                            (!suppressAlways || gestureEnding())
-                        ) {
-                            logger.debug(
-                                "tile: suppressed QSTileImpl.$methodName($paramTypeName)" +
-                                    ", suppress=" + suppressNativeLongClick +
-                                    ", gestureEnding=" + gestureEnding()
-                            )
-                            null
-                        } else {
-                            logger.debug(
-                                "tile: PASSTHROUGH QSTileImpl.$methodName($paramTypeName)" +
-                                    ", suppress=" + suppressNativeLongClick +
-                                    ", gestureEnding=" + gestureEnding()
-                            )
-                            chain.proceed()
-                        }
-                    },
                     XposedInterface.PRIORITY_HIGHEST
-                )
+                ) { chain ->
+                    if (suppressNativeLongClick &&
+                        (!suppressAlways || gestureEnding())
+                    ) {
+                        logger.debug(
+                            "tile: suppressed QSTileImpl.$methodName($paramTypeName)" +
+                                    ", suppress=" + suppressNativeLongClick +
+                                    ", gestureEnding=" + gestureEnding()
+                        )
+                        null
+                    } else {
+                        logger.debug(
+                            "tile: PASSTHROUGH QSTileImpl.$methodName($paramTypeName)" +
+                                    ", suppress=" + suppressNativeLongClick +
+                                    ", gestureEnding=" + gestureEnding()
+                        )
+                        chain.proceed()
+                    }
+                }
             }
         }
     }
@@ -340,18 +339,17 @@ class ControlCenterLongPressHook : AppHookModule() {
             hookWithId(
                 onTouchEvent,
                 "slider_touch_long_press",
-                { chain ->
-                    val result = chain.proceed()
-                    trackPress(chain.thisObject as View, chain.args[0] as MotionEvent) { v ->
-                        val host = findToggleSliderView(v)
-                        if (host != null) {
-                            openBrightnessDetail(host)
-                        }
-                    }
-                    result
-                },
                 XposedInterface.PRIORITY_LOWEST
-            )
+            ) { chain ->
+                val result = chain.proceed()
+                trackPress(chain.thisObject as View, chain.args[0] as MotionEvent) { v ->
+                    val host = findToggleSliderView(v)
+                    if (host != null) {
+                        openBrightnessDetail(host)
+                    }
+                }
+                result
+            }
         } catch (t: Throwable) {
             logger.error("Failed to hook ToggleSeekBar.onTouchEvent", t)
         }
@@ -365,18 +363,17 @@ class ControlCenterLongPressHook : AppHookModule() {
             hookWithId(
                 onTouchEvent,
                 "slider_touch_long_press_nps",
-                { chain ->
-                    val result = chain.proceed()
-                    val view = chain.thisObject as View
-                    if (isVolumeSliderView(view)) {
-                        trackPress(view, chain.args[0] as MotionEvent) {
-                            logger.debug("slider: volume long press, animation only")
-                        }
-                    }
-                    result
-                },
                 XposedInterface.PRIORITY_LOWEST
-            )
+            ) { chain ->
+                val result = chain.proceed()
+                val view = chain.thisObject as View
+                if (isVolumeSliderView(view)) {
+                    trackPress(view, chain.args[0] as MotionEvent) {
+                        logger.debug("slider: volume long press, animation only")
+                    }
+                }
+                result
+            }
         } catch (t: Throwable) {
             logger.error("Failed to hook SeekBarNps.onTouchEvent", t)
         }

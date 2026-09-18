@@ -151,7 +151,13 @@ abstract class BaseHookModule {
             id: String,
             hooker: Hooker
     ): XposedInterface.HookHandle {
-        return hookWithId(target, id, hooker, XposedInterface.PRIORITY_DEFAULT, ExceptionMode.DEFAULT)
+        return hookWithId(
+            target,
+            id,
+            XposedInterface.PRIORITY_DEFAULT,
+            ExceptionMode.DEFAULT,
+            hooker
+        )
     }
 
     /**
@@ -170,33 +176,13 @@ abstract class BaseHookModule {
      * @return the hook handle
      * @see hookWithId
      */
-    protected open fun hookWithId(target: Executable,
-                                  id: String,
-                                  hooker: Hooker,
-                                  priority: Int
+    protected open fun hookWithId(
+        target: Executable,
+        id: String,
+        priority: Int,
+        hooker: Hooker
     ): XposedInterface.HookHandle {
-        return hookWithId(target, id, hooker, priority, ExceptionMode.DEFAULT)
-    }
-
-    /**
-     * Hook with a stable id and an explicit execution priority, with the hooker
-     * as the trailing parameter so Kotlin trailing-lambda syntax can be used at
-     * call sites: {@code hookWithId(method, "id", PRIORITY_LOWEST) { chain -> ... }}.
-     *
-     * @param target   the method or constructor to hook
-     * @param id       a stable, module-unique identifier for the hook
-     * @param priority the execution priority; higher runs first
-     *                 (see the full overload for details)
-     * @param hooker   the interception callback
-     * @return the hook handle
-     * @see hookWithId
-     */
-    protected open fun hookWithId(target: Executable,
-                                  id: String,
-                                  priority: Int,
-                                  hooker: Hooker
-    ): XposedInterface.HookHandle {
-        return hookWithId(target, id, hooker, priority)
+        return hookWithId(target, id, priority, ExceptionMode.DEFAULT, hooker)
     }
 
     /**
@@ -246,11 +232,12 @@ abstract class BaseHookModule {
      * </ul>
      * @return the hook handle
      */
-    protected open fun hookWithId(target: Executable,
-                                  id: String,
-                                  hooker: Hooker,
-                                  priority: Int,
-                                  exceptionMode: ExceptionMode
+    protected open fun hookWithId(
+        target: Executable,
+        id: String,
+        priority: Int,
+        exceptionMode: ExceptionMode,
+        hooker: Hooker
     ): XposedInterface.HookHandle {
         return if (xposed.apiVersion >= XposedInterface.API_102) {
             xposed.hook(target).setId(id).setPriority(priority).setExceptionMode(exceptionMode).intercept(hooker)
