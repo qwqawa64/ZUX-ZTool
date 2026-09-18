@@ -619,18 +619,35 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val persisted = loadPersistedAppVolumes(context)
         val entries = mutableListOf<AppVolumeEntry>()
         val seenUids = mutableSetOf<Int>()
-        for (pkg in readDialogAppPackages()) {
+        for (element in readDialogAppPackages()) {
             if (entries.size >= MAX_APP_ROWS) break
             try {
-                val name = readStringField(pkg, "packageName") ?: continue
-                val uid = readIntField(pkg, "uid")
-                    ?: resolveUidFromPid(context, readIntField(pkg, "pid") ?: -1)
-                    ?: run {
-                        logger.debug("volume panel: app skipped (no uid): $name")
-                        continue
-                    }
+                // The native cache stores plain package-name strings (not
+                // AudioSystem$PackageInfo); support both shapes for safety.
+                val name: String? = if (element is String) {
+                    element
+                } else {
+                    readStringField(element, "packageName")
+                }
+                if (name.isNullOrEmpty()) {
+                    logger.debug("volume panel: app skipped (no name): " + element.javaClass.name)
+                    continue
+                }
+                val uid: Int = when {
+                    element is String -> packageUid(context, name)
+                        ?: run {
+                            logger.debug("volume panel: app skipped (no uid): $name")
+                            continue
+                        }
+                    else -> readIntField(element, "uid")
+                        ?: resolveUidFromPid(context, readIntField(element, "pid") ?: -1)
+                        ?: run {
+                            logger.debug("volume panel: app skipped (no uid): $name")
+                            continue
+                        }
+                }
                 if (!seenUids.add(uid)) continue
-                if (isWhiteListApp != null) {
+                if (isWhiteListApp != null && element !is String) {
                     val pass = isWhiteListApp.invoke(null, context, name) as? Boolean ?: true
                     if (!pass) {
                         logger.debug("volume panel: app skipped (whitelist): $name")
@@ -650,6 +667,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
             }
         }
         return entries
+    }
+
+    private fun packageUid(context: Context, packageName: String): Int? {
+        return try {
+            context.packageManager.getPackageUid(packageName, 0)
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     private fun buildAppColumn(
