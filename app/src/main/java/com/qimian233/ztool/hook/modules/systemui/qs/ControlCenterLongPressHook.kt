@@ -51,25 +51,67 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
+        hookTileListenerReplacement(classLoader)
         hookTileTouchEvent(classLoader)
         hookToggleSliderTouchEvent(classLoader)
         hookNativeLongClickSuppression(classLoader)
     }
 
     /**
-     * Tiles: QSTileViewImpl.onTouchEvent already forwards to
-     * super.onTouchEvent, so an after-hook sees every event and a
-     * performLongClick() from our detector routes through the tile's own
-     * OnLongClickListener.
+     * Tiles: replace the system's OnLongClickListener with ours after
+     * QSTileViewImpl.init wires it. Ours plays the release squish and then:
+     *  - large tiles (detail indicator present): indicator.performClick(),
+     *    which opens the tile's DetailAdapter dialog;
+     *  - small tiles: the captured original listener, preserving the native
+     *    long-press routing (Settings page etc.).
+     * Tiles without an original listener do nothing on long press.
      *
-     * Two tile-specific behaviors on top of the shared detector:
-     *  - Large tiles (detail indicator present) open the DetailAdapter dialog
-     *    by simulating a click on the indicator, because the tile's own
-     *    long-press routes to a Settings page instead of the dialog.
-     *  - After the long-press trigger the gesture is consumed: an
-     *    UP that arrives after the trigger is blocked from the original
-     *    method, so tiles without a long-press handler (flashlight) do not
-     *    additionally fire the click toggle.
+     * The framework long click (View.onTouchEvent -> checkForLongClick)
+     * drives the timing, since QSTileViewImpl.onTouchEvent calls through to
+     * super normally. The squish-in is driven from the touch hook below.
+     */
+    private fun hookTileListenerReplacement(classLoader: ClassLoader) {
+        try {
+            val initMethod: Method = classLoader.loadClass(QS_TILE_VIEW_CLASS)
+                .getDeclaredMethod(
+                    "init",
+                    View.OnClickListener::class.java,
+                    View.OnLongClickListener::class.java,
+                    View.OnClickListener::class.java
+                )
+            hookWithId(initMethod, "tile_listener_replace") { chain ->
+                val result = chain.proceed()
+                val view = chain.thisObject as View
+                val original = chain.args[1] as? View.OnLongClickListener
+                originalTileListeners[view] = original
+                view.setOnLongClickListener { v ->
+                    logger.debug(
+                        "tile: our long click fired, indicator=" +
+                            (findDetailIndicator(v) != null) +
+                            ", hasOriginal=" + (original != null)
+                    )
+                    playReleaseAnimation(v)
+                    val indicator = findDetailIndicator(v)
+                    when {
+                        indicator != null -> indicator.performClick()
+                        original != null -> original.onLongClick(v)
+                        else -> {
+                            // No long-press behavior: animation only.
+                        }
+                    }
+                    true
+                }
+                result
+            }
+        } catch (t: Throwable) {
+            logger.error("Failed to hook QSTileViewImpl.init", t)
+        }
+    }
+
+    /**
+     * Visual-only touch tracking for tiles: squish-in on DOWN, release on
+     * MOVE-beyond-slop / UP / CANCEL. No triggering logic — the framework
+     * long click on the replaced listener handles that.
      */
     private fun hookTileTouchEvent(classLoader: ClassLoader) {
         try {
@@ -78,49 +120,44 @@ class ControlCenterLongPressHook : AppHookModule() {
                 .getDeclaredMethod("onTouchEvent", MotionEvent::class.java)
             hookWithId(
                 onTouchEvent,
-                "tile_touch_long_press",
+                "tile_touch_squish",
                 { chain ->
-                    val view = chain.thisObject as View
-                    val event = chain.args[0] as MotionEvent
-                    if (event.actionMasked == MotionEvent.ACTION_UP ||
-                        event.actionMasked == MotionEvent.ACTION_CANCEL
-                    ) {
-                        val state = pressStates[view]
-                        if (state?.triggered == true) {
-                            // Gesture already handled by the long-press
-                            // trigger; swallow the trailing UP so the tile's
-                            // click toggle does not fire on top of it.
-                            logger.debug("tile: swallowing trailing UP after trigger")
-                            cleanupState(view)
-                            suppressNativeLongClick = false
-                            return@hookWithId true
-                        }
-                        suppressNativeLongClick = false
-                        if (state?.squished == true) {
-                            logger.debug("tile: UP without trigger, releasing squish")
-                            releaseSquish(view, state)
-                        }
-                        chain.proceed()
-                        null
-                    }
                     val result = chain.proceed()
-                    trackPress(view, event) { v ->
-                        val indicator = findDetailIndicator(v)
-                        val hasLongClick = hasOnLongClickListener(v)
-                        logger.debug(
-                            "tile: long-press triggered, indicator=" + (indicator != null) +
-                                ", hasLongClickListener=" + hasLongClick
-                        )
-                        if (indicator != null) {
-                            // Large tile: open the DetailAdapter dialog via
-                            // its own indicator button.
-                            indicator.performClick()
-                        } else if (hasLongClick) {
-                            v.performLongClick()
+                    try {
+                        val view = chain.thisObject as View
+                        val event = chain.args[0] as MotionEvent
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_DOWN -> {
+                                suppressNativeLongClick = true
+                                squishIn(view)
+                            }
+
+                            MotionEvent.ACTION_MOVE -> {
+                                val state = pressStates[view]
+                                if (state != null && !state.released) {
+                                    val dx = event.rawX - state.downX
+                                    val dy = event.rawY - state.downY
+                                    if (dx * dx + dy * dy > state.touchSlopSquared) {
+                                        state.released = true
+                                        playReleaseAnimation(view)
+                                    }
+                                }
+                            }
+
+                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                suppressNativeLongClick = false
+                                val state = pressStates[view]
+                                if (state != null && !state.released) {
+                                    // Long click (if any) fires around this
+                                    // time; release the squish so the action
+                                    // starts from a settled view.
+                                    state.released = true
+                                    playReleaseAnimation(view)
+                                }
+                            }
                         }
-                        // Tiles without a long-press handler do nothing:
-                        // View.performLongClick would otherwise fall back to
-                        // performClick and toggle the tile.
+                    } catch (t: Throwable) {
+                        logger.error("Tile squish tracking failed", t)
                     }
                     result
                 },
@@ -129,6 +166,22 @@ class ControlCenterLongPressHook : AppHookModule() {
         } catch (t: Throwable) {
             logger.error("Failed to hook QSTileViewImpl.onTouchEvent", t)
         }
+    }
+
+    private val originalTileListeners =
+        WeakHashMap<View, View.OnLongClickListener?>()
+
+    private fun squishIn(view: View) {
+        val state = obtainState(view)
+        state.downX = 0f
+        state.downY = 0f
+        state.released = false
+        view.animate()
+            .scaleX(SQUISH_SCALE_X)
+            .scaleY(SQUISH_SCALE_Y)
+            .setDuration(SQUISH_DURATION_MS)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
     }
 
     /**
@@ -142,28 +195,6 @@ class ControlCenterLongPressHook : AppHookModule() {
             (field.get(view) as? View)?.takeIf { it.visibility == View.VISIBLE && it.width > 0 }
         } catch (_: Throwable) {
             null
-        }
-    }
-
-    private fun cleanupState(view: View) {
-        pressStates.remove(view)
-    }
-
-    /**
-     * True when the view has its own OnLongClickListener. Without it,
-     * View.performLongClick falls back to performClick, which would toggle
-     * tiles that have no long-press behavior.
-     */
-    private fun hasOnLongClickListener(view: View): Boolean {
-        return try {
-            val listenerInfoField = View::class.java.getDeclaredField("mListenerInfo")
-            listenerInfoField.isAccessible = true
-            val listenerInfo = listenerInfoField.get(view) ?: return false
-            val listenerField = listenerInfo.javaClass.getDeclaredField("mOnLongClickListener")
-            listenerField.isAccessible = true
-            listenerField.get(listenerInfo) != null
-        } catch (_: Throwable) {
-            false
         }
     }
 
@@ -236,8 +267,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 val state = obtainState(view)
                 state.downX = event.rawX
                 state.downY = event.rawY
-                state.triggered = false
-                state.squished = true
+                state.released = false
                 view.animate()
                     .scaleX(SQUISH_SCALE_X)
                     .scaleY(SQUISH_SCALE_Y)
@@ -247,7 +277,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 cancelTrigger(view)
                 val runnable = Runnable {
-                    state.triggered = true
+                    state.released = true
                     view.animate()
                         .scaleX(1f)
                         .scaleY(1f)
@@ -262,7 +292,7 @@ class ControlCenterLongPressHook : AppHookModule() {
 
             MotionEvent.ACTION_MOVE -> {
                 val state = pressStates[view] ?: return
-                if (state.triggered) return
+                if (state.released) return
                 val dx = event.rawX - state.downX
                 val dy = event.rawY - state.downY
                 if (dx * dx + dy * dy > state.touchSlopSquared) {
@@ -275,11 +305,20 @@ class ControlCenterLongPressHook : AppHookModule() {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 suppressNativeLongClick = false
                 val state = pressStates[view] ?: return
-                if (!state.triggered) {
+                if (!state.released) {
                     releaseSquish(view, state)
                 }
             }
         }
+    }
+
+    private fun playReleaseAnimation(view: View) {
+        view.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(SQUISH_RELEASE_DURATION_MS)
+            .setInterpolator(OvershootInterpolator(SQUISH_OVERSHOOT))
+            .start()
     }
 
     private fun releaseSquish(view: View, state: PressState) {
@@ -333,8 +372,7 @@ class ControlCenterLongPressHook : AppHookModule() {
         val touchSlopSquared: Float = slop * slop
         var downX: Float = 0f
         var downY: Float = 0f
-        var triggered: Boolean = false
-        var squished: Boolean = false
+        var released: Boolean = false
         var runnable: Runnable? = null
     }
 
