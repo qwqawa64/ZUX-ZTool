@@ -97,6 +97,7 @@ import com.qimian233.ztool.hook.modules.systemui.qs.CustomQsColor
 import com.qimian233.ztool.hook.modules.systemui.qs.CustomQsRoundCorner
 import com.qimian233.ztool.hook.modules.systemui.qs.QsPanelWidthHook
 import com.qimian233.ztool.hook.modules.systemui.qs.ControlCenterLongPressHook
+import com.qimian233.ztool.hook.modules.systemui.qs.HideDetailIndicatorHook
 import com.qimian233.ztool.hook.modules.systemui.qs.SliderStyleHook
 import com.qimian233.ztool.hook.modules.systemui.qs.VolumeSliderPercentageHook
 import com.qimian233.ztool.hook.modules.systemui.statusbar.CustomStatusBarClock
@@ -187,6 +188,7 @@ object HookManager {
         registerHookModule(BrightnessSliderPercentageHook())
         registerHookModule(VolumeSliderPercentageHook())
         registerHookModule(ControlCenterLongPressHook())
+        registerHookModule(HideDetailIndicatorHook())
         registerHookModule(CustomQsColor())
         registerHookModule(NotificationCenterTransparency())
         registerHookModule(GuestModeController())
