@@ -71,40 +71,64 @@ class ControlCenterLongPressHook : AppHookModule() {
      * super normally. The squish-in is driven from the touch hook below.
      */
     private fun hookTileListenerReplacement(classLoader: ClassLoader) {
-        try {
-            val initMethod: Method = classLoader.loadClass(QS_TILE_VIEW_CLASS)
-                .getDeclaredMethod(
-                    "init",
-                    View.OnClickListener::class.java,
-                    View.OnLongClickListener::class.java,
-                    View.OnClickListener::class.java
-                )
-            hookWithId(initMethod, "tile_listener_replace") { chain ->
-                val result = chain.proceed()
-                val view = chain.thisObject as View
-                val original = chain.args[1] as? View.OnLongClickListener
-                originalTileListeners[view] = original
-                view.setOnLongClickListener { v ->
-                    logger.debug(
-                        "tile: our long click fired, indicator=" +
-                            (findDetailIndicator(v) != null) +
-                            ", hasOriginal=" + (original != null)
+        // CustomQSTileViewImpl (small tiles) overrides init, so the
+        // superclass hook alone never fires for them. Hook both inits.
+        val initClasses = listOf(QS_TILE_VIEW_CLASS, CUSTOM_QS_TILE_VIEW_CLASS)
+        for (className in initClasses) {
+            try {
+                val initMethod: Method = classLoader.loadClass(className)
+                    .getDeclaredMethod(
+                        "init",
+                        View.OnClickListener::class.java,
+                        View.OnLongClickListener::class.java,
+                        View.OnClickListener::class.java
                     )
-                    playReleaseAnimation(v)
-                    val indicator = findDetailIndicator(v)
-                    when {
-                        indicator != null -> indicator.performClick()
-                        original != null -> original.onLongClick(v)
-                        else -> {
-                            // No long-press behavior: animation only.
+                hookWithId(initMethod, "tile_listener_replace_$className") { chain ->
+                    val result = chain.proceed()
+                    val view = chain.thisObject as View
+                    val original = chain.args[1] as? View.OnLongClickListener
+                    originalTileListeners[view] = original
+                    view.setOnLongClickListener { v ->
+                        logger.debug(
+                            "tile: our long click fired, indicator=" +
+                                (findDetailIndicator(v) != null) +
+                                ", hasOriginal=" + (original != null)
+                        )
+                        playReleaseAnimation(v)
+                        val indicator = findDetailIndicator(v)
+                        when {
+                            indicator != null -> indicator.performClick()
+                            original != null -> original.onLongClick(v)
+                            else -> {
+                                // No long-press behavior: animation only.
+                            }
                         }
+                        true
                     }
-                    true
+                    // Null out the native QSLongPressEffect: its own delayed
+                    // animator overwrites our squish (and its end action
+                    // routes long click to the Settings page) the moment
+                    // isLongClickable becomes true.
+                    disableNativeLongPressEffect(view)
+                    result
                 }
-                result
+            } catch (t: Throwable) {
+                logger.error("Failed to hook $className.init", t)
             }
+        }
+    }
+
+    /**
+     * Nulls the native QSLongPressEffect so its animator stops fighting our
+     * squish and its completion no longer routes long click to Settings.
+     */
+    private fun disableNativeLongPressEffect(view: View) {
+        try {
+            val field = view.javaClass.getDeclaredField(LONG_PRESS_EFFECT_FIELD)
+            field.isAccessible = true
+            field.set(view, null)
         } catch (t: Throwable) {
-            logger.error("Failed to hook QSTileViewImpl.init", t)
+            logger.error("Failed to null longPressEffect", t)
         }
     }
 
@@ -378,6 +402,9 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     private companion object {
         const val QS_TILE_VIEW_CLASS = "com.android.systemui.qs.tileimpl.QSTileViewImpl"
+        const val CUSTOM_QS_TILE_VIEW_CLASS =
+            "com.android.systemui.qs.tileimpl.CustomQSTileViewImpl"
+        const val LONG_PRESS_EFFECT_FIELD = "longPressEffect"
         const val QS_TILE_IMPL_CLASS = "com.android.systemui.qs.tileimpl.QSTileImpl"
         const val EXPANDABLE_CLASS = "com.android.systemui.animation.Expandable"
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
