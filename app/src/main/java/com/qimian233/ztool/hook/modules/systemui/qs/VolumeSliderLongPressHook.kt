@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.annotation.SuppressLint
+import android.animation.ValueAnimator
 import android.app.ActivityManager
 import android.app.Dialog
 import android.app.NotificationManager
@@ -8,9 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.database.ContentObserver
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.media.AudioManager
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.Vibrator
@@ -19,6 +18,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
@@ -80,6 +80,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private var dialogContext: Context? = null
     private var contentObservers = mutableListOf<ContentObserver>()
 
+    /** NotificationPanelViewController used to fade the shade content out/in. */
+    private var behindListener: Any? = null
+
     override fun getModuleName(): String = PreferenceKeys.VOLUME_LONG_PRESS_PANEL.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
@@ -117,6 +120,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         private const val SYSTEM_UI_DIALOG_CLASS =
             "com.android.systemui.statusbar.phone.SystemUIDialog"
+        private const val TOGGLE_SLIDER_VIEW_CLASS =
+            "com.android.systemui.settings.ToggleSliderView"
         private const val CUSTOMIZE_TILE_VIEW_CLASS =
             "com.android.systemui.qs.customize.CustomizeTileView"
         private const val QS_TILE_STATE_CLASS =
@@ -151,7 +156,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             return
         }
         try {
-            buildAndShowPanel(view.context, classLoader)
+            buildAndShowPanel(view.context, classLoader, view)
         } catch (t: Throwable) {
             logger.error("Failed to show volume detail panel", t)
         }
@@ -232,7 +237,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // Panel construction
     // ------------------------------------------------------------------
 
-    private fun buildAndShowPanel(context: Context, classLoader: ClassLoader) {
+    private fun buildAndShowPanel(
+        context: Context,
+        classLoader: ClassLoader,
+        triggerView: View
+    ) {
         val themeRes = resolveStyleId(
             context,
             "Theme_SystemUI_Dialog_GlobalActionsLite",
@@ -248,10 +257,40 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val dialog = ctor.newInstance(context, themeRes, true) as Dialog
         logger.debug("volume panel: SystemUIDialog created")
 
-        val root = LinearLayout(context).apply {
+        // Fullscreen transparent root: the control-center blur behind the shade
+        // IS the background (BrightnessDetailDialog does the same; dim stays 0).
+        // Tapping anywhere outside the container dismisses — a fullscreen window
+        // has no "outside", so outside-touch dismissal must be handled here.
+        val root = FrameLayout(context).apply {
+            setOnClickListener { currentDialog?.dismiss() }
+        }
+        // Container aligned to the QS frame: full width minus QS margins,
+        // bottom-anchored above the navigation inset (portrait behaviour of
+        // BrightnessDetailDialog.updateConstraints).
+        val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(context, 20), dp(context, 16), dp(context, 20), dp(context, 16))
-            background = buildPanelBackground(context)
+        }
+        val qsMarginStart = resolveDimenPx(context, "qs_margin_start", dp(context, 24))
+        val qsMarginEnd = resolveDimenPx(context, "qs_margin_end", dp(context, 24))
+        root.addView(container, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            setMargins(qsMarginStart, 0, qsMarginEnd, 0)
+        })
+        root.setOnApplyWindowInsetsListener { _, insets ->
+            try {
+                (container.layoutParams as? FrameLayout.LayoutParams)?.let { lp ->
+                    val bottom = insets.systemWindowInsetBottom
+                    if (lp.bottomMargin != bottom) {
+                        lp.bottomMargin = bottom
+                        container.layoutParams = lp
+                    }
+                }
+            } catch (_: Throwable) {
+            }
+            insets
         }
 
         dialogContext = context
@@ -259,22 +298,22 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        root.addView(
+        container.addView(
             buildStreamSliderRow(context, am, AudioManager.STREAM_MUSIC, resolveDrawableId(
                 context, "ic_volume_media_zui", "ic_volume_media"
             ))
         )
         if (!AudioSystemHelperShim.isSingleVolume(context)) {
-            root.addView(
+            container.addView(
                 buildStreamSliderRow(context, am, AudioManager.STREAM_RING, resolveDrawableId(
                     context, "ic_volume_ringer_zui", "ic_volume_ringer"
                 ), spacingTopDp = 12)
             )
         }
-        root.addView(buildAppSection(context), LinearLayout.LayoutParams(
+        container.addView(buildAppSection(context), LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = dp(context, 12) })
-        root.addView(buildTileRow(context, classLoader), LinearLayout.LayoutParams(
+        container.addView(buildTileRow(context, classLoader), LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = dp(context, 12) })
         logger.debug(
@@ -282,12 +321,16 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 "${muteTile != null}/${dndTile != null}/${vibrateTile != null}"
         )
 
+        behindListener = resolveBehindListener(triggerView)
         dialog.setOnDismissListener {
             logger.debug("volume panel: dismissed")
             panelShowing = false
             currentDialog = null
             unregisterPanelObservers()
             restoreNativeAppListCallback()
+            // Reveal the control-center widgets the dialog had hidden.
+            setDialogBehindAlpha(1f)
+            behindListener = null
         }
         registerPanelObservers(context)
 
@@ -295,19 +338,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
         currentDialog = dialog
         ensureAppListProxyRegistered(classLoader)
         mainHandler.post { refreshAppSection() }
-        // Don't trust theme 0 (style lookup may have failed) for window size:
-        // give the window explicit sane geometry.
-        try {
-            val window = dialog.window
-            window?.setGravity(Gravity.CENTER)
-            window?.setLayout(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            window?.setDimAmount(0.6f)
-        } catch (t: Throwable) {
-            logger.warn("volume panel: window config failed: ${t.message}")
-        }
         dialog.show()
         // AlertDialog.onCreate -> AlertController.installContent() runs inside
         // show() and installs the stock alert layout, REPLACING any content set
@@ -315,30 +345,75 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // Native BrightnessDetailDialog sets content in onCreate after
         // super.onCreate() for the same reason; setContentView here wins.
         dialog.setContentView(root)
-        logger.debug(
-            "volume panel: content view set, shown=${dialog.isShowing}"
-        )
-        logger.debug("volume panel: shown, isShowing=${dialog.isShowing}")
-        // SystemUIDialog.onCreate -> updateWindowSize() overrides any pre-show
-        // layout with the delegate width (R.dimen.large_dialog_width), which is
-        // 0 on this ROM -> zero-width window, invisible content behind a
-        // full-screen dim. Re-apply explicit geometry AFTER show().
         try {
             val window = dialog.window
-            val metrics = context.resources.displayMetrics
-            val dimenId = resolveResourceId(context, "dimen", "large_dialog_width")
-            var width = dimenId?.let { context.resources.getDimensionPixelSize(it) } ?: 0
-            if (width <= 0) {
-                width = (metrics.widthPixels * 0.9f).roundToInt().coerceAtMost(dp(context, 348))
+            window?.setDimAmount(0f)
+            try {
+                window?.attributes?.layoutInDisplayCutoutMode = 3
+            } catch (_: Throwable) {
             }
-            window?.setGravity(Gravity.CENTER)
-            window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+            window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
         } catch (t: Throwable) {
-            logger.warn("volume panel: post-show layout failed: ${t.message}")
+            logger.warn("volume panel: window config failed: ${t.message}")
         }
-        // root.post never fired on-device (window may never attach the view);
-        // poll independently of the view tree instead.
+        logger.debug("volume panel: content view set, shown=${dialog.isShowing}")
+        // BrightnessDetailDialog-style entrance: fade the control-center
+        // widgets out behind the dialog while the container fades in.
+        container.alpha = 0f
+        container.animate().alpha(1f).setDuration(250L).start()
+        animateDialogBehindAlpha(0f)
         mainHandler.postDelayed({ dumpPanelDiagnostics(dialog, root) }, 400L)
+    }
+
+    /**
+     * Resolves NotificationPanelViewController (mDialogBehindAlphaListener)
+     * from the triggering slider: ToggleSliderView -> mBrightnessDetailDialog
+     *Controller -> mDialogBehindAlphaListener. setDialogBehindAlpha() on it
+     * fades the control-center content out/in, exactly what the stock
+     * BrightnessDetailDialog does.
+     */
+    private fun resolveBehindListener(triggerView: View): Any? {
+        return try {
+            var current: View = triggerView
+            var host: Any? = null
+            repeat(6) {
+                current = current.parent as? View ?: return@repeat
+                if (current.javaClass.name == TOGGLE_SLIDER_VIEW_CLASS) host = current
+            }
+            val controller = host?.let {
+                findField(it.javaClass, "mBrightnessDetailDialogController").get(it)
+            } ?: return null
+            findField(controller.javaClass, "mDialogBehindAlphaListener").get(controller)
+        } catch (t: Throwable) {
+            logger.debug("volume panel: behind listener unavailable: ${t.message}")
+            null
+        }
+    }
+
+    /** Hidden on NotificationPanelViewController: setDialogBehindAlpha(float). */
+    private fun setDialogBehindAlpha(alpha: Float) {
+        val listener = behindListener ?: return
+        try {
+            findMethod(listener.javaClass, "setDialogBehindAlpha", Float::class.javaPrimitiveType)
+                .invoke(listener, alpha)
+        } catch (t: Throwable) {
+            logger.debug("volume panel: setDialogBehindAlpha($alpha) failed: ${t.message}")
+        }
+    }
+
+    private fun animateDialogBehindAlpha(target: Float) {
+        if (behindListener == null) return
+        val start = if (target == 0f) 1f else 0f
+        val animator = ValueAnimator.ofFloat(start, target).apply {
+            duration = 250L
+            addUpdateListener {
+                setDialogBehindAlpha(it.animatedValue as Float)
+            }
+        }
+        animator.start()
     }
 
     private fun dumpPanelDiagnostics(dialog: Dialog, root: ViewGroup) {
@@ -366,15 +441,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             }
         } catch (t: Throwable) {
             logger.error("volume panel: diagnostics failed", t)
-        }
-    }
-
-    private fun buildPanelBackground(context: Context): GradientDrawable {
-        val color = obtainThemeColor(context, android.R.attr.colorBackgroundFloating, Color.WHITE)
-        val radius = resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
-        return GradientDrawable().apply {
-            setColor(color)
-            cornerRadius = radius
         }
     }
 
