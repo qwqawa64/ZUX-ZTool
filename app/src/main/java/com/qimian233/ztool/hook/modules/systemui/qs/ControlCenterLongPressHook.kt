@@ -1,11 +1,13 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
+import android.annotation.SuppressLint
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
+import androidx.core.view.isVisible
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -20,7 +22,7 @@ import java.util.WeakHashMap
  *
  * Tiles (QSTileViewImpl, both large and small): the tile's own long-click
  * listener routes to its native target — DetailAdapter dialogs for Bluetooth
- * / WiFi and longClickIntent settings pages for others — but the squish
+ * / Wi-Fi and longClickIntent settings pages for others — but the squish
  * animation never plays on this ROM. Hook onTouchEvent with a hand-rolled
  * press detector: DOWN plays the squish-in and schedules the trigger;
  * MOVE beyond slop or UP/CANCEL reverses it. The trigger calls
@@ -36,6 +38,7 @@ import java.util.WeakHashMap
  * Trigger timing follows the system configuration via
  * ViewConfiguration.scaledLongPressTimeout.
  */
+@SuppressLint("DiscouragedPrivateApi", "PrivateApi")
 class ControlCenterLongPressHook : AppHookModule() {
 
     private val pressStates = WeakHashMap<View, PressState>()
@@ -94,7 +97,6 @@ class ControlCenterLongPressHook : AppHookModule() {
                     val result = chain.proceed()
                     val view = chain.thisObject as View
                     val original = chain.args[1] as? View.OnLongClickListener
-                    originalTileListeners[view] = original
                     view.setOnLongClickListener { v ->
                         logger.debug(
                             "tile: our long click fired, indicator=" +
@@ -245,9 +247,6 @@ class ControlCenterLongPressHook : AppHookModule() {
         }
     }
 
-    private val originalTileListeners =
-        WeakHashMap<View, View.OnLongClickListener?>()
-
     private fun squishIn(view: View) {
         view.animate()
             .scaleX(SQUISH_SCALE_X)
@@ -265,7 +264,7 @@ class ControlCenterLongPressHook : AppHookModule() {
         return try {
             val field = view.javaClass.getDeclaredField(DETAIL_INDICATOR_FIELD)
             field.isAccessible = true
-            (field.get(view) as? View)?.takeIf { it.visibility == View.VISIBLE && it.width > 0 }
+            (field.get(view) as? View)?.takeIf { it.isVisible && it.width > 0 }
         } catch (_: Throwable) {
             null
         }
@@ -440,7 +439,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 if (dx * dx + dy * dy > state.touchSlopSquared) {
                     logger.debug("press: MOVE beyond slop, cancelling long press")
                     suppressNativeLongClick = false
-                    releaseSquish(view, state)
+                    releaseSquish(view)
                 }
             }
 
@@ -448,7 +447,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 suppressNativeLongClick = false
                 val state = pressStates[view] ?: return
                 if (!state.released) {
-                    releaseSquish(view, state)
+                    releaseSquish(view)
                 }
             }
         }
@@ -463,7 +462,7 @@ class ControlCenterLongPressHook : AppHookModule() {
             .start()
     }
 
-    private fun releaseSquish(view: View, state: PressState) {
+    private fun releaseSquish(view: View) {
         cancelTrigger(view)
         view.animate()
             .scaleX(1f)
@@ -493,7 +492,7 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     private fun findToggleSliderView(view: View): Any? {
         var current: View = view
-        for (i in 0 until 6) {
+        repeat(6) {
             current = current.parent as? View ?: return null
             if (current.javaClass.name == TOGGLE_SLIDER_VIEW_CLASS) return current
         }
