@@ -356,6 +356,47 @@ class ControlCenterLongPressHook : AppHookModule() {
         } catch (t: Throwable) {
             logger.error("Failed to hook ToggleSeekBar.onTouchEvent", t)
         }
+        // The QS volume slider is a zui.widget.SeekBarNps, not a
+        // ToggleSeekBar — hook it too, but animation-only: this ROM has no
+        // native volume panel behind a slider long press.
+        try {
+            val onTouchEvent: Method = classLoader
+                .loadClass(SEEK_BAR_NPS_CLASS)
+                .getDeclaredMethod("onTouchEvent", MotionEvent::class.java)
+            hookWithId(
+                onTouchEvent,
+                "slider_touch_long_press_nps",
+                { chain ->
+                    val result = chain.proceed()
+                    val view = chain.thisObject as View
+                    if (isVolumeSliderView(view)) {
+                        trackPress(view, chain.args[0] as MotionEvent) {
+                            logger.debug("slider: volume long press, animation only")
+                        }
+                    }
+                    result
+                },
+                XposedInterface.PRIORITY_LOWEST
+            )
+        } catch (t: Throwable) {
+            logger.error("Failed to hook SeekBarNps.onTouchEvent", t)
+        }
+    }
+
+    /**
+     * True when the touched view is the media-volume SeekBar of an enclosing
+     * ToggleSliderView. Guards the SeekBarNps hook from animating unrelated
+     * sliders elsewhere in SystemUI.
+     */
+    private fun isVolumeSliderView(view: View): Boolean {
+        val host = findToggleSliderView(view) ?: return false
+        return try {
+            val field = host.javaClass.getDeclaredField(VOLUME_SLIDER_FIELD)
+            field.isAccessible = true
+            field.get(host) == view
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     private fun trackPress(view: View, event: MotionEvent, onTrigger: (View) -> Unit) {
@@ -486,6 +527,8 @@ class ControlCenterLongPressHook : AppHookModule() {
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
         const val TOGGLE_SEEK_BAR_CLASS =
             "com.android.systemui.settings.brightness.ToggleSeekBar"
+        const val SEEK_BAR_NPS_CLASS = "zui.widget.SeekBarNps"
+        const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
         const val DETAIL_INDICATOR_FIELD = "detailIndicatorView"
         const val SQUISH_SCALE_X = 0.94f
         const val SQUISH_SCALE_Y = 0.90f
