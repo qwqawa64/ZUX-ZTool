@@ -386,7 +386,15 @@ class ControlCenterLongPressHook : AppHookModule() {
      * Sliders squish the root; tiles squish themselves.
      */
     private fun squishTarget(view: View): View {
-        return findSliderRoot(view) ?: view
+        val target = findSliderRoot(view) ?: view
+        logger.debug(
+            "press: squishTarget for " + view.javaClass.simpleName +
+                "@" + Integer.toHexString(System.identityHashCode(view)) +
+                " -> " + target.javaClass.simpleName +
+                "@" + Integer.toHexString(System.identityHashCode(target)) +
+                ", isSliderRoot=" + (target !== view)
+        )
+        return target
     }
 
     /**
@@ -395,15 +403,40 @@ class ControlCenterLongPressHook : AppHookModule() {
      * field name differs per slider type (brightness vs volume).
      */
     private fun findSliderRoot(view: View): View? {
-        val host = findToggleSliderView(view) ?: return null
+        val host = findToggleSliderView(view)
+        if (host == null) {
+            logger.debug("press: findSliderRoot: no ToggleSliderView ancestor of " + view.javaClass.simpleName)
+            return null
+        }
         for (fieldName in SLIDER_ROOT_FIELDS) {
             try {
                 val root = findField(host.javaClass, fieldName).get(host) as? View
-                if (root != null) return root
+                if (root != null) {
+                    logger.debug(
+                        "press: findSliderRoot via " + fieldName +
+                            " -> " + root.javaClass.name +
+                            ", parentIsHost=" + (root.parent === host) +
+                            ", containsTouchView=" + isDescendant(view, root)
+                    )
+                    return root
+                }
             } catch (_: Throwable) {
             }
         }
+        logger.debug(
+            "press: findSliderRoot: host found (" + host.javaClass.simpleName +
+                ") but no root field resolved"
+        )
         return null
+    }
+
+    private fun isDescendant(view: View, ancestor: View): Boolean {
+        var current = view.parent
+        while (current != null) {
+            if (current === ancestor) return true
+            current = current.parent
+        }
+        return false
     }
 
     private fun trackPress(view: View, event: MotionEvent, onTrigger: (View) -> Unit) {
