@@ -270,7 +270,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
             )
         }
         // App columns are appended inline by refreshAppSection().
-        sliderRow.addView(buildAppSection(context))
+        buildAppSection(context).also {
+            appSection = it
+            sliderRow.addView(it)
+        }
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
@@ -296,7 +299,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 "${muteTile != null}/${dndTile != null}/${vibrateTile != null}"
         )
 
-        behindListener = resolveBehindListener(triggerView)
         behindListener = resolveBehindListener(triggerView)
         dialog.setOnDismissListener {
             logger.debug("volume panel: dismissed")
