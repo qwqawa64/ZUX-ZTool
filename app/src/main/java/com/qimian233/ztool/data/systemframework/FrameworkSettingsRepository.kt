@@ -1,13 +1,16 @@
 package com.qimian233.ztool.data.systemframework
 
 import android.content.Context
+import com.qimian233.ztool.EnhancedShellExecutor
+import com.qimian233.ztool.EnhancedShellExecutor.ShellResult
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 
 class FrameworkSettingsRepository(
-    private val context: Context
+    private val context: Context,
+    private val shellExecutor: EnhancedShellExecutor = EnhancedShellExecutor.getInstance()
 ) {
     private val prefsUtils = ModulePreferencesUtils(context)
 
@@ -149,6 +152,43 @@ class FrameworkSettingsRepository(
             RestartSystemResult(success = true, error = "")
         } catch (e: Exception) {
             RestartSystemResult(success = false, error = e.message.orEmpty())
+        }
+    }
+
+    /**
+     * Clears the ZUI-persisted night-mode override (ui_night_mode_override_on/off)
+     * and kicks UiModeManagerService to recompute, restoring "sunset to sunrise"
+     * auto switching when it is pinned to light mode by a stale override.
+     * See docs_archive/bug_report_zui_dark_mode_auto.md.
+     */
+    fun fixNightModeOverride(): ShellResult {
+        val clearCmd =
+            "settings put secure ui_night_mode_override_off 0 && " +
+                "settings put secure ui_night_mode_override_on 0"
+        val retuneCmd = "cmd uimode night no && cmd uimode night auto"
+        return try {
+            val clear = shellExecutor.executeCommand("su -c '$clearCmd'")
+            if (!clear.success) {
+                return clear
+            }
+            val retune = shellExecutor.executeCommand("su -c '$retuneCmd'")
+            if (!retune.success) retune else ShellResult(
+                success = true,
+                output = context.getString(R.string.system_framework_fix_night_mode_done),
+                error = "",
+                exitCode = 0,
+                exception = null,
+                executionTime = clear.executionTime + retune.executionTime
+            )
+        } catch (e: Exception) {
+            ShellResult(
+                success = false,
+                output = "",
+                error = e.message.orEmpty(),
+                exitCode = -1,
+                exception = e,
+                executionTime = 0L
+            )
         }
     }
 

@@ -119,9 +119,18 @@ fun FrameworkSettingsRoute(
             onPkgMgrBypassSharedUserChanged = viewModel::setPkgMgrBypassSharedUser,
             onPkgMgrAllowHiddenApisSystemAppsChanged = viewModel::setPkgMgrAllowHiddenApisSystemApps,
             onPkgMgrBypassArscRestrictionChanged = viewModel::setPkgMgrBypassArscRestriction,
+            onFixNightModeOverride = viewModel::fixNightModeOverride,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
+    }
+
+    uiState.fixNightModeOverrideMessage?.let { message ->
+        val dismissFixMessage = viewModel::clearFixNightModeOverrideMessage
+        LaunchedEffect(message) {
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            dismissFixMessage()
+        }
     }
 
     if (uiState.showAiInputInfoDialog) {
@@ -183,6 +192,7 @@ private fun FrameworkSettingsScreen(
     onPkgMgrBypassSharedUserChanged: (Boolean) -> Unit,
     onPkgMgrAllowHiddenApisSystemAppsChanged: (Boolean) -> Unit,
     onPkgMgrBypassArscRestrictionChanged: (Boolean) -> Unit,
+    onFixNightModeOverride: () -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit,
     scrollState: ScrollState,
@@ -246,6 +256,7 @@ private fun FrameworkSettingsScreen(
                         onPkgMgrBypassSharedUserChanged = onPkgMgrBypassSharedUserChanged,
                         onPkgMgrAllowHiddenApisSystemAppsChanged = onPkgMgrAllowHiddenApisSystemAppsChanged,
                         onPkgMgrBypassArscRestrictionChanged = onPkgMgrBypassArscRestrictionChanged,
+                        onFixNightModeOverride = onFixNightModeOverride,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -277,6 +288,7 @@ private fun frameworkSettingsSections(
     onPkgMgrBypassSharedUserChanged: (Boolean) -> Unit,
     onPkgMgrAllowHiddenApisSystemAppsChanged: (Boolean) -> Unit,
     onPkgMgrBypassArscRestrictionChanged: (Boolean) -> Unit,
+    onFixNightModeOverride: () -> Unit,
     onAiInputSignsChanged: (String) -> Unit,
     onShowAiInputInfo: () -> Unit
 ): List<SettingSection> {
@@ -458,6 +470,13 @@ private fun frameworkSettingsSections(
                     checked = state.disableFlagSecure,
                     onCheckedChange = onDisableFlagSecureChanged,
                     key = "framework_disable_flag_secure"
+                ),
+                SettingItem.Action(
+                    title = stringResource(R.string.system_framework_fix_night_mode_title),
+                    summary = stringResource(R.string.system_framework_fix_night_mode_summary),
+                    onClick = onFixNightModeOverride,
+                    enabled = !state.fixNightModeOverrideRunning,
+                    key = "framework_fix_night_mode_override"
                 ),
                 SettingItem.Custom(
                     content = {

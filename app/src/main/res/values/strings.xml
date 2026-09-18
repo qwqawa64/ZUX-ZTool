@@ -662,6 +662,9 @@
     <string name="system_framework_custom_detector_err">格式错误：请使用英文逗号分隔多个检测符</string>
     <string name="system_framework_custom_detector_hint">请输入自定义的检测符，多个使用英文逗号分隔</string>
     <string name="system_framework_misc_title">杂项</string>
+    <string name="system_framework_fix_night_mode_title">修复深色模式自动切换</string>
+    <string name="system_framework_fix_night_mode_summary">深色模式选了"日落到日出"却不自动切换时，点击清除残留的手动覆盖设置并立即生效，无需重启</string>
+    <string name="system_framework_fix_night_mode_done">已清除残留覆盖并重新应用深色模式调度</string>
     <string name="system_framework_ai_input_expand_title">自定义唤起符</string>
     <string name="system_framework_ai_input_expand_summary">尝试强制启用AI全局输入，自定义AI触发符号，官方默认为全/半角的“&amp;&amp;”</string>
     <string name="system_framework_half_width_punct_title">强制半角符号输出</string>
