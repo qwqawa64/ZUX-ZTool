@@ -118,7 +118,18 @@ class ControlCenterLongPressHook : AppHookModule() {
                             }
                             original != null -> {
                                 logger.debug("tile: routing to original.onLongClick()")
-                                original.onLongClick(v)
+                                try {
+                                    original.onLongClick(v)
+                                } catch (t: Throwable) {
+                                    // The native listener dereferences
+                                    // longPressEffect unconditionally; we null
+                                    // that field, so a state-change race can
+                                    // surface an NPE here. Swallow it: the
+                                    // squish already played and the tile's
+                                    // long-press action (dialog vs settings)
+                                    // is best-effort.
+                                    logger.error("tile: original long click failed", t)
+                                }
                             }
                             else -> {
                                 // No long-press behavior: animation only.
@@ -244,13 +255,19 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     /**
      * The large-tile detail indicator (right-bottom ImageButton) — its click
-     * opens the tile's DetailAdapter dialog. Tiles without one return null.
+     * opens the tile's DetailAdapter dialog. Normally requires VISIBLE;
+     * when HideDetailIndicatorHook has tagged the button (dual-target tile
+     * with the button forced GONE), the tag itself qualifies so long-press
+     * routing still reaches performClick() instead of the native listener,
+     * which NPEs on our nulled longPressEffect.
      */
     private fun findDetailIndicator(view: View): View? {
         return try {
-            val field = view.javaClass.getDeclaredField(DETAIL_INDICATOR_FIELD)
-            field.isAccessible = true
-            (field.get(view) as? View)?.takeIf { it.isVisible && it.width > 0 }
+            val field = findField(view.javaClass, DETAIL_INDICATOR_FIELD)
+            val indicator = field.get(view) as? View
+            indicator?.takeIf {
+                it.tag == DUAL_TARGET_TAG || (it.isVisible && it.width > 0)
+            }
         } catch (_: Throwable) {
             null
         }
@@ -558,6 +575,7 @@ class ControlCenterLongPressHook : AppHookModule() {
         val SLIDER_ROOT_FIELDS =
             arrayOf("mBrightnessSliderRoot", "mVolumeSliderRoot")
         const val DETAIL_INDICATOR_FIELD = "detailIndicatorView"
+        const val DUAL_TARGET_TAG = "ztool_dual_target_indicator"
         const val SQUISH_SCALE_X = 0.94f
         const val SQUISH_SCALE_Y = 0.90f
         const val SQUISH_DURATION_MS = 120L

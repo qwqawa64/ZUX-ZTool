@@ -12,11 +12,12 @@ import java.lang.reflect.Method
  * TEST HOOK (enabled via getModuleName() returning a test marker): removes
  * the detail-indicator ImageButtons from the control center.
  *
- * - Large tiles: QSTileViewImpl.detailIndicatorView (side view)
- * - Small tiles: CustomQSTileViewImpl.labelDetailIndicatorView (label row)
+ * - Large tiles: QSTileViewImpl.detailIndicatorView (side view). Small tiles
+ *   are deliberately NOT covered — their labelDetailIndicatorView participates
+ *   in QSAnimator alpha animation and hiding it has no visual benefit.
  * - Brightness slider: ToggleSliderView.mBrightnessDetailIndicator
  *
- * The tile indicators are (re)shown by loadSideViewDrawableIfNecessary on
+ * The tile indicator is (re)shown by loadSideViewDrawableIfNecessary on
  * every state change, so hiding happens AFTER that method runs rather than
  * once at init. The brightness indicator is only ever re-clickable via
  * onStateChanged (accessibility mode), so hiding it right after inflation
@@ -39,42 +40,43 @@ class HideDetailIndicatorHook : AppHookModule() {
     }
 
     /**
-     * Force GONE after every visibility decision the tile view makes. Hooking
-     * both implementations covers large (side view) and small (label row)
-     * tiles; the base method also serves tiles that don't override it.
+     * Force GONE after every visibility decision the tile view makes. Only
+     * the base implementation is hooked: it drives the large-tile side-view
+     * indicator. Small tiles (CustomQSTileViewImpl) are out of scope.
      */
     private fun hideTileIndicators(classLoader: ClassLoader) {
         val stateClass = findQsTileStateClass(classLoader) ?: run {
             logger.warn("QSTile.State not found; tile indicator hooks skipped")
             return
         }
-        for (className in TILE_VIEW_CLASSES) {
-            try {
-                val method: Method = classLoader.loadClass(className)
-                    .getDeclaredMethod("loadSideViewDrawableIfNecessary", stateClass)
-                hookWithId(method, "hide_indicator_$className") { chain ->
-                    val result = chain.proceed()
-                    hideIndicator(chain.thisObject)
-                    result
-                }
-            } catch (t: Throwable) {
-                logger.error("Failed to hook loadSideViewDrawableIfNecessary on $className", t)
+        try {
+            val method: Method = classLoader.loadClass(QS_TILE_VIEW_CLASS)
+                .getDeclaredMethod("loadSideViewDrawableIfNecessary", stateClass)
+            hookWithId(method, "hide_indicator_$QS_TILE_VIEW_CLASS") { chain ->
+                val result = chain.proceed()
+                hideIndicator(chain.thisObject)
+                result
             }
+        } catch (t: Throwable) {
+            logger.error("Failed to hook loadSideViewDrawableIfNecessary on $QS_TILE_VIEW_CLASS", t)
         }
     }
 
     private fun hideIndicator(tileView: Any) {
-        for (fieldName in INDICATOR_FIELDS) {
-            try {
-                val view = findField(tileView.javaClass, fieldName).get(tileView) as? ImageView
-                if (view != null && view.visibility != View.GONE) {
-                    view.visibility = View.GONE
-                    view.isClickable = false
-                    view.isFocusable = false
-                }
-            } catch (_: Throwable) {
-                // Field absent on this tile variant — expected, try next.
+        try {
+            val view = findField(tileView.javaClass, TILE_INDICATOR_FIELD).get(tileView) as? ImageView
+            if (view != null && view.visibility != View.GONE) {
+                // Record that the system considered this a dual-target tile
+                // before we hide the button: the long-press hook uses the tag
+                // to keep routing long presses to performClick() (a GONE view
+                // can still be clicked programmatically), instead of falling
+                // through to the native long-click listener.
+                view.tag = DUAL_TARGET_TAG
+                view.visibility = View.GONE
+                view.isClickable = false
+                view.isFocusable = false
             }
+        } catch (_: Throwable) {
         }
     }
 
@@ -121,13 +123,13 @@ class HideDetailIndicatorHook : AppHookModule() {
     }
 
     private companion object {
-        val TILE_VIEW_CLASSES = arrayOf(
-            "com.android.systemui.qs.tileimpl.QSTileViewImpl",
-            "com.android.systemui.qs.tileimpl.CustomQSTileViewImpl"
-        )
+        const val QS_TILE_VIEW_CLASS = "com.android.systemui.qs.tileimpl.QSTileViewImpl"
         const val QS_TILE_STATE_CLASS = "com.android.systemui.plugins.qs.QSTile\$State"
-        val INDICATOR_FIELDS = arrayOf("detailIndicatorView", "labelDetailIndicatorView")
+        const val TILE_INDICATOR_FIELD = "detailIndicatorView"
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
         const val BRIGHTNESS_INDICATOR_FIELD = "mBrightnessDetailIndicator"
+
+        /** Marker consumed by ControlCenterLongPressHook.findDetailIndicator. */
+        const val DUAL_TARGET_TAG = "ztool_dual_target_indicator"
     }
 }
