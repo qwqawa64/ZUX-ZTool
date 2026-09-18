@@ -312,6 +312,23 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         dialog.show()
         logger.debug("volume panel: shown, isShowing=${dialog.isShowing}")
+        // SystemUIDialog.onCreate -> updateWindowSize() overrides any pre-show
+        // layout with the delegate width (R.dimen.large_dialog_width), which is
+        // 0 on this ROM -> zero-width window, invisible content behind a
+        // full-screen dim. Re-apply explicit geometry AFTER show().
+        try {
+            val window = dialog.window
+            val metrics = context.resources.displayMetrics
+            val dimenId = resolveResourceId(context, "dimen", "large_dialog_width")
+            var width = dimenId?.let { context.resources.getDimensionPixelSize(it) } ?: 0
+            if (width <= 0) {
+                width = (metrics.widthPixels * 0.9f).roundToInt().coerceAtMost(dp(context, 348))
+            }
+            window?.setGravity(Gravity.CENTER)
+            window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+        } catch (t: Throwable) {
+            logger.warn("volume panel: post-show layout failed: ${t.message}")
+        }
         // root.post never fired on-device (window may never attach the view);
         // poll independently of the view tree instead.
         mainHandler.postDelayed({ dumpPanelDiagnostics(dialog, root) }, 400L)
@@ -321,20 +338,20 @@ class VolumeSliderLongPressHook : AppHookModule() {
         try {
             val window = dialog.window
             val lp = window?.attributes
-            logger.debug(
+            logger.warn(
                 "volume panel: window isShowing=${dialog.isShowing}" +
                     " type=${lp?.type} w=${lp?.width} h=${lp?.height}" +
                     " gravity=${lp?.gravity} alpha=${lp?.alpha} dim=${lp?.dimAmount}" +
                     " token=${window?.attributes?.token != null}"
             )
-            logger.debug(
+            logger.warn(
                 "volume panel: root ${root.width}x${root.height}" +
                     " children=${root.childCount} visibility=${root.visibility}" +
                     " alpha=${root.alpha} attached=${root.isAttachedToWindow}"
             )
             for (i in 0 until root.childCount) {
                 val child = root.getChildAt(i)
-                logger.debug(
+                logger.warn(
                     "volume panel: child[$i] ${child.javaClass.simpleName}" +
                         " ${child.width}x${child.height} vis=${child.visibility}" +
                         " alpha=${child.alpha}"
