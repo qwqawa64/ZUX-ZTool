@@ -147,23 +147,9 @@ class ControlCenterLongPressHook : AppHookModule() {
      */
     private fun disableNativeLongPressEffect(view: View) {
         try {
-            var clazz: Class<*>? = view.javaClass
-            var field: java.lang.reflect.Field? = null
-            while (clazz != null) {
-                field = try {
-                    clazz.getDeclaredField(LONG_PRESS_EFFECT_FIELD)
-                } catch (_: NoSuchFieldException) {
-                    null
-                }
-                if (field != null) break
-                clazz = clazz.superclass
-            }
-            if (field != null) {
-                field.isAccessible = true
-                field.set(view, null)
-            } else {
-                logger.warn("longPressEffect field not found in hierarchy")
-            }
+            findField(view.javaClass, LONG_PRESS_EFFECT_FIELD).set(view, null)
+        } catch (_: Throwable) {
+            logger.warn("longPressEffect field not found in hierarchy")
         } catch (t: Throwable) {
             logger.error("Failed to null longPressEffect", t)
         }
@@ -387,15 +373,41 @@ class ControlCenterLongPressHook : AppHookModule() {
     private fun isVolumeSliderView(view: View): Boolean {
         val host = findToggleSliderView(view) ?: return false
         return try {
-            val field = host.javaClass.getDeclaredField(VOLUME_SLIDER_FIELD)
-            field.isAccessible = true
-            field.get(host) == view
+            findField(host.javaClass, VOLUME_SLIDER_FIELD).get(host) == view
         } catch (_: Throwable) {
             false
         }
     }
 
+    /**
+     * Animation target for slider squish: the enclosing ToggleSliderView's
+     * root FrameLayout (mBrightnessSliderRoot / mVolumeSliderRoot), so the
+     * icon, progress bar, and the percentage-hook label scale together.
+     * Sliders squish the root; tiles squish themselves.
+     */
+    private fun squishTarget(view: View): View {
+        return findSliderRoot(view) ?: view
+    }
+
+    /**
+     * Walks up at most a few parents looking for the ToggleSliderView, then
+     * reads its root field via the base-class hierarchy-walking finder. The
+     * field name differs per slider type (brightness vs volume).
+     */
+    private fun findSliderRoot(view: View): View? {
+        val host = findToggleSliderView(view) ?: return null
+        for (fieldName in SLIDER_ROOT_FIELDS) {
+            try {
+                val root = findField(host.javaClass, fieldName).get(host) as? View
+                if (root != null) return root
+            } catch (_: Throwable) {
+            }
+        }
+        return null
+    }
+
     private fun trackPress(view: View, event: MotionEvent, onTrigger: (View) -> Unit) {
+        val target = squishTarget(view)
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 // Our gesture owns this touch from now on: any native
@@ -406,22 +418,13 @@ class ControlCenterLongPressHook : AppHookModule() {
                 state.downX = event.rawX
                 state.downY = event.rawY
                 state.released = false
-                view.animate()
-                    .scaleX(SQUISH_SCALE_X)
-                    .scaleY(SQUISH_SCALE_Y)
-                    .setDuration(SQUISH_DURATION_MS)
-                    .setInterpolator(DecelerateInterpolator())
-                    .start()
+                state.animationTarget = target
+                squishIn(target)
                 view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 cancelTrigger(view)
                 val runnable = Runnable {
                     state.released = true
-                    view.animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(SQUISH_RELEASE_DURATION_MS)
-                        .setInterpolator(OvershootInterpolator(SQUISH_OVERSHOOT))
-                        .start()
+                    playReleaseAnimation(target)
                     onTrigger(view)
                 }
                 state.runnable = runnable
@@ -436,7 +439,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 if (dx * dx + dy * dy > state.touchSlopSquared) {
                     logger.debug("press: MOVE beyond slop, cancelling long press")
                     suppressNativeLongClick = false
-                    releaseSquish(view)
+                    releaseSquish(view, state)
                 }
             }
 
@@ -444,7 +447,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 suppressNativeLongClick = false
                 val state = pressStates[view] ?: return
                 if (!state.released) {
-                    releaseSquish(view)
+                    releaseSquish(view, state)
                 }
             }
         }
@@ -459,14 +462,9 @@ class ControlCenterLongPressHook : AppHookModule() {
             .start()
     }
 
-    private fun releaseSquish(view: View) {
+    private fun releaseSquish(view: View, state: PressState) {
         cancelTrigger(view)
-        view.animate()
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(SQUISH_RELEASE_DURATION_MS)
-            .setInterpolator(OvershootInterpolator(SQUISH_OVERSHOOT))
-            .start()
+        playReleaseAnimation(state.animationTarget ?: view)
     }
 
     private fun cancelTrigger(view: View) {
@@ -498,9 +496,8 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     private fun openBrightnessDetail(sliderView: Any) {
         try {
-            val method: Method = sliderView.javaClass.getDeclaredMethod("openBrightnessDetail")
-            method.isAccessible = true
-            method.invoke(sliderView)
+            findMethod(sliderView.javaClass, "openBrightnessDetail")
+                .invoke(sliderView)
         } catch (t: Throwable) {
             logger.error("Failed to open brightness detail", t)
         }
@@ -512,6 +509,9 @@ class ControlCenterLongPressHook : AppHookModule() {
         var downY: Float = 0f
         var released: Boolean = false
         var runnable: Runnable? = null
+
+        /** View the squish animation is running on (slider root or the view itself). */
+        var animationTarget: View? = null
     }
 
     private companion object {
@@ -525,6 +525,8 @@ class ControlCenterLongPressHook : AppHookModule() {
             "com.android.systemui.settings.brightness.ToggleSeekBar"
         const val SEEK_BAR_NPS_CLASS = "zui.widget.SeekBarNps"
         const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
+        val SLIDER_ROOT_FIELDS =
+            arrayOf("mBrightnessSliderRoot", "mVolumeSliderRoot")
         const val DETAIL_INDICATOR_FIELD = "detailIndicatorView"
         const val SQUISH_SCALE_X = 0.94f
         const val SQUISH_SCALE_Y = 0.90f
