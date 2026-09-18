@@ -188,18 +188,26 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 val arg = chain.args.getOrNull(0)
                 if (arg != null && arg !== ourAppListProxy) {
                     nativeAppListCallback = arg
+                    logger.info(
+                        "volume panel: app-list slot claimed by " + arg.javaClass.name
+                    )
                 }
                 chain.proceed()
             }
+            logger.info("volume panel: app-list callback slot hook installed")
         } catch (t: Throwable) {
             logger.warn("AudioSystem app-list callback slot hook unavailable: ${t.message}")
         }
     }
 
     private fun ensureAppListProxyRegistered(classLoader: ClassLoader) {
-        val setter = audioSystemSetter ?: return
+        val setter = audioSystemSetter ?: run {
+            logger.warn("volume panel: no AudioSystem setter, app volumes unavailable")
+            return
+        }
         if (ourAppListProxy != null) {
             setter.invoke(null, ourAppListProxy)
+            logger.info("volume panel: app-list proxy re-registered (cached)")
             return
         }
         val callbackClass = Class.forName("android.media.AudioSystem\$AudioAppListCallback")
@@ -216,6 +224,15 @@ class VolumeSliderLongPressHook : AppHookModule() {
                         if (e != null) entries.add(e)
                     }
                 }
+                logger.info(
+                    "volume panel: app-list callback fired, entries=" + entries.size
+                )
+                for (e in entries) {
+                    logger.debug(
+                        "volume panel: app entry " + readStringField(e, "packageName") +
+                            " pid=" + readIntField(e, "pid") + " uid=" + readIntField(e, "uid")
+                    )
+                }
                 latestPackages = entries
                 mainHandler.post { refreshAppSection() }
             }
@@ -224,7 +241,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
         ourAppListProxy = Proxy.newProxyInstance(
             callbackClass.classLoader, arrayOf(callbackClass), handler
         )
-        setter.invoke(null, ourAppListProxy)
+        val result = setter.invoke(null, ourAppListProxy)
+        logger.info(
+            "volume panel: app-list proxy registered, audioServerResult=$result" +
+                ", nativeCallbackWas=" + (nativeAppListCallback?.javaClass?.name ?: "null")
+        )
     }
 
     private fun restoreNativeAppListCallback() {
@@ -611,18 +632,25 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val context = dialogContext ?: return
         val classLoader = systemUiClassLoader ?: return
         if (!panelShowing) return
+        logger.info(
+            "volume panel: refreshAppSection, cachedPackages=" + latestPackages.size
+        )
         try {
             section.removeAllViews()
             val entries = collectAppVolumeEntries(context, classLoader)
             if (entries.isEmpty()) {
                 section.visibility = View.GONE
+                logger.info(
+                    "volume panel: app section hidden (no entries); cached=" +
+                        latestPackages.size
+                )
                 return
             }
             section.visibility = View.VISIBLE
             for (entry in entries) {
                 section.addView(buildAppColumn(context, entry))
             }
-            logger.debug("volume panel: app section columns=${entries.size}")
+            logger.info("volume panel: app section columns=${entries.size}")
         } catch (t: Throwable) {
             logger.error("Failed to refresh app volume section", t)
         }
@@ -649,11 +677,17 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 val name = readStringField(pkg, "packageName") ?: continue
                 val uid = readIntField(pkg, "uid")
                     ?: resolveUidFromPid(context, readIntField(pkg, "pid") ?: -1)
-                    ?: continue
+                    ?: run {
+                        logger.debug("volume panel: app skipped (no uid): $name")
+                        continue
+                    }
                 if (!seenUids.add(uid)) continue
                 if (isWhiteListApp != null) {
                     val pass = isWhiteListApp.invoke(null, context, name) as? Boolean ?: true
-                    if (!pass) continue
+                    if (!pass) {
+                        logger.debug("volume panel: app skipped (whitelist): $name")
+                        continue
+                    }
                 }
                 val appInfo = try {
                     context.packageManager.getApplicationInfo(name, 0)
