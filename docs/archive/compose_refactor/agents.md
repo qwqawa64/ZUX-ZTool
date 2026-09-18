@@ -26,8 +26,8 @@ ZUX-ZTool/
   build.gradle.kts             root build script
   settings.gradle.kts          Gradle module configuration
   gradle.properties            Gradle/Android build settings
-  ComposeRefactor.md           historical Compose refactor notes, UTF-8 encoding
-  README.md
+  compose_refactor.md           historical Compose refactor notes, UTF-8 encoding
+  readme.md
   UpdateCheck.json
   ZToolLogo.png
   ZToolLogoForeground.svg
@@ -77,7 +77,7 @@ app/src/main/assets/
 
 Use Compose as the long-term UI layer.
 
-- Use `ComposeRefactor.md` as the detailed migration plan and status log. Before selecting the next migration target, consult the latest plan and verification notes there; keep this file as the concise operating guide.
+- Use `compose_refactor.md` as the detailed migration plan and status log. Before selecting the next migration target, consult the latest plan and verification notes there; keep this file as the concise operating guide.
 - `MainActivity` should move toward only hosting `setContent { ZToolApp() }`.
 - Screens should become composable screen implementations.
 - XML Navigation has been replaced by `navigation-compose`; do not reintroduce XML navigation.
@@ -99,7 +99,7 @@ For example, logic from `HomeFragment` should be modeled around:
 - `EnvironmentRepository`
 - `UpdateRepository`
 
-For Phase 7, avoid adding new dependencies on `HomeFragment`; use the replacement Hook compatibility target documented in `ComposeRefactor.md` once it exists.
+For Phase 7, avoid adding new dependencies on `HomeFragment`; use the replacement Hook compatibility target documented in `compose_refactor.md` once it exists.
 
 ## Compose And Design-System Rules
 
@@ -183,8 +183,8 @@ When changing UI, navigation, theme, design-system, or Compose migration code:
 6. Prefer small, reviewable patches and avoid coupling unrelated screen, theme, and build-system changes.
 7. Do not reintroduce XML layouts, XML menus, XML navigation, old adapters, RecyclerView UI, Fragment Navigation, or View-based screen scaffolding during ordinary UI/theme work.
 8. After UI, theme, shared-component, or navigation changes, run `.\gradlew.bat assembleDebug`.
-9. Document the completed task, verification result, and next step in `ComposeRefactor.md`.
-10. When a planned task is completed, update the corresponding task entry in `ComposeRefactor.md`; if the task entry is empty or stale, generate new tasks to push the refactor forward.
+9. Document the completed task, verification result, and next step in `compose_refactor.md`.
+10. When a planned task is completed, update the corresponding task entry in `compose_refactor.md`; if the task entry is empty or stale, generate new tasks to push the refactor forward.
 11. Commit your changes after documenting them. When committing, include only the current scoped refactor and related documentation. Do not include build outputs, IDE files, Gradle caches, or unrelated untracked files.
 
 ## Areas To Preserve
@@ -214,9 +214,9 @@ The remaining Compose cleanup may remove compatibility wrappers when replacement
 
 ## Current Follow-Up Priorities
 
-Use `ComposeRefactor.md` as the source of truth for the detailed migration order, rationale, completed work log, and next-step notes.
+Use `compose_refactor.md` as the source of truth for the detailed migration order, rationale, completed work log, and next-step notes.
 
-- Keep all follow-up plans only in `ComposeRefactor.md`.
+- Keep all follow-up plans only in `compose_refactor.md`.
 - Do not record work completion progress in `AGENTS.MD`.
 - Keep `AGENTS.MD` stable as an operating guide; update it only for durable workflow rules, preservation boundaries, or project-wide instructions.
 

@@ -243,7 +243,7 @@ If AGP 9 blocks the project and cannot be fixed in a narrow build-script patch:
    - `compileSdk = 36`
    - `targetSdk = 36`
    - previous Miuix version
-4. Preserve a failure note in `GradleUpgrade.md` or the PR with:
+4. Preserve a failure note in `gradle_upgrade.md` or the PR with:
    - selected Gradle/AGP/Kotlin/Miuix versions
    - exact command that failed
    - first actionable error block

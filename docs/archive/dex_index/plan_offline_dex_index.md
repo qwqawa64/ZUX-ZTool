@@ -77,7 +77,7 @@
 | `AndroidManifest.xml` | 注册 `DexIndexReceiver` |
 | `ZToolApplication.kt` | 启动时比对 apk 指纹，变化则后台重扫（覆盖 OTA 更新目标 app） |
 | 7 个 Hook 文件 | `handleLoadPackage` 中删除 DexKitHelper/bridge 查询，改 `DexIndexStore` 读取 + 保留硬编码 fallback |
-| `docs_archive/dex_index/` | 新增接入指南；更新 `AGENTS.md` Hook 架构章节 |
+| `docs/archive/dex_index/` | 新增接入指南；更新 `AGENTS.md` Hook 架构章节 |
 
 ### 删除
 
@@ -142,7 +142,7 @@ val name = idx?.getAsJsonObject(moduleName)?.get("hotwordInitMethod")?.asString 
 4. `MobileDesktopDexIndexer.kt`（迁移 2 模块查询）
 5. 触发：Receiver + `ZToolApplication` 指纹检查 + 设置页手动刷新
 6. 改造 7 个 Hook，删除 `DexKitHelper.kt`
-7. 文档（`docs_archive/dex_index/` + AGENTS.md）
+7. 文档（`docs/archive/dex_index/` + AGENTS.md）
 8. 验证：`.\gradlew.bat assembleDebug`；`git diff --check`；真机清单（见下）
 
 ## 9. 验证计划

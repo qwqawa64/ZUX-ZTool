@@ -1,6 +1,6 @@
-# 问题反馈：ZUI 深色模式"日落到日出"自动切换失效（ui_night_mode_override_off 残留）
+# 问题反馈：ZUXOS 深色模式"日落到日出"自动切换失效（ui_night_mode_override_off 残留）
 
-**适用机型/系统**：ZUI（ZUX OS），基于 Android 16（services.jar 版本以本文反编译信息为准）
+**适用机型/系统**：ZUX OS，基于 Android 16（services.jar 版本以本文反编译信息为准）
 **反馈模块**：系统框架（system_server）/ 设置 APP 深色模式页面
 **严重程度**：中——功能完全失效，但可通过手动清除一个 Settings 值恢复
 
@@ -53,7 +53,7 @@
 4. `adb shell settings get secure ui_night_mode_override_off` 确认为 `1`；
 5. `adb shell settings put secure ui_night_mode_override_off 0` + `adb shell cmd uimode night no` + `adb shell cmd uimode night auto` 后恢复正常。
 
-## 用户侧临时解决方法
+## 用户侧临时解决方法（需 Root）
 
 ```bash
 adb shell settings put secure ui_night_mode_override_off 0

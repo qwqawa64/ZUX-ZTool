@@ -51,7 +51,7 @@ The following areas are migrated or substantially converted to Compose:
 
 ## Latest Migration Notes
 
-See MigrationNotes.md for more information. Detailed changelogs should be written into MigratiionNotes.md too.
+See migration_notes.md for more information. Detailed changelogs should be written into MigratiionNotes.md too.
 
 ## Full Refactor Roadmap
 
@@ -311,7 +311,7 @@ Remaining final manual verification:
    - Verify Material 3 Expressive and Miuix theme modes.
    - Verify LSPosed self-check still reports active when hooked.
    - Verify settings backup/restore, log export, app chooser flows, loading/progress flows, countdown confirmation, and Settings Detail command dialogs.
-   - Record completed work and residual risks in `MigrationNotes.md`.
+   - Record completed work and residual risks in `migration_notes.md`.
 
 ## Preservation Boundaries
 
@@ -345,7 +345,7 @@ Clean Compose app review:
 - No old adapters, RecyclerView UI, Fragment Navigation, AppCompat, or Material Components dependencies remain.
 - Platform interop remains only where it is still appropriate: `ComposeView` for platform dialog/overlay hosting and `AndroidView` for app icons or media/overlay renderer interop.
 
-Final manual verification is recorded in `MigrationNotes.md`.
+Final manual verification is recorded in `migration_notes.md`.
 
 ## Phase 8. Compose Feature Navigation
 
@@ -354,7 +354,7 @@ the app-level Compose Navigation graph.
 
 Completed first slice:
 
-- Added root-level migration plan: `FEATURE_COMPOSE_NAV_MIGRATION.md`.
+- Added root-level migration plan: `feature_compose_nav_migration.md`.
 - Added stable `FeatureDestination` route ids for all current Features entries.
 - Updated `FeaturesMainRoute` so migrated destinations can navigate through Compose while
   non-migrated destinations temporarily keep the existing Activity launch path.

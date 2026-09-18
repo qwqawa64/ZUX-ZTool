@@ -196,7 +196,7 @@ Add to BOTH `res/values/strings.xml` (zh) and `res/values-en-rUS/strings.xml`, s
 `name`s: `search_title`, `search_hint`, `search_no_results`, `search_group_feature_cards`,
 `search_group_screen_prefix` (if needed), `search_requires_parent_switch` (format string,
 one `%s`), plus any page-level strings discovered while building entries. Follow
-`Add_New_Preference_Key_zh-CN.md` conventions for naming.
+`add_new_preference_key_zh-cn.md` conventions for naming.
 
 ## Step 8 — Verification & commit
 
@@ -211,7 +211,7 @@ one `%s`), plus any page-level strings discovered while building entries. Follow
 
 ## Maintenance Rule (goes into the repo after Phase 1 lands)
 
-- `docs_archive/hook_guide/Add_Frontend_Item.md` gains a step: every new visible
+- `docs/archive/hook_guide/add_frontend_item.md` gains a step: every new visible
   `SettingItem` row must add a matching `SearchEntry` (id = PreferenceKeys constant).
 - Phase 3 (future): make `SettingItem.key` mandatory + debug-time self-check comparing
   rendered keys vs index; pinyin matching optional.

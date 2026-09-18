@@ -48,7 +48,7 @@ data class SearchEntry(
 /**
  * Static search index of every non-Home destination. Maintenance rule: a new visible
  * setting row must register a matching [SearchEntry] here (see
- * docs_archive/hook_guide/Add_Frontend_Item.md).
+ * docs/archive/hook_guide/add_frontend_item.md).
  */
 object SearchIndex {
 

@@ -1,6 +1,6 @@
 # 新 Hook 模块（后端）接入指南
 
-> 本文面向**后端 Hook 实现**（Xposed 模块侧）。前端配置接入请阅读 **[Add_Frontend_Item.md](./Add_Frontend_Item.md)**；偏好键集中管理请阅读根目录 **[Add_New_Preference_Key_zh-CN.md](../preference_key/Add_New_Preference_Key_zh-CN.md)**。
+> 本文面向**后端 Hook 实现**（Xposed 模块侧）。前端配置接入请阅读 **[add_frontend_item.md](./add_frontend_item.md)**；偏好键集中管理请阅读根目录 **[add_new_preference_key_zh-cn.md](../preference_key/add_new_preference_key_zh-cn.md)**。
 >
 > 所有偏好键必须先注册到 `PreferenceKeys.kt`，然后通过 `PreferenceKeys.CONSTANT_NAME.name` 引用；所有作用域包名统一由 `ScopeKeys` 管理，通过 `ScopeKeys.CONSTANT.packageName` 引用。不要手写键名或包名字符串。
 
@@ -69,7 +69,7 @@ logger.warn("方法未找到，回退到默认值")
 logger.error("Hook 安装失败，阻断拦截链", throwable)
 ```
 
-日志级别如何确定，参考 **[docs_archive/new_log_system/migrate_and_use_new_logging_system.md](../new_log_system/migrate_and_use_new_logging_system.md)**（相对本文件路径为 `../new_log_system/migrate_and_use_new_logging_system.md`）。
+日志级别如何确定，参考 **[docs/logging/migrate_and_use_new_logging_system.md](../logging/migrate_and_use_new_logging_system.md)**（相对本文件路径为 `../logging/migrate_and_use_new_logging_system.md`）。
 
 ### hookWithId —— 统一安装 Hook
 

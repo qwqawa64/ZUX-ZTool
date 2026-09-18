@@ -1642,4 +1642,4 @@ Outcome:
 
 - All verified functions are available on device.
 - No residual blocker remains for closing the Compose refactor.
-- `AGENTS.MD`, `ComposeRefactor.md`, and `MigrationNotes.md` were archived under `docs/compose_refactor/`.
+- `AGENTS.MD`, `compose_refactor.md`, and `migration_notes.md` were archived under `docs/compose_refactor/`.

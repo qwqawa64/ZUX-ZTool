@@ -32,7 +32,7 @@ Hook 类要实现三个方法：
   ```Kotlin
   override fun getModuleName(): String = Preferencekeys.KEY_VAL_NAME.name
   ```
-  关于偏好键的注册方式，请参考 [Add_New_Preference_Key_zh-CN.md](../preference_key/Add_New_Preference_Key_zh-CN.md) 。
+  关于偏好键的注册方式，请参考 [add_new_preference_key_zh-cn.md](../preference_key/add_new_preference_key_zh-cn.md) 。
   > [!tip]
   > 如果你需要临时测试一个 Hook 在本项目基础设施下的工作效果，可以返回模块名为 `PreferenceKey.TEST_HOOK.name`，基类会自动放行这个 Hook，无需提前修改 UI 层。
   >
@@ -261,7 +261,7 @@ Chain 函数式接口用于编写 Hook 流程，这是 libxposed 和 Rovo89 Xpos
 3. 如果你需要将 Chain 拆进独立方法，显然需要提供方法参数签名：`chain: XposedInterface.Chain`
 
 ## 日志系统
-参见 [migrate_and_use_new_logging_system.md](../new_log_system/migrate_and_use_new_logging_system.md) 了解日志系统用法和等级划分。
+参见 [migrate_and_use_new_logging_system.md](../logging/migrate_and_use_new_logging_system.md) 了解日志系统用法和等级划分。
 
 ## 跨进程共享信息
 
@@ -277,4 +277,4 @@ CUSTOM_COLUMNS =
 ```
 
 ## 对抗混淆
-项目支持 DexKit, 但是请使用离线索引功能，不要在 Hook 内引入 Native 调用破坏热重载能力。具体参见 [README.md](../dex_index/README.md)
+项目支持 DexKit, 但是请使用离线索引功能，不要在 Hook 内引入 Native 调用破坏热重载能力。具体参见 [readme.md](../archive/dex_index/readme.md)

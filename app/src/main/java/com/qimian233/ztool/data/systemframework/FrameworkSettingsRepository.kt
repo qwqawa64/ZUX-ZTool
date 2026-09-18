@@ -159,7 +159,7 @@ class FrameworkSettingsRepository(
      * Clears the ZUI-persisted night-mode override (ui_night_mode_override_on/off)
      * and kicks UiModeManagerService to recompute, restoring "sunset to sunrise"
      * auto switching when it is pinned to light mode by a stale override.
-     * See docs_archive/bug_report_zui_dark_mode_auto.md.
+     * See docs/archive/bug_report_zui_dark_mode_auto.md.
      */
     fun fixNightModeOverride(): ShellResult {
         val clearCmd =

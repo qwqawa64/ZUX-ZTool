@@ -31,7 +31,7 @@
   Size ~200KB, pure Java, minSdk-safe.
 - `search/SearchMatcher.kt` is a small single object — pinyin support slots in without
   touching the index schema.
-- `Add_Frontend_Item.md` currently documents the pre-search workflow and must gain the
+- `add_frontend_item.md` currently documents the pre-search workflow and must gain the
   index-registration + key steps.
 
 ## Steps
@@ -93,10 +93,10 @@
   ASCII check).
 
 ### Step 5 — Documentation / maintenance
-- `docs_archive/hook_guide/Add_Frontend_Item.md`: add a step "register a SearchEntry +
+- `docs/archive/hook_guide/add_frontend_item.md`: add a step "register a SearchEntry +
   set the mandatory `key` (same id)" with a pointer to SearchIndex and the audit
   behavior.
-- `PLAN_feature_search_phase2.md`-style checklist not needed here; the audit IS the
+- `docs/archive/plan_feature_search_phase2.md`-style checklist not needed here; the audit IS the
   long-term checklist.
 
 ### Step 6 — Verification

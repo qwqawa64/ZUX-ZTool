@@ -45,17 +45,19 @@ https://compose-miuix-ui.github.io/miuix/dokka/index.html
 ```text
 .
   app/                         Android app module
-  docs_archive/compose_refactor/        Compose migration notes and scoped agent guide
-  docs_archive/gradle_upgrade/          Gradle upgrade notes
-  docs_archive/hook_guide/              Backend Hook module + frontend Hook setting guides
-  docs_archive/material_enhancement/    Material UI notes
+  docs/                        All project documentation
+    hook/                      Active backend Hook + frontend setting guides
+    preference_key/            Preference key registration guide (active)
+    dex_index/                 Offline DexKit index guide (active)
+    logging/                   New logging system guide (active)
+    archive/                   Archived/outdated docs, grouped by original folder
   reference/                    Reference AAR files
   gradle/                       Gradle wrapper and version catalog
   libs/                         Root local dependencies
-  Add_New_Preference_Key_zh-CN.md  Guide for adding preference keys in the centralized system
+  tools/                        Maintenance scripts (e.g. migrate_docs.py doc-reference scanner)
   AGENTS.MD                     This root agent guide
   README.md
-  UpdateCheck.json
+  TODOS.md
   ZToolLogo.png
   ZToolLogoForeground.svg
   ZToolUploadKey.jks            Release signing file; do not touch casually
@@ -141,14 +143,14 @@ Core files:
 - `app/src/main/java/com/qimian233/ztool/hook/HookInit.java`: Xposed entry point.
 - `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`: base class for Hook modules.
 - `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`: registration and dispatch for Hook modules.
-- `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt`: **single source of truth for all preference keys** — every key in `xposed_module_config` is defined here, organized by data type. See `Add_New_Preference_Key_zh-CN.md`.
+- `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt`: **single source of truth for all preference keys** — every key in `xposed_module_config` is defined here, organized by data type. See `docs/preference_key/add_new_preference_key_zh-cn.md`.
 - `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`: **single source of truth for all scope package names** — every package LSPosed may inject into (`Scope(packageName, HowToRestart)`), plus its preferred restart method. Hooks, `ScopeUtils`, and frontend entry points must reference `ScopeKeys` instead of hardcoding package name strings. See "Scope Management" below.
 - `app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write utility; uses `PreferenceKeys` list-based matching for backup/restore type inference.
 
 **libxposed Hook design patterns**: This project uses the libxposed API, NOT the legacy Rovo89 Xposed API — the two are almost entirely different syntactically. An agent unfamiliar with Hook development here should read the guide below instead of scanning hook sources; it defines the project's canonical Hook patterns (base-class choice, required method trio, ClassLoader acquisition, `findField`/`findMethod`, `hookWithId` with per-scope unique IDs, Chain SAM syntax, remote preferences reads, and the DexKit offline-index anti-obfuscation rule):
 
 ```text
-docs_archive/hook_guide/libxposed_guide_ztool_ver.md
+docs/hook/libxposed_guide_ztool_ver.md
 ```
 
 ### Offline DexKit Index (DexIndex)
@@ -170,7 +172,7 @@ use the offline index pipeline:
 - Never read the index inside hook lambdas (`hookWithId` callbacks) — resolve values in
   `handleLoadPackage` and capture them.
 - Constants (module keys, field keys, file layout): `DexIndexConstants.kt`.
-  Full guide: `docs_archive/dex_index/README.md`.
+  Full guide: `docs/archive/dex_index/readme.md`.
 
 Hook module folders:
 
@@ -195,19 +197,19 @@ hook/modules/
 When adding a Hook switch or other Hook-facing setting in the app UI, read and follow:
 
 ```text
-docs_archive/hook_guide/Add_Frontend_Item.md
+docs/hook/add_frontend_item.md
 ```
 
 When adding a new backend Hook module, read and follow:
 
 ```text
-docs_archive/hook_guide/Add_New_Hook_Module.md
+docs/hook/add_new_hook_module.md
 ```
 
 **For preference key management**, all keys are now centrally defined in `PreferenceKeys.kt`. When adding a new key, read:
 
 ```text
-Add_New_Preference_Key_zh-CN.md
+docs/preference_key/add_new_preference_key_zh-cn.md
 ```
 
 The durable rules are:
@@ -224,14 +226,14 @@ The durable rules are:
 
 To add a new Hook implementation on the backend:
 
-0. If you are not yet familiar with this project's libxposed Hook patterns (base-class choice, the required method trio, `findField`/`findMethod`, `hookWithId`, Chain SAM), read `docs_archive/hook_guide/libxposed_guide_ztool_ver.md` first before writing any Hook code.
+0. If you are not yet familiar with this project's libxposed Hook patterns (base-class choice, the required method trio, `findField`/`findMethod`, `hookWithId`, Chain SAM), read `docs/hook/libxposed_guide_ztool_ver.md` first before writing any Hook code.
 1. Create a Hook class that extends `AppHookModule` for non-system-framework-hook, and extend `SystemHookModule` for system-framework-hook. All new Hooks must be written in **Kotlin** (`.kt`). Java is only permitted for emergency fixes to existing Java infrastructure.
 2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `data/keys/ScopeKeys.kt` first (see "Scope Management"), and add it to `scope.list`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
-3. Read Hook settings using `PreferenceKeys` constants (see `Add_New_Preference_Key_zh-CN.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
+3. Read Hook settings using `PreferenceKeys` constants (see `docs/preference_key/add_new_preference_key_zh-cn.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
 4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
-5. If the Hook needs a user-facing toggle, add the frontend state according to `docs_archive/hook_guide/Add_Frontend_Item.md`.
+5. If the Hook needs a user-facing toggle, add the frontend state according to `docs/hook/add_frontend_item.md`.
 
-Use `logger.<level>` for module logs when possible, see `docs_archive/new_log_system/migrate_and_use_new_logging_system.md` for more information.
+Use `logger.<level>` for module logs when possible, see `docs/logging/migrate_and_use_new_logging_system.md` for more information.
 
 ## Service, Scope, And Activation Rules
 
@@ -286,7 +288,7 @@ When creating hooks that protect or interact with Android system services (e.g. 
 The current UI direction is Compose-first. For Compose migration-specific work, also read:
 
 ```text
-docs/compose_refactor/AGENTS.MD
+docs/archive/compose_refactor/agents.md
 ```
 
 General UI rules:

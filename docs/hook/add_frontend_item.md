@@ -1,6 +1,6 @@
 # 新 Hook 前端接入指南
 
-> 本文面向**应用侧 Compose 设置页**的配置接入。后端 Hook 实现请阅读 **[Add_New_Hook_Module.md](./Add_New_Hook_Module.md)**；偏好键集中管理请阅读根目录 **[Add_New_Preference_Key_zh-CN.md](../preference_key/Add_New_Preference_Key_zh-CN.md)**。
+> 本文面向**应用侧 Compose 设置页**的配置接入。后端 Hook 实现请阅读 **[add_new_hook_module.md](./add_new_hook_module.md)**；偏好键集中管理请阅读根目录 **[add_new_preference_key_zh-cn.md](../preference_key/add_new_preference_key_zh-cn.md)**。
 >
 > 偏好键管理已集中化：所有偏好键必须先在 `PreferenceKeys.kt` 中注册，然后通过 `PreferenceKeys.CONSTANT_NAME.name` 引用；作用域包名统一由 `ScopeKeys` 管理，通过 `ScopeKeys.CONSTANT.packageName` 引用。手写键名/包名字符串不再推荐。
 
@@ -38,7 +38,7 @@ prefsUtils.loadFloatSetting(KEY, defaultValue)
 prefsUtils.saveFloatSetting(KEY, value)
 ```
 
-**键名必须通过 `PreferenceKeys` 常量引用**，不再手写字符串字面量。新键需先在 `PreferenceKeys.kt` 中注册（参见 `Add_New_Preference_Key_zh-CN.md`），然后在 Repository 的 `companion object` 中引用：
+**键名必须通过 `PreferenceKeys` 常量引用**，不再手写字符串字面量。新键需先在 `PreferenceKeys.kt` 中注册（参见 `add_new_preference_key_zh-cn.md`），然后在 Repository 的 `companion object` 中引用：
 
 ```kotlin
 class ExampleSettingsRepository(
@@ -340,7 +340,7 @@ Hook 的作用域包名**统一由 `ScopeKeys` 管理**（`app/src/main/java/com
 
 - `ScopeUtils.getScopes()` 集中定义每个功能入口的作用域列表（包名 + 推荐重启方式），引用 `ScopeKeys`；前端功能入口（`FeaturesRoute`、`MainActivity`）和各 Repository 的"重启作用域"逻辑也来自 `ScopeKeys` / `ScopeUtils`。
 - 每个 `Scope` 同时注册了 `HowToRestart`（`AmStop` / `KillAll` / `Reboot`），`ScopeUtils.restartScope()` 据此选择重启命令。
-- 后端 Hook 的 `getTargetPackages()` 必须返回 `ScopeKeys.CONSTANT.packageName` 引用（详见 `Add_New_Hook_Module.md`）。
+- 后端 Hook 的 `getTargetPackages()` 必须返回 `ScopeKeys.CONSTANT.packageName` 引用（详见 `add_new_hook_module.md`）。
 
 新增 Hook 目标包时按以下顺序处理：
 
