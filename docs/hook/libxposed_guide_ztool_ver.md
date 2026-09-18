@@ -277,4 +277,4 @@ CUSTOM_COLUMNS =
 ```
 
 ## 对抗混淆
-项目支持 DexKit, 但是请使用离线索引功能，不要在 Hook 内引入 Native 调用破坏热重载能力。具体参见 [readme.md](../archive/dex_index/readme.md)
+项目支持 DexKit, 但是请使用离线索引功能，不要在 Hook 内引入 Native 调用破坏热重载能力。具体参见 [readme.md](../dex_index/readme.md)

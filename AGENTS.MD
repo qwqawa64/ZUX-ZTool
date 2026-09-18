@@ -172,7 +172,7 @@ use the offline index pipeline:
 - Never read the index inside hook lambdas (`hookWithId` callbacks) — resolve values in
   `handleLoadPackage` and capture them.
 - Constants (module keys, field keys, file layout): `DexIndexConstants.kt`.
-  Full guide: `docs/archive/dex_index/readme.md`.
+  Full guide: `docs/dex_index/readme.md`.
 
 Hook module folders:
 
