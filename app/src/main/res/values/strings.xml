@@ -858,7 +858,7 @@
     <string name="system_ui_control_center_show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="system_ui_control_center_show_volume_slider_percentage">显示音量滑动条百分比</string>
     <string name="system_ui_control_center_long_press_title">控制中心长按动效</string>
-    <string name="system_ui_control_center_long_press_summary">为磁贴与滑动条启用长按挤压动效，动画结束后执行对应的长按操作</string>
+    <string name="system_ui_control_center_hide_detail_indicator_title">隐藏磁贴详情指示按钮</string>
     <string name="ztool_ram_unavailable" translatable="false" tools:ignore="UnusedResources">-- | --</string>
     <string name="ztool_ram_formatter" tools:ignore="UnusedResources">%1$s 已用 | %2$s</string>
     <string name="launcher_beautify_ram_info">美化总内存信息</string>

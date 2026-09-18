@@ -780,7 +780,7 @@
     <string name="system_ui_control_center_show_brightness_slider_percentage">Show brightness slider percentage</string>
     <string name="system_ui_control_center_show_volume_slider_percentage">Show volume slider percentage</string>
     <string name="system_ui_control_center_long_press_title">Control center long-press effect</string>
-    <string name="system_ui_control_center_long_press_summary">Squish animation on long press for tiles and sliders; the matching action runs after the animation</string>
+    <string name="system_ui_control_center_hide_detail_indicator_title">Hide tile detail indicator buttons</string>
     <string name="page_settings_about_developers_title">Developers</string>
     <string name="page_settings_about_acknowledgements_title">Credits</string>
     <string name="page_settings_about_app_update_latest_summary">You are using the latest version</string>

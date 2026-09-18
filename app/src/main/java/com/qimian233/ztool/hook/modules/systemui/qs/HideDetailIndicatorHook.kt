@@ -3,14 +3,15 @@ package com.qimian233.ztool.hook.modules.systemui.qs
 import android.annotation.SuppressLint
 import android.view.View
 import android.widget.ImageView
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 
 /**
- * TEST HOOK (enabled via getModuleName() returning a test marker): removes
- * the detail-indicator ImageButtons from the control center.
+ * Removes the detail-indicator ImageButtons from the control center, gated by
+ * the single [PreferenceKeys.HIDE_DETAIL_INDICATOR] switch.
  *
  * - Large tiles: QSTileViewImpl.detailIndicatorView (side view). Small tiles
  *   are deliberately NOT covered — their labelDetailIndicatorView participates
@@ -28,11 +29,14 @@ import java.lang.reflect.Method
 @SuppressLint("DiscouragedPrivateApi", "PrivateApi")
 class HideDetailIndicatorHook : AppHookModule() {
 
-    override fun getModuleName(): String = "hook_test"
+    override fun getModuleName(): String = PreferenceKeys.HIDE_DETAIL_INDICATOR.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
+        if (!remotePreferences.getBoolean(PreferenceKeys.HIDE_DETAIL_INDICATOR.name, false)) {
+            return
+        }
         val classLoader = param.defaultClassLoader
         hideTileIndicators(classLoader)
         hideBrightnessIndicator(classLoader)

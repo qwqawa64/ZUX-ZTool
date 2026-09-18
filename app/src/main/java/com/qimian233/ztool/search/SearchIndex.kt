@@ -563,8 +563,11 @@ object SearchIndex {
         ),
         systemUiControlCenter.item(
             id = "control_center_long_press",
-            titleRes = R.string.system_ui_control_center_long_press_title,
-            summaryRes = R.string.system_ui_control_center_long_press_summary
+            titleRes = R.string.system_ui_control_center_long_press_title
+        ),
+        systemUiControlCenter.item(
+            id = "control_center_hide_detail_indicator",
+            titleRes = R.string.system_ui_control_center_hide_detail_indicator_title
         ),
         systemUiControlCenter.item(
             id = "control_center_customize_slider_style",

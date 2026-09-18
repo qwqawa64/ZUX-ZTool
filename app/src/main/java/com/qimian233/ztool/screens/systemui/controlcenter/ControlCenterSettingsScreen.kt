@@ -163,6 +163,7 @@ fun ControlCenterSettingsRoute(
             onBrightnessSliderPercentageChanged = viewModel::setBrightnessSliderPercentageEnabled,
             onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled,
             onControlCenterLongPressChanged = viewModel::setControlCenterLongPressEnabled,
+            onHideDetailIndicatorChanged = viewModel::setHideDetailIndicatorEnabled,
             onExpandQsPanelPortraitChanged = viewModel::setExpandQsPanelPortrait,
             onQsPanelWidthPercentChanged = viewModel::setQsPanelWidthPercent,
             onQsTileColumnsChanged = viewModel::setQsTileColumns,
@@ -265,6 +266,7 @@ private fun ControlCenterSettingsScreen(
     onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
     onControlCenterLongPressChanged: (Boolean) -> Unit,
+    onHideDetailIndicatorChanged: (Boolean) -> Unit,
     onExpandQsPanelPortraitChanged: (Boolean) -> Unit,
     onQsPanelWidthPercentChanged: (Int) -> Unit,
     onQsTileColumnsChanged: (Int) -> Unit,
@@ -344,6 +346,7 @@ private fun ControlCenterSettingsScreen(
                         onBrightnessSliderPercentageChanged = onBrightnessSliderPercentageChanged,
                         onVolumeSliderPercentageChanged = onVolumeSliderPercentageChanged,
                         onControlCenterLongPressChanged = onControlCenterLongPressChanged,
+                        onHideDetailIndicatorChanged = onHideDetailIndicatorChanged,
                         onExpandQsPanelPortraitChanged = onExpandQsPanelPortraitChanged,
                         onQsPanelWidthPercentChanged = onQsPanelWidthPercentChanged,
                         onQsTileColumnsChanged = onQsTileColumnsChanged,
@@ -393,6 +396,7 @@ private fun controlCenterSettingsSections(
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
     onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
     onControlCenterLongPressChanged: (Boolean) -> Unit,
+    onHideDetailIndicatorChanged: (Boolean) -> Unit,
     onExpandQsPanelPortraitChanged: (Boolean) -> Unit,
     onQsPanelWidthPercentChanged: (Int) -> Unit,
     onQsTileColumnsChanged: (Int) -> Unit,
@@ -474,10 +478,17 @@ private fun controlCenterSettingsSections(
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_long_press_title),
-                        summary = stringResource(R.string.system_ui_control_center_long_press_summary),
                         checked = state.controlCenterLongPressEnabled,
                         onCheckedChange = onControlCenterLongPressChanged,
                         key = "control_center_long_press"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_control_center_hide_detail_indicator_title),
+                        checked = state.hideDetailIndicatorEnabled,
+                        onCheckedChange = onHideDetailIndicatorChanged,
+                        key = "control_center_hide_detail_indicator"
                     )
                 )
                 add(

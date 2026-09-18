@@ -196,6 +196,11 @@ class ControlCenterSettingsViewModel(
         repository.saveControlCenterLongPressEnabled(enabled)
     }
 
+    fun setHideDetailIndicatorEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(hideDetailIndicatorEnabled = enabled)
+        repository.saveHideDetailIndicatorEnabled(enabled)
+    }
+
     fun setExpandQsPanelPortrait(enabled: Boolean) {
         repository.saveExpandQsPanelPortrait(enabled)
         // Reload the state to reflect coupled fields such as sliderStyleForcedByQsPanel
@@ -377,6 +382,7 @@ data class ControlCenterSettingsUiState(
     val notificationCenterBlurPercent: Int = ControlCenterSettingsRepository.DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT,
     val volumeSliderPercentageEnabled: Boolean = false,
     val controlCenterLongPressEnabled: Boolean = false,
+    val hideDetailIndicatorEnabled: Boolean = false,
     val brightnessSliderPercentageEnabled: Boolean = false,
     val expandQsPanelPortrait: Boolean = false,
     val qsPanelWidthPercent: Int = ControlCenterSettingsRepository.DEFAULT_QS_PANEL_WIDTH_PERCENT,
