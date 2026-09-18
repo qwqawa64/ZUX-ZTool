@@ -118,8 +118,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             "com.android.systemui.plugins.qs.QSTile\$BooleanState"
         private const val RESOURCE_ICON_CLASS =
             "com.android.systemui.qs.tileimpl.QSTileImpl\$ResourceIcon"
-        private const val APP_VOLUME_UTILS_CLASS =
-            "com.android.systemui.volume.appvolume.Utils"
         private const val APP_SECTION_TAG = "ztool_volume_panel_app_section"
         private const val APP_VOLUME_SETTINGS_KEY = "zui_app_volume"
         private const val MAX_APP_ROWS = 3
@@ -584,11 +582,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private fun refreshAppSection() {
         val section = appSection ?: return
         val context = dialogContext ?: return
-        val classLoader = systemUiClassLoader ?: return
         if (!panelShowing) return
         try {
             section.removeAllViews()
-            val entries = collectAppVolumeEntries(context, classLoader)
+            val entries = collectAppVolumeEntries(context)
             if (entries.isEmpty()) {
                 section.visibility = View.GONE
                 logger.info("volume panel: app section hidden (no entries)")
@@ -604,77 +601,42 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
     }
 
-    private fun collectAppVolumeEntries(
-        context: Context,
-        classLoader: ClassLoader
-    ): List<AppVolumeEntry> {
-        val whitelistClass = try {
-            classLoader.loadClass(APP_VOLUME_UTILS_CLASS)
-        } catch (_: Throwable) {
-            null
-        }
-        val isWhiteListApp = whitelistClass?.declaredMethods?.firstOrNull {
-            it.name == "isWhiteListApp"
-        }
+    /**
+     * The native cache stores one "packageName/uid" string per active-audio
+     * app (already filtered by the native dialog). Parse it directly.
+     */
+    private fun collectAppVolumeEntries(context: Context): List<AppVolumeEntry> {
         val persisted = loadPersistedAppVolumes(context)
         val entries = mutableListOf<AppVolumeEntry>()
         val seenUids = mutableSetOf<Int>()
         for (element in readDialogAppPackages()) {
             if (entries.size >= MAX_APP_ROWS) break
-            try {
-                // The native cache stores plain package-name strings (not
-                // AudioSystem$PackageInfo); support both shapes for safety.
-                val name: String? = if (element is String) {
-                    element
-                } else {
-                    readStringField(element, "packageName")
-                }
-                if (name.isNullOrEmpty()) {
-                    logger.debug("volume panel: app skipped (no name): " + element.javaClass.name)
-                    continue
-                }
-                val uid: Int = when {
-                    element is String -> packageUid(context, name)
-                        ?: run {
-                            logger.debug("volume panel: app skipped (no uid): $name")
-                            continue
-                        }
-                    else -> readIntField(element, "uid")
-                        ?: resolveUidFromPid(context, readIntField(element, "pid") ?: -1)
-                        ?: run {
-                            logger.debug("volume panel: app skipped (no uid): $name")
-                            continue
-                        }
-                }
-                if (!seenUids.add(uid)) continue
-                if (isWhiteListApp != null && element !is String) {
-                    val pass = isWhiteListApp.invoke(null, context, name) as? Boolean ?: true
-                    if (!pass) {
-                        logger.debug("volume panel: app skipped (whitelist): $name")
-                        continue
-                    }
-                }
-                val appInfo = try {
-                    context.packageManager.getApplicationInfo(name, 0)
-                } catch (_: Exception) {
-                    null
-                }
-                val label = appInfo?.loadLabel(context.packageManager)?.toString() ?: name
-                val pct = persisted[uid]?.let { (it * 100).roundToInt().coerceIn(0, 100) } ?: 100
-                entries.add(AppVolumeEntry(uid, label, pct))
-            } catch (t: Throwable) {
-                logger.debug("volume panel: skip package entry: ${t.message}")
+            if (element !is String) {
+                logger.debug("volume panel: app skipped (non-string): " + element.javaClass.name)
+                continue
             }
+            val sep = element.lastIndexOf('/')
+            if (sep <= 0) {
+                logger.debug("volume panel: app skipped (bad format): $element")
+                continue
+            }
+            val name = element.substring(0, sep)
+            val uid = element.substring(sep + 1).toIntOrNull()
+            if (name.isEmpty() || uid == null || uid < 0) {
+                logger.debug("volume panel: app skipped (bad uid): $element")
+                continue
+            }
+            if (!seenUids.add(uid)) continue
+            val appInfo = try {
+                context.packageManager.getApplicationInfo(name, 0)
+            } catch (_: Exception) {
+                null
+            }
+            val label = appInfo?.loadLabel(context.packageManager)?.toString() ?: name
+            val pct = persisted[uid]?.let { (it * 100).roundToInt().coerceIn(0, 100) } ?: 100
+            entries.add(AppVolumeEntry(uid, label, pct))
         }
         return entries
-    }
-
-    private fun packageUid(context: Context, packageName: String): Int? {
-        return try {
-            context.packageManager.getPackageUid(packageName, 0)
-        } catch (_: Throwable) {
-            null
-        }
     }
 
     private fun buildAppColumn(
@@ -738,36 +700,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             Settings.System.putString(context.contentResolver, APP_VOLUME_SETTINGS_KEY, finalValue)
         } catch (t: Throwable) {
             logger.warn("persist app volume failed: ${t.message}")
-        }
-    }
-
-    private fun resolveUidFromPid(context: Context, pid: Int): Int? {
-        if (pid < 0) return null
-        return try {
-            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-            am.runningAppProcesses?.firstOrNull { it.pid == pid }?.uid
-        } catch (_: Throwable) {
-            null
-        }
-    }
-
-    private fun readStringField(obj: Any, name: String): String? {
-        return try {
-            val f = obj.javaClass.getField(name)
-            f.isAccessible = true
-            f.get(obj) as? String
-        } catch (_: Throwable) {
-            null
-        }
-    }
-
-    private fun readIntField(obj: Any, name: String): Int? {
-        return try {
-            val f = obj.javaClass.getField(name)
-            f.isAccessible = true
-            (f.get(obj) as? Int)
-        } catch (_: Throwable) {
-            null
         }
     }
 
