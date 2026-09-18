@@ -399,8 +399,9 @@ class ControlCenterLongPressHook : AppHookModule() {
 
     /**
      * Walks up at most a few parents looking for the ToggleSliderView, then
-     * reads its root field via the base-class hierarchy-walking finder. The
-     * field name differs per slider type (brightness vs volume).
+     * reads its root fields via the base-class hierarchy-walking finder. One
+     * host holds BOTH slider roots (brightness + volume), so only a root
+     * that actually contains the touched view is accepted.
      */
     private fun findSliderRoot(view: View): View? {
         val host = findToggleSliderView(view)
@@ -411,13 +412,8 @@ class ControlCenterLongPressHook : AppHookModule() {
         for (fieldName in SLIDER_ROOT_FIELDS) {
             try {
                 val root = findField(host.javaClass, fieldName).get(host) as? View
-                if (root != null) {
-                    logger.debug(
-                        "press: findSliderRoot via " + fieldName +
-                            " -> " + root.javaClass.name +
-                            ", parentIsHost=" + (root.parent === host) +
-                            ", containsTouchView=" + isDescendant(view, root)
-                    )
+                if (root != null && isDescendant(view, root)) {
+                    logger.debug("press: findSliderRoot via " + fieldName + " -> " + root.javaClass.name)
                     return root
                 }
             } catch (_: Throwable) {
@@ -425,7 +421,7 @@ class ControlCenterLongPressHook : AppHookModule() {
         }
         logger.debug(
             "press: findSliderRoot: host found (" + host.javaClass.simpleName +
-                ") but no root field resolved"
+                ") but no root containing the touched view"
         )
         return null
     }
@@ -440,7 +436,6 @@ class ControlCenterLongPressHook : AppHookModule() {
     }
 
     private fun trackPress(view: View, event: MotionEvent, onTrigger: (View) -> Unit) {
-        val target = squishTarget(view)
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 // Our gesture owns this touch from now on: any native
@@ -451,13 +446,15 @@ class ControlCenterLongPressHook : AppHookModule() {
                 state.downX = event.rawX
                 state.downY = event.rawY
                 state.released = false
-                state.animationTarget = target
-                squishIn(target)
+                // Resolve once per gesture, not per touch event: a MOVE
+                // storm would otherwise re-run the root lookup each frame.
+                state.animationTarget = squishTarget(view)
+                squishIn(state.animationTarget!!)
                 view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 cancelTrigger(view)
                 val runnable = Runnable {
                     state.released = true
-                    playReleaseAnimation(target)
+                    playReleaseAnimation(state.animationTarget ?: view)
                     onTrigger(view)
                 }
                 state.runnable = runnable
