@@ -27,9 +27,7 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
-import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -93,17 +91,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
     override fun handleLoadPackage(param: PackageLoadedParam) {
         systemUiClassLoader = param.defaultClassLoader
         hook = this
-        hookAppListCallbackSlot()
-        // Register permanently from process start: the AudioSystem callback is
-        // push-on-change only, so apps already playing audio when the panel
-        // opens would otherwise never reach our cache. The slot hook re-claims
-        // the slot whenever the native dialog registers later, and our proxy
-        // forwards every push to the native callback.
-        try {
-            ensureAppListProxyRegistered(systemUiClassLoader!!)
-        } catch (t: Throwable) {
-            logger.warn("volume panel: early app-list proxy registration failed: ${t.message}")
-        }
+        hookVolumeDialogImpl()
         logger.info(
             "VolumeSliderLongPressHook installed, classLoader=" +
                 (systemUiClassLoader?.javaClass?.name ?: "null")
@@ -118,23 +106,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
         @Volatile
         private var hook: VolumeSliderLongPressHook? = null
 
-        /** Last non-ztool callback that occupied the AudioSystem slot. */
-        @Volatile
-        private var nativeAppListCallback: Any? = null
-
-        @Volatile
-        private var ourAppListProxy: Any? = null
-
-        @Volatile
-        private var latestPackages: List<Any> = emptyList()
-
-        @Volatile
-        private var audioSystemSetter: Method? = null
-
         private const val SYSTEM_UI_DIALOG_CLASS =
             "com.android.systemui.statusbar.phone.SystemUIDialog"
         private const val TOGGLE_SLIDER_VIEW_CLASS =
             "com.android.systemui.settings.ToggleSliderView"
+        private const val VOLUME_DIALOG_IMPL_CLASS =
+            "com.android.systemui.volume.VolumeDialogImpl"
         private const val CUSTOMIZE_TILE_VIEW_CLASS =
             "com.android.systemui.qs.customize.CustomizeTileView"
         private const val QS_TILE_STATE_CLASS =
@@ -178,110 +155,62 @@ class VolumeSliderLongPressHook : AppHookModule() {
     }
 
     // ------------------------------------------------------------------
-    // AudioSystem app-list callback slot management
+    // App volume source: VolumeDialogImpl's cached package list
     // ------------------------------------------------------------------
 
+    /** VolumeDialogImpl instance captured when the native dialog initializes. */
+    @Volatile
+    private var volumeDialogImpl: Any? = null
+
     /**
-     * Records whoever owns the single AudioSystem app-list callback slot so we
-     * can borrow it while our panel is open and give it back afterwards.
+     * Skips the AudioSystem callback plumbing entirely: the native
+     * VolumeDialogImpl already caches the active-audio app list in its public
+     * appVolumePackgerList field, and its init() runs once at SystemUI startup.
+     * Capture the instance, then read the list when the panel opens.
      */
-    private fun hookAppListCallbackSlot() {
+    private fun hookVolumeDialogImpl() {
+        val classLoader = systemUiClassLoader ?: return
         try {
-            val audioSystemClass = Class.forName("android.media.AudioSystem")
-            val callbackClass = Class.forName("android.media.AudioSystem\$AudioAppListCallback")
-            val setter = audioSystemClass.getDeclaredMethod(
-                "setAudioAppListCallback", callbackClass
+            val implClass = classLoader.loadClass(VOLUME_DIALOG_IMPL_CLASS)
+            val callbackClass = classLoader.loadClass(
+                "com.android.systemui.plugins.VolumeDialog\$Callback"
             )
-            setter.isAccessible = true
-            audioSystemSetter = setter
-            hookWithId(setter, "audio_app_list_cb_slot") { chain ->
-                val arg = chain.args.getOrNull(0)
-                if (arg != null && arg !== ourAppListProxy) {
-                    nativeAppListCallback = arg
-                    logger.info(
-                        "volume panel: app-list slot claimed by " + arg.javaClass.name +
-                            ", reclaiming for ztool proxy"
-                    )
-                    chain.proceed()
-                    // Take the slot back so pushes keep reaching our cache;
-                    // the native callback is forwarded to by our proxy.
-                    if (ourAppListProxy != null) {
-                        setter.invoke(null, ourAppListProxy)
-                    }
-                    return@hookWithId null
-                }
-                chain.proceed()
-            }
-            logger.info("volume panel: app-list callback slot hook installed")
-        } catch (t: Throwable) {
-            logger.warn("AudioSystem app-list callback slot hook unavailable: ${t.message}")
-        }
-    }
-
-    private fun ensureAppListProxyRegistered(classLoader: ClassLoader) {
-        val setter = audioSystemSetter ?: run {
-            logger.warn("volume panel: no AudioSystem setter, app volumes unavailable")
-            return
-        }
-        if (ourAppListProxy != null) {
-            setter.invoke(null, ourAppListProxy)
-            logger.info("volume panel: app-list proxy re-registered (cached)")
-            return
-        }
-        val callbackClass = Class.forName("android.media.AudioSystem\$AudioAppListCallback")
-        val handler = InvocationHandler { _, method, args ->
-            if ("onAudioAppListChanged" == method.name && args != null && args[0] != null) {
-                val payload = args[0]
-                val entries = mutableListOf<Any>()
-                if (payload is Collection<*>) {
-                    for (e in payload) if (e != null) entries.add(e)
-                } else if (payload.javaClass.isArray) {
-                    val length = java.lang.reflect.Array.getLength(payload)
-                    for (i in 0 until length) {
-                        val e = java.lang.reflect.Array.get(payload, i)
-                        if (e != null) entries.add(e)
-                    }
-                }
+            val init = implClass.getDeclaredMethod(
+                "init", Int::class.javaPrimitiveType, callbackClass
+            )
+            init.isAccessible = true
+            hookWithId(init, "volume_dialog_impl_init") { chain ->
+                val result = chain.proceed()
+                volumeDialogImpl = chain.thisObject
                 logger.info(
-                    "volume panel: app-list callback fired, entries=" + entries.size
+                    "volume panel: VolumeDialogImpl captured at init(" +
+                        chain.args.getOrNull(0) + ")"
                 )
-                for (e in entries) {
-                    logger.debug(
-                        "volume panel: app entry " + readStringField(e, "packageName") +
-                            " pid=" + readIntField(e, "pid") + " uid=" + readIntField(e, "uid")
-                    )
-                }
-                latestPackages = entries
-                // Keep the native dialog's cache alive: our proxy permanently
-                // owns the slot and forwards every push to the recorded native
-                // callback (itself a proxy created by AudioSystemHelper).
-                val native = nativeAppListCallback
-                if (native != null) {
-                    try {
-                        method.invoke(native, *(args ?: emptyArray<Any>()))
-                    } catch (t: Throwable) {
-                        logger.debug(
-                            "volume panel: native forward failed: ${t.message}"
-                        )
-                    }
-                }
-                mainHandler.post { refreshAppSection() }
+                result
             }
-            null
+            logger.info("volume panel: VolumeDialogImpl init hook installed")
+        } catch (t: Throwable) {
+            logger.warn("volume panel: VolumeDialogImpl init hook failed: ${t.message}")
         }
-        ourAppListProxy = Proxy.newProxyInstance(
-            callbackClass.classLoader, arrayOf(callbackClass), handler
-        )
-        val result = setter.invoke(null, ourAppListProxy)
-        logger.info(
-            "volume panel: app-list proxy registered, audioServerResult=$result" +
-                ", nativeCallbackWas=" + (nativeAppListCallback?.javaClass?.name ?: "null")
-        )
     }
 
-    private fun restoreNativeAppListCallback() {
-        // No-op since the ztool proxy permanently owns the AudioSystem slot and
-        // forwards pushes to the recorded native callback.
+    private fun readDialogAppPackages(): List<Any> {
+        val dialog = volumeDialogImpl ?: run {
+            logger.info("volume panel: no VolumeDialogImpl instance captured yet")
+            return emptyList()
+        }
+        return try {
+            val raw = findField(dialog.javaClass, "appVolumePackgerList").get(dialog) as? List<*>
+            val list = raw?.filterNotNull() ?: emptyList()
+            logger.info(
+                "volume panel: appVolumePackgerList size=" + list.size +
+                    (list.firstOrNull()?.let { " element=" + it.javaClass.name } ?: "")
+            )
+            list
+        } catch (t: Throwable) {
+            logger.warn("volume panel: read appVolumePackgerList failed: ${t.message}")
+            emptyList()
+        }
     }
 
     // ------------------------------------------------------------------
@@ -655,18 +584,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val context = dialogContext ?: return
         val classLoader = systemUiClassLoader ?: return
         if (!panelShowing) return
-        logger.info(
-            "volume panel: refreshAppSection, cachedPackages=" + latestPackages.size
-        )
         try {
             section.removeAllViews()
             val entries = collectAppVolumeEntries(context, classLoader)
             if (entries.isEmpty()) {
                 section.visibility = View.GONE
-                logger.info(
-                    "volume panel: app section hidden (no entries); cached=" +
-                        latestPackages.size
-                )
+                logger.info("volume panel: app section hidden (no entries)")
                 return
             }
             section.visibility = View.VISIBLE
@@ -694,7 +617,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val persisted = loadPersistedAppVolumes(context)
         val entries = mutableListOf<AppVolumeEntry>()
         val seenUids = mutableSetOf<Int>()
-        for (pkg in latestPackages) {
+        for (pkg in readDialogAppPackages()) {
             if (entries.size >= MAX_APP_ROWS) break
             try {
                 val name = readStringField(pkg, "packageName") ?: continue
