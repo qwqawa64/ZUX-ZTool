@@ -253,8 +253,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             setPadding(dp(context, 20), dp(context, 16), dp(context, 20), dp(context, 16))
             background = buildPanelBackground(context)
         }
-        dialog.setContentView(root)
-        logger.debug("volume panel: content view set")
 
         dialogContext = context
         appSection = null
@@ -311,6 +309,15 @@ class VolumeSliderLongPressHook : AppHookModule() {
             logger.warn("volume panel: window config failed: ${t.message}")
         }
         dialog.show()
+        // AlertDialog.onCreate -> AlertController.installContent() runs inside
+        // show() and installs the stock alert layout, REPLACING any content set
+        // beforehand (that orphaned our root: visible window, empty content).
+        // Native BrightnessDetailDialog sets content in onCreate after
+        // super.onCreate() for the same reason; setContentView here wins.
+        dialog.setContentView(root)
+        logger.debug(
+            "volume panel: content view set, shown=${dialog.isShowing}"
+        )
         logger.debug("volume panel: shown, isShowing=${dialog.isShowing}")
         // SystemUIDialog.onCreate -> updateWindowSize() overrides any pre-show
         // layout with the delegate width (R.dimen.large_dialog_width), which is
