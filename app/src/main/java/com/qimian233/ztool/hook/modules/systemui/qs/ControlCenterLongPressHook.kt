@@ -90,10 +90,12 @@ class ControlCenterLongPressHook : AppHookModule() {
                             // Gesture already handled by the long-press
                             // trigger; swallow the trailing UP so the tile's
                             // click toggle does not fire on top of it.
+                            logger.debug("tile: swallowing trailing UP after trigger")
                             cleanupState(view)
                             return@hookWithId true
                         }
                         if (state?.squished == true) {
+                            logger.debug("tile: UP without trigger, releasing squish")
                             releaseSquish(view, state)
                         }
                         chain.proceed()
@@ -102,11 +104,16 @@ class ControlCenterLongPressHook : AppHookModule() {
                     val result = chain.proceed()
                     trackPress(view, event) { v ->
                         val indicator = findDetailIndicator(v)
+                        val hasLongClick = hasOnLongClickListener(v)
+                        logger.debug(
+                            "tile: long-press triggered, indicator=" + (indicator != null) +
+                                ", hasLongClickListener=" + hasLongClick
+                        )
                         if (indicator != null) {
                             // Large tile: open the DetailAdapter dialog via
                             // its own indicator button.
                             indicator.performClick()
-                        } else if (hasOnLongClickListener(v)) {
+                        } else if (hasLongClick) {
                             v.performLongClick()
                         }
                         // Tiles without a long-press handler do nothing:
@@ -223,6 +230,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 // Our gesture owns this touch from now on: any native
                 // qsTile.longClick() firing during it is suppressed.
                 suppressNativeLongClick = true
+                logger.debug("press: ACTION_DOWN on " + view.javaClass.simpleName)
                 val state = obtainState(view)
                 state.downX = event.rawX
                 state.downY = event.rawY
