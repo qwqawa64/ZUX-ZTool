@@ -92,8 +92,10 @@ class ControlCenterLongPressHook : AppHookModule() {
                             // click toggle does not fire on top of it.
                             logger.debug("tile: swallowing trailing UP after trigger")
                             cleanupState(view)
+                            suppressNativeLongClick = false
                             return@hookWithId true
                         }
+                        suppressNativeLongClick = false
                         if (state?.squished == true) {
                             logger.debug("tile: UP without trigger, releasing squish")
                             releaseSquish(view, state)
@@ -264,6 +266,7 @@ class ControlCenterLongPressHook : AppHookModule() {
                 val dx = event.rawX - state.downX
                 val dy = event.rawY - state.downY
                 if (dx * dx + dy * dy > state.touchSlopSquared) {
+                    logger.debug("press: MOVE beyond slop, cancelling long press")
                     suppressNativeLongClick = false
                     releaseSquish(view, state)
                 }
