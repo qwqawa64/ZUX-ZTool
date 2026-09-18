@@ -124,9 +124,23 @@ class ControlCenterLongPressHook : AppHookModule() {
      */
     private fun disableNativeLongPressEffect(view: View) {
         try {
-            val field = view.javaClass.getDeclaredField(LONG_PRESS_EFFECT_FIELD)
-            field.isAccessible = true
-            field.set(view, null)
+            var clazz: Class<*>? = view.javaClass
+            var field: java.lang.reflect.Field? = null
+            while (clazz != null) {
+                field = try {
+                    clazz.getDeclaredField(LONG_PRESS_EFFECT_FIELD)
+                } catch (_: NoSuchFieldException) {
+                    null
+                }
+                if (field != null) break
+                clazz = clazz.superclass
+            }
+            if (field != null) {
+                field.isAccessible = true
+                field.set(view, null)
+            } else {
+                logger.warn("longPressEffect field not found in hierarchy")
+            }
         } catch (t: Throwable) {
             logger.error("Failed to null longPressEffect", t)
         }
@@ -223,31 +237,51 @@ class ControlCenterLongPressHook : AppHookModule() {
     }
 
     /**
-     * Blocks the native QSLongPressEffect pipeline's qsTile.longClick() while
-     * one of our gestures is in flight: the pipeline posts its own delayed
-     * task on ACTION_DOWN that would otherwise fire the tile's long-press
-     * action a second time (dialog + settings page on large tiles).
+     * Blocks the native QSLongPressEffect pipeline's qsTile.longClick() and
+     * ZUI's click() fallback while one of our gestures is in flight. The
+     * Expandable parameter type moved packages on this ROM, so hook targets
+     * are discovered from the declared method signatures instead of by name.
      */
     private fun hookNativeLongClickSuppression(classLoader: ClassLoader) {
-        try {
-            val longClick: Method = classLoader
-                .loadClass(QS_TILE_IMPL_CLASS)
-                .getDeclaredMethod("longClick", Class.forName(EXPANDABLE_CLASS))
-            hookWithId(
-                longClick,
-                "tile_native_long_click_suppress",
-                { chain ->
-                    if (suppressNativeLongClick) {
-                        null
-                    } else {
-                        chain.proceed()
-                    }
-                },
-                XposedInterface.PRIORITY_HIGHEST
-            )
-        } catch (t: Throwable) {
-            logger.error("Failed to hook QSTileImpl.longClick", t)
+        val implClass = classLoader.loadClass(QS_TILE_IMPL_CLASS)
+        val singleParamByName = implClass.declaredMethods
+            .filter { it.parameterTypes.size == 1 }
+            .groupBy { it.name }
+        for ((name, suppressAlways) in listOf("longClick" to true, "click" to false)) {
+            val candidates = singleParamByName[name]
+            if (candidates.isNullOrEmpty()) {
+                logger.warn("QSTileImpl.$name not found for suppression hook")
+                continue
+            }
+            for (method in candidates) {
+                hookWithId(
+                    method,
+                    "tile_${name}_suppress_" + method.parameterTypes[0].name,
+                    { chain ->
+                        if (suppressNativeLongClick &&
+                            (!suppressAlways || anyGestureEnding())
+                        ) {
+                            logger.debug("tile: suppressed QSTileImpl.$name during our gesture")
+                            null
+                        } else {
+                            chain.proceed()
+                        }
+                    },
+                    XposedInterface.PRIORITY_HIGHEST
+                )
+            }
         }
+    }
+
+    /**
+     * True while a triggered gesture has not yet seen its trailing UP —
+     * the window where ZUI's listener may fall back to a click.
+     */
+    private fun anyGestureEnding(): Boolean {
+        for (state in pressStates.values) {
+            if (state.released) return true
+        }
+        return false
     }
 
     /**
@@ -406,7 +440,6 @@ class ControlCenterLongPressHook : AppHookModule() {
             "com.android.systemui.qs.tileimpl.CustomQSTileViewImpl"
         const val LONG_PRESS_EFFECT_FIELD = "longPressEffect"
         const val QS_TILE_IMPL_CLASS = "com.android.systemui.qs.tileimpl.QSTileImpl"
-        const val EXPANDABLE_CLASS = "com.android.systemui.animation.Expandable"
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
         const val TOGGLE_SEEK_BAR_CLASS =
             "com.android.systemui.settings.brightness.ToggleSeekBar"
