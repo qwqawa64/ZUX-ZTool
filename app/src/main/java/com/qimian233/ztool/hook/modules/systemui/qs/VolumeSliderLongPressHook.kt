@@ -236,9 +236,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val themeRes = resolveStyleId(
             context,
             "Theme_SystemUI_Dialog_GlobalActionsLite",
-            "Theme_SystemUI_Dialog"
-        ) ?: 0
-        logger.debug("volume panel: themeRes=$themeRes")
+            "Theme_SystemUI_Dialog",
+            "Theme_SystemUI"
+        ) ?: android.R.style.Theme_DeviceDefault_Dialog
+        logger.debug("volume panel: themeRes=0x${Integer.toHexString(themeRes)}")
         val dialogClass = classLoader.loadClass(SYSTEM_UI_DIALOG_CLASS)
         val ctor = dialogClass.getDeclaredConstructor(
             Context::class.java, Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType
@@ -314,8 +315,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
             logger.warn("volume panel: window config failed: ${t.message}")
         }
         dialog.show()
-        logger.debug("volume panel: shown")
-        root.post { dumpPanelDiagnostics(dialog, root) }
+        logger.debug("volume panel: shown, isShowing=${dialog.isShowing}")
+        // root.post never fired on-device (window may never attach the view);
+        // poll independently of the view tree instead.
+        mainHandler.postDelayed({ dumpPanelDiagnostics(dialog, root) }, 400L)
     }
 
     private fun dumpPanelDiagnostics(dialog: Dialog, root: ViewGroup) {
@@ -323,7 +326,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val window = dialog.window
             val lp = window?.attributes
             logger.debug(
-                "volume panel: window type=${lp?.type} w=${lp?.width} h=${lp?.height}" +
+                "volume panel: window isShowing=${dialog.isShowing}" +
+                    " type=${lp?.type} w=${lp?.width} h=${lp?.height}" +
                     " gravity=${lp?.gravity} alpha=${lp?.alpha} dim=${lp?.dimAmount}" +
                     " token=${window?.attributes?.token != null}"
             )
