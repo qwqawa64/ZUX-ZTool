@@ -9,7 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -158,20 +157,26 @@ private fun Material3FeatureSearchBar(
     modifier: Modifier = Modifier
 ) {
     androidx.compose.material3.DockedSearchBar(
-        query = uiState.query,
-        onQueryChange = onQueryChanged,
-        onSearch = { onExpandedChange(false) },
-        active = expanded,
-        onActiveChange = onExpandedChange,
-        modifier = modifier,
-        placeholder = { Text(stringResource(R.string.search_hint)) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Rounded.Search,
-                contentDescription = null
+        inputField = {
+            androidx.compose.material3.SearchBarDefaults.InputField(
+                query = uiState.query,
+                onQueryChange = onQueryChanged,
+                onSearch = { onExpandedChange(false) },
+                expanded = expanded,
+                onExpandedChange = onExpandedChange,
+                placeholder = { Text(stringResource(R.string.search_hint)) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = null
+                    )
+                }
             )
         },
-        content = { resultsContent(uiState, onOpenEntry) }
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = modifier,
+        content = { ResultsContent(uiState, onOpenEntry) }
     )
 }
 
@@ -211,7 +216,7 @@ private fun MiuixFeatureSearchBar(
                     .background(colorScheme.surfaceContainer)
                     .padding(vertical = 4.dp)
             ) {
-                resultsContent(uiState, onOpenEntry)
+                ResultsContent(uiState, onOpenEntry)
             }
         }
     )
@@ -219,7 +224,7 @@ private fun MiuixFeatureSearchBar(
 
 /** Result area shared by both styles: hint / no-results / grouped results. */
 @Composable
-private fun ColumnScope.resultsContent(
+private fun ResultsContent(
     uiState: SearchUiState,
     onOpenEntry: (SearchEntry) -> Unit
 ) {
