@@ -548,10 +548,19 @@ class AospScrollCaptureHook : AppHookModule() {
                 logE("mControlCallBack is null; overlay window stays on screen.")
                 return
             }
-            callback.javaClass.getMethod("dismissWin").invoke(callback)
-            logI("Overlay window dismissed via mControlCallBack.dismissWin().")
+            // dismissWin -> requestDismissal -> animateDismissal starts a
+            // ValueAnimator, which is only legal on Looper threads.
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    callback.javaClass.getMethod("dismissWin").invoke(callback)
+                    logI("Overlay window dismissed via mControlCallBack.dismissWin().")
+                } catch (e: Throwable) {
+                    logE("dismissWin invocation failed on main looper; overlay window may remain visible", e)
+                }
+            }
+            logI("dismissWin posted to main looper.")
         } catch (e: Throwable) {
-            logE("dismissWin invocation failed; overlay window may remain visible", e)
+            logE("dismissOverlay preparation failed", e)
         }
     }
 
