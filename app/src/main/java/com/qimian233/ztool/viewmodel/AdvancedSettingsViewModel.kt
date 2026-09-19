@@ -2,6 +2,7 @@ package com.qimian233.ztool.viewmodel
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.R
@@ -9,6 +10,7 @@ import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.advanced.AdvancedSettingsRepository
 import com.qimian233.ztool.data.advanced.HotReloadDetail
 import com.qimian233.ztool.data.advanced.PersistentResetDetail
+import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexProgress
 import io.github.libxposed.service.HookedTarget
@@ -55,7 +57,8 @@ class AdvancedSettingsViewModel(
                 showDeleteOtaPackageDialog = _uiState.value.showDeleteOtaPackageDialog,
                 deleteOtaPackageInProgress = _uiState.value.deleteOtaPackageInProgress,
                 deleteOtaPackageStatus = _uiState.value.deleteOtaPackageStatus,
-                deleteOtaPackageMessage = _uiState.value.deleteOtaPackageMessage
+                deleteOtaPackageMessage = _uiState.value.deleteOtaPackageMessage,
+                fixNightModeOverrideInProgress = _uiState.value.fixNightModeOverrideInProgress
             )
         }
     }
@@ -192,6 +195,28 @@ class AdvancedSettingsViewModel(
         _dexIndexState.value = _dexIndexState.value.copy(resultRes = null)
     }
 
+    /**
+     * One-shot root fix: clears the ZUI-persisted night-mode override
+     * (ui_night_mode_override_on/off) and retunes uimode so dark theme
+     * auto switching ("sunset to sunrise") takes effect immediately.
+     */
+    fun fixNightModeOverride(context: Context) {
+        if (_uiState.value.fixNightModeOverrideInProgress) return
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.value = _uiState.value.copy(fixNightModeOverrideInProgress = true)
+            val repository = FrameworkSettingsRepository(context.applicationContext)
+            val result = repository.fixNightModeOverride()
+            _uiState.value = _uiState.value.copy(fixNightModeOverrideInProgress = false)
+            launch(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    if (result.success) result.output else result.error,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "AdvancedVM"
     }
@@ -217,7 +242,8 @@ data class AdvancedSettingsUiState(
     val showDeleteOtaPackageDialog: Boolean = false,
     val deleteOtaPackageInProgress: Boolean = false,
     val deleteOtaPackageStatus: String? = null,
-    val deleteOtaPackageMessage: String? = null
+    val deleteOtaPackageMessage: String? = null,
+    val fixNightModeOverrideInProgress: Boolean = false
 )
 
 /** DexKit index progress and result (settings-page manual refresh path). */

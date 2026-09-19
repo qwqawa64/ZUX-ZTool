@@ -142,27 +142,6 @@ class FrameworkSettingsViewModel(
         repository.savePkgMgrBypassArscRestriction(enabled)
     }
 
-    fun fixNightModeOverride() {
-        _uiState.value = _uiState.value.copy(fixNightModeOverrideRunning = true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.fixNightModeOverride()
-            _uiState.value = _uiState.value.copy(fixNightModeOverrideRunning = false)
-            withContext(Dispatchers.Main) {
-                _uiState.value = _uiState.value.copy(
-                    fixNightModeOverrideMessage = if (result.success) {
-                        result.output
-                    } else {
-                        result.error
-                    }
-                )
-            }
-        }
-    }
-
-    fun clearFixNightModeOverrideMessage() {
-        _uiState.value = _uiState.value.copy(fixNightModeOverrideMessage = null)
-    }
-
     fun showAiInputInfoDialog() {
         _uiState.value = _uiState.value.copy(showAiInputInfoDialog = true)
     }
@@ -220,6 +199,4 @@ data class FrameworkSettingsUiState(
     val pkgMgrBypassSharedUser: Boolean = false,
     val pkgMgrAllowHiddenApisSystemApps: Boolean = false,
     val pkgMgrBypassArscRestriction: Boolean = false,
-    val fixNightModeOverrideRunning: Boolean = false,
-    val fixNightModeOverrideMessage: String? = null,
 )

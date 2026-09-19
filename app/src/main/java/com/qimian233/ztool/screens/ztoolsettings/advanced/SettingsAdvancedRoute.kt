@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Brightness4
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Refresh
@@ -193,12 +194,12 @@ fun SettingsAdvancedRoute(
             onDeleteOtaPackageClick = { viewModel.showDeleteOtaPackageConfirmDialog() },
             onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
             onOpenFirstrun = { activity.reopenFirstrun() },
+            onFixNightModeOverride = { viewModel.fixNightModeOverride(context) },
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
     }
 }
-
 @Composable
 private fun SettingsAdvancedScreen(
     state: AdvancedSettingsUiState,
@@ -212,6 +213,7 @@ private fun SettingsAdvancedScreen(
     onDeleteOtaPackageClick: () -> Unit,
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
+    onFixNightModeOverride: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
 ) {
@@ -255,7 +257,8 @@ private fun SettingsAdvancedScreen(
                         dexIndexInProgress = dexIndexInProgress,
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = onRefreshDexIndex,
-                        onOpenFirstrun = onOpenFirstrun
+                        onOpenFirstrun = onOpenFirstrun,
+                        onFixNightModeOverride = onFixNightModeOverride
                     ),
                     bottomPadding = 32.dp
                 )
@@ -275,7 +278,8 @@ private fun advancedSettingsSections(
     dexIndexInProgress: Boolean,
     dexIndexSummary: String,
     onRefreshDexIndex: () -> Unit,
-    onOpenFirstrun: () -> Unit
+    onOpenFirstrun: () -> Unit,
+    onFixNightModeOverride: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -334,6 +338,24 @@ private fun advancedSettingsSections(
                     enabled = !state.deleteOtaPackageInProgress,
                     icon = if (state.deleteOtaPackageInProgress) null else Icons.Rounded.DeleteForever,
                     trailingContent = if (state.deleteOtaPackageInProgress) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .padding(0.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else null
+                ),
+                SettingItem.Action(
+                    key = "advanced_fix_night_mode_override",
+                    title = stringResource(R.string.system_framework_fix_night_mode_title),
+                    summary = stringResource(R.string.system_framework_fix_night_mode_summary),
+                    onClick = onFixNightModeOverride,
+                    enabled = !state.fixNightModeOverrideInProgress,
+                    icon = if (state.fixNightModeOverrideInProgress) null else Icons.Rounded.Brightness4,
+                    trailingContent = if (state.fixNightModeOverrideInProgress) {
                         {
                             CircularProgressIndicator(
                                 modifier = Modifier
