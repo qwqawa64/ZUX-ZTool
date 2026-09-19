@@ -15,6 +15,7 @@ class SystemUiMiscSettingsRepository(context: Context) {
             disableBiometricErrorVibration = prefsUtils.loadBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, false),
             bypassFaceAuthTimeout = prefsUtils.loadBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, false),
             forceLongScreenshot = prefsUtils.loadBooleanSetting(KEY_FORCE_LONG_SCREENSHOT, false),
+            aospScrollCapture = prefsUtils.loadBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, false),
         )
     }
 
@@ -22,6 +23,7 @@ class SystemUiMiscSettingsRepository(context: Context) {
     fun saveDisableBiometricErrorVibration(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, enabled)
     fun saveBypassFaceAuthTimeout(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, enabled)
     fun saveForceLongScreenshot(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_FORCE_LONG_SCREENSHOT, enabled)
+    fun saveAospScrollCapture(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, enabled)
 
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
@@ -37,6 +39,7 @@ class SystemUiMiscSettingsRepository(context: Context) {
         private val KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION = PreferenceKeys.DISABLE_BIOMETRIC_ERROR_VIBRATION.name
         private val KEY_BYPASS_FACE_AUTH_TIMEOUT = PreferenceKeys.BYPASS_FACE_AUTH_TIMEOUT.name
         private val KEY_FORCE_LONG_SCREENSHOT = PreferenceKeys.FORCE_LONG_SCREENSHOT.name
+        private val KEY_FORCE_LONG_SCREENSHOT_AOSP = PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP.name
     }
 }
 
@@ -45,6 +48,7 @@ data class SystemUiMiscSettingsUiState(
     val disableBiometricErrorVibration: Boolean = false,
     val bypassFaceAuthTimeout: Boolean = false,
     val forceLongScreenshot: Boolean = false,
+    val aospScrollCapture: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

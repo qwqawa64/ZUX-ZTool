@@ -84,6 +84,7 @@ fun SystemUiMiscSettingsRoute(
             onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
             onBypassFaceAuthTimeoutChanged = viewModel::setBypassFaceAuthTimeout,
             onForceLongScreenshotChanged = viewModel::setForceLongScreenshot,
+            onAospScrollCaptureChanged = viewModel::setAospScrollCapture,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -128,6 +129,7 @@ private fun SystemUiMiscSettingsScreen(
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onForceLongScreenshotChanged: (Boolean) -> Unit,
+    onAospScrollCaptureChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -174,6 +176,7 @@ private fun SystemUiMiscSettingsScreen(
                         onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
                         onBypassFaceAuthTimeoutChanged = onBypassFaceAuthTimeoutChanged,
                         onForceLongScreenshotChanged = onForceLongScreenshotChanged,
+                        onAospScrollCaptureChanged = onAospScrollCaptureChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -190,6 +193,7 @@ private fun systemUiMiscSettingsSections(
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onForceLongScreenshotChanged: (Boolean) -> Unit,
+    onAospScrollCaptureChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -221,6 +225,13 @@ private fun systemUiMiscSettingsSections(
                     checked = state.forceLongScreenshot,
                     onCheckedChange = onForceLongScreenshotChanged,
                     key = "system_ui_misc_force_long_screenshot"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_misc_aosp_scroll_capture_title),
+                    summary = stringResource(R.string.system_ui_misc_aosp_scroll_capture_summary),
+                    checked = state.aospScrollCapture,
+                    onCheckedChange = onAospScrollCaptureChanged,
+                    key = "system_ui_misc_aosp_scroll_capture"
                 )
             )
         )

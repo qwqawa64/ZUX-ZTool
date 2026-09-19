@@ -14,6 +14,7 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -26,21 +27,22 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * TEST HOOK (module name "hook_test" — auto-enabled while installed, no
- * frontend switch). Reroutes the SystemUI screenshot overlay's long screenshot
- * chip (mScrollChip / share_long_screenshot) from the Moto private
+ * Reroutes the SystemUI screenshot overlay's long screenshot chip
+ * (mScrollChip / share_long_screenshot) from the Moto private
  * IApplicationThread chain to the dormant AOSP ScrollCapture pipeline that is
  * fully present in this ROM:
  *
  *   WMS.requestScrollCapture -> ScrollCaptureResponse
- *     -> ScrollCaptureClient.SessionWrapper (startCapture / requestImage / endCapture)
- *     -> ScrollCaptureController stock tile loop, driven reflectively
- *     -> LongScreenshot -> toBitmap -> MediaStore
+ *     -> ScrollCaptureClient.SessionWrapper(startCapture/requestImage/endCapture)
+ *     -> ScrollCaptureController tile loop (stock code, driven reflectively)
+ *     -> LongScreenshot -> stock LongScreenshotActivity (native crop UI)
  *
+ * Gated by PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP; enabling
+ * FORCE_LONG_SCREENSHOT in the UI also enables this switch (one-way link).
  * Everything runs inside the com.android.systemui process against classes from
  * its own classloader. Risky points (reflection misses, binder failures, async
- * timeouts) log through both the module logger and android.util.Log with tag
- * [TAG] for on-device debugging via logcat.
+ * timeouts) all log through both the module logger and android.util.Log with
+ * tag [TAG] for on-device debugging via logcat.
  */
 @SuppressLint("WrongConstant")
 class AospScrollCaptureHook : AppHookModule() {
@@ -66,7 +68,7 @@ class AospScrollCaptureHook : AppHookModule() {
         private val activeController = AtomicReference<WeakReference<Any>?>(null)
     }
 
-    override fun getModuleName(): String = "hook_test"
+    override fun getModuleName(): String = PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP.name
 
     override fun getTargetPackages(): Array<String> = arrayOf(SYSTEMUI_PACKAGE)
 

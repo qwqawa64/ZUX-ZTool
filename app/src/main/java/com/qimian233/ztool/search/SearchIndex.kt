@@ -769,6 +769,11 @@ object SearchIndex {
             titleRes = R.string.system_ui_misc_force_long_screenshot_title,
             summaryRes = R.string.system_ui_misc_force_long_screenshot_summary
         ),
+        systemUiMisc.item(
+            id = "system_ui_misc_aosp_scroll_capture",
+            titleRes = R.string.system_ui_misc_aosp_scroll_capture_title,
+            summaryRes = R.string.system_ui_misc_aosp_scroll_capture_summary
+        ),
 
         framework.item(
             id = "framework_keep_rotation",

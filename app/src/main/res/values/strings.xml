@@ -455,6 +455,8 @@
     <string name="system_ui_misc_bypass_face_auth_timeout_summary">移除 4 小时未使用人脸需密码/图案验证的超时门禁</string>
     <string name="system_ui_misc_force_long_screenshot_title">强制启用长截屏按钮</string>
     <string name="system_ui_misc_force_long_screenshot_summary">截屏浮窗中的长截屏按钮始终可用，无视应用滚动捕获能力上报。不保证截屏效果良好。</string>
+    <string name="system_ui_misc_aosp_scroll_capture_title">长截屏走 AOSP 滚动捕获</string>
+    <string name="system_ui_misc_aosp_scroll_capture_summary">长截屏按钮改走系统原生滚动捕获管线（Android ScrollCapture），完成后进入原生裁剪页。开启强制启用长截屏按钮时会自动启用本开关。</string>
     <!--系统界面 状态栏时钟页资源值-->
     <string name="system_ui_status_bar_clock_settings_title">状态栏时钟设置</string>
     <string name="system_ui_status_bar_display_seconds_title">显示秒数</string>
