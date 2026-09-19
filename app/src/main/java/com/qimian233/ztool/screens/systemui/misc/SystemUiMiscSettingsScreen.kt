@@ -14,7 +14,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,7 +40,6 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiMiscSettingsViewModel
 
@@ -85,7 +83,6 @@ fun SystemUiMiscSettingsRoute(
             onGuestModeChanged = viewModel::setGuestModeController,
             onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
             onBypassFaceAuthTimeoutChanged = viewModel::setBypassFaceAuthTimeout,
-            onForceLongScreenshotChanged = viewModel::setForceLongScreenshot,
             onAospScrollCaptureChanged = viewModel::setAospScrollCapture,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
@@ -130,7 +127,6 @@ private fun SystemUiMiscSettingsScreen(
     onGuestModeChanged: (Boolean) -> Unit,
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
-    onForceLongScreenshotChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
@@ -177,7 +173,6 @@ private fun SystemUiMiscSettingsScreen(
                         onGuestModeChanged = onGuestModeChanged,
                         onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
                         onBypassFaceAuthTimeoutChanged = onBypassFaceAuthTimeoutChanged,
-                        onForceLongScreenshotChanged = onForceLongScreenshotChanged,
                         onAospScrollCaptureChanged = onAospScrollCaptureChanged,
                     ),
                     bottomPadding = 96.dp,
@@ -194,7 +189,6 @@ private fun systemUiMiscSettingsSections(
     onGuestModeChanged: (Boolean) -> Unit,
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
-    onForceLongScreenshotChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
@@ -229,40 +223,13 @@ private fun systemUiMiscSettingsSections(
                 )
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_misc_force_long_screenshot_title),
-                        summary = stringResource(R.string.system_ui_misc_force_long_screenshot_summary),
-                        checked = state.forceLongScreenshot,
-                        onCheckedChange = onForceLongScreenshotChanged,
-                        key = "system_ui_misc_force_long_screenshot"
-                    )
-                )
-                add(
-                    SettingItem.Switch(
                         title = stringResource(R.string.system_ui_misc_aosp_scroll_capture_title),
                         summary = stringResource(R.string.system_ui_misc_aosp_scroll_capture_summary),
                         checked = state.aospScrollCapture,
                         onCheckedChange = onAospScrollCaptureChanged,
-                        enabled = !state.forceLongScreenshot,
                         key = "system_ui_misc_aosp_scroll_capture"
                     )
                 )
-                if (state.forceLongScreenshot) {
-                    add(
-                        SettingItem.Custom(
-                            key = "deco_system_ui_misc_aosp_scroll_capture_forced_note",
-                            content = {
-                                Text(
-                                    text = stringResource(
-                                        R.string.system_ui_misc_aosp_scroll_capture_forced_note
-                                    ),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalZToolColorScheme.current.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
-                                )
-                            }
-                        )
-                    )
-                }
             }
         )
     )

@@ -46,22 +46,7 @@ class SystemUiMiscSettingsViewModel(
         repository.saveBypassFaceAuthTimeout(enabled)
     }
 
-    fun setForceLongScreenshot(enabled: Boolean) {
-        // One-way link: turning on "force long screenshot" also enables the
-        // AOSP scroll capture hook; both switches stay independent afterwards.
-        _uiState.value = if (enabled) {
-            _uiState.value.copy(forceLongScreenshot = true, aospScrollCapture = true)
-        } else {
-            _uiState.value.copy(forceLongScreenshot = false)
-        }
-        repository.saveForceLongScreenshot(enabled)
-        if (enabled) repository.saveAospScrollCapture(true)
-    }
-
     fun setAospScrollCapture(enabled: Boolean) {
-        // Forced on while force long screenshot is enabled; the switch is
-        // disabled in the UI, this guard keeps programmatic paths consistent.
-        if (_uiState.value.forceLongScreenshot && !enabled) return
         _uiState.value = _uiState.value.copy(aospScrollCapture = enabled)
         repository.saveAospScrollCapture(enabled)
     }
