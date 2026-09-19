@@ -13,7 +13,6 @@ import android.os.SystemClock
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -428,11 +427,19 @@ class AospScrollCaptureHook : AppHookModule() {
                             if (chipNow == null) {
                                 logE("mScrollChip became null before listener takeover.")
                             } else {
-                                (chipNow as android.view.View).setOnClickListener { v ->
+                                val chipView = chipNow as android.view.View
+                                logI("Chip state before takeover: enabled=${chipView.isEnabled} " +
+                                    "clickable=${chipView.isClickable} visibility=${chipView.visibility}")
+                                chipView.isEnabled = true
+                                chipView.isClickable = true
+                                chipView.visibility = android.view.View.VISIBLE
+                                restoreChipIcon(chipView)
+                                chipView.setOnClickListener { v ->
                                     logI("Scroll chip clicked — routing to AOSP ScrollCapture pipeline.")
                                     onChipClicked(view, v)
                                 }
-                                logI("AOSP scroll chip listener installed (+$LISTENER_TAKEOVER_DELAY_MS ms).")
+                                logI("AOSP scroll chip listener installed (+$LISTENER_TAKEOVER_DELAY_MS ms); " +
+                                    "state after: enabled=${chipView.isEnabled} clickable=${chipView.isClickable}")
                             }
                         } catch (e: Throwable) {
                             logE("Failed to install AOSP scroll chip listener", e)
@@ -528,7 +535,6 @@ class AospScrollCaptureHook : AppHookModule() {
             val desc = invokeObj(response, "getDescription")
             val title = invokeObj(response, "getWindowTitle")
             logE("ScrollCapture response NOT connected: desc=$desc window=$title")
-            toastMain(screenshotView, "ScrollCapture unavailable: $desc")
             return false
         }
         val packageName = invokeObj(response, "getPackageName")?.toString() ?: "unknown"
@@ -690,7 +696,6 @@ class AospScrollCaptureHook : AppHookModule() {
             return false
         }
         logI("Long screenshot saved: $uri (${bitmap.width}x${bitmap.height})")
-        toastMain(screenshotView, "长截屏已保存: ${bitmap.width}x${bitmap.height}")
         return true
     }
 
@@ -887,6 +892,26 @@ class AospScrollCaptureHook : AppHookModule() {
     // Helpers & logging
     // ---------------------------------------------------------------------
 
+    /**
+     * Swap the disabled long-press icon back to the normal one. The drawables
+     * live in SystemUI's own resources, so resolve by identifier.
+     */
+    private fun restoreChipIcon(chipView: android.view.View) {
+        try {
+            val resId = chipView.context.resources.getIdentifier(
+                "screenshot_long_press", "drawable", chipView.context.packageName)
+            if (resId == 0) {
+                logE("screenshot_long_press drawable not found; icon left unchanged.")
+                return
+            }
+            chipView.javaClass.getMethod("setIcon", Int::class.javaPrimitiveType)
+                .invoke(chipView, resId)
+            logI("Chip icon restored to screenshot_long_press.")
+        } catch (e: Throwable) {
+            logE("Restoring chip icon failed (non-fatal)", e)
+        }
+    }
+
     private fun mainExecutor(controller: Any): java.util.concurrent.Executor {
         val context = findField(controller.javaClass, "mContext").get(controller) as android.content.Context
         return context.mainExecutor
@@ -938,24 +963,11 @@ class AospScrollCaptureHook : AppHookModule() {
         target.javaClass.methods.first { it.name == name && it.parameterCount == 0 }
             .invoke(target)
 
-    private fun toastMain(screenshotView: Any, message: String) {
-        Handler(Looper.getMainLooper()).post {
-            try {
-                Toast.makeText((screenshotView as android.view.View).context,
-                    message, Toast.LENGTH_LONG).show()
-            } catch (e: Throwable) {
-                logE("Toast failed: $message", e)
-            }
-        }
-    }
-
     private fun logI(message: String) {
-        Log.i(TAG, message)
         logger.info("AospScroll: $message")
     }
 
     private fun logE(message: String, e: Throwable? = null) {
-        if (e != null) Log.e(TAG, message, e) else Log.e(TAG, message)
         if (e != null) logger.error("AospScroll: $message", e) else logger.error("AospScroll: $message")
     }
 }
