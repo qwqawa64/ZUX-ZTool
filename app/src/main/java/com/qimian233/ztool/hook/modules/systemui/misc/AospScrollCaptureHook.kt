@@ -52,6 +52,7 @@ class AospScrollCaptureHook : AppHookModule() {
         private const val TAG = "ZTool.AospScroll"
 
         private const val ID_CAN_LONG_SCREENSHOT = "aosp_scroll_can_long_screenshot"
+        private const val ID_INIT_APPLICATION_THREAD = "aosp_scroll_init_application_thread"
         private const val ID_CAPTURE_CONTROLLER_CTOR = "aosp_scroll_capture_controller_ctor"
         private const val ID_CAPTURE_CONTROLLER_HANDLE = "aosp_scroll_capture_controller_handle"
         private const val ID_CHIP_LISTENER = "aosp_scroll_chip_listener"
@@ -83,6 +84,7 @@ class AospScrollCaptureHook : AppHookModule() {
         val executorClass = loadClass(cl, "com.android.systemui.screenshot.scroll.ScrollCaptureExecutor")
 
         hookCanLongScreenshot(screenshotViewClass)
+        hookInitApplicationThread(screenshotViewClass)
         hookLongScreenshotActivityTracing(cl)
         hookPatchEnterTransition(cl)
         hookFatalExceptionTracing()
@@ -300,17 +302,44 @@ class AospScrollCaptureHook : AppHookModule() {
      * that module's switch was already on at SystemUI load time. Force it
      * open here too so this hook is self-sufficient regardless of the other
      * switch, and so the disabled-but-clickable mismatch cannot happen.
+     *
+     * Short-circuit: return true without proceeding, skipping the original
+     * probe queries and their logs entirely.
      */
     private fun hookCanLongScreenshot(screenshotViewClass: Class<*>) {
         try {
             val method = findMethod(screenshotViewClass, "canLongScreenshot")
-            hookWithId(method, ID_CAN_LONG_SCREENSHOT) { chain ->
-                chain.proceed()
-                true
-            }
-            logI("canLongScreenshot force-true installed (chip clickability for this hook).")
+            hookWithId(method, ID_CAN_LONG_SCREENSHOT) { _ -> true }
+            logI("canLongScreenshot short-circuit true installed (chip clickability for this hook).")
         } catch (e: Throwable) {
             logE("Failed to hook canLongScreenshot", e)
+        }
+    }
+
+    /**
+     * ForceLongScreenshot also patched initApplicationThread: the flag
+     * mCanBeLongScreenshotMotoFlag is normally written asynchronously by the
+     * app-reported ILongScreenshotListener callback, which can arrive after
+     * this method and flip it back to false. Re-assert true after every run
+     * so click handlers and the scroll-capture path that re-read the field
+     * stay consistent.
+     */
+    private fun hookInitApplicationThread(screenshotViewClass: Class<*>) {
+        try {
+            val method = findMethod(screenshotViewClass, "initApplicationThread")
+            val flagField = findField(screenshotViewClass, "mCanBeLongScreenshotMotoFlag")
+            hookWithId(method, ID_INIT_APPLICATION_THREAD) { chain ->
+                chain.proceed()
+                try {
+                    flagField.set(chain.thisObject, true)
+                    logger.debug("AospScroll: mCanBeLongScreenshotMotoFlag forced true")
+                } catch (e: Throwable) {
+                    logger.error("AospScroll: failed to force ability flag", e)
+                }
+            }
+            logI("initApplicationThread flag re-assert hook installed.")
+        } catch (e: Throwable) {
+            logE("Failed to hook initApplicationThread", e)
         }
     }
 
