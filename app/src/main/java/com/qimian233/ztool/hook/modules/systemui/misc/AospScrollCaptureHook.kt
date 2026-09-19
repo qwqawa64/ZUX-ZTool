@@ -425,7 +425,7 @@ class AospScrollCaptureHook : AppHookModule() {
             return false
         }
 
-        // --- Step 6: export -----------------------------------------------------
+        // --- Step 6: hand off to the stock LongScreenshotActivity --------------
         if (holder != null) {
             try {
                 val holderRef = findField(holder.javaClass, "mLongScreenshot").get(holder)
@@ -437,6 +437,16 @@ class AospScrollCaptureHook : AppHookModule() {
                 logE("Storing LongScreenshot into holder failed (non-fatal)", e)
             }
         }
+
+        // The stock activity consumes holder.mLongScreenshot (getAndSet(null))
+        // in onStart and offers the native crop/save/share UI.
+        if (launchLongScreenshotActivity(screenshotView, controller, response)) {
+            logI("Handed off to LongScreenshotActivity.")
+            return true
+        }
+
+        // Fallback: export directly if the activity could not be launched.
+        logE("LongScreenshotActivity launch failed; falling back to direct MediaStore export.")
         val bitmap = runCatching {
             longScreenshot.javaClass.getMethod("toBitmap").invoke(longScreenshot) as? android.graphics.Bitmap
         }.getOrNull()
@@ -452,6 +462,52 @@ class AospScrollCaptureHook : AppHookModule() {
         logI("Long screenshot saved: $uri (${bitmap.width}x${bitmap.height})")
         toastMain(screenshotView, "长截屏已保存: ${bitmap.width}x${bitmap.height}")
         return true
+    }
+
+    /**
+     * Launch the ROM's stock LongScreenshotActivity with the same extras the
+     * native transition uses (capture-response + screenshot-userhandle); the
+     * long image itself is passed through longScreenshotHolder.
+     */
+    private fun launchLongScreenshotActivity(
+        screenshotView: Any,
+        controller: Any,
+        response: Any
+    ): Boolean {
+        val cl = controller.javaClass.classLoader
+        if (loadClass(cl, "com.android.systemui.screenshot.scroll.LongScreenshotActivity") == null) {
+            logE("LongScreenshotActivity class not found.")
+            return false
+        }
+        if (response !is android.os.Parcelable) {
+            logE("ScrollCaptureResponse is not Parcelable (${response.javaClass}); cannot attach to intent.")
+            return false
+        }
+        val viewContext = (screenshotView as android.view.View).context
+        val appContext = viewContext.applicationContext
+        val intent = Intent()
+        intent.setClassName(appContext.packageName,
+            "com.android.systemui.screenshot.scroll.LongScreenshotActivity")
+        intent.putExtra("capture-response", response)
+        intent.putExtra("screenshot-userhandle", android.os.Process.myUserHandle())
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        return try {
+            appContext.startActivity(intent)
+            logI("startActivity(LongScreenshotActivity) ok from app context.")
+            true
+        } catch (e: Throwable) {
+            logE("startActivity from app context failed; retrying with controller window context.", e)
+            try {
+                val controllerContext = findField(controller.javaClass, "mContext")
+                    .get(controller) as android.content.Context
+                controllerContext.startActivity(intent)
+                logI("startActivity(LongScreenshotActivity) ok from controller context.")
+                true
+            } catch (e2: Throwable) {
+                logE("startActivity from controller context also failed.", e2)
+                false
+            }
+        }
     }
 
     private fun requestScrollCapture(
