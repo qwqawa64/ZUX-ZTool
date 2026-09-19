@@ -51,6 +51,7 @@ class AospScrollCaptureHook : AppHookModule() {
         private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
         private const val TAG = "ZTool.AospScroll"
 
+        private const val ID_CAN_LONG_SCREENSHOT = "aosp_scroll_can_long_screenshot"
         private const val ID_CAPTURE_CONTROLLER_CTOR = "aosp_scroll_capture_controller_ctor"
         private const val ID_CAPTURE_CONTROLLER_HANDLE = "aosp_scroll_capture_controller_handle"
         private const val ID_CHIP_LISTENER = "aosp_scroll_chip_listener"
@@ -81,6 +82,7 @@ class AospScrollCaptureHook : AppHookModule() {
             loadClass(cl, "com.android.systemui.screenshot.LegacyScreenshotController")
         val executorClass = loadClass(cl, "com.android.systemui.screenshot.scroll.ScrollCaptureExecutor")
 
+        hookCanLongScreenshot(screenshotViewClass)
         hookLongScreenshotActivityTracing(cl)
         hookPatchEnterTransition(cl)
         hookFatalExceptionTracing()
@@ -286,6 +288,29 @@ class AospScrollCaptureHook : AppHookModule() {
             logI($$"Fatal exception tracer installed (RuntimeInit$KillApplicationHandler).")
         } catch (e: Throwable) {
             logE($$"Failed to hook RuntimeInit$KillApplicationHandler", e)
+        }
+    }
+
+    /**
+     * This hook owns a click listener takeover on mScrollChip, so the chip
+     * must be clickable for it to work. The stock gate (canLongScreenshot)
+     * depends on the async Moto ability report and disables the chip
+     * (disabled icon + setClickable(false)) whenever the report is missing
+     * or late; ForceLongScreenshot's own force hook is only installed when
+     * that module's switch was already on at SystemUI load time. Force it
+     * open here too so this hook is self-sufficient regardless of the other
+     * switch, and so the disabled-but-clickable mismatch cannot happen.
+     */
+    private fun hookCanLongScreenshot(screenshotViewClass: Class<*>) {
+        try {
+            val method = findMethod(screenshotViewClass, "canLongScreenshot")
+            hookWithId(method, ID_CAN_LONG_SCREENSHOT) { chain ->
+                chain.proceed()
+                true
+            }
+            logI("canLongScreenshot force-true installed (chip clickability for this hook).")
+        } catch (e: Throwable) {
+            logE("Failed to hook canLongScreenshot", e)
         }
     }
 
