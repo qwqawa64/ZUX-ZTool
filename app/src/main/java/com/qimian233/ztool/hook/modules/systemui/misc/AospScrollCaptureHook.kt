@@ -53,6 +53,8 @@ class AospScrollCaptureHook : AppHookModule() {
         private const val ID_CAPTURE_CONTROLLER_CTOR = "aosp_scroll_capture_controller_ctor"
         private const val ID_CAPTURE_CONTROLLER_HANDLE = "aosp_scroll_capture_controller_handle"
         private const val ID_CHIP_LISTENER = "aosp_scroll_chip_listener"
+        private const val ID_ACTIVITY_LIFECYCLE = "aosp_scroll_activity_lifecycle"
+        private const val ID_FATAL_TRACER = "aosp_scroll_fatal_tracer"
 
         private const val RESPONSE_TIMEOUT_MS = 10_000L
         private const val SESSION_START_TIMEOUT_MS = 10_000L
@@ -78,6 +80,8 @@ class AospScrollCaptureHook : AppHookModule() {
         val executorClass = loadClass(cl, "com.android.systemui.screenshot.scroll.ScrollCaptureExecutor")
 
         hookCanLongScreenshot(screenshotViewClass)
+        hookLongScreenshotActivityTracing(cl)
+        hookFatalExceptionTracing()
         if (legacyControllerClass != null) {
             hookCaptureControllerRef(legacyControllerClass)
         } else {
@@ -102,6 +106,97 @@ class AospScrollCaptureHook : AppHookModule() {
      * ability. Force it open so the AOSP path can be exercised everywhere; the
      * ScrollCapture handshake itself decides per-window support.
      */
+    /**
+     * LongScreenshotActivity crashes with no module-side evidence, so trace its
+     * lifecycle: log onCreate (with intent extras sanity), onStart entry/exit.
+     * Pure logging; exceptions inside are rethrown by proceed() as usual.
+     */
+    private fun hookLongScreenshotActivityTracing(cl: ClassLoader) {
+        val activityClass = loadClass(cl, "com.android.systemui.screenshot.scroll.LongScreenshotActivity")
+            ?: return
+
+        try {
+            val onCreate = activityClass.declaredMethods
+                .first { it.name == "onCreate" && it.parameterCount == 1 }
+            onCreate.isAccessible = true
+            hookWithId(onCreate, ID_ACTIVITY_LIFECYCLE + "_create") { chain ->
+                logI("LongScreenshotActivity.onCreate entered")
+                val result = chain.proceed()
+                try {
+                    val activity = chain.thisObject as android.app.Activity
+                    val intent = activity.intent
+                    logI("onCreate intent component=${intent?.component} " +
+                        "hasCaptureResponse=${intent?.hasExtra("capture-response")} " +
+                        "hasUserHandle=${intent?.hasExtra("screenshot-userhandle")}")
+                } catch (e: Throwable) {
+                    logE("onCreate intent inspection failed", e)
+                }
+                logI("LongScreenshotActivity.onCreate exited normally")
+                result
+            }
+            logI("LongScreenshotActivity.onCreate tracing installed.")
+        } catch (e: Throwable) {
+            logE("Failed to hook LongScreenshotActivity.onCreate", e)
+        }
+
+        try {
+            val onStart = activityClass.declaredMethods
+                .first { it.name == "onStart" && it.parameterCount == 0 }
+            onStart.isAccessible = true
+            hookWithId(onStart, ID_ACTIVITY_LIFECYCLE + "_start") { chain ->
+                logI("LongScreenshotActivity.onStart entered")
+                try {
+                    val result = chain.proceed()
+                    logI("LongScreenshotActivity.onStart exited normally")
+                    result
+                } catch (e: Throwable) {
+                    logE("LongScreenshotActivity.onStart THREW: ${e.javaClass.name}: ${e.message}", e)
+                    throw e
+                }
+            }
+            logI("LongScreenshotActivity.onStart tracing installed.")
+        } catch (e: Throwable) {
+            logE("Failed to hook LongScreenshotActivity.onStart", e)
+        }
+
+        try {
+            val onStop = activityClass.declaredMethods
+                .first { it.name == "onStop" && it.parameterCount == 0 }
+            onStop.isAccessible = true
+            hookWithId(onStop, ID_ACTIVITY_LIFECYCLE + "_stop") { chain ->
+                logI("LongScreenshotActivity.onStop entered")
+                chain.proceed()
+            }
+            logI("LongScreenshotActivity.onStop tracing installed.")
+        } catch (e: Throwable) {
+            logE("Failed to hook LongScreenshotActivity.onStop", e)
+        }
+    }
+
+    /**
+     * Log every fatal uncaught exception in this process (full stack) before
+     * the framework kills it, so any LongScreenshotActivity crash is captured
+     * in LSPosed logs even without a logcat capture.
+     */
+    private fun hookFatalExceptionTracing() {
+        try {
+            val handlerClass = Class.forName(
+                "com.android.internal.os.RuntimeInit\$KillApplicationHandler")
+            val method = handlerClass.declaredMethods
+                .first { it.name == "uncaughtException" && it.parameterCount == 2 }
+            method.isAccessible = true
+            hookWithId(method, ID_FATAL_TRACER) { chain ->
+                val throwable = chain.args.getOrNull(1) as? Throwable
+                logE("FATAL uncaught exception in SystemUI process:\n" +
+                    Log.getStackTraceString(throwable ?: Throwable("unknown")))
+                chain.proceed()
+            }
+            logI("Fatal exception tracer installed (RuntimeInit\$KillApplicationHandler).")
+        } catch (e: Throwable) {
+            logE("Failed to hook RuntimeInit\$KillApplicationHandler", e)
+        }
+    }
+
     private fun hookCanLongScreenshot(screenshotViewClass: Class<*>) {
         try {
             val method = findMethod(screenshotViewClass, "canLongScreenshot")
