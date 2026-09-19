@@ -54,6 +54,7 @@ class AospScrollCaptureHook : AppHookModule() {
         private const val ID_CAPTURE_CONTROLLER_HANDLE = "aosp_scroll_capture_controller_handle"
         private const val ID_CHIP_LISTENER = "aosp_scroll_chip_listener"
         private const val ID_ACTIVITY_LIFECYCLE = "aosp_scroll_activity_lifecycle"
+        private const val ID_ACTIVITY_TRANSITION = "aosp_scroll_activity_transition"
         private const val ID_FATAL_TRACER = "aosp_scroll_fatal_tracer"
 
         private const val RESPONSE_TIMEOUT_MS = 10_000L
@@ -81,6 +82,7 @@ class AospScrollCaptureHook : AppHookModule() {
 
         hookCanLongScreenshot(screenshotViewClass)
         hookLongScreenshotActivityTracing(cl)
+        hookPatchEnterTransition(cl)
         hookFatalExceptionTracing()
         if (legacyControllerClass != null) {
             hookCaptureControllerRef(legacyControllerClass)
@@ -170,6 +172,93 @@ class AospScrollCaptureHook : AppHookModule() {
             logI("LongScreenshotActivity.onStop tracing installed.")
         } catch (e: Throwable) {
             logE("Failed to hook LongScreenshotActivity.onStop", e)
+        }
+    }
+
+    /**
+     * The native enter-transition lambda (case 1) reads the shelf transition
+     * callback from longScreenshotHolder.mTransitionDestinationCallback — a
+     * callback owned by the dormant AOSP ScreenshotController we never set.
+     * When it is null, that lambda NPEs and the crop entrance (case 2: crop
+     * boundary positions + setButtonsEnabled(true)) never runs.
+     *
+     * Patch: when the callback is missing, skip the shelf transition entirely
+     * and apply the essential part of case 2 directly (crop boundaries from
+     * the lambda's captured fractions, crop view visible, buttons enabled).
+     */
+    private fun hookPatchEnterTransition(cl: ClassLoader) {
+        val lambdaClass = loadClass(cl,
+            "com.android.systemui.screenshot.scroll.LongScreenshotActivity\$\$ExternalSyntheticLambda4")
+            ?: return
+        try {
+            val runMethod = lambdaClass.declaredMethods.first { it.name == "run" }
+            runMethod.isAccessible = true
+            val classIdField = findField(lambdaClass, "\$r8\$classId")
+            val activityField = findField(lambdaClass, "f\$0")
+            val topFractionField = findField(lambdaClass, "f\$1")
+            val bottomFractionField = findField(lambdaClass, "f\$2")
+            hookWithId(runMethod, ID_ACTIVITY_TRANSITION) { chain ->
+                val self = chain.thisObject
+                val classId = classIdField.getInt(self)
+                if (classId == 1) {
+                    val activity = activityField.get(self)
+                    val holder = findField(activity.javaClass, "mLongScreenshotHolder").get(activity)
+                    val callbackRef = holder?.let {
+                        findFieldOrNull(it.javaClass, "mTransitionDestinationCallback")?.get(it)
+                            as? java.util.concurrent.atomic.AtomicReference<*>
+                    }
+                    if (callbackRef == null || callbackRef.get() == null) {
+                        logI("Shelf transition callback missing; applying direct crop entrance.")
+                        applyDirectCropEntrance(activity,
+                            topFractionField.getFloat(self), bottomFractionField.getFloat(self))
+                    } else {
+                        logI("Shelf transition callback present; running native transition.")
+                        chain.proceed()
+                    }
+                } else {
+                    chain.proceed()
+                }
+            }
+            logI("Enter-transition patch hook installed (LongScreenshotActivity lambda).")
+        } catch (e: Throwable) {
+            logE("Failed to hook the enter-transition lambda", e)
+        }
+    }
+
+    /**
+     * Direct equivalent of the transition end handler: reveal the preview,
+     * position the crop boundaries and enable the buttons — without the shelf
+     * preview animation that requires the dormant ScreenshotController.
+     */
+    private fun applyDirectCropEntrance(activity: Any, topFraction: Float, bottomFraction: Float) {
+        try {
+            val preview = findField(activity.javaClass, "mPreview").get(activity) as android.widget.ImageView
+            preview.animate().alpha(1.0f)
+
+            val cropView = findField(activity.javaClass, "mCropView").get(activity)
+            val cropViewClass = cropView.javaClass
+            val boundaryClass = cropViewClass.classLoader
+                .loadClass("com.android.systemui.screenshot.scroll.CropView\$CropBoundary")
+            val topBoundary = boundaryClass.getField("TOP").get(null)
+            val bottomBoundary = boundaryClass.getField("BOTTOM").get(null)
+            val setBoundary = findMethodDeep(cropViewClass, "setBoundaryPosition",
+                Float::class.javaPrimitiveType, boundaryClass)
+            setBoundary.invoke(cropView, topFraction, topBoundary)
+            setBoundary.invoke(cropView, bottomFraction, bottomBoundary)
+            logI("Crop boundaries applied: top=$topFraction bottom=$bottomFraction")
+
+            findField(cropViewClass, "mEntranceInterpolation").setFloat(cropView, 1.0f)
+            cropViewClass.getMethod("setVisibility", Int::class.javaPrimitiveType)
+                .invoke(cropView, android.view.View.VISIBLE)
+            val invalidate = cropViewClass.getMethod("invalidate")
+            invalidate.invoke(cropView)
+
+            val setButtonsEnabled = findMethodDeep(activity.javaClass, "setButtonsEnabled",
+                Boolean::class.javaPrimitiveType)
+            setButtonsEnabled.invoke(activity, true)
+            logI("Direct crop entrance applied: crop view visible, buttons enabled.")
+        } catch (e: Throwable) {
+            logE("Direct crop entrance failed — crop view/buttons may stay unusable", e)
         }
     }
 
