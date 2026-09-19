@@ -50,7 +50,8 @@ class AospScrollCaptureHook : AppHookModule() {
         private const val TAG = "ZTool.AospScroll"
 
         private const val ID_CAN_LONG_SCREENSHOT = "aosp_scroll_can_long_screenshot"
-        private const val ID_CAPTURE_CONTROLLER_REF = "aosp_scroll_capture_controller"
+        private const val ID_CAPTURE_CONTROLLER_CTOR = "aosp_scroll_capture_controller_ctor"
+        private const val ID_CAPTURE_CONTROLLER_HANDLE = "aosp_scroll_capture_controller_handle"
         private const val ID_CHIP_LISTENER = "aosp_scroll_chip_listener"
 
         private const val RESPONSE_TIMEOUT_MS = 10_000L
@@ -115,23 +116,62 @@ class AospScrollCaptureHook : AppHookModule() {
     }
 
     /**
-     * Grab the live LegacyScreenshotController on each screenshot request — it
-     * carries the Dagger-injected ScrollCaptureExecutor and the overlay window
-     * whose token WMS needs as the scroll capture host.
+     * Grab the live LegacyScreenshotController as early as possible.
+     *
+     * Primary: the constructor — the controller is created inside
+     * TakeScreenshotExecutorImpl.getLenovoScreenshotController on the first
+     * request, so every active instance passes through it. Backup entries:
+     * takeScreenshotFullscreen (the ROM's actual dispatch entry from
+     * handleLenovoScreenRequest) and handleScreenshot (AOSP-style entry).
      */
     private fun hookCaptureControllerRef(legacyControllerClass: Class<*>) {
         try {
-            val method = legacyControllerClass.declaredMethods
-                .first { it.name == "handleScreenshot" }
-            method.isAccessible = true
-            hookWithId(method, ID_CAPTURE_CONTROLLER_REF) { chain ->
+            val ctor = legacyControllerClass.declaredConstructors
+                .first { it.parameterCount > 0 }
+            ctor.isAccessible = true
+            hookWithId(ctor, ID_CAPTURE_CONTROLLER_CTOR) { chain ->
                 chain.proceed()
                 activeController.set(WeakReference(chain.thisObject))
-                logI("Captured active LegacyScreenshotController: ${chain.thisObject}")
+                logI("Captured LegacyScreenshotController via constructor: ${chain.thisObject}")
             }
-            logI("LegacyScreenshotController.handleScreenshot capture hook installed.")
+            logI("LegacyScreenshotController constructor capture hook installed " +
+                "(${ctor.parameterTypes.size} params).")
         } catch (e: Throwable) {
-            logE("Failed to hook LegacyScreenshotController.handleScreenshot", e)
+            logE("Failed to hook LegacyScreenshotController constructor", e)
+        }
+        try {
+            val fullscreen = legacyControllerClass.declaredMethods
+                .firstOrNull { it.name == "takeScreenshotFullscreen" }
+            if (fullscreen != null) {
+                fullscreen.isAccessible = true
+                hookWithId(fullscreen, ID_CAPTURE_CONTROLLER_HANDLE) { chain ->
+                    chain.proceed()
+                    activeController.set(WeakReference(chain.thisObject))
+                    logI("Captured controller via takeScreenshotFullscreen.")
+                }
+                logI("takeScreenshotFullscreen capture hook installed.")
+            } else {
+                logE("takeScreenshotFullscreen not found on LegacyScreenshotController.")
+            }
+        } catch (e: Throwable) {
+            logE("Failed to hook takeScreenshotFullscreen", e)
+        }
+        try {
+            val method = legacyControllerClass.declaredMethods
+                .firstOrNull { it.name == "handleScreenshot" }
+            if (method != null) {
+                method.isAccessible = true
+                hookWithId(method, ID_CAPTURE_CONTROLLER_HANDLE + "_hs") { chain ->
+                    chain.proceed()
+                    activeController.set(WeakReference(chain.thisObject))
+                    logI("Captured controller via handleScreenshot.")
+                }
+                logI("handleScreenshot capture hook installed.")
+            } else {
+                logE("handleScreenshot not found on LegacyScreenshotController.")
+            }
+        } catch (e: Throwable) {
+            logE("Failed to hook handleScreenshot", e)
         }
     }
 
