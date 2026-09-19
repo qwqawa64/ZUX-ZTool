@@ -207,7 +207,7 @@ class AospScrollCaptureHook : AppHookModule() {
                     val holder = findField(activity.javaClass, "mLongScreenshotHolder").get(activity)
                     val callbackRef = holder?.let {
                         findFieldOrNull(it.javaClass, "mTransitionDestinationCallback")?.get(it)
-                            as? java.util.concurrent.atomic.AtomicReference<*>
+                            as? AtomicReference<*>
                     }
                     if (callbackRef == null || callbackRef.get() == null) {
                         logI("Shelf transition callback missing; applying direct crop entrance.")
@@ -469,7 +469,7 @@ class AospScrollCaptureHook : AppHookModule() {
         // --- Step 1: WMS requestScrollCapture --------------------------------
         val response = requestScrollCapture(controller.javaClass.classLoader!!, wms, displayId, windowToken)
             ?: return false
-        val connected = invokeBool(response, "isConnected")
+        val connected = isResponseConnected(response)
         if (!connected) {
             val desc = invokeObj(response, "getDescription")
             val title = invokeObj(response, "getWindowTitle")
@@ -488,7 +488,7 @@ class AospScrollCaptureHook : AppHookModule() {
         }
 
         // --- Step 2: arm the stock ScrollCaptureController ---------------------
-        val captureFuture = newSafeFuture(controller.javaClass.classLoader!!) { "ztool-capture" }
+        val captureFuture = newSafeFuture(controller.javaClass.classLoader!!) { _ -> }
         val captureCompleter = extractCompleter(captureFuture)
             ?: run { logE("Cannot obtain capture Completer from SafeFuture"); return false }
         setField(captureControllerClass, captureController, "mCancelled", false)
@@ -520,7 +520,7 @@ class AospScrollCaptureHook : AppHookModule() {
         setField(wrapperClass, wrapper, "mReader", reader)
         // Public two-arg listener variant; SessionWrapper implements OnImageAvailableListener.
         reader.setOnImageAvailableListener(
-            wrapper as android.media.ImageReader.OnImageAvailableListener,
+            wrapper as ImageReader.OnImageAvailableListener,
             Handler(Looper.getMainLooper()))
 
         val surface = reader.surface
@@ -539,7 +539,6 @@ class AospScrollCaptureHook : AppHookModule() {
                 runCatching { completeException(cl, completer, e) }
                     .onFailure { logE("completer.setException failed", it) }
             }
-            "ztool-start"
         }
         setField(captureControllerClass, captureController, "mSessionFuture", startFuture)
 
@@ -607,7 +606,7 @@ class AospScrollCaptureHook : AppHookModule() {
             try {
                 val holderRef = findField(holder.javaClass, "mLongScreenshot").get(holder)
                 @Suppress("UNCHECKED_CAST")
-                holderRef as java.util.concurrent.atomic.AtomicReference<Any>
+                holderRef as AtomicReference<Any>
                 holderRef.set(longScreenshot)
                 logI("Stored LongScreenshot into longScreenshotHolder.")
             } catch (e: Throwable) {
@@ -715,7 +714,6 @@ class AospScrollCaptureHook : AppHookModule() {
                 runCatching { completeException(cl, completer, e) }
                     .onFailure { logE("completer.setException failed", it) }
             }
-            "ztool-request"
         }
         return awaitFuture(future, RESPONSE_TIMEOUT_MS, "scroll capture response")
     }
@@ -744,7 +742,7 @@ class AospScrollCaptureHook : AppHookModule() {
     /** SafeFuture holds its Completer only through completerWeakReference. */
     private fun extractCompleter(safeFuture: Any): Any? = try {
         val weakRef = safeFuture.javaClass.getDeclaredField("completerWeakReference")
-            .apply { isAccessible = true }.get(safeFuture) as java.lang.ref.WeakReference<*>
+            .apply { isAccessible = true }.get(safeFuture) as WeakReference<*>
         weakRef.get()
     } catch (e: Throwable) {
         logE("Cannot extract completer from SafeFuture", e)
@@ -878,8 +876,8 @@ class AospScrollCaptureHook : AppHookModule() {
         return null
     }
 
-    private fun invokeBool(target: Any, name: String): Boolean =
-        target.javaClass.methods.first { it.name == name && it.parameterCount == 0 }
+    private fun isResponseConnected(target: Any): Boolean =
+        target.javaClass.methods.first { it.name == "isConnected" && it.parameterCount == 0 }
             .invoke(target) as Boolean
 
     private fun invokeObj(target: Any, name: String): Any? =
