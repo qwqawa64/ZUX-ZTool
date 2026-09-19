@@ -48,7 +48,6 @@ class AospScrollCaptureHook : AppHookModule() {
 
     companion object {
         private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
-        private const val TAG = "ZTool.AospScroll"
 
         private const val ID_CAN_LONG_SCREENSHOT = "aosp_scroll_can_long_screenshot"
         private const val ID_INIT_APPLICATION_THREAD = "aosp_scroll_init_application_thread"
@@ -896,6 +895,7 @@ class AospScrollCaptureHook : AppHookModule() {
      * Swap the disabled long-press icon back to the normal one. The drawables
      * live in SystemUI's own resources, so resolve by identifier.
      */
+    @SuppressLint("DiscouragedApi")
     private fun restoreChipIcon(chipView: android.view.View) {
         try {
             val resId = chipView.context.resources.getIdentifier(
