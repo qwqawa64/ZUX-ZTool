@@ -83,6 +83,7 @@ fun SystemUiMiscSettingsRoute(
             onGuestModeChanged = viewModel::setGuestModeController,
             onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
             onBypassFaceAuthTimeoutChanged = viewModel::setBypassFaceAuthTimeout,
+            onForceLongScreenshotChanged = viewModel::setForceLongScreenshot,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -126,6 +127,7 @@ private fun SystemUiMiscSettingsScreen(
     onGuestModeChanged: (Boolean) -> Unit,
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
+    onForceLongScreenshotChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -171,6 +173,7 @@ private fun SystemUiMiscSettingsScreen(
                         onGuestModeChanged = onGuestModeChanged,
                         onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
                         onBypassFaceAuthTimeoutChanged = onBypassFaceAuthTimeoutChanged,
+                        onForceLongScreenshotChanged = onForceLongScreenshotChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -186,6 +189,7 @@ private fun systemUiMiscSettingsSections(
     onGuestModeChanged: (Boolean) -> Unit,
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
+    onForceLongScreenshotChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -210,6 +214,13 @@ private fun systemUiMiscSettingsSections(
                     checked = state.bypassFaceAuthTimeout,
                     onCheckedChange = onBypassFaceAuthTimeoutChanged,
                     key = "system_ui_misc_bypass_face_auth_timeout"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_misc_force_long_screenshot_title),
+                    summary = stringResource(R.string.system_ui_misc_force_long_screenshot_summary),
+                    checked = state.forceLongScreenshot,
+                    onCheckedChange = onForceLongScreenshotChanged,
+                    key = "system_ui_misc_force_long_screenshot"
                 )
             )
         )

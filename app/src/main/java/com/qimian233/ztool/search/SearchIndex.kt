@@ -764,6 +764,11 @@ object SearchIndex {
             titleRes = R.string.system_ui_misc_bypass_face_auth_timeout_title,
             summaryRes = R.string.system_ui_misc_bypass_face_auth_timeout_summary
         ),
+        systemUiMisc.item(
+            id = "system_ui_misc_force_long_screenshot",
+            titleRes = R.string.system_ui_misc_force_long_screenshot_title,
+            summaryRes = R.string.system_ui_misc_force_long_screenshot_summary
+        ),
 
         framework.item(
             id = "framework_keep_rotation",

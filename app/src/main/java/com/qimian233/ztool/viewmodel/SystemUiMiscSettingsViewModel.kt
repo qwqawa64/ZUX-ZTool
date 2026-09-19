@@ -46,6 +46,11 @@ class SystemUiMiscSettingsViewModel(
         repository.saveBypassFaceAuthTimeout(enabled)
     }
 
+    fun setForceLongScreenshot(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(forceLongScreenshot = enabled)
+        repository.saveForceLongScreenshot(enabled)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }

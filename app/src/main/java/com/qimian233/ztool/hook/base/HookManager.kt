@@ -87,6 +87,7 @@ import com.qimian233.ztool.hook.modules.systemui.misc.CustomChargeAnimation
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomControlCenterDate
 import com.qimian233.ztool.hook.modules.systemui.misc.DisableBiometricErrorVibration
 import com.qimian233.ztool.hook.modules.systemui.misc.ForceImmersiveMode
+import com.qimian233.ztool.hook.modules.systemui.misc.ForceLongScreenshot
 import com.qimian233.ztool.hook.modules.systemui.misc.GuestModeController
 import com.qimian233.ztool.hook.modules.systemui.misc.NoChargeAnimation
 import com.qimian233.ztool.hook.modules.systemui.misc.NotificationCenterTransparency
@@ -180,6 +181,7 @@ object HookManager {
         registerHookModule(NetworkSpeedHideSlowHook())
         registerHookModule(SystemUIBatteryHook())
         registerHookModule(ForceImmersiveMode())
+        registerHookModule(ForceLongScreenshot())
         registerHookModule(ChargeAnimationDurationHook())
         registerHookModule(ForceLenovoAOD())
         registerHookModule(ForceNativeAod())

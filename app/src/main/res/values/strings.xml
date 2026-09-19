@@ -453,6 +453,8 @@
     <string name="system_ui_misc_disable_biometric_error_vibration_title">关闭生物识别失败震动</string>
     <string name="system_ui_misc_bypass_face_auth_timeout_title">跳过人脸识别超时限制</string>
     <string name="system_ui_misc_bypass_face_auth_timeout_summary">移除 4 小时未使用人脸需密码/图案验证的超时门禁</string>
+    <string name="system_ui_misc_force_long_screenshot_title">强制启用长截屏按钮</string>
+    <string name="system_ui_misc_force_long_screenshot_summary">截屏浮窗中的长截屏按钮始终可用，无视应用滚动捕获能力上报。不保证截屏效果良好。</string>
     <!--系统界面 状态栏时钟页资源值-->
     <string name="system_ui_status_bar_clock_settings_title">状态栏时钟设置</string>
     <string name="system_ui_status_bar_display_seconds_title">显示秒数</string>
