@@ -145,7 +145,10 @@ class AospScrollCaptureHook : AppHookModule() {
             val method = findMethod(screenshotViewClass, "createScreenshotActionsShadeAnimation")
             val chipField = findField(screenshotViewClass, "mScrollChip")
             hookWithId(method, ID_CHIP_LISTENER) { chain ->
-                chain.proceed()
+                // Must return the proceeded ValueAnimator: the hooker's return
+                // value replaces the original method result, and the caller
+                // does createScreenshotActionsShadeAnimation().start().
+                val proceeded = chain.proceed()
                 val view = chain.thisObject
                 val chip = chipField.get(view)
                 if (chip == null) {
@@ -168,6 +171,7 @@ class AospScrollCaptureHook : AppHookModule() {
                         }
                     }, LISTENER_TAKEOVER_DELAY_MS)
                 }
+                proceeded
             }
             logI("createScreenshotActionsShadeAnimation hook installed (chip listener takeover).")
         } catch (e: Throwable) {
