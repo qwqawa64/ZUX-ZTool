@@ -83,6 +83,7 @@ import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceLenovoAOD
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ForceNativeAod
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIChargeWattsHook
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIRealWatts
+import com.qimian233.ztool.hook.modules.systemui.misc.AospScrollCaptureHook
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomChargeAnimation
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomControlCenterDate
 import com.qimian233.ztool.hook.modules.systemui.misc.DisableBiometricErrorVibration
@@ -182,6 +183,7 @@ object HookManager {
         registerHookModule(SystemUIBatteryHook())
         registerHookModule(ForceImmersiveMode())
         registerHookModule(ForceLongScreenshot())
+        registerHookModule(AospScrollCaptureHook()) // hook_test: AOSP ScrollCapture reroute, no frontend switch
         registerHookModule(ChargeAnimationDurationHook())
         registerHookModule(ForceLenovoAOD())
         registerHookModule(ForceNativeAod())
