@@ -44,14 +44,13 @@ import java.util.concurrent.atomic.AtomicReference
  * timeouts) all log through both the module logger and android.util.Log with
  * tag [TAG] for on-device debugging via logcat.
  */
-@SuppressLint("WrongConstant")
+@SuppressLint("WrongConstant", "PrivateApi")
 class AospScrollCaptureHook : AppHookModule() {
 
     companion object {
         private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
         private const val TAG = "ZTool.AospScroll"
 
-        private const val ID_CAN_LONG_SCREENSHOT = "aosp_scroll_can_long_screenshot"
         private const val ID_CAPTURE_CONTROLLER_CTOR = "aosp_scroll_capture_controller_ctor"
         private const val ID_CAPTURE_CONTROLLER_HANDLE = "aosp_scroll_capture_controller_handle"
         private const val ID_CHIP_LISTENER = "aosp_scroll_chip_listener"
@@ -82,7 +81,6 @@ class AospScrollCaptureHook : AppHookModule() {
             loadClass(cl, "com.android.systemui.screenshot.LegacyScreenshotController")
         val executorClass = loadClass(cl, "com.android.systemui.screenshot.scroll.ScrollCaptureExecutor")
 
-        hookCanLongScreenshot(screenshotViewClass)
         hookLongScreenshotActivityTracing(cl)
         hookPatchEnterTransition(cl)
         hookFatalExceptionTracing()
@@ -190,20 +188,22 @@ class AospScrollCaptureHook : AppHookModule() {
      */
     private fun hookPatchEnterTransition(cl: ClassLoader) {
         val lambdaClass = loadClass(cl,
-            "com.android.systemui.screenshot.scroll.LongScreenshotActivity\$\$ExternalSyntheticLambda4")
+            $$$"com.android.systemui.screenshot.scroll.LongScreenshotActivity$$ExternalSyntheticLambda4"
+        )
             ?: return
         try {
             val runMethod = lambdaClass.declaredMethods.first { it.name == "run" }
             runMethod.isAccessible = true
-            val classIdField = findField(lambdaClass, "\$r8\$classId")
-            val activityField = findField(lambdaClass, "f\$0")
-            val topFractionField = findField(lambdaClass, "f\$1")
-            val bottomFractionField = findField(lambdaClass, "f\$2")
+            val classIdField = findField(lambdaClass, $$"$r8$classId")
+            val activityField = findField(lambdaClass, $$"f$0")
+            val topFractionField = findField(lambdaClass, $$"f$1")
+            val bottomFractionField = findField(lambdaClass, $$"f$2")
             hookWithId(runMethod, ID_ACTIVITY_TRANSITION) { chain ->
-                val self = chain.thisObject
+                val self = chain.thisObject ?: return@hookWithId chain.proceed()
                 val classId = classIdField.getInt(self)
                 if (classId == 1) {
                     val activity = activityField.get(self)
+                        ?: return@hookWithId chain.proceed()
                     val holder = findField(activity.javaClass, "mLongScreenshotHolder").get(activity)
                     val callbackRef = holder?.let {
                         findFieldOrNull(it.javaClass, "mTransitionDestinationCallback")?.get(it)
@@ -239,8 +239,8 @@ class AospScrollCaptureHook : AppHookModule() {
 
             val cropView = findField(activity.javaClass, "mCropView").get(activity)
             val cropViewClass = cropView.javaClass
-            val boundaryClass = cropViewClass.classLoader
-                .loadClass("com.android.systemui.screenshot.scroll.CropView\$CropBoundary")
+            val boundaryClass = cropViewClass.classLoader!!
+                .loadClass($$"com.android.systemui.screenshot.scroll.CropView$CropBoundary")
             val topBoundary = boundaryClass.getField("TOP").get(null)
             val bottomBoundary = boundaryClass.getField("BOTTOM").get(null)
             val setBoundary = findMethodDeep(cropViewClass, "setBoundaryPosition",
@@ -272,7 +272,8 @@ class AospScrollCaptureHook : AppHookModule() {
     private fun hookFatalExceptionTracing() {
         try {
             val handlerClass = Class.forName(
-                "com.android.internal.os.RuntimeInit\$KillApplicationHandler")
+                $$"com.android.internal.os.RuntimeInit$KillApplicationHandler"
+            )
             val method = handlerClass.declaredMethods
                 .first { it.name == "uncaughtException" && it.parameterCount == 2 }
             method.isAccessible = true
@@ -282,22 +283,9 @@ class AospScrollCaptureHook : AppHookModule() {
                     Log.getStackTraceString(throwable ?: Throwable("unknown")))
                 chain.proceed()
             }
-            logI("Fatal exception tracer installed (RuntimeInit\$KillApplicationHandler).")
+            logI($$"Fatal exception tracer installed (RuntimeInit$KillApplicationHandler).")
         } catch (e: Throwable) {
-            logE("Failed to hook RuntimeInit\$KillApplicationHandler", e)
-        }
-    }
-
-    private fun hookCanLongScreenshot(screenshotViewClass: Class<*>) {
-        try {
-            val method = findMethod(screenshotViewClass, "canLongScreenshot")
-            hookWithId(method, ID_CAN_LONG_SCREENSHOT) { chain ->
-                chain.proceed()
-                true
-            }
-            logI("canLongScreenshot force-true installed.")
-        } catch (e: Throwable) {
-            logE("Failed to hook canLongScreenshot", e)
+            logE($$"Failed to hook RuntimeInit$KillApplicationHandler", e)
         }
     }
 
@@ -479,7 +467,7 @@ class AospScrollCaptureHook : AppHookModule() {
         findFieldOrNull(clientClass, "mHostWindowToken")?.set(client, windowToken)
 
         // --- Step 1: WMS requestScrollCapture --------------------------------
-        val response = requestScrollCapture(controller.javaClass.classLoader, wms, displayId, windowToken)
+        val response = requestScrollCapture(controller.javaClass.classLoader!!, wms, displayId, windowToken)
             ?: return false
         val connected = invokeBool(response, "isConnected")
         if (!connected) {
@@ -500,7 +488,7 @@ class AospScrollCaptureHook : AppHookModule() {
         }
 
         // --- Step 2: arm the stock ScrollCaptureController ---------------------
-        val captureFuture = newSafeFuture(controller.javaClass.classLoader) { "ztool-capture" }
+        val captureFuture = newSafeFuture(controller.javaClass.classLoader!!) { "ztool-capture" }
         val captureCompleter = extractCompleter(captureFuture)
             ?: run { logE("Cannot obtain capture Completer from SafeFuture"); return false }
         setField(captureControllerClass, captureController, "mCancelled", false)
@@ -509,11 +497,13 @@ class AospScrollCaptureHook : AppHookModule() {
         logI("Stock controller armed: mCancelled=false mWindowOwner=$packageName")
 
         // --- Step 3: create session (SessionWrapper + ImageReader) -------------
-        val cl = controller.javaClass.classLoader
+        val cl = controller.javaClass.classLoader!!
         val connection = invokeObj(response, "getConnection") ?: run {
             logE("response.getConnection() is null"); return false
         }
-        val wrapperClass = loadClass(cl, "com.android.systemui.screenshot.scroll.ScrollCaptureClient\$SessionWrapper")
+        val wrapperClass = loadClass(cl,
+            $$"com.android.systemui.screenshot.scroll.ScrollCaptureClient$SessionWrapper"
+        )
             ?: return false
         val viewContext = (screenshotView as android.view.View).context
         val maxPages = Settings.Secure.getFloat(viewContext.contentResolver, "screenshot.scroll_max_pages", 3.0f)
@@ -554,7 +544,8 @@ class AospScrollCaptureHook : AppHookModule() {
         setField(captureControllerClass, captureController, "mSessionFuture", startFuture)
 
         val lambdaClass = loadClass(cl,
-            "com.android.systemui.screenshot.scroll.ScrollCaptureController\$\$ExternalSyntheticLambda0")
+            $$$"com.android.systemui.screenshot.scroll.ScrollCaptureController$$ExternalSyntheticLambda0"
+        )
         var usedStockLambda = false
         if (lambdaClass != null) {
             try {
@@ -615,9 +606,9 @@ class AospScrollCaptureHook : AppHookModule() {
         if (holder != null) {
             try {
                 val holderRef = findField(holder.javaClass, "mLongScreenshot").get(holder)
-                    as java.util.concurrent.atomic.AtomicReference<Any>
                 @Suppress("UNCHECKED_CAST")
-                holderRef.set(longScreenshot as Any)
+                holderRef as java.util.concurrent.atomic.AtomicReference<Any>
+                holderRef.set(longScreenshot)
                 logI("Stored LongScreenshot into longScreenshotHolder.")
             } catch (e: Throwable) {
                 logE("Storing LongScreenshot into holder failed (non-fatal)", e)
@@ -660,7 +651,7 @@ class AospScrollCaptureHook : AppHookModule() {
         controller: Any,
         response: Any
     ): Boolean {
-        val cl = controller.javaClass.classLoader
+        val cl = controller.javaClass.classLoader!!
         if (loadClass(cl, "com.android.systemui.screenshot.scroll.LongScreenshotActivity") == null) {
             logE("LongScreenshotActivity class not found.")
             return false
@@ -710,7 +701,7 @@ class AospScrollCaptureHook : AppHookModule() {
         val future = newSafeFuture(cl) { completer ->
             try {
                 val clientListenerClass =
-                    cl.loadClass("com.android.systemui.screenshot.scroll.ScrollCaptureClient\$1")
+                    cl.loadClass("com.android.systemui.screenshot.scroll.ScrollCaptureClient$1")
                 val listener = clientListenerClass.constructors
                     .first { it.parameterCount == 1 }
                     .newInstance(completer)
@@ -735,16 +726,19 @@ class AospScrollCaptureHook : AppHookModule() {
      */
     private fun newSafeFuture(cl: ClassLoader, resolverBody: (Any) -> Unit): Any {
         val adapterClass = cl.loadClass("androidx.concurrent.futures.CallbackToFutureAdapter")
-        val resolverClass = cl.loadClass("androidx.concurrent.futures.CallbackToFutureAdapter\$Resolver")
+        val resolverClass = cl.loadClass($$"androidx.concurrent.futures.CallbackToFutureAdapter$Resolver")
         val resolver = Proxy.newProxyInstance(cl, arrayOf(resolverClass), InvocationHandler { _, method, args ->
             if (method.name == "attachCompleter" && args != null && args.isNotEmpty()) {
-                resolverBody(args[0])
+                val completer = args[0] ?: return@InvocationHandler null
+                resolverBody(completer)
                 return@InvocationHandler "ZTool AospScrollCapture future"
             }
             null
         })
         val getFuture = adapterClass.methods.first { it.name == "getFuture" }
-        return getFuture.invoke(null, resolver)
+        // Static method: the receiver must be null. SDK 37 stubs annotate the
+        // invoke() return as nullable, hence the non-null assertion.
+        return getFuture.invoke(null as Any?, resolver as Any) ?: error("getFuture returned null")
     }
 
     /** SafeFuture holds its Completer only through completerWeakReference. */
@@ -764,8 +758,7 @@ class AospScrollCaptureHook : AppHookModule() {
         logI("$what future completed: $result")
         result
     } catch (e: java.lang.reflect.InvocationTargetException) {
-        val cause = e.cause
-        when (cause) {
+        when (val cause = e.cause) {
             is java.util.concurrent.TimeoutException ->
                 logE("$what future timed out after ${timeoutMs}ms", cause)
             is java.util.concurrent.ExecutionException ->
@@ -779,7 +772,7 @@ class AospScrollCaptureHook : AppHookModule() {
     }
 
     private fun completeException(cl: ClassLoader, completer: Any, e: Throwable) {
-        val completerClass = cl.loadClass("androidx.concurrent.futures.CallbackToFutureAdapter\$Completer")
+        val completerClass = cl.loadClass($$"androidx.concurrent.futures.CallbackToFutureAdapter$Completer")
         completerClass.getMethod("setException", Throwable::class.java).invoke(completer, e)
     }
 
