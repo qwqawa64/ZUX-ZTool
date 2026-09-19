@@ -59,6 +59,9 @@ class SystemUiMiscSettingsViewModel(
     }
 
     fun setAospScrollCapture(enabled: Boolean) {
+        // Forced on while force long screenshot is enabled; the switch is
+        // disabled in the UI, this guard keeps programmatic paths consistent.
+        if (_uiState.value.forceLongScreenshot && !enabled) return
         _uiState.value = _uiState.value.copy(aospScrollCapture = enabled)
         repository.saveAospScrollCapture(enabled)
     }
