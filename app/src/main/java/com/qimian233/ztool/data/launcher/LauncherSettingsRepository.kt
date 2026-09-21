@@ -51,7 +51,10 @@ class LauncherSettingsRepository(
             wideGrid = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_WIDE_GRID, false),
             wideGridSquare = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_WIDE_GRID_SQUARE, false),
             wideGridSideInset = prefsUtils.loadIntegerSetting(KEY_LAUNCHER_WIDE_GRID_SIDE_INSET, WIDE_GRID_INSET_DEFAULT)
-                .coerceIn(WIDE_GRID_INSET_MIN, WIDE_GRID_INSET_MAX)
+                .coerceIn(WIDE_GRID_INSET_MIN, WIDE_GRID_INSET_MAX),
+            iconScaleOverride = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_ICON_SCALE_OVERRIDE, false),
+            iconScaleValue = prefsUtils.loadFloatSetting(KEY_LAUNCHER_ICON_SCALE_VALUE, ICON_SCALE_DEFAULT)
+                .coerceIn(ICON_SCALE_MIN, ICON_SCALE_MAX)
         )
     }
 
@@ -163,6 +166,17 @@ class LauncherSettingsRepository(
         )
     }
 
+    fun saveIconScaleOverride(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_ICON_SCALE_OVERRIDE, enabled)
+    }
+
+    fun saveIconScaleValue(scale: Float) {
+        prefsUtils.saveFloatSetting(
+            KEY_LAUNCHER_ICON_SCALE_VALUE,
+            scale.coerceIn(ICON_SCALE_MIN, ICON_SCALE_MAX)
+        )
+    }
+
     fun saveDisableDockBar(enabled: Boolean): Boolean {
         val previousMoreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false)
         prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, previousMoreBigDock)
@@ -256,6 +270,14 @@ class LauncherSettingsRepository(
         private val KEY_LAUNCHER_WIDE_GRID = PreferenceKeys.LAUNCHER_WIDE_GRID.name
         private val KEY_LAUNCHER_WIDE_GRID_SQUARE = PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.name
         private val KEY_LAUNCHER_WIDE_GRID_SIDE_INSET = PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.name
+        private val KEY_LAUNCHER_ICON_SCALE_OVERRIDE = PreferenceKeys.LAUNCHER_ICON_SCALE_OVERRIDE.name
+        private val KEY_LAUNCHER_ICON_SCALE_VALUE = PreferenceKeys.LAUNCHER_ICON_SCALE_VALUE.name
+
+        // Icon scale slider bounds; the hook bypasses the launcher's 0.6~1.3 clamp,
+        // so the UI range is the authoritative one.
+        const val ICON_SCALE_MIN = 0.5f
+        const val ICON_SCALE_MAX = 3.0f
+        private const val ICON_SCALE_DEFAULT = 1.0f
     }
 }
 

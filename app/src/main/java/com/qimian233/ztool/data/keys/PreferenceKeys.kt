@@ -154,6 +154,7 @@ object PreferenceKeys {
     val LAUNCHER_APP_ICON_UNMASK_DYNAMIC = BoolKey("launcher_app_icon_unmask_dynamic", false)
     val LAUNCHER_WIDE_GRID = BoolKey("launcher_wide_grid", false)
     val LAUNCHER_WIDE_GRID_SQUARE = BoolKey("launcher_wide_grid_square", false)
+    val LAUNCHER_ICON_SCALE_OVERRIDE = BoolKey("launcher_icon_scale_override", false)
 
     // Launcher sub-feature switches + internal keys
     val REMOVE_HOT_WORD_VIEW = BoolKey("remove_hot_word_view", false)
@@ -243,6 +244,9 @@ object PreferenceKeys {
     val SYSTEMUI_NETWORK_SPEED_HIDE_THRESHOLD = FloatKey("systemui_network_speed_hide_threshold", 10f)
     val CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE = FloatKey("Custom_ControlCenterDateTextSize", 16.0f)
     val CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING = FloatKey("Custom_ControlCenterDateLetterSpacing", 0.1f)
+    // Icon scale multiplier overriding Utilities#getCustomedIconScale in the launcher,
+    // bypassing its 0.6~1.3 clamp. Only read when LAUNCHER_ICON_SCALE_OVERRIDE is on.
+    val LAUNCHER_ICON_SCALE_VALUE = FloatKey("launcher_icon_scale_value", 1.0f)
 
     // ═══════════════════════════════════════════════════════════
     // String keys
@@ -323,7 +327,7 @@ object PreferenceKeys {
         LAUNCHER_DRAWER_NO_LABEL_MODE, LAUNCHER_BIG_FOLDER_ALIGN,
         LAUNCHER_HIDE_BLUE_POINT, DISMISS_CLOUD_FOLDER_CONFIRMATION,
         DISABLE_RECENT_APPS_DISPLAY, LAUNCHER_BATCH_UNINSTALL,
-        LAUNCHER_WIDE_GRID, LAUNCHER_WIDE_GRID_SQUARE,
+        LAUNCHER_WIDE_GRID, LAUNCHER_WIDE_GRID_SQUARE, LAUNCHER_ICON_SCALE_OVERRIDE,
         REMOVE_HOT_WORD_VIEW, REMOVE_SEARCH_RECOMMEND, BEAUTIFY_RAM_INFO,
         FORCE_STOP_WHITE_LIST_ENABLE, ZUI_LAUNCHER_HOTSEAT_BACKUP,
         DISABLE_DOCK_WARNING_CONFIRMED,
@@ -367,7 +371,8 @@ object PreferenceKeys {
     val floatKeys: List<FloatKey> = listOf(
         CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE, CUSTOM_STATUSBAR_CLOCK_LETTER_SPACING,
         SYSTEMUI_NETWORK_SPEED_REFRESH_INTERVAL, SYSTEMUI_NETWORK_SPEED_HIDE_THRESHOLD,
-        CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE, CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING
+        CUSTOM_CONTROL_CENTER_DATE_TEXT_SIZE, CUSTOM_CONTROL_CENTER_DATE_LETTER_SPACING,
+        LAUNCHER_ICON_SCALE_VALUE
     )
 
     val stringKeys: List<StringKey> = listOf(

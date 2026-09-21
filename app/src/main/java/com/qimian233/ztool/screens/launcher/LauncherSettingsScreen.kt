@@ -136,6 +136,8 @@ fun LauncherSettingsRoute(
             onWideGridChanged = viewModel::setWideGrid,
             onWideGridSquareChanged = viewModel::setWideGridSquare,
             onWideGridSideInsetChanged = viewModel::setWideGridSideInset,
+            onIconScaleOverrideChanged = viewModel::setIconScaleOverride,
+            onIconScaleValueChanged = viewModel::setIconScaleValue,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
@@ -215,6 +217,8 @@ private fun LauncherSettingsScreen(
     onWideGridChanged: (Boolean) -> Unit,
     onWideGridSquareChanged: (Boolean) -> Unit,
     onWideGridSideInsetChanged: (Int) -> Unit,
+    onIconScaleOverrideChanged: (Boolean) -> Unit,
+    onIconScaleValueChanged: (Float) -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry,
 ) {
@@ -279,6 +283,8 @@ private fun LauncherSettingsScreen(
                         onWideGridChanged = onWideGridChanged,
                         onWideGridSquareChanged = onWideGridSquareChanged,
                         onWideGridSideInsetChanged = onWideGridSideInsetChanged,
+                        onIconScaleOverrideChanged = onIconScaleOverrideChanged,
+                        onIconScaleValueChanged = onIconScaleValueChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -315,6 +321,8 @@ private fun launcherSettingsSections(
     onWideGridChanged: (Boolean) -> Unit,
     onWideGridSquareChanged: (Boolean) -> Unit,
     onWideGridSideInsetChanged: (Int) -> Unit,
+    onIconScaleOverrideChanged: (Boolean) -> Unit,
+    onIconScaleValueChanged: (Float) -> Unit,
 ): List<SettingSection> {
 
     val launcherLayoutItems = buildList {
@@ -420,6 +428,32 @@ private fun launcherSettingsSections(
                     enabled = !state.wideGridSquare,
                     onValueChange = { onWideGridSideInsetChanged(it.toInt()) },
                     key = "launcher_wide_grid_side_inset"
+                )
+            )
+        }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_icon_scale_override_title),
+                summary = stringResource(R.string.launcher_icon_scale_override_summary),
+                checked = state.iconScaleOverride,
+                onCheckedChange = onIconScaleOverrideChanged,
+                key = "launcher_icon_scale_override"
+            )
+        )
+        if (state.iconScaleOverride) {
+            add(
+                SettingItem.Slider(
+                    title = stringResource(R.string.launcher_icon_scale_value_title),
+                    value = state.iconScaleValue,
+                    valueText = String.format(java.util.Locale.US, "%.1f", state.iconScaleValue),
+                    valueRange = LauncherSettingsRepository.ICON_SCALE_MIN..
+                        LauncherSettingsRepository.ICON_SCALE_MAX,
+                    // 0.1 step from 0.5 to 3.0 -> 25 intermediate steps
+                    steps = 25,
+                    onValueChange = {
+                        onIconScaleValueChanged((it * 10).toInt() / 10f)
+                    },
+                    key = "launcher_icon_scale_value"
                 )
             )
         }

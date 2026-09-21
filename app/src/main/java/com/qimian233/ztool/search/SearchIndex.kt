@@ -1207,6 +1207,17 @@ object SearchIndex {
             parentKey = "launcher_wide_grid"
         ),
         launcher.item(
+            id = "launcher_icon_scale_override",
+            titleRes = R.string.launcher_icon_scale_override_title,
+            summaryRes = R.string.launcher_icon_scale_override_summary
+        ),
+        launcher.item(
+            id = "launcher_icon_scale_value",
+            titleRes = R.string.launcher_icon_scale_value_title,
+            parentTitleRes = R.string.launcher_icon_scale_override_title,
+            parentKey = "launcher_icon_scale_override"
+        ),
+        launcher.item(
             id = "launcher_disable_recent_app_display",
             titleRes = R.string.launcher_disable_recent_app_display
         ),

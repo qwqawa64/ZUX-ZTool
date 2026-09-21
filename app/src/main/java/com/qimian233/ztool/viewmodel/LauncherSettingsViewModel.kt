@@ -152,6 +152,16 @@ class LauncherSettingsViewModel(
         repository.saveWideGridSideInset(inset)
     }
 
+    fun setIconScaleOverride(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(iconScaleOverride = enabled)
+        repository.saveIconScaleOverride(enabled)
+    }
+
+    fun setIconScaleValue(scale: Float) {
+        _uiState.value = _uiState.value.copy(iconScaleValue = scale)
+        repository.saveIconScaleValue(scale)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
@@ -235,6 +245,8 @@ data class LauncherSettingsUiState(
     val wideGrid: Boolean = false,
     val wideGridSquare: Boolean = false,
     val wideGridSideInset: Int = 0,
+    val iconScaleOverride: Boolean = false,
+    val iconScaleValue: Float = 1.0f,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size

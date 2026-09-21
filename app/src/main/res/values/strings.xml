@@ -652,6 +652,9 @@
     <string name="launcher_wide_grid_side_inset_title">左右留白</string>
     <string name="launcher_wide_grid_side_inset_summary">网格与屏幕左右边缘保留的间距，0 为完全贴边</string>
     <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>
+    <string name="launcher_icon_scale_override_title">接管图标大小设置</string>
+    <string name="launcher_icon_scale_override_summary">针对非系统默认图标可能无法生效</string>
+    <string name="launcher_icon_scale_value_title">图标缩放倍率</string>
     <string name="launcher_input_row_number_here">行数</string>
     <string name="launcher_input_column_number_here">列数</string>
     <!--系统框架功能页的资源值-->

@@ -16,6 +16,7 @@ import com.qimian233.ztool.hook.modules.launcher.grid.DismissCloudFolderConfirma
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherDrawerNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherWideGridHook
+import com.qimian233.ztool.hook.modules.launcher.grid.IconScaleOverrideHook
 import com.qimian233.ztool.hook.modules.launcher.misc.BatchUninstall
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
@@ -240,6 +241,7 @@ object HookManager {
         registerHookModule(DisableRecentAppsDisplay())
         registerHookModule(BatchUninstall())
         registerHookModule(LauncherWideGridHook()) // Widen workspace grid towards screen side edges
+        registerHookModule(IconScaleOverrideHook()) // Override Utilities#getCustomedIconScale beyond its 0.6~1.3 clamp
 
         registerHookModule(AutoMistakeTouchHook())
         registerHookModule(DisableGameAudio())
