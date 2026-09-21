@@ -570,9 +570,11 @@
     <string name="launcher_app_icon_unmask_dynamic_summary">Also render clock and other dynamic icons in original style. Note: rebuilding them as static bitmaps freezes the clock hands</string>
     <string name="launcher_wide_grid_title">Widen desktop grid</string>
     <string name="launcher_wide_grid_summary">Extend the icon grid towards the left and right screen edges to use the full desktop width. Restart the launcher to apply</string>
+    <string name="launcher_wide_grid_square_title">Square grid cells</string>
+    <string name="launcher_wide_grid_square_summary">Compute the side margin automatically so grid cells are square. Overrides the side margin slider below</string>
     <string name="launcher_wide_grid_side_inset_title">Side margin</string>
-    <string name="launcher_wide_grid_side_inset_summary">Gap (pixels) kept between the grid and the left/right screen edges; 0 = flush to the edges</string>
-    <string name="launcher_wide_grid_side_inset_value">%1$d px</string>
+    <string name="launcher_wide_grid_side_inset_summary">Gap kept between the grid and the left/right screen edges; 0 = flush to the edges</string>
+    <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>
     <string name="launcher_input_row_number_here">Rows</string>
     <string name="launcher_input_column_number_here">Columns</string>
     <string name="system_framework_ai_input_quick_help_title">Trigger symbol help</string>

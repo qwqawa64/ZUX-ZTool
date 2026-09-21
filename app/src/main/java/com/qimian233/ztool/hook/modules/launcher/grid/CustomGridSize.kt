@@ -5,6 +5,7 @@ import android.content.Context
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
+import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Constructor
 
@@ -50,7 +51,10 @@ class CustomGridSize : AppHookModule() {
                     return
                 }
             }
-            hookWithId(ctor, "ctor") { chain ->
+            // High priority: grid dimensions must be applied before other GridOption-
+            // or DeviceProfile-dependent hooks (e.g. LauncherWideGridHook) recompute
+            // layout values from them on the next setInsets pass.
+            hookWithId(ctor, "ctor", XposedInterface.PRIORITY_HIGHEST) { chain ->
                 chain.proceed()
                 try {
                     val thisObject = chain.thisObject

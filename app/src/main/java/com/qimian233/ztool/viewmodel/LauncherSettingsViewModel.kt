@@ -142,6 +142,11 @@ class LauncherSettingsViewModel(
         repository.saveWideGrid(enabled)
     }
 
+    fun setWideGridSquare(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(wideGridSquare = enabled)
+        repository.saveWideGridSquare(enabled)
+    }
+
     fun setWideGridSideInset(inset: Int) {
         _uiState.value = _uiState.value.copy(wideGridSideInset = inset)
         repository.saveWideGridSideInset(inset)
@@ -228,6 +233,7 @@ data class LauncherSettingsUiState(
     val appIconUnmask: Boolean = false,
     val appIconUnmaskDynamic: Boolean = false,
     val wideGrid: Boolean = false,
+    val wideGridSquare: Boolean = false,
     val wideGridSideInset: Int = 0,
 ) {
     val forceStopWhitelistCount: Int

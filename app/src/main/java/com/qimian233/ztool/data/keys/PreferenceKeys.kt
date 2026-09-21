@@ -153,6 +153,7 @@ object PreferenceKeys {
     val LAUNCHER_APP_ICON_UNMASK = BoolKey("launcher_app_icon_unmask", false)
     val LAUNCHER_APP_ICON_UNMASK_DYNAMIC = BoolKey("launcher_app_icon_unmask_dynamic", false)
     val LAUNCHER_WIDE_GRID = BoolKey("launcher_wide_grid", false)
+    val LAUNCHER_WIDE_GRID_SQUARE = BoolKey("launcher_wide_grid_square", false)
 
     // Launcher sub-feature switches + internal keys
     val REMOVE_HOT_WORD_VIEW = BoolKey("remove_hot_word_view", false)
@@ -225,9 +226,11 @@ object PreferenceKeys {
     val QS_TILE_COLUMNS = IntKey("qs_tile_columns", 7)
     val CHARGE_ANIMATION_DURATION_MS = IntKey("charge_animation_duration_ms", 3500)
     val LOCK_SCREEN_CLOCK_COLOR_VALUE = IntKey("lock_screen_clock_color_value", 0xFFFFFFFF.toInt())
-    // Side inset (px) kept between workspace grid and the left/right screen edges
-    // when LAUNCHER_WIDE_GRID is on; 0 = flush to the edges. Bottom dock area and
-    // top search bar are never touched.
+    // Side inset (dp) kept between workspace grid and the left/right screen edges
+    // when LAUNCHER_WIDE_GRID is on; 0 = flush to the edges. The hook converts dp to
+    // px using the launcher process density. Bottom dock area and top search bar are
+    // never touched. When LAUNCHER_WIDE_GRID_SQUARE is set, the inset is computed by
+    // the hook to produce square cells and this value is ignored.
     val LAUNCHER_WIDE_GRID_SIDE_INSET = IntKey("launcher_wide_grid_side_inset", 0)
 
     // ═══════════════════════════════════════════════════════════
@@ -320,7 +323,7 @@ object PreferenceKeys {
         LAUNCHER_DRAWER_NO_LABEL_MODE, LAUNCHER_BIG_FOLDER_ALIGN,
         LAUNCHER_HIDE_BLUE_POINT, DISMISS_CLOUD_FOLDER_CONFIRMATION,
         DISABLE_RECENT_APPS_DISPLAY, LAUNCHER_BATCH_UNINSTALL,
-        LAUNCHER_WIDE_GRID,
+        LAUNCHER_WIDE_GRID, LAUNCHER_WIDE_GRID_SQUARE,
         REMOVE_HOT_WORD_VIEW, REMOVE_SEARCH_RECOMMEND, BEAUTIFY_RAM_INFO,
         FORCE_STOP_WHITE_LIST_ENABLE, ZUI_LAUNCHER_HOTSEAT_BACKUP,
         DISABLE_DOCK_WARNING_CONFIRMED,

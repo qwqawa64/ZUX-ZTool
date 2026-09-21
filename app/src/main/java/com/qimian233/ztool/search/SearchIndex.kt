@@ -1193,6 +1193,13 @@ object SearchIndex {
             summaryRes = R.string.launcher_wide_grid_summary
         ),
         launcher.item(
+            id = "launcher_wide_grid_square",
+            titleRes = R.string.launcher_wide_grid_square_title,
+            summaryRes = R.string.launcher_wide_grid_square_summary,
+            parentTitleRes = R.string.launcher_wide_grid_title,
+            parentKey = "launcher_wide_grid"
+        ),
+        launcher.item(
             id = "launcher_wide_grid_side_inset",
             titleRes = R.string.launcher_wide_grid_side_inset_title,
             summaryRes = R.string.launcher_wide_grid_side_inset_summary,

@@ -49,6 +49,7 @@ class LauncherSettingsRepository(
             appIconUnmask = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK, false),
             appIconUnmaskDynamic = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, false),
             wideGrid = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_WIDE_GRID, false),
+            wideGridSquare = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_WIDE_GRID_SQUARE, false),
             wideGridSideInset = prefsUtils.loadIntegerSetting(KEY_LAUNCHER_WIDE_GRID_SIDE_INSET, WIDE_GRID_INSET_DEFAULT)
                 .coerceIn(WIDE_GRID_INSET_MIN, WIDE_GRID_INSET_MAX)
         )
@@ -151,6 +152,10 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_WIDE_GRID, enabled)
     }
 
+    fun saveWideGridSquare(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_WIDE_GRID_SQUARE, enabled)
+    }
+
     fun saveWideGridSideInset(inset: Int) {
         prefsUtils.saveIntegerSetting(
             KEY_LAUNCHER_WIDE_GRID_SIDE_INSET,
@@ -215,9 +220,10 @@ class LauncherSettingsRepository(
         const val GRID_MIN = 3
         const val GRID_MAX = 10
 
-        // Side inset slider bounds, in px: 0 = flush to the screen edge
+        // Side inset slider bounds, in dp: 0 = flush to the screen edge.
+        // The hook converts dp to px with the launcher process density.
         const val WIDE_GRID_INSET_MIN = 0
-        const val WIDE_GRID_INSET_MAX = 100
+        const val WIDE_GRID_INSET_MAX = 16
         private const val WIDE_GRID_INSET_DEFAULT = 0
         private const val DEFAULT_ROW = 4
         private const val DEFAULT_COLUMN = 6
@@ -248,6 +254,7 @@ class LauncherSettingsRepository(
         private val KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC =
             PreferenceKeys.LAUNCHER_APP_ICON_UNMASK_DYNAMIC.name
         private val KEY_LAUNCHER_WIDE_GRID = PreferenceKeys.LAUNCHER_WIDE_GRID.name
+        private val KEY_LAUNCHER_WIDE_GRID_SQUARE = PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.name
         private val KEY_LAUNCHER_WIDE_GRID_SIDE_INSET = PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.name
     }
 }
