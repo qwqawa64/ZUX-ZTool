@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher.grid
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.ContextWrapper
 import android.graphics.Point
@@ -11,6 +12,7 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import kotlin.math.roundToInt
 
 /**
  * Widens the launcher workspace grid towards the left and right screen edges
@@ -19,7 +21,7 @@ import java.lang.reflect.Method
  * Measured on-device: outer workspace side margins are 40px and the ScalableGrid
  * inner padding is 216px per side — together ~256px of dead space per edge. When
  * enabled, this hook rewrites both to the user-configured side inset after
- * [com.android.launcher3.Workspace] applies its insets, then re-runs setInsets so
+ * `Workspace#setInsets` applies its insets, then re-runs setInsets so
  * the new padding propagates through setPadding/requestLayout and CellLayout
  * recomputes cellWidth from the wider grid (cellWidth grows automatically; icon
  * size is independent).
@@ -40,6 +42,7 @@ import java.lang.reflect.Method
  * builds degrade to a no-op rather than crashing the launcher. Requires a launcher
  * restart to take effect after changing settings.
  */
+@SuppressLint("PrivateApi")
 class LauncherWideGridHook : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.LAUNCHER_WIDE_GRID.name
@@ -105,7 +108,7 @@ class LauncherWideGridHook : AppHookModule() {
 
         hookWithId(setInsets, "workspace_grid_margins_rewrite") { chain ->
             chain.proceed()
-            if (inRewrite.get()) return@hookWithId null
+            if (inRewrite.get() == true) return@hookWithId null
             inRewrite.set(true)
             try {
                 val workspace = chain.thisObject as? View
@@ -130,7 +133,7 @@ class LauncherWideGridHook : AppHookModule() {
                         PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.name,
                         PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.default
                     )
-                    Math.round(insetDp * workspace.resources.displayMetrics.density)
+                    (insetDp * workspace.resources.displayMetrics.density).roundToInt()
                 }
                 applySideInset(dp, sideInsetPx, resolver)
                 // Re-run with the rewritten profile so setPadding/requestLayout picks
