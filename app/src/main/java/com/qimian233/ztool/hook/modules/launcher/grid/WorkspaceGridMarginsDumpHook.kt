@@ -50,47 +50,51 @@ class WorkspaceGridMarginsDumpHook : AppHookModule() {
             logger.error("DumpHook: Workspace#setInsets(Rect) not found, aborting", th)
             return
         }
-        val dpField = try {
-            findField(workspaceClass, "mDeviceProfile")
+        val activityContextClass = try {
+            classLoader.loadClass("com.android.launcher3.views.ActivityContext")
         } catch (th: Throwable) {
-            null // PagedView's profile field may be renamed; fall back to the arg chain below
+            logger.error("DumpHook: ActivityContext class not found, aborting", th)
+            return
+        }
+        // ActivityContext#getDeviceProfile() is an interface method; the interface name
+        // survives obfuscation while the DeviceProfile field on PagedView does not.
+        val getDeviceProfile = try {
+            activityContextClass.getMethod("getDeviceProfile")
+        } catch (th: Throwable) {
+            logger.error("DumpHook: ActivityContext#getDeviceProfile not found, aborting", th)
+            return
         }
 
         hookWithId(setInsets, "workspace_grid_margins_dump") { chain ->
             chain.proceed()
             try {
-                // DeviceProfile: prefer the field, otherwise resolve from thisObject's
-                // hierarchy at dump time.
-                val dp: Any? = try {
-                    dpField?.get(chain.thisObject)
-                } catch (_: Throwable) {
-                    null
-                } ?: findDeviceProfile(chain.thisObject)
-                if (dp == null) {
-                    logger.info("DumpHook: DeviceProfile instance not reachable on this call")
+                val workspace = chain.thisObject as? android.view.View
+                if (workspace == null) {
+                    logger.info("DumpHook: thisObject is not a View")
                     return@hookWithId null
                 }
-                dumpDeviceProfile(dpClass, dp)
+                val context = workspace.context
+                val dp = if (activityContextClass.isInstance(context)) {
+                    getDeviceProfile.invoke(context)
+                } else {
+                    // DragLayer-wrapped contexts etc.: walk up to the base context
+                    var ctx: android.content.Context? = context
+                    while (ctx is android.content.ContextWrapper && !activityContextClass.isInstance(ctx)) {
+                        ctx = ctx.baseContext
+                    }
+                    if (activityContextClass.isInstance(ctx)) getDeviceProfile.invoke(ctx) else null
+                }
+                if (dp == null) {
+                    logger.info("DumpHook: context is not ActivityContext, DeviceProfile not reachable")
+                    return@hookWithId null
+                }
+                dumpDeviceProfile(dp.javaClass, dp)
             } catch (th: Throwable) {
                 logger.error("DumpHook: dump failed", th)
             }
             null
         }
         logger.info("WorkspaceGridMarginsDumpHook installed (hooking Workspace#setInsets)")
-    }
-
-    private fun findDeviceProfile(workspace: Any?): Any? {
-        var clazz: Class<*>? = workspace?.javaClass
-        while (clazz != null) {
-            for (field in clazz.declaredFields) {
-                if (field.type.name == "com.android.launcher3.DeviceProfile") {
-                    field.isAccessible = true
-                    return field.get(workspace)
-                }
-            }
-            clazz = clazz.superclass
-        }
-        return null
     }
 
     private fun dumpDeviceProfile(dpClass: Class<*>, dp: Any) {
