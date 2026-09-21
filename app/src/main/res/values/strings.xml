@@ -645,6 +645,11 @@
     <string name="launcher_app_icon_unmask_summary">第三方图标包图标不再被系统形状二次裁切，显示为原始方形。图标未变化时可清除桌面数据重建缓存</string>
     <string name="launcher_app_icon_unmask_dynamic_title">包含动态图标</string>
     <string name="launcher_app_icon_unmask_dynamic_summary">时钟等动态图标也按原始样式显示。注意：重建为静态位图后时钟将定格，不再随时间走动</string>
+    <string name="launcher_wide_grid_title">扩展桌面网格宽度</string>
+    <string name="launcher_wide_grid_summary">让图标网格向屏幕左右边缘扩展，充分利用桌面横向空间。生效需重启桌面</string>
+    <string name="launcher_wide_grid_side_inset_title">左右留白</string>
+    <string name="launcher_wide_grid_side_inset_summary">网格与屏幕左右边缘保留的间距（像素），0 为完全贴边</string>
+    <string name="launcher_wide_grid_side_inset_value">%1$d px</string>
     <string name="launcher_input_row_number_here">行数</string>
     <string name="launcher_input_column_number_here">列数</string>
     <!--系统框架功能页的资源值-->

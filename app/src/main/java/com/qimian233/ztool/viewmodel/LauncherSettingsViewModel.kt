@@ -137,6 +137,16 @@ class LauncherSettingsViewModel(
         repository.saveAppIconUnmaskDynamic(enabled)
     }
 
+    fun setWideGrid(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(wideGrid = enabled)
+        repository.saveWideGrid(enabled)
+    }
+
+    fun setWideGridSideInset(inset: Int) {
+        _uiState.value = _uiState.value.copy(wideGridSideInset = inset)
+        repository.saveWideGridSideInset(inset)
+    }
+
     fun setDisableDockBar(enabled: Boolean) {
         val showWarning = repository.saveDisableDockBar(enabled)
         val current = _uiState.value
@@ -217,6 +227,8 @@ data class LauncherSettingsUiState(
     val bigFolderAlign: Boolean = false,
     val appIconUnmask: Boolean = false,
     val appIconUnmaskDynamic: Boolean = false,
+    val wideGrid: Boolean = false,
+    val wideGridSideInset: Int = 0,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size

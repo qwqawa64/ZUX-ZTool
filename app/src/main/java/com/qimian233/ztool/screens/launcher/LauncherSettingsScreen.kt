@@ -133,6 +133,8 @@ fun LauncherSettingsRoute(
             onBigFolderAlignChanged = viewModel::setBigFolderAlign,
             onAppIconUnmaskChanged = viewModel::setAppIconUnmask,
             onAppIconUnmaskDynamicChanged = viewModel::setAppIconUnmaskDynamic,
+            onWideGridChanged = viewModel::setWideGrid,
+            onWideGridSideInsetChanged = viewModel::setWideGridSideInset,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
@@ -209,6 +211,8 @@ private fun LauncherSettingsScreen(
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
     onAppIconUnmaskDynamicChanged: (Boolean) -> Unit,
+    onWideGridChanged: (Boolean) -> Unit,
+    onWideGridSideInsetChanged: (Int) -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry,
 ) {
@@ -270,6 +274,8 @@ private fun LauncherSettingsScreen(
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
                         onAppIconUnmaskChanged = onAppIconUnmaskChanged,
                         onAppIconUnmaskDynamicChanged = onAppIconUnmaskDynamicChanged,
+                        onWideGridChanged = onWideGridChanged,
+                        onWideGridSideInsetChanged = onWideGridSideInsetChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -303,6 +309,8 @@ private fun launcherSettingsSections(
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
     onAppIconUnmaskDynamicChanged: (Boolean) -> Unit,
+    onWideGridChanged: (Boolean) -> Unit,
+    onWideGridSideInsetChanged: (Int) -> Unit,
 ): List<SettingSection> {
 
     val launcherLayoutItems = buildList {
@@ -370,6 +378,34 @@ private fun launcherSettingsSections(
                         )
                     },
                     key = "launcher_custom_grid_column"
+                )
+            )
+        }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_wide_grid_title),
+                summary = stringResource(R.string.launcher_wide_grid_summary),
+                checked = state.wideGrid,
+                onCheckedChange = onWideGridChanged,
+                key = "launcher_wide_grid"
+            )
+        )
+        if (state.wideGrid) {
+            add(
+                SettingItem.Slider(
+                    title = stringResource(R.string.launcher_wide_grid_side_inset_title),
+                    summary = stringResource(R.string.launcher_wide_grid_side_inset_summary),
+                    value = state.wideGridSideInset.toFloat(),
+                    valueText = stringResource(
+                        R.string.launcher_wide_grid_side_inset_value,
+                        state.wideGridSideInset
+                    ),
+                    valueRange = LauncherSettingsRepository.WIDE_GRID_INSET_MIN.toFloat()..
+                        LauncherSettingsRepository.WIDE_GRID_INSET_MAX.toFloat(),
+                    steps = LauncherSettingsRepository.WIDE_GRID_INSET_MAX -
+                        LauncherSettingsRepository.WIDE_GRID_INSET_MIN - 1,
+                    onValueChange = { onWideGridSideInsetChanged(it.toInt()) },
+                    key = "launcher_wide_grid_side_inset"
                 )
             )
         }

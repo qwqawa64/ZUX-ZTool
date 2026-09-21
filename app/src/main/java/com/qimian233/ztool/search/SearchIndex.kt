@@ -1188,6 +1188,18 @@ object SearchIndex {
             parentKey = "launcher_app_icon_unmask"
         ),
         launcher.item(
+            id = "launcher_wide_grid",
+            titleRes = R.string.launcher_wide_grid_title,
+            summaryRes = R.string.launcher_wide_grid_summary
+        ),
+        launcher.item(
+            id = "launcher_wide_grid_side_inset",
+            titleRes = R.string.launcher_wide_grid_side_inset_title,
+            summaryRes = R.string.launcher_wide_grid_side_inset_summary,
+            parentTitleRes = R.string.launcher_wide_grid_title,
+            parentKey = "launcher_wide_grid"
+        ),
+        launcher.item(
             id = "launcher_disable_recent_app_display",
             titleRes = R.string.launcher_disable_recent_app_display
         ),

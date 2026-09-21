@@ -47,7 +47,10 @@ class LauncherSettingsRepository(
             launcherBatchUninstall = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_BATCH_UNINSTALL, false),
             bigFolderAlign = prefsUtils.loadBooleanSetting(KEY_BIG_FOLDER_ALIGN, false),
             appIconUnmask = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK, false),
-            appIconUnmaskDynamic = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, false)
+            appIconUnmaskDynamic = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, false),
+            wideGrid = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_WIDE_GRID, false),
+            wideGridSideInset = prefsUtils.loadIntegerSetting(KEY_LAUNCHER_WIDE_GRID_SIDE_INSET, WIDE_GRID_INSET_DEFAULT)
+                .coerceIn(WIDE_GRID_INSET_MIN, WIDE_GRID_INSET_MAX)
         )
     }
 
@@ -144,6 +147,17 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, enabled)
     }
 
+    fun saveWideGrid(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_WIDE_GRID, enabled)
+    }
+
+    fun saveWideGridSideInset(inset: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_LAUNCHER_WIDE_GRID_SIDE_INSET,
+            inset.coerceIn(WIDE_GRID_INSET_MIN, WIDE_GRID_INSET_MAX)
+        )
+    }
+
     fun saveDisableDockBar(enabled: Boolean): Boolean {
         val previousMoreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false)
         prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP, previousMoreBigDock)
@@ -200,6 +214,11 @@ class LauncherSettingsRepository(
     companion object {
         const val GRID_MIN = 3
         const val GRID_MAX = 10
+
+        // Side inset slider bounds, in px: 0 = flush to the screen edge
+        const val WIDE_GRID_INSET_MIN = 0
+        const val WIDE_GRID_INSET_MAX = 100
+        private const val WIDE_GRID_INSET_DEFAULT = 0
         private const val DEFAULT_ROW = 4
         private const val DEFAULT_COLUMN = 6
 
@@ -228,6 +247,8 @@ class LauncherSettingsRepository(
         private val KEY_LAUNCHER_APP_ICON_UNMASK = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
         private val KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC =
             PreferenceKeys.LAUNCHER_APP_ICON_UNMASK_DYNAMIC.name
+        private val KEY_LAUNCHER_WIDE_GRID = PreferenceKeys.LAUNCHER_WIDE_GRID.name
+        private val KEY_LAUNCHER_WIDE_GRID_SIDE_INSET = PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.name
     }
 }
 

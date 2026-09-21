@@ -152,6 +152,7 @@ object PreferenceKeys {
     val LAUNCHER_BIG_FOLDER_ALIGN = BoolKey("big_folder_align", false)
     val LAUNCHER_APP_ICON_UNMASK = BoolKey("launcher_app_icon_unmask", false)
     val LAUNCHER_APP_ICON_UNMASK_DYNAMIC = BoolKey("launcher_app_icon_unmask_dynamic", false)
+    val LAUNCHER_WIDE_GRID = BoolKey("launcher_wide_grid", false)
 
     // Launcher sub-feature switches + internal keys
     val REMOVE_HOT_WORD_VIEW = BoolKey("remove_hot_word_view", false)
@@ -224,6 +225,10 @@ object PreferenceKeys {
     val QS_TILE_COLUMNS = IntKey("qs_tile_columns", 7)
     val CHARGE_ANIMATION_DURATION_MS = IntKey("charge_animation_duration_ms", 3500)
     val LOCK_SCREEN_CLOCK_COLOR_VALUE = IntKey("lock_screen_clock_color_value", 0xFFFFFFFF.toInt())
+    // Side inset (px) kept between workspace grid and the left/right screen edges
+    // when LAUNCHER_WIDE_GRID is on; 0 = flush to the edges. Bottom dock area and
+    // top search bar are never touched.
+    val LAUNCHER_WIDE_GRID_SIDE_INSET = IntKey("launcher_wide_grid_side_inset", 0)
 
     // ═══════════════════════════════════════════════════════════
     // Float keys
@@ -315,6 +320,7 @@ object PreferenceKeys {
         LAUNCHER_DRAWER_NO_LABEL_MODE, LAUNCHER_BIG_FOLDER_ALIGN,
         LAUNCHER_HIDE_BLUE_POINT, DISMISS_CLOUD_FOLDER_CONFIRMATION,
         DISABLE_RECENT_APPS_DISPLAY, LAUNCHER_BATCH_UNINSTALL,
+        LAUNCHER_WIDE_GRID,
         REMOVE_HOT_WORD_VIEW, REMOVE_SEARCH_RECOMMEND, BEAUTIFY_RAM_INFO,
         FORCE_STOP_WHITE_LIST_ENABLE, ZUI_LAUNCHER_HOTSEAT_BACKUP,
         DISABLE_DOCK_WARNING_CONFIRMED,
@@ -351,7 +357,8 @@ object PreferenceKeys {
         NOTIFICATION_CENTER_BLUR_PERCENT,
         SCREEN_ON_OFF_ANIMATION_MS,
         QS_PANEL_WIDTH_PERCENT, QS_TILE_COLUMNS,
-        CHARGE_ANIMATION_DURATION_MS, LOCK_SCREEN_CLOCK_COLOR_VALUE
+        CHARGE_ANIMATION_DURATION_MS, LOCK_SCREEN_CLOCK_COLOR_VALUE,
+        LAUNCHER_WIDE_GRID_SIDE_INSET
     )
 
     val floatKeys: List<FloatKey> = listOf(
