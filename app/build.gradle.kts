@@ -171,6 +171,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.savedstate)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
