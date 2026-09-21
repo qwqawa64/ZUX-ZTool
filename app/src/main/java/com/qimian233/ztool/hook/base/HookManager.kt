@@ -15,6 +15,7 @@ import com.qimian233.ztool.hook.modules.launcher.grid.CustomGridSize
 import com.qimian233.ztool.hook.modules.launcher.grid.DismissCloudFolderConfirmation
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherDrawerNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherNoLabelMode
+import com.qimian233.ztool.hook.modules.launcher.grid.WorkspaceGridMarginsDumpHook
 import com.qimian233.ztool.hook.modules.launcher.misc.BatchUninstall
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
@@ -238,6 +239,7 @@ object HookManager {
         registerHookModule(BigFolderAlignHook()) // Big folder background/sub-grid/label geometry alignment
         registerHookModule(DisableRecentAppsDisplay())
         registerHookModule(BatchUninstall())
+        registerHookModule(WorkspaceGridMarginsDumpHook()) // hook_test: dumps DeviceProfile grid margins
 
         registerHookModule(AutoMistakeTouchHook())
         registerHookModule(DisableGameAudio())
