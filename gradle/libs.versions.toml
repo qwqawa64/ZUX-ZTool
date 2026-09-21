@@ -20,6 +20,7 @@ tinypinyin = "2.0.3"
 hiddenApiBypass = "4.3"
 gson = "2.10.1"
 dexkit = "2.0.6"
+leakcanary = "2.14"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -49,6 +50,7 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 dexkit = { group = "org.luckypray", name = "dexkit", version.ref = "dexkit" }
 libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "libxposedApi" }
 libxposed-service = { group = "io.github.libxposed", name = "service", version.ref = "libxposedApi" }
+leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakcanary" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
