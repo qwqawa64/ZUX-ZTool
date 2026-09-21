@@ -1,0 +1,8 @@
+{
+    "manifest": {
+        "application": {
+            "bin_file": "PARKER.bin",
+            "dat_file": "PARKER.dat"
+        }
+    }
+}
