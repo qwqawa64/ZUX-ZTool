@@ -843,6 +843,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         HiddenRoute.SETTINGS_THEME -> 4
         HiddenRoute.SETTINGS_ABOUT -> 4
         HiddenRoute.SETTINGS_ADVANCED -> 4
+        HiddenRoute.SETTINGS_ENGINEERING_CODES -> 5
         else -> 0
     }
 }
