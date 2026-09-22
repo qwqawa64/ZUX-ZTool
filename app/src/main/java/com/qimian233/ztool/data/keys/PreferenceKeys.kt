@@ -84,7 +84,6 @@ object PreferenceKeys {
     val DISABLE_BIOMETRIC_ERROR_VIBRATION = BoolKey("disable_biometric_error_vibration", false)
     val BYPASS_FACE_AUTH_TIMEOUT = BoolKey("bypass_face_auth_timeout", false)
     val SHADE_REBOUND_FIX = BoolKey("shade_rebound_fix", false)
-    val SHADE_REBOUND_STIFFNESS = IntKey("shade_rebound_stiffness", 500)
 
     // SystemUI sub-feature switches
     val CUSTOM_STATUSBAR_CLOCK_TEXT_SIZE_ENABLED = BoolKey("Custom_StatusBarClockTextSizeEnabled", false)
@@ -367,8 +366,7 @@ object PreferenceKeys {
         SCREEN_ON_OFF_ANIMATION_MS,
         QS_PANEL_WIDTH_PERCENT, QS_TILE_COLUMNS,
         CHARGE_ANIMATION_DURATION_MS, LOCK_SCREEN_CLOCK_COLOR_VALUE,
-        LAUNCHER_WIDE_GRID_SIDE_INSET,
-        SHADE_REBOUND_STIFFNESS
+        LAUNCHER_WIDE_GRID_SIDE_INSET
     )
 
     val floatKeys: List<FloatKey> = listOf(
