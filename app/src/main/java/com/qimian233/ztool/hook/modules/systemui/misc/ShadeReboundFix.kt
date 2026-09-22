@@ -77,6 +77,35 @@ class ShadeReboundFix : AppHookModule() {
             logger.error("ShadeReboundFix: hook cancelHeightAnimator failed", t)
         }
 
+        // ---- Fix 1b: block the layout refire, not just the cancel ----
+        // The measured onLayoutChange pass does TWO things: cancelHeightAnimator
+        // AND re-fire fling() with ~zero velocity. With only the cancel blocked,
+        // the original spring keeps running while a second spring is created
+        // concurrently — both drive mExpandedHeight, which shows up as the
+        // second segment visibly stretching faster than the first. Skip the
+        // refire so the original fling spring runs alone to completion.
+        try {
+            val flingToHeight = findMethod(
+                npvcClass, "flingToHeight",
+                Float::class.javaPrimitiveType!!, Boolean::class.javaPrimitiveType!!,
+                Float::class.javaPrimitiveType!!, Float::class.javaPrimitiveType!!,
+                Boolean::class.javaPrimitiveType!!
+            )
+            hookWithId(flingToHeight, "rebound_layout_refire_guard") { chain ->
+                val fromLayoutChange = Throwable().stackTrace.any {
+                    it.className.endsWith("NotificationPanelViewController") &&
+                        it.methodName.contains("onLayoutChange")
+                }
+                if (fromLayoutChange) {
+                    logger.debug("flingToHeight blocked: onLayoutChange refire")
+                    return@hookWithId null
+                }
+                chain.proceed()
+            }
+        } catch (t: Throwable) {
+            logger.error("ShadeReboundFix: hook flingToHeight (refire guard) failed", t)
+        }
+
         // ---- Fix 2: speed up the rebound spring convergence ----
         // flingToHeight builds: new SpringAnimation(new FloatValueHolder(h))
         //   spring = SpringForce(target).setDampingRatio(0.72f).setStiffness(100f)
