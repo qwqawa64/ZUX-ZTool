@@ -329,6 +329,11 @@ object SearchIndex {
         groupTitleRes = R.string.page_settings_advanced_title
     )
 
+    private val miscSettings = Screen(
+        route = HiddenRoute.SETTINGS_MISC,
+        groupTitleRes = R.string.page_settings_misc_title
+    )
+
     private val aboutScreen = Screen(
         route = SettingsAboutRouteName,
         groupTitleRes = R.string.page_settings_about_ztool_title
@@ -1438,11 +1443,6 @@ object SearchIndex {
             titleRes = R.string.page_settings_advanced_reset_title
         ),
         advancedSettings.item(
-            id = "advanced_delete_ota_package",
-            titleRes = R.string.page_settings_advanced_delete_ota_package_title,
-            summaryRes = R.string.page_settings_advanced_delete_ota_package_summary
-        ),
-        advancedSettings.item(
             id = "advanced_hot_reload",
             titleRes = R.string.page_settings_advanced_hot_reload_title
         ),
@@ -1450,6 +1450,26 @@ object SearchIndex {
             id = "advanced_open_firstrun",
             titleRes = R.string.page_settings_advanced_open_firstrun_title,
             summaryRes = R.string.page_settings_advanced_open_firstrun_summary
+        ),
+
+        miscSettings.item(
+            id = "misc_delete_ota_package",
+            titleRes = R.string.page_settings_advanced_delete_ota_package_title,
+            summaryRes = R.string.page_settings_advanced_delete_ota_package_summary
+        ),
+        miscSettings.item(
+            id = "misc_fix_night_mode_override",
+            titleRes = R.string.system_framework_fix_night_mode_title,
+            summaryRes = R.string.system_framework_fix_night_mode_summary
+        ),
+        miscSettings.item(
+            id = "misc_engineering_codes",
+            titleRes = R.string.engineering_codes_title,
+            summaryRes = R.string.engineering_codes_summary
+        ),
+        miscSettings.item(
+            id = "misc_api_version",
+            titleRes = R.string.page_settings_advanced_api_version
         ),
 
         aboutScreen.item(

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Build
+import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
@@ -76,6 +77,7 @@ fun SettingsMainRoute(
     onOpenThemeSettings: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenAdvanced: () -> Unit,
+    onOpenMisc: () -> Unit,
     onOpenSearchResult: (String) -> Unit = {},
     targetId: String? = null
 ) {
@@ -187,6 +189,7 @@ fun SettingsMainRoute(
             onExportLogs = { exportLogLauncher.launch(viewModel.exportFileName()) },
             onDeleteAllLogs = { showDeleteLogsConfirmDialog = true },
             onOpenAdvanced = onOpenAdvanced,
+            onOpenMisc = onOpenMisc,
             onAutoCheckUpdateChanged = viewModel::setAutoCheckUpdateEnabled,
             searchExpanded = searchExpanded,
             onSearchExpandedChange = { expanded ->
@@ -314,6 +317,7 @@ private fun SettingsRoute(
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
     onOpenAdvanced: () -> Unit,
+    onOpenMisc: () -> Unit,
     onAutoCheckUpdateChanged: (Boolean) -> Unit,
     searchExpanded: Boolean,
     onSearchExpandedChange: (Boolean) -> Unit,
@@ -368,6 +372,7 @@ private fun SettingsRoute(
                         onExportLogs = onExportLogs,
                         onDeleteAllLogs = onDeleteAllLogs,
                         onOpenAdvanced = onOpenAdvanced,
+                        onOpenMisc = onOpenMisc,
                         onAutoCheckUpdateChanged = onAutoCheckUpdateChanged,
                     ),
                     bottomPadding = 32.dp
@@ -392,6 +397,7 @@ private fun settingsSections(
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
     onOpenAdvanced: () -> Unit,
+    onOpenMisc: () -> Unit,
     onAutoCheckUpdateChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
@@ -528,8 +534,23 @@ private fun settingsSections(
                     }
                 ),
                 SettingItem.Action(
+                    key = "app_settings_misc",
+                    title = stringResource(R.string.page_settings_misc_title),
+                    summary = stringResource(R.string.page_settings_misc_summary),
+                    onClick = onOpenMisc,
+                    icon = Icons.Rounded.Category,
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = LocalZToolColorScheme.current.onSurfaceVariant
+                        )
+                    }
+                ),
+                SettingItem.Action(
                     key = "app_settings_advanced",
                     title = stringResource(R.string.page_settings_advanced_title),
+                    summary = stringResource(R.string.page_settings_advanced_summary),
                     onClick = onOpenAdvanced,
                     icon = Icons.Rounded.Build,
                     trailingContent = {

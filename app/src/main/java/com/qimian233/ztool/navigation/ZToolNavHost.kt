@@ -34,6 +34,7 @@ import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRouteName
 import com.qimian233.ztool.screens.ztoolsettings.advanced.EngineeringCodesRoute
 import com.qimian233.ztool.screens.ztoolsettings.advanced.SettingsAdvancedRoute
+import com.qimian233.ztool.screens.ztoolsettings.misc.SettingsMiscRoute
 import com.qimian233.ztool.screens.ztoolsettings.theme.ThemeSettingsRoute
 import com.qimian233.ztool.screens.systemframework.FrameworkSettingsRoute
 import com.qimian233.ztool.screens.systemui.SystemUiSettingsRoute
@@ -254,6 +255,11 @@ internal fun MainRouteNavHost(
                         launchSingleTop = true
                     }
                 },
+                onOpenMisc = {
+                    navController.navigate(HiddenRoute.SETTINGS_MISC) {
+                        launchSingleTop = true
+                    }
+                },
                 onOpenSearchResult = { route ->
                     navController.navigate(route) {
                         launchSingleTop = true
@@ -309,6 +315,25 @@ internal fun MainRouteNavHost(
             arguments = highlightTargetArguments
         ) { backStackEntry ->
             SettingsAdvancedRoute(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Settings.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                targetId = backStackEntry.highlightTarget(),
+            )
+        }
+        composable(
+            route = routeWithTarget(HiddenRoute.SETTINGS_MISC),
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
+            SettingsMiscRoute(
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Settings.name) {

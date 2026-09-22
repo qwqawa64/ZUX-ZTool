@@ -896,6 +896,9 @@
 
     <!--高级选项页资源值-->
     <string name="page_settings_advanced_title">高级选项</string>
+    <string name="page_settings_advanced_summary">正在探索的实验性功能</string>
+    <string name="page_settings_misc_title">杂项</string>
+    <string name="page_settings_misc_summary">其余维护工具与设备信息</string>
     <string name="page_settings_advanced_reset_title">重置所有被修改的持久化值</string>
     <string name="page_settings_advanced_reset_summary">重置本应用 Hook 修改的应用自启动、设备属性值等持久化信息</string>
     <string name="page_settings_advanced_reset_confirm_title">确认重置持久化值？</string>

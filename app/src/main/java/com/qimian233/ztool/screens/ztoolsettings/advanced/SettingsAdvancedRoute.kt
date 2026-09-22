@@ -14,10 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Brightness4
-import androidx.compose.material.icons.rounded.Build
-import androidx.compose.material.icons.rounded.BuildCircle
-import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.RocketLaunch
@@ -75,7 +71,6 @@ import java.util.Locale
 @Composable
 fun SettingsAdvancedRoute(
     onBack: () -> Unit,
-    onOpenEngineeringCodes: () -> Unit = {},
     targetId: String? = null
 ) {
     val context = LocalContext.current
@@ -111,35 +106,6 @@ fun SettingsAdvancedRoute(
     val hotReloadStartingString = stringResource(R.string.page_settings_advanced_hot_reload_starting)
     val resetResultSummary = buildResetResultSummary(uiState, context)
     val resetStartingString = stringResource(R.string.page_settings_advanced_reset_starting)
-    val deleteOtaPackageStartingString = stringResource(R.string.page_settings_advanced_delete_ota_package_in_progress)
-
-    if (uiState.showDeleteOtaPackageDialog) {
-        DeleteOtaPackageConfirmDialog(
-            onConfirm = {
-                viewModel.performDeleteOtaPackage()
-                Toast.makeText(context, deleteOtaPackageStartingString, Toast.LENGTH_SHORT).show()
-            },
-            onDismiss = viewModel::dismissDeleteOtaPackageDialog
-        )
-    }
-
-    // Delete system update package: show a result Toast when done (SUCCEEDED / NOT_EXIST / FAILED)
-    LaunchedEffect(uiState.deleteOtaPackageStatus) {
-        uiState.deleteOtaPackageStatus?.let { status ->
-            val message = when (status) {
-                "SUCCEEDED" -> context.getString(R.string.page_settings_advanced_delete_ota_package_result_success)
-                "NOT_EXIST" -> context.getString(R.string.page_settings_advanced_delete_ota_package_result_not_exist)
-                else -> context.getString(
-                    R.string.page_settings_advanced_delete_ota_package_result_failed,
-                    uiState.deleteOtaPackageMessage ?: ""
-                )
-            }
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            viewModel.consumeDeleteOtaPackageResult()
-        }
-    }
-
-    var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
 
     if (uiState.showHotReloadDialog) {
         HotReloadConfirmDialog(
@@ -167,6 +133,8 @@ fun SettingsAdvancedRoute(
         DexIndexProgressDialog(progress = dexIndexState.progress)
     }
 
+    var dexIndexSummary by remember { mutableStateOf(buildDexIndexSummary(context)) }
+
     LaunchedEffect(dexIndexState.resultRes) {
         dexIndexState.resultRes?.let { res ->
             dexIndexSummary = buildDexIndexSummary(context)
@@ -193,11 +161,8 @@ fun SettingsAdvancedRoute(
             dexIndexSummary = dexIndexSummary,
             onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
             onResetClick = { viewModel.showResetConfirmDialog() },
-            onDeleteOtaPackageClick = { viewModel.showDeleteOtaPackageConfirmDialog() },
             onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
             onOpenFirstrun = { activity.reopenFirstrun() },
-            onFixNightModeOverride = { viewModel.fixNightModeOverride(context) },
-            onOpenEngineeringCodes = onOpenEngineeringCodes,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
@@ -213,11 +178,8 @@ private fun SettingsAdvancedScreen(
     dexIndexSummary: String,
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
-    onDeleteOtaPackageClick: () -> Unit,
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
-    onFixNightModeOverride: () -> Unit,
-    onOpenEngineeringCodes: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
 ) {
@@ -257,13 +219,10 @@ private fun SettingsAdvancedScreen(
                         resetResultSummary = resetResultSummary,
                         onHotReloadClick = onHotReloadClick,
                         onResetClick = onResetClick,
-                        onDeleteOtaPackageClick = onDeleteOtaPackageClick,
                         dexIndexInProgress = dexIndexInProgress,
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = onRefreshDexIndex,
-                        onOpenFirstrun = onOpenFirstrun,
-                        onFixNightModeOverride = onFixNightModeOverride,
-                        onOpenEngineeringCodes = onOpenEngineeringCodes
+                        onOpenFirstrun = onOpenFirstrun
                     ),
                     bottomPadding = 32.dp
                 )
@@ -279,13 +238,10 @@ private fun advancedSettingsSections(
     resetResultSummary: String?,
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
-    onDeleteOtaPackageClick: () -> Unit,
     dexIndexInProgress: Boolean,
     dexIndexSummary: String,
     onRefreshDexIndex: () -> Unit,
-    onOpenFirstrun: () -> Unit,
-    onFixNightModeOverride: () -> Unit,
-    onOpenEngineeringCodes: () -> Unit
+    onOpenFirstrun: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -335,44 +291,6 @@ private fun advancedSettingsSections(
                     } else null
                 ),
                 SettingItem.Action(
-                    key = "advanced_delete_ota_package",
-                    title = stringResource(R.string.page_settings_advanced_delete_ota_package_title),
-                    summary = buildDeleteOtaPackageSummary(
-                        inProgress = state.deleteOtaPackageInProgress
-                    ),
-                    onClick = onDeleteOtaPackageClick,
-                    enabled = !state.deleteOtaPackageInProgress,
-                    icon = if (state.deleteOtaPackageInProgress) null else Icons.Rounded.DeleteForever,
-                    trailingContent = if (state.deleteOtaPackageInProgress) {
-                        {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .height(20.dp)
-                                    .padding(0.dp),
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    } else null
-                ),
-                SettingItem.Action(
-                    key = "advanced_fix_night_mode_override",
-                    title = stringResource(R.string.system_framework_fix_night_mode_title),
-                    summary = stringResource(R.string.system_framework_fix_night_mode_summary),
-                    onClick = onFixNightModeOverride,
-                    enabled = !state.fixNightModeOverrideInProgress,
-                    icon = if (state.fixNightModeOverrideInProgress) null else Icons.Rounded.Brightness4,
-                    trailingContent = if (state.fixNightModeOverrideInProgress) {
-                        {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .height(20.dp)
-                                    .padding(0.dp),
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    } else null
-                ),
-                SettingItem.Action(
                     key = "advanced_hot_reload",
                     title = stringResource(R.string.page_settings_advanced_hot_reload_title),
                     summary = buildHotReloadSummary(
@@ -397,13 +315,6 @@ private fun advancedSettingsSections(
                     } else null
                 ),
                 SettingItem.Action(
-                    key = "advanced_engineering_codes",
-                    title = stringResource(R.string.engineering_codes_title),
-                    summary = stringResource(R.string.engineering_codes_summary),
-                    onClick = onOpenEngineeringCodes,
-                    icon = Icons.Rounded.BuildCircle
-                ),
-                SettingItem.Action(
                     key = "advanced_open_firstrun",
                     title = stringResource(R.string.page_settings_advanced_open_firstrun_title),
                     summary = stringResource(R.string.page_settings_advanced_open_firstrun_summary),
@@ -426,21 +337,7 @@ private fun advancedSettingsSections(
                 )
             )
         )
-    ) + buildResetDetailSection(state) + buildHotReloadDetailSection(state) + listOf(
-        SettingSection(
-            title = stringResource(R.string.page_settings_advanced_info_title),
-            items = listOf(
-                SettingItem.Action(
-                    key = "api_version",
-                    title = stringResource(R.string.page_settings_advanced_api_version),
-                    summary = "${state.apiVersion}",
-                    onClick = {},
-                    enabled = false,
-                    icon = Icons.Rounded.Build
-                )
-            )
-        )
-    )
+    ) + buildResetDetailSection(state) + buildHotReloadDetailSection(state)
 }
 
 @Composable
@@ -601,15 +498,6 @@ private fun buildResetResultSummary(
 }
 
 @Composable
-private fun buildDeleteOtaPackageSummary(
-    inProgress: Boolean
-): String {
-    val deleteOtaPackageInProgressString = stringResource(R.string.page_settings_advanced_delete_ota_package_in_progress)
-    val deleteOtaPackageDefaultSummary = stringResource(R.string.page_settings_advanced_delete_ota_package_summary)
-    return if (inProgress) deleteOtaPackageInProgressString else deleteOtaPackageDefaultSummary
-}
-
-@Composable
 private fun ResetConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
@@ -619,33 +507,6 @@ private fun ResetConfirmDialog(
         title = { Text(stringResource(R.string.page_settings_advanced_reset_confirm_title)) },
         text = {
             Text(stringResource(R.string.page_settings_advanced_reset_confirm_message))
-        },
-        confirmButton = {
-            ZToolTextButton(
-                onClick = onConfirm,
-                text = stringResource(R.string.common_confirm)
-            )
-        },
-        dismissButton = {
-            ZToolTextButton(
-                onClick = onDismiss,
-                text = stringResource(R.string.common_cancel),
-                isPrimary = false
-            )
-        }
-    )
-}
-
-@Composable
-private fun DeleteOtaPackageConfirmDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.page_settings_advanced_delete_ota_package_confirm_title)) },
-        text = {
-            Text(stringResource(R.string.page_settings_advanced_delete_ota_package_confirm_message))
         },
         confirmButton = {
             ZToolTextButton(
