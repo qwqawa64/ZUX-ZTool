@@ -3,17 +3,12 @@
 ## Agent Quick Start
 
 - Generate your commit message as `.gitmessage` indicates.
-- New code must be written in Kotlin. Java is only permitted for emergency fixes to existing Java infrastructure.
+- No Java. The Android APP part of this repository is Kotlin-only.
 - Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
-- JDK is available **only on Windows** in most scenarios. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
-- If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `./gradlew.bat assembleDebug`
-- To conduct compilation test on WSL2, the command is `bash cd ./ && ./gradlew.bat assembleDebug`
-- To commit your work, use `git.exe commit <commit_messages>`
-- If any of these Windows-specific commands failed, stop the work and ask the user to confirm what went wrong.
 
 ## Project Summary
 
-ZUX-ZTool is a single-module Android project (`:app`, package `com.qimian233.ztool`) for ZUX OS/ZUI devices. It combines a Jetpack Compose app UI, LSPosed/libxposed Hook modules, root/shell utilities, foreground log collection, configuration backup/restore, and embedded Magisk module assets.
+ZUX-ZTool is a single-module Android project (`:app`, package `com.qimian233.ztool`) for Lenovo ZUX OS/ZUI devices. It combines a Jetpack Compose app UI, LSPosed/libxposed Hook modules, root/shell utilities, foreground log collection, configuration backup/restore, and embedded Magisk module assets.
 
 Use English for new agent-facing documentation where practical. Existing user-facing strings and legacy Chinese logs may remain Chinese.
 
@@ -21,10 +16,10 @@ Use English for new agent-facing documentation where practical. Existing user-fa
 
 - Root project name: `ZTool`
 - Android module: `:app`
-- Android Gradle Plugin: `9.1.1`
+- Android Gradle Plugin: `9.4.1`
 - Kotlin: `2.3.21`
 - Compose BOM: `2025.10.00`
-- Miuix: `top.yukonga.miuix.kmp:miuix-ui-android:0.9.2`
+- Miuix: `top.yukonga.miuix.kmp:miuix-ui-android:0.9.3`
 - `compileSdk` / `targetSdk`: `37`
 - `minSdk`: `27`
 - Java/Kotlin JVM target: `11`
@@ -32,19 +27,16 @@ Use English for new agent-facing documentation where practical. Existing user-fa
 - Hidden API bypass: `org.lsposed.hiddenapibypass:hiddenapibypass:4.3`
 - Main verification command: `.\gradlew.bat assembleDebug` (Windows PowerShell or CMD) or `./gradlew.bat assembleDebug` (WSL2 and Git Bash)
 
-For any Miuix API or component behavior, consult the official Dokka site instead of decompiling or reading locally downloaded dependencies:
-
-```text
-https://compose-miuix-ui.github.io/miuix/dokka/index.html
-```
+For any Miuix API or component behavior, consult the official [Dokka site](https://compose-miuix-ui.github.io/miuix/dokka/index.html) instead of decompiling or reading locally downloaded dependencies:
 
 ## Project Structure — Boundary Rules Only
 
 Do not rely on a memorized file tree; explore the repository directly when needed. The durable structural rules are:
 
 - All project documentation lives under `docs/` (`hook/`, `preference_key/`, `dex_index/`, `logging/` are active guides; `archive/` holds outdated docs; `research/` holds analysis notes). The active guides referenced below are the canonical reading list — prefer them over scanning source.
-- Reference AARs are under `reference/`, root local dependencies under `libs/`, maintenance scripts under `tools/`.
-- Keystore/signing files (`*.jks`, `*.keystore`) are gitignored and intentionally not stored in the repository — never commit them.- Single sources of truth in code:
+- Reference AARs are under `reference/` and maintenance scripts are under `tools/`.
+- Keystore/signing files (`*.jks`, `*.keystore`) are gitignored and intentionally not stored in the repository — never commit them.
+- Single sources of truth in code:
   - `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt` — every key in `xposed_module_config`.
   - `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt` — every scope package name and its preferred restart method.
 - Layering: screens (`screens/**`) and shared UI (`ui/**`) must not do preference I/O, shell/root operations, or raw threads directly; persistence lives in `data/**/*Repository.kt`, values flow through `viewmodel/**` UiStates.
@@ -74,13 +66,9 @@ Core files (all Kotlin):
 - `hook/base/DexIndexStore.kt`: hook-side offline DexKit index reader (only index class allowed to touch libxposed).
 - `utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write; uses `PreferenceKeys` list-based matching for backup/restore type inference.
 
-**libxposed Hook design patterns**: This project uses the libxposed API, NOT the legacy Rovo89 Xposed API — the two are almost entirely different syntactically. An agent unfamiliar with Hook development here should read the guide below instead of scanning hook sources; it defines the project's canonical Hook patterns (base-class choice, required method trio, ClassLoader acquisition, `findField`/`findMethod`, `hookWithId` with per-scope unique IDs, Chain SAM syntax, remote preferences reads, and the DexKit offline-index anti-obfuscation rule):
+**libxposed Hook design patterns**: This project uses the libxposed API, NOT the legacy Rovo89 Xposed API — the two are almost entirely different syntactically. An agent unfamiliar with Hook development here should read the [guide](docs/hook/libxposed_guide_ztool_ver.md) instead of scanning hook sources; it defines the project's canonical Hook patterns (base-class choice, required method trio, ClassLoader acquisition, `findField`/`findMethod`, `hookWithId` with per-scope unique IDs, Chain SAM syntax, remote preferences reads, and the DexKit offline-index anti-obfuscation rule):
 
-```text
-docs/hook/libxposed_guide_ztool_ver.md
-```
-
-### Adding A Backend Hook
+### Adding A Hook
 
 0. If you are not yet familiar with this project's libxposed Hook patterns, read `docs/hook/libxposed_guide_ztool_ver.md` first before writing any Hook code.
 1. Create a Hook class extending `AppHookModule` (or `SystemHookModule` for system framework), in **Kotlin**.
@@ -117,7 +105,7 @@ Other scope rules:
 - Do NOT remove scope entries unless their corresponding Hook modules are also removed.
 - The scope is a build-time declaration; users must also configure it in LSPosed Manager.
 
-## Adding Hook Settings In The Frontend
+## Frontend Wiring
 
 When adding a Hook switch or other Hook-facing setting in the app UI, read and follow:
 
