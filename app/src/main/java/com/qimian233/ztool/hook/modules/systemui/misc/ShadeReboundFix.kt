@@ -54,11 +54,21 @@ class ShadeReboundFix : AppHookModule() {
         logger.info("ShadeReboundFix installing, stiffness=$stiffness")
 
         // ---- Fix 1: protect the expanding height spring from layout-cancel ----
+        // Measured call chain of the bad cancel:
+        //   onLayoutChange -> cancelHeightAnimator -> SpringAnimation.cancel
+        // Gate on the caller stack containing "onLayoutChange" instead of
+        // reading mHeightSpringAnimator: SpringUI is R8-obfuscated and field
+        // names may be renamed on other builds. All other cancel paths
+        // (user touch, collapse, etc.) pass through untouched.
         try {
             val cancelHeightAnimator = findMethod(npvcClass, "cancelHeightAnimator")
             hookWithId(cancelHeightAnimator, "rebound_cancel_guard") { chain ->
-                if (isHeightSpringRunning(npvcClass, chain.thisObject)) {
-                    logger.debug("cancelHeightAnimator blocked: height spring running")
+                val fromLayoutChange = Throwable().stackTrace.any {
+                    it.className.endsWith("NotificationPanelViewController") &&
+                        it.methodName.contains("onLayoutChange")
+                }
+                if (fromLayoutChange) {
+                    logger.debug("cancelHeightAnimator blocked: onLayoutChange cancel")
                     return@hookWithId null
                 }
                 chain.proceed()
@@ -70,27 +80,27 @@ class ShadeReboundFix : AppHookModule() {
         // ---- Fix 2: speed up the rebound spring convergence ----
         // flingToHeight builds: new SpringAnimation(new FloatValueHolder(h))
         //   spring = SpringForce(target).setDampingRatio(0.72f).setStiffness(100f)
-        // Hooking setStiffness lets us patch the value after the chain completes;
-        // gated on the exact ZUI rebound signature (100/0.72) so unrelated
-        // springs (bubbles, etc.) sharing the library are untouched.
+        // SystemUI is R8-obfuscated, so SpringForce field names (mStiffness etc.)
+        // are NOT reliable. Instead, rewrite the setStiffness argument itself,
+        // gated on the caller stack containing NPVC.flingToHeight (class names
+        // are kept in this ROM). Other setStiffness callers pass through
+        // untouched.
         try {
             val springForceClass = cl.loadClass("androidx.dynamicanimation.animation.SpringForce")
-            val stiffnessField = findField(springForceClass, "mStiffness")
-            val dampingField = findField(springForceClass, "mDampingRatio")
             val setStiffness = springForceClass.getMethod(
                 "setStiffness", Float::class.javaPrimitiveType!!
             )
             hookWithId(setStiffness, "rebound_spring_stiffness") { chain ->
-                val result = chain.proceed()
-                val force = chain.thisObject
-                if (force != null &&
-                    stiffnessField.getFloat(force) == ZUI_REBOUND_STIFFNESS.toFloat() &&
-                    dampingField.getFloat(force) == ZUI_REBOUND_DAMPING
-                ) {
-                    stiffnessField.setFloat(force, stiffness)
-                    logger.debug("Rebound spring stiffness -> $stiffness")
+                val fromFlingToHeight = Throwable().stackTrace.any {
+                    it.className.endsWith("NotificationPanelViewController") &&
+                        it.methodName.contains("flingToHeight")
                 }
-                result
+                if (fromFlingToHeight) {
+                    logger.debug("Rebound spring stiffness -> $stiffness")
+                    chain.proceed(arrayOf<Any>(stiffness))
+                } else {
+                    chain.proceed()
+                }
             }
         } catch (t: Throwable) {
             logger.error("ShadeReboundFix: hook SpringForce.setStiffness failed", t)
@@ -111,21 +121,7 @@ class ShadeReboundFix : AppHookModule() {
         return raw.coerceIn(MIN_STIFFNESS, MAX_STIFFNESS)
     }
 
-    private fun isHeightSpringRunning(npvcClass: Class<*>, thisObject: Any?): Boolean {
-        if (thisObject == null) return false
-        return try {
-            val f = findField(npvcClass, "mHeightSpringAnimator")
-            val spring = f.get(thisObject) ?: return false
-            // DynamicAnimation.isRunning(), accessed reflectively (no library dep)
-            spring.javaClass.getMethod("isRunning").invoke(spring) as? Boolean ?: false
-        } catch (_: Throwable) {
-            false
-        }
-    }
-
     companion object {
-        private const val ZUI_REBOUND_STIFFNESS = 100f
-        private const val ZUI_REBOUND_DAMPING = 0.72f
         private const val MIN_STIFFNESS = 100
         private const val MAX_STIFFNESS = 2000
     }
