@@ -93,6 +93,7 @@ import com.qimian233.ztool.hook.modules.systemui.misc.ForceImmersiveMode
 import com.qimian233.ztool.hook.modules.systemui.misc.GuestModeController
 import com.qimian233.ztool.hook.modules.systemui.misc.NoChargeAnimation
 import com.qimian233.ztool.hook.modules.systemui.misc.NotificationCenterTransparency
+import com.qimian233.ztool.hook.modules.systemui.misc.ShadeReboundTimingHook
 import com.qimian233.ztool.hook.modules.systemui.qs.BrightnessSliderPercentageHook
 import com.qimian233.ztool.hook.modules.systemui.qs.ControlCenterNoTileLabelsHook
 import com.qimian233.ztool.hook.modules.systemui.qs.MediaOutputDialogCenterHook
@@ -184,6 +185,7 @@ object HookManager {
         registerHookModule(SystemUIBatteryHook())
         registerHookModule(ForceImmersiveMode())
         registerHookModule(AospScrollCaptureHook()) // hook_test: AOSP ScrollCapture reroute, no frontend switch
+        registerHookModule(ShadeReboundTimingHook()) // hook_test: shade rebound timing instrumentation, no frontend switch
         registerHookModule(ChargeAnimationDurationHook())
         registerHookModule(ForceLenovoAOD())
         registerHookModule(ForceNativeAod())
