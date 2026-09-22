@@ -456,9 +456,7 @@
     <string name="system_ui_misc_aosp_scroll_capture_title">AOSP 长截屏</string>
     <string name="system_ui_misc_aosp_scroll_capture_summary">借用 AOSP 基础设施让长截屏功能始终可用，不保证截屏效果良好。</string>
     <string name="system_ui_misc_shade_rebound_fix_title">修复控制中心回弹延迟</string>
-    <string name="system_ui_misc_shade_rebound_fix_summary">下拉控制中心铺满后回弹不再延迟播放，并加快弹簧收敛速度。需重启系统界面生效。</string>
-    <string name="system_ui_misc_shade_rebound_stiffness_title">回弹弹簧刚度</string>
-    <string name="system_ui_misc_shade_rebound_stiffness_summary">数值越大收敛越快、回弹越干脆，默认 500。</string>
+    <string name="system_ui_misc_shade_rebound_fix_summary">用 AOSP 标准下拉动画替代 ZUI 自定义弹簧动画，消除铺满后回弹延迟。需重启系统界面生效。</string>
     <!--系统界面 状态栏时钟页资源值-->
     <string name="system_ui_status_bar_clock_settings_title">状态栏时钟设置</string>
     <string name="system_ui_status_bar_display_seconds_title">显示秒数</string>

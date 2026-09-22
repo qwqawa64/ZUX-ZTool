@@ -411,9 +411,7 @@
     <string name="system_ui_misc_aosp_scroll_capture_title">AOSP long screenshot</string>
     <string name="system_ui_misc_aosp_scroll_capture_summary">Use AOSP screenshot infrastructure to keep long screenshot available. Does not guarantee good capture results.</string>
     <string name="system_ui_misc_shade_rebound_fix_title">Fix shade rebound delay</string>
-    <string name="system_ui_misc_shade_rebound_fix_summary">The control center rebound plays immediately after the shade fills the screen, with faster spring convergence. Requires a SystemUI restart.</string>
-    <string name="system_ui_misc_shade_rebound_stiffness_title">Rebound spring stiffness</string>
-    <string name="system_ui_misc_shade_rebound_stiffness_summary">Higher values converge faster with a snappier rebound. Default 500.</string>
+    <string name="system_ui_misc_shade_rebound_fix_summary">Replace the ZUI custom spring fling with the standard AOSP shade animation to remove the delayed rebound. Requires a SystemUI restart.</string>
     <string name="system_ui_status_bar_clock_settings_title">Status bar clock settings</string>
     <string name="system_ui_status_bar_display_seconds_title">Show seconds</string>
     <string name="system_ui_status_bar_display_seconds_summary">Show seconds in the status bar clock.</string>

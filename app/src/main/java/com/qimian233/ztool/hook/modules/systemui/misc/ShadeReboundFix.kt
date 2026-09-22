@@ -6,32 +6,24 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
- * Fixes the ZUI control-center "delayed rebound": after the shade flings open
- * to full screen, the visible overExpansion spring-back starts ~1.6s late.
+ * Fixes the ZUI control-center "delayed rebound" by falling back to the AOSP
+ * shade fling animation instead of the ZUI custom spring implementation.
  *
- * Root causes measured on device (see ShadeReboundTimingHook logs):
+ * Root cause measured on device (see ShadeReboundTimingHook logs): the ZUI
+ * branch in NotificationPanelViewController.flingToHeight
+ * (QsReboundFeature.animEnable()) drives the panel height with a soft
+ * SpringAnimation (stiffness=100, damping=0.72) whose EndListener only fires
+ * after full convergence. A layout pass cancels it near target and re-fires a
+ * zero-velocity fling that creeps ~900ms before the visible springBack starts
+ * — ~1.6s of perceived delay after touch release.
  *
- *  1. NPVC.onLayoutChange -> cancelHeightAnimator cancels the expanding
- *     SpringAnimation near its target (curH 996/1000), and the same layout
- *     pass re-fires fling() with ~zero velocity. The re-fired spring creeps
- *     the last few px for ~900ms before its EndListener fires.
- *  2. The ZUI rebound spring runs stiffness=100, dampingRatio=0.72; a soft
- *     spring's EndListener only fires after full exponential convergence, so
- *     springBack() (the visible rebound) waits out the long decay tail.
+ * This hook short-circuits QsReboundFeature.animEnable() to false, which makes
+ * flingToHeight take the AOSP ValueAnimator path: a ~350ms fling with the
+ * standard overshoot, followed immediately by the 400ms springBack rebound.
  *
- * Fix (keeping the ZUI spring feel):
- *  - cancelHeightAnimator: block cancels while the expanding height spring
- *    (mHeightSpringAnimator) is still running, so the layout pass cannot
- *    cancel-and-refire the fling.
- *  - SpringForce stiffness: the rebound spring is built with stiffness 100;
- *    after a SpringForce.setStiffness call on a spring matching the ZUI
- *    rebound signature (stiffness 100, damping 0.72), rewrite the stiffness
- *    to the user-configured value (default 500) so the spring converges
- *    quickly and springBack starts right after the panel visually fills.
- *
- * All androidx.dynamicanimation types are accessed reflectively because the
- * app module does not depend on that library. Hooks are scoped to
- * com.android.systemui.
+ * Rebound shaping is ZUI-side only; the AOSP path preserves the overExpansion
+ * mechanism. Once a ZUI release ships a proper fix, gate this hook off by
+ * version in the UI switch (frontend-side version gating).
  */
 class ShadeReboundFix : AppHookModule() {
 
@@ -43,115 +35,22 @@ class ShadeReboundFix : AppHookModule() {
         if (param.packageName != ScopeKeys.SYSTEM_UI.packageName) return
 
         val cl = param.defaultClassLoader
-        val npvcClass = try {
-            cl.loadClass("com.android.systemui.shade.NotificationPanelViewController")
+        val featureClass = try {
+            cl.loadClass("com.android.systemui.shade.util.QsReboundFeature")
         } catch (t: Throwable) {
-            logger.error("ShadeReboundFix: NPVC class not found", t)
+            logger.error("ShadeReboundFix: QsReboundFeature class not found", t)
             return
         }
 
-        val stiffness = readStiffness().toFloat()
-        logger.info("ShadeReboundFix installing, stiffness=$stiffness")
-
-        // ---- Fix 1: protect the expanding height spring from layout-cancel ----
-        // Measured call chain of the bad cancel:
-        //   onLayoutChange -> cancelHeightAnimator -> SpringAnimation.cancel
-        // Gate on the caller stack containing "onLayoutChange" instead of
-        // reading mHeightSpringAnimator: SpringUI is R8-obfuscated and field
-        // names may be renamed on other builds. All other cancel paths
-        // (user touch, collapse, etc.) pass through untouched.
         try {
-            val cancelHeightAnimator = findMethod(npvcClass, "cancelHeightAnimator")
-            hookWithId(cancelHeightAnimator, "rebound_cancel_guard") { chain ->
-                val fromLayoutChange = Throwable().stackTrace.any {
-                    it.className.endsWith("NotificationPanelViewController") &&
-                        it.methodName.contains("onLayoutChange")
-                }
-                if (fromLayoutChange) {
-                    logger.debug("cancelHeightAnimator blocked: onLayoutChange cancel")
-                    return@hookWithId null
-                }
-                chain.proceed()
+            val animEnable = featureClass.getDeclaredMethod("animEnable")
+            hookWithId(animEnable, "shade_rebound_aosp_fallback") { chain ->
+                logger.debug("QsReboundFeature.animEnable -> false (AOSP fallback)")
+                false
             }
+            logger.info("ShadeReboundFix installed (AOSP fling fallback)")
         } catch (t: Throwable) {
-            logger.error("ShadeReboundFix: hook cancelHeightAnimator failed", t)
+            logger.error("ShadeReboundFix: hook QsReboundFeature.animEnable failed", t)
         }
-
-        // ---- Fix 1b: block the layout refire, not just the cancel ----
-        // The measured onLayoutChange pass does TWO things: cancelHeightAnimator
-        // AND re-fire fling() with ~zero velocity. With only the cancel blocked,
-        // the original spring keeps running while a second spring is created
-        // concurrently — both drive mExpandedHeight, which shows up as the
-        // second segment visibly stretching faster than the first. Skip the
-        // refire so the original fling spring runs alone to completion.
-        try {
-            val flingToHeight = findMethod(
-                npvcClass, "flingToHeight",
-                Float::class.javaPrimitiveType!!, Boolean::class.javaPrimitiveType!!,
-                Float::class.javaPrimitiveType!!, Float::class.javaPrimitiveType!!,
-                Boolean::class.javaPrimitiveType!!
-            )
-            hookWithId(flingToHeight, "rebound_layout_refire_guard") { chain ->
-                val fromLayoutChange = Throwable().stackTrace.any {
-                    it.className.endsWith("NotificationPanelViewController") &&
-                        it.methodName.contains("onLayoutChange")
-                }
-                if (fromLayoutChange) {
-                    logger.debug("flingToHeight blocked: onLayoutChange refire")
-                    return@hookWithId null
-                }
-                chain.proceed()
-            }
-        } catch (t: Throwable) {
-            logger.error("ShadeReboundFix: hook flingToHeight (refire guard) failed", t)
-        }
-
-        // ---- Fix 2: speed up the rebound spring convergence ----
-        // flingToHeight builds: new SpringAnimation(new FloatValueHolder(h))
-        //   spring = SpringForce(target).setDampingRatio(0.72f).setStiffness(100f)
-        // SystemUI is R8-obfuscated, so SpringForce field names (mStiffness etc.)
-        // are NOT reliable. Instead, rewrite the setStiffness argument itself,
-        // gated on the caller stack containing NPVC.flingToHeight (class names
-        // are kept in this ROM). Other setStiffness callers pass through
-        // untouched.
-        try {
-            val springForceClass = cl.loadClass("androidx.dynamicanimation.animation.SpringForce")
-            val setStiffness = springForceClass.getMethod(
-                "setStiffness", Float::class.javaPrimitiveType!!
-            )
-            hookWithId(setStiffness, "rebound_spring_stiffness") { chain ->
-                val fromFlingToHeight = Throwable().stackTrace.any {
-                    it.className.endsWith("NotificationPanelViewController") &&
-                        it.methodName.contains("flingToHeight")
-                }
-                if (fromFlingToHeight) {
-                    logger.debug("Rebound spring stiffness -> $stiffness")
-                    chain.proceed(arrayOf<Any>(stiffness))
-                } else {
-                    chain.proceed()
-                }
-            }
-        } catch (t: Throwable) {
-            logger.error("ShadeReboundFix: hook SpringForce.setStiffness failed", t)
-        }
-
-        logger.info("ShadeReboundFix installed")
-    }
-
-    private fun readStiffness(): Int {
-        val raw = try {
-            remotePreferences.getInt(
-                PreferenceKeys.SHADE_REBOUND_STIFFNESS.name,
-                PreferenceKeys.SHADE_REBOUND_STIFFNESS.default
-            )
-        } catch (_: Throwable) {
-            PreferenceKeys.SHADE_REBOUND_STIFFNESS.default
-        }
-        return raw.coerceIn(MIN_STIFFNESS, MAX_STIFFNESS)
-    }
-
-    companion object {
-        private const val MIN_STIFFNESS = 100
-        private const val MAX_STIFFNESS = 2000
     }
 }
