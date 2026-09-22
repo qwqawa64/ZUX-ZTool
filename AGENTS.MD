@@ -3,7 +3,7 @@
 ## Agent Quick Start
 
 - Generate your commit message as `.gitmessage` indicates.
-- New code must be written in Kotlin. Java is only permitted for emergency fixes to existing Java infrastructure (e.g., BaseHookModule.java, HookManager.java).
+- New code must be written in Kotlin. Java is only permitted for emergency fixes to existing Java infrastructure.
 - Explicitly assign UTF-8 as the decode format for all project files to handle Chinese characters.
 - JDK is available **only on Windows** in most scenarios. If you cannot find Java in your workspace on Windows, notify the user to config their JAVA_HOME and Path variable, then restart the terminal or system.
 - If you are on WSL2 and you have to use Java related tools such as gradlew.bat, use Windows environment by explicitly calling cmd or PowerShell. For example, `./gradlew.bat assembleDebug`
@@ -13,9 +13,7 @@
 
 ## Project Summary
 
-ZUX-ZTool is a single-module Android project for ZUX OS/ZUI devices. It combines a normal Android app UI, LSPosed/Xposed Hook modules, root/shell utilities, foreground log collection, configuration backup/restore, and embedded Magisk module assets.
-
-The Android module is `:app`, package `com.qimian233.ztool`. The app UI is largely Jetpack Compose based: `MainActivity` hosts the main Compose routes for Home, Features, Audit, and Settings. Feature detail entry points are still Android `Activity` contracts declared in the Manifest and must remain stable unless the user explicitly approves a breaking change.
+ZUX-ZTool is a single-module Android project (`:app`, package `com.qimian233.ztool`) for ZUX OS/ZUI devices. It combines a Jetpack Compose app UI, LSPosed/libxposed Hook modules, root/shell utilities, foreground log collection, configuration backup/restore, and embedded Magisk module assets.
 
 Use English for new agent-facing documentation where practical. Existing user-facing strings and legacy Chinese logs may remain Chinese.
 
@@ -40,112 +38,42 @@ For any Miuix API or component behavior, consult the official Dokka site instead
 https://compose-miuix-ui.github.io/miuix/dokka/index.html
 ```
 
-## Repository Layout
+## Project Structure — Boundary Rules Only
 
-```text
-.
-  app/                         Android app module
-  docs/                        All project documentation
-    hook/                      Active backend Hook + frontend setting guides
-    preference_key/            Preference key registration guide (active)
-    dex_index/                 Offline DexKit index guide (active)
-    logging/                   New logging system guide (active)
-    archive/                   Archived/outdated docs, grouped by original folder
-  reference/                    Reference AAR files
-  gradle/                       Gradle wrapper and version catalog
-  libs/                         Root local dependencies
-  tools/                        Maintenance scripts (e.g. migrate_docs.py doc-reference scanner)
-  AGENTS.MD                     This root agent guide
-  README.md
-  TODOS.md
-  ZToolLogo.png
-  ZToolLogoForeground.svg
-  ZToolUploadKey.jks            Release signing file; do not touch casually
-  更新日志.txt
-```
+Do not rely on a memorized file tree; explore the repository directly when needed. The durable structural rules are:
 
-The Android module has this high-level shape:
-
-```text
-app/
-  build.gradle.kts
-  proguard-rules.pro
-  libs/XposedBridgeAPI-82.jar
-  src/main/
-    AndroidManifest.xml
-    assets/
-      xposed_init
-      embedding/
-    java/com/qimian233/ztool/
-    res/
-  src/test/
-  src/androidTest/
-```
-
-## Source Package Map
-
-```text
-com.qimian233.ztool
-  MainActivity.kt, root Compose routes, shell executor, activation probe
-
-audit
-  Hook log parsing and structured audit data
-
-config
-  Module config constants
-
-data
-  Repository layer for preferences, root/shell operations, logs, OTA, theme, and feature settings
-
-hook
-  Xposed entry point, Hook manager, base Hook API, preference helpers, and Hook modules
-
-service
-  Foreground Hook log collection service and service manager
-
-settingactivity
-  Feature detail Activities and remaining helper screens
-
-ui
-  Shared Compose components and theme system
-
-utils
-  File, permission, Magisk, embedding, firmware, font, dialog, and config utilities
-
-viewmodel
-  UiState and state management for main routes and feature detail pages
-```
-
-Main route files:
-
-- `MainActivity.kt`: app entry point and Compose host.
-- `HomeRoute.kt`: environment status, module activation, device info, update prompt, reboot actions.
-- `FeaturesRoute.kt`: feature entry list grouped by target app/scope.
-- `AuditRoute.kt`: Hook log filtering, search, stats, export, clear, and details.
-- `SettingsRoute.kt`: log service, detailed logging, backup/restore, theme settings, about dialog.
+- All project documentation lives under `docs/` (`hook/`, `preference_key/`, `dex_index/`, `logging/` are active guides; `archive/` holds outdated docs; `research/` holds analysis notes). The active guides referenced below are the canonical reading list — prefer them over scanning source.
+- Reference AARs are under `reference/`, root local dependencies under `libs/`, maintenance scripts under `tools/`.
+- `ZToolUploadKey.jks` is the release signing file — do not touch casually.
+- Single sources of truth in code:
+  - `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt` — every key in `xposed_module_config`.
+  - `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt` — every scope package name and its preferred restart method.
+- Layering: screens (`screens/**`) and shared UI (`ui/**`) must not do preference I/O, shell/root operations, or raw threads directly; persistence lives in `data/**/*Repository.kt`, values flow through `viewmodel/**` UiStates.
+- Hook entry point and infrastructure live in `hook/` (entry: `hook/HookInit.kt`, registered in `app/src/main/resources/META-INF/xposed/java_init.list`); per-app Hook modules live in `hook/modules/<package>/`.
+- App-side offline DexKit indexing lives in `dexindex/` (pure Kotlin, no libxposed dependency); the hook-side reader is `hook/base/DexIndexStore.kt`.
+- Foreground services live in `service/`. Currently: `LogCollectorService` (foreground, `specialUse`, not exported) and `MediaOutputTileService`. New services must declare an appropriate `foregroundServiceType` and stay in `service/`.
 
 ## Manifest And Xposed Contracts
 
 Keep these stable unless the task explicitly targets them:
 
-- Existing Activity package/class names used as Manifest launch contracts.
+- Existing Manifest component declarations (`MainActivity`, `LogCollectorService`, `MediaOutputTileService`, `DexIndexReceiver`) and their intent actions.
 - Existing SharedPreferences/config keys used by Hook modules.
-- `app/src/main/resources/META-INF/xposed/java_init.list` Hook entry class, currently points to `com.qimian233.ztool.hook.HookInit`.
-- `app/src/main/resources/META-INF/xposed/module.prop` Module properties, such as minimum API version.
-- `app/src/main/resources/META-INF/xposed/scope.list` Module scope.
+- `app/src/main/resources/META-INF/xposed/java_init.list` — Hook entry class (`com.qimian233.ztool.hook.HookInit`).
+- `app/src/main/resources/META-INF/xposed/module.prop` — module metadata (e.g. `minApiVersion`, `staticScope`); keep hardcoded.
+- `app/src/main/resources/META-INF/xposed/scope.list` — the LSPosed injection scope declaration (build-time; package names are intentionally hardcoded there, NOT driven by `ScopeKeys`).
 
-Hook scope packages include Android framework/system apps and ZUI apps such as `android`, `com.android.systemui`, `com.android.settings`, `com.zui.launcher`, and `com.lenovo.ota`.
+Hook scope packages include Android framework/system apps and ZUI/third-party apps such as `android`, `com.android.systemui`, `com.android.settings`, `com.zui.launcher`, `com.lenovo.ota`, `com.sohu.inputmethod.sogou*`, and others; see `ScopeKeys.kt` for the authoritative list.
 
 ## Hook Architecture
 
-Core files:
+Core files (all Kotlin):
 
-- `app/src/main/java/com/qimian233/ztool/hook/HookInit.java`: Xposed entry point.
-- `app/src/main/java/com/qimian233/ztool/hook/base/BaseHookModule.java`: base class for Hook modules.
-- `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`: registration and dispatch for Hook modules.
-- `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt`: **single source of truth for all preference keys** — every key in `xposed_module_config` is defined here, organized by data type. See `docs/preference_key/add_new_preference_key_zh-cn.md`.
-- `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`: **single source of truth for all scope package names** — every package LSPosed may inject into (`Scope(packageName, HowToRestart)`), plus its preferred restart method. Hooks, `ScopeUtils`, and frontend entry points must reference `ScopeKeys` instead of hardcoding package name strings. See "Scope Management" below.
-- `app/src/main/java/com/qimian233/ztool/utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write utility; uses `PreferenceKeys` list-based matching for backup/restore type inference.
+- `hook/HookInit.kt`: Xposed entry point.
+- `hook/base/BaseHookModule.kt`: base class; `AppHookModule` for app hooks, `SystemHookModule` for system-framework hooks.
+- `hook/base/HookManager.kt`: registration and dispatch for Hook modules.
+- `hook/base/DexIndexStore.kt`: hook-side offline DexKit index reader (only index class allowed to touch libxposed).
+- `utils/ModulePreferencesUtils.kt`: app-side SharedPreferences read/write; uses `PreferenceKeys` list-based matching for backup/restore type inference.
 
 **libxposed Hook design patterns**: This project uses the libxposed API, NOT the legacy Rovo89 Xposed API — the two are almost entirely different syntactically. An agent unfamiliar with Hook development here should read the guide below instead of scanning hook sources; it defines the project's canonical Hook patterns (base-class choice, required method trio, ClassLoader acquisition, `findField`/`findMethod`, `hookWithId` with per-scope unique IDs, Chain SAM syntax, remote preferences reads, and the DexKit offline-index anti-obfuscation rule):
 
@@ -153,44 +81,54 @@ Core files:
 docs/hook/libxposed_guide_ztool_ver.md
 ```
 
+### Adding A Backend Hook
+
+0. If you are not yet familiar with this project's libxposed Hook patterns, read `docs/hook/libxposed_guide_ztool_ver.md` first before writing any Hook code.
+1. Create a Hook class extending `AppHookModule` (or `SystemHookModule` for system framework), in **Kotlin**.
+2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `ScopeKeys.kt` first (see "Scope Management") and add it to `scope.list`. For system-framework hooks, implement `handleSystemServerStarting(...)` too. Returning "hook_test" or "test_hook" from `getModuleName()` always enables a test hook without a frontend switch.
+3. Read Hook settings using `PreferenceKeys` constants: `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
+4. Register the Hook class in `hook/base/HookManager.kt`.
+5. If the Hook needs a user-facing toggle, add the frontend state according to `docs/hook/add_frontend_item.md`. New backend module guide: `docs/hook/add_new_hook_module.md`.
+
+Use `logger.<level>` for module logs when possible, see `docs/logging/migrate_and_use_new_logging_system.md`.
+
 ### Offline DexKit Index (DexIndex)
 
-DexKit lookups must NOT run inside `handleLoadPackage` (they break LSPosed hot reload —
-replay re-creates the bridge for the same APK and the native state conflicts). Instead,
-use the offline index pipeline:
+DexKit lookups must NOT run inside `handleLoadPackage` (they break LSPosed hot reload — replay re-creates the bridge for the same APK and the native state conflicts). Instead, use the offline index pipeline:
 
-- App side (`com.qimian233.ztool.dexindex`, pure Kotlin, **no libxposed dependency**):
-  one `DexIndexer` per scope package (see `DexIndexRegistry`); `DexIndexManager` runs
-  them after install/update (triggered by `DexIndexReceiver`), on app start when the
-  target APK fingerprint changed, or via the Settings manual refresh entry. Results are
-  written atomically to `<scopePackage>.json` in the module's private `filesDir` root
-  (Remote Files cannot address subdirectories).
-- Hook side (`hook/base/DexIndexStore.kt`, the only index class allowed to touch
-  libxposed): reads the JSON via `XposedInterface.openRemoteFile(...)` (Remote Files —
-  the LSPosed daemon reads the module's private `filesDir` with privileges, no chmod
-  needed). Any failure returns null and the hook falls back to hardcoded names.
-- Never read the index inside hook lambdas (`hookWithId` callbacks) — resolve values in
-  `handleLoadPackage` and capture them.
-- Constants (module keys, field keys, file layout): `DexIndexConstants.kt`.
-  Full guide: `docs/dex_index/readme.md`.
+- App side (`com.qimian233.ztool.dexindex`, pure Kotlin, **no libxposed dependency**): one `DexIndexer` per scope package (see `DexIndexRegistry`); `DexIndexManager` runs them after install/update (triggered by `DexIndexReceiver`), on app start when the target APK fingerprint changed, or via the Settings manual refresh entry. Results are written atomically to `<scopePackage>.json` in the module's private `filesDir` root (Remote Files cannot address subdirectories).
+- Hook side (`hook/base/DexIndexStore.kt`): reads the JSON via `XposedInterface.openRemoteFile(...)` (Remote Files — the LSPosed daemon reads the module's private `filesDir` with privileges, no chmod needed). Any failure returns null and the hook falls back to hardcoded names.
+- Never read the index inside hook lambdas (`hookWithId` callbacks) — resolve values in `handleLoadPackage` and capture them.
+- Constants: `DexIndexConstants.kt`. Full guide: `docs/dex_index/readme.md`.
 
-Hook module folders:
+### Scope Management
 
-```text
-hook/modules/
-  documentsui/
-  gametool/
-  launcher/
-  mobiledesktop/
-  ota/
-  packageinstaller/
-  safecenter/
-  setting/
-  SharedPreferencesTool/
-  systemFramework/
-  systemui/
-  wallpaper/
-```
+**`ScopeKeys` is the single source of truth for scope package names in code.** Every place that manages scope packages — Hook `getTargetPackages()` implementations, `ScopeUtils.getScopes()` / `getScopePackages()`, and frontend feature entries — must reference `ScopeKeys.CONSTANT.packageName` and never hardcode package name strings. The `HowToRestart` registered on each `Scope` drives the unified restart logic in `ScopeUtils.restartScope()`.
+
+When adding a Hook that targets a package:
+
+1. Register the package in `ScopeKeys.kt` (with its preferred `HowToRestart`) before using it anywhere.
+2. Reference `ScopeKeys.CONSTANT.packageName` in the Hook's `getTargetPackages()`, and add it to `ScopeUtils.getScopes(...)` if the package belongs to a frontend feature entry.
+3. Add the package to the build-time `scope.list` resource.
+
+Other scope rules:
+
+- **`android` and `system` (system framework) are already in scope** — no change needed for system-framework hooks.
+- **Always verify scope coverage after adding a new Hook module.** If a target package is missing from scope, the Hook will silently never execute.
+- Do NOT remove scope entries unless their corresponding Hook modules are also removed.
+- The scope is a build-time declaration; users must also configure it in LSPosed Manager.
+
+### Service Protection Hook Guidelines
+
+When creating hooks that protect or interact with Android system services (e.g. keeping daemon processes alive, preventing service GC):
+
+- **Target `android`** (system framework) for hooks that intercept AMS, process management, or Binder behavior.
+- **Use `hookMethodBySignature`** when hooking AMS or ActiveServices methods — Android version differences change method parameter counts across releases. Iterate declared methods by name to cover all overloads.
+- **Wrap every hook attempt in its own try-catch** — missing methods on a particular ROM/version should not prevent other hooks from applying.
+- **For binder anti-GC**: hold `ServiceManager.getService(...)` references in a static `List<IBinder>` to prevent weak-reference-only GC.
+- **For death recipient protection**: hook `Binder.unlinkToDeath` and inspect the call stack for LSPosed-related classes before deciding to intercept.
+- **Log each defense layer** independently so the audit UI can show which protections are active.
+- Such hooks typically require a system reboot to take effect after enabling.
 
 ## Adding Hook Settings In The Frontend
 
@@ -200,13 +138,7 @@ When adding a Hook switch or other Hook-facing setting in the app UI, read and f
 docs/hook/add_frontend_item.md
 ```
 
-When adding a new backend Hook module, read and follow:
-
-```text
-docs/hook/add_new_hook_module.md
-```
-
-**For preference key management**, all keys are now centrally defined in `PreferenceKeys.kt`. When adding a new key, read:
+**For preference key management**, all keys are centrally defined in `PreferenceKeys.kt`. When adding a new key, read:
 
 ```text
 docs/preference_key/add_new_preference_key_zh-cn.md
@@ -221,67 +153,6 @@ The durable rules are:
 - **Preference keys must be registered in `PreferenceKeys.kt`** before use in Repository or Hook code. Reference them as `PreferenceKeys.CONSTANT_NAME.name` — never write key strings by hand.
 - Preference keys and default values must match the Hook-side reads exactly.
 - Use existing shared setting components such as `SettingItem.Switch`, dropdowns, sliders, and text inputs where applicable.
-
-## Adding A Backend Hook
-
-To add a new Hook implementation on the backend:
-
-0. If you are not yet familiar with this project's libxposed Hook patterns (base-class choice, the required method trio, `findField`/`findMethod`, `hookWithId`, Chain SAM), read `docs/hook/libxposed_guide_ztool_ver.md` first before writing any Hook code.
-1. Create a Hook class that extends `AppHookModule` for non-system-framework-hook, and extend `SystemHookModule` for system-framework-hook. All new Hooks must be written in **Kotlin** (`.kt`). Java is only permitted for emergency fixes to existing Java infrastructure.
-2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `data/keys/ScopeKeys.kt` first (see "Scope Management"), and add it to `scope.list`. For system server (system framework) hooks, implement `handleSystemServerStarting(...)`, too. When implementing test hook, return "hook_test" or "test_hook" in getModuleName() will always enable this test hook without bothering to add frontend switch.
-3. Read Hook settings using `PreferenceKeys` constants (see `docs/preference_key/add_new_preference_key_zh-cn.md`). Use `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
-4. Register the Hook class in `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java`.
-5. If the Hook needs a user-facing toggle, add the frontend state according to `docs/hook/add_frontend_item.md`.
-
-Use `logger.<level>` for module logs when possible, see `docs/logging/migrate_and_use_new_logging_system.md` for more information.
-
-## Service, Scope, And Activation Rules
-
-### Scope Management
-
-**`ScopeKeys` (`app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`) is the single source of truth for scope package names in code.** Every place that manages scope packages — Hook `getTargetPackages()` implementations, `ScopeUtils.getScopes()` / `getScopePackages()`, and frontend feature entries (`FeaturesRoute`, `MainActivity`) — must reference `ScopeKeys.CONSTANT.packageName` and never hardcode package name strings. The `HowToRestart` registered on each `Scope` also drives the unified restart logic in `ScopeUtils.restartScope()`.
-
-When adding a Hook that targets a package:
-
-1. Register the package in `ScopeKeys.kt` (with its preferred `HowToRestart`) before using it anywhere.
-2. Reference `ScopeKeys.CONSTANT.packageName` in the Hook's `getTargetPackages()`, and add it to `ScopeUtils.getScopes(...)` if the package belongs to a frontend feature entry.
-3. Add the package to the build-time `scope.list` resource (see below).
-
-Build-time resource files intentionally keep package names hardcoded and are NOT driven by `ScopeKeys`:
-
-- `app/src/main/resources/META-INF/xposed/scope.list` — the LSPosed injection scope declaration. When a new Hook targets a package not already in the scope, add it here; `getTargetPackages()` returned by each module must be a subset of the declared scope.
-- `app/src/main/resources/META-INF/xposed/module.prop` — module metadata (e.g. `minApiVersion`, `staticScope`); keep hardcoded.
-
-Other scope rules:
-
-- **`android` and `system` (system framework) are already in scope** — no change needed for system-framework hooks.
-- **Always verify scope coverage after adding a new Hook module.** If a target package is missing from scope, the Hook will silently never execute.
-- Do NOT remove scope entries unless their corresponding Hook modules are also removed.
-- The scope is a build-time declaration; users must also configure it in LSPosed Manager.
-
-### Activation Chain
-
-- LSPosed sends a bind when module starts up.
-- `ModuleActivationProbe` has a onBind receiver that sets `active` field in this class to `true`.
-- Frontend reads this value and shows the activated user interface.
-
-### Service Protection Hook Guidelines
-
-When creating hooks that protect or interact with Android system services (e.g. keeping daemon processes alive, preventing service GC):
-
-- **Target `android`** (system framework) for hooks that intercept AMS, process management, or Binder behavior.
-- **Use `hookMethodBySignature`** when hooking AMS or ActiveServices methods — Android version differences change method parameter counts across releases. Iterate declared methods by name to cover all overloads.
-- **Wrap every hook attempt in its own try-catch** — missing methods on a particular ROM/version should not prevent other hooks from applying.
-- **For binder anti-GC**: hold `ServiceManager.getService(...)` references in a static `List<IBinder>` to prevent weak-reference-only GC.
-- **For death recipient protection**: hook `Binder.unlinkToDeath` and inspect the call stack for LSPosed-related classes before deciding to intercept.
-- **Log each defense layer** independently so the Audit UI can show which protections are active.
-- Such hooks typically require a system reboot to take effect after enabling.
-
-### Service Declaration In Manifest
-
-- The only current service is `LogCollectorService` (foreground, `specialUse`, not exported). Declared in `AndroidManifest.xml:40-44`.
-- New services must be declared with appropriate `foregroundServiceType` for the target SDK.
-- Services that interact with Hook modules should stay in `com.qimian233.ztool.service`.
 
 ## UI And Compose Guidance
 
@@ -299,23 +170,16 @@ General UI rules:
 - Keep frontend style, theme mode, dynamic color, manual seed color, and AMOLED behavior in the theme settings layer, not in feature pages.
 - Do not reintroduce XML navigation, View-based screen scaffolding, old adapters, or Fragment navigation for new work.
 - Do not put shell/root operations, raw threads, preference I/O, or imperative dialogs directly in Composables. Use Repository/ViewModel/state.
-- Preserve detail Activity launch contracts even if the screen body is Compose.
 
 ## Resources And Assets
 
-- `res/values/`: strings, colors, themes, arrays.
-- `res/values-night/`: night resources.
-- `res/drawable/`: in-app drawables and icons.
-- `res/mipmap-*`: launcher icons.
-- `res/raw/`: demo video resources and user agreement.
-- `res/xml/`: backup, extraction, and locale config.
-- `assets/embedding/`: embedded Magisk module configuration and scripts.
-- `assets/embedding/zuxos_embedding/`: module package contents such as `module.prop`, shell scripts, sepolicy rules, and installer metadata.
+- `res/values/` + localized values dirs (e.g. `values-en/`, `values-night/`): strings, colors, themes, arrays.
+- `res/drawable/`, `res/mipmap-*`: icons; `res/raw/`: demo video and user agreement; `res/xml/`: backup/extraction/locale config.
+- `assets/embedding/` + `assets/embedding/zuxos_embedding/`: embedded Magisk module config, scripts, sepolicy rules, installer metadata.
 
 Do not edit embedded module assets unless the task is specifically about Magisk/embedding behavior.
 
-- **When adding new user-facing strings**, always add entries to both `res/values/strings.xml` (default/Chinese) 
-AND non-default language files such as`res/values-en/strings.xml` (English). Use the same `name` attribute in both files.
+- **When adding new user-facing strings**, always add entries to both `res/values/strings.xml` (default/Chinese) AND non-default language files such as `res/values-en/strings.xml` (English). Use the same `name` attribute in both files.
 - Developer-only or debug strings that should never be translated must use `translatable="false"`.
 
 ## Verification
@@ -364,4 +228,4 @@ git commit ...
 5. Continue until at least one of the following condition is/are satisfied. Notify the user with the current situation after encountering these situations:
     - The work is done, no todo item left unchecked.
     - Some step requires additional information and these information cannot be fetched via Internet, build cache and user input.
-    - Unable to access critical tools: gradlew.bat, git, javap, javac for 3 times. 
+    - Unable to access critical tools: gradlew.bat, git, javap, javac for 3 times.
