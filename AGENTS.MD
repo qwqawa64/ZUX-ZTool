@@ -44,8 +44,7 @@ Do not rely on a memorized file tree; explore the repository directly when neede
 
 - All project documentation lives under `docs/` (`hook/`, `preference_key/`, `dex_index/`, `logging/` are active guides; `archive/` holds outdated docs; `research/` holds analysis notes). The active guides referenced below are the canonical reading list — prefer them over scanning source.
 - Reference AARs are under `reference/`, root local dependencies under `libs/`, maintenance scripts under `tools/`.
-- `ZToolUploadKey.jks` is the release signing file — do not touch casually.
-- Single sources of truth in code:
+- Keystore/signing files (`*.jks`, `*.keystore`) are gitignored and intentionally not stored in the repository — never commit them.- Single sources of truth in code:
   - `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt` — every key in `xposed_module_config`.
   - `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt` — every scope package name and its preferred restart method.
 - Layering: screens (`screens/**`) and shared UI (`ui/**`) must not do preference I/O, shell/root operations, or raw threads directly; persistence lives in `data/**/*Repository.kt`, values flow through `viewmodel/**` UiStates.
@@ -117,18 +116,6 @@ Other scope rules:
 - **Always verify scope coverage after adding a new Hook module.** If a target package is missing from scope, the Hook will silently never execute.
 - Do NOT remove scope entries unless their corresponding Hook modules are also removed.
 - The scope is a build-time declaration; users must also configure it in LSPosed Manager.
-
-### Service Protection Hook Guidelines
-
-When creating hooks that protect or interact with Android system services (e.g. keeping daemon processes alive, preventing service GC):
-
-- **Target `android`** (system framework) for hooks that intercept AMS, process management, or Binder behavior.
-- **Use `hookMethodBySignature`** when hooking AMS or ActiveServices methods — Android version differences change method parameter counts across releases. Iterate declared methods by name to cover all overloads.
-- **Wrap every hook attempt in its own try-catch** — missing methods on a particular ROM/version should not prevent other hooks from applying.
-- **For binder anti-GC**: hold `ServiceManager.getService(...)` references in a static `List<IBinder>` to prevent weak-reference-only GC.
-- **For death recipient protection**: hook `Binder.unlinkToDeath` and inspect the call stack for LSPosed-related classes before deciding to intercept.
-- **Log each defense layer** independently so the audit UI can show which protections are active.
-- Such hooks typically require a system reboot to take effect after enabling.
 
 ## Adding Hook Settings In The Frontend
 
