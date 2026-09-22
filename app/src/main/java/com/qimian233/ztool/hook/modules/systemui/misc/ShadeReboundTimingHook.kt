@@ -79,6 +79,7 @@ class ShadeReboundTimingHook : AppHookModule() {
                     "flingToHeight start expand=$expanding targetH=$target " +
                         "curH=$expandedHeight overExp=$overExpansion"
                 )
+                logCallerStack("flingToHeight")
                 val t0 = SystemClock.elapsedRealtime()
                 chain.proceed()
                 logTs("flingToHeight exit dt=${SystemClock.elapsedRealtime() - t0}ms")
@@ -106,10 +107,45 @@ class ShadeReboundTimingHook : AppHookModule() {
             val onFlingEnd = findMethod(npvcClass, "onFlingEnd", Boolean::class.javaPrimitiveType!!)
             hookWithId(onFlingEnd, "rebound_on_fling_end") { chain ->
                 logTs("onFlingEnd cancelled=${chain.args[0]}")
+                logCallerStack("onFlingEnd")
                 chain.proceed()
             }
         } catch (t: Throwable) {
             logger.error("ShadeReboundTimingHook: hook onFlingEnd failed", t)
+        }
+
+        // 5. cancelAnimation / setAnimator — who cancels the first animation
+        try {
+            val cancelAnimation = findMethod(npvcClass, "cancelAnimation")
+            hookWithId(cancelAnimation, "rebound_cancel_animation") { chain ->
+                logTs("cancelAnimation")
+                logCallerStack("cancelAnimation")
+                chain.proceed()
+            }
+        } catch (t: Throwable) {
+            logger.error("ShadeReboundTimingHook: hook cancelAnimation failed", t)
+        }
+        try {
+            val setAnimator = findMethod(npvcClass, "setAnimator", android.animation.ValueAnimator::class.java)
+            hookWithId(setAnimator, "rebound_set_animator") { chain ->
+                logTs("setAnimator anim=${chain.args[0] != null}")
+                logCallerStack("setAnimator")
+                chain.proceed()
+            }
+        } catch (t: Throwable) {
+            logger.error("ShadeReboundTimingHook: hook setAnimator failed", t)
+        }
+
+        // 6. expand(boolean) — the delayed expandDelayIfNeed re-entry suspect
+        try {
+            val expand = findMethod(npvcClass, "expand", Boolean::class.javaPrimitiveType!!)
+            hookWithId(expand, "rebound_expand") { chain ->
+                logTs("expand expand=${chain.args[0]}")
+                logCallerStack("expand")
+                chain.proceed()
+            }
+        } catch (t: Throwable) {
+            logger.error("ShadeReboundTimingHook: hook expand failed", t)
         }
 
         logger.info("ShadeReboundTimingHook installed (tag ZTool-Rebound)")
@@ -133,4 +169,16 @@ class ShadeReboundTimingHook : AppHookModule() {
         logger.debug("[$ts] $message")
         android.util.Log.i("ZTool-Rebound", "[$ts] $message")
     }
+
+    /** Prints a trimmed caller stack to attribute async animation callbacks to their origin. */
+    private fun logCallerStack(where: String) {
+        val frames = Throwable().stackTrace
+        // Skip getStackTrace/logCallerStack/logTs/hook lambda frames; keep the first meaningful callers
+        val interesting = frames.drop(4)
+            .take(10)
+            .joinToString(" <- ") { "${it.className.substringAfterLast('.').substringBefore('$')}.${it.methodName}" }
+        android.util.Log.i("ZTool-Rebound", "[$ts()] stack($where): $interesting")
+    }
+
+    private fun ts(): Long = SystemClock.elapsedRealtime()
 }
