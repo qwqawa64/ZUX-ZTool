@@ -177,7 +177,7 @@ class ShadeReboundTimingHook : AppHookModule() {
         val interesting = frames.drop(4)
             .take(10)
             .joinToString(" <- ") { "${it.className.substringAfterLast('.').substringBefore('$')}.${it.methodName}" }
-        android.util.Log.i("ZTool-Rebound", "[$ts()] stack($where): $interesting")
+        android.util.Log.i("ZTool-Rebound", "[${ts()}] stack($where): $interesting")
     }
 
     private fun ts(): Long = SystemClock.elapsedRealtime()
