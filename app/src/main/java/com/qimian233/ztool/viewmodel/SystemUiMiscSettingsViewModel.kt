@@ -51,6 +51,20 @@ class SystemUiMiscSettingsViewModel(
         repository.saveAospScrollCapture(enabled)
     }
 
+    fun setShadeReboundFix(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(shadeReboundFix = enabled)
+        repository.saveShadeReboundFix(enabled)
+    }
+
+    fun setShadeReboundStiffness(stiffness: Int) {
+        val clamped = stiffness.coerceIn(
+            SystemUiMiscSettingsRepository.STIFFNESS_MIN,
+            SystemUiMiscSettingsRepository.STIFFNESS_MAX
+        )
+        _uiState.value = _uiState.value.copy(shadeReboundStiffness = clamped)
+        repository.saveShadeReboundStiffness(clamped)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }

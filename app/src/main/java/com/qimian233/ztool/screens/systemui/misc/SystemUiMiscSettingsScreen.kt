@@ -84,6 +84,8 @@ fun SystemUiMiscSettingsRoute(
             onDisableBiometricErrorVibrationChanged = viewModel::setDisableBiometricErrorVibration,
             onBypassFaceAuthTimeoutChanged = viewModel::setBypassFaceAuthTimeout,
             onAospScrollCaptureChanged = viewModel::setAospScrollCapture,
+            onShadeReboundFixChanged = viewModel::setShadeReboundFix,
+            onShadeReboundStiffnessChanged = viewModel::setShadeReboundStiffness,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -128,6 +130,8 @@ private fun SystemUiMiscSettingsScreen(
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
+    onShadeReboundFixChanged: (Boolean) -> Unit,
+    onShadeReboundStiffnessChanged: (Int) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -174,6 +178,8 @@ private fun SystemUiMiscSettingsScreen(
                         onDisableBiometricErrorVibrationChanged = onDisableBiometricErrorVibrationChanged,
                         onBypassFaceAuthTimeoutChanged = onBypassFaceAuthTimeoutChanged,
                         onAospScrollCaptureChanged = onAospScrollCaptureChanged,
+                        onShadeReboundFixChanged = onShadeReboundFixChanged,
+                        onShadeReboundStiffnessChanged = onShadeReboundStiffnessChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -190,6 +196,8 @@ private fun systemUiMiscSettingsSections(
     onDisableBiometricErrorVibrationChanged: (Boolean) -> Unit,
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
+    onShadeReboundFixChanged: (Boolean) -> Unit,
+    onShadeReboundStiffnessChanged: (Int) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -230,6 +238,29 @@ private fun systemUiMiscSettingsSections(
                         key = "system_ui_misc_aosp_scroll_capture"
                     )
                 )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_misc_shade_rebound_fix_title),
+                        summary = stringResource(R.string.system_ui_misc_shade_rebound_fix_summary),
+                        checked = state.shadeReboundFix,
+                        onCheckedChange = onShadeReboundFixChanged,
+                        key = "system_ui_misc_shade_rebound_fix"
+                    )
+                )
+                if (state.shadeReboundFix) {
+                    add(
+                        SettingItem.Slider(
+                            title = stringResource(R.string.system_ui_misc_shade_rebound_stiffness_title),
+                            summary = stringResource(R.string.system_ui_misc_shade_rebound_stiffness_summary),
+                            value = state.shadeReboundStiffness.toFloat(),
+                            valueText = state.shadeReboundStiffness.toString(),
+                            valueRange = 100f..2000f,
+                            steps = 18,
+                            onValueChange = { onShadeReboundStiffnessChanged(it.toInt()) },
+                            key = "system_ui_misc_shade_rebound_stiffness"
+                        )
+                    )
+                }
             }
         )
     )

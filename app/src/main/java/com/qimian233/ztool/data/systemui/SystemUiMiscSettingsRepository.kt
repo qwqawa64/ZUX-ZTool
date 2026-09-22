@@ -15,6 +15,8 @@ class SystemUiMiscSettingsRepository(context: Context) {
             disableBiometricErrorVibration = prefsUtils.loadBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, false),
             bypassFaceAuthTimeout = prefsUtils.loadBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, false),
             aospScrollCapture = prefsUtils.loadBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, false),
+            shadeReboundFix = prefsUtils.loadBooleanSetting(KEY_SHADE_REBOUND_FIX, false),
+            shadeReboundStiffness = prefsUtils.loadIntegerSetting(KEY_SHADE_REBOUND_STIFFNESS, DEFAULT_SHADE_REBOUND_STIFFNESS),
         )
     }
 
@@ -22,6 +24,10 @@ class SystemUiMiscSettingsRepository(context: Context) {
     fun saveDisableBiometricErrorVibration(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, enabled)
     fun saveBypassFaceAuthTimeout(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, enabled)
     fun saveAospScrollCapture(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, enabled)
+    fun saveShadeReboundFix(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_SHADE_REBOUND_FIX, enabled)
+    fun saveShadeReboundStiffness(stiffness: Int) {
+        prefsUtils.saveIntegerSetting(KEY_SHADE_REBOUND_STIFFNESS, stiffness.coerceIn(STIFFNESS_MIN, STIFFNESS_MAX))
+    }
 
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
@@ -33,10 +39,15 @@ class SystemUiMiscSettingsRepository(context: Context) {
     }
 
     companion object {
+        const val STIFFNESS_MIN = 100
+        const val STIFFNESS_MAX = 2000
+        const val DEFAULT_SHADE_REBOUND_STIFFNESS = 500
         private val KEY_GUEST_MODE_CONTROLLER = PreferenceKeys.GUEST_MODE_CONTROLLER.name
         private val KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION = PreferenceKeys.DISABLE_BIOMETRIC_ERROR_VIBRATION.name
         private val KEY_BYPASS_FACE_AUTH_TIMEOUT = PreferenceKeys.BYPASS_FACE_AUTH_TIMEOUT.name
         private val KEY_FORCE_LONG_SCREENSHOT_AOSP = PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP.name
+        private val KEY_SHADE_REBOUND_FIX = PreferenceKeys.SHADE_REBOUND_FIX.name
+        private val KEY_SHADE_REBOUND_STIFFNESS = PreferenceKeys.SHADE_REBOUND_STIFFNESS.name
     }
 }
 
@@ -45,6 +56,8 @@ data class SystemUiMiscSettingsUiState(
     val disableBiometricErrorVibration: Boolean = false,
     val bypassFaceAuthTimeout: Boolean = false,
     val aospScrollCapture: Boolean = false,
+    val shadeReboundFix: Boolean = false,
+    val shadeReboundStiffness: Int = SystemUiMiscSettingsRepository.DEFAULT_SHADE_REBOUND_STIFFNESS,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

@@ -774,6 +774,11 @@ object SearchIndex {
             titleRes = R.string.system_ui_misc_aosp_scroll_capture_title,
             summaryRes = R.string.system_ui_misc_aosp_scroll_capture_summary
         ),
+        systemUiMisc.item(
+            id = "system_ui_misc_shade_rebound_fix",
+            titleRes = R.string.system_ui_misc_shade_rebound_fix_title,
+            summaryRes = R.string.system_ui_misc_shade_rebound_fix_summary
+        ),
 
         framework.item(
             id = "framework_keep_rotation",
