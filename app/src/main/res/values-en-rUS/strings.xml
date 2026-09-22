@@ -848,6 +848,19 @@
     <string name="page_settings_advanced_delete_ota_package_result_success">Deleted /data/ota_package</string>
     <string name="page_settings_advanced_delete_ota_package_result_not_exist">/data/ota_package does not exist, nothing to delete</string>
     <string name="page_settings_advanced_delete_ota_package_result_failed">Deletion failed: %s</string>
+    <!-- Engineering codes (secret codes) entry screen strings -->
+    <string name="engineering_codes_title">Lenovo Engineering Codes</string>
+    <string name="engineering_codes_summary">Engineering screens normally opened via dialer secret codes. Root access is required.</string>
+    <string name="engineering_codes_dial_prefix">Dialer code: *#*#%1$s#*#*</string>
+    <string name="engineering_codes_launching">Launching engineering screen…</string>
+    <string name="engineering_codes_launch_failed_with_reason">Launch failed: %1$s</string>
+    <string name="engineering_codes_unavailable">Lenovo engineering app not found on this device</string>
+    <string name="engineering_codes_item_version_info">Version info</string>
+    <string name="engineering_codes_item_sn">Serial number (SN)</string>
+    <string name="engineering_codes_item_framework_version">Internal framework version</string>
+    <string name="engineering_codes_item_imei">IMEI info</string>
+    <string name="engineering_codes_item_usb_debug">USB debug settings</string>
+    <string name="engineering_codes_item_offline_log">Open all offline log switches</string>
     <string name="launcher_launcher_no_label_mode_title">Launcher No-label Mode</string>
     <string name="launcher_launcher_drawer_no_label_mode_title">Drawer No-label Mode</string>
     <string name="launcher_launcher_hide_blue_point_title">Hide app update blue dot</string>

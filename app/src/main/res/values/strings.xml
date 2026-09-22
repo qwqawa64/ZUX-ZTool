@@ -929,6 +929,19 @@
     <string name="page_settings_advanced_delete_ota_package_result_success">已删除 /data/ota_package</string>
     <string name="page_settings_advanced_delete_ota_package_result_not_exist">/data/ota_package 不存在，无需删除</string>
     <string name="page_settings_advanced_delete_ota_package_result_failed">删除失败：%s</string>
+    <!--工程代码（secret code）入口页资源值-->
+    <string name="engineering_codes_title">联想工程代码</string>
+    <string name="engineering_codes_summary">通过拨号盘 secret code 可打开的工程屏幕，需要 Root 权限</string>
+    <string name="engineering_codes_dial_prefix">拨号盘代码：*#*#%1$s#*#*</string>
+    <string name="engineering_codes_launching">正在启动工程屏幕…</string>
+    <string name="engineering_codes_launch_failed_with_reason">启动失败：%1$s</string>
+    <string name="engineering_codes_unavailable">此设备上未找到联想工程模式应用</string>
+    <string name="engineering_codes_item_version_info">版本信息</string>
+    <string name="engineering_codes_item_sn">序列号（SN）</string>
+    <string name="engineering_codes_item_framework_version">内部 Framework 版本</string>
+    <string name="engineering_codes_item_imei">IMEI 信息</string>
+    <string name="engineering_codes_item_usb_debug">USB 调试设置</string>
+    <string name="engineering_codes_item_offline_log">打开全部离线日志开关</string>
     <string name="launcher_launcher_no_label_mode_title">桌面无字模式</string>
     <string name="launcher_launcher_drawer_no_label_mode_title">抽屉无字模式</string>
     <string name="launcher_launcher_hide_blue_point_title">隐藏应用更新蓝点提示</string>

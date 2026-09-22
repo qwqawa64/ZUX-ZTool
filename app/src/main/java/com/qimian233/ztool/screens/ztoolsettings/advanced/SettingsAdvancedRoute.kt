@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Brightness4
 import androidx.compose.material.icons.rounded.Build
+import androidx.compose.material.icons.rounded.BuildCircle
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
@@ -74,6 +75,7 @@ import java.util.Locale
 @Composable
 fun SettingsAdvancedRoute(
     onBack: () -> Unit,
+    onOpenEngineeringCodes: () -> Unit = {},
     targetId: String? = null
 ) {
     val context = LocalContext.current
@@ -195,6 +197,7 @@ fun SettingsAdvancedRoute(
             onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
             onOpenFirstrun = { activity.reopenFirstrun() },
             onFixNightModeOverride = { viewModel.fixNightModeOverride(context) },
+            onOpenEngineeringCodes = onOpenEngineeringCodes,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
@@ -214,6 +217,7 @@ private fun SettingsAdvancedScreen(
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
     onFixNightModeOverride: () -> Unit,
+    onOpenEngineeringCodes: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
 ) {
@@ -258,7 +262,8 @@ private fun SettingsAdvancedScreen(
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = onRefreshDexIndex,
                         onOpenFirstrun = onOpenFirstrun,
-                        onFixNightModeOverride = onFixNightModeOverride
+                        onFixNightModeOverride = onFixNightModeOverride,
+                        onOpenEngineeringCodes = onOpenEngineeringCodes
                     ),
                     bottomPadding = 32.dp
                 )
@@ -279,7 +284,8 @@ private fun advancedSettingsSections(
     dexIndexSummary: String,
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
-    onFixNightModeOverride: () -> Unit
+    onFixNightModeOverride: () -> Unit,
+    onOpenEngineeringCodes: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -389,6 +395,13 @@ private fun advancedSettingsSections(
                             )
                         }
                     } else null
+                ),
+                SettingItem.Action(
+                    key = "advanced_engineering_codes",
+                    title = stringResource(R.string.engineering_codes_title),
+                    summary = stringResource(R.string.engineering_codes_summary),
+                    onClick = onOpenEngineeringCodes,
+                    icon = Icons.Rounded.BuildCircle
                 ),
                 SettingItem.Action(
                     key = "advanced_open_firstrun",
