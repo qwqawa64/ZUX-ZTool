@@ -65,6 +65,7 @@ import com.qimian233.ztool.hook.modules.systemframework.AllowUntrustedTouch
 import com.qimian233.ztool.hook.modules.systemframework.DisableFlagSecure
 import com.qimian233.ztool.hook.modules.systemframework.DisableGameAudio
 import com.qimian233.ztool.hook.modules.systemframework.DisableHbmThermalLimit
+import com.qimian233.ztool.hook.modules.systemframework.ForceOvFreeformWhitelist
 import com.qimian233.ztool.hook.modules.systemframework.ForceRelativeAppFreeform
 import com.qimian233.ztool.hook.modules.systemframework.ForceScreenOnOffAnimation
 import com.qimian233.ztool.hook.modules.systemframework.KeepRotation
@@ -157,6 +158,7 @@ object HookManager {
         registerHookModule(KeepRotation())
         registerHookModule(AllowRelativeAppLaunch())
         registerHookModule(ForceRelativeAppFreeform())
+        registerHookModule(ForceOvFreeformWhitelist())
         registerHookModule(DisableHbmThermalLimit())
         registerHookModule(SystemSplitScreenMandatory())
 
