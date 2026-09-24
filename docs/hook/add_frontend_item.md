@@ -155,6 +155,19 @@ SettingItem.Switch(
 onNewHookEnabledChanged = viewModel::setNewHookEnabled
 ```
 
+### 移动 / 重命名既有条目
+
+迁移功能入口时，**索引与 key 必须在同一笔改动中同步更新**：
+
+1. `SettingItem.key` 与 `search/SearchIndex.kt` 中对应条目的 `id`、`route`
+   一起改；条目换了宿主屏幕时，`route` 必须指向新屏幕的路由。
+2. 提交前运行
+   `.\gradlew.bat testDebugUnitTest --tests "com.qimian233.ztool.SearchIndexConsistencyTest"`，
+   索引与屏幕 key 不一致时测试会直接失败。
+
+历史教训：OTA 线刷入口从 OTA 屏迁出后索引未跟随，导致"线刷"搜索命中
+错误屏幕且无高亮——这正是该测试要拦截的问题。
+
 ## 添加其它自定义控件
 
 项目已有 `SettingItem` 模型，优先使用共享组件，避免在业务页面重复写样式。

@@ -47,6 +47,7 @@ import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
+import com.qimian233.ztool.ui.components.HighlightableSettingRow
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
@@ -846,18 +847,20 @@ private fun QsRoundCornerRadius(
                 valueRange = 0.0f..96.0f,
                 valueText = state.qsHeadUpRoundCornerRadius.toString() + "dp",
             )
-            ZToolSliderRow(
-                title = stringResource(R.string.system_ui_control_center_normal_tile_corner_radius),
-                value = state.qsTileRoundCornerRadius.toFloat(),
-                onValueChange = {
-                    onQsTileRoundCornerRadiusChanged(
-                        snapToAccurateRadius(it)
-                    )
-                },
-                steps = QS_ROUND_CORNER_STEPS,
-                valueRange = 0.0f..96.0f,
-                valueText = state.qsTileRoundCornerRadius.toString() + "dp"
-            )
+            HighlightableSettingRow(highlightKey = "control_center_normal_tile_corner_radius") {
+                ZToolSliderRow(
+                    title = stringResource(R.string.system_ui_control_center_normal_tile_corner_radius),
+                    value = state.qsTileRoundCornerRadius.toFloat(),
+                    onValueChange = {
+                        onQsTileRoundCornerRadiusChanged(
+                            snapToAccurateRadius(it)
+                        )
+                    },
+                    steps = QS_ROUND_CORNER_STEPS,
+                    valueRange = 0.0f..96.0f,
+                    valueText = state.qsTileRoundCornerRadius.toString() + "dp"
+                )
+            }
         }
     }
 }

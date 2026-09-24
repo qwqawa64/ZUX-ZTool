@@ -1061,10 +1061,6 @@ object SearchIndex {
             id = "ota_info_fetch",
             titleRes = R.string.system_update_ota_info_fetch_title
         ),
-        ota.item(
-            id = "ota_pc_flash_firmware_fetch",
-            titleRes = R.string.system_update_pc_flash_firmware_fetch_title
-        ),
 
         tbEngine.item(
             id = "tb_engine_disable_auto_download",
@@ -1253,6 +1249,13 @@ object SearchIndex {
             summaryRes = R.string.launcher_disable_force_stop_enable_summary
         ),
         launcher.item(
+            id = "launcher_force_stop_whitelist",
+            titleRes = R.string.launcher_disable_force_stop_enable_title,
+            summaryRes = R.string.launcher_protected_apps_summary,
+            parentTitleRes = R.string.launcher_disable_force_stop_enable_title,
+            parentKey = "launcher_force_stop_mode"
+        ),
+        launcher.item(
             id = "launcher_show_ram_info",
             titleRes = R.string.launcher_show_ram_info,
             summaryRes = R.string.launcher_show_ram_info_summary
@@ -1386,6 +1389,11 @@ object SearchIndex {
             titleRes = R.string.page_settings_advanced_title
         ),
         appSettings.item(
+            id = "app_settings_misc",
+            titleRes = R.string.page_settings_misc_title,
+            summaryRes = R.string.page_settings_misc_summary
+        ),
+        appSettings.item(
             id = "app_settings_about",
             titleRes = R.string.page_settings_show_about_page
         ),
@@ -1484,6 +1492,11 @@ object SearchIndex {
         miscSettings.item(
             id = "misc_api_version",
             titleRes = R.string.page_settings_advanced_api_version
+        ),
+        miscSettings.item(
+            id = "misc_pc_flash_firmware_fetch",
+            titleRes = R.string.system_update_pc_flash_firmware_fetch_title,
+            summaryRes = R.string.system_update_pc_flash_firmware_fetch_summary
         ),
 
         aboutScreen.item(

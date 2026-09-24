@@ -129,6 +129,12 @@ The durable rules are:
 - Preference keys and default values must match the Hook-side reads exactly.
 - Use existing shared setting components such as `SettingItem.Switch`, dropdowns, sliders, and text inputs where applicable.
 
+**Search index maintenance**: every user-visible setting row and feature entry must be
+searchable. When adding a row, set its `SettingItem.key` and register a matching
+`SearchEntry` in `search/SearchIndex.kt` (same id). When moving or renaming an entry,
+update both sides in the same change. Decorative-only rows use the `deco_` key prefix.
+`SearchIndexConsistencyTest` enforces this at test time; details in `docs/hook/add_frontend_item.md`.
+
 ## UI And Compose Guidance
 
 The current UI direction is Compose-first. For Compose migration-specific work, also read:
@@ -168,7 +174,9 @@ Follow the steps below:
     - Manifest, resources, Gradle files, or embedded assets.
 
     For documentation-only changes, a build is usually unnecessary; verify with `git diff --check` at minimum.
-2. Commit your changes.
+2. If a setting row or feature entry was added, moved, or renamed, run
+   `.\gradlew.bat testDebugUnitTest --tests "com.qimian233.ztool.SearchIndexConsistencyTest"`.
+3. Commit your changes.
 
 ## Git And Workflow Rules
 
