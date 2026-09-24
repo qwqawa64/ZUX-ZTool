@@ -34,7 +34,10 @@ class ForceRelativeAppFreeform: SystemHookModule() {
 
         private val LOCK = Any()
 
-        private fun resolveLauncherPackages(autoRunInstance: Any): Set<String> {
+        private fun resolveLauncherPackages(
+            autoRunInstance: Any,
+            log: (String) -> Unit
+        ): Set<String> {
             val now = System.currentTimeMillis()
             val cached = launcherPkgs
             if (cached != null && now < launcherCacheExpire) return cached
@@ -47,17 +50,31 @@ class ForceRelativeAppFreeform: SystemHookModule() {
                     val ctx = ctxField.get(autoRunInstance) as? android.content.Context
                     if (ctx != null) {
                         val pm: PackageManager = ctx.packageManager
+                        // Query both HOME and DEFAULT categories so launchers whose
+                        // MAIN activity lacks CATEGORY_HOME (e.g. leanback / dual-home)
+                        // are still collected.
                         val homeIntent = Intent(Intent.ACTION_MAIN).apply {
                             addCategory(Intent.CATEGORY_HOME)
+                            addCategory(Intent.CATEGORY_DEFAULT)
                         }
                         val pkgs = pm.queryIntentActivities(homeIntent, 0)
                             .mapNotNull { it.activityInfo?.packageName }
                             .toSet()
-                        launcherPkgs = pkgs
-                        launcherCacheExpire = System.currentTimeMillis() + LAUNCHER_CACHE_TTL
-                        return pkgs
+                        if (pkgs.isNotEmpty()) {
+                            launcherPkgs = pkgs
+                            launcherCacheExpire = System.currentTimeMillis() + LAUNCHER_CACHE_TTL
+                        }
+                        log(
+                            "resolveLauncherPackages: query ACTION_MAIN|HOME|DEFAULT -> $pkgs" +
+                                " (cached=${pkgs.isNotEmpty()})"
+                        )
+                        return if (pkgs.isNotEmpty()) pkgs
+                        else setOf(ScopeKeys.LAUNCHER.packageName)
                     }
-                } catch (_: Exception) { }
+                    log("resolveLauncherPackages: mContext field resolved to null, fallback")
+                } catch (e: Exception) {
+                    log("resolveLauncherPackages: query failed: ${e.javaClass.simpleName}: ${e.message}")
+                }
             }
             return setOf(ScopeKeys.LAUNCHER.packageName)
         }
@@ -101,12 +118,34 @@ class ForceRelativeAppFreeform: SystemHookModule() {
             // over intent.package (which the SDK may set to the caller's own package)
             val targetPackage = intent?.component?.packageName ?: intent?.getPackage()
 
-            // Inject freeform only for cross-app relative launches
-            // Excluded: same-package self launches and launchers
-            val launchers = resolveLauncherPackages(chain.thisObject)
+            val launchers = resolveLauncherPackages(chain.thisObject) { logger.debug(it) }
+
+            // Reliable "launched from a visible foreground context" signal: the framework's
+            // own ZuiWmAutoRunManager.isTopAppPackage(callingPackage) reports whether the
+            // caller currently owns a visible task or the focused window. A launcher icon
+            // tap always satisfies this; a background relative-start usually does not.
+            val callerIsTop = try {
+                val isTopMethod = findMethod(
+                    chain.thisObject.javaClass, "isTopAppPackage", String::class.java)
+                isTopMethod.invoke(chain.thisObject, callingPackage) as Boolean
+            } catch (e: Exception) {
+                logger.debug("isTopAppPackage lookup failed: ${e.javaClass.simpleName}: ${e.message}")
+                null // unknown — fall back to launcher-set exclusion only
+            }
+
+            // Inject freeform only for cross-app relative launches.
+            // Excluded: same-package self launches, launchers, and callers that are
+            // currently the top/visible app (e.g. launched from the home screen).
             val isRelativeLaunch = callingPackage != null
                 && callingPackage != targetPackage
                 && callingPackage !in launchers
+                && callerIsTop != true
+
+            logger.debug(
+                "relative-start check: caller=$callingPackage target=$targetPackage" +
+                    " launchers=$launchers callerIsTop=$callerIsTop" +
+                    " intent=($intent) inject=$isRelativeLaunch"
+            )
 
             if (isRelativeLaunch) {
                 val bundle = chain.getArg(10) as Bundle?
