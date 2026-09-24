@@ -40,6 +40,8 @@ class SettingsDetailRepository(
             appDetail = prefsUtils.loadBooleanSetting(KEY_APP_DETAILS, false),
             appIconUnmask = prefsUtils.loadBooleanSetting(KEY_SETTINGS_APP_ICON_UNMASK, false),
             showZuiForceConfig = Build.VERSION.SDK_INT >= 36,
+            forceFreeformEntryHookEnabled =
+                prefsUtils.loadBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, false),
             allowAddingLanguages = prefsUtils.loadBooleanSetting(KEY_ALLOW_ADDING_LANGUAGE, false)
         )
     }
@@ -242,6 +244,7 @@ class SettingsDetailRepository(
         private val KEY_PERMISSION_CONTROLLER_HOOK = PreferenceKeys.PERMISSION_CONTROLLER_HOOK.name
         private val KEY_APP_DETAILS = PreferenceKeys.APP_DETAILS.name
         private val KEY_SETTINGS_APP_ICON_UNMASK = PreferenceKeys.SETTINGS_APP_ICON_UNMASK.name
+        private val KEY_LAUNCHER_FORCE_FREEFORM_ENTRY = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
         private val KEY_ALLOW_ADDING_LANGUAGE = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
     }
 }

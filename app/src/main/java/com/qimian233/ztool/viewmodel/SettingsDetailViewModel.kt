@@ -364,6 +364,7 @@ data class SettingsDetailUiState(
     val allowDisableDolby: Boolean = false,
     val allowNativePermissionController: Boolean = false,
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
+    val forceFreeformEntryHookEnabled: Boolean = false,
     val showRestartDialog: Boolean = false,
     val appDetail: Boolean = false,
     val appIconUnmask: Boolean = false,

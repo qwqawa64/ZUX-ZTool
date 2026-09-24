@@ -904,6 +904,21 @@ private fun settingsDetailSections(
                                 )
                             }
                         ),
+                        if (state.forceFreeformEntryHookEnabled) {
+                            SettingItem.Custom(
+                                key = "deco_settings_zui_force_config_hook_warning",
+                                content = {
+                                    Text(
+                                        text = stringResource(R.string.settings_zui_force_config_hook_warning),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = LocalZToolColorScheme.current.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                    )
+                                }
+                            )
+                        } else {
+                            null
+                        },
                         settingsDetailActionItem(
                             key = "settings_detail_zui_force_split",
                             title = stringResource(R.string.settings_zui_force_split_title),
@@ -922,7 +937,7 @@ private fun settingsDetailSections(
                             summary = stringResource(R.string.settings_zui_force_fixed_summary),
                             onClick = onZuiForceFixed
                         )
-                    )
+                    ).filterNotNull()
                 )
             )
         } else {

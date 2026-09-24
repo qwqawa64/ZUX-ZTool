@@ -323,6 +323,7 @@
     <!--设置页：一视界策略搜索页功能资源值-->
     <string name="settings_zui_force_config_title">小窗与分屏</string>
     <string name="settings_zui_force_config_summary">此项配置优先级相当高，会覆盖所有用户及系统配置，不勾选的应用保持系统默认行为</string>
+    <string name="settings_zui_force_config_hook_warning">注意：检测到「所有应用显示小窗入口」Hook 已开启，该 Hook 开启时此处配置文件定义的小窗行为可能被覆盖。</string>
     <string name="settings_zui_force_split_title">强制应用支持分屏</string>
     <string name="settings_zui_force_split_summary">修改系统配置文件，强制指定应用支持分屏</string>
     <string name="settings_zui_force_freeform_title">强制自由小窗</string>
