@@ -94,7 +94,6 @@ import com.qimian233.ztool.hook.modules.systemui.misc.GuestModeController
 import com.qimian233.ztool.hook.modules.systemui.misc.NoChargeAnimation
 import com.qimian233.ztool.hook.modules.systemui.misc.NotificationCenterTransparency
 import com.qimian233.ztool.hook.modules.systemui.misc.ShadeReboundFix
-import com.qimian233.ztool.hook.modules.systemui.misc.ShadeReboundTimingHook
 import com.qimian233.ztool.hook.modules.systemui.qs.BrightnessSliderPercentageHook
 import com.qimian233.ztool.hook.modules.systemui.qs.ControlCenterNoTileLabelsHook
 import com.qimian233.ztool.hook.modules.systemui.qs.MediaOutputDialogCenterHook
@@ -159,7 +158,7 @@ object HookManager {
         registerHookModule(AllowRelativeAppLaunch())
         registerHookModule(ForceRelativeAppFreeform())
         registerHookModule(DisableHbmThermalLimit())
-        registerHookModule(SystemSplitScreenMandatory()) // See the setting-package registration below for why this line is written this way
+        registerHookModule(SystemSplitScreenMandatory())
 
         registerHookModule(PackageManagerDowngradeHook())
         registerHookModule(PackageManagerSignatureBypassHook())
@@ -185,9 +184,8 @@ object HookManager {
         registerHookModule(NetworkSpeedHideSlowHook())
         registerHookModule(SystemUIBatteryHook())
         registerHookModule(ForceImmersiveMode())
-        registerHookModule(AospScrollCaptureHook()) // hook_test: AOSP ScrollCapture reroute, no frontend switch
-        registerHookModule(ShadeReboundTimingHook()) // hook_test: shade rebound timing instrumentation, no frontend switch
-        registerHookModule(ShadeReboundFix()) // fixes delayed shade rebound: blocks layout-cancel of expanding spring + raises spring stiffness
+        registerHookModule(AospScrollCaptureHook())
+        registerHookModule(ShadeReboundFix())
         registerHookModule(ChargeAnimationDurationHook())
         registerHookModule(ForceLenovoAOD())
         registerHookModule(ForceNativeAod())
@@ -215,13 +213,13 @@ object HookManager {
         registerHookModule(PermissionControllerHook())
         registerHookModule(OwnerInfoSettingsHook())
         registerHookModule(OwnerInfoSystemHook())
-        registerHookModule(SettingSplitScreenMandatory()) // No laughing — the fully qualified name is required to avoid a name clash
+        registerHookModule(SettingSplitScreenMandatory())
         registerHookModule(AppInfoHeaderDetailsHook())
         registerHookModule(CustomizeAboutDeviceInfo())
         registerHookModule(ZToolSettingsEntryHook())
         registerHookModule(HideOtaUpdateHint())
-        registerHookModule(LocaleListEditorHook()) // test_hook: intercept LenovoUtils locale detection
-        registerHookModule(SettingsAppIconUnmaskHook()) // Settings app icon unmasking
+        registerHookModule(LocaleListEditorHook())
+        registerHookModule(SettingsAppIconUnmaskHook())
 
         registerHookModule(PackageInstallerHookScan())
         registerHookModule(PackageInstallerPermissionHook())
@@ -232,7 +230,7 @@ object HookManager {
 
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
-        registerHookModule(LauncherAppIconUnmaskHook()) // hook_test: launcher icon unmasking, no frontend switch yet
+        registerHookModule(LauncherAppIconUnmaskHook())
         registerHookModule(CustomGridSize())
         registerHookModule(CleanGlobalSearch())
         registerHookModule(DisableDockBar())
@@ -241,11 +239,11 @@ object HookManager {
         registerHookModule(LauncherDrawerNoLabelMode())
         registerHookModule(BluePointRemovalHook())
         registerHookModule(DismissCloudFolderConfirmation())
-        registerHookModule(BigFolderAlignHook()) // Big folder background/sub-grid/label geometry alignment
+        registerHookModule(BigFolderAlignHook())
         registerHookModule(DisableRecentAppsDisplay())
         registerHookModule(BatchUninstall())
-        registerHookModule(LauncherWideGridHook()) // Widen workspace grid towards screen side edges
-        registerHookModule(IconScaleOverrideHook()) // Override Utilities#getCustomedIconScale beyond its 0.6~1.3 clamp
+        registerHookModule(LauncherWideGridHook())
+        registerHookModule(IconScaleOverrideHook())
 
         registerHookModule(AutoMistakeTouchHook())
         registerHookModule(DisableGameAudio())
