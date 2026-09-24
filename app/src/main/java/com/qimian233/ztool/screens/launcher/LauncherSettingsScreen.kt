@@ -501,15 +501,6 @@ private fun launcherSettingsSections(
                 key = "launcher_disable_recent_app_display"
             )
         )
-        add(
-            SettingItem.Switch(
-                title = stringResource(R.string.launcher_force_freeform_entry_title),
-                summary = stringResource(R.string.launcher_force_freeform_entry_summary),
-                checked = state.forceFreeformEntry,
-                onCheckedChange = onForceFreeformEntryChanged,
-                key = "launcher_force_freeform_entry"
-            )
-        )
         if (!state.disableDockBar) {
             add(
                 SettingItem.Switch(
@@ -556,6 +547,15 @@ private fun launcherSettingsSections(
                 )
             )
         }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_force_freeform_entry_title),
+                summary = stringResource(R.string.launcher_force_freeform_entry_summary),
+                checked = state.forceFreeformEntry,
+                onCheckedChange = onForceFreeformEntryChanged,
+                key = "launcher_force_freeform_entry"
+            )
+        )
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.launcher_show_ram_info),
