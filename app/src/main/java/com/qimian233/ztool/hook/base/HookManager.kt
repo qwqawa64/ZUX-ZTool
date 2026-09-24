@@ -6,6 +6,7 @@ import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudioApp
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix
+import com.qimian233.ztool.hook.modules.launcher.LauncherFreeformEntryHook
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableDockBar
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableRecentAppsDisplay
 import com.qimian233.ztool.hook.modules.launcher.dockbar.ZuiLauncherHotseatHook
@@ -232,6 +233,7 @@ object HookManager {
 
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
+        registerHookModule(LauncherFreeformEntryHook())
         registerHookModule(LauncherAppIconUnmaskHook())
         registerHookModule(CustomGridSize())
         registerHookModule(CleanGlobalSearch())
