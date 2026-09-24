@@ -904,7 +904,7 @@
     <string name="page_settings_advanced_reset_title">重置所有被修改的持久化值</string>
     <string name="page_settings_advanced_reset_summary">重置本应用 Hook 修改的应用自启动、设备属性值等持久化信息</string>
     <string name="page_settings_advanced_reset_confirm_title">确认重置持久化值？</string>
-    <string name="page_settings_advanced_reset_confirm_message">将清除本应用 Hook 曾经写入的持久化设置（如原生 AOD 开关等），使其恢复系统默认状态。\n\n需要 Root 权限，此操作不可撤销。</string>
+    <string name="page_settings_advanced_reset_confirm_message">将清除本应用 Hook 曾经写入的持久化设置（如原生 AOD 开关等），使其恢复系统默认状态。\n\n此操作不可撤销。</string>
     <string name="page_settings_advanced_reset_starting">正在重置持久化值…</string>
     <string name="page_settings_advanced_reset_in_progress">重置进行中…</string>
     <string name="page_settings_advanced_reset_result">成功 %1$d，失败 %2$d，不支持 %3$d</string>
@@ -929,14 +929,14 @@
     <string name="page_settings_advanced_delete_ota_package_title">删除系统更新包</string>
     <string name="page_settings_advanced_delete_ota_package_summary">删除 UDS 实时连接引擎自动下载到 /data/ota_package 的更新包</string>
     <string name="page_settings_advanced_delete_ota_package_confirm_title">删除系统更新包？</string>
-    <string name="page_settings_advanced_delete_ota_package_confirm_message">将删除 /data/ota_package 目录下的全部内容，包括 UDS 实时连接引擎自动下载的更新包。\n\n需要 Root 权限，此操作不可撤销。</string>
+    <string name="page_settings_advanced_delete_ota_package_confirm_message">将删除 /data/ota_package 目录下的全部内容，包括 UDS 实时连接引擎自动下载的更新包。\n\n此操作不可撤销。</string>
     <string name="page_settings_advanced_delete_ota_package_in_progress">正在删除…</string>
     <string name="page_settings_advanced_delete_ota_package_result_success">已删除 /data/ota_package</string>
     <string name="page_settings_advanced_delete_ota_package_result_not_exist">/data/ota_package 不存在，无需删除</string>
     <string name="page_settings_advanced_delete_ota_package_result_failed">删除失败：%s</string>
     <!--工程代码（secret code）入口页资源值-->
     <string name="engineering_codes_title">联想工程代码</string>
-    <string name="engineering_codes_summary">通过拨号盘 secret code 可打开的工程屏幕，需要 Root 权限</string>
+    <string name="engineering_codes_summary">通过拨号盘 secret code 可打开的工程屏幕</string>
     <string name="engineering_codes_dial_prefix">拨号盘代码：*#*#%1$s#*#*</string>
     <string name="engineering_codes_launching">正在启动工程屏幕…</string>
     <string name="engineering_codes_launch_failed_with_reason">启动失败：%1$s</string>

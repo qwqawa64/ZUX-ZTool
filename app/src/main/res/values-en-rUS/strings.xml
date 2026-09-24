@@ -845,14 +845,14 @@
     <string name="page_settings_advanced_delete_ota_package_title">Delete system update package</string>
     <string name="page_settings_advanced_delete_ota_package_summary">Delete update packages automatically downloaded by the UDS Realtime Connection Engine to /data/ota_package</string>
     <string name="page_settings_advanced_delete_ota_package_confirm_title">Delete system update package?</string>
-    <string name="page_settings_advanced_delete_ota_package_confirm_message">This will remove everything under /data/ota_package, including update packages automatically downloaded by the UDS Realtime Connection Engine.\n\nRoot access is required. This operation cannot be undone.</string>
+    <string name="page_settings_advanced_delete_ota_package_confirm_message">This will remove everything under /data/ota_package, including update packages automatically downloaded by the UDS Realtime Connection Engine.\n\nThis operation cannot be undone.</string>
     <string name="page_settings_advanced_delete_ota_package_in_progress">Deleting…</string>
     <string name="page_settings_advanced_delete_ota_package_result_success">Deleted /data/ota_package</string>
     <string name="page_settings_advanced_delete_ota_package_result_not_exist">/data/ota_package does not exist, nothing to delete</string>
     <string name="page_settings_advanced_delete_ota_package_result_failed">Deletion failed: %s</string>
     <!-- Engineering codes (secret codes) entry screen strings -->
     <string name="engineering_codes_title">Lenovo Engineering Codes</string>
-    <string name="engineering_codes_summary">Engineering screens normally opened via dialer secret codes. Root access is required.</string>
+    <string name="engineering_codes_summary">Engineering screens normally opened via dialer secret codes.</string>
     <string name="engineering_codes_dial_prefix">Dialer code: *#*#%1$s#*#*</string>
     <string name="engineering_codes_launching">Launching engineering screen…</string>
     <string name="engineering_codes_launch_failed_with_reason">Launch failed: %1$s</string>
@@ -881,7 +881,7 @@
     <string name="page_settings_advanced_reset_title">Reset all modified persistent values</string>
     <string name="page_settings_advanced_reset_summary">Reset persistent values modified by this app\'s hooks, such as app auto-start and device properties</string>
     <string name="page_settings_advanced_reset_confirm_title">Reset persistent values?</string>
-    <string name="page_settings_advanced_reset_confirm_message">This will clear persistent settings written by this app\'s hooks (e.g. the native AOD switch) and restore system defaults.\n\nRoot access is required. This operation cannot be undone.</string>
+    <string name="page_settings_advanced_reset_confirm_message">This will clear persistent settings written by this app\'s hooks (e.g. the native AOD switch) and restore system defaults.\n\nThis operation cannot be undone.</string>
     <string name="page_settings_advanced_reset_starting">Resetting persistent values…</string>
     <string name="page_settings_advanced_reset_in_progress">Reset in progress…</string>
     <string name="page_settings_advanced_reset_result">Success %1$d, failed %2$d, unsupported %3$d</string>
