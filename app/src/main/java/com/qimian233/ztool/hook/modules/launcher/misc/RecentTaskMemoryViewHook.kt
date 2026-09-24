@@ -75,7 +75,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
                 val enabled = chain.args[0] as Boolean
                 overviewEnabledStates[recentsView] = enabled
                 updateMemoryViewVisibility(recentsView)
-                logger.info("setOverviewStateEnabled hook executed successfully")
+                logger.debug("setOverviewStateEnabled hook executed successfully")
                 null
             }
 
@@ -84,7 +84,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
             hookWithId(setVisibilityMethod, "set_visibility") { chain ->
                 chain.proceed()
                 updateMemoryViewVisibility(chain.thisObject as View)
-                logger.info("setVisibility hook executed successfully")
+                logger.debug("setVisibility hook executed successfully")
                 null
             }
 
@@ -99,7 +99,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
             hookWithId(onLayoutMethod, "on_layout") { chain ->
                 chain.proceed()
                 attachMemoryView(chain.thisObject as View)
-                logger.info("onLayout hook executed successfully")
+                logger.debug("onLayout hook executed successfully")
                 null
             }
 
