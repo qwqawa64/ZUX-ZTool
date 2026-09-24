@@ -3,7 +3,6 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.qimian233.ztool.data.systemui.FirmwareFetchResult
 import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsRepository
 import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsUiState
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +20,6 @@ class SystemUiMiscSettingsViewModel(
 
     fun loadSettings() {
         _uiState.value = loadInitialState()
-        loadCurrentSn()
     }
 
     private fun loadInitialState(): SystemUiMiscSettingsUiState {
@@ -56,59 +54,6 @@ class SystemUiMiscSettingsViewModel(
     fun setShadeReboundFix(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(shadeReboundFix = enabled)
         repository.saveShadeReboundFix(enabled)
-    }
-
-    private fun loadCurrentSn() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val sn = repository.loadCurrentSn()
-            withContext(Dispatchers.Main) {
-                _uiState.value = _uiState.value.copy(
-                    currentSn = sn.orEmpty(),
-                    firmwareSnInput = if (_uiState.value.firmwareSnInput.isEmpty() && !sn.isNullOrEmpty()) {
-                        sn
-                    } else {
-                        _uiState.value.firmwareSnInput
-                    }
-                )
-            }
-        }
-    }
-
-    fun setFirmwareSnInput(value: String) {
-        _uiState.value = _uiState.value.copy(firmwareSnInput = value)
-    }
-
-    fun fetchFirmware(emptySnMessage: String) {
-        val sn = _uiState.value.firmwareSnInput.trim().ifEmpty { _uiState.value.currentSn }
-        if (sn.isEmpty()) {
-            _uiState.value = _uiState.value.copy(errorDialogMessage = emptySnMessage)
-            return
-        }
-
-        _uiState.value = _uiState.value.copy(isFetchingFirmware = true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.fetchFirmware(sn)
-            withContext(Dispatchers.Main) {
-                when (result) {
-                    is FirmwareFetchResult.Failure -> {
-                        _uiState.value = _uiState.value.copy(
-                            isFetchingFirmware = false,
-                            errorDialogMessage = result.message
-                        )
-                    }
-                    is FirmwareFetchResult.Success -> {
-                        _uiState.value = _uiState.value.copy(
-                            isFetchingFirmware = false,
-                            firmwareResult = result.firmware
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    fun dismissErrorDialog() {
-        _uiState.value = _uiState.value.copy(errorDialogMessage = null)
     }
 
     fun showRestartDialog() {

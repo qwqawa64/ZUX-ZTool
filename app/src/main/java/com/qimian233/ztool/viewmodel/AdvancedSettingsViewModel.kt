@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.R
 import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.advanced.AdvancedSettingsRepository
+import com.qimian233.ztool.data.advanced.FirmwareFetchResult
 import com.qimian233.ztool.data.advanced.HotReloadDetail
+import com.qimian233.ztool.data.advanced.PcFlashFirmwareRepository
 import com.qimian233.ztool.data.advanced.PersistentResetDetail
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
 import com.qimian233.ztool.dexindex.base.DexIndexManager
@@ -21,10 +23,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AdvancedSettingsViewModel(
-    private val repository: AdvancedSettingsRepository = AdvancedSettingsRepository()
+    private val repository: AdvancedSettingsRepository = AdvancedSettingsRepository(),
+    private val firmwareRepository: PcFlashFirmwareRepository? = null
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AdvancedSettingsUiState())
     val uiState: StateFlow<AdvancedSettingsUiState> = _uiState.asStateFlow()
+
+    private val _firmwareUiState = MutableStateFlow(PcFlashFirmwareUiState())
+    val firmwareUiState: StateFlow<PcFlashFirmwareUiState> = _firmwareUiState.asStateFlow()
 
     private val _dexIndexState = MutableStateFlow(DexIndexRefreshUiState())
     val dexIndexState: StateFlow<DexIndexRefreshUiState> = _dexIndexState.asStateFlow()
@@ -36,6 +42,7 @@ class AdvancedSettingsViewModel(
                 _dexIndexState.value = _dexIndexState.value.copy(progress = p)
             }
         }
+        loadCurrentSn()
     }
 
     fun refresh() {
@@ -217,10 +224,65 @@ class AdvancedSettingsViewModel(
         }
     }
 
+    private fun loadCurrentSn() {
+        val firmwareRepository = firmwareRepository ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val sn = firmwareRepository.loadCurrentSn()
+            _firmwareUiState.value = _firmwareUiState.value.copy(
+                currentSn = sn.orEmpty(),
+                snInput = if (_firmwareUiState.value.snInput.isEmpty() && !sn.isNullOrEmpty()) {
+                    sn
+                } else {
+                    _firmwareUiState.value.snInput
+                }
+            )
+        }
+    }
+
+    fun setFirmwareSnInput(value: String) {
+        _firmwareUiState.value = _firmwareUiState.value.copy(snInput = value)
+    }
+
+    fun fetchFirmware(emptySnMessage: String) {
+        val firmwareRepository = firmwareRepository ?: return
+        val sn = _firmwareUiState.value.snInput.trim().ifEmpty { _firmwareUiState.value.currentSn }
+        if (sn.isEmpty()) {
+            _firmwareUiState.value = _firmwareUiState.value.copy(errorDialogMessage = emptySnMessage)
+            return
+        }
+
+        _firmwareUiState.value = _firmwareUiState.value.copy(isFetching = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = firmwareRepository.fetchFirmware(sn)
+            _firmwareUiState.value = when (result) {
+                is FirmwareFetchResult.Failure -> _firmwareUiState.value.copy(
+                    isFetching = false,
+                    errorDialogMessage = result.message
+                )
+                is FirmwareFetchResult.Success -> _firmwareUiState.value.copy(
+                    isFetching = false,
+                    firmwareResult = result.firmware
+                )
+            }
+        }
+    }
+
+    fun dismissFirmwareErrorDialog() {
+        _firmwareUiState.value = _firmwareUiState.value.copy(errorDialogMessage = null)
+    }
+
     companion object {
         private const val TAG = "AdvancedVM"
     }
 }
+
+data class PcFlashFirmwareUiState(
+    val snInput: String = "",
+    val currentSn: String = "",
+    val isFetching: Boolean = false,
+    val firmwareResult: com.qimian233.ztool.data.advanced.FirmwareResult? = null,
+    val errorDialogMessage: String? = null
+)
 
 data class AdvancedSettingsUiState(
     val apiVersion: Int = 0,
