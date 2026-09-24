@@ -286,7 +286,7 @@
     <string name="common_font_author">Import By ZTool</string>
     <string name="common_font_preview_text">Quote\n\n   He who fights with monsters should be careful lest he thereby become a monster;\n   and if thou gaze long into an abyss, the abyss will also gaze into thee.\n\n           ---Friedrich Nietzsche</string>
     <string name="settings_zui_force_config_title">Floating window and split screen</string>
-    <string name="settings_zui_force_config_summary">Requires a system reboot. This configuration has high priority and overrides all user and system configurations. Unchecked apps keep the system default behavior.</string>
+    <string name="settings_zui_force_config_summary">This configuration has high priority and overrides all user and system configurations. Unchecked apps keep the system default behavior.</string>
     <string name="settings_zui_force_split_title">Force split-screen support</string>
     <string name="settings_zui_force_split_summary">Modify system configuration files to force selected apps to support split screen.</string>
     <string name="settings_zui_force_freeform_title">Force freeform floating window</string>
@@ -357,7 +357,7 @@
     <string name="settings_float_app_mandatory">Force floating window</string>
     <string name="settings_float_app_mandatory_summary">Force all apps to run in floating windows. Android 15 and below only.</string>
     <string name="settings_split_screen_mandatory_title">Force split screen</string>
-    <string name="settings_split_screen_mandatory_summary">Force all apps to support split screen. Android 15 and below only. Requires a system reboot.</string>
+    <string name="settings_split_screen_mandatory_summary">Force all apps to support split screen. Android 15 and below only.</string>
     <string name="settings_font_settings_title">Fonts</string>
     <string name="settings_import_font_title">Import font</string>
     <string name="settings_import_font_summary">Supports TTF format. Imports fonts into the system font manager.</string>
@@ -411,7 +411,7 @@
     <string name="system_ui_misc_aosp_scroll_capture_title">AOSP long screenshot</string>
     <string name="system_ui_misc_aosp_scroll_capture_summary">Use AOSP screenshot infrastructure to keep long screenshot available. Does not guarantee good capture results.</string>
     <string name="system_ui_misc_shade_rebound_fix_title">Fix shade rebound delay</string>
-    <string name="system_ui_misc_shade_rebound_fix_summary">Replace the ZUI custom spring fling with the standard AOSP shade animation to remove the delayed rebound. Requires a SystemUI restart.</string>
+    <string name="system_ui_misc_shade_rebound_fix_summary">Replace the ZUI custom spring fling with the standard AOSP shade animation to remove the delayed rebound.</string>
     <string name="system_ui_status_bar_clock_settings_title">Status bar clock settings</string>
     <string name="system_ui_status_bar_display_seconds_title">Show seconds</string>
     <string name="system_ui_status_bar_display_seconds_summary">Show seconds in the status bar clock.</string>
@@ -442,9 +442,9 @@
     <string name="system_ui_status_bar_syatus_battery_external_summary">Show remaining battery percentage to the right of the battery icon. Disable the system percentage display first.</string>
     <string name="system_ui_lock_screen_widgets_title">Lockscreen widgets</string>
     <string name="system_ui_lock_screen_yi_yan_switch_title">Random lock screen signature</string>
-    <string name="system_ui_lock_screen_yi_yan_summary">Show random text fetched from the network on the lock screen. Reboot to take effect.</string>
+    <string name="system_ui_lock_screen_yi_yan_summary">Show random text fetched from the network on the lock screen.</string>
     <string name="system_ui_animation_charge_anim_duration_title">Custom charging animation duration</string>
-    <string name="system_ui_animation_charge_anim_duration_summary">Change how long the lock screen charging animation plays. Requires a SystemUI restart</string>
+    <string name="system_ui_animation_charge_anim_duration_summary">Change how long the lock screen charging animation plays.</string>
     <string name="system_ui_animation_charge_anim_duration_slider_title">Animation duration</string>
     <string name="system_ui_animation_charge_anim_duration_slider_summary">Controls the timeout that ends the charging animation</string>
     <string name="system_ui_animation_charge_anim_duration_value">%.1f s</string>
@@ -517,9 +517,9 @@
     <string name="system_ui_common_select_font_color_title">Select text color</string>
     <string name="system_ui_status_bar_clock_format_help_title">Clock Format Help</string>
     <string name="system_ui_common_copy_example_button">Copy example</string>
-    <string name="system_ui_status_bar_clock_format_quick_help_summary">Enter a time format to preview it directly. Common format symbols are case-sensitive. Restart the scope after saving.</string>
+    <string name="system_ui_status_bar_clock_format_quick_help_summary">Enter a time format to preview it directly. Common format symbols are case-sensitive.</string>
     <string name="system_ui_status_bar_clock_format_quick_help_note">You can also use yyyy, MM, and dd when a date is needed. Lunar calendar and traditional time symbols are shown only in supported system UI.</string>
-    <string name="system_ui_control_center_date_format_quick_help_summary">Enter a date format to preview it directly. Common format symbols are case-sensitive. Restart the scope after saving.</string>
+    <string name="system_ui_control_center_date_format_quick_help_summary">Enter a date format to preview it directly. Common format symbols are case-sensitive.</string>
     <string name="system_ui_control_center_date_format_quick_help_note">You can also combine time fields, such as HH:mm. Lunar calendar and solar term symbols are shown only in supported system UI.</string>
     <string name="system_ui_control_center_format_help_year">Year</string>
     <string name="system_ui_control_center_format_help_month">Month</string>
@@ -571,7 +571,7 @@
     <string name="launcher_app_icon_unmask_dynamic_title">Include dynamic icons</string>
     <string name="launcher_app_icon_unmask_dynamic_summary">Also render clock and other dynamic icons in original style. Note: rebuilding them as static bitmaps freezes the clock hands</string>
     <string name="launcher_wide_grid_title">Widen desktop grid</string>
-    <string name="launcher_wide_grid_summary">Extend the icon grid towards the left and right screen edges to use the full desktop width. Restart the launcher to apply</string>
+    <string name="launcher_wide_grid_summary">Extend the icon grid towards the left and right screen edges to use the full desktop width.</string>
     <string name="launcher_wide_grid_square_title">Square grid cells</string>
     <string name="launcher_wide_grid_square_summary">Compute the side margin automatically so grid cells are square. Overrides the side margin slider below</string>
     <string name="launcher_wide_grid_side_inset_title">Side margin</string>
@@ -607,7 +607,7 @@
     <string name="sogou_ime_app_name">Sogou IME (Lenovo OEM)</string>
     <string name="sogou_ime_app_description">IME enhancements: forced half-width symbol output, punctuation intervention, etc.</string>
     <string name="sogou_ime_punct_section_title">Punctuation</string>
-    <string name="system_framework_half_width_punct_summary">In Chinese mode, symbols in the list are always committed half-width (IME restart required). Defaults to #*-+=, matching PC IME conventions; pure CJK punctuation (。，《》 etc.) is unaffected.</string>
+    <string name="system_framework_half_width_punct_summary">In Chinese mode, symbols in the list are always committed half-width. Defaults to #*-+=, matching PC IME conventions; pure CJK punctuation (。，《》 etc.) is unaffected.</string>
     <string name="system_framework_half_width_punct_hint">Symbols to force half-width</string>
     <string name="system_framework_half_width_punct_supporting">Full/half-width are equivalent; bracket pairs apply as a pair. Example: #*-+=</string>
     <string name="system_framework_screen_and_display_title">Screen and Display</string>
@@ -625,23 +625,23 @@
     <string name="system_framework_pkgmgr_section_title">Package manager service</string>
     <string name="system_framework_pkgmgr_android16_note">Note: the Core Patch feature set is only adapted for Android 16. It may not work or cause unexpected behavior on other system versions.</string>
     <string name="system_framework_pkgmgr_allow_downgrade_title">Allow downgrade installs</string>
-    <string name="system_framework_pkgmgr_allow_downgrade_summary">Skip the versionCode check and allow installing APKs with a lower versionCode than the installed one. Reboot required.</string>
+    <string name="system_framework_pkgmgr_allow_downgrade_summary">Skip the versionCode check and allow installing APKs with a lower versionCode than the installed one.</string>
     <string name="system_framework_pkgmgr_bypass_verification_title">Bypass signature verification</string>
-    <string name="system_framework_pkgmgr_bypass_verification_summary">Skip signature and digest checks during installation and allow installing modified APKs. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_verification_summary">Skip signature and digest checks during installation and allow installing modified APKs.</string>
     <string name="system_framework_pkgmgr_disable_verification_agent_title">Disable install verification agent</string>
-    <string name="system_framework_pkgmgr_disable_verification_agent_summary">No longer send verification requests to verification agents during installation. Reboot required.</string>
+    <string name="system_framework_pkgmgr_disable_verification_agent_summary">No longer send verification requests to verification agents during installation.</string>
     <string name="system_framework_pkgmgr_bypass_digest_title">Bypass signing identity checks</string>
-    <string name="system_framework_pkgmgr_bypass_digest_summary">Ignore signing certificate changes on upgrade and allow installing with a different signature. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_digest_summary">Ignore signing certificate changes on upgrade and allow installing with a different signature.</string>
     <string name="system_framework_pkgmgr_use_previous_signatures_title">Reuse installed app signatures</string>
     <string name="system_framework_pkgmgr_use_previous_signatures_summary">Reuse the installed version\'s signature records for signature permission checks. Requires bypassing signing identity checks first.</string>
     <string name="system_framework_pkgmgr_bypass_exact_sig_match_title">Bypass exact signature match</string>
-    <string name="system_framework_pkgmgr_bypass_exact_sig_match_summary">Treat signatures as an exact match with the installed version. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_exact_sig_match_summary">Treat signatures as an exact match with the installed version.</string>
     <string name="system_framework_pkgmgr_bypass_shared_user_title">Bypass sharedUserId signature restriction</string>
-    <string name="system_framework_pkgmgr_bypass_shared_user_summary">Allow apps with different signatures to join the same sharedUserId. Requires bypassing signing identity checks. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_shared_user_summary">Allow apps with different signatures to join the same sharedUserId. Requires bypassing signing identity checks.</string>
     <string name="system_framework_pkgmgr_allow_hidden_apis_title">Allow hidden APIs for system apps</string>
-    <string name="system_framework_pkgmgr_allow_hidden_apis_summary">Allow hidden API access for system apps not signed with the platform key. Reboot required.</string>
+    <string name="system_framework_pkgmgr_allow_hidden_apis_summary">Allow hidden API access for system apps not signed with the platform key.</string>
     <string name="system_framework_pkgmgr_bypass_arsc_title">Bypass resources.arsc restriction</string>
-    <string name="system_framework_pkgmgr_bypass_arsc_summary">Allow installing APKs whose resources.arsc does not meet the uncompressed and alignment requirements. Reboot required.</string>
+    <string name="system_framework_pkgmgr_bypass_arsc_summary">Allow installing APKs whose resources.arsc does not meet the uncompressed and alignment requirements.</string>
     <string name="safe_center_bypass_docements_ui">Allow selecting user root directory</string>
     <string name="safe_center_bypass_docements_ui_summary">Fixes "Cannot use this folder" and allows selection operations in restricted directories such as /storage/emulated/0/.</string>
     <string name="safe_center_default_allow_autorun_title">Background behavior management</string>
@@ -940,7 +940,7 @@
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">Uninstall</string>
     <string name="tile_media_output_label">Media output</string>
     <string name="system_ui_media_output_dialog_center_title">Center media output dialog</string>
-    <string name="system_ui_media_output_dialog_center_summary">Fixes the output switcher dialog launched from the Media output tile sticking to the left edge of the screen. Requires a SystemUI restart</string>
+    <string name="system_ui_media_output_dialog_center_summary">Fixes the output switcher dialog launched from the Media output tile sticking to the left edge of the screen.</string>
     <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">No uninstallable apps in the selection</string>
     <string name="system_ui_animation_wallpaper_title_suffix">\ - Animation &amp; wallpaper</string>
     <string name="system_ui_animation_wallpaper_setting_title">Animation &amp; wallpaper</string>
