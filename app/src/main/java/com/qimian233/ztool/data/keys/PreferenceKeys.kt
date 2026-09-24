@@ -30,6 +30,7 @@ object PreferenceKeys {
     val KEEP_ROTATION = BoolKey("keep_rotation", false)
     val ALLOW_RELATIVE_APP_LAUNCH = BoolKey("allow_relative_app_launch", false)
     val FORCE_RELATIVE_APP_FREEFORM = BoolKey("force_relative_app_freeform", false)
+    val LAUNCHER_FORCE_FREEFORM_ENTRY = BoolKey("launcher_force_freeform_entry", false)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
     // One-shot maintenance action marker: clears stale ZUI night-mode override
     // (ui_night_mode_override_on/off) via root; not read by any hook module
@@ -286,6 +287,7 @@ object PreferenceKeys {
         DISABLE_FLAG_SECURE, ALLOW_GET_PACKAGES,
         ALLOW_UNTRUSTED_TOUCH, FORCE_SCREEN_ON_OFF_ANIMATION, AI_INPUT_EXPAND,
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
+        LAUNCHER_FORCE_FREEFORM_ENTRY,
         DISABLE_HBM_THERMAL_LIMIT, FIX_NIGHT_MODE_OVERRIDE,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
         PKG_MGR_DISABLE_VERIFICATION_AGENT, PKG_MGR_BYPASS_DIGEST,

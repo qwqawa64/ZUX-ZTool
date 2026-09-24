@@ -1232,6 +1232,10 @@ object SearchIndex {
             titleRes = R.string.launcher_disable_recent_app_display
         ),
         launcher.item(
+            id = "launcher_force_freeform_entry",
+            titleRes = R.string.launcher_force_freeform_entry_title
+        ),
+        launcher.item(
             id = "launcher_larger_dock",
             titleRes = R.string.launcher_larger_dock_title,
             parentTitleRes = R.string.launcher_disable_dock_bar_title,

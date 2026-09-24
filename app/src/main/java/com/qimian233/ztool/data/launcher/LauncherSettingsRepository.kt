@@ -28,6 +28,7 @@ class LauncherSettingsRepository(
             forceStopMode = forceStopMode,
             forceStopWhitelist = loadForceStopWhitelist(),
             moreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false),
+            forceFreeformEntry = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, false),
             customGridSize = prefsUtils.loadBooleanSetting(KEY_CUSTOM_GRID_SIZE, false),
             customGridRow = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LAUNCHER_ROW, DEFAULT_ROW)
                 .coerceIn(GRID_MIN, GRID_MAX),
@@ -84,6 +85,10 @@ class LauncherSettingsRepository(
 
     fun saveMoreBigDock(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, enabled)
+    }
+
+    fun saveForceFreeformEntry(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, enabled)
     }
 
     fun saveCustomGridSize(enabled: Boolean) {
@@ -246,6 +251,7 @@ class LauncherSettingsRepository(
         private val KEY_FORCE_STOP_WHITE_LIST_ENABLE = PreferenceKeys.FORCE_STOP_WHITE_LIST_ENABLE.name
         private val KEY_FORCE_STOP_WHITE_LIST = PreferenceKeys.FORCE_STOP_WHITE_LIST.name
         private val KEY_ZUI_LAUNCHER_HOTSEAT = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
+        private val KEY_LAUNCHER_FORCE_FREEFORM_ENTRY = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
         private val KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT_BACKUP.name
         private val KEY_CUSTOM_GRID_SIZE = PreferenceKeys.CUSTOM_GRID_SIZE.name
         private val KEY_CUSTOM_LAUNCHER_ROW = PreferenceKeys.CUSTOM_LAUNCHER_ROW.name

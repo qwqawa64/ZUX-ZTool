@@ -961,6 +961,8 @@
     <string name="system_framework_allow_relative_app_launch_title">总是允许关联 APP 启动</string>
     <string name="system_framework_force_relative_app_freeform_title">关联启动时强制小窗打开</string>
     <string name="launcher_disable_recent_app_display">在 Dock 栏隐藏最近使用的 APP</string>
+    <string name="launcher_force_freeform_entry_title">所有应用显示小窗入口</string>
+    <string name="launcher_force_freeform_entry_summary">跳过系统小窗白名单与客户端开关判断，在最近任务菜单中为所有应用显示小窗入口</string>
 
     <!--桌面动态壁纸页资源值-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">桌面动态壁纸</string>

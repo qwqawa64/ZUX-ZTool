@@ -48,6 +48,11 @@ class LauncherSettingsViewModel(
         repository.saveMoreBigDock(enabled)
     }
 
+    fun setForceFreeformEntry(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(forceFreeformEntry = enabled)
+        repository.saveForceFreeformEntry(enabled)
+    }
+
     fun setCustomGridSize(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(customGridSize = enabled)
         repository.saveCustomGridSize(enabled)
@@ -222,6 +227,7 @@ data class LauncherSettingsUiState(
     val forceStopMode: ForceStopMode = ForceStopMode.Default,
     val forceStopWhitelist: List<String> = emptyList(),
     val moreBigDock: Boolean = false,
+    val forceFreeformEntry: Boolean = false,
     val customGridSize: Boolean = false,
     val customGridRow: Int = 4,
     val customGridColumn: Int = 6,

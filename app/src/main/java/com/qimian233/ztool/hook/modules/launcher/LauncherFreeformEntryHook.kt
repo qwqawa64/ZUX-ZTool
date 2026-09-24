@@ -1,29 +1,29 @@
 package com.qimian233.ztool.hook.modules.launcher
 
 import android.annotation.SuppressLint
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 
 /**
- * Test hook (launcher side): forces ZUI Launcher's freeform (small window) entry
- * checks to always pass, and logs the original results.
+ * Forces ZUI Launcher's freeform (small window) entry checks to always pass.
  *
  * The recents long-press menu entry is gated by
  * com.zui.launcher.utils.FreeformUtilities.isPackageSupportZuiFreeform(...), which
  * requires ENABLE_ZUI_FREEFORM, CommercialManager.isOVFeatureEnable(),
  * zui.permission.OVFREEFORM_CLIENT and default display before asking the
- * "ovcommon" binder service. Other entries (sidebar/freeform bar) go through
- * isTaskSupportSmallWindow(...), which additionally consults the client-side static
- * deny set inStaticDenyOvcDcvSet(...) read from framework-res
- * config_ovcDcv_StaticDenySet. All three are bypassed here.
- *
- * Module name is "hook_test" so it always runs without a frontend switch.
+ * "ovcommon" binder service (whose server-side implementation does NOT go through
+ * OvCommonCompatManager.supportsOvFreeform on current builds). Other entries
+ * (sidebar/freeform bar) go through isTaskSupportSmallWindow(...), which
+ * additionally consults the client-side static deny set
+ * inStaticDenyOvcDcvSet(...) read from framework-res config_ovcDcv_StaticDenySet.
+ * All three are bypassed here; the original results are logged at debug level.
  */
 @SuppressLint("PrivateApi")
 class LauncherFreeformEntryHook : AppHookModule() {
-    override fun getModuleName(): String = "hook_test"
+    override fun getModuleName(): String = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
 
     override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.LAUNCHER.packageName)
