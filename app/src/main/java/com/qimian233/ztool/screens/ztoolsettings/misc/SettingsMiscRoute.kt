@@ -47,8 +47,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
-import com.qimian233.ztool.data.advanced.FirmwareResult
-import com.qimian233.ztool.data.advanced.PcFlashFirmwareRepository
+import com.qimian233.ztool.data.misc.FirmwareResult
+import com.qimian233.ztool.data.misc.PcFlashFirmwareRepository
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
@@ -64,8 +64,8 @@ import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import com.qimian233.ztool.viewmodel.AdvancedSettingsViewModel
-import com.qimian233.ztool.viewmodel.AdvancedSettingsUiState
+import com.qimian233.ztool.viewmodel.MiscSettingsUiState
+import com.qimian233.ztool.viewmodel.MiscSettingsViewModel
 import com.qimian233.ztool.viewmodel.PcFlashFirmwareUiState
 
 /**
@@ -87,12 +87,13 @@ fun SettingsMiscRoute(
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return AdvancedSettingsViewModel(
-                        firmwareRepository = PcFlashFirmwareRepository(context.applicationContext)
-                    ) as T
+                return MiscSettingsViewModel(
+                    context = context.applicationContext,
+                    firmwareRepository = PcFlashFirmwareRepository(context.applicationContext)
+                ) as T
                 }
             }
-        )[AdvancedSettingsViewModel::class.java]
+        )[MiscSettingsViewModel::class.java]
     }
     val uiState by viewModel.uiState.collectAsState()
     val firmwareUiState by viewModel.firmwareUiState.collectAsState()
@@ -153,7 +154,7 @@ fun SettingsMiscRoute(
             firmwareState = firmwareUiState,
             onBack = onBack,
             onDeleteOtaPackageClick = { viewModel.showDeleteOtaPackageConfirmDialog() },
-            onFixNightModeOverride = { viewModel.fixNightModeOverride(context) },
+            onFixNightModeOverride = viewModel::fixNightModeOverride,
             onOpenEngineeringCodes = onOpenEngineeringCodes,
             onFirmwareSnChanged = viewModel::setFirmwareSnInput,
             onFetchFirmware = { viewModel.fetchFirmware(snDefaultHint) },
@@ -179,7 +180,7 @@ fun SettingsMiscRoute(
 
 @Composable
 private fun SettingsMiscScreen(
-    state: AdvancedSettingsUiState,
+    state: MiscSettingsUiState,
     firmwareState: PcFlashFirmwareUiState,
     onBack: () -> Unit,
     onDeleteOtaPackageClick: () -> Unit,
@@ -238,7 +239,7 @@ private fun SettingsMiscScreen(
 
 @Composable
 private fun miscSettingsSections(
-    state: AdvancedSettingsUiState,
+    state: MiscSettingsUiState,
     firmwareState: PcFlashFirmwareUiState,
     onDeleteOtaPackageClick: () -> Unit,
     onFixNightModeOverride: () -> Unit,

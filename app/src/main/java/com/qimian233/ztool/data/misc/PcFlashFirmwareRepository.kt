@@ -1,4 +1,4 @@
-package com.qimian233.ztool.data.advanced
+package com.qimian233.ztool.data.misc
 
 import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
