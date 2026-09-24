@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Category
@@ -182,6 +183,7 @@ fun SettingsMainRoute(
             onOpenLanguageSettings = { openAppLanguageSettings(context) },
             onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
             onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
+            onShowAllAppsChanged = viewModel::setShowAllAppsEnabled,
             onAbout = {
                 showRestoreConfirmDialog = false
                 onOpenAbout()
@@ -312,6 +314,7 @@ private fun SettingsRoute(
     onOpenThemeSettings: () -> Unit,
     onOpenLanguageSettings: () -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
+    onShowAllAppsChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
@@ -367,6 +370,7 @@ private fun SettingsRoute(
                         onOpenThemeSettings = onOpenThemeSettings,
                         onOpenLanguageSettings = onOpenLanguageSettings,
                         onEntryDisplayChanged = onEntryDisplayChanged,
+                        onShowAllAppsChanged = onShowAllAppsChanged,
                         onDetailedLoggingChanged = onDetailedLoggingChanged,
                         onAbout = onAbout,
                         onExportLogs = onExportLogs,
@@ -392,6 +396,7 @@ private fun settingsSections(
     onOpenThemeSettings: () -> Unit,
     onOpenLanguageSettings: () -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
+    onShowAllAppsChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
@@ -455,6 +460,14 @@ private fun settingsSections(
                     checked = state.isEntryDisplayedInSettings,
                     onCheckedChange = onEntryDisplayChanged,
                     icon = Icons.AutoMirrored.Rounded.OpenInNew
+                ),
+                SettingItem.Switch(
+                    key = "app_settings_show_all_apps",
+                    title = stringResource(R.string.page_settings_show_all_apps),
+                    summary = stringResource(R.string.page_settings_show_all_apps_summary),
+                    checked = state.isShowAllAppsEnabled,
+                    onCheckedChange = onShowAllAppsChanged,
+                    icon = Icons.Rounded.Apps
                 ),
                 SettingItem.Switch(
                     key = "app_settings_auto_check_update",

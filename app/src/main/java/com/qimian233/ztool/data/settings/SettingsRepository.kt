@@ -28,6 +28,7 @@ class SettingsRepository(
         return SettingsUiState(
             isDetailedLoggingEnabled = prefsUtils.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
             isEntryDisplayedInSettings = prefsUtils.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
+            isShowAllAppsEnabled = prefsUtils.loadBooleanSetting(KEY_SHOW_ALL_APPS, false),
             versionName = getVersionName(),
             commitCount = BuildConfig.GIT_COMMIT_COUNT,
             commitHash = BuildConfig.GIT_COMMIT_HASH,
@@ -63,6 +64,10 @@ class SettingsRepository(
 
     fun setEntryInSettingsEnabled(isEnabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, isEnabled)
+    }
+
+    fun setShowAllAppsEnabled(isEnabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_SHOW_ALL_APPS, isEnabled)
     }
 
     fun setAutoCheckUpdateEnabled(enabled: Boolean) {
@@ -149,6 +154,7 @@ class SettingsRepository(
         private const val TAG = "SettingsRepository"
         private val KEY_DETAILED_LOGGING = PreferenceKeys.IS_DETAILED_LOGGING.name
         private val KEY_DISPLAY_ENTRY_IN_SETTINGS = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
+        private val KEY_SHOW_ALL_APPS = PreferenceKeys.ZTOOL_SETTINGS_SHOW_ALL_APPS.name
         private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name
     }
 

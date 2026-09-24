@@ -1347,6 +1347,11 @@ object SearchIndex {
             summaryRes = R.string.page_settings_display_entry_in_settings_summary
         ),
         appSettings.item(
+            id = "app_settings_show_all_apps",
+            titleRes = R.string.page_settings_show_all_apps,
+            summaryRes = R.string.page_settings_show_all_apps_summary
+        ),
+        appSettings.item(
             id = "app_settings_auto_check_update",
             titleRes = R.string.page_settings_auto_check_update_title
         ),

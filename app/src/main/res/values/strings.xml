@@ -872,6 +872,8 @@
     <string name="page_home_non_zuxos_dismiss">不再提示</string>
     <string name="page_settings_display_entry_in_settings">在设置中显示入口</string>
     <string name="page_settings_display_entry_in_settings_summary">需要重启系统设置 APP</string>
+    <string name="page_settings_show_all_apps">显示全部应用</string>
+    <string name="page_settings_show_all_apps_summary">在功能面板显示被冻结或卸载的应用</string>
     <string name="system_ui_control_center_show_brightness_slider_percentage">显示亮度滑动条百分比</string>
     <string name="system_ui_control_center_show_volume_slider_percentage">显示音量滑动条百分比</string>
     <string name="system_ui_control_center_long_press_title">控制中心长按动效</string>

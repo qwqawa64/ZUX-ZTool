@@ -69,6 +69,11 @@ class SettingsViewModel(
         repository.setEntryInSettingsEnabled(isEnabled)
     }
 
+    fun setShowAllAppsEnabled(isEnabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isShowAllAppsEnabled = isEnabled)
+        repository.setShowAllAppsEnabled(isEnabled)
+    }
+
     fun setAutoCheckUpdateEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(isAutoCheckUpdateEnabled = enabled)
         repository.setAutoCheckUpdateEnabled(enabled)
@@ -210,6 +215,7 @@ class SettingsViewModel(
 data class SettingsUiState(
     val isDetailedLoggingEnabled: Boolean = false,
     val isEntryDisplayedInSettings: Boolean = false,
+    val isShowAllAppsEnabled: Boolean = false,
     val showRestoreConfirmDialog: Boolean = false,
     val versionName: String = "",
     val commitCount: Int = 0,

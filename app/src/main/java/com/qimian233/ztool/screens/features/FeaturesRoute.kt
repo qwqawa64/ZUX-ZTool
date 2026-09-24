@@ -47,6 +47,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.qimian233.ztool.R
 import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.keys.ScopeKeys
+import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
@@ -82,6 +83,9 @@ fun FeaturesMainRoute(
     val context = LocalContext.current
     val allItems = rememberFeatureItems(context)
     val installedPackages = rememberInstalledPackages(context)
+    val showAllApps = remember(context) {
+        SettingsRepository(context.applicationContext).loadState().isShowAllAppsEnabled
+    }
     var scopeSet by remember { mutableStateOf(XposedServiceBridge.getScope().toSet()) }
     val scopeRequestFailReason = stringResource(R.string.page_features_scope_request_fail_message)
     // "system" is the LSPosed system-server scope entry — not a real installed package
@@ -91,7 +95,7 @@ fun FeaturesMainRoute(
     // result state toggles.
     var searchExpanded by remember { mutableStateOf(false) }
 
-    val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet) {
+    val (visibleItems, warningMessageRes) = remember(allItems, installedPackages, scopeSet, showAllApps) {
         val scopedItems = allItems.map { item ->
             item.copy(inScope = item.scopePackages
                 .filter { it in installedPackages || it in systemScopePackages }
@@ -100,12 +104,13 @@ fun FeaturesMainRoute(
         val visible = scopedItems.filter { item ->
             item.alwaysVisible || item.packageName in installedPackages
         }
-        if (installedPackages.isEmpty()) {
-            scopedItems to R.string.page_features_app_list_permission_warning
-        } else if (visible.isEmpty()) {
-            scopedItems to R.string.page_features_all_filtered_warning
-        } else {
-            visible to null
+        when {
+            showAllApps -> scopedItems to null
+            installedPackages.isEmpty() ->
+                scopedItems to R.string.page_features_app_list_permission_warning
+            visible.isEmpty() ->
+                scopedItems to R.string.page_features_all_filtered_warning
+            else -> visible to null
         }
     }
 
