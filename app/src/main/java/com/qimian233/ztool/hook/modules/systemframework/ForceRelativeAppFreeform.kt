@@ -68,8 +68,7 @@ class ForceRelativeAppFreeform: SystemHookModule() {
                             "resolveLauncherPackages: query ACTION_MAIN|HOME|DEFAULT -> $pkgs" +
                                 " (cached=${pkgs.isNotEmpty()})"
                         )
-                        return if (pkgs.isNotEmpty()) pkgs
-                        else setOf(ScopeKeys.LAUNCHER.packageName)
+                        return pkgs.ifEmpty { setOf(ScopeKeys.LAUNCHER.packageName) }
                     }
                     log("resolveLauncherPackages: mContext field resolved to null, fallback")
                 } catch (e: Exception) {
@@ -120,31 +119,18 @@ class ForceRelativeAppFreeform: SystemHookModule() {
 
             val launchers = resolveLauncherPackages(chain.thisObject) { logger.debug(it) }
 
-            // Reliable "launched from a visible foreground context" signal: the framework's
-            // own ZuiWmAutoRunManager.isTopAppPackage(callingPackage) reports whether the
-            // caller currently owns a visible task or the focused window. A launcher icon
-            // tap always satisfies this; a background relative-start usually does not.
-            val callerIsTop = try {
-                val isTopMethod = findMethod(
-                    chain.thisObject.javaClass, "isTopAppPackage", String::class.java)
-                isTopMethod.invoke(chain.thisObject, callingPackage) as Boolean
-            } catch (e: Exception) {
-                logger.debug("isTopAppPackage lookup failed: ${e.javaClass.simpleName}: ${e.message}")
-                null // unknown — fall back to launcher-set exclusion only
-            }
-
             // Inject freeform only for cross-app relative launches.
-            // Excluded: same-package self launches, launchers, and callers that are
-            // currently the top/visible app (e.g. launched from the home screen).
+            // Excluded: same-package self launches and launcher-resolved launches.
+            // NOTE: isTopAppPackage() is NOT usable here — the sender of a genuine
+            // relative start (e.g. QQ -> Bilibili deep link) is itself the visible
+            // top app, so a top-app check suppresses every classic use case.
             val isRelativeLaunch = callingPackage != null
                 && callingPackage != targetPackage
                 && callingPackage !in launchers
-                && callerIsTop != true
 
             logger.debug(
                 "relative-start check: caller=$callingPackage target=$targetPackage" +
-                    " launchers=$launchers callerIsTop=$callerIsTop" +
-                    " intent=($intent) inject=$isRelativeLaunch"
+                    " launchers=$launchers intent=($intent) inject=$isRelativeLaunch"
             )
 
             if (isRelativeLaunch) {
