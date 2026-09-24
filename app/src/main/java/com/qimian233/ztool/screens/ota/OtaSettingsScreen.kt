@@ -51,11 +51,9 @@ import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
-import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
 import com.qimian233.ztool.viewmodel.OtaSettingsViewModel
@@ -80,7 +78,6 @@ fun OtaSettingsRoute(
     }
     val unknownText = stringResource(R.string.common_unknown)
     val otaInfoFetchFailed = stringResource(R.string.system_update_ota_info_fetch_failed)
-    val snDefaultHint = stringResource(R.string.system_update_sn_default_hint)
     val clipboardLabel = stringResource(R.string.system_update_ota_info_clipboard_label)
 
     LaunchedEffect(viewModel) {
@@ -116,10 +113,6 @@ fun OtaSettingsRoute(
             onFetchOtaInfo = {
                 viewModel.fetchOtaInfo(otaInfoFetchFailed)
             },
-            onFirmwareSnChanged = viewModel::setFirmwareSnInput,
-            onFetchFirmware = {
-                viewModel.fetchFirmware(snDefaultHint)
-            },
             onCopyDownloadLink = {
                 copyToClipboard(it)
                 Toast.makeText(context, R.string.system_update_download_link_copied, Toast.LENGTH_SHORT).show()
@@ -127,10 +120,6 @@ fun OtaSettingsRoute(
             onCopyChangelog = {
                 copyToClipboard(it)
                 Toast.makeText(context, R.string.system_update_changelog_copied, Toast.LENGTH_SHORT).show()
-            },
-            onCopyPassword = {
-                copyToClipboard(it)
-                Toast.makeText(context, R.string.system_update_password_copied, Toast.LENGTH_SHORT).show()
             },
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
@@ -183,11 +172,8 @@ private fun OtaSettingsScreen(
     onBlockOtaInstallDialogChanged: (Boolean) -> Unit,
     onDisableOtaNotificationAndRedDot: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
-    onFirmwareSnChanged: (String) -> Unit,
-    onFetchFirmware: () -> Unit,
     onCopyDownloadLink: (String) -> Unit,
     onCopyChangelog: (String) -> Unit,
-    onCopyPassword: (String) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -230,11 +216,8 @@ private fun OtaSettingsScreen(
                         onDisableOtaCheckChanged = onDisableOtaCheckChanged,
                         onHideOtaUpdateHintChanged = onHideOtaUpdateHintChanged,
                         onFetchOtaInfo = onFetchOtaInfo,
-                        onFirmwareSnChanged = onFirmwareSnChanged,
-                        onFetchFirmware = onFetchFirmware,
                         onCopyDownloadLink = onCopyDownloadLink,
                         onCopyChangelog = onCopyChangelog,
-                        onCopyPassword = onCopyPassword,
                         onDisableOtaAutoInstallChanged = onDisableOtaAutoInstallChanged,
                         onBlockOtaInstallDialogChanged = onBlockOtaInstallDialogChanged,
                         onDisableOtaNotificationAndRedDot = onDisableOtaNotificationAndRedDot
@@ -256,11 +239,8 @@ private fun otaSettingsSections(
     onBlockOtaInstallDialogChanged: (Boolean) -> Unit,
     onDisableOtaNotificationAndRedDot: (Boolean) -> Unit,
     onFetchOtaInfo: () -> Unit,
-    onFirmwareSnChanged: (String) -> Unit,
-    onFetchFirmware: () -> Unit,
     onCopyDownloadLink: (String) -> Unit,
-    onCopyChangelog: (String) -> Unit,
-    onCopyPassword: (String) -> Unit
+    onCopyChangelog: (String) -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -314,26 +294,6 @@ private fun otaSettingsSections(
                         )
                     },
                     key = "ota_info_fetch"
-                )
-            )
-        ),
-        SettingSection(
-            title = stringResource(R.string.system_update_pc_flash_firmware_fetch_title),
-            items = listOf(
-                SettingItem.Custom(
-                    content = {
-                        FirmwareContent(
-                            sn = state.firmwareSnInput,
-                            currentSn = state.currentSn,
-                            isFetching = state.isFetchingFirmware,
-                            result = state.firmwareResult,
-                            onSnChanged = onFirmwareSnChanged,
-                            onFetch = onFetchFirmware,
-                            onCopyDownloadLink = onCopyDownloadLink,
-                            onCopyPassword = onCopyPassword
-                        )
-                    },
-                    key = "ota_pc_flash_firmware_fetch"
                 )
             )
         ),
@@ -449,119 +409,6 @@ private fun OtaInfoContent(
                         isPrimary = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FirmwareContent(
-    sn: String,
-    currentSn: String,
-    isFetching: Boolean,
-    result: FirmwareResult?,
-    onSnChanged: (String) -> Unit,
-    onFetch: () -> Unit,
-    onCopyDownloadLink: (String) -> Unit,
-    onCopyPassword: (String) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.system_update_pc_flash_firmware_fetch_summary),
-                style = MaterialTheme.typography.titleMedium,
-                color = LocalZToolColorScheme.current.onSurface
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ZToolTextInputRow(
-                    value = sn,
-                    onValueChange = onSnChanged,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .widthIn(720.dp),
-                    label = if (currentSn.isNotEmpty() && currentSn != stringResource(R.string.system_update_loading_ellipsis)) {
-                                stringResource(R.string.system_update_sn_current_machine_hint, currentSn)
-                            } else {
-                                stringResource(R.string.system_update_sn_default_hint)
-                            },
-                    singleLine = true,
-                    horizontalPadding = 0.dp
-                )
-                Spacer(modifier = Modifier.width(32.dp))
-                ZToolButton(
-                    onClick = onFetch,
-                    enabled = !isFetching,
-                ) {
-                    Text(
-                        if (isFetching) stringResource(R.string.system_update_fetching_firmware_info) else stringResource(
-                            R.string.common_confirm
-                        )
-                    )
-                }
-            }
-
-            if (result != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(modifier = Modifier.padding(start = 24.dp, end = 24.dp))
-                Spacer(modifier = Modifier.height(16.dp))
-                ResultText(
-                    title = stringResource(R.string.system_update_pc_flash_firmware_fetch_result),
-                    body = buildString {
-                        append(stringResource(R.string.system_update_firmware_download_link)).append(result.downloadUrl)
-                            .append("\n")
-                        append(stringResource(R.string.system_update_firmware_extract_password)).append(result.password)
-                            .append("\n")
-                        append(stringResource(R.string.system_update_firmware_platform_and_method))
-                            .append(result.platform)
-                            .append(stringResource(R.string.system_update_firmware_platform_suffix))
-                            .append(result.method)
-                            .append("\n")
-                        append(stringResource(R.string.system_update_firmware_first_upload_time)).append(result.firstUploadTime)
-                            .append("\n")
-                        append(stringResource(R.string.system_update_firmware_last_update_time)).append(result.lastUpdateTime)
-                    }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
-                    Row {
-                        Spacer(modifier = Modifier.weight(1f))
-                        ZToolTextButton(
-                            onClick = { onCopyPassword(result.password) },
-                            text = stringResource(R.string.system_update_copy_password),
-                            isPrimary = false,
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        ZToolTextButton(
-                            onClick = { onCopyDownloadLink(result.downloadUrl) },
-                            text = stringResource(R.string.system_update_copy_download_link),
-                        )
-                    }
-                } else {
-                    Column {
-                        ZToolTextButton(
-                            onClick = { onCopyPassword(result.password) },
-                            text = stringResource(R.string.system_update_copy_password),
-                            isPrimary = false,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        ZToolTextButton(
-                            onClick = { onCopyDownloadLink(result.downloadUrl) },
-                            text = stringResource(R.string.system_update_copy_download_link),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
                 }
             }
         }

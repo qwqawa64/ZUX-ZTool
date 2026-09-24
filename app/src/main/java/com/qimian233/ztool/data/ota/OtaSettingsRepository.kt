@@ -8,9 +8,7 @@ import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys
-import com.qimian233.ztool.utils.GetPCFlashFirmware
 import com.qimian233.ztool.utils.ScopeUtils
-import com.qimian233.ztool.viewmodel.FirmwareResult
 import com.qimian233.ztool.viewmodel.OtaInfoResult
 import com.qimian233.ztool.viewmodel.OtaSettingsUiState
 import org.xmlpull.v1.XmlPullParser
@@ -21,8 +19,6 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.io.StringReader
 import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
@@ -40,8 +36,7 @@ class OtaSettingsRepository(
             noAutoOtaInstall = prefsUtils.loadBooleanSetting(KEY_DISABLE_NIGHT_AUTO_INSTALL, false),
             blockOtaInstallDialog = prefsUtils.loadBooleanSetting(KEY_BLOCK_OTA_INSTALL_DIALOG, false),
             disableOtaNotificationAndRedDot = prefsUtils.loadBooleanSetting(KEY_BLOCK_OTA_NOTIFICATION_AND_RED_DOT, false),
-            currentVersion = context.getString(R.string.system_update_loading_ellipsis),
-            currentSn = context.getString(R.string.system_update_loading_ellipsis)
+            currentVersion = context.getString(R.string.system_update_loading_ellipsis)
         )
     }
 
@@ -71,8 +66,7 @@ class OtaSettingsRepository(
             context.getString(R.string.common_unknown)
         }
 
-        val sn = getMachineSnByProps()?.takeIf { it.isNotEmpty() } ?: context.getString(R.string.common_unknown)
-        return CurrentDeviceInfo(version = version, sn = sn)
+        return CurrentDeviceInfo(version = version)
     }
 
     fun fetchOtaInfo(): OtaInfoResult {
@@ -80,28 +74,6 @@ class OtaSettingsRepository(
         val otaInfo = parseOtaInfoXml(xmlContent)
         return otaInfo.toOtaInfoResult()
     }
-
-    suspend fun fetchFirmware(sn: String): FirmwareFetchResult {
-        val firmwareInfo = GetPCFlashFirmware().queryFirmware(sn)
-        return if (firmwareInfo != null && firmwareInfo.size >= 6) {
-            FirmwareFetchResult.Success(
-                FirmwareResult(
-                    downloadUrl = firmwareInfo[0].orEmpty(),
-                    password = firmwareInfo[1].orEmpty(),
-                    platform = firmwareInfo[2].orEmpty(),
-                    method = firmwareInfo[3].orEmpty(),
-                    firstUploadTime = formatTimestamp(firmwareInfo[4]?.toLongOrNull() ?: 0L),
-                    lastUpdateTime = formatTimestamp(firmwareInfo[5]?.toLongOrNull() ?: 0L)
-                )
-            )
-        } else {
-            FirmwareFetchResult.Failure(
-                context.getString(R.string.system_update_pc_flash_firmware_fetch_failed_message)
-            )
-        }
-    }
-
-    fun getMachineSn(): String? = getMachineSnByProps()
 
     fun restartScope(): OtaRestartResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.Ota)
@@ -112,17 +84,6 @@ class OtaSettingsRepository(
             )
             is ScopeUtils.RestartResult.Failure -> OtaRestartResult.Failure(result.message)
         }
-    }
-
-    private fun getMachineSnByProps(): String? {
-        val keys = listOf("ro.odm.lenovo.gsn", "ro.serialno", "ro.boot.serialno")
-        for (key in keys) {
-            val result = shellExecutor.executeRootCommand("getprop $key", 3)
-            if (result.isSuccess && result.output.trim().isNotEmpty()) {
-                return result.output.trim()
-            }
-        }
-        return null
     }
 
     @Suppress("SameParameterValue")
@@ -242,16 +203,6 @@ class OtaSettingsRepository(
             units[digitGroups]
     }
 
-    private fun formatTimestamp(timestamp: Long): String {
-        if (timestamp <= 0L) return timestamp.toString()
-        return try {
-            SimpleDateFormat("yyyy.MM.dd-HH:mm:ss", Locale.getDefault())
-                .format(Date(timestamp * 1000L))
-        } catch (_: Exception) {
-            timestamp.toString()
-        }
-    }
-
     companion object {
         private const val TAG = "OtaSettings"
         private const val OTA_INFO_FILE_PATH =
@@ -266,14 +217,8 @@ class OtaSettingsRepository(
 }
 
 data class CurrentDeviceInfo(
-    val version: String,
-    val sn: String
+    val version: String
 )
-
-sealed interface FirmwareFetchResult {
-    data class Success(val firmware: FirmwareResult) : FirmwareFetchResult
-    data class Failure(val message: String) : FirmwareFetchResult
-}
 
 sealed interface OtaRestartResult {
     data object Success : OtaRestartResult

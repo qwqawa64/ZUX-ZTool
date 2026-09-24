@@ -3,7 +3,6 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.qimian233.ztool.data.ota.FirmwareFetchResult
 import com.qimian233.ztool.data.ota.OtaRestartResult
 import com.qimian233.ztool.data.ota.OtaSettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -32,15 +31,8 @@ class OtaSettingsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val info = repository.loadCurrentDeviceInfo()
             withContext(Dispatchers.Main) {
-                val current = _uiState.value
-                _uiState.value = current.copy(
-                    currentVersion = info.version,
-                    currentSn = info.sn,
-                    firmwareSnInput = if (current.firmwareSnInput.isEmpty() && info.sn != unknownText) {
-                        info.sn
-                    } else {
-                        current.firmwareSnInput
-                    }
+                _uiState.value = _uiState.value.copy(
+                    currentVersion = info.version
                 )
             }
         }
@@ -59,10 +51,6 @@ class OtaSettingsViewModel(
     fun setBlockOtaInstallDialog(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(blockOtaInstallDialog = enabled)
         repository.saveBlockOtaInstallDialog(enabled)
-    }
-
-    fun setFirmwareSnInput(value: String) {
-        _uiState.value = _uiState.value.copy(firmwareSnInput = value)
     }
 
     fun setHideOtaUpdate(enabled: Boolean) {
@@ -93,37 +81,6 @@ class OtaSettingsViewModel(
                         isFetchingOtaInfo = false,
                         errorDialogMessage = errorPrefix + e.message
                     )
-                }
-            }
-        }
-    }
-
-    fun fetchFirmware(emptySnMessage: String) {
-        val sn = _uiState.value.firmwareSnInput.trim().ifEmpty {
-            repository.getMachineSn().orEmpty()
-        }
-        if (sn.isEmpty()) {
-            _uiState.value = _uiState.value.copy(errorDialogMessage = emptySnMessage)
-            return
-        }
-
-        _uiState.value = _uiState.value.copy(isFetchingFirmware = true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.fetchFirmware(sn)
-            withContext(Dispatchers.Main) {
-                when (result) {
-                    is FirmwareFetchResult.Failure -> {
-                        _uiState.value = _uiState.value.copy(
-                            isFetchingFirmware = false,
-                            errorDialogMessage = result.message
-                        )
-                    }
-                    is FirmwareFetchResult.Success -> {
-                        _uiState.value = _uiState.value.copy(
-                            isFetchingFirmware = false,
-                            firmwareResult = result.firmware
-                        )
-                    }
                 }
             }
         }
@@ -169,24 +126,11 @@ data class OtaInfoResult(
     val isNewVersionAvailable: Boolean,
 )
 
-data class FirmwareResult(
-    val downloadUrl: String,
-    val password: String,
-    val platform: String,
-    val method: String,
-    val firstUploadTime: String,
-    val lastUpdateTime: String
-)
-
 data class OtaSettingsUiState(
     val disableOtaCheck: Boolean = false,
     val currentVersion: String = "",
-    val currentSn: String = "",
-    val firmwareSnInput: String = "",
     val isFetchingOtaInfo: Boolean = false,
-    val isFetchingFirmware: Boolean = false,
     val otaInfoResult: OtaInfoResult? = null,
-    val firmwareResult: FirmwareResult? = null,
     val errorDialogMessage: String? = null,
     val showRestartDialog: Boolean = false,
     val hideOtaUpdateHint: Boolean = false,
