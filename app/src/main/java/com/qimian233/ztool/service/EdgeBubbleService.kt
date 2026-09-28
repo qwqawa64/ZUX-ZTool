@@ -36,14 +36,19 @@ class EdgeBubbleService : Service() {
         private const val POLL_INTERVAL_MS = 600L
         /** Window flush to the display edge within this margin triggers a bubble. */
         private const val EDGE_TOUCH_MARGIN_PX = 48
-        /** After a bubble restore, do not re-trigger the same task for this long. */
-        private const val RESTORE_COOLDOWN_MS = 3000L
+        /** After a bubble restore, the window must leave the edge once before a
+         *  new bubble triggers (otherwise a restored window resting flush at the
+         *  edge would immediately re-dock). */
+        private const val RESTORE_COOLDOWN_MS = 1000L
     }
 
     private val bubbles = HashMap<Int, EdgeBubbleView>()
     private var eventReceiver: BroadcastReceiver? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val restoredAt = HashMap<Int, Long>()
+
+    /** taskId -> whether the window has left the edge since its last restore. */
+    private val edgeCleared = HashMap<Int, Boolean>()
     private var polling = false
     private var realDisplayWidth = 0
 
@@ -113,17 +118,23 @@ class EdgeBubbleService : Service() {
     private fun handleFreeformTasks(tasks: List<FreeformBubbleBridge.FreeformTask>) {
         if (!polling) return
         val now = SystemClock.elapsedRealtime()
-        val visibleIds = HashSet<Int>()
+        // Present = still a freeform task, visible OR docked-hidden. A docked task
+        // must keep its bubble; only leaving freeform entirely removes it.
+        val presentIds = HashSet<Int>()
         for (task in tasks) {
+            presentIds.add(task.taskId)
             if (task.hidden) continue // docked behind home: bubble is already up
-            visibleIds.add(task.taskId)
             val side = when {
                 task.bounds.left <= EDGE_TOUCH_MARGIN_PX -> 0
                 realDisplayWidth - task.bounds.right <= EDGE_TOUCH_MARGIN_PX -> 1
                 else -> -1
             }
+            val leftEdgeSinceRestore = side < 0 || edgeCleared[task.taskId] == true
+            if (side < 0) edgeCleared[task.taskId] = true
             val cooledDown = now - (restoredAt[task.taskId] ?: 0L) >= RESTORE_COOLDOWN_MS
-            if (side >= 0 && !bubbles.containsKey(task.taskId) && cooledDown) {
+            if (side >= 0 && !bubbles.containsKey(task.taskId) && cooledDown &&
+                leftEdgeSinceRestore
+            ) {
                 Log.i(TAG, "edge detected task=${task.taskId} side=$side bounds=${task.bounds}")
                 FreeformBubbleBridge.minimizeTask(task.taskId, side)
                 addBubble(task.taskId, side, task.packageName)
@@ -131,8 +142,9 @@ class EdgeBubbleService : Service() {
         }
         // A tracked task that left freeform (e.g. exited via launcher) loses its bubble.
         for (taskId in bubbles.keys.toList()) {
-            if (taskId !in visibleIds) {
+            if (taskId !in presentIds) {
                 restoredAt.remove(taskId)
+                edgeCleared.remove(taskId)
                 removeBubble(taskId)
             }
         }
@@ -158,6 +170,7 @@ class EdgeBubbleService : Service() {
                 listener = object : EdgeBubbleView.Listener {
                     override fun onBubbleRestore(taskId: Int) {
                         restoredAt[taskId] = SystemClock.elapsedRealtime()
+                        edgeCleared[taskId] = false
                         FreeformBubbleBridge.restoreTask(taskId)
                     }
 

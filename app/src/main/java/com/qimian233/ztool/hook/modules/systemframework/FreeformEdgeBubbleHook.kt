@@ -60,6 +60,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private const val CMD_LIST_MINIMIZED = 3
         private const val CMD_GET_PACKAGE = 4
         private const val CMD_LIST_FREEFORM_TASKS = 5
+        private const val CMD_TOGGLE_PROBE = 9
 
         // Event ids (server→app, extra "event").
         const val EVENT_BUBBLE_ADDED = 11
@@ -88,6 +89,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
 
         @Volatile private var ztoolUid = -1
         @Volatile private var atmsHandlesCache: AtmsHandles? = null
+
+        /** Edge-probe logging is expensive and off by default; toggle with CMD_TOGGLE_PROBE. */
+        @Volatile private var probeLogEnabled = false
         @Volatile private var hideShowControllerCache: Triple<Any?, Method?, Method?>? = null
         @Volatile private var bridgeRegistered = false
         private var eventPostHandler: Handler? = null
@@ -241,6 +245,11 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                     bundle.putString("pkg", taskPackages[intent.getIntExtra("task_id", -1)])
                     result = 1
                     extras = bundle
+                }
+                CMD_TOGGLE_PROBE -> {
+                    probeLogEnabled = !probeLogEnabled
+                    logger.info("edge probe logging -> $probeLogEnabled")
+                    result = 1
                 }
                 CMD_LIST_FREEFORM_TASKS -> {
                     val bundle = withTaskHandles(classLoader) { collectFreeformTaskInfos(it) }
@@ -605,29 +614,26 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             val boundsList = ArrayList<Int>()
             val pkgs = ArrayList<String?>()
             val hidden = ArrayList<Boolean>()
+            val taskClass = handles.taskClass
+            val getMode = try { taskClass.getMethod("getWindowingMode") } catch (_: Throwable) { null }
+            val getBounds = try { taskClass.getMethod("getBounds") } catch (_: Throwable) { null }
+            val isVisible = try { taskClass.getMethod("isVisible") } catch (_: Throwable) { null }
             for (info in infos) {
                 val ti = info ?: continue
-                val winCfg = try {
-                    ti.javaClass.getMethod("getWindowConfiguration").invoke(ti)
-                } catch (_: Throwable) { continue } ?: continue
-                val mode = try {
-                    winCfg.javaClass.getMethod("getWindowingMode").invoke(winCfg) as Int
-                } catch (_: Throwable) { continue }
-                if (mode != WINDOWING_MODE_FREEFORM) continue
-                val bounds = try {
-                    winCfg.javaClass.getMethod("getBounds").invoke(winCfg) as? Rect
-                } catch (_: Throwable) { null } ?: continue
-                if (bounds.isEmpty) continue
                 val taskId = try {
                     ti.javaClass.getField("taskId").getInt(ti)
                 } catch (_: Throwable) { continue }
+                // TaskInfo has no reliable WindowConfiguration accessor on ZUX; read the
+                // live Task instead (same methods the minimize/restore paths use).
+                val task = findTask(handles, taskId) ?: continue
+                val mode = try { getMode?.invoke(task) as? Int } catch (_: Throwable) { null } ?: continue
+                if (mode != WINDOWING_MODE_FREEFORM) continue
+                val bounds = try { getBounds?.invoke(task) as? Rect } catch (_: Throwable) { null } ?: continue
+                if (bounds.isEmpty) continue
                 val pkg = try {
                     (ti.javaClass.getField("topActivity").get(ti) as? android.content.ComponentName)?.packageName
                 } catch (_: Throwable) { null }
-                val visible = try {
-                    val task = findTask(handles, taskId)
-                    task != null && task.javaClass.getMethod("isVisible").invoke(task) as Boolean
-                } catch (_: Throwable) { true }
+                val visible = try { isVisible?.invoke(task) as? Boolean } catch (_: Throwable) { null } ?: true
                 taskIds.add(taskId)
                 boundsList.addAll(listOf(bounds.left, bounds.top, bounds.right, bounds.bottom))
                 pkgs.add(pkg)
