@@ -289,6 +289,10 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val hideShowController: Any?,
         val bringToBack: Method?,
         val bringToFront: Method?,
+        val getRootTask: Method?,
+        val setAlwaysOnTop: Method?,
+        val moveTaskToBack: Method?,
+        val resumeFocusedTasks: Method?,
         val anyTaskForId: Method,
         val taskClass: Class<*>,
         val getBounds: Method,
@@ -352,6 +356,10 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val hideShow = resolveHideShowController(classLoader, atms)
         return AtmsHandles(
             atms, globalLock, rwc, hideShow?.first, hideShow?.second, hideShow?.third,
+            try { taskClass.getMethod("getRootTask") } catch (_: Throwable) { null },
+            try { taskClass.getMethod("setAlwaysOnTop", Boolean::class.javaPrimitiveType) } catch (_: Throwable) { null },
+            try { taskClass.getMethod("moveTaskToBack", taskClass) } catch (_: Throwable) { null },
+            try { rwcClass.getMethod("resumeFocusedTasksTopActivities") } catch (_: Throwable) { null },
             anyTaskForId, taskClass,
             taskClass.getMethod("getBounds"),
             taskClass.getMethod("setBounds", Rect::class.java),
@@ -488,10 +496,31 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         } catch (t: Throwable) {
             logger.debug("setLastNonFullscreenBounds failed: ${t.message}")
         }
+        if (handles.getRootTask != null && handles.setAlwaysOnTop != null &&
+            handles.moveTaskToBack != null
+        ) {
+            // ZUI native dock WITHOUT the shell transition: bringToBack wraps the same
+            // calls in a TO_BACK transition whose BLAST sync waits for the (now paused,
+            // not drawing) task surface and times out after 5s. Skipping the transition
+            // makes the dock instant; the bubble covers the missing exit animation.
+            val rootTask = handles.getRootTask.invoke(task)
+            internalMove.set(true)
+            try {
+                handles.setAlwaysOnTop.invoke(rootTask, false)
+                handles.moveTaskToBack.invoke(rootTask, task)
+                try {
+                    handles.resumeFocusedTasks?.invoke(handles.rootWindowContainer)
+                } catch (t: Throwable) {
+                    logger.debug("resumeFocusedTasks failed: ${t.message}")
+                }
+            } finally {
+                internalMove.set(false)
+            }
+            logger.info("minimize task=$taskId side=$side via dockToBack, bounds=$bounds")
+            return true
+        }
         if (handles.hideShowController != null && handles.bringToBack != null) {
-            // ZUI native path: dock the task behind home with a shell hide transition.
-            // The freeform layout policy would clamp arbitrary offscreen bounds back
-            // on-screen, so bounds-shifting is only a fallback here.
+            // Fallback: full ZUI path with shell transition (slow, 5s sync timeout).
             handles.bringToBack.invoke(handles.hideShowController, task)
             logger.info("minimize task=$taskId side=$side via bringToBack, bounds=$bounds")
             return true
