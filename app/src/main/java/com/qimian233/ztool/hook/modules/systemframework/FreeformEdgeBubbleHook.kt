@@ -286,7 +286,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
      */
     @Throws(Throwable::class)
     private fun installEdgeDetectionHook(classLoader: ClassLoader) {
-        val windowContainerClass = classLoader.loadClass("android.view.WindowContainer")
+        val windowContainerClass = classLoader.loadClass("com.android.server.wm.WindowContainer")
         val setBounds: Method = findMethod(windowContainerClass, "setBounds", Rect::class.java)
         val taskClass = classLoader.loadClass("com.android.server.wm.Task")
         hookWithId(setBounds, "freeform_edge_bubble_detect") { chain ->
