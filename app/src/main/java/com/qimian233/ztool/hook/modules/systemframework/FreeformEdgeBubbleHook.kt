@@ -263,16 +263,26 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             getInstance.isAccessible = true
             getInstance.invoke(null)
         } catch (_: Throwable) {
-            // Fallback: LocalServices registered ActivityTaskManagerInternal impl
-            // carrying an mService field back to ATMS.
+            // Fallback: LocalServices holds the ActivityTaskManagerInternal impl; scan
+            // its fields for a value that IS the ATMS instance (ZUX renames mService).
             val localServicesClass = classLoader.loadClass("com.android.server.LocalServices")
             val internalClass = classLoader.loadClass("com.android.server.wm.ActivityTaskManagerInternal")
             val getService = localServicesClass.getDeclaredMethod("getService", Class::class.java)
             val internal = getService.invoke(null, internalClass)
                 ?: error("ActivityTaskManagerInternal not in LocalServices")
-            val serviceField = internal.javaClass.getDeclaredField("mService")
-            serviceField.isAccessible = true
-            serviceField.get(internal)
+            for (cls in generateSequence(internal.javaClass) { it.superclass }) {
+                for (field in cls.declaredFields) {
+                    if (!java.lang.reflect.Modifier.isStatic(field.modifiers)) {
+                        try {
+                            field.isAccessible = true
+                            val value = field.get(internal)
+                            if (value != null && value.javaClass.name == atmsClass.name) return value
+                        } catch (_: Throwable) {
+                        }
+                    }
+                }
+            }
+            error("no ATMS reference found on " + internal.javaClass.name)
         }
     }
 
