@@ -247,6 +247,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     private class AtmsHandles(
         val atms: Any,
         val globalLock: Any,
+        val rootWindowContainer: Any,
         val anyTaskForId: Method,
         val taskClass: Class<*>,
         val getBounds: Method,
@@ -296,9 +297,10 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val rwcClass = classLoader.loadClass("com.android.server.wm.RootWindowContainer")
         val anyTaskForId = rwcClass.getMethod(
             "anyTaskForId", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+
         val taskClass = classLoader.loadClass("com.android.server.wm.Task")
         return AtmsHandles(
-            atms, globalLock, anyTaskForId, taskClass,
+            atms, globalLock, rwc, anyTaskForId, taskClass,
             taskClass.getMethod("getBounds"),
             taskClass.getMethod("setBounds", Rect::class.java),
             try { taskClass.getMethod("moveToFront", String::class.java) } catch (_: Throwable) { null },
@@ -308,7 +310,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     }
 
     private fun findTask(handles: AtmsHandles, taskId: Int): Any? =
-        handles.anyTaskForId.invoke(handles.atms, taskId, MATCH_TASK_MODE_ANY)
+        handles.anyTaskForId.invoke(handles.rootWindowContainer, taskId, MATCH_TASK_MODE_ANY)
 
     private fun doMinimize(handles: AtmsHandles, taskId: Int, side: Int): Boolean {
         val task = findTask(handles, taskId) ?: run {
