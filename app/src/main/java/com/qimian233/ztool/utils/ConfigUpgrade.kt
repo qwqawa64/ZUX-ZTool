@@ -1,5 +1,6 @@
 package com.qimian233.ztool.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
@@ -10,11 +11,13 @@ import java.io.File
 // Enable this utility only after other parts have finished stripping the PREFIX.
 object ConfigUpgrade {
     private const val TAG = "ConfigUpgrade"
+    @SuppressLint("StaticFieldLeak")
     private var mPreferencesUtils: ModulePreferencesUtils? = null
     private var mCachedXSharedPrefsDir: String? = null
 
     private fun getPreferencesUtils(context: Context): ModulePreferencesUtils {
-        return mPreferencesUtils ?: ModulePreferencesUtils(context).also { mPreferencesUtils = it }
+        val appContext = context.applicationContext
+        return mPreferencesUtils ?: ModulePreferencesUtils(appContext).also { mPreferencesUtils = it }
     }
 
     // Executor method group

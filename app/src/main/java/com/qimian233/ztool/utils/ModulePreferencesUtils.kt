@@ -25,9 +25,7 @@ class ModulePreferencesUtils(
     private val modulePackageName: String = "com.qimian233.ztool"
 ) {
 
-    // ═══════════════════════════════════════════════════════════
     // SharedPreferences instance access
-    // ═══════════════════════════════════════════════════════════
 
     val modulePreferences: SharedPreferences
         get() {
@@ -51,9 +49,7 @@ class ModulePreferencesUtils(
             }
         }
 
-    // ═══════════════════════════════════════════════════════════
     // Boolean
-    // ═══════════════════════════════════════════════════════════
 
     fun loadBooleanSetting(featureName: String, defaultValue: Boolean): Boolean {
         val prefs = modulePreferences
@@ -91,9 +87,7 @@ class ModulePreferencesUtils(
         return success
     }
 
-    // ═══════════════════════════════════════════════════════════
     // String
-    // ═══════════════════════════════════════════════════════════
 
     fun loadStringSetting(featureName: String, defaultValue: String): String {
         val prefs = modulePreferences
@@ -126,9 +120,7 @@ class ModulePreferencesUtils(
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // Int
-    // ═══════════════════════════════════════════════════════════
 
     @SuppressLint("ApplySharedPref")
     fun saveIntegerSetting(featureName: String, value: Int) {
@@ -161,9 +153,7 @@ class ModulePreferencesUtils(
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // Float
-    // ═══════════════════════════════════════════════════════════
 
     @SuppressLint("ApplySharedPref")
     fun saveFloatSetting(featureName: String, value: Float) {
@@ -196,9 +186,7 @@ class ModulePreferencesUtils(
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // Batch operations
-    // ═══════════════════════════════════════════════════════════
 
     @SuppressLint("WorldReadableFiles", "ApplySharedPref")
     fun clearAllSettings() {
@@ -249,9 +237,7 @@ class ModulePreferencesUtils(
         Log.d(TAG, "Cleared local module preferences, success: $cleared")
     }
 
-    // ═══════════════════════════════════════════════════════════
     // JSON serialization
-    // ═══════════════════════════════════════════════════════════
 
     fun getAllSettingsAsJSON(): String? {
         return try {
@@ -264,9 +250,7 @@ class ModulePreferencesUtils(
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // Config restore
-    // ═══════════════════════════════════════════════════════════
 
     fun writeJSONToSharedPrefs(jsonString: String) {
         val mapToWrite = jsonToHashMap(jsonString)
@@ -347,9 +331,7 @@ class ModulePreferencesUtils(
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // Type coercion helpers
-    // ═══════════════════════════════════════════════════════════
 
     companion object {
         private const val PREFS_NAME = "xposed_module_config"
