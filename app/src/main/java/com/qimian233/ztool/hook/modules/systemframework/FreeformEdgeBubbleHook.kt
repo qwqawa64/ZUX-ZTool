@@ -1,10 +1,15 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Rect
 import android.os.Binder
+import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
-import android.os.Parcel
+import android.os.Handler
+import android.os.HandlerThread
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.SystemHookModule
@@ -16,19 +21,26 @@ import java.util.concurrent.ConcurrentHashMap
  * Freeform edge bubble: system_server side of the "shrink a freeform window into an
  * edge bubble" replication (see docs/research/oplus-float-handle-gesture-spec.md).
  *
+ * App↔system_server channel: **ordered broadcasts**, not a published binder service —
+ * SELinux only allows servicemanager names listed in service_contexts, so a custom
+ * service cannot be registered. Commands arrive as ordered broadcasts targeted at the
+ * "android" package (system_server's receiver) and return values travel back through
+ * the broadcast result (resultCode + resultExtras); events go the other way as a
+ * package-targeted broadcast to ZTool.
+ *
  * Responsibilities:
- * 1. Publish a raw-Parcel Binder service "ztool.freeform_bubble" (the only
- *    app→system_server channel; ZTool app talks to it through reflection/HiddenApiBypass).
- * 2. Execute task minimize/restore inside the WMS global lock via ATMS reflection.
+ * 1. Register the command receiver on the system context (retry loop — the context is
+ *    only complete a moment after system-server start).
+ * 2. Execute task minimize/restore inside the WMS global lock via ATMS reflection,
+ *    keeping restore-bounds in a server-side map.
  * 3. Pass ZTool's uid through [com.android.server.wm.OvFreeformService.checkPermission]
  *    so the app can use IOvFreeformService helpers without privileged permissions.
- * 4. Watch freeform task bounds ([android.view.WindowContainer.setBounds]) to detect a
- *    window dragged to the screen edge and notify the app overlay via callback binder.
+ * 4. Watch freeform task bounds ([com.android.server.wm.WindowContainer.setBounds]) to
+ *    detect a window dragged to the screen edge and broadcast bubble add/remove events.
  *
  * The feature switch is [PreferenceKeys.FREEFORM_EDGE_BUBBLE] (read by
  * [com.qimian233.ztool.hook.base.BaseHookModule.isEnabled]). Toggling it requires a
- * system restart (scope HowToRestart.Reboot) because the binder service is registered
- * once at boot.
+ * system restart (scope HowToRestart.Reboot).
  */
 @Suppress("PrivateApi", "SdkLintPrivateApi")
 class FreeformEdgeBubbleHook : SystemHookModule() {
@@ -38,18 +50,19 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.SYSTEM_SERVER.packageName)
 
     companion object {
-        private const val BRIDGE_DESCRIPTOR = "com.qimian233.ztool.hook.IFreeformBubbleBridge"
-        private const val BRIDGE_SERVICE_NAME = "ztool.freeform_bubble"
+        private const val ACTION_COMMAND = "com.qimian233.ztool.action.FREEFORM_BUBBLE_COMMAND"
+        private const val ACTION_EVENT = "com.qimian233.ztool.action.FREEFORM_BUBBLE_EVENT"
+        private const val ZTOOL_PACKAGE = "com.qimian233.ztool"
 
-        // Transaction codes (app→server), mirrored in app-side FreeformBubbleBridge.
-        private const val CODE_MINIMIZE_TASK = 1
-        private const val CODE_RESTORE_TASK = 2
-        private const val CODE_LIST_MINIMIZED = 3
-        private const val CODE_GET_PACKAGE = 4
-        private const val CODE_REGISTER_CALLBACK = 5
-        // Transaction codes (server→app callback).
-        private const val CB_BUBBLE_ADDED = 11
-        private const val CB_BUBBLE_REMOVED = 12
+        // Command ids (app→server, extra "cmd"), mirrored in app-side FreeformBubbleBridge.
+        private const val CMD_MINIMIZE_TASK = 1
+        private const val CMD_RESTORE_TASK = 2
+        private const val CMD_LIST_MINIMIZED = 3
+        private const val CMD_GET_PACKAGE = 4
+
+        // Event ids (server→app, extra "event").
+        const val EVENT_BUBBLE_ADDED = 11
+        const val EVENT_BUBBLE_REMOVED = 12
 
         private const val WINDOWING_MODE_FREEFORM = 5
         private const val MATCH_TASK_MODE_ANY = 0
@@ -57,21 +70,22 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private const val OFFSCREEN_GAP_PX = 32
         /** Fraction of task width allowed to hang offscreen before the bubble triggers. */
         private const val EDGE_TRIGGER_FRACTION = 0.5f
-        private const val PUBLISH_MAX_ATTEMPTS = 120
-        private const val PUBLISH_RETRY_INTERVAL_MS = 500L
-
-        @Volatile private var ztoolUid = -1
+        private const val BRIDGE_REGISTER_MAX_ATTEMPTS = 120
+        private const val BRIDGE_REGISTER_RETRY_INTERVAL_MS = 500L
+        private const val ADB_SHELL_UID = 2000
 
         /** taskId → restore bounds, server-side session state (lost on reboot is fine). */
         private val restoreRects = ConcurrentHashMap<Int, Rect>()
         /** taskId → side (0 left / 1 right) of currently minimized tasks. */
         private val minimizedSides = ConcurrentHashMap<Int, Int>()
-        /** taskId → package name, cached for getPackageForTask and events. */
+        /** taskId → package name, cached for events. */
         private val taskPackages = ConcurrentHashMap<Int, String>()
         /** Guards against re-entering the setBounds hook from our own moves. */
         private val internalMove = ThreadLocal.withInitial { false }
 
-        @Volatile private var eventCallback: IBinder? = null
+        @Volatile private var ztoolUid = -1
+        @Volatile private var bridgeRegistered = false
+        private var eventPostHandler: Handler? = null
     }
 
     // region server-start wiring
@@ -82,58 +96,165 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
 
         installCheckPermissionPassthrough(classLoader)
         installEdgeDetectionHook(classLoader)
-        // Publish immediately: task-handle resolution inside the bridge is lazy per
-        // call, so there is no need to wait for a boot phase (and ZUX renames
-        // SystemServiceManager.startBootPhase, which broke the deferred approach).
-        // Retry on a background thread: at the very start of startBootstrapServices the
-        // binder host may not accept addService yet, and the true cause is wrapped in
-        // InvocationTargetException. Late publication is harmless — callers resolve the
-        // service lazily.
+        registerBroadcastBridge(classLoader)
+    }
+
+    /**
+     * Registers the command receiver on the system context. The context is not fully
+     * built at system-server-start time, hence the retry loop.
+     */
+    private fun registerBroadcastBridge(classLoader: ClassLoader) {
+        if (bridgeRegistered) return
         Thread({
             var lastError: Throwable? = null
-            for (attempt in 1..PUBLISH_MAX_ATTEMPTS) {
+            for (attempt in 1..BRIDGE_REGISTER_MAX_ATTEMPTS) {
                 try {
-                    if (publishBridgeService(classLoader)) return@Thread
+                    if (registerCommandReceiver(classLoader)) return@Thread
                 } catch (t: Throwable) {
                     lastError = (t as? java.lang.reflect.InvocationTargetException)?.cause ?: t
                 }
                 try {
-                    Thread.sleep(PUBLISH_RETRY_INTERVAL_MS)
+                    Thread.sleep(BRIDGE_REGISTER_RETRY_INTERVAL_MS)
                 } catch (_: InterruptedException) {
                     return@Thread
                 }
             }
             logger.error(
-                "publish bridge service failed after $PUBLISH_MAX_ATTEMPTS attempts", lastError)
-        }, "ztool-bubble-publish").start()
+                "register broadcast bridge failed after $BRIDGE_REGISTER_MAX_ATTEMPTS attempts",
+                lastError)
+        }, "ztool-bubble-bridge").start()
     }
 
-    /**
-     * @return true when the service is registered (or already present from a previous
-     * generation during hot reload).
-     */
-    private fun publishBridgeService(classLoader: ClassLoader): Boolean {
-        val smClass = classLoader.loadClass("android.os.ServiceManager")
-        val existing = try {
-            val getService = smClass.getDeclaredMethod("getService", String::class.java)
-            getService.invoke(null, BRIDGE_SERVICE_NAME)
-        } catch (_: Throwable) {
+    /** @return true when the receiver is registered. */
+    private fun registerCommandReceiver(classLoader: ClassLoader): Boolean {
+        val systemContext = resolveSystemContext(classLoader) ?: return false
+        if (eventPostHandler == null) {
+            val thread = HandlerThread("ztool-bubble-events")
+            thread.start()
+            eventPostHandler = Handler(thread.looper)
+        }
+        val filter = IntentFilter(ACTION_COMMAND)
+        val receiver = CommandReceiver(classLoader)
+        val registerReceiver = systemContext.javaClass.getMethod(
+            "registerReceiver",
+            BroadcastReceiver::class.java, IntentFilter::class.java, Int::class.javaPrimitiveType)
+        val flags = if (Build.VERSION.SDK_INT >= 33) 0x2 /* RECEIVER_EXPORTED */ else 0
+        registerReceiver.invoke(systemContext, receiver, filter, flags)
+        eventPostContext = systemContext
+        bridgeRegistered = true
+        logger.info("freeform bubble broadcast bridge registered")
+        return true
+    }
+
+    private fun resolveSystemContext(classLoader: ClassLoader): Context? {
+        return try {
+            val atClass = classLoader.loadClass("android.app.ActivityThread")
+            val current = atClass.getMethod("currentActivityThread").invoke(null) ?: return null
+            val getSystemContext = atClass.getMethod("getSystemContext")
+            getSystemContext.invoke(current) as? Context
+        } catch (t: Throwable) {
+            logger.debug("system context resolve failed: ${t.message}")
             null
         }
-        if (existing != null) {
-            logger.debug("bridge service already present, skip publish")
-            return true
-        }
-        val addService = smClass.getDeclaredMethod(
-            "addService", String::class.java, IBinder::class.java)
-        addService.invoke(null, BRIDGE_SERVICE_NAME, BridgeBinder(classLoader))
-        logger.info("bridge service published: $BRIDGE_SERVICE_NAME")
-        return true
     }
 
     // endregion
 
-    // region task operations (called from BridgeBinder, system uid, WMS lock held)
+    // region command receiver
+
+    private inner class CommandReceiver(private val classLoader: ClassLoader) : BroadcastReceiver() {
+
+        override fun onReceive(context: Context, intent: Intent) {
+            val uid = try {
+                // Available since API 34; compileSdk 37.
+                javaClass.getMethod("getSentFromUid").invoke(this) as Int
+            } catch (_: Throwable) {
+                -1
+            }
+            if (!isAllowedCaller(uid, classLoader)) {
+                logger.warn("bridge command from untrusted uid=$uid")
+                resultCode = 0
+                return
+            }
+            when (intent.getIntExtra("cmd", -1)) {
+                CMD_MINIMIZE_TASK -> {
+                    val taskId = intent.getIntExtra("task_id", -1)
+                    val side = intent.getIntExtra("side", 0)
+                    resultCode = if (withTaskHandles(classLoader) { doMinimize(it, taskId, side) }) 1 else 0
+                }
+                CMD_RESTORE_TASK -> {
+                    val taskId = intent.getIntExtra("task_id", -1)
+                    resultCode = if (withTaskHandles(classLoader) { doRestore(it, taskId) }) 1 else 0
+                }
+                CMD_LIST_MINIMIZED -> {
+                    val bundle = Bundle()
+                    val taskIds = IntArray(minimizedSides.size)
+                    val sides = IntArray(minimizedSides.size)
+                    var i = 0
+                    for ((taskId, side) in minimizedSides) {
+                        taskIds[i] = taskId
+                        sides[i] = side
+                        i++
+                    }
+                    bundle.putIntArray("task_ids", taskIds)
+                    bundle.putIntArray("sides", sides)
+                    resultCode = 1
+                    setResultExtras(bundle)
+                }
+                CMD_GET_PACKAGE -> {
+                    val bundle = Bundle()
+                    bundle.putString("pkg", taskPackages[intent.getIntExtra("task_id", -1)])
+                    resultCode = 1
+                    setResultExtras(bundle)
+                }
+                else -> resultCode = 0
+            }
+        }
+
+        private fun isAllowedCaller(uid: Int, classLoader: ClassLoader): Boolean {
+            if (uid == 0 || uid == ADB_SHELL_UID) return true
+            if (uid == ztoolUid) return true
+            if (uid <= 0) return false
+            return try {
+                val context = resolveSystemContext(classLoader) ?: return false
+                val uidResolved = context.packageManager.getPackageUid(ZTOOL_PACKAGE, 0)
+                ztoolUid = uidResolved
+                uid == uidResolved
+            } catch (_: Throwable) {
+                false
+            }
+        }
+    }
+
+    // endregion
+
+    // region task operations (WMS lock held)
+
+    private inline fun withTaskHandles(
+        classLoader: ClassLoader,
+        block: (AtmsHandles) -> Boolean
+    ): Boolean {
+        return try {
+            val handles = resolveAtmsHandles(classLoader)
+            synchronized(handles.globalLock) { block(handles) }
+        } catch (t: Throwable) {
+            logger.error("bridge operation failed", t)
+            false
+        }
+    }
+
+
+    private class AtmsHandles(
+        val atms: Any,
+        val globalLock: Any,
+        val anyTaskForId: Method,
+        val taskClass: Class<*>,
+        val getBounds: Method,
+        val setBounds: Method,
+        val moveToFront: Method?,
+        val setLastNonFullscreenBounds: Method?,
+        val getBaseIntent: Method?
+    )
 
     private fun resolveAtms(classLoader: ClassLoader): Any {
         val atmsClass = classLoader.loadClass("com.android.server.wm.ActivityTaskManagerService")
@@ -155,19 +276,6 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         }
     }
 
-    private class AtmsHandles(
-        val atms: Any,
-        val globalLock: Any,
-        val anyTaskForId: Method,
-        val taskClass: Class<*>,
-        val getBounds: Method,
-        val setBounds: Method,
-        val moveToFront: Method?,
-        val setLastNonFullscreenBounds: Method?,
-        val getBaseIntent: Method?,
-        val getWindowingMode: Method?
-    )
-
     private fun resolveAtmsHandles(classLoader: ClassLoader): AtmsHandles {
         val atms = resolveAtms(classLoader)
         val atmsClass = atms.javaClass
@@ -185,8 +293,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             taskClass.getMethod("setBounds", Rect::class.java),
             try { taskClass.getMethod("moveToFront", String::class.java) } catch (_: Throwable) { null },
             try { taskClass.getMethod("setLastNonFullscreenBounds", Rect::class.java) } catch (_: Throwable) { null },
-            try { taskClass.getMethod("getBaseIntent") } catch (_: Throwable) { null },
-            try { taskClass.getMethod("getWindowingMode") } catch (_: Throwable) { null }
+            try { taskClass.getMethod("getBaseIntent") } catch (_: Throwable) { null }
         )
     }
 
@@ -249,23 +356,6 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         return true
     }
 
-    private fun resolveZtoolUid(handles: AtmsHandles): Int {
-        ztoolUid.let { if (it != -1) return it }
-        synchronized(this) {
-            if (ztoolUid != -1) return ztoolUid
-            val uid = try {
-                val contextField = findField(handles.atms.javaClass, "mContext")
-                val context = contextField.get(handles.atms) as android.content.Context
-                context.packageManager.getPackageUid("com.qimian233.ztool", 0)
-            } catch (t: Throwable) {
-                logger.warn("resolve ztool uid failed: ${t.message}")
-                -2
-            }
-            ztoolUid = uid
-            return uid
-        }
-    }
-
     // endregion
 
     // region hooks
@@ -291,10 +381,8 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         }
         hookWithId(checkPermission, "freeform_edge_bubble_ovf_perm") { chain ->
             val callingUid = Binder.getCallingUid()
-            val handles = try { resolveAtmsHandles(chain.thisObject.javaClass.classLoader) } catch (_: Throwable) { null }
-            val zuid = handles?.let { resolveZtoolUid(it) } ?: -2
-            if (callingUid == zuid) {
-                logger.debug("checkPermission passthrough for ztool uid=$callingUid")
+            if (callingUid == ztoolUid || callingUid == ADB_SHELL_UID) {
+                logger.debug("checkPermission passthrough for uid=$callingUid")
                 return@hookWithId null
             }
             chain.proceed()
@@ -331,7 +419,8 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             val width = newBounds.width().coerceAtLeast(1)
             val offLeft = displayBounds?.left?.let { (it - newBounds.left).coerceAtLeast(0) } ?: 0
             val offRight = displayBounds?.right?.let { (newBounds.right - it).coerceAtLeast(0) } ?: 0
-            val wasTracked = minimizedSides.containsKey(task.taskIdCompat())
+            val taskId = task.taskIdCompat()
+            val wasTracked = minimizedSides.containsKey(taskId)
             val side = when {
                 offLeft >= width * EDGE_TRIGGER_FRACTION -> 0
                 offRight >= width * EDGE_TRIGGER_FRACTION -> 1
@@ -341,14 +430,15 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             if (side >= 0 && !wasTracked) {
                 // First time reaching the edge: record the onscreen bounds the user had,
                 // then fully dock the task offscreen.
-                restoreRects[task.taskIdCompat()] = Rect(newBounds)
-                minimizedSides[task.taskIdCompat()] = side
+                restoreRects[taskId] = Rect(newBounds)
+                minimizedSides[taskId] = side
                 notifyBubbleAdded(task, taskClass, side)
             } else if (side < 0 && wasTracked) {
-                minimizedSides.remove(task.taskIdCompat())
-                restoreRects.remove(task.taskIdCompat())
-                notifyBubbleRemoved(task.taskIdCompat())
+                minimizedSides.remove(taskId)
+                restoreRects.remove(taskId)
+                notifyBubbleRemoved(taskId)
             }
+            null
         }
     }
 
@@ -364,143 +454,43 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     private fun notifyBubbleAdded(task: Any, taskClass: Class<*>, side: Int) {
         val taskId = task.taskIdCompat()
         val pkg = try {
-            val intent = taskClass.getMethod("getBaseIntent").invoke(task) as? android.content.Intent
+            val intent = taskClass.getMethod("getBaseIntent").invoke(task) as? Intent
             intent?.component?.packageName ?: intent?.`package`
         } catch (_: Throwable) { null }
         if (pkg != null) taskPackages[taskId] = pkg
         minimizedSides[taskId] = side
-        sendEvent(CB_BUBBLE_ADDED) { data ->
-            data.writeInt(taskId)
-            data.writeInt(side)
-            data.writeString(pkg)
+        sendEvent(EVENT_BUBBLE_ADDED) { intent ->
+            intent.putExtra("task_id", taskId)
+            intent.putExtra("side", side)
+            intent.putExtra("pkg", pkg)
         }
         logger.info("bubble add task=$taskId side=$side pkg=$pkg")
     }
 
     private fun notifyBubbleRemoved(taskId: Int) {
-        sendEvent(CB_BUBBLE_REMOVED) { data ->
-            data.writeInt(taskId)
+        taskPackages.remove(taskId)
+        sendEvent(EVENT_BUBBLE_REMOVED) { intent ->
+            intent.putExtra("task_id", taskId)
         }
         logger.info("bubble remove task=$taskId")
     }
 
-    private fun sendEvent(code: Int, payload: (Parcel) -> Unit) {
-        val callback = eventCallback ?: return
-        val data = Parcel.obtain()
-        val reply = Parcel.obtain()
-        try {
-            data.writeInterfaceToken(BRIDGE_DESCRIPTOR)
-            payload(data)
+    private fun sendEvent(event: Int, payload: (Intent) -> Unit) {
+        val handler = eventPostHandler ?: return
+        handler.post {
             try {
-                callback.transact(code, data, reply, Binder.FLAG_ONEWAY)
+                val context = eventPostContext ?: return@post
+                val intent = Intent(ACTION_EVENT).setPackage(ZTOOL_PACKAGE)
+                intent.putExtra("event", event)
+                payload(intent)
+                context.sendBroadcast(intent)
             } catch (t: Throwable) {
-                logger.warn("sendEvent code=$code failed: ${t.message}")
+                logger.warn("sendEvent event=$event failed: ${t.message}")
             }
-        } finally {
-            data.recycle()
-            reply.recycle()
         }
     }
 
-    // endregion
-
-    // region binder bridge
-
-    /**
-     * Raw-Parcel binder published as "ztool.freeform_bubble". All task mutations run
-     * under the WMS global lock; reflection handles are re-resolved per call so hot
-     * reload and ATMS replacement stay safe.
-     */
-    private inner class BridgeBinder(private val classLoader: ClassLoader) : Binder() {
-
-        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-            if (code != INTERFACE_TRANSACTION && !isAllowedCaller()) {
-                logger.warn("bridge call from untrusted uid=" + Binder.getCallingUid())
-                return false
-            }
-            when (code) {
-                CODE_MINIMIZE_TASK -> {
-                    val taskId = data.readInt()
-                    val side = data.readInt()
-                    val ok = withTaskHandles { doMinimize(it, taskId, side) }
-                    reply?.writeNoException()
-                    reply?.writeInt(if (ok) 1 else 0)
-                    return true
-                }
-                CODE_RESTORE_TASK -> {
-                    val taskId = data.readInt()
-                    val ok = withTaskHandles { doRestore(it, taskId) }
-                    reply?.writeNoException()
-                    reply?.writeInt(if (ok) 1 else 0)
-                    return true
-                }
-                CODE_LIST_MINIMIZED -> {
-                    reply?.writeNoException()
-                    val flat = ArrayList<Int>(minimizedSides.size * 2)
-                    for ((taskId, side) in minimizedSides) {
-                        flat.add(taskId)
-                        flat.add(side)
-                    }
-                    reply?.writeInt(flat.size)
-                    for (v in flat) reply?.writeInt(v)
-                    return true
-                }
-                CODE_GET_PACKAGE -> {
-                    val taskId = data.readInt()
-                    reply?.writeNoException()
-                    reply?.writeString(taskPackages[taskId])
-                    return true
-                }
-                CODE_REGISTER_CALLBACK -> {
-                    val callback = data.readStrongBinder()
-                    eventCallback = callback
-                    try {
-                        val deathRecipient = IBinder.DeathRecipient {
-                            logger.info("app callback died, clearing event callback")
-                            eventCallback = null
-                        }
-                        callback.linkToDeath(deathRecipient, 0)
-                    } catch (t: Throwable) {
-                        logger.warn("linkToDeath failed: ${t.message}")
-                    }
-                    reply?.writeNoException()
-                    logger.info("app event callback registered")
-                    return true
-                }
-                INTERFACE_TRANSACTION -> {
-                    reply?.writeString(BRIDGE_DESCRIPTOR)
-                    return true
-                }
-                else -> return super.onTransact(code, data, reply, flags)
-            }
-        }
-
-        /**
-         * Root, adb shell, and the ZTool app may call the bridge. The interface-token
-         * check is intentionally omitted so `adb shell service call` can drive the
-         * bridge directly during testing.
-         */
-        private fun isAllowedCaller(): Boolean {
-            val uid = Binder.getCallingUid()
-            if (uid == 0 || uid == 2000) return true
-            return try {
-                uid == resolveZtoolUid(resolveAtmsHandles(classLoader))
-            } catch (_: Throwable) {
-                false
-            }
-        }
-
-        private inline fun withTaskHandles(block: (AtmsHandles) -> Boolean): Boolean {
-            return try {
-                val handles = resolveAtmsHandles(classLoader)
-                val lock = handles.globalLock
-                synchronized(lock) { block(handles) }
-            } catch (t: Throwable) {
-                logger.error("bridge operation failed", t)
-                false
-            }
-        }
-    }
+    @Volatile private var eventPostContext: Context? = null
 
     // endregion
 }

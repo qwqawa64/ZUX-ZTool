@@ -4,14 +4,13 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
-import android.os.Binder
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.os.Parcel
 import android.util.Log
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
@@ -20,9 +19,9 @@ import com.qimian233.ztool.utils.FreeformBubbleBridge
 
 /**
  * Hosts the freeform edge-bubble overlay windows. One [EdgeBubbleView] per minimized
- * freeform task; task events arrive from system_server through
- * [FreeformBubbleBridge.registerCallback]. Started/stopped by the frontend switch
- * (PreferenceKeys.FREEFORM_EDGE_BUBBLE).
+ * freeform task; task events arrive from system_server via
+ * [FreeformBubbleBridge.ACTION_EVENT] broadcasts. Started/stopped by the frontend
+ * switch (PreferenceKeys.FREEFORM_EDGE_BUBBLE).
  */
 class EdgeBubbleService : Service() {
 
@@ -36,48 +35,32 @@ class EdgeBubbleService : Service() {
     }
 
     private val bubbles = HashMap<Int, EdgeBubbleView>()
-    private var callbackRegistered = false
+    private var eventReceiver: BroadcastReceiver? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-
-    private val eventCallback = object : Binder() {
-        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-            if (code != Binder.INTERFACE_TRANSACTION) {
-                data.enforceInterface(FreeformBubbleBridge.DESCRIPTOR)
-            }
-            when (code) {
-                FreeformBubbleBridge.CB_BUBBLE_ADDED -> {
-                    val taskId = data.readInt()
-                    val side = data.readInt()
-                    val pkg = data.readString()
-                    mainHandler.post { addBubble(taskId, side, pkg) }
-                    return true
-                }
-                FreeformBubbleBridge.CB_BUBBLE_REMOVED -> {
-                    val taskId = data.readInt()
-                    mainHandler.post { removeBubble(taskId) }
-                    return true
-                }
-                else -> return super.onTransact(code, data, reply, flags)
-            }
-        }
-    }
 
     override fun onCreate() {
         super.onCreate()
         startForegroundWithNotification()
+        FreeformBubbleBridge.init(this)
+        eventReceiver = FreeformBubbleBridge.registerEventReceiver(
+            this,
+            onBubbleAdded = { taskId, side, pkg ->
+                mainHandler.post { addBubble(taskId, side, pkg) }
+            },
+            onBubbleRemoved = { taskId ->
+                mainHandler.post { removeBubble(taskId) }
+            })
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!callbackRegistered) {
-            callbackRegistered = true
-            FreeformBubbleBridge.registerCallback(eventCallback)
-            // Reconcile with tasks that were minimized before this service started.
-            mainHandler.post { reconcileExisting() }
-        }
+        // Reconcile with tasks that were minimized before this service started.
+        mainHandler.post { reconcileExisting() }
         return START_STICKY
     }
 
     override fun onDestroy() {
+        eventReceiver?.let { FreeformBubbleBridge.unregisterEventReceiver(this, it) }
+        eventReceiver = null
         mainHandler.post { removeAllBubbles() }
         super.onDestroy()
     }
@@ -93,8 +76,12 @@ class EdgeBubbleService : Service() {
 
     private fun reconcileExisting() {
         if (bubbles.isNotEmpty()) return
-        for (task in FreeformBubbleBridge.listMinimized()) {
-            addBubble(task.taskId, task.side, task.packageName)
+        FreeformBubbleBridge.listMinimized { tasks ->
+            mainHandler.post {
+                for (task in tasks) {
+                    addBubble(task.taskId, task.side, task.packageName)
+                }
+            }
         }
     }
 

@@ -1,102 +1,146 @@
 package com.qimian233.ztool.utils
 
-import android.os.Binder
-import android.os.IBinder
-import android.os.Parcel
+import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
-import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 /**
- * App-side client for the "ztool.freeform_bubble" binder service published by
- * [com.qimian233.ztool.hook.modules.systemframework.FreeformEdgeBubbleHook] inside
- * system_server. android.os.ServiceManager is hidden from the SDK, so it is reached
- * via reflection + [HiddenApiBypass]; the parcel protocol is hand-rolled (no AIDL)
- * and must stay in sync with the hook-side [FreeformEdgeBubbleHook.BridgeBinder].
+ * App-side client for the freeform edge-bubble bridge inside system_server.
+ *
+ * The channel is ordered broadcasts (SELinux forbids publishing custom services from
+ * system_server): commands go out as package-targeted ordered broadcasts to "android"
+ * and the return value comes back via the broadcast result; hook-side events arrive as
+ * broadcasts to ZTool. Must stay in sync with
+ * [com.qimian233.ztool.hook.modules.systemframework.FreeformEdgeBubbleHook].
  */
 object FreeformBubbleBridge {
 
     private const val TAG = "FreeformBubbleBridge"
-    private const val SERVICE_NAME = "ztool.freeform_bubble"
-    const val DESCRIPTOR = "com.qimian233.ztool.hook.IFreeformBubbleBridge"
-
-    // Must mirror the hook-side codes.
-    private const val CODE_MINIMIZE_TASK = 1
-    private const val CODE_RESTORE_TASK = 2
-    private const val CODE_LIST_MINIMIZED = 3
-    private const val CODE_GET_PACKAGE = 4
-    private const val CODE_REGISTER_CALLBACK = 5
-    const val CB_BUBBLE_ADDED = 11
-    const val CB_BUBBLE_REMOVED = 12
+    const val ACTION_COMMAND = "com.qimian233.ztool.action.FREEFORM_BUBBLE_COMMAND"
+    const val ACTION_EVENT = "com.qimian233.ztool.action.FREEFORM_BUBBLE_EVENT"
+    const val EVENT_BUBBLE_ADDED = 11
+    const val EVENT_BUBBLE_REMOVED = 12
 
     /** A minimized freeform task as reported by the hook. */
     data class MinimizedTask(val taskId: Int, val side: Int, val packageName: String?)
 
-    fun isServiceAvailable(): Boolean = obtainBinder() != null
+    private val mainHandler = Handler(Looper.getMainLooper())
 
-    private fun obtainBinder(): IBinder? = try {
-        val smClass = Class.forName("android.os.ServiceManager")
-        HiddenApiBypass.invoke(
-            smClass, null, "getService", String::class.java, SERVICE_NAME
-        ) as? IBinder
-    } catch (t: Throwable) {
-        Log.w(TAG, "getService failed: ${t.message}")
-        null
-    }
-
-    private fun <T> transact(code: Int, writeArgs: (Parcel) -> Unit, readResult: (Parcel) -> T): T? {
-        val remote = obtainBinder() ?: return null
-        val data = Parcel.obtain()
-        val reply = Parcel.obtain()
+    /**
+     * Sends a command and delivers the hook's resultCode/resultExtras to [onResult]
+     * on the main thread. Returns false immediately when the ordered broadcast has no
+     * receiver in system_server (bridge not registered yet).
+     */
+    private fun sendCommand(
+        build: (Intent) -> Unit,
+        onResult: (resultCode: Int, extras: Bundle?) -> Unit
+    ): Boolean {
+        val intent = Intent(ACTION_COMMAND).setPackage("android")
+        build(intent)
         return try {
-            data.writeInterfaceToken(DESCRIPTOR)
-            writeArgs(data)
-            remote.transact(code, data, reply, 0)
-            reply.readException()
-            readResult(reply)
+            val context = appContext ?: return false
+            context.sendOrderedBroadcast(
+                intent,
+                null,
+                object : BroadcastReceiver() {
+                    override fun onReceive(ctx: Context, received: Intent) {
+                        onResult(resultCode, getResultExtras(true))
+                    }
+                },
+                mainHandler, Activity.RESULT_CANCELED, null, null
+            )
+            true
         } catch (t: Throwable) {
-            Log.w(TAG, "transact code=$code failed: ${t.message}")
-            null
-        } finally {
-            data.recycle()
-            reply.recycle()
+            Log.w(TAG, "sendCommand failed: ${t.message}")
+            false
         }
     }
 
+    @Volatile private var appContext: Context? = null
+
+    /** Call once from the Application/Service so broadcasts can be sent. */
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
+
     /** Docks the freeform task fully offscreen; `side` is 0 (left) or 1 (right). */
-    fun minimizeTask(taskId: Int, side: Int): Boolean =
-        transact(CODE_MINIMIZE_TASK, { it.writeInt(taskId); it.writeInt(side) }, { it.readInt() == 1 })
-            ?: false
+    fun minimizeTask(taskId: Int, side: Int, onResult: (Boolean) -> Unit = {}) {
+        sendCommand({ it.putExtra("cmd", 1).putExtra("task_id", taskId).putExtra("side", side) }
+        ) { code, _ -> onResult(code == 1) }
+    }
 
     /** Brings the task back to its pre-dock bounds and to the front. */
-    fun restoreTask(taskId: Int): Boolean =
-        transact(CODE_RESTORE_TASK, { it.writeInt(taskId) }, { it.readInt() == 1 }) ?: false
+    fun restoreTask(taskId: Int, onResult: (Boolean) -> Unit = {}) {
+        sendCommand({ it.putExtra("cmd", 2).putExtra("task_id", taskId) }
+        ) { code, _ -> onResult(code == 1) }
+    }
 
-    fun listMinimized(): List<MinimizedTask> =
-        transact(CODE_LIST_MINIMIZED, { }, { reply ->
-            val n = reply.readInt()
-            val out = ArrayList<MinimizedTask>(n / 2)
-            var taskId = -1
-            var side = 0
-            for (i in 0 until n) {
-                val v = reply.readInt()
-                if (i % 2 == 0) taskId = v else {
-                    side = v
-                    out.add(MinimizedTask(taskId, side, getPackageForTask(taskId)))
+    fun listMinimized(onResult: (List<MinimizedTask>) -> Unit = {}) {
+        sendCommand({ it.putExtra("cmd", 3) }) { code, extras ->
+            if (code != 1 || extras == null) {
+                onResult(emptyList())
+                return@sendCommand
+            }
+            val taskIds = extras.getIntArray("task_ids") ?: IntArray(0)
+            val sides = extras.getIntArray("sides") ?: IntArray(0)
+            val out = ArrayList<MinimizedTask>(taskIds.size)
+            // Package names resolve asynchronously; chain the lookups.
+            fun resolve(i: Int) {
+                if (i >= taskIds.size) {
+                    onResult(out)
+                    return
+                }
+                getPackageForTask(taskIds[i]) { pkg ->
+                    out.add(MinimizedTask(taskIds[i], sides.getOrElse(i) { 0 }, pkg))
+                    resolve(i + 1)
                 }
             }
-            out
-        }) ?: emptyList()
+            resolve(0)
+        }
+    }
 
-    fun getPackageForTask(taskId: Int): String? =
-        transact(CODE_GET_PACKAGE, { it.writeInt(taskId) }, { it.readString() })
+    fun getPackageForTask(taskId: Int, onResult: (String?) -> Unit = {}) {
+        sendCommand({ it.putExtra("cmd", 4).putExtra("task_id", taskId) }) { _, extras ->
+            onResult(extras?.getString("pkg"))
+        }
+    }
 
     /**
-     * Registers a callback binder receiving hook-side bubble events
-     * ([CB_BUBBLE_ADDED] / [CB_BUBBLE_REMOVED], one-way).
+     * Registers a receiver for hook-side bubble events. The returned receiver must be
+     * unregistered with [unregisterEventReceiver] when the host service stops.
      */
-    fun registerCallback(callback: Binder) {
-        transact(CODE_REGISTER_CALLBACK, { it.writeStrongBinder(callback) }, { }) ?: run {
-            Log.w(TAG, "registerCallback: service unreachable")
+    fun registerEventReceiver(
+        context: Context,
+        onBubbleAdded: (taskId: Int, side: Int, pkg: String?) -> Unit,
+        onBubbleRemoved: (taskId: Int) -> Unit
+    ): BroadcastReceiver {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                when (intent.getIntExtra("event", -1)) {
+                    EVENT_BUBBLE_ADDED -> onBubbleAdded(
+                        intent.getIntExtra("task_id", -1),
+                        intent.getIntExtra("side", 0),
+                        intent.getStringExtra("pkg"))
+                    EVENT_BUBBLE_REMOVED -> onBubbleRemoved(intent.getIntExtra("task_id", -1))
+                }
+            }
+        }
+        val filter = IntentFilter(ACTION_EVENT)
+        context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
+        return receiver
+    }
+
+    fun unregisterEventReceiver(context: Context, receiver: BroadcastReceiver) {
+        try {
+            context.unregisterReceiver(receiver)
+        } catch (t: Throwable) {
+            Log.w(TAG, "unregisterEventReceiver: ${t.message}")
         }
     }
 }
