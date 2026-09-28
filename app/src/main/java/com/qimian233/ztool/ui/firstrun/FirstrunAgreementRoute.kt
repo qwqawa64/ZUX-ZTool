@@ -81,7 +81,6 @@ import com.qimian233.ztool.data.home.FirstrunAgreementRepository
 import com.qimian233.ztool.data.home.FirstrunCheckState
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
-import com.qimian233.ztool.ui.components.ZToolMarkdownText
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalThemeRevealController
@@ -355,25 +354,10 @@ private fun AgreementPage(
                 fontWeight = FontWeight.Bold
             )
 
-            ZToolCard(
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = LocalZToolColorScheme.current.surfaceContainerHigh
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(400.dp)
-                        .verticalScroll(readScrollState)
-                        .padding(16.dp)
-                ) {
-                    ZToolMarkdownText(
-                        markdown = markdownText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LocalZToolColorScheme.current.onSurfaceVariant,
-                        fontSize = 18.sp
-                    )
-                }
-            }
+            AgreementContentCard(
+                markdownText = markdownText,
+                scrollState = readScrollState
+            )
         }
 
         BottomActionBar(
