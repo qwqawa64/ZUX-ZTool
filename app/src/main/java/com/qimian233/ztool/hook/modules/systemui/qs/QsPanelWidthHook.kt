@@ -171,7 +171,10 @@ class QsPanelWidthHook : AppHookModule() {
                     .getIdentifier("volume_row_slider_frame", "id", ScopeKeys.SYSTEM_UI.packageName)
                 if (resolved != 0) cachedVolumeRowSliderFrameId = resolved
             }
-            if (cachedVolumeRowSliderFrameId == 0 || frame.id != cachedVolumeRowSliderFrameId) {
+            // The QS-panel sliders (media_volume_slider, brightness) live in arbitrary
+            // FrameLayouts; volume_row_slider_frame is the volume dialog's own window,
+            // which must NOT be touched. Stretch every other portrait frame's seekbars.
+            if (frame.id == cachedVolumeRowSliderFrameId) {
                 return@hookWithId null
             }
             if (isWindowPortrait(frame)) {
