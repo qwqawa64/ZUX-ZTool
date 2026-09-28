@@ -81,6 +81,7 @@ import com.qimian233.ztool.data.home.FirstrunAgreementRepository
 import com.qimian233.ztool.data.home.FirstrunCheckState
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolOutlinedTextField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalThemeRevealController
@@ -154,7 +155,8 @@ fun FirstrunAgreementRoute(
         when (currentPageState.value) {
             FirstrunPage.Splash -> onAgreementDeclined()
             FirstrunPage.Agreement -> onAgreementDeclined()
-            FirstrunPage.Permissions -> currentPageState.value = FirstrunPage.Agreement
+            FirstrunPage.SourceVerify -> currentPageState.value = FirstrunPage.Agreement
+            FirstrunPage.Permissions -> currentPageState.value = FirstrunPage.SourceVerify
         }
     }
 
@@ -212,7 +214,7 @@ fun FirstrunAgreementRoute(
                             viewModel.acceptAgreement()
                             revealNavigation = true
                             revealController.triggerReveal(
-                                onAction = { currentPageState.value = FirstrunPage.Permissions },
+                                onAction = { currentPageState.value = FirstrunPage.SourceVerify },
                                 onAnimationEnd = { revealNavigation = false },
                                 anchor = tapAnchor
                             )
@@ -220,6 +222,19 @@ fun FirstrunAgreementRoute(
                         onDisagree = {
                             viewModel.declineAgreement()
                             onAgreementDeclined()
+                        }
+                    )
+                    FirstrunPage.SourceVerify -> SourceVerifyPage(
+                        onNext = { tapAnchor ->
+                            revealNavigation = true
+                            revealController.triggerReveal(
+                                onAction = { currentPageState.value = FirstrunPage.Permissions },
+                                onAnimationEnd = { revealNavigation = false },
+                                anchor = tapAnchor
+                            )
+                        },
+                        onBack = {
+                            currentPageState.value = FirstrunPage.Agreement
                         }
                     )
                     FirstrunPage.Permissions -> PermissionPage(
@@ -366,6 +381,74 @@ private fun AgreementPage(
             nextEnabled = firstPageReady,
             onNext = onNext,
             onDisagree = onDisagree
+        )
+    }
+}
+
+@Composable
+private fun SourceVerifyPage(
+    onNext: (Offset) -> Unit,
+    onBack: () -> Unit
+) {
+    var input by rememberSaveable { mutableStateOf("") }
+    val verified = input.trim() == ExpectedRepoName
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            PageHeader(
+                title = stringResource(R.string.page_firstrun_verify_title),
+                subtitle = stringResource(R.string.page_firstrun_verify_subtitle)
+            )
+
+            Text(
+                text = stringResource(R.string.page_firstrun_verify_body),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "1. " + stringResource(R.string.page_firstrun_verify_channel_1),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "2. " + stringResource(R.string.page_firstrun_verify_channel_2),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Text(
+                text = stringResource(R.string.page_firstrun_verify_instruction),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            ZToolOutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.page_firstrun_verify_input_label),
+                placeholder = stringResource(R.string.page_firstrun_verify_input_hint),
+                isError = input.isNotEmpty() && !verified,
+                singleLine = true
+            )
+        }
+
+        BottomActionBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            nextText = stringResource(R.string.page_firstrun_next_step),
+            nextEnabled = verified,
+            onNext = onNext,
+            onDisagree = onBack,
+            negativeText = stringResource(R.string.page_firstrun_previous)
         )
     }
 }
@@ -637,13 +720,17 @@ private class FirstrunAgreementViewModelFactory(
 private enum class FirstrunPage {
     Splash,
     Agreement,
+    SourceVerify,
     Permissions
 }
 
 private fun FirstrunPage.pageOrder(): Int = when (this) {
     FirstrunPage.Splash -> 0
     FirstrunPage.Agreement -> 1
-    FirstrunPage.Permissions -> 2
+    FirstrunPage.SourceVerify -> 2
+    FirstrunPage.Permissions -> 3
 }
+
+private const val ExpectedRepoName = "ZUX-ZTool"
 
 private const val FirstrunPageTransitionMillis = 320

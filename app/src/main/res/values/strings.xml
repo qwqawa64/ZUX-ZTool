@@ -27,6 +27,14 @@
     <string name="page_firstrun_agreement_screen_title">首次运行说明</string>
     <string name="page_firstrun_agreement_screen_subtitle">首先，请仔细阅读用户协议</string>
     <string name="page_firstrun_permissions_title">权限配置</string>
+    <string name="page_firstrun_verify_title">额外确认</string>
+    <string name="page_firstrun_verify_subtitle">输入本应用的仓库名</string>
+    <string name="page_firstrun_verify_body">近期注意到部分平台在未经原作者授权的情况下上架本软件副本。这些副本可能已经经过修改，可能包含可利用 Root 权限执行的恶意代码。建议您仅从以下渠道下载软件：</string>
+    <string name="page_firstrun_verify_channel_1">我们的 Xposed 模块仓库</string>
+    <string name="page_firstrun_verify_channel_2">我们的 GitHub 仓库 release 页面</string>
+    <string name="page_firstrun_verify_instruction">为了核对来源，请输入我们的 GitHub 仓库的名称。只有输入正确的仓库名称您才可以继续操作。如果您从 Xposed 模块仓库下载本模块，请查看源码 url 获取相关信息：</string>
+    <string name="page_firstrun_verify_input_label">仓库名称</string>
+    <string name="page_firstrun_verify_input_hint">请输入仓库名称</string>
     <string name="page_firstrun_permissions_subtitle">授权后方可使用模块功能</string>
     <string name="page_firstrun_permissions_check_title">权限检查与处理</string>
     <string name="page_firstrun_permissions_ready">所有权限要求已满足，可以继续</string>

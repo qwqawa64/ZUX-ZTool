@@ -26,6 +26,14 @@
     <string name="page_firstrun_agreement_screen_title">First-run notice</string>
     <string name="page_firstrun_agreement_screen_subtitle">First, please read this user agreement carefully</string>
     <string name="page_firstrun_permissions_title">Permission setup</string>
+    <string name="page_firstrun_verify_title">Extra verification</string>
+    <string name="page_firstrun_verify_subtitle">Enter the repository name of this app</string>
+    <string name="page_firstrun_verify_body">We have recently noticed that some platforms distribute copies of this software without the original author\'s authorization. These copies may have been modified and may contain malicious code that can exploit Root privileges. We recommend downloading the software only from the following sources:</string>
+    <string name="page_firstrun_verify_channel_1">Our Xposed module repository</string>
+    <string name="page_firstrun_verify_channel_2">Our GitHub repository release page</string>
+    <string name="page_firstrun_verify_instruction">To verify the source, please enter the name of our GitHub repository. You can only continue after entering the correct repository name. If you downloaded this module from an Xposed module repository, check the source code URL for the relevant information:</string>
+    <string name="page_firstrun_verify_input_label">Repository name</string>
+    <string name="page_firstrun_verify_input_hint">Enter the repository name</string>
     <string name="page_firstrun_permissions_subtitle">The module could not work properly without these permissions</string>
     <string name="page_firstrun_permissions_check_title">Permission checks and actions</string>
     <string name="page_firstrun_permissions_ready">All permission requirements satisfied, you can continue.</string>
