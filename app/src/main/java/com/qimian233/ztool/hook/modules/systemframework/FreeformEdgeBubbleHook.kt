@@ -86,6 +86,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private val internalMove = ThreadLocal.withInitial { false }
 
         @Volatile private var ztoolUid = -1
+        @Volatile private var atmsHandlesCache: AtmsHandles? = null
         @Volatile private var hideShowControllerCache: Triple<Any?, Method?, Method?>? = null
         @Volatile private var bridgeRegistered = false
         private var eventPostHandler: Handler? = null
@@ -179,15 +180,45 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 resultCode = 0
                 return
             }
+            // Execute off the system_server main thread: the WMS lock and reflection
+            // resolution here must never contend with system UI work, and goAsync keeps
+            // the ordered-broadcast result channel open until the handler finishes.
+            val pending = goAsync()
+            val startedAt = android.os.SystemClock.elapsedRealtime()
+            val handler = eventPostHandler
+            if (handler == null) {
+                val (code, extras) = executeCommand(intent, startedAt)
+                pending.setResultCode(code)
+                if (extras != null) pending.setResultExtras(extras)
+                pending.finish()
+                return
+            }
+            handler.post {
+                try {
+                    val (code, extras) = executeCommand(intent, startedAt)
+                    pending.setResultCode(code)
+                    if (extras != null) pending.setResultExtras(extras)
+                } catch (t: Throwable) {
+                    logger.error("bridge command crashed", t)
+                    pending.setResultCode(0)
+                } finally {
+                    pending.finish()
+                }
+            }
+        }
+
+        private fun executeCommand(intent: Intent, startedAt: Long): Pair<Int, Bundle?> {
+            var result: Int
+            var extras: Bundle? = null
             when (intent.getIntExtra("cmd", -1)) {
                 CMD_MINIMIZE_TASK -> {
                     val taskId = intent.getIntExtra("task_id", -1)
                     val side = intent.getIntExtra("side", 0)
-                    resultCode = if (withTaskHandles(classLoader) { doMinimize(it, taskId, side) }) 1 else 0
+                    result = if (withTaskHandles(classLoader) { doMinimize(it, taskId, side) }) 1 else 0
                 }
                 CMD_RESTORE_TASK -> {
                     val taskId = intent.getIntExtra("task_id", -1)
-                    resultCode = if (withTaskHandles(classLoader) { doRestore(it, taskId) }) 1 else 0
+                    result = if (withTaskHandles(classLoader) { doRestore(it, taskId) }) 1 else 0
                 }
                 CMD_LIST_MINIMIZED -> {
                     val bundle = Bundle()
@@ -201,17 +232,21 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                     }
                     bundle.putIntArray("task_ids", taskIds)
                     bundle.putIntArray("sides", sides)
-                    resultCode = 1
-                    setResultExtras(bundle)
+                    result = 1
+                    extras = bundle
                 }
                 CMD_GET_PACKAGE -> {
                     val bundle = Bundle()
                     bundle.putString("pkg", taskPackages[intent.getIntExtra("task_id", -1)])
-                    resultCode = 1
-                    setResultExtras(bundle)
+                    result = 1
+                    extras = bundle
                 }
-                else -> resultCode = 0
+                else -> result = 0
             }
+            logger.info(
+                "cmd=${intent.getIntExtra("cmd", -1)} result=$result " +
+                    "took=${android.os.SystemClock.elapsedRealtime() - startedAt}ms")
+            return Pair(result, extras)
         }
 
         private fun isAllowedCaller(uid: Int, classLoader: ClassLoader): Boolean {
@@ -294,6 +329,15 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     }
 
     private fun resolveAtmsHandles(classLoader: ClassLoader): AtmsHandles {
+        atmsHandlesCache?.let { cached ->
+            if (cached.taskClass.classLoader === classLoader) return cached
+        }
+        val handles = resolveAtmsHandlesUncached(classLoader)
+        atmsHandlesCache = handles
+        return handles
+    }
+
+    private fun resolveAtmsHandlesUncached(classLoader: ClassLoader): AtmsHandles {
         val atms = resolveAtms(classLoader)
         val atmsClass = atms.javaClass
         val globalLock = findField(atmsClass, "mGlobalLock").get(atms)
