@@ -99,8 +99,11 @@ class EdgeBubbleService : Service() {
     private fun startPolling() {
         if (polling) return
         polling = true
+        // maximumWindowMetrics: ZTool itself may be inside a freeform window, where
+        // currentWindowMetrics would return the small window bounds instead of the
+        // display's.
         val metricsBounds = try {
-            windowManager.currentWindowMetrics.bounds
+            windowManager.maximumWindowMetrics.bounds
         } catch (_: Throwable) { null }
         realDisplayWidth = metricsBounds?.width() ?: resources.displayMetrics.widthPixels
         realDisplayHeight = metricsBounds?.height() ?: resources.displayMetrics.heightPixels

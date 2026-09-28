@@ -71,15 +71,16 @@ class EdgeBubbleView(
     private val wm = context.getSystemService(WindowManager::class.java)
     private val mainHandler = Handler(Looper.getMainLooper())
     private val density = context.resources.displayMetrics.density
-    // Real display bounds: displayMetrics can report the unrotated (portrait) size on
-    // rotated tablets, which anchors right-edge bubbles in the middle of the screen.
+    // Full display bounds. maximumWindowMetrics (not currentWindowMetrics!) is required:
+    // when ZTool itself runs inside a freeform window, currentWindowMetrics returns that
+    // small window's bounds and every edge anchor lands mid-screen.
     private val screenWidth: Int
     private val screenHeight: Int
 
     init {
         val metricsBounds = try {
             context.getSystemService(WindowManager::class.java)
-                .currentWindowMetrics.bounds
+                .maximumWindowMetrics.bounds
         } catch (_: Throwable) { null }
         screenWidth = metricsBounds?.width() ?: context.resources.displayMetrics.widthPixels
         screenHeight = metricsBounds?.height() ?: context.resources.displayMetrics.heightPixels
