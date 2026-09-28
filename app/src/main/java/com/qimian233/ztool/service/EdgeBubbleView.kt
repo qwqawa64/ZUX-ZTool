@@ -52,8 +52,9 @@ class EdgeBubbleView(
         private const val MODE_HALF = 4
 
         private const val PILL_CORNER_DP = 16f
-        private const val ICON_SIZE_DP = 40f
-        private const val PILL_INNER_MARGIN_DP = 6f
+        // 250% of the initial 40dp icon, Oplus-style.
+        private const val ICON_SIZE_DP = 100f
+        private const val PILL_INNER_MARGIN_DP = 10f
         private const val HALF_PEEK_DP = 16f
         private const val VERTICAL_LIMIT_DP = 48f
         private const val HALF_HIDE_DELAY_MS = 50L
@@ -64,8 +65,8 @@ class EdgeBubbleView(
         private const val FLING_VELOCITY_PX = 1000f
         private const val FLING_DISTANCE_PX = 100f
 
-        private val BG_COLOR_DARK = Color.argb(230, 32, 32, 34)
-        private val BG_COLOR_LIGHT = Color.argb(230, 244, 244, 246)
+        // Dark rounded backdrop behind the icon, 80% opacity (Oplus alignment).
+        private val BG_COLOR = Color.argb(204, 28, 28, 30)
     }
 
     private val wm = context.getSystemService(WindowManager::class.java)
@@ -154,7 +155,7 @@ class EdgeBubbleView(
     )
 
     init {
-        pillPaint.color = if (isDarkTheme()) BG_COLOR_DARK else BG_COLOR_LIGHT
+        pillPaint.color = BG_COLOR
         // Start in HALF after a brief fully-visible moment (Oplus appear behaviour).
         scheduleHalfHide(APPEAR_FULL_MS)
     }
@@ -352,12 +353,6 @@ class EdgeBubbleView(
             (pillSizePx - inset).toInt(), (pillSizePx - inset).toInt()
         )
         icon.draw(canvas)
-    }
-
-    private fun isDarkTheme(): Boolean {
-        val mode = context.resources.configuration.uiMode and
-            android.content.res.Configuration.UI_MODE_NIGHT_MASK
-        return mode == android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
 
     // endregion
