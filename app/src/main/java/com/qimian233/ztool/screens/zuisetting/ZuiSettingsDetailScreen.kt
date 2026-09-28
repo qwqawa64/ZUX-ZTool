@@ -892,7 +892,7 @@ private fun settingsDetailSections(
             add(
                 SettingSection(
                     title = stringResource(R.string.settings_zui_force_config_title),
-                    items = listOf(
+                    items = listOfNotNull(
                         SettingItem.Custom(
                             key = "deco_settings_zui_force_config_summary",
                             content = {
@@ -912,7 +912,10 @@ private fun settingsDetailSections(
                                         text = stringResource(R.string.settings_zui_force_config_hook_warning),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = LocalZToolColorScheme.current.onSurfaceVariant,
-                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                        modifier = Modifier.padding(
+                                            horizontal = 24.dp,
+                                            vertical = 8.dp
+                                        )
                                     )
                                 }
                             )
@@ -937,7 +940,7 @@ private fun settingsDetailSections(
                             summary = stringResource(R.string.settings_zui_force_fixed_summary),
                             onClick = onZuiForceFixed
                         )
-                    ).filterNotNull()
+                    )
                 )
             )
         } else {
