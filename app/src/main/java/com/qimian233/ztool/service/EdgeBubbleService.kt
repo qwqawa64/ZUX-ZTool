@@ -45,6 +45,9 @@ class EdgeBubbleService : Service() {
     private var eventReceiver: BroadcastReceiver? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val restoredAt = HashMap<Int, Long>()
+    private val bubblePrefs by lazy {
+        getSharedPreferences("edge_bubble_pos", MODE_PRIVATE)
+    }
     private var polling = false
     private var realDisplayWidth = 0
 
@@ -137,9 +140,14 @@ class EdgeBubbleService : Service() {
             if (taskId !in presentIds) {
                 restoredAt.remove(taskId)
                 removeBubble(taskId)
+                bubblePrefs.edit().remove("cy_$taskId").apply()
             }
         }
     }
+
+    /** Remembered vertical ratio for a task's bubble (0..1 of screen height). */
+    private fun storedCenterYRatio(taskId: Int): Float =
+        bubblePrefs.getFloat("cy_$taskId", Float.NaN)
 
     private fun reconcileExisting() {
         if (bubbles.isNotEmpty()) return
@@ -154,10 +162,14 @@ class EdgeBubbleService : Service() {
 
     private fun addBubble(taskId: Int, side: Int, pkg: String?) {
         if (bubbles.containsKey(taskId)) return
+        val remembered = storedCenterYRatio(taskId)
+        val centerYRatio = if (remembered.isNaN())
+            BASE_CENTER_Y_RATIO + (bubbles.size % 3) * CENTER_Y_STAGGER_RATIO
+        else remembered
         val view = try {
             EdgeBubbleView(
                 this, taskId, side,
-                BASE_CENTER_Y_RATIO + (bubbles.size % 3) * CENTER_Y_STAGGER_RATIO,
+                centerYRatio,
                 listener = object : EdgeBubbleView.Listener {
                     override fun onBubbleRestore(taskId: Int) {
                         restoredAt[taskId] = SystemClock.elapsedRealtime()
@@ -165,7 +177,7 @@ class EdgeBubbleService : Service() {
                     }
 
                     override fun onBubbleSettled(taskId: Int, side: Int, centerYRatio: Float) {
-                        // v1: side/y are per-bubble view state; nothing to persist yet.
+                        bubblePrefs.edit().putFloat("cy_$taskId", centerYRatio).apply()
                     }
                 }
             )

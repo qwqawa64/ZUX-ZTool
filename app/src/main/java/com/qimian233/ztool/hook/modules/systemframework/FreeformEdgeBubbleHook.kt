@@ -581,7 +581,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val target = Rect(stored)
         if (displayBounds != null && !displayBounds.isEmpty) {
             // Must exceed the app-side EDGE_TOUCH_MARGIN_PX (48px) so a restored
-            // window is clearly outside the edge-trigger zone.
+            // window is clearly outside the edge-trigger zone; applies vertically
+            // too, or a window docked near a corner would come back with its caption
+            // bar clipped offscreen.
             val margin = 96
             val dx = when {
                 target.left < displayBounds.left + margin ->
@@ -590,7 +592,14 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                     displayBounds.right - margin - target.right
                 else -> 0
             }
-            target.offset(dx, 0)
+            val dy = when {
+                target.top < displayBounds.top + margin ->
+                    displayBounds.top + margin - target.top
+                target.bottom > displayBounds.bottom - margin ->
+                    displayBounds.bottom - margin - target.bottom
+                else -> 0
+            }
+            target.offset(dx, dy)
         }
         if (handles.hideShowController != null && handles.bringToFront != null) {
             try {

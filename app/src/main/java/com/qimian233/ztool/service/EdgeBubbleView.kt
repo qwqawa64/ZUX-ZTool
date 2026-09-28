@@ -71,8 +71,19 @@ class EdgeBubbleView(
     private val wm = context.getSystemService(WindowManager::class.java)
     private val mainHandler = Handler(Looper.getMainLooper())
     private val density = context.resources.displayMetrics.density
-    private val screenWidth = context.resources.displayMetrics.widthPixels
-    private val screenHeight = context.resources.displayMetrics.heightPixels
+    // Real display bounds: displayMetrics can report the unrotated (portrait) size on
+    // rotated tablets, which anchors right-edge bubbles in the middle of the screen.
+    private val screenWidth: Int
+    private val screenHeight: Int
+
+    init {
+        val metricsBounds = try {
+            context.getSystemService(WindowManager::class.java)
+                .currentWindowMetrics.bounds
+        } catch (_: Throwable) { null }
+        screenWidth = metricsBounds?.width() ?: context.resources.displayMetrics.widthPixels
+        screenHeight = metricsBounds?.height() ?: context.resources.displayMetrics.heightPixels
+    }
 
     private val pillSizePx = dip(ICON_SIZE_DP + PILL_INNER_MARGIN_DP * 2).toInt()
     private val halfPeekPx = dip(HALF_PEEK_DP).toInt()
