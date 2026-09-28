@@ -5,10 +5,8 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Outline
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
-import android.view.ViewOutlineProvider
 import android.os.Handler
 import android.os.Looper
 import android.view.GestureDetector
@@ -92,6 +90,12 @@ class EdgeBubbleView(
     private val halfPeekPx = dip(HALF_PEEK_DP).toInt()
 
     private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        // Nearly-invisible fill: only the shadowLayer halo is wanted, cast outward.
+        color = 0x01000000
+        setShadowLayer(dip(6f), 0f, dip(2f), 0x88000000.toInt())
+    }
     private val pillRect = RectF()
     private var appIcon: Drawable? = null
 
@@ -156,18 +160,8 @@ class EdgeBubbleView(
     )
 
     init {
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         pillPaint.color = BG_COLOR
-        // Projected shadow from the backdrop's rounded-rect outline; the icon
-        // drawable's built-in shadow alone hides under the enlarged icon.
-        outlineProvider = object : ViewOutlineProvider() {
-            override fun getOutline(view: View, outline: Outline) {
-                outline.setRoundRect(
-                    0, 0, pillSizePx, pillSizePx, dip(PILL_CORNER_DP))
-            }
-        }
-        clipToOutline = false
-        stateListAnimator = null
-        elevation = dip(8f)
         // Start in HALF after a brief fully-visible moment (Oplus appear behaviour).
         scheduleHalfHide(APPEAR_FULL_MS)
     }
@@ -356,7 +350,9 @@ class EdgeBubbleView(
     override fun onDraw(canvas: Canvas) {
         val inset = dip(PILL_INNER_MARGIN_DP)
         pillRect.set(inset, inset, pillSizePx - inset, pillSizePx - inset)
-        canvas.drawRoundRect(pillRect, dip(PILL_CORNER_DP), dip(PILL_CORNER_DP), pillPaint)
+        val corner = dip(PILL_CORNER_DP)
+        canvas.drawRoundRect(pillRect, corner, corner, shadowPaint)
+        canvas.drawRoundRect(pillRect, corner, corner, pillPaint)
         val icon = appIcon ?: return
         val alpha = if (mode == MODE_HALF) 0.5f else 1f
         icon.mutate().alpha = (alpha * 255).toInt()
