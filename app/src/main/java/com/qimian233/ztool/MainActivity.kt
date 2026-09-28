@@ -1,6 +1,8 @@
 package com.qimian233.ztool
 
+import android.content.Intent
 import android.content.res.Configuration
+import android.provider.Settings
 import android.os.Bundle
 import android.view.Window
 import android.widget.Toast
@@ -38,6 +40,9 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.service.EdgeBubbleService
+import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.navigation.MainRouteNavHost
@@ -162,6 +167,18 @@ class MainActivity : ComponentActivity(),
         }
 
         LogServiceManager.restartServiceIfNeeded(this)
+
+        // Restart the edge-bubble overlay service after reboot: the switch preference
+        // persists, but the foreground service itself does not survive a restart.
+        if (ModulePreferencesUtils(this).loadBooleanSetting(
+                PreferenceKeys.FREEFORM_EDGE_BUBBLE.name, false) &&
+            Settings.canDrawOverlays(this)
+        ) {
+            try {
+                startForegroundService(Intent(this, EdgeBubbleService::class.java))
+            } catch (_: Throwable) {
+            }
+        }
 
         // Clean up excess logs at startup + sync LSPosed logs
         val settingsRepo = SettingsRepository(applicationContext)
