@@ -55,6 +55,10 @@ class EdgeBubbleView(
         private const val PILL_SIZE_DP = 75f
         private const val PILL_INNER_MARGIN_DP = 6f
         private const val HALF_PEEK_DP = 24f
+        /** Light-grey pad connecting the backdrop to the screen edge (FULL state). */
+        private const val CONNECTOR_W_DP = 24f
+        /** Whole-bubble alpha in HALF state (Oplus "collapsed" dimming). */
+        private const val HALF_ALPHA = 0.45f
         private const val VERTICAL_LIMIT_DP = 48f
         private const val HALF_HIDE_DELAY_MS = 50L
         private const val APPEAR_FULL_MS = 600L
@@ -66,6 +70,8 @@ class EdgeBubbleView(
 
         // Dark rounded backdrop behind the icon, 80% opacity (Oplus alignment).
         private val BG_COLOR = Color.argb(204, 28, 28, 30)
+        // Lighter grey pad between backdrop and screen edge.
+        private val CONNECTOR_COLOR = Color.argb(217, 168, 168, 170)
     }
 
     private val wm = context.getSystemService(WindowManager::class.java)
@@ -88,6 +94,7 @@ class EdgeBubbleView(
 
     private val pillSizePx = dip(PILL_SIZE_DP).toInt()
     private val halfPeekPx = dip(HALF_PEEK_DP).toInt()
+    private val connWpx = dip(CONNECTOR_W_DP).toInt()
 
     private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -96,6 +103,7 @@ class EdgeBubbleView(
         color = 0x01000000
         setShadowLayer(dip(6f), 0f, dip(2f), 0x88000000.toInt())
     }
+    private val connectorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val pillRect = RectF()
     private var appIcon: Drawable? = null
 
@@ -119,7 +127,7 @@ class EdgeBubbleView(
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         format = android.graphics.PixelFormat.TRANSLUCENT
-        width = 2 * pillSizePx - halfPeekPx
+        width = 2 * pillSizePx - halfPeekPx + connWpx
         height = pillSizePx
         gravity = Gravity.TOP or Gravity.START
         layoutInDisplayCutoutMode =
@@ -162,6 +170,7 @@ class EdgeBubbleView(
     init {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         pillPaint.color = BG_COLOR
+        connectorPaint.color = CONNECTOR_COLOR
         // Start in HALF after a brief fully-visible moment (Oplus appear behaviour).
         scheduleHalfHide(APPEAR_FULL_MS)
     }
@@ -179,10 +188,11 @@ class EdgeBubbleView(
     private fun anchorX(side: Int): Int =
         if (side == SIDE_LEFT) -(pillSizePx - halfPeekPx) else screenWidth - halfPeekPx
 
-    /** View translation for FULL mode on the given side. */
-    private fun fullTranslation(side: Int): Float =
-        if (side == SIDE_LEFT) (pillSizePx - halfPeekPx).toFloat()
-        else -(pillSizePx - halfPeekPx).toFloat()
+    /** View translation for FULL mode on the given side (connector fits toward edge). */
+    private fun fullTranslation(side: Int): Float {
+        val t = (pillSizePx - halfPeekPx + connWpx).toFloat()
+        return if (side == SIDE_LEFT) t else -t
+    }
 
     private fun clampY(top: Int): Int {
         val limit = dip(VERTICAL_LIMIT_DP).toInt()
@@ -349,13 +359,27 @@ class EdgeBubbleView(
 
     override fun onDraw(canvas: Canvas) {
         val inset = dip(PILL_INNER_MARGIN_DP)
-        pillRect.set(inset, inset, pillSizePx - inset, pillSizePx - inset)
         val corner = dip(PILL_CORNER_DP)
+        val dim = if (mode == MODE_HALF) HALF_ALPHA else 1f
+
+        // Backdrop occupies the leading part of the view; the connector extends from
+        // it toward the screen edge (visible only in FULL, where the whole bubble is
+        // pushed off the edge by the connector width).
+        pillRect.set(0f, 0f, pillSizePx.toFloat(), pillSizePx.toFloat())
+        val connectorRect = RectF(pillRect)
+        if (side == SIDE_LEFT) connectorRect.offset(-connWpx.toFloat(), 0f)
+        else connectorRect.offset(connWpx.toFloat(), 0f)
+
+        shadowPaint.alpha = (255 * dim).toInt()
+        connectorPaint.alpha = (255 * dim).toInt()
+        pillPaint.alpha = (255 * dim).toInt()
+        canvas.drawRoundRect(connectorRect, corner, corner, shadowPaint)
+        canvas.drawRoundRect(connectorRect, corner, corner, connectorPaint)
         canvas.drawRoundRect(pillRect, corner, corner, shadowPaint)
         canvas.drawRoundRect(pillRect, corner, corner, pillPaint)
+
         val icon = appIcon ?: return
-        val alpha = if (mode == MODE_HALF) 0.5f else 1f
-        icon.mutate().alpha = (alpha * 255).toInt()
+        icon.mutate().alpha = (255 * dim).toInt()
         icon.setBounds(
             inset.toInt(), inset.toInt(),
             (pillSizePx - inset).toInt(), (pillSizePx - inset).toInt()
