@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
@@ -32,11 +33,19 @@ class EdgeBubbleService : Service() {
         /** Base vertical ratio for bubbles; per-bubble stagger keeps them separable. */
         private const val BASE_CENTER_Y_RATIO = 0.35f
         private const val CENTER_Y_STAGGER_RATIO = 0.15f
+        private const val POLL_INTERVAL_MS = 600L
+        /** Window flush to the display edge within this margin triggers a bubble. */
+        private const val EDGE_TOUCH_MARGIN_PX = 48
+        /** After a bubble restore, do not re-trigger the same task for this long. */
+        private const val RESTORE_COOLDOWN_MS = 3000L
     }
 
     private val bubbles = HashMap<Int, EdgeBubbleView>()
     private var eventReceiver: BroadcastReceiver? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val restoredAt = HashMap<Int, Long>()
+    private var polling = false
+    private var realDisplayWidth = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -53,12 +62,15 @@ class EdgeBubbleService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startPolling()
         // Reconcile with tasks that were minimized before this service started.
         mainHandler.post { reconcileExisting() }
         return START_STICKY
     }
 
     override fun onDestroy() {
+        polling = false
+        mainHandler.removeCallbacksAndMessages(null)
         eventReceiver?.let { FreeformBubbleBridge.unregisterEventReceiver(this, it) }
         eventReceiver = null
         mainHandler.post { removeAllBubbles() }
@@ -73,6 +85,58 @@ class EdgeBubbleService : Service() {
     }
 
     // region bubble management (main thread)
+
+    /**
+     * App-side edge detection (option 1): poll the hook's freeform task snapshot and
+     * dock+bubble any visible task flushed against the display edge. The hook-side
+     * setBounds hook does not see ZUI shell drags, hence this poller.
+     */
+    private fun startPolling() {
+        if (polling) return
+        polling = true
+        realDisplayWidth = try {
+            windowManager.currentWindowMetrics.bounds.width()
+        } catch (_: Throwable) {
+            resources.displayMetrics.widthPixels
+        }
+        mainHandler.postDelayed({ pollOnce() }, POLL_INTERVAL_MS)
+    }
+
+    private fun pollOnce() {
+        if (!polling) return
+        FreeformBubbleBridge.listFreeformTasks { tasks ->
+            mainHandler.post { handleFreeformTasks(tasks) }
+            if (polling) mainHandler.postDelayed({ pollOnce() }, POLL_INTERVAL_MS)
+        }
+    }
+
+    private fun handleFreeformTasks(tasks: List<FreeformBubbleBridge.FreeformTask>) {
+        if (!polling) return
+        val now = SystemClock.elapsedRealtime()
+        val visibleIds = HashSet<Int>()
+        for (task in tasks) {
+            if (task.hidden) continue // docked behind home: bubble is already up
+            visibleIds.add(task.taskId)
+            val side = when {
+                task.bounds.left <= EDGE_TOUCH_MARGIN_PX -> 0
+                realDisplayWidth - task.bounds.right <= EDGE_TOUCH_MARGIN_PX -> 1
+                else -> -1
+            }
+            val cooledDown = now - (restoredAt[task.taskId] ?: 0L) >= RESTORE_COOLDOWN_MS
+            if (side >= 0 && !bubbles.containsKey(task.taskId) && cooledDown) {
+                Log.i(TAG, "edge detected task=${task.taskId} side=$side bounds=${task.bounds}")
+                FreeformBubbleBridge.minimizeTask(task.taskId, side)
+                addBubble(task.taskId, side, task.packageName)
+            }
+        }
+        // A tracked task that left freeform (e.g. exited via launcher) loses its bubble.
+        for (taskId in bubbles.keys.toList()) {
+            if (taskId !in visibleIds) {
+                restoredAt.remove(taskId)
+                removeBubble(taskId)
+            }
+        }
+    }
 
     private fun reconcileExisting() {
         if (bubbles.isNotEmpty()) return
@@ -93,6 +157,7 @@ class EdgeBubbleService : Service() {
                 BASE_CENTER_Y_RATIO + (bubbles.size % 3) * CENTER_Y_STAGGER_RATIO,
                 listener = object : EdgeBubbleView.Listener {
                     override fun onBubbleRestore(taskId: Int) {
+                        restoredAt[taskId] = SystemClock.elapsedRealtime()
                         FreeformBubbleBridge.restoreTask(taskId)
                     }
 

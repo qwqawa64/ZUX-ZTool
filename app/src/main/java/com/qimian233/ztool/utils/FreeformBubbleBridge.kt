@@ -30,6 +30,14 @@ object FreeformBubbleBridge {
     /** A minimized freeform task as reported by the hook. */
     data class MinimizedTask(val taskId: Int, val side: Int, val packageName: String?)
 
+    /** A freeform task snapshot for app-side edge detection (cmd 5). */
+    data class FreeformTask(
+        val taskId: Int,
+        val bounds: android.graphics.Rect,
+        val hidden: Boolean,
+        val packageName: String?
+    )
+
     private val mainHandler = Handler(Looper.getMainLooper())
 
     /**
@@ -108,6 +116,37 @@ object FreeformBubbleBridge {
     fun getPackageForTask(taskId: Int, onResult: (String?) -> Unit = {}) {
         sendCommand({ it.putExtra("cmd", 4).putExtra("task_id", taskId) }) { _, extras ->
             onResult(extras?.getString("pkg"))
+        }
+    }
+
+    /**
+     * Snapshots every freeform task (bounds, package, visibility) for app-side edge
+     * detection. [bounds] uses real display pixel coordinates.
+     */
+    fun listFreeformTasks(onResult: (List<FreeformTask>) -> Unit = {}) {
+        sendCommand({ it.putExtra("cmd", 5) }) { code, extras ->
+            if (code != 1 || extras == null) {
+                onResult(emptyList())
+                return@sendCommand
+            }
+            val ids = extras.getIntArray("task_ids") ?: IntArray(0)
+            val b = extras.getIntArray("bounds") ?: IntArray(0)
+            val pkgs = extras.getStringArray("pkgs") ?: arrayOf()
+            val hidden = extras.getBooleanArray("hidden") ?: BooleanArray(0)
+            val out = ArrayList<FreeformTask>(ids.size)
+            for (i in ids.indices) {
+                val o = i * 4
+                if (o + 3 >= b.size) break
+                out.add(
+                    FreeformTask(
+                        ids[i],
+                        android.graphics.Rect(b[o], b[o + 1], b[o + 2], b[o + 3]),
+                        hidden.getOrElse(i) { false },
+                        pkgs.getOrNull(i)
+                    )
+                )
+            }
+            onResult(out)
         }
     }
 

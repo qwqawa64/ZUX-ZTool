@@ -59,6 +59,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private const val CMD_RESTORE_TASK = 2
         private const val CMD_LIST_MINIMIZED = 3
         private const val CMD_GET_PACKAGE = 4
+        private const val CMD_LIST_FREEFORM_TASKS = 5
 
         // Event ids (server→app, extra "event").
         const val EVENT_BUBBLE_ADDED = 11
@@ -214,11 +215,11 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 CMD_MINIMIZE_TASK -> {
                     val taskId = intent.getIntExtra("task_id", -1)
                     val side = intent.getIntExtra("side", 0)
-                    result = if (withTaskHandles(classLoader) { doMinimize(it, taskId, side) }) 1 else 0
+                    result = if (withTaskHandles(classLoader) { doMinimize(it, taskId, side) } == true) 1 else 0
                 }
                 CMD_RESTORE_TASK -> {
                     val taskId = intent.getIntExtra("task_id", -1)
-                    result = if (withTaskHandles(classLoader) { doRestore(it, taskId) }) 1 else 0
+                    result = if (withTaskHandles(classLoader) { doRestore(it, taskId) } == true) 1 else 0
                 }
                 CMD_LIST_MINIMIZED -> {
                     val bundle = Bundle()
@@ -239,6 +240,11 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                     val bundle = Bundle()
                     bundle.putString("pkg", taskPackages[intent.getIntExtra("task_id", -1)])
                     result = 1
+                    extras = bundle
+                }
+                CMD_LIST_FREEFORM_TASKS -> {
+                    val bundle = withTaskHandles(classLoader) { collectFreeformTaskInfos(it) }
+                    result = if (bundle != null) 1 else 0
                     extras = bundle
                 }
                 else -> result = 0
@@ -268,16 +274,16 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
 
     // region task operations (WMS lock held)
 
-    private inline fun withTaskHandles(
+    private inline fun <T> withTaskHandles(
         classLoader: ClassLoader,
-        block: (AtmsHandles) -> Boolean
-    ): Boolean {
+        block: (AtmsHandles) -> T
+    ): T? {
         return try {
             val handles = resolveAtmsHandles(classLoader)
             synchronized(handles.globalLock) { block(handles) }
         } catch (t: Throwable) {
             logger.error("bridge operation failed", t)
-            false
+            null
         }
     }
 
@@ -293,6 +299,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val setAlwaysOnTop: Method?,
         val moveTaskToBack: Method?,
         val resumeFocusedTasks: Method?,
+        val getAllRootTaskInfos: Method?,
         val anyTaskForId: Method,
         val taskClass: Class<*>,
         val getBounds: Method,
@@ -360,6 +367,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             try { taskClass.getMethod("setAlwaysOnTop", Boolean::class.javaPrimitiveType) } catch (_: Throwable) { null },
             try { taskClass.getMethod("moveTaskToBack", taskClass) } catch (_: Throwable) { null },
             try { rwcClass.getMethod("resumeFocusedTasksTopActivities") } catch (_: Throwable) { null },
+            try { rwcClass.getMethod("getAllRootTaskInfos") } catch (_: Throwable) { null },
             anyTaskForId, taskClass,
             taskClass.getMethod("getBounds"),
             taskClass.getMethod("setBounds", Rect::class.java),
@@ -572,6 +580,62 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         notifyBubbleRemoved(taskId)
         logger.info("restore task=$taskId -> $target")
         return true
+    }
+
+    /**
+     * App-side edge-detection feed: all freeform tasks with bounds, package name and
+     * visibility. Visibility distinguishes "docked behind home" (hidden, bubble stays)
+     * from "visible near the edge" (bubble trigger candidate).
+     */
+    private fun collectFreeformTaskInfos(handles: AtmsHandles): Bundle? {
+        return try {
+            val infos = handles.getAllRootTaskInfos?.invoke(handles.rootWindowContainer) as? List<*>
+            if (infos == null) {
+                logger.warn("getAllRootTaskInfos unavailable")
+                return null
+            }
+            val taskIds = ArrayList<Int>()
+            val boundsList = ArrayList<Int>()
+            val pkgs = ArrayList<String?>()
+            val hidden = ArrayList<Boolean>()
+            for (info in infos) {
+                val ti = info ?: continue
+                val winCfg = try {
+                    ti.javaClass.getMethod("getWindowConfiguration").invoke(ti)
+                } catch (_: Throwable) { continue } ?: continue
+                val mode = try {
+                    winCfg.javaClass.getMethod("getWindowingMode").invoke(winCfg) as Int
+                } catch (_: Throwable) { continue }
+                if (mode != WINDOWING_MODE_FREEFORM) continue
+                val bounds = try {
+                    winCfg.javaClass.getMethod("getBounds").invoke(winCfg) as? Rect
+                } catch (_: Throwable) { null } ?: continue
+                if (bounds.isEmpty) continue
+                val taskId = try {
+                    ti.javaClass.getField("taskId").getInt(ti)
+                } catch (_: Throwable) { continue }
+                val pkg = try {
+                    (ti.javaClass.getField("topActivity").get(ti) as? android.content.ComponentName)?.packageName
+                } catch (_: Throwable) { null }
+                val visible = try {
+                    val task = findTask(handles, taskId)
+                    task != null && task.javaClass.getMethod("isVisible").invoke(task) as Boolean
+                } catch (_: Throwable) { true }
+                taskIds.add(taskId)
+                boundsList.addAll(listOf(bounds.left, bounds.top, bounds.right, bounds.bottom))
+                pkgs.add(pkg)
+                hidden.add(!visible)
+            }
+            Bundle().apply {
+                putIntArray("task_ids", taskIds.toIntArray())
+                putIntArray("bounds", boundsList.toIntArray())
+                putStringArray("pkgs", pkgs.toTypedArray())
+                putBooleanArray("hidden", hidden.toBooleanArray())
+            }
+        } catch (t: Throwable) {
+            logger.warn("collectFreeformTaskInfos failed: ${t.message}")
+            null
+        }
     }
 
     // endregion
