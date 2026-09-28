@@ -57,6 +57,8 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private const val OFFSCREEN_GAP_PX = 32
         /** Fraction of task width allowed to hang offscreen before the bubble triggers. */
         private const val EDGE_TRIGGER_FRACTION = 0.5f
+        private const val PUBLISH_MAX_ATTEMPTS = 120
+        private const val PUBLISH_RETRY_INTERVAL_MS = 500L
 
         @Volatile private var ztoolUid = -1
 
@@ -83,14 +85,34 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         // Publish immediately: task-handle resolution inside the bridge is lazy per
         // call, so there is no need to wait for a boot phase (and ZUX renames
         // SystemServiceManager.startBootPhase, which broke the deferred approach).
-        try {
-            publishBridgeService(classLoader)
-        } catch (t: Throwable) {
-            logger.error("publish bridge service failed", t)
-        }
+        // Retry on a background thread: at the very start of startBootstrapServices the
+        // binder host may not accept addService yet, and the true cause is wrapped in
+        // InvocationTargetException. Late publication is harmless — callers resolve the
+        // service lazily.
+        Thread({
+            var lastError: Throwable? = null
+            for (attempt in 1..PUBLISH_MAX_ATTEMPTS) {
+                try {
+                    if (publishBridgeService(classLoader)) return@Thread
+                } catch (t: Throwable) {
+                    lastError = (t as? java.lang.reflect.InvocationTargetException)?.cause ?: t
+                }
+                try {
+                    Thread.sleep(PUBLISH_RETRY_INTERVAL_MS)
+                } catch (_: InterruptedException) {
+                    return@Thread
+                }
+            }
+            logger.error(
+                "publish bridge service failed after $PUBLISH_MAX_ATTEMPTS attempts", lastError)
+        }, "ztool-bubble-publish").start()
     }
 
-    private fun publishBridgeService(classLoader: ClassLoader) {
+    /**
+     * @return true when the service is registered (or already present from a previous
+     * generation during hot reload).
+     */
+    private fun publishBridgeService(classLoader: ClassLoader): Boolean {
         val smClass = classLoader.loadClass("android.os.ServiceManager")
         val existing = try {
             val getService = smClass.getDeclaredMethod("getService", String::class.java)
@@ -100,12 +122,13 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         }
         if (existing != null) {
             logger.debug("bridge service already present, skip publish")
-            return
+            return true
         }
         val addService = smClass.getDeclaredMethod(
             "addService", String::class.java, IBinder::class.java)
         addService.invoke(null, BRIDGE_SERVICE_NAME, BridgeBinder(classLoader))
         logger.info("bridge service published: $BRIDGE_SERVICE_NAME")
+        return true
     }
 
     // endregion
