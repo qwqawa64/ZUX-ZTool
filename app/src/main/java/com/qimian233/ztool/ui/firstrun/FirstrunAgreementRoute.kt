@@ -117,6 +117,8 @@ fun FirstrunAgreementRoute(
     val introCoverColor = ztoolRevealCoverColor()
     val gate = remember { ScrollToBottomAgreementGate() }
     val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Splash) }
+    // Hoisted so the user's input survives page switches within the first-run flow.
+    val sourceVerifyInput = rememberSaveable { mutableStateOf("") }
     // True while a page change is driven by a reveal — the pages swap instantly
     // under the snapshot so the expanding circle fully owns the transition.
     var revealNavigation by remember { mutableStateOf(false) }
@@ -225,6 +227,8 @@ fun FirstrunAgreementRoute(
                         }
                     )
                     FirstrunPage.SourceVerify -> SourceVerifyPage(
+                        input = sourceVerifyInput.value,
+                        onInputChange = { sourceVerifyInput.value = it },
                         onNext = { tapAnchor ->
                             revealNavigation = true
                             revealController.triggerReveal(
@@ -397,10 +401,11 @@ private fun AgreementPage(
 
 @Composable
 private fun SourceVerifyPage(
+    input: String,
+    onInputChange: (String) -> Unit,
     onNext: (Offset) -> Unit,
     onBack: (Offset) -> Unit
 ) {
-    var input by rememberSaveable { mutableStateOf("") }
     val verified = input.trim() == ExpectedRepoName
 
     Box(
@@ -443,7 +448,7 @@ private fun SourceVerifyPage(
 
             ZToolOutlinedTextField(
                 value = input,
-                onValueChange = { input = it },
+                onValueChange = onInputChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = stringResource(R.string.page_firstrun_verify_input_label),
                 placeholder = stringResource(R.string.page_firstrun_verify_input_hint),
