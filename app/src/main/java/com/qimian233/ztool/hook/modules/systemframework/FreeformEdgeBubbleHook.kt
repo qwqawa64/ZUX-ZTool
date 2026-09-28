@@ -580,7 +580,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         } catch (_: Throwable) { null }
         val target = Rect(stored)
         if (displayBounds != null && !displayBounds.isEmpty) {
-            val margin = 24
+            // Must exceed the app-side EDGE_TOUCH_MARGIN_PX (48px) so a restored
+            // window is clearly outside the edge-trigger zone.
+            val margin = 96
             val dx = when {
                 target.left < displayBounds.left + margin ->
                     displayBounds.left + margin - target.left

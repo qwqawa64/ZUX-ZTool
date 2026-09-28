@@ -36,9 +36,8 @@ class EdgeBubbleService : Service() {
         private const val POLL_INTERVAL_MS = 600L
         /** Window flush to the display edge within this margin triggers a bubble. */
         private const val EDGE_TOUCH_MARGIN_PX = 48
-        /** After a bubble restore, the window must leave the edge once before a
-         *  new bubble triggers (otherwise a restored window resting flush at the
-         *  edge would immediately re-dock). */
+        /** Small cooldown after a bubble restore; the hook now nudges restored
+         *  bounds 96px inward, clear of the 48px edge-trigger zone. */
         private const val RESTORE_COOLDOWN_MS = 1000L
     }
 
@@ -46,9 +45,6 @@ class EdgeBubbleService : Service() {
     private var eventReceiver: BroadcastReceiver? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val restoredAt = HashMap<Int, Long>()
-
-    /** taskId -> whether the window has left the edge since its last restore. */
-    private val edgeCleared = HashMap<Int, Boolean>()
     private var polling = false
     private var realDisplayWidth = 0
 
@@ -129,12 +125,8 @@ class EdgeBubbleService : Service() {
                 realDisplayWidth - task.bounds.right <= EDGE_TOUCH_MARGIN_PX -> 1
                 else -> -1
             }
-            val leftEdgeSinceRestore = side < 0 || edgeCleared[task.taskId] == true
-            if (side < 0) edgeCleared[task.taskId] = true
             val cooledDown = now - (restoredAt[task.taskId] ?: 0L) >= RESTORE_COOLDOWN_MS
-            if (side >= 0 && !bubbles.containsKey(task.taskId) && cooledDown &&
-                leftEdgeSinceRestore
-            ) {
+            if (side >= 0 && !bubbles.containsKey(task.taskId) && cooledDown) {
                 Log.i(TAG, "edge detected task=${task.taskId} side=$side bounds=${task.bounds}")
                 FreeformBubbleBridge.minimizeTask(task.taskId, side)
                 addBubble(task.taskId, side, task.packageName)
@@ -144,7 +136,6 @@ class EdgeBubbleService : Service() {
         for (taskId in bubbles.keys.toList()) {
             if (taskId !in presentIds) {
                 restoredAt.remove(taskId)
-                edgeCleared.remove(taskId)
                 removeBubble(taskId)
             }
         }
@@ -170,7 +161,6 @@ class EdgeBubbleService : Service() {
                 listener = object : EdgeBubbleView.Listener {
                     override fun onBubbleRestore(taskId: Int) {
                         restoredAt[taskId] = SystemClock.elapsedRealtime()
-                        edgeCleared[taskId] = false
                         FreeformBubbleBridge.restoreTask(taskId)
                     }
 
