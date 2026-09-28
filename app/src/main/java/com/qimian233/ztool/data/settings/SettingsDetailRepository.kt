@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
+import android.provider.Settings
 import androidx.core.content.edit
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.service.EdgeBubbleService
@@ -57,6 +58,18 @@ class SettingsDetailRepository(
      */
     fun saveEdgeBubbleEnabled(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_FREEFORM_EDGE_BUBBLE, enabled)
+        if (enabled && !Settings.canDrawOverlays(context)) {
+            Log.w("SettingsDetailRepository", "overlay permission missing, opening settings")
+            try {
+                context.startActivity(
+                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                        .setData(Uri.parse("package:" + context.packageName))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (t: Throwable) {
+                Log.w("SettingsDetailRepository", "open overlay settings failed", t)
+            }
+            return
+        }
         try {
             if (enabled) {
                 context.startForegroundService(

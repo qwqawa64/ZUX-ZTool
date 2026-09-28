@@ -58,8 +58,6 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         /** Fraction of task width allowed to hang offscreen before the bubble triggers. */
         private const val EDGE_TRIGGER_FRACTION = 0.5f
 
-        @Volatile private var bootPhaseHooked = false
-        @Volatile private var servicePublished = false
         @Volatile private var ztoolUid = -1
 
         /** taskId → restore bounds, server-side session state (lost on reboot is fine). */
@@ -81,30 +79,14 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val classLoader = param.classLoader
 
         installCheckPermissionPassthrough(classLoader)
-        installBootPhasePublisher(classLoader)
         installEdgeDetectionHook(classLoader)
-    }
-
-    /**
-     * The bridge needs ActivityTaskManagerService to be fully constructed, so the
-     * binder service is published on the final boot phase instead of at
-     * system-server-starting time.
-     */
-    @Throws(Throwable::class)
-    private fun installBootPhasePublisher(classLoader: ClassLoader) {
-        val ssmClass = classLoader.loadClass("com.android.server.SystemServiceManager")
-        val startBootPhase: Method = findMethod(ssmClass, "startBootPhase", Int::class.javaPrimitiveType)
-        hookWithId(startBootPhase, "freeform_edge_bubble_publish") { chain ->
-            val phase = chain.getArg(0) as Int
-            if (phase >= 600 && !servicePublished) {
-                servicePublished = true
-                try {
-                    publishBridgeService(classLoader)
-                } catch (t: Throwable) {
-                    logger.error("publish bridge service failed", t)
-                }
-            }
-            chain.proceed()
+        // Publish immediately: task-handle resolution inside the bridge is lazy per
+        // call, so there is no need to wait for a boot phase (and ZUX renames
+        // SystemServiceManager.startBootPhase, which broke the deferred approach).
+        try {
+            publishBridgeService(classLoader)
+        } catch (t: Throwable) {
+            logger.error("publish bridge service failed", t)
         }
     }
 
@@ -409,8 +391,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     private inner class BridgeBinder(private val classLoader: ClassLoader) : Binder() {
 
         override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-            if (code != INTERFACE_TRANSACTION) {
-                data.enforceInterface(BRIDGE_DESCRIPTOR)
+            if (code != INTERFACE_TRANSACTION && !isAllowedCaller()) {
+                logger.warn("bridge call from untrusted uid=" + Binder.getCallingUid())
+                return false
             }
             when (code) {
                 CODE_MINIMIZE_TASK -> {
@@ -466,6 +449,21 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                     return true
                 }
                 else -> return super.onTransact(code, data, reply, flags)
+            }
+        }
+
+        /**
+         * Root, adb shell, and the ZTool app may call the bridge. The interface-token
+         * check is intentionally omitted so `adb shell service call` can drive the
+         * bridge directly during testing.
+         */
+        private fun isAllowedCaller(): Boolean {
+            val uid = Binder.getCallingUid()
+            if (uid == 0 || uid == 2000) return true
+            return try {
+                uid == resolveZtoolUid(resolveAtmsHandles(classLoader))
+            } catch (_: Throwable) {
+                false
             }
         }
 

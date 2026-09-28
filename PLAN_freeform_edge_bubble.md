@@ -59,3 +59,32 @@ full/half-hidden/free-drag states.
       manifest service declaration.
 - [ ] Verify: `gradlew.bat assembleDebug` + `SearchIndexConsistencyTest`; commit
       (no-gpg-sign fallback after two GPG timeouts).
+
+## Test procedure (2026-09-28, after commit fixing bridge publication)
+
+Prereq: ZTool installed via LSPosed with `system` scope enabled; module enabled.
+
+1. Install `assembleDebug` APK; reboot the device (hook + service registration need a
+   system restart; the bridge is now published directly at system-server start because
+   ZUX renames `SystemServiceManager.startBootPhase`).
+2. In ZTool: ZUI 设置 → 强制配置 → 开启「小窗贴边气泡」. If the 悬浮窗 permission is
+   missing the app now opens the overlay-permission page automatically; grant it and
+   toggle again. Expected: `EdgeBubbleService` foreground notification appears.
+3. Sanity checks (adb):
+   - `adb shell service check ztool.freeform_bubble` → `found`
+   - `adb logcat -s ZToolXposedModule EdgeBubbleService FreeformBubbleBridge`
+4. Open any app as a floating window (ZTool 强制小窗 entry or native ZUI freeform),
+   find its taskId: `adb shell am stack list` (freeform root task).
+5. Drag the window past the screen edge (>50% of its width offscreen). Expected:
+   the task docks fully offscreen, a capsule bubble appears at that edge.
+   - fallback deterministic trigger (uid gate allows root/shell):
+     `adb shell service call ztool.freeform_bubble 1 i32 <taskId> i32 0` (1=left, 2nd int side; 1 for right)
+6. Tap the bubble. Expected: window restores to pre-dock bounds and comes to front
+   (`am stack list` shows original bounds). Bubble disappears
+   (restore → explicit `onBubbleRemoved` event).
+7. Bubble gestures: long-press + drag to the other edge → snaps and half-hides
+   (16 dp sliver visible); tap brings it back to full before restoring.
+8. Failure triage: hook logs use tag `ZToolXposedModule`; if `publish bridge service
+   failed` appears, inspect the attached stack; if bubbles never appear, check
+   `adb shell dumpsys activity activities | grep -i freeform` for bounds actually
+   moving offscreen (detection hook works) vs missing `onBubbleAdded` (callback binder).
