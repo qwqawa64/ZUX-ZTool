@@ -52,10 +52,9 @@ class EdgeBubbleView(
         private const val MODE_HALF = 4
 
         private const val PILL_CORNER_DP = 16f
-        // 250% of the initial 40dp icon, Oplus-style.
-        private const val ICON_SIZE_DP = 100f
-        private const val PILL_INNER_MARGIN_DP = 10f
-        private const val HALF_PEEK_DP = 16f
+        private const val PILL_SIZE_DP = 75f
+        private const val PILL_INNER_MARGIN_DP = 6f
+        private const val HALF_PEEK_DP = 24f
         private const val VERTICAL_LIMIT_DP = 48f
         private const val HALF_HIDE_DELAY_MS = 50L
         private const val APPEAR_FULL_MS = 600L
@@ -87,7 +86,7 @@ class EdgeBubbleView(
         screenHeight = metricsBounds?.height() ?: context.resources.displayMetrics.heightPixels
     }
 
-    private val pillSizePx = dip(ICON_SIZE_DP + PILL_INNER_MARGIN_DP * 2).toInt()
+    private val pillSizePx = dip(PILL_SIZE_DP).toInt()
     private val halfPeekPx = dip(HALF_PEEK_DP).toInt()
 
     private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
