@@ -286,9 +286,13 @@ private fun SettingsAboutScreen(
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_about_license_title),
                         summary = stringResource(R.string.page_settings_about_license_summary),
-                        onClick = {},
-                        modifier = getModifier(2),
-                        showTrailingArrow = false
+                        onClick = {
+                            openExternalLink(
+                                context,
+                                "https://github.com/qwqawa64/ZUX-ZTool/blob/master/LICENSE"
+                            )
+                        },
+                        modifier = getModifier(2)
                     )
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_about_user_agreement_title),
