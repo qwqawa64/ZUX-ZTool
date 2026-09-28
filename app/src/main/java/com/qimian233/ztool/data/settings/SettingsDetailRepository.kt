@@ -1,12 +1,15 @@
 package com.qimian233.ztool.data.settings
 
 import android.content.Context
+import android.content.Intent
+import android.util.Log
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
 import androidx.core.content.edit
 import com.qimian233.ztool.EnhancedShellExecutor
+import com.qimian233.ztool.service.EdgeBubbleService
 import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.EmbeddingConfigManager
@@ -42,8 +45,28 @@ class SettingsDetailRepository(
             showZuiForceConfig = Build.VERSION.SDK_INT >= 36,
             forceFreeformEntryHookEnabled =
                 prefsUtils.loadBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, false),
+            edgeBubbleEnabled =
+                prefsUtils.loadBooleanSetting(KEY_FREEFORM_EDGE_BUBBLE, false),
             allowAddingLanguages = prefsUtils.loadBooleanSetting(KEY_ALLOW_ADDING_LANGUAGE, false)
         )
+    }
+
+    /**
+     * Persists the edge-bubble switch and starts/stops the overlay service to match.
+     * The hook side reads the same key from xposed_module_config at system restart.
+     */
+    fun saveEdgeBubbleEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_FREEFORM_EDGE_BUBBLE, enabled)
+        try {
+            if (enabled) {
+                context.startForegroundService(
+                    Intent(context, EdgeBubbleService::class.java))
+            } else {
+                context.stopService(Intent(context, EdgeBubbleService::class.java))
+            }
+        } catch (t: Throwable) {
+            Log.w("SettingsDetailRepository", "edge bubble service switch failed", t)
+        }
     }
 
     fun saveRemoveBlacklist(enabled: Boolean) {
@@ -245,6 +268,7 @@ class SettingsDetailRepository(
         private val KEY_APP_DETAILS = PreferenceKeys.APP_DETAILS.name
         private val KEY_SETTINGS_APP_ICON_UNMASK = PreferenceKeys.SETTINGS_APP_ICON_UNMASK.name
         private val KEY_LAUNCHER_FORCE_FREEFORM_ENTRY = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
+        private val KEY_FREEFORM_EDGE_BUBBLE = PreferenceKeys.FREEFORM_EDGE_BUBBLE.name
         private val KEY_ALLOW_ADDING_LANGUAGE = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
     }
 }

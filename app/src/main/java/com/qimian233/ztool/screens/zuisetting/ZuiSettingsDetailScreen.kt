@@ -608,6 +608,7 @@ fun SettingsDetailRoute(
             )
         },
         onFloatMandatoryChanged = viewModel::setFloatMandatory,
+        onEdgeBubbleChanged = viewModel::setEdgeBubbleEnabled,
         onSplitScreenMandatoryChanged = viewModel::setSplitScreenMandatory,
         onImportFont = ::startFontImportProcess,
         onAllowNativePermissionControllerChanged = viewModel::setAllowNativePermissionController,
@@ -701,6 +702,7 @@ private fun SettingsDetailScreen(
     onZuiForceFreeform: () -> Unit,
     onZuiForceFixed: () -> Unit,
     onFloatMandatoryChanged: (Boolean) -> Unit,
+    onEdgeBubbleChanged: (Boolean) -> Unit,
     onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onImportFont: () -> Unit,
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
@@ -778,6 +780,7 @@ private fun SettingsDetailScreen(
                         onZuiForceFreeform = onZuiForceFreeform,
                         onZuiForceFixed = onZuiForceFixed,
                         onFloatMandatoryChanged = onFloatMandatoryChanged,
+                        onEdgeBubbleChanged = onEdgeBubbleChanged,
                         onSplitScreenMandatoryChanged = onSplitScreenMandatoryChanged,
                         onImportFont = onImportFont,
                         onAllowNativePermissionControllerChanged = onAllowNativePermissionControllerChanged,
@@ -817,6 +820,7 @@ private fun settingsDetailSections(
     onZuiForceSplit: () -> Unit,
     onZuiForceFreeform: () -> Unit,
     onZuiForceFixed: () -> Unit,
+    onEdgeBubbleChanged: (Boolean) -> Unit,
     onFloatMandatoryChanged: (Boolean) -> Unit,
     onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onImportFont: () -> Unit,
@@ -939,6 +943,13 @@ private fun settingsDetailSections(
                             title = stringResource(R.string.settings_zui_force_fixed_title),
                             summary = stringResource(R.string.settings_zui_force_fixed_summary),
                             onClick = onZuiForceFixed
+                        ),
+                        SettingItem.Switch(
+                            key = "settings_detail_edge_bubble",
+                            title = stringResource(R.string.settings_edge_bubble_title),
+                            summary = stringResource(R.string.settings_edge_bubble_summary),
+                            checked = state.edgeBubbleEnabled,
+                            onCheckedChange = onEdgeBubbleChanged
                         )
                     )
                 )

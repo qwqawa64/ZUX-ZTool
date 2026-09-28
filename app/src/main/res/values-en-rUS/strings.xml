@@ -301,6 +301,11 @@
     <string name="settings_zui_force_freeform_title">Force freeform floating window</string>
     <string name="settings_zui_force_freeform_summary">Conflicts with fixed-ratio floating windows. Forces selected apps to use any-ratio floating windows.</string>
     <string name="settings_zui_force_fixed_title">Force fixed-ratio floating window</string>
+    <string name="settings_edge_bubble_title">Floating window edge bubble</string>
+    <string name="settings_edge_bubble_summary">Dragging a floating window past the screen edge docks it into a bubble; tap the bubble to restore. Takes effect after a system restart</string>
+    <string name="edge_bubble_notification_channel">Floating window edge bubble</string>
+    <string name="edge_bubble_notification_title">Floating window edge bubble active</string>
+    <string name="edge_bubble_notification_text">Keep this service running to show edge bubbles</string>
     <string name="settings_zui_force_fixed_summary">Conflicts with freeform floating windows. Forces selected apps to use fixed-ratio floating windows.</string>
     <string name="settings_saving_config">Saving system configuration…</string>
     <string name="settings_save_success_message">Saved</string>

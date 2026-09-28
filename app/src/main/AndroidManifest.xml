@@ -47,6 +47,15 @@
             android:exported="false"
             android:foregroundServiceType="specialUse" />
         <service
+            android:name=".service.EdgeBubbleService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="freeform_edge_bubble_overlay" />
+        </service>
+        <service
             android:name=".service.MediaOutputTileService"
             android:enabled="true"
             android:exported="true"

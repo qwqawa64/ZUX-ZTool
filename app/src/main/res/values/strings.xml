@@ -341,6 +341,11 @@
     <string name="settings_zui_force_freeform_title">强制自由小窗</string>
     <string name="settings_zui_force_freeform_summary">与固定比例小窗冲突，强制指定应用使用任意比例小窗</string>
     <string name="settings_zui_force_fixed_title">强制固定比例小窗</string>
+    <string name="settings_edge_bubble_title">小窗贴边气泡</string>
+    <string name="settings_edge_bubble_summary">将小窗拖出屏幕边缘后自动收纳为气泡，点击气泡可恢复；需重启系统后生效</string>
+    <string name="edge_bubble_notification_channel">小窗贴边气泡</string>
+    <string name="edge_bubble_notification_title">小窗贴边气泡已启用</string>
+    <string name="edge_bubble_notification_text">保持此服务运行以显示贴边气泡</string>
     <string name="settings_zui_force_fixed_summary">与自由小窗冲突，强制指定应用使用固定比例小窗</string>
     <string name="settings_saving_config">正在保存系统配置…</string>
     <string name="settings_save_success_message">保存成功</string>

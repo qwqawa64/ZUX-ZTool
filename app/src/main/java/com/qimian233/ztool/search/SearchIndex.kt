@@ -911,6 +911,11 @@ object SearchIndex {
             summaryRes = R.string.settings_zui_force_freeform_summary
         ),
         settingsDetail.item(
+            id = "settings_detail_edge_bubble",
+            titleRes = R.string.settings_edge_bubble_title,
+            summaryRes = R.string.settings_edge_bubble_summary
+        ),
+        settingsDetail.item(
             id = "settings_detail_zui_force_fixed",
             titleRes = R.string.settings_zui_force_fixed_title,
             summaryRes = R.string.settings_zui_force_fixed_summary
