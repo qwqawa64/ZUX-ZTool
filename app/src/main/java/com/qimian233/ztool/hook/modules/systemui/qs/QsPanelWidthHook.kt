@@ -269,10 +269,16 @@ class QsPanelWidthHook : AppHookModule() {
                     if (currentColumns != tileColumns) {
                         if (qqsDefaultColumns == -1) qqsDefaultColumns = currentColumns
                         columnsField.setInt(tileLayout, tileColumns)
-                        val parent = tileLayout.parent
-                        if (parent != null && quickQSPanelClass.isInstance(parent)) {
-                            val rows = maxAllowedRowsField.getInt(tileLayout)
+                    }
+                    // mMaxTiles must be synced independently of the columns gate: when the
+                    // native column count equals the custom value the gate above never
+                    // fires and the native mMaxTiles cap (from resources) would survive.
+                    val parent = tileLayout.parent
+                    if (parent != null && quickQSPanelClass.isInstance(parent)) {
+                        val rows = maxAllowedRowsField.getInt(tileLayout)
+                        if (rows > 0 && maxTilesField.getInt(parent) != tileColumns * rows) {
                             maxTilesField.setInt(parent, tileColumns * rows)
+                            logger.trace("QSW qqs: mMaxTiles -> ${tileColumns * rows}")
                         }
                     }
                 } else if (qqsDefaultColumns > 0 && columnsField.getInt(tileLayout) == tileColumns) {
@@ -284,19 +290,21 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
 
-        // QuickQSPanelController.onConfigurationChanged() reads the default value from resources,
-        // resets mMaxTiles, and immediately calls setTiles() to truncate the tile list. This hook
-        // re-applies the custom value and refreshes after the original method runs.
+        // QuickQSPanelController.setTiles() truncates the tile list at QuickQSPanel.mMaxTiles,
+        // which is (re)initialized from resources on construction and on every config change.
+        // Re-apply the custom cap and refresh the list after every native setTiles() so all
+        // paths (boot init, tile list changes, configuration changes) are covered. The
+        // re-applying guard prevents recursion from invoking setTiles inside its own hook.
         val controllerClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QuickQSPanelController")
-        val controllerOnConfigMethod = findMethod(controllerClass, "onConfigurationChanged")
         val controllerSetTilesMethod = findMethod(controllerClass, "setTiles")
         // mView is defined in ViewController (QuickQSPanelController's ancestor)
         val controllerViewField = findField(controllerClass, "mView")
+        var applyingSetTiles = false
 
-        hookWithId(controllerOnConfigMethod, "qqs_max_tiles_config_fix") { chain ->
+        hookWithId(controllerSetTilesMethod, "qqs_max_tiles_settiles") { chain ->
             chain.proceed()
-            if (tileColumns != 0) {
+            if (tileColumns != 0 && !applyingSetTiles) {
                 val controller = chain.thisObject
                 val panel = controllerViewField.get(controller) as? View ?: return@hookWithId null
                 if (!quickQSPanelClass.isInstance(panel)) return@hookWithId null
@@ -306,13 +314,17 @@ class QsPanelWidthHook : AppHookModule() {
                     val rows = maxAllowedRowsField.getInt(tileLayout)
                     if (rows > 0) {
                         val targetMaxTiles = tileColumns * rows
-                        val currentMaxTiles = maxTilesField.getInt(panel)
-                        if (currentMaxTiles != targetMaxTiles) {
+                        if (maxTilesField.getInt(panel) != targetMaxTiles) {
                             maxTilesField.setInt(panel, targetMaxTiles)
-                            controllerSetTilesMethod.invoke(controller)
-                            logger.info(
-                                "QsPanelWidthTestHook: restored mMaxTiles=$targetMaxTiles after config change"
-                            )
+                            applyingSetTiles = true
+                            try {
+                                controllerSetTilesMethod.invoke(controller)
+                                logger.trace(
+                                    "QSW qqs: setTiles re-applied with mMaxTiles=$targetMaxTiles"
+                                )
+                            } finally {
+                                applyingSetTiles = false
+                            }
                         }
                     }
                 }
@@ -320,7 +332,7 @@ class QsPanelWidthHook : AppHookModule() {
             null
         }
 
-        logger.info("QsPanelWidthTestHook: hooked QuickQSPanelController.onConfigurationChanged")
+        logger.info("QsPanelWidthTestHook: hooked QuickQSPanelController.setTiles for QQS max tiles")
     }
 
     private fun disableClip(view: View, overrides: WeakHashMap<View, Pair<Boolean, Boolean>>) {
