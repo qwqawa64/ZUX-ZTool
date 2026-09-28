@@ -376,9 +376,16 @@ class EdgeBubbleView(
         shadowPaint.alpha = (255 * dim).toInt()
         connectorPaint.alpha = (255 * dim).toInt()
         pillPaint.alpha = (255 * dim).toInt()
-        canvas.drawRoundRect(connectorRect, corner, corner, shadowPaint)
+        // One shadow for the whole silhouette — a per-shape shadow drawn after the
+        // connector darkened most of the connector body.
+        val silhouette = RectF(pillRect)
+        if (side == SIDE_LEFT) {
+            silhouette.left = minOf(silhouette.left, connectorRect.left)
+        } else {
+            silhouette.right = maxOf(silhouette.right, connectorRect.right)
+        }
+        canvas.drawRoundRect(silhouette, corner, corner, shadowPaint)
         canvas.drawRoundRect(connectorRect, corner, corner, connectorPaint)
-        canvas.drawRoundRect(pillRect, corner, corner, shadowPaint)
         canvas.drawRoundRect(pillRect, corner, corner, pillPaint)
 
         val icon = appIcon ?: return
