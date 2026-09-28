@@ -70,6 +70,8 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private const val OFFSCREEN_GAP_PX = 32
         /** Fraction of task width allowed to hang offscreen before the bubble triggers. */
         private const val EDGE_TRIGGER_FRACTION = 0.5f
+        /** Window flush to the display edge within this margin counts as "at edge". */
+        private const val EDGE_TOUCH_MARGIN_PX = 48
         private const val BRIDGE_REGISTER_MAX_ATTEMPTS = 120
         private const val BRIDGE_REGISTER_RETRY_INTERVAL_MS = 500L
         private const val ADB_SHELL_UID = 2000
@@ -84,6 +86,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private val internalMove = ThreadLocal.withInitial { false }
 
         @Volatile private var ztoolUid = -1
+        @Volatile private var hideShowControllerCache: Triple<Any?, Method?, Method?>? = null
         @Volatile private var bridgeRegistered = false
         private var eventPostHandler: Handler? = null
     }
@@ -248,6 +251,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val atms: Any,
         val globalLock: Any,
         val rootWindowContainer: Any,
+        val hideShowController: Any?,
+        val bringToBack: Method?,
+        val bringToFront: Method?,
         val anyTaskForId: Method,
         val taskClass: Class<*>,
         val getBounds: Method,
@@ -299,14 +305,66 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             "anyTaskForId", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
 
         val taskClass = classLoader.loadClass("com.android.server.wm.Task")
+        val hideShow = resolveHideShowController(classLoader, atms)
         return AtmsHandles(
-            atms, globalLock, rwc, anyTaskForId, taskClass,
+            atms, globalLock, rwc, hideShow?.first, hideShow?.second, hideShow?.third,
+            anyTaskForId, taskClass,
             taskClass.getMethod("getBounds"),
             taskClass.getMethod("setBounds", Rect::class.java),
             try { taskClass.getMethod("moveToFront", String::class.java) } catch (_: Throwable) { null },
             try { taskClass.getMethod("setLastNonFullscreenBounds", Rect::class.java) } catch (_: Throwable) { null },
             try { taskClass.getMethod("getBaseIntent") } catch (_: Throwable) { null }
         )
+    }
+
+    /**
+     * Resolves ZUI's native freeform hide/show controller ([OvfWmHideShowController]):
+     * minimize = [bringToBack] (task docks behind home via shell transition, immune to
+     * the freeform bounds clamp), restore = [bringToFront]. Returns null when absent;
+     * the plain Task.setBounds path stays as fallback.
+     */
+    private fun resolveHideShowController(classLoader: ClassLoader, atms: Any): Triple<Any?, Method?, Method?>? {
+        if (hideShowControllerCache != null) return hideShowControllerCache
+        return try {
+            var manager: Any? = null
+            for (getter in arrayOf("getOvcWmManager", "getOvfMgr")) {
+                try {
+                    manager = atms.javaClass.getMethod(getter).invoke(atms)
+                    if (manager != null) break
+                } catch (_: Throwable) {
+                }
+            }
+            manager ?: return null
+            var controller: Any? = null
+            for (cls in generateSequence(manager.javaClass) { it.superclass }) {
+                for (field in cls.declaredFields) {
+                    if (java.lang.reflect.Modifier.isStatic(field.modifiers)) continue
+                    try {
+                        field.isAccessible = true
+                        val value = field.get(manager)
+                        if (value != null && value.javaClass.simpleName == "OvfWmHideShowController") {
+                            controller = value
+                            break
+                        }
+                    } catch (_: Throwable) {
+                    }
+                }
+                if (controller != null) break
+            }
+            controller ?: return null
+            val toBack = controller.javaClass.getMethod("bringToBack",
+                classLoader.loadClass("com.android.server.wm.Task"))
+            val toFront = controller.javaClass.getMethod("bringToFront",
+                classLoader.loadClass("com.android.server.wm.Task"),
+                String::class.java,
+                classLoader.loadClass("com.android.server.wm.TransitionController"),
+                classLoader.loadClass("com.android.server.wm.Transition"))
+            hideShowControllerCache = Triple(controller, toBack, toFront)
+            hideShowControllerCache
+        } catch (t: Throwable) {
+            logger.debug("resolveHideShowController failed: ${t.message}")
+            null
+        }
     }
 
     private fun findTask(handles: AtmsHandles, taskId: Int): Any? =
@@ -325,6 +383,14 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             handles.setLastNonFullscreenBounds?.invoke(task, bounds)
         } catch (t: Throwable) {
             logger.debug("setLastNonFullscreenBounds failed: ${t.message}")
+        }
+        if (handles.hideShowController != null && handles.bringToBack != null) {
+            // ZUI native path: dock the task behind home with a shell hide transition.
+            // The freeform layout policy would clamp arbitrary offscreen bounds back
+            // on-screen, so bounds-shifting is only a fallback here.
+            handles.bringToBack.invoke(handles.hideShowController, task)
+            logger.info("minimize task=$taskId side=$side via bringToBack, bounds=$bounds")
+            return true
         }
         val offscreen = Rect(bounds)
         offscreen.offset(if (side == 0) -(bounds.width() + OFFSCREEN_GAP_PX) else bounds.width() + OFFSCREEN_GAP_PX, 0)
@@ -350,6 +416,13 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             return false
         }
         minimizedSides.remove(taskId)
+        if (handles.hideShowController != null && handles.bringToFront != null) {
+            handles.bringToFront.invoke(
+                handles.hideShowController, task, "ztool_freeform_bubble", null, null)
+            notifyBubbleRemoved(taskId)
+            logger.info("restore task=$taskId via bringToFront -> $target")
+            return true
+        }
         internalMove.set(true)
         try {
             handles.setBounds.invoke(task, target)
@@ -434,17 +507,29 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             val taskId = task.taskIdCompat()
             val wasTracked = minimizedSides.containsKey(taskId)
             val side = when {
-                offLeft >= width * EDGE_TRIGGER_FRACTION -> 0
-                offRight >= width * EDGE_TRIGGER_FRACTION -> 1
+                offLeft >= width * EDGE_TRIGGER_FRACTION ||
+                    (displayBounds != null && newBounds.left - displayBounds.left <= EDGE_TOUCH_MARGIN_PX) -> 0
+                offRight >= width * EDGE_TRIGGER_FRACTION ||
+                    (displayBounds != null && displayBounds.right - newBounds.right <= EDGE_TOUCH_MARGIN_PX) -> 1
                 else -> -1
             }
             chain.proceed()
             if (side >= 0 && !wasTracked) {
                 // First time reaching the edge: record the onscreen bounds the user had,
-                // then fully dock the task offscreen.
+                // then dock the task behind home (ZUI native hide) so only the bubble
+                // remains visible.
                 restoreRects[taskId] = Rect(newBounds)
                 minimizedSides[taskId] = side
                 notifyBubbleAdded(task, taskClass, side)
+                try {
+                    val h = resolveAtmsHandles(classLoader)
+                    if (h.hideShowController != null && h.bringToBack != null) {
+                        h.bringToBack.invoke(h.hideShowController, task)
+                        logger.info("auto-dock task=$taskId via bringToBack")
+                    }
+                } catch (t: Throwable) {
+                    logger.warn("auto-dock failed: ${t.message}")
+                }
             } else if (side < 0 && wasTracked) {
                 minimizedSides.remove(taskId)
                 restoreRects.remove(taskId)
