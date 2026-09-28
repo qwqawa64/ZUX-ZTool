@@ -84,6 +84,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.HomeUiState
@@ -292,10 +293,15 @@ private fun HomeScreen(
                 .padding(innerPadding),
             contentAlignment = Alignment.TopCenter
         ) {
+            val isMiuixStyle = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth()
+                    .then(
+                        // Miuix scaffold ignores widthIn on this chain; the cap only holds in Material mode.
+                        if (isMiuixStyle) Modifier else Modifier.widthIn(max = 1120.dp)
+                    )
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
@@ -629,7 +635,7 @@ private fun SystemInfoCard(state: HomeUiState) {
     )
 
     ZToolSettingsList(
-        modifier = Modifier.padding(horizontal = 8.dp),
+        modifier = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) Modifier.padding(horizontal = 8.dp) else Modifier,
         sections = listOf(
             SettingSection(
                 items = infoRows.map { row ->
