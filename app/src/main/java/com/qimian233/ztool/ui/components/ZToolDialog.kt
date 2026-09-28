@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalIsPlatformDialog
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.basic.Surface as MiuixSurface
 
 val DIALOG_BUTTON_HORIZONTAL_ARRANGEMENT = 0
@@ -121,12 +123,31 @@ fun ZToolDialog(
                 miuixContent()
             }
         } else {
-            OverlayDialog(
-                show = true,
+            // Miuix's OverlayDialog caps content width at DialogDefaults.MaxWidth (420.dp)
+            // and measures its Column children against the remaining height, so tall content
+            // compresses the trailing buttons. Render the same surface in a platform window
+            // with our own width cap and a scrollable body instead.
+            androidx.compose.ui.window.Dialog(
                 onDismissRequest = onDismissRequest,
-                backgroundColor = LocalZToolColorScheme.current.surfaceContainerHigh,
+                properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false
+                )
             ) {
-                miuixContent()
+                MiuixSurface(
+                    modifier = Modifier
+                        .widthIn(max = 560.dp)
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    color = LocalZToolColorScheme.current.surfaceContainerHigh,
+                    shape = RoundedCornerShape(24.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(24.dp)
+                    ) {
+                        miuixContent()
+                    }
+                }
             }
         }
         return
