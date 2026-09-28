@@ -1490,6 +1490,16 @@ object SearchIndex {
             summaryRes = R.string.engineering_codes_summary
         ),
         miscSettings.item(
+            id = "misc_open_reduce_bright_colors",
+            titleRes = R.string.page_settings_misc_open_reduce_bright_colors_title,
+            summaryRes = R.string.page_settings_misc_open_reduce_bright_colors_summary
+        ),
+        miscSettings.item(
+            id = "misc_open_app_battery_usage",
+            titleRes = R.string.page_settings_misc_open_app_battery_usage_title,
+            summaryRes = R.string.page_settings_misc_open_app_battery_usage_summary
+        ),
+        miscSettings.item(
             id = "misc_api_version",
             titleRes = R.string.page_settings_advanced_api_version
         ),

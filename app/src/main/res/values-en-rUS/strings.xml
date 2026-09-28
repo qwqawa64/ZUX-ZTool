@@ -866,6 +866,11 @@
     <!-- Engineering codes (secret codes) entry screen strings -->
     <string name="engineering_codes_title">Lenovo Engineering Codes</string>
     <string name="engineering_codes_summary">Engineering screens normally opened via dialer secret codes.</string>
+    <string name="page_settings_misc_open_reduce_bright_colors_title">Extra dim</string>
+    <string name="page_settings_misc_open_reduce_bright_colors_summary">Open the Extra dim page in system Settings.</string>
+    <string name="page_settings_misc_open_app_battery_usage_title">Battery optimization</string>
+    <string name="page_settings_misc_open_app_battery_usage_summary">Open the battery optimization page in system Settings.</string>
+    <string name="common_open_settings_page_failed">Failed to open system page: %1$s</string>
     <string name="engineering_codes_dial_prefix">Dialer code: *#*#%1$s#*#*</string>
     <string name="engineering_codes_launching">Launching engineering screen…</string>
     <string name="engineering_codes_launch_failed_with_reason">Launch failed: %1$s</string>
@@ -954,6 +959,7 @@
     <!-- Read by the hook side (BatchUninstall) -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">Uninstall</string>
     <string name="tile_media_output_label">Media output</string>
+    <string name="tile_reduce_bright_colors_label">Extra dim</string>
     <string name="system_ui_media_output_dialog_center_title">Center media output dialog</string>
     <string name="system_ui_media_output_dialog_center_summary">Fixes the output switcher dialog launched from the Media output tile sticking to the left edge of the screen.</string>
     <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">No uninstallable apps in the selection</string>

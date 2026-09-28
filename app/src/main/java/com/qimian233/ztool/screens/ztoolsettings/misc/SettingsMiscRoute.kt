@@ -1,8 +1,10 @@
 package com.qimian233.ztool.screens.ztoolsettings.misc
 
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
@@ -18,9 +20,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.BatterySaver
 import androidx.compose.material.icons.rounded.Brightness4
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.BuildCircle
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -72,6 +76,8 @@ import com.qimian233.ztool.viewmodel.PcFlashFirmwareUiState
  * Miscellaneous settings: those that live on the Advanced route historically
  * but are neither experimental nor under active exploration.
  */
+private const val SETTINGS_PACKAGE = "com.android.settings"
+
 @Composable
 fun SettingsMiscRoute(
     onBack: () -> Unit,
@@ -247,6 +253,7 @@ private fun miscSettingsSections(
     onFirmwareSnChanged: (String) -> Unit,
     onFetchFirmware: () -> Unit
 ): List<SettingSection> {
+    val context = LocalContext.current
     val deleteOtaPackageInProgressString = stringResource(R.string.page_settings_advanced_delete_ota_package_in_progress)
     val deleteOtaPackageDefaultSummary = stringResource(R.string.page_settings_advanced_delete_ota_package_summary)
     return listOf(
@@ -298,6 +305,30 @@ private fun miscSettingsSections(
                     summary = stringResource(R.string.engineering_codes_summary),
                     onClick = onOpenEngineeringCodes,
                     icon = Icons.Rounded.BuildCircle
+                ),
+                SettingItem.Action(
+                    key = "misc_open_reduce_bright_colors",
+                    title = stringResource(R.string.page_settings_misc_open_reduce_bright_colors_title),
+                    summary = stringResource(R.string.page_settings_misc_open_reduce_bright_colors_summary),
+                    onClick = {
+                        openSettingsActivity(
+                            context,
+                            "com.android.settings.Settings\$ReduceBrightColorsSettingsActivity"
+                        )
+                    },
+                    icon = Icons.Rounded.DarkMode
+                ),
+                SettingItem.Action(
+                    key = "misc_open_app_battery_usage",
+                    title = stringResource(R.string.page_settings_misc_open_app_battery_usage_title),
+                    summary = stringResource(R.string.page_settings_misc_open_app_battery_usage_summary),
+                    onClick = {
+                        openSettingsActivity(
+                            context,
+                            "com.android.settings.Settings\$AppBatteryUsageActivity"
+                        )
+                    },
+                    icon = Icons.Rounded.BatterySaver
                 )
             )
         ),
@@ -333,6 +364,25 @@ private fun miscSettingsSections(
             )
         )
     )
+}
+
+/**
+ * Opens an explicit Settings sub-page; most Settings sub-activities are not
+ * exported, so failures surface as ActivityNotFoundException on some builds.
+ */
+internal fun openSettingsActivity(context: Context, activityClassName: String) {
+    try {
+        context.startActivity(Intent().apply {
+            setClassName(SETTINGS_PACKAGE, activityClassName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(
+            context,
+            context.getString(R.string.common_open_settings_page_failed, e.message ?: ""),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 }
 
 @Composable

@@ -950,6 +950,11 @@
     <!--工程代码（secret code）入口页资源值-->
     <string name="engineering_codes_title">联想工程代码</string>
     <string name="engineering_codes_summary">通过拨号盘 secret code 可打开的工程屏幕</string>
+    <string name="page_settings_misc_open_reduce_bright_colors_title">极暗模式</string>
+    <string name="page_settings_misc_open_reduce_bright_colors_summary">打开系统设置中的极暗模式页面</string>
+    <string name="page_settings_misc_open_app_battery_usage_title">电池优化</string>
+    <string name="page_settings_misc_open_app_battery_usage_summary">打开系统设置中的电池优化页面</string>
+    <string name="common_open_settings_page_failed">无法打开系统页面：%1$s</string>
     <string name="engineering_codes_dial_prefix">拨号盘代码：*#*#%1$s#*#*</string>
     <string name="engineering_codes_launching">正在启动工程屏幕…</string>
     <string name="engineering_codes_launch_failed_with_reason">启动失败：%1$s</string>
@@ -1005,6 +1010,7 @@
     <!-- Hook 侧读取（BatchUninstall）；经 getIdentifier 按名加载，勿改名勿删 -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">卸载应用</string>
     <string name="tile_media_output_label">媒体输出</string>
+    <string name="tile_reduce_bright_colors_label">极暗模式</string>
     <string name="system_ui_media_output_dialog_center_title">媒体输出弹窗居中</string>
     <string name="system_ui_media_output_dialog_center_summary">修正从"媒体输出"磁贴拉起的输出切换弹窗贴屏幕左缘的问题</string>
     <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">所选中内容没有可卸载的应用</string>
