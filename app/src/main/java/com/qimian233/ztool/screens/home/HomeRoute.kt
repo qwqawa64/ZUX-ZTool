@@ -296,7 +296,6 @@ private fun HomeScreen(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth()
-                    .widthIn(max = 1120.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 32.dp, vertical = 32.dp)
             ) {
@@ -630,6 +629,7 @@ private fun SystemInfoCard(state: HomeUiState) {
     )
 
     ZToolSettingsList(
+        modifier = Modifier.padding(horizontal = 8.dp),
         sections = listOf(
             SettingSection(
                 items = infoRows.map { row ->
