@@ -265,7 +265,10 @@ class EdgeBubbleView(
                     if (!dragging) {
                         // Bake the current translation into the window position and
                         // rebase the drag origin, so the drag operates on window
-                        // coordinates only and the pill doesn't jump.
+                        // coordinates only and the pill doesn't jump. Cancel any
+                        // in-flight mode animation first, or it keeps overwriting
+                        // translationX after the bake.
+                        modeAnimator?.cancel()
                         layoutParams.x += translationX.toInt()
                         translationX = 0f
                         postApply()
@@ -294,7 +297,9 @@ class EdgeBubbleView(
                     val targetX = anchorX(side).toFloat()
                     val fromY = layoutParams.y.toFloat()
                     val targetY = clampY(centerY - pillSizePx / 2).toFloat()
+                    val fromT = translationX
                     mode = MODE_HALF
+                    modeAnimator?.cancel()
                     snapAnimator?.cancel()
                     snapAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
                         duration = SNAP_ANIM_MS
@@ -303,6 +308,9 @@ class EdgeBubbleView(
                             val t = anim.animatedValue as Float
                             layoutParams.x = (fromX + (targetX - fromX) * t).toInt()
                             layoutParams.y = (fromY + (targetY - fromY) * t).toInt()
+                            // Translation must land on 0 (= HALF at the anchor), or the
+                            // pill stays stuck fully visible after the drag.
+                            translationX = fromT * (1f - t)
                             postApply()
                         }
                         start()
