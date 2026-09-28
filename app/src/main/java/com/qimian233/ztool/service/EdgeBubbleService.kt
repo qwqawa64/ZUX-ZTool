@@ -50,6 +50,7 @@ class EdgeBubbleService : Service() {
     }
     private var polling = false
     private var realDisplayWidth = 0
+    private var realDisplayHeight = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -98,11 +99,11 @@ class EdgeBubbleService : Service() {
     private fun startPolling() {
         if (polling) return
         polling = true
-        realDisplayWidth = try {
-            windowManager.currentWindowMetrics.bounds.width()
-        } catch (_: Throwable) {
-            resources.displayMetrics.widthPixels
-        }
+        val metricsBounds = try {
+            windowManager.currentWindowMetrics.bounds
+        } catch (_: Throwable) { null }
+        realDisplayWidth = metricsBounds?.width() ?: resources.displayMetrics.widthPixels
+        realDisplayHeight = metricsBounds?.height() ?: resources.displayMetrics.heightPixels
         mainHandler.postDelayed({ pollOnce() }, POLL_INTERVAL_MS)
     }
 
@@ -131,6 +132,11 @@ class EdgeBubbleService : Service() {
             val cooledDown = now - (restoredAt[task.taskId] ?: 0L) >= RESTORE_COOLDOWN_MS
             if (side >= 0 && !bubbles.containsKey(task.taskId) && cooledDown) {
                 Log.i(TAG, "edge detected task=${task.taskId} side=$side bounds=${task.bounds}")
+                // Refresh the remembered bubble height from the window's vertical
+                // center just before it docks, on every bubble-ization.
+                val ratio = ((task.bounds.top + task.bounds.bottom) / 2f)
+                    .coerceIn(0f, realDisplayHeight.toFloat()) / realDisplayHeight
+                bubblePrefs.edit().putFloat("cy_${task.taskId}", ratio).apply()
                 FreeformBubbleBridge.minimizeTask(task.taskId, side)
                 addBubble(task.taskId, side, task.packageName)
             }
