@@ -327,39 +327,90 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         if (hideShowControllerCache != null) return hideShowControllerCache
         return try {
             var manager: Any? = null
-            for (getter in arrayOf("getOvcWmManager", "getOvfMgr")) {
+            val steps = StringBuilder()
+            // Path 1/2: named getters on ATMS.
+            for (getter in arrayOf("getOvfMgr", "getOvcWmManager")) {
                 try {
-                    manager = atms.javaClass.getMethod(getter).invoke(atms)
-                    if (manager != null) break
-                } catch (_: Throwable) {
+                    val result = atms.javaClass.getMethod(getter).invoke(atms)
+                    if (result != null) {
+                        steps.append(getter).append("=ok ")
+                        if (result.javaClass.simpleName == "OvfWmFreeformManager") {
+                            manager = result
+                            break
+                        }
+                        // OvcWmManager: drill into its freeform manager.
+                        try {
+                            val fm = result.javaClass.getMethod("getFreeformManager").invoke(result)
+                            if (fm != null) {
+                                steps.append("getFreeformManager=ok ")
+                                manager = fm
+                                break
+                            }
+                        } catch (t: Throwable) {
+                            steps.append("getFreeformManager=fail ").append(t.message).append(' ')
+                        }
+                    }
+                } catch (t: Throwable) {
+                    steps.append(getter).append("=fail ").append(t.message).append(' ')
                 }
             }
-            manager ?: return null
+            // Path 3: field-type scan on ATMS itself.
+            if (manager == null) {
+                for (cls in generateSequence(atms.javaClass) { it.superclass }) {
+                    for (field in cls.declaredFields) {
+                        if (java.lang.reflect.Modifier.isStatic(field.modifiers)) continue
+                        try {
+                            field.isAccessible = true
+                            val value = field.get(atms)
+                            if (value != null && value.javaClass.simpleName == "OvfWmFreeformManager") {
+                                manager = value
+                                steps.append("atmsFieldScan=ok ")
+                                break
+                            }
+                        } catch (_: Throwable) {
+                        }
+                    }
+                    if (manager != null) break
+                }
+            }
+            if (manager == null) {
+                logger.info("hideShow resolve failed: no OvfWmFreeformManager; " + steps)
+                return null
+            }
             var controller: Any? = null
             // Preferred: named accessor on OvfWmFreeformManager.
             for (getter in arrayOf("getHideShowCtrl", "getHideShowController")) {
                 try {
                     controller = manager.javaClass.getMethod(getter).invoke(manager)
+                    steps.append(getter).append(if (controller != null) "=ok " else "=null ")
                     if (controller != null) break
-                } catch (_: Throwable) {
+                } catch (t: Throwable) {
+                    steps.append(getter).append("=fail ").append(t.message).append(' ')
                 }
             }
-            for (cls in generateSequence(manager.javaClass) { it.superclass }) {
-                for (field in cls.declaredFields) {
-                    if (java.lang.reflect.Modifier.isStatic(field.modifiers)) continue
-                    try {
-                        field.isAccessible = true
-                        val value = field.get(manager)
-                        if (value != null && value.javaClass.simpleName == "OvfWmHideShowController") {
-                            controller = value
-                            break
+            // Fallback: field-type scan on the manager.
+            if (controller == null) {
+                for (cls in generateSequence(manager.javaClass) { it.superclass }) {
+                    for (field in cls.declaredFields) {
+                        if (java.lang.reflect.Modifier.isStatic(field.modifiers)) continue
+                        try {
+                            field.isAccessible = true
+                            val value = field.get(manager)
+                            if (value != null && value.javaClass.simpleName == "OvfWmHideShowController") {
+                                controller = value
+                                steps.append("mgrFieldScan=ok ")
+                                break
+                            }
+                        } catch (_: Throwable) {
                         }
-                    } catch (_: Throwable) {
                     }
+                    if (controller != null) break
                 }
-                if (controller != null) break
             }
-            controller ?: return null
+            if (controller == null) {
+                logger.info("hideShow resolve failed: no controller; " + steps)
+                return null
+            }
             val toBack = controller.javaClass.getMethod("bringToBack",
                 classLoader.loadClass("com.android.server.wm.Task"))
             val toFront = controller.javaClass.getMethod("bringToFront",
@@ -368,6 +419,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 classLoader.loadClass("com.android.server.wm.TransitionController"),
                 classLoader.loadClass("com.android.server.wm.Transition"))
             hideShowControllerCache = Triple(controller, toBack, toFront)
+            logger.info("hideShow resolved: " + steps)
             hideShowControllerCache
         } catch (t: Throwable) {
             logger.debug("resolveHideShowController failed: ${t.message}")
