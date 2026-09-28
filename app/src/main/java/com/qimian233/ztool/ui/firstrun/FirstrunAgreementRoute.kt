@@ -219,7 +219,7 @@ fun FirstrunAgreementRoute(
                                 anchor = tapAnchor
                             )
                         },
-                        onDisagree = {
+                        onDisagree = { _ ->
                             viewModel.declineAgreement()
                             onAgreementDeclined()
                         }
@@ -233,8 +233,13 @@ fun FirstrunAgreementRoute(
                                 anchor = tapAnchor
                             )
                         },
-                        onBack = {
-                            currentPageState.value = FirstrunPage.Agreement
+                        onBack = { tapAnchor ->
+                            revealNavigation = true
+                            revealController.triggerReveal(
+                                onAction = { currentPageState.value = FirstrunPage.Agreement },
+                                onAnimationEnd = { revealNavigation = false },
+                                anchor = tapAnchor
+                            )
                         }
                     )
                     FirstrunPage.Permissions -> PermissionPage(
@@ -264,8 +269,13 @@ fun FirstrunAgreementRoute(
                                 anchor = tapAnchor
                             )
                         },
-                        onBack = {
-                            currentPageState.value = FirstrunPage.Agreement
+                        onBack = { tapAnchor ->
+                            revealNavigation = true
+                            revealController.triggerReveal(
+                                onAction = { currentPageState.value = FirstrunPage.SourceVerify },
+                                onAnimationEnd = { revealNavigation = false },
+                                anchor = tapAnchor
+                            )
                         }
                     )
                 }
@@ -342,7 +352,7 @@ private fun AgreementPage(
     readScrollState: ScrollState,
     firstPageReady: Boolean,
     onNext: (Offset) -> Unit,
-    onDisagree: () -> Unit
+    onDisagree: (Offset) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -388,7 +398,7 @@ private fun AgreementPage(
 @Composable
 private fun SourceVerifyPage(
     onNext: (Offset) -> Unit,
-    onBack: () -> Unit
+    onBack: (Offset) -> Unit
 ) {
     var input by rememberSaveable { mutableStateOf("") }
     val verified = input.trim() == ExpectedRepoName
@@ -464,7 +474,7 @@ private fun PermissionPage(
     onRequestUsage: () -> Unit,
     onRequestOverlay: () -> Unit,
     onAgree: (Offset) -> Unit,
-    onBack: () -> Unit
+    onBack: (Offset) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -672,10 +682,11 @@ private fun BottomActionBar(
     nextText: String,
     nextEnabled: Boolean,
     onNext: (Offset) -> Unit,
-    onDisagree: () -> Unit,
+    onDisagree: (Offset) -> Unit,
     negativeText: String = stringResource(R.string.page_firstrun_agreement_dismiss)
 ) {
     var nextButtonCenter by remember { mutableStateOf(Offset.Zero) }
+    var backButtonCenter by remember { mutableStateOf(Offset.Zero) }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -685,9 +696,14 @@ private fun BottomActionBar(
     ) {
         ZToolTextButton(
             text = negativeText,
-            onClick = onDisagree,
+            onClick = { onDisagree(backButtonCenter) },
             isPrimary = false,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .onGloballyPositioned { coordinates ->
+                    backButtonCenter = coordinates.positionInRoot() +
+                            Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+                }
         )
         ZToolButton(
             onClick = { onNext(nextButtonCenter) },
