@@ -1554,6 +1554,11 @@ object SearchIndex {
             summaryRes = R.string.page_settings_about_user_agreement_summary
         ),
         aboutScreen.item(
+            id = "about_beta_build",
+            titleRes = R.string.page_settings_about_beta_build_title,
+            summaryRes = R.string.page_settings_about_beta_build_summary
+        ),
+        aboutScreen.item(
             id = "about_check_update",
             titleRes = R.string.page_settings_about_app_update_title,
             summaryRes = R.string.page_settings_about_app_update_placeholder_summary

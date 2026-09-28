@@ -849,6 +849,8 @@
     <string name="page_features_not_in_scope_tip">Some component not in the scope. Click to fix.</string>
     <string name="page_settings_about_app_update_section_title">APP Update</string>
     <string name="page_settings_about_app_update_title">Check APP Update</string>
+    <string name="page_settings_about_beta_build_title">Get Beta Builds</string>
+    <string name="page_settings_about_beta_build_summary">Get nightly builds (may be unstable). Sign in to GitHub to download build artifacts</string>
     <string name="page_settings_about_app_update_placeholder_summary">Click to check ZTool\'s update</string>
     <string name="page_settings_auto_check_update_title">Check Updates Automatically</string>
     <string name="page_settings_advanced_info_title">System Info</string>

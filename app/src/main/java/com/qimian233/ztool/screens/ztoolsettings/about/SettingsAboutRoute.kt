@@ -102,6 +102,7 @@ fun SettingsAboutRoute(
             highlightRegistry = highlightRegistry,
             onOpenGithub = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool") },
             onOpenGithubIssues = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool/issues") },
+            onOpenGithubActions = { openExternalLink(context, "https://github.com/qwqawa64/ZUX-ZTool/actions") },
             onOpenUnfuckZUI = { openExternalLink(context, "https://github.com/dantmnf/UnfuckZUI") },
             onOpenZuxOsPlus = { openExternalLink(context, "https://github.com/morannlx/me.inkdye.zuxos") },
             onOpenGitHubAccelerationSite = { openExternalLink(context, "https://gh.absinthe.life/") },
@@ -139,6 +140,7 @@ private fun SettingsAboutScreen(
     onBack: () -> Unit,
     onOpenGithub: () -> Unit,
     onOpenGithubIssues: () -> Unit,
+    onOpenGithubActions: () -> Unit,
     onOpenUnfuckZUI: () -> Unit,
     onOpenZuxOsPlus: () -> Unit,
     onOpenGitHubAccelerationSite: () -> Unit,
@@ -303,13 +305,20 @@ private fun SettingsAboutScreen(
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                AboutSectionCard(stringResource(R.string.page_settings_about_app_update_section_title), 1) { getModifier ->
+                AboutSectionCard(stringResource(R.string.page_settings_about_app_update_section_title), 2) { getModifier ->
+                    AboutActionRow(
+                        title = stringResource(R.string.page_settings_about_beta_build_title),
+                        summary = stringResource(R.string.page_settings_about_beta_build_summary),
+                        onClick = onOpenGithubActions,
+                        highlightKey = "about_beta_build",
+                        modifier = getModifier(0)
+                    )
                     AboutActionRow(
                         title = stringResource(R.string.page_settings_about_app_update_title),
                         summary = updateSummary,
                         onClick = updateRowClick,
                         highlightKey = "about_check_update",
-                        modifier = getModifier(0),
+                        modifier = getModifier(1),
                         showTrailingArrow = true
                     )
                 }
