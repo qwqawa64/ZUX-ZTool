@@ -171,7 +171,10 @@ class EdgeBubbleView(
         setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         pillPaint.color = BG_COLOR
         connectorPaint.color = CONNECTOR_COLOR
-        // Start in HALF after a brief fully-visible moment (Oplus appear behaviour).
+        // Start fully visible (FULL position); translationX defaults to 0 which is the
+        // HALF position, so it must be set explicitly.
+        translationX = fullTranslation(side)
+        // Slide to HALF after a brief fully-visible moment (Oplus appear behaviour).
         scheduleHalfHide(APPEAR_FULL_MS)
     }
 
@@ -379,7 +382,9 @@ class EdgeBubbleView(
         canvas.drawRoundRect(pillRect, corner, corner, pillPaint)
 
         val icon = appIcon ?: return
-        icon.mutate().alpha = (255 * dim).toInt()
+        // Oplus collapsed state shows no icon at all — it slides out with the bubble.
+        val iconAlpha = if (mode == MODE_HALF) 0f else dim
+        icon.mutate().alpha = (255 * iconAlpha).toInt()
         icon.setBounds(
             inset.toInt(), inset.toInt(),
             (pillSizePx - inset).toInt(), (pillSizePx - inset).toInt()
