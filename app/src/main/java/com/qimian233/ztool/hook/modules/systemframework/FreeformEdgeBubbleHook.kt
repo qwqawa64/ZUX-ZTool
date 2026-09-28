@@ -336,6 +336,14 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             }
             manager ?: return null
             var controller: Any? = null
+            // Preferred: named accessor on OvfWmFreeformManager.
+            for (getter in arrayOf("getHideShowCtrl", "getHideShowController")) {
+                try {
+                    controller = manager.javaClass.getMethod(getter).invoke(manager)
+                    if (controller != null) break
+                } catch (_: Throwable) {
+                }
+            }
             for (cls in generateSequence(manager.javaClass) { it.superclass }) {
                 for (field in cls.declaredFields) {
                     if (java.lang.reflect.Modifier.isStatic(field.modifiers)) continue
