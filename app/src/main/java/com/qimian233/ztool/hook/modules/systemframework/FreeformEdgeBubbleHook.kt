@@ -300,6 +300,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val moveTaskToBack: Method?,
         val resumeFocusedTasks: Method?,
         val getAllRootTaskInfos: Method?,
+        val getAllRootTaskInfosByDisplay: Method?,
         val anyTaskForId: Method,
         val taskClass: Class<*>,
         val getBounds: Method,
@@ -368,6 +369,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             try { taskClass.getMethod("moveTaskToBack", taskClass) } catch (_: Throwable) { null },
             try { rwcClass.getMethod("resumeFocusedTasksTopActivities") } catch (_: Throwable) { null },
             try { rwcClass.getMethod("getAllRootTaskInfos") } catch (_: Throwable) { null },
+            try {
+                rwcClass.getMethod("getAllRootTaskInfos", Int::class.javaPrimitiveType)
+            } catch (_: Throwable) { null },
             anyTaskForId, taskClass,
             taskClass.getMethod("getBounds"),
             taskClass.getMethod("setBounds", Rect::class.java),
@@ -589,7 +593,10 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
      */
     private fun collectFreeformTaskInfos(handles: AtmsHandles): Bundle? {
         return try {
-            val infos = handles.getAllRootTaskInfos?.invoke(handles.rootWindowContainer) as? List<*>
+            // ZUX signature takes a displayId (-1 = all displays).
+            val infos = (handles.getAllRootTaskInfos?.invoke(handles.rootWindowContainer)
+                ?: handles.getAllRootTaskInfosByDisplay?.invoke(handles.rootWindowContainer, -1)
+                ) as? List<*>
             if (infos == null) {
                 logger.warn("getAllRootTaskInfos unavailable")
                 return null
