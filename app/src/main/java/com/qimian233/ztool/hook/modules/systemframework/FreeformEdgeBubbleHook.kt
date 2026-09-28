@@ -565,14 +565,39 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             minimizedSides.remove(taskId)
             return false
         }
-        val target = restoreRects.remove(taskId) ?: run {
+        val stored = restoreRects.remove(taskId) ?: run {
             logger.warn("restore: no stored bounds for task $taskId")
             return false
         }
         minimizedSides.remove(taskId)
+        // Nudge the stored bounds fully on-screen: the user dragged the window to the
+        // edge before docking, so restoring verbatim would leave half of it offscreen.
+        val displayBounds = try {
+            val dc = handles.taskClass.getMethod("getDisplayContent").invoke(task)
+            dc?.javaClass?.getMethod("getBounds")?.invoke(dc) as? Rect
+        } catch (_: Throwable) { null }
+        val target = Rect(stored)
+        if (displayBounds != null && !displayBounds.isEmpty) {
+            val margin = 24
+            val dx = when {
+                target.left < displayBounds.left + margin ->
+                    displayBounds.left + margin - target.left
+                target.right > displayBounds.right - margin ->
+                    displayBounds.right - margin - target.right
+                else -> 0
+            }
+            target.offset(dx, 0)
+        }
         if (handles.hideShowController != null && handles.bringToFront != null) {
             handles.bringToFront.invoke(
                 handles.hideShowController, task, "ztool_freeform_bubble", null, null)
+            // bringToFront keeps the (edge-hanging) bounds; pull them on-screen.
+            internalMove.set(true)
+            try {
+                handles.setBounds.invoke(task, target)
+            } finally {
+                internalMove.set(false)
+            }
             notifyBubbleRemoved(taskId)
             logger.info("restore task=$taskId via bringToFront -> $target")
             return true

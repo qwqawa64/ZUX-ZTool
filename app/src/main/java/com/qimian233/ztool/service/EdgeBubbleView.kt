@@ -21,10 +21,14 @@ import kotlin.math.abs
 /**
  * The edge-bubble capsule for one minimized freeform task.
  *
- * Each bubble owns a small overlay window (capsule-sized, LAYOUT_NO_LIMITS lets the
- * window itself hang offscreen — same approach as the Oplus handle whose frame was
- * e.g. [0,650][28,914]). States follow the Oplus spec (FULL / HALF / free drag);
- * values from docs/research/oplus-float-handle-gesture-spec.md.
+ * Geometry: the overlay window is anchored at the screen edge and sized
+ * [2*pill - halfPeek] wide, covering both the FULL and HALF positions of the pill
+ * (window x can hang offscreen thanks to LAYOUT_NO_LIMITS). FULL↔HALF animates the
+ * view's translationX inside the window — pure view-level, no WindowManager calls
+ * per frame (updateViewLayout is far too slow for smooth mode switching). Window
+ * position changes only while free-dragging.
+ *
+ * Timing/threshold values follow docs/research/oplus-float-handle-gesture-spec.md.
  */
 class EdgeBubbleView(
     context: Context,
@@ -50,11 +54,12 @@ class EdgeBubbleView(
         private const val PILL_CORNER_DP = 16f
         private const val ICON_SIZE_DP = 40f
         private const val PILL_INNER_MARGIN_DP = 6f
-        private const val SCREEN_MARGIN_DP = 8f
         private const val HALF_PEEK_DP = 16f
         private const val VERTICAL_LIMIT_DP = 48f
         private const val HALF_HIDE_DELAY_MS = 50L
+        private const val APPEAR_FULL_MS = 600L
         private const val SNAP_ANIM_MS = 260L
+        private const val MODE_ANIM_MS = 180L
         // Fling thresholds (spec): fast branch and slow-long-distance branch.
         private const val FLING_VELOCITY_PX = 1000f
         private const val FLING_DISTANCE_PX = 100f
@@ -70,7 +75,6 @@ class EdgeBubbleView(
     private val screenHeight = context.resources.displayMetrics.heightPixels
 
     private val pillSizePx = dip(ICON_SIZE_DP + PILL_INNER_MARGIN_DP * 2).toInt()
-    private val screenMarginPx = dip(SCREEN_MARGIN_DP).toInt()
     private val halfPeekPx = dip(HALF_PEEK_DP).toInt()
 
     private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
@@ -87,7 +91,8 @@ class EdgeBubbleView(
     private var downWinY = 0
     private var dragging = false
     private var removed = false
-    private var xAnimator: ValueAnimator? = null
+    private var modeAnimator: ValueAnimator? = null
+    private var snapAnimator: ValueAnimator? = null
 
     val layoutParams: WindowManager.LayoutParams = WindowManager.LayoutParams().apply {
         type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -96,12 +101,12 @@ class EdgeBubbleView(
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         format = android.graphics.PixelFormat.TRANSLUCENT
-        width = pillSizePx
+        width = 2 * pillSizePx - halfPeekPx
         height = pillSizePx
         gravity = Gravity.TOP or Gravity.START
         layoutInDisplayCutoutMode =
             WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        x = fullX()
+        x = anchorX(side)
         y = clampY(centerY - pillSizePx / 2)
     }
 
@@ -129,7 +134,7 @@ class EdgeBubbleView(
             }
 
             override fun onLongPress(e: MotionEvent) {
-                // Long press arms free dragging; actual movement is handled in onTouchEvent.
+                // Long press arms free dragging; movement is handled in onTouchEvent.
                 dragging = true
                 parent?.requestDisallowInterceptTouchEvent(true)
             }
@@ -138,7 +143,8 @@ class EdgeBubbleView(
 
     init {
         pillPaint.color = if (isDarkTheme()) BG_COLOR_DARK else BG_COLOR_LIGHT
-        updateWindowPos(animate = false)
+        // Start in HALF after a brief fully-visible moment (Oplus appear behaviour).
+        scheduleHalfHide(APPEAR_FULL_MS)
     }
 
     fun setAppIcon(drawable: Drawable?) {
@@ -146,46 +152,23 @@ class EdgeBubbleView(
         invalidate()
     }
 
-    // region window position management
+    // region geometry
 
     private fun dip(v: Float): Float = v * density
 
-    private fun fullX(): Int = if (side == SIDE_LEFT) -screenMarginPx
-    else screenWidth - pillSizePx + screenMarginPx
+    /** Window x anchor: HALF position of the pill for the given side. */
+    private fun anchorX(side: Int): Int =
+        if (side == SIDE_LEFT) -(pillSizePx - halfPeekPx) else screenWidth - halfPeekPx
 
-    private fun halfX(): Int = if (side == SIDE_LEFT) -(pillSizePx - halfPeekPx)
-    else screenWidth - halfPeekPx
+    /** View translation for FULL mode on the given side. */
+    private fun fullTranslation(side: Int): Float =
+        if (side == SIDE_LEFT) (pillSizePx - halfPeekPx).toFloat()
+        else -(pillSizePx - halfPeekPx).toFloat()
 
     private fun clampY(top: Int): Int {
         val limit = dip(VERTICAL_LIMIT_DP).toInt()
         return top.coerceIn(limit, screenHeight - pillSizePx - limit)
     }
-
-    private fun updateWindowPos(animate: Boolean, targetX: Int = modeX(), targetY: Int = clampY(centerY - pillSizePx / 2)) {
-        xAnimator?.cancel()
-        xAnimator = null
-        if (!animate) {
-            layoutParams.x = targetX
-            layoutParams.y = targetY
-            postApply()
-            return
-        }
-        val fromX = layoutParams.x
-        val fromY = layoutParams.y
-        xAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = SNAP_ANIM_MS
-            interpolator = OvershootInterpolator(0.8f)
-            addUpdateListener { anim ->
-                val t = anim.animatedValue as Float
-                layoutParams.x = (fromX + (targetX - fromX) * t).toInt()
-                layoutParams.y = (fromY + (targetY - fromY) * t).toInt()
-                postApply()
-            }
-            start()
-        }
-    }
-
-    private fun modeX(): Int = if (mode == MODE_FULL) fullX() else halfX()
 
     private fun postApply() {
         if (removed) return
@@ -195,24 +178,64 @@ class EdgeBubbleView(
         }
     }
 
-    private fun scheduleHalfHide() {
+    /** Animates the in-window translation between FULL and HALF (cheap, view-level). */
+    private fun animateToMode(target: Int) {
+        modeAnimator?.cancel()
+        val to = if (target == MODE_FULL) fullTranslation(side) else 0f
+        val from = translationX
+        if (from == to) return
+        modeAnimator = ValueAnimator.ofFloat(from, to).apply {
+            duration = MODE_ANIM_MS
+            interpolator = OvershootInterpolator(0.6f)
+            addUpdateListener { anim -> translationX = anim.animatedValue as Float }
+            start()
+        }
+    }
+
+    private fun setMode(target: Int, animate: Boolean) {
+        mode = target
+        if (animate) animateToMode(target) else translationX = fullTranslation(side)
+    }
+
+    private fun scheduleHalfHide(delay: Long = HALF_HIDE_DELAY_MS) {
         mainHandler.postDelayed({
             if (!dragging && mode != MODE_HALF && !removed) {
-                mode = MODE_HALF
-                updateWindowPos(animate = true)
+                setMode(MODE_HALF, animate = true)
             }
-        }, HALF_HIDE_DELAY_MS)
+        }, delay)
+    }
+
+    /** Keeps the window parked at the current edge anchor with the given y. */
+    private fun parkAtEdge(targetSide: Int = side, animateY: Boolean = false) {
+        side = targetSide
+        layoutParams.x = anchorX(side)
+        val targetY = clampY(centerY - pillSizePx / 2)
+        if (!animateY) {
+            layoutParams.y = targetY
+            postApply()
+            return
+        }
+        val fromY = layoutParams.y
+        snapAnimator?.cancel()
+        snapAnimator = ValueAnimator.ofFloat(fromY.toFloat(), targetY.toFloat()).apply {
+            duration = SNAP_ANIM_MS
+            addUpdateListener { anim ->
+                layoutParams.y = (anim.animatedValue as Float).toInt()
+                postApply()
+            }
+            start()
+        }
     }
 
     fun expandToFull() {
         if (removed) return
-        mode = MODE_FULL
-        updateWindowPos(animate = true)
+        setMode(MODE_FULL, animate = true)
     }
 
     fun release() {
         removed = true
-        xAnimator?.cancel()
+        modeAnimator?.cancel()
+        snapAnimator?.cancel()
     }
 
     // endregion
@@ -224,14 +247,13 @@ class EdgeBubbleView(
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 mainHandler.removeCallbacksAndMessages(null)
-                xAnimator?.cancel()
+                modeAnimator?.cancel()
                 downRawX = event.rawX
                 downRawY = event.rawY
                 downWinX = layoutParams.x
                 downWinY = layoutParams.y
                 if (mode == MODE_HALF) {
-                    mode = MODE_FULL
-                    updateWindowPos(animate = true)
+                    setMode(MODE_FULL, animate = true)
                 }
                 return true
             }
@@ -240,9 +262,21 @@ class EdgeBubbleView(
                 val dy = event.rawY - downRawY
                 val slop = ViewConfiguration.get(context).scaledTouchSlop
                 if (dragging || dx * dx + dy * dy > slop * slop) {
+                    if (!dragging) {
+                        // Bake the current translation into the window position and
+                        // rebase the drag origin, so the drag operates on window
+                        // coordinates only and the pill doesn't jump.
+                        layoutParams.x += translationX.toInt()
+                        translationX = 0f
+                        postApply()
+                        downWinX = layoutParams.x
+                        downWinY = layoutParams.y
+                        downRawX = event.rawX
+                        downRawY = event.rawY
+                    }
                     dragging = true
-                    layoutParams.x = downWinX + dx.toInt()
-                    layoutParams.y = clampY(downWinY + dy.toInt())
+                    layoutParams.x = downWinX + (event.rawX - downRawX).toInt()
+                    layoutParams.y = clampY(downWinY + (event.rawY - downRawY).toInt())
                     postApply()
                 }
                 return true
@@ -250,20 +284,31 @@ class EdgeBubbleView(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (dragging) {
                     dragging = false
-                    // Snap to the nearest edge, remember the y ratio, then half-hide.
-                    val windowCenterX = layoutParams.x + pillSizePx / 2
+                    val windowCenterX = layoutParams.x + width / 2
                     side = if (windowCenterX < screenWidth / 2) SIDE_LEFT else SIDE_RIGHT
                     centerY = layoutParams.y + pillSizePx / 2
                     listener.onBubbleSettled(taskId, side, centerY.toFloat() / screenHeight)
-                    updateWindowPos(animate = true)
-                    scheduleHalfHide()
-                } else {
-                    // Plain tap: stay FULL briefly then re-hide (Oplus full→half 500 ms
-                    // after settle; keep the shorter 50 ms release rule for taps that
-                    // did not restore, restore itself removes the view).
-                    if (mode == MODE_FULL) {
-                        scheduleHalfHide()
+                    // Snap window x/y back to the edge anchor; translation stays 0,
+                    // which is exactly the HALF position at the anchor.
+                    val fromX = layoutParams.x.toFloat()
+                    val targetX = anchorX(side).toFloat()
+                    val fromY = layoutParams.y.toFloat()
+                    val targetY = clampY(centerY - pillSizePx / 2).toFloat()
+                    mode = MODE_HALF
+                    snapAnimator?.cancel()
+                    snapAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+                        duration = SNAP_ANIM_MS
+                        interpolator = OvershootInterpolator(0.6f)
+                        addUpdateListener { anim ->
+                            val t = anim.animatedValue as Float
+                            layoutParams.x = (fromX + (targetX - fromX) * t).toInt()
+                            layoutParams.y = (fromY + (targetY - fromY) * t).toInt()
+                            postApply()
+                        }
+                        start()
                     }
+                } else if (mode == MODE_FULL) {
+                    scheduleHalfHide()
                 }
                 return true
             }
