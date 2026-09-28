@@ -291,7 +291,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             val handles = resolveAtmsHandles(classLoader)
             synchronized(handles.globalLock) { block(handles) }
         } catch (t: Throwable) {
-            logger.error("bridge operation failed", t)
+            logger.error(
+                "bridge operation failed",
+                (t as? java.lang.reflect.InvocationTargetException)?.cause ?: t)
             null
         }
     }
@@ -589,12 +591,21 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             target.offset(dx, 0)
         }
         if (handles.hideShowController != null && handles.bringToFront != null) {
-            handles.bringToFront.invoke(
-                handles.hideShowController, task, "ztool_freeform_bubble", null, null)
-            // bringToFront keeps the (edge-hanging) bounds; pull them on-screen.
-            internalMove.set(true)
             try {
+                handles.bringToFront.invoke(
+                    handles.hideShowController, task, "ztool_freeform_bubble", null, null)
+            } catch (t: Throwable) {
+                // Never abort the whole restore because one ZUI call threw.
+                logger.warn(
+                    "bringToFront failed: " + ((t as? java.lang.reflect.InvocationTargetException)?.cause ?: t))
+            }
+            // bringToFront keeps the (edge-hanging) bounds; pull them on-screen.
+            try {
+                internalMove.set(true)
                 handles.setBounds.invoke(task, target)
+            } catch (t: Throwable) {
+                logger.warn(
+                    "restore setBounds failed: " + ((t as? java.lang.reflect.InvocationTargetException)?.cause ?: t))
             } finally {
                 internalMove.set(false)
             }
