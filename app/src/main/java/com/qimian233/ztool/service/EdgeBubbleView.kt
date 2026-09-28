@@ -5,8 +5,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Outline
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import android.view.ViewOutlineProvider
 import android.os.Handler
 import android.os.Looper
 import android.view.GestureDetector
@@ -155,6 +157,17 @@ class EdgeBubbleView(
 
     init {
         pillPaint.color = BG_COLOR
+        // Projected shadow from the backdrop's rounded-rect outline; the icon
+        // drawable's built-in shadow alone hides under the enlarged icon.
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(
+                    0, 0, pillSizePx, pillSizePx, dip(PILL_CORNER_DP))
+            }
+        }
+        clipToOutline = false
+        stateListAnimator = null
+        elevation = dip(8f)
         // Start in HALF after a brief fully-visible moment (Oplus appear behaviour).
         scheduleHalfHide(APPEAR_FULL_MS)
     }
