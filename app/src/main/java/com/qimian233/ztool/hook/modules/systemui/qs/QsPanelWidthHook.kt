@@ -259,30 +259,51 @@ class QsPanelWidthHook : AppHookModule() {
         // mTileLayout is defined in QSPanel (QuickQSPanel's parent), used to read the current mMaxAllowedRows
         val qsPanelTileLayoutField = findField(quickQSPanelClass, "mTileLayout")
         var qqsDefaultColumns = -1
+        // Native mMaxTiles cap read from the quick_qs_panel_max_tiles resource, used to
+        // restore when the window leaves portrait (id cache: 0 = unresolved, retried).
+        var cachedMaxTilesResId = 0
+        fun nativeMaxTiles(panel: View): Int {
+            if (cachedMaxTilesResId == 0) {
+                val resolved = panel.resources
+                    .getIdentifier("quick_qs_panel_max_tiles", "integer", ScopeKeys.SYSTEM_UI.packageName)
+                if (resolved != 0) cachedMaxTilesResId = resolved
+            }
+            return if (cachedMaxTilesResId != 0) panel.resources.getInteger(cachedMaxTilesResId) else 0
+        }
 
         hookWithId(qqsMeasureMethod, "tile_columns_qqs") { chain ->
             if (tileColumns != 0) {
                 val tileLayout = chain.thisObject as View
-                if (isWindowPortrait(tileLayout)) {
-                    // Only write when the column count actually changes, avoiding unnecessary field updates
-                    val currentColumns = columnsField.getInt(tileLayout)
-                    if (currentColumns != tileColumns) {
-                        if (qqsDefaultColumns == -1) qqsDefaultColumns = currentColumns
-                        columnsField.setInt(tileLayout, tileColumns)
-                    }
-                    // mMaxTiles must be synced independently of the columns gate: when the
-                    // native column count equals the custom value the gate above never
-                    // fires and the native mMaxTiles cap (from resources) would survive.
-                    val parent = tileLayout.parent
-                    if (parent != null && quickQSPanelClass.isInstance(parent)) {
+                val parent = tileLayout.parent
+                if (parent != null && quickQSPanelClass.isInstance(parent)) {
+                    if (isWindowPortrait(tileLayout)) {
+                        // Only write when the column count actually changes, avoiding unnecessary field updates
+                        val currentColumns = columnsField.getInt(tileLayout)
+                        if (currentColumns != tileColumns) {
+                            if (qqsDefaultColumns == -1) qqsDefaultColumns = currentColumns
+                            columnsField.setInt(tileLayout, tileColumns)
+                        }
+                        // mMaxTiles must be synced independently of the columns gate: when the
+                        // native column count equals the custom value the gate above never
+                        // fires and the native mMaxTiles cap (from resources) would survive.
                         val rows = maxAllowedRowsField.getInt(tileLayout)
                         if (rows > 0 && maxTilesField.getInt(parent) != tileColumns * rows) {
                             maxTilesField.setInt(parent, tileColumns * rows)
                             logger.trace("QSW qqs: mMaxTiles -> ${tileColumns * rows}")
                         }
+                    } else {
+                        if (qqsDefaultColumns > 0 && columnsField.getInt(tileLayout) == tileColumns) {
+                            columnsField.setInt(tileLayout, qqsDefaultColumns)
+                        }
+                        // Restore the native cap when leaving portrait. This also heals the
+                        // rotation race where setTiles() runs while the root view still has
+                        // stale portrait dimensions and the portrait branch re-applied 14.
+                        val nativeMax = nativeMaxTiles(tileLayout)
+                        if (nativeMax > 0 && maxTilesField.getInt(parent) != nativeMax) {
+                            maxTilesField.setInt(parent, nativeMax)
+                            logger.trace("QSW qqs: mMaxTiles restored to native $nativeMax")
+                        }
                     }
-                } else if (qqsDefaultColumns > 0 && columnsField.getInt(tileLayout) == tileColumns) {
-                    columnsField.setInt(tileLayout, qqsDefaultColumns)
                 }
             }
             chain.proceed()
@@ -325,6 +346,23 @@ class QsPanelWidthHook : AppHookModule() {
                             } finally {
                                 applyingSetTiles = false
                             }
+                        }
+                    }
+                } else {
+                    // Heal the rotation race: setTiles() can run while the root view
+                    // still has stale portrait dimensions, leaving the custom cap
+                    // applied in landscape. Restore the native cap and refresh.
+                    val nativeMax = nativeMaxTiles(panel)
+                    if (nativeMax > 0 && maxTilesField.getInt(panel) != nativeMax) {
+                        maxTilesField.setInt(panel, nativeMax)
+                        applyingSetTiles = true
+                        try {
+                            controllerSetTilesMethod.invoke(controller)
+                            logger.trace(
+                                "QSW qqs: setTiles re-applied with native mMaxTiles=$nativeMax"
+                            )
+                        } finally {
+                            applyingSetTiles = false
                         }
                     }
                 }
