@@ -35,6 +35,7 @@ import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
+import com.qimian233.ztool.ui.components.ZToolPopupMenuSettingRow
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
@@ -133,13 +134,22 @@ private fun PreferenceEditorScreen(
                     sections = listOf(
                         SettingSection(
                             items = listOfNotNull(
-                                SettingItem.Dropdown(
-                                    key = "deco_pref_editor_target",
-                                    label = stringResource(R.string.preference_editor_target_label),
-                                    value = state.target.prefsFileName,
-                                    options = PreferenceEditorTarget.entries,
-                                    optionLabel = { it.prefsFileName },
-                                    onOptionSelected = onTargetSelected
+                                SettingItem.Custom(
+                                    content = {
+                                        // SettingItem.Dropdown doesn't expose the field
+                                        // width knobs; render the row directly so the long
+                                        // prefs file names fit the value field.
+                                        ZToolPopupMenuSettingRow(
+                                            title = stringResource(R.string.preference_editor_target_label),
+                                            value = state.target.prefsFileName,
+                                            options = PreferenceEditorTarget.entries,
+                                            optionLabel = { it.prefsFileName },
+                                            onOptionSelected = onTargetSelected,
+                                            fieldMinWidth = 220.dp,
+                                            fieldMaxWidth = 320.dp
+                                        )
+                                    },
+                                    key = "deco_pref_editor_target"
                                 ),
                                 SettingItem.TextInput(
                                     key = "deco_pref_editor_key",
@@ -211,7 +221,12 @@ private fun PreferenceEditorButtons(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             buttons.forEach { (text, action) ->
-                ZToolTextButton(text = text, onClick = action, modifier = Modifier.fillMaxWidth())
+                ZToolTextButton(
+                    text = text,
+                    onClick = action,
+                    modifier = Modifier.fillMaxWidth(),
+                    isPrimary = false
+                )
             }
         }
     } else {
@@ -222,7 +237,12 @@ private fun PreferenceEditorButtons(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             buttons.forEach { (text, action) ->
-                ZToolTextButton(text = text, onClick = action, modifier = Modifier.weight(1f))
+                ZToolTextButton(
+                    text = text,
+                    onClick = action,
+                    modifier = Modifier.weight(1f),
+                    isPrimary = false
+                )
             }
         }
     }
