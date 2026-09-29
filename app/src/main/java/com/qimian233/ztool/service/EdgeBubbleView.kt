@@ -252,8 +252,18 @@ class EdgeBubbleView(
 
     private fun setMode(target: Int, animate: Boolean) {
         mode = target
-        if (animate) animateToMode(target)
-        else translationX = if (target == MODE_FULL) 0f else halfTranslation(side)
+        val targetAlpha = if (target == MODE_HALF) HALF_ALPHA else 1f
+        if (animate) {
+            animateToMode(target)
+            // Whole-view alpha: covers background, icon and shadow uniformly on
+            // every collapse path (first collapse included).
+            animate().alpha(targetAlpha)
+                .setDuration(MODE_ANIM_MS.toLong())
+                .start()
+        } else {
+            translationX = if (target == MODE_FULL) 0f else halfTranslation(side)
+            alpha = targetAlpha
+        }
     }
 
     private fun scheduleHalfHide(delay: Long = HALF_HIDE_DELAY_MS) {
@@ -387,18 +397,15 @@ class EdgeBubbleView(
 
     override fun onDraw(canvas: Canvas) {
         val ox = containerOriginX()
-        val dim = if (mode == MODE_HALF) HALF_ALPHA else 1f
         // Opaque theme background, drawn only inside the clipped container region.
         containerRect.set(ox, 0f, ox + containerWpx, containerHpx.toFloat())
-        bgPaint.alpha = (255 * dim).toInt()
         canvas.drawRoundRect(
             containerRect, dip(CONTAINER_RADIUS_DP), dip(CONTAINER_RADIUS_DP), bgPaint)
-        // Icon: marginStart 38dp (LEFT) / 8dp (RIGHT), 8dp top/bottom.
+        // Icon: marginStart 38dp (LEFT) / 8dp (RIGHT), 8dp top/bottom. Whole-bubble
+        // dimming is applied via view-level alpha in setMode.
         val iconStart = ox + (if (side == SIDE_LEFT) screenMarginPx + innerPx else innerPx)
         val icon = appIcon ?: return
-        // Collapsed state dims the whole bubble — icon included ("透明度 + 收起图标
-        // + 收起底色"), aligned with the first-collapse behaviour.
-        icon.mutate().alpha = (255 * dim).toInt()
+        icon.mutate().alpha = 255
         icon.setBounds(
             iconStart.toInt(), innerPx,
             (iconStart + iconPx).toInt(), (innerPx + iconPx)
